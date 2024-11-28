@@ -287,7 +287,7 @@ export default {
 	methods: {
 		setCurrentDay (day) {
 			// Find best match among days, because timezones can muddle this
-			const matchingDays = this.days.filter(d => d.setZone(this.currentTimezone).toISODate() === day.setZone(this.currentTimezone).toISODate())
+			const matchingDays = this.days.filter(d => d.toISODate() === day.toISODate())
 			if (matchingDays.length) {
 				this.currentDay = matchingDays[0].toISODate()
 			}
