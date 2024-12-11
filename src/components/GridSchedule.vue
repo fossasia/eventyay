@@ -72,8 +72,7 @@ export default {
 			getLocalizedString,
 			getPrettyDuration,
 			timeWithoutAmPm,
-			timeAmPm,
-			scrolledDay: null
+			timeAmPm
 		}
 	},
 	computed: {
@@ -265,7 +264,7 @@ export default {
 			}
 		}
 		if (fragmentIsDate || !this.$refs.now) return
-		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop() - 90
+		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop()
 		if (this.scrollParent) {
 			this.scrollParent.scrollTop = scrollTop
 		} else {
@@ -285,8 +284,20 @@ export default {
 			}
 		},
 		getOffsetTop () {
-			const rect = this.$parent.$el.getBoundingClientRect()
-			return rect.top + window.scrollY
+			return window.scrollY + this.$el.getBoundingClientRect().top - 100
+		},
+		getScrolledDay () {
+			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
+			for (const slice of this.timeslices) {
+				const el = this.$refs[slice.name]?.[0]
+				if (!el) continue
+				const rect = el.getBoundingClientRect()
+				// only count as visible if at least 100px are visible
+				const buffer = 100
+				if (rect.top + buffer < window.innerHeight && rect.bottom - buffer > 0) {
+					return slice.date
+				}
+			}
 		},
 		getSliceClasses (slice) {
 			return {
@@ -312,7 +323,7 @@ export default {
 			return slice.date.setZone(this.timezone).toLocaleString({ hour: 'numeric', minute: 'numeric' })
 		},
 		changeDay (day) {
-			if (this.scrolledDay?.toISODate() === day) return
+			if (this.getScrolledDay()?.toISODate() === day) return
 			const el = this.$refs[getSliceName(DateTime.fromISO(day))]?.[0]
 			if (!el) return
 			const offset = el.offsetTop + this.getOffsetTop()
@@ -327,9 +338,8 @@ export default {
 			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
 			if (!entry) return
 			const day = DateTime.fromISO(entry.target.dataset.slice).startOf('day')
-			this.scrolledDay = day
-			if (this.scrolledDay.toISODate() !== this.currentDay) {
-				this.$emit('changeDay', this.scrolledDay)
+			if (day.toISODate() !== this.currentDay) {
+				this.$emit('changeDay', day)
 			}
 		}
 	}
