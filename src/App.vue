@@ -66,61 +66,61 @@
 			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
 			div.message {{ message }}
 	#bunt-teleport-target(ref="teleportTarget")
-	dialog#session-popover(popover="auto", ref="sessionPopover", @beforetoggle="onPopoverToggle")
-		button.close-button(@click="$refs.sessionPopover?.hidePopover()") ✕
-		template(v-if="popoverContent && popoverContent.contentType === 'session'")
-			h3 {{ popoverContent.contentObject.title }}
-			.card-content
-				.facts
-					.time
-						span {{ popoverContent.contentObject.start.toLocaleString({ weekday: 'long', day: 'numeric', month: 'long' }) }}, {{ getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).time }}
-						span.ampm(v-if="getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
-					.room(v-if="popoverContent.contentObject.room") {{ getLocalizedString(popoverContent.contentObject.room.name) }}
-					.track(v-if="popoverContent.contentObject.track", :style="{ color: popoverContent.contentObject.track.color }") {{ getLocalizedString(popoverContent.contentObject.track.name) }}
-				.text-content
-					.abstract(v-if="popoverContent.contentObject.abstract", v-html="markdownIt.renderInline(popoverContent.contentObject.abstract)")
-					template(v-if="popoverContent.contentObject.isLoading")
-						bunt-progress-circular(size="big", :page="true")
-					template(v-else)
-						hr(v-if="popoverContent.contentObject.abstract?.length && popoverContent.contentObject.description?.length")
-						.description(v-if="popoverContent.contentObject.description", v-html="markdownIt.render(popoverContent.contentObject.description)")
-			.speakers(v-if="popoverContent.contentObject.speakers")
-				a.speaker.inner-card(v-for="speaker in popoverContent.contentObject.speakers", @click="showSpeakerDetails(speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
-					.img-wrapper
-						img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
-						.avatar-placeholder(v-else)
-							svg(viewBox="0 0 24 24")
-								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-					.inner-card-content {{ speaker.name }}
-		template(v-if="popoverContent && popoverContent.contentType === 'speaker'")
-			.speaker-details
-				h3 {{ popoverContent.contentObject.name }}
-				.speaker-content.card-content
+	dialog#session-modal(ref="detailsModal", @click.stop="$refs.detailsModal?.close()")
+		.dialog-inner(@click.stop="")
+			button.close-button(@click="$refs.detailsModal?.close()") ✕
+			template(v-if="modalContent && modalContent.contentType === 'session'")
+				h3 {{ modalContent.contentObject.title }}
+				.card-content
+					.facts
+						.time
+							span {{ modalContent.contentObject.start.toLocaleString({ weekday: 'long', day: 'numeric', month: 'long' }) }}, {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).time }}
+							span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
+						.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
+						.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
 					.text-content
-						template(v-if="popoverContent.contentObject.isLoading")
+						.abstract(v-if="modalContent.contentObject.abstract", v-html="markdownIt.renderInline(modalContent.contentObject.abstract)")
+						template(v-if="modalContent.contentObject.isLoading")
 							bunt-progress-circular(size="big", :page="true")
 						template(v-else)
-							.biography(v-if="popoverContent.contentObject.biography", v-html="markdownIt.render(popoverContent.contentObject.biography)")
-					.img-wrapper
-						img(v-if="popoverContent.contentObject.avatar", :src="popoverContent.contentObject.avatar", :alt="popoverContent.contentObject.name")
-						.avatar-placeholder(v-else)
-							svg(viewBox="0 0 24 24")
-								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-			.speaker-sessions
-				session(
-					v-for="session in popoverContent.contentObject.sessions",
-					:session="session",
-					:showDate="true",
-					:now="now",
-					:timezone="currentTimezone",
-					:locale="locale",
-					:hasAmPm="hasAmPm",
-					:faved="favs.includes(session.id)",
-					:onHomeServer="onHomeServer",
-					@fav="fav(session.id)",
-					@unfav="unfav(session.id)",
-				)
-	#popover-background
+							hr(v-if="modalContent.contentObject.abstract?.length && modalContent.contentObject.description?.length")
+							.description(v-if="modalContent.contentObject.description", v-html="markdownIt.render(modalContent.contentObject.description)")
+				.speakers(v-if="modalContent.contentObject.speakers")
+					a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="showSpeakerDetails(speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
+						.img-wrapper
+							img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
+							.avatar-placeholder(v-else)
+								svg(viewBox="0 0 24 24")
+									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+						.inner-card-content {{ speaker.name }}
+			template(v-if="modalContent && modalContent.contentType === 'speaker'")
+				.speaker-details
+					h3 {{ modalContent.contentObject.name }}
+					.speaker-content.card-content
+						.text-content
+							template(v-if="modalContent.contentObject.isLoading")
+								bunt-progress-circular(size="big", :page="true")
+							template(v-else)
+								.biography(v-if="modalContent.contentObject.biography", v-html="markdownIt.render(modalContent.contentObject.biography)")
+						.img-wrapper
+							img(v-if="modalContent.contentObject.avatar", :src="modalContent.contentObject.avatar", :alt="modalContent.contentObject.name")
+							.avatar-placeholder(v-else)
+								svg(viewBox="0 0 24 24")
+									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+				.speaker-sessions
+					session(
+						v-for="session in modalContent.contentObject.sessions",
+						:session="session",
+						:showDate="true",
+						:now="now",
+						:timezone="currentTimezone",
+						:locale="locale",
+						:hasAmPm="hasAmPm",
+						:faved="favs.includes(session.id)",
+						:onHomeServer="onHomeServer",
+						@fav="fav(session.id)",
+						@unfav="unfav(session.id)",
+					)
 	a(href="https://pretalx.com", target="_blank", v-if="!onHomeServer").powered-by powered by
 		span.pretalx(href="https://pretalx.com", target="_blank") pretalx
 </template>
@@ -192,7 +192,7 @@ export default {
 			translationMessages: {},
 			errorMessages: [],
 			displayDates: this.dateFilter?.split(',').filter(d => d.length === 10) || [],
-			popoverContent: null,
+			modalContent: null,
 		}
 	},
 	computed: {
@@ -479,7 +479,7 @@ export default {
 			)
 
 			// Show speaker immediately with loading state
-			this.popoverContent = {
+			this.modalContent = {
 				contentType: 'speaker',
 				contentObject: {
 					...speakerObj,
@@ -488,14 +488,14 @@ export default {
 					isLoading: !speakerObj.apiContent
 				}
 			}
-			this.$refs.sessionPopover?.showPopover()
+			this.$refs.detailsModal?.showModal()
 
 			// Fetch additional data if needed
 			if (!speakerObj.apiContent) {
 				try {
 					speakerObj.apiContent = await this.remoteApiRequest(`speakers/${speaker.code}/`, 'GET')
 					// Update content with fetched biography
-					this.popoverContent = {
+					this.modalContent = {
 						contentType: 'speaker',
 						contentObject: {
 							...speakerObj,
@@ -506,7 +506,7 @@ export default {
 					}
 				} catch (e) {
 					console.error('Failed to fetch speaker details:', e)
-					this.popoverContent.contentObject.isLoading = false
+					this.modalContent.contentObject.isLoading = false
 				}
 			}
 		},
@@ -517,7 +517,7 @@ export default {
 			const talk = this.schedule.talks.find(t => t.code === session.id)
 
 			// Show session immediately with loading state
-			this.popoverContent = {
+			this.modalContent = {
 				contentType: 'session',
 				contentObject: {
 					...session,
@@ -525,14 +525,14 @@ export default {
 					isLoading: !talk.apiContent
 				}
 			}
-			this.$refs.sessionPopover?.showPopover()
+			this.$refs.detailsModal?.showModal()
 
 			// Fetch additional data if needed
 			if (!talk.apiContent) {
 				try {
 					talk.apiContent = await this.remoteApiRequest(`submissions/${session.id}/`, 'GET')
 					// Update content with fetched description
-					this.popoverContent = {
+					this.modalContent = {
 						contentType: 'session',
 						contentObject: {
 							...session,
@@ -542,7 +542,7 @@ export default {
 					}
 				} catch (e) {
 					console.error('Failed to fetch session details:', e)
-					this.popoverContent.contentObject.isLoading = false
+					this.modalContent.contentObject.isLoading = false
 				}
 			}
 		},
@@ -562,7 +562,7 @@ export default {
 	.error-message
 		margin-top: 16px
 
-.pretalx-schedule, dialog[popover]
+.pretalx-schedule, dialog#session-modal
 	color: rgb(13 15 16)
 
 .pretalx-schedule
@@ -706,20 +706,23 @@ export default {
 	&:hover .pretalx
 		color: #3aa57c
 
-#session-popover
-	padding: 16px 24px
+#session-modal
+	padding: 0
 	border-radius: 8px
 	border: 0
-	position: relative
 	box-shadow: 0 -2px 4px rgba(0,0,0,0.06),
 		0 1px 3px rgba(0,0,0,0.12),
 		0 8px 24px rgba(0,0,0,0.15),
 		0 16px 32px rgba(0,0,0,0.09)
 	width: calc(100vw - 32px)
-	max-width: 800px
+	max-width: 848px
 	max-height: calc(100vh - 64px)
 	overflow-y: auto
 	font-size: 16px
+
+	.dialog-inner
+		padding: 16px 24px
+		margin: 0
 
 	.close-button
 		position: absolute
@@ -821,17 +824,4 @@ export default {
 
 			.biography
 					margin-top: 8px
-
-#popover-background
-	display: none
-	position: fixed
-	top: 0
-	left: 0
-	width: 100vw
-	height: 100vh
-	z-index: 999
-	background-color: rgba(0, 0, 0, 0.2)
-
-dialog#session-popover:popover-open + #popover-background
-	display: block
 </style>
