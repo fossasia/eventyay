@@ -69,34 +69,47 @@
 	dialog#session-popover(popover="auto", ref="sessionPopover")
 		template(v-if="popoverContent && popoverContent.contentType === 'session'")
 			h3 {{ popoverContent.contentObject.title }}
-			.session-meta
-				.time
-					.time-value(:class="{'has-ampm': hasAmPm}")
-						span {{ getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).time }}
+			.card-content
+				.facts
+					.time
+						span {{ popoverContent.contentObject.start.toLocaleString({ weekday: 'long', day: 'numeric', month: 'long' }) }}, {{ getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).time }}
 						span.ampm(v-if="getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(popoverContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
-				.room(v-if="popoverContent.contentObject.room") {{ getLocalizedString(popoverContent.contentObject.room.name) }}
-				.track(v-if="popoverContent.contentObject.track", :style="{ color: popoverContent.contentObject.track.color }") {{ getLocalizedString(popoverContent.contentObject.track.name) }}
+					.room(v-if="popoverContent.contentObject.room") {{ getLocalizedString(popoverContent.contentObject.room.name) }}
+					.track(v-if="popoverContent.contentObject.track", :style="{ color: popoverContent.contentObject.track.color }") {{ getLocalizedString(popoverContent.contentObject.track.name) }}
+				.text-content
+					.abstract(v-if="popoverContent.contentObject.abstract") {{ popoverContent.contentObject.abstract }}
 			.speakers(v-if="popoverContent.contentObject.speakers")
-				a.speaker(v-for="speaker in popoverContent.contentObject.speakers", @click="showSpeakerDetails(speaker)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
-					img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
-					span {{ speaker.name }}
-			.abstract(v-if="popoverContent.contentObject.abstract") {{ popoverContent.contentObject.abstract }}
+				a.speaker.inner-card(v-for="speaker in popoverContent.contentObject.speakers", @click="showSpeakerDetails(speaker)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
+					.img-wrapper
+						img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
+						.avatar-placeholder(v-else)
+							svg(viewBox="0 0 24 24")
+								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+					.inner-card-content {{ speaker.name }}
 		template(v-if="popoverContent && popoverContent.contentType === 'speaker'")
 			.speaker-details
-				.speaker-header
-					img(v-if="popoverContent.contentObject.avatar", :src="popoverContent.contentObject.avatar", :alt="popoverContent.contentObject.name")
-					h3 {{ popoverContent.contentObject.name }}
-				.speaker-sessions
-					h4 Sessions:
-					a.session(v-for="session in popoverContent.contentObject.sessions", @click="showSessionDetails(session)", :key="session.id", :href="`#session/${session.id}`")
-						.session-title {{ session.title }}
-						.session-details(style="cursor: pointer")
-							.session-time
-								.time(:class="{'has-ampm': hasAmPm}")
-									span.time-value {{ getSessionTime(session, currentTimezone, locale, hasAmPm).time }}
-									span.ampm(v-if="getSessionTime(session, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(session, currentTimezone, locale, hasAmPm).ampm }}
-							.room(v-if="session.room") {{ getLocalizedString(session.room.name) }}
-							.track(v-if="session.track", :style="{ color: session.track.color }") {{ getLocalizedString(session.track.name) }}
+				h3 {{ popoverContent.contentObject.name }}
+				.speaker-content.card-content
+					.text-content
+					.img-wrapper
+						img(v-if="popoverContent.contentObject.avatar", :src="popoverContent.contentObject.avatar", :alt="popoverContent.contentObject.name")
+						.avatar-placeholder(v-else)
+							svg(viewBox="0 0 24 24")
+								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+			.speaker-sessions
+				session(
+					v-for="session in popoverContent.contentObject.sessions",
+					:session="session",
+					:showDate="true",
+					:now="now",
+					:timezone="currentTimezone",
+					:locale="locale",
+					:hasAmPm="hasAmPm",
+					:faved="favs.includes(session.id)",
+					:onHomeServer="onHomeServer",
+					@fav="fav(session.id)",
+					@unfav="unfav(session.id)",
+				)
 	a(href="https://pretalx.com", target="_blank", v-if="!onHomeServer").powered-by powered by
 		span.pretalx(href="https://pretalx.com", target="_blank") pretalx
 </template>
@@ -105,11 +118,12 @@ import { computed } from 'vue'
 import { DateTime, Settings } from 'luxon'
 import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
+import Session from '~/components/Session'
 import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
 
 export default {
 	name: 'PretalxSchedule',
-	components: { LinearSchedule, GridScheduleWrapper },
+	components: { LinearSchedule, GridScheduleWrapper, Session },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -607,4 +621,97 @@ export default {
 		color: $clr-grey-600
 	&:hover .pretalx
 		color: #3aa57c
+
+#session-popover
+	padding: 16px 24px
+	border-radius: 8px
+	border: 0
+	box-shadow: 0 -2px 4px rgba(0,0,0,0.06),
+		0 1px 3px rgba(0,0,0,0.12),
+		0 8px 24px rgba(0,0,0,0.15),
+		0 16px 32px rgba(0,0,0,0.09)
+	width: calc(100vw - 32px)
+	max-width: 800px
+	max-height: calc(100vh - 64px)
+	overflow-y: auto
+	font-size: 16px
+
+	h3
+		margin: 8px 0
+
+	.ampm
+		margin-left: 4px
+
+	.facts
+		display: flex
+		flex-wrap: wrap
+		color: $clr-grey-600
+		margin-bottom: 8px
+		border-bottom: 1px solid $clr-grey-300
+		&>*
+			margin-right: 4px
+			margin-bottom: 8px
+			&:not(:last-child):after
+				content: ','
+
+	.card-content
+			display: flex
+			flex-direction: column
+
+	.text-content
+			padding: 8px 0
+			margin-bottom: 8px
+			font-size: 16px
+			color: var()
+
+	.inner-card
+		display: flex
+		margin-bottom: 12px
+		cursor: pointer
+		border-radius: 6px
+		padding: 12px
+		border-radius: 6px
+		border: 1px solid #ced4da
+		min-height: 96px
+		align-items: flex-start
+		padding: 8px
+		text-decoration: none
+		color: var(--pretalx-clr-primary)
+
+		.inner-card-content
+			margin-top: 8px
+			margin-left: 8px
+
+	.img-wrapper
+		padding: 4px 16px 4px 4px
+		width: 100px
+		height: 100px
+		img, .avatar-placeholder
+			width: 100px
+			height: 100px
+			border-radius: 50%
+		img
+			object-fit: cover
+		.avatar-placeholder
+			background: rgba(0,0,0,0.1)
+			display: flex
+			align-items: center
+			justify-content: center
+			svg
+				width: 60%
+				height: 60%
+				color: rgba(0,0,0,0.3)
+
+	.speaker-details
+		h3
+			margin-bottom: 0
+		.speaker-content
+			display: flex
+			flex-direction: row
+			align-items: flex-start
+			justify-content: space-between
+			margin-bottom: 16px
+
+			.biography
+					margin-top: 8px
 </style>

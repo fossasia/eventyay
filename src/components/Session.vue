@@ -2,6 +2,7 @@
 a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start(:class="{'has-ampm': hasAmPm}")
+			.date(v-if="showDate") {{ shortDate }}
 			.time {{ startTime.time }}
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ getPrettyDuration(session.start, session.end) }}
@@ -53,6 +54,10 @@ export default {
 			type: Boolean,
 			default: true
 		},
+		showDate: {
+			type: Boolean,
+			default: false
+		},
 		faved: {
 			type: Boolean,
 			default: false
@@ -101,6 +106,12 @@ export default {
 		startTime () {
 			return getSessionTime(this.session, this.timezone, this.locale, this.hasAmPm)
 		},
+		shortDate () {
+			return this.session.start.setZone(this.timezone).toLocaleString({
+				month: 'short',
+				day: 'numeric'
+			})
+		},
 		isLive () {
 			return this.session.start < this.now && this.session.end > this.now
 		},
@@ -137,6 +148,7 @@ export default {
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative
+	font-size: 14px
 	.time-box
 		width: 69px
 		box-sizing: border-box
@@ -151,6 +163,8 @@ export default {
 			font-size: 16px
 			font-weight: 600
 			margin-bottom: 8px
+			.date
+				margin-bottom: 4px
 			display: flex
 			flex-direction: column
 			align-items: flex-end
