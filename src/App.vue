@@ -66,7 +66,8 @@
 			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
 			div.message {{ message }}
 	#bunt-teleport-target(ref="teleportTarget")
-	dialog#session-popover(popover="auto", ref="sessionPopover")
+	dialog#session-popover(popover="auto", ref="sessionPopover", @beforetoggle="onPopoverToggle")
+		button.close-button(@click="$refs.sessionPopover?.hidePopover()") ✕
 		template(v-if="popoverContent && popoverContent.contentType === 'session'")
 			h3 {{ popoverContent.contentObject.title }}
 			.card-content
@@ -626,6 +627,7 @@ export default {
 	padding: 16px 24px
 	border-radius: 8px
 	border: 0
+	position: relative
 	box-shadow: 0 -2px 4px rgba(0,0,0,0.06),
 		0 1px 3px rgba(0,0,0,0.12),
 		0 8px 24px rgba(0,0,0,0.15),
@@ -635,6 +637,20 @@ export default {
 	max-height: calc(100vh - 64px)
 	overflow-y: auto
 	font-size: 16px
+
+	.close-button
+		position: absolute
+		top: 0
+		right: 4px
+		background: none
+		border: none
+		cursor: pointer
+		padding: 8px
+		color: $clr-grey-600
+		font-size: 22px
+		font-weight: bold
+		&:hover
+			color: $clr-grey-900
 
 	h3
 		margin: 8px 0
