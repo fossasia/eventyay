@@ -111,6 +111,7 @@
 					@fav="fav(session.id)",
 					@unfav="unfav(session.id)",
 				)
+	#popover-background
 	a(href="https://pretalx.com", target="_blank", v-if="!onHomeServer").powered-by powered by
 		span.pretalx(href="https://pretalx.com", target="_blank") pretalx
 </template>
@@ -730,4 +731,17 @@ export default {
 
 			.biography
 					margin-top: 8px
+
+#popover-background
+	display: none
+	position: fixed
+	top: 0
+	left: 0
+	width: 100vw
+	height: 100vh
+	z-index: 999
+	background-color: rgba(0, 0, 0, 0.2)
+
+dialog#session-popover:popover-open + #popover-background
+	display: block
 </style>
