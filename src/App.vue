@@ -4,14 +4,8 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="schedule && sessions.length")
-		.modal-overlay(v-if="showFilterModal", @click.stop="showFilterModal = false")
-			.modal-box(@click.stop="")
-				h3 Tracks
-				.checkbox-line(v-for="track in allTracks", :key="track.value", :style="{'--track-color': track.color}")
-					bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
-					.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 		.settings
-			bunt-button.filter-tracks(v-if="this.schedule.tracks.length", @click="showFilterModal=true")
+			bunt-button.filter-tracks(v-if="this.schedule.tracks.length", @click="$refs.filterModal?.showModal()")
 				svg#filter(viewBox="0 0 752 752")
 					path(d="m401.57 264.71h-174.75c-6.6289 0-11.84 5.2109-11.84 11.84 0 6.6289 5.2109 11.84 11.84 11.84h174.75c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h43.098c6.6289 0 11.84-5.2109 11.84-11.84 0-6.6289-5.2109-11.84-11.84-11.84h-43.098c-5.2109-17.523-21.312-30.309-40.254-30.309-19.414 0-35.516 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469c9.4727-0.003906 18.469 8.0469 18.469 18.469z")
 					path(d="m259.5 359.43h-32.676c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h32.676c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h185.17c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-185.17c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.73 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469-9.9453 0-18.469-8.0508-18.469-18.469s8.5234-18.469 18.469-18.469c9.9453 0 18.469 8.0508 18.469 18.469z")
@@ -66,7 +60,14 @@
 			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
 			div.message {{ message }}
 	#bunt-teleport-target(ref="teleportTarget")
-	dialog#session-modal(ref="detailsModal", @click.stop="$refs.detailsModal?.close()")
+	dialog.pretalx-modal#filter-modal(ref="filterModal", @click.stop="$refs.filterModal?.close()")
+		.dialog-inner(@click.stop="", v-if="schedule && sessions.length")
+			button.close-button(@click="$refs.detailsModal?.close()") ✕
+			h3 Tracks
+			.checkbox-line(v-for="track in allTracks", :key="track.value", :style="{'--track-color': track.color}")
+				bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="onlyFavs = false")
+				.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
+	dialog.pretalx-modal#session-modal(ref="detailsModal", @click.stop="$refs.detailsModal?.close()")
 		.dialog-inner(@click.stop="")
 			button.close-button(@click="$refs.detailsModal?.close()") ✕
 			template(v-if="modalContent && modalContent.contentType === 'session'")
@@ -185,7 +186,6 @@ export default {
 			now: DateTime.now(),
 			currentDay: null,
 			currentTimezone: null,
-			showFilterModal: false,
 			favs: [],
 			allTracks: [],
 			onlyFavs: false,
@@ -568,7 +568,7 @@ export default {
 	.error-message
 		margin-top: 16px
 
-.pretalx-schedule, dialog#session-modal
+.pretalx-schedule, dialog.pretalx-modal
 	color: rgb(13 15 16)
 
 .pretalx-schedule
@@ -583,31 +583,6 @@ export default {
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0
-	.modal-overlay
-		position: fixed
-		z-index: 1000
-		top: 0
-		left: 0
-		width: 100%
-		height: 100%
-		background-color: rgba(0,0,0,0.4)
-		.modal-box
-			width: 600px
-			max-width: calc(95% - 64px)
-			border-radius: 32px
-			padding: 4px 32px
-			margin-top: 32px
-			background: white
-			margin-left: auto
-			margin-right: auto
-			.checkbox-line
-				margin: 16px 8px
-				.bunt-checkbox.checked .bunt-checkbox-box
-					background-color: var(--track-color)
-					border-color: var(--track-color)
-				.track-description
-					color: $clr-grey-600
-					margin-left: 32px
 	.settings
 		align-self: flex-start
 		display: flex
@@ -712,7 +687,7 @@ export default {
 	&:hover .pretalx
 		color: #3aa57c
 
-#session-modal
+.pretalx-modal
 	padding: 0
 	border-radius: 8px
 	border: 0
@@ -831,4 +806,14 @@ export default {
 
 			.biography
 					margin-top: 8px
+
+#filter-modal
+	.checkbox-line
+		margin: 16px 8px
+		.bunt-checkbox.checked .bunt-checkbox-box
+			background-color: var(--track-color)
+			border-color: var(--track-color)
+		.track-description
+			color: $clr-grey-600
+			margin-left: 32px
 </style>
