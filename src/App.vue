@@ -815,6 +815,7 @@ export default {
 			margin-left: 8px
 			p
 				color: var(--pretalx-clr-text)
+				font-size: 14px
 
 	.img-wrapper
 		padding: 4px 16px 4px 4px
