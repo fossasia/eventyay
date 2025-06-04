@@ -164,6 +164,7 @@ export default {
 			margin-bottom: 8px
 			.date
 				margin-bottom: 4px
+				white-space: nowrap
 			display: flex
 			flex-direction: column
 			align-items: flex-end
