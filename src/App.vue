@@ -68,7 +68,7 @@
 		:now="now",
 		:onHomeServer="onHomeServer",
 		@toggleFav="favs.includes(modalContent?.contentObject.id) ? unfav(modalContent.contentObject.id) : fav(modalContent.contentObject.id)",
-		@showSpeaker="showSpeakerDetails($event, arguments[1])",
+		@showSpeaker="showSpeakerDetails",
 		@fav="fav($event)",
 		@unfav="unfav($event)"
 	)

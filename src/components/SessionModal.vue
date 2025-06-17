@@ -22,7 +22,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						hr(v-if="(modalContent.contentObject.abstract?.length > 0) && (modalContent.contentObject.apiContent?.description?.length > 0)")
 						.description(v-if="modalContent.contentObject.apiContent?.description?.length > 0", v-html="markdownIt.render(modalContent.contentObject.apiContent.description)")
 			.speakers(v-if="modalContent.contentObject.speakers")
-				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="$emit('showSpeaker', speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
+				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
 						img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
 						.avatar-placeholder(v-else)
@@ -97,6 +97,9 @@ export default {
 		},
 		close () {
 			this.$refs.modal?.close()
+		},
+		handleSpeakerClick (speaker, event) {
+			this.$emit('showSpeaker', speaker, event)
 		}
 	}
 }
