@@ -49,19 +49,19 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						.answers(v-if="shortAnswers.length > 0")
 							hr
 							.inline-answer(v-for="answer in shortAnswers", :key="answer.id")
-								span.question
-									strong {{ getLocalizedString(answer.question.question) }}:
-								span.answer
-									template(v-if="answer.question.variant === 'file'")
+								template(v-if="answer.question.variant === 'url' && answer.answer")
+									strong.question
+										a(:href="answer.answer", target="_blank", rel="noopener noreferrer") {{ getLocalizedString(answer.question.question) }}
+								template(v-else)
+									span.question
+										strong {{ getLocalizedString(answer.question.question) }}:
+									span.answer(v-if="answer.question.variant === 'file'")
 										i.fa.fa-file-o
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
 										span(v-else) No file provided
-									template(v-else-if="answer.question.variant === 'boolean'")
-										span {{ answer.answer ? 'Yes' : 'No' }}
-									template(v-else-if="answer.answer")
-										span(v-html="markdownIt.render(answer.answer)")
-									template(v-else)
-										span No response
+									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? 'Yes' : 'No' }}
+									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
+									span.answer(v-else) No response
 			.speaker-sessions
 				session(
 					v-for="session in modalContent.contentObject.sessions",
