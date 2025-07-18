@@ -483,7 +483,6 @@ export default {
 	height: 100%
 	font-size: 14px
 	&.grid-schedule
-		min-width: min-content
 		max-width: var(--schedule-max-width)
 		margin: 0 auto
 	&.list-schedule
