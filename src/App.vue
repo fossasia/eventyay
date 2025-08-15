@@ -19,7 +19,8 @@
 			@openFilter="$refs.filterModal?.showModal()",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()",
 			@saveTimezone="saveTimezone"
-			@trackToggled="onlyFavs = false"
+			@trackToggled="toggleTrackFilterChoice"
+			@roomToggled="toggleRoomFilterChoice"
 		)
 		bunt-tabs.days(v-if="days && days.length > 1", v-model="currentDay", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.toISODate()", :header="day.toLocaleString(dateFormat)", @selected="changeDay(day)")
@@ -95,7 +96,7 @@ import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
-import ScheduleSettings from '~/components/ScheduleSettings'
+import ScheduleSettings from '~/components/ScheduleSettings.vue'
 import SessionModal from '~/components/SessionModal'
 import FilterModal from '~/components/FilterModal'
 import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
@@ -154,7 +155,6 @@ export default {
 			now: DateTime.now(),
 			currentDay: null,
 			currentTimezone: null,
-			showFilterModal: false,
 			favs: [],
 			allTracks: [],
 			onlyFavs: false,
@@ -163,16 +163,19 @@ export default {
 			filter: {
 				tracks: {
 					refKey: 'track',
+					/** @type {Array<{name: string, value: number, selected: boolean}>} */
 					data: [],
 					title: 'Tracks'
 				},
 				rooms: {
 					refKey: 'room',
+					/** @type {Array<{name: string, value: number, selected: boolean}>} */
 					data: [],
 					title: 'Rooms'
 				},
 				types: {
 					refKey: 'session_type',
+					/** @type {Array<{name: string, value: number, selected: boolean}>} */
 					data: [],
 					title: 'Types'
 				}
@@ -209,7 +212,8 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			return filteredSessions(this?.filter, this?.schedule?.talks)
+			if (!this.schedule) return []
+			return filteredSessions(this.filter, this.schedule.talks)
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -443,6 +447,20 @@ export default {
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
 		},
+		toggleTrackFilterChoice(id) {
+			for (const track of this.filter.tracks.data) {
+				if (track.value === id) {
+					track.selected = !(track.selected || false)
+				}
+			}
+		},
+		toggleRoomFilterChoice(id) {
+			for (const room of this.filter.rooms.data) {
+				if (room.value === id) {
+					room.selected = !(room.selected || false)
+				}
+			}
+		},
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
 			const talkIds = talks.map(e => e.code)
@@ -486,13 +504,11 @@ export default {
 			this.onlyFavs = false
 		},
 		resetFiltered () {
-			Object.keys(this.filter).forEach(key => {
-				this.filter[key].data.forEach(t => {
-					if (t.selected) {
-						t.selected = false
-					}
-				})
-			})
+			for (const [key, value] of Object.entries(this.filter)) {
+				for (const item of value.data) {
+					item.selected = false
+				}
+			}
 		},
 		toggleSortOptions () {
 			this.showSortOptions = !this.showSortOptions
@@ -832,7 +848,7 @@ export default {
 
 	}
 
-  }
+}
 
 .error-messages
 	position: fixed

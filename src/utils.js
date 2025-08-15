@@ -126,6 +126,20 @@ export function filterTalk (talksData, refKey, selectedIds, previousResults) {
 		.map(talk => talk.id) || []
 }
 
+/**
+ * @typedef {Object} Choice
+ * @property {string} name
+ * @property {number} value
+ * @property {boolean} selected
+ * @typedef {Object} Filter
+ * @property {{refKey: string, data: Array<Choice>}} tracks
+ * @property {{refKey: string, data: Array<Choice>}} rooms
+ * @property {{refKey: string, data: Array<Choice>}} types
+ *
+ * @param {Filter} filter
+ * @param {*} data
+ * @returns
+ */
 export function filteredSessions (filter, data) {
 	let filteredResults = []
 
