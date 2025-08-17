@@ -2,6 +2,7 @@
 a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start(:class="{'has-ampm': hasAmPm}")
+			.date(v-if="showDate") {{ shortDate }}
 			.time {{ startTime.time }}
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ getPrettyDuration(session.start, session.end) }}
@@ -12,22 +13,22 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 		.title {{ getLocalizedString(session.title) }}
 		.speakers(v-if="session.speakers")
 			.avatars
-				template(v-for="speaker of session.speakers")
-					.speaker-info(:key="speaker.code")
-						img(v-if="speaker.avatar", :src="speaker.avatar")
+				template(v-for="speaker of session.speakers", :key="speaker.code")
+					.speaker-info
+						img(v-if="speaker.avatar_thumbnail_tiny", :src="speaker.avatar_thumbnail_tiny")
+						img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
+						img(v-else-if="speaker.avatar", :src="speaker.avatar")
 						.names {{ speaker.name }}
 		.tags-box
 			.tags(v-for="tag_item of session.tags", :key="tag_item.id")
 				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
-		.abstract(v-if="showAbstract", v-html="abstract")
+		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 	.session-icons
 		.fav-count(v-if="session.fav_count > 0 && isLinearSchedule") {{ session.fav_count > 99 ? "99+" : session.fav_count  }}
-		bunt-icon-button.btn-fav-container(@click.prevent.stop="toggleFav")
-			svg.star(viewBox="0 0 24 24", ref="star")
-				path(d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z")
+		fav-button(@toggleFav="toggleFav")
 		svg.do-not-record(v-if="session.do_not_record", viewBox="0 0 116.59076 116.59076", width="4116.59076mm", height="116.59076mm", fill="none", xmlns="http://www.w3.org/2000/svg")
 			g(transform="translate(-9.3465481,-5.441411)")
 				rect(style="fill:#000000;fill-opacity;stroke:none;stroke-width:11.2589;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers stroke fill", width="52.753284", height="39.619537", x="35.496307", y="43.927021", rx="5.5179553", ry="7.573648")
@@ -36,9 +37,10 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 
 </template>
 <script>
-import moment from 'moment-timezone'
+import { DateTime } from 'luxon'
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration, getPrettyDate } from 'utils'
+import { getLocalizedString, getPrettyDuration, getSessionTime, getPrettyDate } from '~/utils'
+import FavButton from '~/components/FavButton.vue'
 
 const markdownIt = MarkdownIt({
 	linkify: true,
@@ -46,21 +48,8 @@ const markdownIt = MarkdownIt({
 })
 
 export default {
-	inject: {
-		eventUrl: { default: null },
-		linkTarget: { default: '_self' },
-		generateSessionLinkUrl: {
-			default () {
-				return ({eventUrl, session}) => `${eventUrl}talk/${session.id}/`
-			}
-		},
-		onSessionLinkClick: {
-			default () {
-				return () => {}
-			}
-		}
-	},
 	props: {
+		now: Object,
 		session: Object,
 		showAbstract: {
 			type: Boolean,
@@ -70,6 +59,10 @@ export default {
 			type: Boolean,
 			default: true
 		},
+		showDate: {
+			type: Boolean,
+			default: false
+		},
 		faved: {
 			type: Boolean,
 			default: false
@@ -78,12 +71,36 @@ export default {
 			type: Boolean,
 			default: false
 		},
+		locale: String,
+		timezone: String,
+		onHomeServer: Boolean,
 		isLinearSchedule: Boolean
+	},
+	inject: {
+		eventUrl: { default: null },
+		linkTarget: { default: '_self' },
+		generateSessionLinkUrl: {
+			default () {
+				return ({eventUrl, session}) => {
+					if (!this.onHomeServer) return `#session/${session.id}/`
+					return`${eventUrl}talk/${session.id}/`
+				}
+			}
+		},
+		onSessionLinkClick: {
+			default () {
+				return () => {}
+			}
+		}
+	},
+	components: {
+		FavButton
 	},
 	data () {
 		return {
 			getPrettyDuration,
 			getLocalizedString,
+			getSessionTime,
 			getPrettyDate,
 		}
 	},
@@ -97,22 +114,18 @@ export default {
 			}
 		},
 		startTime () {
-			// check if 12h or 24h locale
-			if (this.hasAmPm) {
-				return {
-					time: this.session.start.format('h:mm'),
-					ampm: this.session.start.format('A')
-				}
-			} else {
-				return {
-					time: moment(this.session.start).format('LT')
-				}
-			}
+			return getSessionTime(this.session, this.timezone, this.locale, this.hasAmPm)
+		},
+		shortDate () {
+			return this.session.start.setZone(this.timezone).toLocaleString({
+				month: 'short',
+				day: 'numeric'
+			})
 		},
 		isLive () {
-			return moment(this.session.start).isBefore(this.now) && moment(this.session.end).isAfter(this.now)
+			return this.session.start < this.now && this.session.end > this.now
 		},
-		abstract () {
+		abstractText () {
 			try {
 				return markdownIt.renderInline(this.session.abstract)
 			} catch (error) {
@@ -121,29 +134,13 @@ export default {
 		}
 	},
 	methods: {
-		getContrastColor (bgColor) {
-			if (!bgColor) {
-				return ''
-			}
-			bgColor = bgColor.replace('#', '')
-			const r = parseInt(bgColor.slice(0, 2), 16)
-			const g = parseInt(bgColor.slice(2, 4), 16)
-			const b = parseInt(bgColor.slice(4, 6), 16)
-			const brightness = (r * 299 + g * 587 + b * 114) / 1000
-
-			// If the brightness is over 128, return black. Otherwise, return white
-			return brightness > 128 ? 'black' : 'white'
-		},
 		toggleFav () {
+			console.log("toggling fav")
 			if (this.faved) {
 				this.$emit('unfav', this.session.id)
 			} else {
 				this.$emit('fav', this.session.id)
 			}
-			this.$refs.star.classList.add('rotate-star')
-			setTimeout(() => {
-				this.$refs.star.classList.remove('rotate-star')
-			}, 400)
 		}
 	}
 }
@@ -156,8 +153,9 @@ export default {
 	min-height: 96px
 	margin: 8px
 	overflow: hidden
-	color: $clr-primary-text-light
+	color: rgb(13 15 16)
 	position: relative
+	font-size: 14px
 	.time-box
 		min-width: 75px
 		max-width: 75px
@@ -173,6 +171,9 @@ export default {
 			font-size: 16px
 			font-weight: 600
 			margin-bottom: 8px
+			.date
+				margin-bottom: 4px
+				white-space: nowrap
 			display: flex
 			flex-direction: column
 			align-items: flex-end
@@ -218,6 +219,7 @@ export default {
 			font-size: 16px
 			font-weight: 500
 			margin-bottom: 4px
+			margin-right: 20px
 		.speakers
 			color: $clr-secondary-text-light
 			display: flex
@@ -267,37 +269,18 @@ export default {
 			padding: 6px 6px 6px 0
 		.btn-fav-container
 			margin-top: 2px
-			display: none
+			display: inline-flex
 			icon-button-style(style: clear)
 			padding: 2px
 			width: 32px
 			height: 32px
-			svg.star
-				height: 20px
-				width: 20px
-				path
-					fill: none
-					stroke: #ffa000
-					stroke-width: 1px
-					vector-effect: non-scaling-stroke
-	&.faved
-		.btn-fav-container
-			display: inline-flex
-			svg.star
-				filter: drop-shadow(0 0 2px rgba(0 0 0 0.17))
-				path
-					fill: #ffa000
 	&:hover
 		.info
 			border: 1px solid var(--track-color)
 			border-left: none
 			.title
 				color: var(--pretalx-clr-primary)
-		.btn-fav-container
-			display: inline-flex
-	// +below('m')
-	// 	min-width: 0
-	.fav-count
+    .fav-count
 		border: 1px solid
 		border-radius: 50%
 		margin-top: 5px
@@ -317,11 +300,7 @@ export default {
 			margin: 0px 2px
 			.tag-item
 				padding: 3px
-	svg.star.rotate-star
-		animation: rotate 0.4s
-	@keyframes rotate
-		0%
-			transform: rotate(0deg)
-		100%
-			transform: rotate(72deg)
+@media(hover: none)
+	.c-linear-schedule-session .session-icons .btn-fav-container
+		display: inline-flex
 </style>

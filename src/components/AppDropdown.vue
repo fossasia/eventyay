@@ -1,6 +1,6 @@
 <template>
   <div
-    v-on-clickaway="away"
+    v-clickaway="away"
     class="app-drop-down"
   >
     <bunt-button @click="toggle">
@@ -36,11 +36,9 @@
   </div>
 </template>
 <script>
-import { mixin as clickaway } from 'vue-clickaway'
 
 export default {
 	name: 'AppDropdown',
-	mixins: [clickaway],
 	provide () {
 		return {
 			sharedState: this.sharedState

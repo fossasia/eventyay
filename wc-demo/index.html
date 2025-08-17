@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title><%= htmlWebpackPlugin.options.title %></title>
+    <title>Pretalx Schedule Web Component Demo</title>
     <style>
       html, body {
         margin: 0;
@@ -13,10 +13,7 @@
     </style>
   </head>
   <body>
-    <noscript>
-      <strong>We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
-    </noscript>
     <pretalx-schedule event-url="https://pretalx.com/democon/" locale="en-ie" style="--pretalx-clr-primary: #673ab7"></pretalx-schedule>
-    <!-- built files will be auto injected -->
+    <script type="module" src="../dist/pretalx-schedule.js"></script>
   </body>
 </html>

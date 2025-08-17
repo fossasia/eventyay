@@ -1,5 +1,5 @@
 // import i18n from 'i18n'
-import moment from 'moment'
+import { DateTime } from 'luxon'
 
 export function getLocalizedString (string) {
 	if (!string) return ''
@@ -18,11 +18,11 @@ export function findScrollParent (node) {
 }
 
 export function getPrettyDuration (start, end) {
-	let minutes = end.diff(start, 'minutes')
-	const hours = Math.floor(minutes / 60)
+	let minutes = end.diff(start).shiftTo('minutes').minutes
 	if (minutes <= 60) {
 		return `${minutes}min`
 	}
+	const hours = Math.floor(minutes / 60)
 	minutes = minutes % 60
 	if (minutes) {
 		return `${hours}h${minutes}min`
@@ -31,8 +31,7 @@ export function getPrettyDuration (start, end) {
 }
 
 export function getPrettyDate (start) {
-	const date = moment(start)
-	return date.format('ddd DD. MMM')
+	return start.toLocaleString({'weekday': 'short', 'day': '2-digit', 'month': 'short'})
 }
 
 export function getLanguage () {
@@ -106,6 +105,14 @@ export function matchesSessionTypeFilter (talk, selectedIds) {
 	return false
 }
 
+/**
+ *
+ * @param {*} talksData
+ * @param {*} refKey
+ * @param {Array<T>} selectedIds
+ * @param {Array<T>} previousResults
+ * @returns {Array<T>}
+ */
 export function filterTalk (talksData, refKey, selectedIds, previousResults) {
 	const talks = talksData
 
@@ -114,22 +121,59 @@ export function filterTalk (talksData, refKey, selectedIds, previousResults) {
 			const matchesSessionType = refKey === 'session_type' && matchesSessionTypeFilter(talk, selectedIds)
 			const matchesRefKey = selectedIds.includes(talk[refKey])
 
-			return (matchesSessionType || matchesRefKey) && (!previousResults || previousResults.includes(talk.id))
+			return (matchesSessionType || matchesRefKey) && (!previousResults.length || previousResults.includes(talk.id))
 		})
 		.map(talk => talk.id) || []
 }
 
+/**
+ * @typedef {Object} Choice
+ * @property {string} name
+ * @property {number} value
+ * @property {boolean} selected
+ * @typedef {Object} Filter
+ * @property {{refKey: string, data: Array<Choice>}} tracks
+ * @property {{refKey: string, data: Array<Choice>}} rooms
+ * @property {{refKey: string, data: Array<Choice>}} types
+ *
+ * @param {Filter} filter
+ * @param {*} data
+ * @returns
+ */
 export function filteredSessions (filter, data) {
-	let filteredResults = null
+	let filteredResults = []
 
-	Object.entries(filter).forEach(([key, value]) => {
+	for (const [key, value] of Object.entries(filter)) {
 		const refKey = value.refKey
 		const selectedIds = value.data.flatMap(item => item.selected ? item.value : [])
 
 		if (selectedIds.length) {
 			filteredResults = filterTalk(data, refKey, selectedIds, filteredResults)
 		}
-	})
+	}
 
 	return filteredResults
+}
+
+export function timeWithoutAmPm (time, locale) {
+	const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: time.zoneName }).formatToParts(time)
+	return parts.filter(part => part.type !== 'dayPeriod').map(part => part.value).join('')
+}
+
+export function timeAmPm (time, locale) {
+	const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: time.zoneName }).formatToParts(time)
+	return parts.filter(part => part.type === 'dayPeriod')[0].value
+}
+
+export function getSessionTime(session, timezone, locale, hasAmPm) {
+	if (hasAmPm) {
+		return {
+			time: timeWithoutAmPm(session.start.setZone(timezone), locale),
+			ampm: timeAmPm(session.start.setZone(timezone), locale)
+		}
+	} else {
+		return {
+			time: session.start.setZone(timezone).toLocaleString({ hour: 'numeric', 'minute': 'numeric' })
+		}
+	}
 }

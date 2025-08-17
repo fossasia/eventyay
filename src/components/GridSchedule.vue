@@ -2,7 +2,7 @@
 .c-grid-schedule()
 	.grid(:style="gridStyle")
 		template(v-for="slice of visibleTimeslices")
-			.timeslice(:ref="slice.name", :key="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.format()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+			.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISO()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
 			.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
 		.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
 			svg(viewBox="0 0 10 10")
@@ -16,20 +16,24 @@
 				v-if="isProperSession(session)",
 				:key="session.id",
 				:session="session",
+				:now="now",
+				:locale="locale",
+				:timezone="timezone",
 				:style="getSessionStyle(session)",
 				:showAbstract="false", :showRoom="false",
 				:faved="favs.includes(session.id)",
 				:hasAmPm="hasAmPm",
+				:onHomeServer="onHomeServer",
 				@fav="$emit('fav', session.id)",
 				@unfav="$emit('unfav', session.id)"
 			)
 			.break(v-else, :style="getSessionStyle(session)")
 				.time-box
 					.start(v-if="hasAmPm", class="has-ampm")
-						.time {{ session.start.format('h:mm') }}
-						.ampm {{ session.start.format('A') }}
+						.time {{ timeWithoutAmPm(session.start.setZone(timezone), locale) }}
+						.ampm {{ timeAmPm(session.start.setZone(timezone), locale) }}
 					.start(v-else)
-						.time {{ session.start.format('LT') }}
+						.time {{ session.start.setZone(timezone).toLocaleString({hour: 'numeric', minute: 'numeric'}) }}
 					.duration {{ getPrettyDuration(session.start, session.end) }}
 					.buffer
 				.info
@@ -39,12 +43,12 @@
 // TODO
 // - handle click on already selected day (needs some buntpapier hacking)
 // - optionally only show venueless rooms
-import moment from 'moment-timezone'
-import Session from './Session.vue'
-import { getLocalizedString, getPrettyDuration } from 'utils'
+import { DateTime } from 'luxon'
+import Session from './Session'
+import { getLocalizedString, getPrettyDuration, timeWithoutAmPm, timeAmPm} from '~/utils'
 
 const getSliceName = function (date) {
-	return `slice-${date.format('MM-DD-HH-mm')}`
+	return `slice-${date.toFormat('LL-dd-HH-mm')}`
 }
 
 export default {
@@ -58,24 +62,25 @@ export default {
 				return []
 			}
 		},
-		currentDay: Object,
+		currentDay: String,
 		now: Object,
-		scrollParent: Element
+		timezone: String,
+		locale: String,
+		hasAmPm: Boolean,
+		scrollParent: Element,
+		onHomeServer: Boolean
 	},
 	data () {
 		return {
-			moment,
 			getLocalizedString,
 			getPrettyDuration,
-			scrolledDay: null
+			timeWithoutAmPm,
+			timeAmPm
 		}
 	},
 	computed: {
 		hasSessionsWithoutRoom () {
 			return this.sessions.some(s => !s.room)
-		},
-		hasAmPm () {
-			return moment.localeData().longDateFormat('LT').endsWith(' A')
 		},
 		timeslices () {
 			const minimumSliceMins = 30
@@ -97,7 +102,7 @@ export default {
 						hasBreak,
 						hasStart,
 						hasEnd,
-						datebreak: date.isSame(date.clone().startOf('day'))
+						datebreak: date.equals(date.startOf('day'))
 					}
 					slices.push(slice)
 					slicesLookup[name] = slice
@@ -105,21 +110,21 @@ export default {
 			}
 			const fillHalfHours = function (start, end, {hasSession, hasBreak} = {}) {
 				// fill to the nearest half hour, then each half hour, then fill to end
-				let mins = end.diff(start, 'minutes')
-				const startingMins = minimumSliceMins - start.minute() % minimumSliceMins
+				let mins = end.diff(start).shiftTo('minutes').minutes
+				const startingMins = minimumSliceMins - start.minute % minimumSliceMins
 				// buffer slices because we need to remove hasSession from the last one
 				const halfHourSlices = []
 				if (startingMins) {
-					halfHourSlices.push(start.clone().add(startingMins, 'minutes'))
+					halfHourSlices.push(start.plus({minutes: startingMins}))
 					mins -= startingMins
 				}
-				const endingMins = end.minute() % minimumSliceMins
+				const endingMins = end.minute % minimumSliceMins
 				for (let i = 1; i <= mins / minimumSliceMins; i++) {
-					halfHourSlices.push(start.clone().add(startingMins + minimumSliceMins * i, 'minutes'))
+					halfHourSlices.push(start.plus({minutes: startingMins + minimumSliceMins * i}))
 				}
 
 				if (endingMins) {
-					halfHourSlices.push(end.clone().subtract(endingMins, 'minutes'))
+					halfHourSlices.push(end.minus({'minutes': endingMins}))
 				}
 
 				// last slice is actually just after the end of the session and has no session
@@ -131,8 +136,8 @@ export default {
 				const lastSlice = slices[slices.length - 1]
 				// gap to last slice
 				if (!lastSlice) {
-					pushSlice(session.start.clone().startOf('day'))
-				} else if (session.start.isAfter(lastSlice.date, 'minutes')) {
+					pushSlice(session.start.startOf('day'))
+				} else if (session.start > lastSlice.date) {
 					fillHalfHours(lastSlice.date, session.start)
 				}
 
@@ -146,7 +151,7 @@ export default {
 
 			const sliceIsFraction = function (slice) {
 				if (!slice) return
-				return slice.date.minutes() !== 0 && slice.date.minutes() !== minimumSliceMins
+				return slice.date.minute !== 0 && slice.date.minute !== minimumSliceMins
 			}
 
 			const sliceShouldDisplay = function (slice, index) {
@@ -187,7 +192,7 @@ export default {
 			// Only count slice as gap if it is longer than 30 minutes
 			compactedSlices.forEach((slice, index) => {
 				if (slice.gap && index < compactedSlices.length - 1) {
-					if (compactedSlices[index + 1].date.diff(slice.date, 'minutes') <= 30) slice.gap = false
+					if (compactedSlices[index + 1].date.diff(slice.date).shiftTo('minutes').minutes <= 30) slice.gap = false
 				}
 			})
 			// remove gap at the end of the schedule
@@ -195,7 +200,7 @@ export default {
 			return compactedSlices
 		},
 		visibleTimeslices () {
-			return this.timeslices.filter(slice => slice.date.minute() % 30 === 0)
+			return this.timeslices.filter(slice => slice.date.minute % 30 === 0)
 		},
 		gridStyle () {
 			let rows = '[header] 52px '
@@ -207,7 +212,7 @@ export default {
 				} else if (slice.datebreak) {
 					height = 60
 				} else if (next) {
-					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+					height = Math.min(60, next.date.diff(slice.date).shiftTo('minutes').minutes * 2)
 				}
 				return `[${slice.name}] minmax(${height}px, auto)`
 			}).join(' ')
@@ -219,21 +224,21 @@ export default {
 		nowSlice () {
 			let slice
 			for (const s of this.timeslices) {
-				if (this.now.isBefore(s.date)) break
+				if (this.now < s.date) break
 				slice = s
 			}
 			if (slice) {
 				const nextSlice = this.timeslices[this.timeslices.indexOf(slice) + 1]
 				if (!nextSlice) return null
 				// is on daybreak
-				if (nextSlice.date.diff(slice.date, 'minutes') > 30) return {
+				if (nextSlice.date.diff(slice.date).shiftTo('minutes').minutes > 30) return {
 					slice: nextSlice,
 					offset: 0,
 					onDaybreak: true
 				}
 				return {
 					slice,
-					offset: this.now.diff(slice.date, 'minutes') / nextSlice.date.diff(slice.date, 'minutes')
+					offset: this.now.diff(slice.date).shiftTo('minutes').minutes / nextSlice.date.diff(slice.date).shiftTo('minutes').minutes
 				}
 			}
 			return null
@@ -243,7 +248,6 @@ export default {
 		currentDay: 'changeDay'
 	},
 	async mounted () {
-		await this.$nextTick()
 		this.observer = new IntersectionObserver(this.onIntersect, {
 			root: this.scrollParent,
 			rootMargin: '-45% 0px'
@@ -252,17 +256,18 @@ export default {
 			if (!ref.startsWith('slice') || !ref.endsWith('00-00')) continue
 			this.observer.observe(el[0])
 		}
+		await this.$nextTick()
 		// scroll to now, unless URL overrides now
 		let fragmentIsDate = false
 		const fragment = window.location.hash.slice(1)
 		if (fragment && fragment.length === 10) {
-			const initialDay = moment(fragment, 'YYYY-MM-DD')
+			const initialDay = DateTime.fromISO(fragment, { zone: this.timezone })
 			if (initialDay) {
 				fragmentIsDate = true
 			}
 		}
 		if (fragmentIsDate || !this.$refs.now) return
-		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop() - 90
+		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop()
 		if (this.scrollParent) {
 			this.scrollParent.scrollTop = scrollTop
 		} else {
@@ -282,8 +287,20 @@ export default {
 			}
 		},
 		getOffsetTop () {
-			const rect = this.$parent.$el.getBoundingClientRect()
-			return rect.top + window.scrollY
+			return window.scrollY + this.$el.getBoundingClientRect().top - 100
+		},
+		getScrolledDay () {
+			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
+			for (const slice of this.timeslices) {
+				const el = this.$refs[slice.name]?.[0]
+				if (!el) continue
+				const rect = el.getBoundingClientRect()
+				// only count as visible if at least 100px are visible
+				const buffer = 100
+				if (rect.top + buffer < window.innerHeight && rect.bottom - buffer > 0) {
+					return slice.date
+				}
+			}
 		},
 		getSliceClasses (slice) {
 			return {
@@ -293,7 +310,7 @@ export default {
 		},
 		getSliceStyle (slice) {
 			if (slice.datebreak) {
-				let index = this.timeslices.findIndex(s => s.date.isAfter(slice.date, 'day'))
+				let index = this.timeslices.findIndex(s => s.date.startOf('day') > slice.date.startOf('day'))
 				if (index < 0) {
 					index = this.timeslices.length - 1
 				}
@@ -302,12 +319,15 @@ export default {
 			return {'grid-area': `${slice.name} / 1 / auto / auto`}
 		},
 		getSliceLabel (slice) {
-			if (slice.datebreak) return slice.date.format('ddd[\n]DD. MMM')
-			return slice.date.format('LT')
+			if (slice.datebreak) {
+				const date = slice.date
+				return date.toLocaleString({ weekday: 'short' }) + '\n' + date.toLocaleString({ day: 'numeric', month: 'short' })
+			}
+			return slice.date.setZone(this.timezone).toLocaleString({ hour: 'numeric', minute: 'numeric' })
 		},
 		changeDay (day) {
-			if (this.scrolledDay === day) return
-			const el = this.$refs[getSliceName(day)]?.[0]
+			if (this.getScrolledDay()?.toISODate() === day) return
+			const el = this.$refs[getSliceName(DateTime.fromISO(day))]?.[0]
 			if (!el) return
 			const offset = el.offsetTop + this.getOffsetTop()
 			if (this.scrollParent) {
@@ -318,11 +338,12 @@ export default {
 		},
 		onIntersect (entries) {
 			// TODO still gets stuck when scrolling fast above threshold and back
-			const entry = entries.sort((a, b) => b.time - a.time).find(entry => entry.isIntersecting)
+			const entry = entries.sort((a, b) => b.ts - a.ts).find(entry => entry.isIntersecting)
 			if (!entry) return
-			const day = moment.parseZone(entry.target.dataset.slice).startOf('day')
-			this.scrolledDay = day
-			this.$emit('changeDay', this.scrolledDay)
+			const day = DateTime.fromISO(entry.target.dataset.slice).startOf('day')
+			if (day.toISODate() !== this.currentDay) {
+				this.$emit('changeDay', day)
+			}
 		}
 	}
 }
@@ -375,7 +396,7 @@ export default {
 				justify-content: center
 				align-items: center
 				.title
-					font-size: 20px
+					font-size: 16px
 					font-weight: 500
 					color: $clr-secondary-text-light
 					align: center

@@ -1,14 +1,16 @@
-import Vue from 'vue'
-import App from './App.vue'
-import 'styles/global.styl'
+// This file is used for the development server, and for the default production build.
+// It is not used for the web component build, which is handled by the `main-wc.js` file.
+import { createApp } from 'vue'
+import Buntpapier from 'buntpapier'
+import ClickAway from '@manusanchev/vue3-clickaway'
+import App from '~/App.vue'
+import '~/styles/global.styl'
 
-Vue.config.productionTip = false
-
-new Vue({
-	render: h => h(App, {
-		props: {
-			eventUrl: 'https://pretalx.com/democon/',
-			locale: 'en-ie'
-		}
-	})
-}).$mount('#app')
+createApp(
+	App,
+	{
+		eventUrl: 'https://quan.hoabinh.vn/democon/',
+		locale: 'en-ie',
+		// format: 'list',
+	}
+).use(Buntpapier).use(ClickAway).mount('#app')
