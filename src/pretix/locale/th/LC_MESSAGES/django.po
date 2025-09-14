@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.14-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -175,7 +176,7 @@ msgstr ""
 
 #: pretix/api/serializers/item.py:327 pretix/control/forms/item.py:97
 msgid "This type of question cannot be asked during check-in."
-msgstr ""
+msgstr "此類問題在驗票時不得提出。"
 
 #: pretix/api/serializers/order.py:1109 pretix/api/serializers/order.py:1116
 msgid "The product \"{}\" is not available on this date."
@@ -283,11 +284,11 @@ msgstr ""
 
 #: pretix/api/webhooks.py:227
 msgid "Ticket checked in"
-msgstr ""
+msgstr "已驗票"
 
 #: pretix/api/webhooks.py:231
 msgid "Ticket check-in reverted"
-msgstr ""
+msgstr "驗票訊息已撤銷"
 
 #: pretix/api/webhooks.py:235
 msgid "Event created"
