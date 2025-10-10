@@ -1,30 +1,12 @@
 <template lang="pug">
 .settings
-	app-dropdown(key="tracks", lazy)
-		template(v-slot:toggler)
-			span Tracks
-		app-dropdown-content
-			app-dropdown-item(v-for="track in languageFilteredTracks", :key="track.value")
-				.checkbox-line(:style="{'--track-color': track.color}")
-					bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", :model-value="track.selected", @input="$emit('trackToggled', track.value)")
-
-	app-dropdown(key="rooms", lazy)
-		template(v-slot:toggler)
-			span Rooms
-		app-dropdown-content
-			app-dropdown-item(v-for="room in languageFilteredRooms", :key="room.value")
-				.checkbox-line(:style="{'--track-color': room.color}")
-					bunt-checkbox(type="checkbox", :label="room.label", :name="room.value + room.label", :model-value="room.selected" @input="$emit('roomToggled', room.value)")
-
-	app-dropdown(v-if="languageFilteredSessionTypes.length", key="session-types", lazy)
-		template(v-slot:toggler)
-			span Types
-		app-dropdown-content
-			app-dropdown-item(v-for="sesstype in languageFilteredSessionTypes", :key="sesstype.value")
-				.checkbox-line(:style="{'--track-color': sesstype.color}")
-					bunt-checkbox(type="checkbox", :label="sesstype.label", :name="sesstype.value + sesstype.label", :model-value="sesstype.selected", @input="$emit('sessionTypeToggled', sesstype.value)")
-
-	template(v-if="filteredTracksCount") ({{ filteredTracksCount }})
+	bunt-button.filter-tracks(v-if="tracks.length", @click="$emit('openFilter')")
+		svg#filter(viewBox="0 0 752 752")
+			path(d="m401.57 264.71h-174.75c-6.6289 0-11.84 5.2109-11.84 11.84 0 6.6289 5.2109 11.84 11.84 11.84h174.75c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h43.098c6.6289 0 11.84-5.2109 11.84-11.84 0-6.6289-5.2109-11.84-11.84-11.84h-43.098c-5.2109-17.523-21.312-30.309-40.254-30.309-19.414 0-35.516 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469c9.4727-0.003906 18.469 8.0469 18.469 18.469z")
+			path(d="m259.5 359.43h-32.676c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h32.676c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h185.17c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-185.17c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.73 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469-9.9453 0-18.469-8.0508-18.469-18.469s8.5234-18.469 18.469-18.469c9.9453 0 18.469 8.0508 18.469 18.469z")
+			path(d="m344.75 463.61h-117.92c-6.6289 0-11.84 5.2109-11.84 11.84s5.2109 11.84 11.84 11.84h117.92c5.2109 17.523 21.312 30.309 40.727 30.309 18.941 0 35.52-12.785 40.254-30.309h99.926c6.6289 0 11.84-5.2109 11.84-11.84s-5.2109-11.84-11.84-11.84h-99.926c-5.2109-17.523-21.312-30.309-40.254-30.309-19.418 0-35.52 12.785-40.727 30.309zm58.723 11.84c0 10.418-8.5234 18.469-18.469 18.469s-18.469-8.0508-18.469-18.469 8.5234-18.469 18.469-18.469 18.469 8.0508 18.469 18.469z")
+		| Filter
+		template(v-if="filteredTracksCount") ({{ filteredTracksCount }})
 	bunt-button.fav-toggle(v-if="favsCount", @click="$emit('toggleFavs')", :class="onlyFavs ? ['active'] : []")
 		svg#star(viewBox="0 0 24 24")
 			polygon(
@@ -39,13 +21,8 @@
 </template>
 
 <script>
-import AppDropdown from './AppDropdown.vue'
-import AppDropdownContent from './AppDropdownContent.vue'
-import AppDropdownItem from './AppDropdownItem.vue'
-
 export default {
 	name: 'ScheduleSettings',
-	components: { AppDropdown, AppDropdownContent, AppDropdownItem },
 	props: {
 		tracks: {
 			type: Array,
@@ -54,19 +31,6 @@ export default {
 		filteredTracksCount: {
 			type: Number,
 			default: 0
-		},
-		// @type: {Array<{value: string, label: string, selected: boolean}>}
-		languageFilteredTracks: {
-			type: Array,
-			default: () => []
-		},
-		languageFilteredRooms: {
-			type: Array,
-			default: () => []
-		},
-		languageFilteredSessionTypes: {
-			type: Array,
-			default: () => []
 		},
 		favsCount: {
 			type: Number,
@@ -84,7 +48,7 @@ export default {
 		scheduleTimezone: String,
 		userTimezone: String
 	},
-	emits: ['openFilter', 'toggleFavs', 'saveTimezone', 'update:currentTimezone', 'trackToggled', 'roomToggled', 'sessionTypeToggled'],
+	emits: ['openFilter', 'toggleFavs', 'saveTimezone', 'update:currentTimezone'],
 	computed: {
 		timezoneOptions () {
 			return [
@@ -93,7 +57,7 @@ export default {
 			]
 		},
 		timezoneModel: {
-		  get() {
+			get () {
 				return this.currentTimezone
 			},
 			set (value) {

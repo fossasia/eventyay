@@ -17,8 +17,6 @@ module.exports = {
 		'comma-dangle': 0,
 		curly: 0,
 		'no-return-assign': 0,
-		'func-call-spacing': ['warn', 'never'],
-		'vue/func-call-spacing': ['warn', 'never'],
 		'vue/require-default-prop': 0,
 		'object-curly-spacing': 0
 	}

@@ -8,13 +8,12 @@
 			svg(viewBox="0 0 10 10")
 				path(d="M 0 0 L 10 5 L 0 10 z")
 		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
-		.room(v-for="(room, index) of rooms", :key="room.id", :style="{'grid-area': `1 / ${index + 2 } / auto / auto`}") {{ getLocalizedString(room.name) }}
+		.room(v-for="(room, index) of rooms", :style="{'grid-area': `1 / ${index + 2 } / auto / auto`}") {{ getLocalizedString(room.name) }}
 			bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
 		.room(v-if="hasSessionsWithoutRoom", :style="{'grid-area': `1 / ${rooms.length + 2} / auto / -1`}") no location
 		template(v-for="session of sessions")
 			session(
 				v-if="isProperSession(session)",
-				:key="session.id",
 				:session="session",
 				:now="now",
 				:locale="locale",
@@ -196,7 +195,7 @@ export default {
 				}
 			})
 			// remove gap at the end of the schedule
-			if (compactedSlices && compactedSlices[compactedSlices.length - 1]?.gap) compactedSlices.pop()
+			if (compactedSlices[compactedSlices.length - 1].gap) compactedSlices.pop()
 			return compactedSlices
 		},
 		visibleTimeslices () {
@@ -352,8 +351,6 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
-	max-width: 100vw
-	/* In comparison to upstream, we removed "overflow" to make room bar sticky */
 	.grid
 		display: grid
 		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
@@ -362,7 +359,7 @@ export default {
 		min-width: min-content
 		> .room
 			position: sticky
-			top: 0
+			top: calc(var(--pretalx-sticky-date-offset) + var(--pretalx-sticky-top-offset, 0px))
 			display: flex
 			justify-content: center
 			align-items: center

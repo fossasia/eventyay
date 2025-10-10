@@ -1,13 +1,12 @@
 <template lang="pug">
 .c-linear-schedule(v-scrollbar.y="")
-	.bucket(v-if="sortBy == 'time'", v-for="({date, sessions}, index) of sessionBuckets", :key="date.toISO()")
+	.bucket(v-for="({date, sessions}, index) of sessionBuckets")
 		.bucket-label(:ref="getBucketName(date)", :data-date="date.toISO()")
 			.day(v-if="index === 0 || date.startOf('day').diff(sessionBuckets[index - 1].date.startOf('day')).shiftTo('days').days > 0")  {{ date.setZone(timezone).toLocaleString({ weekday: 'long', day: 'numeric', month: 'long' }) }}
 			.time {{ date.setZone(timezone).toLocaleString({ hour: 'numeric', minute: 'numeric' }) }}
 			template(v-for="session of sessions")
 				session(
 					v-if="isProperSession(session)",
-					:key="session.id"
 					:session="session",
 					:now="now",
 					:timezone="timezone",
@@ -16,23 +15,10 @@
 					:faved="session.id && favs.includes(session.id)",
 					:onHomeServer="onHomeServer",
 					@fav="$emit('fav', session.id)",
-					@unfav="$emit('unfav', session.id)",
-					isLinearSchedule=true
+					@unfav="$emit('unfav', session.id)"
 				)
 				.break(v-else)
 					.title {{ getLocalizedString(session.title) }}
-	.bucket(v-if="sortBy == 'popularity' || sortBy == 'title'", v-for="session of sessionBuckets", :key="session.id")
-		.sorted-session
-			session(
-				v-if="isProperSession(session)",
-				:session="session",
-				:faved="session.id && favs.includes(session.id)",
-				@fav="$emit('fav', session.id)",
-				@unfav="$emit('unfav', session.id)",
-				isLinearSchedule=true
-			)
-			.break(v-else)
-				.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
 import { DateTime } from 'luxon'
@@ -56,13 +42,6 @@ export default {
 		currentDay: String,
 		now: Object,
 		scrollParent: Element,
-		// This sortBy prop is from a customized feature we implemented before,
-		// but was lost after we merged with upstream.
-		// Will recover it sometimes in the future.
-		sortBy: {
-			type: String,
-			default: 'time'
-		},
 		onHomeServer: Boolean
 	},
 	data () {
@@ -72,7 +51,6 @@ export default {
 		}
 	},
 	computed: {
-        // TODO: Bring back our implementation of `sortBy`.
 		sessionBuckets () {
 			const buckets = {}
 			for (const session of this.sessions) {
@@ -189,8 +167,6 @@ export default {
 			padding-left: 16px
 			.day
 				font-weight: 600
-		.sorted-session
-			padding-left: 16px
 		.break
 			z-index: 10
 			margin: 8px

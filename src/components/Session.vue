@@ -6,28 +6,22 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 			.time {{ startTime.time }}
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ getPrettyDuration(session.start, session.end) }}
-		.session-date {{ getPrettyDate(session.start) }}
 		.buffer
 		.is-live(v-if="isLive") live
 	.info
 		.title {{ getLocalizedString(session.title) }}
 		.speakers(v-if="session.speakers")
 			.avatars
-				template(v-for="speaker of session.speakers", :key="speaker.code")
-					.speaker-info
-						img(v-if="speaker.avatar_thumbnail_tiny", :src="speaker.avatar_thumbnail_tiny")
-						img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
-						img(v-else-if="speaker.avatar", :src="speaker.avatar")
-						.names {{ speaker.name }}
-		.tags-box
-			.tags(v-for="tag_item of session.tags", :key="tag_item.id")
-				.tag-item(:style="{'background-color': tag_item.color, 'color': getContrastColor(tag_item.color)}") {{ tag_item.tag }}
+				template(v-for="speaker of session.speakers")
+					img(v-if="speaker.avatar_thumbnail_tiny", :src="speaker.avatar_thumbnail_tiny")
+					img(v-else-if="speaker.avatar_thumbnail_default", :src="speaker.avatar_thumbnail_default")
+					img(v-else-if="speaker.avatar", :src="speaker.avatar")
+			.names {{ session.speakers.map(s => s.name).join(', ') }}
 		.abstract(v-if="showAbstract", v-html="abstractText")
 		.bottom-info
 			.track(v-if="session.track") {{ getLocalizedString(session.track.name) }}
 			.room(v-if="showRoom && session.room") {{ getLocalizedString(session.room.name) }}
 	.session-icons
-		.fav-count(v-if="session.fav_count > 0 && isLinearSchedule") {{ session.fav_count > 99 ? "99+" : session.fav_count  }}
 		fav-button(@toggleFav="toggleFav")
 		svg.do-not-record(v-if="session.do_not_record", viewBox="0 0 116.59076 116.59076", width="4116.59076mm", height="116.59076mm", fill="none", xmlns="http://www.w3.org/2000/svg")
 			g(transform="translate(-9.3465481,-5.441411)")
@@ -39,7 +33,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 <script>
 import { DateTime } from 'luxon'
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getPrettyDuration, getSessionTime, getPrettyDate } from '~/utils'
+import { getLocalizedString, getPrettyDuration, getSessionTime } from '~/utils'
 import FavButton from '~/components/FavButton.vue'
 
 const markdownIt = MarkdownIt({
@@ -73,8 +67,7 @@ export default {
 		},
 		locale: String,
 		timezone: String,
-		onHomeServer: Boolean,
-		isLinearSchedule: Boolean
+		onHomeServer: Boolean
 	},
 	inject: {
 		eventUrl: { default: null },
@@ -101,7 +94,6 @@ export default {
 			getPrettyDuration,
 			getLocalizedString,
 			getSessionTime,
-			getPrettyDate,
 		}
 	},
 	computed: {
@@ -141,19 +133,6 @@ export default {
 			} else {
 				this.$emit('fav', this.session.id)
 			}
-		},
-		getContrastColor (bgColor) {
-			if (!bgColor) {
-				return ''
-			}
-			bgColor = bgColor.replace('#', '')
-			var r = parseInt(bgColor.slice(0, 2), 16)
-			var g = parseInt(bgColor.slice(2, 4), 16)
-			var b = parseInt(bgColor.slice(4, 6), 16)
-			var brightness = (r * 299 + g * 587 + b * 114) / 1000
-
-			// If the brightness is over 128, return black. Otherwise, return white
-			return brightness > 128 ? 'black' : 'white'
 		}
 	}
 }
@@ -170,8 +149,7 @@ export default {
 	position: relative
 	font-size: 14px
 	.time-box
-		min-width: 75px
-		max-width: 75px
+		width: 69px
 		box-sizing: border-box
 		background-color: var(--track-color)
 		padding: 12px 16px 8px 12px
@@ -197,14 +175,6 @@ export default {
 				font-size: 13px
 		.duration
 			color: $clr-secondary-text-dark
-			margin-bottom: 8px
-		.session-date
-			color: $clr-primary-text-dark
-			font-size: 13px
-			font-weight: 600
-			display: flex
-			flex-direction: column
-			align-items: flex-end
 		.buffer
 			flex: auto
 		.is-live
@@ -237,18 +207,18 @@ export default {
 			color: $clr-secondary-text-light
 			display: flex
 			.avatars
-				.speaker-info
-					display: flex
-					flex: none
-					img
-						background-color: $clr-white
-						border-radius: 50%
-						height: 24px
-						width: @height
-						margin: 0 8px 0 0
-						object-fit: cover
-					.names
-						line-height: 24px
+				flex: none
+				> *:not(:first-child)
+					margin-left: -20px
+				img
+					background-color: $clr-white
+					border-radius: 50%
+					height: 24px
+					width: @height
+					margin: 0 8px 0 0
+					object-fit: cover
+			.names
+				line-height: 24px
 		.abstract
 			margin: 8px 0 12px 0
 			// TODO make this take up more space if available?
@@ -293,26 +263,6 @@ export default {
 			border-left: none
 			.title
 				color: var(--pretalx-clr-primary)
-    .fav-count
-		border: 1px solid
-		border-radius: 50%
-		margin-top: 5px
-		width: 25px
-		height: 25px
-		display: flex
-		justify-content: center
-		align-items: center
-		text-align: center
-		background-color: var(--track-color)
-		color: $clr-primary-text-dark
-
-	.tags-box
-		display: flex
-		margin: 5px 0px
-		.tags
-			margin: 0px 2px
-			.tag-item
-				padding: 3px
 @media(hover: none)
 	.c-linear-schedule-session .session-icons .btn-fav-container
 		display: inline-flex

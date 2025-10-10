@@ -8,9 +8,6 @@
 			:tracks="schedule.tracks",
 			:filteredTracksCount="filteredTracks.length",
 			:favsCount="favs.length",
-			:language-filtered-tracks="filter.tracks.data"
-			:language-filtered-rooms="filter.rooms.data"
-			:language-filtered-session-types="filter.types.data"
 			:onlyFavs="onlyFavs",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
@@ -19,29 +16,24 @@
 			@openFilter="$refs.filterModal?.showModal()",
 			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()",
 			@saveTimezone="saveTimezone"
-			@trackToggled="toggleTrackFilterChoice"
-			@roomToggled="toggleRoomFilterChoice"
 		)
-
-
 		bunt-tabs.days(v-if="days && days.length > 1", v-model="currentDay", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
 			bunt-tab(v-for="day in days", :id="day.toISODate()", :header="day.toLocaleString(dateFormat)", @selected="changeDay(day)")
-		.anchor-for-sticky.overflow-y-auto.overflow-x-auto(v-if="showGrid")
-			grid-schedule-wrapper(
-				:sessions="sessions",
-				:rooms="rooms",
-				:days="days",
-				:currentDay="currentDay",
-				:now="now",
-				:hasAmPm="hasAmPm",
-				:timezone="currentTimezone",
-				:locale="locale",
-				:scrollParent="scrollParent",
-				:favs="favs",
-				:onHomeServer="onHomeServer",
-				@changeDay="setCurrentDay($event)",
-				@fav="fav($event)",
-				@unfav="unfav($event)")
+		grid-schedule-wrapper(v-if="showGrid",
+			:sessions="sessions",
+			:rooms="rooms",
+			:days="days",
+			:currentDay="currentDay",
+			:now="now",
+			:hasAmPm="hasAmPm",
+			:timezone="currentTimezone",
+			:locale="locale",
+			:scrollParent="scrollParent",
+			:favs="favs",
+			:onHomeServer="onHomeServer",
+			@changeDay="setCurrentDay($event)",
+			@fav="fav($event)",
+			@unfav="unfav($event)")
 		linear-schedule(v-else,
 			:sessions="sessions",
 			:rooms="rooms",
@@ -55,15 +47,7 @@
 			:onHomeServer="onHomeServer",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
-			@unfav="unfav($event)",
-			:sortBy="sortBy",)
-		.modal(v-if="showModal")
-			.modal-content
-				.modal-header
-					.h3.modal-title Warning
-				.modal-body.p Please login to add a session to your personal schedule.
-				.modal-footer
-					.button(@click="closeModal") OK
+			@unfav="unfav($event)")
 	bunt-progress-circular(v-else, size="huge", :page="true")
 	.error-messages(v-if="errorMessages.length")
 		.error-message(v-for="message in errorMessages", :key="message")
@@ -99,15 +83,10 @@ import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
-import ScheduleSettings from '~/components/ScheduleSettings.vue'
+import ScheduleSettings from '~/components/ScheduleSettings'
 import SessionModal from '~/components/SessionModal'
 import FilterModal from '~/components/FilterModal'
 import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
-import {
-	filterSessionTypesByLanguage,
-	filterItemsByLanguage,
-	filteredSessions
-} from '~/utils'
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -162,33 +141,6 @@ export default {
 			allTracks: [],
 			onlyFavs: false,
 			scheduleError: false,
-			showModal: false,
-			filter: {
-				tracks: {
-					refKey: 'track',
-					/** @type {Array<{name: string, value: number, selected: boolean}>} */
-					data: [],
-					title: 'Tracks'
-				},
-				rooms: {
-					refKey: 'room',
-					/** @type {Array<{name: string, value: number, selected: boolean}>} */
-					data: [],
-					title: 'Rooms'
-				},
-				types: {
-					refKey: 'session_type',
-					/** @type {Array<{name: string, value: number, selected: boolean}>} */
-					data: [],
-					title: 'Types'
-				}
-			},
-			sortOptions: [
-				{id: 'title', label: 'Title'}, {id: 'time', label: 'Time'}, {id: 'popularity', label: 'Popularity'}
-			],
-			selectedSort: 'time',
-			showSortOptions: false,
-			selectedSortIcon: '',
 			onHomeServer: false,
 			loggedIn: false,
 			apiUrl: null,
@@ -215,8 +167,7 @@ export default {
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		filteredTracks () {
-			if (!this.schedule) return []
-			return filteredSessions(this.filter, this.schedule.talks)
+			return this.allTracks.filter(t => t.selected)
 		},
 		speakersLookup () {
 			if (!this.schedule) return {}
@@ -225,7 +176,6 @@ export default {
 		sessions () {
 			if (!this.schedule || !this.currentTimezone) return
 			const sessions = []
-			const filter = this.filteredTracks
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
 				if (this.filteredTracks && this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
@@ -240,9 +190,7 @@ export default {
 					end: DateTime.fromISO(session.end),
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
-					room: this.roomsLookup[session.room],
-					fav_count: session.fav_count,
-					tags: session.tags
+					room: this.roomsLookup[session.room]
 				})
 			}
 			sessions.sort((a, b) => a.start.diff(b.start))
@@ -266,12 +214,21 @@ export default {
 			return DateTime.local().offset === DateTime.local({ zone: this.schedule.timezone }).offset
 		},
 		dateFormat () {
-			// Defaults to cccc d. LLLL for: all grid schedules with more than two rooms, and all list schedules with less than five days
-			// After that, we start to shorten the date string, hoping to reduce unwanted scroll behaviour
-			if ((this.showGrid && this.schedule && this.schedule.rooms.length > 2) || !this.days || !this.days.length) return { weekday: 'long', day: 'numeric', month: 'long'}
-			if (this.days && this.days.length <= 5) return { weekday: 'long', day: 'numeric', month: 'long'}
-			if (this.days && this.days.length <= 7) return { weekday: 'long', day: 'numeric', month: 'short'}
-			return { weekday: 'short', day: 'numeric', month: 'short'}
+			const format = { day: 'numeric', month: 'short' }
+			if (this.showGrid) {
+				// Mobile schedules always omit the weekday to preserve space, for others, we start
+				// shortening the weekday if the schedule gets unwieldy (but we shorten the month name first)
+				if (this.days && (!this.days.length || this.days.length <= 7)) {
+					format.weekday = 'long'
+				} else {
+					format.weekday = 'short'
+				}
+			}
+			if ((this.days && this.days.length <= 5) || (this.showGrid && this.schedule && this.schedule.rooms.length > 2)) {
+				// If we have fewer than five days or if we're on a sizeable grid schedule, we can show the long month name
+				format.month = 'long'
+			}
+			return format
 		},
 		hasAmPm () {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
@@ -330,10 +287,6 @@ export default {
 		// set API URL before loading favs
 		this.apiUrl = window.location.origin + '/api/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
-
-		this.filter.types.data = filterSessionTypesByLanguage(this?.schedule?.talks)
-		this.filter.rooms.data = filterItemsByLanguage(this?.schedule?.rooms)
-		this.filter.tracks.data = filterItemsByLanguage(this?.schedule?.tracks)
 
 		if (fragment && fragment.length === 10) {
 			const initialDay = DateTime.fromISO(fragment, { zone: this.currentTimezone })
@@ -443,26 +396,12 @@ export default {
 					this.pushErrorMessage(this.translationMessages.favs_not_saved)
 				}
 			}
-			return favs
+			return favs || []
 		},
 		pushErrorMessage (message) {
 			if (!message || !message.length) return
 			if (this.errorMessages.includes(message)) return
 			this.errorMessages.push(message)
-		},
-		toggleTrackFilterChoice(id) {
-			for (const track of this.filter.tracks.data) {
-				if (track.value === id) {
-					track.selected = !(track.selected || false)
-				}
-			}
-		},
-		toggleRoomFilterChoice(id) {
-			for (const room of this.filter.rooms.data) {
-				if (room.value === id) {
-					room.selected = !(room.selected || false)
-				}
-			}
 		},
 		pruneFavs (favs, schedule) {
 			const talks = schedule.talks || []
@@ -470,9 +409,6 @@ export default {
 			// we're not pushing the changed list to the server, as if a talk vanished but will appear again,
 			// we want it to still be faved
 			return favs.filter(e => talkIds.includes(e))
-		},
-		closeModal () {
-			this.showModal = false
 		},
 		saveFavs () {
 			localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
@@ -501,23 +437,6 @@ export default {
 				this.pushErrorMessage(this.translationMessages.favs_not_logged_in)
 			}
 			if (!this.favs.length) this.onlyFavs = false
-		},
-		resetAllFiltered () {
-			this.resetFiltered()
-			this.onlyFavs = false
-		},
-		resetFiltered () {
-			for (const [key, value] of Object.entries(this.filter)) {
-				for (const item of value.data) {
-					item.selected = false
-				}
-			}
-		},
-		toggleSortOptions () {
-			this.showSortOptions = !this.showSortOptions
-		},
-		handleSortSelected () {
-			this.selectedSort = this.selectedSortIcon
 		},
 		async fetchSpeakerApiContentIfNeeded (speakerCode) {
 			const speakerObj = this.speakersLookup[speakerCode]
@@ -665,76 +584,11 @@ export default {
 	font-size: 14px
 	--pretalx-clr-text: rgb(13,15,16)
 	&.grid-schedule
+		min-width: min-content
 		max-width: var(--schedule-max-width)
 		margin: 0 auto
 	&.list-schedule
 		min-width: 0
-	.modal-overlay
-		position: fixed
-		z-index: 1000
-		top: 0
-		left: 0
-		width: 100%
-		height: 100%
-		background-color: rgba(0,0,0,0.4)
-		.modal-box
-			width: 600px
-			max-width: calc(95% - 64px)
-			border-radius: 32px
-			padding: 4px 32px
-			margin-top: 32px
-			background: white
-			margin-left: auto
-			margin-right: auto
-			.checkbox-line
-				margin: 16px 8px
-				.bunt-checkbox.checked .bunt-checkbox-box
-					background-color: var(--track-color)
-					border-color: var(--track-color)
-				.track-description
-					color: $clr-grey-600
-					margin-left: 32px
-	.settings
-		max-width: calc(var(--schedule-max-width) - 10px)
-		position: sticky
-		left: 0
-		align-self: flex-start
-		flex-wrap: wrap
-		display: flex
-		align-items: center
-		z-index: 100
-		left: 18px
-		width: calc(100% - 36px)
-		.fav-toggle
-			display: flex
-			margin-right: 5px
-			&.active
-				border: #FFA000 2px solid
-			.bunt-button-text
-				display: flex
-				align-items: center
-			svg
-				width: 20px
-				height: 20px
-				margin-right: 6px
-		.filter-tracks
-			margin-right: 8px
-			display: flex
-			.bunt-button-text
-				display: flex
-				align-items: center
-				padding-right: 8px
-			svg
-				width: 36px
-				height: 36px
-				margin-right: 6px
-		.bunt-select
-			max-width: 150px
-			padding-right: 8px
-			margin-left: 5px
-		.timezone-label
-			cursor: default
-			color: $clr-secondary-text-light
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
@@ -757,102 +611,6 @@ export default {
 				min-width: min-content
 			.bunt-tab-header-item-text
 				white-space: nowrap
-.modal {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 999;
-}
-
-.modal-content {
-	background-color: white;
-	padding: 20px;
-	border-radius: 5px;
-	width: 300px;
-	text-align: center;
-	position: relative;
-	border: 1px solid var(--pretalx-clr-primary);
-}
-
-.modal-header {
-	margin-bottom: 10px;
-}
-
-.modal-title {
-	margin: 0;
-	font-size: 1.25em;
-	color: var(--pretalx-clr-primary);
-}
-
-.modal-body {
-	margin-bottom: 20px;
-}
-
-.modal-footer {
-	display: flex;
-	justify-content: flex-end;
-	.button {
-		cursor:pointer;
-		border: 1px solid var(--pretalx-clr-primary)
-		padding: 2px 5px;
-		border-radius: 5px;
-	}
-}
-
-.modal-footer button {
-	background-color: transparent;
-	border: 1px solid #ccc;
-	border-radius: 5px;
-	padding: 5px 10px;
-	cursor: pointer;
-}
-
-.sort-icon {
-	display: none !important
-}
-
-@media (max-width: 480px) {
-	.hide-select {
-		display: none
-	}
-    .sort-icon {
-      display: flex !important;
-      align-items: center;
-    padding: 0 !important;
-    min-width: 40px !important;
-    margin-right: 10px;
-    width: 40px !important;
-    }
-
-	.sort-icon .bunt-button-text {
-		display: flex
-		align-items: center
-		width: 20px;
-	}
-	.sort-icon .bunt-button-text svg {
-		width: 20px
-		height: 20px
-		position: absolute
-	}
-	.dropdown-sort-menu {
-		background: white;
-		border: 1px solid #ccc;
-		border-radius: 4px;
-		transform: translate(-7%, 68%);
-		min-width: 150px !important;
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-
-	}
-
-}
-
 .error-messages
 	position: fixed
 	width: 250px
@@ -898,14 +656,4 @@ export default {
 	&:hover .pretalx
 		color: #3aa57c
 
-.relative
-	position: relative
-.overflow-x-auto
-	overflow-x: auto
-.overflow-y-auto
-	overflow-y: auto
-.anchor-for-sticky
-	max-width: calc(100% - 8px)
-	/* Subtract: filter bar, date bar, footer */
-	max-height: calc(100vh - 168px)
 </style>

@@ -25,7 +25,6 @@
     }
   },
   "dependencies": {
-    "@manusanchev/vue3-clickaway": "^1.1.4",
     "buntpapier": "^2.0.0-alpha.34",
     "luxon": "^3.5.0",
     "markdown-it": "^14.1.0",
@@ -42,7 +41,7 @@
   },
   "homepage": "https://github.com/pretalx/schedule#readme",
   "license": "ISC",
-  "readme": "README.md",
+  "readme": "ERROR: No README data found!",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/pretalx/schedule.git"
