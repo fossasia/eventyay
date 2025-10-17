@@ -71,13 +71,17 @@
                         {% bootstrap_field filter_form.qm layout='inline' %}
                     </div>
                     <div class="col-lg-2 col-sm-6 col-xs-12">
-                        <div class="form-group">
-                            <button class="btn btn-primary btn-block" type="submit">
-                                <span class="fa fa-filter"></span>
-                                <span class="hidden-md">
-                                        {% trans "Filter" %}
-                                    </span>
-                            </button>
+                        <div class="btn-group btn-group-justified" role="group">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="fa fa-filter"></span>
+                                </button>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <a href="?tab=vouchers" class="btn btn-default" role="button">
+                                    <span class="fa fa-eraser"></span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -238,13 +242,19 @@
                             <div class="col-lg-2 col-sm-3 col-xs-6">
                                 {% bootstrap_field tags_filter_form.subevent layout='inline' %}
                             </div>
-                        <div class="col-lg-1 col-sm-6 col-xs-6">
-                            <button class="btn btn-primary btn-block" type="submit">
-                                <span class="fa fa-filter"></span>
-                                <span class="hidden-md">
-                                        {% trans "Filter" %}
-                                    </span>
-                            </button>
+                        <div class="col-lg-2 col-sm-6 col-xs-6">
+                            <div class="btn-group btn-group-justified" role="group">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-primary" type="submit">
+                                        <span class="fa fa-filter"></span>
+                                    </button>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <a href="?tab=tags" class="btn btn-default" role="button">
+                                        <span class="fa fa-eraser"></span>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
