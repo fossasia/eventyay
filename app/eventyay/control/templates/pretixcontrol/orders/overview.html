@@ -43,18 +43,7 @@
             </div>
             {{ filter_form.browser_timezone }}
             <div class="col-lg-2 col-lg-offset-2 col-sm-6 col-xs-6">
-                <div class="btn-group btn-group-justified" role="group">
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-primary" type="submit">
-                            <span class="fa fa-filter"></span>
-                        </button>
-                    </div>
-                    <div class="btn-group" role="group">
-                        <a href="?" class="btn btn-default" role="button">
-                            <span class="fa fa-eraser"></span>
-                        </a>
-                    </div>
-                </div>
+                {% include "eventyay_common/filter_actions.html" %}
             </div>
         </form>
     </div>
