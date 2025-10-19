@@ -640,15 +640,6 @@ table td > .checkbox input[type="checkbox"] {
   gap: 20px;
   align-items: center;
   margin-bottom: 0;
-  
-  // Override Bootstrap grid constraints when inside filter-actions
-  &.col-md-2,
-  &.col-sm-6,
-  &.col-xs-12 {
-    flex: 1 1 auto;
-    max-width: none;
-    width: auto;
-  }
 }
 
 #rules-editor {
@@ -724,7 +715,7 @@ table td > .checkbox input[type="checkbox"] {
 }
 
 // Responsive styles for filter actions
-@media (max-width: 768px) {
+@media (max-width: $screen-sm-max) {
   .filter-form .filter-actions {
     flex-direction: column;
     gap: 10px;
