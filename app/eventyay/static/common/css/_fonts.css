@@ -119,8 +119,8 @@
 :root {
   --font-fallback:
     "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-family: "Open Sans", var(--font-fallback);
-  --font-family-title: "Open Sans", var(--font-fallback);
+  --font-family: var(--font-fallback);
+  --font-family-title: var(--font-fallback);
   --font-family-monospace:
     SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
     monospace;
