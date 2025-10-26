@@ -1,7 +1,6 @@
 @font-face {
     font-family: 'Open Sans';
-    src: url("/static/fonts/opensans_regular_macroman/OpenSans-Regular-webfont.woff2") format("woff2"),
-         url("/static/fonts/opensans_regular_macroman/OpenSans-Regular-webfont.woff") format("woff");
+    src: url("/static/fonts/opensans_regular_macroman/OpenSans-Regular-webfont.woff") format("woff");
     font-weight: 400;
     font-style: normal;
     font-display: swap;
@@ -9,8 +8,7 @@
 
 @font-face {
     font-family: 'Open Sans';
-    src: url("/static/fonts/opensans_bold_macroman/OpenSans-Bold-webfont.woff2") format("woff2"),
-         url("/static/fonts/opensans_bold_macroman/OpenSans-Bold-webfont.woff") format("woff");
+    src: url("/static/fonts/opensans_bold_macroman/OpenSans-Bold-webfont.woff") format("woff");
     font-weight: 700;
     font-style: normal;
     font-display: swap;
@@ -18,8 +16,7 @@
 
 @font-face {
     font-family: 'Open Sans';
-    src: url("/static/fonts/opensans_italic_macroman/OpenSans-Italic-webfont.woff2") format("woff2"),
-         url("/static/fonts/opensans_italic_macroman/OpenSans-Italic-webfont.woff") format("woff");
+    src: url("/static/fonts/opensans_italic_macroman/OpenSans-Italic-webfont.woff") format("woff");
     font-weight: 400;
     font-style: italic;
     font-display: swap;
@@ -27,8 +24,7 @@
 
 @font-face {
     font-family: 'Open Sans';
-    src: url("/static/fonts/opensans_bolditalic_macroman/OpenSans-BoldItalic-webfont.woff2") format("woff2"),
-         url("/static/fonts/opensans_bolditalic_macroman/OpenSans-BoldItalic-webfont.woff") format("woff");
+    src: url("/static/fonts/opensans_bolditalic_macroman/OpenSans-BoldItalic-webfont.woff") format("woff");
     font-weight: 700;
     font-style: italic;
     font-display: swap;
