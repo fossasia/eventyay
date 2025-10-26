@@ -1,9 +1,7 @@
 <template lang="pug">
 transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel")
-		router-link.logo(:to="{name: 'home'}", v-if="$mq.above['m']", :class="{'fit-to-width': theme.logo.fitToWidth}")
-			img(:src="theme.logo.url", :alt="world.title")
-		bunt-icon-button#btn-close-sidebar(v-else, @click="$emit('close')") menu
+		bunt-icon-button#btn-close-sidebar(v-if="!$mq.above['m']", @click="$emit('close')") menu
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)", @click="onNavigate")
@@ -230,20 +228,7 @@ export default {
 	display: flex
 	flex-direction: column
 	height: var(--vh100)
-	.logo
-		font-size: 18px
-		text-align: center
-		margin: 0 16px
-		height: 56px
-		img
-			height: 100%
-			max-width: 100%
-			object-fit: contain
-		&.fit-to-width
-			height: auto
-			margin: 0
-			img
-				height: auto
+	padding-top: 8px
 	#btn-close-sidebar
 		margin: 8px
 		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
