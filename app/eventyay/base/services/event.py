@@ -238,7 +238,7 @@ def get_event_config_for_user(event, user):
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
-            Room.objects.filter(event=data["event"]).aggregate(
+            Room.objects.filter(event=data["event"], deleted=False).aggregate(
                 m=Max("sorting_priority")
             )["m"]
             or 0
