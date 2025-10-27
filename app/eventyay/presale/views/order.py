@@ -298,9 +298,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
                 r.giftcard = gc
         
-        if self.request.user.is_authenticated:
-            ctx['viewer_email'] = self.request.user.email
-
+        ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
         ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
 
         return ctx

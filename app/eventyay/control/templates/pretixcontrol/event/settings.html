@@ -104,15 +104,9 @@
                 
                 <h4>{% translate "Changes to existing orders" %}</h4>
                 {% bootstrap_field sform.allow_modifications layout="control" %}
-                <div data-display-dependency-container>
-                    <div data-display-dependency="#id_settings-allow_modifications_1">
-                        {% bootstrap_field sform.last_order_modification_date layout="control" %}
-                        {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
-                    </div>
-                    <div data-display-dependency="#id_settings-allow_modifications_2">
-                        {% bootstrap_field sform.last_order_modification_date layout="control" %}
-                        {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
-                    </div>
+                <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
+                    {% bootstrap_field sform.last_order_modification_date layout="control" %}
+                    {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
                 </div>
             </fieldset>
             <fieldset>
