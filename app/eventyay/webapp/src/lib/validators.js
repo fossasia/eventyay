@@ -41,7 +41,7 @@ export function youtubeid(message) {
 }
 const relative = helpers.regex(/^\/.*$/)
 // Allow localhost and local IP addresses (with or without port)
-const localurl = helpers.regex(/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:[0-9]+)?(\/.*)?$/)
+const localurl = helpers.regex(/^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?(\/.*)?$/)
 export function url(message) {
 	return helpers.withMessage(message, (value) => (!helpers.req(value) || _url(value) || relative(value) || localurl(value)))
 }
