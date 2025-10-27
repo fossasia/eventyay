@@ -298,7 +298,7 @@ TEMPLATES = (
             BASE_DIR / 'jinja-templates',
         ],
         'OPTIONS': {
-            'environment': 'eventyay.helpers.jinja.environment',
+            'environment': 'eventyay.jinja.environment',
             'extensions': (
                 'jinja2.ext.i18n',
                 'jinja2.ext.do',
