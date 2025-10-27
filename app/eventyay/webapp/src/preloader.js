@@ -3,11 +3,12 @@ import 'styles/preloader.styl'
 /* global ENV_DEVELOPMENT */
 
 // Set debug favicon in development mode
+const DEBUG_FAVICON_PATH = '/static/common/img/icons/favicon_debug.ico';
 if (ENV_DEVELOPMENT) {
 	const favicon = document.getElementById('favicon')
 	const faviconShortcut = document.getElementById('favicon-shortcut')
-	if (favicon) favicon.href = '/static/common/img/icons/favicon_debug.ico'
-	if (faviconShortcut) faviconShortcut.href = '/static/common/img/icons/favicon_debug.ico'
+	if (favicon) favicon.href = DEBUG_FAVICON_PATH
+	if (faviconShortcut) faviconShortcut.href = DEBUG_FAVICON_PATH
 }
 
 const showBrowserBlock = function() {
