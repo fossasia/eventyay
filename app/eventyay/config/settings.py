@@ -750,7 +750,7 @@ redis_connection_kwargs = {
     'health_check_interval': 30,
 }
 
-REDIS_URL = config.get('redis', 'location') if not DEBUG else 'redis://localhost:6379/0'
+REDIS_URL = config.get('redis', 'location')
 HAS_REDIS = bool(REDIS_URL)
 REDIS_HOSTS = [
     {
@@ -1006,6 +1006,11 @@ LOG_CSP = config.getboolean('eventyay', 'csp_log', fallback=True)
 CSP_ADDITIONAL_HEADER = config.get('eventyay', 'csp_additional_header', fallback='')
 
 # Django allauth settings for social login
+
+# Updated to use new allauth settings format (deprecated settings removed)
+# ACCOUNT_LOGIN_METHODS = {'email'}
+# ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+# This is outdated, but it seems necessary
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
