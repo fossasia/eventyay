@@ -15,7 +15,7 @@ def send_mails(
     subject: dict,
     message: dict,
     orders: list,
-    items: list,
+    products: list,
     recipients: str,
     filter_checkins: bool,
     not_checked_in: bool,
@@ -41,7 +41,7 @@ def send_mails(
                 if p.addon_to_id is not None:
                     continue
 
-                if p.item_id not in items and not any(a.item_id in items for a in p.addons.all()):
+                if p.product_id not in products and not any(a.product_id in products for a in p.addons.all()):
                     continue
 
                 if filter_checkins:
