@@ -132,7 +132,7 @@
     </tr>
   </table>
   <div class="order-button">
-    <a href="{{ url_for('presale:event.order.open', event=event, hash=order.email_confirm_hash, order=order.code, secret=order.secret) }}" class="button">
+	<a href="{{ url_for('presale:event.order.open', organizer=event.organizer.slug, event=event.slug, order=order.code, secret=order.secret, hash=order.email_confirm_hash()) }}" class="button">
       {{ _('View order details') }}
     </a>
   </div>
