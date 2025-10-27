@@ -277,7 +277,7 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ('date_from', models.DateTimeField(verbose_name='Event start time')),
-                ('date_to', models.DateTimeField(blank=True, null=True, verbose_name='Event end time')),
+                ('date_to', models.DateTimeField(verbose_name='Event end time')),
                 ('date_admission', models.DateTimeField(blank=True, null=True, verbose_name='Admission time')),
                 (
                     'is_public',
@@ -3823,7 +3823,7 @@ class Migration(migrations.Migration):
                 ),
                 ('name', i18nfield.fields.I18nCharField(max_length=200, verbose_name='Name')),
                 ('date_from', models.DateTimeField(verbose_name='Event start time')),
-                ('date_to', models.DateTimeField(blank=True, null=True, verbose_name='Event end time')),
+                ('date_to', models.DateTimeField(verbose_name='Event end time')),
                 ('date_admission', models.DateTimeField(blank=True, null=True, verbose_name='Admission time')),
                 (
                     'presale_end',
