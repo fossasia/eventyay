@@ -3,6 +3,7 @@ from rest_framework import routers
 
 # Import views directly from their modules to avoid relying on package attribute access
 from .views.rooms import RoomViewSet
+from .views.speaker import SpeakerViewSet
 from .views.event import (
     EventView,
     schedule_update,
@@ -13,17 +14,18 @@ from .views.event import (
     ExportView,
 )
 
-orga_router = routers.DefaultRouter(trailing_slash=False)
+orga_router = routers.DefaultRouter()
 
-event_router = routers.DefaultRouter(trailing_slash=False)
+event_router = routers.DefaultRouter()
 event_router.register(r"rooms", RoomViewSet)
+event_router.register(r"speakers", SpeakerViewSet, basename="speaker")
 
-router = routers.DefaultRouter(trailing_slash=False)
+router = routers.DefaultRouter()
 urlpatterns = [
-    path("events/<str:event_id>/", EventView.as_view(), name="root"),
     re_path("events/(?P<event_id>[^/]+)/schedule_update/?$", schedule_update),
     re_path("events/(?P<event_id>[^/]+)/delete_user/?$", delete_user),
     path("events/<str:event_id>/", include(event_router.urls)),
+    path("events/<str:event_id>", EventView.as_view(), name="root"),
     path("events/<str:event_id>/theme", EventThemeView.as_view()),
     path(
         "events/<str:event_id>/favourite-talk/",

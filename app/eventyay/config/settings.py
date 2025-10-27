@@ -895,7 +895,23 @@ if DEBUG:
     CORS_ORIGIN_REGEX_WHITELIST = [
         r'^http://localhost$',
         r'^http://localhost:\d+$',
+        r'^http://127\.0\.0\.1$',
+        r'^http://127\.0\.0\.1:\d+$',
     ]
+
+# Additional CORS settings for API access
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # Video-Security settings
 SECURE_BROWSER_XSS_FILTER = True
