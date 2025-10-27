@@ -50,12 +50,12 @@ class SenderView(EventPermissionRequiredMixin, FormView):
                     'subject': LazyI18nString(logentry.parsed_data['subject']),
                     'sendto': logentry.parsed_data['sendto'],
                 }
-                if 'items' in logentry.parsed_data:
-                    kwargs['initial']['items'] = self.request.event.items.filter(
-                        id__in=[a['id'] for a in logentry.parsed_data['items']]
+                if 'products' in logentry.parsed_data:
+                    kwargs['initial']['products'] = self.request.event.products.filter(
+                        id__in=[a['id'] for a in logentry.parsed_data['products']]
                     )
-                elif logentry.parsed_data.get('item'):
-                    kwargs['initial']['items'] = self.request.event.items.filter(id=logentry.parsed_data['item']['id'])
+                elif logentry.parsed_data.get('product'):
+                    kwargs['initial']['products'] = self.request.event.products.filter(id=logentry.parsed_data['product']['id'])
                 if 'checkin_lists' in logentry.parsed_data:
                     kwargs['initial']['checkin_lists'] = self.request.event.checkin_lists.filter(
                         id__in=[c['id'] for c in logentry.parsed_data['checkin_lists']]
@@ -99,7 +99,7 @@ class SenderView(EventPermissionRequiredMixin, FormView):
         opq = OrderPosition.objects.filter(
             order=OuterRef('pk'),
             canceled=False,
-            item_id__in=[i.pk for i in form.cleaned_data.get('items')],
+            product_id__in=[i.pk for i in form.cleaned_data.get('products')],
         )
 
         if form.cleaned_data.get('filter_checkins'):
@@ -168,7 +168,7 @@ class SenderView(EventPermissionRequiredMixin, FormView):
             'subject': form.cleaned_data['subject'].data,
             'message': form.cleaned_data['message'].data,
             'orders': [o.pk for o in orders],
-            'items': [i.pk for i in form.cleaned_data.get('items')],
+            'products': [i.pk for i in form.cleaned_data.get('products')],
             'not_checked_in': form.cleaned_data.get('not_checked_in'),
             'checkin_lists': [i.pk for i in form.cleaned_data.get('checkin_lists')],
             'filter_checkins': form.cleaned_data.get('filter_checkins'),
@@ -219,7 +219,7 @@ class EmailHistoryView(EventPermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
 
-        itemcache = {i.pk: str(i) for i in self.request.event.items.all()}
+        productcache = {i.pk: str(i) for i in self.request.event.products.all()}
         checkin_list_cache = {i.pk: str(i) for i in self.request.event.checkin_lists.all()}
         status = dict(Order.STATUS_CHOICE)
         status['overdue'] = _('pending with payment overdue')
@@ -235,7 +235,7 @@ class EmailHistoryView(EventPermissionRequiredMixin, ListView):
                     'subject': log.pdata['subject'][locale],
                 }
             log.pdata['sendto'] = [status[s] for s in log.pdata['sendto']]
-            log.pdata['items'] = [itemcache.get(i['id'], '?') for i in log.pdata.get('items', [])]
+            log.pdata['products'] = [productcache.get(i['id'], '?') for i in log.pdata.get('products', [])]
             log.pdata['checkin_lists'] = [
                 checkin_list_cache.get(i['id'], '?')
                 for i in log.pdata.get('checkin_lists', [])
