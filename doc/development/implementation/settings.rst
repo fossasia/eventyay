@@ -1,9 +1,9 @@
 Settings storage
 ================
 
-pretix is highly configurable and therefore needs to store a lot of per-event and per-organizer settings.
-For this purpose, we use `django-hierarkey`_ which started out as part of pretix and then got refactored into
-its own library. It has a comprehensive `documentation`_ which you should read if you work with settings in pretix.
+Eventyay is highly configurable and therefore needs to store a lot of per-event and per-organizer settings.
+For this purpose, we use `django-hierarkey`_ which started out as part of Eventyay and then got refactored into
+its own library. It has a comprehensive `documentation`_ which you should read if you work with settings in Eventyay.
 
 The settings are stored in the database and accessed through a ``HierarkeyProxy`` instance. You can obtain
 such an instance from any event or organizer model instance by just accessing ``event.settings`` or
@@ -26,7 +26,7 @@ To avoid naming conflicts, plugins are requested to prefix all settings they use
 or something unique, e.g. ``payment_paypal_api_key``. To reduce redundant typing of this prefix, we provide
 another helper class:
 
-.. autoclass:: pretix.base.settings.SettingsSandbox
+.. autoclass:: eventyay.base.settings.SettingsSandbox
 
 When implementing e.g. a payment or export provider, you do not event need to create this sandbox yourself,
 you will just be passed a sandbox object with a prefix generated from your provider name.
@@ -34,10 +34,10 @@ you will just be passed a sandbox object with a prefix generated from your provi
 Forms
 -----
 
-Hierarkey also provides a base class for forms that allow the modification of settings. pretix contains a
+Hierarkey also provides a base class for forms that allow the modification of settings. Eventyay contains a
 subclass that also adds support for internationalized fields:
 
-.. autoclass:: pretix.base.forms.SettingsForm
+.. autoclass:: eventyay.base.forms.SettingsForm
 
 You can simply use it like this:
 
@@ -62,7 +62,7 @@ Plugins can add custom hardcoded defaults in the following way:
 
 .. code-block:: python
 
-    from pretix.base.settings import settings_hierarkey
+    from eventyay.base.settings import settings_hierarkey
 
     settings_hierarkey.add_default('key', 'value', type)
 

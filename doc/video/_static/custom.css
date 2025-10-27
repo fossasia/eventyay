@@ -1,0 +1,124 @@
+/* Eventyay custom styles for Read the Docs theme */
+
+.logo {
+    height: 50px;
+}
+
+/* Brand colors - Django blue (#2185d0) */
+:root {
+    --eventyay-primary: #2185d0;
+    --eventyay-secondary: #1a6ba8;
+    --eventyay-dark: #0f4a73;
+}
+
+/* CRITICAL: Override theme navigation background */
+.wy-side-nav-search {
+    background: whitesmoke !important;
+}
+
+.wy-menu-vertical header, .wy-menu-vertical p.caption {
+    color: #7baaf0;
+}
+
+.wy-menu-vertical a {
+    color: #d9d9d9;
+}
+
+.wy-menu-vertical a:hover {
+    background-color: var(--eventyay-dark);
+    color: #ffffff;
+}
+
+a, a:visited {
+    color: var(--eventyay-primary);
+}
+
+a:hover {
+    color: var(--eventyay-dark);
+    text-decoration: underline;
+}
+
+.btn-neutral {
+    background-color: var(--eventyay-primary);
+    color: white;
+}
+
+.btn-neutral:hover {
+    background-color: var(--eventyay-secondary);
+}
+
+.wy-alert-title, .rst-content .admonition-title {
+    background: var(--eventyay-primary);
+}
+
+.wy-menu-vertical li.current a {
+    color: #404040;
+    border-right: solid 1px #c9c9c9;
+    background: #fcfcfc;
+}
+
+.wy-menu-vertical li.current a:hover {
+    color: #ffffff;
+    background-color: var(--eventyay-dark);
+}
+
+.wy-menu-vertical li.on a, .wy-menu-vertical li.current > a {
+    color: #404040;
+    background: #fcfcfc;
+    border: none;
+    border-top: solid 1px #c9c9c9;
+    border-bottom: solid 1px #c9c9c9;
+}
+
+.wy-menu-vertical li.on a:hover, .wy-menu-vertical li.current > a:hover {
+    color: #ffffff;
+    background-color: var(--eventyay-dark);
+}
+
+.wy-menu-vertical li.current {
+    background: #e3e3e3;
+}
+
+@media screen and (min-width: 480px) {
+    .wy-table-responsive table.rest-resource-table td, 
+    .wy-table-responsive table.rest-resource-table th {
+        white-space: normal;
+    }
+}
+
+footer[role="contentinfo"] {
+    padding-bottom: 2rem;
+}
+
+footer[role="contentinfo"] p {
+    font-size: 0.85em;
+}
+
+/* Full-width content area with centered text (max 1200px) */
+.wy-nav-content {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.wy-nav-content .rst-content {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.wy-nav-content-wrap {
+    margin-left: 300px;
+    background: #fcfcfc;
+}
+
+@media screen and (max-width: 768px) {
+    .wy-nav-content-wrap {
+        margin-left: 0;
+    }
+    
+    .wy-nav-content {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

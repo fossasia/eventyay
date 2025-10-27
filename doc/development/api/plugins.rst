@@ -6,35 +6,37 @@
 Creating a plugin
 =================
 
-It is possible to extend pretix with custom Python code using the official plugin
+It is possible to extend Eventyay with custom Python code using the official plugin
 API. Every plugin has to be implemented as an independent Django 'app' living
 in its own python package installed like any other python module. There are also some
-official plugins inside the ``pretix/plugins/`` directory of your pretix installation.
+official plugins inside the ``eventyay/plugins/`` directory of your Eventyay installation.
 
-The communication between pretix and the plugins happens mostly using Django's
-`signal dispatcher`_ feature. The core modules of pretix, ``pretix.base``,
-``pretix.control`` and ``pretix.presale`` expose a number of signals which are documented
+The communication between Eventyay and the plugins happens mostly using Django's
+`signal dispatcher`_ feature. The core modules of Eventyay, ``eventyay.base``,
+``eventyay.control`` and ``eventyay.presale`` expose a number of signals which are documented
 on the next pages.
 
 To create a new plugin, create a new python package which must be a valid `Django app`_
 and must contain plugin metadata, as described below.
 There is some boilerplate that you will need for every plugin to get started. To save your
-time, we created a `cookiecutter`_ template that you can use like this::
+time, we created a `cookiecutter`_ template that you can use like this:
+
+.. code-block:: bash
 
    $ pip install cookiecutter
-   $ cookiecutter https://github.com/pretix/pretix-plugin-cookiecutter
+   $ cookiecutter https://github.com/fossasia/eventyay-plugin-cookiecutter
 
 This will ask you some questions and then create a project folder for your plugin.
 
 The following pages go into detail about the several types of plugins currently
-supported. While these instructions don't assume that you know a lot about pretix,
+supported. While these instructions don't assume that you know a lot about Eventyay,
 they do assume that you have prior knowledge about Django (e.g. its view layer,
 how its ORM works, etc.).
 
 Plugin metadata
 ---------------
 
-The plugin metadata lives inside a ``PretixPluginMeta`` class inside your app's
+The plugin metadata lives inside a ``EventyayPluginMeta`` class inside your app's
 configuration class. The metadata class must define the following attributes:
 
 .. rst-class:: rest-resource-table
@@ -52,7 +54,7 @@ category           string               Category of a plugin. Either one of ``"F
 visible            boolean (optional)   ``True`` by default, can hide a plugin so it cannot be normally activated.
 restricted         boolean (optional)   ``False`` by default, restricts a plugin such that it can only be enabled
                                         for an event by system administrators / superusers.
-compatibility      string               Specifier for compatible pretix versions.
+compatibility      string               Specifier for compatible Eventyay versions.
 ================== ==================== ===========================================================
 
 A working example would be:
@@ -60,17 +62,17 @@ A working example would be:
 .. code-block:: python
 
     try:
-        from pretix.base.plugins import PluginConfig
+        from eventyay.base.plugins import PluginConfig
     except ImportError:
-        raise RuntimeError("Please use pretix 2.7 or above to run this plugin!")
+        raise RuntimeError("Please use Eventyay 2.7 or above to run this plugin!")
     from django.utils.translation import gettext_lazy as _
 
 
     class PaypalApp(PluginConfig):
-        name = 'pretix_paypal'
+        name = 'eventyay_paypal'
         verbose_name = _("PayPal")
 
-        class PretixPluginMeta:
+        class EventyayPluginMeta:
             name = _("PayPal")
             author = _("the development team")
             version = '1.0.0'
@@ -78,13 +80,13 @@ A working example would be:
             visible = True
             restricted = False
             description = _("This plugin allows you to receive payments via PayPal")
-            compatibility = "pretix>=2.7.0"
+            compatibility = "eventyay>=2.7.0"
 
 
-    default_app_config = 'pretix_paypal.PaypalApp'
+    default_app_config = 'eventyay_paypal.PaypalApp'
 
 The ``AppConfig`` class may implement a property ``compatibility_errors``, that checks
-whether the pretix installation meets all requirements of the plugin. If so,
+whether the Eventyay installation meets all requirements of the plugin. If so,
 it should contain ``None`` or an empty list, otherwise a list of strings containing
 human-readable error messages. We recommend using the ``django.utils.functional.cached_property``
 decorator, as it might get called a lot. You can also implement ``compatibility_warnings``,
@@ -96,7 +98,7 @@ is available for a specific event. If not, it will not be shown in the plugin li
 Plugin registration
 -------------------
 
-Somehow, pretix needs to know that your plugin exists at all. For this purpose, we
+Somehow, Eventyay needs to know that your plugin exists at all. For this purpose, we
 make use of the `entry point`_ feature of setuptools. To register a plugin that lives
 in a separate python package, your ``setup.py`` should contain something like this:
 
@@ -105,20 +107,20 @@ in a separate python package, your ``setup.py`` should contain something like th
     setup(
         args...,
         entry_points="""
-    [pretix.plugin]
-    pretix_paypal=pretix_paypal:PretixPluginMeta
+    [eventyay.plugin]
+    eventyay_paypal=eventyay_paypal:EventyayPluginMeta
     """
     )
 
 
-This will automatically make pretix discover this plugin as soon as it is installed e.g.
+This will automatically make Eventyay discover this plugin as soon as it is installed e.g.
 through ``pip``. During development, you can just run ``python setup.py develop`` inside
 your plugin source directory to make it discoverable.
 
 Signals
 -------
 
-The various components of pretix define a number of signals which your plugin can
+The various components of Eventyay define a number of signals which your plugin can
 listen for. We will go into the details of the different signals in the following
 pages. We suggest that you put your signal receivers into a ``signals`` submodule
 of your plugin. You should extend your ``AppConfig`` (see above) by the following
@@ -127,7 +129,7 @@ method to make your receivers available:
 .. code-block:: python
 
     class PaypalApp(AppConfig):
-        …
+        name = 'eventyay_paypal'
 
         def ready(self):
             from . import signals  # NOQA
@@ -138,7 +140,7 @@ in the ``installed`` method:
 .. code-block:: python
 
     class PaypalApp(AppConfig):
-        …
+        name = 'eventyay_paypal'
 
         def installed(self, event):
             pass  # Your code here
@@ -151,7 +153,7 @@ Views
 -----
 
 Your plugin may define custom views. If you put an ``urls`` submodule into your
-plugin module, pretix will automatically import it and include it into the root
+plugin module, Eventyay will automatically import it and include it into the root
 URL configuration with the namespace ``plugins:<label>:``, where ``<label>`` is
 your Django app label.
 

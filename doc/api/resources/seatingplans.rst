@@ -51,7 +51,7 @@ Endpoints
           {
             "id": 2,
             "name": "Main plan",
-            "layout": { … }
+            "layout": {"name": "Simple Plan", "categories": []}
           }
         ]
       }
@@ -85,7 +85,7 @@ Endpoints
       {
         "id": 2,
         "name": "Main plan",
-        "layout": { … }
+        "layout": {"name": "Simple Plan", "categories": []}
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -109,7 +109,7 @@ Endpoints
 
       {
         "name": "Main plan",
-        "layout": { … }
+        "layout": {"name": "Simple Plan", "categories": []}
       }
 
    **Example response**:
@@ -123,7 +123,7 @@ Endpoints
       {
         "id": 3,
         "name": "Main plan",
-        "layout": { … }
+        "layout": {"name": "Simple Plan", "categories": []}
       }
 
    :param organizer: The ``slug`` field of the organizer to create a seating plan for
@@ -166,7 +166,7 @@ Endpoints
       {
         "id": 1,
         "name": "Old plan",
-        "layout": { … }
+        "layout": {"name": "Simple Plan", "categories": []}
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -202,4 +202,4 @@ Endpoints
    :statuscode 403: The requested organizer does not exist **or** you have no permission to delete this resource **or** the plan is currently in use.
 
 
-.. _here: https://github.com/pretix/pretix/blob/master/src/pretix/static/seating/seating-plan.schema.json
+.. _here: https://github.com/fossasia/eventyay/blob/master/app/Eventyay/static/seating/seating-plan.schema.json

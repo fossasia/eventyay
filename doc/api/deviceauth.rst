@@ -72,7 +72,7 @@ In case of an error, the response will look like this:
 Performing API requests
 -----------------------
 
-You need to include the API token with every request to pretix' API in the ``Authorization`` header
+You need to include the API token with every request to Eventyay' API in the ``Authorization`` header
 like the following:
 
 .. sourcecode:: http
@@ -145,8 +145,8 @@ Device authentication is currently hardcoded to grant the following permissions:
 Devices cannot change events or products and cannot access vouchers.
 
 Additionally, when creating a device through the user interface or API, a user can specify a "security profile" for
-the device. These include an allow list of specific API calls that may be made by the device. pretix ships with security
-policies for official pretix apps like pretixSCAN and pretixPOS.
+the device. These include an allow list of specific API calls that may be made by the device. Eventyay ships with security
+policies for official Eventyay apps like pretixSCAN and pretixPOS.
 
 Removing a device
 -----------------

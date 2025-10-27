@@ -1,0 +1,147 @@
+name: Deploy Documentation
+
+on:
+  push:
+    branches:
+      - enext
+      - main
+    paths:
+      - 'doc/**'
+      - '.github/workflows/deploy-docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            enchant-2 \
+            libffi-dev \
+            libssl-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            gettext \
+            libfreetype-dev \
+            libjpeg-dev \
+            libpq-dev \
+            build-essential
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd doc
+          # Run comprehensive installation script
+          bash install-all-deps.sh
+        env:
+          # Skip building C extensions if they fail
+          SKIP_BUILD_EXT: "1"
+
+      - name: Build main documentation
+        run: |
+          cd doc
+          # Set minimal environment for Django
+          export DJANGO_SETTINGS_MODULE=eventyay.config.settings
+          export EVENTYAY_CONFIG_FILE=/dev/null
+          make html || echo "Main docs build completed with warnings"
+        continue-on-error: true
+        env:
+          DATABASE_URL: "sqlite:////:memory:"
+          REDIS_URL: "redis://localhost:6379/0"
+
+      - name: Build Talk documentation
+        run: |
+          cd doc/talk
+          export DJANGO_SETTINGS_MODULE=eventyay.config.settings
+          export EVENTYAY_CONFIG_FILE=/dev/null
+          make html || echo "Talk docs build completed with warnings"
+        continue-on-error: true
+        env:
+          DATABASE_URL: "sqlite:////:memory:"
+          REDIS_URL: "redis://localhost:6379/0"
+
+      - name: Build Video documentation
+        run: |
+          cd doc/video
+          make html || echo "Video docs build completed with warnings"
+        continue-on-error: true
+        env:
+          SKIP_DJANGO_SETUP: "1"
+
+      - name: Consolidate documentation
+        run: |
+          mkdir -p _site
+          # Copy main documentation
+          if [ -d doc/_build/html ]; then
+            echo "Copying main documentation..."
+            cp -r doc/_build/html/* _site/
+          else
+            echo "Warning: Main docs not found"
+          fi
+          # Copy Talk documentation
+          if [ -d doc/talk/_build/html ]; then
+            echo "Copying Talk documentation..."
+            mkdir -p _site/talk
+            cp -r doc/talk/_build/html/* _site/talk/
+          else
+            echo "Warning: Talk docs not found"
+          fi
+          # Copy Video documentation
+          if [ -d doc/video/_build/html ]; then
+            echo "Copying Video documentation..."
+            mkdir -p _site/video
+            cp -r doc/video/_build/html/* _site/video/
+          else
+            echo "Warning: Video docs not found"
+          fi
+          # Copy CNAME for custom domain (docs.eventyay.com)
+          if [ -f doc/CNAME ]; then
+            echo "Copying CNAME file..."
+            cp doc/CNAME _site/
+          fi
+          # Create .nojekyll to prevent GitHub Pages from ignoring files starting with _
+          touch _site/.nojekyll
+          # List contents for verification
+          echo "Documentation site structure:"
+          ls -la _site/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

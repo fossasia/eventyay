@@ -6,7 +6,7 @@ Items
 Resource description
 --------------------
 
-Items (better known as products) are the things that can be sold using pretix.
+Items (better known as products) are the things that can be sold using Eventyay.
 The item resource contains the following public fields:
 
 .. rst-class:: rest-resource-table

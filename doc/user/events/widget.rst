@@ -23,10 +23,10 @@ You will obtain two code snippets that look *roughly* like the following. The fi
 
 The second snippet should be embedded at the position where the widget should show up::
 
-    <pretix-widget event="https://eventyay.com/demo/democon/"></pretix-widget>
+    <Eventyay-widget event="https://eventyay.com/demo/democon/"></Eventyay-widget>
     <noscript>
-       <div class="pretix-widget">
-            <div class="pretix-widget-info-message">
+       <div class="Eventyay-widget">
+            <div class="Eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our ticket shop without JavaScript,
                 please <a target="_blank" href="https://eventyay.com/demo/democon/">click here</a>.
             </div>
@@ -41,8 +41,8 @@ The second snippet should be embedded at the position where the widget should sh
 .. note::
 
     Some website builders like Jimdo have trouble with our custom HTML tag. In that case, you can use
-    ``<div class="pretix-widget-compat" …></div>`` instead of ``<pretix-widget …></pretix-widget>`` starting with
-    pretix 1.14.
+    ``<div class="Eventyay-widget-compat" …></div>`` instead of ``<Eventyay-widget …></Eventyay-widget>`` starting with
+    Eventyay 1.14.
 
 Example
 -------
@@ -53,10 +53,10 @@ Your embedded widget could look like the following:
 
     <link rel="stylesheet" type="text/css" href="https://eventyay.com/demo/democon/widget/v1.css">
     <script type="text/javascript" src="https://eventyay.com/widget/v1.en.js" async></script>
-    <pretix-widget event="https://eventyay.com/demo/democon/"></pretix-widget>
+    <Eventyay-widget event="https://eventyay.com/demo/democon/"></Eventyay-widget>
     <noscript>
-       <div class="pretix-widget">
-            <div class="pretix-widget-info-message">
+       <div class="Eventyay-widget">
+            <div class="Eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our ticket shop without javascript, please <a target="_blank" href="https://eventyay.com/demo/democon/">click here</a>.
             </div>
         </div>
@@ -68,7 +68,7 @@ Styling
 
 If you want, you can customize the appearance of the widget to fit your website with CSS. If you inspect the rendered
 HTML of the widget with your browser's developer tools, you will see that nearly every element has a custom class
-and all classes are prefixed with ``pretix-widget``. You can override the styles as much as you want to and if
+and all classes are prefixed with ``Eventyay-widget``. You can override the styles as much as you want to and if
 you want to go all custom, you don't even need to use the stylesheet provided by us at all.
 
 SSL
@@ -77,7 +77,7 @@ SSL
 Since buying a ticket normally involves entering sensitive data, we strongly suggest that you use SSL/HTTPS for the page
 that includes the widget. Initiatives like `Let's Encrypt`_ allow you to obtain a SSL certificate free of charge.
 
-All data transferred to pretix will be made over SSL, even if using the widget on a non-SSL site. However, without
+All data transferred to Eventyay will be made over SSL, even if using the widget on a non-SSL site. However, without
 using SSL for your site, a man-in-the-middle attacker could potentially alter the widget in dangerous ways. Moreover,
 using SSL is becoming standard practice and your customers might want expect see the secure lock icon in their browser
 granted to SSL-enabled web pages.
@@ -86,7 +86,7 @@ By default, the checkout process will open in a new tab in your customer's brows
 website. If you confident to have a good reason for not using SSL, you can override this behavior with the
 ``skip-ssl-check`` attribute::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" skip-ssl-check></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" skip-ssl-check></Eventyay-widget>
 
 Always open a new tab
 ---------------------
@@ -94,7 +94,7 @@ Always open a new tab
 If you want the checkout process to always open a new tab regardless of screen size, you can pass the ``disable-iframe``
 attribute::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" disable-iframe></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" disable-iframe></Eventyay-widget>
 
 
 Pre-selecting a voucher
@@ -102,17 +102,17 @@ Pre-selecting a voucher
 
 You can pre-select a voucher for the widget with the ``voucher`` attribute::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" voucher="ABCDE123456"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" voucher="ABCDE123456"></Eventyay-widget>
 
 This way, the widget will only show products that can be bought with the voucher and prices according to the
 voucher's settings.
 
 .. raw:: html
 
-    <pretix-widget event="https://eventyay.com/demo/democon/" voucher="ABCDE123456"></pretix-widget>
+    <Eventyay-widget event="https://eventyay.com/demo/democon/" voucher="ABCDE123456"></Eventyay-widget>
     <noscript>
-       <div class="pretix-widget">
-            <div class="pretix-widget-info-message">
+       <div class="Eventyay-widget">
+            <div class="Eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our ticket shop without javascript, please <a target="_blank" href="https://eventyay.com/demo/democon/">click here</a>.
             </div>
         </div>
@@ -123,36 +123,36 @@ Disabling the voucher input
 
 If you want to disable voucher input in the widget, you can pass the ``disable-vouchers`` attribute::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" disable-vouchers></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" disable-vouchers></Eventyay-widget>
 
 Filtering products
 ------------------
 
 You can filter the products shown in the widget by passing in a list of product IDs::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" items="23,42"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" items="23,42"></Eventyay-widget>
 
 Alternatively, you can select one or more categories to be shown::
 
-   <pretix-widget event="https://eventyay.com/demo/democon/" categories="12,25"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/democon/" categories="12,25"></Eventyay-widget>
 
 Multi-event selection
 ---------------------
 
 If you want to embed multiple events in a single widget, you can do so. If it's multiple dates of an event series, just leave off the ``series`` attribute::
 
-   <pretix-widget event="https://eventyay.com/demo/series/"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/series/"></Eventyay-widget>
 
 If you want to include all your public events, you can just reference your organizer::
 
-   <pretix-widget event="https://eventyay.com/demo/"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/"></Eventyay-widget>
 
 There is an optional ``style`` parameter that let's you choose between a monthly calendar view, a week view and a list
 view. If you do not set it, the choice will be taken from your organizer settings::
 
-   <pretix-widget event="https://eventyay.com/demo/series/" style="list"></pretix-widget>
-   <pretix-widget event="https://eventyay.com/demo/series/" style="calendar"></pretix-widget>
-   <pretix-widget event="https://eventyay.com/demo/series/" style="week"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/series/" style="list"></Eventyay-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/series/" style="calendar"></Eventyay-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/series/" style="week"></Eventyay-widget>
 
 If you have more than 100 events, the system might refuse to show a list view and always show a calendar for performance
 reasons instead.
@@ -161,10 +161,10 @@ You can see an example here:
 
 .. raw:: html
 
-    <pretix-widget event="https://eventyay.com/demo/series/" style="calendar"></pretix-widget>
+    <Eventyay-widget event="https://eventyay.com/demo/series/" style="calendar"></Eventyay-widget>
     <noscript>
-       <div class="pretix-widget">
-            <div class="pretix-widget-info-message">
+       <div class="Eventyay-widget">
+            <div class="Eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our ticket shop without javascript, please <a target="_blank" href="https://eventyay.com/demo/series/">click here</a>.
             </div>
         </div>
@@ -173,10 +173,10 @@ You can see an example here:
 You can filter events by meta data attributes. You can create those attributes in your order profile and set their values in both event and series date
 settings. For example, if you set up a meta data property called "Promoted" that you set to "Yes" on some events, you can pass a filter like this::
 
-   <pretix-widget event="https://eventyay.com/demo/series/" style="list" filter="attr[Promoted]=Yes"></pretix-widget>
+   <Eventyay-widget event="https://eventyay.com/demo/series/" style="list" filter="attr[Promoted]=Yes"></Eventyay-widget>
 
-pretix Button
--------------
+Eventyay Button
+---------------
 
 Instead of a product list, you can also display just a single button. When pressed, the button will add a number of
 products associated with the button to the cart and will immediately proceed to checkout if the operation succeeded.
@@ -184,24 +184,24 @@ You can try out this behavior here:
 
 .. raw:: html
 
-    <pretix-button event="https://eventyay.com/demo/democon/" items="item_6424=1">Buy ticket!</pretix-button>
+    <Eventyay-button event="https://eventyay.com/demo/democon/" items="item_6424=1">Buy ticket!</Eventyay-button>
     <noscript>
-       <div class="pretix-widget">
-            <div class="pretix-widget-info-message">
+       <div class="Eventyay-widget">
+            <div class="Eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our ticket shop without javascript, please <a target="_blank" href="https://eventyay.com/demo/democon/">click here</a>.
             </div>
         </div>
     </noscript>
     <br><br>
 
-You can embed the pretix Button just like the pretix Widget. Just like above, first embed the CSS and JavaScript
-resources. Then, instead of the ``pretix-widget`` tag, use the ``pretix-button`` tag::
+You can embed the Eventyay Button just like the Eventyay Widget. Just like above, first embed the CSS and JavaScript
+resources. Then, instead of the ``Eventyay-widget`` tag, use the ``Eventyay-button`` tag::
 
-    <pretix-button event="https://eventyay.com/demo/democon/" items="item_6424=1">
+    <Eventyay-button event="https://eventyay.com/demo/democon/" items="item_6424=1">
         Buy ticket!
-    </pretix-button>
+    </Eventyay-button>
 
-As you can see, the ``pretix-button`` element takes an additional ``items`` attribute that specifies the items that
+As you can see, the ``Eventyay-button`` element takes an additional ``items`` attribute that specifies the items that
 should be added to the cart. The syntax of this attribute is ``item_ITEMID=1,item_ITEMID=2,variation_ITEMID_VARID=4``
 where ``ITEMID`` are the internal IDs of items to be added and ``VARID`` are the internal IDs of variations of those
 items, if the items have variations. If you omit the ``items`` attribute, the general start page will be presented.
@@ -211,12 +211,12 @@ cart. This can be done by specifying the ``subevent``-attribute.
 
 Just as the widget, the button supports the optional attributes ``voucher``, ``disable-iframe``, and ``skip-ssl-check``.
 
-You can style the button using the ``pretix-button`` CSS class.
+You can style the button using the ``Eventyay-button`` CSS class.
 
 Dynamically opening the widget
 ------------------------------
 
-You can get the behavior of the pretix Button without a button at all, so you can trigger it from your own code in
+You can get the behavior of the Eventyay Button without a button at all, so you can trigger it from your own code in
 response to a user action. Usually, this will open an overlay with your ticket shop, however in some cases, such as
 missing HTTPS encryption on your case or a really small screen (mobile), it will open a new tab instead of an overlay.
 Therefore, make sure you call this *in direct response to a user action*, otherwise most browser will block it as an
@@ -277,17 +277,17 @@ If you display the widget in a restricted area of your website and you want to p
 with known user data to save your users some typing and increase conversions, you can pass additional data attributes
 with that information::
 
-    <pretix-widget event="https://eventyay.com/demo/democon/"
+    <Eventyay-widget event="https://eventyay.com/demo/democon/"
         data-attendee-name-given-name="John"
         data-attendee-name-family-name="Doe"
         data-invoice-address-name-given-name="John"
         data-invoice-address-name-family-name="Doe"
         data-email="test@example.org"
         data-question-L9G8NG9M="Foobar">
-    </pretix-widget>
+    </Eventyay-widget>
 
-This works for the pretix Button as well, if you also specify a product.
-Currently, the following attributes are understood by pretix itself:
+This works for the Eventyay Button as well, if you also specify a product.
+Currently, the following attributes are understood by Eventyay itself:
 
 * ``data-email`` will pre-fill the order email field as well as the attendee email field (if enabled).
 
@@ -310,14 +310,14 @@ Currently, the following attributes are understood by pretix itself:
   always be modified. Note that this is not a security feature and can easily be overridden by users, so do not rely
   on this for authentication.
 
-Any configured pretix plugins might understand more data fields. For example, if the appropriate plugins on pretix
-Hosted or pretix Enterprise are active, you can pass the following fields:
+Any configured Eventyay plugins might understand more data fields. For example, if the appropriate plugins on Eventyay
+Hosted or Eventyay Enterprise are active, you can pass the following fields:
 
 * If you use the campaigns plugin, you can pass a campaign ID as a value to ``data-campaign``. This way, all orders
   made through this widget will be counted towards this campaign.
 
 * If you use the tracking plugin, you can enable cross-domain tracking. To do so, you need to initialize the 
-  pretix-widget manually. Use the html code to embed the widget and add one the following code snippets. Make sure to
+  Eventyay-widget manually. Use the html code to embed the widget and add one the following code snippets. Make sure to
   replace all occurrences of <MEASUREMENT_ID> with your Google Analytics MEASUREMENT_ID (UA-XXXXXXX-X or G-XXXXXXXX)
 
   Please also make sure to add the embedding website to your `Referral exclusions
@@ -352,7 +352,7 @@ Hosted or pretix Enterprise are active, you can pass the following fields:
                     if (sessionId) window.PretixWidget.widget_data["tracking-ga-sessid"] = sessionId;
                     window.PretixWidget.buildWidgets();
                 };
-                // make sure to build pretix-widgets if gtag fails to load either client_id or session_id
+                // make sure to build Eventyay-widgets if gtag fails to load either client_id or session_id
                 loadingTimeout = window.setTimeout(build, 2000);
 
                 gtag('get', '<MEASUREMENT_ID>', 'client_id', function(id) {
@@ -384,7 +384,7 @@ Hosted or pretix Enterprise are active, you can pass the following fields:
                     return;
                 }
 
-                // make sure to build pretix-widgets if gtag fails to load client_id
+                // make sure to build Eventyay-widgets if gtag fails to load client_id
                 var loadingTimeout = window.setTimeout(function() {
                     loadingTimeout = null;
                     window.PretixWidget.buildWidgets();
@@ -401,7 +401,7 @@ Hosted or pretix Enterprise are active, you can pass the following fields:
         };
     </script>
 
-  If you use ```analytics.js` (Universal Analytics)::
+  If you use ``analytics.js`` (Universal Analytics)::
 
     <script>
         (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -439,6 +439,6 @@ Hosted or pretix Enterprise are active, you can pass the following fields:
 
 .. versionchanged:: 3.6
 
-   Dynamically opening the widget has been added in pretix 3.6.
+   Dynamically opening the widget has been added in Eventyay 3.6.
 
 .. _Let's Encrypt: https://letsencrypt.org/

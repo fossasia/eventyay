@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+{% set title = "Overview" %}
+{% block body %}
+  <section>
+    <h1>Welcome to Eventyay’s documentation</h1>
+    <p>
+        <p>Eventyay is an open source conference management tool.
+        It starts you off by creating a  Calls for Participation that is
+        exactly right for you. You can then review incoming submissions with
+        your team and choose the best ones. Once you’ve made your choice,
+        create the best schedule for your conference with our schedule editor.
+        It even takes into account when your speakers are available!
+        And it can do even more – check the <a href="https://Eventyay.com/p/features">
+        features</a> page for details.</p>
+
+        <p>
+        We aim to make our documentation as up to date, usable and
+        complete as possible. We want you to be able understand, use, run, and
+        improve Eventyay. That said, documentation is never finished, and rarely
+        perfect. If there is anything unclear or missing in our documentation,
+        or if Eventyay behaves in unexpected ways, we’d be happy if you’d <a
+        href="https://github.com/fossasia/eventyay/issues/new">let us know</a>.
+        </p>
+    </p>
+
+    <h2>Documentation structure</h2>
+
+<div class="boxes">
+    <a href="user/index.html" class="sectionbox">
+        <span class="fa fa-users fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>User Guide</strong>
+            </div>
+            <div class="text">
+                <p>
+                    Find out how to configure and use Eventyay as an event organiser or reviewer.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="administrator/index.html" class="sectionbox">
+        <span class="fa fa-server fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>Administrator documentation</strong>
+            </div>
+            <div class="text">
+                <p>
+                    You want to install and maintain Eventyay on your own server?
+                    Read about different ways to set things up.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="api/index.html" class="sectionbox">
+        <span class="fa fa-plug fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>API documentation</strong>
+            </div>
+            <div class="text">
+                <p>
+                    You want to interact with Eventyay using its RESTful API?
+                    We’ve got you covered.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="developer/index.html" class="sectionbox">
+        <span class="fa fa-wrench fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>Developer docs</strong>
+            </div>
+            <div class="text">
+                <p>
+                    You want to contribute to Eventyay, either to fix bugs,
+                    or to introduce that feature you’re missing?
+                    Setup instructions and helpful instructions are over here.
+                </p>
+            </div>
+        </div>
+    </a>
+</div>
+
+<h2>Project information</h2>
+
+<div>
+    <p>The Eventyay source code is available on
+    <a href="https://github.com/fossasia/eventyay">GitHub</a>, where you can
+    also find the <a href="https://github.com/fossasia/eventyay/issues/">issue
+    tracker</a>. The documentation is available at
+    <a href="https://docs.Eventyay.org">docs.Eventyay.org</a>, and you can find
+    up to date information on <a href="https://Eventyay.com/news">our blog</a>
+    and <a href="https://Eventyay.com/twitter">Twitter</a>. You can install
+    Eventyay with <code>pip</code> via <a href="https://pypi.org/project/Eventyay/">PyPI</a>.</p>
+
+    <p>Eventyay is published under the terms of the Apache License. The primary
+    maintainer of this project is <a href="https://rixx.de">Tobias Kunze</a>
+    who also runs the Eventyay hosting at <a href="https://Eventyay.com">Eventyay.com</a>.</p>
+
+    If you’d like to contribute to Eventyay, you are most welcome! We have written
+    a little about how to get started
+    <a href="https://docs.Eventyay.org/developer/">here</a>.
+    </p>
+</div>
+
+    <h2>Useful links</h2>
+
+<div class="boxes">
+    <a href="https://Eventyay.com" target="_blank" class="sectionbox">
+        <span class="fa fa-globe fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>Project website</strong>
+            </div>
+            <div class="text">
+                <p>
+                    Eventyay.com is the central entrypoint to the project and also
+                    the home of the commercial hosting service.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="https://github.com/fossasia/eventyay" target="_blank" class="sectionbox">
+        <span class="fa fa-github fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>GitHub repository</strong>
+            </div>
+            <div class="text">
+                <p>
+                    Eventyay is open source – you can find the complete source code
+                    here, and some related projects in the same GitHub
+                    organization.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="https://Eventyay.com/p/news" target="_blank" class="sectionbox">
+        <span class="fa fa-newspaper-o fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>Project blog</strong>
+            </div>
+            <div class="text">
+                <p>
+                    Any relevant news about releases (and Eventyay in general) will be presented in our blog.
+                </p>
+            </div>
+        </div>
+    </a>
+    <a href="https://twitter.com/Eventyay" target="_blank" class="sectionbox">
+        <span class="fa fa-twitter fa-fw"></span>
+        <div class="content">
+            <div class="heading">
+                <strong>Twitter</strong>
+            </div>
+            <div class="text">
+                <p>Keep in touch and stay up to date by following our project account on Twitter.</p>
+            </div>
+        </div>
+    </a>
+</div>
+  </section>
+
+{% endblock %}

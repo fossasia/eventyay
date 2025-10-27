@@ -1,5 +1,5 @@
-Contributing to pretix
-======================
+Contributing to Eventyay
+========================
 
 .. toctree::
    :maxdepth: 2

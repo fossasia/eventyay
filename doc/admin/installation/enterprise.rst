@@ -1,10 +1,10 @@
 .. highlight:: none
 
-Installing pretix Enterprise plugins
-====================================
+Installing Eventyay Enterprise plugins
+======================================
 
-If you want to use a feature of pretix that is part of our commercial offering pretix Enterprise, you need to follow
-some extra steps. Installation works similar to normal pretix plugins, but involves a few extra steps.
+If you want to use a feature of Eventyay that is part of our commercial offering Eventyay Enterprise, you need to follow
+some extra steps. Installation works similar to normal Eventyay plugins, but involves a few extra steps.
 
 Buying the license
 ------------------
@@ -17,31 +17,31 @@ first.
 Manual installation
 -------------------
 
-First, generate an SSH key for the system user that you install pretix as. In our tutorial, that would be the user
-``pretix``. Choose an empty passphrase::
+First, generate an SSH key for the system user that you install Eventyay as. In our tutorial, that would be the user
+``Eventyay``. Choose an empty passphrase::
 
-    # su pretix
+    # su Eventyay
     $ ssh-keygen
     Generating public/private rsa key pair.
-    Enter file in which to save the key (/var/pretix/.ssh/id_rsa):
+    Enter file in which to save the key (/var/eventyay/.ssh/id_rsa):
     Enter passphrase (empty for no passphrase):
     Enter same passphrase again:
-    Your identification has been saved in /var/pretix/.ssh/id_rsa.
-    Your public key has been saved in /var/pretix/.ssh/id_rsa.pub.
+    Your identification has been saved in /var/eventyay/.ssh/id_rsa.
+    Your public key has been saved in /var/eventyay/.ssh/id_rsa.pub.
 
-Next, send the content of the *public* key to your sales representative at pretix::
+Next, send the content of the *public* key to your sales representative at Eventyay::
 
-    $ cat /var/pretix/.ssh/id_rsa.pub
-    ssh-rsa AAAAB3N...744HZawHlD pretix@foo
+    $ cat /var/eventyay/.ssh/id_rsa.pub
+    ssh-rsa AAAAB3N...744HZawHlD Eventyay@foo
 
 After we configured your key in our system, you can install the plugin directly using ``pip`` from the URL we told
 you, for example::
 
-    $ source /var/pretix/venv/bin/activate
-    (venv)$ pip3 install -U "git+ssh://git@code.rami.io:10022/pretix/pretix-slack.git@stable#egg=pretix-slack"
-    (venv)$ python -m pretix migrate
-    (venv)$ python -m pretix rebuild
-    # systemctl restart pretix-web pretix-worker
+    $ source /var/eventyay/venv/bin/activate
+    (venv)$ pip3 install -U "git+ssh://git@code.rami.io:10022/Eventyay/Eventyay-slack.git@stable#egg=Eventyay-slack"
+    (venv)$ python -m Eventyay migrate
+    (venv)$ python -m Eventyay rebuild
+    # systemctl restart Eventyay-web Eventyay-worker
 
 Docker installation
 -------------------
@@ -50,26 +50,26 @@ To install a plugin, you need to build your own docker image. To do so, create a
 step, generate a new SSH key in that directory to use for authentication with us::
 
     $ cd /home/me/mypretixdocker
-    $ ssh-keygen -N "" -f id_pretix_enterprise
+    $ ssh-keygen -N "" -f id_eventyay_enterprise
 
-Next, send the content of the *public* key to your sales representative at pretix::
+Next, send the content of the *public* key to your sales representative at Eventyay::
 
-    $ cat id_pretix_enterprise.pub
-    ssh-rsa AAAAB3N...744HZawHlD pretix@foo
+    $ cat id_eventyay_enterprise.pub
+    ssh-rsa AAAAB3N...744HZawHlD Eventyay@foo
 
 After we configured your key in our system, you can add a ``Dockerfile`` in your directory that includes the newly
 generated key and installs the plugin from the URL we told you::
 
-    FROM pretix/standalone:stable
+    FROM fossasia/eventyay-tickets:stable
     USER root
-    COPY id_pretix_enterprise /root/.ssh/id_rsa
-    COPY id_pretix_enterprise.pub /root/.ssh/id_rsa.pub
+    COPY id_eventyay_enterprise /root/.ssh/id_rsa
+    COPY id_eventyay_enterprise.pub /root/.ssh/id_rsa.pub
     RUN chmod -R 0600 /root/.ssh && \
         mkdir -p /etc/ssh && \
         ssh-keyscan -t rsa -p 10022 code.rami.io >> /root/.ssh/known_hosts && \
         echo StrictHostKeyChecking=no >> /root/.ssh/config && \
-        DJANGO_SETTINGS_MODULE=pretix.settings pip3 install -U "git+ssh://git@code.rami.io:10022/pretix/pretix-slack.git@stable#egg=pretix-slack" && \
-        cd /pretix/src && \
+        DJANGO_SETTINGS_MODULE=Eventyay.settings pip3 install -U "git+ssh://git@code.rami.io:10022/Eventyay/Eventyay-slack.git@stable#egg=Eventyay-slack" && \
+        cd /Eventyay/src && \
         sudo -u pretixuser make production
     USER pretixuser
 
@@ -77,8 +77,8 @@ Then, build the image for docker::
 
     $ docker build -t mypretix
 
-You can now use that image ``mypretix`` instead of ``pretix/standalone:stable`` in your ``/etc/systemd/system/pretix.service``
-service file. Be sure to re-build your custom image after you pulled ``pretix/standalone`` if you want to perform an
-update to a new version of pretix.
+You can now use that image ``mypretix`` instead of ``fossasia/eventyay-tickets:stable`` in your ``/etc/systemd/system/Eventyay.service``
+service file. Be sure to re-build your custom image after you pulled ``fossasia/eventyay-tickets`` if you want to perform an
+update to a new version of Eventyay.
 
 .. _price list: https://eventyay.com/about/en/pricing

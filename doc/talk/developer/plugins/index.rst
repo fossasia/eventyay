@@ -1,0 +1,25 @@
+.. _plugin-index:
+
+Plugin development
+==================
+
+The following pages will help you create your first Eventyay plugin, and will
+show you common plugin patterns and functionality in the “Writing a … plugin”
+sections.
+
+If you’re not quite sure what kind of plugin you’d like to work on, check out
+our `plugin idea collection`_, or add entries there yourself. If you develop
+a plugin, please add it to our `plugin list`_!
+
+.. toctree::
+   :maxdepth: 2
+
+   plugins
+   general
+   customview
+   recording
+   exporter
+   authentication
+
+.. _plugin idea collection: https://github.com/fossasia/eventyay/wiki/Plugin-ideas
+.. _plugin list: https://github.com/fossasia/eventyay/wiki/Plugins

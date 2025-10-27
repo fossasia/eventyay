@@ -61,6 +61,7 @@ class SubmissionType(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for submission type views."""
         base = edit = '{self.event.cfp.urls.types}{self.pk}/'
         default = '{base}default'
         delete = '{base}delete/'

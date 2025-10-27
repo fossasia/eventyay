@@ -1,7 +1,3 @@
-.. spelling::
-
-   checkins
-   pdf
 
 
 .. _rest-orders:
@@ -47,7 +43,7 @@ invoice_address                       object                     Invoice address
 ├ last_modified                       datetime                   Last modification date of the address
 ├ company                             string                     Customer company name
 ├ is_business                         boolean                    Business or individual customers (always ``false``
-                                                                 for orders created before pretix 1.7, do not rely on
+                                                                 for orders created before Eventyay 1.7, do not rely on
                                                                  it).
 ├ name                                string                     Customer name
 ├ name_parts                          object of strings          Customer name decomposition
@@ -599,7 +595,7 @@ Order ticket download
       Vary: Accept
       Content-Type: application/pdf
 
-      ...
+      %PDF-1.4 binary content...
 
    :param organizer: The ``slug`` field of the organizer to fetch
    :param event: The ``slug`` field of the event to fetch
@@ -657,7 +653,13 @@ Updating order fields
       Vary: Accept
       Content-Type: application/json
 
-      (Full order resource, see above.)
+      {
+        "code": "ABC12",
+        "status": "p",
+        "email": "buyer@example.org",
+        "datetime": "2017-12-01T10:00:00Z",
+        "positions": []
+      }
 
    :param organizer: The ``slug`` field of the organizer of the event
    :param event: The ``slug`` field of the event
@@ -691,7 +693,13 @@ Generating new secrets
       Vary: Accept
       Content-Type: application/json
 
-      (Full order resource, see above.)
+      {
+        "code": "ABC12",
+        "status": "p",
+        "email": "buyer@example.org",
+        "datetime": "2017-12-01T10:00:00Z",
+        "positions": []
+      }
 
    :param organizer: The ``slug`` field of the organizer of the event
    :param event: The ``slug`` field of the event
@@ -804,21 +812,21 @@ Creating orders
    * ``checkin_attention`` (optional)
    * ``invoice_address`` (optional)
 
-      * ``company``
-      * ``is_business``
-      * ``name`` **or** ``name_parts``
-      * ``street``
-      * ``zipcode``
-      * ``city``
-      * ``country``
-      * ``state``
-      * ``internal_reference``
-      * ``vat_id``
-      * ``vat_id_validated`` (optional) – If you need support for reverse charge (rarely the case), you need to check
+     * ``company``
+     * ``is_business``
+     * ``name`` **or** ``name_parts``
+     * ``street``
+     * ``zipcode``
+     * ``city``
+     * ``country``
+     * ``state``
+     * ``internal_reference``
+     * ``vat_id``
+     * ``vat_id_validated`` (optional) – If you need support for reverse charge (rarely the case), you need to check
        yourself if the passed VAT ID is a valid EU VAT ID. In that case, set this to ``true``. Only valid VAT IDs will
        trigger reverse charge taxation. Don't forget to set ``is_business`` as well!
 
-   * ``positions``
+  * ``positions``
 
       * ``positionid`` (optional, see below)
       * ``item``
@@ -862,19 +870,19 @@ Creating orders
    * ``force`` (optional). If set to ``true``, quotas will be ignored.
    * ``send_email`` (optional). If set to ``true``, the same emails will be sent as for a regular order, regardless of
      whether these emails are enabled for certain sales channels. Defaults to
-     ``false``. Used to be ``send_mail`` before pretix 3.14.
+     ``false``. Used to be ``send_mail`` before Eventyay 3.14.
 
    If you want to use add-on products, you need to set the ``positionid`` fields of all positions manually
    to incrementing integers starting with ``1``. Then, you can reference one of these
    IDs in the ``addon_to`` field of another position. Note that all add_ons for a specific position need to come
    immediately after the position itself.
 
-   Starting with pretix 3.7, you can add ``"simulate": true`` to the body to do a "dry run" of your order. This will
+   Starting with Eventyay 3.7, you can add ``"simulate": true`` to the body to do a "dry run" of your order. This will
    validate your order and return you an order object with the resulting prices, but will not create an actual order.
    You can use this for testing or to look up prices. In this case, some attributes are ignored, such as whether
    to send an email or what payment provider will be used. Note that some returned fields will contain empty values
    (e.g. all ``id`` fields of positions will be zero) and some will contain fake values (e.g. the order code will
-   always be ``PREVIEW``). pretix plugins will not be triggered, so some special behavior might be missing as well.
+   always be ``PREVIEW``). Eventyay plugins will not be triggered, so some special behavior might be missing as well.
 
    **Example request**:
 
@@ -942,7 +950,13 @@ Creating orders
       Vary: Accept
       Content-Type: application/json
 
-      (Full order resource, see above.)
+      {
+        "code": "ABC12",
+        "status": "p",
+        "email": "buyer@example.org",
+        "datetime": "2017-12-01T10:00:00Z",
+        "positions": []
+      }
 
    :param organizer: The ``slug`` field of the organizer of the event to create an order for
    :param event: The ``slug`` field of the event to create an order for
@@ -987,7 +1001,7 @@ Order state operations
       {
         "code": "ABC12",
         "status": "p",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1032,7 +1046,7 @@ Order state operations
       {
         "code": "ABC12",
         "status": "c",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1068,7 +1082,7 @@ Order state operations
       {
         "code": "ABC12",
         "status": "n",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1103,7 +1117,7 @@ Order state operations
       {
         "code": "ABC12",
         "status": "n",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1138,7 +1152,7 @@ Order state operations
       {
         "code": "ABC12",
         "status": "e",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1156,7 +1170,7 @@ Order state operations
    available, its state will be changed to pending.
 
    The only required parameter of this operation is ``expires``, which should contain a date in the future.
-   Note that only a date is expected, not a datetime, since pretix will always set the deadline to the end of the
+   Note that only a date is expected, not a datetime, since Eventyay will always set the deadline to the end of the
    day in the event's timezone.
 
    You can pass the optional parameter ``force``. If it is set to ``true``, the operation will be performed even if
@@ -1188,7 +1202,7 @@ Order state operations
         "code": "ABC12",
         "status": "n",
         "expires": "2017-10-28T23:59:59Z",
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1224,7 +1238,7 @@ Order state operations
         "code": "ABC12",
         "status": "n",
         "require_approval": false,
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1267,7 +1281,7 @@ Order state operations
         "code": "ABC12",
         "status": "c",
         "require_approval": true,
-        ...
+        "email": "buyer@example.org"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -1308,14 +1322,14 @@ Generating invoices
         "order": "FOO",
         "number": "DUMMY-00001",
         "is_cancellation": false,
-        ...
+        "invoice_to": "Sample Company"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
    :param event: The ``slug`` field of the event to modify
    :param code: The ``code`` field of the order to create an invoice for
    :statuscode 200: no error
-   :statuscode 400: The invoice can not be created (invoicing disabled, the order already has an invoice, …)
+   :statuscode 400: The invoice can not be created (invoicing disabled, the order already has an invoice, etc.)
    :statuscode 401: Authentication failure
    :statuscode 403: The requested organizer/event does not exist **or** you have no permission to view this resource.
    :statuscode 404: The requested order does not exist.
@@ -1584,7 +1598,7 @@ Order position ticket download
       Vary: Accept
       Content-Type: application/pdf
 
-      ...
+      %PDF-1.4 binary content...
 
    :param organizer: The ``slug`` field of the organizer to fetch
    :param event: The ``slug`` field of the event to fetch
@@ -1652,7 +1666,13 @@ Manipulating individual positions
       Vary: Accept
       Content-Type: application/json
 
-      (Full order resource, see above.)
+      {
+        "code": "ABC12",
+        "status": "p",
+        "email": "buyer@example.org",
+        "datetime": "2017-12-01T10:00:00Z",
+        "positions": []
+      }
 
    :param organizer: The ``slug`` field of the organizer of the event
    :param event: The ``slug`` field of the event
@@ -1819,7 +1839,7 @@ Order payment endpoints
       {
         "local_id": 1,
         "state": "confirmed",
-        ...
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -1856,7 +1876,7 @@ Order payment endpoints
       {
         "local_id": 1,
         "state": "canceled",
-        ...
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -1901,7 +1921,7 @@ Order payment endpoints
         "local_id": 1,
         "source": "admin",
         "state": "done",
-        ...
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -2144,7 +2164,7 @@ Order refund endpoints
       {
         "local_id": 1,
         "state": "done",
-        ....
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -2183,7 +2203,7 @@ Order refund endpoints
       {
         "local_id": 1,
         "state": "done",
-        ....
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -2219,7 +2239,7 @@ Order refund endpoints
       {
         "local_id": 1,
         "state": "canceled",
-        ....
+        "amount": "23.00"
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch

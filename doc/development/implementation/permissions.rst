@@ -1,25 +1,25 @@
 Permissions
 ===========
 
-pretix uses a fine-grained permission system to control who is allowed to control what parts of the system.
+Eventyay uses a fine-grained permission system to control who is allowed to control what parts of the system.
 The central concept here is the concept of *Teams*. You can read more on `configuring teams and permissions <user-teams>`_
-and the :class:`pretix.base.models.Team` model in the respective parts of the documentation. The basic digest is:
+and the :class:`eventyay.base.models.Team` model in the respective parts of the documentation. The basic digest is:
 An organizer account can have any number of teams, and any number of users can be part of a team. A team can be
 assigned a set of permissions and connected to some or all of the events of the organizer.
 
-A second way to access pretix is via the REST API, which allows authentication via tokens that are bound to a team,
-but not to a user. You can read more at :class:`pretix.base.models.TeamAPIToken`. This page will show you how to
-work with permissions in plugins and within the pretix code base.
+A second way to access Eventyay is via the REST API, which allows authentication via tokens that are bound to a team,
+but not to a user. You can read more at :class:`eventyay.base.models.TeamAPIToken`. This page will show you how to
+work with permissions in plugins and within the Eventyay code base.
 
 Requiring permissions for a view
 --------------------------------
 
-pretix provides a number of useful mixins and decorators that allow you to specify that a user needs a certain
+Eventyay provides a number of useful mixins and decorators that allow you to specify that a user needs a certain
 permission level to access a view:
 
 .. code-block:: python
 
-    from pretix.control.permissions import (
+    from eventyay.control.permissions import (
         OrganizerPermissionRequiredMixin, organizer_permission_required
     )
 
@@ -50,7 +50,7 @@ Of course, the same is available on event level:
 
 .. code-block:: python
 
-    from pretix.control.permissions import (
+    from eventyay.control.permissions import (
         EventPermissionRequiredMixin, event_permission_required
     )
 
@@ -81,7 +81,7 @@ You can also require that this view is only accessible by system administrators 
 
 .. code-block:: python
 
-    from pretix.control.permissions import (
+    from eventyay.control.permissions import (
         AdministratorPermissionRequiredMixin, administrator_permission_required
     )
 
@@ -99,7 +99,7 @@ necessarily have an active admin session:
 
 .. code-block:: python
 
-    from pretix.control.permissions import (
+    from eventyay.control.permissions import (
         StaffMemberRequiredMixin, staff_member_required
     )
 
@@ -118,7 +118,7 @@ Requiring permissions in the REST API
 -------------------------------------
 
 When creating your own ``viewset`` using Django REST framework, you just need to set the ``permission`` attribute
-and pretix will check it automatically for you::
+and Eventyay will check it automatically for you::
 
     class MyModelViewSet(viewsets.ReadOnlyModelViewSet):
         permission = 'can_view_orders'
@@ -126,8 +126,8 @@ and pretix will check it automatically for you::
 Checking permission in code
 ---------------------------
 
-If you need to work with permissions manually, there are a couple of useful helper methods on the :class:`pretix.base.models.Event`,
-:class:`pretix.base.models.User` and :class:`pretix.base.models.TeamAPIToken` classes. Here's a quick overview.
+If you need to work with permissions manually, there are a couple of useful helper methods on the :class:`eventyay.base.models.Event`,
+:class:`eventyay.base.models.User` and :class:`eventyay.base.models.TeamAPIToken` classes. Here's a quick overview.
 
 Return all users that are in any team that is connected to this event::
 
@@ -179,7 +179,7 @@ You can also do the reverse to get any events a user has access to::
     >>> user.get_events_with_any_permission(request=request)
     <QuerySet: …>
 
-Most of these methods work identically on :class:`pretix.base.models.TeamAPIToken`.
+Most of these methods work identically on :class:`eventyay.base.models.TeamAPIToken`.
 
 Staff sessions
 --------------
@@ -189,7 +189,7 @@ Staff sessions
    In 1.14, the ``User.is_superuser`` attribute has been deprecated and statically set to return ``False``. Staff
    sessions have been newly introduced.
 
-System administrators of a pretix instance are identified by the ``is_staff`` attribute on the user model. By default,
+System administrators of a Eventyay instance are identified by the ``is_staff`` attribute on the user model. By default,
 the regular permission rules apply for users with ``is_staff = True``. The only difference is that such users can
 temporarily turn on "staff mode" via a button in the user interface that grants them **all permissions** as long as
 staff mode is active. You can check if a user is in staff mode using their session key:

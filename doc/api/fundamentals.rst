@@ -2,25 +2,25 @@ Basic concepts
 ==============
 
 This page describes basic concepts and definition that you need to know to interact
-with pretix' REST API, such as authentication, pagination and similar definitions.
+with Eventyay' REST API, such as authentication, pagination and similar definitions.
 
 .. _`rest-auth`:
 
 Authentication
 --------------
 
-To access the API, you need to present valid authentication credentials. pretix currently
+To access the API, you need to present valid authentication credentials. Eventyay currently
 supports the following authorization schemes:
 
 * :ref:`rest-tokenauth`: This is the simplest way and recommended for server-side applications
-  that interact with pretix without user interaction.
+  that interact with Eventyay without user interaction.
 * :ref:`rest-oauth`: This is the recommended way to use if you write a third-party application
-  that users can connect with their pretix account. It provides the best user experience, but
+  that users can connect with their Eventyay account. It provides the best user experience, but
   requires user interaction and slightly more implementation effort.
 * :ref:`rest-deviceauth`: This is the recommended way if you build apps or hardware devices that can
-  connect to pretix, e.g. for processing check-ins or to sell tickets offline. It provides a way
+  connect to Eventyay, e.g. for processing check-ins or to sell tickets offline. It provides a way
   to uniquely identify devices and allows for a quick configuration flow inside your software.
-* Authentication using browser sessions: This is used by the pretix web interface and it is *not*
+* Authentication using browser sessions: This is used by the Eventyay web interface and it is *not*
   officially supported for use by third-party applications. It might change or be removed at any
   time without prior notice. If you use it, you need to comply with Django's `CSRF policies`_.
 
@@ -46,8 +46,8 @@ Possible permissions are:
 Compatibility
 -------------
 
-We currently see pretix' API as a beta-stage feature. We therefore do not give any guarantees
-for compatibility between feature releases of pretix (such as 1.5 and 1.6). However, as always,
+We currently see Eventyay' API as a beta-stage feature. We therefore do not give any guarantees
+for compatibility between feature releases of Eventyay (such as 1.5 and 1.6). However, as always,
 we try not to break things when we don't need to. Any backwards-incompatible changes will be
 prominently noted in the release notes.
 
@@ -69,7 +69,7 @@ We treat the following types of changes as *backwards-incompatible*:
 Pagination
 ----------
 
-Most lists of objects returned by pretix' API will be paginated. The response will take
+Most lists of objects returned by Eventyay' API will be paginated. The response will take
 the form of:
 
 .. sourcecode:: javascript
@@ -78,7 +78,7 @@ the form of:
         "count": 117,
         "next": "https://eventyay.com/api/v1/organizers/?page=2",
         "previous": null,
-        "results": […],
+        "results": []
     }
 
 As you can see, the response contains the total number of results in the field ``count``.
@@ -92,7 +92,7 @@ objects, every page contains 50 results.
 Conditional fetching
 --------------------
 
-If you pull object lists from pretix' APIs regularly, we ask you to implement conditional fetching
+If you pull object lists from Eventyay' APIs regularly, we ask you to implement conditional fetching
 to avoid unnecessary data traffic. This is not supported on all resources and we currently implement
 two different mechanisms for different resources, which is necessary because we can only obtain best
 efficiency for resources that do not support deletion operations.
@@ -160,33 +160,25 @@ be ``null`` as well.
 The following table shows some data types that have no native JSON representation and how
 we serialize them to JSON.
 
-===================== ============================ ===================================
-Internal pretix type  JSON representation          Examples
-===================== ============================ ===================================
-Datetime              String in ISO 8601 format    ``"2017-12-27T10:00:00Z"``
-                      with timezone (normally UTC) ``"2017-12-27T10:00:00.596934Z"``,
-                                                   ``"2017-12-27T10:00:00+02:00"``
-Date                  String in ISO 8601 format    ``2017-12-27``
-Multi-lingual string  Object of strings            ``{"en": "red", "de": "rot", "de_Informal": "rot"}``
-Money                 String with decimal number   ``"23.42"``
-Currency              String with ISO 4217 code    ``"EUR"``, ``"USD"``
-Relative datetime     *either* String in ISO 8601  ``"2017-12-27T10:00:00.596934Z"``,
-                      format *or* specification of ``"RELDATE/3/12:00:00/presale_start/"``
-                      a relative datetime,
-                      constructed from a number of
-                      days before the base point,
-                      a time of day, and the base
-                      point.
-Relative date         *either* String in ISO 8601  ``"2017-12-27"``,
-                      format *or* specification of ``"RELDATE/3/-/presale_start/"``
-                      a relative date,
-                      constructed from a number of
-                      days before the base point
-                      and the base point.
-File                  URL in responses, ``file:``  ``"https://…"``, ``"file:…"``
-                      specifiers in requests
-                      (see below).
-===================== ============================ ===================================
+====================== ================================ ============================================
+Internal Eventyay type JSON representation              Examples
+====================== ================================ ============================================
+Datetime               String in ISO 8601 format        ``"2017-12-27T10:00:00Z"``
+                       with timezone (normally UTC)     ``"2017-12-27T10:00:00.596934Z"``,
+                                                        ``"2017-12-27T10:00:00+02:00"``
+Date                   String in ISO 8601 format        ``2017-12-27``
+Multi-lingual string   Object of strings                ``{"en": "red", "de": "rot"}``
+Money                  String with decimal number       ``"23.42"``
+Currency               String with ISO 4217 code        ``"EUR"``, ``"USD"``
+Relative datetime      *either* String in ISO 8601      ``"2017-12-27T10:00:00.596934Z"``,
+                       format *or* specification of     ``"RELDATE/3/12:00:00/presale_start/"``
+                       a relative datetime
+Relative date          *either* String in ISO 8601      ``"2017-12-27"``,
+                       format *or* specification of     ``"RELDATE/3/-/presale_start/"``
+                       a relative date
+File                   URL in responses, ``file:``      ``"https://…"``, ``"file:…"``
+                       specifiers in requests
+====================== ================================ ============================================
 
 Query parameters
 ^^^^^^^^^^^^^^^^

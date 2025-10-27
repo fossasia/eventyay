@@ -1,9 +1,7 @@
-.. spelling:: checkin
-
 Data exporters
 ==============
 
-pretix and it's plugins include a number of data exporters that allow you to bulk download various data from pretix in
+Eventyay and it's plugins include a number of data exporters that allow you to bulk download various data from Eventyay in
 different formats. This page shows you how to use these exporters through the API.
 
 .. versionchanged:: 3.13
@@ -23,7 +21,7 @@ Listing available exporters
 
    Returns a list of all exporters available for a given event. You will receive a list of export methods as well as their
    supported input fields. Note that the exact type and validation requirements of the input fields are not given in the
-   response, and you might need to look into the pretix web interface to figure out the exact input required.
+   response, and you might need to look into the Eventyay web interface to figure out the exact input required.
 
    **Example request**:
 
@@ -86,7 +84,7 @@ Listing available exporters
 
    Returns a list of all cross-event exporters available for a given organizer. You will receive a list of export methods as well as their
    supported input fields. Note that the exact type and validation requirements of the input fields are not given in the
-   response, and you might need to look into the pretix web interface to figure out the exact input required.
+   response, and you might need to look into the Eventyay web interface to figure out the exact input required.
 
    **Example request**:
 

@@ -1,28 +1,28 @@
-NGINX and URL Path Configuration for Eventyay-Tickets
-=====================================================
+NGINX and URL Path Configuration for Eventyay
+=============================================
 
-This document outlines the NGINX and URL path setup for the ``eventyay-tickets`` project hosted at `https://github.com/fossasia/eventyay-tickets`. This Django project utilizes ``FORCE_SCRIPT_NAME`` to configure a base path, allowing the application to run on a specified sub-path within the domain.
+This document outlines the NGINX and URL path setup for the ``eventyay`` project hosted at `https://github.com/fossasia/eventyay`. This Django project utilizes ``FORCE_SCRIPT_NAME`` to configure a base path, allowing the application to run on a specified sub-path within the domain.
 
 Project Setup in Django
 -----------------------
 
-In ``eventyay-tickets``, the following settings are used to configure the base path for the application:
+In ``eventyay``, the following settings are used to configure the base path for the application:
 
 .. code-block:: python
 
     # Django Settings
-    BASE_PATH = config.get('pretix', 'base_path', fallback='/tickets')
+    BASE_PATH = config.get('Eventyay', 'base_path', fallback='/tickets')
     FORCE_SCRIPT_NAME = BASE_PATH
 
-- **BASE_PATH**: Retrieved from the ``pretix.cfg`` configuration file, which allows flexible configuration of the base URL path. By default, this is set to ``'/tickets'``.
+- **BASE_PATH**: Retrieved from the ``eventyay.cfg`` configuration file, which allows flexible configuration of the base URL path. By default, this is set to ``'/tickets'``.
 - **FORCE_SCRIPT_NAME**: Uses the value from ``BASE_PATH``, setting ``/tickets`` as the base path for URL routing within Django.
 
-This means that all URLs within Django are prefixed with ``/tickets``, allowing users to access ``eventyay-tickets`` via URLs like ``domain.com/tickets/``.
+This means that all URLs within Django are prefixed with ``/tickets``, allowing users to access ``eventyay`` via URLs like ``domain.com/tickets/``.
 
 NGINX Configuration
 -------------------
 
-The following NGINX configuration serves the ``eventyay-tickets`` application along with other services such as ``talk`` and ``video``. The configuration is hosted on server.
+The following NGINX configuration serves the ``eventyay`` application along with other services such as ``talk`` and ``video``. The configuration is hosted on server.
 
 Key Sections of NGINX Configuration
 -----------------------------------
@@ -49,7 +49,7 @@ Key Sections of NGINX Configuration
      - Proxies requests from ``https://your-domain/`` to the backend on ``localhost:8455/common/``.
 
    - **/tickets**:
-     - This location is for the ``eventyay-tickets`` application.
+     - This location is for the ``eventyay`` application.
      - Requests to ``https://your-domain/tickets/`` are proxied to ``localhost:8455/``.
 
      .. code-block:: nginx
@@ -65,14 +65,14 @@ Key Sections of NGINX Configuration
      - These locations handle other components (``talk`` and ``video``) by proxying requests to their respective backend services on different ports.
 
 3. **Custom Redirects**:
-   - **/video/admin**:
-     - Redirects requests from ``/video/admin/`` to the ``control`` panel at ``https://your-domain:8443/control``.
 
-     .. code-block:: nginx
+   - **/video/admin**: Redirects requests from ``/video/admin/`` to the ``control`` panel at ``https://your-domain:8443/control``.
 
-         location /video/admin/ {
-             return 301 https://your-domain:8443/control;
-         }
+   .. code-block:: nginx
+
+       location /video/admin/ {
+           return 301 https://your-domain:8443/control;
+       }
 
    - **/talk/static** and **/media**:
      - Routes static files for the ``talk`` component, setting up paths for ``/talk/media/`` and ``/media/`` to point to Docker volumes where media files are stored.
@@ -81,7 +81,7 @@ Key Sections of NGINX Configuration
 
          location /talk/media/ {
              rewrite ^/talk/media/(.*)$ /media/$1 break;
-             root /var/lib/docker/volumes/pretalx_pretalx-data/_data;
+             root /var/lib/docker/volumes/eventyay_pretalx-data/_data;
          }
 
 4. **HTTP to HTTPS Redirection**:
@@ -123,12 +123,12 @@ Key Sections of NGINX Configuration
            }
        }
 
-Accessing eventyay-tickets
---------------------------
+Accessing eventyay
+------------------
 
 With this setup:
 
-- The URL for accessing the ``eventyay-tickets`` application control panel is ``https://your-domain/tickets/control``.
+- The URL for accessing the ``eventyay`` application control panel is ``https://your-domain/tickets/control``.
 - NGINX routes requests to the correct backend ports based on path prefixes, ensuring that each application (tickets, talk, video) is isolated within its respective path.
 
 Summary

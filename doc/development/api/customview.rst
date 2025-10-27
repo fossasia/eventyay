@@ -8,7 +8,7 @@ Creating custom views
 
 This page describes how to provide a custom view from within your plugin. Before you start
 reading this page, please read and understand how :ref:`URL handling <urlconf>` works in
-pretix.
+Eventyay.
 
 Control panel views
 -------------------
@@ -50,7 +50,7 @@ your views:
 
 .. code-block:: python
 
-    from pretix.control.permissions import (
+    from eventyay.control.permissions import (
         event_permission_required, EventPermissionRequiredMixin
     )
 
@@ -72,7 +72,7 @@ event-related views, there is also a signal that allows you to add the view to t
     from django.urls import resolve, reverse
     from django.dispatch import receiver
     from django.utils.translation import gettext_lazy as _
-    from pretix.control.signals import nav_event
+    from eventyay.control.signals import nav_event
 
 
     @receiver(nav_event, dispatch_uid='friends_tickets_nav')
@@ -111,7 +111,7 @@ special navigation signal:
             'active': url.namespace == 'plugins:myplugin' and url.url_name == 'settings',
         }]
 
-Also, your view should inherit from ``EventSettingsViewMixin`` and your template from ``pretixcontrol/event/settings_base.html``
+Also, your view should inherit from ``EventSettingsViewMixin`` and your template from ``eventyaycontrol/event/settings_base.html``
 for good integration. If you just want to display a form, you could do it like the following:
 
 .. code-block:: python
@@ -130,7 +130,7 @@ for good integration. If you just want to display a form, you could do it like t
 
 With this template::
 
-    {% extends "pretixcontrol/event/settings_base.html" %}
+    {% extends "eventyaycontrol/event/settings_base.html" %}
     {% load i18n %}
     {% load bootstrap3 %}
     {% block title %} {% trans "Friends Tickets Settings" %} {% endblock %}
@@ -160,7 +160,7 @@ First, define your URL in your ``urls.py``, but this time in the ``event_pattern
 
 .. code-block:: python
 
-    from pretix.multidomain import event_url
+    from Eventyay.multidomain import event_url
 
     from . import views
 
@@ -192,12 +192,12 @@ Our REST API is built upon `Django REST Framework`_ (DRF). DRF has two important
 standard Django request handling: There are `ViewSets`_ to group related views in a single class and `Routers`_ to
 automatically build URL configurations from them.
 
-To integrate a custom viewset with pretix' REST API, you can just register with one of our routers within the
+To integrate a custom viewset with Eventyay' REST API, you can just register with one of our routers within the
 ``urls.py`` module of your plugin:
 
 .. code-block:: python
 
-    from pretix.api.urls import event_router, router, orga_router
+    from eventyay.api.urls import event_router, router, orga_router
 
     router.register('global_viewset', MyViewSet)
     orga_router.register('orga_level_viewset', MyViewSet)
@@ -231,7 +231,7 @@ following:
         ...
 
 
-.. warning:: It is important that you do this in the ``yourplugin.urls`` module, otherwise pretix will not find your
+.. warning:: It is important that you do this in the ``yourplugin.urls`` module, otherwise Eventyay will not find your
              routes early enough during system startup.
 
 .. _Django REST Framework: http://www.django-rest-framework.org/

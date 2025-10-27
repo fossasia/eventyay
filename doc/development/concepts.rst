@@ -4,7 +4,7 @@ Concepts and Terminology
 The components
 ^^^^^^^^^^^^^^
 
-The project pretix is split into several components. The main components are:
+The project Eventyay is split into several components. The main components are:
 
 **base**
     This is the foundation below all other components. It is primarily
@@ -24,22 +24,22 @@ The project pretix is split into several components. The main components are:
     A RESTful API exposed to integrate with third-party software.
 
 **plugins**
-    A set of pretix plugins that ship bundled with pretix.
+    A set of Eventyay plugins that ship bundled with Eventyay.
 
 Users and events
 ^^^^^^^^^^^^^^^^
 
-pretix is all about **events**, which are defined as something happening somewhere.
+Eventyay is all about **events**, which are defined as something happening somewhere.
 Every event is managed by the **organizer**, an abstract entity running the event.
 
-pretix has a concept of **users** that is used for all people who have to log in to the
+Eventyay has a concept of **users** that is used for all people who have to log in to the
 control panel to manage one or more events. No user is required to place an order.
 
 
 Items and variations
 ^^^^^^^^^^^^^^^^^^^^
 
-The purpose of pretix is to sell products, e.g. tickets or merchandise for an event. Internally,
+The purpose of Eventyay is to sell products, e.g. tickets or merchandise for an event. Internally,
 those products are called **items**. An item can have multiple **variations**. For example,
 the item 'T-Shirt' could have the **variations** 'S', 'M' and 'L'.
 

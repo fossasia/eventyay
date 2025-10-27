@@ -5,10 +5,10 @@ Pluggable authentication backends
 =================================
 
 Plugins can supply additional authentication backends. This is mainly useful in self-hosted installations
-and allows you to use company-wide login mechanisms such as LDAP or OAuth for accessing pretix' backend.
+and allows you to use company-wide login mechanisms such as LDAP or OAuth for accessing Eventyay' backend.
 
-Every authentication backend contains an implementation of the interface defined in ``pretix.base.auth.BaseAuthBackend``
-(see below). Note that pretix authentication backends work differently than plain Django authentication backends.
+Every authentication backend contains an implementation of the interface defined in ``eventyay.base.auth.BaseAuthBackend``
+(see below). Note that eventyay authentication backends work differently than plain Django authentication backends.
 Basically, three pre-defined flows are supported:
 
 * Authentication mechanisms that rely on a **set of input parameters**, e.g. a username and a password. These can be
@@ -21,10 +21,10 @@ Basically, three pre-defined flows are supported:
   supplying a ``authentication_url`` method and implementing a custom return view.
 
 Authentication backends are *not* collected through a signal. Instead, they must explicitly be set through the
-``auth_backends`` directive in the ``pretix.cfg`` :ref:`configuration file <config>`.
+``auth_backends`` directive in the ``eventyay.cfg`` :ref:`configuration file <config>`.
 
 In each of these methods (``form_authenticate``, ``request_authenticate`` or your custom view) you are supposed to
-either get an existing :py:class:`pretix.base.models.User` object from the database or create a new one. There are a
+either get an existing :py:class:`eventyay.base.models.User` object from the database or create a new one. There are a
 few rules you need to follow:
 
 * You **MUST** only return users with the ``auth_backend`` attribute set to the ``identifier`` value of your backend.
@@ -37,7 +37,7 @@ few rules you need to follow:
 The backend interface
 ---------------------
 
-.. class:: pretix.base.auth.BaseAuthBackend
+.. class:: eventyay.base.auth.BaseAuthBackend
 
    The central object of each backend is the subclass of ``BaseAuthBackend``.
 
@@ -67,4 +67,9 @@ for you correctly. However, if you use a redirection method and build a custom v
 recommend that you use the following utility method to correctly set session values and enforce two-factor
 authentication (if activated):
 
-.. autofunction:: pretix.control.views.auth.process_login
+.. py:function:: eventyay.eventyay_common.views.auth.process_login(request, user, keep_logged_in)
+
+   This method allows you to return a response to a successful log-in. This will set all session values correctly
+   and redirect to either the URL specified in the ``next`` parameter, or the 2FA login screen, or the dashboard.
+
+   :return: This method returns a ``HttpResponse``.

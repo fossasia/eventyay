@@ -17,8 +17,8 @@ shared secret such that nobody can create their own tokens or modify the content
 
     https://webinars.example.com/join?with_token={token}
 
-Additionally, you will need to set a JWT secret and a token template, either through the pretix interface or through the
-API (see below). pretix currently only supports tokens signed with ``HMAC-SHA256`` (``HS256``). Your token template can contain
+Additionally, you will need to set a JWT secret and a token template, either through the Eventyay interface or through the
+API (see below). Eventyay currently only supports tokens signed with ``HMAC-SHA256`` (``HS256``). Your token template can contain
 whatever JSON you'd like to pass on based on the same variables, for example::
 
     {
@@ -33,7 +33,7 @@ whatever JSON you'd like to pass on based on the same variables, for example::
     }
 
 Variables can only be used in strings inside the JSON structure.
-pretix will automatically add an ``iat`` claim with the current timestamp and an ``exp`` claim with an expiration timestamp
+Eventyay will automatically add an ``iat`` claim with the current timestamp and an ``exp`` claim with an expiration timestamp
 based on your configuration.
 
 

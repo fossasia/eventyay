@@ -563,7 +563,7 @@ class Event(
     tickets for.
 
     :param organizer: The organizer this event belongs to
-    :type organizer: Organizer
+    :type organizer: eventyay.base.models.organizer.Organizer
     :param testmode: This event is in test mode
     :type testmode: bool
     :param name: This event's full title
@@ -806,6 +806,7 @@ class Event(
     )
 
     class urls(EventUrls):
+        """URL patterns for public/frontend views of this event."""
         base_path = settings.BASE_PATH
         base = '{base_path}/{self.slug}/'
         login = '{base}login/'
@@ -836,6 +837,7 @@ class Event(
         settings_css = '{base}static/event.css'
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer/admin panel views of this event."""
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/event/{self.slug}/'
         login = '{base}login/'
@@ -889,6 +891,7 @@ class Event(
         new_information = '{base}info/new/'
 
     class api_urls(EventUrls):
+        """URL patterns for API endpoints related to this event."""
         base_path = settings.TALK_BASE_PATH
         base = '{base_path}/api/events/{self.slug}/'
         submissions = '{base}submissions/'
@@ -909,6 +912,7 @@ class Event(
         speaker_information = '{base}speaker-information/'
 
     class tickets_urls(EventUrls):
+        """URL patterns for ticket/control panel views of this event."""
         _full_base_path = settings.BASE_PATH
         base_path = urlparse(_full_base_path).path.rstrip('/')
         base = '{base_path}/control/'

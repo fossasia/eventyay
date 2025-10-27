@@ -14,14 +14,14 @@ Output registration
 
 The invoice renderer API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available invoice renderers. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.invoice.BaseInvoiceRenderer``
+should listen for this signal and return the subclass of ``eventyay.base.invoice.BaseInvoiceRenderer``
 that we'll provide in this plugin:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_invoice_renderers
+    from eventyay.base.signals import register_invoice_renderers
 
 
     @receiver(register_invoice_renderers, dispatch_uid="output_custom")
@@ -33,7 +33,7 @@ that we'll provide in this plugin:
 The renderer class
 ------------------
 
-.. class:: pretix.base.invoice.BaseInvoiceRenderer
+.. class:: eventyay.base.invoice.BaseInvoiceRenderer
 
    The central object of each invoice renderer is the subclass of ``BaseInvoiceRenderer``.
 
@@ -42,27 +42,36 @@ The renderer class
       The default constructor sets this property to the event we are currently
       working for.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this invoice renderer.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this invoice renderer.
 
       This is an abstract attribute, you **must** override this!
 
-   .. automethod:: generate
+   .. py:method:: generate(invoice)
+
+      Generate the invoice file.
+
+      :param invoice: The invoice to generate a file for.
+      :return: A tuple of (filename, content_type, file_content)
 
 Helper class for reportlab-base renderers
 -----------------------------------------
 
-All PDF rendering that ships with pretix is based on reportlab. We recommend to read the
+All PDF rendering that ships with Eventyay is based on reportlab. We recommend to read the
 `reportlab User Guide`_ to understand all the concepts used here.
 
 If you want to implement a renderer that also uses report lab, this helper class might be
 convenient to you:
 
 
-.. class:: pretix.base.invoice.BaseReportlabInvoiceRenderer
+.. class:: eventyay.base.invoice.BaseReportlabInvoiceRenderer
 
    .. py:attribute:: BaseReportlabInvoiceRenderer.pagesize
 
@@ -78,20 +87,36 @@ convenient to you:
 
    .. py:attribute:: BaseReportlabInvoiceRenderer.invoice
 
-   .. automethod:: _init
+   .. py:method:: _init()
 
-   .. automethod:: _get_stylesheet
+      Initialize the renderer.
 
-   .. automethod:: _register_fonts
+   .. py:method:: _get_stylesheet()
 
-   .. automethod:: _on_first_page
+      Get the reportlab stylesheet.
 
-   .. automethod:: _on_other_page
+   .. py:method:: _register_fonts()
 
-   .. automethod:: _get_first_page_frames
+      Register custom fonts with reportlab.
 
-   .. automethod:: _get_other_page_frames
+   .. py:method:: _on_first_page(canvas, doc)
 
-   .. automethod:: _build_doc
+      Callback for rendering the first page.
+
+   .. py:method:: _on_other_page(canvas, doc)
+
+      Callback for rendering other pages.
+
+   .. py:method:: _get_first_page_frames(doc)
+
+      Get the frames for the first page.
+
+   .. py:method:: _get_other_page_frames(doc)
+
+      Get the frames for other pages.
+
+   .. py:method:: _build_doc(fhandle, story)
+
+      Build the document.
 
 .. _reportlab User Guide: https://www.reportlab.com/docs/reportlab-userguide.pdf

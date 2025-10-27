@@ -723,6 +723,7 @@ the eventyay robot"""
     reset_password.alters_data = True
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views related to this user."""
         admin = '/orga/admin/users/{self.code}/'
 
     @transaction.atomic

@@ -6,13 +6,13 @@
 Extending the order import process
 ==================================
 
-It's possible through the backend to import orders into pretix, for example from a legacy ticketing system. If your
+It's possible through the backend to import orders into Eventyay, for example from a legacy ticketing system. If your
 plugins defines additional data structures around orders, it might be useful to make it possible to import them as well.
 
 Import process
 --------------
 
-Here's a short description of pretix' import process to show you where the system will need to interact with your plugin.
+Here's a short description of Eventyay' import process to show you where the system will need to interact with your plugin.
 You can find more detailed descriptions of the attributes and methods further below.
 
 1. The user uploads a CSV file. The system tries to parse the CSV file and understand its column headers.
@@ -40,14 +40,14 @@ Column registration
 
 The import API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available import columns. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.orderimport.ImportColumn``
+should listen for this signal and return the subclass of ``eventyay.base.orderimport.ImportColumn``
 that we'll provide in this plugin:
 
 .. sourcecode:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import order_import_columns
+    from eventyay.base.signals import order_import_columns
 
 
     @receiver(order_import_columns, dispatch_uid="custom_columns")
@@ -59,7 +59,7 @@ that we'll provide in this plugin:
 The column class API
 --------------------
 
-.. class:: pretix.base.orderimport.ImportColumn
+.. class:: eventyay.base.orderimport.ImportColumn
 
    The central object of each import extension is the subclass of ``ImportColumn``.
 
@@ -68,29 +68,61 @@ The column class API
       The default constructor sets this property to the event we are currently
       working for.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      Unique, internal name of the column.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      Human-readable description of the column.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: default_value
+   .. py:attribute:: default_value
 
-   .. autoattribute:: default_label
+      Internal default value for the assignment of this column. Defaults to ``empty``.
+      Return ``None`` to disable this option.
 
-   .. autoattribute:: initial
+   .. py:attribute:: default_label
 
-   .. automethod:: static_choices
+      Human-readable description of the default assignment of this column, defaults to "Keep empty".
 
-   .. automethod:: resolve
+   .. py:attribute:: initial
 
-   .. automethod:: clean
+      Initial value for the form component.
 
-   .. automethod:: assign
+   .. py:method:: static_choices()
 
-   .. automethod:: save
+      This will be called when rendering the form component and allows you to return a list of values
+      that can be selected by the user statically during import.
+
+      :return: list of 2-tuples of strings
+
+   .. py:method:: resolve(settings, record)
+
+      This method will be called to get the raw value for this field, usually by either using a static
+      value or inspecting the CSV file for the assigned header.
+
+   .. py:method:: clean(value, previous_values)
+
+      Allows you to validate the raw input value for your column. Raise ``ValidationError`` if the
+      value is invalid.
+
+      :param value: The raw value of your column as returned by ``resolve``.
+      :param previous_values: Dictionary containing the validated values of all columns that have
+                              already been validated.
+
+   .. py:method:: assign(value, order, position, invoice_address, **kwargs)
+
+      This will be called to perform the actual import. Set attributes on the ``order``, ``position``,
+      or ``invoice_address`` objects based on the input ``value``.
+
+   .. py:method:: save(order)
+
+      This will be called to perform the actual import inside the database transaction. The input
+      object ``order`` has already been saved to the database.
 
 Example
 -------

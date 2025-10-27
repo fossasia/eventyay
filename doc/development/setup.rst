@@ -3,16 +3,16 @@
 Development setup
 =================
 
-This tutorial helps you to get started hacking with pretix on your own computer. You need this to
-be able to contribute to pretix, but it might also be helpful if you want to write your own plugins.
-If you want to install pretix on a server for actual usage, go to the :ref:`admindocs` instead.
+This tutorial helps you to get started hacking with Eventyay on your own computer. You need this to
+be able to contribute to Eventyay, but it might also be helpful if you want to write your own plugins.
+If you want to install Eventyay on a server for actual usage, go to the :ref:`admindocs` instead.
 
 Obtain a copy of the source code
 --------------------------------
 You can just clone our git repository::
 
-    git clone https://github.com/pretix/pretix.git
-    cd pretix/
+    git clone https://github.com/fossasia/eventyay.git
+    cd eventyay/
 
 External Dependencies
 ---------------------
@@ -44,7 +44,7 @@ environment and activate it for your current session::
     source env/bin/activate
 
 You should now see a ``(env)`` prepended to your shell prompt. You have to do this
-in every shell you use to work with pretix (or configure your shell to do so
+in every shell you use to work with Eventyay (or configure your shell to do so
 automatically). If you are working on Ubuntu or Debian, we strongly recommend upgrading
 your pip and setuptools installation inside the virtual environment, otherwise some of
 the dependencies might fail::
@@ -53,13 +53,16 @@ the dependencies might fail::
 
 Working with the code
 ---------------------
+Navigate to the app directory where the main code resides::
+
+    cd app/
+
 The first thing you need are all the main application's dependencies::
 
     pip3 install -e ".[dev]"
 
 Next, you need to copy the SCSS files from the source folder to the STATIC_ROOT directory::
 
-    cd src/
     python manage.py collectstatic --noinput
 
 Then, create the local database::
@@ -73,7 +76,7 @@ You will also need to install a few JavaScript dependencies::
 
     make npminstall
 
-If you want to see pretix in a different language than English, you have to compile our language
+If you want to see Eventyay in a different language than English, you have to compile our language
 files::
 
     make localecompile
@@ -90,7 +93,7 @@ As we did not implement an overall front page yet, you need to go directly to
 http://localhost:8000/control/ for the admin view.
 
 .. note:: If you want the development server to listen on a different interface or
-          port (for example because you develop on `pretixdroid`_), you can check
+          port (for example because you develop on the Eventyaydroid Android app), you can check
           `Django's documentation`_ for more options.
 
 .. _`checksandtests`:
@@ -98,7 +101,7 @@ http://localhost:8000/control/ for the admin view.
 Code checks and unit tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Before you check in your code into git, always run static checkers and linters. If any of these commands fail,
-your pull request will not be merged into pretix. If you have trouble figuring out *why* they fail, create your
+your pull request will not be merged into Eventyay. If you have trouble figuring out *why* they fail, create your
 pull request nevertheless and ask us for help, we are happy to assist you.
 
 Execute the following commands to check for code style errors::
@@ -107,7 +110,7 @@ Execute the following commands to check for code style errors::
     isort -c .
     python manage.py check
 
-Execute the following command to run pretix' test suite (might take a couple of minutes)::
+Execute the following command to run Eventyay' test suite (might take a couple of minutes)::
 
     py.test
 
@@ -123,7 +126,7 @@ for example, to check for any errors in any staged files when committing::
     export GIT_WORK_TREE=../
     export GIT_DIR=../.git
     source ../env/bin/activate  # Adjust to however you activate your virtual environment
-    for file in $(git diff --cached --name-only | grep -E '\.py$' | grep -Ev "migrations|mt940\.py|pretix/settings\.py|make_testdata\.py|testutils/settings\.py|tests/settings\.py|pretix/base/models/__init__\.py|.*_pb2\.py")
+    for file in $(git diff --cached --name-only | grep -E '\.py$' | grep -Ev "migrations|mt940\.py|Eventyay/settings\.py|make_testdata\.py|testutils/settings\.py|tests/settings\.py|Eventyay/base/models/__init__\.py|.*_pb2\.py")
     do
       echo $file
       git show ":$file" | flake8 - --stdin-display-name="$file" || exit 1 # we only want to lint the staged changes, not any un-staged changes
@@ -137,10 +140,10 @@ This keeps you from accidentally creating commits violating the style guide.
 Working with mails
 ^^^^^^^^^^^^^^^^^^
 If you want to test anything regarding emails in your development setup, we recommend
-starting Python's debugging SMTP server in a separate shell and configuring pretix to use it.
+starting Python's debugging SMTP server in a separate shell and configuring Eventyay to use it.
 Every email will then be printed to the debugging SMTP server's stdout.
 
-Add this to your ``src/pretix.cfg``::
+Add this to your ``src/Eventyay.cfg``::
 
     [mail]
     port = 1025
@@ -159,7 +162,7 @@ However, most of the time you don't need to care about this. Just create your pu
 with functionality and English strings only, and we'll push the new translation strings
 to our translation platform after the merge.
 
-To actually see pretix in your language, you have to compile the ``*.po`` files to their
+To actually see Eventyay in your language, you have to compile the ``*.po`` files to their
 optimized binary ``*.mo`` counterparts::
 
     make localecompile
@@ -188,4 +191,4 @@ Then, go to http://localhost:8081 for a version of the documentation that automa
 whenever you change a source file.
 
 .. _Django's documentation: https://docs.djangoproject.com/en/1.11/ref/django-admin/#runserver
-.. _pretixdroid: https://github.com/pretix/pretixdroid
+.. _pretixdroid: https://github.com/fossasia/eventyaydroid

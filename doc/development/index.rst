@@ -4,6 +4,7 @@ Developer documentation
 .. toctree::
    :maxdepth: 2
 
+   unified_architecture
    concepts
    setup
    contribution/index
@@ -11,3 +12,5 @@ Developer documentation
    translation/index
    api/index
    structure
+   social_login
+   sso_with_talk

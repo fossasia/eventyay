@@ -1,9 +1,3 @@
-.. spelling::
-
-   geo
-   lat
-   lon
-
 Events
 ======
 
@@ -129,10 +123,10 @@ Endpoints
             "timezone": "Europe/Berlin",
             "item_meta_properties": {},
             "plugins": [
-              "pretix.plugins.banktransfer",
-              "pretix.plugins.stripe",
-              "pretix.plugins.paypal",
-              "pretix.plugins.ticketoutputpdf"
+              "eventyay.plugins.banktransfer",
+              "eventyay.plugins.stripe",
+              "eventyay.plugins.paypal",
+              "eventyay.plugins.ticketoutputpdf"
             ],
             "sales_channels": [
               "web",
@@ -207,13 +201,13 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.banktransfer",
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal",
-          "pretix.plugins.ticketoutputpdf"
+          "eventyay.plugins.banktransfer",
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal",
+          "eventyay.plugins.ticketoutputpdf"
         ],
         "valid_keys": {
-          "pretix_sig1": [
+          "eventyay_sig1": [
             "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUNvd0JRWURLMlZ3QXlFQTdBRDcvdkZBMzNFc1k0ejJQSHI3aVpQc1o4bjVkaDBhalA4Z3l6Tm1tSXM9Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo="
           ]
         },
@@ -270,8 +264,8 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal"
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal"
         ],
         "sales_channels": [
           "web",
@@ -310,8 +304,8 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal"
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal"
         ],
         "sales_channels": [
           "web",
@@ -370,8 +364,8 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal"
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal"
         ],
         "sales_channels": [
           "web",
@@ -410,8 +404,8 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal"
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal"
         ],
         "sales_channels": [
           "web",
@@ -445,10 +439,10 @@ Endpoints
 
       {
         "plugins": [
-          "pretix.plugins.banktransfer",
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal",
-          "pretix.plugins.pretixdroid"
+          "eventyay.plugins.banktransfer",
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal",
+          "eventyay.plugins.pretixdroid"
         ]
       }
 
@@ -482,10 +476,10 @@ Endpoints
         "timezone": "Europe/Berlin",
         "item_meta_properties": {},
         "plugins": [
-          "pretix.plugins.banktransfer",
-          "pretix.plugins.stripe",
-          "pretix.plugins.paypal",
-          "pretix.plugins.pretixdroid"
+          "eventyay.plugins.banktransfer",
+          "eventyay.plugins.stripe",
+          "eventyay.plugins.paypal",
+          "eventyay.plugins.pretixdroid"
         ],
         "sales_channels": [
           "web",
@@ -532,11 +526,11 @@ Endpoints
 Event settings
 --------------
 
-pretix events have lots and lots of parameters of different types that are stored in a key-value store on our system.
+Eventyay events have lots and lots of parameters of different types that are stored in a key-value store on our system.
 Since many of these settings depend on each other in complex ways, we can not give direct access to all of these
 settings through the API. However, we do expose many of the simple and useful flags through the API.
 
-Please note that the available settings flags change between pretix versions and also between events, depending on the
+Please note that the available settings flags change between Eventyay versions and also between events, depending on the
 installed plugins, and we do not give a guarantee on backwards-compatibility like with other parts of the API.
 Therefore, we're also not including a list of the options here, but instead recommend to look at the endpoint output
 to see available options. The ``explain=true`` flag enables a verbose mode that provides you with human-readable
@@ -575,8 +569,7 @@ information about the properties.
       Content-Type: application/json
 
       {
-        "imprint_url": "https://eventyay.com",
-        …
+        "imprint_url": "https://eventyay.com"
       }
 
    **Example verbose response**:
@@ -594,8 +587,6 @@ information about the properties.
             "label": "Imprint URL",
             "help_text": "This should point e.g. to a part of your website that has your contact details and legal information."
           }
-        },
-        …
       }
 
    :param organizer: The ``slug`` field of the organizer of the event to access
@@ -611,7 +602,7 @@ information about the properties.
 
     .. warning::
 
-       Settings can be stored at different levels in pretix. If a value is not set on event level, a default setting
+       Settings can be stored at different levels in Eventyay. If a value is not set on event level, a default setting
        from a higher level (organizer, global) will be returned. If you explicitly set a setting on event level, it
        will no longer be inherited from the higher levels. Therefore, we recommend you to send only settings that you
        explicitly want to set on event level. To unset a settings, pass ``null``.
@@ -638,8 +629,7 @@ information about the properties.
       Content-Type: application/json
 
       {
-        "imprint_url": "https://example.org/imprint/",
-        …
+        "imprint_url": "https://example.org/imprint/"
       }
 
    :param organizer: The ``slug`` field of the organizer of the event to update
