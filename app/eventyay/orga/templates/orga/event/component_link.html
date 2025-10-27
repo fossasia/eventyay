@@ -10,5 +10,10 @@
         <a href="#" class="header-nav btn btn-success active">
             <i class="fa fa-group"></i> {% translate "Talk" %}
         </a>
+        <a class="header-nav btn btn-outline-success"
+           href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
+           title="{% translate 'Access videos related to this event' %}">
+            <i class="fa fa-video-camera"></i> {% translate "Videos" %}
+        </a>
     {% endif %}
 </div>
