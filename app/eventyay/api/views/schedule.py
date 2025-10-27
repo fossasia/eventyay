@@ -12,19 +12,20 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from pretalx.agenda.views.utils import get_schedule_exporter_content
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.filters.schedule import TalkSlotFilter
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.legacy import LegacyScheduleSerializer
-from pretalx.api.serializers.schedule import (
+from eventyay.agenda.views.utils import get_schedule_exporter_content
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.filters.schedule import TalkSlotFilter
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.legacy import LegacyScheduleSerializer
+from eventyay.api.serializers.schedule import (
     ScheduleListSerializer,
     ScheduleReleaseSerializer,
     ScheduleSerializer,
     TalkSlotOrgaSerializer,
     TalkSlotSerializer,
 )
-from pretalx.schedule.models import Schedule, TalkSlot
+from eventyay.base.models.schedule import Schedule
+from eventyay.base.models.slot import TalkSlot
 
 
 @extend_schema_view(
@@ -268,7 +269,7 @@ class TalkSlotViewSet(
     @cached_property
     def is_orga(self):
         return self.event and self.request.user.has_perm(
-            "schedule.orga_view_schedule", self.event
+            "base.orga_view_schedule", self.event
         )
 
     def get_unversioned_serializer_class(self):

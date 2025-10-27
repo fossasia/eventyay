@@ -2,11 +2,12 @@ from pathlib import Path
 
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.fields import UploadedFileField
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.person.models import SpeakerInformation
-from pretalx.submission.models import SubmissionType, Track
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.fields import UploadedFileField
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.track import Track
+from eventyay.base.models.type import SubmissionType
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -26,11 +27,11 @@ class SpeakerInformationSerializer(FlexFieldsSerializerMixin, PretalxSerializer)
         )
         expandable_fields = {
             "limit_tracks": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"many": True, "read_only": True},
             ),
             "limit_types": (
-                "pretalx.api.serializers.submission.SubmissionTypeSerializer",
+                "eventyay.api.serializers.submission.SubmissionTypeSerializer",
                 {"many": True, "read_only": True},
             ),
         }
