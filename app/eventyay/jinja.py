@@ -4,6 +4,7 @@ from django.template.defaultfilters import date
 from jinja2 import Environment
 
 from .helpers.jinja import url_for
+from eventyay.helpers.templatetags.thumb import thumb
 
 jj_globals = {
     'url_for': url_for,
@@ -11,6 +12,7 @@ jj_globals = {
 }
 
 jj_filters = {
+    'thumb': thumb,
     'format_date': date,
 }
 
