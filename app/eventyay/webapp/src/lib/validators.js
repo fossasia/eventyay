@@ -40,9 +40,10 @@ export function youtubeid(message) {
 	return helpers.withMessage(message, helpers.regex(/^[0-9A-Za-z_-]{5,}$/))
 }
 const relative = helpers.regex(/^\/.*$/)
-const devurl = helpers.regex(/^http:\/\/localhost.*$/) // vuelidate does not allow localhost
+// Allow localhost and local IP addresses (with or without port)
+const localurl = helpers.regex(/^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:[0-9]+)?(\/.*)?$/)
 export function url(message) {
-	return helpers.withMessage(message, (value) => (!helpers.req(value) || _url(value) || relative(value) || (ENV_DEVELOPMENT && devurl(value))))
+	return helpers.withMessage(message, (value) => (!helpers.req(value) || _url(value) || relative(value) || (ENV_DEVELOPMENT && localurl(value))))
 }
 export function isJson() {
 	return helpers.withMessage(({ $response }) => $response?.message, value => {
