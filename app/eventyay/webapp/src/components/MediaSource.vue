@@ -251,7 +251,7 @@ defineExpose({ isPlaying })
 		z-index: 101
 	.background-room
 		position: fixed
-		top: 3px
+		top: 51px
 		right: 4px
 		card()
 		display: flex
@@ -291,13 +291,12 @@ defineExpose({ isPlaying })
 	position: fixed
 	transition: all .3s ease
 	&.size-tiny, &.background
-		bottom: calc(var(--vh100) - 48px - 3px)
+		bottom: calc(var(--vh100) - 48px - 51px)
 		right: 4px + 36px + 4px
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		bottom: calc(var(--vh100) - 56px - var(--mediasource-placeholder-height))
-		right: calc(100vw - var(--sidebar-width) - var(--mediasource-placeholder-width))
+		top: calc(var(--vh100) - 56px - var(--mediasource-placeholder-height))
 		width: var(--mediasource-placeholder-width)
 		height: var(--mediasource-placeholder-height)
 		+below('l')

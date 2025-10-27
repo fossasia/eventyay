@@ -19,7 +19,7 @@
 				.searchbox
 					bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
 				.room-traits(v-for="room of filteredRooms")
-					h4 {{ room.name }}
+					h4(v-html="$emojify($localize(room.name))")
 					trait-grants(:trait-grants="room.trait_grants", :config="config", @click.stop="", @changed="roomChanged(room)")
 		bunt-tab(header="Roles", v-scrollbar.y="")
 			.permission-config
@@ -73,7 +73,7 @@ export default {
 		filteredRooms() {
 			if (!this.rooms) return
 			if (!this.search) return this.rooms
-			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), room.name.toLowerCase()))
+			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase()))
 		}
 	},
 	async created() {
