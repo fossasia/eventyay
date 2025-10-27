@@ -41,7 +41,7 @@ def format_date(value, format_str="SHORT_DATE_FORMAT"):
 
 
 def environment(**options):
-    env = Environment(**options)
+    env = Environment(**options, autoescape=True)
 
     env.globals.update({
         'url_for': url_for,
