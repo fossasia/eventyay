@@ -4,8 +4,10 @@ from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
+from django.db.models import Q
 from django.utils.module_loading import import_string
 
+from eventyay.base.models.auth import StaffSession
 from eventyay.common.text.phrases import CALL_FOR_SPEAKER_LOGIN_BTN_LABELS
 from eventyay.orga.signals import html_head, nav_event, nav_event_settings, nav_global
 
