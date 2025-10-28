@@ -253,9 +253,10 @@ for module_name in ALL_PLUGINS:
     try:
         module = importlib.import_module(module_name)
         LOADED_PLUGINS[module_name] = module
-    except Exception as e:
-        # Log errors but continue
-        print(f"Failed to load plugin {module_name}: {e}")
+    except ModuleNotFoundError as e:
+        print(f"Plugin not found: {module_name} ({e})")
+    except ImportError as e:
+        print(f"Failed to import plugin {module_name}: {e}")
 
 _LIBRARY_MIDDLEWARES = (
     'corsheaders.middleware.CorsMiddleware',

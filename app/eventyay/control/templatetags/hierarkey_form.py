@@ -86,5 +86,8 @@ def getitem(value, key):
         if isinstance(value, dict):
             return value.get(key)
         return getattr(value, key, None)
-    except Exception:
+    except (AttributeError, KeyError, TypeError):
+        # - AttributeError: when object has no such attribute
+        # - KeyError: when key not found in a dict-like object
+        # - TypeError: when value is not subscriptable or key is wrong type
         return None
