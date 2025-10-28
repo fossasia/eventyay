@@ -118,7 +118,7 @@ class UserResetView(AdministratorPermissionRequiredMixin, RecentAuthenticationRe
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         try:
-            self.object.send_password_reset()
+            self.object.send_password_reset(request)
         except SendMailException:
             messages.error(
                 request,
