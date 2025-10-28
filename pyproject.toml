@@ -53,7 +53,7 @@ dependencies = [
         'csscompressor',
         'django-markup',
         'markdown==3.7',
-        'bleach==5.0.*',
+        'bleach==6.3.*',
         'sentry-sdk==2.42.*',
         'babel',
         'pycparser==2.22',
