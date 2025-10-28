@@ -647,8 +647,8 @@ class User(
         """
         from eventyay.base.models.log import LogEntry
 
-        if data:
-            data = json.dumps(data)
+        if data is None:
+            data = {}
 
         LogEntry.objects.create(
             user=user or person or self,
