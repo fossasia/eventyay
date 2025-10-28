@@ -19,6 +19,17 @@ class EventTokenAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
+        # Always set request.event if event_id is in the URL, even for unauthenticated requests
+        if "event_id" in request.resolver_match.kwargs:
+            event_id = request.resolver_match.kwargs["event_id"]
+            try:
+                request.event = Event.objects.get(id=int(event_id))
+            except (ValueError, TypeError, Event.DoesNotExist):
+                try:
+                    request.event = Event.objects.get(slug=event_id)
+                except Event.DoesNotExist:
+                    request.event = None
+
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
 
@@ -35,8 +46,9 @@ class EventTokenAuthentication(authentication.BaseAuthentication):
             msg = "Invalid token header. Token string should not contain invalid characters."
             raise exceptions.AuthenticationFailed(msg)
 
-        event_id = request.resolver_match.kwargs["event_id"]
-        request.event = get_object_or_404(Event, id=event_id)
+        if not request.event:
+            raise exceptions.AuthenticationFailed("Event not found.")
+
         return self.authenticate_credentials(token, request.event)
 
     def authenticate_credentials(self, key, event):

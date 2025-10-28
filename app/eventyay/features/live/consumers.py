@@ -164,6 +164,10 @@ class MainConsumer(AsyncJsonWebsocketConsumer):
 
         if not self.user:
             if content[0] == "authenticate":
+                # Check if components are properly initialized
+                if "user" not in self.components:
+                    await self.send_error("protocol.not_connected", close=True)
+                    return
                 await self._maybe_refresh(self.event, allowed_age=30)
                 await self.components["user"].login(content[-1])
             else:
