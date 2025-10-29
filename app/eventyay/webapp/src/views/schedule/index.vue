@@ -282,6 +282,7 @@ export default {
 				window.URL.revokeObjectURL(downloadUrl)
 				a.remove()
 				this.isExporting = false
+				this.selectedExporter = null
 			} catch (error) {
 				this.isExporting = false
 				this.error = error

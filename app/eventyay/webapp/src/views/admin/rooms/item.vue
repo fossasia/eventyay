@@ -8,7 +8,7 @@
 		.ui-page-header
 			bunt-icon-button(@click="$router.push({name: 'admin:rooms:index'})") arrow_left
 			h1 {{ inferredType ? inferredType.name : 'Mystery Room' }} :
-				span.room-name(v-html="$emojify(config.name)")
+				span.room-name(v-html="$emojify($localize(config.name))")
 			.actions
 				bunt-button.btn-delete-room(@click="showDeletePrompt = true") delete
 		edit-form(:config="config")
@@ -19,10 +19,10 @@
 				.prompt-header
 					h3 Are you ABSOLUTELY sure?
 				p This action #[b CANNOT] be undone. This will permanently delete the room
-				.room-name {{ config.name }}
+				.room-name {{ $localize(config.name) }}
 				p Please type in the name of the room to confirm.
 				bunt-input(name="deletingRoomName", label="Room name", v-model="deletingRoomName", @keypress.enter="deleteRoom")
-				bunt-button.delete-room(icon="delete", :disabled="deletingRoomName !== config.name", @click="deleteRoom", :loading="deleting", :error-message="deleteError") delete this room
+				bunt-button.delete-room(icon="delete", :disabled="deletingRoomName !== $localize(config.name)", @click="deleteRoom", :loading="deleting", :error-message="deleteError") delete this room
 </template>
 <script>
 import api from 'lib/api'
@@ -51,6 +51,9 @@ export default {
 	computed: {
 		inferredType() {
 			return inferType(this.config)
+		},
+		localizedRoomName() {
+			return this.$localize(this.config?.name)
 		}
 	},
 	async created() {
@@ -86,7 +89,7 @@ export default {
 			}
 		},
 		async deleteRoom() {
-			if (this.deletingRoomName !== this.config.name) return
+			if (this.deletingRoomName !== this.localizedRoomName) return
 			this.deleting = true
 			this.deleteError = null
 			try {

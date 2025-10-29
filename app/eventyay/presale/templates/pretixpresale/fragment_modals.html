@@ -10,7 +10,7 @@
         <div class="modal-card-content">
             <h3></h3>
             <p class="text"></p>
-            <p class="status">{% trans "If the process continues for an extended period, feel free to reach out to us." %}</p>
+            <p class="status">{% translate 'If the process continues for an extended period, feel free to reach out to us.' %}</p>
         </div>
     </div>
 </div>
@@ -19,23 +19,23 @@
         <div class="modal-card-content-join">
             <div>
                 <h3>
-                    {% trans "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
+                    {% translate "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
                 </h3>
                 <h3>
-                    {% trans "As a ticket holder please also check your email for the unique link to join online sessions." %}
+                    {% translate 'As a ticket holder please also check your email for the unique link to join online sessions.' %}
                 </h3>
                 {% if request.event %}
                     <p class="text">
-                        {% trans "Can't find your ticket?" %}
+                        {% translate "Can't find your ticket?" %}
                         <a class="btn btn-link" href='{% eventurl request.event "presale:event.resend_link" %}'>
-                            {% trans "Resend the email" %}
+                            {% translate 'Resend the email' %}
                         </a>
-                        {% trans "to receive it." %}
+                        {% translate 'to receive it.' %}
                     </p>
                     <p class="text">
-                        {% trans "Want to order a ticket?" %}
+                        {% translate 'Want to order a ticket?' %}
                         <a class="btn btn-link" href='{% eventurl request.event "presale:event.index" %}'>
-                            {% trans "Get a ticket here" %}
+                            {% translate 'Get a ticket here' %}
                         </a>
                     </p>
                 {% endif %}
@@ -44,16 +44,16 @@
                         {% blocktrans with event_name=event_name %}
                             Want to create a {{ event_name }} account?
                         {% endblocktrans %}
-                        <a class="btn btn-link" href='{% url "control:auth.register" %}?next={{ request.get_full_path|urlencode }}'>
-                            {% trans "Sign up here" %}
+                        <a class="btn btn-link" href='{% url "eventyay_common:auth.register" %}?next={{ request.get_full_path|urlencode }}'>
+                            {% translate 'Sign up here' %}
                         </a>
                     </p>
                     <p class="text">
                         {% blocktrans with event_name=event_name %}
                             Already have a {{ event_name }} account?
                         {% endblocktrans %}
-                        <a class="btn btn-link" href='{% url "control:auth.login" %}?next={{ request.get_full_path|urlencode }}'>
-                            {% trans "Login here" %}
+                        <a class="btn btn-link" href='{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}'>
+                            {% translate 'Login here' %}
                         </a>
                     </p>
                 {% endif %}

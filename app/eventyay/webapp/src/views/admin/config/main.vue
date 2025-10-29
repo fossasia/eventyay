@@ -135,6 +135,25 @@ async function save() {
 	flex: auto
 	display: flex
 	flex-direction: column
+	min-height: 0
+	height: 100%
+	.ui-page-header
+		flex: none
+		position: sticky
+		top: 0
+		z-index: 10
+		background-color: $clr-grey-50
+	> .c-scrollbars
+		flex: auto
+		min-height: 0
+	.ui-form-actions
+		flex: none
+		position: sticky
+		bottom: 0
+		background-color: white
+		border-top: border-separator()
+		padding: 16px
+		z-index: 10
 	.bunt-input-outline-container
 		margin-top: 16px
 		&.error

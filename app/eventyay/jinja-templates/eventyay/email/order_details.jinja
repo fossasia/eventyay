@@ -11,7 +11,7 @@
         {{ event.name }}
         <br>
         {% if event.has_subevents and ev.name|upper != event.name|upper %}{{ ev.name }}<br>{% endif %}
-        {{ ev.get_date_range_display }}
+        {{ ev.get_date_range_display() }}
         {% if event.settings.show_times %}
           {{ ev.date_from|format_date('TIME_FORMAT') }}
         {% endif %}
@@ -61,7 +61,7 @@
         {{ event.name }}
         {% if not event.has_subevents and event.settings.show_dates_on_frontpage %}
           <br>
-          {{ event.get_date_range_display }}
+          {{ event.get_date_range_display() }}
           {% if event.settings.show_times %}
             {{ event.date_from|format_date('TIME_FORMAT') }}
           {% endif %}
@@ -107,7 +107,7 @@
                   {% endif %}
                   {% if groupkey[3] %} {# attendee name #}
                     <br>
-                    {{ groupkey[3].name }}
+                    {{ groupkey[3].name|default(groupkey[3]) }}
                   {% endif %}
                 </td>
               </tr>
