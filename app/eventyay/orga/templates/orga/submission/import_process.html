@@ -1,0 +1,113 @@
+{% extends "orga/base.html" %}
+
+{% load i18n %}
+{% load static %}
+{% load getitem %}
+
+{% block extra_title %}{% translate "Import sessions" %} :: {% endblock extra_title %}
+
+{% block content %}
+    <div class="d-md-flex justify-content-between align-items-center">
+        <h2 class="mb-3 mb-md-0">{% translate "Import sessions" %}</h2>
+        {% include "orga/event/component_link.html" %}
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h3 class="card-title mb-0">{% translate "Data preview" %}</h3>
+                {% if file %}
+                    <p class="mb-0 small text-muted">{{ file.filename }}</p>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 320px; overflow: auto;">
+                    <table class="table mb-0 table-sm table-striped" style="min-width: 720px;">
+                        <thead>
+                        <tr>
+                            {% for header in headers %}
+                                <th>{{ header }}</th>
+                            {% endfor %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% if sample_rows %}
+                            {% for row in sample_rows %}
+                                <tr>
+                                    {% for header in headers %}
+                                        <td class="text-break">{{ row|getitem:header }}</td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="{{ header_count|default:1 }}" class="text-center text-muted py-4">
+                                    {% translate "No rows found in the uploaded file." %}
+                                </td>
+                            </tr>
+                        {% endif %}
+                        {% if has_more_rows %}
+                            <tr>
+                                <td colspan="{{ header_count|default:1 }}" class="text-center text-muted">
+                                    &hellip;
+                                </td>
+                            </tr>
+                        {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h3 class="card-title mb-0">{% translate "Import settings" %}</h3>
+            </div>
+            <div class="card-body">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% for field in form %}
+                    <div class="form-group row align-items-center">
+                        <label class="col-md-4 col-form-label font-weight-bold" for="{{ field.id_for_label }}">
+                            {{ field.label }}
+                            {% if field.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        <div class="col-md-8">
+                            {{ field }}
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="submit-group mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="fa fa-check"></i> {% translate "Perform import" %}
+            </button>
+            <a href="{{ request.event.orga_urls.submissions_import }}" class="btn btn-outline-secondary ml-2">
+                {% translate "Back" %}
+            </a>
+        </div>
+        <div class="alert alert-info mt-3">
+            {% blocktranslate trimmed %}
+                The automated import is still being built. Your field mapping will be saved so you can resume once the importer is ready.
+            {% endblocktranslate %}
+        </div>
+    </form>
+{% endblock content %}
+

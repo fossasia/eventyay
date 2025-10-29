@@ -1,0 +1,61 @@
+{% extends "orga/base.html" %}
+
+{% load compress %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{% translate "Import speakers" %} :: {% endblock extra_title %}
+
+{% block content %}
+    <div class="d-md-flex justify-content-between align-items-center">
+        <h2 class="mb-3 mb-md-0">{% translate "Import speakers" %}</h2>
+        {% include "orga/event/component_link.html" %}
+    </div>
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="card mt-3">
+        <div class="card-header">
+            <h3 class="card-title mb-0">{% translate "Upload a new file" %}</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                <p>
+                    {% blocktranslate trimmed %}
+                        The uploaded file should be a CSV file with a header row. You will be able to assign the
+                        meanings of the different columns in the next step.
+                    {% endblocktranslate %}
+                </p>
+
+                <div class="form-group row align-items-center">
+                    <label for="{{ form.file.id_for_label }}" class="col-md-3 col-form-label font-weight-bold mb-0">
+                        {{ form.file.label }}:
+                    </label>
+                    <div class="col-md-9">
+                        <input
+                            type="file"
+                            name="{{ form.file.html_name }}"
+                            id="{{ form.file.id_for_label }}"
+                            class="form-control-file{% if form.file.errors %} is-invalid{% endif %}"
+                            accept="{{ form.file.field.widget.attrs.accept|default:'.csv,text/csv' }}"{% if form.file.field.required %} required{% endif %}
+                        >
+                        {% for error in form.file.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary float-right flip">
+                    <i class="fa fa-upload"></i> {% translate "Start import" %}
+                </button>
+            </form>
+        </div>
+    </div>
+{% endblock content %}
