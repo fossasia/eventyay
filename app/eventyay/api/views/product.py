@@ -10,34 +10,34 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
-from pretix.api.serializers.item import (
-    ItemAddOnSerializer,
-    ItemBundleSerializer,
-    ItemCategorySerializer,
-    ItemSerializer,
-    ItemVariationSerializer,
+from eventyay.api.serializers.product import (
+    ProductAddOnSerializer,
+    ProductBundleSerializer,
+    ProductCategorySerializer,
+    ProductSerializer,
+    ProductVariationSerializer,
     QuestionOptionSerializer,
     QuestionSerializer,
     QuotaSerializer,
 )
-from pretix.api.views import ConditionalListView
-from pretix.base.models import (
+from eventyay.api.views import ConditionalListView
+from eventyay.base.models import (
     CartPosition,
-    Item,
-    ItemAddOn,
-    ItemBundle,
-    ItemCategory,
-    ItemVariation,
+    Product,
+    ProductAddOn,
+    ProductBundle,
+    ProductCategory,
+    ProductVariation,
     Question,
     QuestionOption,
     Quota,
 )
-from pretix.base.services.quotas import QuotaAvailability
-from pretix.helpers.dicts import merge_dicts
+from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.helpers.dicts import merge_dicts
 
 with scopes_disabled():
 
-    class ItemFilter(FilterSet):
+    class ProductFilter(FilterSet):
         tax_rate = django_filters.CharFilter(method='tax_rate_qs')
 
         def tax_rate_qs(self, queryset, name, value):
@@ -47,23 +47,23 @@ with scopes_disabled():
                 return queryset.filter(tax_rule__rate=value)
 
         class Meta:
-            model = Item
+            model = Product
             fields = ['active', 'category', 'admission', 'tax_rate', 'free_price']
 
 
-class ItemViewSet(ConditionalListView, viewsets.ModelViewSet):
-    serializer_class = ItemSerializer
-    queryset = Item.objects.none()
+class ProductViewSet(ConditionalListView, viewsets.ModelViewSet):
+    serializer_class = ProductSerializer
+    queryset = Product.objects.none()
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     ordering_fields = ('id', 'position')
     ordering = ('position', 'id')
-    filterset_class = ItemFilter
+    filterset_class = ProductFilter
     permission = None
     write_permission = 'can_change_items'
 
     def get_queryset(self):
         return (
-            self.request.event.items.select_related('tax_rule')
+            self.request.event.products.select_related('tax_rule')
             .prefetch_related('variations', 'addons', 'bundles', 'meta_values')
             .all()
         )
@@ -71,7 +71,7 @@ class ItemViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.item.added',
+            'eventyay.event.product.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -92,7 +92,7 @@ class ItemViewSet(ConditionalListView, viewsets.ModelViewSet):
             # This costs us a few cycles on save, but avoids thousands of lines in our log.
             return
         serializer.instance.log_action(
-            'pretix.event.item.changed',
+            'eventyay.event.product.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -101,24 +101,24 @@ class ItemViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         if not instance.allow_delete():
             raise PermissionDenied(
-                'This item cannot be deleted because it has already been ordered '
-                "by a user or currently is in a users's cart. Please set the item as "
+                'This product cannot be deleted because it has already been ordered '
+                "by a user or currently is in a users's cart. Please set the product as "
                 '"inactive" instead.'
             )
 
         instance.log_action(
-            'pretix.event.item.deleted',
+            'eventyay.event.product.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
-        CartPosition.objects.filter(addon_to__item=instance).delete()
+        CartPosition.objects.filter(addon_to__product=instance).delete()
         instance.cartposition_set.all().delete()
         super().perform_destroy(instance)
 
 
-class ItemVariationViewSet(viewsets.ModelViewSet):
-    serializer_class = ItemVariationSerializer
-    queryset = ItemVariation.objects.none()
+class ProductVariationViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductVariationSerializer
+    queryset = ProductVariation.objects.none()
     filter_backends = (
         DjangoFilterBackend,
         OrderingFilter,
@@ -129,27 +129,27 @@ class ItemVariationViewSet(viewsets.ModelViewSet):
     write_permission = 'can_change_items'
 
     @cached_property
-    def item(self):
-        return get_object_or_404(Item, pk=self.kwargs['item'], event=self.request.event)
+    def product(self):
+        return get_object_or_404(Product, pk=self.kwargs['product'], event=self.request.event)
 
     def get_queryset(self):
-        return self.item.variations.all()
+        return self.product.variations.all()
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
-        ctx['item'] = self.item
+        ctx['product'] = self.product
         return ctx
 
     def perform_create(self, serializer):
-        item = self.item
-        if not item.has_variations:
+        product = self.product
+        if not product.has_variations:
             raise PermissionDenied(
-                'This variation cannot be created because the item does not have variations. '
+                'This variation cannot be created because the product does not have variations. '
                 'Changing a product without variations to a product with variations is not allowed.'
             )
-        serializer.save(item=item)
-        item.log_action(
-            'pretix.event.item.variation.added',
+        serializer.save(product=product)
+        product.log_action(
+            'eventyay.event.product.variation.added',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -162,8 +162,8 @@ class ItemVariationViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
-        serializer.instance.item.log_action(
-            'pretix.event.item.variation.changed',
+        serializer.instance.product.log_action(
+            'eventyay.event.product.variation.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -187,17 +187,17 @@ class ItemVariationViewSet(viewsets.ModelViewSet):
                 'product with variations to a product without variations is not allowed.'
             )
         super().perform_destroy(instance)
-        instance.item.log_action(
-            'pretix.event.item.variation.deleted',
+        instance.product.log_action(
+            'eventyay.event.product.variation.deleted',
             user=self.request.user,
             auth=self.request.auth,
             data={'value': instance.value, 'id': self.kwargs['pk']},
         )
 
 
-class ItemBundleViewSet(viewsets.ModelViewSet):
-    serializer_class = ItemBundleSerializer
-    queryset = ItemBundle.objects.none()
+class ProductBundleViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductBundleSerializer
+    queryset = ProductBundle.objects.none()
     filter_backends = (
         DjangoFilterBackend,
         OrderingFilter,
@@ -208,23 +208,23 @@ class ItemBundleViewSet(viewsets.ModelViewSet):
     write_permission = 'can_change_items'
 
     @cached_property
-    def item(self):
-        return get_object_or_404(Item, pk=self.kwargs['item'], event=self.request.event)
+    def product(self):
+        return get_object_or_404(Product, pk=self.kwargs['product'], event=self.request.event)
 
     def get_queryset(self):
-        return self.item.bundles.all()
+        return self.product.bundles.all()
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx['event'] = self.request.event
-        ctx['item'] = self.item
+        ctx['product'] = self.product
         return ctx
 
     def perform_create(self, serializer):
-        item = get_object_or_404(Item, pk=self.kwargs['item'], event=self.request.event)
-        serializer.save(base_item=item)
-        item.log_action(
-            'pretix.event.item.bundles.added',
+        product = get_object_or_404(Product, pk=self.kwargs['product'], event=self.request.event)
+        serializer.save(base_product=product)
+        product.log_action(
+            'eventyay.event.product.bundles.added',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': serializer.instance.pk}),
@@ -232,8 +232,8 @@ class ItemBundleViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
-        serializer.instance.base_item.log_action(
-            'pretix.event.item.bundles.changed',
+        serializer.instance.base_product.log_action(
+            'eventyay.event.product.bundles.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': serializer.instance.pk}),
@@ -241,12 +241,12 @@ class ItemBundleViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         super().perform_destroy(instance)
-        instance.base_item.log_action(
-            'pretix.event.item.bundles.removed',
+        instance.base_product.log_action(
+            'eventyay.event.product.bundles.removed',
             user=self.request.user,
             auth=self.request.auth,
             data={
-                'bundled_item': instance.bundled_item.pk,
+                'bundled_product': instance.bundled_product.pk,
                 'bundled_variation': instance.bundled_variation.pk if instance.bundled_variation else None,
                 'count': instance.count,
                 'designated_price': instance.designated_price,
@@ -254,9 +254,9 @@ class ItemBundleViewSet(viewsets.ModelViewSet):
         )
 
 
-class ItemAddOnViewSet(viewsets.ModelViewSet):
-    serializer_class = ItemAddOnSerializer
-    queryset = ItemAddOn.objects.none()
+class ProductAddOnViewSet(viewsets.ModelViewSet):
+    serializer_class = ProductAddOnSerializer
+    queryset = ProductAddOn.objects.none()
     filter_backends = (
         DjangoFilterBackend,
         OrderingFilter,
@@ -264,27 +264,27 @@ class ItemAddOnViewSet(viewsets.ModelViewSet):
     ordering_fields = ('id', 'position')
     ordering = ('id',)
     permission = None
-    write_permission = 'can_change_items'
+    write_permission = 'can_change_products'
 
     @cached_property
-    def item(self):
-        return get_object_or_404(Item, pk=self.kwargs['item'], event=self.request.event)
+    def product(self):
+        return get_object_or_404(Product, pk=self.kwargs['product'], event=self.request.event)
 
     def get_queryset(self):
-        return self.item.addons.all()
+        return self.product.addons.all()
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
         ctx['event'] = self.request.event
-        ctx['item'] = self.item
+        ctx['product'] = self.product
         return ctx
 
     def perform_create(self, serializer):
-        item = self.item
-        category = get_object_or_404(ItemCategory, pk=self.request.data['addon_category'])
-        serializer.save(base_item=item, addon_category=category)
-        item.log_action(
-            'pretix.event.item.addons.added',
+        product = self.product
+        category = get_object_or_404(ProductCategory, pk=self.request.data['addon_category'])
+        serializer.save(base_product=product, addon_category=category)
+        product.log_action(
+            'eventyay.event.product.addons.added',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -296,8 +296,8 @@ class ItemAddOnViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
-        serializer.instance.base_item.log_action(
-            'pretix.event.item.addons.changed',
+        serializer.instance.base_product.log_action(
+            'eventyay.event.product.addons.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -309,25 +309,25 @@ class ItemAddOnViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         super().perform_destroy(instance)
-        instance.base_item.log_action(
-            'pretix.event.item.addons.removed',
+        instance.base_product.log_action(
+            'eventyay.event.product.addons.removed',
             user=self.request.user,
             auth=self.request.auth,
             data={'category': instance.addon_category.pk},
         )
 
 
-class ItemCategoryFilter(FilterSet):
+class ProductCategoryFilter(FilterSet):
     class Meta:
-        model = ItemCategory
+        model = ProductCategory
         fields = ['is_addon']
 
 
-class ItemCategoryViewSet(ConditionalListView, viewsets.ModelViewSet):
-    serializer_class = ItemCategorySerializer
-    queryset = ItemCategory.objects.none()
+class ProductCategoryViewSet(ConditionalListView, viewsets.ModelViewSet):
+    serializer_class = ProductCategorySerializer
+    queryset = ProductCategory.objects.none()
     filter_backends = (DjangoFilterBackend, OrderingFilter)
-    filterset_class = ItemCategoryFilter
+    filterset_class = ProductCategoryFilter
     ordering_fields = ('id', 'position')
     ordering = ('position', 'id')
     permission = None
@@ -339,7 +339,7 @@ class ItemCategoryViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.category.added',
+            'eventyay.event.category.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -353,18 +353,18 @@ class ItemCategoryViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.category.changed',
+            'eventyay.event.category.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
         )
 
     def perform_destroy(self, instance):
-        for item in instance.items.all():
-            item.category = None
-            item.save()
+        for product in instance.products.all():
+            product.category = None
+            product.save()
         instance.log_action(
-            'pretix.event.category.deleted',
+            'eventyay.event.category.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -395,7 +395,7 @@ class QuestionViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.question.added',
+            'eventyay.event.question.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -409,7 +409,7 @@ class QuestionViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.question.changed',
+            'eventyay.event.question.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -417,7 +417,7 @@ class QuestionViewSet(ConditionalListView, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.log_action(
-            'pretix.event.question.deleted',
+            'eventyay.event.question.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -450,7 +450,7 @@ class QuestionOptionViewSet(viewsets.ModelViewSet):
         q = get_object_or_404(Question, pk=self.kwargs['question'], event=self.request.event)
         serializer.save(question=q)
         q.log_action(
-            'pretix.event.question.option.added',
+            'eventyay.event.question.option.added',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -463,7 +463,7 @@ class QuestionOptionViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.question.log_action(
-            'pretix.event.question.option.changed',
+            'eventyay.event.question.option.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(
@@ -475,7 +475,7 @@ class QuestionOptionViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.question.log_action(
-            'pretix.event.question.option.deleted',
+            'eventyay.event.question.option.deleted',
             user=self.request.user,
             auth=self.request.auth,
             data={'id': instance.pk},
@@ -510,14 +510,14 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.quota.added',
+            'eventyay.event.quota.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
         )
         if serializer.instance.subevent:
             serializer.instance.subevent.log_action(
-                'pretix.subevent.quota.added',
+                'eventyay.subevent.quota.added',
                 user=self.request.user,
                 auth=self.request.auth,
                 data=self.request.data,
@@ -542,19 +542,19 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
 
         if original_data['closed'] is True and serializer.instance.closed is False:
             serializer.instance.log_action(
-                'pretix.event.quota.opened',
+                'eventyay.event.quota.opened',
                 user=self.request.user,
                 auth=self.request.auth,
             )
         elif original_data['closed'] is False and serializer.instance.closed is True:
             serializer.instance.log_action(
-                'pretix.event.quota.closed',
+                'eventyay.event.quota.closed',
                 user=self.request.user,
                 auth=self.request.auth,
             )
 
         serializer.instance.log_action(
-            'pretix.event.quota.changed',
+            'eventyay.event.quota.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -562,7 +562,7 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
         if current_subevent == request_subevent:
             if current_subevent is not None:
                 current_subevent.log_action(
-                    'pretix.subevent.quota.changed',
+                    'eventyay.subevent.quota.changed',
                     user=self.request.user,
                     auth=self.request.auth,
                     data=self.request.data,
@@ -570,14 +570,14 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
         else:
             if request_subevent is not None:
                 request_subevent.log_action(
-                    'pretix.subevent.quota.added',
+                    'eventyay.subevent.quota.added',
                     user=self.request.user,
                     auth=self.request.auth,
                     data=self.request.data,
                 )
             if current_subevent is not None:
                 current_subevent.log_action(
-                    'pretix.subevent.quota.deleted',
+                    'eventyay.subevent.quota.deleted',
                     user=self.request.user,
                     auth=self.request.auth,
                 )
@@ -585,13 +585,13 @@ class QuotaViewSet(ConditionalListView, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.log_action(
-            'pretix.event.quota.deleted',
+            'eventyay.event.quota.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
         if instance.subevent:
             instance.subevent.log_action(
-                'pretix.subevent.quota.deleted',
+                'eventyay.subevent.quota.deleted',
                 user=self.request.user,
                 auth=self.request.auth,
             )

@@ -20,8 +20,8 @@ from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from pretix.api.models import OAuthAccessToken
-from pretix.api.serializers.organizer import (
+from eventyay.api.models import OAuthAccessToken
+from eventyay.api.serializers.organizer import (
     DeviceSerializer,
     GiftCardSerializer,
     GiftCardTransactionSerializer,
@@ -33,7 +33,7 @@ from pretix.api.serializers.organizer import (
     TeamMemberSerializer,
     TeamSerializer,
 )
-from pretix.base.models import (
+from eventyay.base.models import (
     Device,
     GiftCard,
     GiftCardTransaction,
@@ -44,9 +44,9 @@ from pretix.base.models import (
     TeamInvite,
     User,
 )
-from pretix.base.settings import SETTINGS_AFFECTING_CSS
-from pretix.helpers.dicts import merge_dicts
-from pretix.presale.style import regenerate_organizer_css
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.helpers.dicts import merge_dicts
+from eventyay.presale.style import regenerate_organizer_css
 
 
 class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
@@ -93,7 +93,7 @@ class SeatingPlanViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         inst = serializer.save(organizer=self.request.organizer)
         self.request.organizer.log_action(
-            'pretix.seatingplan.added',
+            'eventyay.seatingplan.added',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': inst.pk}),
@@ -105,7 +105,7 @@ class SeatingPlanViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('This plan can not be changed while it is in use for an event.')
         inst = serializer.save(organizer=self.request.organizer)
         self.request.organizer.log_action(
-            'pretix.seatingplan.changed',
+            'eventyay.seatingplan.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': serializer.instance.pk}),
@@ -117,7 +117,7 @@ class SeatingPlanViewSet(viewsets.ModelViewSet):
         if instance.events.exists() or instance.subevents.exists():
             raise PermissionDenied('This plan can not be deleted while it is in use for an event.')
         instance.log_action(
-            'pretix.seatingplan.deleted',
+            'eventyay.seatingplan.deleted',
             user=self.request.user,
             auth=self.request.auth,
             data={'id': instance.pk},
@@ -161,7 +161,7 @@ class GiftCardViewSet(viewsets.ModelViewSet):
         inst = serializer.save(issuer=self.request.organizer)
         inst.transactions.create(value=value)
         inst.log_action(
-            'pretix.giftcards.transaction.manual',
+            'eventyay.giftcards.transaction.manual',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': inst.pk}),
@@ -182,7 +182,7 @@ class GiftCardViewSet(viewsets.ModelViewSet):
         diff = value - old_value
         inst.transactions.create(value=diff)
         inst.log_action(
-            'pretix.giftcards.transaction.manual',
+            'eventyay.giftcards.transaction.manual',
             user=self.request.user,
             auth=self.request.auth,
             data={'value': diff},
@@ -202,7 +202,7 @@ class GiftCardViewSet(viewsets.ModelViewSet):
             )
         gc.transactions.create(value=value, text=text)
         gc.log_action(
-            'pretix.giftcards.transaction.manual',
+            'eventyay.giftcards.transaction.manual',
             user=self.request.user,
             auth=self.request.auth,
             data={'value': value, 'text': text},
@@ -249,7 +249,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         inst = serializer.save(organizer=self.request.organizer)
         inst.log_action(
-            'pretix.team.created',
+            'eventyay.team.created',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': inst.pk}),
@@ -259,7 +259,7 @@ class TeamViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         inst = serializer.save()
         inst.log_action(
-            'pretix.team.changed',
+            'eventyay.team.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -267,7 +267,7 @@ class TeamViewSet(viewsets.ModelViewSet):
         return inst
 
     def perform_destroy(self, instance):
-        instance.log_action('pretix.team.deleted', user=self.request.user, auth=self.request.auth)
+        instance.log_action('eventyay.team.deleted', user=self.request.user, auth=self.request.auth)
         instance.delete()
 
 
@@ -293,7 +293,7 @@ class TeamMemberViewSet(DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
     def perform_destroy(self, instance):
         self.team.members.remove(instance)
         self.team.log_action(
-            'pretix.team.member.removed',
+            'eventyay.team.member.removed',
             user=self.request.user,
             auth=self.request.auth,
             data={'email': instance.email, 'user': instance.pk},
@@ -326,7 +326,7 @@ class TeamInviteViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyMo
     @transaction.atomic()
     def perform_destroy(self, instance):
         self.team.log_action(
-            'pretix.team.invite.deleted',
+            'eventyay.team.invite.deleted',
             user=self.request.user,
             auth=self.request.auth,
             data={
@@ -368,7 +368,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
         instance.active = False
         instance.save()
         self.team.log_action(
-            'pretix.team.token.deleted',
+            'eventyay.team.token.deleted',
             user=self.request.user,
             auth=self.request.auth,
             data={
@@ -380,7 +380,7 @@ class TeamAPITokenViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
     def perform_create(self, serializer):
         instance = serializer.save(team=self.team)
         self.team.log_action(
-            'pretix.team.token.created',
+            'eventyay.team.token.created',
             auth=self.request.auth,
             user=self.request.user,
             data={'name': instance.name, 'id': instance.pk},
@@ -428,7 +428,7 @@ class DeviceViewSet(
     def perform_create(self, serializer):
         inst = serializer.save(organizer=self.request.organizer)
         inst.log_action(
-            'pretix.device.created',
+            'eventyay.device.created',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': inst.pk}),
@@ -438,7 +438,7 @@ class DeviceViewSet(
     def perform_update(self, serializer):
         inst = serializer.save()
         inst.log_action(
-            'pretix.device.changed',
+            'eventyay.device.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -480,7 +480,7 @@ class OrganizerSettingsView(views.APIView):
         with transaction.atomic():
             s.save()
             self.request.organizer.log_action(
-                'pretix.organizer.settings',
+                'eventyay.organizer.settings',
                 user=self.request.user,
                 auth=self.request.auth,
                 data={k: v for k, v in s.validated_data.items()},
