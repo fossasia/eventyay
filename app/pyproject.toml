@@ -169,6 +169,7 @@ dependencies = [
     "pycryptodome>=3.20.0",
     "pydantic>=2.10.4",
     "pydantic-core>=2.27.2",
+    "pydantic-settings>=2.11.0",
     "pyenchant>=3.2.2",
     "pyflakes>=3.2.0",
     "pygments>=2.19.1",

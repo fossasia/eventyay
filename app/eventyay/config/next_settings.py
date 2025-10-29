@@ -1,0 +1,414 @@
+import importlib.util
+import os
+import sys
+from enum import StrEnum
+from importlib.metadata import entry_points
+from pathlib import Path
+from typing import Annotated
+from urllib.parse import urlparse
+
+from pycountry import currencies
+from pydantic import Field, HttpUrl
+from pydantic_settings import BaseSettings as _BaseSettings
+from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
+
+# To avoid loading unnecessary settings from other applications
+# we only load those which are prefixed with EVY_.
+_ENV_PREFIX = 'EVY_'
+_ENV_KEY_ACTIVE_ENVIRONMENT = f'{_ENV_PREFIX}RUNNING_ENVIRONMENT'
+# The 'eventyay.toml' is the main configuration file and contains default values.
+# The 'eventyay.local.toml' is optional, ignored by Git, for developers to override settings
+# to match their personal setup.
+_TOML_SOURCE_FILES = ['eventyay.toml', 'eventyay.local.toml']
+
+_DEFAULT_DB_NAME = 'eventyay-db'
+
+# The base directory of the project, where "./manage.py" file is located.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+DATA_DIR = BASE_DIR / 'data'
+LOG_DIR = DATA_DIR / 'logs'
+MEDIA_ROOT = DATA_DIR / 'media'
+PROFILE_DIR = DATA_DIR / 'profiles'
+
+DATA_DIR.mkdir(exist_ok=True)
+LOG_DIR.mkdir(exist_ok=True)
+MEDIA_ROOT.mkdir(exist_ok=True)
+
+
+# To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT
+class RunningEnvironment(StrEnum):
+    PRODUCTION = 'production'
+    DEVELOPMENT = 'development'
+    TESTING = 'testing'
+
+
+ACTIVE_ENVIRONMENT = RunningEnvironment(os.getenv(_ENV_KEY_ACTIVE_ENVIRONMENT, 'development'))
+# Some shortcuts
+_IN_DEVELOPMENT = ACTIVE_ENVIRONMENT == RunningEnvironment.DEVELOPMENT
+_IN_TESTING = ACTIVE_ENVIRONMENT == RunningEnvironment.TESTING
+_IN_PRODUCTION = ACTIVE_ENVIRONMENT == RunningEnvironment.PRODUCTION
+
+
+class BaseSettings(_BaseSettings):
+    """
+    Contains the settings which were loaded from the configuration file.
+
+    After that, it will be manipulated to serve Django.
+    """
+
+    # Tell Pydantic how to load our configurations.
+    model_config = SettingsConfigDict(
+        env_prefix=_ENV_PREFIX,
+    )
+    # Here, starting our settings fields.
+    debug: bool = False
+    secret_key: str
+    postgres_db: str = _DEFAULT_DB_NAME
+    # When these values are `None`, "peer" connection method will be used.
+    # We just need to have a PostgreSQL user with the same name as Linux user.
+    postgres_user: str | None = None
+    postgres_password: str | None = None
+    postgres_host: str | None = None
+    postgres_port: str | None = None
+    # Used by "Talk" (pretalx). Not sure why it is named like this.
+    core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
+    # Don't send emails to Internet by default.
+    email_backend: str = 'django.core.mail.backends.console.EmailBackend'
+    allowed_hosts: list[str] = []
+    site_url: HttpUrl = 'http://localhost:8000'
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[_BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        # Insert the TOML which matches the running environment
+        toml_files = _TOML_SOURCE_FILES[:1]
+        toml_files.append(f'eventyay.{ACTIVE_ENVIRONMENT}.toml')
+        toml_files.extend(_TOML_SOURCE_FILES[1:])
+        print(f'Loading configuration from: {toml_files}', file=sys.stderr)
+        toml_settings = TomlConfigSettingsSource(
+            settings_cls,
+            toml_file=toml_files,
+        )
+        return (
+            init_settings,
+            toml_settings,
+            # The following files will override values from TOML files.
+            env_settings,
+            dotenv_settings,
+            file_secret_settings,
+        )
+
+
+conf = BaseSettings()
+
+# --- Now, provide values to Django's settings. ---
+
+# Note: DEBUG doesn't mean "development". Sometimes we need "debug" in production for troubleshooting,
+# but please use with caution.
+DEBUG = conf.debug
+SECRET_KEY = conf.secret_key
+
+
+# Database configuration
+DATABASES = {
+    'default': {
+        # We don't support other DB backends than PostgreSQL,
+        # because we need advanced features like UUID, ARRAY, JSONB fields.
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': conf.postgres_db,
+        # When these values are `None`, "peer" connection method will be used.
+        # We just need to have a PostgreSQL user with the same name as Linux user.
+        'USER': conf.postgres_user,
+        'PASSWORD': conf.postgres_password,
+        'HOST': conf.postgres_host,
+        'PORT': conf.postgres_port,
+        'CONN_MAX_AGE': 120,
+    }
+}
+
+_LIBRARY_APPS = (
+    'bootstrap3',
+    'corsheaders',
+    'channels',
+    'compressor',
+    'daphne',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'django.contrib.humanize',
+    'django_filters',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
+    'django_otp.plugins.otp_static',
+    'django_celery_beat',
+    'django.forms',
+    'djangoformsetjs',
+    'django_pdb',
+    'jquery',
+    'rest_framework.authtoken',
+    'rules.apps.AutodiscoverRulesConfig',
+    'oauth2_provider',
+    'statici18n',
+    'rest_framework',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
+    'allauth.socialaccount.providers.mediawiki',
+)
+
+if DEBUG and importlib.util.find_spec('django_extensions'):
+    _LIBRARY_APPS += ('django_extensions',)
+
+if DEBUG and importlib.util.find_spec('debug_toolbar'):
+    _LIBRARY_APPS += ('debug_toolbar',)
+
+_OURS_APPS = (
+    # agenda, orga and common must be on top to load contexts before forms gets initialized.
+    'eventyay.agenda',
+    'eventyay.common',
+    'eventyay.orga',
+    'eventyay.api',
+    'eventyay.base',
+    'eventyay.cfp',
+    'eventyay.control.ControlConfig',
+    'eventyay.event',
+    'eventyay.eventyay_common',
+    'eventyay.features.live.LiveConfig',
+    'eventyay.features.analytics.graphs.GraphsConfig',
+    'eventyay.features.importers.ImportersConfig',
+    'eventyay.storage.StorageConfig',
+    'eventyay.features.social.SocialConfig',
+    'eventyay.features.integrations.zoom.ZoomConfig',
+    'eventyay.helpers',
+    'eventyay.mail',
+    'eventyay.multidomain',
+    'eventyay.person',
+    'eventyay.presale',
+    'eventyay.plugins.socialauth',
+    'eventyay.plugins.banktransfer',
+    'eventyay.plugins.badges',
+    'eventyay.plugins.sendmail',
+    'eventyay.plugins.statistics',
+    'eventyay.plugins.reports',
+    'eventyay.plugins.checkinlists',
+    'eventyay.plugins.manualpayment',
+    'eventyay.plugins.returnurl',
+    'eventyay.plugins.scheduledtasks',
+    'eventyay.plugins.ticketoutputpdf',
+    'eventyay.plugins.webcheckin',
+    'eventyay.schedule',
+    'eventyay.submission',
+    # Load local ticket-video plugin
+    'pretix_venueless',
+)
+INSTALLED_APPS = _LIBRARY_APPS + _OURS_APPS
+
+# For "Talk" (pretalx).
+# TODO: May rename, because it is extended from something, not only "core" modules.
+CORE_MODULES = (
+    INSTALLED_APPS
+    + conf.core_modules
+    + (
+        'eventyay.base',
+        'eventyay.presale',
+        'eventyay.control',
+        'eventyay.plugins.checkinlists',
+        'eventyay.plugins.reports',
+    )
+)
+
+# TODO: This list is only for display. It should not be here.
+PLUGINS = []
+for entry_point in entry_points(group='pretalx.plugin'):
+    PLUGINS.append(entry_point.module)
+
+AUTH_USER_MODEL = 'base.User'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+_LIBRARY_MIDDLEWARES = (
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
+)
+
+if DEBUG and importlib.util.find_spec('debug_toolbar'):
+    _LIBRARY_MIDDLEWARES += ('debug_toolbar.middleware.DebugToolbarMiddleware',)
+
+_OURS_MIDDLEWARES = (
+    'eventyay.base.middleware.CustomCommonMiddleware',
+    'eventyay.common.middleware.SessionMiddleware',  # Add session handling
+    'eventyay.common.middleware.MultiDomainMiddleware',  # Check which host is used and if it is valid
+    'eventyay.common.middleware.EventPermissionMiddleware',  # Sets locales, request.event, available events, etc.
+    'eventyay.common.middleware.CsrfViewMiddleware',  # Protect against CSRF attacks before forms/data are processed
+    'eventyay.multidomain.middlewares.MultiDomainMiddleware',
+    'eventyay.multidomain.middlewares.SessionMiddleware',
+    'eventyay.multidomain.middlewares.CsrfViewMiddleware',
+    'eventyay.control.middleware.PermissionMiddleware',
+    'eventyay.control.middleware.AuditLogMiddleware',
+    'eventyay.control.video.middleware.SessionMiddleware',
+    'eventyay.control.video.middleware.AuthenticationMiddleware',
+    'eventyay.control.video.middleware.MessageMiddleware',
+    'eventyay.base.middleware.LocaleMiddleware',
+    'eventyay.base.middleware.SecurityMiddleware',
+    'eventyay.presale.middleware.EventMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
+    'eventyay.api.middleware.ApiScopeMiddleware',
+)
+
+MIDDLEWARE = _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
+
+
+_TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+)
+
+if _IN_PRODUCTION:
+    _TEMPLATE_LOADERS = ('django.template.loaders.cached.Loader', *_TEMPLATE_LOADERS)
+
+TEMPLATES = (
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': (DATA_DIR / 'templates',),
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.static',
+                'django.template.context_processors.request',
+                'django.template.context_processors.tz',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'eventyay.config.settings.instance_name',
+                'eventyay.agenda.context_processors.is_html_export',
+                'eventyay.common.context_processors.add_events',
+                'eventyay.common.context_processors.locale_context',
+                'eventyay.common.context_processors.messages',
+                'eventyay.common.context_processors.system_information',
+                'eventyay.orga.context_processors.orga_events',
+                'eventyay.base.context.contextprocessor',
+                'eventyay.control.context.contextprocessor',
+                'eventyay.presale.context.contextprocessor',
+                'eventyay.eventyay_common.context.contextprocessor',
+                'django.template.context_processors.request',
+            ],
+            'loaders': _TEMPLATE_LOADERS,
+        },
+    },
+    {
+        'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        'DIRS': [
+            BASE_DIR / 'eventyay' / 'jinja-templates',
+        ],
+        'OPTIONS': {
+            'environment': 'eventyay.jinja.environment',
+            'extensions': (
+                'jinja2.ext.i18n',
+                'jinja2.ext.do',
+                'jinja2.ext.debug',
+                'jinja2.ext.loopcontrols',
+            ),
+        },
+    },
+)
+
+AUTHENTICATION_BACKENDS = (
+    'rules.permissions.ObjectPermissionBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+# Password validation
+# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = (
+    # In development, we don't need strong password validation.
+    ()
+    if _IN_DEVELOPMENT
+    else (
+        {
+            'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        },
+        {
+            'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        },
+    )
+)
+
+# Security settings
+X_FRAME_OPTIONS = 'DENY'
+
+# URL settings
+ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
+
+ALLOWED_HOSTS = conf.allowed_hosts
+EMAIL_BACKEND = conf.email_backend
+
+WSGI_APPLICATION = 'eventyay.config.wsgi.application'
+ASGI_APPLICATION = 'eventyay.config.asgi.application'
+
+STATIC_URL = '/static/'
+MEDIA_URL = '/media/'
+
+SITE_URL = str(conf.site_url)
+SITE_NETLOC = urlparse(SITE_URL).netloc
+
+# TODO: Move to consts.py
+VIDEO_BASE_PATH = '/video'
+WEBSOCKET_URL = '/ws/event/'
+
+FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+
+FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
+
+# TODO: Move to consts.py. It should not be dynamic, or it will cause generating DB migrations.
+DEFAULT_CURRENCY = 'USD'
+CURRENCY_PLACES = {
+    # default is 2
+    'BIF': 0,
+    'CLP': 0,
+    'DJF': 0,
+    'GNF': 0,
+    'JPY': 0,
+    'KMF': 0,
+    'KRW': 0,
+    'MGA': 0,
+    'PYG': 0,
+    'RWF': 0,
+    'VND': 0,
+    'VUV': 0,
+    'XAF': 0,
+    'XOF': 0,
+    'XPF': 0,
+}
+CURRENCIES = list(currencies)
+
+# TODO: Move to consts.py
+EVENTYAY_PRIMARY_COLOR = '#2185d0'
+DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'

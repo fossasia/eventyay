@@ -1,0 +1,2 @@
+# For development, we just store emails as files.
+EMAIL_BACKEND = 'eventyay.base.email.FileSavedEmailBackend'

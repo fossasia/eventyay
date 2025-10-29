@@ -1,0 +1,4 @@
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# TODO: Use concrete hostnames for production.
+ALLOWED_HOSTS = ['*', '127.0.0.1']
