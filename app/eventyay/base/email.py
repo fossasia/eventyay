@@ -10,6 +10,7 @@ from email.parser import BytesParser
 from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
+from typing import Iterable
 
 from css_inline import inline as inline_css
 from django.conf import settings
@@ -275,7 +276,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
         if order:
             htmlctx['order'] = order
             positions = list(
-                order.positions.select_related('item', 'variation', 'subevent', 'addon_to').annotate(
+                order.positions.select_related('product', 'variation', 'subevent', 'addon_to').annotate(
                     has_addons=Count('addons')
                 )
             )
@@ -284,7 +285,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
                 for k, v in groupby(
                     positions,
                     key=lambda op: (
-                        op.item,
+                        op.product,
                         op.variation,
                         op.subevent,
                         op.attendee_name,
@@ -385,7 +386,7 @@ class SimpleFunctionalMailTextPlaceholder(BaseMailTextPlaceholder):
             return self._sample
 
 
-def get_available_placeholders(event, base_parameters):
+def get_available_placeholders(event: Event, base_parameters: Iterable[str]) -> dict[str, BaseMailTextPlaceholder]:
     if 'order' in base_parameters:
         base_parameters.append('invoice_address')
         base_parameters.append('position_or_address')
@@ -419,6 +420,7 @@ def get_email_context(**kwargs):
         for v in val:
             if all(rp in kwargs for rp in v.required_context):
                 ctx[v.identifier] = v.render(kwargs)
+    logger.info('Email context: %s', ctx)
     return ctx
 
 
@@ -469,12 +471,15 @@ def generate_sample_video_url():
 
 
 @receiver(register_mail_placeholders, dispatch_uid='pretixbase_register_mail_placeholders')
-def base_placeholders(sender, **kwargs):
+def base_placeholders(sender: Event, **kwargs):
     from eventyay.multidomain.urlreverse import (
         build_absolute_uri,
         build_join_video_url,
     )
-
+    def render_video_join_link(event: Event, order) -> str:
+        url = build_join_video_url(event, order)
+        # TODO: Make the label translatable.
+        return f'<a href="{url}" class="button">Join online event</a>'
     ph = [
         SimpleFunctionalMailTextPlaceholder('event', ['event'], lambda event: event.name, lambda event: event.name),
         SimpleFunctionalMailTextPlaceholder(
@@ -710,7 +715,7 @@ def base_placeholders(sender, **kwargs):
         SimpleFunctionalMailTextPlaceholder(
             'product',
             ['waiting_list_entry'],
-            lambda waiting_list_entry: waiting_list_entry.item.name,
+            lambda waiting_list_entry: waiting_list_entry.product.name,
             _('Sample Admission Ticket'),
         ),
         SimpleFunctionalMailTextPlaceholder(
@@ -783,10 +788,12 @@ def base_placeholders(sender, **kwargs):
             SimpleFunctionalMailTextPlaceholder(
                 'join_online_event',
                 ['order', 'event'],
-                lambda order, event: build_join_video_url(event=event, order=order),
+                lambda order, event: render_video_join_link(event, order),
                 generate_sample_video_url(),
             ),
         )
+    else:
+        logger.info('pretix_venueless plugin not found, skipping join_online_event placeholder')
     name_scheme = PERSON_NAME_SCHEMES[sender.settings.name_scheme]
     for f, l, w in name_scheme['fields']:
         if f == 'full_name':

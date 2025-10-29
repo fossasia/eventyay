@@ -1,5 +1,5 @@
 <template lang="pug">
-.v-app(:key="`${userLocale}-${userTimezone}`", :class="{'has-background-room': backgroundRoom}", :style="[browserhackStyle, mediaConstraintsStyle]")
+.v-app(:key="`${userLocale}-${userTimezone}`", :class="{'has-background-room': backgroundRoom, 'override-sidebar-collapse': overrideSidebarCollapse}", :style="[browserhackStyle, mediaConstraintsStyle]")
 	.fatal-connection-error(v-if="fatalConnectionError")
 		template(v-if="fatalConnectionError.code === 'world.unknown_world'")
 			.mdi.mdi-help-circle
@@ -19,7 +19,9 @@
 		p.code error code: {{ fatalConnectionError.code }}
 	template(v-else-if="world")
 		// AppBar stays fixed; only main content shifts
-		app-bar(@toggle-sidebar="toggleSidebar")
+		app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
+		transition(name="backdrop")
+			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
 		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
 			// router-view no longer carries role=main; main landmark is the scroll container
 			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
@@ -87,6 +89,12 @@ export default {
 			return this.mediaSourceRefs.primary?.$refs.livestream ? !this.mediaSourceRefs.primary.$refs.livestream.playing : false
 		},
 		// force open sidebar on medium screens on home page (with no media) so certain people can find the menu
+		overrideSidebarCollapse() {
+			return this.$mq.below.l &&
+				this.$mq.above.m &&
+				this.$route.name === 'home' &&
+				!this.roomHasMedia
+		},
 		// safari cleverly includes the address bar cleverly in 100vh
 		mediaConstraintsStyle() {
 			const hasStageTools = this.room?.modules.some(module => stageToolModules.includes(module.type))
@@ -256,24 +264,40 @@ export default {
 	flex-direction: column
 	--sidebar-width: 280px
 	--pretalx-clr-primary: var(--clr-primary)
-	.c-app-bar
-		flex: none
 	.app-content
-		flex: auto
+		flex: 1 1 auto
 		min-height: 0
+		height: calc(100vh - 48px)
+		display: flex
+		flex-direction: column
 		position: relative
-		// Smoothly shift content when sidebar opens/closes
-		transition: margin-left .3s ease, width .3s ease
-		width: 100vw
-		height: calc(var(--vh100) - 48px)
-		overflow-y: auto
-		-webkit-overflow-scrolling: touch
-		overscroll-behavior: contain
-		&.sidebar-open
-			margin-left: var(--sidebar-width)
-			width: calc(100vw - var(--sidebar-width))
+		padding-top: 48px
+		z-index: 1
+	.sidebar-backdrop
+		position: fixed
+		top: 0
+		left: 0
+		right: 0
+		bottom: 0
+		background-color: rgba(0, 0, 0, 0.5)
+		z-index: 105
+		&.backdrop-enter-active, &.backdrop-leave-active
+			transition: opacity .2s
+		&.backdrop-enter-from, &.backdrop-leave-to
+			opacity: 0
+	.main-content
+		grid-area: main
+		display: flex
+		flex-direction: column
+		min-height: var(--vh100)
+		min-width: 0
+	.c-app-bar
+		grid-area: app-bar
+	.c-rooms-sidebar
+		grid-area: rooms-sidebar
 	.c-room-header
-		height: calc(var(--vh100) - 48px)
+		grid-area: main
+		height: 100vh
 	> .bunt-progress-circular
 		position: fixed
 		top: 50%
@@ -281,7 +305,7 @@ export default {
 		transform: translate(-50%, -50%)
 	.disconnected-warning, .fatal-error
 		position: fixed
-		top: 0
+		top: 48px
 		left: calc(50% - 240px)
 		width: 480px
 		background-color: $clr-danger
@@ -327,10 +351,10 @@ export default {
 			themed-button-primary('large')
 	.native-permission-blocker
 		position: fixed
-		top: 0
+		top: 48px
 		left: 0
 		width: 100vw
-		height: var(--vh100)
+		height: calc(var(--vh100) - 48px)
 		z-index: 2000
 		background-color: $clr-secondary-text-light
 	#media-source-iframes

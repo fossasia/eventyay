@@ -72,6 +72,7 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
+	height: 100%
 	#btn-create
 		themed-button-primary()
 	h2

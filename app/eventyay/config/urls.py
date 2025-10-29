@@ -51,7 +51,7 @@ page_patterns = [
 ]
 
 admin_patterns = [
-    path('admin/', include('eventyay.config.urls_admin')),
+    path('admin/', include(('eventyay.control.urls_admin', 'eventyay_admin'))),
 ]
 
 talk_patterns = [

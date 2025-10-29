@@ -1,5 +1,6 @@
 import datetime
 import logging
+from typing import cast
 from urllib.parse import urljoin, urlsplit
 
 import jwt
@@ -7,7 +8,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.urls import reverse
 
-from eventyay.base.models import Event, Organizer
+from eventyay.base.models import Event, Order, OrderPosition, Organizer
 
 from .models import KnownDomain
 
@@ -158,72 +159,80 @@ def build_absolute_uri(obj, urlname, kwargs=None):
     return urljoin(settings.SITE_URL, reversedurl)
 
 
-def build_join_video_url(event, order):
+def build_join_video_url(event: Event, order: Order) -> str:
     # Get list order position id
-    order_item_ids = [position.item_id for position in order.positions.all()]
+    order_product_ids = [position.product_id for position in order.positions.all()]
     # Check if video allow all positions
-    if event.settings.venueless_all_items:
+    if event.settings.venueless_all_products:
         position = order.positions.first()
-        return generate_token_url(event, order, position)
-    else:
-        common_item_id = next(
-            (item for item in order_item_ids if item in event.settings.venueless_items),
-            None,
-        )
-        # Get position object
-        position = order.positions.filter(item_id=common_item_id).first()
-        # Check if any item in order item is allowed to join
-        if any(item in event.settings.venueless_items for item in order_item_ids):
-            return generate_token_url(event, order, position)
-        else:
-            logger.error('order %s does not have any item that is allowed to join the event' % order.code)
-            return ''
+        return generate_video_token_url_from_order(event, order, position)
+    common_product_id = next(
+        (product for product in order_product_ids if product in event.settings.venueless_products),
+        None,
+    )
+    # Get position object
+    position = order.positions.filter(product_id=common_product_id).first() if common_product_id else None
+    # Check if any product in order product is allowed to join
+    if any(product in event.settings.venueless_products for product in order_product_ids):
+        return generate_video_token_url_from_order(event, order, position)
+    logger.error('order %s does not have any product that is allowed to join the event.', order.code)
+    # Log more to help debugging
+    logger.info('Order products: %s', order_product_ids)
+    logger.info('Event allowed products: %s', event.settings.venueless_products)
+    return ''
 
 
-def generate_token_url(event, order, position):
+def generate_video_token_url_from_order(event: Event, order: Order, position: OrderPosition | None) -> str:
     # If customer has account, use customer code to generate token
     if hasattr(order, 'customer') and order.customer:
-        video_url = generate_token(event, order.customer.identifier, position)
+        video_url = generate_video_token_url(event, order.customer.identifier, position)
     else:
         # else user position Id to generate token
-        video_url = generate_token(event, None, position)
+        video_url = generate_video_token_url(event, None, position)
     return video_url
 
 
-def generate_token(event, customer_code, position):
-    iat = datetime.datetime.utcnow()
+def generate_video_token_url(event: Event, customer_code: str, position: OrderPosition | None) -> str:
+    iat = datetime.datetime.now(tz=datetime.UTC)
     exp = iat + datetime.timedelta(days=30)
+    if not customer_code and not position:
+        logger.error('No customer code or position provided for generating video token URL.')
+        return ''
+    uid = customer_code if customer_code else position.pseudonymization_id
     profile = {'fields': {}}
-    if position.attendee_name:
+    if position and position.attendee_name:
         profile['display_name'] = position.attendee_name
-    if position.company:
+    if position and position.company:
         profile['fields']['company'] = position.company
 
-    for a in position.answers.filter(question_id__in=event.settings.venueless_questions).select_related('question'):
-        profile['fields'][a.question.identifier] = a.answer
+    if position:
+        for a in position.answers.filter(question_id__in=event.settings.venueless_questions).select_related('question'):
+            profile['fields'][a.question.identifier] = a.answer
     payload = {
         'iss': event.settings.venueless_issuer,
         'aud': event.settings.venueless_audience,
         'exp': exp,
         'iat': iat,
-        'uid': customer_code if customer_code else position.pseudonymization_id,
+        'uid': uid,
         'profile': profile,
         'traits': list(
             {
                 'eventyay-video-event-{}'.format(event.slug),
                 'eventyay-video-subevent-{}'.format(position.subevent_id),
-                'eventyay-video-item-{}'.format(position.item_id),
+                'eventyay-video-product-{}'.format(position.product_id),
                 'eventyay-video-variation-{}'.format(position.variation_id),
-                'eventyay-video-category-{}'.format(position.item.category_id),
+                'eventyay-video-category-{}'.format(position.product.category_id),
             }
-            | {'eventyay-video-item-{}'.format(p.item_id) for p in position.addons.all()}
+            | {'eventyay-video-product-{}'.format(p.product_id) for p in position.addons.all()}
             | {'eventyay-video-variation-{}'.format(p.variation_id) for p in position.addons.all() if p.variation_id}
             | {
-                'eventyay-video-category-{}'.format(p.item.category_id)
+                'eventyay-video-category-{}'.format(p.product.category_id)
                 for p in position.addons.all()
-                if p.item.category_id
+                if p.product.category_id
             }
         ),
     }
     token = jwt.encode(payload, event.settings.venueless_secret, algorithm='HS256')
-    return '{}/#token={}'.format(event.settings.venueless_url, token).replace('//#', '/#')
+    url = urlsplit(cast(str, event.settings.venueless_url))
+    url = url._replace(fragment=f'token={token}')
+    return url.geturl()

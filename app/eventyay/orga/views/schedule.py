@@ -66,6 +66,8 @@ class ScheduleView(EventPermissionRequired, TemplateView):
         result['active_schedule'] = (
             self.request.event.schedules.filter(version=version).first() if version else self.request.event.wip_schedule
         )
+        # Only count non-deleted rooms for sync with video component
+        result['rooms_count'] = self.request.event.rooms.filter(deleted=False).count()
         return result
 
 
@@ -336,7 +338,7 @@ class TalkList(EventPermissionRequired, View):
         room = room.get('id') if isinstance(room, dict) else room
         slot = TalkSlot.objects.create(
             schedule=request.event.wip_schedule,
-            room=(request.event.rooms.get(pk=room) if room else request.event.rooms.first()),
+            room=(request.event.rooms.filter(deleted=False).get(pk=room) if room else request.event.rooms.filter(deleted=False).first()),
             description=LazyI18nString(data.get('title')),
             start=start,
             end=end,
@@ -372,7 +374,7 @@ class ScheduleAvailabilities(EventPermissionRequired, View):
         # IDs or allDay
         return {
             room.pk: [av.serialize(full=False) for av in room.availabilities.all()]
-            for room in self.request.event.rooms.all().prefetch_related('availabilities')
+            for room in self.request.event.rooms.filter(deleted=False).prefetch_related('availabilities')
         }
 
     def _get_speaker_availabilities(self):
@@ -434,7 +436,7 @@ class TalkUpdate(PermissionRequired, View):
                 talk.end = talk.start + dt.timedelta(minutes=duration or 30)
             else:
                 talk.end = talk.start + dt.timedelta(minutes=talk.submission.get_duration())
-            talk.room = request.event.rooms.get(pk=data['room'] or getattr(talk.room, 'pk', None))
+            talk.room = request.event.rooms.filter(deleted=False).get(pk=data['room'] or getattr(talk.room, 'pk', None))
             if not talk.submission:
                 new_description = LazyI18nString(data.get('title', ''))
                 talk.description = new_description if str(new_description) else talk.description
@@ -489,7 +491,8 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
     template_namespace = 'orga/schedule'
 
     def get_queryset(self):
-        return self.request.event.rooms.all()
+        # Filter out soft-deleted rooms to sync with video component
+        return self.request.event.rooms.filter(deleted=False)
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
@@ -505,7 +508,12 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
 
     def delete_handler(self, request, *args, **kwargs):
         try:
-            return super().delete_handler(request, *args, **kwargs)
+            # Use soft delete to sync with video component
+            obj = self.get_object()
+            obj.deleted = True
+            obj.save(update_fields=['deleted'])
+            messages.success(request, phrases.base.success)
+            return redirect(self.get_success_url())
         except ProtectedError:
             messages.error(
                 request,

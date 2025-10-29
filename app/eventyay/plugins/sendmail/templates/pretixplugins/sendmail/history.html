@@ -1,12 +1,18 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
-{% block title %}{% trans "Send out emails" %}{% endblock %}
+{% block title %}{% trans "Mails" %}{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>{% trans "Email history" %}</h1>
+                <h1>
+                    {% blocktranslate count log_count=logs|length %}
+                        Sent emails
+                    {% plural %}
+                        {{ log_count }} Sent emails
+                    {% endblocktranslate %}
+                </h1>
             </div>
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
@@ -27,8 +33,8 @@
                         {% for status in log.parsed_data.sendto %}
                             {{ status }}{% if forloop.revcounter > 1 %},{% endif %}
                         {% endfor %}
-                        {% if log.pdata.items %}
-                            <br/><span class="fa fa-shopping-cart fa-fw"></span> {{ log.pdata.items|join:", " }}
+                        {% if log.pdata.products %}
+                            <br/><span class="fa fa-shopping-cart fa-fw"></span> {{ log.pdata.products|join:", " }}
                         {% endif %}
                         {% if log.pdata.filter_checkins %}
                             {% if log.pdata.not_checked_in %}

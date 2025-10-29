@@ -3,21 +3,25 @@ import logging
 import bleach
 import dateutil
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Exists, OuterRef, Q
 from django.http import Http404
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import LazyI18nString, language
-from eventyay.base.models import LogEntry, Order, OrderPosition
+from eventyay.base.models import Event, LogEntry, Order, OrderPosition
 from eventyay.base.models.event import SubEvent
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.plugins.sendmail.tasks import send_mails
+from eventyay.control.views.event import EventSettingsFormView, EventSettingsViewMixin
+from .forms import MailContentSettingsForm
 
 from . import forms
 
@@ -46,12 +50,12 @@ class SenderView(EventPermissionRequiredMixin, FormView):
                     'subject': LazyI18nString(logentry.parsed_data['subject']),
                     'sendto': logentry.parsed_data['sendto'],
                 }
-                if 'items' in logentry.parsed_data:
-                    kwargs['initial']['items'] = self.request.event.items.filter(
-                        id__in=[a['id'] for a in logentry.parsed_data['items']]
+                if 'products' in logentry.parsed_data:
+                    kwargs['initial']['products'] = self.request.event.products.filter(
+                        id__in=[a['id'] for a in logentry.parsed_data['products']]
                     )
-                elif logentry.parsed_data.get('item'):
-                    kwargs['initial']['items'] = self.request.event.items.filter(id=logentry.parsed_data['item']['id'])
+                elif logentry.parsed_data.get('product'):
+                    kwargs['initial']['products'] = self.request.event.products.filter(id=logentry.parsed_data['product']['id'])
                 if 'checkin_lists' in logentry.parsed_data:
                     kwargs['initial']['checkin_lists'] = self.request.event.checkin_lists.filter(
                         id__in=[c['id'] for c in logentry.parsed_data['checkin_lists']]
@@ -95,7 +99,7 @@ class SenderView(EventPermissionRequiredMixin, FormView):
         opq = OrderPosition.objects.filter(
             order=OuterRef('pk'),
             canceled=False,
-            item_id__in=[i.pk for i in form.cleaned_data.get('items')],
+            product_id__in=[i.pk for i in form.cleaned_data.get('products')],
         )
 
         if form.cleaned_data.get('filter_checkins'):
@@ -164,7 +168,7 @@ class SenderView(EventPermissionRequiredMixin, FormView):
             'subject': form.cleaned_data['subject'].data,
             'message': form.cleaned_data['message'].data,
             'orders': [o.pk for o in orders],
-            'items': [i.pk for i in form.cleaned_data.get('items')],
+            'products': [i.pk for i in form.cleaned_data.get('products')],
             'not_checked_in': form.cleaned_data.get('not_checked_in'),
             'checkin_lists': [i.pk for i in form.cleaned_data.get('checkin_lists')],
             'filter_checkins': form.cleaned_data.get('filter_checkins'),
@@ -215,7 +219,7 @@ class EmailHistoryView(EventPermissionRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
 
-        itemcache = {i.pk: str(i) for i in self.request.event.items.all()}
+        productcache = {i.pk: str(i) for i in self.request.event.products.all()}
         checkin_list_cache = {i.pk: str(i) for i in self.request.event.checkin_lists.all()}
         status = dict(Order.STATUS_CHOICE)
         status['overdue'] = _('pending with payment overdue')
@@ -231,7 +235,7 @@ class EmailHistoryView(EventPermissionRequiredMixin, ListView):
                     'subject': log.pdata['subject'][locale],
                 }
             log.pdata['sendto'] = [status[s] for s in log.pdata['sendto']]
-            log.pdata['items'] = [itemcache.get(i['id'], '?') for i in log.pdata.get('items', [])]
+            log.pdata['products'] = [productcache.get(i['id'], '?') for i in log.pdata.get('products', [])]
             log.pdata['checkin_lists'] = [
                 checkin_list_cache.get(i['id'], '?')
                 for i in log.pdata.get('checkin_lists', [])
@@ -244,3 +248,42 @@ class EmailHistoryView(EventPermissionRequiredMixin, ListView):
                     pass
 
         return ctx
+
+
+class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
+    model = Event
+    template_name = 'pretixplugins/sendmail/mail_templates.html'
+    form_class = MailContentSettingsForm
+    permission = 'can_change_event_settings'
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'plugins:sendmail:templates',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+
+    def form_invalid(self, form):
+        messages.error(
+            self.request,
+            _('We could not save your changes. See below for details.'),
+        )
+        return super().form_invalid(form)
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if not form.is_valid():
+            return self.form_invalid(form)
+
+        form.save()
+        if form.has_changed():
+            self.request.event.log_action(
+                'pretix.event.settings',
+                user=self.request.user,
+                data={k: form.cleaned_data.get(k) for k in form.changed_data},
+            )
+        messages.success(self.request, _('Your changes have been saved.'))
+        return redirect(self.get_success_url())

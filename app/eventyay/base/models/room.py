@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from i18nfield.fields import I18nCharField
 
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.base.models import OrderedModel, PretalxModel
 from eventyay.base.models.auth import User
@@ -274,7 +275,7 @@ class RoomView(models.Model):
         ]
 
 
-class RoomConfigSerializer(serializers.ModelSerializer):
+class RoomConfigSerializer(I18nAwareModelSerializer):
     class Meta:
         model = Room
         fields = (

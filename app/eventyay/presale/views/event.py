@@ -862,32 +862,33 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if not hasattr(self.request, 'user'):
             # Customer not logged in yet
             return False, None, None
-        else:
-            # Get all orders of customer which belong to this event
-            order_list = (
-                Order.objects.filter(Q(event=self.request.event) & (Q(email__iexact=self.request.user.email)))
-                .select_related('event')
-                .order_by('-datetime')
-            )
-            # Check qs is empty
-            if not order_list:
-                # no order placed yet
-                return False, None, None
-            else:
-                # Check if Event allow all ticket type to join
-                if self.request.event.settings.venueless_all_items:
-                    return True, None, order_list[0]
-                list_allow_ticket_type = self.request.event.settings.venueless_items
-                if not list_allow_ticket_type:
-                    # no ticket allow to join
-                    return False, None, None
-                # check if ticket type is in list_allow_ticket_type
-                for order in order_list:
-                    order_positions = list(order.positions.all())
-                    for order_position in order_positions:
-                        if order_position.product_id in list_allow_ticket_type:
-                            return True, order_position, order
-                return False, None, None
+        if not self.request.user.is_authenticated:
+            # Customer not logged in yet
+            return False, None, None
+        # Get all orders of customer which belong to this event
+        order_list = (
+            Order.objects.filter(Q(event=self.request.event) & (Q(email__iexact=self.request.user.email)))
+            .select_related('event')
+            .order_by('-datetime')
+        )
+        # Check qs is empty
+        if not order_list:
+            # no order placed yet
+            return False, None, None
+        # Check if Event allow all ticket type to join
+        if self.request.event.settings.venueless_all_products:
+            return True, None, order_list[0]
+        list_allow_ticket_type = self.request.event.settings.venueless_products
+        if not list_allow_ticket_type:
+            # no ticket allow to join
+            return False, None, None
+        # check if ticket type is in list_allow_ticket_type
+        for order in order_list:
+            order_positions = list(order.positions.all())
+            for order_position in order_positions:
+                if order_position.product_id in list_allow_ticket_type:
+                    return True, order_position, order
+        return False, None, None
 
     def generate_token_url(self, request, order_position, order):
         if not order_position:
@@ -905,7 +906,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             profile['fields'][a.question.identifier] = a.answer
 
         uid_token = encode_email(order.email) if order.email else order_position.pseudonymization_id
-        iat = dt.datetime.utcnow()
+        iat = dt.datetime.now(dt.UTC)
         exp = iat + dt.timedelta(days=30)
 
         payload = {
@@ -919,20 +920,20 @@ class JoinOnlineVideoView(EventViewMixin, View):
                 {
                     'eventyay-video-event-{}'.format(request.event.slug),
                     'eventyay-video-subevent-{}'.format(order_position.subevent_id),
-                    'eventyay-video-item-{}'.format(order_position.item_id),
+                    'eventyay-video-product-{}'.format(order_position.product_id),
                     'eventyay-video-variation-{}'.format(order_position.variation_id),
-                    'eventyay-video-category-{}'.format(order_position.item.category_id),
+                    'eventyay-video-category-{}'.format(order_position.product.category_id),
                 }
-                | {'eventyay-video-item-{}'.format(p.item_id) for p in order_position.addons.all()}
+                | {'eventyay-video-product-{}'.format(p.product_id) for p in order_position.addons.all()}
                 | {
                     'eventyay-video-variation-{}'.format(p.variation_id)
                     for p in order_position.addons.all()
                     if p.variation_id
                 }
                 | {
-                    'eventyay-video-category-{}'.format(p.item.category_id)
+                    'eventyay-video-category-{}'.format(p.product.category_id)
                     for p in order_position.addons.all()
-                    if p.item.category_id
+                    if p.product.category_id
                 }
             ),
         }

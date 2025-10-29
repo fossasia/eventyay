@@ -77,7 +77,7 @@ class OAuthReturnView(View):
                 try:
                     oauth2_params = OAuth2Params.model_validate(oauth2_params)
                     query_string = urlencode(oauth2_params.model_dump())
-                    auth_url = reverse('control:oauth2_provider.authorize')
+                    auth_url = reverse('eventyay_common:oauth2_provider.authorize')
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
@@ -86,7 +86,7 @@ class OAuthReturnView(View):
         except AttributeError as e:
             messages.error(request, _('Error while authorizing: no email address available.'))
             logger.error('Error while authorizing: %s', e)
-            return redirect('control:auth.login')
+            return redirect('eventyay_common:auth.login')
 
     @staticmethod
     def get_or_create_user(request: HttpRequest) -> User:
