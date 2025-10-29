@@ -16,8 +16,8 @@ from oauth2_provider.views import (
     TokenView as BaseTokenView,
 )
 
-from pretix.api.models import OAuthApplication
-from pretix.base.models import Organizer
+from eventyay.api.models import OAuthApplication
+from eventyay.base.models import Organizer
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +94,7 @@ class AuthorizationView(BaseAuthorizationView):
         ]
         self.request.user.send_security_notice(msgs)
         self.request.user.log_action(
-            'pretix.user.oauth.authorized',
+            'eventyay.user.oauth.authorized',
             user=self.request.user,
             data={
                 'application_id': application.pk,

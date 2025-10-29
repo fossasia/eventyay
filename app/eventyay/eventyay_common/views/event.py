@@ -174,23 +174,23 @@ class EventCreateView(SafeSessionWizardView):
                     initial_form['organizer'] = queryset.get(slug=request_get.get('organizer'))
                 except Organizer.DoesNotExist:
                     pass
-        
+
         elif step == 'basics':
             initial_form['locale'] = 'en'
-            
+
             # Set default dates: 3 months from now, 9 AM to 5 PM in user's timezone
             user_tz = timezone(get_current_timezone_name())
             now = user_tz.localize(datetime.now())
             default_start = now + timedelta(days=90)
             default_start = default_start.replace(hour=9, minute=0, second=0, microsecond=0)
             default_end = default_start.replace(hour=17, minute=0, second=0, microsecond=0)
-            
+
             initial_form['date_from'] = default_start
             initial_form['date_to'] = default_end
 
             # Set default timezone to user's system timezone (consistent with manual entry)
             initial_form['timezone'] = get_current_timezone_name()
-            
+
         return initial_form
 
     def dispatch(self, request, *args, **kwargs):
@@ -260,11 +260,11 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
-            
+
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
             event.settings.set('create_for', create_for)
-            
+
             # Smart defaults work for all event types
             if create_for in [EventCreatedFor.BOTH, EventCreatedFor.TICKET, EventCreatedFor.TALK]:
                 event_dict = {
@@ -456,7 +456,7 @@ class VideoAccessAuthenticator(View):
         """
         # Check if the organizer has permission for the event
         if not self.request.user.has_event_permission(
-            self.request.organizer, self.request.event, 'can_change_event_settings'
+            self.request.organizer, self.request.event, 'can_change_event_settings', request=self.request
         ):
             raise PermissionDenied(_('You do not have permission to access this video system.'))
 
