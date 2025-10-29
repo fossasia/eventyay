@@ -4,11 +4,11 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
 from rest_framework.response import Response
 
-from pretix.api.serializers.cart import (
+from eventyay.api.serializers.cart import (
     CartPositionCreateSerializer,
     CartPositionSerializer,
 )
-from pretix.base.models import CartPosition
+from eventyay.base.models import CartPosition
 
 
 class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyModelViewSet):

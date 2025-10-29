@@ -4,10 +4,10 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from pretix import __version__
-from pretix.api.auth.device import DeviceTokenAuthentication
-from pretix.api.auth.permission import AnyAuthenticatedClientPermission
-from pretix.api.auth.token import TeamTokenAuthentication
+from eventyay import __version__
+from eventyay.api.auth.device import DeviceTokenAuthentication
+from eventyay.api.auth.permission import AnyAuthenticatedClientPermission
+from eventyay.api.auth.token import TeamTokenAuthentication
 
 
 def numeric_version(v):

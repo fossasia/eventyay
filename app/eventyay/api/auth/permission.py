@@ -1,10 +1,10 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
-from pretix.api.models import OAuthAccessToken
-from pretix.base.models import Device, Event, User
-from pretix.base.models.auth import SuperuserPermissionSet
-from pretix.base.models.organizer import TeamAPIToken
-from pretix.helpers.security import (
+from eventyay.api.models import OAuthAccessToken
+from eventyay.base.models import Device, Event, User
+from eventyay.base.models.auth import SuperuserPermissionSet
+from eventyay.base.models.organizer import TeamAPIToken
+from eventyay.helpers.security import (
     SessionInvalid,
     SessionReauthRequired,
     assert_session_valid,
@@ -25,7 +25,7 @@ class EventPermission(BasePermission):
 
         if request.user.is_authenticated:
             try:
-                # If this logic is updated, make sure to also update the logic in pretix/control/middleware.py
+                # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
             except SessionInvalid:
                 return False
@@ -106,7 +106,7 @@ class ProfilePermission(BasePermission):
 
         if request.user.is_authenticated:
             try:
-                # If this logic is updated, make sure to also update the logic in pretix/control/middleware.py
+                # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
             except SessionInvalid:
                 return False
@@ -130,7 +130,7 @@ class AnyAuthenticatedClientPermission(BasePermission):
 
         if request.user.is_authenticated:
             try:
-                # If this logic is updated, make sure to also update the logic in pretix/control/middleware.py
+                # If this logic is updated, make sure to also update the logic in eventyay/control/middleware.py
                 assert_session_valid(request)
             except SessionInvalid:
                 return False
