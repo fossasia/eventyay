@@ -9,7 +9,7 @@
 
 {% block scripts %}
     {% vite_hmr %}
-    {% vite_asset "src/main.js" %}
+    {% vite_asset "src/main.ts" %}
 {% endblock scripts %}
 
 {% block extra_title %}{{ phrases.schedule.schedule }} :: {% endblock extra_title %}
@@ -64,7 +64,7 @@
             </details>
         </div>
     </div>
-    {% if not request.event.rooms.count %}
+    {% if not rooms_count %}
         <div class="alert alert-warning schedule-alert">
             <span>
                 {% translate "You can start planning your schedule once you have configured some rooms for sessions to take place in." %}

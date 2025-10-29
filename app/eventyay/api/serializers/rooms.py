@@ -1,11 +1,11 @@
 from rest_framework import serializers
 
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
 from eventyay.base.models.event import Event
-
 from eventyay.base.models.room import Room
 
 
-class RoomSerializer(serializers.ModelSerializer):
+class RoomSerializer(I18nAwareModelSerializer):
     module_config = serializers.ListField(
         child=serializers.DictField(), required=False, default=[]
     )

@@ -37,14 +37,14 @@ export default {
 <style lang="stylus">
 .c-notifications
 	position: fixed
-	top: 3px
+	top: 51px
 	right: 4px
 	display: flex
 	flex-direction: column
 	width: 320px
 	z-index: 600
 	&.has-background-media
-		top: 3px + 480px
+		top: 51px + 480px
 	.ui-notification
 		card()
 		display: flex

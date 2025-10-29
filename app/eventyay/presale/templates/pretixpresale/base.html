@@ -31,10 +31,10 @@
         <link rel="icon" type="image/png" sizes="194x194" href="{{ settings.favicon|thumb:'194x194^' }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ settings.favicon|thumb:'16x16^' }}">
     {% elif development_warning or debug_warning %}
-        <link rel="shortcut icon" href="{% static "pretixbase/img/favicon-debug.ico" %}">
+        <link rel="shortcut icon" href="{% static "common/img/icons/favicon_debug.ico" %}">
     {% else %}
-        <link rel="icon" href="{% static "pretixbase/img/favicon.ico" %}">
-        <link rel="shortcut icon" href="{% static "pretixbase/img/favicon.ico" %}">
+        <link rel="icon" href="{% static "common/img/icons/favicon.ico" %}">
+        <link rel="shortcut icon" href="{% static "common/img/icons/favicon.ico" %}">
         <link rel="icon" type="image/png" sizes="32x32" href="{% static "pretixbase/img/icons/favicon-32x32.png" %}">
         <link rel="icon" type="image/png" sizes="194x194" href="{% static "pretixbase/img/icons/favicon-194x194.png" %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static "pretixbase/img/icons/favicon-16x16.png" %}">
