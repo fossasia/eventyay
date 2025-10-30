@@ -732,7 +732,7 @@ class Event(
             RegexValidator('#([0-9A-Fa-f]{3}){1,2}'),
         ],
         verbose_name=_('Main event colour'),
-        help_text=_('Provide a hex value like #00ff00 if you want to style eventyay in your event's colour scheme.'),
+        help_text=_("Provide a hex value like #00ff00 if you want to style eventyay in your event's colour scheme."),
     )
     custom_css = models.FileField(
         upload_to=event_css_path,
