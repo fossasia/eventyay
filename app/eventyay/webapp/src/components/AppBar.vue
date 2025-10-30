@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click="$emit('toggleSidebar')", @touchend="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
 			span.bar
 			span.bar
 			span.bar
@@ -207,8 +207,6 @@ onBeforeUnmount(() => {
 	justify-content: space-between
 	padding: 0 8px
 	background-color: var(--clr-sidebar)
-	border-bottom: 2px solid var(--clr-primary)
-	box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 3px 9px -2px rgba(0,0,0,0.35)
 	white-space: nowrap
 	overflow: visible
 	z-index: 120
@@ -231,20 +229,20 @@ onBeforeUnmount(() => {
 			justify-content: center
 			align-items: flex-start
 			cursor: pointer
-			&:focus-visible
-				outline: 2px solid var(--clr-primary)
-				outline-offset: 2px
+			outline: none
+			-webkit-tap-highlight-color: transparent
+			&:focus
+				outline: none
+			&:active
+				outline: none
 			.bar
 				display: block
 				width: 22px
 				height: 3px
 				background: var(--clr-sidebar-text-primary)
 				border-radius: 2px
-				transition: background .2s
 				&:not(:last-child)
 					margin-bottom: 5px
-			&:hover .bar
-				background: var(--clr-sidebar-text-secondary)
 	.logo
 		margin-left: 0
 		font-size: 24px
@@ -326,7 +324,7 @@ onBeforeUnmount(() => {
 			border-radius: 2px
 			box-shadow: 0 3px 8px rgba(0,0,0,0.175), 0 1px 3px rgba(0,0,0,0.105)
 			padding: 6px 0
-			z-index: 130
+			z-index: 120
 			font-size: 14px
 			user-select: none
 			.menu-item
