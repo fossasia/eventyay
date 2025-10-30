@@ -164,7 +164,7 @@ class User(
         unique=True, db_index=True, null=True, blank=True, verbose_name=_('E-mail'), max_length=190
     )
     fullname = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('Full name'))
-    wikimedia_username = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('Wikimedia username'))
+    wikimedia_username = models.CharField(max_length=255, blank=True, null=True, unique=True, verbose_name=_('Wikimedia username'))
     is_wikimedia_user = models.BooleanField(default=False, verbose_name=_('Is Wikimedia user'))
     is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
     is_staff = models.BooleanField(default=False, verbose_name=_('Is site admin'))

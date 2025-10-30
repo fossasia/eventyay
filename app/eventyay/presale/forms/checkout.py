@@ -99,10 +99,7 @@ class ContactForm(forms.Form):
         if self.request and self.request.user and is_wikimedia_user(self.request.user):
             return cleaned_data
 
-        # For non-Wikimedia users, validate email is provided
-        if not cleaned_data.get('email'):
-            raise ValidationError(_('Email is required'))
-
+        # Validate email_repeat matches email if both are provided
         if (
             self.event.settings.order_email_asked_twice
             and self.cleaned_data.get('email')
