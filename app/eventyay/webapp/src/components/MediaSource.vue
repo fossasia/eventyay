@@ -303,12 +303,11 @@ defineExpose({ isPlaying })
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		top: calc(var(--vh100) - 56px - var(--mediasource-placeholder-height))
-		width: var(--mediasource-placeholder-width)
+		top: 104px
+		width: 100%
 		height: var(--mediasource-placeholder-height)
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
-			right: calc(100vw - var(--mediasource-placeholder-width))
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
