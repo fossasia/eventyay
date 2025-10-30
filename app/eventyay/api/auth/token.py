@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication
 
-from pretix.base.models.organizer import TeamAPIToken
+from eventyay.base.models.organizer import TeamAPIToken
 
 
 class TeamTokenAuthentication(TokenAuthentication):

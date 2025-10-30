@@ -284,12 +284,42 @@ var form_handlers = function (el) {
         dependency.on("change", update);
     });
 
+    function findDependency(searchString, sourceElement) {
+        if (searchString.substr(0, 1) === '<') {
+            return $(sourceElement).closest("form, .form-horizontal").find(searchString.substr(1));
+        } else {
+            return $(searchString);
+        }
+    }
+
     el.find("div[data-display-dependency], textarea[data-display-dependency], input[data-display-dependency], select[data-display-dependency]").each(function () {
         var dependent = $(this),
-            dependency = $($(this).attr("data-display-dependency")),
+            dependency = findDependency($(this).attr("data-display-dependency"), this),
             update = function (ev) {
-                var enabled = (dependency.attr("type") === 'checkbox' || dependency.attr("type") === 'radio') ? dependency.prop('checked') : !!dependency.val();
+                var enabled = dependency.toArray().some(function(d) {
+                    if (d.disabled) return false;
+                    if (d.type === 'checkbox' || d.type === 'radio') {
+                        return d.checked;
+                    } else if (d.type === 'select-one') {
+                        var checkValue;
+                        if ((checkValue = /^\/(.*)\/$/.exec(dependent.attr("data-display-dependency-regex")))) {
+                            return new RegExp(checkValue[1]).test(d.value);
+                        } else if ((checkValue = dependent.attr("data-display-dependency-value"))) {
+                            return d.value === checkValue;
+                        } else {
+                            return !!d.value
+                        }
+                    } else {
+                        return (!!d.value && !d.value.match(/^0\.?0*$/g));
+                    }
+                });
+                if (dependent.is("[data-inverse]")) {
+                    enabled = !enabled;
+                }
                 var $toggling = dependent;
+                if (dependent.attr("data-disable-dependent")) {
+                    $toggling.attr('disabled', !enabled).trigger("change");
+                }
                 if (dependent.get(0).tagName.toLowerCase() !== "div") {
                     $toggling = dependent.closest('.form-group');
                 }
@@ -304,8 +334,9 @@ var form_handlers = function (el) {
                 }
             };
         update();
-        dependency.closest('.form-group').find('input[name=' + dependency.attr("name") + ']').on("change", update);
-        dependency.closest('.form-group').find('input[name=' + dependency.attr("name") + ']').on("dp.change", update);
+        dependency.each(function() {
+            $(this).closest('.form-group').find('[name=' + $(this).attr("name") + ']').on("change dp.change", update);
+        })
     });
 
     el.find("input[data-required-if], select[data-required-if], textarea[data-required-if]").each(function () {

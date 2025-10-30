@@ -15,8 +15,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
-from pretix.api.serializers.voucher import VoucherSerializer
-from pretix.base.models import Voucher
+from eventyay.api.serializers.voucher import VoucherSerializer
+from eventyay.base.models import Voucher
 
 with scopes_disabled():
 
@@ -33,7 +33,7 @@ with scopes_disabled():
                 'allow_ignore_quota',
                 'price_mode',
                 'value',
-                'item',
+                'product',
                 'variation',
                 'quota',
                 'tag',
@@ -92,7 +92,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.voucher.added',
+            'eventyay.voucher.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -114,7 +114,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.voucher.changed',
+            'eventyay.voucher.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -125,7 +125,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('This voucher can not be deleted as it has already been used.')
 
         instance.log_action(
-            'pretix.voucher.deleted',
+            'eventyay.voucher.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -147,7 +147,7 @@ class VoucherViewSet(viewsets.ModelViewSet):
                 serializer.save(event=self.request.event)
                 for i, v in enumerate(serializer.instance):
                     v.log_action(
-                        'pretix.voucher.added',
+                        'eventyay.voucher.added',
                         user=self.request.user,
                         auth=self.request.auth,
                         data=self.request.data[i],

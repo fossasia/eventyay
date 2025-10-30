@@ -30,17 +30,17 @@ from rest_framework.fields import DateTimeField
 from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 
-from pretix.api.serializers.checkin import (
+from eventyay.api.serializers.checkin import (
     CheckinListSerializer,
     CheckinRedeemInputSerializer,
     MiniCheckinListSerializer,
 )
-from pretix.api.serializers.item import QuestionSerializer
-from pretix.api.serializers.order import CheckinListOrderPositionSerializer
-from pretix.api.views import RichOrderingFilter
-from pretix.api.views.order import OrderPositionFilter
-from pretix.base.i18n import language
-from pretix.base.models import (
+from eventyay.api.serializers.product import QuestionSerializer
+from eventyay.api.serializers.order import CheckinListOrderPositionSerializer
+from eventyay.api.views import RichOrderingFilter
+from eventyay.api.views.order import OrderPositionFilter
+from eventyay.base.i18n import language
+from eventyay.base.models import (
     CachedFile,
     Checkin,
     CheckinList,
@@ -52,13 +52,13 @@ from pretix.base.models import (
     RevokedTicketSecret,
     TeamAPIToken,
 )
-from pretix.base.services.checkin import (
+from eventyay.base.services.checkin import (
     CheckInError,
     RequiredQuestionsError,
     SQLLogic,
     perform_checkin,
 )
-from pretix.helpers.database import FixedOrderBy
+from eventyay.helpers.database import FixedOrderBy
 
 with scopes_disabled():
 
@@ -101,8 +101,8 @@ class CheckinListViewSet(viewsets.ModelViewSet):
             qs = qs.prefetch_related(
                 'subevent',
                 'subevent__event',
-                'subevent__subeventitem_set',
-                'subevent__subeventitemvariation_set',
+                'subevent__subeventproduct_set',
+                'subevent__subeventproductvariation_set',
                 'subevent__seat_category_mappings',
                 'subevent__meta_values',
             )
@@ -111,7 +111,7 @@ class CheckinListViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.checkinlist.added',
+            'eventyay.event.checkinlist.added',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -125,7 +125,7 @@ class CheckinListViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.checkinlist.changed',
+            'eventyay.event.checkinlist.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=self.request.data,
@@ -133,7 +133,7 @@ class CheckinListViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         instance.log_action(
-            'pretix.event.checkinlist.deleted',
+            'eventyay.event.checkinlist.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -166,31 +166,31 @@ class CheckinListViewSet(viewsets.ModelViewSet):
                 'inside_count': clist.inside_count,
             }
 
-            op_by_item = {p['item']: p['cnt'] for p in pqs.order_by().values('item').annotate(cnt=Count('id'))}
+            op_by_product = {p['product']: p['cnt'] for p in pqs.order_by().values('product').annotate(cnt=Count('id'))}
             op_by_variation = {
                 p['variation']: p['cnt'] for p in pqs.order_by().values('variation').annotate(cnt=Count('id'))
             }
-            c_by_item = {p['item']: p['cnt'] for p in cqs.order_by().values('item').annotate(cnt=Count('id'))}
+            c_by_product = {p['product']: p['cnt'] for p in cqs.order_by().values('product').annotate(cnt=Count('id'))}
             c_by_variation = {
                 p['variation']: p['cnt'] for p in cqs.order_by().values('variation').annotate(cnt=Count('id'))
             }
 
             if not clist.all_products:
-                items = clist.limit_products
+                products = clist.limit_products
             else:
-                items = clist.event.items
+                products = clist.event.products
 
-            response['items'] = []
-            for item in items.order_by('category__position', 'position', 'pk').prefetch_related('variations'):
+            response['products'] = []
+            for product in products.order_by('category__position', 'position', 'pk').prefetch_related('variations'):
                 i = {
-                    'id': item.pk,
-                    'name': str(item),
-                    'admission': item.admission,
-                    'checkin_count': c_by_item.get(item.pk, 0),
-                    'position_count': op_by_item.get(item.pk, 0),
+                    'id': product.pk,
+                    'name': str(product),
+                    'admission': product.admission,
+                    'checkin_count': c_by_product.get(product.pk, 0),
+                    'position_count': op_by_product.get(product.pk, 0),
                     'variations': [],
                 }
-                for var in item.variations.all():
+                for var in product.variations.all():
                     i['variations'].append(
                         {
                             'id': var.pk,
@@ -199,7 +199,7 @@ class CheckinListViewSet(viewsets.ModelViewSet):
                             'position_count': op_by_variation.get(var.pk, 0),
                         }
                     )
-                response['items'].append(i)
+                response['products'].append(i)
 
             return Response(response)
 
@@ -266,7 +266,7 @@ def _checkin_list_position_queryset(
                     | Q(order__status=Order.STATUS_PENDING, order__valid_if_pending=True)
                 )
         if not checkinlist.all_products and not ignore_products:
-            list_q &= Q(item__in=checkinlist.limit_products.values_list('id', flat=True))
+            list_q &= Q(product__in=checkinlist.limit_products.values_list('id', flat=True))
         lists_qs.append(list_q)
 
     qs = qs.filter(reduce(operator.or_, lists_qs))
@@ -280,7 +280,7 @@ def _checkin_list_position_queryset(
             'answers',
             'answers__options',
             'answers__question',
-            Prefetch('addons', OrderPosition.objects.select_related('item', 'variation')),
+            Prefetch('addons', OrderPosition.objects.select_related('product', 'variation')),
             Prefetch(
                 'order',
                 Order.objects.select_related('invoice_address').prefetch_related(
@@ -289,7 +289,7 @@ def _checkin_list_position_queryset(
                         'positions',
                         OrderPosition.objects.prefetch_related(
                             Prefetch('checkins', queryset=Checkin.objects.all()),
-                            'item',
+                            'product',
                             'variation',
                             'answers',
                             'answers__options',
@@ -299,9 +299,9 @@ def _checkin_list_position_queryset(
                 ),
             ),
         ).select_related(
-            'item',
+            'product',
             'variation',
-            'item__category',
+            'product__category',
             'addon_to',
             'order',
             'order__invoice_address',
@@ -316,9 +316,9 @@ def _checkin_list_position_queryset(
             'answers',
             'answers__options',
             'answers__question',
-            Prefetch('addons', OrderPosition.objects.select_related('item', 'variation')),
+            Prefetch('addons', OrderPosition.objects.select_related('product', 'variation')),
         ).select_related(
-            'item',
+            'product',
             'variation',
             'order',
             'addon_to',
@@ -331,20 +331,20 @@ def _checkin_list_position_queryset(
         qs = qs.prefetch_related(
             'subevent',
             'subevent__event',
-            'subevent__subeventitem_set',
-            'subevent__subeventitemvariation_set',
+            'subevent__subeventproduct_set',
+            'subevent__subeventproductvariation_set',
             'subevent__seat_category_mappings',
             'subevent__meta_values',
         )
 
-    if expand and 'item' in expand:
+    if expand and 'product' in expand:
         qs = qs.prefetch_related(
-            'item',
-            'item__addons',
-            'item__bundles',
-            'item__meta_values',
-            'item__variations',
-        ).select_related('item__tax_rule')
+            'product',
+            'product__addons',
+            'product__bundles',
+            'product__meta_values',
+            'product__variations',
+        ).select_related('product__tax_rule')
 
     if expand and 'variation' in expand:
         qs = qs.prefetch_related('variation', 'variation__meta_values')
@@ -438,7 +438,7 @@ def _handle_no_candidates(
     simulate,
 ):
     checkinlists[0].event.log_action(
-        'pretix.event.checkin.unknown',
+        'eventyay.event.checkin.unknown',
         data={
             'datetime': dateandtime,
             'type': checkin_type,
@@ -456,7 +456,7 @@ def _handle_no_candidates(
                 parsed = s.parse_secret(raw_barcode)
                 common_checkin_args.update(
                     {
-                        'raw_item': parsed.item,
+                        'raw_product': parsed.product,
                         'raw_variation': parsed.variation,
                         'raw_subevent': parsed.subevent,
                     }
@@ -493,7 +493,7 @@ def _filter_matching_candidates(op_candidates, list_by_event, raw_barcode, legac
             (list_by_event[op.order.event_id].addon_match or op.secret == raw_barcode or legacy_url_support)
             and (
                 list_by_event[op.order.event_id].all_products
-                or op.item_id in {i.pk for i in list_by_event[op.order.event_id].limit_products.all()}
+                or op.product_id in {i.pk for i in list_by_event[op.order.event_id].limit_products.all()}
             )
         )
     ]
@@ -502,7 +502,7 @@ def _filter_matching_candidates(op_candidates, list_by_event, raw_barcode, legac
 def _handle_ambiguous_candidates(op, common_checkin_args, list_by_event, context, user, auth, simulate):
     if not simulate:
         op.order.log_action(
-            'pretix.event.checkin.denied',
+            'eventyay.event.checkin.denied',
             data={
                 'position': op.id,
                 'positionid': op.positionid,
@@ -543,7 +543,7 @@ def _handle_ambiguous_candidates(op, common_checkin_args, list_by_event, context
 def _process_given_answers(op, answers_data, user, auth):
     given_answers = {}
     if answers_data:
-        for q in op.item.questions.filter(ask_during_checkin=True):
+        for q in op.product.questions.filter(ask_during_checkin=True):
             if str(q.pk) in answers_data:
                 try:
                     if q.type == Question.TYPE_FILE:
@@ -556,7 +556,7 @@ def _process_given_answers(op, answers_data, user, auth):
 
 
 def _append_badge_download(downloads, op, request):
-    if 'pretix.plugins.badges' in op.order.event.plugins:
+    if 'eventyay.plugins.badges' in op.order.event.plugins:
         badge_url = f'/api/v1/organizers/{request.organizer.slug}/events/{op.order.event.slug}/orderpositions/{op.pk}/download/badge/'
         downloads.append({'output': 'badge', 'url': badge_url})
     return downloads
@@ -673,7 +673,7 @@ def _redeem_process(
         except CheckInError as e:
             if not simulate:
                 op.order.log_action(
-                    'pretix.event.checkin.denied',
+                    'eventyay.event.checkin.denied',
                     data={
                         'position': op.id,
                         'positionid': op.positionid,
@@ -816,7 +816,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 'answers',
                 'answers__options',
                 'answers__question',
-                Prefetch('addons', OrderPosition.objects.select_related('item', 'variation')),
+                Prefetch('addons', OrderPosition.objects.select_related('product', 'variation')),
                 Prefetch(
                     'order',
                     Order.objects.select_related('invoice_address').prefetch_related(
@@ -825,7 +825,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                             'positions',
                             OrderPosition.objects.prefetch_related(
                                 'checkins',
-                                'item',
+                                'product',
                                 'variation',
                                 'answers',
                                 'answers__options',
@@ -835,9 +835,9 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                     ),
                 ),
             ).select_related(
-                'item',
+                'product',
                 'variation',
-                'item__category',
+                'product__category',
                 'addon_to',
                 'order',
                 'order__invoice_address',
@@ -852,9 +852,9 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 'answers',
                 'answers__options',
                 'answers__question',
-                Prefetch('addons', OrderPosition.objects.select_related('item', 'variation')),
+                Prefetch('addons', OrderPosition.objects.select_related('product', 'variation')),
             ).select_related(
-                'item',
+                'product',
                 'variation',
                 'order',
                 'addon_to',
@@ -864,26 +864,26 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             )
 
         if not self.checkinlist.all_products and not ignore_products:
-            qs = qs.filter(item__in=self.checkinlist.limit_products.values_list('id', flat=True))
+            qs = qs.filter(product__in=self.checkinlist.limit_products.values_list('id', flat=True))
 
         if 'subevent' in self.request.query_params.getlist('expand'):
             qs = qs.prefetch_related(
                 'subevent',
                 'subevent__event',
-                'subevent__subeventitem_set',
-                'subevent__subeventitemvariation_set',
+                'subevent__subeventproduct_set',
+                'subevent__subeventproductvariation_set',
                 'subevent__seat_category_mappings',
                 'subevent__meta_values',
             )
 
-        if 'item' in self.request.query_params.getlist('expand'):
+        if 'product' in self.request.query_params.getlist('expand'):
             qs = qs.prefetch_related(
-                'item',
-                'item__addons',
-                'item__bundles',
-                'item__meta_values',
-                'item__variations',
-            ).select_related('item__tax_rule')
+                'product',
+                'product__addons',
+                'product__bundles',
+                'product__meta_values',
+                'product__variations',
+            ).select_related('product__tax_rule')
 
         if 'variation' in self.request.query_params.getlist('expand'):
             qs = qs.prefetch_related('variation')
@@ -921,7 +921,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             revoked_matches = list(self.request.event.revoked_secrets.filter(secret=self.kwargs['pk']))
             if len(revoked_matches) == 0 or not force:
                 self.request.event.log_action(
-                    'pretix.event.checkin.unknown',
+                    'eventyay.event.checkin.unknown',
                     data={
                         'datetime': dt,
                         'type': type,
@@ -935,7 +935,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
 
             op = revoked_matches[0].position
             op.order.log_action(
-                'pretix.event.checkin.revoked',
+                'eventyay.event.checkin.revoked',
                 data={
                     'datetime': dt,
                     'type': type,
@@ -949,7 +949,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
         given_answers = {}
         if 'answers' in self.request.data:
             aws = self.request.data.get('answers')
-            for q in op.item.questions.filter(ask_during_checkin=True):
+            for q in op.product.questions.filter(ask_during_checkin=True):
                 if str(q.pk) in aws:
                     try:
                         if q.type == Question.TYPE_FILE:
@@ -978,7 +978,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {
                     'status': 'incomplete',
-                    'require_attention': op.item.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                     'questions': [QuestionSerializer(q).data for q in e.questions],
                 },
@@ -986,7 +986,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             )
         except CheckInError as e:
             op.order.log_action(
-                'pretix.event.checkin.denied',
+                'eventyay.event.checkin.denied',
                 data={
                     'position': op.id,
                     'positionid': op.positionid,
@@ -1003,7 +1003,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
                 {
                     'status': 'error',
                     'reason': e.code,
-                    'require_attention': op.item.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                 },
                 status=400,
@@ -1012,7 +1012,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {
                     'status': 'ok',
-                    'require_attention': op.item.checkin_attention or op.order.checkin_attention,
+                    'require_attention': op.product.checkin_attention or op.order.checkin_attention,
                     'position': CheckinListOrderPositionSerializer(op, context=self.get_serializer_context()).data,
                 },
                 status=201,

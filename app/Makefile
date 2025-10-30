@@ -35,6 +35,6 @@ npminstall:
 	OUT_DIR=$(shell pwd)/eventyay/static npm run build --prefix=eventyay/frontend/schedule-editor
 
 webappbuild:
-	npm install --prefix=eventyay/webapp
+	npm ci --prefix=eventyay/webapp
 	OUT_DIR=$(shell pwd)/eventyay/static npm run build --prefix=eventyay/webapp
 
