@@ -1,6 +1,8 @@
+import asyncio
 import binascii
 import os
-from contextlib import asynccontextmanager
+import weakref
+from contextlib import asynccontextmanager, contextmanager
 
 import redis
 from channels.layers import get_channel_layer
@@ -23,86 +25,121 @@ def consistent_hash(value):
     return int(bigval / ring_divisor)
 
 
-if settings.REDIS_USE_PUBSUB:
-    _pool = {}
+_sync_pools = {}
+_pools_by_loop = weakref.WeakKeyDictionary()
 
-    @asynccontextmanager
-    async def aredis(shard_key=None):
-        global _pool
 
-        if shard_key:
-            shard_index = consistent_hash(shard_key)
-        else:
-            shard_index = 0
+@asynccontextmanager
+async def aredis(shard_key=None):
+    shard_index = consistent_hash(shard_key) if shard_key else 0
+    host = settings.REDIS_HOSTS[shard_index]
 
-        if "PYTEST_CURRENT_TEST" in os.environ:
-            # During tests, async is... different.
-            shard = get_channel_layer()._shards[shard_index]
-            async with shard._lock:
-                shard._ensure_redis()
-            yield shard._redis
-            return
+    if "PYTEST_CURRENT_TEST" in os.environ:
+        shard = get_channel_layer()._shards[shard_index]
+        async with shard._lock:
+            shard._ensure_redis()
+        yield shard._redis
+        return
 
-        if shard_index not in _pool:
-            shard = get_channel_layer()._shards[shard_index]
-            _pool[shard_index] = create_pool(shard.host)
+    loop = asyncio.get_running_loop()
+    pool_map = _pools_by_loop.get(loop)
+    if pool_map is None:
+        pool_map = {}
+        _pools_by_loop[loop] = pool_map
 
-        def _make_conn():
-            return aioredis.Redis(
-                connection_pool=_pool[shard_index],
-                retry=Retry(ExponentialBackoff(), 3),
-                retry_on_error=[redis.exceptions.ConnectionError],
-                retry_on_timeout=True,
-            )
+    pool = pool_map.get(shard_index)
+    if pool is None:
+        pool = create_pool(host)
+        pool_map[shard_index] = pool
 
+    def _make_conn(active_pool):
+        return aioredis.Redis(
+            connection_pool=active_pool,
+            retry=Retry(ExponentialBackoff(), 3),
+            retry_on_error=[redis.exceptions.ConnectionError],
+            retry_on_timeout=True,
+        )
+
+    async def _connect_with_retry(active_pool):
+        conn = _make_conn(active_pool)
         try:
-            conn = _make_conn()
             await conn.ping()
-        except redis.exceptions.ConnectionError:  # retry once
-            conn = _make_conn()
-            await conn.ping()
-
-        try:
-            yield conn
-        finally:
+        except redis.exceptions.ConnectionError:
             await conn.aclose()
+            return None
+        return conn
 
-else:
+    conn = await _connect_with_retry(pool)
+    if conn is None:
+        await pool.aclose()
+        pool = create_pool(host)
+        pool_map[shard_index] = pool
+        conn = await _connect_with_retry(pool)
+        if conn is None:
+            conn = _make_conn(pool)
+            await conn.ping()
 
-    def aredis(shard_key=None):
-        if shard_key:
-            shard_index = consistent_hash(shard_key)
-        else:
-            shard_index = 0
-        return get_channel_layer().connection(shard_index)
+    try:
+        yield conn
+    finally:
+        await conn.aclose()
+
+
+def _build_sync_pool(host_cfg):
+    if isinstance(host_cfg, dict):
+        address = host_cfg.get("address")
+        if isinstance(address, str):
+            return redis.ConnectionPool.from_url(address)
+        if isinstance(address, (tuple, list)):
+            h, p = address
+            return redis.ConnectionPool.from_url(f"redis://{h}:{p}")
+        return redis.ConnectionPool(**host_cfg)
+    if isinstance(host_cfg, str):
+        return redis.ConnectionPool.from_url(host_cfg)
+    if isinstance(host_cfg, (tuple, list)):
+        h, p = host_cfg
+        return redis.ConnectionPool.from_url(f"redis://{h}:{p}")
+    return redis.ConnectionPool(**host_cfg)
+
+
+@contextmanager
+def sredis(shard_key=None):
+    shard_index = consistent_hash(shard_key) if shard_key else 0
+    try:
+        shard = get_channel_layer()._shards[shard_index]
+        host_cfg = shard.host
+    except Exception:
+        cfg_hosts = settings.CHANNEL_LAYERS["default"]["CONFIG"]["hosts"]
+        host_cfg = cfg_hosts[shard_index if shard_index < len(cfg_hosts) else 0]
+
+    pool = _sync_pools.get(shard_index)
+    if pool is None:
+        pool = _build_sync_pool(host_cfg)
+        _sync_pools[shard_index] = pool
+
+    conn = redis.Redis(connection_pool=pool)
+    try:
+        conn.ping()
+    except redis.exceptions.ConnectionError:
+        conn.close()
+        pool.disconnect()
+        pool = _build_sync_pool(host_cfg)
+        _sync_pools[shard_index] = pool
+        conn = redis.Redis(connection_pool=pool)
+        conn.ping()
+
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 async def flush_aredis_pool():
-    global _pool
-
-    if settings.REDIS_USE_PUBSUB:
-        for v in _pool.values():
-            await v.aclose()
-        _pool.clear()
-
-
-"""
-Currently not needed and therefore not covered by tests
-
-async def get_json(key, default=None):
-    async with aredis() as redis:
-        data = await redis.get(key)
-    result = None
-    try:
-        result = json.loads(data)
-    except (json.decoder.JSONDecodeError, TypeError):
-        pass
-    if result is None:
-        return default
-    return result
-
-
-async def set_json(key, value):
-    async with aredis() as redis:
-        await redis.set(key, json.dumps(value))
-"""
+    global _pools_by_loop, _sync_pools
+    for pool_map in list(_pools_by_loop.values()):
+        for pool in pool_map.values():
+            await pool.aclose()
+    _pools_by_loop = weakref.WeakKeyDictionary()
+    for pool in _sync_pools.values():
+        pool.disconnect()
+    _sync_pools = {}
