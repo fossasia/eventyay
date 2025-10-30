@@ -485,6 +485,11 @@ nav.navbar,
   }
 }
 
+/* Navigation buttons styling - consistent with Tickets component */
+.header-nav {
+  border-radius: 0 !important;
+}
+
 .speaker-info {
   display: flex;
   flex-direction: row;
