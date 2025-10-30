@@ -44,7 +44,7 @@ class DashboardEventListView(TemplateView):
 
     @cached_property
     def queryset(self):
-        if check_admin_mode(self, self.request):
+        if check_admin_mode(self.request):
             qs = Event.objects.all()
         else:
             qs = self.base_queryset.annotate(

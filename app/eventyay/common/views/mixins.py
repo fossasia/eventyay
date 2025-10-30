@@ -43,7 +43,7 @@ class ActionFromUrl:
         return self.object
 
     def _check_permission(self, permission_name):
-        if check_admin_mode(self, self.request):
+        if check_admin_mode(self.request):
             return True
         
         return self.request.user.has_perm(permission_name, self.permission_object)

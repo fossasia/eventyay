@@ -10,7 +10,7 @@ register = template.Library()
 
 @register.simple_tag()
 def has_event_perm(perm, user, request, obj=None):
-    return check_admin_mode(user, request) or User.has_perm(user, perm, obj)
+    return check_admin_mode(request) or User.has_perm(user, perm, obj)
 
 
 @register.filter

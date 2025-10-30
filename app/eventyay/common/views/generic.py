@@ -355,7 +355,7 @@ class CRUDView(PaginationMixin, Filterable, View):
             permission_object = self.get_generic_permission_object()
         else:
             permission_object = self.get_permission_object()
-        return self.request.user.has_perm(permission, permission_object) or check_admin_mode(self, self.request)
+        return self.request.user.has_perm(permission, permission_object) or check_admin_mode(self.request)
 
     def get_context_data(self, **kwargs):
         kwargs['view'] = self
@@ -366,8 +366,8 @@ class CRUDView(PaginationMixin, Filterable, View):
         if self.object:
             kwargs['object'] = self.object
             kwargs['generic_title'] = self.get_generic_title(instance=self.object)
-            kwargs['has_update_permission'] = self.request.user.has_perm(self.model.get_perm('update'), self.object) or check_admin_mode(self, self.request)
-            kwargs['has_delete_permission'] = self.request.user.has_perm(self.model.get_perm('delete'), self.object) or check_admin_mode(self, self.request)
+            kwargs['has_update_permission'] = self.request.user.has_perm(self.model.get_perm('update'), self.object) or check_admin_mode(self.request)
+            kwargs['has_delete_permission'] = self.request.user.has_perm(self.model.get_perm('delete'), self.object) or check_admin_mode(self.request)
             if name := self.get_context_object_name():
                 kwargs[name] = self.object
 
@@ -377,13 +377,13 @@ class CRUDView(PaginationMixin, Filterable, View):
             generic_permission_object = self.get_generic_permission_object()
             kwargs['has_create_permission'] = self.request.user.has_perm(
                 self.model.get_perm('create'), generic_permission_object
-            ) or check_admin_mode(self, self.request)
+            ) or check_admin_mode(self.request)
             kwargs['has_update_permission'] = self.request.user.has_perm(
                 self.model.get_perm('update'), generic_permission_object
-            ) or check_admin_mode(self, self.request)
+            ) or check_admin_mode(self.request)
             kwargs['has_delete_permission'] = self.request.user.has_perm(
                 self.model.get_perm('delete'), generic_permission_object
-            ) or check_admin_mode(self, self.request)
+            ) or check_admin_mode(self.request)
             if name := self.get_context_object_name():
                 kwargs[name] = self.object_list
 

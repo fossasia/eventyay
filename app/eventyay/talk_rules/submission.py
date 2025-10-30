@@ -179,7 +179,7 @@ def questions_for_user(self, event, user):
     from eventyay.common.permissions import check_admin_mode
     from eventyay.talk_rules.orga import can_view_speaker_names
 
-    if user.has_perm('base.update_talkquestion', event) or check_admin_mode(self, self.request):
+    if user.has_perm('base.update_talkquestion', event) or check_admin_mode(self.request):
         # Organizers with edit permissions can see everything
         return event.talkquestions(manager='all_objects').all()
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):
