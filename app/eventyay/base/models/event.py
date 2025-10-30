@@ -685,7 +685,11 @@ class Event(
     )
     comment = models.TextField(verbose_name=_('Internal comment'), null=True, blank=True)
     has_subevents = models.BooleanField(verbose_name=_('Event series'), default=True)  # Always enable event series; UI selection disabled
-    is_video_creation = models.BooleanField(verbose_name=_('Add video call'), default=True)  # Always enable video
+    is_video_creation = models.BooleanField(
+        verbose_name=_('Add video call'),
+        default=True,
+        help_text=_('Create Video platform for Event. This feature is always enabled.'),
+    )  # Always enable video
     seating_plan = models.ForeignKey(
         'SeatingPlan',
         on_delete=models.PROTECT,
