@@ -206,7 +206,6 @@ onBeforeUnmount(() => {
 	padding: 0 8px
 	background-color: var(--clr-sidebar)
 	border-bottom: 2px solid var(--clr-primary)
-	box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 3px 9px -2px rgba(0,0,0,0.35)
 	white-space: nowrap
 	overflow: visible
 	z-index: 120
