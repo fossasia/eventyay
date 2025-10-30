@@ -86,20 +86,44 @@ async def aredis(shard_key=None):
 
 
 def _build_sync_pool(host_cfg):
+    """
+    Build a synchronous Redis ConnectionPool from the given host configuration.
+
+    Args:
+        host_cfg (str | dict | tuple | list): The Redis host configuration.
+            - str: treated as redis:// URL
+            - dict: may contain 'address' (string or (host, port))
+            - tuple/list: treated as (host, port)
+    Returns:
+        redis.ConnectionPool: A valid connection pool.
+
+    Raises:
+        TypeError: if host_cfg is not one of the supported types.
+    """
     if isinstance(host_cfg, dict):
         address = host_cfg.get("address")
         if isinstance(address, str):
-            return redis.ConnectionPool.from_url(address)
-        if isinstance(address, (tuple, list)):
+            # Filter only valid kwargs for redis.ConnectionPool
+            valid_keys = {"max_connections", "socket_timeout", "socket_connect_timeout"}
+            kwargs = {k: v for k, v in host_cfg.items() if k in valid_keys}
+            return redis.ConnectionPool.from_url(address, **kwargs)
+        if isinstance(address, (tuple, list)) and len(address) == 2:
             h, p = address
             return redis.ConnectionPool.from_url(f"redis://{h}:{p}")
+        # Fallback: assume full dict of connection args
         return redis.ConnectionPool(**host_cfg)
+
     if isinstance(host_cfg, str):
         return redis.ConnectionPool.from_url(host_cfg)
-    if isinstance(host_cfg, (tuple, list)):
+
+    if isinstance(host_cfg, (tuple, list)) and len(host_cfg) == 2:
         h, p = host_cfg
         return redis.ConnectionPool.from_url(f"redis://{h}:{p}")
-    return redis.ConnectionPool(**host_cfg)
+
+    raise TypeError(
+        f"Unsupported Redis host configuration type: {type(host_cfg).__name__}. "
+        "Expected str, dict, or (host, port) tuple/list."
+    )
 
 
 @contextmanager
@@ -135,11 +159,25 @@ def sredis(shard_key=None):
 
 
 async def flush_aredis_pool():
+    """
+    Close all async and sync Redis connection pools safely.
+    Ensures that errors in one pool do not stop cleanup of others.
+    """
     global _pools_by_loop, _sync_pools
+
+    # Close async pools
     for pool_map in list(_pools_by_loop.values()):
         for pool in pool_map.values():
-            await pool.aclose()
+            try:
+                await pool.aclose()
+            except Exception:
+                pass
     _pools_by_loop = weakref.WeakKeyDictionary()
+
+    # Close sync pools
     for pool in _sync_pools.values():
-        pool.disconnect()
+        try:
+            pool.disconnect()
+        except Exception:
+            pass
     _sync_pools = {}

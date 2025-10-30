@@ -14,6 +14,7 @@ from unittest.mock import patch
 
 import pytest
 import django
+import redis
 
 import fakeredis
 from redis import asyncio as aioredis
@@ -148,3 +149,70 @@ async def test_aredis_per_loop_isolation(fake_server):
     finally:
         if marker is not None:
             os.environ["PYTEST_CURRENT_TEST"] = marker
+
+
+@pytest.mark.asyncio
+async def test_aredis_handles_connection_error(fake_server, monkeypatch):
+    """
+    Ensure aredis gracefully raises ConnectionError when ping fails.
+    """
+    with patch("eventyay.core.utils.redis.get_channel_layer", return_value=DummyLayer(fake_server)):
+
+        async def failing_ping():
+            raise redis.exceptions.ConnectionError("Simulated failure")
+
+        async with aredis(TEST_KEY) as redis_conn:
+            monkeypatch.setattr(redis_conn, "ping", failing_ping)
+            with pytest.raises(redis.exceptions.ConnectionError):
+                await redis_conn.ping()
+
+
+def test_sredis_handles_connection_error(fake_server, monkeypatch):
+    """
+    Ensure sredis rebuilds the connection pool on connection failure.
+    """
+    with patch("eventyay.core.utils.redis.get_channel_layer", return_value=DummyLayer(fake_server)):
+
+        # Make .ping() fail once
+        def failing_ping():
+            raise redis.exceptions.ConnectionError("Simulated sync failure")
+
+        # Replace ping temporarily
+        with sredis(TEST_KEY) as conn:
+            monkeypatch.setattr(conn, "ping", failing_ping)
+            with pytest.raises(redis.exceptions.ConnectionError):
+                conn.ping()
+
+        # Ensure pool recovers and works again
+        with sredis(TEST_KEY) as conn:
+            conn.set(f"{TEST_KEY}:version", TEST_VERSION)
+            val = conn.get(f"{TEST_KEY}:version")
+        assert val.decode() == TEST_VERSION
+
+
+@pytest.mark.asyncio
+async def test_aredis_retries_after_failure(fake_server, monkeypatch):
+    """
+    Simulate a transient ping failure and ensure a subsequent ping works.
+    """
+    with patch("eventyay.core.utils.redis.get_channel_layer", return_value=DummyLayer(fake_server)):
+
+        call_count = {"pings": 0}
+
+        async def flaky_ping(self):
+            call_count["pings"] += 1
+            if call_count["pings"] == 1:
+                raise redis.exceptions.ConnectionError("Transient failure")
+            return True
+
+        # Patch Redis.ping (needs self)
+        monkeypatch.setattr("eventyay.core.utils.redis.aioredis.Redis.ping", flaky_ping)
+
+        async with aredis(TEST_KEY) as redis_conn:
+            # First call fails
+            with pytest.raises(redis.exceptions.ConnectionError):
+                await redis_conn.ping()
+
+            # Second call succeeds
+            result = await redis_conn.ping()
+            assert result is True
