@@ -7,12 +7,12 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from pretix.api.serializers.i18n import I18nAwareModelSerializer
-from pretix.api.serializers.order import CompatibleJSONField
-from pretix.api.serializers.settings import SettingsSerializer
-from pretix.base.auth import get_auth_backends
-from pretix.base.i18n import get_language_without_region
-from pretix.base.models import (
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.api.serializers.order import CompatibleJSONField
+from eventyay.api.serializers.settings import SettingsSerializer
+from eventyay.base.auth import get_auth_backends
+from eventyay.base.i18n import get_language_without_region
+from eventyay.base.models import (
     Device,
     GiftCard,
     GiftCardTransaction,
@@ -23,10 +23,10 @@ from pretix.base.models import (
     TeamInvite,
     User,
 )
-from pretix.base.models.seating import SeatingPlanLayoutValidator
-from pretix.base.services.mail import SendMailException, mail
-from pretix.base.settings import validate_organizer_settings
-from pretix.helpers.urls import build_absolute_uri
+from eventyay.base.models.seating import SeatingPlanLayoutValidator
+from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.settings import validate_organizer_settings
+from eventyay.helpers.urls import build_absolute_uri
 
 logger = logging.getLogger(__name__)
 
@@ -195,12 +195,12 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                 if self.context['team'].invites.filter(email__iexact=validated_data['email']).exists():
                     raise ValidationError(_('This user already has been invited for this team.'))
                 if 'native' not in get_auth_backends():
-                    raise ValidationError('Users need to have a pretix account before they can be invited.')
+                    raise ValidationError('Users need to have a eventyay account before they can be invited.')
 
                 invite = self.context['team'].invites.create(email=validated_data['email'])
                 self._send_invite(invite)
                 invite.team.log_action(
-                    'pretix.team.invite.created',
+                    'eventyay.team.invite.created',
                     data={'email': validated_data['email']},
                     **self.context['log_kwargs'],
                 )
@@ -211,7 +211,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
 
                 self.context['team'].members.add(user)
                 self.context['team'].log_action(
-                    'pretix.team.member.added',
+                    'eventyay.team.member.added',
                     data={
                         'email': user.email,
                         'user': user.pk,

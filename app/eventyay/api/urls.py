@@ -1,35 +1,170 @@
-from django.urls import include, path, re_path
+import importlib
+
+from django.apps import apps
+from django.urls import include
+from django.urls import re_path as url
 from rest_framework import routers
 
-# Import views directly from their modules to avoid relying on package attribute access
-from .views.rooms import RoomViewSet
-from .views.event import (
-    EventView,
-    schedule_update,
-    delete_user,
-    EventThemeView,
-    UserFavouriteView,
-    CreateEventView,
-    ExportView,
+from eventyay.api.views import cart
+
+from ..eventyay_common.views.billing import BillingInvoicePreview
+from .views import (
+    checkin,
+    device,
+    event,
+    exporters,
+    product,
+    oauth,
+    order,
+    organizer,
+    upload,
+    user,
+    version,
+    voucher,
+    waitinglist,
+    webhooks,
 )
+from .views.stripe import stripe_webhook_view
 
-orga_router = routers.DefaultRouter(trailing_slash=False)
+router = routers.DefaultRouter()
+router.register(r'organizers', organizer.OrganizerViewSet)
 
-event_router = routers.DefaultRouter(trailing_slash=False)
-event_router.register(r"rooms", RoomViewSet)
+orga_router = routers.DefaultRouter()
+orga_router.register(r'events', event.EventViewSet, basename='events')
+orga_router.register(r'subevents', event.SubEventViewSet, basename='subevents')
+orga_router.register(r'webhooks', webhooks.WebHookViewSet)
+orga_router.register(r'seatingplans', organizer.SeatingPlanViewSet)
+orga_router.register(r'giftcards', organizer.GiftCardViewSet)
+orga_router.register(r'teams', organizer.TeamViewSet)
+orga_router.register(r'devices', organizer.DeviceViewSet)
+orga_router.register(r'exporters', exporters.OrganizerExportersViewSet, basename='exporters')
 
-router = routers.DefaultRouter(trailing_slash=False)
+team_router = routers.DefaultRouter()
+team_router.register(r'members', organizer.TeamMemberViewSet)
+team_router.register(r'invites', organizer.TeamInviteViewSet)
+team_router.register(r'tokens', organizer.TeamAPITokenViewSet)
+
+event_router = routers.DefaultRouter()
+event_router.register(r'subevents', event.SubEventViewSet, basename='subevents')
+event_router.register(r'clone', event.CloneEventViewSet, basename='clone')
+event_router.register(r'products', product.ProductViewSet)
+event_router.register(r'categories', product.ProductCategoryViewSet)
+event_router.register(r'questions', product.QuestionViewSet)
+event_router.register(r'quotas', product.QuotaViewSet)
+event_router.register(r'vouchers', voucher.VoucherViewSet)
+event_router.register(r'orders', order.OrderViewSet)
+event_router.register(r'orderpositions', order.OrderPositionViewSet)
+event_router.register(r'invoices', order.InvoiceViewSet)
+event_router.register(r'revokedsecrets', order.RevokedSecretViewSet, basename='revokedsecrets')
+event_router.register(r'taxrules', event.TaxRuleViewSet, basename='taxrules')
+event_router.register(r'waitinglistentries', waitinglist.WaitingListViewSet)
+event_router.register(r'checkinlists', checkin.CheckinListViewSet)
+event_router.register(r'cartpositions', cart.CartPositionViewSet)
+event_router.register(r'exporters', exporters.EventExportersViewSet, basename='exporters')
+
+checkinlist_router = routers.DefaultRouter()
+checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
+
+question_router = routers.DefaultRouter()
+question_router.register(r'options', product.QuestionOptionViewSet)
+
+product_router = routers.DefaultRouter()
+product_router.register(r'variations', product.ProductVariationViewSet)
+product_router.register(r'addons', product.ProductAddOnViewSet)
+product_router.register(r'bundles', product.ProductBundleViewSet)
+
+order_router = routers.DefaultRouter()
+order_router.register(r'payments', order.PaymentViewSet)
+order_router.register(r'refunds', order.RefundViewSet)
+
+giftcard_router = routers.DefaultRouter()
+giftcard_router.register(r'transactions', organizer.GiftCardTransactionViewSet)
+
+# Force import of all plugins to give them a chance to register URLs with the router
+for app in apps.get_app_configs():
+    if hasattr(app, 'EventyayPluginMeta'):
+        if importlib.util.find_spec(app.name + '.urls'):
+            importlib.import_module(app.name + '.urls')
+
 urlpatterns = [
-    path("events/<str:event_id>/", EventView.as_view(), name="root"),
-    re_path("events/(?P<event_id>[^/]+)/schedule_update/?$", schedule_update),
-    re_path("events/(?P<event_id>[^/]+)/delete_user/?$", delete_user),
-    path("events/<str:event_id>/", include(event_router.urls)),
-    path("events/<str:event_id>/theme", EventThemeView.as_view()),
-    path(
-        "events/<str:event_id>/favourite-talk/",
-        UserFavouriteView.as_view(),
+    url(r'^', include(router.urls)),
+    url(r'^organizers/(?P<organizer>[^/]+)/', include(orga_router.urls)),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/settings/$',
+        organizer.OrganizerSettingsView.as_view(),
+        name='organizer.settings',
     ),
-    path("create-event/", CreateEventView.as_view()),
-    path("events/<str:event_id>/export-talk", ExportView.as_view()),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/giftcards/(?P<giftcard>[^/]+)/',
+        include(giftcard_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/settings/$',
+        event.EventSettingsView.as_view(),
+        name='event.settings',
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/',
+        include(event_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/teams/(?P<team>[^/]+)/',
+        include(team_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/products/(?P<product>[^/]+)/',
+        include(product_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/questions/(?P<question>[^/]+)/',
+        include(question_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/checkinlists/(?P<list>[^/]+)/',
+        include(checkinlist_router.urls),
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/checkin/redeem/$',
+        checkin.CheckinRedeemView.as_view(),
+        name='checkin.redeem',
+    ),
+    url(
+        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/orders/(?P<order>[^/]+)/',
+        include(order_router.urls),
+    ),
+    url(r'^oauth/authorize$', oauth.AuthorizationView.as_view(), name='authorize'),
+    url(r'^oauth/token$', oauth.TokenView.as_view(), name='token'),
+    url(r'^oauth/revoke_token$', oauth.RevokeTokenView.as_view(), name='revoke-token'),
+    url(
+        r'^device/initialize$',
+        device.InitializeView.as_view(),
+        name='device.initialize',
+    ),
+    url(r'^device/update$', device.UpdateView.as_view(), name='device.update'),
+    url(r'^device/roll$', device.RollKeyView.as_view(), name='device.roll'),
+    url(r'^device/revoke$', device.RevokeKeyView.as_view(), name='device.revoke'),
+    url(
+        r'^device/eventselection$',
+        device.EventSelectionView.as_view(),
+        name='device.eventselection',
+    ),
+    url(r'^upload$', upload.UploadView.as_view(), name='upload'),
+    url(r'^me$', user.MeView.as_view(), name='user.me'),
+    url(r'^version$', version.VersionView.as_view(), name='version'),
+    url(
+        r'^billing-testing/(?P<task>[^/]+)',
+        BillingInvoicePreview.as_view(),
+        name='billing-testing',
+    ),
+    url(r'^webhook/stripe$', stripe_webhook_view, name='stripe-webhook'),
+    url(
+        r'(?P<organizer>[^/]+)/(?P<event>[^/]+)/schedule-public',
+        event.talk_schedule_public,
+        name='event.schedule-public',
+    ),
+    url(
+        r'(?P<organizer>[^/]+)/(?P<event>[^/]+)/ticket-check',
+        event.CustomerOrderCheckView.as_view(),
+        name='event.ticket-check',
+    ),
 ]
-

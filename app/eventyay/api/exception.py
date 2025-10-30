@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import exception_handler, status
 
-from pretix.base.services.locking import LockTimeoutException
+from eventyay.base.services.locking import LockTimeoutException
 
 
 def custom_exception_handler(exc, context):

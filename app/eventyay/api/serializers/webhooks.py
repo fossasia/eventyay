@@ -1,10 +1,10 @@
 from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
-from pretix.api.models import WebHook
-from pretix.api.serializers.i18n import I18nAwareModelSerializer
-from pretix.api.webhooks import get_all_webhook_events
-from pretix.base.models import Event
+from eventyay.api.models import WebHook
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.api.webhooks import get_all_webhook_events
+from eventyay.base.models import Event
 
 
 class EventRelatedField(serializers.SlugRelatedField):

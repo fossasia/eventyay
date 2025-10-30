@@ -7,9 +7,9 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.response import Response
 
-from pretix.api.serializers.waitinglist import WaitingListSerializer
-from pretix.base.models import WaitingListEntry
-from pretix.base.models.waitinglist import WaitingListException
+from eventyay.api.serializers.waitinglist import WaitingListSerializer
+from eventyay.base.models import WaitingListEntry
+from eventyay.base.models.waitinglist import WaitingListException
 
 with scopes_disabled():
 
@@ -21,7 +21,7 @@ with scopes_disabled():
 
         class Meta:
             model = WaitingListEntry
-            fields = ['item', 'variation', 'email', 'locale', 'has_voucher', 'subevent']
+            fields = ['product', 'variation', 'email', 'locale', 'has_voucher', 'subevent']
 
 
 class WaitingListViewSet(viewsets.ModelViewSet):
@@ -29,7 +29,7 @@ class WaitingListViewSet(viewsets.ModelViewSet):
     queryset = WaitingListEntry.objects.none()
     filter_backends = (DjangoFilterBackend, OrderingFilter)
     ordering = ('created',)
-    ordering_fields = ('id', 'created', 'email', 'item')
+    ordering_fields = ('id', 'created', 'email', 'product')
     filterset_class = WaitingListFilter
     permission = 'can_view_orders'
     write_permission = 'can_change_orders'
@@ -45,7 +45,7 @@ class WaitingListViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.orders.waitinglist.added',
+            'eventyay.event.orders.waitinglist.added',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -55,7 +55,7 @@ class WaitingListViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('This entry can not be changed as it has already been assigned a voucher.')
         serializer.save(event=self.request.event)
         serializer.instance.log_action(
-            'pretix.event.orders.waitinglist.changed',
+            'eventyay.event.orders.waitinglist.changed',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -65,7 +65,7 @@ class WaitingListViewSet(viewsets.ModelViewSet):
             raise PermissionDenied('This entry can not be deleted as it has already been assigned a voucher.')
 
         instance.log_action(
-            'pretix.event.orders.waitinglist.deleted',
+            'eventyay.event.orders.waitinglist.deleted',
             user=self.request.user,
             auth=self.request.auth,
         )

@@ -8,9 +8,9 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from pretix.api.auth.device import DeviceTokenAuthentication
-from pretix.base.models import CheckinList, Device, SubEvent
-from pretix.base.models.devices import Gate, generate_api_token
+from eventyay.api.auth.device import DeviceTokenAuthentication
+from eventyay.base.models import CheckinList, Device, SubEvent
+from eventyay.base.models.devices import Gate, generate_api_token
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class InitializeView(APIView):
         device.api_token = generate_api_token()
         device.save()
 
-        device.log_action('pretix.device.initialized', data=serializer.validated_data, auth=device)
+        device.log_action('eventyay.device.initialized', data=serializer.validated_data, auth=device)
 
         serializer = DeviceSerializer(device)
         return Response(serializer.data)
@@ -99,7 +99,7 @@ class UpdateView(APIView):
         device.software_brand = serializer.validated_data.get('software_brand')
         device.software_version = serializer.validated_data.get('software_version')
         device.save()
-        device.log_action('pretix.device.updated', data=serializer.validated_data, auth=device)
+        device.log_action('eventyay.device.updated', data=serializer.validated_data, auth=device)
 
         serializer = DeviceSerializer(device)
         return Response(serializer.data)
@@ -112,7 +112,7 @@ class RollKeyView(APIView):
         device = request.auth
         device.api_token = generate_api_token()
         device.save()
-        device.log_action('pretix.device.keyroll', auth=device)
+        device.log_action('eventyay.device.keyroll', auth=device)
 
         serializer = DeviceSerializer(device)
         return Response(serializer.data)
@@ -125,7 +125,7 @@ class RevokeKeyView(APIView):
         device = request.auth
         device.revoked = True
         device.save()
-        device.log_action('pretix.device.revoked', auth=device)
+        device.log_action('eventyay.device.revoked', auth=device)
 
         serializer = DeviceSerializer(device)
         return Response(serializer.data)

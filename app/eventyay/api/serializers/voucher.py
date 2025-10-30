@@ -1,8 +1,8 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from pretix.api.serializers.i18n import I18nAwareModelSerializer
-from pretix.base.models import Seat, Voucher
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.base.models import Seat, Voucher
 
 
 class VoucherListSerializer(serializers.ListSerializer):
@@ -50,13 +50,13 @@ class VoucherSerializer(I18nAwareModelSerializer):
             'allow_ignore_quota',
             'price_mode',
             'value',
-            'item',
+            'product',
             'variation',
             'quota',
             'tag',
             'comment',
             'subevent',
-            'show_hidden_items',
+            'show_hidden_products',
             'seat',
         )
         read_only_fields = ('id', 'redeemed')
@@ -68,11 +68,11 @@ class VoucherSerializer(I18nAwareModelSerializer):
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
 
-        Voucher.clean_item_properties(
+        Voucher.clean_product_properties(
             full_data,
             self.context.get('event'),
             full_data.get('quota'),
-            full_data.get('item'),
+            full_data.get('product'),
             full_data.get('variation'),
             block_quota=full_data.get('block_quota'),
         )
@@ -81,9 +81,9 @@ class VoucherSerializer(I18nAwareModelSerializer):
         check_quota = Voucher.clean_quota_needs_checking(
             full_data,
             self.instance,
-            item_changed=self.instance
+            product_changed=self.instance
             and (
-                full_data.get('item') != self.instance.item
+                full_data.get('product') != self.instance.product
                 or full_data.get('variation') != self.instance.variation
                 or full_data.get('quota') != self.instance.quota
             ),
@@ -96,7 +96,7 @@ class VoucherSerializer(I18nAwareModelSerializer):
                 self.instance,
                 self.context.get('event'),
                 full_data.get('quota'),
-                full_data.get('item'),
+                full_data.get('product'),
                 full_data.get('variation'),
             )
         Voucher.clean_voucher_code(
@@ -108,7 +108,7 @@ class VoucherSerializer(I18nAwareModelSerializer):
         if full_data.get('seat'):
             data['seat'] = Voucher.clean_seat_id(
                 full_data,
-                full_data.get('item'),
+                full_data.get('product'),
                 full_data.get('quota'),
                 self.context.get('event'),
                 self.instance.pk if self.instance else None,
