@@ -684,7 +684,8 @@ class Event(
         verbose_name=_('Plugins'),
     )
     comment = models.TextField(verbose_name=_('Internal comment'), null=True, blank=True)
-    has_subevents = models.BooleanField(verbose_name=_('Event series'), default=False)
+    has_subevents = models.BooleanField(verbose_name=_('Event series'), default=True)  # Always enable event series; UI selection disabled
+    is_video_creation = models.BooleanField(verbose_name=_('Add video call'), default=True)  # Always enable video
     seating_plan = models.ForeignKey(
         'SeatingPlan',
         on_delete=models.PROTECT,
@@ -696,11 +697,6 @@ class Event(
         verbose_name=_('Restrict to specific sales channels'),
         help_text=_('Only sell tickets for this event on the following sales channels.'),
         default=['web'],
-    )
-    is_video_creation = models.BooleanField(
-        verbose_name=_('Add video call'),
-        help_text=_('Create Video platform for Event.'),
-        default=False,
     )
 
     # Fields for talk
@@ -732,7 +728,7 @@ class Event(
             RegexValidator('#([0-9A-Fa-f]{3}){1,2}'),
         ],
         verbose_name=_('Main event colour'),
-        help_text=_('Provide a hex value like #00ff00 if you want to style eventyay in your event’s colour scheme.'),
+        help_text=_('Provide a hex value like #00ff00 if you want to style eventyay in your event's colour scheme.'),
     )
     custom_css = models.FileField(
         upload_to=event_css_path,
@@ -747,7 +743,7 @@ class Event(
         blank=True,
         verbose_name=_('Logo'),
         help_text=_(
-            'If you provide a logo image, your event’s name will not be shown in the event header. '
+            'If you provide a logo image, your event's name will not be shown in the event header. '
             'The logo will be scaled down to a height of 140px.'
         ),
     )
@@ -757,7 +753,7 @@ class Event(
         blank=True,
         verbose_name=_('Header image'),
         help_text=_(
-            'If you provide a header image, it will be displayed instead of your event’s color and/or header pattern '
+            'If you provide a header image, it will be displayed instead of your event's color and/or header pattern '
             'at the top of all event pages. It will be center-aligned, so when the window shrinks, '
             'the center parts will continue to be displayed, and not stretched.'
         ),
