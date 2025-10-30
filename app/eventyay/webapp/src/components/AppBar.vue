@@ -53,7 +53,8 @@ const ICON_CLASSES = {
 	admin: 'fa fa-cog',
 	logout: 'fa fa-sign-out',
 	tickets: 'fa fa-ticket',
-	talks: 'fa fa-microphone'
+	talks: 'fa fa-microphone',
+	profile: 'fa fa-user-circle'
 }
 
 const PROFILE_MENU_ITEMS = [
@@ -67,8 +68,9 @@ const PROFILE_MENU_ITEMS = [
 	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
 	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
 	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
-	{ key: 'account', label: 'Account', externalPath: 'common/account/general', separatorBefore: true, icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', separatorBefore: true, icon: 'logout' }
+	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout' }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
