@@ -70,7 +70,7 @@ const PROFILE_MENU_ITEMS = [
 	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
 	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
 	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', separatorBefore: true, icon: 'logout' }
+	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout' }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
