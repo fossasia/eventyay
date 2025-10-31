@@ -72,6 +72,7 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
+	height: 100%
 	.scroll-wrapper
 		flex: auto
 		display: flex

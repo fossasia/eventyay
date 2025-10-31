@@ -3,8 +3,8 @@
 	.scroll-wrapper(v-scrollbar.y="")
 		.ui-form-body
 			.generic-settings
-				bunt-input(name="name", v-model="config.name", label="Name", :validation="v$.config.name")
-				bunt-input(name="description", v-model="config.description", label="Description")
+				bunt-input(name="name", v-model="localizedName", label="Name", :validation="v$.config.name")
+				bunt-input(name="description", v-model="localizedDescription", label="Description")
 				bunt-input(name="sorting_priority", v-model="config.sorting_priority", label="Sorting priority", :validation="v$.config.sorting_priority")
 				template(v-if="inferredType")
 					bunt-input(v-if="inferredType.id === 'stage' || inferredType.id === 'channel-bbb'", name="pretalx_id", v-model="config.pretalx_id", label="pretalx ID", :validation="v$.config.pretalx_id")
@@ -72,6 +72,22 @@ export default {
 		},
 		inferredType() {
 			return inferType(this.config)
+		},
+		localizedName: {
+			get() {
+				return this.$localize(this.config.name)
+			},
+			set(value) {
+				this.config.name = value
+			}
+		},
+		localizedDescription: {
+			get() {
+				return this.$localize(this.config.description)
+			},
+			set(value) {
+				this.config.description = value
+			}
 		}
 	},
 	validations() {

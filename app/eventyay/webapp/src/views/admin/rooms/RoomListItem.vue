@@ -1,7 +1,7 @@
 <template lang="pug">
 router-link.c-room-list-item.table-row(:to="{name: 'admin:rooms:item', params: {roomId: room.id}}")
 	.handle.mdi.mdi-drag-vertical(class="{disabled}", v-handle, v-tooltip="disabled ? 'sorting is disabled while searching' : ''")
-	.name {{ room.name }}
+	.name(v-html="$emojify($localize(room.name))")
 </template>
 <script>
 import { ElementMixin, HandleDirective } from 'vue-slicksort'

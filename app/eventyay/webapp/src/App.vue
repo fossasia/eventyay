@@ -18,23 +18,24 @@
 			h1 {{ $t('App:fatal-connection-error:else:headline') }}
 		p.code error code: {{ fatalConnectionError.code }}
 	template(v-else-if="world")
-		app-bar(v-if="$mq.below['l']", @toggle-sidebar="toggleSidebar")
+		// AppBar stays fixed; only main content shifts
+		app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
 		transition(name="backdrop")
-			.sidebar-backdrop(v-if="$mq.below['l'] && showSidebar && !overrideSidebarCollapse", @pointerup="showSidebar = false")
-		rooms-sidebar(:show="$mq.above['l'] || showSidebar || overrideSidebarCollapse", @close="showSidebar = false")
-		// Ensure all routed pages occupy the 'main' grid area, not just room pages
-		.main-content
-			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null", :role="roomHasMedia ? '' : 'main'")
-		//- defining keys like this keeps the playing dom element alive for uninterupted transitions
-		media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
-		media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
-		media-source(v-else-if="backgroundRoom", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
-		#media-source-iframes
-		notifications(:hasBackgroundMedia="!!backgroundRoom")
-		.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
-		transition(name="prompt")
-			greeting-prompt(v-if="!user.profile.greeted")
-		.native-permission-blocker(v-if="askingPermission")
+			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
+		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
+			// router-view no longer carries role=main; main landmark is the scroll container
+			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
+			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
+			media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
+			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
+			media-source(v-else-if="backgroundRoom", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
+			#media-source-iframes
+			notifications(:hasBackgroundMedia="!!backgroundRoom")
+			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
+			transition(name="prompt")
+				greeting-prompt(v-if="!user.profile.greeted")
+			.native-permission-blocker(v-if="askingPermission")
+		rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
 	.connecting(v-else-if="!fatalError")
 		bunt-progress-circular(size="huge")
 		.details(v-if="socketCloseCode == 1006") {{ $t('App:error-code:1006') }}
@@ -136,6 +137,7 @@ export default {
 		room: 'roomChange',
 		call: 'callChange',
 		$route() {
+			// Always close the sidebar after navigation for consistent drawer UX on all screen sizes
 			this.showSidebar = false
 		},
 		stageStreamCollapsed: {
@@ -149,13 +151,25 @@ export default {
 		this.windowHeight = window.innerHeight
 		window.addEventListener('resize', this.onResize)
 		window.addEventListener('focus', this.onFocus, true)
+		window.addEventListener('pointerdown', this.onGlobalPointerDown, true)
+		window.addEventListener('keydown', this.onKeydown, true)
 	},
 	beforeUnmount() {
 		window.removeEventListener('resize', this.onResize)
 		window.removeEventListener('focus', this.onFocus)
+		window.removeEventListener('pointerdown', this.onGlobalPointerDown, true)
+		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		onKeydown(e) {
+			if ((e.key === 'Escape' || e.key === 'Esc') && this.showSidebar) {
+				this.showSidebar = false
+				// Prevent the Escape from triggering other handlers if we handled it
+				e.stopPropagation()
+			}
+		},
 		onResize() {
+			// Only track height for CSS vars; no breakpoint-based sidebar behavior
 			this.windowHeight = window.innerHeight
 		},
 		onFocus() {
@@ -163,6 +177,13 @@ export default {
 		},
 		toggleSidebar() {
 			this.showSidebar = !this.showSidebar
+		},
+		onGlobalPointerDown(event) {
+			if (!this.showSidebar) return
+			const sidebarEl = document.querySelector('.c-rooms-sidebar')
+			const hamburgerEl = document.querySelector('.c-app-bar .hamburger')
+			if (sidebarEl?.contains(event.target) || hamburgerEl?.contains(event.target)) return
+			this.showSidebar = false
 		},
 		clearTokenAndReload() {
 			localStorage.removeItem('token')
@@ -195,14 +216,21 @@ export default {
 			if (!this.$mq.above.m) return // no background rooms for mobile
 			if (this.call) return // When a DM call is running, we never want background media
 			const newRoomHasMedia = newRoom && newRoom.modules && newRoom.modules.some(module => mediaModules.includes(module.type))
+			// We treat "undefined / not callable" as true to avoid race conditions.
+			let primaryWasPlaying = true
+			const primaryRef = this.mediaSourceRefs.primary
+			if (typeof primaryRef?.isPlaying === 'function') {
+				const result = primaryRef.isPlaying()
+				if (result === false) primaryWasPlaying = false
+			}
 			if (oldRoom &&
 				this.rooms.includes(oldRoom) &&
 				!this.backgroundRoom &&
 				oldRoom.modules.some(module => mediaModules.includes(module.type)) &&
-				this.mediaSourceRefs.primary?.isPlaying() &&
+				primaryWasPlaying &&
 				// don't background bbb room when switching to new bbb room
 				!(newRoom?.modules.some(isExclusive) && oldRoom?.modules.some(isExclusive)) &&
-				!newRoomHasMedia
+				!newRoomHasMedia 
 			) {
 				this.backgroundRoom = oldRoom
 			} else if (newRoomHasMedia) {
@@ -232,12 +260,31 @@ export default {
 .v-app
 	flex: auto
 	min-height: 0
-	display: grid
-	grid-template-columns: var(--sidebar-width) auto
-	grid-template-rows: auto
-	grid-template-areas: "rooms-sidebar main"
+	display: flex
+	flex-direction: column
 	--sidebar-width: 280px
 	--pretalx-clr-primary: var(--clr-primary)
+	.app-content
+		flex: 1 1 auto
+		min-height: 0
+		height: calc(100vh - 48px)
+		display: flex
+		flex-direction: column
+		position: relative
+		padding-top: 48px
+		z-index: 1
+	.sidebar-backdrop
+		position: fixed
+		top: 0
+		left: 0
+		right: 0
+		bottom: 0
+		background-color: rgba(0, 0, 0, 0.5)
+		z-index: 105
+		&.backdrop-enter-active, &.backdrop-leave-active
+			transition: opacity .2s
+		&.backdrop-enter-from, &.backdrop-leave-to
+			opacity: 0
 	.main-content
 		grid-area: main
 		display: flex
@@ -258,7 +305,7 @@ export default {
 		transform: translate(-50%, -50%)
 	.disconnected-warning, .fatal-error
 		position: fixed
-		top: 0
+		top: 48px
 		left: calc(50% - 240px)
 		width: 480px
 		background-color: $clr-danger
@@ -304,10 +351,10 @@ export default {
 			themed-button-primary('large')
 	.native-permission-blocker
 		position: fixed
-		top: 0
+		top: 48px
 		left: 0
 		width: 100vw
-		height: var(--vh100)
+		height: calc(var(--vh100) - 48px)
 		z-index: 2000
 		background-color: $clr-secondary-text-light
 	#media-source-iframes

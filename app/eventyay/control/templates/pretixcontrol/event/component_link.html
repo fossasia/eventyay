@@ -12,12 +12,10 @@
             <i class="fa fa-group"></i> {% trans "Talk" %}
         </a>
         {% endif %}
-        {% if is_video_enabled %}
-            <a class="header-nav btn btn-outline-success"
-               href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
-               title="{% trans 'Access videos related to this event' %}">
-                <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-            </a>
-        {% endif %}
+        <a class="header-nav btn btn-outline-success"
+           href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+           title="{% trans 'Access videos related to this event' %}">
+            <i class="fa fa-video-camera"></i> {% trans "Videos" %}
+        </a>
     {% endif %}
 </div>

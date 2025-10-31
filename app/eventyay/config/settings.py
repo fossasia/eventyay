@@ -42,13 +42,18 @@ from .settings_helpers import build_redis_tls_config
 
 # Configuration file handling
 _config = configparser.RawConfigParser()
+LOADED_FILES = []
+
 if 'EVENTYAY_CONFIG_FILE' in os.environ:
-    _config.read_file(open(os.environ.get('EVENTYAY_CONFIG_FILE'), encoding='utf-8'))
+    config_file_path = os.environ.get('EVENTYAY_CONFIG_FILE')
+    _config.read_file(open(config_file_path, encoding='utf-8'))
+    LOADED_FILES.append(config_file_path)
 else:
-    _config.read(
-        ['/etc/eventyay/eventyay.cfg', os.path.expanduser('~/.eventyay.cfg'), 'eventyay.cfg'],
-        encoding='utf-8',
-    )
+    possible_files = ['/etc/eventyay/eventyay.cfg', os.path.expanduser('~/.eventyay.cfg'), 'eventyay.cfg']
+    for file_path in possible_files:
+        if os.path.exists(file_path):
+            _config.read(file_path, encoding='utf-8')
+            LOADED_FILES.append(file_path)
 
 config = EnvOrParserConfig(_config)
 talk_config, TALK_CONFIG_FILES = build_config()
@@ -810,8 +815,8 @@ if not SESSION_ENGINE:
         SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 
 # Celery configuration
-CELERY_BROKER_URL = config.get('celery', 'broker') if not DEBUG else 'redis://localhost:6379/2'
-CELERY_RESULT_BACKEND = config.get('celery', 'backend') if not DEBUG else 'redis://localhost:6379/1'
+CELERY_BROKER_URL = config.get('celery', 'broker')
+CELERY_RESULT_BACKEND = config.get('celery', 'backend')
 CELERY_TASK_ALWAYS_EAGER = False if not DEBUG else True
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

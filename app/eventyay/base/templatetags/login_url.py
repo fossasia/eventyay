@@ -12,7 +12,7 @@ def build_login_url(context):
     query_string = request.META.get('QUERY_STRING', '')
 
     # Construct the base login URL
-    login_url = reverse('control:auth.login')
+    login_url = reverse('eventyay_common:auth.login')
 
     # Encode the next parameter
     if query_string:

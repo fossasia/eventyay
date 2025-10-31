@@ -8,8 +8,8 @@
 			path(d="m8 11.62a2 2 0 1 0-1e-3 3.999 2 2 0 0 0 1e-3 -3.999m8 0a2 2 0 1 0-1e-3 3.999 2 2 0 0 0 1e-3 -3.999m-0.768 8c-0.693 1.195-1.87 2-3.349 2-1.477 0-2.655-0.805-3.347-2h6.464m3-2h-12a6 6 0 1 0 12 0")
 			path(d="m23.047 0a1 1 0 0 0-1 1v3.6484h-3.6484a1 1 0 0 0-1 1 1 1 0 0 0 1 1h3.6484v3.6484a1 1 0 0 0 1 1 1 1 0 0 0 1-1v-3.6484h3.6484a1 1 0 0 0 1-1 1 1 0 0 0-1-1h-3.6484v-3.6484a1 1 0 0 0-1-1z")
 			path(d="m13.242 4.6836c-5.0865-0.52948-9.9583 2.2302-12.119 6.8652-2.1608 4.635-1.1425 10.142 2.5332 13.697 3.6757 3.5555 9.2129 4.3899 13.773 2.0762 4.5606-2.3138 7.1553-7.2758 6.457-12.342a1 1 0 0 0-1.127-0.85352 1 1 0 0 0-0.85352 1.127c0.58284 4.2284-1.5744 8.352-5.3809 10.283-3.8065 1.9312-8.4106 1.2391-11.479-1.7285-3.068-2.9676-3.9129-7.5455-2.1094-11.414 1.8036-3.8686 5.8522-6.1626 10.098-5.7207a1 1 0 0 0 1.0977-0.89062 1 1 0 0 0-0.89062-1.0996z")
-	.emoji-picker-blocker(v-if="showEmojiPicker", @click="showEmojiPicker = false")
-	emoji-picker(v-if="showEmojiPicker", ref="picker", @selected="selected")
+	.emoji-picker-blocker(v-if="showEmojiPicker", @click="showEmojiPicker = false, clearDismissTimer()")
+	emoji-picker(v-if="showEmojiPicker", ref="picker", @selected="selected", @mouseenter="resetDismissTimer", @mousemove="resetDismissTimer", @click="resetDismissTimer")
 </template>
 <script>
 import { createPopper } from '@popperjs/core'
@@ -38,19 +38,31 @@ export default {
 	emits: ['selected'],
 	data() {
 		return {
-			showEmojiPicker: false
+			showEmojiPicker: false,
+			dismissTimer: null
 		}
 	},
 	computed: {},
+	watch: {
+		showEmojiPicker(newVal) {
+			if (!newVal) {
+				this.clearDismissTimer()
+			}
+		}
+	},
 	created() {},
 	mounted() {
 		this.$nextTick(() => {
 		})
 	},
+	beforeUnmount() {
+		this.clearDismissTimer()
+	},
 	methods: {
 		async toggle(event) {
 			if (this.showEmojiPicker) {
 				this.showEmojiPicker = false
+				this.clearDismissTimer()
 				return
 			}
 			this.showEmojiPicker = true
@@ -67,10 +79,27 @@ export default {
 					},
 				]
 			})
+			// Start auto-dismiss timer
+			this.resetDismissTimer()
 		},
 		selected(emoji) {
-			this.showEmojiPicker = false
+			// Don't close immediately, emit the selected emoji and reset timer
 			this.$emit('selected', emoji)
+			this.resetDismissTimer()
+		},
+		resetDismissTimer() {
+			// Clear existing timer
+			this.clearDismissTimer()
+			// Set new timer to auto-dismiss after 1.5 seconds of no interaction
+			this.dismissTimer = setTimeout(() => {
+				this.showEmojiPicker = false
+			}, 1500)
+		},
+		clearDismissTimer() {
+			if (this.dismissTimer) {
+				clearTimeout(this.dismissTimer)
+				this.dismissTimer = null
+			}
 		}
 	}
 }
