@@ -153,7 +153,7 @@ body {
 }
 
 .sidebar .context-selector {
-    a {
+    .dropdown-toggle {
         padding: 10px 20px 9px 7px;
         display: block;
         text-decoration: none;
@@ -167,10 +167,21 @@ body {
         }
         &:hover, &:focus {
             text-decoration: none;
-            background-color: $gray-lighter;
+            
         }
-        .fa-stack .fa-calendar {
-          font-size: 18px;
+        .context-icon {
+            width: 2.5em;
+            height: 2.5em;
+            line-height: 2.5em;
+        }
+        .context-icon .fa-circle {
+            font-size: 2em;
+        }
+        .context-icon .fa-dashboard, .context-icon .fa-group {
+            font-size: 1em;
+            // Ensure visibility
+            visibility: visible;
+            opacity: 1;
         }
     }
     border-bottom: 2px solid darken($gray-lightest, 6.5%);
@@ -183,7 +194,7 @@ body {
         vertical-align: middle;
         span {
             display: block;
-            width: 160px;
+            width: 170px; // Slightly wider for longer text
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -191,6 +202,7 @@ body {
         span.context-name {
             font-weight: bold;
             vertical-align: middle;
+            font-size: 15px; // Slightly larger font
         }
         span.context-meta {
             opacity: 0.7;

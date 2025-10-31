@@ -50,23 +50,26 @@ $(function () {
 
         if (isMobileView()) {
             // Mobile: Always start minimized, no localStorage
-            $body.addClass('sidebar-minimized');
+            // Class is already added in HTML template to prevent flash
+            if (!$body.hasClass('sidebar-minimized')) {
+                $body.addClass('sidebar-minimized');
+            }
         } else {
             // Desktop/Tablet: Start minimized by default, but allow localStorage override
             if (localStorage.getItem('sidebar-minimized') === null) {
                 // First time visit - set to minimized by default
-                $body.addClass('sidebar-minimized');
+                // Class is already added in HTML template
                 localStorage.setItem('sidebar-minimized', 'true');
             } else if (localStorage.getItem('sidebar-minimized') === 'true') {
-                $body.addClass('sidebar-minimized');
+                // Class is already added in HTML template
+                if (!$body.hasClass('sidebar-minimized')) {
+                    $body.addClass('sidebar-minimized');
+                }
             } else {
                 $body.removeClass('sidebar-minimized');
             }
         }
     }
-
-    // Remove the replaceNavbarCollapseWithSidebarToggle function entirely
-    // since we're removing the navbar collapse button
 
     initializeSidebar();
 
@@ -109,15 +112,10 @@ $(function () {
         }, 250);
     });
 
+    // Removed navbar-collapse toggle functionality as the mobile burger button has been removed
+    // Only keeping the page-wrapper height adjustment
     $(window).bind("load resize", function () {
-        var topOffset = 50,
-            width = (this.window.innerWidth > 0) ? this.window.innerWidth : this.screen.width;
-        if (width < 768) {
-            $('div.navbar-collapse').addClass('collapse');
-            topOffset = 100; // 2-row-menu
-        } else {
-            $('div.navbar-collapse').removeClass('collapse');
-        }
+        var topOffset = 50;
 
         var height = ((this.window.innerHeight > 0) ? this.window.innerHeight : this.screen.height) - 1;
         height = height - topOffset;

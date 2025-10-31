@@ -131,8 +131,7 @@ class AdminUserDetail(PermissionRequired, DetailView):
     context_object_name = 'user'
     slug_url_kwarg = 'code'
     slug_field = 'code'
-    
-    @gravatar_csp()
+
     def dispatch(self, *args, **kwargs):
         with scopes_disabled():
             return super().dispatch(*args, **kwargs)
