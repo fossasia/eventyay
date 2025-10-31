@@ -696,7 +696,6 @@ class Event(
         verbose_name=_('Add video call'),
         default=True,
         editable=False,
-        help_text=_('Create Video platform for Event. This feature is always enabled.'),
     )  # Always enable video
     seating_plan = models.ForeignKey(
         'SeatingPlan',
