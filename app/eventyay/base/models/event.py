@@ -765,7 +765,7 @@ class Event(
         blank=True,
         verbose_name=_('Header image'),
         help_text=_(
-            'If you provide a header image, it will be displayed instead of your event's color and/or header pattern '
+            "If you provide a header image, it will be displayed instead of your event's color and/or header pattern "
             'at the top of all event pages. It will be center-aligned, so when the window shrinks, '
             'the center parts will continue to be displayed, and not stretched.'
         ),
