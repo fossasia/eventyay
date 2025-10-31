@@ -690,7 +690,7 @@ class Event(
         verbose_name=_('Event series'),
         default=True,
         editable=False,
-    )  # Always enable event series; UI selection disabled
+    )
     # Always enable video creation; not user-editable to ensure consistency during unification
     is_video_creation = models.BooleanField(
         verbose_name=_('Add video call'),
