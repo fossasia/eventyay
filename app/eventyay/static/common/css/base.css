@@ -168,10 +168,12 @@ select {
 
 .admin-mode {
   color: var(--color-offwhite);
+  margin-right: 16px;
 }
 
 .end-admin-mode {
   padding: 12px;
+  margin-right: 16px;
   background-color: red;
 }
 
