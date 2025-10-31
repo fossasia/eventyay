@@ -696,7 +696,7 @@ class Event(
         verbose_name=_('Add video call'),
         default=True,
         editable=False,
-    )  # Always enable video
+    )
     seating_plan = models.ForeignKey(
         'SeatingPlan',
         on_delete=models.PROTECT,
