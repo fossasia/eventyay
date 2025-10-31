@@ -229,7 +229,6 @@ function getLanguageIframeUrl(languageUrl) {
 	if (!languageUrl) return null
 	const config = module.value?.config || {}
 	const origin = window.location.origin
-	
 	const params = new URLSearchParams({
 		enablejsapi: '1',
 		autoplay: '1',
