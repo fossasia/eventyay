@@ -14,7 +14,7 @@ def disable_all_components(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0005_alter_logentry_data'),  # Update this if you have a newer migration
+        ('base', '0005_alter_logentry_data'),
     ]
 
     operations = [
