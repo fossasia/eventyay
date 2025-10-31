@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='event',
             name='is_video_creation',
-            field=models.BooleanField(default=True, editable=False, verbose_name='Add video call', help_text='Create Video platform for Event.'),
+            field=models.BooleanField(default=True, editable=False, verbose_name='Add video call', help_text='Create Video platform for Event. This feature is always enabled.'),
         ),
     ]
