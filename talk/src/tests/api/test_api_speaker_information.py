@@ -36,11 +36,11 @@ def test_speaker_information_serializer(submission_type, event, track):
         assert submission_type.pk in data["limit_types"]
 
 
-@pytest.mark.parametrize("is_public", (True, False))
+@pytest.mark.parametrize("live", (True, False))
 @pytest.mark.django_db
-def test_cannot_see_speaker_information(client, event, is_public):
+def test_cannot_see_speaker_information(client, event, live):
     with scope(event=event):
-        event.is_public = is_public
+        event.live = live
         event.save()
     response = client.get(event.api_urls.speaker_information, follow=True)
     assert response.status_code == 401

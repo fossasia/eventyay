@@ -9,7 +9,7 @@ from eventyay.base.models import SubmissionStates
 
 
 def _is_in_preparation(event):
-    return not event.is_public and now() <= event.date_from
+    return not event.live and now() <= event.date_from
 
 
 def _is_cfp_open(event):

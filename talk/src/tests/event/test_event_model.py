@@ -15,7 +15,7 @@ def event():
         return Event.objects.create(
             name="Event",
             slug="event",
-            is_public=True,
+            live=True,
             email="orga@orga.org",
             locale_array="en,de",
             locale="en",
@@ -87,7 +87,7 @@ def test_event_model_slug_permitted_validation(slug):
         Event(
             name="Event",
             slug=slug,
-            is_public=True,
+            live=True,
             email="orga@orga.org",
             locale_array="en,de",
             locale="en",
@@ -102,7 +102,7 @@ def test_event_model_slug_uniqueness():
         Event.objects.create(
             name="Event",
             slug="slog",
-            is_public=True,
+            live=True,
             email="orga@orga.org",
             locale_array="en,de",
             locale="en",
@@ -114,7 +114,7 @@ def test_event_model_slug_uniqueness():
             Event.objects.create(
                 name="Event",
                 slug="slog",
-                is_public=True,
+                live=True,
                 email="orga@orga.org",
                 locale_array="en,de",
                 locale="en",

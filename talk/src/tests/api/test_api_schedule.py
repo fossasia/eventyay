@@ -124,7 +124,7 @@ def test_orga_can_access_latest_schedule_shortcut(
 def test_user_can_access_latest_schedule_shortcut_if_public(client, event, slot):
     with scope(event=event):
         assert event.current_schedule is not None
-        event.is_public = True
+        event.live = True
         event.feature_flags["show_schedule"] = True
         event.save()
         current_schedule_version = event.current_schedule.version
@@ -141,7 +141,7 @@ def test_user_cannot_access_latest_schedule_shortcut_if_schedule_not_public(
 ):
     with scope(event=event):
         assert event.current_schedule is not None
-        event.is_public = True
+        event.live = True
         event.feature_flags["show_schedule"] = False
         event.save()
 
@@ -155,7 +155,7 @@ def test_user_cannot_access_latest_schedule_shortcut_if_event_not_public(
 ):
     with scope(event=event):
         assert event.current_schedule is not None
-        event.is_public = False
+        event.live = False
         event.save()
     response = client.get(event.api_urls.schedules + "latest/")
     assert response.status_code == 401
@@ -347,7 +347,7 @@ def test_user_cannot_download_slot_ical_if_schedule_not_public(client, slot, eve
 @pytest.mark.django_db
 def test_user_cannot_download_slot_ical_if_event_not_public(client, slot, event):
     with scope(event=event):
-        event.is_public = False
+        event.live = False
         event.save()
 
     url = event.api_urls.slots + f"{slot.pk}/ical/"
@@ -366,7 +366,7 @@ def test_download_slot_ical_slot_without_submission(client, event, break_slot):
 
 @pytest.mark.django_db
 def test_list_slots_anonymous_event_not_public(client, event, slot):
-    event.is_public = False
+    event.live = False
     event.save()
     response = client.get(event.api_urls.slots, follow=True)
     assert response.status_code == 401
@@ -374,7 +374,7 @@ def test_list_slots_anonymous_event_not_public(client, event, slot):
 
 @pytest.mark.django_db
 def test_list_slots_anonymous_schedule_not_public(client, event, slot):
-    event.is_public = True
+    event.live = True
     event.feature_flags["show_schedule"] = False
     event.save()
     response = client.get(event.api_urls.slots, follow=True)
@@ -485,7 +485,7 @@ def test_retrieve_slot_anonymous_visible_schedule_public(client, event, slot):
 @pytest.mark.django_db
 def test_retrieve_slot_anonymous_schedule_not_public(client, event, slot):
     with scope(event=event):
-        event.is_public = True
+        event.live = True
         event.feature_flags["show_schedule"] = False
         event.save()
     response = client.get(event.api_urls.slots + f"{slot.pk}/", follow=True)

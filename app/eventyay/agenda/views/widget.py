@@ -30,7 +30,7 @@ def widget_js_etag(request, event, **kwargs):
     return WIDGET_JS_CHECKSUM
 
 
-def is_public_and_versioned(request, event, version=None):
+def is_live_and_versioned(request, event, version=None):
     if version and version == 'wip':
         # We never cache the wip schedule
         return False
@@ -52,7 +52,7 @@ def version_prefix(request, event, version=None):
 @conditional_cache_page(
     60,
     key_prefix=version_prefix,
-    condition=is_public_and_versioned,
+    condition=is_live_and_versioned,
     server_timeout=5 * 60,
     headers={
         'Access-Control-Allow-Headers': 'authorization,content-type',

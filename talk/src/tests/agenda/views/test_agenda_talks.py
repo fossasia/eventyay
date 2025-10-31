@@ -126,7 +126,7 @@ def test_can_see_talk_does_accept_feedback(
 
 @pytest.mark.django_db
 def test_cannot_see_nonpublic_talk(client, django_assert_num_queries, event, slot):
-    event.is_public = False
+    event.live = False
     event.save()
     with django_assert_num_queries(10):
         response = client.get(slot.submission.urls.public, follow=True)

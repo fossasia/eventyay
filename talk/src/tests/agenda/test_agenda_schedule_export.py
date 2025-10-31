@@ -217,7 +217,7 @@ def test_schedule_single_ical_export(slot, client, django_assert_max_num_queries
 def test_schedule_export_nonpublic(
     exporter, slot, client, django_assert_max_num_queries
 ):
-    slot.submission.event.is_public = False
+    slot.submission.event.live = False
     slot.submission.event.save()
     exporter = "feed" if exporter == "feed" else f"export.{exporter}"
 
@@ -461,7 +461,7 @@ def test_html_export_full(
     )
 
     event.primary_color = "#111111"
-    event.is_public = False
+    event.live = False
     event.save()
     other_event.primary_color = "#222222"
     other_event.save()
@@ -556,7 +556,7 @@ def test_html_export_full(
     ics_path = settings.HTMLEXPORT_ROOT / f"test/test/talk/{slot.submission.code}.ics"
     talk_ics = ics_path.read_text()
     assert slot.submission.title in talk_ics
-    assert event.is_public is False
+    assert event.live is False
 
     with django_assert_max_num_queries(33):
         response = orga_client.get(

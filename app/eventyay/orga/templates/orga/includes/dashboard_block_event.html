@@ -19,8 +19,8 @@
                 {% translate "No proposals yet" %}
             {% endif %}
         </a>
-        <a href="{{ event.orga_urls.base }}" class="dashboard-block-addon dashboard-block-addon-{% if event.is_public %}success{% else %}secondary{% endif %}">
-            {% if event.is_public %}
+        <a href="{{ event.orga_urls.base }}" class="dashboard-block-addon dashboard-block-addon-{% if event.live %}success{% else %}secondary{% endif %}">
+            {% if event.live %}
                 <div class="state active">{% translate "live" %}</div>
             {% else %}
                 <div class="state inactive">{% translate "Not public" %}</div>

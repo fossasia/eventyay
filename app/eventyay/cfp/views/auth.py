@@ -41,8 +41,8 @@ class LoginView(GenericLoginView):
     template_name = 'cfp/event/login.html'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.event.is_public:
-            logger.info('Event %s is not public. Blocking access.', request.event.slug)
+        if not request.event.live:
+            logger.info('Event %s is not live. Blocking access.', request.event.slug)
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 

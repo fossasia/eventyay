@@ -11,7 +11,7 @@ def test_event_list_serializer(event):
     assert data == {
         "name": {"en": event.name},
         "slug": event.slug,
-        "is_public": event.is_public,
+        "live": event.live,
         "date_from": event.date_from.isoformat(),
         "date_to": event.date_to.isoformat(),
         "timezone": event.timezone,
@@ -24,7 +24,7 @@ def test_event_serializer(event):
     assert data == {
         "name": {"en": event.name},
         "slug": event.slug,
-        "is_public": event.is_public,
+        "live": event.live,
         "date_from": event.date_from.isoformat(),
         "date_to": event.date_to.isoformat(),
         "timezone": event.timezone,
@@ -40,11 +40,11 @@ def test_event_serializer(event):
 
 
 @pytest.mark.django_db
-def test_can_only_see_public_events(client, event, other_event):
-    other_event.is_public = False
+def test_can_only_see_live_events(client, event, other_event):
+    other_event.live = False
     other_event.save()
-    assert event.is_public
-    assert not other_event.is_public
+    assert event.live
+    assert not other_event.live
 
     response = client.get("/api/events/")
     content = json.loads(response.text)
@@ -55,15 +55,15 @@ def test_can_only_see_public_events(client, event, other_event):
 
 
 @pytest.mark.django_db
-def test_can_only_see_public_events_in_detail(client, event):
-    assert event.is_public
+def test_can_only_see_live_events_in_detail(client, event):
+    assert event.live
     response = client.get(event.api_urls.base, follow=True)
     content = json.loads(response.text)
 
     assert response.status_code == 200
     assert content["name"]["en"] == event.name
 
-    event.is_public = False
+    event.live = False
     event.save()
 
     response = client.get(event.api_urls.base, follow=True)
@@ -72,11 +72,11 @@ def test_can_only_see_public_events_in_detail(client, event):
 
 
 @pytest.mark.django_db
-def test_orga_can_see_nonpublic_events(client, event, other_event, orga_user_token):
-    event.is_public = False
+def test_orga_can_see_nonlive_events(client, event, other_event, orga_user_token):
+    event.live = False
     event.save()
-    assert not event.is_public
-    assert other_event.is_public
+    assert not event.live
+    assert other_event.live
 
     response = client.get(
         "/api/events/", headers={"Authorization": f"Token {orga_user_token.token}"}

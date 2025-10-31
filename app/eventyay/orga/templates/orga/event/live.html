@@ -2,18 +2,18 @@
 
 {% load i18n %}
 
-{% block extra_title %}{% if request.event.is_public %}{% translate "Deactivate event" %}{% else %}{% translate "Go live" %}{% endif %} :: {% endblock extra_title %}
+{% block extra_title %}{% if request.event.live %}{% translate "Deactivate event" %}{% else %}{% translate "Go live" %}{% endif %} :: {% endblock extra_title %}
 
 {% block content %}
     <h2>
-        {% if request.event.is_public %}
+        {% if request.event.live %}
             {% translate "Deactivate event" %}
         {% else %}
             {% translate "Go live" %}
         {% endif %}
     </h2>
 
-    {% if request.event.is_public %}
+    {% if request.event.live %}
         {% blocktranslate trimmed %}
             Your event is currently live and publicly visible.
             If you take it down, it will only be visible to you and your team.
@@ -54,7 +54,7 @@
             <span></span>
             <form method="post">
                 {% csrf_token %}
-                {% if request.event.is_public %}
+                {% if request.event.live %}
                     <button class="btn btn-lg btn-danger" type="submit" name="action" value="deactivate">{% translate "Go offline" %}</button>
                 {% else %}
                     <button class="btn btn-lg btn-success" type="submit" name="action" value="activate">{% translate "Go live" %}</button>

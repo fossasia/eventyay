@@ -9,7 +9,7 @@ from pretalx.event.stages import STAGE_ORDER, in_stage
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "target,is_public,from_delta,to_delta,deadline_delta,has_submissions",
+    "target,live,from_delta,to_delta,deadline_delta,has_submissions",
     (
         ("PREPARATION", False, 2, 3, 1, False),
         ("PREPARATION", False, 2, 3, 1, True),
@@ -29,7 +29,7 @@ def test_event_stages(
     event,
     submission,
     target,
-    is_public,
+    live,
     from_delta,
     to_delta,
     deadline_delta,
@@ -37,7 +37,7 @@ def test_event_stages(
 ):
     with scope(event=event):
         _now = now()
-        event.is_public = is_public
+        event.live = live
         event.date_from = (_now + dt.timedelta(days=from_delta)).date()
         event.date_to = (_now + dt.timedelta(days=to_delta)).date()
         event.cfp.deadline = _now + dt.timedelta(days=deadline_delta)

@@ -4,7 +4,7 @@ from django.db.models import Q
 
 @rules.predicate
 def is_event_visible(user, event):
-    return event and event.is_public
+    return event and event.live
 
 
 def get_events_for_user(user, queryset=None):
@@ -12,10 +12,10 @@ def get_events_for_user(user, queryset=None):
 
     queryset = queryset or Event.objects.all()
     if user.is_anonymous:
-        queryset = queryset.filter(is_public=True)
+        queryset = queryset.filter(live=True)
     else:
         events = user.get_events_with_any_permission().values_list('pk', flat=True)
-        queryset = queryset.filter(Q(is_public=True) | Q(pk__in=events))
+        queryset = queryset.filter(Q(live=True) | Q(pk__in=events))
     return queryset.order_by('-date_from')
 
 
