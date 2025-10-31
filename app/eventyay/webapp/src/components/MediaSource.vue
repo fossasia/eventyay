@@ -239,7 +239,7 @@ function getLanguageIframeUrl(languageUrl) {
 		rel: '0',
 		showinfo: '0',
 		playlist: languageUrl,
-		origin: origin, // Required when using enablejsapi=1 (fixes Error 153)
+		origin, // Required when using enablejsapi=1 (fixes Error 153)
 	})
 
 	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
