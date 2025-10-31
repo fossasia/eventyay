@@ -685,13 +685,16 @@ class Event(
     )
     comment = models.TextField(verbose_name=_('Internal comment'), null=True, blank=True)
     # Always enable event series; not user-editable to ensure consistency during unification
-    has_subevents = models.BooleanField(verbose_name=_('Event series'), default=True, editable=False)
+    has_subevents = models.BooleanField(
+        verbose_name=_('Event series'),
+        default=True,
+        editable=False,
+    )  # Always enable event series; UI selection disabled
     # Always enable video creation; not user-editable to ensure consistency during unification
-    is_video_creation = models.BooleanField(verbose_name=_('Add video call'), default=True, editable=False)
-    has_subevents = models.BooleanField(verbose_name=_('Event series'), default=True)  # Always enable event series; UI selection disabled
     is_video_creation = models.BooleanField(
         verbose_name=_('Add video call'),
         default=True,
+        editable=False,
         help_text=_('Create Video platform for Event. This feature is always enabled.'),
     )  # Always enable video
     seating_plan = models.ForeignKey(
