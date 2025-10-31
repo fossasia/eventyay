@@ -918,6 +918,10 @@ class JoinOnlineVideoView(EventViewMixin, View):
             'profile': profile,
             'traits': list(
                 {
+                    # Grant base attendee role so the video app allows EVENT_VIEW by default
+                    # Without this, users with valid tickets received auth.denied because
+                    # none of the event trait_grants matched the token traits.
+                    'attendee',
                     'eventyay-video-event-{}'.format(request.event.slug),
                     'eventyay-video-subevent-{}'.format(order_position.subevent_id),
                     'eventyay-video-product-{}'.format(order_position.product_id),
