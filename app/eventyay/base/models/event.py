@@ -29,6 +29,7 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
@@ -632,7 +633,7 @@ class Event(
         default=settings.DEFAULT_CURRENCY,
     )
     date_from = models.DateTimeField(verbose_name=_('Event start time'))
-    date_to = models.DateTimeField(null=True, blank=True, verbose_name=_('Event end time'))
+    date_to = models.DateTimeField(verbose_name=_('Event end time'))
     date_admission = models.DateTimeField(null=True, blank=True, verbose_name=_('Admission time'))
     is_public = models.BooleanField(
         default=True,
@@ -1006,9 +1007,12 @@ class Event(
 
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
+        if self.date_from and not self.date_to:
+            self.date_to = self.date_from + timedelta(hours=24)
+
         obj = super().save(*args, **kwargs)
         self.cache.clear()
-
+        
         if was_created:
             self.build_initial_data()
         return obj
@@ -2494,7 +2498,7 @@ class SubEvent(EventMixin, LoggedModel):
         verbose_name=_('Name'),
     )
     date_from = models.DateTimeField(verbose_name=_('Event start time'))
-    date_to = models.DateTimeField(null=True, blank=True, verbose_name=_('Event end time'))
+    date_to = models.DateTimeField(verbose_name=_('Event end time'))
     date_admission = models.DateTimeField(null=True, blank=True, verbose_name=_('Admission time'))
     presale_end = models.DateTimeField(
         null=True,
@@ -2626,6 +2630,9 @@ class SubEvent(EventMixin, LoggedModel):
         from .orders import Order
 
         clear_cache = kwargs.pop('clear_cache', False)
+        if self.date_from and not self.date_to:
+            self.date_to = self.date_from + timedelta(hours=24)
+        
         super().save(*args, **kwargs)
         if self.event and clear_cache:
             self.event.cache.clear()
