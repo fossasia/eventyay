@@ -7,6 +7,9 @@ from pathlib import Path
 from typing import Annotated
 from urllib.parse import urlparse
 
+import django.conf.locale
+from django.contrib.messages import constants as messages
+from django.utils.translation import gettext_lazy as _
 from pycountry import currencies
 from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings as _BaseSettings
@@ -15,7 +18,7 @@ from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, To
 # To avoid loading unnecessary settings from other applications
 # we only load those which are prefixed with EVY_.
 _ENV_PREFIX = 'EVY_'
-_ENV_KEY_ACTIVE_ENVIRONMENT = f'{_ENV_PREFIX}RUNNING_ENVIRONMENT'
+_ENV_KEY_ACTIVE_ENVIRONMENT = 'EVY_RUNNING_ENVIRONMENT'
 # The 'eventyay.toml' is the main configuration file and contains default values.
 # The 'eventyay.local.toml' is optional, ignored by Git, for developers to override settings
 # to match their personal setup.
@@ -43,11 +46,11 @@ class RunningEnvironment(StrEnum):
     TESTING = 'testing'
 
 
-ACTIVE_ENVIRONMENT = RunningEnvironment(os.getenv(_ENV_KEY_ACTIVE_ENVIRONMENT, 'development'))
+active_environment = RunningEnvironment(os.getenv(_ENV_KEY_ACTIVE_ENVIRONMENT, 'development'))
 # Some shortcuts
-_IN_DEVELOPMENT = ACTIVE_ENVIRONMENT == RunningEnvironment.DEVELOPMENT
-_IN_TESTING = ACTIVE_ENVIRONMENT == RunningEnvironment.TESTING
-_IN_PRODUCTION = ACTIVE_ENVIRONMENT == RunningEnvironment.PRODUCTION
+is_development = active_environment == RunningEnvironment.DEVELOPMENT
+is_testing = active_environment == RunningEnvironment.TESTING
+is_production = active_environment == RunningEnvironment.PRODUCTION
 
 
 class BaseSettings(_BaseSettings):
@@ -71,8 +74,10 @@ class BaseSettings(_BaseSettings):
     postgres_password: str | None = None
     postgres_host: str | None = None
     postgres_port: str | None = None
+    redis_url: str = 'redis://localhost:6379/0'
     # Used by "Talk" (pretalx). Not sure why it is named like this.
     core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
+    language_code: str = 'en'
     # Don't send emails to Internet by default.
     email_backend: str = 'django.core.mail.backends.console.EmailBackend'
     allowed_hosts: list[str] = []
@@ -89,7 +94,7 @@ class BaseSettings(_BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Insert the TOML which matches the running environment
         toml_files = _TOML_SOURCE_FILES[:1]
-        toml_files.append(f'eventyay.{ACTIVE_ENVIRONMENT}.toml')
+        toml_files.append(f'eventyay.{active_environment}.toml')
         toml_files.extend(_TOML_SOURCE_FILES[1:])
         print(f'Loading configuration from: {toml_files}', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
@@ -282,7 +287,7 @@ _TEMPLATE_LOADERS = (
     'django.template.loaders.app_directories.Loader',
 )
 
-if _IN_PRODUCTION:
+if is_production:
     _TEMPLATE_LOADERS = ('django.template.loaders.cached.Loader', *_TEMPLATE_LOADERS)
 
 TEMPLATES = (
@@ -344,7 +349,7 @@ AUTHENTICATION_BACKENDS = (
 AUTH_PASSWORD_VALIDATORS = (
     # In development, we don't need strong password validation.
     ()
-    if _IN_DEVELOPMENT
+    if is_development
     else (
         {
             'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -361,12 +366,271 @@ AUTH_PASSWORD_VALIDATORS = (
     )
 )
 
+LANGUAGE_CODE = conf.language_code
+# Due to an issue of drifting time in Celery, we don't allow to change TIME_ZONE yet.
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+LOCALE_PATHS = (
+    BASE_DIR / 'locale',
+)
+
+# TODO: Move to consts.py
+ALL_LANGUAGES = (
+    ('en', _('English')),
+    ('de', _('German')),
+    ('de-formal', _('German (informal)')),
+    ('ar', _('Arabic')),
+    ('zh-hans', _('Chinese (simplified)')),
+    ('da', _('Danish')),
+    ('nl', _('Dutch')),
+    ('nl-informal', _('Dutch (informal)')),
+    ('fr', _('French')),
+    ('fi', _('Finnish')),
+    ('el', _('Greek')),
+    ('it', _('Italian')),
+    ('lv', _('Latvian')),
+    ('pl', _('Polish')),
+    ('pt-pt', _('Portuguese (Portugal)')),
+    ('pt-br', _('Portuguese (Brazil)')),
+    ('ru', _('Russian')),
+    ('es', _('Spanish')),
+    ('sw', _('Swahili')),
+    ('tr', _('Turkish')),
+    ('uk', _('Ukrainian')),
+)
+LANGUAGES_OFFICIAL = {'en', 'de', 'de-formal'}
+LANGUAGES_INCUBATING = {'pl', 'fi', 'pt-br'}
+LANGUAGES_RTL = {'ar', 'he', 'fa-ir'}
+LANGUAGES = tuple((k, v) for k, v in ALL_LANGUAGES if k not in LANGUAGES_INCUBATING) if is_production else ALL_LANGUAGES
+
+EXTRA_LANG_INFO = {
+    'de-formal': {
+        'bidi': False,
+        'code': 'de-formal',
+        'name': 'German (informal)',
+        'name_local': 'Deutsch',
+        'public_code': 'de',
+    },
+    'nl-informal': {
+        'bidi': False,
+        'code': 'nl-informal',
+        'name': 'Dutch (informal)',
+        'name_local': 'Nederlands',
+        'public_code': 'nl',
+    },
+    'fr': {'bidi': False, 'code': 'fr', 'name': 'French', 'name_local': 'Français'},
+    'lv': {'bidi': False, 'code': 'lv', 'name': 'Latvian', 'name_local': 'Latviešu'},
+    'pt-pt': {
+        'bidi': False,
+        'code': 'pt-pt',
+        'name': 'Portuguese',
+        'name_local': 'Português',
+    },
+    'sw': {
+        'bid': False,
+        'code': 'sw',
+        'name': _('Swahili'),
+        'name_local': 'Kiswahili',
+    },
+}
+
+django.conf.locale.LANG_INFO.update(EXTRA_LANG_INFO)
+
+# TODO: Move to consts.py
+LANGUAGES_INFORMATION = {
+    'en': {
+        'name': _('English'),
+        'natural_name': 'English',
+        'official': True,
+        'percentage': 100,
+    },
+    'de': {
+        'name': _('German'),
+        'natural_name': 'Deutsch',
+        'official': True,
+        'percentage': 100,
+        'path': 'de_DE',
+    },
+    'de-formal': {
+        'name': _('German (formal)'),
+        'natural_name': 'Deutsch',
+        'official': True,
+        'percentage': 100,
+        'public_code': 'de',
+        'path': 'de_Formal',
+    },
+    'ar': {
+        'name': _('Arabic'),
+        'natural_name': 'اَلْعَرَبِيَّةُ',
+        'official': False,
+        'percentage': 72,
+    },
+    'cs': {
+        'name': _('Czech'),
+        'natural_name': 'Čeština',
+        'official': False,
+        'percentage': 97,
+    },
+    'el': {
+        'name': _('Greek'),
+        'natural_name': 'Ελληνικά',
+        'official': False,
+        'percentage': 90,
+    },
+    'es': {
+        'name': _('Spanish'),
+        'natural_name': 'Español',
+        'official': False,
+        'percentage': 80,
+    },
+    'fa-ir': {
+        'name': _('Persian'),
+        'natural_name': 'قارسی',
+        'official': False,
+        'percentage': 99,
+        'path': 'fa_IR',
+        'public_code': 'fa_IR',
+    },
+    'fr': {
+        'name': _('French'),
+        'natural_name': 'Français',
+        'official': False,
+        'percentage': 98,
+        'path': 'fr_FR',
+    },
+    'it': {
+        'name': _('Italian'),
+        'natural_name': 'Italiano',
+        'official': False,
+        'percentage': 95,
+    },
+    'ja-jp': {
+        'name': _('Japanese'),
+        'natural_name': '日本語',
+        'official': False,
+        'percentage': 69,
+        'public_code': 'jp',
+    },
+    'nl': {
+        'name': _('Dutch'),
+        'natural_name': 'Nederlands',
+        'official': False,
+        'percentage': 88,
+    },
+    'pt-br': {
+        'name': _('Brasilian Portuguese'),
+        'natural_name': 'Português brasileiro',
+        'official': False,
+        'percentage': 89,
+        'public_code': 'pt',
+    },
+    'pt-pt': {
+        'name': _('Portuguese'),
+        'natural_name': 'Português',
+        'official': False,
+        'percentage': 89,
+        'public_code': 'pt',
+    },
+    'ru': {
+        'name': _('Russian'),
+        'natural_name': 'Русский',
+        'official': True,
+        'percentage': 0,
+    },
+    'sw': {
+        'name': _('Swahili'),
+        'natural_name': 'Kiswahili',
+        'official': False,
+        'percentage': 0,
+    },
+    'ua': {
+        'name': _('Ukrainian'),
+        'natural_name': 'Українська',
+        'official': True,
+        'percentage': 0,
+    },
+    'zh-hant': {
+        'name': _('Traditional Chinese (Taiwan)'),
+        'natural_name': '漢語',
+        'official': False,
+        'percentage': 66,
+        'public_code': 'zh',
+    },
+    'zh-hans': {
+        'name': _('Simplified Chinese'),
+        'natural_name': '简体中文',
+        'official': False,
+        'percentage': 86,
+        'public_code': 'zh',
+    },
+}
+
+# Use Redis for caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': conf.redis_url,
+    },
+}
+
+# Use Redis for session storage
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {
+        'BACKEND': 'eventyay.base.storage.NoMapManifestStaticFilesStorage',
+    },
+}
+
+STATIC_ROOT = BASE_DIR / 'static.dist'
+STATICFILES_DIRS = (
+    (BASE_DIR / 'static' / 'webapp'),
+    # Added to make sure root package static assets (e.g. pretixcontrol/scss/) are found
+    (BASE_DIR / 'static'),
+)
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+)
+# For django-statici18n
+STATICI18N_ROOT = BASE_DIR / 'static'
+
+FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+FRONTEND_DIR = BASE_DIR / 'frontend'
+VITE_DEV_SERVER_PORT = 8080
+VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
+VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
+VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+
+COMPRESS_PRECOMPILERS = (
+    ('text/x-scss', 'django_libsass.SassCompiler'),
+    ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
+)
+COMPRESS_ENABLED = COMPRESS_OFFLINE = is_production
+COMPRESS_CSS_FILTERS = (
+    # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
+    # However, we don't need it if we consequently use the static() function in Sass
+    # 'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSCompressorFilter',
+)
+
 # Security settings
 X_FRAME_OPTIONS = 'DENY'
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # URL settings
 ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
+INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
 EMAIL_BACKEND = conf.email_backend
 
@@ -379,9 +643,13 @@ MEDIA_URL = '/media/'
 SITE_URL = str(conf.site_url)
 SITE_NETLOC = urlparse(SITE_URL).netloc
 
-# TODO: Move to consts.py
+LOGIN_URL = 'eventyay_common:auth.login'
+LOGIN_URL_CONTROL = 'eventyay_common:auth.login'
+
+# TODO: We should not need them (after merging eventyay-xxx components).
 VIDEO_BASE_PATH = '/video'
 WEBSOCKET_URL = '/ws/event/'
+TALK_BASE_PATH = ''
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
@@ -409,6 +677,37 @@ CURRENCY_PLACES = {
 }
 CURRENCIES = list(currencies)
 
+
+HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
+HTMLEXPORT_ROOT.mkdir(exist_ok=True)
+
+MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
+MESSAGE_TAGS = {
+    messages.INFO: 'alert-info',
+    messages.ERROR: 'alert-danger',
+    messages.WARNING: 'alert-warning',
+    messages.SUCCESS: 'alert-success',
+}
+BOOTSTRAP3 = {
+    'success_css_class': '',
+    'field_renderers': {
+        'default': 'bootstrap3.renderers.FieldRenderer',
+        'inline': 'bootstrap3.renderers.InlineFieldRenderer',
+        'control': 'eventyay.control.forms.renderers.ControlFieldRenderer',
+        'bulkedit': 'eventyay.control.forms.renderers.BulkEditFieldRenderer',
+        'bulkedit_inline': 'eventyay.control.forms.renderers.InlineBulkEditFieldRenderer',
+        'checkout': 'eventyay.presale.forms.renderers.CheckoutFieldRenderer',
+    },
+}
+
 # TODO: Move to consts.py
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
+# Not sure if they need to be configurable.
+ENTROPY = {
+    'order_code': 5,
+    'ticket_secret': 32,
+    'voucher_code': 16,
+    'giftcard_secret': 12,
+}
+
