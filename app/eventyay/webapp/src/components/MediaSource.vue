@@ -12,7 +12,7 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true")
+	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
@@ -157,6 +157,11 @@ async function initializeIframe(mute) {
 		iframe.allowFullscreen = true
 		iframe.setAttribute('allowusermedia', 'true')
 		iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox#media-source-iframes
+		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+		if (module.value?.type === 'livestream.youtube') {
+			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+		}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
@@ -223,6 +228,8 @@ function getLanguageIframeUrl(languageUrl) {
 	// Checks if the languageUrl is not provided the retun null
 	if (!languageUrl) return null
 	const config = module.value?.config || {}
+	const origin = window.location.origin
+	
 	const params = new URLSearchParams({
 		enablejsapi: '1',
 		autoplay: '1',
@@ -233,6 +240,7 @@ function getLanguageIframeUrl(languageUrl) {
 		rel: '0',
 		showinfo: '0',
 		playlist: languageUrl,
+		origin: origin, // Required when using enablejsapi=1 (fixes Error 153)
 	})
 
 	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
