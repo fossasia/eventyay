@@ -445,4 +445,3 @@ class OrderActionMixin:
                 obj.position = index
                 obj.save(update_fields=['position'])
         return self.list(request, *args, **kwargs)
-    
