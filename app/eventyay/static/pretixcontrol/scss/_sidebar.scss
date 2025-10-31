@@ -27,16 +27,13 @@
   }
 }
 
-// Hide the navbar-toggle button that was used for collapsing navbar-nav-collapse
-// This targets the button with data-toggle="collapse" specifically
-// The navbar-toggle-sidebar and other navbar-toggle elements (like view event buttons) remain visible
 .navbar-header > .navbar-toggle[data-toggle="collapse"] {
   display: none !important;
 }
 
 body.sidebar-minimized {
   .sidebar {
-    width: 45px;  // Match talks module width exactly
+    width: 45px;  
     overflow: hidden;
 
     .nav > li > a {
@@ -44,10 +41,10 @@ body.sidebar-minimized {
       align-items: center;
       justify-content: center;
       font-size: 0;
-      padding: 12px 0;  // Adjusted padding to match talks module
+      padding: 12px 0; 
       text-align: center;
       width: 100%;
-      height: 45px; // Fixed height for consistent spacing
+      height: 45px; 
       box-sizing: border-box;
 
       span {
@@ -55,7 +52,7 @@ body.sidebar-minimized {
       }
 
       .fa, svg {
-        font-size: 1.5rem;  // Reduced icon size to match talks module
+        font-size: 1.5rem;  
         margin: 0;
         padding: 0;
         display: flex;
@@ -136,7 +133,7 @@ body.sidebar-minimized {
   }
 
   #page-wrapper {
-    margin-left: 45px;  // Match talks module margin exactly
+    margin-left: 45px;  
   }
 }
 
