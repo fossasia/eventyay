@@ -225,7 +225,7 @@ function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinf
 
 // Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided the retun null
+	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null
 	const config = module.value?.config || {}
 	const origin = window.location.origin
