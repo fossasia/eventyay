@@ -157,3 +157,78 @@ class StaffMemberRequiredMixin:
     def as_view(cls, **initkwargs):
         view = super(StaffMemberRequiredMixin, cls).as_view(**initkwargs)
         return staff_member_required()(view)
+
+
+class OrganizerCreationPermissionMixin:
+    """
+    Mixin to check if a user has permission to create organizers.
+    Can be used in any view that needs to check organizer creation permissions.
+    """
+
+    def _can_create_organizer(self, user):
+        """
+        Check if the user has permission to create an organizer.
+        System admins can always create organizers.
+        Other users can create organizers based on global settings.
+        
+        Args:
+            user: The user to check permissions for
+            
+        Returns:
+            bool: True if user can create organizers, False otherwise
+        """
+        from eventyay.base.settings import GlobalSettingsObject
+        
+        # System admins can always create organizers
+        if user.has_active_staff_session(self.request.session.session_key):
+            return True
+
+        # Get global settings
+        gs = GlobalSettingsObject()
+        allow_all_users = gs.settings.get('allow_all_users_create_organizer', None, as_type=bool)
+        allow_payment_users = gs.settings.get('allow_payment_users_create_organizer', None, as_type=bool)
+
+        # If neither option is explicitly set, default to allowing all users (permissive default)
+        if allow_all_users is None and allow_payment_users is None:
+            return True
+
+        # If all users are allowed
+        if allow_all_users:
+            return True
+
+        # If users with payment information are allowed
+        if allow_payment_users:
+            return self._user_has_payment_info(user)
+
+        # By default, deny access if settings are explicitly set to False
+        return False
+
+    def _user_has_payment_info(self, user):
+        """
+        Check if the user has valid payment information on file.
+        This is determined by checking if any of their organizers have a billing record with stripe_customer_id.
+        
+        Args:
+            user: The user to check payment info for
+            
+        Returns:
+            bool: True if user has payment info, False otherwise
+        """
+        from eventyay.base.models import Organizer
+        from eventyay.base.models.organizer import OrganizerBillingModel
+        
+        # Get all organizers where the user is a team member
+        user_organizers = Organizer.objects.filter(
+            teams__members=user
+        ).distinct()
+
+        # Check if any of these organizers have billing info with stripe_customer_id
+        for organizer in user_organizers:
+            billing = OrganizerBillingModel.objects.filter(
+                organizer=organizer,
+                stripe_customer_id__isnull=False
+            ).exclude(stripe_customer_id='').first()
+            if billing:
+                return True
+
+        return False

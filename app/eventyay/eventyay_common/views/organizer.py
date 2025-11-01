@@ -14,23 +14,24 @@ from django_scopes import scopes_disabled
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
-from eventyay.base.models.organizer import OrganizerBillingModel
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
-from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.forms.filter import OrganizerFilterForm
+from eventyay.control.permissions import (
+    OrganizerCreationPermissionMixin,
+    OrganizerPermissionRequiredMixin,
+)
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from ...control.permissions import OrganizerPermissionRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'eventyay_common/organizers/index.html'
@@ -49,63 +50,12 @@ class OrganizerList(PaginationMixin, ListView):
         ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
-    def _can_create_organizer(self, user):
-        """
-        Check if the user has permission to create an organizer.
-        System admins can always create organizers.
-        Other users can create organizers based on global settings.
-        """
-        # System admins can always create organizers
-        if user.has_active_staff_session(self.request.session.session_key):
-            return True
-
-        # Get global settings
-        gs = GlobalSettingsObject()
-        allow_all_users = gs.settings.get('allow_all_users_create_organizer', None, as_type=bool)
-        allow_payment_users = gs.settings.get('allow_payment_users_create_organizer', None, as_type=bool)
-
-        # If neither option is explicitly set, default to allowing all users (permissive default)
-        if allow_all_users is None and allow_payment_users is None:
-            return True
-
-        # If all users are allowed
-        if allow_all_users:
-            return True
-
-        # If users with payment information are allowed
-        if allow_payment_users:
-            return self._user_has_payment_info(user)
-
-        # By default, deny access if settings are explicitly set to False
-        return False
-
-    def _user_has_payment_info(self, user):
-        """
-        Check if the user has valid payment information on file.
-        This is determined by checking if any of their organizers have a billing record with stripe_customer_id.
-        """
-        # Get all organizers where the user is a team member
-        user_organizers = Organizer.objects.filter(
-            teams__members=user
-        ).distinct()
-
-        # Check if any of these organizers have billing info with stripe_customer_id
-        for organizer in user_organizers:
-            billing = OrganizerBillingModel.objects.filter(
-                organizer=organizer,
-                stripe_customer_id__isnull=False
-            ).exclude(stripe_customer_id='').first()
-            if billing:
-                return True
-
-        return False
-
     @cached_property
     def filter_form(self):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'eventyay_common/organizers/create.html'
@@ -120,57 +70,6 @@ class OrganizerCreate(CreateView):
             )
             raise PermissionDenied(_('You do not have permission to create organizers.'))
         return super().dispatch(request, *args, **kwargs)
-
-    def _can_create_organizer(self, user):
-        """
-        Check if the user has permission to create an organizer.
-        System admins can always create organizers.
-        Other users can create organizers based on global settings.
-        """
-        # System admins can always create organizers
-        if user.has_active_staff_session(self.request.session.session_key):
-            return True
-
-        # Get global settings
-        gs = GlobalSettingsObject()
-        allow_all_users = gs.settings.get('allow_all_users_create_organizer', None, as_type=bool)
-        allow_payment_users = gs.settings.get('allow_payment_users_create_organizer', None, as_type=bool)
-
-        # If neither option is explicitly set, default to allowing all users (permissive default)
-        if allow_all_users is None and allow_payment_users is None:
-            return True
-
-        # If all users are allowed
-        if allow_all_users:
-            return True
-
-        # If users with payment information are allowed
-        if allow_payment_users:
-            return self._user_has_payment_info(user)
-
-        # By default, deny access if settings are explicitly set to False
-        return False
-
-    def _user_has_payment_info(self, user):
-        """
-        Check if the user has valid payment information on file.
-        This is determined by checking if any of their organizers have a billing record with stripe_customer_id.
-        """
-        # Get all organizers where the user is a team member
-        user_organizers = Organizer.objects.filter(
-            teams__members=user
-        ).distinct()
-
-        # Check if any of these organizers have billing info with stripe_customer_id
-        for organizer in user_organizers:
-            billing = OrganizerBillingModel.objects.filter(
-                organizer=organizer,
-                stripe_customer_id__isnull=False
-            ).exclude(stripe_customer_id='').first()
-            if billing:
-                return True
-
-        return False
 
     @transaction.atomic
     def form_valid(self, form):

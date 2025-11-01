@@ -353,6 +353,10 @@ class GlobalSettingsForm(SettingsForm):
             ('maps', _('Maps'), [
                 'opencagedata_apikey', 'mapquest_apikey', 'leaflet_tiles', 'leaflet_tiles_attribution',
             ]),
+            ('organizers', _('Organizers'), [
+                'allow_all_users_create_organizer',
+                'allow_payment_users_create_organizer',
+            ]),
         ]
 
     def clean(self):
