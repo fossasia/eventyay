@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.core.management import CommandError
 from getpass import getpass
 
 from eventyay.base.models.auth import User
@@ -14,19 +15,18 @@ class Command(BaseCommand):
         email = self.get_email()
         password = self.get_password()
         fullname = options.get('fullname') or self.get_fullname()
-
+        
         # Check if email already exists
         if User.objects.filter(email=email).exists():
-            self.stderr.write(self.style.ERROR(f"A user with email {email} already exists."))
-            return
-
+            raise CommandError(f"A user with email {email} already exists.")
+        
         # Create the admin user using the custom UserManager
         user = User.objects.create_adminuser(
             email=email,
             password=password,
             fullname=fullname
         )
-
+        
         self.stdout.write(self.style.SUCCESS(f"Successfully created admin user: {user.email}"))
 
     def get_email(self):
@@ -59,8 +59,11 @@ class Command(BaseCommand):
     def get_fullname(self):
         """
         Prompt for full name if not provided via options.
+        Returns None if no name is entered.
         """
-        return input("Full name (Optional): ").strip()
+        fullname = input("Full name (Optional): ").strip()
+        
+        return fullname if fullname else None
 
     def _get_password(self, prompt):
         """
