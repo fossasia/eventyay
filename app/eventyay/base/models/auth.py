@@ -97,7 +97,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_adminuser(self, email: str, password: str = None, **kwargs):
+    def create_adminuser(self, email: str, password: str = None):
         """
         Command: python manage.py createadminuser
         Create an admin user without setting is_superuser to True.
@@ -105,7 +105,7 @@ class UserManager(BaseUserManager):
         if password is None:
             raise ValueError("You must provide a password")
 
-        user = self.model(email=email, **kwargs)
+        user = self.model(email=email)
         user.is_staff = True
         user.is_administrator = True
         user.set_password(password)
