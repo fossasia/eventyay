@@ -2,10 +2,10 @@ from django.utils.translation import gettext as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from pretix.api.serializers.event import SubEventSerializer
-from pretix.api.serializers.i18n import I18nAwareModelSerializer
-from pretix.base.channels import get_all_sales_channels
-from pretix.base.models import Checkin, CheckinList
+from eventyay.api.serializers.event import SubEventSerializer
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.base.channels import get_all_sales_channels
+from eventyay.base.models import Checkin, CheckinList
 
 
 class CheckinListSerializer(I18nAwareModelSerializer):
@@ -51,9 +51,9 @@ class CheckinListSerializer(I18nAwareModelSerializer):
         full_data = self.to_internal_value(self.to_representation(self.instance)) if self.instance else {}
         full_data.update(data)
 
-        for item in full_data.get('limit_products'):
-            if event != item.event:
-                raise ValidationError(_('One or more items do not belong to this event.'))
+        for product in full_data.get('limit_products'):
+            if event != product.event:
+                raise ValidationError(_('One or more products do not belong to this event.'))
 
         if event.has_subevents:
             if full_data.get('subevent') and event != full_data.get('subevent').event:

@@ -3,11 +3,11 @@ from django_scopes import scopes_disabled
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication
 
-from pretix.api.auth.devicesecurity import (
+from eventyay.api.auth.devicesecurity import (
     DEVICE_SECURITY_PROFILES,
     FullAccessSecurityProfile,
 )
-from pretix.base.models import Device
+from eventyay.base.models import Device
 
 
 class DeviceTokenAuthentication(TokenAuthentication):

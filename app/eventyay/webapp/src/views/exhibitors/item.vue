@@ -4,7 +4,7 @@ scrollbars.c-exhibitor(y)
 		.content
 			img.banner(:src="exhibitor.banner_detail", v-if="exhibitor.banner_detail && !bannerIsVideo && !bannerIsFrame")
 			.iframe-banner(v-else-if="bannerIsFrame")
-				iframe(:src="bannerVideoSource", allowfullscreen, allow="fullscreen")
+				iframe(:src="bannerVideoSource", allowfullscreen, allow="fullscreen", referrerpolicy="strict-origin-when-cross-origin")
 			.video-banner(v-else-if="bannerIsVideo")
 				video(:src="exhibitor.banner_detail", autoplay, controls, loop)
 			markdown-content.text(v-if="exhibitor.text_legacy", :markdown="exhibitor.text_legacy")

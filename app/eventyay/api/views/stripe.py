@@ -4,8 +4,8 @@ import stripe
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from pretix.eventyay_common.tasks import update_billing_invoice_information
-from pretix.helpers.stripe_utils import (
+from eventyay.eventyay_common.tasks import update_billing_invoice_information
+from eventyay.helpers.stripe_utils import (
     get_stripe_secret_key,
     get_stripe_webhook_secret_key,
 )

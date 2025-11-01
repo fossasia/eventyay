@@ -1,8 +1,8 @@
 from rest_framework import viewsets
 
-from pretix.api.models import WebHook
-from pretix.api.serializers.webhooks import WebHookSerializer
-from pretix.helpers.dicts import merge_dicts
+from eventyay.api.models import WebHook
+from eventyay.api.serializers.webhooks import WebHookSerializer
+from eventyay.helpers.dicts import merge_dicts
 
 
 class WebHookViewSet(viewsets.ModelViewSet):
@@ -22,7 +22,7 @@ class WebHookViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         inst = serializer.save(organizer=self.request.organizer)
         self.request.organizer.log_action(
-            'pretix.webhook.created',
+            'eventyay.webhook.created',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': inst.pk}),
@@ -31,7 +31,7 @@ class WebHookViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         inst = serializer.save(organizer=self.request.organizer)
         self.request.organizer.log_action(
-            'pretix.webhook.changed',
+            'eventyay.webhook.changed',
             user=self.request.user,
             auth=self.request.auth,
             data=merge_dicts(self.request.data, {'id': serializer.instance.pk}),
@@ -40,7 +40,7 @@ class WebHookViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         self.request.organizer.log_action(
-            'pretix.webhook.changed',
+            'eventyay.webhook.changed',
             user=self.request.user,
             auth=self.request.auth,
             data={'id': instance.pk, 'enabled': False},

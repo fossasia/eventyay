@@ -27,8 +27,8 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 
-from pretix.api.models import OAuthAccessToken
-from pretix.api.serializers.order import (
+from eventyay.api.models import OAuthAccessToken
+from eventyay.api.serializers.order import (
     InvoiceSerializer,
     OrderCreateSerializer,
     OrderPaymentCreateSerializer,
@@ -41,8 +41,8 @@ from pretix.api.serializers.order import (
     RevokedTicketSecretSerializer,
     SimulatedOrderSerializer,
 )
-from pretix.base.i18n import language
-from pretix.base.models import (
+from eventyay.base.i18n import language
+from eventyay.base.models import (
     CachedCombinedTicket,
     CachedTicket,
     Device,
@@ -60,20 +60,20 @@ from pretix.base.models import (
     TeamAPIToken,
     generate_secret,
 )
-from pretix.base.models.orders import QuestionAnswer, RevokedTicketSecret
-from pretix.base.payment import PaymentException
-from pretix.base.pdf import get_images
-from pretix.base.secrets import assign_ticket_secret
-from pretix.base.services import tickets
-from pretix.base.services.invoices import (
+from eventyay.base.models.orders import QuestionAnswer, RevokedTicketSecret
+from eventyay.base.payment import PaymentException
+from eventyay.base.pdf import get_images
+from eventyay.base.secrets import assign_ticket_secret
+from eventyay.base.services import tickets
+from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
     invoice_pdf,
     invoice_qualified,
     regenerate_invoice,
 )
-from pretix.base.services.mail import SendMailException
-from pretix.base.services.orders import (
+from eventyay.base.services.mail import SendMailException
+from eventyay.base.services.orders import (
     OrderChangeManager,
     OrderError,
     _order_placed_email,
@@ -86,16 +86,16 @@ from pretix.base.services.orders import (
     mark_order_refunded,
     reactivate_order,
 )
-from pretix.base.services.pricing import get_price
-from pretix.base.services.tickets import generate
-from pretix.base.signals import (
+from eventyay.base.services.pricing import get_price
+from eventyay.base.services.tickets import generate
+from eventyay.base.signals import (
     order_modified,
     order_paid,
     order_placed,
     register_ticket_outputs,
 )
-from pretix.base.templatetags.money import money_filter
-from pretix.control.signals import order_search_filter_q
+from eventyay.base.templatetags.money import money_filter
+from eventyay.control.signals import order_search_filter_q
 
 with scopes_disabled():
 
@@ -225,15 +225,15 @@ class OrderViewSet(viewsets.ModelViewSet):
                     'positions',
                     opq.all().prefetch_related(
                         'checkins',
-                        'item',
+                        'product',
                         'variation',
                         'answers',
                         'answers__options',
                         'answers__question',
-                        'item__category',
+                        'product__category',
                         'addon_to',
                         'seat',
-                        Prefetch('addons', opq.select_related('item', 'variation', 'seat')),
+                        Prefetch('addons', opq.select_related('product', 'variation', 'seat')),
                     ),
                 )
             )
@@ -243,7 +243,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                     'positions',
                     opq.all().prefetch_related(
                         'checkins',
-                        'item',
+                        'product',
                         'variation',
                         'answers',
                         'answers__options',
@@ -331,7 +331,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         with transaction.atomic():
                             p.payment_provider.cancel_payment(p)
                             order.log_action(
-                                'pretix.event.order.payment.canceled',
+                                'eventyay.event.order.payment.canceled',
                                 {
                                     'local_id': p.local_id,
                                     'provider': p.provider,
@@ -341,7 +341,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                             )
                     except PaymentException as e:
                         order.log_action(
-                            'pretix.event.order.payment.canceled.failed',
+                            'eventyay.event.order.payment.canceled.failed',
                             {
                                 'local_id': p.local_id,
                                 'provider': p.provider,
@@ -473,7 +473,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = Order.STATUS_PENDING
         order.save(update_fields=['status'])
         order.log_action(
-            'pretix.event.order.unpaid',
+            'eventyay.event.order.unpaid',
             user=request.user if request.user.is_authenticated else None,
             auth=request.auth,
         )
@@ -536,7 +536,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         inv = generate_invoice(order)
         order.log_action(
-            'pretix.event.order.invoice.generated',
+            'eventyay.event.order.invoice.generated',
             user=self.request.user,
             auth=self.request.auth,
             data={'invoice': inv.pk},
@@ -573,7 +573,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         CachedCombinedTicket.objects.filter(order=order).delete()
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': order.pk})
         order.log_action(
-            'pretix.event.order.secret.changed',
+            'eventyay.event.order.secret.changed',
             user=self.request.user,
             auth=self.request.auth,
         )
@@ -632,7 +632,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 serializer = OrderSerializer(order, context=serializer.context)
 
             order.log_action(
-                'pretix.event.order.placed',
+                'eventyay.event.order.placed',
                 user=request.user if request.user.is_authenticated else None,
                 auth=request.auth,
             )
@@ -665,12 +665,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 )
                 if free_flow:
                     email_template = request.event.settings.mail_text_order_free
-                    log_entry = 'pretix.event.order.email.order_free'
+                    log_entry = 'eventyay.event.order.email.order_free'
                     email_attendees = request.event.settings.mail_send_order_free_attendee
                     email_attendees_template = request.event.settings.mail_text_order_free_attendee
                 else:
                     email_template = request.event.settings.mail_text_order_placed
-                    log_entry = 'pretix.event.order.email.order_placed'
+                    log_entry = 'eventyay.event.order.email.order_placed'
                     email_attendees = request.event.settings.mail_send_order_placed_attendee
                     email_attendees_template = request.event.settings.mail_text_order_placed_attendee
 
@@ -717,7 +717,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         with transaction.atomic():
             if 'comment' in self.request.data and serializer.instance.comment != self.request.data.get('comment'):
                 serializer.instance.log_action(
-                    'pretix.event.order.comment',
+                    'eventyay.event.order.comment',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={'new_comment': self.request.data.get('comment')},
@@ -728,7 +728,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                 and serializer.instance.checkin_attention != self.request.data.get('checkin_attention')
             ):
                 serializer.instance.log_action(
-                    'pretix.event.order.checkin_attention',
+                    'eventyay.event.order.checkin_attention',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={'new_value': self.request.data.get('checkin_attention')},
@@ -737,7 +737,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if 'email' in self.request.data and serializer.instance.email != self.request.data.get('email'):
                 serializer.instance.email_known_to_work = False
                 serializer.instance.log_action(
-                    'pretix.event.order.contact.changed',
+                    'eventyay.event.order.contact.changed',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={
@@ -748,7 +748,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if 'phone' in self.request.data and serializer.instance.phone != self.request.data.get('phone'):
                 serializer.instance.log_action(
-                    'pretix.event.order.phone.changed',
+                    'eventyay.event.order.phone.changed',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={
@@ -759,7 +759,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if 'locale' in self.request.data and serializer.instance.locale != self.request.data.get('locale'):
                 serializer.instance.log_action(
-                    'pretix.event.order.locale.changed',
+                    'eventyay.event.order.locale.changed',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={
@@ -770,7 +770,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
             if 'invoice_address' in self.request.data:
                 serializer.instance.log_action(
-                    'pretix.event.order.modified',
+                    'eventyay.event.order.modified',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={
@@ -834,7 +834,7 @@ with scopes_disabled():
         class Meta:
             model = OrderPosition
             fields = {
-                'item': ['exact', 'in'],
+                'product': ['exact', 'in'],
                 'variation': ['exact', 'in'],
                 'secret': ['exact'],
                 'order__status': ['exact', 'in'],
@@ -890,7 +890,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                 'answers',
                 'answers__options',
                 'answers__question',
-                Prefetch('addons', qs.select_related('item', 'variation')),
+                Prefetch('addons', qs.select_related('product', 'variation')),
                 Prefetch(
                     'order',
                     Order.objects.select_related('invoice_address').prefetch_related(
@@ -899,7 +899,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                             'positions',
                             qs.prefetch_related(
                                 'checkins',
-                                'item',
+                                'product',
                                 'variation',
                                 'answers',
                                 'answers__options',
@@ -908,14 +908,14 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                         ),
                     ),
                 ),
-            ).select_related('item', 'variation', 'item__category', 'addon_to', 'seat')
+            ).select_related('product', 'variation', 'product__category', 'addon_to', 'seat')
         else:
             qs = qs.prefetch_related(
                 'checkins',
                 'answers',
                 'answers__options',
                 'answers__question',
-            ).select_related('item', 'order', 'order__event', 'order__event__organizer', 'seat')
+            ).select_related('product', 'order', 'order__event', 'order__event__organizer', 'seat')
         return qs
 
     def _get_output_provider(self, identifier):
@@ -931,12 +931,12 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
         """
         This calculates the price assuming a change of product or subevent. This endpoint
         is deliberately not documented and considered a private API, only to be used by
-        pretix' web interface.
+        eventyay' web interface.
 
         Sample input:
 
         {
-            "item": 2,
+            "product": 2,
             "variation": null,
             "subevent": 3,
             "tax_rule": 4,
@@ -964,7 +964,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             ia = InvoiceAddress()
 
         kwargs = {
-            'item': pos.item,
+            'product': pos.product,
             'variation': pos.variation,
             'voucher': pos.voucher,
             'subevent': pos.subevent,
@@ -972,22 +972,22 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             'invoice_address': ia,
         }
 
-        if data.get('item'):
-            item = data.get('item')
-            kwargs['item'] = item
+        if data.get('product'):
+            product = data.get('product')
+            kwargs['product'] = product
 
-            if item.has_variations:
+            if product.has_variations:
                 variation = data.get('variation') or pos.variation
                 if not variation:
                     raise ValidationError('No variation given')
-                if variation.item != item:
-                    raise ValidationError('Variation does not belong to item')
+                if variation.product != product:
+                    raise ValidationError('Variation does not belong to product')
                 kwargs['variation'] = variation
             else:
                 variation = None
                 kwargs['variation'] = None
 
-            if pos.voucher and not pos.voucher.applies_to(item, variation):
+            if pos.voucher and not pos.voucher.applies_to(product, variation):
                 kwargs['voucher'] = None
 
         if data.get('subevent'):
@@ -997,7 +997,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
             kwargs['tax_rule'] = data.get('tax_rule')
 
         price = get_price(**kwargs)
-        tr = kwargs.get('tax_rule', kwargs.get('item').tax_rule)
+        tr = kwargs.get('tax_rule', kwargs.get('product').tax_rule)
         with language(
             data.get('locale') or self.request.event.settings.locale,
             self.request.event.settings.region,
@@ -1142,7 +1142,7 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                         log_data[f'question_{a["question"]}'] = a['answer']
                     log_data.pop('answers', None)
                 serializer.instance.order.log_action(
-                    'pretix.event.order.modified',
+                    'eventyay.event.order.modified',
                     user=self.request.user,
                     auth=self.request.auth,
                     data={'data': [dict(position=serializer.instance.pk, **log_data)]},
@@ -1202,7 +1202,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             serializer = OrderPaymentSerializer(r, context=serializer.context)
 
             r.order.log_action(
-                'pretix.event.order.payment.started',
+                'eventyay.event.order.payment.started',
                 {
                     'local_id': r.local_id,
                     'provider': r.provider,
@@ -1308,7 +1308,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             )
         else:
             payment.order.log_action(
-                'pretix.event.order.refund.created',
+                'eventyay.event.order.refund.created',
                 {
                     'local_id': r.local_id,
                     'provider': r.provider,
@@ -1351,7 +1351,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             with transaction.atomic():
                 payment.payment_provider.cancel_payment(payment)
                 payment.order.log_action(
-                    'pretix.event.order.payment.canceled',
+                    'eventyay.event.order.payment.canceled',
                     {
                         'local_id': payment.local_id,
                         'provider': payment.provider,
@@ -1396,7 +1396,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             refund.state = OrderRefund.REFUND_STATE_CANCELED
             refund.save()
             refund.order.log_action(
-                'pretix.event.order.refund.canceled',
+                'eventyay.event.order.refund.canceled',
                 {
                     'local_id': refund.local_id,
                     'provider': refund.provider,
@@ -1479,7 +1479,7 @@ class RefundViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
             serializer = OrderRefundSerializer(r, context=serializer.context)
 
             r.order.log_action(
-                'pretix.event.order.refund.created',
+                'eventyay.event.order.refund.created',
                 {
                     'local_id': r.local_id,
                     'provider': r.provider,
@@ -1587,7 +1587,7 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             inv = regenerate_invoice(inv)
             inv.order.log_action(
-                'pretix.event.order.invoice.regenerated',
+                'eventyay.event.order.invoice.regenerated',
                 data={'invoice': inv.pk},
                 user=self.request.user,
                 auth=self.request.auth,
@@ -1608,7 +1608,7 @@ class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
             else:
                 inv = c
             inv.order.log_action(
-                'pretix.event.order.invoice.reissued',
+                'eventyay.event.order.invoice.reissued',
                 data={'invoice': inv.pk},
                 user=self.request.user,
                 auth=self.request.auth,
