@@ -2418,6 +2418,7 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
                 date_from=self.filter_form.cleaned_data['date_from'],
                 date_until=self.filter_form.cleaned_data['date_until'],
                 fees=True,
+                browser_timezone=self.filter_form.cleaned_data.get('browser_timezone'),
             )
         else:
             ctx['products_by_category'], ctx['total'] = order_overview(self.request.event, fees=True)

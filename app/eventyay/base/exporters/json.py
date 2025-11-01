@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
 
+import pytz
 from django.core.serializers.json import DjangoJSONEncoder
 from django.dispatch import receiver
 
@@ -13,6 +14,8 @@ class JSONExporter(BaseExporter):
     verbose_name = 'Order data (JSON)'
 
     def render(self, form_data):
+        event_tz = pytz.timezone(self.event.settings.timezone)
+        
         jo = {
             'event': {
                 'name': str(self.event.name),
@@ -62,12 +65,13 @@ class JSONExporter(BaseExporter):
                     }
                     for question in self.event.questions.all()
                 ],
+                'timezone': str(event_tz),
                 'orders': [
                     {
                         'code': order.code,
                         'status': order.status,
                         'user': order.email,
-                        'datetime': order.datetime,
+                        'datetime': order.datetime.astimezone(event_tz).isoformat(),
                         'fees': [
                             {
                                 'type': fee.fee_type,

@@ -2,6 +2,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Tuple
 
+import pytz
 from django.db.models import (
     Case,
     Count,
@@ -21,6 +22,7 @@ from eventyay.base.models import Event, Product, ProductCategory, Order, OrderPo
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import OrderFee, OrderPayment
 from eventyay.base.signals import order_fee_type_name
+from eventyay.helpers.timezone import get_browser_timezone
 
 
 class DummyObject:
@@ -93,6 +95,7 @@ def order_overview(
     date_until=None,
     fees=False,
     admission_only=False,
+    browser_timezone=None,
 ) -> Tuple[List[Tuple[ProductCategory, List[Product]]], Dict[str, Tuple[Decimal, Decimal]]]:
     products = (
         event.products.all()
@@ -111,18 +114,20 @@ def order_overview(
         products = products.filter(admission=True)
 
     if date_from and isinstance(date_from, date):
+        tz = pytz.timezone(browser_timezone) if browser_timezone else pytz.UTC
         date_from = make_aware(
             datetime.combine(date_from, time(hour=0, minute=0, second=0, microsecond=0)),
-            event.timezone,
+            tz,
         )
 
     if date_until and isinstance(date_until, date):
+        tz = pytz.timezone(browser_timezone) if browser_timezone else pytz.UTC
         date_until = make_aware(
             datetime.combine(
                 date_until + timedelta(days=1),
                 time(hour=0, minute=0, second=0, microsecond=0),
             ),
-            event.timezone,
+            tz,
         )
 
     if date_filter == 'order_date':

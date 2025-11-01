@@ -4,6 +4,7 @@
 {% load urlreplace %}
 {% load money %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{% trans "Order search" %}{% endblock %}
 {% block content %}
     <h1>{% trans "Order search" %}</h1>
@@ -20,4 +21,7 @@
             </button>
         </div>
     </form>
+{% endblock %}
+{% block custom_header %}
+    <script src="{% static 'common/js/timezone.js' %}"></script>
 {% endblock %}

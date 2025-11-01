@@ -8,6 +8,7 @@
 {% load eventsignal %}
 {% load l10n %}
 {% load phone_format %}
+{% load static %}
 {% block title %}
     {% blocktrans trimmed with code=order.code %}
         Order details: {{ code }}
@@ -162,10 +163,10 @@
                         <dt>{% trans "Order code" %}</dt>
                         <dd>{{ order.code }}</dd>
                         <dt>{% trans "Order date" %}</dt>
-                        <dd>{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</dd>
+                        <dd class="order-datetime" data-datetime="{{ order.datetime.isoformat }}">{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted" id="tz-indicator"></span></dd>
                         {% if order.cancellation_date %}
                             <dt>{% trans "Cancellation date" %}</dt>
-                            <dd>{{ order.cancellation_date|date:"SHORT_DATETIME_FORMAT" }}</dd>
+                            <dd class="order-datetime" data-datetime="{{ order.cancellation_date.isoformat }}">{{ order.cancellation_date|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></dd>
                         {% endif %}
                         {% if sales_channel %}
                             <dt>{% trans "Sales channel" %}</dt>
@@ -629,10 +630,10 @@
                                                         {% trans "MIGRATED" %}
                                                     </span>
                                                 {% else %}
-                                                    {{ p.created|date:"SHORT_DATETIME_FORMAT" }}
+                                                    <span class="order-datetime" data-datetime="{{ p.created.isoformat }}">{{ p.created|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></span>
                                                 {% endif %}
                                             </td>
-                                            <td>{{ p.payment_date|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                            <td class="order-datetime" data-datetime="{{ p.payment_date.isoformat }}">{{ p.payment_date|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></td>
                                             <td>
                                                 {{ p.payment_provider.verbose_name }}
                                                 {% if p.state == "pending" or p.state == "created" %}
@@ -719,8 +720,8 @@
                                         {% for r in refunds %}
                                             <tr>
                                                 <td>{{ r.full_id }}</td>
-                                                <td>{{ r.created|date:"SHORT_DATETIME_FORMAT" }}</td>
-                                                <td>{{ r.execution_date|date:"SHORT_DATETIME_FORMAT" }}</td>
+                                                <td class="order-datetime" data-datetime="{{ r.created.isoformat }}">{{ r.created|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></td>
+                                                <td class="order-datetime" data-datetime="{{ r.execution_date.isoformat }}">{{ r.execution_date|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></td>
                                                 <td>{{ r.get_source_display }}</td>
                                                 <td>
                                                     {{ r.payment_provider.verbose_name }}
@@ -894,4 +895,7 @@
             </div>
         </div>
     </div>
+{% endblock %}
+{% block custom_header %}
+    <script src="{% static 'common/js/timezone.js' %}"></script>
 {% endblock %}

@@ -638,7 +638,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             row.append(op.company or ia.company)
             row.append(op.voucher.code if op.voucher else '')
             row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%Y-%m-%d'))
-            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S'))
+            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S %Z'))
             row.append(_('Yes') if op.order.checkin_attention or op.item.checkin_attention else _('No'))
             row.append(op.order.comment or '')
 
@@ -749,10 +749,10 @@ class CheckinLogList(ListExporter):
                 (
                     'items',
                     forms.ModelMultipleChoiceField(
-                        queryset=self.event.items.all(),
+                        queryset=self.event.products.all(),
                         label=_('Limit to products'),
                         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
-                        initial=self.event.items.all(),
+                        initial=self.event.products.all(),
                     ),
                 ),
             ]

@@ -29,6 +29,7 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import OrderFee, OrderPayment
 from eventyay.base.services.stats import order_overview
+from eventyay.helpers.timezone import get_browser_timezone
 from eventyay.control.forms.filter import OverviewFilterForm
 
 logger = logging.getLogger(__name__)
@@ -208,9 +209,11 @@ class OverviewReport(Report):
 
     def get_story(self, doc, form_data):
         if form_data.get('date_from'):
-            form_data['date_from'] = parse(form_data['date_from'])
+            if isinstance(form_data['date_from'], str):
+                form_data['date_from'] = parse(form_data['date_from'])
         if form_data.get('date_until'):
-            form_data['date_until'] = parse(form_data['date_until'])
+            if isinstance(form_data['date_until'], str):
+                form_data['date_until'] = parse(form_data['date_until'])
 
         story = self._table_story(doc, form_data)
         if self.event.tax_rules.exists():
@@ -695,13 +698,15 @@ class OrderTaxListReport(MultiSheetListExporter):
         date_from = form_data.get('date_from')
         date_until = form_data.get('date_until')
         date_filter = form_data.get('date_axis')
+        browser_tz = get_browser_timezone(form_data)
+        
         if date_from:
             if isinstance(date_from, str):
                 date_from = parse(date_from).date()
             if isinstance(date_from, date):
                 date_from = make_aware(
                     datetime.combine(date_from, time(hour=0, minute=0, second=0, microsecond=0)),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_until:
@@ -713,7 +718,7 @@ class OrderTaxListReport(MultiSheetListExporter):
                         date_until + timedelta(days=1),
                         time(hour=0, minute=0, second=0, microsecond=0),
                     ),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_filter == 'order_date':
