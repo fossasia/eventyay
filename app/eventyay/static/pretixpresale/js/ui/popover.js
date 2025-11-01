@@ -121,7 +121,7 @@ $(function () {
   if (showOrganizerArea) {
     blocks.push(
       `<div class="profile-menu organizer-area">
-          <a href="${basePath}/common/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
+          <a href="${basePath}/control/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
               <i class="fa fa-users"></i> ${window.gettext('Organizer Area')}
           </a>
       </div>`
