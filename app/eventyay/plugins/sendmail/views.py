@@ -7,6 +7,7 @@ from django.db.models import Exists, Subquery, OuterRef, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils import timezone as dj_timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
@@ -21,6 +22,7 @@ from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.permissions import EventPermissionRequiredMixin
+from eventyay.helpers.timezone import get_browser_timezone
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import CopyDraftMixin, QueryFilterOrderingMixin
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
@@ -95,10 +97,17 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             opq = opq.filter(subevent__date_from__gte=form.cleaned_data.get('subevents_from'))
         if form.cleaned_data.get('subevents_to'):
             opq = opq.filter(subevent__date_from__lt=form.cleaned_data.get('subevents_to'))
-        if form.cleaned_data.get('order_created_from'):
-            opq = opq.filter(order__datetime__gte=form.cleaned_data.get('order_created_from'))
-        if form.cleaned_data.get('order_created_to'):
-            opq = opq.filter(order__datetime__lt=form.cleaned_data.get('order_created_to'))
+        if form.cleaned_data.get('order_created_from') or form.cleaned_data.get('order_created_to'):
+            browser_tz = get_browser_timezone(form.cleaned_data.get('browser_timezone'))
+
+            def attach_timezone(dt_value):
+                dt_naive = dt_value.replace(tzinfo=None) if not dj_timezone.is_naive(dt_value) else dt_value
+                return dt_naive.replace(tzinfo=browser_tz)
+
+            if form.cleaned_data.get('order_created_from'):
+                opq = opq.filter(order__datetime__gte=attach_timezone(form.cleaned_data['order_created_from']))
+            if form.cleaned_data.get('order_created_to'):
+                opq = opq.filter(order__datetime__lt=attach_timezone(form.cleaned_data['order_created_to']))
 
         orders = orders.annotate(match_pos=Exists(opq)).filter(match_pos=True).distinct()
 
