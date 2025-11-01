@@ -1,4 +1,3 @@
-/* globals ENV_DEVELOPMENT */
 import {
 	helpers,
 	required as _required,
@@ -40,10 +39,20 @@ export function youtubeid(message) {
 	return helpers.withMessage(message, helpers.regex(/^[0-9A-Za-z_-]{5,}$/))
 }
 const relative = helpers.regex(/^\/.*$/)
+<<<<<<< HEAD
 // Allow localhost and local IP addresses (with or without port)
 const localurl = helpers.regex(/^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?(\/.*)?$/)
 export function url(message) {
 	return helpers.withMessage(message, (value) => (!helpers.req(value) || _url(value) || relative(value) || localurl(value)))
+=======
+const devurl = helpers.regex(/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?.*$/) // vuelidate does not allow localhost
+export function url(message) {
+	return helpers.withMessage(message, (value) => {
+		// Allow localhost URLs when Django DEBUG is enabled
+		const isDebugMode = window.venueless?.DEBUG || false
+		return !helpers.req(value) || _url(value) || relative(value) || (isDebugMode && devurl(value))
+	})
+>>>>>>> 4d5c2cc7f (added debug to ensure development mode instead of webapp env variable)
 }
 export function isJson() {
 	return helpers.withMessage(({ $response }) => $response?.message, value => {

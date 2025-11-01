@@ -83,6 +83,7 @@ class VideoSPAView(View):
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
+                'DEBUG': settings.DEBUG,  # Expose Django DEBUG setting to frontend
             }
             # Always prepend to guarantee execution before any module scripts
             import json as _json
