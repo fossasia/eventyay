@@ -14,44 +14,44 @@
         },
         
         setField: function(fieldId) {
-            var field = document.getElementById(fieldId);
+            const field = document.getElementById(fieldId);
             if (field) {
                 field.value = this.detect();
             }
         },
         
         autoSet: function() {
-            var tz = this.detect();
-            var fields = document.querySelectorAll('.browser-timezone-field');
+            const tz = this.detect();
+            const fields = document.querySelectorAll('.browser-timezone-field');
             fields.forEach(function(field) {
                 field.value = tz;
             });
         },
         
         showIndicator: function(indicatorId) {
-            var tz = this.detect();
-            var indicator = document.getElementById(indicatorId || 'tz-indicator');
+            const tz = this.detect();
+            const indicator = document.getElementById(indicatorId || 'tz-indicator');
             if (indicator) {
                 indicator.textContent = '(' + tz + ')';
             }
         },
         
         showInlineIndicators: function(selector) {
-            var tz = this.detect();
-            var indicators = document.querySelectorAll(selector || '.tz-indicator-inline');
+            const tz = this.detect();
+            const indicators = document.querySelectorAll(selector || '.tz-indicator-inline');
             indicators.forEach(function(ind) {
                 ind.textContent = '(' + tz + ')';
             });
         },
         
         convertDateTimes: function(selector) {
-            var cells = document.querySelectorAll(selector || '.order-datetime');
+            const cells = document.querySelectorAll(selector || '.order-datetime');
             cells.forEach(function(cell) {
-                var isoDate = cell.getAttribute('data-datetime');
+                const isoDate = cell.getAttribute('data-datetime');
                 if (isoDate) {
                     try {
-                        var date = new Date(isoDate);
-                        var formatted = date.toLocaleString(undefined, {
+                        const date = new Date(isoDate);
+                        const formatted = date.toLocaleString(undefined, {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',

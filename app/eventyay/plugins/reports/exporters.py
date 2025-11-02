@@ -208,12 +208,10 @@ class OverviewReport(Report):
         return pagesizes.landscape(pagesizes.A4)
 
     def get_story(self, doc, form_data):
-        if form_data.get('date_from'):
-            if isinstance(form_data['date_from'], str):
-                form_data['date_from'] = parse(form_data['date_from'])
-        if form_data.get('date_until'):
-            if isinstance(form_data['date_until'], str):
-                form_data['date_until'] = parse(form_data['date_until'])
+        if form_data.get('date_from') and isinstance(form_data['date_from'], str):
+            form_data['date_from'] = parse(form_data['date_from'])
+        if form_data.get('date_until') and isinstance(form_data['date_until'], str):
+            form_data['date_until'] = parse(form_data['date_until'])
 
         story = self._table_story(doc, form_data)
         if self.event.tax_rules.exists():
