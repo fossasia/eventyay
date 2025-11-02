@@ -7,7 +7,7 @@ Component Modules
 Documentation for the main component modules in the unified Eventyay system.
 
 Tickets Component (Presale)
-----------------------------
+---------------------------
 
 Presale Views
 ~~~~~~~~~~~~~
@@ -34,7 +34,7 @@ Presale Signals
    :members:
 
 Talk Component (CfP & Organizer)
----------------------------------
+--------------------------------
 
 Call for Papers
 ~~~~~~~~~~~~~~~
@@ -105,7 +105,7 @@ Talk Rules & Permissions
    :members:
 
 Control Panel (Admin Interface)
---------------------------------
+-------------------------------
 
 Control Views
 ~~~~~~~~~~~~~
@@ -155,6 +155,7 @@ Common Tasks
 
 .. automodule:: eventyay.common.tasks
    :members:
+   :exclude-members: ignore_result, reject_on_worker_lost, track_started, acks_late, acks_on_failure_or_timeout
 
 Common Exceptions
 ~~~~~~~~~~~~~~~~~

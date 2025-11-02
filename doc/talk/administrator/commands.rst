@@ -189,9 +189,9 @@ installation, or if the console output of Eventyay tells you to run it in case
 of changes to database models.
 
 ``create_social_apps``
-~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 This command is used to create SocialApp entries for Eventyay Provider
 
 ``sync_customer_account``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 This command is used to sync customer accounts from Eventyay

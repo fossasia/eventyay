@@ -227,7 +227,7 @@ Checking Availability
         print(f"{left} tickets remaining")
 
 Talk Component Services
-------------------------
+-----------------------
 
 Submission Services
 ~~~~~~~~~~~~~~~~~~~
@@ -277,7 +277,7 @@ Located in ``eventyay.schedule.services``:
     service.publish_schedule(schedule=schedule)
 
 Video Component Services
--------------------------
+------------------------
 
 Room Services
 ~~~~~~~~~~~~~
@@ -319,7 +319,7 @@ Streaming Services
     join_url = service.get_join_url(stream=stream, user=user)
 
 Service Best Practices
------------------------
+----------------------
 
 1. **Use services, not direct model manipulation**: Services handle business logic, validation, and side effects.
 
@@ -332,7 +332,7 @@ Service Best Practices
 5. **Keep services stateless**: Services should not maintain state between calls.
 
 Example: Complete Order Flow
------------------------------
+----------------------------
 
 .. code-block:: python
 

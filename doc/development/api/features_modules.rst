@@ -7,7 +7,7 @@ Features & Integrations
 This section documents the advanced features and integrations in the unified Eventyay system.
 
 Live Features (Video Component)
---------------------------------
+-------------------------------
 
 WebSocket Consumers
 ~~~~~~~~~~~~~~~~~~~

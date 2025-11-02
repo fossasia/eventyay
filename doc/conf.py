@@ -18,7 +18,6 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-from datetime import date
 
 sys.path.insert(0, os.path.abspath('../app'))
 
@@ -60,7 +59,6 @@ try:
     
     # Override Django logging configuration after setup to use simple console logging
     # This prevents complex handlers (like 'rich') from being used during docs build
-    from django.conf import settings
     import logging.config
     
     SIMPLE_LOGGING = {
@@ -101,7 +99,7 @@ except Exception as e:
 
 
 try:
-    import enchant
+    import enchant  # noqa: F401
     HAS_PYENCHANT = True
 except ImportError:
     HAS_PYENCHANT = False
@@ -158,6 +156,7 @@ copyright = '2025 Apache 2.0 License by contributors'
 # built documents.
 #
 # The short X.Y version.
+# Note: version and release are read by Sphinx from this module's namespace
 try:
     from eventyay import __version__
     version = '.'.join(__version__.split('.')[:2])
@@ -422,6 +421,7 @@ if HAS_PYENCHANT:
     spelling_show_suggestions = True
 
     # List of filter classes to be added to the tokenizer that produces words to be checked.
+    # Note: spelling_filters is read by sphinxcontrib.spelling extension
     try:
         from checkin_filter import CheckinFilter
         spelling_filters = [CheckinFilter]

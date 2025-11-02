@@ -2,7 +2,7 @@
    :linenothreshold: 5
 
 Frontend Applications Overview
-===============================
+==============================
 
 The unified Eventyay system includes several frontend applications built with modern web technologies.
 
@@ -189,7 +189,7 @@ State Management
 ~~~~~~~~~~~~~~~~
 
 Vuex Store Modules (``src/store/``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **announcement.js**
   - Global announcements
@@ -230,7 +230,7 @@ Utility Libraries
 ~~~~~~~~~~~~~~~~~
 
 API Client (``src/lib/api.js``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Provides methods for:
 - Authentication
@@ -240,7 +240,7 @@ Provides methods for:
 - Event data fetching
 
 WebSocket Client (``src/lib/WebSocketClient.js``)
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Handles:
 - Real-time bidirectional communication

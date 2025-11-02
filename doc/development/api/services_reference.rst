@@ -63,10 +63,10 @@ Video & Streaming
    :undoc-members:
    :show-inheritance:
 
-Janus WebRTC Service
-^^^^^^^^^^^^^^^^^^^^
-
-The Janus service provides WebRTC video conferencing integration. See ``eventyay.base.services.janus`` for implementation details.
+.. automodule:: eventyay.base.services.janus
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 .. automodule:: eventyay.base.services.turn
    :members:
@@ -171,17 +171,11 @@ Data Management
 System
 ------
 
-Tasks Module
-^^^^^^^^^^^^
-
-The tasks module provides Celery task base classes for background job processing.
-
-**Key Classes:**
-
-- ``ProfiledTask`` - Task with performance profiling
-- ``EventTask`` - Event-scoped task
-- ``OrganizerUserTask`` - User-scoped task
-- ``ProfiledEventTask`` - Event task with profiling
+.. automodule:: eventyay.base.services.tasks
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :exclude-members: ignore_result, reject_on_worker_lost, track_started, acks_late, acks_on_failure_or_timeout
 
 .. automodule:: eventyay.base.services.locking
    :members:

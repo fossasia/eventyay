@@ -50,7 +50,7 @@ pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
     sepaxml sendgrid service-identity setuptools six slimit sortedcontainers sqlparse \
     static3 stripe text-unidecode tlds tqdm txaio twisted typing-extensions tzdata \
     u-msgpack-python ua-parser urlman vat-moss-forked vobject wcwidth webauthn webencodings \
-    werkzeug xmlschema yarl zipp zope-interface
+    websockets werkzeug xmlschema yarl zipp zope-interface
 
 echo ""
 echo "=== Installing doc requirements ==="

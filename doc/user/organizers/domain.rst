@@ -12,7 +12,7 @@ and your website is ``awesomepartycorp.com``, you might want to sell your ticket
 and with eventyay, you can do this. On this page, you find out the necessary steps to take.
 
 With the eventyay.com hosted service
--------------------------------------
+------------------------------------
 
 Go to "Organizers" in the backend and select your organizer account. Then, go to "Settings" and "Custom Domain".
 

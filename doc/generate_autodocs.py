@@ -6,7 +6,6 @@ This script scans the app/eventyay directory and generates RST files
 for modules that don't have documentation yet.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -24,7 +23,7 @@ def get_module_docstring(module_path):
         exec(f"import {module_name}")
         mod = eval(module_name)
         return getattr(mod, '__doc__', None) or "No description available"
-    except:
+    except Exception:
         return "Module documentation"
 
 def should_document(module_path):

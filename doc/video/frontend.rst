@@ -4,7 +4,7 @@
 .. _video-frontend:
 
 Video Component Frontend - Web Application
-===========================================
+==========================================
 
 The video component features a comprehensive Vue.js web application for virtual events, live streaming, and interactive online experiences.
 
@@ -202,7 +202,7 @@ User profile card in chat:
 - Block/report options (for moderators)
 
 CreateChatPrompt & CreateDmPrompt
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/CreateChatPrompt.vue``, ``CreateDmPrompt.vue``
 
@@ -241,7 +241,7 @@ WebRTC video conferencing via Janus Gateway:
 - Connection quality indicators
 
 JanusChannelCall Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/JanusChannelCall.vue``
 
@@ -252,7 +252,7 @@ Channel-integrated video calls:
 - Recording capabilities
 
 MediaSource & MediaSourcePlaceholder
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/MediaSource.vue``, ``MediaSourcePlaceholder.vue``
 
@@ -263,7 +263,7 @@ Media source selection and display:
 - Error recovery
 
 AVDevicePrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/AVDevicePrompt.vue``
 
@@ -291,7 +291,7 @@ Live polling system:
 - Admin controls (create, close, delete)
 
 Question & Questions Components
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/Question.vue``, ``components/Questions.vue``
 
@@ -317,7 +317,7 @@ Speed networking/roulette matching:
 - Time limits per match
 
 ReactionsBar & ReactionsOverlay
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/ReactionsBar.vue``, ``ReactionsOverlay.vue``
 
@@ -358,7 +358,7 @@ Academic poster sessions:
 - Session scheduling
 
 ContactExhibitorPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/ContactExhibitorPrompt.vue``
 
@@ -384,7 +384,7 @@ User image display:
 - Fallback handling
 
 EmojiPicker & EmojiPickerButton
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/EmojiPicker.vue``, ``components/EmojiPickerButton.vue``
 
@@ -432,7 +432,7 @@ Content Components
 ~~~~~~~~~~~~~~~~~~
 
 RichTextEditor & RichTextContent
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/RichTextEditor.vue``, ``components/RichTextContent.vue``
 
@@ -445,7 +445,7 @@ Rich text editing with Quill:
 - Sanitized output
 
 MarkdownContent & MarkdownPage
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/MarkdownContent.js``, ``components/MarkdownPage.vue``
 
@@ -457,7 +457,7 @@ Markdown rendering:
 - Safe HTML output
 
 StaticPage & IframePage
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/StaticPage.vue``, ``components/IframePage.vue``
 
@@ -483,7 +483,7 @@ Base modal dialog:
 - Accessibility (focus trap)
 
 UserActionPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/UserActionPrompt.vue``
 
@@ -494,7 +494,7 @@ User action confirmation:
 - Moderator actions
 
 FeedbackPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/FeedbackPrompt.vue``
 
@@ -505,7 +505,7 @@ User feedback collection:
 - Anonymous option
 
 RecordingsPrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/RecordingsPrompt.vue``
 
@@ -516,7 +516,7 @@ Recording access:
 - Access permissions
 
 QRCodePrompt Component
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/QRCodePrompt.vue``
 
@@ -526,7 +526,7 @@ QR code display:
 - Mobile app integration
 
 UploadButton & UploadUrlInput
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/UploadButton.vue``, ``components/UploadUrlInput.vue``
 
@@ -538,7 +538,7 @@ File upload utilities:
 - Progress indicators
 
 UserSearch & UserSelect
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **Files**: ``components/UserSearch.vue``, ``components/UserSelect.vue``
 
@@ -549,7 +549,7 @@ User selection:
 - Selected user chips
 
 CopyableText Component
-^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/CopyableText.vue``
 
@@ -559,7 +559,7 @@ Click-to-copy text:
 - Fallback for old browsers
 
 ErrorBoundary Component
-^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^
 
 **File**: ``components/ErrorBoundary.vue``
 
@@ -607,7 +607,7 @@ Admin Views
 - **Analytics**: Real-time analytics dashboard
 
 State Management (Vuex)
-------------------------
+-----------------------
 
 Store Modules
 ~~~~~~~~~~~~~

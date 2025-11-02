@@ -56,7 +56,7 @@ The interactive ``create_world`` command allows you to create an empty Eventyay 
     Default API keys: [{'issuer': 'any', 'audience': 'Eventyay', 'secret': 'zvB7hI28vbrI7KtsRnJ1TZBSN3DvYdoy9VoJGLI1ouHQP5VtRG3U6AgKJ9YOqKNU'}]
 
 ``clone_world``
-""""""""""""""""
+"""""""""""""""
 
 The interactive ``clone_world`` command allows you to create a Eventyay world while copying all settings and rooms
 (but not users and user-generated content) from an existing one::

@@ -11,9 +11,12 @@
     --eventyay-dark: #0f4a73;
 }
 
-/* Logo and search area styling */
+/* Logo and search area styling - Fixed at top of sidebar */
 .wy-side-nav-search {
     background: #2185d0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .wy-side-nav-search a {

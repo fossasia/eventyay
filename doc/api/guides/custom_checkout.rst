@@ -83,7 +83,7 @@ lot of Eventyay functionality, such as automatic refunds. Therefore, it is also 
 payment process even in this case:
 
 Using Eventyay payment providers
----------------------------------
+--------------------------------
 
 If you passed a ``payment_provider`` during order creation above, Eventyay will have created a payment object with state
 ``created`` that you can see in the returned order object. This payment object will have an attribute ``payment_url``

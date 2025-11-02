@@ -1,7 +1,7 @@
 .. _unified_architecture:
 
 Unified Eventyay Architecture
-==============================
+=============================
 
 Overview
 --------
@@ -28,7 +28,7 @@ All components share a common Django-based data model located in ``app/eventyay/
 * **Team** - Permission and access control
 
 Component-Specific Models
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each component extends the base models with specialized functionality:
 
@@ -215,7 +215,7 @@ Unified environment variables (replacing component-specific ones):
 * ``EVENTYAY_DEBUG`` - Debug mode (development only)
 
 Migration from Legacy Systems
-------------------------------
+-----------------------------
 
 If migrating from standalone Pretix, Pretalx, or Venueless:
 

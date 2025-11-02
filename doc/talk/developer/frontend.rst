@@ -36,7 +36,7 @@ Key Features
 ~~~~~~~~~~~~
 
 Interactive Schedule Management
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - **Drag-and-Drop Interface**: Move sessions between time slots and rooms
 - **Visual Grid Layout**: See the entire schedule at a glance

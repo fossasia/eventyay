@@ -7,7 +7,7 @@ Core Modules Reference
 This section documents the core modules of the unified Eventyay system.
 
 Configuration & Settings
--------------------------
+------------------------
 
 Settings Management
 ~~~~~~~~~~~~~~~~~~~
@@ -32,7 +32,7 @@ The default sales channel is:
    :members:
 
 Authentication & Authorization
--------------------------------
+------------------------------
 
 Auth Backends
 ~~~~~~~~~~~~~

@@ -240,7 +240,7 @@ does not particularly matter which one you use, as long as you make sure to use
 
 
 Step 8: Check the installation
--------------------------------
+------------------------------
 
 You can make sure the web interface is up and look for any issues with::
 

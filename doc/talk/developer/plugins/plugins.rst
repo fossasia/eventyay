@@ -43,7 +43,7 @@ Eventyay, they do assume that you have prior knowledge about Django (e.g. its
 view layer, how its ORM works, topics covered in the Django tutorial.).
 
 Plugin metadata
-----------------
+---------------
 
 The plugin metadata lives inside a ``EventyayPluginMeta`` class inside your
 configuration class. The metadata class must define the following attributes:

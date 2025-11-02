@@ -96,7 +96,7 @@ Sent to discover available data exporters.
 * **Expected return value:** List of exporter classes
 
 Talk Component Signals
------------------------
+----------------------
 
 Signals for talk submissions, reviews, and scheduling are integrated into the unified base signals system. Common talk-related signals include:
 
@@ -113,7 +113,7 @@ Available through the ``eventyay.common.signals`` module for schedule releases a
 Available through the ``eventyay.common.signals`` module for review submissions and scoring.
 
 Video Component Signals
-------------------------
+-----------------------
 
 Signals for video rooms and streaming are integrated into the unified features system and can be accessed through the base signals as needed for virtual event features.
 
@@ -157,7 +157,7 @@ To register a payment provider:
         return [MyPaymentProvider]
 
 Returning Multiple Items
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Some signals expect you to return multiple items:
 

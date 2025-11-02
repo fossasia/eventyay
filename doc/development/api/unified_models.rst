@@ -2,7 +2,7 @@
    :linenothreshold: 5
 
 Unified Component Models
-=========================
+========================
 
 These models represent the unified architecture of Eventyay, integrating tickets, talk, and video components.
 
@@ -27,7 +27,7 @@ Base Models & Mixins
    :members:
 
 Announcements & Notifications
-------------------------------
+-----------------------------
 
 .. autoclass:: eventyay.base.models.Announcement
    :members:

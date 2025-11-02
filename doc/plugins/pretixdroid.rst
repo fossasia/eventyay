@@ -1,5 +1,5 @@
 Eventyaydroid HTTP API
-=======================
+======================
 
 The Eventyaydroid plugin provides a HTTP API that the `Eventyaydroid Android app`_
 uses to communicate with the Eventyay server.

@@ -262,7 +262,7 @@ cycle.
 - **Default:** ``''``
 
 ``broker``
-~~~~~~~~~~~
+~~~~~~~~~~
 
 - The celery broker. If you use a standard redis-based setup,
   ``redis://127.0.0.1/2`` would be a sensible value.
