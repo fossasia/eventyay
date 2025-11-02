@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def escape_markdown(text):
-    text = text.replace("*", "\\*")
+    text = text.replace("*", r"\*")
     return text
 
 
