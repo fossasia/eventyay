@@ -99,7 +99,7 @@ class UserManager(BaseUserManager):
 
     def create_adminuser(self, email: str, password: str = None):
         """
-        Command: python manage.py createadminuser
+        Command: python manage.py create_admin_user
         Create an admin user without setting is_superuser to True.
         """
         if password is None:
