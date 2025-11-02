@@ -1005,7 +1005,7 @@ class Event(
 
         obj = super().save(*args, **kwargs)
         self.cache.clear()
-        
+
         if was_created:
             self.build_initial_data()
         return obj
@@ -1374,7 +1374,11 @@ class Event(
         room=None,
         allow_empty_traits=True,
     ):
-        for role, required_traits in self.trait_grants.items():
+        # Ensure trait_grants and roles are not None - use defaults if missing
+        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_roles = self.roles if self.roles is not None else default_roles()
+
+        for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
                 and all(
@@ -1383,14 +1387,16 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
+                role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 if any(
-                    p.value in self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                    p in role_permissions or p.value in role_permissions
                     for p in permissions
                 ):
                     return True
 
         if room:
-            for role, required_traits in room.trait_grants.items():
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
                     and all(
@@ -1399,11 +1405,15 @@ class Event(
                     )
                     and (required_traits or allow_empty_traits)
                 ):
+                    role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                     if any(
-                        p.value in self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                        p in role_permissions or p.value in role_permissions
                         for p in permissions
                     ):
                         return True
+
+        # Return False if no permission was granted
+        return False
 
     def has_permission(self, *, user, permission: Permission, room=None):
         """
@@ -1431,9 +1441,10 @@ class Event(
             return True
 
         roles = user.get_role_grants(room)
+        event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             if any(
-                p.value in self.roles.get(r, SYSTEM_ROLES.get(r, []))
+                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
                 for p in permission
             ):
                 return True
@@ -1464,9 +1475,10 @@ class Event(
             return True
 
         roles = await user.get_role_grants_async(room)
+        event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             if any(
-                p.value in self.roles.get(r, SYSTEM_ROLES.get(r, []))
+                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
                 for p in permission
             ):
                 return True
@@ -1478,7 +1490,11 @@ class Event(
 
         allow_empty_traits = user.type == User.UserType.PERSON
 
-        for role, required_traits in self.trait_grants.items():
+        # Ensure trait_grants and roles are not None
+        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_roles = self.roles if self.roles is not None else default_roles()
+
+        for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
                 and all(
@@ -1487,12 +1503,13 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(self.roles.get(role, SYSTEM_ROLES.get(role, [])))
+                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
         # Removed user.world_grants loop (attribute not present on unified User model)
 
         for room in self.rooms.all():
-            for role, required_traits in room.trait_grants.items():
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
                     and all(
@@ -1505,12 +1522,12 @@ class Event(
                     and (required_traits or allow_empty_traits)
                 ):
                     result[room].update(
-                        self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                        event_roles.get(role, SYSTEM_ROLES.get(role, []))
                     )
 
         for grant in user.room_grants.select_related("room"):
             result[grant.room].update(
-                self.roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
+                event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
             )
         if user.is_silenced:
             for key in result.keys():
@@ -2625,7 +2642,7 @@ class SubEvent(EventMixin, LoggedModel):
         clear_cache = kwargs.pop('clear_cache', False)
         if self.date_from and not self.date_to:
             self.date_to = self.date_from + timedelta(hours=24)
-        
+
         super().save(*args, **kwargs)
         if self.event and clear_cache:
             self.event.cache.clear()
