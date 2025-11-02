@@ -3,10 +3,10 @@
 Rate limiting
 =============
 
-.. note:: This page only applies to the Eventyay Hosted service at eventyay.com. APIs of custom Eventyay installations do not
+.. note:: This page only applies to the eventyay Hosted service at eventyay.com. APIs of custom eventyay installations do not
           enforce any rate limiting by default.
 
-All authenticated requests to Eventyay' API are rate limited. If you exceed the limits, you will receive a response
+All authenticated requests to eventyay' API are rate limited. If you exceed the limits, you will receive a response
 with HTTP status code ``429 Too Many Requests``. This response will have a ``Retry-After`` header, containing the number
 of seconds you are supposed to wait until you try again. We expect that all API clients respect this. If you continue
 to burst requests after a ``429`` status code, we might get in touch with you or, in extreme cases, disable your API

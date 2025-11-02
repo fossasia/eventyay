@@ -3,7 +3,7 @@
 Maintenance
 ===========
 
-Once you have installed Eventyay, you’ll start thinking about maintaining your
+Once you have installed eventyay, you’ll start thinking about maintaining your
 installation. The following guide assumes that you perform general system
 maintenance and monitoring. So please: keep your servers up to date on security
 updates. Keep all non-public ports closed. Follow best practices.
@@ -22,28 +22,28 @@ important upgrade notes and warnings. Also, make sure you have a current
 backup.
 
 Next, execute the following commands in the same environment as your
-installation. This may be your Eventyay user, or a virtualenv, if you chose a
+installation. This may be your eventyay user, or a virtualenv, if you chose a
 different installation path.
 
-These commands update Eventyay first, then the database, then the static files.
+These commands update eventyay first, then the database, then the static files.
 Once you have executed these steps without seeing any errors, do not forget to
 restart your service(s)::
 
-    (env)$ pip3 install --upgrade-strategy eager -U Eventyay
+    (env)$ pip3 install --upgrade-strategy eager -U eventyay
     (env)$ python -m eventyay check --deploy
     (env)$ python -m eventyay migrate
     (env)$ python -m eventyay rebuild --npm-install
-    # systemctl restart Eventyay-web
-    # systemctl restart Eventyay-worker  # If you’re running celery
+    # systemctl restart eventyay-web
+    # systemctl restart eventyay-worker  # If you’re running celery
 
 Installing a fixed release
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you want to upgrade Eventyay to a specific release, you can pin the version
-in the pip command. Substitute ``Eventyay`` with ``Eventyay==1.2.3`` in the pip
+If you want to upgrade eventyay to a specific release, you can pin the version
+in the pip command. Substitute ``eventyay`` with ``eventyay==1.2.3`` in the pip
 install line above like this::
 
-    (env)$ pip3 install --user --upgrade-strategy eager Eventyay==1.2.3
+    (env)$ pip3 install --user --upgrade-strategy eager eventyay==1.2.3
 
 .. _installing-a-commit:
 
@@ -51,10 +51,10 @@ Installing a commit or a branch version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you’re sure that you know what you’re doing, you can also install a specific
-commit or branch of Eventyay. You can replace ``main`` with a short or long
+commit or branch of eventyay. You can replace ``main`` with a short or long
 commit ID for a specific commit::
 
-    (env)$ pip3 install --user --upgrade-strategy eager -U "git+https://github.com/fossasia/eventyay.git@main#egg=Eventyay"
+    (env)$ pip3 install --user --upgrade-strategy eager -U "git+https://github.com/fossasia/eventyay.git@main#egg=eventyay"
 
 
 Backups
@@ -72,7 +72,7 @@ Database
     schedule. Do not forget to add another one to rotate your backups.
 
 Data directory
-    The data directory of your Eventyay configuration may contain files that you
+    The data directory of your eventyay configuration may contain files that you
     want to back up. If you did not specify a secret in your config file, back
     up the ``.secret`` text file in the data directory. If you lose the secret,
     all active user sessions, password reset links will be invalid. You should
@@ -85,4 +85,4 @@ Data directory
 There is no need to create backups of the redis database, if you use it. We only use it for
 non-critical, temporary or cached data.
 
-.. _blog post: https://Eventyay.com/p/news/
+.. _blog post: https://eventyay.com/p/news/

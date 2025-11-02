@@ -4,7 +4,7 @@
 Unified Component Models
 ========================
 
-These models represent the unified architecture of Eventyay, integrating tickets, talk, and video components.
+These models represent the unified architecture of eventyay, integrating tickets, talk, and video components.
 
 Base Models & Mixins
 --------------------

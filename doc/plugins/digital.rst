@@ -17,8 +17,8 @@ shared secret such that nobody can create their own tokens or modify the content
 
     https://webinars.example.com/join?with_token={token}
 
-Additionally, you will need to set a JWT secret and a token template, either through the Eventyay interface or through the
-API (see below). Eventyay currently only supports tokens signed with ``HMAC-SHA256`` (``HS256``). Your token template can contain
+Additionally, you will need to set a JWT secret and a token template, either through the eventyay interface or through the
+API (see below). eventyay currently only supports tokens signed with ``HMAC-SHA256`` (``HS256``). Your token template can contain
 whatever JSON you'd like to pass on based on the same variables, for example::
 
     {

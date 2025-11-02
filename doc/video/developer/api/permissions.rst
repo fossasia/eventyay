@@ -9,7 +9,7 @@ User types
 There are multiple user types:
 
 - **Person** - A user account representing a regular attendee (or moderator, or admin) with access to the regular
-  Eventyay interface.
+  eventyay interface.
 
 - **Anonymous user** - A "light-weight" user account representing an attendee of an in-person event with temporary
   access to specific features in specific rooms of the event.
@@ -101,7 +101,7 @@ Implicit grants and traits
 --------------------------
 
 Traits are arbitrary tokens that are contained in a user's authentication information. For example, if a user
-authenticates to Eventyay through a ticketing system, they might have a trait for every product category they paid for.
+authenticates to eventyay through a ticketing system, they might have a trait for every product category they paid for.
 
 Both the world as well as any room can define *implicit grants* based on those traits. For example if anyone with
 **both** the ``eventyay-product-1234`` and the ``eventyay-product-5678`` should get the role ``participant`` in a room,

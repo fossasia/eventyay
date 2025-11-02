@@ -3,15 +3,15 @@
 Installation
 ============
 
-This guide will help you to install Eventyay on Linux. This setup is suitable to
+This guide will help you to install eventyay on Linux. This setup is suitable to
 support events in usual sizes, but the guide does not go into performance
 tuning or customisation options beyond the standard settings.
 
-.. warning:: While we try to make it straightforward to run Eventyay, it still
+.. warning:: While we try to make it straightforward to run eventyay, it still
              requires some Linux experience to get it right, particularly to
              make sure that standard security practices are followed. If
              you’re not feeling comfortable managing a Linux server, check
-             out our hosting and service offers at `Eventyay.com`_.
+             out our hosting and service offers at `eventyay.com`_.
 
 For the more automation-savvy, we also provide an `Ansible role`_ that follows
 this guide. If you prefer a docker setup, there is a `docker-compose setup`_.
@@ -30,14 +30,14 @@ and configuration here, but please have a look at the linked pages.
   files from the filesystem
 * A database server: `PostgreSQL`_ 14+, or SQLite 3. Given the choice, we’d
   recommend to use PostgreSQL.
-* A `redis`_ server, if you want to use Eventyay with an asynchronous task
+* A `redis`_ server, if you want to use eventyay with an asynchronous task
   runner or improved caching.
 * `nodejs`_ and npm (usually bundled with nodejs). You’ll need a `supported
   version of nodejs`_.
 
 .. highlight:: console
 
-Please ensure that the environment used to run Eventyay is configured to work
+Please ensure that the environment used to run eventyay is configured to work
 with non-ASCII file names. You can check this by running::
 
     $ python -c "import sys; print(sys.getfilesystemencoding())"
@@ -49,10 +49,10 @@ Step 1: Unix user
 .. hint:: All code lines prepended with a ``#`` symbol are commands that you
           need to execute on your server as the ``root`` user (e.g. using
           ``sudo``); you should run all lines prepended with a ``$`` symbol as
-          the ``Eventyay`` user. If the prompt reads ``(env)$``, your virtual
+          the ``eventyay`` user. If the prompt reads ``(env)$``, your virtual
           Python environment should be active.
 
-As we do not want to run Eventyay as root, we first create a new unprivileged user::
+As we do not want to run eventyay as root, we first create a new unprivileged user::
 
     # adduser eventyay --disabled-password --home /var/eventyay
 
@@ -79,7 +79,7 @@ Step 3: Package dependencies
 ----------------------------
 
 Besides the packages above, you might need local system packages to build and
-run Eventyay. We cannot maintain an up-to-date dependency list for all Linux
+run eventyay. We cannot maintain an up-to-date dependency list for all Linux
 flavours – on Ubuntu-like systems, you will need packages like:
 
 - ``build-essential``
@@ -94,7 +94,7 @@ Step 4: Configuration
 
 .. highlight:: console
 
-Now we’ll create a configuration directory and configuration file for Eventyay::
+Now we’ll create a configuration directory and configuration file for eventyay::
 
     # mkdir /etc/eventyay
     # touch /etc/eventyay/eventyay.cfg
@@ -123,7 +123,7 @@ remove the old ``venv`` directory and create it again the same way)::
 
 Now, activate the virtual environment – you’ll have to run this command once
 per session whenever you’re interacting with ``python``, ``pip`` or
-``Eventyay``::
+``eventyay``::
 
     $ source /var/eventyay/venv/bin/activate
 
@@ -163,12 +163,12 @@ Now, create a user with administrator rights, an organiser and a team by running
 
     (venv)$ python -m eventyay init
 
-Step 6: Starting Eventyay as a service
+Step 6: Starting eventyay as a service
 --------------------------------------
 
 .. highlight:: ini
 
-We recommend starting Eventyay using systemd to make sure it starts up after a
+We recommend starting eventyay using systemd to make sure it starts up after a
 reboot. Create a file named ``/etc/systemd/system/eventyay-web.service``, and
 adjust the content to fit your system::
 
@@ -191,7 +191,7 @@ adjust the content to fit your system::
 
 Eventyay optionally runs with Celery, a service that allows for long-running
 tasks (like sending many emails) to be performed asynchronously in the
-background. We strongly recommend running Eventyay with Celery workers, as some
+background. We strongly recommend running eventyay with Celery workers, as some
 things, like cleaning up unused files, are otherwise not going to work.
 
 To run Celery workers, you’ll need a second service
@@ -251,16 +251,16 @@ case the emails are not sent)::
 
     # journalctl -u eventyay-worker
 
-If you’re looking for errors, check the Eventyay log. You can find the logging
+If you’re looking for errors, check the eventyay log. You can find the logging
 directory in the start-up output.
 
-Once Eventyay is up and running, you can also find up to date administrator information
+Once eventyay is up and running, you can also find up to date administrator information
 at https://eventyay.yourdomain.com/orga/admin/.
 
 Step 9: Provide periodic tasks
 ------------------------------
 
-There are a couple of things in Eventyay that should be run periodically. It
+There are a couple of things in eventyay that should be run periodically. It
 does not matter how you run them, so you can go with your choice of periodic
 tasks, be they systemd timers, cron, or something else entirely.
 
@@ -279,7 +279,7 @@ You could for example configure the ``eventyay`` user cron like this::
 Next Steps
 ----------
 
-You made it! You should now be able to reach Eventyay at
+You made it! You should now be able to reach eventyay at
 https://eventyay.yourdomain.com/orga/ Log in with the administrator account you
 configured above, and create your first event!
 

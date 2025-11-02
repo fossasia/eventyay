@@ -7,9 +7,9 @@ and the :class:`eventyay.base.models.Team` model in the respective parts of the 
 An organizer account can have any number of teams, and any number of users can be part of a team. A team can be
 assigned a set of permissions and connected to some or all of the events of the organizer.
 
-A second way to access Eventyay is via the REST API, which allows authentication via tokens that are bound to a team,
+A second way to access eventyay is via the REST API, which allows authentication via tokens that are bound to a team,
 but not to a user. You can read more at :class:`eventyay.base.models.TeamAPIToken`. This page will show you how to
-work with permissions in plugins and within the Eventyay code base.
+work with permissions in plugins and within the eventyay code base.
 
 Requiring permissions for a view
 --------------------------------
@@ -118,7 +118,7 @@ Requiring permissions in the REST API
 -------------------------------------
 
 When creating your own ``viewset`` using Django REST framework, you just need to set the ``permission`` attribute
-and Eventyay will check it automatically for you::
+and eventyay will check it automatically for you::
 
     class MyModelViewSet(viewsets.ReadOnlyModelViewSet):
         permission = 'can_view_orders'
@@ -189,7 +189,7 @@ Staff sessions
    In 1.14, the ``User.is_superuser`` attribute has been deprecated and statically set to return ``False``. Staff
    sessions have been newly introduced.
 
-System administrators of a Eventyay instance are identified by the ``is_staff`` attribute on the user model. By default,
+System administrators of a eventyay instance are identified by the ``is_staff`` attribute on the user model. By default,
 the regular permission rules apply for users with ``is_staff = True``. The only difference is that such users can
 temporarily turn on "staff mode" via a button in the user interface that grants them **all permissions** as long as
 staff mode is active. You can check if a user is in staff mode using their session key:

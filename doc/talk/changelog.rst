@@ -3,50 +3,50 @@
 Release Notes
 =============
 
-- admin: As PostgreSQL 13 is soon EOL, Eventyay support has changed to PostgreSQL 14 or higher.
+- admin: As PostgreSQL 13 is soon EOL, eventyay support has changed to PostgreSQL 14 or higher.
 - admin: The ``shell_scoped`` command was removed – please use the ``shell`` command instead, which now requires you to either specify an ``--event`` or run with ``--unsafe-disable-scopes`` (matching the previous ``shell_scoped --scopes-disabled``).
-- admin: Attention, plugin developers and administrators: In the course of the development of the new API, many permissions have changed names (most notably: ``orga.change_settings`` to ``event.update_event``, ``agenda.view_schedule`` to ``schedule.list_schedule``, and ``orga.view_submissions`` to ``submission.orga_list_submission``), and some import paths have changed. Take a look at the changes to the official Eventyay plugins for reference. Administrators, please make sure that your plugins work with the new Eventyay release before updating to the new release.
+- admin: Attention, plugin developers and administrators: In the course of the development of the new API, many permissions have changed names (most notably: ``orga.change_settings`` to ``event.update_event``, ``agenda.view_schedule`` to ``schedule.list_schedule``, and ``orga.view_submissions`` to ``submission.orga_list_submission``), and some import paths have changed. Take a look at the changes to the official eventyay plugins for reference. Administrators, please make sure that your plugins work with the new eventyay release before updating to the new release.
 - admin: Administrators who have configured an email address for error logs/tracebacks will now also receive emails for failed asynchronous tasks.
-- api,1598: The Eventyay API now supports write operations, and the format of nearly all endpoints has changed to a more consistent interface. However, all existing API tokens have been migrated and will continue to automatically use the legacy API (with some caveats), so for most API users, nothing should change immediately. You have time for one or two releases to migrate your API clients and scripts to the new API. Please refer to the :ref:`api-changelog` and the documentation on :ref:`api-endpoints` for further details. We thank the NLNet foundation and their NGI Zero Entrust grant for making the development work possible.
-- api,1598: The Eventyay API has now stopped supporting session authentication, which was never officially supported. If you need to use the authenticated API, please use the documented token authentication process.
+- api,1598: The eventyay API now supports write operations, and the format of nearly all endpoints has changed to a more consistent interface. However, all existing API tokens have been migrated and will continue to automatically use the legacy API (with some caveats), so for most API users, nothing should change immediately. You have time for one or two releases to migrate your API clients and scripts to the new API. Please refer to the :ref:`api-changelog` and the documentation on :ref:`api-endpoints` for further details. We thank the NLNet foundation and their NGI Zero Entrust grant for making the development work possible.
+- api,1598: The eventyay API has now stopped supporting session authentication, which was never officially supported. If you need to use the authenticated API, please use the documented token authentication process.
 - orga,2022: The CfP editor in the organiser area only showed session questions, not speaker questions.
 - orga:speaker,1892: Organisers can now mark speakers as "arrived" on the speakers detail page and on the speakers tab of accepted sessions.
-- dev,1931: Plugins can now add authentication providers, which is already in use in the `eventyay_social_auth <https://github.com/adamskrz/Eventyay-social-auth?rgh-link-date=2025-01-05T12%3A14%3A03Z>`_ plugin.
-- lang: Eventyay now comes with new translations, Polish and Vietnamese!
+- dev,1931: Plugins can now add authentication providers, which is already in use in the `eventyay_social_auth <https://github.com/adamskrz/eventyay-social-auth?rgh-link-date=2025-01-05T12%3A14%3A03Z>`_ plugin.
+- lang: eventyay now comes with new translations, Polish and Vietnamese!
 - orga:review: Additional custom field columns were sometimes not visible for reviewers, or offset to the right by one column.
 - orga:submission: When you apply pending changes to proposals, you can now apply the changes to only your current, filtered list of proposals.
 - orga:speaker,1626: You can filter the speaker list by speaker arrival status.
 - orga:schedule,1856: When you schedule a session outside a speaker’s availabilities, the warning message will include the availabilities of all speakers of that proposal.
 - schedule: On touch-based devices, the session favourite button is now always shown, rather than being hidden behind an impossible-to-find hover action.
 - orga:submission: On proposal, speaker and review pages, where possible, a speaker’s other proposals are linked to provide organisers and reviewers with further context.
-- orga:submission: If you have pending state changes in your sessions, Eventyay will show you the total number on the event dashboard.
+- orga:submission: If you have pending state changes in your sessions, eventyay will show you the total number on the event dashboard.
 - orga:submission: You can now apply a proposal’s pending state change from the detail view.
-- orga: We started writing the Eventyay user guide. Currently, the section :ref:`user-guide-proposals` is finished and further sections are in the works. We also expanded the :ref:`user-faq`.
-- orga:review: If you use both track-based reviewer teams and review assignments, Eventyay will now only suggest (and allow) proposals to be assigned to a reviewer who has access to that proposal’s track.
+- orga: We started writing the eventyay user guide. Currently, the section :ref:`user-guide-proposals` is finished and further sections are in the works. We also expanded the :ref:`user-faq`.
+- orga:review: If you use both track-based reviewer teams and review assignments, eventyay will now only suggest (and allow) proposals to be assigned to a reviewer who has access to that proposal’s track.
 - orga:mail: You can now use the new ``{session_duration_minutes}`` email placeholder.
-- cfp: Due to the current limitations of the Eventyay logging system, the log entries sidebar was removed from the speaker/submitter-facing session pages. Organisers still have access to the history view.
+- cfp: Due to the current limitations of the eventyay logging system, the log entries sidebar was removed from the speaker/submitter-facing session pages. Organisers still have access to the history view.
 - orga: The organiser indicator in the various log entry views was accidentally invisible.
-- cfp: As the availabilities feature was confusing or not required for many events, Eventyay now defaults to not requesting a speaker’s availabilities.
+- cfp: As the availabilities feature was confusing or not required for many events, eventyay now defaults to not requesting a speaker’s availabilities.
 - orga,schedule: Sometimes, speaker notifications switched language back to the default event language in the schedule notifications placeholder.
 - dev: Plugins may now use Markdown in their publicly shown description.
 - orga:submission,1951: The event dashboard now includes more useful session counts depending on the current event phase, like highlighting the number of not-yet-confirmed sessions.
 - orga:submission,1955: When creating a proposal as an organiser, track/session type specific questions are skipped at first and only shown once the proposal was created.
 - orga:submission: Organisers and reviewers can now leave comments on proposals. Comments are shown in chronological order, and users can of course comment multiple times, rather than leaving a single review.
-- schedule: When you embed the Eventyay widget on an external page, clicking on session links will open the session details (or speaker details) in a popup on the same page, instead of directing attendees to the Eventyay schedule page.
+- schedule: When you embed the eventyay widget on an external page, clicking on session links will open the session details (or speaker details) in a popup on the same page, instead of directing attendees to the eventyay schedule page.
 - schedule: Organisers can now configure additional links to show in the top menu next to "Schedule", "Sessions", "Speakers", handy for links back to the conference website, streams, etc.
 - orga: Organisers can now configure footer links that will be shown on all schedule pages.
 - admin: Administrators will now see a user’s last actions on the user page, and will also have a better overview over a user’s events and permissions.
-- cfp: Eventyay will now send an email after a user changes their password, notifying them of the change.
+- cfp: eventyay will now send an email after a user changes their password, notifying them of the change.
 - schedule: The QR code link of public schedule exporters was sometimes placed outside the visible screen.
 - schedule: All outbound links are now passed via a redirect page in order to prevent URL leakage by referer headers.
 - orga:submission: The numbers of proposals in the track overview were inflated because deleted and draft proposals were included in the count.
 - orga:mail,1302: Organisers can now customise the template used to inform speakers when they are added to a proposal by an organiser. There are two new templates – one for speakers with an existing account, and one for speakers without account who need to set their password.
 - orga:mail,1311: Organisers can now customise the “New proposal” notification email contents.
 - orga:schedule,1900: The HTML export did not work and exported only 404 pages if the schedule was not public.
-- schedule: When a room is empty during a day, Eventyay will not show it anymore in the grid schedule (rather than only hiding rooms that are *never* used).
+- schedule: When a room is empty during a day, eventyay will not show it anymore in the grid schedule (rather than only hiding rooms that are *never* used).
 - cfp: The ampersand character appeared escaped when placed in a drop-down menu (e.g. in a track or session type name).
 - orga:mail: You can now send or discard only a filtered list of emails from the outbox.
-- dev,1596: With the new ``queuedmail_pre_send`` signal, your plugin can modify a `QueuedMail` object before it is sent out. You can handle the sending entirely by setting the object’s `sent` attribute, or e.g. modify the email text before it is sent out by Eventyay.
+- dev,1596: With the new ``queuedmail_pre_send`` signal, your plugin can modify a `QueuedMail` object before it is sent out. You can handle the sending entirely by setting the object’s `sent` attribute, or e.g. modify the email text before it is sent out by eventyay.
 - orga:mail: Outgoing mails now know which proposals or sessions they are about. This information can’t be added to existing mails, but will be included in all new mails, which will link to the proposals in question, and will help you find relevant emails by showing the linked proposals and their track colours (if any).
 - orga:schedule: When exporting your sessions or submissions as CSV or JSON, you can now choose to export start and end times as separate date/time values instead of a single combined value.
 - dev: The ``submission_state_change`` signal is now also sent when a proposal is created or submitted from a draft state in order to allow plugins to take action on initial submission.
@@ -55,9 +55,9 @@ Release Notes
 - schedule,1874: The calendar parts of the public schedule (day of week, month) were always in English, even if another language was selected.
 - orga:review: Fixed several smaller bugs regarding review phase ordering and updates, and made sure that review phases cannot overlap.
 - orga: Dragging and dropping questions and other elements to change their order was broken in Google Chrome.
-- cfp: The upload of files with very long file names would fail instead of showing an error message. Eventyay will now truncate the filename instead.
+- cfp: The upload of files with very long file names would fail instead of showing an error message. eventyay will now truncate the filename instead.
 - orga:schedule: When exporting all your sessions as CSV or JSON export, only the end time would be in the local timezone, but the start time would be in UTC – both timestamps included the full timezone, so if you went on to parse them with a program, this likely would not matter, but it was confusing regardless. The export now uses the event timezone, as intended.
-- orga: When entering a HTML colour manually instead of using the colour picker, Eventyay would expand a three-letter colour to a six-letter colour (e.g. #123 to #112233), which is technically correct, but also not helpful when you’re in the process of typing out a six-letter colour, so Eventyay will now not expand these colours anymore.
+- orga: When entering a HTML colour manually instead of using the colour picker, eventyay would expand a three-letter colour to a six-letter colour (e.g. #123 to #112233), which is technically correct, but also not helpful when you’re in the process of typing out a six-letter colour, so eventyay will now not expand these colours anymore.
 - orga: In order to make it easier for organisers of multiple events to see which event they are currently editing, the green line in the top navigation bar is now of the current event’s colour instead.
 - orga:review: Reviewers were shown the proposal state dropdown, even when they did not have the necessary permissions to change a proposal’s state. They are now shown a non-interactive badge instead, and the same badge is also used on the frontend-side for speakers.
 - 2024.3.1 <2024-10-27>:
@@ -74,8 +74,8 @@ Release Notes
 - orga:submission: The proposal list can now be sorted by session type and track.
 - cfp: Organisers can now turn off the public “secret” proposal share URLs.
 - cfp: On some registration pages, the password strength indicator was missing.
-- dev: Eventyay has dropped its use of SCSS, Bootstrap (while retaining a lot of style rules) and jQuery. If you rely on these in your plugin, you will need to adjust your code. If you require jQuery, you can load `static/js/jquery.js`, as this is still shipped with Eventyay core. You can continue using SCSS, but you'll have to use CSS variables rather than SCSS variables, but we do expose all previous SCSS variables as CSS variables.
-- admin: Eventyay is now better about deleting uploaded files that are not in use anymore, as well as giving predictable filenames to user profile pictures.
+- dev: eventyay has dropped its use of SCSS, Bootstrap (while retaining a lot of style rules) and jQuery. If you rely on these in your plugin, you will need to adjust your code. If you require jQuery, you can load `static/js/jquery.js`, as this is still shipped with eventyay core. You can continue using SCSS, but you'll have to use CSS variables rather than SCSS variables, but we do expose all previous SCSS variables as CSS variables.
+- admin: eventyay is now better about deleting uploaded files that are not in use anymore, as well as giving predictable filenames to user profile pictures.
 - orga: Deleting review phases and review score categories was broken.
 - schedule: The schedule navigation to switch between schedule, talk list, and speakers, is now always visible and easier to find.
 - orga: Organisers can now open the quick-nav menu with the Alt-K shortcut.
@@ -85,12 +85,12 @@ Release Notes
 - orga: There is now an organiser-level dashboard with an events list and team list.
 - schedule: The schedule page makes even better use of several caching methods in order to be smaller and faster to load and re-load.
 - admin: The ``regenerate_css`` command has been dropped without replacement, as it was not needed anymore.
-- admin: Due to a potentially tricky update in Django, and maintenance cost, Eventyay is dropping support for MySQL/MariaDB. Please use either PostgreSQL or SQLite. If you are currently running MySLQ, please take a look at this exemplary `MySQL migration guide <https://docs.Eventyay.eu/self-hosting/mysql2postgres/>`_ by the Eventyay project **BEFORE** starting your Eventyay update, in order to migrate your data with ``pgloader`` to PostgreSQL!
-- admin: Eventyay now requires Python 3.10 or newer.
+- admin: Due to a potentially tricky update in Django, and maintenance cost, eventyay is dropping support for MySQL/MariaDB. Please use either PostgreSQL or SQLite. If you are currently running MySLQ, please take a look at this exemplary `MySQL migration guide <https://docs.Eventyay.eu/self-hosting/mysql2postgres/>`_ by the eventyay project **BEFORE** starting your eventyay update, in order to migrate your data with ``pgloader`` to PostgreSQL!
+- admin: eventyay now requires Python 3.10 or newer.
 - orga: Organisers now have access to a list of all speakers / submitters for all of their events.
 - orga:schedule,1828: When exporting an event to a HTML export, files with umlauts or other non-ASCII characters in their file name were saved with the encoded version of that name, so when the export was served by a web server, these files wouldn't be shown.
 - schedule: When organisers initially asked speakers to upload a profile picture, but then turned off the upload, the profile pictures collected to that date would still show up in the schedule grid and on the individual speaker pages. They will now be hidden from view.
-- orga: Organisers could inadvertently remove all access to an event when they updated their team permissions. Eventyay now forbids this, and additionally shows warnings when an event is being orphaned by a team change.
+- orga: Organisers could inadvertently remove all access to an event when they updated their team permissions. eventyay now forbids this, and additionally shows warnings when an event is being orphaned by a team change.
 - orga: A lot of info boxes that are mostly useful to new or inexperienced users are now hidden behind ❓ symbols rather than being always visible.
 - cfp: The "additional speaker" form field would be shown even after a proposal had been submitted, even though there is a more detailed dedicated page to add new speakers at that point. The field now won't be shown on the proposal edit page.
 - orga:speaker: Speaker profile pictures are now shown in more places.
@@ -98,9 +98,9 @@ Release Notes
 - orga: When copying an old event's settings to a new one, questions were copied, but their answer options (for choice/multiple choice questions) were omitted.
 - orga:email: When sending an email to only speakers with a specific question answer, emails would instead be generated (and placed in the outbox, not sent!) to all speakers.
 - orga:submission: When organisers filtered the session list by specific question answers, adding search terms or filters would reset the question filter.
-- schedule: When the Eventyay schedule widget was used with an event that didn't have a public schedule, it would show a loading spinner indefinitely. It now shows a message that the schedule is not available.
+- schedule: When the eventyay schedule widget was used with an event that didn't have a public schedule, it would show a loading spinner indefinitely. It now shows a message that the schedule is not available.
 - schedule,1002: Logged-in users can now download an iCal file with their starred talks.
-- schedule: For logged in users, Eventyay will now save the list of starred/favourited talks, so that you can sync the starred talks across devices.
+- schedule: For logged in users, eventyay will now save the list of starred/favourited talks, so that you can sync the starred talks across devices.
 - schedule: If a talk won't be recorded, this will now be shown in the schedule, rather than just on the individual talk pages.
 - schedule,1794: The iCal schedule export has been made private (available only to organisers) as the utility of importing a conference's entire schedule is limited, and people were frustrated that the iCal export did not reflect any applied schedule filters.
 - schedule,1803: The QR code for schedule exporter links was not showing up when hovering on the QR code symbol.
@@ -112,7 +112,7 @@ Release Notes
 - api: The submission API now has a filter for the ``is_featured`` field.
 - cfp,1761: In the CfP submission multi-step form, the tab title now reflects the proposal title, to make it easier to work on multiple proposal submissions at the same time.
 - orga:speaker,1768: When filtering the speaker list by only accepted/confirmed speakers, the listed proposal count would be incorrect (inflated).
-- cfp,1574: Eventyay now supports the ``~~`` strikethrough syntax in Markdown.
+- cfp,1574: eventyay now supports the ``~~`` strikethrough syntax in Markdown.
 - orga:schedule,1702: Sessions starting at exactly midnight of the first day of the event would not show up in the schedule editor (but could be scheduled there by dropping them on the day heading).
 - orga:schedule,1730: The schedule editor now allows you to schedule talks that are only "pending accepted" (i.e. the speaker has not yet received the acceptance email), so that organisers can try out how their schedule would look with a given number of tentatively accepted proposals.
 - orga: Administrators (i.e. instance owners) can now search a list of all users, which includes their teams and permissions, and links to trigger account deletion and password resets.
@@ -128,18 +128,18 @@ Release Notes
 - orga:schedule,1698: The HTML export failed to render the schedule page due to an incorrect URL.
 - schedule,1694: The XML schedule export was missing all speaker information.
 - 2024.1.0 <2024-02-16>:
-- lang: Eventyay now comes with new translations, in Dutch and Italian!
+- lang: eventyay now comes with new translations, in Dutch and Italian!
 - orga,820: Restricted tracks now link to the page where you can create access codes for that track.
-- admin,1678: Due to its incomplete and complex nature, the ``import_schedule`` admin command has been removed. If you want to import a schedule, despite all the complexities, please use the Eventyay-downstream plugin instead.
+- admin,1678: Due to its incomplete and complex nature, the ``import_schedule`` admin command has been removed. If you want to import a schedule, despite all the complexities, please use the eventyay-downstream plugin instead.
 - orga,1672: The organiser area now has a search box located in the side bar, opened after clicking the event name. It searches all events the current user has full access to (that is, not a limited reviewer account) for events, sessions and speakers.
 - orga:review,1633: Resources uploaded or linked by speakers are now shown in the review view (unless anonymous reviews are used, as resources can currently not be anonymised).
 - orga:review,1675: In order to make large events more manageable, the review dashboard is now by default paginated to 100 sessions per page. The page size can be adjusted up to showing all sessions as before (and the page size is remembered on a per-user basis).
 - orga: The default page size for paginated pages has been increased to 50.
 - orga:review: Reviewers can now review all proposals at the same time in bulk, as an alternative to reviewing them one by one.
 - orga: Organisers can now upload question options in bulk, which is particularly handy for questions with many options, like country lists.
-- orga:email,1351: Eventyay now provides two new email placeholders, ``speaker_schedule_new`` (all talks changed in the current schedule, like in the notification email generated on schedule release) and ``speaker_schedule_full`` (a list of **all** scheduled sessions for that user).
-- schedule,1666: When building the social media preview card, Eventyay would display a session’s description rather than its abstract.
-- cfp,1660: When setting character limits on text questions, Eventyay would count line breaks as two characters.
+- orga:email,1351: eventyay now provides two new email placeholders, ``speaker_schedule_new`` (all talks changed in the current schedule, like in the notification email generated on schedule release) and ``speaker_schedule_full`` (a list of **all** scheduled sessions for that user).
+- schedule,1666: When building the social media preview card, eventyay would display a session’s description rather than its abstract.
+- cfp,1660: When setting character limits on text questions, eventyay would count line breaks as two characters.
 - orga:submission,1613: The session page drop-down would sometimes include the "public link" even though it was not public yet. This has been fixed, and in the case of accepted or confirmed proposals that don’t have a public page yet (e.g. because they’re not scheduled yet), the link is marked as "public link (not public yet)".
 - cfp: When rendering email addresses in Markdown, shorter TLDs won out against longer ones (e.g. .co instead of .com, or .ro instead of .rocks). This was already fixed for normal links, just not for email addresses. Until you update to include this fix, you can instead turn emails into a link yourself: ``[test@example.co](mailto:test@example.co)``.
 - orga,1619: Organisers can now add new team members in bulk instead of one by one.
@@ -148,10 +148,10 @@ Release Notes
 - schedule: Breaks now also show their start time and duration in the schedule.
 - orga:speaker: The buttons to mark speakers as arrived would only show up once an event was over.
 - orga:email,848: When looking at an email, the sidebar now correctly indicates if it is a sent or queued email (rather than always highlighting the "Outbox" menu entry).
-- orga:email,1402: When you accept a previously rejected proposal (or vice versa), Eventyay will warn you if there is a conflicting email waiting in the outbox, to prevent you from accidentally sending both an acceptance and a rejection email.
+- orga:email,1402: When you accept a previously rejected proposal (or vice versa), eventyay will warn you if there is a conflicting email waiting in the outbox, to prevent you from accidentally sending both an acceptance and a rejection email.
 - orga,1336: In the CfP settings, a warning will be shown next to the deadline setting if some session types have different deadlines.
 - schedule,1324: Session and speaker images will now be shown in an overlay on click, instead of opening a new page.
-- orga:email,1350: Eventyay will now warn you if you have empty URLs in email templates (which can easily happen with Markdown by accident).
+- orga:email,1350: eventyay will now warn you if you have empty URLs in email templates (which can easily happen with Markdown by accident).
 - orga:email,1244: Emails can now be sent both per-speaker and per-proposal, though some placeholders are not available in per-speaker emails (such as the proposal title).
 - orga:email: Improved email editor: Placeholders are now listed in the sidebar and inserted on click.
 - orga:email,1254: Organisers can now also send emails to reviewers or other team members.
@@ -159,60 +159,60 @@ Release Notes
 - orga: Review scores and phases were not copied correctly when copying event settings.
 - orga:schedule: Sessions could not be scheduled for midnight via drag’n’drop (though scheduling via the session form still worked as a workaround).
 - orga:schedule: The schedule editor page can now be printed – page breaks can still occur in odd places, but it’s otherwise a very readable schedule (with your selection of rooms).
-- dev: Plugins can now inject content into a page’s HTML ``<head>`` tag with the ``Eventyay.orga.signals.html_head`` signal.
+- dev: Plugins can now inject content into a page’s HTML ``<head>`` tag with the ``eventyay.orga.signals.html_head`` signal.
 - orga: Answers for URL questions were not included in JSON/CSV exports
 - schedule: The primary URL of widget scripts and widget data has changed. The old URLs will continue to work until at least the last 2024 release.
 - schedule: The old v1 schedule widget, which has been deprecated for a long time, has been removed.
 - orga: Tracks and session types in speaker information notes have a better interface, helpful for events with many of either of them.
 - orga:review,1462: Reviewers can now remove their reviews (while they can still be edited).
 - dev: Plugins can now also render nested menu entries in the sidebar navigation.
-- orga,1107: Eventyay now warns users when they try to leave a page with unsaved changes.
-- cfp,1107: Eventyay now warns users when they try to leave a page with unsaved changes.
+- orga,1107: eventyay now warns users when they try to leave a page with unsaved changes.
+- cfp,1107: eventyay now warns users when they try to leave a page with unsaved changes.
 - schedule,1041: Talks can now be starred (added to the list of favourite talks) from the talk page, not just from the schedule page.
 - dev: Plugins can now declare their category, which is used to group them in the plugin list. Available categories are "Feature", "Integration", "Customisation", "Exporter", "Recording", "Language" and "Other". Plugins without a set category will be grouped as "Other". If you’re a plugin developer, please update your plugin to declare a category!
-- admin,1588: Administrators can now see their Eventyay version in the admin dashboard.
+- admin,1588: Administrators can now see their eventyay version in the admin dashboard.
 - schedule: RSS feeds for new releases would sometimes fail to load if control characters were used in the schedule version or event name.
 - cfp: Draft proposals could not be discarded if they included answered questions.
-- lang: When using two variants of the same language in the same event, Eventyay would not reliably switch between the two variants.
+- lang: When using two variants of the same language in the same event, eventyay would not reliably switch between the two variants.
 - orga:email: Email signatures are now also parsed as markdown, so line breaks will show up in HTML email signatures as expected.
 - admin: CSS regeneration of event styles was broken and left events stuck on their last selected colour.
 - orga: When creating an event with copied event settings, custom email templates are now included.
-- cfp,1534: Eventyay now adds hints for password managers to make the dual login/registration form easier to navigate.
+- cfp,1534: eventyay now adds hints for password managers to make the dual login/registration form easier to navigate.
 - orga: Organisers can now change the pagination size of all list pages, with a choice of 25, 50 or 100.
 - orga,1576: Tracks can now be ordered, and the order is used both in drop-down and in the schedule.
 - 2023.1.3 <2023-09-16>:
 - lang: Flags for some languages were not being displayed in the organiser area.
 - 2023.1.1 <2023-09-16>:
-- lang: For users without a Eventyay account, their browser’s choice of language took precedence over their own language selection.
-- lang: When using non-standard languages, Eventyay would only show those languages as available sometimes.
-- admin,1579: There was a bug in the `Eventyay init` command, and also too verbose output.
+- lang: For users without a eventyay account, their browser’s choice of language took precedence over their own language selection.
+- lang: When using non-standard languages, eventyay would only show those languages as available sometimes.
+- admin,1579: There was a bug in the `eventyay init` command, and also too verbose output.
 - orga,1577: The printable proposal cards showed broken characters for anything outside Latin1.
 - orga: Reordering questions while some of them were inactive could lead to 404 errors.
-- orga:submission: Eventyay was not able to filter pending state changes from the organiser proposal list.
+- orga:submission: eventyay was not able to filter pending state changes from the organiser proposal list.
 - lang: The schedule editor was not operational with some languages, particularly with different language code versions (e.g. Brazilian versus European Portuguese).
 - orga:schedule: The schedule editor would not show some specific time selectors when people expanded the timeline to see five-minute steps.
 - 2023.1.0 <2023-08-30>:
 - orga:schedule: Completely rewrote the schedule editor, making it look like the actual schedule, and added some powerful features like hiding rooms, easy duration changes, and more.
-- admin: The ``Eventyay init`` command now has a ``--no-input`` flag for all your automation needs.
-- admin: Eventyay no longer logs 404 responses, as you can get those equally from your web server logs.
-- schedule,399: Eventyay will now locally cache gravatar avatars to avoid GDPR issues when using gravatar.
+- admin: The ``eventyay init`` command now has a ``--no-input`` flag for all your automation needs.
+- admin: eventyay no longer logs 404 responses, as you can get those equally from your web server logs.
+- schedule,399: eventyay will now locally cache gravatar avatars to avoid GDPR issues when using gravatar.
 - schedule,1498: Talks that were scheduled, but not confirmed by the speaker yet would be shown in the public speaker profile.
-- orga:review: Eventyay always showed the anonymised version of proposals if there was one. Now it reverts to the non-anonymised one once the anonymisation period is over.
+- orga:review: eventyay always showed the anonymised version of proposals if there was one. Now it reverts to the non-anonymised one once the anonymisation period is over.
 - orga:speaker: Organiser pages for speakers now use their alphanumeric ``code`` identifier in the URL rather than the numeric ID, matching the public and API pages.
 - orga:submission,1347: The submission type and track lists now include links to the filtered list of proposals.
 - cfp,889: A talk’s duration is now listed on the talk acceptance site to avoid misunderstandings early on.
 - admin: Due to database versions going EOL, please make sure to use PostgreSQL 12+, MySQL 8+, MariaDB 10.4+, or SQLite 3.21.
-- admin: As Python 3.6 and 3.7 are now EOL, and we are using new Python features, Eventyay supports Python versions 3.9+.
+- admin: As Python 3.6 and 3.7 are now EOL, and we are using new Python features, eventyay supports Python versions 3.9+.
 - orga:review: The review dashboard can now be filtered by question answers, just like the submission list.
 - orga:submission: New anonymisation indicator in proposal list.
 - cfp,1418: Speaker availabilities are now limited to the sum of all room availabilities.
 - orga,1440: The list of team members is now always sorted by name.
 - admin: Document that in nginx, gzip should be turned on only for static files.
-- admin,1098: There was a very rare bug that could lock up Eventyay instances due to a race condition in the review process, and required manual admin intervention to get fixed.
+- admin,1098: There was a very rare bug that could lock up eventyay instances due to a race condition in the review process, and required manual admin intervention to get fixed.
 - orga,1061: Image previews (e.g. for event logos) now handle transparency by adding a chequered background, so even the white logo fans can still see their images.
 - orga,963: The featured talks page is now linked in the corresponding setting, making it easier for organisers to find.
 - orga:submission,392: Our longest-standing feature request has finally been closed: You can now set the possible proposal/content languages independently from the available UI languages.
-- cfp,1363: Eventyay now shows the actual file upload limit to users uploading resources rather than a slightly too-large one.
+- cfp,1363: eventyay now shows the actual file upload limit to users uploading resources rather than a slightly too-large one.
 - orga: You can’t accidentally remove all permissions from a team anymore.
 - api: Added the ``tag_ids`` attribute in the proposal API for organisers.
 - orga:email: The reject email template was missing on the template list.
@@ -227,14 +227,14 @@ Release Notes
 - schedule: Track descriptions are now shown publicly on the schedule page, in the track filter.
 - schedule: You can now filter the schedule by proposal track.
 - schedule: If organisers provide a room description, it is now shown in the room header in the grid schedule.
-- orga:schedule,515: Eventyay sometimes mysteriously creates two new schedules when releasing one, and then is in a confused and broken state until an administrator intervenes. Now Eventyay can fix the situation on its own (though we still do not know how this ever happens).
+- orga:schedule,515: eventyay sometimes mysteriously creates two new schedules when releasing one, and then is in a confused and broken state until an administrator intervenes. Now eventyay can fix the situation on its own (though we still do not know how this ever happens).
 - api: The schedule API did not work to retrieve historical schedule versions when the schedule version included a dot, as it often does.
 - api: The schedule API now also includes breaks.
-- orga:email: In the email outbox, Eventyay now shows if a pending email comes from a known template, e.g. if it is an accept or reject email.
+- orga:email: In the email outbox, eventyay now shows if a pending email comes from a known template, e.g. if it is an accept or reject email.
 - orga:submission: You can now exclude proposals with pending state changes from your search results.
 - orga:email: To improve email template handling, the list of emails now shows just the subjects or use case, and you can click them to expand and see the details.
 - schedule: Breaks are now also shown on the mobile/minimal/linear schedule.
-- orga:review: Review pages were not working when Eventyay was run with Python 3.7 and the aggregation method "mean" (as opposed to "median").
+- orga:review: Review pages were not working when eventyay was run with Python 3.7 and the aggregation method "mean" (as opposed to "median").
 - orga: Teams are now sorted by the date of their accessible events, making it easier to manage organisers with many event-specific teams.
 - schedule: The schedule widget was not showing up for some locales (particularly Chinese).
 - schedule: On sessions that have both videos and images, videos now show up first, and the overall layout is improved.
@@ -265,18 +265,18 @@ Release Notes
 - orga:review: You can now export reviews in CSV or JSON formats, just like proposals, sessions and speakers.
 - orga: On the event dashboard, reviews of deleted proposals were included in the review count tile.
 - cfp: On new events, questions could not be limited by track (because the field was hidden, due to legacy migrations).
-- schedule: Eventyay displayed speaker profile pictures even if profile pictures were not requested in the CfP, if they existed e.g. from past events.
+- schedule: eventyay displayed speaker profile pictures even if profile pictures were not requested in the CfP, if they existed e.g. from past events.
 - orga:submission: Markdown preview is now also available for organisers when they edit existing proposals.
 - cfp: In some situations, it was impossible to delete uploaded files in question answers.
-- cfp: If you try to upload files that are larger than the upload limit, Eventyay will now warn you before you even attempt the upload.
+- cfp: If you try to upload files that are larger than the upload limit, eventyay will now warn you before you even attempt the upload.
 - orga: You can now, finally!, use SVGs as event logo and event header images.
 - orga:speaker: Reminders about unanswered questions were always sent in the event language, instead of the user’s/speaker’s chosen language.
 - cfp: There are new question types: You can now ask for a URL, a date, or a date and a time (and you can set allowed ranges for the latter two).
-- orga,1284: Some browsers cached hidden fields in forms extremely aggressively, so Eventyay has stopped relying on them as much.
+- orga,1284: Some browsers cached hidden fields in forms extremely aggressively, so eventyay has stopped relying on them as much.
 - cfp: Organisers can now configure not just field help texts, but also field titles/labels.
 - orga: The custom CSV and JSON exports are now the new default on the export pages, since they’re more useful to the average user.
 - admin,1281: Fixed a rare race condition, where on schedule release, two new WIP schedules were created, leading to persistent errors on some event pages.
-- orga:submission,1278: Deleting a proposal from its detail view would lead to a 404 page (because Eventyay tried to redirect you back to the original page, which was now unavailable).
+- orga:submission,1278: Deleting a proposal from its detail view would lead to a 404 page (because eventyay tried to redirect you back to the original page, which was now unavailable).
 - orga: Added a way to quickly check or uncheck all the possible export fields in the export form.
 - orga:schedule: Fixed a bug where the time travelling option in the schedule editor was unreliable.
 - orga:submission: Fixed a bug where trying to filter by answers to a multiple choice question would not work.
@@ -284,14 +284,14 @@ Release Notes
 - orga:submission: You can now remove a pending state be re-selecting the current state of a proposal.
 - orga:email: Email placeholders now explain their use when you hover over them.
 - orga:email: New email placeholder: ``{all_reviews}`` allows you to send all review texts (though not scores!) to submitters.
-- orga:schedule,1266: Eventyay only recognised overlapping scheduled talks for a speaker when they did not start or end at the exact same time.
+- orga:schedule,1266: eventyay only recognised overlapping scheduled talks for a speaker when they did not start or end at the exact same time.
 - orga: The rendering speed of all backend pages has been improved.
 - orga:schedule: The performance of the schedule editor and release pages was improved for large events.
 - orga:review: The track filter was missing on the review dashboard page.
 - orga:schedule: Sometimes, breaks were shown oddly in the schedule editor, with incorrect start or end times.
 - orga: Reviewer team settings (like track assignments) are now on the same page as the general team settings, and will be shown only if the team is currently a reviewer team.
 - orga:review,619: Reviewers can now be assigned to proposals directly. Depending on your settings, reviewers can only see their assigned proposals, or will just see them highlighted.
-- schedule: Caching of schedule pages is reset the moment a new schedule version is released, so that integrations (for example with Eventyay) that push notifications on new schedule releases will always see the actual new schedule.
+- schedule: Caching of schedule pages is reset the moment a new schedule version is released, so that integrations (for example with eventyay) that push notifications on new schedule releases will always see the actual new schedule.
 - orga:schedule: Schedule pages showing the WIP schedule to organisers are not cached anymore, so all changes show up immediately.
 - orga:speaker,1261: Automatic confirmation emails of received proposals are now also shown in the list of a user’s emails, since the absence was confusing for organisers and speakers.
 - orga,1260: It was possible to change teams so that they had access to no events – neither via the explicit list, nor via the "all events" flag, which was extremely confusing.
@@ -314,27 +314,27 @@ Release Notes
 - api,1232: You can filter submissions by multiple states in the API now.
 - admin: When updating, please take care to update your plugins, as some interfaces have changed. Plugin authors, please refer to PR 1230 to see changed settings access.
 - orga:review: Tags are now shown in the reviewer dashboard and can be filtered for.
-- schedule: Eventyay now remembers the timezone you have selected on the schedule page across reloads.
+- schedule: eventyay now remembers the timezone you have selected on the schedule page across reloads.
 - orga:schedule: The schedule editor now polls changes, so if somebody else changes the schedule while you’re editing it, you will see the changes soon afterwards.
-- orga:schedule: Eventyay will now highlight overlapping sessions on the schedule editor, and will also warn you before you release a new schedule if sessions overlap in the same room.
+- orga:schedule: eventyay will now highlight overlapping sessions on the schedule editor, and will also warn you before you release a new schedule if sessions overlap in the same room.
 - orga:schedule: When you clicked a talk in the schedule editor, it would open in a new window, but also stay in dragging mode in the editor page.
 - orga:email: Fixed an issue when rendering individual session times in emails.
 - schedule: Schedules have better scroll behaviour on very wide and very narrow displays.
 - admin: Media files are now excluded from crawlers via robots.txt.
 - orga:review: Fixed a bug where abstaining during the review process was not possible while review scores were mandatory.
 - cfp: If you run a multi-lingual event, you don’t have to request the content locale in your CfP anymore.
-- lang: Eventyay now comes with new translations, in Arabic, Spanish, and Brazilian Portuguese!
+- lang: eventyay now comes with new translations, in Arabic, Spanish, and Brazilian Portuguese!
 - orga:email: Email signatures now look a lot better in HTML emails
 - schedule,1171: Organisers can now disable audience feedback.
 - schedule,1163: You can now link to specific days on the schedule again, as with our old schedule. The link is generated when you click the tabs leading to specific days.
 - dev: Plugin languages can now be either globally available or only for active events – plugin developers, please adjust your plugins!
 - cfp: Organisers can now disable the optional inclusion of gravatar images.
-- schedule: If you attach ``?lang=en`` to a request, Eventyay will serve the page in the requested language (if active in the current event).
+- schedule: If you attach ``?lang=en`` to a request, eventyay will serve the page in the requested language (if active in the current event).
 - orga,1157: When adding a new organisers to a team, email suggestions from known users did not work.
-- orga:submission,1157: When adding a new speaker to a proposal, Eventyay would suggest organiser accounts rather than speaker accounts.
-- orga:email,412: Eventyay finally supports sending of emails based on templates, with a full template placeholder system. Hello, {name}!
+- orga:submission,1157: When adding a new speaker to a proposal, eventyay would suggest organiser accounts rather than speaker accounts.
+- orga:email,412: eventyay finally supports sending of emails based on templates, with a full template placeholder system. Hello, {name}!
 - orga:email,715: Email filters are now subtractive instead of additive, giving you more fine-grained control about your bulk emails.
-- orga:email,1150: Eventyay now does not allow you to test your custom SMTP settings until you have actually configured them.
+- orga:email,1150: eventyay now does not allow you to test your custom SMTP settings until you have actually configured them.
 - orga:review,976: Improved the tagging interface to be still useful with a large number of tags.
 - orga:schedule,933: You can now change a session’s room and time in the session form, allowing for minute-level accuracy instead of our usual 5-minute intervals.
 - dev: Plugins can now perform actions on every schedule release (for example, to trigger an update in external consumers to avoid polling).
@@ -346,26 +346,26 @@ Release Notes
 - dev: There is a new plugin hook that allows you to perform actions when a new schedule is released.
 - 2.2.0 <2021-08-15>:
 - schedule: To improve performance, the NoJS schedule is now located on a separate page.
-- dev,1143: On self-hosted Eventyay instances, you can now configure Eventyay to include additional CSP headers, especially of interest for plugin developers.
+- dev,1143: On self-hosted eventyay instances, you can now configure eventyay to include additional CSP headers, especially of interest for plugin developers.
 - api: In the submission API view, the end time of a slot was sometimes empty.
-- orga: If you use custom domains, Eventyay will automatically redirect the domain to the most recent event that uses this domain. This also means that you can configure multiple events with the same custom domain!
+- orga: If you use custom domains, eventyay will automatically redirect the domain to the most recent event that uses this domain. This also means that you can configure multiple events with the same custom domain!
 - orga:review,656: You can now choose if you want to compare the median of review scores or the average/mean.
 - orga,313: Organisers can now create custom proposal and speaker exports (as either CSV or JSON), including any data they need.
 - admin: If you use PostgreSQL, please make sure to be on at least PostgreSQL 10.
-- admin: Eventyay will no longer send emails to localhost addresses, as those are used for deleted users. Please get in touch if this is a problem for you.
+- admin: eventyay will no longer send emails to localhost addresses, as those are used for deleted users. Please get in touch if this is a problem for you.
 - cfp,1069: You can freeze a question after a certain date, prohibiting users from changing their answers after the deadline.
 - cfp,1069: You can now attach deadlines to questions, making them optional before the deadline and mandatory afterwards.
 - api: With the ``anon`` query parameter, you can request anonymised proposal data from the API, even when you have permission to see the full data.
 - cfp: In the CfP editor, when a step description was only given in a language that was not currently active, you could not change it any longer.
-- orga:email,1111: Eventyay would send multiple emails for proposals with multiple speakers.
+- orga:email,1111: eventyay would send multiple emails for proposals with multiple speakers.
 - orga:review: Not all existing review scores were recalculated when review score weights were changed during a review phase.
 - schedule,1082: Event header images are now scaled down to a height of ``150px``.
-- orga:email,1093: Eventyay sometimes over-reported the number of emails generated when bulk-sending emails.
+- orga:email,1093: eventyay sometimes over-reported the number of emails generated when bulk-sending emails.
 - orga:submission,1092: You can now get a list of proposals or speakers that are still missing the answer to a given question.
-- schedule: The display of external videos in Eventyay was broken due to a security header being set too strictly.
-- schedule: Eventyay has better rendering for multi-line code blocks (``\`\`\```) in markdown elements and supports code highlighting.
+- schedule: The display of external videos in eventyay was broken due to a security header being set too strictly.
+- schedule: eventyay has better rendering for multi-line code blocks (``\`\`\```) in markdown elements and supports code highlighting.
 - cfp: When your default submission type had a deadline prior to the event-wide deadline, the CfP form would not accept new proposals past the earlier deadline.
-- orga:schedule,1087: Eventyay would sometimes show unnecessary warnings in the talk editor when talks were scheduled across day breaks.
+- orga:schedule,1087: eventyay would sometimes show unnecessary warnings in the talk editor when talks were scheduled across day breaks.
 - orga:review: You can mark review score categories as independent. They won’t be part of the total calculation, and instead show up as their own column in the review dashboard.
 - orga:speaker: You can now search speakers by specific given answers, as you could already search proposals and sessions.
 - api: The API would return errors in some edge cases when used by unauthenticated users.
@@ -379,9 +379,9 @@ Release Notes
 - schedule: The display of large talk images was off, extending them too far to the right.
 - cfp: The availability widget now shows day names in your locale instead of always using English.
 - orga:email: To prevent emails getting recorded as spam, the custom sender address is now only used when you are using a custom email server. You can still set the reply-to address.
-- admin: If you run Eventyay with ``--no-Eventyay-information``, it will not print the Eventyay information header.
-- cfp: Eventyay will resize uploaded images down to 1920x1080 (by default).
-- cfp: Eventyay now removes EXIF metadata from all uploaded images.
+- admin: If you run eventyay with ``--no-Eventyay-information``, it will not print the eventyay information header.
+- cfp: eventyay will resize uploaded images down to 1920x1080 (by default).
+- cfp: eventyay now removes EXIF metadata from all uploaded images.
 - dev: The event activation signal can now return a string to be shown as success message.
 - schedule: The HTML export did not work with the new schedule page.
 - orga:email: In addition to sending either all emails or a single email, organisers can now also send only the currently selected emails. This is particularly helpful with an email provider (*cough* google) who starts rejecting emails when bulk-sending, halfway through your sending process.
@@ -398,73 +398,73 @@ Release Notes
 - orga: The statistics page did not work for events with just a single submission type.
 - 2.1.1 <2021-01-16>:
 - 2.1.0 <2021-01-16>:
-- admin,1046: Eventyay shipped an incorrect override settings file that broke email sending.
-- orga:submission: Eventyay would sometimes throw an error when you tried to create a proposal as an organiser without giving the speaker a name.
-- schedule: The Eventyay schedule now always shows the event timezone (and allows users to switch to their local timezone, if it’s different).
+- admin,1046: eventyay shipped an incorrect override settings file that broke email sending.
+- orga:submission: eventyay would sometimes throw an error when you tried to create a proposal as an organiser without giving the speaker a name.
+- schedule: The eventyay schedule now always shows the event timezone (and allows users to switch to their local timezone, if it’s different).
 - orga:schedule,738: When organisers create a proposal or session in the backend, they can now schedule it directly on the creation page, instead of having to set the proposal to "accepted" and then move it in the interactive schedule editor.
 - 2.0.0 <2020-12-24>:
 - orga:review: Reviewers can now tag reviews while reviewing, and later filter for those tags.
 - orga:review: The essentially unused override score feature has been removed.
 - orga:review: Reviewers can now be asked to rate a proposal in several categories, with a total score calculated automatically.
-- schedule: Eventyay has a new schedule, with a new widget. The old widget is deprecated and will be removed in the next release. Please migrate all of your widgets to the new widget code. You can generate it in your event’s settings.
+- schedule: eventyay has a new schedule, with a new widget. The old widget is deprecated and will be removed in the next release. Please migrate all of your widgets to the new widget code. You can generate it in your event’s settings.
 - admin: Remember to check your access logs before upgrading to v2.1 to warn users about failing widgets.
 - api: There are two new API endpoints, ``/questions/`` and ``/answers/``, that incidentally are our first writable API endpoints. The API docs have been updated.
-- admin: Email error reporting (sent to instance administrators) now includes a short explanation and a link to the Eventyay issue tracker.
+- admin: Email error reporting (sent to instance administrators) now includes a short explanation and a link to the eventyay issue tracker.
 - api: If a speaker has selected to show their gravatar, it is now also exposed in the API in the avatar field.
 - orga:email: When you send out reminders about unanswered questions, you can now target specific questions, or tracks, or submission types.
-- cfp: Eventyay now limits file uploads to 10MB.
+- cfp: eventyay now limits file uploads to 10MB.
 - orga:schedule,979: In the schedule editor, you can now search for talks by speaker name.
-- orga: Eventyay now shows the complete history of logged changes to organisers.
-- admin: Eventyay will no longer make alarmist noises about missing migrations.
+- orga: eventyay now shows the complete history of logged changes to organisers.
+- admin: eventyay will no longer make alarmist noises about missing migrations.
 - orga:submission,882: You can now filter the submission list by specific question answers.
 - orga:review: In addition to anonymising proposals, you can now also anonymise reviewers towards other reviewers.
 - orga:review: Questions that are visible to reviewers now also show up on the review page, to avoid having to switch to the full submission view in the review process.
 - api,928: Reviewers had access to question answers that were not explicitly visible to reviewers by way of the API.
 - orga:review,923: In some settings combinations, reviewers were unable to change or even see their own reviews after submitting them.
-- orga,907: Eventyay now prevents you from creating multiple tracks or submission types with the same name.
+- orga,907: eventyay now prevents you from creating multiple tracks or submission types with the same name.
 - orga,951: The link to the team settings on the review settings page was incorrect.
 - lang,945: Internationalised strings were not always shown as such in the API, sometimes they were instead returned as plain strings.
-- lang,947: In all exporters, you can now select the export language with the ``?lang=`` query parameter. If you don’t supply the parameter, Eventyay will continue to guess your locale as before. If you provide the parameter without a value, the default event locale will be used.
+- lang,947: In all exporters, you can now select the export language with the ``?lang=`` query parameter. If you don’t supply the parameter, eventyay will continue to guess your locale as before. If you provide the parameter without a value, the default event locale will be used.
 - schedule,934: Instead of being unsorted as before, the list of talks on the schedule page is now sorted alphabetically.
-- api,936: The submission API returned a duration in formatted time, like "00:30", but the API documentation claimed it was a number of minutes. Eventyay now returns the number of minutes as promised.
+- api,936: The submission API returned a duration in formatted time, like "00:30", but the API documentation claimed it was a number of minutes. eventyay now returns the number of minutes as promised.
 - cfp,915: Tracks now have a description attached to them which is shown to the user in the CfP, if specified. This can be used to further explain an otherwise very short track name.
-- admin: Redirects to an event domain now include CORS headers to permit access from any client, to make Eventyay integration in other websites easier.
+- admin: Redirects to an event domain now include CORS headers to permit access from any client, to make eventyay integration in other websites easier.
 - orga: If you go to a login page while you are logged in (e.g. because it was still open in another tab), you are now redirected instead of being prompted to log in.
-- dev: Exporters can now supply the CORS header they want to send. All exporters provided by Eventyay directly now allow access from all origins by default.
+- dev: Exporters can now supply the CORS header they want to send. All exporters provided by eventyay directly now allow access from all origins by default.
 - cfp: Questions can now be limited by submission type.
 - orga:schedule,772: Organisers can now leave a public comment when they release a new schedule. It will be visible in the changelog and the schedule RSS feed.
 - admin,830: Administrators can now configure static and media files to be under different URLs than ``static`` and ``media``.
 - orga:email: Using custom mail servers worked, but testing the connection in the settings page showed an error (incorrectly).
-- dev: Plugin developers can now add content to the HTML head area with the new ``Eventyay.cfp.signals.html_head`` signal.
+- dev: Plugin developers can now add content to the HTML head area with the new ``eventyay.cfp.signals.html_head`` signal.
 - orga:schedule: If you move your event dates, the schedule is moved too, and you can send notifications to your speakers by releasing a new schedule version.
 - orga:review: Firefox has a bug in their form caching. If you reviewed a submission, clicked "Save and next", then *went back and reloaded the page*, Firefox would incorrectly fill your review form with the choice *one point worse* than your original selection. If you then chose "Save and next" again, this value would be saved.
 - dev: The test event creation command now allows you to specify the event slug. This allows you to generate multiple test events in various event stages.
-- dev: A bug in our permission checks made Eventyay unable to run on Windows.
+- dev: A bug in our permission checks made eventyay unable to run on Windows.
 - orga:email: Schedule notifications for speakers are now properly connected to the speaker accounts, instead of just referencing them by email addresses.
 - orga: Now, event organisers can activate and deactivate plugins for their events. Previously this was restricted to administrators.
-- dev: If you have a plugin that listens to the ``footer_link`` signal, please change it so that it returns a list of dictionaries instead of a single dictionary. The dictionary-only return value is deprecated and support will be removed in a future Eventyay version.
-- dev: The new signal ``Eventyay.common.signals.activitylog_display`` allows plugins to change how entries in the Eventyay activity log are displayed.
-- dev: The new signal ``Eventyay.orga.signals.event_copy_data`` allows plugins to transfer data from one event to the next at event creation time.
+- dev: If you have a plugin that listens to the ``footer_link`` signal, please change it so that it returns a list of dictionaries instead of a single dictionary. The dictionary-only return value is deprecated and support will be removed in a future eventyay version.
+- dev: The new signal ``eventyay.common.signals.activitylog_display`` allows plugins to change how entries in the eventyay activity log are displayed.
+- dev: The new signal ``eventyay.orga.signals.event_copy_data`` allows plugins to transfer data from one event to the next at event creation time.
 - cfp: The help text for questions can now be 800 characters long instead of 200.
 - admin: Under specific circumstances, the ``django_sessions`` table could bloat a lot. This is fixed with the next release and the table will shrink over time as long as you regularly run the ``clearsessions`` command.
 - orga:speaker,855: The filtered list of speakers in the organiser area now contains only people with confirmed *or accepted* talks, and is also better at showing the filter currently applied.
 - orga:review: Organisers can now anonymise submission content for reviewers, if they choose to do anonymised reviews. They can redact or edit any part of the submission for the reviewers’ view of it to remove identifying information.
 - cfp: It was not possible to hide a submission type unless accessed with an access token. (Or, well, it was possible, but the possibility was hidden.)
 - orga,880: The submission statistics now ignore deleted submissions.
-- admin: This version of Eventyay has higher database version requirements. We now support PostgreSQL 9.6+, MariaDB 10.1+, MySQL 5.6+, and SQLite 3.8.3+.
+- admin: This version of eventyay has higher database version requirements. We now support PostgreSQL 9.6+, MariaDB 10.1+, MySQL 5.6+, and SQLite 3.8.3+.
 - cfp,877: The frontend markdown preview would not render all line breaks as line breaks (only two line breaks in a row), but the server rendered version did.
-- orga,873: If you create a new event and copy an old event’s configuration, Eventyay will now also copy tracks and questions.
+- orga,873: If you create a new event and copy an old event’s configuration, eventyay will now also copy tracks and questions.
 - schedule: Organisers can now choose how to display their schedule. Currently, the only two options are the previous grid display, or a list with talks and times.
 - api: In the API, the event list is now sorted so that the oldest event comes last, not first as it was before.
-- lang: If your event has only a single language configured, Eventyay won’t show the language flag in the input fields anymore.
+- lang: If your event has only a single language configured, eventyay won’t show the language flag in the input fields anymore.
 - lang: To make translation contributions more accessible, you can now improve translations (or add new ones!) at `translate.Eventyay.com <https://translate.Eventyay.com>`_
-- lang: Eventyay now comes with an updated French translation, and a brand new Chinese community translation!
-- orga:email,863: If incorrect variables were used in the schedule update email template, Eventyay did not catch this mistake ahead of time, and instead just refused to release a new schedule.
+- lang: eventyay now comes with an updated French translation, and a brand new Chinese community translation!
+- orga:email,863: If incorrect variables were used in the schedule update email template, eventyay did not catch this mistake ahead of time, and instead just refused to release a new schedule.
 - -: A lot of minor UI improvements, a re-work of the colours and fonts in use, as well as improvements of mobile and responsive pages.
 - orga:review: Review scores are now consistently shown as numbers, and the text representation/meaning of those numbers is shown on hover.
 - orga:review: Reviewers can now see both their own score and the median score in the review dashboard.
 - orga:submission: People without edit or delete permissions are not shown the edit or delete buttons on submissions anymore.
-- orga: When updating the settings for an event with a custom domain, Eventyay would mistakenly show an error message that this domain was already in use for another event.
+- orga: When updating the settings for an event with a custom domain, eventyay would mistakenly show an error message that this domain was already in use for another event.
 - 1.1.2 <2020-01-10>:
 - cfp: If a CfP requested the submitters’ availability at submission time, only logged-in users could successfully finish the submission workflow.
 - 1.1.1 <2020-01-10>:
@@ -472,7 +472,7 @@ Release Notes
 - orga:submission: The list of all submission feedback given in a single event was only usable for people with administrator permissions.
 - cfp: Not all CfP form help text parts were translated.
 - 1.1.0 <2019-12-21>:
-- admin: Eventyay now comes with an update check, which will notify you when new Eventyay or plugin versions are available. This check sends anonymous data to the Eventyay.com server, which is run by the Eventyay developer. The data consist of a random but stable ID, the number of total and public events, and the version of Eventyay and all installed plugins. No identifying information will be retained, and there is a visible and persistent opt-out warning until acknowledged by an administrator.
+- admin: eventyay now comes with an update check, which will notify you when new eventyay or plugin versions are available. This check sends anonymous data to the eventyay.com server, which is run by the eventyay developer. The data consist of a random but stable ID, the number of total and public events, and the version of eventyay and all installed plugins. No identifying information will be retained, and there is a visible and persistent opt-out warning until acknowledged by an administrator.
 - admin: One broken task among the periodically executed task would prevent others from being executed.
 - schedule,828: Deleted talks could still be shown with their previous title and speaker. Now they are always replaced with a box saying "[deleted]" with no further information.
 - orga:schedule,816: Reducing the slot count of a submission where all slots had been scheduled would not remove spare slots.
@@ -480,29 +480,29 @@ Release Notes
 - admin,841: File attachments generated from user data are now generated to be in safe ASCII range, to avoid trouble with Unicode-sensitive gunicorn versions.
 - orga:submission,794: There is now a page that shows all feedback by attendees for any talk in the conference.
 - orga:email,432: Organisers can now send emails to all speakers who have not uploaded slides/files for their talk yet.
-- admin: Eventyay now has pretty error pages for CSRF fails and 400 errors. Test error pages are located at ``/400``, ``/403``, ``/404``, ``/500``, and ``/403/csrf``.
+- admin: eventyay now has pretty error pages for CSRF fails and 400 errors. Test error pages are located at ``/400``, ``/403``, ``/404``, ``/500``, and ``/403/csrf``.
 - orga:submission,792: There is now a CSV export for answered questions.
 - cfp,814: Questions of the type "choose one from a list" are now shown as a list of radio input options instead of a single drop-down, if there are three or less options to choose from.
 - dev: Plugins can now implement the ``uninstalled`` method to perform actions when a user deactivates them for an event.
-- admin: We documented the implicit requirement that the filesystem Eventyay accesses should work with non-ASCII file names. Please check the installation documentation if you want to make sure this is the case for you.
+- admin: We documented the implicit requirement that the filesystem eventyay accesses should work with non-ASCII file names. Please check the installation documentation if you want to make sure this is the case for you.
 - orga:submission: The submission type list and the track list now list the numbers of submissions per entry.
 - orga:review,638: You can now determine if the answers to talk questions should be visible to reviewers. This allows you to ask personal questions of your submitters, even when you are running an anonymous review process.
-- orga,648: Eventyay now comes with a CfP editor that allows you to change the headline, text, and help texts on each of the CfP step pages.
+- orga,648: eventyay now comes with a CfP editor that allows you to change the headline, text, and help texts on each of the CfP step pages.
 - api,760: Speakers can now see and reset their API token in their profile page.
-- dev: We have added a couple of pages to the Eventyay wiki on GitHub, most importantly a list of events using Eventyay, and a list of available plugins. The wiki is world-writable, so please add to it if you have an event or plugin that has not been mentioned yet!
+- dev: We have added a couple of pages to the eventyay wiki on GitHub, most importantly a list of events using eventyay, and a list of available plugins. The wiki is world-writable, so please add to it if you have an event or plugin that has not been mentioned yet!
 - orga:schedule,277: The static HTML export will now be triggered when talk or speaker data is changed (as long as it’s also generated on schedule release). To protect against high server load, it will still run at most once every hour.
-- schedule: To reduce scroll wheel abrasions, Eventyay schedules are now tabbed with one tab per event day.
-- schedule,242: Eventyay has learned what breaks are. Organisers can create those in the schedule editor, and they will be shown in an appropriately muted way in the schedule.
+- schedule: To reduce scroll wheel abrasions, eventyay schedules are now tabbed with one tab per event day.
+- schedule,242: eventyay has learned what breaks are. Organisers can create those in the schedule editor, and they will be shown in an appropriately muted way in the schedule.
 - cfp,324: Organisers can create access tokens that allow users to submit after the CfP deadline, or that give access to hidden tracks or submission types.
-- dev: Eventyay has the new management command ``create_test_event``, which creates a demo event in a stage of your choice (``cfp``, ``review``, ``schedule`` or ``over``). All user accounts are created with ``@example.org`` email addresses.
-- schedule: If you want to display your schedule on your own homepage, Eventyay now offers you a schedule widget. You can generate the code for the widget in your organiser settings.
-- dev: If Eventyay encounters an error it can’t recover from, the error page now shows a link to a partially filled GitHub issue.
-- cfp: Eventyay would show an error when users were asked to select their submission’s track during the CfP workflow.
+- dev: eventyay has the new management command ``create_test_event``, which creates a demo event in a stage of your choice (``cfp``, ``review``, ``schedule`` or ``over``). All user accounts are created with ``@example.org`` email addresses.
+- schedule: If you want to display your schedule on your own homepage, eventyay now offers you a schedule widget. You can generate the code for the widget in your organiser settings.
+- dev: If eventyay encounters an error it can’t recover from, the error page now shows a link to a partially filled GitHub issue.
+- cfp: eventyay would show an error when users were asked to select their submission’s track during the CfP workflow.
 - 1.0.4 <2019-10-15>:
 - schedule: In feedback pages for talks that contained multiple speakers, the email addresses of those speakers were shown next to their names.
 - orga: Allow users to add an imprint URL that will be shown at the bottom of every public event page.
 - schedule: On the sneak peek preview page, markdown was not rendered correctly to HTML.
-- dev: If Eventyay is running in development mode, its favicon will be red.
+- dev: If eventyay is running in development mode, its favicon will be red.
 - dev: Plugin authors will now have access to all configuration sections starting with ``[plugin:*]``, to ease the integration of system level settings.
 - api,787: Provide the file uploads a speaker added to their submission via the ``/talks`` and ``/submissions`` API endpoint.
 - cfp: Show speakers how many feedback notes have been left (if any) in their personal submission list view.
@@ -520,7 +520,7 @@ Release Notes
 - api,754: Reviews could be returned multiple times in the reviews API endpoint (though the total count returned was correct).
 - cfp,742: Organisers can now set a minimum or maximum length for submission titles.
 - schedule,743: If no schedule has been published but a sneak peek is available, the schedule page now redirects to the sneak peek page.
-- cfp: The Eventyay markdown display now supports markdown tables.
+- cfp: The eventyay markdown display now supports markdown tables.
 - orga:schedule: Due to the powerful and hard-to-specify nature of the schedule HTML import, the frontend facing schedule XML import has been removed. Administrators can still import schedule files with the ``import_schedule`` command.
 - 1.0.3 <2019-06-27>:
 - schedule,730: The talk page of talks with multiple slots did not work and threw an error instead.
@@ -528,12 +528,12 @@ Release Notes
 - orga,728: The “Invite reviewers” link on the main event dashboard led to an incorrect page.
 - api,732: Speaker availability is now included in the API for organisers.
 - orga:email,475: Organisers can now regenerate the accept/reject emails from the review dashboard context menu.
-- admin: To keep in line with our new database scoping, if you access the Eventyay shell, you are now advised to use the ``shell_scoped`` command instead of the ``shell`` command, and call it with the flags for your event, like ``--event__slug=my-event`` (or an ``--override`` flag to access all events).
+- admin: To keep in line with our new database scoping, if you access the eventyay shell, you are now advised to use the ``shell_scoped`` command instead of the ``shell`` command, and call it with the flags for your event, like ``--event__slug=my-event`` (or an ``--override`` flag to access all events).
 - cfp,731: Users can now see (and potentially edit) their submission’s submission type.
 - orga: Some custom domains could not be set via the frontend.
 - schedule: Organisers can now also see unconfirmed talks in their preview of the public schedule page. The unconfirmed talks are clearly marked to avoid confusion.
 - 1.0.2 <2019-06-07>:
-- orga:email: Organisers were able to see all emails sent to a user in their events, instead of only emails sent for the currently active event. This is a data leak. You can find more information `on our blog <https://Eventyay.com/p/news/incident-report-data-leak-in-Eventyay-10/>`_.
+- orga:email: Organisers were able to see all emails sent to a user in their events, instead of only emails sent for the currently active event. This is a data leak. You can find more information `on our blog <https://eventyay.com/p/news/incident-report-data-leak-in-Eventyay-10/>`_.
 - admin: We now add a hash to all uploaded file names to avoid collisions.
 - 1.0.1 <2019-06-03>:
 - cfp,719: In the submission process, file upload questions would not be saved correctly.
@@ -542,16 +542,16 @@ Release Notes
 - 1.0.0 <2019-06-02>:
 - cfp,427: Organisers can now permit users to submit (and change) their own talk duration length.
 - cfp,700: Submitters can now choose to withdraw their talk even if it was accepted. When an accepted talk is withdrawn, the organisers will receive a notification email.
-- schedule: When using a command line client to access a schedule page, Eventyay will now output ASCII tables or lists, depending on the format parameter.
+- schedule: When using a command line client to access a schedule page, eventyay will now output ASCII tables or lists, depending on the format parameter.
 - cfp,402: Fields with markdown support now come with a preview next to the input field (if JavaScript is enabled).
 - orga:email,669: Emails can now also be sent grouped by submission track or submission type.
-- admin: You can now install ``Eventyay[redis]`` if you use Eventyay with a redis server for better caching and/or asynchronous task runners.
-- admin: Our documentation now lists the tasks a Eventyay instance should run periodically, namely ``runperiodic`` about once every five minutes, and ``clearsessions`` about once a month.
+- admin: You can now install ``eventyay[redis]`` if you use eventyay with a redis server for better caching and/or asynchronous task runners.
+- admin: Our documentation now lists the tasks a eventyay instance should run periodically, namely ``runperiodic`` about once every five minutes, and ``clearsessions`` about once a month.
 - admin: Administrators can now see a dashboard with relevant settings and current information, including documentation links.
 - api,689: In the (undocumented) review API, reviews of deleted submissions were shown, even though those submissions were not available anymore via the frontend.
-- orga:email,688: Eventyay was inconsistent in its usage of email senders and Reply-To. Now, if there is a sender address configured, the Reply-To is not explicitly set. Eventyay falls back to the instance-global sender if there is no event sender address. A Reply-To setting is available if the organisers wish to provide a separate address there.
+- orga:email,688: eventyay was inconsistent in its usage of email senders and Reply-To. Now, if there is a sender address configured, the Reply-To is not explicitly set. eventyay falls back to the instance-global sender if there is no event sender address. A Reply-To setting is available if the organisers wish to provide a separate address there.
 - api,682: The submission endpoint now provides a ``created`` field to organiser users.
-- orga,326: During event creation, Eventyay provides more critical feedback, such as asking if the event is supposed to take place in the past, or suggesting good slugs.
+- orga,326: During event creation, eventyay provides more critical feedback, such as asking if the event is supposed to take place in the past, or suggesting good slugs.
 - orga,393: As an alternative to file uploads, organisers can now also provide their custom CSS directly as text.
 - orga:review,360: Within the review dashboard, organisers can now accept and reject multiple submissions at the same time.
 - orga:review,656: Instead of by average, review scores are now shown aggregated by the median.
@@ -559,7 +559,7 @@ Release Notes
 - orga: Question pages now feature visual statistics where appropriate.
 - orga:submission: There now is a page for submission statistics.
 - cfp,628: Fill CfP form with track and submission type if they are available in the query string.
-- admin: Eventyay is now able to run with Python 3.7 even when using Celery.
+- admin: eventyay is now able to run with Python 3.7 even when using Celery.
 - orga:review,598: Via the new review phase settings, speakers can be allowed to modify their submissions while they are being reviewed.
 - schedule,641: At the undocumented URL `/<event>/speaker/by-id/123/` there is now a redirect to the canonical speaker URL `/<event>/speaker/CODE/` to work around export format restrictions.
 - cfp,565: When using the back button to return to the previous step in the submission workflow, the data from the current step had to be filled in to use the button, but was not saved. Now it will be saved, and the progress bar on top can be used for lossy (but quick) navigation to the previous step.
@@ -570,10 +570,10 @@ Release Notes
 - api,634: The API now provides internal notes by speakers and organisers to requesting users with adequate permissions.
 - orga: Organiser can now provide a header image instead of a header colour and pattern for their events.
 - orga:schedule,640: Instead of having to scroll with the mouse wheel or arrow keys when dragging a talk in the schedule editor, you can now just drag the talk to the upper or lower edge of the window instead.
-- orga:email: In Eventyay, emails the organisers send out are now connected with user accounts if the address matches anybody, allowing organisers and speakers to see which emails were sent to a speaker. This serves both as a help for organisers and speakers, in case emails get lost, email addresses are inaccessible, or any other issues occur.
-- schedule,637: Eventyay will now display the schedule wider the more rooms are present, starting at four rooms and reaching maximum browser width for six rooms, to make schedules look less cramped and more readable.
+- orga:email: In eventyay, emails the organisers send out are now connected with user accounts if the address matches anybody, allowing organisers and speakers to see which emails were sent to a speaker. This serves both as a help for organisers and speakers, in case emails get lost, email addresses are inaccessible, or any other issues occur.
+- schedule,637: eventyay will now display the schedule wider the more rooms are present, starting at four rooms and reaching maximum browser width for six rooms, to make schedules look less cramped and more readable.
 - cfp,620: Speakers can’t invite other speakers any longer after the CfP is over.
-- admin,606: Our documentation now explains which parts of Eventyay to back up.
+- admin,606: Our documentation now explains which parts of eventyay to back up.
 - orga:schedule,486: In the schedule editor, the room names and the current date are now fixed to the top when scrolling down.
 - api,618: Fix a bug where some fields in the schedule XML export were rendered without their timezone offset (only day definitions, not the talk times).
 - orga:submission,532: Add a field for notes of the organisers for their own use which is not visible to the public and the speakers.
@@ -581,14 +581,14 @@ Release Notes
 - schedule,570: Submissions can now be scheduled multiple times, e.g. if a workshop will be held twice.
 - orga:schedule: Changing the order of rooms made the schedule break.
 - orga:review,433: Organisers can now view all reviews, except for their own submissions.
-- orga,589: Before setting a new custom domain for an event, Eventyay now checks if the domain has any DNS records.
+- orga,589: Before setting a new custom domain for an event, eventyay now checks if the domain has any DNS records.
 - cfp: A dependency of ours introduced an XSS vulnerability, which organisers could use to execute JavaScript during the CfP workflow of speakers via question texts. We have added a fix against this behaviour, and submitted a report including a patch to the upstream library. To prevent issues like this one in the future, we have moved all remaining JavaScript sources to files, and set the according CSP header, so that execution of inline JavaScript will be disabled.
 - cfp,364: Speakers can now invite a co-speaker while in the submission process.
 - schedule,62: Exporters can now opt in to show a QR code to their location. The XML and iCal exporters show a QR code linking their location by default.
 - orga:schedule,477: If you only noticed after releasing your schedule that you wanted to changes something in your speaker notifications, you can now generate those emails again from the schedule editor actions menu.
 - orga:email,479: When telling speakers about their scheduled or rescheduled slots, a hidden mail template was used instead of the actual template visible to the organiser.
 - cfp,563: For later reference, the full submission is included in the confirmation mail sent to the speaker.
-- orga:speaker,571: When adding a submission as organiser, Eventyay did not validate the speaker email address and then tried to send them an email regardless of its validity.
+- orga:speaker,571: When adding a submission as organiser, eventyay did not validate the speaker email address and then tried to send them an email regardless of its validity.
 - schedule,403: Organisers can now choose question answers by speakers to be published on the talk/speaker pages. This setting cannot be changed on once the question has been answered, to make sure that speakers are informed about this.
 - orga:review: Reviewer teams can now be restricted to one or multiple tracks. Reviewers will only see submissions and reviews from these tracks.
 - orga: Teams settings are now located exclusively at the organiser level. The navigation entry in the event sidebar will take you there directly.
@@ -598,39 +598,39 @@ Release Notes
 - orga:email,566: The Reply-To field now permits multiple email addresses.
 - orga,579: When organisers changed the event time frame, already submitted availabilities would have to be changed upon new submission.
 - cfp,577: You can now decide if text lengths should be counted in words or in characters when restricting how long they should be.
-- orga:schedule,587: Eventyay did not automatically update a talk’s duration when it was changed via the submission type or directly. It was only changed when you moved the talk in the schedule editor.
-- cfp,594: Eventyay did not display speaker availabilities during submission, even when they were required, breaking submission workflows.
-- orga:review,346: Due to the generous sponsorship of JuliaCon, Eventyay is now capable of blind reviews, i.e. making sure that reviewers cannot see speaker names.
+- orga:schedule,587: eventyay did not automatically update a talk’s duration when it was changed via the submission type or directly. It was only changed when you moved the talk in the schedule editor.
+- cfp,594: eventyay did not display speaker availabilities during submission, even when they were required, breaking submission workflows.
+- orga:review,346: Due to the generous sponsorship of JuliaCon, eventyay is now capable of blind reviews, i.e. making sure that reviewers cannot see speaker names.
 - orga: The organiser area has now additional, event specific login pages (at ``/orga/event/<slug>/login/``) which redirect by default to the event dashboard, and appear with the colour and logo of the event in question.
 - orga:review: The review settings have moved from the CfP page to their own settings page.
 - orga: You can now decide to add the ``robots=noindex`` meta tag to prevent bots from crawling your event pages.
 - dev: Plugin developers can now use the ``is_available`` hook to decide if their plugin should be shown on a per-event basis.
 - orga:speaker: Speaker without an avatar and with gravatar disabled had a broken avatar-image in the speaker’s view in the organiser backend.
 - schedule: The visual representation of a speaker’s avatar is now consistent across all image-sizes and bio-texts.
-- cfp,583: When signing up with an email address with upper case letters included, Eventyay only allowed to log in with a lower-cased email address.
+- cfp,583: When signing up with an email address with upper case letters included, eventyay only allowed to log in with a lower-cased email address.
 - orga:speaker,572: People who had only deleted submissions in an event were still shown in the submitter list, which was unexpected and was since fixed.
-- lang: If only one conference language is available, Eventyay does not as speakers to choose it from a drop-down, as this behaviour is rather silly.
-- admin: Eventyay does not run ``regenerate_css`` on startup automatically any longer. This reduces startup times. If for any reason an event does not look as it should, you can fix it by running ``python -m eventyay regenerate_css``. You will also need to execute this command on updates from now on.
+- lang: If only one conference language is available, eventyay does not as speakers to choose it from a drop-down, as this behaviour is rather silly.
+- admin: eventyay does not run ``regenerate_css`` on startup automatically any longer. This reduces startup times. If for any reason an event does not look as it should, you can fix it by running ``python -m eventyay regenerate_css``. You will also need to execute this command on updates from now on.
 - orga:schedule: You can now decide if you want to notify speakers about their changed talks when releasing a new schedule.
-- admin: To help make other Eventyay installations more secure, we have updated our proposed nginx configuration to include an attachment header for all files under /media, to prevent user uploaded data to be delivered directly to other users. If you host a Eventyay instance, please make use of this option.
-- orga: Since SVG files are nearly impossible to sanitise, Eventyay has given up trying, and will no longer accept SVG files as image uploads.
+- admin: To help make other eventyay installations more secure, we have updated our proposed nginx configuration to include an attachment header for all files under /media, to prevent user uploaded data to be delivered directly to other users. If you host a eventyay instance, please make use of this option.
+- orga: Since SVG files are nearly impossible to sanitise, eventyay has given up trying, and will no longer accept SVG files as image uploads.
 - schedule: The iCal export for speakers who had both scheduled and not-yet-scheduled talks was broken.
 - orga:speaker,559: Organisers can download a list of speakers as a CSV file.
-- admin: A couple of URLs now end in a trailing slash where they did not before – you will be automatically redirected, so you don’t have to worry about it unless you integrate Eventyay somewhere without following redirects.
+- admin: A couple of URLs now end in a trailing slash where they did not before – you will be automatically redirected, so you don’t have to worry about it unless you integrate eventyay somewhere without following redirects.
 - schedule: You can set the URL of your static HTML export, if you’re using one, and it will be used when generating absolute URLs, e.g. in exports or emails.
 - 0.9.0 <2018-12-21>:
-- -: Eventyay can now group talks in tracks. Each talk can be assigned a track (either by the submitter, or by the organiser). Tracks will be displayed in configurable colours in the public schedule. The feature is entirely optional, and you can continue using Eventyay without tracks without any problem.
-- -: We tuned Eventyay performance to be faster when showing the schedules of large conferences with several hundreds of talks.
+- -: eventyay can now group talks in tracks. Each talk can be assigned a track (either by the submitter, or by the organiser). Tracks will be displayed in configurable colours in the public schedule. The feature is entirely optional, and you can continue using eventyay without tracks without any problem.
+- -: We tuned eventyay performance to be faster when showing the schedules of large conferences with several hundreds of talks.
 - 538: The sneak peek view will only feature talks that have been accepted.
 - 440: Organisers can now follow an RSS feed to see new submissions – you’ll have to provide your authentication token in the RSS request header to authenticate.
-- -: You can now set the default Eventyay system wide time zone and locale (defaulting to ``UTC`` and English).
+- -: You can now set the default eventyay system wide time zone and locale (defaulting to ``UTC`` and English).
 - 544: Organisers could see the titles of speaker information notes of all events, not just the currently active one (they could not see the details or edit them).
 - 504: The schedule page is now better printable.
-- -: A `bug <https://github.com/celery/celery/issues/4878>` in celery could make running Eventyay with asynchronous workers impossible. We have pinned an earlier celery version that does not show this problem.
-- -: A new Eventyay plugin adds media.ccc.de as a recording provider – this plugin replaces the previously inbuilt capacity of Eventyay to provide recording iframes. (This functionality was never directly exposed and only accessible via the Eventyay shell. It is now deprecated and will be removed in a later version.)
+- -: A `bug <https://github.com/celery/celery/issues/4878>` in celery could make running eventyay with asynchronous workers impossible. We have pinned an earlier celery version that does not show this problem.
+- -: A new eventyay plugin adds media.ccc.de as a recording provider – this plugin replaces the previously inbuilt capacity of eventyay to provide recording iframes. (This functionality was never directly exposed and only accessible via the eventyay shell. It is now deprecated and will be removed in a later version.)
 - -: Plugins can now provide recording iframes (via the new ``register_recording_provider`` signal and other helpers).
-- -: The new ``nav_event_settings`` plugin signal allows plugins to integrate their own settings pages next to the Eventyay core pages.
-- -: Eventyay now presents a colour picker for your event primary colour, including a hint on colour suitability.
+- -: The new ``nav_event_settings`` plugin signal allows plugins to integrate their own settings pages next to the eventyay core pages.
+- -: eventyay now presents a colour picker for your event primary colour, including a hint on colour suitability.
 - -: The new `/api/me` endpoint shows name, email address, locale, and timezone of the logged in user.
 - -: The ``nav_event`` plugin signal has changed to expect a list instead of a dictionary response. The dictionary response will be supported for one more version, and raises a deprecation warning.
 - -: The API now provides a ``/rooms`` endpoint.
@@ -646,11 +646,11 @@ Release Notes
 - -: The ``rebuild`` command now comes with a lot more build output for ease of debugging. You can disable the build output with the new ``--silent/-s`` flag.
 - 476: Administrators can now delete both events and organisers.
 - 493: Speaker email addresses are now available via the API for users with access permissions.
-- 515: Under rare circumstances, the Eventyay database could reach a state Eventyay could not cope with due to duplicate schedule versions.
+- 515: Under rare circumstances, the eventyay database could reach a state eventyay could not cope with due to duplicate schedule versions.
 - 512: You can now configure if speakers should provide their availability during talk submission.
-- admin: Due to an updated Django version, Eventyay has dropped support for PostgreSQL 9.3 and MySQL 5.5.
+- admin: Due to an updated Django version, eventyay has dropped support for PostgreSQL 9.3 and MySQL 5.5.
 - 0.8.0 <2018-09-23>:
-- -: When a user removed a submission containing an answered choice question, Eventyay removed the selected answer option, too.
+- -: When a user removed a submission containing an answered choice question, eventyay removed the selected answer option, too.
 - 501: When a speaker held more than two talks, their related talks did not show up.
 - 505: Custom CSS may now also include media queries.
 - 500: Display of times could be off in the static HTML export.
@@ -668,13 +668,13 @@ Release Notes
 - -: The submission list now includes a graph of submissions over time.
 - -: You can now see the sneak peek / is_featured flag in the submissions and talk API endpoints.
 - -: You can now use your authentication token to access all pages you have access to, as you already could for the API. This makes integration of exports much easier.
-- admin: All manage commands available in Eventyay are now included in the documentation.
+- admin: All manage commands available in eventyay are now included in the documentation.
 - 240: When using paper cards to build a schedule, each card comes with a QR code link to a quick scheduling form for that submission.
 - -: You can now see warnings and what the public changelog will look like before releasing a new schedule.
 - 214: The schedule editor shows warnings on scheduling conflicts, including live feedback on where you can schedule a talk.
 - 474: The review dashboard now features the same search and filter options as the submission list.
 - 473: Following the revamp of team permissions, override votes were missing from the settings. We re-introduced the settings, and improved the general handling of override votes.
-- admin: Eventyay now does not support usernames any longer – as all users had to have email addresses already, you will now have to provide an email address to log in. This may confuse users – as an administrator, you can look up users’ email addresses if they don’t remember them, or change them, if necessary.
+- admin: eventyay now does not support usernames any longer – as all users had to have email addresses already, you will now have to provide an email address to log in. This may confuse users – as an administrator, you can look up users’ email addresses if they don’t remember them, or change them, if necessary.
 - -: You could make questions inactive, but not delete them.
 - 408: You can now add length restrictions to abstracts, descriptions, speaker biographies, and all text-based questions.
 - -: When linking to a talk on social media, those pages will show the talk image.
@@ -683,7 +683,7 @@ Release Notes
 - 149: Allow to order rooms manually.
 - 149: Allow to order questions manually.
 - dev: We now have tests to make sure all config options and plugin hooks are part of our documentation.
-- -: Instead of setting a flag somewhere, Eventyay now has an explicit "go live" button. Plugins can listen to the corresponding signal (please refer to the plugin documentation for further information).
+- -: Instead of setting a flag somewhere, eventyay now has an explicit "go live" button. Plugins can listen to the corresponding signal (please refer to the plugin documentation for further information).
 - 463: Don’t show a 404 error if a reviewer tries to review their own submission, but show an error message instead.
 - -: For organisers, the submission/talk API endpoints now contain the question answers given by the speakers.
 - -: Schedules now contain a search bar to filter talks by title or speaker.
@@ -691,13 +691,13 @@ Release Notes
 - -: Allow organisers to configure which of the default CfP fields to request and require. Please check your settings after updating, as the migration is not guaranteed to work as expected.
 - -: Prevent organisers from adding a non-localhost mail server without transport level security to make sure our Privacy Policy holds true.
 - 415: Allow organisers to trigger a password reset for team members.
-- 451: Don’t crash during ``Eventyay init`` if no conference organiser slug is present.
+- 451: Don’t crash during ``eventyay init`` if no conference organiser slug is present.
 - 0.7.1 <2018-06-19>:
-- -: The new read-only links for submissions received the same secret token when migrating the database. Eventyay leaked no data, as this made using the read-only links impossible. When upgrading to the next release, all read-only link addresses will be reset.
+- -: The new read-only links for submissions received the same secret token when migrating the database. eventyay leaked no data, as this made using the read-only links impossible. When upgrading to the next release, all read-only link addresses will be reset.
 - -: A one-character-oversight led to issues with the new navigation search with certain user permissions.
 - 0.7.0 <2018-06-19>:
 - 430: To maintain compatibility with frab XML exports, the schedule XML export now contains a ``<url>`` tag.
-- -: When trying to register a user with a nick that already existed in a different capitalisation, Eventyay failed to show a clear error message.
+- -: When trying to register a user with a nick that already existed in a different capitalisation, eventyay failed to show a clear error message.
 - 128: An event’s schedule is now available even if the browser has no internet connection, provided it has opened the schedule before.
 - admin: Provide better upgrade documentation for administrators.
 - -: Add clever release notes.
@@ -720,20 +720,20 @@ Release Notes
 - -: The "Copy to draft" button was missing when viewing a sent email.
 - 431: Accepted, but unconfirmed talks showed up as "Other talks" on the public schedule once the speaker had confirmed one talk.
 - 0.6.0 <2018-05-06>:
-- -: New plugin hook: ``Eventyay.submission.signals.submission_state_change`` will trigger on any state change by a submission.
-- -: The frab compatible XML now uses UUIDs, and includes an XML comment with a Eventyay version string.
-- -: Eventyay has a better general look and feel and colour scheme.
+- -: New plugin hook: ``eventyay.submission.signals.submission_state_change`` will trigger on any state change by a submission.
+- -: The frab compatible XML now uses UUIDs, and includes an XML comment with a eventyay version string.
+- -: eventyay has a better general look and feel and colour scheme.
 - -: Organisers can make more changes to speaker profiles and submissions to ease event administration.
-- -: Eventyay now has a concept of organisers and teams.
+- -: eventyay now has a concept of organisers and teams.
 - -: To avoid running into issues when uploading custom CSS, and ensuring smooth operations, custom colours and CSS is not used in the organiser area anymore.
 - -: You can now send mails from templates and use shortcuts from submissions to send mails to specific speakers.
 - -: Since different events have different needs, organisers can now choose if speakers have to provide submission abstracts, descriptions, and speaker biographies during the CfP.
 - 375: Speakers could see their submission in the organiser backend, but could access no information they did not put there themselves.
 - -: The API showed talks to organisers if no schedule was present yet. It did not show the information to unauthorised users.
 - -: There was no possibility to reset a user’s API token.
-- -: If an organiser changed a speaker’s email address, they could assign an address already in use in the Eventyay instance, resulting in buggy behaviour all around.
+- -: If an organiser changed a speaker’s email address, they could assign an address already in use in the eventyay instance, resulting in buggy behaviour all around.
 - 0.5.0 <2018-03-07>:
-- -: Eventyay now features a Plugin API, allowing to install custom plugins. Plugins can add their own exporters, and hook into plugin hooks. You can enable or disable plugins per event. You can find the plugin developer documentation :ref:`here<plugin-index>`.
+- -: eventyay now features a Plugin API, allowing to install custom plugins. Plugins can add their own exporters, and hook into plugin hooks. You can enable or disable plugins per event. You can find the plugin developer documentation :ref:`here<plugin-index>`.
 - 340: Organisers can now decide if reviewers should have to submit a score or a text with their review.
 - 93: Organisers can provide room-based information for speakers, and send it automatically in the emails about talk scheduling.
 - 318: The list of submissions is now better searchable.
@@ -764,8 +764,8 @@ Release Notes
 - -: You can choose a pattern for the header hero strip in your event colour.
 - 320: You can now choose different deadlines per submission type, overriding the default deadline.
 - 325: All forms are instantly editable if you have edit permissions, and disabled otherwise. No more need to click "Edit"!
-- -: The schedule export could change project settings, requiring Eventyay restart to reset the settings. Turning "Generate HTML export on schedule release" off was a workaround for this bug.
-- 259: When running Eventyay as (in-application) superuser, permission issues could arise. Eventyay now warns and offers to migrate the account to an administrator account.
+- -: The schedule export could change project settings, requiring eventyay restart to reset the settings. Turning "Generate HTML export on schedule release" off was a workaround for this bug.
+- 259: When running eventyay as (in-application) superuser, permission issues could arise. eventyay now warns and offers to migrate the account to an administrator account.
 - -: Frontend password validation was non-functional, and never displayed interactive password statistics. This was a display issue.
 - 327: We removed the unused `max_duration` property of submission types.
 - 329: Users always saw the default submission type instead of their chosen one.
@@ -781,7 +781,7 @@ Release Notes
 - -: Non-superusers could not access the email sending form.
 - -: More than one event stage could be visible as active.
 - -: If a user without active log-in looked at entered submissions, they triggered a server error instead of a 404.
-- -: If notifications about new submissions were active, Eventyay sent the mails to the submitter instead of the organiser.
+- -: If notifications about new submissions were active, eventyay sent the mails to the submitter instead of the organiser.
 - 0.2.2 <2017-12-11>:
 - -: Reviewers could not view speaker pages.
 - -: Inviting somebody twice did not issue a second invitation object.
@@ -799,11 +799,11 @@ Release Notes
 - -: The default value for email SSL usage is now ``False``, permitting the default configuration of ``localhost:25`` to work on more machines out of the box.
 - 159: E-mails are now sent with a multipart/HTML version, featuring the mail’s text in a box, styled with the event’s primary colour.
 - 126: You can now choose to hide the public schedule (including talk pages and speaker pages, but excluding feedback pages and the schedule XML export)
-- 215: Eventyay validates mail template placeholders, and prevents organisers from saving templates including invalid placeholders.
+- 215: eventyay validates mail template placeholders, and prevents organisers from saving templates including invalid placeholders.
 - 208: You can now ask questions that take an uploaded file as an answer.
 - 209: Speakers can now upload files which will be visible on their talk page.
 - 210:, 195: The review interface has been rewritten to include fewer pages with more information relevant to the user, dependent on event stages and their role in the event.
-- 38: Eventyay can now run with celery (an asynchronous task scheduler) for long running tasks and tasks like email sending. The new config section is part of our documentation.
+- 38: eventyay can now run with celery (an asynchronous task scheduler) for long running tasks and tasks like email sending. The new config section is part of our documentation.
 - -: The new ``rebuild`` command will recompile all static assets.
 - 207: Question answers now receive a nice evaluation, aggregating all given answers.
 - 233: Organisers can mark questions as “answers contain personal data”. When users delete their accounts, they also delete answers of these questions.
@@ -811,8 +811,8 @@ Release Notes
 - 171: You can now configure a custom domain to use with your event, in case you have an event specific domain for each of your events.
 - 156: You can assign "override votes" to reviewers, which function like vetoes (both positive and negative), on an individual basis.
 - -: The new read-only REST API supports resources for events and submissions.
-- 304: Eventyay crashed with incorrect invite keys, now it shows a 404 page.
-- -: When building absolute URLs for exports, emails, and RSS feeds, Eventyay used “localhost” instead of the actual configured URL.
+- 304: eventyay crashed with incorrect invite keys, now it shows a 404 page.
+- -: When building absolute URLs for exports, emails, and RSS feeds, eventyay used “localhost” instead of the actual configured URL.
 - -: If a user was both an organiser member and a reviewer, they could encounter access rights issues.
 - -: When removing the custom event colour, and then adding it again, caching issues could occur.
 - -: Inactive questions (questions not visible to speakers) were not editable.

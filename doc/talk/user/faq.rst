@@ -4,7 +4,7 @@ FAQ
 ===
 
 This document collects issues that came up in the past, and that cannot be
-solved in Eventyay with a reasonable amount of effort or time.
+solved in eventyay with a reasonable amount of effort or time.
 
 Sessions
 --------
@@ -36,11 +36,11 @@ Schedule
 --------
 
 How can I export my schedule to PDF / print my schedule?
-    Eventyay does not currently offer a PDF export of the schedule, because of the level of complexity
+    eventyay does not currently offer a PDF export of the schedule, because of the level of complexity
     that comes with printing a schedule with an arbitrary amount of rooms.
-    However, the schedule editor page has print support, hiding the usual Eventyay UI elements like the
+    However, the schedule editor page has print support, hiding the usual eventyay UI elements like the
     menu sidebar. Combined with the schedule editor’s support for hiding rooms, this is the best PDF
-    version of the schedule Eventyay offers. To use it, navigate to your schedule editor, select your
+    version of the schedule eventyay offers. To use it, navigate to your schedule editor, select your
     browser’s print dialogue, and then select “Print to PDF”.
 
 
@@ -48,7 +48,7 @@ Email
 -----
 
 We run into issues when using Gmail.
-    In Google’s eyes, Eventyay is a `less secure app`_, which you’ll have to
+    In Google’s eyes, eventyay is a `less secure app`_, which you’ll have to
     grant special access. Even then, Gmail is known to unexpectedly block your
     SMTP connection with unhelpful error messages if you use it to send out too
     many emails in bulk (e.g. all rejections for a conference) even on GSuite,
@@ -58,12 +58,12 @@ We run into issues when using Gmail.
 Integrations
 ------------
 
-How do we create speaker tickets with Eventyay?
-    As there is no direct integration between Eventyay and Eventyay yet (some details
-    here `on GitHub`_), the best way to send Eventyay vouchers to all your Eventyay
-    speakers is to use the Eventyay CSV export.
+How do we create speaker tickets with eventyay?
+    As there is no direct integration between eventyay and eventyay yet (some details
+    here `on GitHub`_), the best way to send eventyay vouchers to all your eventyay
+    speakers is to use the eventyay CSV export.
     Select all accepted and confirmed speakers, and export the name and email
-    field. You can then use the bulk voucher form in Eventyay with the exported
+    field. You can then use the bulk voucher form in eventyay with the exported
     CSV file directly – you can find more information on the bulk voucher
     sending workflow in the `eventyay documentation`_.
 

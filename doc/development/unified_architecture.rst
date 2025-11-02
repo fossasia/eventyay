@@ -1,6 +1,6 @@
 .. _unified_architecture:
 
-Unified Eventyay Architecture
+Unified eventyay Architecture
 =============================
 
 Overview
@@ -152,7 +152,7 @@ Eventyay supports plugins that can extend all components:
         class EventyayPluginMeta:
             name = 'My Plugin'
             category = 'FEATURE'
-            description = 'Extends Eventyay functionality'
+            description = 'Extends eventyay functionality'
 
 Plugins can:
 

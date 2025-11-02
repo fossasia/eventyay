@@ -1,10 +1,10 @@
 .. highlight:: none
 
-Installing Eventyay Enterprise plugins
+Installing eventyay Enterprise plugins
 ======================================
 
-If you want to use a feature of Eventyay that is part of our commercial offering Eventyay Enterprise, you need to follow
-some extra steps. Installation works similar to normal Eventyay plugins, but involves a few extra steps.
+If you want to use a feature of eventyay that is part of our commercial offering eventyay Enterprise, you need to follow
+some extra steps. Installation works similar to normal eventyay plugins, but involves a few extra steps.
 
 Buying the license
 ------------------
@@ -17,10 +17,10 @@ first.
 Manual installation
 -------------------
 
-First, generate an SSH key for the system user that you install Eventyay as. In our tutorial, that would be the user
-``Eventyay``. Choose an empty passphrase::
+First, generate an SSH key for the system user that you install eventyay as. In our tutorial, that would be the user
+``eventyay``. Choose an empty passphrase::
 
-    # su Eventyay
+    # su eventyay
     $ ssh-keygen
     Generating public/private rsa key pair.
     Enter file in which to save the key (/var/eventyay/.ssh/id_rsa):
@@ -29,19 +29,19 @@ First, generate an SSH key for the system user that you install Eventyay as. In 
     Your identification has been saved in /var/eventyay/.ssh/id_rsa.
     Your public key has been saved in /var/eventyay/.ssh/id_rsa.pub.
 
-Next, send the content of the *public* key to your sales representative at Eventyay::
+Next, send the content of the *public* key to your sales representative at eventyay::
 
     $ cat /var/eventyay/.ssh/id_rsa.pub
-    ssh-rsa AAAAB3N...744HZawHlD Eventyay@foo
+    ssh-rsa AAAAB3N...744HZawHlD eventyay@foo
 
 After we configured your key in our system, you can install the plugin directly using ``pip`` from the URL we told
 you, for example::
 
     $ source /var/eventyay/venv/bin/activate
-    (venv)$ pip3 install -U "git+ssh://git@code.rami.io:10022/Eventyay/Eventyay-slack.git@stable#egg=Eventyay-slack"
-    (venv)$ python -m Eventyay migrate
-    (venv)$ python -m Eventyay rebuild
-    # systemctl restart Eventyay-web Eventyay-worker
+    (venv)$ pip3 install -U "git+ssh://git@code.rami.io:10022/eventyay/eventyay-slack.git@stable#egg=eventyay-slack"
+    (venv)$ python -m eventyay migrate
+    (venv)$ python -m eventyay rebuild
+    # systemctl restart eventyay-web eventyay-worker
 
 Docker installation
 -------------------
@@ -52,10 +52,10 @@ step, generate a new SSH key in that directory to use for authentication with us
     $ cd /home/me/mypretixdocker
     $ ssh-keygen -N "" -f id_eventyay_enterprise
 
-Next, send the content of the *public* key to your sales representative at Eventyay::
+Next, send the content of the *public* key to your sales representative at eventyay::
 
     $ cat id_eventyay_enterprise.pub
-    ssh-rsa AAAAB3N...744HZawHlD Eventyay@foo
+    ssh-rsa AAAAB3N...744HZawHlD eventyay@foo
 
 After we configured your key in our system, you can add a ``Dockerfile`` in your directory that includes the newly
 generated key and installs the plugin from the URL we told you::
@@ -68,8 +68,8 @@ generated key and installs the plugin from the URL we told you::
         mkdir -p /etc/ssh && \
         ssh-keyscan -t rsa -p 10022 code.rami.io >> /root/.ssh/known_hosts && \
         echo StrictHostKeyChecking=no >> /root/.ssh/config && \
-        DJANGO_SETTINGS_MODULE=Eventyay.settings pip3 install -U "git+ssh://git@code.rami.io:10022/Eventyay/Eventyay-slack.git@stable#egg=Eventyay-slack" && \
-        cd /Eventyay/src && \
+        DJANGO_SETTINGS_MODULE=eventyay.settings pip3 install -U "git+ssh://git@code.rami.io:10022/eventyay/eventyay-slack.git@stable#egg=eventyay-slack" && \
+        cd /eventyay/src && \
         sudo -u pretixuser make production
     USER pretixuser
 
@@ -77,8 +77,8 @@ Then, build the image for docker::
 
     $ docker build -t mypretix
 
-You can now use that image ``mypretix`` instead of ``fossasia/eventyay-tickets:stable`` in your ``/etc/systemd/system/Eventyay.service``
+You can now use that image ``mypretix`` instead of ``fossasia/eventyay-tickets:stable`` in your ``/etc/systemd/system/eventyay.service``
 service file. Be sure to re-build your custom image after you pulled ``fossasia/eventyay-tickets`` if you want to perform an
-update to a new version of Eventyay.
+update to a new version of eventyay.
 
 .. _price list: https://eventyay.com/about/en/pricing

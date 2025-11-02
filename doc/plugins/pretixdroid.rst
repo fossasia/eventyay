@@ -1,10 +1,10 @@
 Eventyaydroid HTTP API
 ======================
 
-The Eventyaydroid plugin provides a HTTP API that the `Eventyaydroid Android app`_
-uses to communicate with the Eventyay server.
+The eventyaydroid plugin provides a HTTP API that the `eventyaydroid Android app`_
+uses to communicate with the eventyay server.
 
-.. warning:: This API is **DEPRECATED** and will probably go away soon. It is used **only** to serve the Eventyaydroid
+.. warning:: This API is **DEPRECATED** and will probably go away soon. It is used **only** to serve the eventyaydroid
              Android app. There are no backwards compatibility guarantees on this API. We will not add features that
              are not required for the  Android App. There is a general-purpose :ref:`rest-api` that provides all
              features that you need to check in.

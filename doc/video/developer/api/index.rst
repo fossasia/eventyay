@@ -1,10 +1,10 @@
 Internal API
 ============
 
-In this chapter, we document the **internal API** of Eventyay. This is the API used to communicate between our
+In this chapter, we document the **internal API** of eventyay. This is the API used to communicate between our
 frontend web application and the server-side component.
 
-We do not consider this API to be stable in any way and it may change between different versions of Eventyay
+We do not consider this API to be stable in any way and it may change between different versions of eventyay
 without warning.
 
 .. toctree::

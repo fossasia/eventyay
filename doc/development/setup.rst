@@ -3,9 +3,9 @@
 Development setup
 =================
 
-This tutorial helps you to get started hacking with Eventyay on your own computer. You need this to
-be able to contribute to Eventyay, but it might also be helpful if you want to write your own plugins.
-If you want to install Eventyay on a server for actual usage, go to the :ref:`admindocs` instead.
+This tutorial helps you to get started hacking with eventyay on your own computer. You need this to
+be able to contribute to eventyay, but it might also be helpful if you want to write your own plugins.
+If you want to install eventyay on a server for actual usage, go to the :ref:`admindocs` instead.
 
 Obtain a copy of the source code
 --------------------------------
@@ -44,7 +44,7 @@ environment and activate it for your current session::
     source env/bin/activate
 
 You should now see a ``(env)`` prepended to your shell prompt. You have to do this
-in every shell you use to work with Eventyay (or configure your shell to do so
+in every shell you use to work with eventyay (or configure your shell to do so
 automatically). If you are working on Ubuntu or Debian, we strongly recommend upgrading
 your pip and setuptools installation inside the virtual environment, otherwise some of
 the dependencies might fail::
@@ -76,7 +76,7 @@ You will also need to install a few JavaScript dependencies::
 
     make npminstall
 
-If you want to see Eventyay in a different language than English, you have to compile our language
+If you want to see eventyay in a different language than English, you have to compile our language
 files::
 
     make localecompile
@@ -93,7 +93,7 @@ As we did not implement an overall front page yet, you need to go directly to
 http://localhost:8000/control/ for the admin view.
 
 .. note:: If you want the development server to listen on a different interface or
-          port (for example because you develop on the Eventyaydroid Android app), you can check
+          port (for example because you develop on the eventyaydroid Android app), you can check
           `Django's documentation`_ for more options.
 
 .. _`checksandtests`:
@@ -101,7 +101,7 @@ http://localhost:8000/control/ for the admin view.
 Code checks and unit tests
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 Before you check in your code into git, always run static checkers and linters. If any of these commands fail,
-your pull request will not be merged into Eventyay. If you have trouble figuring out *why* they fail, create your
+your pull request will not be merged into eventyay. If you have trouble figuring out *why* they fail, create your
 pull request nevertheless and ask us for help, we are happy to assist you.
 
 Execute the following commands to check for code style errors::
@@ -110,7 +110,7 @@ Execute the following commands to check for code style errors::
     isort -c .
     python manage.py check
 
-Execute the following command to run Eventyay' test suite (might take a couple of minutes)::
+Execute the following command to run eventyay' test suite (might take a couple of minutes)::
 
     py.test
 
@@ -140,10 +140,10 @@ This keeps you from accidentally creating commits violating the style guide.
 Working with mails
 ^^^^^^^^^^^^^^^^^^
 If you want to test anything regarding emails in your development setup, we recommend
-starting Python's debugging SMTP server in a separate shell and configuring Eventyay to use it.
+starting Python's debugging SMTP server in a separate shell and configuring eventyay to use it.
 Every email will then be printed to the debugging SMTP server's stdout.
 
-Add this to your ``src/Eventyay.cfg``::
+Add this to your ``src/eventyay.cfg``::
 
     [mail]
     port = 1025
@@ -162,7 +162,7 @@ However, most of the time you don't need to care about this. Just create your pu
 with functionality and English strings only, and we'll push the new translation strings
 to our translation platform after the merge.
 
-To actually see Eventyay in your language, you have to compile the ``*.po`` files to their
+To actually see eventyay in your language, you have to compile the ``*.po`` files to their
 optimized binary ``*.mo`` counterparts::
 
     make localecompile

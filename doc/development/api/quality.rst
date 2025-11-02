@@ -6,7 +6,7 @@
 Plugin quality checklist
 ========================
 
-If you want to write a high-quality Eventyay plugin, this is a list of things you should check before
+If you want to write a high-quality eventyay plugin, this is a list of things you should check before
 you publish it. This is also a list of things that we check, if we consider installing an externally
 developed plugin on our hosted infrastructure.
 
@@ -18,7 +18,7 @@ A. Meta
 #. The plugin has an unambiguous name, description, and author metadata.
 
 #. The plugin has a clear versioning scheme and the latest version of the plugin is kept compatible to the latest
-   stable version of Eventyay.
+   stable version of eventyay.
 
 #. The plugin is properly packaged using standard Python packaging tools.
 
@@ -56,9 +56,9 @@ C. Security
 
 #. If the plugin is a payment provider:
 
-  #. No credit card numbers may be stored within Eventyay.
+  #. No credit card numbers may be stored within eventyay.
 
-  #. A notification/webhook system is implemented to notify Eventyay of any refunds.
+  #. A notification/webhook system is implemented to notify eventyay of any refunds.
 
   #. If such a webhook system is implemented, contents of incoming webhooks are either verified using a cryptographic
      signature or are not being trusted and all data is fetched from an API instead.
@@ -96,7 +96,7 @@ F. Functionality
 
     #. In case of overpayment or external refunds, a "required action" is created to notify the event organizer.
 
-#. If the plugin adds steps to the checkout process, it has been tested in combination with the Eventyay widget.
+#. If the plugin adds steps to the checkout process, it has been tested in combination with the eventyay widget.
 
 G. Code quality
 ---------------

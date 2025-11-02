@@ -4,7 +4,7 @@
 Features & Integrations
 =======================
 
-This section documents the advanced features and integrations in the unified Eventyay system.
+This section documents the advanced features and integrations in the unified eventyay system.
 
 Live Features (Video Component)
 -------------------------------

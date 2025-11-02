@@ -6,13 +6,13 @@
 Extending the order import process
 ==================================
 
-It's possible through the backend to import orders into Eventyay, for example from a legacy ticketing system. If your
+It's possible through the backend to import orders into eventyay, for example from a legacy ticketing system. If your
 plugins defines additional data structures around orders, it might be useful to make it possible to import them as well.
 
 Import process
 --------------
 
-Here's a short description of Eventyay' import process to show you where the system will need to interact with your plugin.
+Here's a short description of eventyay' import process to show you where the system will need to interact with your plugin.
 You can find more detailed descriptions of the attributes and methods further below.
 
 1. The user uploads a CSV file. The system tries to parse the CSV file and understand its column headers.

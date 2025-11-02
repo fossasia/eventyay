@@ -3,7 +3,7 @@
 Sessions & Proposals
 ====================
 
-In Eventyay, sessions (also called proposals) contain the content of your event
+In eventyay, sessions (also called proposals) contain the content of your event
 – the talks, workshops, and other programming items that make up your schedule.
 
 .. note::
@@ -28,7 +28,7 @@ Session Lifecycle
 -----------------
 
 Sessions go through several states during their lifecycle, and these states and
-their transitions are a key part of Eventyay.
+their transitions are a key part of eventyay.
 
 Submitted
 ^^^^^^^^^
@@ -153,8 +153,8 @@ Session Types define the format and default duration of sessions. Common example
 Session types make scheduling easier for you, because you can just drag blocks of the correct duration onto the schedule.
 You can always override the duration of a session individually, but offering these categories can help the submitter communicate their intended format from the beginning.
 
-If you don’t want to use session types, just don’t create any beyond the default one that Eventyay creates for you.
-If there is only a single session type, Eventyay will not show the session type selection field at all.
+If you don’t want to use session types, just don’t create any beyond the default one that eventyay creates for you.
+If there is only a single session type, eventyay will not show the session type selection field at all.
 
 Tags
 ^^^^
@@ -178,7 +178,7 @@ If a session is submitted through the CfP, the submitting user is automatically 
 Organisers can add or remove speakers at any time.
 You can do so from the „Speakers“ tab on the session detail page.
 If you add a new speaker to a session, they will receive an email notification.
-The notification will be based on the email template „Add a speaker to a proposal (existing account)“ if the email address is already known to Eventyay, and on the template „Add a speaker to a proposal (new account)“ if the email address is not yet known.
+The notification will be based on the email template „Add a speaker to a proposal (existing account)“ if the email address is already known to eventyay, and on the template „Add a speaker to a proposal (new account)“ if the email address is not yet known.
 If the speaker does not have an account yet, their email will contain a link where they can set their account password.
 
 Interaction & Communication

@@ -4,7 +4,7 @@
 Writing an exporter plugin
 ==========================
 
-An Exporter is a method to export the product and order data in Eventyay for later use in another
+An Exporter is a method to export the product and order data in eventyay for later use in another
 program.
 
 In this document, we will walk through the creation of an exporter output plugin step by step.

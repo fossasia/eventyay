@@ -160,7 +160,7 @@ First, define your URL in your ``urls.py``, but this time in the ``event_pattern
 
 .. code-block:: python
 
-    from Eventyay.multidomain import event_url
+    from eventyay.multidomain import event_url
 
     from . import views
 
@@ -192,7 +192,7 @@ Our REST API is built upon `Django REST Framework`_ (DRF). DRF has two important
 standard Django request handling: There are `ViewSets`_ to group related views in a single class and `Routers`_ to
 automatically build URL configurations from them.
 
-To integrate a custom viewset with Eventyay' REST API, you can just register with one of our routers within the
+To integrate a custom viewset with eventyay' REST API, you can just register with one of our routers within the
 ``urls.py`` module of your plugin:
 
 .. code-block:: python
@@ -231,7 +231,7 @@ following:
         ...
 
 
-.. warning:: It is important that you do this in the ``yourplugin.urls`` module, otherwise Eventyay will not find your
+.. warning:: It is important that you do this in the ``yourplugin.urls`` module, otherwise eventyay will not find your
              routes early enough during system startup.
 
 .. _Django REST Framework: http://www.django-rest-framework.org/

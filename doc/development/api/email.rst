@@ -4,7 +4,7 @@
 Writing an HTML e-mail renderer plugin
 ======================================
 
-An email renderer class controls how the HTML part of e-mails sent by Eventyay is built.
+An email renderer class controls how the HTML part of e-mails sent by eventyay is built.
 The creation of such a plugin is very similar to creating an export output.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven't already.
@@ -81,7 +81,7 @@ The renderer class
 Helper class for template-base renderers
 ----------------------------------------
 
-The email renderer that ships with Eventyay is based on Django templates to generate HTML.
+The email renderer that ships with eventyay is based on Django templates to generate HTML.
 In case you also want to render emails based on a template, we provided a ready-made base
 class ``TemplateBasedMailRenderer`` that you can re-use to perform the following steps:
 

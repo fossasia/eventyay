@@ -4,12 +4,12 @@ Working with URLs
 =================
 
 As soon as you write a plugin that provides a new view to the user (or if you want to
-contribute to Eventyay itself), you need to understand how URLs work in Eventyay as it differs
+contribute to eventyay itself), you need to understand how URLs work in eventyay as it differs
 slightly from the standard Django system.
 
-The reason for the complicated URL handling is that Eventyay supports custom subdomains for
+The reason for the complicated URL handling is that eventyay supports custom subdomains for
 single organizers. In this example we will use an event organizer with the slug ``bigorg``
-that manages an awesome conference with the slug ``awesomecon``. If Eventyay is installed
+that manages an awesome conference with the slug ``awesomecon``. If eventyay is installed
 on eventyay.com, this event is available by default at ``https://eventyay.com/bigorg/awesomecon/``
 and the admin panel is available at ``https://eventyay.com/control/event/bigorg/awesomecon/``.
 
@@ -24,8 +24,8 @@ URL routing
 The hard part about implementing this URL routing in Django is that
 ``https://eventyay.com/bigorg/awesomecon/`` contains two parameters of nearly arbitrary content
 and ``https://tickets.bigorg.com/awesomecon/`` contains only one. The only robust way to do
-this is by having *separate* URL configuration for those two cases. In Eventyay, we call the
-former our ``maindomain`` config and the latter our ``subdomain`` config. For Eventyay's core
+this is by having *separate* URL configuration for those two cases. In eventyay, we call the
+former our ``maindomain`` config and the latter our ``subdomain`` config. For eventyay's core
 modules we do some magic to avoid duplicate configuration, but for a fairly simple plugin with
 only a handful of routes, we recommend just configuring the two URL sets separately.
 
@@ -59,14 +59,14 @@ If you only provide URLs in the admin area, you do not need to provide a ``event
 URL reversal
 ------------
 
-Eventyay uses Django's URL namespacing feature. The URLs of Eventyay's core are available in the ``control``
+Eventyay uses Django's URL namespacing feature. The URLs of eventyay's core are available in the ``control``
 and ``presale`` namespaces, there are only very few URLs in the root namespace. Your plugin's URLs will
 be available in the ``plugins:<applabel>`` namespace, e.g. the form of the email sending plugin is
 available as ``plugins:sendmail:send``.
 
 Generating a URL for the frontend is a complicated task, because you need to know whether the event's
 organizer uses a custom URL or not and then generate the URL with a different domain and different
-arguments based on this information. Eventyay provides some helpers to make this easier. The first helper
+arguments based on this information. eventyay provides some helpers to make this easier. The first helper
 is a python method that emulates a behavior similar to ``reverse``:
 
 .. autofunction:: eventyay.multidomain.urlreverse.eventreverse

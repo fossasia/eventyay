@@ -202,4 +202,4 @@ Endpoints
    :statuscode 403: The requested organizer does not exist **or** you have no permission to delete this resource **or** the plan is currently in use.
 
 
-.. _here: https://github.com/fossasia/eventyay/blob/master/app/Eventyay/static/seating/seating-plan.schema.json
+.. _here: https://github.com/fossasia/eventyay/blob/master/app/eventyay/static/seating/seating-plan.schema.json

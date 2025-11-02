@@ -1,16 +1,16 @@
 Additional database indices
 ===========================
 
-If you have a large Eventyay database, some features such as search for orders or events might turn pretty slow.
+If you have a large eventyay database, some features such as search for orders or events might turn pretty slow.
 For PostgreSQL, we have compiled a list of additional database indexes that you can add to speed things up.
 Just like any index, they in turn make write operations insignificantly slower and cause the database to use
 more disk space.
 
-The indexes aren't automatically created by Eventyay since Django does not allow us to do so only on PostgreSQL
+The indexes aren't automatically created by eventyay since Django does not allow us to do so only on PostgreSQL
 (and they won't work on other databases). Also, they're really not necessary if you're not having tens of
 thousands of records in your database.
 
-However, this also means they won't automatically adapt if some of the referred fields change in future updates of Eventyay
+However, this also means they won't automatically adapt if some of the referred fields change in future updates of eventyay
 and you might need to re-check this page and change them manually.
 
 Here is the currently recommended set of commands::
@@ -66,7 +66,7 @@ Here is the currently recommended set of commands::
         ON public.eventyaybase_voucher (upper((code)::text));
 
 
-Also, if you use our ``Eventyay-shipping`` plugin::
+Also, if you use our ``eventyay-shipping`` plugin::
 
     CREATE INDEX CONCURRENTLY eventyay_addidx_sa_name
         ON eventyay_shipping_shippingaddress

@@ -4,7 +4,7 @@
 Component Modules
 =================
 
-Documentation for the main component modules in the unified Eventyay system.
+Documentation for the main component modules in the unified eventyay system.
 
 Tickets Component (Presale)
 ---------------------------

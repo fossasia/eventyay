@@ -2,8 +2,8 @@ Management commands
 ===================
 
 Eventyay comes with commands that you can execute from the command line. Run
-them in the same environment you installed Eventyay in. If you followed the
-installation guide, you should run them as the ``Eventyay`` user, and either
+them in the same environment you installed eventyay in. If you followed the
+installation guide, you should run them as the ``eventyay`` user, and either
 use the ``/var/pretax/venv/bin/python`` executable, or activate the virtual
 environment by running ``source /var/eventyay/venv/bin/activate``.
 
@@ -14,7 +14,7 @@ All commands are run with the ``python -m eventyay`` prefix::
   python -m eventyay <command> [<flags>] [<options>]
 
 You can add the ``--no-Eventyay-information`` flag to any of these commands
-to suppress the printing of the Eventyay debug startup header.
+to suppress the printing of the eventyay debug startup header.
 
 Database commands
 -----------------
@@ -22,11 +22,11 @@ Database commands
 ``migrate``
 ~~~~~~~~~~~
 
-The ``migrate`` command updates the database tables to conform to what Eventyay
+The ``migrate`` command updates the database tables to conform to what eventyay
 expects. Please execute it once upon installation and then on every update. As
 ``migrate`` touches the database, you should have a backup of the state before
 the command run.
-Running ``migrate`` if Eventyay has no pending database changes  is harmless. It
+Running ``migrate`` if eventyay has no pending database changes  is harmless. It
 will result in no changes to the database.
 
 If migrations touch upon large populated tables, they may run for some time.
@@ -37,7 +37,7 @@ behaviour.
 ~~~~~~~~~~~~~~~~~~
 
 If you ran into trouble during ``migrate``, run ``showmigrations``. It will
-show you the current state of all Eventyay migrations. It may be useful debug
+show you the current state of all eventyay migrations. It may be useful debug
 output to include in bug reports about database problems.
 
 ``clearsessions``
@@ -53,7 +53,7 @@ Debug commands
 ``shell``
 ~~~~~~~~~
 
-The ``shell`` command opens a Python shell with the Eventyay configuration and
+The ``shell`` command opens a Python shell with the eventyay configuration and
 environment. If you have ``ipython`` installed, an IPython shell will open,
 though you can change to plain Python with ``-i python``.
 Eventyay models will be imported automatically.
@@ -79,13 +79,13 @@ passwords, so sanitise it before pasting it anywhere.
 .. highlight:: python
 
 If you don’t want to install a library for debugging, you can run these
-commands in the Eventyay ``shell`` command::
+commands in the eventyay ``shell`` command::
 
     >>> from django.conf import settings
     >>> from pprint import pprint
     >>> pprint(settings.__dict__)
 
-Core Eventyay commands
+Core eventyay commands
 ----------------------
 
 ``rebuild``
@@ -106,7 +106,7 @@ install`` can take a long time.
 ~~~~~~~~
 
 The ``init`` command allows you to create a superuser and an organiser. It is
-useful to give you all the tools to start configuring Eventyay in the web
+useful to give you all the tools to start configuring eventyay in the web
 interface. Please run this command once in the beginning. You can abort the
 command at any time, and it will not write anything to the database.
 
@@ -184,14 +184,14 @@ Eventyay development (:ref:`developer-translations`).
 ~~~~~~~~~~~~~~~~~~
 
 This command generates new migration files for database changed. It should ONLY
-be used during Eventyay development, even if you are running a custom
-installation, or if the console output of Eventyay tells you to run it in case
+be used during eventyay development, even if you are running a custom
+installation, or if the console output of eventyay tells you to run it in case
 of changes to database models.
 
 ``create_social_apps``
 ~~~~~~~~~~~~~~~~~~~~~~
-This command is used to create SocialApp entries for Eventyay Provider
+This command is used to create SocialApp entries for eventyay Provider
 
 ``sync_customer_account``
 ~~~~~~~~~~~~~~~~~~~~~~~~~
-This command is used to sync customer accounts from Eventyay
+This command is used to sync customer accounts from eventyay

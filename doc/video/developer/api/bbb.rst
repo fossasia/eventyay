@@ -1,7 +1,7 @@
 BigBlueButton module
 ====================
 
-To enable video calls, we integrate the BigBlueButton (BBB) software. Eventyay implements simple load balancing across
+To enable video calls, we integrate the BigBlueButton (BBB) software. eventyay implements simple load balancing across
 multiple BBB servers, which is why the frontend always needs to convert a room or call ID into an actual meeting
 URL explicitly.
 

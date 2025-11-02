@@ -64,7 +64,7 @@ The renderer class
 Helper class for reportlab-base renderers
 -----------------------------------------
 
-All PDF rendering that ships with Eventyay is based on reportlab. We recommend to read the
+All PDF rendering that ships with eventyay is based on reportlab. We recommend to read the
 `reportlab User Guide`_ to understand all the concepts used here.
 
 If you want to implement a renderer that also uses report lab, this helper class might be

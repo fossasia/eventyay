@@ -6,7 +6,7 @@
 Writing a data shredder
 =======================
 
-If your plugin adds the ability to store personal data within Eventyay, you should also implement a "data shredder"
+If your plugin adds the ability to store personal data within eventyay, you should also implement a "data shredder"
 to anonymize or pseudonymize the data later.
 
 Shredder registration
@@ -94,7 +94,7 @@ looks like this:
         def shred_data(self):
             InvoiceAddress.objects.filter(order__event=self.event).delete()
 
-            for le in self.event.logentry_set.filter(action_type="Eventyay.event.order.modified"):
+            for le in self.event.logentry_set.filter(action_type="eventyay.event.order.modified"):
                 d = le.parsed_data
                 if 'invoice_data' in d and not isinstance(d['invoice_data'], bool):
                     for field in d['invoice_data']:

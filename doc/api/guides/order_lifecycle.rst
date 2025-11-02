@@ -1,7 +1,7 @@
 Understanding the life cycle of orders
 ======================================
 
-When integrating Eventyay with other systems, it is important that you understand how orders and related objects
+When integrating eventyay with other systems, it is important that you understand how orders and related objects
 such as order positions, fees, payments, refunds, and invoices work together, in order to react to their changes
 properly and map them to processes in your system.
 

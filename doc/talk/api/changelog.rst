@@ -3,25 +3,25 @@
 API Changelog
 =============
 
-The Eventyay API is versioned – see :ref:`api-versioning` for the full explanation.
-The short version is that the Eventyay API version change with a new Eventyay release,
+The eventyay API is versioned – see :ref:`api-versioning` for the full explanation.
+The short version is that the eventyay API version change with a new eventyay release,
 but it does not have to change, as there may be no (or no breaking) API changes in
 a release.
 
 Minor changes that don’t result in a new API version will not be listed here,
 as this page is meant to support you in updating your API tokens to a new
-version. To see all API changes in a Eventyay release, please refer to the
+version. To see all API changes in a eventyay release, please refer to the
 general :ref:`changelog`.
 
 If you want to test if your existing API client can deal with a new API version
-before upgrading your API token, you can send a ``Eventyay-Version`` header with
+before upgrading your API token, you can send a ``eventyay-Version`` header with
 your requests to temporarily change the API version you’re using.
 
 v1 (2025.1.0)
 -------------
 
 Before the API versioning outlined here, the API was read-only, and also inconsistent in
-many ways. The v1 API released in Eventyay v2025.1.0 makes sweeping changes to the API,
+many ways. The v1 API released in eventyay v2025.1.0 makes sweeping changes to the API,
 introduces the new auth tokens, allows organisers to use the writable API.
 The changes are too numerous to list here – for example, related objects were included
 in many places by name (e.g. a room name) instead of a reliable and fixed ID.

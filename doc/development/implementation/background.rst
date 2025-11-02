@@ -5,7 +5,7 @@ Eventyay provides the ability to run all longer-running tasks like generating ti
 in a background thread instead of the web server process. We use the well-established `Celery`_ project to
 implement this. However, as celery requires running a task queue like RabbitMQ and a result storage such as
 Redis to work efficiently, we don't like to *depend* on celery being available to make small-scale installations
-of Eventyay more straightforward. For this reason, the "background" in "background task" is always optional. If
+of eventyay more straightforward. For this reason, the "background" in "background task" is always optional. If
 no celery broker is configured, celery will be configured to run tasks synchronously.
 
 Implementing a task

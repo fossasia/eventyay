@@ -1,7 +1,7 @@
 Eventyay Documentation
 ======================
 
-Welcome to the unified Eventyay documentation! Eventyay is an open-source event management platform built by FOSSASIA.
+Welcome to the unified eventyay documentation! eventyay is an open-source event management platform built by FOSSASIA.
 
 This documentation covers:
 

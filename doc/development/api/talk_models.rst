@@ -4,7 +4,7 @@
 Talk Component Models
 =====================
 
-These models are part of the unified Eventyay Talk component, handling submissions, schedules, and speaker management.
+These models are part of the unified eventyay Talk component, handling submissions, schedules, and speaker management.
 
 Submissions
 -----------

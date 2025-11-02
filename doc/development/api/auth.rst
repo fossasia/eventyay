@@ -5,7 +5,7 @@ Pluggable authentication backends
 =================================
 
 Plugins can supply additional authentication backends. This is mainly useful in self-hosted installations
-and allows you to use company-wide login mechanisms such as LDAP or OAuth for accessing Eventyay' backend.
+and allows you to use company-wide login mechanisms such as LDAP or OAuth for accessing eventyay' backend.
 
 Every authentication backend contains an implementation of the interface defined in ``eventyay.base.auth.BaseAuthBackend``
 (see below). Note that eventyay authentication backends work differently than plain Django authentication backends.

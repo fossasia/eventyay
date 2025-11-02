@@ -1,12 +1,12 @@
 General remarks
 ===============
 
-You are interested in contributing to Eventyay? That is awesome!
+You are interested in contributing to eventyay? That is awesome!
 
 If you’re new to contributing to open source software, don’t be afraid. We’ll happily review your code and give you
 constructive and friendly feedback on your changes.
 
-First of all, you'll need Eventyay running locally on your machine. Head over to :ref:`devsetup` to learn how to do this.
+First of all, you'll need eventyay running locally on your machine. Head over to :ref:`devsetup` to learn how to do this.
 If you run into any problems on your way, please do not hesitate to ask us anytime!
 
 Please note that we bound ourselves to a :ref:`coc` that applies to all communication around the project. You can be
@@ -15,14 +15,14 @@ assured that we will not tolerate any form of harassment.
 Sending a patch
 ---------------
 
-If you improved Eventyay in any way, we'd be very happy if you contribute it
+If you improved eventyay in any way, we'd be very happy if you contribute it
 back to the main code base! The easiest way to do so is to `create a pull request`_
 on our `GitHub repository`_.
 
 We recommend that you create a feature branch for every issue you work on so the changes can
 be reviewed individually.
 Please use the test suite to check whether your changes break any existing features and run
-the code style checks to confirm you are consistent with Eventyay's coding style. You'll
+the code style checks to confirm you are consistent with eventyay's coding style. You'll
 find instructions on this in the :ref:`checksandtests` section of the development setup guide.
 
 We automatically run the tests and the code style check on every pull request on Travis CI and we won’t

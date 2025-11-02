@@ -5,7 +5,7 @@
 Backups and Monitoring
 ======================
 
-If you host your own Eventyay instance, you also need to care about the availability
+If you host your own eventyay instance, you also need to care about the availability
 of your service and the safety of your data yourself. This page gives you some
 information that you might need to do so properly.
 
@@ -22,7 +22,7 @@ Database
     want to create a cronjob that does the backups for you on a regular schedule.
 
 Data directory
-    The data directory of your Eventyay configuration might contain some things that you should
+    The data directory of your eventyay configuration might contain some things that you should
     back up. If you did not specify a secret in your config file, back up the ``.secret`` text
     file in the data directory. If you lose your secret, all currently active user sessions,
     password reset links and similar things will be rendered invalid. Also, you probably want
@@ -40,8 +40,8 @@ non-critical, temporary or cached data.
 Uptime monitoring
 -----------------
 
-To monitor whether your Eventyay instance is running, you can issue a GET request to
-``https://Eventyay.mydomain.com/healthcheck/``. This endpoint tests if the connection to the
+To monitor whether your eventyay instance is running, you can issue a GET request to
+``https://eventyay.mydomain.com/healthcheck/``. This endpoint tests if the connection to the
 database, to the configured cache and to redis (if used) is working correctly. If everything
 appears to work fine, an empty response with status code ``200`` is returned.
 If there is a problem, a status code in the ``5xx`` range will be returned.
@@ -51,8 +51,8 @@ If there is a problem, a status code in the ``5xx`` range will be returned.
 Performance monitoring
 ----------------------
 
-If you want to generate detailed performance statistics of your Eventyay installation, there is an
-endpoint at ``https://Eventyay.mydomain.com/metrics`` (no slash at the end) which returns a
+If you want to generate detailed performance statistics of your eventyay installation, there is an
+endpoint at ``https://eventyay.mydomain.com/metrics`` (no slash at the end) which returns a
 number of values in the text format understood by monitoring tools like Prometheus_. This data
 is only collected and exposed if you enable it in the :ref:`metrics-settings` section of your
 Eventyay configuration. You can also configure basic auth credentials there to protect your
@@ -71,7 +71,7 @@ really interested in the results.
 Available metrics
 ^^^^^^^^^^^^^^^^^
 
-The metrics available in Eventyay follow the standard `metric types`_ from the Prometheus world.
+The metrics available in eventyay follow the standard `metric types`_ from the Prometheus world.
 Currently, the following metrics are exported:
 
 eventyay_view_requests_total
@@ -92,7 +92,7 @@ eventyay_task_duration_seconds
 
 eventyay_model_instances
     Gauge. Measures number of instances of a certain model within the database, labeled with
-    the ``model`` name. Starting with Eventyay 3.11, these numbers might only be approximate for
+    the ``model`` name. Starting with eventyay 3.11, these numbers might only be approximate for
     most tables when running on PostgreSQL to mitigate performance impact.
 
 eventyay_celery_tasks_queued_count

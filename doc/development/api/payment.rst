@@ -9,7 +9,7 @@ is very similar to creating an export output.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven't already.
 
-.. warning:: We changed our payment provider API a lot in Eventyay 2.x. Our documentation page on :ref:`payment2.0`
+.. warning:: We changed our payment provider API a lot in eventyay 2.x. Our documentation page on :ref:`payment2.0`
              might be insightful even if you do not have a payment provider to port, as it outlines the rationale
              behind the current design.
 

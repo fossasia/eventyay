@@ -3,7 +3,7 @@
 Administrator documentation
 ===========================
 
-This documentation is for everyone who wants to install Eventyay on a server.
+This documentation is for everyone who wants to install eventyay on a server.
 
 .. toctree::
    :maxdepth: 2

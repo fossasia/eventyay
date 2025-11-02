@@ -1,4 +1,4 @@
-NGINX and URL Path Configuration for Eventyay
+NGINX and URL Path Configuration for eventyay
 =============================================
 
 This document outlines the NGINX and URL path setup for the ``eventyay`` project hosted at `https://github.com/fossasia/eventyay`. This Django project utilizes ``FORCE_SCRIPT_NAME`` to configure a base path, allowing the application to run on a specified sub-path within the domain.

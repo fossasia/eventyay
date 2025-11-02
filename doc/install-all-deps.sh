@@ -47,10 +47,10 @@ pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
     python-stdnum python-u2flib-server pytz pyuca pyvat pyyaml \
     qrcode rcssmin redis referencing reportlab requests \
     rjsmin rpds-py rules \
-    sepaxml sendgrid service-identity setuptools six slimit sortedcontainers sqlparse \
+    sepaxml sendgrid sentry-sdk service-identity setuptools six slimit sortedcontainers sqlparse \
     static3 stripe text-unidecode tlds tqdm txaio twisted typing-extensions tzdata \
     u-msgpack-python ua-parser urlman vat-moss-forked vobject wcwidth webauthn webencodings \
-    websockets werkzeug xmlschema yarl zipp zope-interface
+    websockets werkzeug xmlschema yarl zipp zope-interface zxcvbn
 
 echo ""
 echo "=== Installing doc requirements ==="

@@ -1,7 +1,7 @@
 Eventyay Hosted reseller API
 ============================
 
-This API is only accessible to our `value-added reseller partners`_ on Eventyay Hosted.
+This API is only accessible to our `value-added reseller partners`_ on eventyay Hosted.
 
 .. note:: This API is only accessible with user-level permissions, not with API tokens. Therefore, you will need to
           create an :ref:`OAuth application <rest-oauth>` and obtain an OAuth access token for a user account that has

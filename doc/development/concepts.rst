@@ -4,7 +4,7 @@ Concepts and Terminology
 The components
 ^^^^^^^^^^^^^^
 
-The project Eventyay is split into several components. The main components are:
+The project eventyay is split into several components. The main components are:
 
 **base**
     This is the foundation below all other components. It is primarily
@@ -24,7 +24,7 @@ The project Eventyay is split into several components. The main components are:
     A RESTful API exposed to integrate with third-party software.
 
 **plugins**
-    A set of Eventyay plugins that ship bundled with Eventyay.
+    A set of eventyay plugins that ship bundled with eventyay.
 
 Users and events
 ^^^^^^^^^^^^^^^^
@@ -39,7 +39,7 @@ control panel to manage one or more events. No user is required to place an orde
 Items and variations
 ^^^^^^^^^^^^^^^^^^^^
 
-The purpose of Eventyay is to sell products, e.g. tickets or merchandise for an event. Internally,
+The purpose of eventyay is to sell products, e.g. tickets or merchandise for an event. Internally,
 those products are called **items**. An item can have multiple **variations**. For example,
 the item 'T-Shirt' could have the **variations** 'S', 'M' and 'L'.
 

@@ -1,11 +1,11 @@
 .. _contributing:
 
-Contributing to Eventyay
+Contributing to eventyay
 ========================
 
 .. highlight: console
 
-You want to contribute? That’s great! Being an open source project, Eventyay
+You want to contribute? That’s great! Being an open source project, eventyay
 thrives if it receives regular contributions from the community. Everyone is
 able to contribute, and contributions can come in many forms: Code,
 Documentation, :ref:`Translations<translating>`, Graphics, Feedback ….  We
@@ -13,16 +13,16 @@ appreciate them highly! If you’re not sure how to make something work, feel
 free to `open a GitHub Discussion`_ about it.
 
 Don’t forget to head over to :ref:`devsetup` to read about how to set up your
-local copy of Eventyay for development and testing.
+local copy of eventyay for development and testing.
 
 Pull Request Workflow
 ---------------------
 
-If you want to add some change to Eventyay itself or its documentation, you can
+If you want to add some change to eventyay itself or its documentation, you can
 do so by opening a Pull Request on GitHub_.
 
 If you are not familiar with GitHub, the workflow is basically this: You
-register an account on GitHub, then you “fork” Eventyay, and work on your copy
+register an account on GitHub, then you “fork” eventyay, and work on your copy
 of it until you’re done. Then, you submit your changes as a Pull Request. We’ll
 review the PR and help you make any changes required to get it merged.  Have a
 look at the `GitHub documentation`_ and other documentation on git for further
@@ -52,7 +52,7 @@ so we’d like to ask you to follow these style guide notes:
 Code
 ~~~~
 
-Generally, Eventyay Python code follows `PEP8`_. We run ``flake8``, ``isort``
+Generally, eventyay Python code follows `PEP8`_. We run ``flake8``, ``isort``
 and ``black`` as style checkers, so those should help you if you’re not sure
 how to format something. They are configured via the ``setup.cfg`` file in the
 ``src`` directory, and can be run like this::

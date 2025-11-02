@@ -6,14 +6,14 @@
 Writing an authentication plugin
 ================================
 
-An authentication plugin allows you to add a new way to allow users to log in to your Eventyay
+An authentication plugin allows you to add a new way to allow users to log in to your eventyay
 instance. This can be useful if you want to integrate with an existing user database, or if
 you want to use a different authentication method.
 
 In this document, we will walk through the creation of an authentication plugin step by step.
 
 If you’d like to look at a completed working authentication provider, take a look at
-`Eventyay-social-auth <https://github.com/adamskrz/Eventyay-social-auth>`_, which also provides
+`eventyay-social-auth <https://github.com/adamskrz/eventyay-social-auth>`_, which also provides
 a framework for adding custom OAuth2 providers.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven’t already.
@@ -21,13 +21,13 @@ Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven’t alrea
 Authentication registration
 ---------------------------
 
-The Eventyay auth plugin system is based around Django’s authentication backends, with a couple
-of signals to integrate with the Eventyay interface.
+The eventyay auth plugin system is based around Django’s authentication backends, with a couple
+of signals to integrate with the eventyay interface.
 
 First, follow Django’s documentation on writing an authentication backend, which must have the
 methods ``get_user(user_id)`` and ``authenticate(request, **credentials)``.
 
-To add your the backend to Eventyay, it needs to be added `authentication` section of the
+To add your the backend to eventyay, it needs to be added `authentication` section of the
 `eventyay.cfg` file, in addition to the standard plugin registration e.g.:
 
 .. code-block:: ini
@@ -36,7 +36,7 @@ To add your the backend to Eventyay, it needs to be added `authentication` secti
    additional_auth_backends=my_auth_plugin.auth.MyAuthBackend
 
    [project.entry-points."eventyay.plugin"]
-   my_auth_plugin = "my_auth_plugin:EventyayPluginMeta"
+   my_auth_plugin = "my_auth_plugin:eventyayPluginMeta"
 
 The main signal used for authentication plugins (that require visiting a custom view) is the
 `eventyay.common.signals.auth_html` signal. This adds additional HTML to the login page, for
@@ -60,7 +60,7 @@ parameter, which is the path the user should be redirected to after logging in.:
 The `do_login` view should be implemented in your plugin, and should handle the actual
 authentication process.
 
-Most authentication plugins will store data against a user in the Eventyay database (e.g.
+Most authentication plugins will store data against a user in the eventyay database (e.g.
 third-party ID), so you will need to create a model to store this data. To ensure this is
 removed when the user is deleted, your plugin should listen for the `delete_user` signal and
 remove any associated data for the `user` parameter.::

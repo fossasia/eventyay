@@ -4,7 +4,7 @@
 Core Modules Reference
 ======================
 
-This section documents the core modules of the unified Eventyay system.
+This section documents the core modules of the unified eventyay system.
 
 Configuration & Settings
 ------------------------

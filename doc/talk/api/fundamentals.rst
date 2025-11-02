@@ -2,7 +2,7 @@ API principles
 ==============
 
 This page describes basic concepts and definition that you need to know to
-interact with the Eventyay REST API, such as authentication, pagination and
+interact with the eventyay REST API, such as authentication, pagination and
 similar definitions.
 
 .. _`authentication`:
@@ -17,7 +17,7 @@ additional data.
 
 You can see, create and disable your API tokens in the organiser frontend at
 ``/orga/me``. API tokens are always scoped to specific endpoints and events.
-While Eventyay comes with shortcuts to create tokens with all read or all
+While eventyay comes with shortcuts to create tokens with all read or all
 read-write permissions, we highly recommend that you limit your tokens to the
 endpoints and permissions that they actually need, to reduce the security
 impact of accidentally revealing your token to others.
@@ -29,10 +29,10 @@ header like this:
    :emphasize-lines: 3
 
    GET /api/events/ HTTP/1.1
-   Host: Eventyay.com
+   Host: eventyay.com
    Authorization: Token e1l6gq2ye72thbwkacj7jbri7a7tvxe614ojv8ybureain92ocub46t5gab5966k
 
-If you were using the Eventyay API before v2025.1.0, when the new API tokens
+If you were using the eventyay API before v2025.1.0, when the new API tokens
 were introduced, your old API tokens will continue working. They will be automatically
 scoped to use the legacy API for as long as it continues working (see :ref:`api-versioning`).
 
@@ -43,17 +43,17 @@ API tokens with an expiry date in the past will be periodically deleted.
 Versioning
 ----------
 
-As Eventyay is under active development, and we have to make changes to the API
-for both new and existing features, the Eventyay API exists in multiple
+As eventyay is under active development, and we have to make changes to the API
+for both new and existing features, the eventyay API exists in multiple
 versions. Your API version is saved **the first time you use an API token**.
 All subsequent requests with this token will use the same version (for as long
 as it is available), so that you don’t have to worry about API changes after
 Eventyay updates, for example.
 
-The Eventyay API version *can* change in a new release, but does not *have* to
-change: sometimes, a Eventyay release will not contain any API changes, and it
+The eventyay API version *can* change in a new release, but does not *have* to
+change: sometimes, a eventyay release will not contain any API changes, and it
 would be needlessly annoying to users to still increment the API version. So,
-while Eventyay uses a calendar-based API versioning scheme, and will continue to
+while eventyay uses a calendar-based API versioning scheme, and will continue to
 note relevant API changes in the :ref:`changelog`, there is also a separate
 :ref:`api-changelog` listing API versions to help you update your tokens.
 
@@ -71,25 +71,25 @@ client should be able to deal with them gracefully:
 - Changing the default pagination size
 - Introducing or changing API rate limits (be prepared to handle HTTP ``429 Too Many Requests`` responses with a ``Retry-After`` header)
 
-When a Eventyay release contains a new API version, the previous API version
+When a eventyay release contains a new API version, the previous API version
 will **still be available** in that release. It will show up as “deprecated”
 in your API token list, and you can update an existing API token to use the
 new version there. In order to test things without updating your token, you
 can also temporarily override the API version used in a request with the
-``Eventyay-Version`` header like this:
+``eventyay-Version`` header like this:
 
 .. sourcecode:: http
    :emphasize-lines: 3
 
    GET /api/events/ HTTP/1.1
-   Host: Eventyay.com
-   Eventyay-Version: v1
+   Host: eventyay.com
+   eventyay-Version: v1
    Authorization: Token e1l6gq2ye72thbwkacj7jbri7a7tvxe614ojv8ybureain92ocub46t5gab5966k
 
-Deprecated API versions will be removed in the next Eventyay release by default,
+Deprecated API versions will be removed in the next eventyay release by default,
 though we may extend support for versions to a second release: On the one hand,
 we want to reduce our maintenance burden by not having to maintain more than
-two API versions at all times. On the other hand, users of Eventyay often only
+two API versions at all times. On the other hand, users of eventyay often only
 use the API once per year for their yearly conference, and depending on the
 amount of changes we introduce, that could result in always having to upgrade
 to a new API version.
@@ -140,7 +140,7 @@ in the selected language.
 Expanding linked resources
 --------------------------
 
-A lot of data is interlinked in the Eventyay API. For example, a ``submission``
+A lot of data is interlinked in the eventyay API. For example, a ``submission``
 endpoint resource will contain references to a track, a submission type,
 several tags and speakers, slots, which belong to a schedule and take place in
 a room, and so on.
@@ -159,8 +159,8 @@ a comma: ``?expand=speakers,track,submission_type,slots.room``.
 Expansions can go multiple levels deep, e.g. ``?expand=speakers.answers.question``.
 
 Please note that expansions on large endpoints, like e.g. the schedule
-endpoint, place a noticeable note on the Eventyay server. Please use expansion
-responsibly, and ideally cache results for future use. The Eventyay API may
+endpoint, place a noticeable note on the eventyay server. Please use expansion
+responsibly, and ideally cache results for future use. The eventyay API may
 implement rate limits based on a user’s frequency or cost of API requests
 without prior warning.
 
@@ -175,7 +175,7 @@ of:
 
     {
         "count": 117,
-        "next": "https://Eventyay.yourdomain.com/api/v1/organisers/?page=2",
+        "next": "https://eventyay.yourdomain.com/api/v1/organisers/?page=2",
         "previous": null,
         "results": []
     }
@@ -200,7 +200,7 @@ make a separate request to the file upload endpoint:
 .. sourcecode:: http
 
    POST /api/upload/ HTTP/1.1
-   Host: Eventyay.com
+   Host: eventyay.com
    Authorization: Token e1l6gq2ye72thbwkacj7jbri7a7tvxe614ojv8ybureain92ocub46t5gab5966k
    Content-Type: image/png
    Content-Disposition: attachment; filename="logo.png"
@@ -256,10 +256,10 @@ via the ``?q=`` query parameter.
 Best Practices
 --------------
 
-When you use the Eventyay API, we’d like to ask you to keep the following points
+When you use the eventyay API, we’d like to ask you to keep the following points
 in mind:
 
-**Be respectful of Eventyay resources**: Keep your API use to a reasonable load.
+**Be respectful of eventyay resources**: Keep your API use to a reasonable load.
 Apply time-outs between API calls, keep your requests simple when possible by
 not requesting deeply nested data when not needed, and cache data that does not
 change. Try to avoid receiving ``429 Too Many Requests`` responses. If you
@@ -276,7 +276,7 @@ public websites.
 Limitations
 -----------
 
-There are some known limitations to the Eventyay API. Some of these are by design,
+There are some known limitations to the eventyay API. Some of these are by design,
 like the fact that authenticated API access is only permitted to organisers and
 reviewers: While this limitation *could* be removed, it would place an enormous
 additional maintenance burden on making sure that all access permissions are

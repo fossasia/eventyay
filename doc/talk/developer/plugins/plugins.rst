@@ -6,12 +6,12 @@
 Creating a plugin
 =================
 
-You can extend Eventyay Talk with custom Python code using the official plugin API.
+You can extend eventyay Talk with custom Python code using the official plugin API.
 Think of every plugin as an independent Django application living in its own
 python package installed like any other python module.
 
-The communication between Eventyay and the plugins happens using Django's
-`signal dispatcher`_ feature. The core modules of Eventyay expose signals which
+The communication between eventyay and the plugins happens using Django's
+`signal dispatcher`_ feature. The core modules of eventyay expose signals which
 you can read about on the next pages.
 
 .. highlight:: console
@@ -25,12 +25,12 @@ time, we created a `cookiecutter`_ template that you can use like this::
    (env)$ cookiecutter https://github.com/fossasia/eventyay-plugin-cookiecutter
 
 This will ask you some questions and then create a project folder for your plugin.
-Afterwards install your plugin into Eventyay::
+Afterwards install your plugin into eventyay::
 
    (env)$ cd eventyay-pluginname
    (env)$ python -m pip install -e .
 
-If you already had it running, you'll now have to restart your Eventyay
+If you already had it running, you'll now have to restart your eventyay
 development server process for it to recognise the new plugin. Your plugin
 should now show up in the startup message the server prints to the console.
 
@@ -45,7 +45,7 @@ view layer, how its ORM works, topics covered in the Django tutorial.).
 Plugin metadata
 ---------------
 
-The plugin metadata lives inside a ``EventyayPluginMeta`` class inside your
+The plugin metadata lives inside a ``eventyayPluginMeta`` class inside your
 configuration class. The metadata class must define the following attributes:
 
 .. rst-class:: rest-resource-table
@@ -79,7 +79,7 @@ A working example would be::
 
         class EventyayPluginMeta:
             name = _("Facebook")
-            author = _("the Eventyay team")
+            author = _("the eventyay team")
             version = "1.0.0"
             visible = True
             description = _("This plugin allows you to post talks to facebook.")
@@ -93,18 +93,18 @@ Plugin registration
 
 .. highlight:: toml
 
-Somehow, Eventyay needs to know that your plugin exists at all. For this purpose, we
+Somehow, eventyay needs to know that your plugin exists at all. For this purpose, we
 make use of the `entry point`_ feature of setuptools. To register a plugin that lives
 in a separate python package, your ``pyproject.toml`` should contain something like this::
 
     [project.entry-points."eventyay.plugin"]
-    eventyay_facebook = "eventyay_facebook:EventyayPluginMeta"
+    eventyay_facebook = "eventyay_facebook:eventyayPluginMeta"
 
 
-This will automatically make Eventyay discover this plugin as soon as you have
+This will automatically make eventyay discover this plugin as soon as you have
 installed it e.g.  through ``pip``. During development, you can run ``pip
 install -e .`` inside your plugin source directory to make it discoverable.
-Make sure you do this in the same virtualenv as you're using for Eventyay.
+Make sure you do this in the same virtualenv as you're using for eventyay.
 
 Signals
 -------
@@ -161,7 +161,7 @@ Views
 -----
 
 Your plugin may define custom views. If you put an ``urls`` submodule into your
-plugin module, Eventyay will automatically import it and include it into the root
+plugin module, eventyay will automatically import it and include it into the root
 URL configuration with the namespace ``plugins:<label>:``, where ``<label>`` is
 your Django application label.
 
@@ -169,11 +169,11 @@ You can see examples of how this works on the following pages, particularly
 the "Writing a … plugin" pages.
 
 .. note:: We recommend that non-backend-URLs start with a /p/ to avoid collisions
-   with event names and current/future Eventyay URLs.
+   with event names and current/future eventyay URLs.
 
 .. WARNING:: If you define custom URLs and views, you are on your own
    with checking that the calling user has logged in, has appropriate permissions,
-   and more. You can use mixins and permissions from Eventyay to help you with this,
+   and more. You can use mixins and permissions from eventyay to help you with this,
    but by default, all views are public to all users, authenticated or not.
 
 Configuration
@@ -184,7 +184,7 @@ Configuration
 Occasionally, your plugin may need system-level configuration that does not
 need its own API. In this case, you can ask users to provide this configuration
 via their ``eventyay.cfg`` file. Ask them to put their configuration in a
-section with the title ``[plugin:your_plugin_name]``, which Eventyay will then
+section with the title ``[plugin:your_plugin_name]``, which eventyay will then
 provide in ``settings.PLUGIN_SETTINGS[your_plugin_name]``, like this::
 
    [plugin:eventyay_soap]

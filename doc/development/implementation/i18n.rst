@@ -1,12 +1,12 @@
 Internationalization
 ====================
 
-One of Eventyay's major selling points is its multi-language capability. We make heavy use of Django's
+One of eventyay's major selling points is its multi-language capability. We make heavy use of Django's
 `translation features`_ that are built upon `GNU gettext`_. However, Django does not provide a standard
 way to translate *user-generated content*. In our case, we need to translate strings like product names
 or event descriptions, so we need event organizers to be able to fill in all fields in multiple languages.
 
-For this purpose, we use ``django-i18nfield`` which started out as part of Eventyay and then got refactored into
+For this purpose, we use ``django-i18nfield`` which started out as part of eventyay and then got refactored into
 its own library. It has comprehensive documentation on how to work with its `strings`_, `database fields`_ and
 `forms`_.
 
@@ -14,7 +14,7 @@ its own library. It has comprehensive documentation on how to work with its `str
 Forms
 -----
 
-For backwards-compatibility with older parts of Eventyay' code base and older plugins, ``eventyay.base.forms`` still
+For backwards-compatibility with older parts of eventyay' code base and older plugins, ``eventyay.base.forms`` still
 contains a number of forms that are equivalent in name and usage to their counterparts in ``i18nfield.forms`` with
 the difference that they take an ``event`` keyword argument and then set the ``locales`` argument based on
 ``event.settings.get('locales')``.

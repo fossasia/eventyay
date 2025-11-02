@@ -43,7 +43,7 @@ invoice_address                       object                     Invoice address
 ├ last_modified                       datetime                   Last modification date of the address
 ├ company                             string                     Customer company name
 ├ is_business                         boolean                    Business or individual customers (always ``false``
-                                                                 for orders created before Eventyay 1.7, do not rely on
+                                                                 for orders created before eventyay 1.7, do not rely on
                                                                  it).
 ├ name                                string                     Customer name
 ├ name_parts                          object of strings          Customer name decomposition
@@ -870,19 +870,19 @@ Creating orders
    * ``force`` (optional). If set to ``true``, quotas will be ignored.
    * ``send_email`` (optional). If set to ``true``, the same emails will be sent as for a regular order, regardless of
      whether these emails are enabled for certain sales channels. Defaults to
-     ``false``. Used to be ``send_mail`` before Eventyay 3.14.
+     ``false``. Used to be ``send_mail`` before eventyay 3.14.
 
    If you want to use add-on products, you need to set the ``positionid`` fields of all positions manually
    to incrementing integers starting with ``1``. Then, you can reference one of these
    IDs in the ``addon_to`` field of another position. Note that all add_ons for a specific position need to come
    immediately after the position itself.
 
-   Starting with Eventyay 3.7, you can add ``"simulate": true`` to the body to do a "dry run" of your order. This will
+   Starting with eventyay 3.7, you can add ``"simulate": true`` to the body to do a "dry run" of your order. This will
    validate your order and return you an order object with the resulting prices, but will not create an actual order.
    You can use this for testing or to look up prices. In this case, some attributes are ignored, such as whether
    to send an email or what payment provider will be used. Note that some returned fields will contain empty values
    (e.g. all ``id`` fields of positions will be zero) and some will contain fake values (e.g. the order code will
-   always be ``PREVIEW``). Eventyay plugins will not be triggered, so some special behavior might be missing as well.
+   always be ``PREVIEW``). eventyay plugins will not be triggered, so some special behavior might be missing as well.
 
    **Example request**:
 
@@ -1170,7 +1170,7 @@ Order state operations
    available, its state will be changed to pending.
 
    The only required parameter of this operation is ``expires``, which should contain a date in the future.
-   Note that only a date is expected, not a datetime, since Eventyay will always set the deadline to the end of the
+   Note that only a date is expected, not a datetime, since eventyay will always set the deadline to the end of the
    day in the event's timezone.
 
    You can pass the optional parameter ``force``. If it is set to ``true``, the operation will be performed even if

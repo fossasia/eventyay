@@ -7,7 +7,7 @@ Obtaining an API token
 ----------------------
 
 To authenticate your API requests with Tokens, you need to obtain a team-level API token.
-You can create a token in the Eventyay web interface on the level of organizer teams. Create
+You can create a token in the eventyay web interface on the level of organizer teams. Create
 a new team or choose an existing team that has the level of permissions the token should
 have and create a new token using the form below the list of team members:
 
@@ -24,7 +24,7 @@ Copy this token, as you won't be able to retrieve it again.
 Using an API token
 ------------------
 
-You need to include the API token with every request to Eventyay' API in the ``Authorization`` header
+You need to include the API token with every request to eventyay' API in the ``Authorization`` header
 like the following:
 
 .. sourcecode:: http

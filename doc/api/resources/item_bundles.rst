@@ -11,7 +11,7 @@ With bundles, you can specify products that are included within other products. 
   sub-items into the cart, making sure of correct quota calculation and issuance of the correct number of tickets.
 
 * Tax splitting. For example, if your conference ticket includes a part that is subject to different taxation and that
-  you need to put on the invoice separately. When you putting a "designated price" on a bundled sub-item, Eventyay will
+  you need to put on the invoice separately. When you putting a "designated price" on a bundled sub-item, eventyay will
   use that price to show a split taxation.
 
 The bundles resource contains the following public fields:

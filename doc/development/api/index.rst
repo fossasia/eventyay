@@ -10,6 +10,7 @@ Core API Documentation
    talk_models
    video_models
    unified_models
+   ticket_reference
    signals
    services
    services_reference

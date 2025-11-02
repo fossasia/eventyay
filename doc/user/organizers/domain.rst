@@ -32,16 +32,16 @@ anyways, you should get a eventyay-themed error page with the headline "Unknown 
 
 Now, tell us about your domain on the "Custom Domain" page to get started.
 
-With a custom Eventyay installation
+With a custom eventyay installation
 -----------------------------------
 
-If you installed Eventyay on a server yourself, you can also use separate domains for separate organizers.
-First of all, configure your webserver or reverse proxy to pass requests to the new domain to Eventyay as well.
-Then, go to the organizer account in Eventyay and click the "Edit" button. Enter the new domain in the "Custom Domain"
+If you installed eventyay on a server yourself, you can also use separate domains for separate organizers.
+First of all, configure your webserver or reverse proxy to pass requests to the new domain to eventyay as well.
+Then, go to the organizer account in eventyay and click the "Edit" button. Enter the new domain in the "Custom Domain"
 field, then you're done!
 
 .. thumbnail:: ../../screens/organizer/edit_sysadmin.png
    :align: center
    :class: screenshot
 
-Note that this field only shows up if you are logged in as a system administrator of your Eventyay installation.
+Note that this field only shows up if you are logged in as a system administrator of your eventyay installation.

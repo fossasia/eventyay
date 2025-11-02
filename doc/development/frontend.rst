@@ -4,7 +4,7 @@
 Frontend Applications Overview
 ==============================
 
-The unified Eventyay system includes several frontend applications built with modern web technologies.
+The unified eventyay system includes several frontend applications built with modern web technologies.
 
 This page provides an overview of all frontend applications. For component-specific details:
 
@@ -349,7 +349,7 @@ For complete documentation, see :doc:`/talk/developer/frontend`.
 
 **Global Navigation Menu**
 
-A web component for unified navigation across all Eventyay interfaces.
+A web component for unified navigation across all eventyay interfaces.
 
 **Location**: ``app/eventyay/frontend/global-nav-menu/``
 

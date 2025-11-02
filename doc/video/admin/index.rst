@@ -1,7 +1,7 @@
 Administrator documentation
 ===========================
 
-Welcome to our administrator documentation! Here, we document everything around deploying Eventyay to production.
+Welcome to our administrator documentation! Here, we document everything around deploying eventyay to production.
 
 .. toctree::
    :maxdepth: 2

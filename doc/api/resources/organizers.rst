@@ -4,7 +4,7 @@ Organizers
 Resource description
 --------------------
 
-An organizers is an entity running any number of events. In Eventyay, every event belongs to one
+An organizers is an entity running any number of events. In eventyay, every event belongs to one
 organizer and various settings, such as teams and permissions, are managed on organizer level.
 
 The organizer resource contains the following public fields:
@@ -98,7 +98,7 @@ Eventyay organizers and events have lots and lots of parameters of different typ
 Since many of these settings depend on each other in complex ways, we can not give direct access to all of these
 settings through the API. However, we do expose many of the simple and useful flags through the API.
 
-Please note that the available settings flags change between Eventyay versions, and we do not give a guarantee on backwards-compatibility like with other parts of the API.
+Please note that the available settings flags change between eventyay versions, and we do not give a guarantee on backwards-compatibility like with other parts of the API.
 Therefore, we're also not including a list of the options here, but instead recommend to look at the endpoint output
 to see available options. The ``explain=true`` flag enables a verbose mode that provides you with human-readable
 information about the properties.
@@ -168,7 +168,7 @@ information about the properties.
 
     .. warning::
 
-       Settings can be stored at different levels in Eventyay. If a value is not set on organizer level, a default setting
+       Settings can be stored at different levels in eventyay. If a value is not set on organizer level, a default setting
        from a higher level (global) will be returned. If you explicitly set a setting on organizer level, it
        will no longer be inherited from the higher levels. Therefore, we recommend you to send only settings that you
        explicitly want to set on organizer level. To unset a settings, pass ``null``.

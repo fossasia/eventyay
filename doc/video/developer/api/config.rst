@@ -40,7 +40,7 @@ The first room acts as the landing page.
                     {
                         "type": "agenda.Eventyay",
                         "config": {
-                            "api_url": "https://Eventyay.com/conf/online/schedule/export/schedule.json",
+                            "api_url": "https://eventyay.com/conf/online/schedule/export/schedule.json",
                             "room_id": 3
                         },
                     }
@@ -66,10 +66,10 @@ The first room acts as the landing page.
 Schedule updates
 ================
 
-When Eventyay is notified about an updated schedule, you will get a
+When eventyay is notified about an updated schedule, you will get a
 notification like this::
 
     <= ["world.schedule.updated", { … }]
 
-The data will be the ``Eventyay`` configuration of the event, so either a
+The data will be the ``eventyay`` configuration of the event, so either a
 ``url`` or a ``domain`` with an ``event``.

@@ -3,10 +3,10 @@
 The development setup
 =====================
 
-To contribute to Eventyay, it’s useful to run Eventyay locally on your device so you can test your
+To contribute to eventyay, it’s useful to run eventyay locally on your device so you can test your
 changes. First of all, you need install some packages on your operating system:
 
-If you want to install Eventyay on a server for actual usage, go to the :ref:`administrator-index`
+If you want to install eventyay on a server for actual usage, go to the :ref:`administrator-index`
 instead.
 
 External dependencies
@@ -55,7 +55,7 @@ Get a copy of the source code
 You can clone our git repository::
 
     git clone https://github.com/fossasia/eventyay.git
-    cd Eventyay/
+    cd eventyay/
 
 
 Working with the code
@@ -71,7 +71,7 @@ First up, install all the main application dependencies::
 
 You should now see a *(.venv)* prepended to your shell prompt.
 
-When working with `Eventyay`, you need to use commands installed in this virtual environment, so you always have to activate it.
+When working with `eventyay`, you need to use commands installed in this virtual environment, so you always have to activate it.
 Other than explicitly activating, you can invoke the commands indirectly via `uv run`. For example:
 
 .. code-block:: shell
@@ -110,7 +110,7 @@ stage the event in question should be in. The available choices are ``cfp``
 a schedule and the event is currently running), and ``over``. ``schedule`` is
 the default value.
 
-If you want to see Eventyay in a different language than English, you have to compile our language
+If you want to see eventyay in a different language than English, you have to compile our language
 files::
 
     (.venv)$ python manage.py compilemessages
@@ -173,7 +173,7 @@ afterwards to format that file.
 Working with mails
 ^^^^^^^^^^^^^^^^^^
 
-When running in development mode, Eventyay uses Django’s console email backend.
+When running in development mode, eventyay uses Django’s console email backend.
 This means the development server will print any emails to its stdout, instead
 of sending them via SMTP.
 
@@ -201,7 +201,7 @@ translate and update the ``*.po`` files accordingly::
 
     (.venv)$ python manage.py makemessages --keep-pot --all
 
-To actually see Eventyay in your language, you have to compile the ``*.po`` files to their optimised
+To actually see eventyay in your language, you have to compile the ``*.po`` files to their optimised
 binary ``*.mo`` counterparts::
 
     (.venv)$ python manage.py compilemessages

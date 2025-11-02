@@ -41,7 +41,7 @@ query or to the first redirect URL configured in your application settings.
 On successful registration, we will append the query parameter ``code`` to the URL containing an authorization code.
 For example, we might redirect the user to this URL::
 
-    https://Eventyay.com/?code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&state=e3KCh9mfx07qxU4bRpXk
+    https://eventyay.com/?code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&state=e3KCh9mfx07qxU4bRpXk
 
 You will need this ``code`` parameter to perform the next step.
 
@@ -72,7 +72,7 @@ parameter that you used for the authorization.
       Accept: application/json, text/javascript
       Authorization: Basic bHNMaTBoTkwwdms1M21FZFlqTkp4SFVuMVBjTzFSNndWZzgxZExOVDplSmpzZVA0UjJMN0hMcjBiS0p1b3BmbnJtT2cyY3NDeTdYaFVVZ0FoalhUU0NhZHhRTjk3cVNvMkpPaXlWTFpQOEozaTVQd1FVdFIwNUNycG5ac2Z0bXJjdmNTbkZ1SkFmb2ZsUTdZUDRpSjZNTWFYTHIwQ0FpNlhIRFJjV1Awcg==
 
-      grant_type=authorization_code&code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&redirect_uri=https://Eventyay.com
+      grant_type=authorization_code&code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&redirect_uri=https://eventyay.com
 
    **Example response**:
 

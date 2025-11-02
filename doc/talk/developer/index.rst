@@ -2,7 +2,7 @@ Developer documentation
 =======================
 
 You want to contribute? That’s great, we love contributions! Being an open
-source project, Eventyay will thrive if it receives regular contributions from
+source project, eventyay will thrive if it receives regular contributions from
 the community. Everyone is able to contribute, and contributions come in many
 forms: Code, Documentation, Translations, Graphics, Feedback ….
 We appreciate them highly!
@@ -21,6 +21,7 @@ documentation to help the next one who is running into the same problem. 😉
    contributing
    frontend
    organizer
+   talk_reference
    translating
    concepts
    interfaces/index

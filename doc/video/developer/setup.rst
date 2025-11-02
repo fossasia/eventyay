@@ -4,7 +4,7 @@ Development setup
 Installation
 ------------
 
-A Eventyay installation currently contains four components:
+A eventyay installation currently contains four components:
 
 * A frontend web application with our user interface
 
@@ -53,22 +53,22 @@ Any pull requests you send us will automatically be checked against these rules.
 To check locally, it is convenient to have a local Python environment (such as a virtual environemnt) in which you
 can install the dependencies of the server component::
 
-	(Eventyay) $ cd server
-	(Eventyay) $ pip install -r requirements.txt
+	(eventyay) $ cd server
+	(eventyay) $ pip install -r requirements.txt
 
 To auto-format the code according to the code style and to check for linter issues, you can run the following
 commands::
 
-	(Eventyay) $ black Eventyay tests
-	(Eventyay) $ isort -rc Eventyay tests
-	(Eventyay) $ flake8 Eventyay tests
+	(eventyay) $ black eventyay tests
+	(eventyay) $ isort -rc eventyay tests
+	(eventyay) $ flake8 eventyay tests
 
 To automatically check before commits, add a script like the following to ``.git/hooks/pre-commit`` and apply ``chmod +x .git/hooks/pre-commit``::
 
 	#!/bin/bash
-	source ~/.virtualenvs/Eventyay/bin/activate
+	source ~/.virtualenvs/eventyay/bin/activate
 	cd server
-	for file in $(git diff --cached --name-only | grep -E '\.py$' | grep -Ev "Eventyay/celery_app\.py|Eventyay/settings\.py")
+	for file in $(git diff --cached --name-only | grep -E '\.py$' | grep -Ev "eventyay/celery_app\.py|Eventyay/settings\.py")
 	do
 	  echo Scanning $file
 	  git show ":$file" | black -q --check - || { echo "Black failed."; exit 1; } # we only want to lint the staged changes, not any un-staged changes

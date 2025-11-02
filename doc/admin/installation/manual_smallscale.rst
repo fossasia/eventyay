@@ -3,12 +3,12 @@
 Small-scale manual deployment
 =============================
 
-This guide describes the installation of a small-scale installation of Eventyay from source. By small-scale, we mean
+This guide describes the installation of a small-scale installation of eventyay from source. By small-scale, we mean
 that everything is being run on one host and you don't expect thousands of participants trying to get a ticket within
 a few minutes. In this setup, you will have to perform a number of manual steps. If you prefer using a container
 solution with many things readily set-up, look at :ref:`dockersmallscale`.
 
-.. warning:: Even though we try to make it straightforward to run Eventyay, it still requires some Linux experience to
+.. warning:: Even though we try to make it straightforward to run eventyay, it still requires some Linux experience to
              get it right. If you're not feeling comfortable managing a Linux server, check out our hosting and service
              offers at `eventyay.com`_.
 
@@ -27,10 +27,10 @@ installation guides):
 * A `redis`_ server
 * A `nodejs_` installation
 
-We also recommend that you use a firewall, although this is not a Eventyay-specific recommendation. If you're new to
+We also recommend that you use a firewall, although this is not a eventyay-specific recommendation. If you're new to
 Linux and firewalls, we recommend that you start with `ufw`_.
 
-.. note:: Please, do not run Eventyay without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
+.. note:: Please, do not run eventyay without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
           SSL certificates can be obtained for free these days. We also *do not* provide support for HTTP-only
           installations except for evaluation purposes.
 
@@ -40,9 +40,9 @@ Linux and firewalls, we recommend that you start with `ufw`_.
 Unix user
 ---------
 
-As we do not want to run Eventyay as root, we first create a new unprivileged user::
+As we do not want to run eventyay as root, we first create a new unprivileged user::
 
-    # adduser Eventyay --disabled-password --home /var/eventyay
+    # adduser eventyay --disabled-password --home /var/eventyay
 
 In this guide, all code lines prepended with a ``#`` symbol are commands that you need to execute on your server as
 ``root`` user (e.g. using ``sudo``); all lines prepended with a ``$`` symbol should be run by the unprivileged user.
@@ -53,17 +53,17 @@ Database
 Having the database server installed, we still need a database and a database user. We can create these with any kind
 of database managing tool or directly on our database's shell. For PostgreSQL, we would do::
 
-    # sudo -u postgres createuser Eventyay
-    # sudo -u postgres createdb -O Eventyay Eventyay
+    # sudo -u postgres createuser eventyay
+    # sudo -u postgres createdb -O eventyay Eventyay
 
 When using MySQL, make sure you set the character set of the database to ``utf8mb4``, e.g. like this::
 
-    mysql > CREATE DATABASE Eventyay DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
+    mysql > CREATE DATABASE eventyay DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
 
 Package dependencies
 --------------------
 
-To build and run Eventyay, you will need the following debian packages::
+To build and run eventyay, you will need the following debian packages::
 
     # apt-get install git build-essential python-dev python3-venv python3 python3-pip \
                       python3-dev libxml2-dev libxslt1-dev libffi-dev zlib1g-dev libssl-dev \
@@ -72,17 +72,17 @@ To build and run Eventyay, you will need the following debian packages::
 Config file
 -----------
 
-We now create a config directory and config file for Eventyay::
+We now create a config directory and config file for eventyay::
 
     # mkdir /etc/eventyay
     # touch /etc/eventyay/eventyay.cfg
-    # chown -R Eventyay:Eventyay /etc/eventyay/
+    # chown -R eventyay:eventyay /etc/eventyay/
     # chmod 0600 /etc/eventyay/eventyay.cfg
 
 Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following content (adjusted to your environment)::
 
     [eventyay]
-    instance_name=My Eventyay installation
+    instance_name=My eventyay installation
     url=https://eventyay.mydomain.com
     currency=EUR
     datadir=/var/eventyay/data
@@ -92,8 +92,8 @@ Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following co
     [database]
     ; For MySQL, replace with "mysql"
     backend=postgresql
-    name=Eventyay
-    user=Eventyay
+    name=eventyay
+    user=eventyay
     ; For MySQL, enter the user password. For PostgreSQL on the same host,
     ; we don't need one because we can use peer authentification if our
     ; PostgreSQL user matches our unix user.
@@ -118,21 +118,21 @@ Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following co
 
 See :ref:`email configuration <mail-settings>` to learn more about configuring mail features.
 
-Install Eventyay from PyPI
+Install eventyay from PyPI
 --------------------------
 
-Now we will install Eventyay itself. The following steps are to be executed as the ``Eventyay`` user. Before we
-actually install Eventyay, we will create a virtual environment to isolate the python packages from your global
+Now we will install eventyay itself. The following steps are to be executed as the ``eventyay`` user. Before we
+actually install eventyay, we will create a virtual environment to isolate the python packages from your global
 python installation::
 
     $ python3 -m venv /var/eventyay/venv
     $ source /var/eventyay/venv/bin/activate
     (venv)$ pip3 install -U pip setuptools wheel
 
-We now install Eventyay, its direct dependencies and gunicorn. Replace ``postgres`` with ``mysql`` in the following
+We now install eventyay, its direct dependencies and gunicorn. Replace ``postgres`` with ``mysql`` in the following
 command if you're running MySQL::
 
-    (venv)$ pip3 install "Eventyay[postgres]" gunicorn
+    (venv)$ pip3 install "eventyay[postgres]" gunicorn
 
 Note that you need Python 3.11 or newer. You can find out your Python version using ``python -V``.
 
@@ -142,18 +142,18 @@ We also need to create a data directory::
 
 Finally, we compile static files and translation data and create the database structure::
 
-    (venv)$ python -m Eventyay migrate
-    (venv)$ python -m Eventyay rebuild
+    (venv)$ python -m eventyay migrate
+    (venv)$ python -m eventyay rebuild
 
 
-Start Eventyay as a service
+Start eventyay as a service
 ---------------------------
 
-We recommend starting Eventyay using systemd to make sure it runs correctly after a reboot. Create a file
+We recommend starting eventyay using systemd to make sure it runs correctly after a reboot. Create a file
 named ``/etc/systemd/system/eventyay-web.service`` with the following content::
 
     [Unit]
-    Description=Eventyay web service
+    Description=eventyay web service
     After=network.target
 
     [Service]
@@ -174,7 +174,7 @@ named ``/etc/systemd/system/eventyay-web.service`` with the following content::
 For background tasks we need a second service ``/etc/systemd/system/eventyay-worker.service`` with the following content::
 
     [Unit]
-    Description=Eventyay background worker
+    Description=eventyay background worker
     After=network.target
 
     [Service]
@@ -192,8 +192,8 @@ For background tasks we need a second service ``/etc/systemd/system/eventyay-wor
 You can now run the following commands to enable and start the services::
 
     # systemctl daemon-reload
-    # systemctl enable eventyay-web Eventyay-worker
-    # systemctl start eventyay-web Eventyay-worker
+    # systemctl enable eventyay-web eventyay-worker
+    # systemctl start eventyay-web eventyay-worker
 
 
 Cronjob
@@ -209,7 +209,7 @@ The cronjob should run as the ``eventyay`` user (``crontab -e -u eventyay``).
 SSL
 ---
 
-The following snippet is an example on how to configure a nginx proxy for Eventyay::
+The following snippet is an example on how to configure a nginx proxy for eventyay::
 
     server {
         listen 80 default_server;
@@ -266,7 +266,7 @@ We recommend reading about setting `strong encryption settings`_ for your web se
 Next steps
 ----------
 
-Yay, you are done! You should now be able to reach Eventyay at https://eventyay.yourdomain.com/control/ and log in as
+Yay, you are done! You should now be able to reach eventyay at https://eventyay.yourdomain.com/control/ and log in as
 *admin@localhost* with a password of *admin*. Don't forget to change that password! Create an organizer first, then
 create an event and start selling tickets!
 
@@ -277,7 +277,7 @@ Updates
 
 .. warning:: While we try hard not to break things, **please perform a backup before every upgrade**.
 
-To upgrade to a new Eventyay release, pull the latest code changes and run the following commands (again, replace
+To upgrade to a new eventyay release, pull the latest code changes and run the following commands (again, replace
 ``postgres`` with ``mysql`` if necessary)::
 
     $ source /var/eventyay/venv/bin/activate

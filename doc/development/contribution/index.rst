@@ -1,4 +1,4 @@
-Contributing to Eventyay
+Contributing to eventyay
 ========================
 
 .. toctree::

@@ -16,7 +16,7 @@ Coding style and quality
 * Please remember to always mark all strings ever displayed to any user for `translation`_.
 
 * We expect all new code to come with proper tests. When writing new tests, please write them using `pytest-style`_
-  test functions and raw ``assert`` statements. Use `fixtures`_ to prevent repetitive code. Some old parts of Eventyay'
+  test functions and raw ``assert`` statements. Use `fixtures`_ to prevent repetitive code. Some old parts of eventyay'
   test suite are in the style of Python's unit test module. If you extend those files, you might continue in this style,
   but please use ``pytest`` style for any new test files.
 

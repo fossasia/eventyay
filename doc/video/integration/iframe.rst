@@ -2,12 +2,12 @@ Iframe Guest API
 ================
 
 Eventyay rooms can contain arbitrary iframes. This is often used for embedding third-party applications or static
-content. Eventyay exposes a few ways for those iframes to interact with the main application if desired.
+content. eventyay exposes a few ways for those iframes to interact with the main application if desired.
 
 URL parameters
 --------------
 
-The target URL of the iframe may contain parameters that will be expanded by Eventyay. For example, if you want
+The target URL of the iframe may contain parameters that will be expanded by eventyay. For example, if you want
 to prefill the name of the user in a third-party application, you could use::
 
     https://other-application.com/embed?name={display_name}
@@ -27,7 +27,7 @@ Currently, the following parameters are supported:
 Routing
 -------
 
-You can route the user to a different location in Eventyay by sending a JavaScript message to the main application.
+You can route the user to a different location in eventyay by sending a JavaScript message to the main application.
 An example that moves the user to a room with a specific ID would look like this::
 
     window.parent.postMessage(
@@ -45,7 +45,7 @@ The ``location`` needs to be a valid location as defined by the `Vue Router API`
 
 .. note::
 
-   The exact naming of all routes inside Eventyay as well as the exact version of Vue Router we're using are not
+   The exact naming of all routes inside eventyay as well as the exact version of Vue Router we're using are not
    considered stable APIs and might change in the future. Simple routes to a specific room such as the one in the
    example above should be safe for the future.
 

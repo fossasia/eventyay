@@ -112,7 +112,7 @@ Endpoints
 
 .. http:post:: /api/v1/worlds/(world_id)/delete_user
 
-   Deletes a given user by ID. You can either supply a ``user_id`` with Eventyay' internal ID value, or a ``token_id``
+   Deletes a given user by ID. You can either supply a ``user_id`` with eventyay' internal ID value, or a ``token_id``
    with the ID from a JWT authorization.
 
    **Example request**:

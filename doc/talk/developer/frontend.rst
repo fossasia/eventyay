@@ -204,7 +204,7 @@ Development
 Global Navigation Menu
 ----------------------
 
-A lightweight web component providing unified navigation across all Eventyay interfaces.
+A lightweight web component providing unified navigation across all eventyay interfaces.
 
 **Location**: ``app/eventyay/frontend/global-nav-menu/``
 

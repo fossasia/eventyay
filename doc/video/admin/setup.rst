@@ -3,15 +3,15 @@
 Installation guide
 ==================
 
-This guide describes the installation of a small-scale installation of Eventyay using docker. By small-scale, we mean
+This guide describes the installation of a small-scale installation of eventyay using docker. By small-scale, we mean
 that everything is being run on one host, and you don't expect many thousands of participants for your events.
-It is absolutely possible to run Eventyay without docker if you have some experience working with Django and JavaScript
-projects, but we currently do not provide any documentation or support for it. At this time, Eventyay is a young,
+It is absolutely possible to run eventyay without docker if you have some experience working with Django and JavaScript
+projects, but we currently do not provide any documentation or support for it. At this time, eventyay is a young,
 fast-moving project, and we do not have the capacity to keep multiple different setup guides up to date.
 
-.. warning:: Eventyay is still a work in progress and anything about deploying it might change. While we tried to
-             give a good tutorial here, installing Eventyay will **require solid Linux experience** to get it right, and
-             Eventyay is only really useful in combination with other pieces of software (eg. BigBlueButton, live streaming servers, …)
+.. warning:: eventyay is still a work in progress and anything about deploying it might change. While we tried to
+             give a good tutorial here, installing eventyay will **require solid Linux experience** to get it right, and
+             eventyay is only really useful in combination with other pieces of software (eg. BigBlueButton, live streaming servers, …)
              which are not explained here and complex to install on their own. If this is too much for you, please
              **reach out to hello@Eventyay.org** to talk about commercial support or our SaaS offering.
 
@@ -30,11 +30,11 @@ installation guides):
 * A `redis`_ server
 
 This guide will assume PostgreSQL and redis are running on the host system. You can of course run them as docker
-containers as well if you prefer, you just need to adjust the hostnames in Eventyay' configuration file.
-We also recommend that you use a firewall, although this is not a Eventyay-specific recommendation. If you're new to
+containers as well if you prefer, you just need to adjust the hostnames in eventyay' configuration file.
+We also recommend that you use a firewall, although this is not a eventyay-specific recommendation. If you're new to
 Linux and firewalls, we recommend that you start with `ufw`_.
 
-.. note:: Please, do not run Eventyay without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
+.. note:: Please, do not run eventyay without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
           SSL certificates can be obtained for free these days. We also *do not* provide support for HTTP-only
           installations except for evaluation purposes.
 
@@ -47,8 +47,8 @@ all lines prepended with a ``$`` symbol can also be run by an unprivileged user.
 Data files
 ----------
 
-First of all, you need to create a directory on your server that Eventyay can use to store files such as logs and make
-that directory writable to the user that runs Eventyay inside the docker container::
+First of all, you need to create a directory on your server that eventyay can use to store files such as logs and make
+that directory writable to the user that runs eventyay inside the docker container::
 
     # mkdir /var/eventyay-data
     # chown -R 15371:15371 /var/eventyay-data
@@ -59,8 +59,8 @@ Database
 Next, we need a database and a database user. We can create these with any kind of database managing tool or directly on
 your ``psql`` shell::
 
-    # sudo -u postgres createuser -P Eventyay
-    # sudo -u postgres createdb -O Eventyay Eventyay
+    # sudo -u postgres createuser -P eventyay
+    # sudo -u postgres createdb -O eventyay Eventyay
 
 Make sure that your database listens on the network. If PostgreSQL runs on the same host as docker, but not inside a
 docker container, we recommend that you just listen on the Docker interface by changing the following line in
@@ -71,7 +71,7 @@ docker container, we recommend that you just listen on the Docker interface by c
 You also need to add a new line to ``/etc/postgresql/<version>/main/pg_hba.conf`` to allow network connections to this
 user and database::
 
-    host    Eventyay          Eventyay          172.17.0.1/16           md5
+    host    eventyay          eventyay          172.17.0.1/16           md5
 
 Restart PostgreSQL after you changed these files::
 
@@ -96,23 +96,23 @@ Now restart redis-server::
 Config file
 -----------
 
-We now create a config directory and config file for Eventyay::
+We now create a config directory and config file for eventyay::
 
     # mkdir /etc/eventyay
-    # touch /etc/eventyay/Eventyay.cfg
+    # touch /etc/eventyay/eventyay.cfg
     # chown -R 15371:15371 /etc/eventyay/
-    # chmod 0700 /etc/eventyay/Eventyay.cfg
+    # chmod 0700 /etc/eventyay/eventyay.cfg
 
-Fill the configuration file ``/etc/eventyay/Eventyay.cfg`` with the following content (adjusted to your environment)::
+Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following content (adjusted to your environment)::
 
     [Eventyay]
-    url=https://Eventyay.mydomain.com
+    url=https://eventyay.mydomain.com
     short_url=https://shorturl.com
 
     [database]
     backend=postgresql
-    name=Eventyay
-    user=Eventyay
+    name=eventyay
+    user=eventyay
     ; Replace with the password you chose above
     password=*********
     ; In most docker setups, 172.17.0.1 is the address of the docker host. Adjuts
@@ -130,15 +130,15 @@ Fill the configuration file ``/etc/eventyay/Eventyay.cfg`` with the following co
 Docker image and service
 ------------------------
 
-First of all, download the latest Eventyay image by running::
+First of all, download the latest eventyay image by running::
 
-    $ docker pull Eventyay/Eventyay:stable
+    $ docker pull eventyay/eventyay:stable
 
 We recommend starting the docker container using systemd to make sure it runs correctly after a reboot. Create a file
-named ``/etc/systemd/system/Eventyay.service`` with the following content::
+named ``/etc/systemd/system/eventyay.service`` with the following content::
 
     [Unit]
-    Description=Eventyay
+    Description=eventyay
     After=docker.service
     Requires=docker.service
 
@@ -150,7 +150,7 @@ named ``/etc/systemd/system/Eventyay.service`` with the following content::
         -v /var/eventyay-data:/data \
         -v /etc/eventyay:/etc/eventyay \
         --sysctl net.core.somaxconn=4096 \
-        Eventyay/Eventyay:stable all
+        eventyay/eventyay:stable all
     ExecStop=/usr/bin/docker stop %n
 
     [Install]
@@ -159,24 +159,24 @@ named ``/etc/systemd/system/Eventyay.service`` with the following content::
 You can now run the following commands to enable and start the service::
 
     # systemctl daemon-reload
-    # systemctl enable Eventyay
-    # systemctl start Eventyay
+    # systemctl enable eventyay
+    # systemctl start eventyay
 
 SSL
 ---
 
-The following snippet is an example on how to configure a nginx proxy for Eventyay::
+The following snippet is an example on how to configure a nginx proxy for eventyay::
 
     server {
         listen 80 default_server;
         listen [::]:80 ipv6only=on default_server;
-        server_name Eventyay.mydomain.com;
+        server_name eventyay.mydomain.com;
         return 301 https://$host$request_uri;
     }
     server {
         listen 443 default_server;
         listen [::]:443 ipv6only=on default_server;
-        server_name Eventyay.mydomain.com;
+        server_name eventyay.mydomain.com;
 
         ssl on;
         ssl_certificate /path/to/cert.chain.pem;
@@ -203,23 +203,23 @@ We recommend reading about setting `strong encryption settings`_ for your web se
 Create your world
 -----------------
 
-Everything in Eventyay happens in a **world**. A world basically represents your digital event, with everything it includes:
+Everything in eventyay happens in a **world**. A world basically represents your digital event, with everything it includes:
 Users, settings, rooms, and so on.
 
 To create your first world, execute the following command and answer its questions.
 Right now, every world needs its own domain to run on::
 
-    $ docker exec -it Eventyay.service Eventyay create_world
+    $ docker exec -it eventyay.service eventyay create_world
     Enter the internal ID for the new world (alphanumeric): myevent2020
     Enter the title for the new world: My Event 2020
-    Enter the domain of the new world (e.g. myevent.example.org): Eventyay.mydomain.com
+    Enter the domain of the new world (e.g. myevent.example.org): eventyay.mydomain.com
     World created.
     Default API keys: [{'issuer': 'any', 'audience': 'Eventyay', 'secret': 'zvB7hI28vbrI7KtsRnJ1TZBSN3DvYdoy9VoJGLI1ouHQP5VtRG3U6AgKJ9YOqKNU'}]
 
-That's it! You should now be able to access Eventyay on the configured domain. To get access to the administration
+That's it! You should now be able to access eventyay on the configured domain. To get access to the administration
 web interface, you first need to create a user::
 
-    $ docker exec -it Eventyay.service Eventyay createsuperuser
+    $ docker exec -it eventyay.service eventyay createsuperuser
 
 Then, open ``/control/`` on your own domain and log in.
 
@@ -229,11 +229,11 @@ Cronjobs
 If you have multiple BigBlueButton servers, you should add a cronjob that polls the current meeting and user numbers for
 the BBB servers to update the load balancer's cost function::
 
-    * * * * *   docker exec Eventyay.service Eventyay bbb_update_cost
+    * * * * *   docker exec eventyay.service eventyay bbb_update_cost
 
 Also, the following cronjob performs various cleanup tasks::
 
-    */10 * * * *   docker exec Eventyay.service Eventyay cleanup
+    */10 * * * *   docker exec eventyay.service eventyay cleanup
 
 Updates
 -------
@@ -242,8 +242,8 @@ Updates
 
 Updates are fairly simple, but require at least a short downtime::
 
-    # docker pull Eventyay/Eventyay:stable
-    # systemctl restart Eventyay.service
+    # docker pull eventyay/eventyay:stable
+    # systemctl restart eventyay.service
 
 Restarting the service can take a few seconds, especially if the update requires changes to the database.
 

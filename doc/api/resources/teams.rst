@@ -461,7 +461,7 @@ Team invite endpoints
 
 .. http:post:: /api/v1/organizers/(organizer)/teams/(team)/invites/
 
-   Invites someone into the team. Note that if the user already has a Eventyay account, you will receive a response without
+   Invites someone into the team. Note that if the user already has a eventyay account, you will receive a response without
    an ``id`` and instead of an invite being created, the user will be directly added to the team.
 
    **Example request**:

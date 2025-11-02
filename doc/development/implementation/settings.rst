@@ -2,8 +2,8 @@ Settings storage
 ================
 
 Eventyay is highly configurable and therefore needs to store a lot of per-event and per-organizer settings.
-For this purpose, we use `django-hierarkey`_ which started out as part of Eventyay and then got refactored into
-its own library. It has a comprehensive `documentation`_ which you should read if you work with settings in Eventyay.
+For this purpose, we use `django-hierarkey`_ which started out as part of eventyay and then got refactored into
+its own library. It has a comprehensive `documentation`_ which you should read if you work with settings in eventyay.
 
 The settings are stored in the database and accessed through a ``HierarkeyProxy`` instance. You can obtain
 such an instance from any event or organizer model instance by just accessing ``event.settings`` or
@@ -34,7 +34,7 @@ you will just be passed a sandbox object with a prefix generated from your provi
 Forms
 -----
 
-Hierarkey also provides a base class for forms that allow the modification of settings. Eventyay contains a
+Hierarkey also provides a base class for forms that allow the modification of settings. eventyay contains a
 subclass that also adds support for internationalized fields:
 
 .. autoclass:: eventyay.base.forms.SettingsForm

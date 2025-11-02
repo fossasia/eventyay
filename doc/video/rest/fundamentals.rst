@@ -1,7 +1,7 @@
 Basic concepts
 ==============
 
-This page describes basic concepts and definition that you need to know to interact with Eventyay' public REST API,
+This page describes basic concepts and definition that you need to know to interact with eventyay' public REST API,
 such as authentication, pagination and similar definitions.
 
 .. _`video-rest-auth`:
@@ -22,7 +22,7 @@ Accessing the API requires that your JWT token is granted at least the ``world.a
 Pagination
 ----------
 
-Most lists of objects returned by Eventyay' API will be paginated. The response will take the form of:
+Most lists of objects returned by eventyay' API will be paginated. The response will take the form of:
 
 .. sourcecode:: javascript
 

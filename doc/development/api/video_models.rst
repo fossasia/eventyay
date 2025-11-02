@@ -4,7 +4,7 @@
 Video Component Models
 ======================
 
-These models are part of the unified Eventyay Video component, handling virtual event platforms, rooms, and video streaming.
+These models are part of the unified eventyay Video component, handling virtual event platforms, rooms, and video streaming.
 
 Rooms & Spaces
 --------------

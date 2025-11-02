@@ -1,30 +1,30 @@
-Translating Eventyay
+Translating eventyay
 ====================
 
 Eventyay has been designed for multi-language capabilities from its start. Organizers can enter their event information
-in multiple languages at the same time. However, the software interface of Eventyay also needs to be translated for
+in multiple languages at the same time. However, the software interface of eventyay also needs to be translated for
 this to be useful.
 
-Since we (the developers of Eventyay) only speak a very limited number of languages, we need help from the community
-to achieve this goal. To make translating Eventyay easy not only for software developers, we set up a translation
+Since we (the developers of eventyay) only speak a very limited number of languages, we need help from the community
+to achieve this goal. To make translating eventyay easy not only for software developers, we set up a translation
 platform at `translate.eventyay.com`_.
 
 Official and inofficial languages
 ---------------------------------
 
-In the Eventyay project, there are three types of languages:
+In the eventyay project, there are three types of languages:
 
 Official languages
-    are translated and maintained by the core team behind Eventyay or as part of long-term partnerships. We are
-    committed to keeping these translations up-to-date with new features or changes in Eventyay and try to offer
+    are translated and maintained by the core team behind eventyay or as part of long-term partnerships. We are
+    committed to keeping these translations up-to-date with new features or changes in eventyay and try to offer
     support in this language.
 
 Inofficial languages
-    are contributed and maintained by the Community. We ship them with Eventyay so you can use them, but we can not
-    guarantee that new or changed features in Eventyay will be translated in time.
+    are contributed and maintained by the Community. We ship them with eventyay so you can use them, but we can not
+    guarantee that new or changed features in eventyay will be translated in time.
 
 Incubating languages
-    are currently in the process of being translated. They can not yet be selected in Eventyay by end users on
+    are currently in the process of being translated. They can not yet be selected in eventyay by end users on
     production installations and are only available in development mode for testing.
 
 Please contact translate@eventyay.com if you think an incubated language should be promoted to an inofficial one or if
@@ -32,8 +32,8 @@ you are interested in a partnership to make your language official.
 
 The current translation status of various languages is:
 
-.. image:: https://translate.eventyay.com/widgets/Eventyay/-/multi-blue.svg
-   :target: https://translate.eventyay.com/engage/Eventyay/?utm_source=widget
+.. image:: https://translate.eventyay.com/widgets/eventyay/-/multi-blue.svg
+   :target: https://translate.eventyay.com/engage/eventyay/?utm_source=widget
 
 
 Using our translation platform
@@ -64,9 +64,9 @@ go to the `eventyay project page`_ where you can select specific components.
 
 .. note::
 
-   If you want to translate Eventyay to a new language that is not yet listed here, you are very welcome to do so!
+   If you want to translate eventyay to a new language that is not yet listed here, you are very welcome to do so!
    While you technically can add the language to the portal yourself, we ask you to drop us a short mail to
-   translate@eventyay.com so we can add it to all components at once and also make it selectable in Eventyay itself.
+   translate@eventyay.com so we can add it to all components at once and also make it selectable in eventyay itself.
 
 .. image:: img/weblate4.png
    :class: screenshot

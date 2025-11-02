@@ -4,7 +4,7 @@
 Writing an e-mail placeholder plugin
 ====================================
 
-An email placeholder is a dynamic value that Eventyay users can use in their email templates.
+An email placeholder is a dynamic value that eventyay users can use in their email templates.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven't already.
 
@@ -31,7 +31,7 @@ should listen for this signal and return an instance of a subclass of ``eventyay
 Context mechanism
 -----------------
 
-Emails are sent in different "contexts" within Eventyay. For example, many emails are sent in the
+Emails are sent in different "contexts" within eventyay. For example, many emails are sent in the
 the context of an order, but some are not, such as the notification of a waiting list voucher.
 
 Not all placeholders make sense in every email, and placeholders usually depend some parameters

@@ -3,8 +3,8 @@
 Stripe
 ======
 
-.. note:: If you use the Hosted version of Eventyay at eventyay.com, you do not need to copy API keys and create webhooks
-          any more. Instead, you can just click "Connect with Stripe" in Eventyay and everything will connect
+.. note:: If you use the Hosted version of eventyay at eventyay.com, you do not need to copy API keys and create webhooks
+          any more. Instead, you can just click "Connect with Stripe" in eventyay and everything will connect
           automatically.
 
 To integrate Stripe with eventyay, you first need to have an active Stripe merchant account. If you do not already have a

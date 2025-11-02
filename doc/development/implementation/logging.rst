@@ -1,7 +1,7 @@
 Logging and notifications
 =========================
 
-As Eventyay is handling monetary transactions, we are very careful to make it possible to review all changes
+As eventyay is handling monetary transactions, we are very careful to make it possible to review all changes
 in the system that lead to the current state.
 
 .. _`logging`:
@@ -104,7 +104,7 @@ to register a notification type:
     def register_my_notification_types(sender, **kwargs):
         return [MyNotificationType(sender)]
 
-Note that this event is different than other events send out by Eventyay: ``sender`` may be an event or ``None``. The
+Note that this event is different than other events send out by eventyay: ``sender`` may be an event or ``None``. The
 latter case is required to let the user define global notification preferences for all events.
 
 You also need to implement a custom class that specifies how notifications should be handled for your notification type.

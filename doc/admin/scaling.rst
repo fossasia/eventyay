@@ -6,9 +6,9 @@ Scaling guide
 Our :ref:`installation guide <installation>` only covers "small-scale" setups, by which we mostly mean
 setups that run on a **single (virtual) machine** and do not encounter large traffic peaks.
 
-We do not offer an installation guide for larger-scale setups of Eventyay, mostly because we believe that
+We do not offer an installation guide for larger-scale setups of eventyay, mostly because we believe that
 there is no one-size-fits-all solution for this and the desired setup highly depends on your use case,
-the platform you run Eventyay on, and your technical capabilities. We do not recommend trying set up Eventyay
+the platform you run eventyay on, and your technical capabilities. We do not recommend trying set up eventyay
 in a multi-server environment if you do not already have experience with managing server clusters.
 
 This document is intended to give you a general idea on what issues you will encounter when you scale up
@@ -16,8 +16,8 @@ and what you should think of.
 
 .. tip::
 
-   If you require more help on this, we're happy to help. Our Eventyay Enterprise support team has built
-   and helped building, scaling and load-testing Eventyay installations at any scale and we're looking
+   If you require more help on this, we're happy to help. Our eventyay Enterprise support team has built
+   and helped building, scaling and load-testing eventyay installations at any scale and we're looking
    forward to work with you on fine-tuning your system. If you intend to sell **more than a thousand
    tickets in a very short amount of time**, we highly recommend reaching out and at least talking this
    through. Just get in touch at sales@eventyay.com!
@@ -25,30 +25,30 @@ and what you should think of.
 Scaling reasons
 ---------------
 
-There's mainly two reasons to scale up a Eventyay installation beyond a single server:
+There's mainly two reasons to scale up a eventyay installation beyond a single server:
 
-* **Availability:** Distributing Eventyay over multiple servers can allow you to survive failure of one or more single machines, leading to a higher uptime and reliability of your system.
+* **Availability:** Distributing eventyay over multiple servers can allow you to survive failure of one or more single machines, leading to a higher uptime and reliability of your system.
 
-* **Traffic and throughput:** Distributing Eventyay over multiple servers can allow you to process more web requests and ticket sales at the same time.
+* **Traffic and throughput:** Distributing eventyay over multiple servers can allow you to process more web requests and ticket sales at the same time.
 
 You are very unlikely to require scaling for other reasons, such as having too much data in your database.
 
 Components
 ----------
 
-A Eventyay installation usually consists of the following components which run performance-relevant processes:
+A eventyay installation usually consists of the following components which run performance-relevant processes:
 
-* ``Eventyay-web`` is the Django-based web application that serves all user interaction.
+* ``eventyay-web`` is the Django-based web application that serves all user interaction.
 
-* ``Eventyay-worker`` is a Celery-based application that processes tasks that should be run asynchronously outside of the web application process.
+* ``eventyay-worker`` is a Celery-based application that processes tasks that should be run asynchronously outside of the web application process.
 
 * A **SQL database** keeps all the important data and processes the actual transactions. We recommend using PostgreSQL, but MySQL/MariaDB works as well.
 
-* A **web server** that terminates TLS and HTTP connections and forwards them to ``Eventyay-web``. In some cases, e.g. when serving static files, the web servers might return a response directly. We recommend using ``nginx``.
+* A **web server** that terminates TLS and HTTP connections and forwards them to ``eventyay-web``. In some cases, e.g. when serving static files, the web servers might return a response directly. We recommend using ``nginx``.
 
-* A **redis** server responsible for the communication between ``Eventyay-web`` and ``Eventyay-worker``, as well as for caching.
+* A **redis** server responsible for the communication between ``eventyay-web`` and ``eventyay-worker``, as well as for caching.
 
-* A directory of **media files** such as user-uploaded files or generated files (tickets, invoices, …) that are created and used by ``Eventyay-web``, ``Eventyay-worker`` and the web server.
+* A directory of **media files** such as user-uploaded files or generated files (tickets, invoices, …) that are created and used by ``eventyay-web``, ``eventyay-worker`` and the web server.
 
 In the following, we will discuss the scaling behavior of every component individually. In general, you can run all of the components
 on the same server, but you can just as well distribute every component to its own server, or even use multiple servers for some single
@@ -77,10 +77,10 @@ handshakes can get really expensive.
 During a traffic peak, your web server will be able to make us of more CPU resources, while memory usage will stay comparatively low,
 so if you invest in more hardware here, invest in more and faster CPU cores.
 
-Make sure that Eventyay' static files (such as CSS and JavaScript assets) as well as user-uploaded media files (event logos, etc)
+Make sure that eventyay' static files (such as CSS and JavaScript assets) as well as user-uploaded media files (event logos, etc)
 are served directly by your web server and your web server caches them in-memory (nginx does it by default) and sets useful
 headers for client-side caching. As an additional performance improvement, you can turn of access logging for these types of files.
-If you want, you can even farm out serving static files to a different web server entirely and :ref:`configure Eventyay to reference
+If you want, you can even farm out serving static files to a different web server entirely and :ref:`configure eventyay to reference
 them from a different URL <config-urls>`.
 
 .. tip::
@@ -92,34 +92,34 @@ them from a different URL <config-urls>`.
 Eventyay-web
 """"""""""""
 
-The ``Eventyay-web`` process does not carry any internal state can be easily started on as many machines as you like, and you can
+The ``eventyay-web`` process does not carry any internal state can be easily started on as many machines as you like, and you can
 use the load balancing features of your frontend web server to redirect to all of them.
 
 You can adjust the number of processes in the ``gunicorn`` command line, and we recommend choosing roughly two times the number
-of CPU cores available. Under load, the memory consumption of ``Eventyay-web`` will stay comparatively constant, while the CPU usage
+of CPU cores available. Under load, the memory consumption of ``eventyay-web`` will stay comparatively constant, while the CPU usage
 will increase a lot. Therefore, if you can add more or faster CPU cores, you will be able to serve more users.
 
 Eventyay-worker
 """""""""""""""
 
-The ``Eventyay-worker`` process performs all operations that are not directly executed in the request-response-cycle of ``Eventyay-web``.
-Just like ``Eventyay-web`` you can easily start up as many instances as you want on different machines to share the work. As long as they
-all talk to the same redis server, they will all receive tasks from ``Eventyay-web``, work on them and post their result back.
+The ``eventyay-worker`` process performs all operations that are not directly executed in the request-response-cycle of ``eventyay-web``.
+Just like ``eventyay-web`` you can easily start up as many instances as you want on different machines to share the work. As long as they
+all talk to the same redis server, they will all receive tasks from ``eventyay-web``, work on them and post their result back.
 You can configure the number of threads that run tasks in parallel through the ``--concurrency`` command line option of ``celery``.
 
-Just like ``Eventyay-web``, this process is mostly heavy on CPU, disk IO and network IO, although memory peaks can occur e.g. during the
+Just like ``eventyay-web``, this process is mostly heavy on CPU, disk IO and network IO, although memory peaks can occur e.g. during the
 generation of large PDF files, so we recommend having some reserves here.
 
-``Eventyay-worker`` performs a variety of tasks which are of different importance.
+``eventyay-worker`` performs a variety of tasks which are of different importance.
 Some of them are mission-critical and need to be run quickly even during high load (such as
 creating a cart or an order), others are irrelevant and can easily run later (such as
 distributing tickets on the waiting list). You can fine-tune the capacity you assign to each
-of these tasks by running ``Eventyay-worker`` processes that only work on a specific **queue**.
+of these tasks by running ``eventyay-worker`` processes that only work on a specific **queue**.
 For example, you could have three servers dedicated only to process order creations and one
 server dedicated only to sending emails. This allows you to set priorities and also protects
 you from e.g. a slow email server lowering your ticket throughput.
 
-You can do so by specifying one or more queues on the ``celery`` command line of this process, such as ``celery -A Eventyay.celery_app worker -Q notifications,mail``. Currently,
+You can do so by specifying one or more queues on the ``celery`` command line of this process, such as ``celery -A eventyay.celery_app worker -Q notifications,mail``. Currently,
 the following queues exist:
 
 * ``checkout`` -- This queue handles everything related to carts and orders and thereby everything required to process a sale. This includes adding and deleting items from carts as well as creating and canceling orders.
@@ -135,7 +135,7 @@ the following queues exist:
 Media files
 """""""""""
 
-Both ``Eventyay-web``, ``Eventyay-worker`` and in some cases your webserver need to work with
+Both ``eventyay-web``, ``eventyay-worker`` and in some cases your webserver need to work with
 media files. Media files are all files generated *at runtime* by the software. This can
 include files uploaded by the event organizers, such as the event logo, files uploaded by
 ticket buyers (if you use such features) or files generated by the software, such as
@@ -144,17 +144,17 @@ ticket files, invoice PDFs, data exports or customized CSS files.
 Those files are by default stored to the ``media/`` sub-folder of the data directory given
 in the ``eventyay.cfg`` configuration file. Inside that ``media/`` folder, you will find a
 ``pub/`` folder containing the subset of files that should be publicly accessible through
-the web server. Everything else only needs to be accessible by ``Eventyay-web`` and
-``Eventyay-worker`` themselves.
+the web server. Everything else only needs to be accessible by ``eventyay-web`` and
+``eventyay-worker`` themselves.
 
-If you distribute ``Eventyay-web`` or ``Eventyay-worker`` across more than one machine, you
+If you distribute ``eventyay-web`` or ``eventyay-worker`` across more than one machine, you
 **must** make sure that they all have access to a shared storage to read and write these
 files, otherwise you **will** run into errors with the user interface.
 
 The easiest solution for this is probably to store them on a NFS server that you mount
 on each of the other servers.
 
-Since we use Django's file storage mechanism internally, you can in theory also use a object-storage solution like Amazon S3, Ceph, or Minio to store these files, although we currently do not expose this through Eventyay' configuration file and this would require you to ship your own variant of ``Eventyay/settings.py`` and reference it through the ``DJANGO_SETTINGS_MODULE`` environment variable.
+Since we use Django's file storage mechanism internally, you can in theory also use a object-storage solution like Amazon S3, Ceph, or Minio to store these files, although we currently do not expose this through eventyay' configuration file and this would require you to ship your own variant of ``eventyay/settings.py`` and reference it through the ``DJANGO_SETTINGS_MODULE`` environment variable.
 
 At eventyay.com, we use a custom-built `object storage cluster`_.
 
@@ -184,15 +184,15 @@ that you have a deep understanding of the semantics of your replication mechanis
    Using an off-the-shelf database proxy solution that redirects read queries to your
    replicas and write queries to your primary database **will lead to very nasty bugs.**
 
-   As an example, if you buy a ticket, Eventyay first needs to calculate how many tickets
+   As an example, if you buy a ticket, eventyay first needs to calculate how many tickets
    are left to sell. If this calculation is done on a database replica that lags behind
    even for fractions of a second, the decision to allow selling the ticket will be made
    on out-of-data data and you can end up with more tickets sold than configured. Similarly,
    you could imagine situations leading to double payments etc.
 
-If you do have a replica, you *can* tell Eventyay about it :ref:`in your configuration <config-replica>`.
-This way, Eventyay can offload complex read-only queries to the replica when it is safe to do so.
-As of Eventyay 2.7, this is mainly used for search queries in the backend and for rendering the
+If you do have a replica, you *can* tell eventyay about it :ref:`in your configuration <config-replica>`.
+This way, eventyay can offload complex read-only queries to the replica when it is safe to do so.
+As of eventyay 2.7, this is mainly used for search queries in the backend and for rendering the
 product list and event lists in the frontend, but we plan on expanding this in the future.
 
 Therefore, for now our clear recommendation is: Try to scale your database vertically and put
@@ -202,7 +202,7 @@ redis
 """""
 
 While redis is a very important part that glues together some of the components, it isn't used
-heavily and can usually handle a fairly large Eventyay installation easily on a single modern
+heavily and can usually handle a fairly large eventyay installation easily on a single modern
 CPU core.
 Having some memory available is good in case of e.g. lots of tasks queuing up during a traffic peak, but we wouldn't expect ever needing more than a gigabyte of it.
 
@@ -211,12 +211,12 @@ Feel free to set up a redis cluster for availability – but you won't need it f
 The limitations
 ---------------
 
-Up to a certain point, Eventyay scales really well. However, there are a few things that we consider
+Up to a certain point, eventyay scales really well. However, there are a few things that we consider
 even more important than scalability, and those are correctness and reliability. We want you to be
-able to trust that Eventyay will not sell more tickets than you intended or run into similar error
+able to trust that eventyay will not sell more tickets than you intended or run into similar error
 cases.
 
-Combined with Eventyay' flexibility and complexity, especially around vouchers and quotas, this creates
+Combined with eventyay' flexibility and complexity, especially around vouchers and quotas, this creates
 some hard issues. In many cases, we need to fall back to event-global locking for some actions which
 are likely to run with high concurrency and cause harm.
 
@@ -229,7 +229,7 @@ If you have an unlimited number of tickets, we can apply fewer locking and we've
 1500 orders per minute per event** in benchmarks, although even more should be possible.
 
 We're working to reduce the number of cases in which this is relevant and thereby improve the possible
-throughput. If you want to use Eventyay for an event with 10,000+ tickets that are likely to be sold out
+throughput. If you want to use eventyay for an event with 10,000+ tickets that are likely to be sold out
 within minutes, please get in touch to discuss possible solutions. We'll work something out for you!
 
 

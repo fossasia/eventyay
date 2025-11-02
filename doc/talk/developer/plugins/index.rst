@@ -3,7 +3,7 @@
 Plugin development
 ==================
 
-The following pages will help you create your first Eventyay plugin, and will
+The following pages will help you create your first eventyay plugin, and will
 show you common plugin patterns and functionality in the “Writing a … plugin”
 sections.
 

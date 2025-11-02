@@ -15,16 +15,16 @@ You will obtain two code snippets that look *roughly* like the following. The
 first should be embedded into the ``<head>`` part of your website, if possible.
 If this is inconvenient, you can put it in the ``<body>`` part as well::
 
-    <script type="text/javascript" src="https://Eventyay.com/democon/schedule/widget/v2.en.js"></script>
+    <script type="text/javascript" src="https://eventyay.com/democon/schedule/widget/v2.en.js"></script>
 
 The second snippet should be embedded at the position where the widget should show up::
 
-    <Eventyay-schedule event-url="https://Eventyay.com/democon/" locale="en" style="--Eventyay-clr-primary: #3aa57c"></Eventyay-schedule>
+    <Eventyay-schedule event-url="https://eventyay.com/democon/" locale="en" style="--Eventyay-clr-primary: #3aa57c"></eventyay-schedule>
     <noscript>
-       <div class="Eventyay-widget">
-            <div class="Eventyay-widget-info-message">
+       <div class="eventyay-widget">
+            <div class="eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our schedule without JavaScript,
-                please <a target="_blank" href="https://Eventyay.com/democon/schedule/">click here</a>.
+                please <a target="_blank" href="https://eventyay.com/democon/schedule/">click here</a>.
             </div>
         </div>
     </noscript>
@@ -42,16 +42,16 @@ Your embedded widget could look like the following:
 
 .. raw:: html
 
-    <script type="text/javascript" src="https://Eventyay.com/democon/schedule/widget/v2.en.js" async></script>
+    <script type="text/javascript" src="https://eventyay.com/democon/schedule/widget/v2.en.js" async></script>
 
     <div style="overflow-x: auto; width: calc(100% + 100px); padding-right: 12px">
-    <Eventyay-schedule event-url="https://Eventyay.com/democon/" locale="en" style="--Eventyay-clr-primary: #3aa57c;"></Eventyay-schedule>
+    <Eventyay-schedule event-url="https://eventyay.com/democon/" locale="en" style="--Eventyay-clr-primary: #3aa57c;"></eventyay-schedule>
     </div>
     <noscript>
-       <div class="Eventyay-widget">
-            <div class="Eventyay-widget-info-message">
+       <div class="eventyay-widget">
+            <div class="eventyay-widget-info-message">
                 JavaScript is disabled in your browser. To access our schedule without JavaScript,
-                please <a target="_blank" href="https://Eventyay.com/democon/schedule/">click here</a>.
+                please <a target="_blank" href="https://eventyay.com/democon/schedule/">click here</a>.
             </div>
         </div>
     </noscript>

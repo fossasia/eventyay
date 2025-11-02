@@ -1,10 +1,10 @@
 Eventyay Hosted billing invoices
 ================================
 
-This endpoint allows you to access invoices you received for Eventyay Hosted. It only contains invoices created starting
+This endpoint allows you to access invoices you received for eventyay Hosted. It only contains invoices created starting
 November 2017.
 
-.. note:: Only available on Eventyay Hosted, not on self-hosted Eventyay instances.
+.. note:: Only available on eventyay Hosted, not on self-hosted eventyay instances.
 
 Resource description
 --------------------
