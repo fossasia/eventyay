@@ -1,5 +1,16 @@
 import 'styles/preloader.styl'
 
+/* global ENV_DEVELOPMENT */
+
+// Set debug favicon in development mode
+const DEBUG_FAVICON_PATH = '/static/common/img/icons/favicon_debug.ico';
+if (ENV_DEVELOPMENT) {
+	const favicon = document.getElementById('favicon')
+	const faviconShortcut = document.getElementById('favicon-shortcut')
+	if (favicon) favicon.href = DEBUG_FAVICON_PATH
+	if (faviconShortcut) faviconShortcut.href = DEBUG_FAVICON_PATH
+}
+
 const showBrowserBlock = function() {
 	document.getElementById('browser-block').style.display = 'block'
 	document.body.removeChild(document.getElementById('app'))

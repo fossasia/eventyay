@@ -7,14 +7,14 @@ from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from pretix.api.serializers.i18n import I18nAwareModelSerializer
-from pretix.api.serializers.order import (
+from eventyay.api.serializers.i18n import I18nAwareModelSerializer
+from eventyay.api.serializers.order import (
     AnswerCreateSerializer,
     AnswerSerializer,
     InlineSeatSerializer,
 )
-from pretix.base.models import Quota, Seat
-from pretix.base.models.orders import CartPosition
+from eventyay.base.models import Quota, Seat
+from eventyay.base.models.orders import CartPosition
 
 
 class CartPositionSerializer(I18nAwareModelSerializer):
@@ -26,7 +26,7 @@ class CartPositionSerializer(I18nAwareModelSerializer):
         fields = (
             'id',
             'cart_id',
-            'item',
+            'product',
             'variation',
             'price',
             'attendee_name',
@@ -54,7 +54,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
         model = CartPosition
         fields = (
             'cart_id',
-            'item',
+            'product',
             'variation',
             'price',
             'attendee_name',
@@ -85,11 +85,11 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             new_quotas = (
                 validated_data.get('variation').quotas.filter(subevent=validated_data.get('subevent'))
                 if validated_data.get('variation')
-                else validated_data.get('item').quotas.filter(subevent=validated_data.get('subevent'))
+                else validated_data.get('product').quotas.filter(subevent=validated_data.get('subevent'))
             )
             if len(new_quotas) == 0:
                 raise ValidationError(
-                    gettext_lazy('The product "{}" is not assigned to a quota.').format(str(validated_data.get('item')))
+                    gettext_lazy('The product "{}" is not assigned to a quota.').format(str(validated_data.get('product')))
                 )
             for quota in new_quotas:
                 avail = quota.availability()
@@ -104,7 +104,7 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
                 validated_data['attendee_name_parts'] = {'_legacy': attendee_name}
 
             seated = (
-                validated_data.get('item')
+                validated_data.get('product')
                 .seat_category_mappings.filter(subevent=validated_data.get('subevent'))
                 .exists()
             )
@@ -153,12 +153,12 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
             raise ValidationError('Cart ID should end in @api or be empty.')
         return cid
 
-    def validate_item(self, item):
-        if item.event != self.context['event']:
-            raise ValidationError('The specified item does not belong to this event.')
-        if not item.active:
-            raise ValidationError('The specified item is not active.')
-        return item
+    def validate_product(self, product):
+        if product.event != self.context['event']:
+            raise ValidationError('The specified product does not belong to this event.')
+        if not product.active:
+            raise ValidationError('The specified product is not active.')
+        return product
 
     def validate_subevent(self, subevent):
         if self.context['event'].has_subevents:
@@ -171,15 +171,15 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
         return subevent
 
     def validate(self, data):
-        if data.get('item'):
-            if data.get('item').has_variations:
+        if data.get('product'):
+            if data.get('product').has_variations:
                 if not data.get('variation'):
-                    raise ValidationError('You should specify a variation for this item.')
+                    raise ValidationError('You should specify a variation for this product.')
                 else:
-                    if data.get('variation').item != data.get('item'):
-                        raise ValidationError('The specified variation does not belong to the specified item.')
+                    if data.get('variation').product != data.get('product'):
+                        raise ValidationError('The specified variation does not belong to the specified product.')
             elif data.get('variation'):
-                raise ValidationError('You cannot specify a variation for this item.')
+                raise ValidationError('You cannot specify a variation for this product.')
         if data.get('attendee_name') and data.get('attendee_name_parts'):
             raise ValidationError(
                 {'attendee_name': ['Do not specify attendee_name if you specified attendee_name_parts.']}
