@@ -67,8 +67,13 @@ const inRoomManager = computed(() => route.name === 'room:manage')
 
 watch(() => props.background, (value) => {
 	if (!iframeEl.value) return
-	if (value) iframeEl.value.classList.add('background')
-	else iframeEl.value.classList.remove('background')
+	if (value) {
+		iframeEl.value.classList.add('background')
+		iframeEl.value.classList.add('size-tiny')
+	} else {
+		iframeEl.value.classList.remove('background')
+		iframeEl.value.classList.remove('size-tiny')
+	}
 })
 
 watch(module, (value, oldValue) => {
@@ -129,39 +134,51 @@ async function initializeIframe(mute) {
 				iframeUrl = module.value.config.url
 				break
 			}
-					case 'livestream.youtube': {
-						const ytid = youtubeTransUrl.value || module.value.config.ytid
-						iframeUrl = getYoutubeUrl(
-							ytid,
-							autoplay.value,
-							mute,
-							module.value.config.hideControls,
-							module.value.config.noRelated,
-							module.value.config.showinfo,
-							module.value.config.disableKb,
-							module.value.config.loop,
-							module.value.config.modestBranding,
-							module.value.config.enablePrivacyEnhancedMode
-						)
-						break
-					}
+		case 'livestream.youtube': {
+			const ytid = youtubeTransUrl.value || module.value.config.ytid
+			const config = module.value.config
+			// Smart muting logic to balance autoplay and user control:
+			// - Always mute if already muted (e.g., for language translation)
+			// - Mute for autoplay ONLY if controls are visible (so user can unmute)
+			// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
+			const shouldMute = mute || (autoplay.value && !config.hideControls)
+			iframeUrl = getYoutubeUrl(
+				ytid,
+				autoplay.value,
+				shouldMute,
+				config.hideControls,
+				config.noRelated,
+				config.showInfo,
+				config.disableKb,
+				config.loop,
+				config.modestBranding,
+				config.enablePrivacyEnhancedMode
+			)
+			break
 		}
-		if (!iframeUrl || isUnmounted.value) return
-		const iframe = document.createElement('iframe')
-		iframe.src = iframeUrl
-		iframe.classList.add('iframe-media-source')
-		if (hideIfBackground) {
-			iframe.classList.add('hide-if-background')
-		}
-		iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
-		iframe.allowFullscreen = true
-		iframe.setAttribute('allowusermedia', 'true')
-		iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox#media-source-iframes
-		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
-		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-		if (module.value?.type === 'livestream.youtube') {
-			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
-		}
+	}
+	if (!iframeUrl || isUnmounted.value) return
+	const iframe = document.createElement('iframe')
+	iframe.src = iframeUrl
+	iframe.classList.add('iframe-media-source')
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background')
+	}
+	// Add background and size-tiny classes if in background mode
+	if (props.background) {
+		iframe.classList.add('background')
+		iframe.classList.add('size-tiny')
+	}
+	// Set iframe permissions and attributes
+	iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
+	iframe.allowFullscreen = true
+	iframe.setAttribute('allowusermedia', 'true')
+	iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
+	// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+	// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+	if (module.value?.type === 'livestream.youtube') {
+		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+	}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
@@ -207,17 +224,38 @@ function handleLanguageChange(languageUrl) {
 }
 
 function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
-	const params = new URLSearchParams({
-		autoplay: autoplayVal ? '1' : '0',
-		mute: mute ? '1' : '0',
-		controls: hideControls ? '0' : '1',
-		rel: noRelated ? '0' : '1',
-		showinfo: showinfo ? '0' : '1',
-		disablekb: disableKb ? '1' : '0',
-		loop: loop ? '1' : '0',
-		modestbranding: modestBranding ? '1' : '0',
-		playlist: ytid,
-	})
+	const params = new URLSearchParams()
+	
+	// Always add autoplay and mute as they control core functionality
+	params.append('autoplay', autoplayVal ? '1' : '0')
+	params.append('mute', mute ? '1' : '0')
+	
+	// Only add optional parameters when explicitly enabled
+	if (hideControls) {
+		params.append('controls', '0')
+	}
+	
+	if (noRelated) {
+		params.append('rel', '0')
+	}
+	
+	if (showinfo) {
+		params.append('showinfo', '0')
+	}
+	
+	if (disableKb) {
+		params.append('disablekb', '1')
+	}
+	
+	if (loop) {
+		params.append('loop', '1')
+		// Loop requires playlist parameter to work properly
+		params.append('playlist', ytid)
+	}
+	
+	if (modestBranding) {
+		params.append('modestbranding', '1')
+	}
 
 	const domain = enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
 	return `https://${domain}/embed/${ytid}?${params}`
@@ -304,10 +342,11 @@ defineExpose({ isPlaying })
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
 		top: 104px
-		width: 100%
+		width: var(--mediasource-placeholder-width)
 		height: var(--mediasource-placeholder-height)
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
+			right: calc(100vw - var(--mediasource-placeholder-width))
 iframe.iframe-media-source
 	transition: all .3s ease
 	border: none
