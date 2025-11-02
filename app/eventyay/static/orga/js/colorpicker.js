@@ -43,6 +43,11 @@ const updateContrast = (field, color) => {
     field.parentNode.parentNode.querySelector(
         ".colorpicker-preview",
     ).style.backgroundColor = color.hex
+    // Update the live preview CSS variable
+    const previewContainer = document.querySelector('.colorpicker-update');
+    if (previewContainer) {
+        previewContainer.style.setProperty('--color', color.hex.slice(0, 7));
+    }
     // We're getting RRGGBBAA, but we don't want the alpha channel
     const c = contrast([255, 255, 255], color.rgba.slice(0, 3))
     if (!field.parentNode.parentNode.querySelector(".contrast-state")) {
