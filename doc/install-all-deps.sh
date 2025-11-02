@@ -9,7 +9,7 @@ echo ""
 # Install Sphinx and documentation tools first
 echo "=== Installing Sphinx and documentation tools ==="
 pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org \
-    sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-images sphinxemoji rich
+    sphinx sphinx-rtd-theme sphinxcontrib-httpdomain sphinxcontrib-images sphinxcontrib-spelling sphinxemoji rich
 
 # Install ALL standard PyPI dependencies from pyproject.toml
 # Excluding git-based dependencies which need special handling
