@@ -81,7 +81,7 @@ Key Sections of NGINX Configuration
 
          location /talk/media/ {
              rewrite ^/talk/media/(.*)$ /media/$1 break;
-             root /var/lib/docker/volumes/eventyay_pretalx-data/_data;
+             root /var/lib/docker/volumes/eventyay_talk-data/_data;
          }
 
 4. **HTTP to HTTPS Redirection**:

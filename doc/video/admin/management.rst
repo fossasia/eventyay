@@ -107,7 +107,7 @@ system maintenance.
 Shows a list of connection labels and their estimated number of current connections. The estimated number might be
 significantly higher than expected if connections where dropped without a cleanup, and old connection labels might
 be lingering around for a couple of seconds. Connection labels are composed by the git commit ID of the Eventyay
-build and the environment (read from the ``VENUELESS_ENVIRONMENT`` environment variable, ``unknown``) by default.
+build and the environment (read from the ``EVENTYAY_VIDEO_ENVIRONMENT`` environment variable, ``unknown``) by default.
 Sample output::
 
     > connections list
