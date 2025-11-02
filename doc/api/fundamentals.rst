@@ -160,25 +160,21 @@ be ``null`` as well.
 The following table shows some data types that have no native JSON representation and how
 we serialize them to JSON.
 
-====================== ================================ ============================================
-Internal Eventyay type JSON representation              Examples
-====================== ================================ ============================================
-Datetime               String in ISO 8601 format        ``"2017-12-27T10:00:00Z"``
-                       with timezone (normally UTC)     ``"2017-12-27T10:00:00.596934Z"``,
-                                                        ``"2017-12-27T10:00:00+02:00"``
-Date                   String in ISO 8601 format        ``2017-12-27``
-Multi-lingual string   Object of strings                ``{"en": "red", "de": "rot"}``
-Money                  String with decimal number       ``"23.42"``
-Currency               String with ISO 4217 code        ``"EUR"``, ``"USD"``
-Relative datetime      *either* String in ISO 8601      ``"2017-12-27T10:00:00.596934Z"``,
-                       format *or* specification of     ``"RELDATE/3/12:00:00/presale_start/"``
-                       a relative datetime
-Relative date          *either* String in ISO 8601      ``"2017-12-27"``,
-                       format *or* specification of     ``"RELDATE/3/-/presale_start/"``
-                       a relative date
-File                   URL in responses, ``file:``      ``"https://…"``, ``"file:…"``
-                       specifiers in requests
-====================== ================================ ============================================
+====================== ================================= ==========================================
+Internal Eventyay type JSON representation               Examples
+====================== ================================= ==========================================
+Datetime               String in ISO 8601 format         ``"2017-12-27T10:00:00Z"``,
+                       with timezone (UTC)               ``"2017-12-27T10:00:00.596934Z"``
+Date                   String in ISO 8601 format         ``"2017-12-27"``
+Multi-lingual string   Object of strings                 ``{"en": "red", "de": "rot"}``
+Money                  String with decimal number        ``"23.42"``
+Currency               String with ISO 4217 code         ``"EUR"``, ``"USD"``
+Relative datetime      String in ISO 8601 or relative    ``"2017-12-27T10:00:00.596934Z"``,
+                       specification                     ``"RELDATE/3/12:00:00/presale_start/"``
+Relative date          String in ISO 8601 or relative    ``"2017-12-27"``,
+                       specification                     ``"RELDATE/3/-/presale_start/"``
+File                   URL or file specifier             ``"https://..."``, ``"file:..."``
+====================== ================================= ==========================================
 
 Query parameters
 ^^^^^^^^^^^^^^^^

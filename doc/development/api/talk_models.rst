@@ -84,6 +84,8 @@ Tags & Resources
 .. autoclass:: eventyay.base.models.Tag
    :members:
    :exclude-members: urls, DoesNotExist, MultipleObjectsReturned
+   :undoc-members:
+   :special-members: __str__
 
 .. autoclass:: eventyay.base.models.Resource
    :members:

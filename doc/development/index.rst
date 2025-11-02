@@ -7,6 +7,7 @@ Developer documentation
    unified_architecture
    concepts
    setup
+   frontend
    contribution/index
    implementation/index
    translation/index

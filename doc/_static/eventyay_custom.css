@@ -11,21 +11,48 @@
     --eventyay-dark: #0f4a73;
 }
 
-/* CRITICAL: Override theme navigation background */
+/* Logo and search area styling */
 .wy-side-nav-search {
-    background: whitesmoke !important;
+    background: #2185d0;
+}
+
+.wy-side-nav-search a {
+    color: #2185d0;
+}
+
+.wy-side-nav-search a:hover {
+    background: none;
+    background-color: transparent;
+}
+
+.wy-side-nav-search a img {
+    background: transparent;
+}
+
+.wy-side-nav-search input[type="text"] {
+    border-color: #d9d9d9;
+}
+
+/* Left sidebar background - eventyay whitesmoke theme */
+.wy-nav-side {
+    background: whitesmoke;
+}
+
+.wy-side-scroll {
+    background: whitesmoke;
 }
 
 .wy-menu-vertical header, .wy-menu-vertical p.caption {
-    color: #7baaf0;
+    color: #2185d0;
+    font-weight: 600;
 }
 
 .wy-menu-vertical a {
-    color: #d9d9d9;
+    color: #404040;
 }
 
 .wy-menu-vertical a:hover {
-    background-color: var(--eventyay-dark);
+    background-color: var(--eventyay-primary);
     color: #ffffff;
 }
 
@@ -53,30 +80,30 @@ a:hover {
 
 .wy-menu-vertical li.current a {
     color: #404040;
-    border-right: solid 1px #c9c9c9;
-    background: #fcfcfc;
+    border-right: solid 1px #d9d9d9;
+    background: #ffffff;
 }
 
 .wy-menu-vertical li.current a:hover {
     color: #ffffff;
-    background-color: var(--eventyay-dark);
+    background-color: var(--eventyay-primary);
 }
 
 .wy-menu-vertical li.on a, .wy-menu-vertical li.current > a {
     color: #404040;
-    background: #fcfcfc;
+    background: #ffffff;
     border: none;
-    border-top: solid 1px #c9c9c9;
-    border-bottom: solid 1px #c9c9c9;
+    border-top: solid 1px #d9d9d9;
+    border-bottom: solid 1px #d9d9d9;
 }
 
 .wy-menu-vertical li.on a:hover, .wy-menu-vertical li.current > a:hover {
     color: #ffffff;
-    background-color: var(--eventyay-dark);
+    background-color: var(--eventyay-primary);
 }
 
 .wy-menu-vertical li.current {
-    background: #e3e3e3;
+    background: whitesmoke;
 }
 
 @media screen and (min-width: 480px) {
@@ -96,8 +123,8 @@ footer[role="contentinfo"] p {
 
 /* Full-width content area with centered text (max 1200px) */
 .wy-nav-content {
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100%;
+    width: 100%;
     padding-left: 2rem;
     padding-right: 2rem;
 }

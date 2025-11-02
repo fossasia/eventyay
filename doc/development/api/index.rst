@@ -12,6 +12,10 @@ Core API Documentation
    unified_models
    signals
    services
+   services_reference
+   core_modules
+   features_modules
+   component_modules
 
 Plugin Development
 ------------------

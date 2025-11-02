@@ -137,11 +137,6 @@ autodoc_default_options = {
 # Don't fail the build on autodoc import errors
 autodoc_warningiserror = False
 
-# Suppress warnings for known problematic autodoc members
-suppress_warnings = [
-    'autodoc',  # Suppress autodoc warnings
-]
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -251,7 +246,7 @@ html_css_files = [
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'images/eventyay-logo-white.svg'
+html_logo = 'images/eventyay-logo.svg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -435,21 +430,23 @@ if HAS_PYENCHANT:
         spelling_filters = []
 
 
-def skip_url_classes(app, what, name, obj, skip, options):
+def autodoc_skip_member(app, what, name, obj, skip, options):
     """
-    Skip documenting URL classes and problematic attributes.
+    Skip URL descriptor attributes that cause autodoc issues.
+    
+    Django urlman creates nested 'urls' classes as descriptors. These don't have
+    proper __objclass__ attributes and cause autodoc to fail when trying to document them.
+    We skip these entirely as they are implementation details.
     """
-    # Skip the problematic urls attribute/property
-    if name == "urls":
+    # Skip all urlman URL descriptor attributes
+    if name in ('urls', 'orga_urls', 'api_urls', 'tickets_urls'):
         return True
-    # Skip URL classes (nested classes ending with _urls or named 'urls')
-    if what == 'class' and hasattr(obj, '__module__'):
-        class_name = obj.__name__ if hasattr(obj, '__name__') else str(obj)
-        if class_name.endswith('_urls') or class_name == 'urls':
-            return True
+    # Also skip any attribute ending with _urls
+    if name.endswith('_urls'):
+        return True
     return skip
 
 
 def setup(app):
     """Setup function for Sphinx."""
-    app.connect('autodoc-skip-member', skip_url_classes)
+    app.connect('autodoc-skip-member', autodoc_skip_member)

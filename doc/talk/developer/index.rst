@@ -19,6 +19,8 @@ documentation to help the next one who is running into the same problem. 😉
 
    setup
    contributing
+   frontend
+   organizer
    translating
    concepts
    interfaces/index

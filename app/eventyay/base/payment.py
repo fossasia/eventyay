@@ -795,7 +795,7 @@ class BasePaymentProvider:
         return ''
 
     def payment_presale_render(self, payment: OrderPayment) -> str:
-        """
+        r"""
         Will be called if the *ticket customer* views the details of a payment. This is
         currently used e.g. when the customer requests a refund to show which payment
         method is used for the refund. This should only include very basic information
