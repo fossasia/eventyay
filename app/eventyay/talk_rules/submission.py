@@ -171,7 +171,7 @@ def has_reviewer_access(user, obj):
     return user in obj.assigned_reviewers.all()
 
 
-def questions_for_user(self, event, user):
+def questions_for_user(request, event, user):
     """Used to retrieve synced querysets in the orga list and the API list."""
     from django.db.models import Q
 
@@ -179,7 +179,7 @@ def questions_for_user(self, event, user):
     from eventyay.common.permissions import is_admin_mode_active
     from eventyay.talk_rules.orga import can_view_speaker_names
 
-    if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(self.request):
+    if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(request):
         # Organizers with edit permissions can see everything
         return event.talkquestions(manager='all_objects').all()
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):

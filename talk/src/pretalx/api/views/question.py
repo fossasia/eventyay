@@ -52,7 +52,7 @@ class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     endpoint = "questions"
 
     def get_queryset(self):
-        queryset = questions_for_user(self, self.event, self.request.user).select_related(
+        queryset = questions_for_user(self.request, self.event, self.request.user).select_related(
             "event"
         )
         if fields := self.check_expanded_fields(
@@ -112,7 +112,7 @@ class AnswerOptionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     endpoint = "question-options"
 
     def get_queryset(self):
-        questions = questions_for_user(self, self.event, self.request.user)
+        questions = questions_for_user(self.request, self.event, self.request.user)
         queryset = AnswerOption.objects.filter(
             question__in=questions,
             question__variant__in=[QuestionVariant.CHOICES, QuestionVariant.MULTIPLE],
@@ -203,7 +203,7 @@ class AnswerViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = (
             Answer.objects.filter(
-                question__in=questions_for_user(self, self.event, self.request.user)
+                question__in=questions_for_user(self.request, self.event, self.request.user)
             )
             .select_related("question", "question__event")
             .order_by("pk")
