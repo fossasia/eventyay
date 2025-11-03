@@ -9,7 +9,7 @@ is very similar to creating an export output.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven't already.
 
-.. warning:: We changed our payment provider API a lot in pretix 2.x. Our documentation page on :ref:`payment2.0`
+.. warning:: We changed our payment provider API a lot in eventyay 2.x. Our documentation page on :ref:`payment2.0`
              might be insightful even if you do not have a payment provider to port, as it outlines the rationale
              behind the current design.
 
@@ -18,14 +18,14 @@ Provider registration
 
 The payment provider API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available payment providers. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.payment.BasePaymentProvider``
+should listen for this signal and return the subclass of ``eventyay.base.payment.BasePaymentProvider``
 that the plugin will provide:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_payment_providers
+    from eventyay.base.signals import register_payment_providers
 
 
     @receiver(register_payment_providers, dispatch_uid="payment_paypal")
@@ -37,7 +37,7 @@ that the plugin will provide:
 The provider class
 ------------------
 
-.. py:class:: pretix.base.payment.BasePaymentProvider
+.. py:class:: eventyay.base.payment.BasePaymentProvider
 
    The central object of each payment provider is the subclass of ``BasePaymentProvider``.
 
@@ -52,91 +52,171 @@ The provider class
       use this object to store settings using its ``get`` and ``set`` methods. All settings
       you store are transparently prefixed, so you get your very own settings namespace.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this payment provider.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this payment provider.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: public_name
+   .. py:attribute:: public_name
 
-   .. autoattribute:: is_enabled
+      The public name of this payment provider as shown to customers.
 
-   .. autoattribute:: priority
+   .. py:attribute:: is_enabled
 
-   .. autoattribute:: settings_form_fields
+      Whether this payment provider is enabled.
 
-   .. automethod:: settings_form_clean
+   .. py:attribute:: priority
 
-   .. automethod:: settings_content_render
+      The priority of this payment provider. Lower values are shown first.
 
-   .. automethod:: is_allowed
+   .. py:attribute:: settings_form_fields
 
-   .. automethod:: payment_form_render
+      A dictionary of form fields for the provider settings.
 
-   .. automethod:: payment_form
+   .. py:method:: settings_form_clean(cleaned_data)
 
-   .. autoattribute:: payment_form_fields
+      Validate the settings form data.
 
-   .. automethod:: payment_is_valid_session
+   .. py:method:: settings_content_render(request)
 
-   .. automethod:: checkout_prepare
+      Render additional content for the settings page.
 
-   .. automethod:: checkout_confirm_render
+   .. py:method:: is_allowed(request, total=None)
+
+      Check if this payment provider is allowed for the given request.
+
+   .. py:method:: payment_form_render(request)
+
+      Render the payment form shown during checkout.
+
+   .. py:method:: payment_form(request)
+
+      Return a form instance for payment details.
+
+   .. py:attribute:: payment_form_fields
+
+      A dictionary of form fields for payment details.
+
+   .. py:method:: payment_is_valid_session(request)
+
+      Check if the payment session is valid.
+
+   .. py:method:: checkout_prepare(request, cart)
+
+      Prepare the checkout process.
+
+   .. py:method:: checkout_confirm_render(request)
+
+      Render content for the checkout confirmation page.
 
       This is an abstract method, you **must** override this!
 
-   .. automethod:: execute_payment
+   .. py:method:: execute_payment(request, payment)
 
-   .. automethod:: calculate_fee
+      Execute the payment.
 
-   .. automethod:: order_pending_mail_render
+   .. py:method:: calculate_fee(price)
 
-   .. automethod:: payment_pending_render
+      Calculate the fee for this payment method.
 
-   .. autoattribute:: abort_pending_allowed
+   .. py:method:: order_pending_mail_render(order)
 
-   .. automethod:: render_invoice_text
+      Render content for the pending order email.
 
-   .. automethod:: order_change_allowed
+   .. py:method:: payment_pending_render(request, payment)
 
-   .. automethod:: payment_prepare
+      Render content for pending payment status.
 
-   .. automethod:: payment_control_render
+   .. py:attribute:: abort_pending_allowed
 
-   .. automethod:: payment_control_render_short
+      Whether aborting pending payments is allowed.
 
-   .. automethod:: payment_refund_supported
+   .. py:method:: render_invoice_text(order, payment)
 
-   .. automethod:: payment_partial_refund_supported
+      Render text to be shown on the invoice.
 
-   .. automethod:: payment_presale_render
+   .. py:method:: order_change_allowed(order)
 
-   .. automethod:: execute_refund
+      Check if order changes are allowed for this payment provider.
 
-   .. automethod:: refund_control_render
+   .. py:method:: payment_prepare(request, payment)
 
-   .. automethod:: new_refund_control_form_render
+      Prepare a payment.
 
-   .. automethod:: new_refund_control_form_process
+   .. py:method:: payment_control_render(request, payment)
 
-   .. automethod:: api_payment_details
+      Render control interface for a payment.
 
-   .. automethod:: matching_id
+   .. py:method:: payment_control_render_short(payment)
 
-   .. automethod:: shred_payment_info
+      Render short control interface for a payment.
 
-   .. automethod:: cancel_payment
+   .. py:method:: payment_refund_supported(payment)
 
-   .. autoattribute:: is_implicit
+      Check if refunds are supported for this payment.
 
-   .. autoattribute:: is_meta
+   .. py:method:: payment_partial_refund_supported(payment)
 
-   .. autoattribute:: test_mode_message
+      Check if partial refunds are supported for this payment.
 
-   .. autoattribute:: requires_invoice_immediately
+   .. py:method:: payment_presale_render(payment)
+
+      Render payment information in the presale interface.
+
+   .. py:method:: execute_refund(refund)
+
+      Execute a refund.
+
+   .. py:method:: refund_control_render(request, refund)
+
+      Render control interface for a refund.
+
+   .. py:method:: new_refund_control_form_render(request, payment)
+
+      Render form for creating a new refund.
+
+   .. py:method:: new_refund_control_form_process(request, payment, form_data)
+
+      Process the new refund form.
+
+   .. py:method:: api_payment_details(payment)
+
+      Return payment details for API responses.
+
+   .. py:method:: matching_id(payment)
+
+      Return an identifier for matching payments.
+
+   .. py:method:: shred_payment_info(payment)
+
+      Shred sensitive payment information.
+
+   .. py:method:: cancel_payment(payment)
+
+      Cancel a payment.
+
+   .. py:attribute:: is_implicit
+
+      Whether this is an implicit payment provider.
+
+   .. py:attribute:: is_meta
+
+      Whether this is a meta payment provider.
+
+   .. py:attribute:: test_mode_message
+
+      Message to display when in test mode.
+
+   .. py:attribute:: requires_invoice_immediately
+
+      Whether this provider requires an invoice to be generated immediately.
 
 
 Additional views

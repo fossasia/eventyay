@@ -67,6 +67,7 @@ class Schedule(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for schedule views."""
         public = '{self.event.urls.schedule}v/{self.url_version}/'
         widget_data = '{public}widgets/schedule.json'
         nojs = '{public}nojs'

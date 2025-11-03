@@ -1,22 +1,22 @@
 Background tasks
 ================
 
-pretix provides the ability to run all longer-running tasks like generating ticket files or sending emails
+Eventyay provides the ability to run all longer-running tasks like generating ticket files or sending emails
 in a background thread instead of the web server process. We use the well-established `Celery`_ project to
 implement this. However, as celery requires running a task queue like RabbitMQ and a result storage such as
 Redis to work efficiently, we don't like to *depend* on celery being available to make small-scale installations
-of pretix more straightforward. For this reason, the "background" in "background task" is always optional. If
+of eventyay more straightforward. For this reason, the "background" in "background task" is always optional. If
 no celery broker is configured, celery will be configured to run tasks synchronously.
 
 Implementing a task
 -------------------
 
-A common pattern for implementing asynchronous tasks can be seen a lot in ``pretix.base.services``
+A common pattern for implementing asynchronous tasks can be seen a lot in ``eventyay.base.services``
 and looks like this:
 
 .. code-block:: python
 
-    from pretix.celery_app import app
+    from eventyay.celery_app import app
 
     @app.task
     def my_task(argument1, argument2):
@@ -32,8 +32,8 @@ and looks like this:
 Tasks in the request-response flow
 ----------------------------------
 
-If your user needs to wait for the response of the asynchronous task, there are helpers available in ``pretix.presale``
-that will probably move to ``pretix.base`` at some point. They consist of the view mixin ``AsyncAction`` that allows
+If your user needs to wait for the response of the asynchronous task, there are helpers available in ``eventyay.presale``
+that will probably move to ``eventyay.base`` at some point. They consist of the view mixin ``AsyncAction`` that allows
 you to easily write a view that kicks off and waits for an asynchronous task. ``AsyncAction`` will determine whether
 to run the task asynchronously or not and will do some magic to look nice for users with and without JavaScript support.
 A usage example taken directly from the code is:
@@ -85,12 +85,12 @@ A usage example taken directly from the code is:
 On the client side, this can be used by simply adding a ``data-asynctask`` attribute to an HTML form. This will enable
 AJAX sending of the form and display a loading indicator:
 
-.. code-block:: html
+.. code-block:: django
 
     <form method="post" data-asynctask
-          action="{% eventurl request.event "presale:event.order.cancel.do" … %}">
+          action="{% eventurl request.event 'presale:event.order.cancel.do' %}">
         {% csrf_token %}
-        ...
+        <button type="submit">Cancel order</button>
     </form>
 
 .. _Celery: http://www.celeryproject.org/
