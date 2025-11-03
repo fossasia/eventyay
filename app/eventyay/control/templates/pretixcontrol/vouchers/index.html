@@ -22,13 +22,13 @@
     <div class="row filter-form">
         <div class="col-lg-2 col-sm-6 col-xs-6">
             <form action="{% url "control:event.vouchers.go" event=request.event.slug organizer=request.event.organizer.slug %}">
-                <div class="input-group">
-                    <input type="text" name="code" class="form-control" placeholder="{% trans "Voucher code" %}" autofocus>
-                    <span class="input-group-btn">
-                        <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
-                    </span>
-                </div>
-            </form>
+            <div class="input-group">
+                <input type="text" name="code" class="form-control" placeholder="{% trans "Voucher code" %}" autofocus>
+                <span class="input-group-btn">
+                    <button class="btn btn-primary" type="submit">{% trans "Go!" %}</button>
+                </span>
+            </div>
+        </form>
         </div>
         <form class="" action="" method="get">
             <div class="col-lg-2 col-sm-3 col-xs-6">
