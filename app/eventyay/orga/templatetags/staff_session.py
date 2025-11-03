@@ -2,7 +2,7 @@ from django import template
 from django.conf import settings
 from django.db.models import Q
 
-from eventyay.common.permissions import check_admin_mode
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.base.models.auth import StaffSession, User
 
 register = template.Library()
@@ -10,7 +10,7 @@ register = template.Library()
 
 @register.simple_tag()
 def has_event_perm(perm, user, request, obj=None):
-    return check_admin_mode(request) or User.has_perm(user, perm, obj)
+    return is_admin_mode_active(request) or User.has_perm(user, perm, obj)
 
 
 @register.filter

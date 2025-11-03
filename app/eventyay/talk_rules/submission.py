@@ -176,10 +176,10 @@ def questions_for_user(self, event, user):
     from django.db.models import Q
 
     from eventyay.base.models import TalkQuestionTarget
-    from eventyay.common.permissions import check_admin_mode
+    from eventyay.common.permissions import is_admin_mode_active
     from eventyay.talk_rules.orga import can_view_speaker_names
 
-    if user.has_perm('base.update_talkquestion', event) or check_admin_mode(self.request):
+    if user.has_perm('base.update_talkquestion', event) or is_admin_mode_active(self.request):
         # Organizers with edit permissions can see everything
         return event.talkquestions(manager='all_objects').all()
     if not user.is_anonymous and is_only_reviewer(user, event) and can_view_speaker_names(user, event):

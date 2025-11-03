@@ -15,7 +15,7 @@ from eventyay.base.models.event import Event
 from eventyay.base.models.log import LogEntry
 from eventyay.base.models.organizer import Organizer
 from eventyay.common.text.phrases import phrases
-from eventyay.common.permissions import check_admin_mode
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.event.stages import get_stages
 from eventyay.talk_rules.submission import get_missing_reviews
@@ -44,7 +44,7 @@ class DashboardEventListView(TemplateView):
 
     @cached_property
     def queryset(self):
-        if check_admin_mode(self.request):
+        if is_admin_mode_active(self.request):
             qs = Event.objects.all()
         else:
             qs = self.base_queryset.annotate(
