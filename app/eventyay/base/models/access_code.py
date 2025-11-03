@@ -74,6 +74,7 @@ class SubmitterAccessCode(GenerateCode, PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for SubmitterAccessCode model views."""
         base = edit = '{self.event.cfp.urls.access_codes}{self.code}/'
         send = '{base}send'
         delete = '{base}delete/'

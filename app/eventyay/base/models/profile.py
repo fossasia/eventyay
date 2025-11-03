@@ -59,11 +59,13 @@ class SpeakerProfile(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for public speaker profile views."""
         public = '{self.event.urls.base}speaker/{self.user.code}/'
         social_image = '{public}og-image'
         talks_ical = '{self.urls.public}talks.ics'
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of this speaker profile."""
         base = '{self.event.orga_urls.speakers}{self.user.code}/'
         password_reset = '{self.event.orga_urls.speakers}{self.user.code}/reset'
         toggle_arrived = '{self.event.orga_urls.speakers}{self.user.code}/toggle-arrived'
