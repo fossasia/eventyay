@@ -85,6 +85,21 @@ class ExtensionFileInput:
             content_types.update(ext)
         content_types = ','.join(content_types)
         self.widget.attrs['accept'] = content_types
+        
+        # Add allowed file types to help text
+        if self.extensions:
+            allowed_types = ', '.join(sorted(self.extensions.keys()))
+            extension_help_text = _('Allowed file types: {types}').format(types=allowed_types)
+            self.original_help_text = getattr(self, 'original_help_text', '') or self.help_text or ''
+            self.added_help_text = getattr(self, 'added_help_text', '')
+            if self.added_help_text:
+                self.added_help_text = extension_help_text + ' ' + self.added_help_text
+            else:
+                self.added_help_text = extension_help_text
+            if self.original_help_text:
+                self.help_text = self.original_help_text + ' ' + self.added_help_text
+            else:
+                self.help_text = self.added_help_text
 
     def validate(self, value):
         super().validate(value)
