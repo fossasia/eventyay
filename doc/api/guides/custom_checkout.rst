@@ -1,19 +1,19 @@
 Creating an external checkout process
 =====================================
 
-Occasionally, we get asked whether it is possible to just use pretix' powerful backend as a ticketing engine but use
+Occasionally, we get asked whether it is possible to just use eventyay' powerful backend as a ticketing engine but use
 a fully-customized checkout process that only communicates via the API. This is possible, but with a few limitations.
-If you go down this route, you will miss out on many of pretix features and safeguards, as well as the added flexibility
-by most of pretix' plugins. We strongly recommend to talk this through with us before you decide this is the way to go.
+If you go down this route, you will miss out on many of eventyay features and safeguards, as well as the added flexibility
+by most of eventyay' plugins. We strongly recommend to talk this through with us before you decide this is the way to go.
 
-However, this is really useful if you need to tightly integrate pretix into existing web applications that e.g. control
-the pricing of your products in a way that cannot be mapped to pretix' product structures.
+However, this is really useful if you need to tightly integrate eventyay into existing web applications that e.g. control
+the pricing of your products in a way that cannot be mapped to eventyay' product structures.
 
 Creating orders
 ---------------
 
 After letting your user select the products to  buy in your application, you should create a new order object inside
-pretix. Below, you can see an example of such an order, but most fields are optional and there are some more features
+Eventyay. Below, you can see an example of such an order, but most fields are optional and there are some more features
 supported. Read :ref:`rest-orders-create` to learn more about this endpoint.
 
 Please note that this endpoint assumes trustworthy input for the most part. By default, the endpoint checks that
@@ -69,41 +69,41 @@ calculated automatically.
 
 You will be returned a full order object that you can inspect, store, or use to build emails or confirmation pages for
 the user. If you don't want to do that yourself, it will also contain the URL to our confirmation page in the ``url``
-attribute. If you pass the ``"send_mail": true`` option, pretix will also send order confirmations for you.
+attribute. If you pass the ``"send_mail": true`` option, eventyay will also send order confirmations for you.
 
 Handling payments yourself
 --------------------------
 
 If you want to handle payments in your application, you can either just create the orders with status "paid" or you can
 create them in "pending" state (the default) and later confirm the payment. We strongly advise to use the payment
-provider ``"manual"`` in this case to avoid interference with payment code with pretix.
+provider ``"manual"`` in this case to avoid interference with payment code with eventyay.
 
 However, it is often unfeasible to implement the payment process yourself, and it also requires you to give up a
-lot of pretix functionality, such as automatic refunds. Therefore, it is also possible to utilize pretix' native
+lot of eventyay functionality, such as automatic refunds. Therefore, it is also possible to utilize eventyay' native
 payment process even in this case:
 
-Using pretix payment providers
-------------------------------
+Using eventyay payment providers
+--------------------------------
 
-If you passed a ``payment_provider`` during order creation above, pretix will have created a payment object with state
+If you passed a ``payment_provider`` during order creation above, eventyay will have created a payment object with state
 ``created`` that you can see in the returned order object. This payment object will have an attribute ``payment_url``
 that you can use to let the user pay. For example, you could link or redirect to this page.
 
 If you want the user to return to your application after the payment is complete, you can pass a query parameter
-``return_url``. To prepare your event for this, open your event in the pretix backend and go to "Settings", then
+``return_url``. To prepare your event for this, open your event in the eventyay backend and go to "Settings", then
 "Plugins". Enable the plugin "Redirection from order page". Then, go to the new page "Settings", then "Redirection".
 Enter the base URL of your web application. This will allow you to redirect to pages under this base URL later on.
 For example, if you want users to be redirected to ``https://example.org/order/return?tx_id=1234``, you could now
 either enter ``https://example.org`` or ``https://example.org/order/``.
 
-The user will be redirected back to your page instead of pretix' order confirmation page after the payment,
+The user will be redirected back to your page instead of eventyay' order confirmation page after the payment,
 **regardless of whether it was successful or not**. Make sure you use our API to check if the payment actually
 worked! Your final URL could look like this::
 
     https://test.eventyay.com/democon/3vjrh/order/NSLEZ/ujbrnsjzbq4dzhck/pay/123/?return_url=https%3A%2F%2Fexample.org%2Forder%2Freturn%3Ftx_id%3D1234
 
 You can also embed this page in an ``<iframe>`` instead. Note, however, that this causes problems with some payment
-methods such as PayPal which do not allow being opened in an iframe. pretix can partly work around these issues by
+methods such as PayPal which do not allow being opened in an iframe. eventyay can partly work around these issues by
 opening a new window, but will only to so if you also append an ``iframe=1`` parameter to the URL::
 
     https://test.eventyay.com/democon/3vjrh/order/NSLEZ/ujbrnsjzbq4dzhck/pay/123/?return_url=https%3A%2F%2Fexample.org%2Forder%2Freturn%3Ftx_id%3D1234&iframe=1
@@ -119,7 +119,7 @@ Of course, you can also use the ``iframe`` and ``return_url`` parameters here.
 Optional: Cart reservations
 ---------------------------
 
-Creating orders is an atomic operation: The order is either created as a whole or not at all. However, pretix'
+Creating orders is an atomic operation: The order is either created as a whole or not at all. However, eventyay'
 built-in checkout automatically reserves tickets in a user's cart for a configurable amount of time to ensure users
 will actually get their tickets once they started entering all their details. If you want a similar behavior in your
 application, you need to create :ref:`rest-carts` through the API.

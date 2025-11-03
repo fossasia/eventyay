@@ -5,12 +5,12 @@
 Small-scale deployment with Docker
 ==================================
 
-This guide describes the installation of a small-scale installation of pretix using docker. By small-scale, we mean
+This guide describes the installation of a small-scale installation of eventyay using docker. By small-scale, we mean
 that everything is being run on one host and you don't expect thousands of participants trying to get a ticket within
-a few minutes. In this setup, as many parts of pretix as possible are hidden away in one single docker container.
+a few minutes. In this setup, as many parts of eventyay as possible are hidden away in one single docker container.
 This has some trade-offs in terms of performance and isolation but allows a rather easy installation.
 
-.. warning:: Even though we try to make it straightforward to run pretix, it still requires some Linux experience to
+.. warning:: Even though we try to make it straightforward to run eventyay, it still requires some Linux experience to
              get it right. If you're not feeling comfortable managing a Linux server, check out our hosting and service
              offers at `eventyay.com`_.
 
@@ -29,10 +29,10 @@ installation guides):
 * A `PostgreSQL`_ 9.5+, `MySQL`_ 5.7+, or MariaDB 10.2.7+ database server
 * A `redis`_ server
 
-We also recommend that you use a firewall, although this is not a pretix-specific recommendation. If you're new to
+We also recommend that you use a firewall, although this is not a eventyay-specific recommendation. If you're new to
 Linux and firewalls, we recommend that you start with `ufw`_.
 
-.. note:: Please, do not run pretix without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
+.. note:: Please, do not run eventyay without HTTPS encryption. You'll handle user data and thanks to `Let's Encrypt`_
           SSL certificates can be obtained for free these days. We also *do not* provide support for HTTP-only
           installations except for evaluation purposes.
 
@@ -48,11 +48,11 @@ all lines prepended with a ``$`` symbol can also be run by an unprivileged user.
 Data files
 ----------
 
-First of all, you need to create a directory on your server that pretix can use to store data files and make that
-directory writable to the user that runs pretix inside the docker container::
+First of all, you need to create a directory on your server that eventyay can use to store data files and make that
+directory writable to the user that runs eventyay inside the docker container::
 
-    # mkdir /var/pretix-data
-    # chown -R 15371:15371 /var/pretix-data
+    # mkdir /var/eventyay-data
+    # chown -R 15371:15371 /var/eventyay-data
 
 Database
 --------
@@ -60,8 +60,8 @@ Database
 Next, we need a database and a database user. We can create these with any kind of database managing tool or directly on
 our database's shell. For PostgreSQL, we would do::
 
-    # sudo -u postgres createuser -P pretix
-    # sudo -u postgres createdb -O pretix pretix
+    # sudo -u postgres createuser -P eventyay
+    # sudo -u postgres createdb -O eventyay Eventyay
 
 Make sure that your database listens on the network. If PostgreSQL on the same same host as docker, but not inside a docker container, we recommend that you just listen on the Docker interface by changing the following line in ``/etc/postgresql/<version>/main/postgresql.conf``::
 
@@ -69,7 +69,7 @@ Make sure that your database listens on the network. If PostgreSQL on the same s
 
 You also need to add a new line to ``/etc/postgresql/<version>/main/pg_hba.conf`` to allow network connections to this user and database::
 
-    host    pretix          pretix          172.17.0.1/16           md5
+    host    eventyay          eventyay          172.17.0.1/16           md5
 
 Restart PostgreSQL after you changed these files::
 
@@ -80,12 +80,12 @@ If you have a firewall running, you should also make sure that port 5432 is reac
 For MySQL, you can either also use network-based connections or mount the ``/var/run/mysqld/mysqld.sock`` socket into the docker container.
 When using MySQL, make sure you set the character set of the database to ``utf8mb4``, e.g. like this::
 
-    mysql > CREATE DATABASE pretix DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
+    mysql > CREATE DATABASE eventyay DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;
 
 Redis
 -----
 
-For caching and messaging in small-scale setups, pretix recommends using redis. In this small-scale setup we assume a
+For caching and messaging in small-scale setups, eventyay recommends using redis. In this small-scale setup we assume a
 redis instance to be running on the same host. To avoid the hassle with network configurations and firewalls, we
 recommend connecting to redis via a unix socket. To enable redis on unix sockets, add the following to your
 ``/etc/redis/redis.conf``::
@@ -109,18 +109,18 @@ Now restart redis-server::
 Config file
 -----------
 
-We now create a config directory and config file for pretix::
+We now create a config directory and config file for eventyay::
 
-    # mkdir /etc/pretix
-    # touch /etc/pretix/pretix.cfg
-    # chown -R 15371:15371 /etc/pretix/
-    # chmod 0700 /etc/pretix/pretix.cfg
+    # mkdir /etc/eventyay
+    # touch /etc/eventyay/eventyay.cfg
+    # chown -R 15371:15371 /etc/eventyay/
+    # chmod 0700 /etc/eventyay/eventyay.cfg
 
-Fill the configuration file ``/etc/pretix/pretix.cfg`` with the following content (adjusted to your environment)::
+Fill the configuration file ``/etc/eventyay/eventyay.cfg`` with the following content (adjusted to your environment)::
 
-    [pretix]
-    instance_name=My pretix installation
-    url=https://pretix.mydomain.com
+    [Eventyay]
+    instance_name=My eventyay installation
+    url=https://eventyay.mydomain.com
     currency=EUR
     ; DO NOT change the following value, it has to be set to the location of the
     ; directory *inside* the docker container
@@ -131,8 +131,8 @@ Fill the configuration file ``/etc/pretix/pretix.cfg`` with the following conten
     [database]
     ; Replace postgresql with mysql for MySQL
     backend=postgresql
-    name=pretix
-    user=pretix
+    name=eventyay
+    user=eventyay
     ; Replace with the password you chose above
     password=*********
     ; In most docker setups, 172.17.0.1 is the address of the docker host. Adjust
@@ -162,15 +162,15 @@ See :ref:`email configuration <mail-settings>` to learn more about configuring m
 Docker image and service
 ------------------------
 
-First of all, download the latest stable pretix image by running::
+First of all, download the latest stable eventyay image by running::
 
-    $ docker pull pretix/standalone:stable
+    $ docker pull eventyay/standalone:stable
 
 We recommend starting the docker container using systemd to make sure it runs correctly after a reboot. Create a file
-named ``/etc/systemd/system/pretix.service`` with the following content::
+named ``/etc/systemd/system/eventyay.service`` with the following content::
 
     [Unit]
-    Description=pretix
+    Description=eventyay
     After=docker.service
     Requires=docker.service
 
@@ -179,11 +179,11 @@ named ``/etc/systemd/system/pretix.service`` with the following content::
     ExecStartPre=-/usr/bin/docker kill %n
     ExecStartPre=-/usr/bin/docker rm %n
     ExecStart=/usr/bin/docker run --name %n -p 8345:80 \
-        -v /var/pretix-data:/data \
-        -v /etc/pretix:/etc/pretix \
+        -v /var/eventyay-data:/data \
+        -v /etc/eventyay:/etc/eventyay \
         -v /var/run/redis:/var/run/redis \
         --sysctl net.core.somaxconn=4096 \
-        pretix/standalone:stable all
+        eventyay/standalone:stable all
     ExecStop=/usr/bin/docker stop %n
 
     [Install]
@@ -195,8 +195,8 @@ You can now run the following commands
 to enable and start the service::
 
     # systemctl daemon-reload
-    # systemctl enable pretix
-    # systemctl start pretix
+    # systemctl enable eventyay
+    # systemctl start eventyay
 
 Cronjob
 -------
@@ -204,24 +204,24 @@ Cronjob
 You need to set up a cronjob that runs the management command ``runperiodic``. The exact interval is not important
 but should be something between every minute and every hour. You could for example configure cron like this::
 
-    15,45 * * * * /usr/bin/docker exec pretix.service pretix cron
+    15,45 * * * * /usr/bin/docker exec eventyay.service eventyay cron
 
 The cronjob may run as any user that can use the docker daemon.
 
 SSL
 ---
 
-The following snippet is an example on how to configure a nginx proxy for pretix::
+The following snippet is an example on how to configure a nginx proxy for eventyay::
 
     server {
         listen 80 default_server;
         listen [::]:80 ipv6only=on default_server;
-        server_name pretix.mydomain.com;
+        server_name eventyay.mydomain.com;
     }
     server {
         listen 443 default_server;
         listen [::]:443 ipv6only=on default_server;
-        server_name pretix.mydomain.com;
+        server_name eventyay.mydomain.com;
 
         ssl on;
         ssl_certificate /path/to/cert.chain.pem;
@@ -241,7 +241,7 @@ We recommend reading about setting `strong encryption settings`_ for your web se
 Next steps
 ----------
 
-Yay, you are done! You should now be able to reach pretix at https://pretix.yourdomain.com/control/ and log in as
+Yay, you are done! You should now be able to reach eventyay at https://eventyay.yourdomain.com/control/ and log in as
 *admin@localhost* with a password of *admin*. Don't forget to change that password! Create an organizer first, then
 create an event and start selling tickets!
 
@@ -254,9 +254,9 @@ Updates
 
 Updates are fairly simple, but require at least a short downtime::
 
-    # docker pull pretix/standalone:stable
-    # systemctl restart pretix.service
-    # docker exec -it pretix.service pretix upgrade
+    # docker pull eventyay/standalone:stable
+    # systemctl restart eventyay.service
+    # docker exec -it eventyay.service eventyay upgrade
 
 Restarting the service can take a few seconds, especially if the update requires changes to the database.
 Replace ``stable`` above with a specific version number like ``1.0`` or with ``latest`` for the development
@@ -268,21 +268,21 @@ Install a plugin
 ----------------
 
 To install a plugin, you need to build your own docker image. To do so, create a new directory and place a file
-named ``Dockerfile`` in it. The Dockerfile could look like this (replace ``pretix-passbook`` with the plugins of your
+named ``Dockerfile`` in it. The Dockerfile could look like this (replace ``eventyay-passbook`` with the plugins of your
 choice)::
 
-    FROM pretix/standalone:stable
+    FROM eventyay/standalone:stable
     USER root
-    RUN pip3 install pretix-passbook
-    USER pretixuser
-    RUN cd /pretix/src && make production
+    RUN pip3 install eventyay-passbook
+    USER eventyayuser
+    RUN cd /eventyay/src && make production
 
 Then, go to that directory and build the image::
 
-    $ docker build . -t mypretix
+    $ docker build . -t myeventyay
 
-You can now use that image ``mypretix`` instead of ``pretix/standalone`` in your service file (see above). Be sure
-to re-build your custom image after you pulled ``pretix/standalone`` if you want to perform an update.
+You can now use that image ``myeventyay`` instead of ``eventyay/standalone`` in your service file (see above). Be sure
+to re-build your custom image after you pulled ``eventyay/standalone`` if you want to perform an update.
 
 Scaling up
 ----------
@@ -290,16 +290,16 @@ Scaling up
 If you need to scale to multiple machines, please first read our :ref:`scaling guide <scaling>`.
 
 If you run the official docker container on multiple machines, it is recommended to set the environment
-variable ``AUTOMIGRATE=skip`` on all containers and run ``docker exec -it pretix.service pretix migrate``
+variable ``AUTOMIGRATE=skip`` on all containers and run ``docker exec -it eventyay.service eventyay migrate``
 on one machine after each upgrade manually, otherwise multiple containers might try to upgrade the
 database schema at the same time.
 
-To run only the ``pretix-web`` component of pretix as well as a nginx server serving static files, you
-can invoke the container with ``docker run … pretix/standalone:stable web`` (instead of ``all``). You
+To run only the ``eventyay-web`` component of eventyay as well as a nginx server serving static files, you
+can invoke the container with ``docker run … eventyay/standalone:stable web`` (instead of ``all``). You
 can adjust the number of ``gunicorn`` processes with the ``NUM_WORKERS`` environment variable (defaults to
 two times the number of CPUs detected).
 
-To run only ``pretix-worker``, you can run ``docker run … pretix/standalone:stable taskworker``. You can
+To run only ``eventyay-worker``, you can run ``docker run … eventyay/standalone:stable taskworker``. You can
 also pass arguments to limit the worker to specific queues or to change the number of concurrent task
 workers, e.g. ``docker run … taskworker -Q notifications --concurrency 32``.
 
