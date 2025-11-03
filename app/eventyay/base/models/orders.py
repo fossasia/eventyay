@@ -256,6 +256,27 @@ class Order(LockModel, LoggedModel):
     def email_confirm_hash(self):
         return hashlib.sha256(settings.SECRET_KEY.encode() + self.secret.encode()).hexdigest()[:9]
 
+    @classmethod
+    def user_has_existing_order(cls, event, email):
+        """
+        Check if a user (identified by email) already has an existing order for the event.
+        
+        Args:
+            event: The event to check
+            email: The user's email address
+            
+        Returns:
+            bool: True if user has existing order, False otherwise
+        """
+        if not email:
+            return False
+            
+        return cls.objects.filter(
+            event=event,
+            email__iexact=email,
+            status__in=[cls.STATUS_PENDING, cls.STATUS_PAID]
+        ).exists()
+
     @property
     def fees(self):
         """
@@ -725,6 +746,18 @@ class Order(LockModel, LoggedModel):
                 length += 1
                 iteration = 0
 
+    def modify_deadline(self):
+        update_deadline = self.event.settings.get('last_order_modification_date', as_type=RelativeDateWrapper)
+        if self.event.has_subevents and update_deadline:
+            dates = [
+                update_deadline.datetime(se)
+                for se in self.event.subevents.filter(id__in=self.positions.values_list('subevent', flat=True))
+            ]
+            return min(dates, default=None)
+        elif update_deadline:
+            return update_deadline.datetime(self.event)
+        return None
+
     @property
     def can_modify_answers(self) -> bool:
         """
@@ -741,17 +774,12 @@ class Order(LockModel, LoggedModel):
         ):
             return False
 
-        modify_deadline = self.event.settings.get('last_order_modification_date', as_type=RelativeDateWrapper)
-        if self.event.has_subevents and modify_deadline:
-            dates = [
-                modify_deadline.datetime(se)
-                for se in self.event.subevents.filter(id__in=self.positions.values_list('subevent', flat=True))
-            ]
-            modify_deadline = min(dates) if dates else None
-        elif modify_deadline:
-            modify_deadline = modify_deadline.datetime(self.event)
+        if self.event.settings.allow_modifications not in ("order", "attendee"):
+            return False
 
-        if modify_deadline is not None and now() > modify_deadline:
+        update_deadline = self.modify_deadline()
+
+        if update_deadline is not None and now() > update_deadline:
             return False
 
         positions = list(
@@ -773,6 +801,26 @@ class Order(LockModel, LoggedModel):
                 return True
 
         return False  # nothing there to modify
+
+    def is_modification_allowed_by(self, email: str) -> bool:
+        """
+        Returns True if a user with this email is allowed to modify the order,
+        based on the event's 'allow_modifications' setting.
+        """
+        if not self.can_modify_answers or not email:
+            return False
+
+        setting = self.event.settings.allow_modifications
+
+        if setting == 'order':
+            return self.email and self.email.lower() == email.lower()
+
+        elif setting == 'attendee':
+            return (
+                self.email and self.email.lower() == email.lower()
+            ) or self.positions.filter(attendee_email__iexact=email).exists()
+
+        return False
 
     @property
     def is_expired_by_time(self):

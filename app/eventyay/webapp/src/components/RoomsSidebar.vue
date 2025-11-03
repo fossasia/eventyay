@@ -1,12 +1,13 @@
 <template lang="pug">
 transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel", @click.capture="onSidebarClickCapture")
+		bunt-icon-button#btn-close-sidebar(v-if="!$mq.above['m']", @click="$emit('close')") menu
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)", @click="onNavigate")
-				router-link.room(:to="{name: 'schedule'}", v-if="!!world.pretalx && (world.pretalx.url || world.pretalx.domain)", @click="onNavigate") {{ $t('RoomsSidebar:schedule:label') }}
-				router-link.room(:to="{name: 'schedule:sessions'}", v-if="!!world.pretalx && (world.pretalx.url || world.pretalx.domain)", @click="onNavigate") {{ $t('RoomsSidebar:session:label') }}
-				router-link.room(:to="{name: 'schedule:speakers'}", v-if="!!world.pretalx && (world.pretalx.url || world.pretalx.domain)", @click="onNavigate") {{ $t('RoomsSidebar:speaker:label') }}
+				router-link.room(:to="{name: 'schedule'}", @click="onNavigate") {{ $t('RoomsSidebar:schedule:label') }}
+				router-link.room(:to="{name: 'schedule:sessions'}", @click="onNavigate") {{ $t('RoomsSidebar:session:label') }}
+				router-link.room(:to="{name: 'schedule:speakers'}", @click="onNavigate") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
 					router-link.room(v-if="page !== rooms[0]", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)", @click="onNavigate")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
@@ -74,7 +75,7 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')", @click="onNavigate") {{ $t('RoomsSidebar:admin-users:label') }}
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')", @click="onNavigate") {{ $t('RoomsSidebar:admin-rooms:label') }}
 					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:users.manage')", @click="onNavigate") {{ $t('RoomsSidebar:admin-kiosks:label') }}
-					router-link.room(:to="{name: 'admin:config'}", v-if="hasPermission('world:update')", @click="onNavigate") {{ $t('RoomsSidebar:admin-config:label') }}
+					router-link.room(:to="{name: 'admin:config'}", @click="onNavigate") {{ $t('RoomsSidebar:admin-config:label') }}
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
@@ -111,11 +112,13 @@ export default {
 	},
 	computed: {
 		...mapState(['user', 'world', 'rooms']),
+		...mapState('schedule', ['schedule']),
 		...mapState('chat', ['joinedChannels', 'call']),
 		...mapState('exhibition', ['staffedExhibitions']),
 		...mapGetters(['hasPermission']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
+		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
 			if (this.pointerMovementX === 0) return
 			return {
@@ -207,6 +210,7 @@ export default {
 			this.lastPointer = null
 			if (this.pointerMovementX < -80) this.$emit('close')
 			this.pointerMovementX = 0
+			// TODO not the cleanest, control transition completely ourselves
 			this.snapBack = true
 			await this.$nextTick()
 			this.snapBack = false
@@ -231,12 +235,13 @@ export default {
 	display: flex
 	flex-direction: column
 	position: fixed
-	top: 50px
+	top: 0
 	left: 0
-	z-index: 901
+	z-index: 110
 	width: var(--sidebar-width)
-	padding-top: 1rem
-	height: calc(var(--vh100) - 48px)
+	padding: calc(48px + 16px) 0 16px 0
+	height: var(--vh100)
+	box-sizing: border-box
 	// Visual separation shadow similar to app bar
 	box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 3px 9px -2px rgba(0,0,0,0.35)
 	// Animate open/close on all screen sizes
@@ -244,9 +249,9 @@ export default {
 		transition: transform .2s ease
 	&.sidebar-enter-from, &.sidebar-leave-to
 		transform: translateX(calc(-1 * var(--sidebar-width)))
-	.logo
-		// Removed unused .logo styles (element not present in template)
-	// Removed unused #btn-close-sidebar styles (element not present)
+	#btn-close-sidebar
+		margin: 8px
+		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 	> .c-scrollbars
 		flex: auto
 		.scroll-content
@@ -330,6 +335,26 @@ export default {
 
 			&.starts-with-emoji
 				padding: 0 18px
+				// .room-icon
+				// 	position: absolute
+				// 	width: 18px
+				// 	height: @width
+				// 	left: 18px
+				// 	background-color: var(--clr-sidebar)
+				// 	border-radius: 50%
+				// 	&::before
+				// 		display: block
+				// 		height: 18px
+				// 		width: 18px
+				// 		line-height: @height
+				// 		font-size: 14px
+				// 		margin: 0 auto
+				// .room-icon
+				// 	width: 10px
+				// .name
+				// 	background-color: var(--clr-sidebar)
+				// 	padding-left: 3px
+				// 	border-radius: 18px
 				.room-icon
 					display: none
 			&.unread
@@ -446,7 +471,7 @@ export default {
 				margin-left: auto
 				margin-right: 4px
 				&::before
-					opacity: 0.5
+					opacity: 0.5 // TODO do a proper color variable for this
 			.bunt-icon-button
 				icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
 				margin-left: auto
@@ -468,6 +493,26 @@ export default {
 				color: var(--clr-sidebar-text-primary)
 	.buffer
 		flex: auto
+	> .profile
+		display: flex
+		padding: 8px
+		align-items: center
+		cursor: pointer
+		color: var(--clr-sidebar-text-primary)
+		&:hover
+			background-color: rgba(255, 255, 255, 0.3)
+		.c-avatar
+			background-color: $clr-white
+			border-radius: 50%
+			padding: 4px
+		.display-name
+			flex: auto
+			font-weight: 600
+			font-size: 18px
+			margin-left: 8px
+		.mdi
+			font-size: 24px
+			line-height: 1
 	.room-attendee
 		display: flex
 </style>

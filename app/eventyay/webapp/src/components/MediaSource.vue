@@ -12,7 +12,7 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true")
+	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
@@ -157,6 +157,11 @@ async function initializeIframe(mute) {
 		iframe.allowFullscreen = true
 		iframe.setAttribute('allowusermedia', 'true')
 		iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox#media-source-iframes
+		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+		if (module.value?.type === 'livestream.youtube') {
+			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+		}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
@@ -220,9 +225,10 @@ function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinf
 
 // Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided the retun null
+	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null
 	const config = module.value?.config || {}
+	const origin = window.location.origin
 	const params = new URLSearchParams({
 		enablejsapi: '1',
 		autoplay: '1',
@@ -233,6 +239,7 @@ function getLanguageIframeUrl(languageUrl) {
 		rel: '0',
 		showinfo: '0',
 		playlist: languageUrl,
+		origin, // Required when using enablejsapi=1 (fixes Error 153)
 	})
 
 	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
@@ -251,7 +258,7 @@ defineExpose({ isPlaying })
 		z-index: 101
 	.background-room
 		position: fixed
-		top: 55px
+		top: 51px
 		right: 4px
 		card()
 		display: flex
@@ -283,26 +290,27 @@ defineExpose({ isPlaying })
 			top: 51px
 	.background-room-enter-active, .background-room-leave-active
 		transition: transform .3s ease
+	// .background-room-enter-active
+	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
 .c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, iframe.iframe-media-source
 	position: fixed
+	transition: all .3s ease
 	&.size-tiny, &.background
-		bottom: calc(var(--vh100) - 48px - 3px)
+		bottom: calc(var(--vh100) - 48px - 51px)
 		right: 4px + 36px + 4px
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		top: 105px
+		top: calc(var(--vh100) - 56px - var(--mediasource-placeholder-height))
 		width: var(--mediasource-placeholder-width)
 		height: var(--mediasource-placeholder-height)
-		// When content area is shifted due to sidebar-open, account for sidebar width on the right edge
-		.app-content.sidebar-open &
-			right: calc(100vw - var(--sidebar-width) - var(--mediasource-placeholder-width))
-		// Otherwise anchor to right edge of viewport
-		.app-content:not(.sidebar-open) &
+		+below('l')
+			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
 			right: calc(100vw - var(--mediasource-placeholder-width))
 iframe.iframe-media-source
+	transition: all .3s ease
 	border: none
 	&.background
 		pointer-events: none
@@ -312,11 +320,4 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
-// When sidebar is collapsed (no .sidebar-open on .app-content) and media is in normal size, anchor it under the fixed AppBar at left edge
-.app-content:not(.sidebar-open) .c-media-source .c-livestream:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source .c-januscall:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source .c-januschannelcall:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source iframe.iframe-media-source:not(.size-tiny):not(.background)
-	left: 0
-	right: auto
 </style>

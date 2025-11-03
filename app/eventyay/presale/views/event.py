@@ -876,9 +876,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
             # no order placed yet
             return False, None, None
         # Check if Event allow all ticket type to join
-        if self.request.event.settings.venueless_all_items:
+        if self.request.event.settings.venueless_all_products:
             return True, None, order_list[0]
-        list_allow_ticket_type = self.request.event.settings.venueless_items
+        list_allow_ticket_type = self.request.event.settings.venueless_products
         if not list_allow_ticket_type:
             # no ticket allow to join
             return False, None, None
@@ -886,7 +886,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
         for order in order_list:
             order_positions = list(order.positions.all())
             for order_position in order_positions:
-                if order_position.item_id in list_allow_ticket_type:
+                if order_position.product_id in list_allow_ticket_type:
                     return True, order_position, order
         return False, None, None
 
@@ -918,22 +918,26 @@ class JoinOnlineVideoView(EventViewMixin, View):
             'profile': profile,
             'traits': list(
                 {
+                    # Grant base attendee role so the video app allows EVENT_VIEW by default
+                    # Without this, users with valid tickets received auth.denied because
+                    # none of the event trait_grants matched the token traits.
+                    'attendee',
                     'eventyay-video-event-{}'.format(request.event.slug),
                     'eventyay-video-subevent-{}'.format(order_position.subevent_id),
-                    'eventyay-video-item-{}'.format(order_position.item_id),
+                    'eventyay-video-product-{}'.format(order_position.product_id),
                     'eventyay-video-variation-{}'.format(order_position.variation_id),
-                    'eventyay-video-category-{}'.format(order_position.item.category_id),
+                    'eventyay-video-category-{}'.format(order_position.product.category_id),
                 }
-                | {'eventyay-video-item-{}'.format(p.item_id) for p in order_position.addons.all()}
+                | {'eventyay-video-product-{}'.format(p.product_id) for p in order_position.addons.all()}
                 | {
                     'eventyay-video-variation-{}'.format(p.variation_id)
                     for p in order_position.addons.all()
                     if p.variation_id
                 }
                 | {
-                    'eventyay-video-category-{}'.format(p.item.category_id)
+                    'eventyay-video-category-{}'.format(p.product.category_id)
                     for p in order_position.addons.all()
-                    if p.item.category_id
+                    if p.product.category_id
                 }
             ),
         }

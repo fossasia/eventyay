@@ -1,9 +1,11 @@
+import importlib.util
 import inspect
 import json
 import mimetypes
 import os
 import re
 from collections import OrderedDict
+from importlib import import_module
 from decimal import Decimal
 
 from django import forms
@@ -80,6 +82,14 @@ from eventyay.presale.views import (
     iframe_entry_view_wrapper,
 )
 from eventyay.presale.views.robots import NoSearchIndexViewMixin
+
+
+package_name = 'pretix_venueless'
+
+if importlib.util.find_spec(package_name) is not None:
+    pretix_venueless = import_module(package_name)
+else:
+    pretix_venueless = None
 
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
@@ -297,6 +307,20 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
                 r.giftcard = gc
+        
+        ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
+        ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
+
+        ctx['is_video_plugin_enabled'] = False
+        if (
+            getattr(
+                getattr(getattr(pretix_venueless, 'apps', None), 'PluginApp', None),
+                'name',
+                None,
+            )
+            in self.request.event.get_plugins()
+        ):
+            ctx['is_video_plugin_enabled'] = True
 
         return ctx
 
@@ -847,7 +871,9 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         self.kwargs = kwargs
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        if not self.order.can_modify_answers:
+        email = self.request.user.email if self.request.user.is_authenticated else ''
+
+        if not self.order.is_modification_allowed_by(email):
             messages.error(request, _('You cannot modify this order'))
             return redirect(self.get_order_url())
         return super().dispatch(request, *args, **kwargs)

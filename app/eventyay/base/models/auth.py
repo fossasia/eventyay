@@ -3,7 +3,6 @@ import json
 import os
 import uuid
 import logging
-import uuid
 from datetime import timedelta
 from hashlib import md5
 from pathlib import Path
@@ -96,6 +95,21 @@ class UserManager(BaseUserManager):
         user.is_superuser = True
         user.set_password(password)
         user.save()
+        return user
+
+    def create_adminuser(self, email: str, password: str = None):
+        """
+        Command: python manage.py create_admin_user
+        Create an admin user without setting is_superuser to True.
+        """
+        if password is None:
+            raise ValueError("You must provide a password")
+
+        user = self.model(email=email)
+        user.is_staff = True
+        user.is_administrator = True
+        user.set_password(password)
+        user.save(using=self._db)
         return user
 
 
@@ -265,7 +279,7 @@ class User(
 
         notification_settings: QuerySet[NotificationSetting]
 
-    objects = UserManager().from_queryset(UserQuerySet)()
+    objects: UserManager = UserManager.from_queryset(UserQuerySet)()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -292,7 +306,10 @@ class User(
         return self.fullname
 
     def save(self, *args, **kwargs):
-        self.email = self.email.lower()
+        # In some flows (e.g., anonymous/kiosk or external auth), users can be created
+        # without an email. Guard against calling lower() on None.
+        if self.email:
+            self.email = self.email.lower()
         is_new = not self.pk
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not kwargs.get('update_fields') or 'get_gravatar' in kwargs['update_fields']
@@ -301,7 +318,7 @@ class User(
             from eventyay.person.tasks import gravatar_cache
 
             gravatar_cache.apply_async(args=(self.pk,), ignore_result=True)
-        if is_new:
+        if is_new and self.email:  # only create notifications if an email-backed account
             self.notification_settings.create(
                 action_type='eventyay.event.order.refund.requested',
                 event=None,
@@ -310,7 +327,16 @@ class User(
             )
 
     def __str__(self):
-        return self.email
+        # Ensure __str__ always returns a string. In some flows (anon/kiosk/external),
+        # users may be created without an email/fullname. Returning None breaks
+        # Django debug toolbar (and logging) JSON serialization when it calls str().
+        return (
+            (self.fullname or "").strip()
+            or (self.email or "").strip()
+            or (self.nick or "").strip()
+            or (self.client_id or "").strip()
+            or f"user:{self.pk}"
+        )
 
     # @property
     # def is_superuser(self):
@@ -636,8 +662,8 @@ class User(
         """
         from eventyay.base.models.log import LogEntry
 
-        if data:
-            data = json.dumps(data)
+        if data is None:
+            data = {}
 
         LogEntry.objects.create(
             user=user or person or self,
@@ -712,6 +738,7 @@ the eventyay robot"""
     reset_password.alters_data = True
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views related to this user."""
         admin = '/orga/admin/users/{self.code}/'
 
     @transaction.atomic

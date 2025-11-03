@@ -34,10 +34,9 @@
 				template(#default="{focus, blur}")
 					textarea(@focus="focus", @blur="blur", v-model="hlsConfig")
 			.json-error-message {{ v$.hlsConfig.isJson.$message }}
-	.ui-form-actions-wrapper
-		.ui-form-actions
-			bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
-			.errors {{ validationErrors.join(', ') }}
+	.ui-form-actions
+		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") Save
+		.errors {{ validationErrors.join(', ') }}
 </template>
 <script setup>
 import { ref, computed, onMounted, getCurrentInstance } from 'vue'
@@ -136,6 +135,25 @@ async function save() {
 	flex: auto
 	display: flex
 	flex-direction: column
+	min-height: 0
+	height: 100%
+	.ui-page-header
+		flex: none
+		position: sticky
+		top: 0
+		z-index: 10
+		background-color: $clr-grey-50
+	> .c-scrollbars
+		flex: auto
+		min-height: 0
+	.ui-form-actions
+		flex: none
+		position: sticky
+		bottom: 0
+		background-color: white
+		border-top: border-separator()
+		padding: 16px
+		z-index: 10
 	.bunt-input-outline-container
 		margin-top: 16px
 		&.error

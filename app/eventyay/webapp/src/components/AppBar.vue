@@ -1,32 +1,30 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(type="button", @click="$emit('toggleSidebar')", @touchend="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click="$emit('toggleSidebar')", @touchend="$emit('toggleSidebar')", aria-label="Toggle navigation")
 			span.bar
 			span.bar
 			span.bar
-		router-link.logo(:to="{name: 'home'}", :class="{anonymous: isAnonymous}")
+		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
 			img(:src="theme.logo.url", :alt="world.title")
-	div.user-profile(:class="{open: profileMenuOpen}", ref="userProfileEl", @click.self="toggleProfileMenu")
-		avatar(v-if="!isAnonymous", :user="user", :size="32")
-		span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
-		span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
-		span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
+	// Admin quick link to Config
+	router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
+		bunt-icon-button settings
+	.user-section(v-if="showUser")
+		div.user-profile(:class="{open: profileMenuOpen}", ref="userProfileEl", @click.self="toggleProfileMenu")
+			avatar(v-if="!isAnonymous", :user="user", :size="32")
+			span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
+			span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
+			span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
+		button.logout-btn(v-if="!isAnonymous", @click="logout", type="button", :aria-label="'Logout'")
+			i.fa.fa-sign-out
 		.profile-dropdown(v-if="profileMenuOpen", role="menu")
 			template(v-for="item in menuItems", :key="item.key")
 				div.menu-separator(v-if="item.separatorBefore")
-				div.menu-item-wrapper(:class="{'has-children': item.children, 'submenu-open': openSubmenuKey === item.key}")
-					a.menu-item(:class="{danger: item.action === 'logout'}", :href="item.children ? '#' : getItemHref(item)", role="menuitem", :aria-haspopup="item.children ? 'true' : 'false'", :aria-expanded="item.children ? String(openSubmenuKey === item.key) : undefined", @click.prevent="item.children ? toggleSubmenu(item) : onMenuItem(item)", @keydown.right.prevent="item.children && openSubmenu(item)", @keydown.left.prevent="item.children && forceCloseSubmenu()")
-						span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-							i(:class="iconClasses[item.icon]")
-						span.menu-item-label {{ item.label }}
-						span.submenu-caret(v-if="item.children" :class="{open: openSubmenuKey === item.key}") ▸
-					transition(name="submenu-fade")
-						div.submenu-box(v-if="item.children && openSubmenuKey === item.key" role="menu")
-							a.submenu-item(v-for="child in item.children" :key="child.key" role="menuitem" :href="getItemHref(child)" @click.prevent="onMenuItem(child)")
-								span.menu-item-icon(v-if="child.icon" aria-hidden="true")
-									i(:class="iconClasses[child.icon]")
-								span.menu-item-label {{ child.label }}
+				a.menu-item(:class="{danger: item.action === 'logout'}", :href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
+					span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+						i(:class="iconClasses[item.icon]")
+					span.menu-item-label {{ item.label }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -34,6 +32,17 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import theme from 'theme'
 import Avatar from 'components/Avatar'
+
+const props = defineProps({
+	showActions: {
+		type: Boolean,
+		default: true
+	},
+	showUser: {
+		type: Boolean,
+		default: false
+	}
+})
 
 const ICON_CLASSES = {
 	dashboard: 'fa fa-tachometer',
@@ -44,7 +53,8 @@ const ICON_CLASSES = {
 	admin: 'fa fa-cog',
 	logout: 'fa fa-sign-out',
 	tickets: 'fa fa-ticket',
-	talks: 'fa fa-microphone'
+	talks: 'fa fa-microphone',
+	profile: 'fa fa-user-circle'
 }
 
 const PROFILE_MENU_ITEMS = [
@@ -52,35 +62,41 @@ const PROFILE_MENU_ITEMS = [
 		key: 'dashboard',
 		label: 'Dashboard',
 		icon: 'dashboard',
-		children: [
-			{ key: 'db-main', label: 'Main dashboard', icon: 'dashboard', externalPath: 'common/' },
-			{ key: 'db-tickets', label: 'Tickets', icon: 'tickets', externalPath: 'tickets/control' },
-			{ key: 'db-talks', label: 'Talks', icon: 'talks', externalPath: 'talk/orga/event/' }
-		]
+		externalPath: 'common/'
 	},
-	{ key: 'orders', label: 'My Orders', externalPath: 'tickets/common/orders/', icon: 'orders' },
-	{ key: 'events', label: 'My Events', externalPath: 'tickets/common/events/', icon: 'events' },
-	{ key: 'organizers', label: 'Organizers', externalPath: 'tickets/common/organizers/', icon: 'organizers' },
-	{ key: 'account', label: 'Account', route: { name: 'preferences' }, separatorBefore: true, icon: 'account' },
-	{ key: 'admin', label: 'Admin', route: { name: 'admin' }, separatorBefore: true, icon: 'admin' },
-	{ key: 'logout', label: 'Logout', action: 'logout', separatorBefore: true, icon: 'logout' }
+	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
+	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
+	{ key: 'events', label: 'My Events', externalPath: 'common/events/', icon: 'events' },
+	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
+	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
+	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
+	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout' }
 ]
 
-defineEmits(['toggleSidebar'])
+const emit = defineEmits(['toggleSidebar'])
 
 const store = useStore()
 const router = useRouter()
 
 const user = computed(() => store.state.user)
 const world = computed(() => store.state.world)
+const hasPermission = computed(() => (permission) => {
+	return store.getters.hasPermission(permission)
+})
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
+
+const logoHref = computed(() => {
+	try {
+		return buildBaseSansVideo() + 'common/'
+	} catch (e) {
+		return '/common/'
+	}
+})
 
 const profileMenuOpen = ref(false)
 const menuItems = ref(PROFILE_MENU_ITEMS)
 const iconClasses = ICON_CLASSES
-const openSubmenuKey = ref(null)
-const submenuCloseTimer = ref(null)
 const userProfileEl = ref(null)
 
 function buildBaseSansVideo() {
@@ -101,13 +117,18 @@ function toggleProfileMenu() {
 }
 function closeProfileMenu() {
 	profileMenuOpen.value = false
-	openSubmenuKey.value = null
+}
+function logout() {
+	// Clear webapp tokens
+	localStorage.removeItem('token')
+	localStorage.removeItem('clientId')
+	// Navigate to Django logout which handles session and redirects to login
+	const logoutUrl = '/common/logout/'
+	window.location.href = logoutUrl
 }
 function onMenuItem(item) {
 	if (item.action === 'logout') {
-		localStorage.removeItem('token')
-		localStorage.removeItem('clientId')
-		window.location.reload()
+		logout()
 		closeProfileMenu()
 		return
 	}
@@ -149,29 +170,6 @@ function getItemHref(item) {
 	return '#'
 }
 
-function openSubmenu(item) {
-	if (!item?.children) return
-	openSubmenuKey.value = item.key
-}
-function toggleSubmenu(item) {
-	if (!item?.children) return
-	openSubmenuKey.value = openSubmenuKey.value === item.key ? null : item.key
-}
-function forceCloseSubmenu() {
-	openSubmenuKey.value = null
-}
-function scheduleSubmenuClose() {
-	clearSubmenuClose()
-	submenuCloseTimer.value = setTimeout(() => {
-		openSubmenuKey.value = null
-	}, 250)
-}
-function clearSubmenuClose() {
-	if (submenuCloseTimer.value) {
-		clearTimeout(submenuCloseTimer.value)
-		submenuCloseTimer.value = null
-	}
-}
 function handleClickOutside(e) {
 	if (!profileMenuOpen.value) return
 	const el = userProfileEl.value
@@ -195,12 +193,14 @@ onMounted(() => {
 onBeforeUnmount(() => {
 	document.removeEventListener('click', handleClickOutside)
 	document.removeEventListener('keydown', handleGlobalKeydown)
-	if (submenuCloseTimer.value) clearTimeout(submenuCloseTimer.value)
 })
 </script>
 <style lang="stylus">
 .c-app-bar
-	position: relative
+	position: fixed
+	top: 0
+	left: 0
+	right: 0
 	height: 48px
 	display: flex
 	align-items: center
@@ -257,6 +257,15 @@ onBeforeUnmount(() => {
 			object-fit: contain
 			margin: 0
 			padding: 0
+	.settings
+		margin-left: auto
+		.bunt-icon-button
+			icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)
+	.user-section
+		display: flex
+		align-items: center
+		gap: 8px
+		position: relative
 	.user-profile
 		display: flex
 		align-items: center
@@ -264,7 +273,6 @@ onBeforeUnmount(() => {
 		padding: 4px 8px
 		color: var(--clr-sidebar-text-primary)
 		text-decoration: none
-		max-width: 50%
 		position: relative
 		cursor: pointer
 		&.open
@@ -285,10 +293,26 @@ onBeforeUnmount(() => {
 			border-top: 6px solid var(--clr-sidebar-text-primary)
 			margin-left: 2px
 			cursor: pointer
-			transition: transform .2s
-			outline: none
-			&:focus-visible
-				outline: 2px solid var(--clr-primary)
+	.logout-btn
+		appearance: none
+		background: none
+		border: none
+		padding: 8px 12px
+		cursor: pointer
+		color: var(--clr-sidebar-text-primary)
+		display: flex
+		align-items: center
+		justify-content: center
+		border-radius: 4px
+		transition: background-color 0.2s, color 0.2s
+		&:hover
+			background-color: rgba(0, 0, 0, 0.1)
+			color: var(--clr-danger)
+		&:focus-visible
+			outline: 2px solid var(--clr-primary)
+		i
+			font-size: 18px
+	.user-section
 		.profile-dropdown
 			position: absolute
 			top: calc(100% + 6px)
@@ -302,85 +326,9 @@ onBeforeUnmount(() => {
 			border-radius: 2px
 			box-shadow: 0 3px 8px rgba(0,0,0,0.175), 0 1px 3px rgba(0,0,0,0.105)
 			padding: 6px 0
-			z-index: 500
+			z-index: 130
 			font-size: 14px
 			user-select: none
-			.menu-item-wrapper
-				position: relative
-				&.has-children > .menu-item
-					padding-right: 18px
-				.submenu-caret
-					position: absolute
-					right: 10px
-					top: 50%
-					transform: translateY(-50%) rotate(180deg)
-					font-size: 12px
-					opacity: .7
-					pointer-events: none
-					transition: transform .18s ease, opacity .15s
-				
-				.submenu-caret.open
-					transform: translateY(-50%) rotate(0deg)
-				&:hover .submenu-caret
-					opacity: 1
-				.submenu-box
-					position: absolute
-					top: 0
-					right: calc(100% + 8px)
-					width: 200px
-					background: var(--clr-surface, #fff)
-					border: 1px solid rgba(0,0,0,0.20)
-					border-radius: 4px
-					box-shadow: 0 1px 4px rgba(0,0,0,0.12), 0 1px 3px -1px rgba(0,0,0,0.1)
-					padding: 6px 0
-					z-index: 650
-					&:before
-						content: ''
-						position: absolute
-						top: 10px
-						left: 100%
-						width: 8px
-						height: 8px
-						background: var(--clr-surface, #fff)
-						border-top: 1px solid rgba(0,0,0,0.20)
-						border-right: 1px solid rgba(0,0,0,0.20)
-						transform: translateX(-4px) rotate(45deg)
-						box-shadow: 2px -2px 4px rgba(0,0,0,0.08)
-					.submenu-item
-						appearance: none
-						background: none
-						border: none
-						width: 100%
-						text-align: left
-						padding: 8px 10px
-						cursor: pointer
-						font: inherit
-						color: inherit
-						display: flex
-						align-items: center
-						gap: 8px
-						white-space: nowrap
-						text-decoration: none
-						& + .submenu-item
-							border-top: 1px solid rgba(0,0,0,0.08)
-						&:hover, &:focus-visible
-							background: rgba(0,0,0,0.06)
-						.menu-item-icon
-							color: var(--clr-primary)
-							flex: 0 0 auto
-							width: 18px
-							height: 18px
-							display: inline-flex
-							align-items: center
-							justify-content: center
-							opacity: .9
-							i
-								font-size: 16px
-								line-height: 1
-								width: 16px
-								height: 16px
-								text-align: center
-								color: currentColor
 			.menu-item
 				appearance: none
 				background: none
@@ -424,15 +372,6 @@ onBeforeUnmount(() => {
 			.menu-item.danger .menu-item-icon,
 			.menu-item.danger .menu-item-icon i
 				color: inherit
-			.menu-item-wrapper:hover > .menu-item
-				background: rgba(0,0,0,0.04)
-			.menu-item-wrapper:hover > .menu-item.danger
-				background: rgba(176,0,32,0.08)
-			.submenu-fade-enter-active, .submenu-fade-leave-active
-				transition: opacity .12s ease, transform .12s ease
-			.submenu-fade-enter-from, .submenu-fade-leave-to
-				opacity: 0
-				transform: translateX(4px)
 			.menu-separator
 				height: 1px
 				background: rgba(0,0,0,0.08)
@@ -440,10 +379,11 @@ onBeforeUnmount(() => {
 
 
 @media (max-width: 560px)
-	.user-profile .display-name
-		display: none
-	.logo img
-		max-width: 120px
+	.c-app-bar
+		.user-profile .display-name
+			display: none
+		.logo img
+			max-width: 120px
 
 #app.override-sidebar-collapse .c-app-bar
 	border-bottom: none

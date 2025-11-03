@@ -23,6 +23,7 @@ export default {
 .c-admin-config
 	background white
 	display: flex
+	flex: auto
 	min-height: 0
 	height: 100%
 	.admin-nav
@@ -33,6 +34,7 @@ export default {
 		border-right: border-separator()
 		width: 218px
 		height: 100%
+		overflow-y: auto
 		> *:not(h1)
 			flex: none
 			height: 36px
