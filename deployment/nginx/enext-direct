@@ -4,7 +4,7 @@ server {
 	access_log /var/log/nginx/enext-access.log;
         error_log /var/log/nginx/enext-error.log;
 
-	# Allow larger file uploads (fixes 413 Payload Too Large errors)
+	# Allow larger file uploads
 	client_max_body_size 11M;
 
 	# WebSocket connections - route to daphne

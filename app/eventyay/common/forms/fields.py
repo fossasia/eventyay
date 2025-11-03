@@ -49,17 +49,16 @@ class SizeFileInput:
     """Takes the intended maximum upload size in bytes."""
 
     def __init__(self, *args, **kwargs):
-        if 'max_size' not in kwargs:  # Allow None, but only explicitly
-            self.max_size = settings.FILE_UPLOAD_DEFAULT_LIMIT
-        else:
-            self.max_size = kwargs.pop('max_size')
+        self.max_size = kwargs.pop('max_size', settings.FILE_UPLOAD_DEFAULT_LIMIT) if 'max_size' not in kwargs else kwargs.pop('max_size')
         super().__init__(*args, **kwargs)
+        
         self.size_warning = self.get_size_warning(self.max_size)
-        self.original_help_text = getattr(self, 'original_help_text', '') or self.help_text
-        self.added_help_text = getattr(self, 'added_help_text', '') + self.size_warning
-        self.help_text = self.original_help_text + ' ' + self.added_help_text
         self.widget.attrs['data-maxsize'] = self.max_size
         self.widget.attrs['data-sizewarning'] = self.size_warning
+        
+        current_help = self.help_text or ''
+        if self.size_warning not in current_help:
+            self.help_text = f'{current_help} {self.size_warning}'.strip()
 
     @staticmethod
     def get_size_warning(max_size=None, fallback=True):
@@ -80,26 +79,19 @@ class ExtensionFileInput:
     def __init__(self, *args, **kwargs):
         self.extensions = kwargs.pop('extensions', None) or self.extensions or {}
         super().__init__(*args, **kwargs)
-        content_types = set()
-        for ext in self.extensions.values():
-            content_types.update(ext)
-        content_types = ','.join(content_types)
-        self.widget.attrs['accept'] = content_types
         
-        # Add allowed file types to help text
         if self.extensions:
+            content_types = set()
+            for ext in self.extensions.values():
+                content_types.update(ext)
+            self.widget.attrs['accept'] = ','.join(content_types)
+            
             allowed_types = ', '.join(sorted(self.extensions.keys()))
             extension_help_text = _('Allowed file types: {types}').format(types=allowed_types)
-            self.original_help_text = getattr(self, 'original_help_text', '') or self.help_text or ''
-            self.added_help_text = getattr(self, 'added_help_text', '')
-            if self.added_help_text:
-                self.added_help_text = extension_help_text + ' ' + self.added_help_text
-            else:
-                self.added_help_text = extension_help_text
-            if self.original_help_text:
-                self.help_text = self.original_help_text + ' ' + self.added_help_text
-            else:
-                self.help_text = self.added_help_text
+            
+            current_help = self.help_text or ''
+            if extension_help_text not in current_help:
+                self.help_text = f'{current_help} {extension_help_text}' if current_help else extension_help_text
 
     def validate(self, value):
         super().validate(value)
@@ -107,11 +99,12 @@ class ExtensionFileInput:
             filename = value.name
             extension = Path(filename).suffix.lower()
             if extension not in self.extensions.keys():
+                allowed_types = ', '.join(sorted(self.extensions.keys()))
                 raise ValidationError(
-                    _('This filetype ({extension}) is not allowed, it has to be one of the following: ').format(
-                        extension=extension
+                    _('This filetype ({extension}) is not allowed, it has to be one of the following: {types}').format(
+                        extension=extension,
+                        types=allowed_types
                     )
-                    + ', '.join(self.extensions.keys())
                 )
 
 

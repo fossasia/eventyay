@@ -151,7 +151,6 @@ class SizeFileField(forms.FileField):
         self.max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
         
-        # Add size information to widget attributes and help text
         if self.max_size:
             size_warning = _('Please do not upload files larger than {size}!').format(
                 size=SizeFileField._sizeof_fmt(self.max_size)
@@ -159,11 +158,8 @@ class SizeFileField(forms.FileField):
             self.widget.attrs['data-maxsize'] = self.max_size
             self.widget.attrs['data-sizewarning'] = size_warning
             
-            # Add to help text if not already present
-            if self.help_text and size_warning not in self.help_text:
-                self.help_text = f'{self.help_text} {size_warning}'
-            elif not self.help_text:
-                self.help_text = size_warning
+            if size_warning not in (self.help_text or ''):
+                self.help_text = f'{self.help_text} {size_warning}' if self.help_text else size_warning
 
     @staticmethod
     def _sizeof_fmt(num, suffix='B'):
@@ -192,18 +188,14 @@ class ExtFileField(SizeFileField):
         self.ext_whitelist = [i.lower() for i in ext_whitelist]
         super().__init__(*args, **kwargs)
         
-        # Set accept attribute on widget for client-side validation
         if self.ext_whitelist:
             self.widget.attrs['accept'] = ','.join(self.ext_whitelist)
-        
-        # Add allowed file types to help text
-        if self.ext_whitelist and self.help_text:
+            
             allowed_types = ', '.join(sorted(self.ext_whitelist))
             extension_help = _('Allowed file types: {types}.').format(types=allowed_types)
-            self.help_text = f'{self.help_text} {extension_help}'
-        elif self.ext_whitelist:
-            allowed_types = ', '.join(sorted(self.ext_whitelist))
-            self.help_text = _('Allowed file types: {types}.').format(types=allowed_types)
+            
+            if extension_help not in (self.help_text or ''):
+                self.help_text = f'{self.help_text} {extension_help}' if self.help_text else extension_help
 
     def clean(self, *args, **kwargs):
         data = super().clean(*args, **kwargs)
