@@ -148,7 +148,7 @@ async function initializeIframe(mute) {
 				shouldMute,
 				config.hideControls,
 				config.noRelated,
-				config.showInfo,
+				config.showinfo,
 				config.disableKb,
 				config.loop,
 				config.modestBranding,
