@@ -1,6 +1,6 @@
-=====================================================
+=========================================================
 Single Sign-On (SSO) Implementation with JWT and OAuth2
-=====================================================
+=========================================================
 
 Overview
 ========
@@ -17,20 +17,20 @@ Step 1: Customize Authorization View
 ====================================
 To bypass the OAuth2 consent screen for trusted applications and automatically set a JWT cookie upon successful authorization, we override the `AuthorizationView`.
 
-src/pretix/control/views/auth.py
+src/eventyay/control/views/auth.py
 
 
 Step 2: Update URL Configuration
 ================================
 Update the URL configuration to use the `CustomAuthorizationView`:
 
-src/pretix/control/urls.py
+src/eventyay/control/urls.py
 
 Step 3: Modify Login View to Set JWT Cookie
 ===========================================
 In the `ticket` application, modify the `login` view to set a JWT cookie after successful authentication.
 
-Update `login` view in `src/pretix/control/views/auth.py`:
+Update `login` view in `src/eventyay/control/views/auth.py`:
 
 
 Step 4: Security and Configuration

@@ -233,7 +233,21 @@ Cart position endpoints
       Vary: Accept
       Content-Type: application/json
 
-      (Full cart position resource, see above.)
+      {
+         "id": 1,
+         "cart_id": "aCGdgte0sZ7m5pyr",
+         "item": 1,
+         "variation": null,
+         "price": "23.00",
+         "attendee_name": "Peter Miller",
+         "attendee_email": null,
+         "voucher": null,
+         "addon_to": null,
+         "subevent": null,
+         "datetime": "2017-12-01T10:00:00Z",
+         "expires": "2017-12-10T10:00:00Z",
+         "includes_tax": true
+      }
 
    :param organizer: The ``slug`` field of the organizer of the event to create a position for
    :param event: The ``slug`` field of the event to create a position for
