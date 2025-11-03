@@ -1,7 +1,3 @@
-/**
- * Client-side filtering without page reloads
- * Filters visible content based on form values
- */
 (function() {
     'use strict';
 
@@ -19,29 +15,19 @@
 
     function init() {
         const filterButtons = document.querySelectorAll('.filter-btn');
-        console.log('Found filter buttons:', filterButtons.length);
         
         filterButtons.forEach(function(filterBtn) {
             if (filterBtn.dataset.initialized) return;
             filterBtn.dataset.initialized = 'true';
             
             const clearBtn = filterBtn.parentElement.querySelector('.clear-btn');
-            if (!clearBtn) {
-                console.warn('Clear button not found');
-                return;
-            }
+            if (!clearBtn) return;
             
             const form = filterBtn.closest('form') || 
                         filterBtn.closest('.filter-form, .row')?.querySelector('form');
             
-            if (!form) {
-                console.warn('Form not found');
-                return;
-            }
+            if (!form) return;
             
-            console.log('Initialized filters for form:', form);
-            
-            // Prevent form submission completely
             filterBtn.type = 'button';
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -68,9 +54,6 @@
     }
 
     function applyFilters(form) {
-        console.log('Applying filters...');
-        
-        // Get all form values
         const formData = new FormData(form);
         const filters = {};
         
@@ -80,22 +63,14 @@
             }
         }
         
-        console.log('Filters:', filters);
-        
-        // Find all filterable rows (tables, lists, cards, etc.)
         const rows = findFilterableRows();
-        console.log('Found rows to filter:', rows.length);
-        
         let visibleCount = 0;
         
         rows.forEach(function(row) {
             let shouldShow = true;
             
-            // Check each filter
             for (const [key, value] of Object.entries(filters)) {
                 const rowText = row.textContent.toLowerCase();
-                
-                // Check if row matches filter
                 if (!rowText.includes(value)) {
                     shouldShow = false;
                     break;
@@ -110,43 +85,27 @@
             }
         });
         
-        // Show message if no results
         showResultCount(visibleCount, rows.length);
-        
-        // Clear form fields after filtering
         clearFormFields(form);
     }
 
     function clearFilters(form) {
-        console.log('Clearing filters...');
-        
-        // Clear all form fields
         clearFormFields(form);
         
-        // Show all rows
         const rows = findFilterableRows();
-        console.log('Showing all rows:', rows.length);
         rows.forEach(function(row) {
             row.style.display = '';
         });
         
-        // Remove result message
         removeResultMessage();
     }
 
     function findFilterableRows() {
-        // Find all rows in tables
         const tableRows = Array.from(document.querySelectorAll('table tbody tr'));
-        
-        // Find all list items
         const listItems = Array.from(document.querySelectorAll('.list-group-item'));
-        
-        // Find all cards
         const cards = Array.from(document.querySelectorAll('.card, .panel'));
         
-        // Combine and return
         return [...tableRows, ...listItems, ...cards].filter(function(el) {
-            // Exclude the header row and empty rows
             return el && !el.classList.contains('empty-collection');
         });
     }
@@ -158,13 +117,11 @@
                 input.checked = false;
             } else if (input.tagName === 'SELECT') {
                 input.selectedIndex = 0;
+                if (typeof jQuery !== 'undefined') {
+                    jQuery(input).trigger('change.select2');
+                }
             } else if (input.type !== 'hidden' && input.type !== 'submit') {
                 input.value = '';
-            }
-            
-            // Trigger change for Select2
-            if (input.tagName === 'SELECT' && typeof jQuery !== 'undefined') {
-                jQuery(input).trigger('change.select2');
             }
         });
     }
