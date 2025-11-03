@@ -8,6 +8,7 @@ from typing import Annotated
 from urllib.parse import urlparse
 
 import django.conf.locale
+import importlib_metadata
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from pycountry import currencies
@@ -54,6 +55,8 @@ is_development = active_environment == RunningEnvironment.DEVELOPMENT
 is_testing = active_environment == RunningEnvironment.TESTING
 is_production = active_environment == RunningEnvironment.PRODUCTION
 
+DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
+
 
 class BaseSettings(_BaseSettings):
     """
@@ -95,6 +98,9 @@ class BaseSettings(_BaseSettings):
     talk_hostname: str = 'http://localhost:8000'
     sentry_dsn: str = ''
     instance_name: str = 'eventyay'
+    auth_backends: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_AUTH_BACKENDS)]
+    obligatory_2fa: bool = False
+    plugins_exclude: Annotated[tuple[str, ...], Field(default_factory=tuple)]
 
     @classmethod
     def settings_customise_sources(
@@ -231,7 +237,33 @@ _OURS_APPS = (
     # Load local ticket-video plugin
     'pretix_venueless',
 )
-INSTALLED_APPS = _LIBRARY_APPS + _OURS_APPS
+
+# TODO: Merge these two.
+PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
+PLUGINS_EXCLUDE = PRETIX_PLUGINS_EXCLUDE
+
+eps = importlib_metadata.entry_points()
+
+# Pretix plugins
+pretix_plugins = [
+    ep.module
+    for ep in eps.select(group='pretix.plugin')
+    if ep.module not in PLUGINS_EXCLUDE
+]
+
+# Pretalx plugins
+pretalx_plugins = [
+    ep.module
+    for ep in eps.select(group='pretalx.plugin')
+    if ep.module not in PLUGINS_EXCLUDE
+]
+
+SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_venueless', 'pretix_pages'})
+
+INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
+
+# TODO: What is it for?
+ALL_PLUGINS = sorted(pretix_plugins + pretalx_plugins)
 
 # For "Talk" (pretalx).
 # TODO: May rename, because it is extended from something, not only "core" modules.
@@ -867,7 +899,7 @@ ENTROPY = {
 EVENTYAY_VERSION = __version__
 
 # TODO: Remove.
-# These values are used for channel layer group. Why we need to name them like that?
+# These values are used for channel layer group name. Why we need to name group with Git commit?
 EVENTYAY_COMMIT = os.getenv('EVENTYAY_COMMIT_SHA', 'unknown')
 EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
 
@@ -902,3 +934,18 @@ MULTIFACTOR = {
 }
 
 INSTANCE_NAME = conf.instance_name
+EVENTYAY_REGISTRATION = True
+EVENTYAY_PASSWORD_RESET = True
+EVENTYAY_LONG_SESSIONS = True
+# Ref: https://docs.pretix.eu/dev/development/api/auth.html
+EVENTYAY_AUTH_BACKENDS = conf.auth_backends
+EVENTYAY_ADMIN_AUDIT_COMMENTS = True
+EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
+EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
+EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
+# TODO: Merge with above.
+PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
+PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
+
+# TODO: The `pdftk` tool should be auto-detected.
+PDFTK = ''
