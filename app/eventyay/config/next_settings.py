@@ -15,6 +15,8 @@ from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings as _BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
 
+from eventyay import __version__
+
 # To avoid loading unnecessary settings from other applications
 # we only load those which are prefixed with EVY_.
 _ENV_PREFIX = 'EVY_'
@@ -57,7 +59,8 @@ class BaseSettings(_BaseSettings):
     """
     Contains the settings which were loaded from the configuration file.
 
-    After that, it will be manipulated to serve Django.
+    After that, the settings will be manipulated to serve Django.
+    This class is named "BaseSettings" because the settings it holds are not finalized yet.
     """
 
     # Tell Pydantic how to load our configurations.
@@ -65,6 +68,7 @@ class BaseSettings(_BaseSettings):
         env_prefix=_ENV_PREFIX,
     )
     # Here, starting our settings fields.
+    # The names follow what is in Django and converted to lowercase.
     debug: bool = False
     secret_key: str
     postgres_db: str = _DEFAULT_DB_NAME
@@ -80,8 +84,17 @@ class BaseSettings(_BaseSettings):
     language_code: str = 'en'
     # Don't send emails to Internet by default.
     email_backend: str = 'django.core.mail.backends.console.EmailBackend'
+    email_host: str = 'localhost'
+    email_port: int = 587
+    email_host_user: str = 'info@eventyay.com'
+    email_host_password: str = ''
+    email_use_tls: bool = True
+    default_from_email: str = 'info@eventyay.com'
     allowed_hosts: list[str] = []
     site_url: HttpUrl = 'http://localhost:8000'
+    talk_hostname: str = 'http://localhost:8000'
+    sentry_dsn: str = ''
+    instance_name: str = 'eventyay'
 
     @classmethod
     def settings_customise_sources(
@@ -632,10 +645,144 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
+
 EMAIL_BACKEND = conf.email_backend
+EMAIL_HOST = conf.email_host
+EMAIL_PORT = conf.email_port
+EMAIL_HOST_USER = conf.email_host_user
+EMAIL_HOST_PASSWORD = conf.email_host_password
+EMAIL_USE_TLS = conf.email_use_tls
+# Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
+EMAIL_USE_SSL = not conf.email_use_tls
+# TODO: Move to consts.py and rename
+EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
+# TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
+# Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
+MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
+
+# TODO: Remove (why we need to use different values from default?)
+SESSION_COOKIE_NAME = 'eventyay_session'
+LANGUAGE_COOKIE_NAME = 'eventyay_language'
+CSRF_COOKIE_NAME = 'eventyay_csrftoken'
+# TODO: After merging eventyay-xxx componenents, we may not need this.
+CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
+SESSION_COOKIE_HTTPONLY = True
+# TODO: Remove. We always use Nginx or we are even behind CloudFlare,
+# so trusting X-Forwarded-For is a must, if we want to get real client IP.
+TRUST_X_FORWARDED_FOR = True
 
 WSGI_APPLICATION = 'eventyay.config.wsgi.application'
 ASGI_APPLICATION = 'eventyay.config.asgi.application'
+
+_LOGGING_HANDLERS = {
+    'console': {
+        'level': 'DEBUG',
+        'class': 'logging.StreamHandler',
+        'formatter': 'verbose',
+    },
+    'rich': {
+        'level': 'DEBUG',
+        'class': 'rich.logging.RichHandler' if os.getenv('TERM') else 'logging.StreamHandler',
+        'formatter': 'tiny' if os.getenv('TERM') else 'verbose',
+    },
+}
+_LOGGING_FORMATTERS = {
+    'verbose': {'format': '%(levelname)s %(asctime)s %(module)s: %(message)s'},
+    'tiny': {
+        'format': '%(message)s',
+        'datefmt': '[%X]',
+    },
+}
+_adaptive_console_handler = 'rich' if DEBUG else 'console'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'root': {
+        'level': 'WARNING',
+        'handlers': [_adaptive_console_handler],
+    },
+    'formatters': _LOGGING_FORMATTERS,
+    'handlers': _LOGGING_HANDLERS,
+    'loggers': {
+        'django.db.backends': {
+            'handlers': [_adaptive_console_handler],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        # Daphne always print color codes, so we bypass rich handler
+        'django.channels.server': {
+            'level': 'INFO',
+            'handlers': ['console'],
+            'propagate': False,
+        },
+        # We need it to debug permission issues.
+        'rules': {
+            'handlers': [_adaptive_console_handler],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'eventyay': {
+            'handlers': [_adaptive_console_handler],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# NOTE: I skipped configuring sending errors via emails to developers.
+# We should setup Sentry for error tracking later.
+
+# --- Django allauth settings for social login ---
+
+# NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
+# ACCOUNT_LOGIN_METHODS = {'email'}
+# ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+
+SOCIALACCOUNT_ADAPTER = 'eventyay.plugins.socialauth.adapter.CustomSocialAccountAdapter'
+SOCIALACCOUNT_EMAIL_REQUIRED = True
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'
+OAUTH2_PROVIDER_GRANT_MODEL = 'api.OAuthGrant'
+OAUTH2_PROVIDER_ACCESS_TOKEN_MODEL = 'api.OAuthAccessToken'
+OAUTH2_PROVIDER_ID_TOKEN_MODEL = 'api.OAuthIDToken'
+OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = 'api.OAuthRefreshToken'
+OAUTH2_PROVIDER = {
+    'SCOPES': {
+        'profile': _('User profile only'),
+        'read': _('Read access'),
+        'write': _('Write access'),
+    },
+    'OAUTH2_VALIDATOR_CLASS': 'eventyay.api.oauth.Validator',
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'] if not DEBUG else ['http', 'https'],
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 3600 * 24,
+    'ROTATE_REFRESH_TOKEN': False,
+    'PKCE_REQUIRED': False,
+    'OIDC_RESPONSE_TYPES_SUPPORTED': ['code'],  # We don't support proper OIDC for now
+}
+
+# REST Framework configuration
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'eventyay.api.auth.api_auth.NoPermission',
+    ],
+    'UNAUTHENTICATED_USER': 'eventyay.api.auth.api_auth.AnonymousUser',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
+    'PAGE_SIZE': 50,
+    'DEFAULT_AUTHENTICATION_CLASSES': ('eventyay.api.auth.api_auth.EventTokenAuthentication',),
+    'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
+    'UNICODE_JSON': False,
+}
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
@@ -650,6 +797,7 @@ LOGIN_URL_CONTROL = 'eventyay_common:auth.login'
 VIDEO_BASE_PATH = '/video'
 WEBSOCKET_URL = '/ws/event/'
 TALK_BASE_PATH = ''
+LOGIN_REDIRECT_URL = '/control/video'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
@@ -700,6 +848,10 @@ BOOTSTRAP3 = {
     },
 }
 
+# TODO: The value is an URL (https://...) but the name is "hostname". Rename it.
+# Also, after merging eventyay-xxx components, we may not need this.
+TALK_HOSTNAME = conf.talk_hostname
+
 # TODO: Move to consts.py
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
@@ -711,3 +863,42 @@ ENTROPY = {
     'giftcard_secret': 12,
 }
 
+# TODO: Remove, why we have to get this information from settings?
+EVENTYAY_VERSION = __version__
+
+# TODO: Remove.
+# These values are used for channel layer group. Why we need to name them like that?
+EVENTYAY_COMMIT = os.getenv('EVENTYAY_COMMIT_SHA', 'unknown')
+EVENTYAY_ENVIRONMENT = os.getenv('EVENTYAY_ENVIRONMENT', 'unknown')
+
+# Sentry configuration
+SENTRY_DSN = conf.sentry_dsn
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[CeleryIntegration(), DjangoIntegration()],
+        send_default_pii=False,
+        debug=DEBUG,
+        release=EVENTYAY_COMMIT,
+        environment=active_environment.value,
+    )
+
+# Multifactor authentication configuration
+MULTIFACTOR = {
+    'LOGIN_CALLBACK': False,
+    'RECHECK': True,
+    'RECHECK_MIN': 3600 * 24,
+    'RECHECK_MAX': 3600 * 24 * 7,
+    'FIDO_SERVER_ID': urlparse(SITE_URL).hostname,
+    'FIDO_SERVER_NAME': 'Eventyay',
+    'TOKEN_ISSUER_NAME': 'Eventyay',
+    'U2F_APPID': SITE_URL,
+    'FACTORS': ['FIDO2'],
+    'FALLBACKS': {},
+}
+
+INSTANCE_NAME = conf.instance_name

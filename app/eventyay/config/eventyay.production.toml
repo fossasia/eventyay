@@ -1,4 +1,8 @@
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+email_backend = 'django.core.mail.backends.smtp.EmailBackend'
+email_host = 'mail.your-server.de'
+email_host_password = 'CHANGEME'
 
 # TODO: Use concrete hostnames for production.
-ALLOWED_HOSTS = ['*', '127.0.0.1']
+allowed_hosts = ['*', '127.0.0.1']
+
+talk_hostname = 'https://wikimania-dev.eventyay.com/'
