@@ -1,5 +1,3 @@
-.. spelling:: fullname
-
 .. _`rest-devices`:
 
 Devices
@@ -212,7 +210,8 @@ Device endpoints
       {
         "id": 1,
         "name": "Foo",
-        ...
+        "device_id": 1,
+        "unique_serial": "ABC123"
       }
 
    :param organizer: The ``slug`` field of the organizer to modify

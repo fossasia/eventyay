@@ -59,6 +59,7 @@ Getting Started
 4. **Install Python packages**
 
 Use ``uv`` to create virtual environment and install Python packages at the same time.
+**Make sure you are in app directory**
 
   .. code-block:: sh
 
@@ -88,10 +89,9 @@ From now on, you can do everything with the database without specifying password
 
 .. code-block:: sh
 
-   dropdb eventyay-db
    psql eventyay-db
 
-In case you cannot take adavantage of PostgreSQL *peer* mode, you need to create a *.env* file with these values:
+In case you cannot take advantage of PostgreSQL *peer* mode, you need to create a *.env* file with these values:
 
 .. code-block:: sh
 
@@ -102,9 +102,7 @@ In case you cannot take adavantage of PostgreSQL *peer* mode, you need to create
 
 6. **Activate virtual environment**
 
-After running ``uv sync```, ``uv`` will activate the virtual environment. But if you are back
-to work on the project another, we don't run ``uv``, then we activate the virtual environment by:
-
+After running ``uv sync```, activate a virtual environment
 
   .. code-block:: sh
 
@@ -117,11 +115,23 @@ to work on the project another, we don't run ``uv``, then we activate the virtua
 
       python manage.py migrate
 
-8. **Create a superuser account** (for accessing the admin panel):
+   If you see any Redis issues, Install Redis and start it:
+
+   **Update configuration**
+
+
+   Edit ``app/eventyay.cfg`` and change Redis URLs from
+   ``redis://eventyay-next-redis`` **to**
+   ``redis://localhost:6379/``
+
+
+   Do **not** edit the database numbers (0, 1, etc.).
+
+8. **Create a admin user account** (for accessing the admin panel):
 
    .. code-block:: bash
 
-      python manage.py createsuperuser
+      python manage.py create_admin_user
 
 9. **Run the development server**:
 
@@ -166,7 +176,7 @@ We assume your current working directory is the checkout of this repo.
 
 5. **Create a superuser account** (for accessing the admin panel):
 
-   This should be necessary only once, since the database is persisted 
+   This should be necessary only once, since the database is persisted
    as docker volume. If you see strange behaviour, see the point 3.
    on how to reset.
 
