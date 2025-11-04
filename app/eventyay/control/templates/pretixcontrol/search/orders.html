@@ -112,5 +112,5 @@
     {% include "pretixcontrol/pagination_huge.html" %}
 {% endblock %}
 {% block custom_header %}
-    <script src="{% static 'common/js/timezone.js' %}"></script>
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}

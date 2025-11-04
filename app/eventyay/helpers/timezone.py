@@ -4,18 +4,25 @@ Timezone conversion utilities for browser timezone support
 import pytz
 
 
-def get_browser_timezone(form_data, fallback='UTC'):
+def get_browser_timezone(source, fallback='UTC'):
     """
-    Get browser timezone from form data
-    
+    Resolve a pytz timezone from user-provided input.
+
     Args:
-        form_data: Dictionary containing cleaned form data
-        fallback: Fallback timezone string if browser timezone not provided (default: 'UTC')
-    
+        source: Either a timezone string or a mapping with a ``browser_timezone`` key.
+        fallback: Fallback timezone string if no usable timezone is provided (default: 'UTC').
+
     Returns:
-        pytz timezone object
+        pytz timezone object.
     """
-    browser_tz_str = form_data.get('browser_timezone') or fallback
+    if isinstance(source, str):
+        browser_tz_str = source or fallback
+    else:
+        try:
+            browser_tz_str = source.get('browser_timezone', fallback) or fallback
+        except AttributeError:
+            browser_tz_str = fallback
+
     try:
         return pytz.timezone(browser_tz_str)
     except pytz.UnknownTimeZoneError:

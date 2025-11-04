@@ -1175,7 +1175,7 @@ def generate_GiftCardListExporter(organizer):  # hackhack
                     obj.cached_value,
                     o.full_code if o else '',
                     i.number if i else '',
-                    i.date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z') if i else '',
+                    i.date.strftime('%Y-%m-%d') if i else '',
                 ]
                 yield row
 
