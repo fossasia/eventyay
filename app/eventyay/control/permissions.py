@@ -1,9 +1,14 @@
 from urllib.parse import quote
 
 from django.core.exceptions import PermissionDenied
+from django.db.models import Q
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.translation import gettext as _
+
+from eventyay.base.models import Organizer
+from eventyay.base.models.organizer import OrganizerBillingModel
+from eventyay.base.settings import GlobalSettingsObject
 
 
 def current_url(request):
@@ -168,8 +173,16 @@ class OrganizerCreationPermissionMixin:
     def _can_create_organizer(self, user):
         """
         Check if the user has permission to create an organizer.
-        System admins can always create organizers.
-        Other users can create organizers based on global settings.
+        
+        Permission precedence (highest to lowest):
+        1. System admins (staff with active session) - always allowed
+        2. Default when both settings are None - allow all users (permissive default)
+        3. allow_all_users_create_organizer=True - allow all authenticated users
+        4. allow_payment_users_create_organizer=True - allow users with payment info
+        5. Both False - deny (admin only)
+        
+        Note: If allow_all_users=True, it takes precedence over allow_payment_users
+        (no need to check payment info if all users are already allowed).
         
         Args:
             user: The user to check permissions for
@@ -177,8 +190,6 @@ class OrganizerCreationPermissionMixin:
         Returns:
             bool: True if user can create organizers, False otherwise
         """
-        from eventyay.base.settings import GlobalSettingsObject
-        
         # System admins can always create organizers
         if user.has_active_staff_session(self.request.session.session_key):
             return True
@@ -192,7 +203,7 @@ class OrganizerCreationPermissionMixin:
         if allow_all_users is None and allow_payment_users is None:
             return True
 
-        # If all users are allowed
+        # If all users are allowed (takes precedence over payment check)
         if allow_all_users:
             return True
 
@@ -206,7 +217,11 @@ class OrganizerCreationPermissionMixin:
     def _user_has_payment_info(self, user):
         """
         Check if the user has valid payment information on file.
-        This is determined by checking if any of their organizers have a billing record with stripe_customer_id.
+        
+        This checks if any of the user's organizers have billing records with payment method setup.
+        Checks for:
+        - stripe_customer_id: Indicates Stripe customer account
+        - stripe_payment_method_id: Indicates saved payment method
         
         Args:
             user: The user to check payment info for
@@ -214,21 +229,16 @@ class OrganizerCreationPermissionMixin:
         Returns:
             bool: True if user has payment info, False otherwise
         """
-        from eventyay.base.models import Organizer
-        from eventyay.base.models.organizer import OrganizerBillingModel
-        
         # Get all organizers where the user is a team member
         user_organizers = Organizer.objects.filter(
             teams__members=user
         ).distinct()
 
-        # Check if any of these organizers have billing info with stripe_customer_id
-        for organizer in user_organizers:
-            billing = OrganizerBillingModel.objects.filter(
-                organizer=organizer,
-                stripe_customer_id__isnull=False
-            ).exclude(stripe_customer_id='').first()
-            if billing:
-                return True
-
-        return False
+        # Single query to check if any billing record has payment info
+        # Check for either stripe_customer_id OR stripe_payment_method_id
+        return OrganizerBillingModel.objects.filter(
+            organizer__in=user_organizers
+        ).filter(
+            (Q(stripe_customer_id__isnull=False) & ~Q(stripe_customer_id='')) |
+            (Q(stripe_payment_method_id__isnull=False) & ~Q(stripe_payment_method_id=''))
+        ).exists()

@@ -62,11 +62,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         # Check if user has permission to create organizers
         if not self._can_create_organizer(request.user):
-            messages.error(
-                request,
-                _('You do not have permission to create organizers. Please contact an administrator.')
-            )
-            raise PermissionDenied(_('You do not have permission to create organizers.'))
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
