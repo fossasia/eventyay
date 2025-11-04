@@ -103,7 +103,7 @@ class EmailQueue(models.Model):
         Uses their stored metadata and updates send status individually.
         """
         if self.sent_at:
-            return  # Already sent
+            return False  # Already sent
         recipients = self.recipients.all()
         if not recipients.exists():
             return False  # Nothing to send
@@ -187,7 +187,7 @@ class EmailQueue(models.Model):
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("SendMailException error while sending to %s: %s", email, str(e))
+            logger.exception("SendMailException error while sending to %s: %s", email, str(se))
         except Exception as e:
             recipient.sent = False
             recipient.error = f"Internal error: {str(e)}"

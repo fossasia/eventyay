@@ -14,7 +14,7 @@ from django.views.generic import FormView, ListView, TemplateView, UpdateView, V
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import language
-from eventyay.base.models .base import CachedFile
+from eventyay.base.models.base import CachedFile
 from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
@@ -253,13 +253,6 @@ class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, Lis
         return ctx
 
     def get_queryset(self):
-        base_qs = self.model.objects.filter(
-            event=self.request.event,
-            sent_at__isnull=True
-        ).select_related('event', 'user').prefetch_related('recipients')
-        return self.get_filtered_queryset(base_qs)
-
-    def get_queryset(self):
         first_recipient_email = EmailQueueToUser.objects.filter(
             mail=OuterRef('pk')
         ).order_by('id').values('email')[:1]
@@ -333,7 +326,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
         return ctx
 
     def form_invalid(self, form):
-        messages.error(self.request, _('We could save the email. See below for details.'))
+        messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
     def form_valid(self, form):
@@ -523,7 +516,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         return ctx
 
     def form_invalid(self, form):
-        messages.error(self.request, _('We could save the email. See below for details.'))
+        messages.error(self.request, _('We could not save the email. See below for details.'))
         return super().form_invalid(form)
 
     def form_valid(self, form):

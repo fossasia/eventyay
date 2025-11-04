@@ -130,8 +130,6 @@ def send_queued_mail(self, event_id: int, queued_mail_id: int):
         event = Event.objects.get(id=original_event_id)
 
     try:
-        event = Event.objects.get(id=original_event_id)
-
         qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
         result = qm.send(async_send=True)
 

@@ -175,7 +175,7 @@ def mail(
             timezone = event.timezone
             renderer = event.get_html_mail_renderer()
             if not auto_email:
-                if event_bcc is not None and event_bcc != '':  # The organizer may edit the BCC field in the EmailQueue editor to either specify a different BCC address or remove it entirely.
+                if event_bcc is not None and event_bcc != '':  # Use custom BCC if specified
                     for bcc_mail in event_bcc.split(','):
                         bcc.append(bcc_mail.strip())
             elif event.settings.mail_bcc:

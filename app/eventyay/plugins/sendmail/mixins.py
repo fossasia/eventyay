@@ -67,6 +67,7 @@ class CopyDraftMixin:
                             try:
                                 form_kwargs['initial']['subevent'] = request.event.subevents.get(id=qmf.subevent)
                             except SubEvent.DoesNotExist:
+                                # It's possible that the referenced subevent no longer exists; ignore in this case.
                                 pass
 
                         for field in ['subevents_from', 'subevents_to', 'created_from', 'created_to']:
