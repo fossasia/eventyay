@@ -42,6 +42,35 @@ const matchPasswords = (passwordField, confirmationFields) => {
     }
 }
 
+const validatePasswordComplexity = (password) => {
+    const errors = []
+
+    if (password.length < 8) {
+        errors.push("Password must be at least 8 characters long")
+    }
+
+    if (!/[a-zA-Z]/.test(password)) {
+        errors.push("Password must contain at least one letter")
+    }
+
+    if (!/[0-9]/.test(password)) {
+        errors.push("Password must contain at least one number")
+    }
+
+    const commonPasswords = [
+        "password",
+        "password123",
+        "12345678",
+        "qwerty",
+        "abc123",
+    ]
+    if (commonPasswords.includes(password.toLowerCase())) {
+        errors.push("This password is too common")
+    }
+
+    return errors
+}
+
 const updatePasswordStrength = (passwordField) => {
     const passwordStrengthBar = passwordField.parentNode.querySelector(
         ".password_strength_bar",
@@ -57,27 +86,50 @@ const updatePasswordStrength = (passwordField) => {
         passwordStrengthBar.setAttribute("aria-valuenow", 0)
         passwordStrengthInfo.classList.add("d-none")
     } else {
-        const result = zxcvbn(passwordField.value)
-        const crackTime =
-            result.crack_times_display.online_no_throttling_10_per_second
+        const validationErrors = validatePasswordComplexity(passwordField.value)
 
-        if (result.score < 1) {
-            passwordStrengthBar.classList.remove("bg-success")
+        if (validationErrors.length > 0) {
+            passwordStrengthBar.classList.remove("bg-success", "bg-warning")
             passwordStrengthBar.classList.add("bg-danger")
-        } else if (result.score < 3) {
-            passwordStrengthBar.classList.remove("bg-danger")
-            passwordStrengthBar.classList.add("bg-warning")
-        } else {
-            passwordStrengthBar.classList.remove("bg-warning")
-            passwordStrengthBar.classList.add("bg-success")
-        }
+            passwordStrengthBar.style.width = "20%"
+            passwordStrengthBar.setAttribute("aria-valuenow", 1)
 
-        passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`
-        passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1)
-        passwordStrengthInfo.querySelector(
-            ".password_strength_time",
-        ).innerHTML = crackTime
-        passwordStrengthInfo.classList.remove("d-none")
+            const errorHtml = validationErrors
+                .map(
+                    (err) =>
+                        `<span class="d-block text-danger"><i class="fa fa-times-circle"></i> ${err}</span>`,
+                )
+                .join("")
+
+            passwordStrengthInfo.innerHTML = `<div class="password-validation-errors">${errorHtml}</div>`
+            passwordStrengthInfo.classList.remove("d-none")
+        } else {
+            const result = zxcvbn(passwordField.value)
+            const crackTime =
+                result.crack_times_display.online_no_throttling_10_per_second
+
+            if (result.score < 1) {
+                passwordStrengthBar.classList.remove("bg-success")
+                passwordStrengthBar.classList.add("bg-danger")
+            } else if (result.score < 3) {
+                passwordStrengthBar.classList.remove("bg-danger")
+                passwordStrengthBar.classList.add("bg-warning")
+            } else {
+                passwordStrengthBar.classList.remove("bg-warning")
+                passwordStrengthBar.classList.add("bg-success")
+            }
+
+            passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`
+            passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1)
+
+            const strengthText =
+                result.score >= 3
+                    ? `<span class="text-success"><i class="fa fa-check-circle"></i> This password would take <em class="password_strength_time">${crackTime}</em> to crack.</span>`
+                    : `<span style="margin-left:5px;">This password would take <em class="password_strength_time">${crackTime}</em> to crack.</span>`
+
+            passwordStrengthInfo.innerHTML = `<p class="text-muted mb-0">${strengthText}</p>`
+            passwordStrengthInfo.classList.remove("d-none")
+        }
     }
     matchPasswords(passwordField)
 }

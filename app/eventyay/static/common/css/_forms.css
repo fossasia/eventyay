@@ -779,3 +779,26 @@ input.password_strength {
     }
   }
 }
+
+.password-validation-errors {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 0.25rem;
+}
+
+.password-validation-errors span {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.password-requirements {
+    margin-top: 0.25rem;
+    color: #6c757d;
+}
+
+.password-strength-input:focus ~ .password-requirements {
+    color: #495057;
+    font-weight: 500;
+}
