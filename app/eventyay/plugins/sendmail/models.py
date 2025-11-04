@@ -139,10 +139,7 @@ class EmailQueue(models.Model):
             return None
 
     def _finalize_send_status(self):
-        if all(r.sent for r in self.recipients.all()):
-            self.sent_at = now()
-        else:
-            self.sent_at = None
+        self.sent_at = now() if all(r.sent for r in self.recipients.all()) else None
         self.save(update_fields=["sent_at"])
 
     def _send_to_recipient(self, recipient, subject, message):

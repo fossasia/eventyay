@@ -512,10 +512,16 @@ class EmailQueueEditForm(forms.ModelForm):
             if email.strip()
         ]
 
-        if len(updated_emails) > len(self.recipient_objects):
+        if len(updated_emails) == 0:
             raise ValidationError(
-                _("You cannot add new recipients. Only editing existing email addresses is allowed.")
+                _("At least one recipient must remain. You cannot remove all recipients.")
             )
+
+        if len(updated_emails) != len(self.recipient_objects):
+            raise ValidationError(
+                _("You cannot add new recipients or remove recipients. Only editing existing email addresses is allowed.")
+            )
+
         return updated_emails
 
     def save(self, commit=True):
