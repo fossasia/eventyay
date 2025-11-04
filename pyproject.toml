@@ -52,7 +52,7 @@ dependencies = [
         'dj-static',
         'csscompressor',
         'django-markup',
-        'markdown==3.7',
+        'markdown==3.10',
         'bleach==6.3.*',
         'sentry-sdk==2.43.*',
         'babel',
