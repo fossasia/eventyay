@@ -120,10 +120,10 @@ The site section
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Use any of these settings to update the matching CSP security headers. Your
-  configuration values will be *added* to the default headers, they won’t replace
+  configuration values will be *added* to the default headers, they won't replace
   them completely!
   If you need to include special values like ``self``, remember to use single tick
-  quotation marks: ``csp=https://rixx.de,'self'``
+  quotation marks: ``csp=https://example.com,'self'``
 - **Environment variables:** ``EVENTYAY_SITE_CSP``, ``EVENTYAY_SITE_CSP_SCRIPT`` etc.
 - **Default**: ``''``
 
