@@ -1,8 +1,25 @@
+# Production is deployed as Docker containers, so data directory is /data
+data_dir = '/data'
+
+postgres_db = 'eventyay_prod'
+postgres_host = 'eventyay-next-db'
+postgres_port = 5432
+postgres_user = 'eventyay-prod-user'
+# Please provide postgres_password via secret file or Docker secret.
+
 email_backend = 'django.core.mail.backends.smtp.EmailBackend'
 email_host = 'mail.your-server.de'
-email_host_password = 'CHANGEME'
+# Please provide email_host_password via secret file or Docker secret.
 
-# TODO: Use concrete hostnames for production.
-allowed_hosts = ['*', '127.0.0.1']
+allowed_hosts = [
+    'eventyay.com',
+    'wikimania.eventyay.com',
+    'next.eventyay.com',
+    'app.eventyay.com',
+    'app-test.eventyay.com',
+]
 
-talk_hostname = 'https://wikimania-dev.eventyay.com/'
+talk_hostname = 'https://next.eventyay.com/'
+video_server_hostname = 'https://next.eventyay.com:8443'
+
+redis_url = 'redis://eventyay-next-redis/0'

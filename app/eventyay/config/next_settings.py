@@ -11,10 +11,13 @@ import django.conf.locale
 import importlib_metadata
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
+from kombu import Queue
 from pycountry import currencies
-from pydantic import Field, HttpUrl
+from pydantic import DirectoryPath, Field, HttpUrl
 from pydantic_settings import BaseSettings as _BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
+from redis.asyncio.retry import Retry
+from redis.backoff import ExponentialBackoff
 
 from eventyay import __version__
 
@@ -22,24 +25,20 @@ from eventyay import __version__
 # we only load those which are prefixed with EVY_.
 _ENV_PREFIX = 'EVY_'
 _ENV_KEY_ACTIVE_ENVIRONMENT = 'EVY_RUNNING_ENVIRONMENT'
-# The 'eventyay.toml' is the main configuration file and contains default values.
+
+# Our system will look for these TOML configuration files.
+# - eventyay.{active_environment}.toml
+# - eventyay.local.toml
+#
+# The 'eventyay.{active_environment}.toml' is the main configuration file
+# for current active environment.
 # The 'eventyay.local.toml' is optional, ignored by Git, for developers to override settings
 # to match their personal setup.
-_TOML_SOURCE_FILES = ['eventyay.toml', 'eventyay.local.toml']
 
 _DEFAULT_DB_NAME = 'eventyay-db'
 
 # The base directory of the project, where "./manage.py" file is located.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-DATA_DIR = BASE_DIR / 'data'
-LOG_DIR = DATA_DIR / 'logs'
-MEDIA_ROOT = DATA_DIR / 'media'
-PROFILE_DIR = DATA_DIR / 'profiles'
-
-DATA_DIR.mkdir(exist_ok=True)
-LOG_DIR.mkdir(exist_ok=True)
-MEDIA_ROOT.mkdir(exist_ok=True)
 
 
 # To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT
@@ -74,16 +73,15 @@ class BaseSettings(_BaseSettings):
     # The names follow what is in Django and converted to lowercase.
     debug: bool = False
     secret_key: str
+    data_dir: DirectoryPath = BASE_DIR / 'data'
     postgres_db: str = _DEFAULT_DB_NAME
     # When these values are `None`, "peer" connection method will be used.
     # We just need to have a PostgreSQL user with the same name as Linux user.
     postgres_user: str | None = None
     postgres_password: str | None = None
     postgres_host: str | None = None
-    postgres_port: str | None = None
-    redis_url: str = 'redis://localhost:6379/0'
-    # Used by "Talk" (pretalx). Not sure why it is named like this.
-    core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
+    postgres_port: int | None = None
+    redis_url: str = 'redis://localhost/0'
     language_code: str = 'en'
     # Don't send emails to Internet by default.
     email_backend: str = 'django.core.mail.backends.console.EmailBackend'
@@ -94,13 +92,30 @@ class BaseSettings(_BaseSettings):
     email_use_tls: bool = True
     default_from_email: str = 'info@eventyay.com'
     allowed_hosts: list[str] = []
+    # Used by "Talk" (pretalx). Not sure why it is named like this.
+    core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
     site_url: HttpUrl = 'http://localhost:8000'
+    short_url: HttpUrl = 'http://localhost:8000'
     talk_hostname: str = 'http://localhost:8000'
     sentry_dsn: str = ''
     instance_name: str = 'eventyay'
     auth_backends: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_AUTH_BACKENDS)]
     obligatory_2fa: bool = False
     plugins_exclude: Annotated[tuple[str, ...], Field(default_factory=tuple)]
+    metrics_enabled: bool = False
+    metrics_user: str = 'metrics'
+    metrics_passphrase: str = ''
+    nanocdn_url: HttpUrl | None = None
+    zoom_key: str = ''
+    zoom_secret: str = ''
+    control_secret: str = ''
+    statsd_host: str = ''
+    statsd_port: int = 8125
+    statsd_prefix: str = 'eventyay'
+    twitter_client_id: str = ''
+    twitter_client_secret: str = ''
+    linkedin_client_id: str = ''
+    linkedin_client_secret: str = ''
 
     @classmethod
     def settings_customise_sources(
@@ -112,9 +127,7 @@ class BaseSettings(_BaseSettings):
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Insert the TOML which matches the running environment
-        toml_files = _TOML_SOURCE_FILES[:1]
-        toml_files.append(f'eventyay.{active_environment}.toml')
-        toml_files.extend(_TOML_SOURCE_FILES[1:])
+        toml_files = discover_toml_files()
         print(f'Loading configuration from: {toml_files}', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,
@@ -129,6 +142,44 @@ class BaseSettings(_BaseSettings):
             file_secret_settings,
         )
 
+def discover_toml_files() -> list[Path]:
+    """Discover TOML configuration files to be loaded.
+
+    Where to search:
+    - The same directory as this settings file.
+    - In parent directories, go up until the base directory (containing manage.py).
+    """
+    toml_files: list[Path] = []
+    current_dir = Path(__file__).resolve().parent
+    names = [f'eventyay.{active_environment}.toml', 'eventyay.local.toml']
+    while True:
+        for name in names:
+            candidate = current_dir / name
+            if candidate.is_file():
+                toml_files.append(candidate)
+        if current_dir == BASE_DIR:
+            break
+        current_dir = current_dir.parent
+    # Sort the files so that the "local" file is loaded last,
+    # and the one in the deepest directory is loaded first.
+    toml_files.sort(key=lambda p: (1 if 'local' in p.name else 0, -len(p.parts)))
+    return toml_files
+
+
+def increase_redis_db(url: str, increment: int) -> str:
+    """Increase the Redis database number in the given URL by the given increment.
+
+    If the provided URL is missing DB number, we assume it is 0.
+    """
+    parsed = urlparse(url)
+    try:
+        db_number = int(parsed.path.lstrip('/')) + increment
+    except ValueError:
+        db_number = increment
+    new_path = f'/{db_number}'
+    new_url = parsed._replace(path=new_path).geturl()
+    return new_url
+
 
 conf = BaseSettings()
 
@@ -138,6 +189,15 @@ conf = BaseSettings()
 # but please use with caution.
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
+
+DATA_DIR = conf.data_dir
+LOG_DIR = DATA_DIR / 'logs'
+MEDIA_ROOT = DATA_DIR / 'media'
+PROFILE_DIR = DATA_DIR / 'profiles'
+
+DATA_DIR.mkdir(exist_ok=True)
+LOG_DIR.mkdir(exist_ok=True)
+MEDIA_ROOT.mkdir(exist_ok=True)
 
 
 # Database configuration
@@ -245,18 +305,10 @@ PLUGINS_EXCLUDE = PRETIX_PLUGINS_EXCLUDE
 eps = importlib_metadata.entry_points()
 
 # Pretix plugins
-pretix_plugins = [
-    ep.module
-    for ep in eps.select(group='pretix.plugin')
-    if ep.module not in PLUGINS_EXCLUDE
-]
+pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PLUGINS_EXCLUDE]
 
 # Pretalx plugins
-pretalx_plugins = [
-    ep.module
-    for ep in eps.select(group='pretalx.plugin')
-    if ep.module not in PLUGINS_EXCLUDE
-]
+pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
 
 SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_venueless', 'pretix_pages'})
 
@@ -283,6 +335,18 @@ CORE_MODULES = (
 PLUGINS = []
 for entry_point in entry_points(group='pretalx.plugin'):
     PLUGINS.append(entry_point.module)
+
+# TODO: What is it for?
+LOADED_PLUGINS = {}
+for module_name in ALL_PLUGINS:
+    try:
+        module = importlib.import_module(module_name)
+        LOADED_PLUGINS[module_name] = module
+    except ModuleNotFoundError as e:
+        print(f'Plugin not found: {module_name} ({e})')
+    except ImportError as e:
+        print(f'Failed to import plugin {module_name}: {e}')
+
 
 AUTH_USER_MODEL = 'base.User'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -417,9 +481,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-LOCALE_PATHS = (
-    BASE_DIR / 'locale',
-)
+LOCALE_PATHS = (BASE_DIR / 'locale',)
 
 # TODO: Move to consts.py
 ALL_LANGUAGES = (
@@ -613,10 +675,12 @@ LANGUAGES_INFORMATION = {
 }
 
 # Use Redis for caching
+REDIS_URL = conf.redis_url
+
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-        'LOCATION': conf.redis_url,
+        'LOCATION': REDIS_URL,
     },
 }
 
@@ -630,6 +694,32 @@ STORAGES = {
     },
 }
 
+# TODO: Remove. Redis is always required.
+HAS_REDIS = bool(REDIS_URL)
+
+# TODO: Remove. Always use Redis Pub/Sub for Channels.
+REDIS_USE_PUBSUB = True
+
+CELERY_BROKER_URL = increase_redis_db(REDIS_URL, 1)
+CELERY_RESULT_BACKEND = increase_redis_db(REDIS_URL, 2)
+CELERY_TASK_ALWAYS_EAGER = is_testing
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_DEFAULT_QUEUE = 'default'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_QUEUES = (
+    Queue('default', routing_key='default.#'),
+    Queue('longrunning', routing_key='longrunning.#'),
+    Queue('background', routing_key='background.#'),
+    Queue('notifications', routing_key='notifications.#'),
+)
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_ROUTES = {
+    'eventyay.base.services.notifications.*': {'queue': 'notifications'},
+    'eventyay.api.webhooks.*': {'queue': 'notifications'},
+}
+
 STATIC_ROOT = BASE_DIR / 'static.dist'
 STATICFILES_DIRS = (
     (BASE_DIR / 'static' / 'webapp'),
@@ -641,17 +731,26 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
 )
+
+NANOCDN_URL = conf.nanocdn_url
+default_storage_backend = (
+    'eventyay.base.integrations.platforms.storage.nanocdn.NanoCDNStorage'
+    if NANOCDN_URL
+    else 'django.core.files.storage.FileSystemStorage'
+)
+
+STORAGES = {
+    'default': {'BACKEND': default_storage_backend},
+    'staticfiles': {
+        'BACKEND': 'eventyay.base.storage.NoMapManifestStaticFilesStorage',
+    },
+}
+
 # For django-statici18n
 STATICI18N_ROOT = BASE_DIR / 'static'
 
 FILE_UPLOAD_DIRECTORY_PERMISSIONS = 0o775
 FILE_UPLOAD_PERMISSIONS = 0o644
-
-FRONTEND_DIR = BASE_DIR / 'frontend'
-VITE_DEV_SERVER_PORT = 8080
-VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
-VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
-VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
@@ -667,6 +766,24 @@ COMPRESS_CSS_FILTERS = (
 
 # Security settings
 X_FRAME_OPTIONS = 'DENY'
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CORS_ORIGIN_REGEX_WHITELIST = (
+    (
+        r'^https?://([\w\-]+\.)?eventyay\.com$',  # Allow any subdomain of eventyay.com
+        r'^https?://app-test\.eventyay\.com(:\d+)?$',  # Allow video-dev.eventyay.com with any port
+        r'^https?://app\.eventyay\.com(:\d+)?$',  # Allow wikimania-live.eventyay.com with any port
+    )
+    if is_production
+    else (
+        r'^http://localhost$',
+        r'^http://localhost:\d+$',
+    )
+)
+
+# Video-Security settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
@@ -795,11 +912,33 @@ OAUTH2_PROVIDER = {
         'write': _('Write access'),
     },
     'OAUTH2_VALIDATOR_CLASS': 'eventyay.api.oauth.Validator',
-    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'] if not DEBUG else ['http', 'https'],
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'] if is_production else ['http', 'https'],
     'ACCESS_TOKEN_EXPIRE_SECONDS': 3600 * 24,
     'ROTATE_REFRESH_TOKEN': False,
     'PKCE_REQUIRED': False,
     'OIDC_RESPONSE_TYPES_SUPPORTED': ['code'],  # We don't support proper OIDC for now
+}
+
+# Channels (WebSocket) configuration
+redis_connection_kwargs = {
+    'retry': Retry(ExponentialBackoff(), 3),
+    'health_check_interval': 30,
+}
+redis_hosts = [
+    {
+        'address': REDIS_URL,
+        **redis_connection_kwargs,
+    }
+]
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': ('channels_redis.pubsub.RedisPubSubChannelLayer'),
+        'CONFIG': {
+            'hosts': redis_hosts,
+            'prefix': 'eventyay:asgi:',
+            'capacity': 10000,
+        },
+    },
 }
 
 # REST Framework configuration
@@ -884,17 +1023,6 @@ BOOTSTRAP3 = {
 # Also, after merging eventyay-xxx components, we may not need this.
 TALK_HOSTNAME = conf.talk_hostname
 
-# TODO: Move to consts.py
-EVENTYAY_PRIMARY_COLOR = '#2185d0'
-DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
-# Not sure if they need to be configurable.
-ENTROPY = {
-    'order_code': 5,
-    'ticket_secret': 32,
-    'voucher_code': 16,
-    'giftcard_secret': 12,
-}
-
 # TODO: Remove, why we have to get this information from settings?
 EVENTYAY_VERSION = __version__
 
@@ -915,7 +1043,7 @@ if SENTRY_DSN:
         integrations=[CeleryIntegration(), DjangoIntegration()],
         send_default_pii=False,
         debug=DEBUG,
-        release=EVENTYAY_COMMIT,
+        release=EVENTYAY_COMMIT if EVENTYAY_COMMIT != 'unknown' else None,
         environment=active_environment.value,
     )
 
@@ -949,3 +1077,47 @@ PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
 
 # TODO: The `pdftk` tool should be auto-detected.
 PDFTK = ''
+
+# Disable the feature for now.
+PROFILING_RATE = 0
+
+METRICS_ENABLED = conf.metrics_enabled
+METRICS_USER = conf.metrics_user
+METRICS_PASSPHRASE = conf.metrics_passphrase
+
+SHORT_URL = str(conf.short_url)
+# TODO: Remove. Our views should calculate it from the current connected HTTP/HTTPS protocol,
+# instead of relying on a setting.
+WEBSOCKET_PROTOCOL = 'wss' if is_production else 'ws'
+
+ZOOM_KEY = conf.zoom_key
+ZOOM_SECRET = conf.zoom_secret
+CONTROL_SECRET = conf.control_secret
+STATSD_HOST = conf.statsd_host
+STATSD_PORT = conf.statsd_port
+STATSD_PREFIX = conf.statsd_prefix
+TWITTER_CLIENT_ID = conf.twitter_client_id
+TWITTER_CLIENT_SECRET = conf.twitter_client_secret
+LINKEDIN_CLIENT_ID = conf.linkedin_client_id
+LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
+
+FRONTEND_DIR = BASE_DIR / 'frontend'
+VITE_DEV_SERVER_PORT = 8080
+VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
+VITE_DEV_MODE = False  # Set to False to use static files instead of dev server
+VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
+
+# Not sure if they need to be configurable.
+ENTROPY = {
+    'order_code': 5,
+    'ticket_secret': 32,
+    'voucher_code': 16,
+    'giftcard_secret': 12,
+}
+
+IS_HTML_EXPORT = False
+HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
+
+# TODO: Move to consts.py
+EVENTYAY_PRIMARY_COLOR = '#2185d0'
+DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'

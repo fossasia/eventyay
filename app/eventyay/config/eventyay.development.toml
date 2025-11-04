@@ -1,2 +1,6 @@
 # For development, we just store emails as files.
 email_backend = 'eventyay.base.email.FileSavedEmailBackend'
+
+allowed_hosts = ['*']
+
+redis_url = 'redis://localhost/0'
