@@ -191,8 +191,8 @@ class ExtFileField(SizeFileField):
         if self.ext_whitelist:
             self.widget.attrs['accept'] = ','.join(self.ext_whitelist)
             
-            allowed_types = ', '.join(sorted(self.ext_whitelist))
-            extension_help = _('Allowed file types: {types}.').format(types=allowed_types)
+            supported_formats = ', '.join(sorted(self.ext_whitelist))
+            extension_help = _('Supported formats: {formats}').format(formats=supported_formats)
             
             if extension_help not in (self.help_text or ''):
                 self.help_text = f'{self.help_text} {extension_help}' if self.help_text else extension_help
@@ -204,9 +204,11 @@ class ExtFileField(SizeFileField):
             ext = os.path.splitext(filename)[1]
             ext = ext.lower()
             if ext not in self.ext_whitelist:
+                supported_formats = ', '.join(sorted(self.ext_whitelist))
                 raise forms.ValidationError(
-                    _('Filetype not allowed! Please upload one of: {types}').format(
-                        types=', '.join(sorted(self.ext_whitelist))
+                    _("The file type '{extension}' is not supported. Please upload one of the supported formats: {formats}.").format(
+                        extension=ext,
+                        formats=supported_formats
                     )
                 )
         return data

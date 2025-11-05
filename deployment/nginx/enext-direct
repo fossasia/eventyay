@@ -4,9 +4,6 @@ server {
 	access_log /var/log/nginx/enext-access.log;
         error_log /var/log/nginx/enext-error.log;
 
-	# Allow larger file uploads
-	client_max_body_size 11M;
-
 	# WebSocket connections - route to daphne
 	location /ws/ {
 		proxy_pass http://127.0.0.1:8001;
@@ -33,10 +30,6 @@ server {
 
 	location /static/ {
 		alias /home/fossasia/enext/data/static/;
-	}
-	
-	location /media/ {
-		alias /home/fossasia/enext/data/media/;
 	}
 
     listen 443 ssl; # managed by Certbot
