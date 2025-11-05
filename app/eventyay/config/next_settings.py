@@ -155,6 +155,7 @@ class BaseSettings(_BaseSettings):
             file_secret_settings,
         )
 
+
 def discover_toml_files() -> list[Path]:
     """Discover TOML configuration files to be loaded.
 
@@ -524,7 +525,10 @@ ALL_LANGUAGES = (
 LANGUAGES_OFFICIAL = {'en', 'de', 'de-formal'}
 LANGUAGES_INCUBATING = {'pl', 'fi', 'pt-br'}
 LANGUAGES_RTL = {'ar', 'he', 'fa-ir'}
-LANGUAGES = tuple((k, v) for k, v in ALL_LANGUAGES if k not in LANGUAGES_INCUBATING) if is_production else ALL_LANGUAGES
+# TODO: Convert to tuple (some code still assumes LANGUAGES to be a list)
+LANGUAGES = (
+    [(k, v) for k, v in ALL_LANGUAGES if k not in LANGUAGES_INCUBATING] if is_production else list(ALL_LANGUAGES)
+)
 
 EXTRA_LANG_INFO = {
     'de-formal': {
@@ -695,6 +699,14 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
+    },
+    # TODO: Remove. Use the 'default' cache everywhere.
+    'redis': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'REDIS_CLIENT_KWARGS': {'health_check_interval': 30},
+        },
     },
 }
 
@@ -971,6 +983,8 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
+# TODO: Remove.
+BASE_PATH = ''
 
 SITE_URL = str(conf.site_url)
 SITE_NETLOC = urlparse(SITE_URL).netloc
@@ -1135,6 +1149,3 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 # TODO: Move to consts.py
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
-
-print('Secret dirs:', PROJECT_ROOT / '.secrets')
-print('SECRET_KEY', SECRET_KEY)
