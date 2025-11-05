@@ -156,7 +156,7 @@ on each of the other servers.
 
 Since we use Django's file storage mechanism internally, you can in theory also use a object-storage solution like Amazon S3, Ceph, or Minio to store these files, although we currently do not expose this through eventyay' configuration file and this would require you to ship your own variant of ``eventyay/settings.py`` and reference it through the ``DJANGO_SETTINGS_MODULE`` environment variable.
 
-At eventyay.com, we use a custom-built `object storage cluster`_.
+At eventyay.com, we use a custom-built object storage cluster.
 
 SQL database
 """"""""""""
@@ -231,6 +231,3 @@ If you have an unlimited number of tickets, we can apply fewer locking and we've
 We're working to reduce the number of cases in which this is relevant and thereby improve the possible
 throughput. If you want to use eventyay for an event with 10,000+ tickets that are likely to be sold out
 within minutes, please get in touch to discuss possible solutions. We'll work something out for you!
-
-
-.. _object storage cluster: https://behind.Eventyay.eu/2018/03/20/high-available-cdn/

@@ -601,7 +601,7 @@ class Schedule(PretalxModel):
             'submission__submission_type',
         ).prefetch_related('submission__speakers')
         talks = talks.order_by('start')
-        rooms = set() if not all_rooms else set(self.event.rooms.all())
+        rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
         result = {
@@ -613,7 +613,9 @@ class Schedule(PretalxModel):
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         for talk in talks:
-            rooms.add(talk.room)
+            # Only add room if it's not deleted
+            if talk.room and not talk.room.deleted:
+                rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
                 speakers |= set(talk.submission.speakers.all())
