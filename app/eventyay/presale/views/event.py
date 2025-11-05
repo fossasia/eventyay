@@ -853,10 +853,16 @@ class JoinOnlineVideoView(EventViewMixin, View):
             # Show popup
             return HttpResponse(status=403, content='user_not_allowed')
 
-        return JsonResponse(
-            {'redirect_url': self.generate_token_url(request, order_position, order)},
-            status=200,
-        )
+        redirect_url = self.generate_token_url(request, order_position, order)
+
+        # Check if this is an AJAX request (from JavaScript button)
+        # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') >= 0:
+            # AJAX request - return JSON for JavaScript to handle
+            return JsonResponse({'redirect_url': redirect_url}, status=200)
+        else:
+            # Direct browser access - do a server-side redirect
+            return redirect(redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
         if not hasattr(self.request, 'user'):
@@ -865,15 +871,20 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if not self.request.user.is_authenticated:
             # Customer not logged in yet
             return False, None, None
-        # Get all orders of customer which belong to this event
+        # Get all PAID orders of customer which belong to this event
+        # CRITICAL FIX: Only paid orders should grant video access
         order_list = (
-            Order.objects.filter(Q(event=self.request.event) & (Q(email__iexact=self.request.user.email)))
+            Order.objects.filter(
+                Q(event=self.request.event)
+                & Q(email__iexact=self.request.user.email)
+                & Q(status=Order.STATUS_PAID)  # Only paid orders
+            )
             .select_related('event')
             .order_by('-datetime')
         )
         # Check qs is empty
         if not order_list:
-            # no order placed yet
+            # no paid order found
             return False, None, None
         # Check if Event allow all ticket type to join
         if self.request.event.settings.venueless_all_products:
@@ -944,4 +955,10 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         baseurl = self.request.event.settings.venueless_url
+
+        # Ensure the URL includes the event identifier so VideoSPAView has event context
+        # Format: http://localhost:8000/video/event-slug/#token=...
+        if not baseurl.rstrip('/').endswith(self.request.event.slug):
+            baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
+
         return '{}/#token={}'.format(baseurl, token).replace('//#', '/#')

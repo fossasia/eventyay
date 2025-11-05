@@ -178,6 +178,10 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
             "profile": profile,
             "traits": list(
                 {
+                    # Grant base attendee role so the video app allows EVENT_VIEW by default
+                    # Without this, users with valid tickets received auth.denied because
+                    # none of the event trait_grants matched the token traits.
+                    'attendee',
                     'eventyay-video-event-{}'.format(request.event.slug),
                     'eventyay-video-subevent-{}'.format(self.position.subevent_id),
                     'eventyay-video-product-{}'.format(self.position.product_id),
@@ -219,4 +223,10 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         if '{token}' in baseurl:
             # Hidden feature to support other kinds of installations
             return redirect(baseurl.format(token=token))
+
+        # Ensure the URL includes the event identifier so VideoSPAView has event context
+        # Format: http://localhost:8000/video/event-slug/#token=...
+        if not baseurl.rstrip('/').endswith(self.request.event.slug):
+            baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
+
         return redirect('{}/#token={}'.format(baseurl, token).replace("//#", "/#"))
