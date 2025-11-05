@@ -60,8 +60,7 @@ class EventCfP(EventStartpage):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        site_name = dict(settings.TALK_CONFIG.items('site')).get('name')
-        context['site_name'] = site_name
+        context['site_name'] = settings.INSTANCE_NAME
         return context
 
     @context

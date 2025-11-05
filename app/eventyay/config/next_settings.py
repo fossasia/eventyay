@@ -117,6 +117,8 @@ class BaseSettings(_BaseSettings):
     metrics_enabled: bool = False
     metrics_user: str = 'metrics'
     metrics_passphrase: str = ''
+    log_csp: bool = True
+    csp_additional_header: str = ''
     nanocdn_url: HttpUrl | None = None
     zoom_key: str = ''
     zoom_secret: str = ''
@@ -406,13 +408,14 @@ _OURS_MIDDLEWARES = (
 MIDDLEWARE = _LIBRARY_MIDDLEWARES + _OURS_MIDDLEWARES
 
 
-_TEMPLATE_LOADERS = (
+_CORE_TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
 )
 
-if is_production:
-    _TEMPLATE_LOADERS = ('django.template.loaders.cached.Loader', *_TEMPLATE_LOADERS)
+template_loaders = (
+    (('django.template.loaders.cached.Loader', _CORE_TEMPLATE_LOADERS),) if is_production else _CORE_TEMPLATE_LOADERS
+)
 
 TEMPLATES = (
     {
@@ -442,7 +445,7 @@ TEMPLATES = (
                 'eventyay.eventyay_common.context.contextprocessor',
                 'django.template.context_processors.request',
             ],
-            'loaders': _TEMPLATE_LOADERS,
+            'loaders': template_loaders,
         },
     },
     {
@@ -1112,6 +1115,9 @@ PROFILING_RATE = 0
 METRICS_ENABLED = conf.metrics_enabled
 METRICS_USER = conf.metrics_user
 METRICS_PASSPHRASE = conf.metrics_passphrase
+
+LOG_CSP = conf.log_csp
+CSP_ADDITIONAL_HEADER = conf.csp_additional_header
 
 SHORT_URL = str(conf.short_url)
 # TODO: Remove. Our views should calculate it from the current connected HTTP/HTTPS protocol,

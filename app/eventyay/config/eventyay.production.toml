@@ -1,6 +1,3 @@
-# Production is deployed as Docker containers, so data directory is /data
-data_dir = '/data'
-
 postgres_db = 'eventyay_prod'
 postgres_host = 'eventyay-next-db'
 postgres_port = 5432
@@ -20,6 +17,5 @@ allowed_hosts = [
 ]
 
 talk_hostname = 'https://next.eventyay.com/'
-video_server_hostname = 'https://next.eventyay.com:8443'
 
 redis_url = 'redis://eventyay-next-redis/0'
