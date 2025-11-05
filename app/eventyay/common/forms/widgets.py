@@ -50,7 +50,7 @@ class PasswordStrengthInput(PasswordInput):
                 </small>
             </div>
         </div>
-        """.format(message=_('This password would take <em class="password_strength_time"></em> to crack.'))
+        """.format(message=_('This password would take some time to crack.'))
 
         self.attrs = add_class(self.attrs, 'password_strength')
         self.attrs['autocomplete'] = 'new-password'
