@@ -13,16 +13,21 @@ $(function () {
 
     const $body = $('body');
     const $sidebar = $('.sidebar');
+    const $navbar = $('.navbar');
+    
+    function getNavbarHeight() {
+        return $navbar.outerHeight() || 50;
+    }
+    
+    function updateCSSVariables() {
+        document.documentElement.style.setProperty('--navbar-height', getNavbarHeight() + 'px');
+    }
     const $sidebarToggleButton = $('#sidebar-toggle');
     
     function isMobileView() {
         return window.matchMedia("(max-width: 767px)").matches;
     }
-
-    function isTabletView() {
-        return window.matchMedia("(min-width: 768px) and (max-width: 1024px)").matches;
-    }
-
+    
     function isDesktopView() {
         return window.matchMedia("(min-width: 1025px)").matches;
     }
@@ -33,35 +38,26 @@ $(function () {
 
     function toggleSidebar() {
         if (isMobileView()) {
-            // Mobile: Simple toggle without localStorage
             $body.toggleClass('sidebar-minimized');
         } else if (isTabletOrDesktop()) {
-            // Desktop/Tablet: Toggle with localStorage persistence
             $body.toggleClass('sidebar-minimized');
             localStorage.setItem('sidebar-minimized', $body.hasClass('sidebar-minimized'));
         }
     }
 
     function initializeSidebar() {
-        // Initialize metisMenu with toggle: false to allow multiple menus to be open
         $('#side-menu').metisMenu({
             toggle: false
         });
 
         if (isMobileView()) {
-            // Mobile: Always start minimized, no localStorage
-            // Class is already added in HTML template to prevent flash
             if (!$body.hasClass('sidebar-minimized')) {
                 $body.addClass('sidebar-minimized');
             }
         } else {
-            // Desktop/Tablet: Start minimized by default, but allow localStorage override
             if (localStorage.getItem('sidebar-minimized') === null) {
-                // First time visit - set to minimized by default
-                // Class is already added in HTML template
                 localStorage.setItem('sidebar-minimized', 'true');
             } else if (localStorage.getItem('sidebar-minimized') === 'true') {
-                // Class is already added in HTML template
                 if (!$body.hasClass('sidebar-minimized')) {
                     $body.addClass('sidebar-minimized');
                 }
@@ -71,51 +67,29 @@ $(function () {
         }
     }
 
+    // Initialize and sync CSS vars on load
+    updateCSSVariables();
     initializeSidebar();
 
-    // SIDEBAR TOGGLE: Handle the sidebar burger button specifically (LEFT BUTTON)
     $sidebarToggleButton.on('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
         toggleSidebar();
     });
 
-    // DESKTOP-ONLY: Hover functionality
-    $sidebar.on('mouseenter', function () {
-        if (isDesktopView() && $body.hasClass('sidebar-minimized')) {
-            $body.addClass('sidebar-hover');
-        }
-    }).on('mouseleave', function () {
-        if (isDesktopView()) {
-            $body.removeClass('sidebar-hover');
-        }
-    });
+    // Drop JS-driven hover class toggling; rely on CSS :hover with input-aware media queries
 
-    // UNIVERSAL: Window resize handler
     let resizeTimeout;
     $(window).on('resize', function () {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(function() {
-            // Re-initialize based on current screen size
-            if (isMobileView()) {
-                // Mobile: Force minimized state
-                $body.addClass('sidebar-minimized');
-                $body.removeClass('sidebar-hover');
-            } else {
-                // Desktop/Tablet: Restore from localStorage
-                if (localStorage.getItem('sidebar-minimized') === 'true') {
-                    $body.addClass('sidebar-minimized');
-                } else {
-                    $body.removeClass('sidebar-minimized');
-                }
-            }
-        }, 250);
+            // Only refresh dynamic CSS variables on resize; no class toggling
+            updateCSSVariables();
+        }, 150);
     });
 
-    // Removed navbar-collapse toggle functionality as the mobile burger button has been removed
-    // Only keeping the page-wrapper height adjustment
     $(window).bind("load resize", function () {
-        var topOffset = 50;
+        var topOffset = getNavbarHeight();
 
         var height = ((this.window.innerHeight > 0) ? this.window.innerHeight : this.screen.height) - 1;
         height = height - topOffset;
@@ -126,4 +100,12 @@ $(function () {
     });
 
     $('ul.nav ul.nav-second-level a.active').parent().parent().addClass('in').parent().addClass('active');
+
+    function stopPropagationHandler(e) {
+        e.stopPropagation();
+    }
+    [$sidebar, $pageWrapper].forEach(function($el) {
+        $el.on('wheel', stopPropagationHandler);
+        $el.on('touchmove', stopPropagationHandler);
+    });
 });

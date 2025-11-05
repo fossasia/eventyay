@@ -33,6 +33,10 @@ footer {
 
 nav.navbar {
     margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
 }
 .navbar-brand img {
     height: 100%;
@@ -963,5 +967,27 @@ h1 .label {
             transform: translateY(0);
             opacity: 1;
         }
+    }
+}
+// Main content scroll isolation and layout under fixed navbar
+#page-wrapper {
+    margin-top: 50px; // offset for fixed navbar
+    height: calc(100vh - 50px);
+    overflow-y: auto;
+    overscroll-behavior: contain; // prevent scroll chaining to body
+    contain: content; // isolate layout/paint without size constraints
+}
+
+@media (max-width: $screen-sm-max) {
+    /* Mobile: ensure content sits fully below the fixed navbar
+       without changing the navbar itself. Use internal padding
+       rather than margin to prevent overlap and layout shifts.
+    */
+    #page-wrapper {
+        margin-top: 0;               // avoid double offset
+        padding-top: var(--navbar-height, 56px); // space below navbar using dynamic CSS var
+        height: auto;                // allow natural document flow
+        overflow-y: visible;         // prevent forced scroll container on small screens
+        box-sizing: border-box;      // make padding part of layout
     }
 }

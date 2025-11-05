@@ -165,10 +165,6 @@ body {
             top: 50%;
             margin-top: -2px;
         }
-        &:hover, &:focus {
-            text-decoration: none;
-            
-        }
         .context-icon {
             width: 2.5em;
             height: 2.5em;
@@ -194,7 +190,7 @@ body {
         vertical-align: middle;
         span {
             display: block;
-            width: 170px; // Slightly wider for longer text
+            width: 170px;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -202,7 +198,7 @@ body {
         span.context-name {
             font-weight: bold;
             vertical-align: middle;
-            font-size: 15px; // Slightly larger font
+            font-size: 15px;
         }
         span.context-meta {
             opacity: 0.7;
@@ -214,10 +210,17 @@ body {
 @media(min-width:768px) {
     .sidebar {
         z-index: 1;
-        position: absolute;
+        position: fixed;
         width: 250px;
         margin-top: 51px;
         top: 0;
+        bottom: 0;
+        height: calc(100vh - 50px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
+        contain: strict;
     }
 
     .navbar-top-links .dropdown-messages,
