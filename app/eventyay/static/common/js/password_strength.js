@@ -85,52 +85,69 @@ const updatePasswordStrength = (passwordField) => {
         passwordStrengthBar.style.width = "0%"
         passwordStrengthBar.setAttribute("aria-valuenow", 0)
         passwordStrengthInfo.classList.add("d-none")
+    } 
+
+    const validationErrors = validatePasswordComplexity(passwordField.value);
+    passwordStrengthInfo.textContent = "";
+
+    if (validationErrors.length > 0) {
+        passwordStrengthBar.classList.remove("bg-success", "bg-warning");
+        passwordStrengthBar.classList.add("bg-danger");
+        passwordStrengthBar.style.width = "20%";
+        passwordStrengthBar.setAttribute("aria-valuenow", 1);
+
+        const container = document.createElement("div");
+        container.className = "password-validation-errors";
+
+        validationErrors.forEach((err) => {
+            const span = document.createElement("span");
+            span.className = "d-block text-danger";
+
+            const icon = document.createElement("i");
+            icon.className = "fa fa-times-circle";
+            icon.setAttribute("aria-hidden", "true");
+
+            span.appendChild(icon);
+            span.append(` ${err}`);
+            container.appendChild(span);
+        });
+        passwordStrengthInfo.appendChild(container);
+        passwordStrengthInfo.classList.remove("d-none");
     } else {
-        const validationErrors = validatePasswordComplexity(passwordField.value)
+        const result = zxcvbn(passwordField.value);
+        const crackTime = result.crack_times_display.online_no_throttling_10_per_second;
 
-        if (validationErrors.length > 0) {
-            passwordStrengthBar.classList.remove("bg-success", "bg-warning")
-            passwordStrengthBar.classList.add("bg-danger")
-            passwordStrengthBar.style.width = "20%"
-            passwordStrengthBar.setAttribute("aria-valuenow", 1)
-
-            const errorHtml = validationErrors
-                .map(
-                    (err) =>
-                        `<span class="d-block text-danger"><i class="fa fa-times-circle"></i> ${err}</span>`,
-                )
-                .join("")
-
-            passwordStrengthInfo.innerHTML = `<div class="password-validation-errors">${errorHtml}</div>`
-            passwordStrengthInfo.classList.remove("d-none")
+        passwordStrengthBar.classList.remove("bg-danger", "bg-warning", "bg-success");
+        if (result.score < 1) {
+            passwordStrengthBar.classList.add("bg-danger");
+        } else if (result.score < 3) {
+            passwordStrengthBar.classList.add("bg-warning");
         } else {
-            const result = zxcvbn(passwordField.value)
-            const crackTime =
-                result.crack_times_display.online_no_throttling_10_per_second
-
-            if (result.score < 1) {
-                passwordStrengthBar.classList.remove("bg-success")
-                passwordStrengthBar.classList.add("bg-danger")
-            } else if (result.score < 3) {
-                passwordStrengthBar.classList.remove("bg-danger")
-                passwordStrengthBar.classList.add("bg-warning")
-            } else {
-                passwordStrengthBar.classList.remove("bg-warning")
-                passwordStrengthBar.classList.add("bg-success")
-            }
-
-            passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`
-            passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1)
-
-            const strengthText =
-                result.score >= 3
-                    ? `<span class="text-success"><i class="fa fa-check-circle"></i> This password would take <em class="password_strength_time">${crackTime}</em> to crack.</span>`
-                    : `<span style="margin-left:5px;">This password would take <em class="password_strength_time">${crackTime}</em> to crack.</span>`
-
-            passwordStrengthInfo.innerHTML = `<p class="text-muted mb-0">${strengthText}</p>`
-            passwordStrengthInfo.classList.remove("d-none")
+            passwordStrengthBar.classList.add("bg-success");
         }
+
+        passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`;
+        passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1);
+        const p = document.createElement("p");
+        p.className = "text-muted mb-0";
+
+        const span = document.createElement("span");
+        if (result.score >= 3) {
+            span.className = "text-success";
+            const icon = document.createElement("i");
+            icon.className = "fa fa-check-circle";
+            icon.setAttribute("aria-hidden", "true");
+            span.appendChild(icon);
+            span.append(` This password would take ${crackTime} to crack.`);
+        } else {
+            span.textContent = `This password would take ${crackTime} to crack.`;
+        }
+
+        p.appendChild(span);
+        passwordStrengthInfo.appendChild(p);
+        passwordStrengthInfo.classList.remove("d-none");
     }
+
     matchPasswords(passwordField)
 }
 
