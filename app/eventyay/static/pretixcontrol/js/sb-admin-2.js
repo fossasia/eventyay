@@ -67,7 +67,6 @@ $(function () {
         }
     }
 
-    // Initialize and sync CSS vars on load
     updateCSSVariables();
     initializeSidebar();
 
@@ -77,13 +76,12 @@ $(function () {
         toggleSidebar();
     });
 
-    // Drop JS-driven hover class toggling; rely on CSS :hover with input-aware media queries
-
+   
     let resizeTimeout;
     $(window).on('resize', function () {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(function() {
-            // Only refresh dynamic CSS variables on resize; no class toggling
+           
             updateCSSVariables();
         }, 150);
     });
