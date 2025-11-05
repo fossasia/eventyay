@@ -57,7 +57,7 @@ const validatePasswordComplexity = (password) => {
         errors.push("Password must contain at least one number")
     }
 
-    if (!/[!@#$%^&*()_\-+=[\]{}|;':",.<>/?`~]/.test(password)) {
+    if (!/[!@#$%^&*()_\-+=\[\\\]{}|;':",.<>/?`~]/.test(password)) {
         errors.push("Password must contain at least one special character")
     }
 
@@ -89,8 +89,8 @@ const updatePasswordStrength = (passwordField) => {
         passwordStrengthBar.style.width = "0%"
         passwordStrengthBar.setAttribute("aria-valuenow", 0)
         passwordStrengthInfo.classList.add("d-none")
-        return;
-    } 
+        return
+    }
 
     const validationErrors = validatePasswordComplexity(passwordField.value);
     passwordStrengthInfo.textContent = "";

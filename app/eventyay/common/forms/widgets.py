@@ -46,7 +46,7 @@ class PasswordStrengthInput(PasswordInput):
             </div>
             <div class="password-requirements text-muted small mt-1">
                 <small>
-                    Password must be at least 8 characters long and contain letters and numbers.
+                    Password must be at least 8 characters long and contain letters, numbers, and special characters.
                 </small>
             </div>
         </div>
