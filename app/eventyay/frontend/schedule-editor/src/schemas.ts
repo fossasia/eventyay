@@ -19,13 +19,22 @@ export const SpeakerSchema = z.object({
 
 export const RoomSchema = z.object({
   id: z.number(),
-  name: z.record(z.string(), z.string()).default({}),
-  description: z.record(z.string(), z.string()).default({})
+  name: z.union([
+    z.string(),
+    z.record(z.string(), z.string())
+  ]).transform(toTitleRecord),
+  description: z.union([
+    z.string(),
+    z.record(z.string(), z.string())
+  ]).transform(toTitleRecord)
 });
 
 export const TrackSchema = z.object({
   id: z.number(),
-  name: z.record(z.string(), z.string()).default({})
+  name: z.union([
+    z.string(),
+    z.record(z.string(), z.string())
+  ]).transform(toTitleRecord)
 });
 
 // Define availability entry schema
