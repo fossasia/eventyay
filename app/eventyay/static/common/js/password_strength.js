@@ -68,14 +68,7 @@ const validatePasswordComplexity = (password) => {
         "whatever", "michael", "dragon", "baseball", "master", "trustno1", "jordan", "jennifer", "hunter", "cookie",
         "secret", "mustang", "shadow", "summer", "ashley", "bailey", "passw0rd", "batman", "zaq1zaq1", "qazwsx",
         "password123", "1q2w3e4r", "qwertyuiop", "123qwe", "123456a", "696969", "qwe123", "1qaz2wsx", "qwerty1",
-        "1234567890", "qwerty12", "123456789a", "password!", "password1234", "password12345", "password123456",
-        "password123!", "password123$", "password123#", "password123@", "password123qwe", "password123qwe!",
-        "password123qwe$", "password123qwe#", "password123qwe@", "password123qwe1", "password123qwe2", "password123qwe3",
-        "password123qwe4", "password123qwe5", "password123qwe6", "password123qwe7", "password123qwe8", "password123qwe9",
-        "password123qwe0", "password123qwe!", "password123qwe$", "password123qwe#", "password123qwe@", "password123qwe1!",
-        "password123qwe2@", "password123qwe3#", "password123qwe4$", "password123qwe5%", "password123qwe6^", "password123qwe7&",
-        "password123qwe8*", "password123qwe9(", "password123qwe0)", "password123qwe!@", "password123qwe#$", "password123qwe%^",
-        "password123qwe&*", "password123qwe()"
+        "1234567890", "qwerty12", "123456789a", "password!", "password1234", "password12345", "password123456"
     ]
     if (commonPasswords.includes(password.toLowerCase())) {
         errors.push("This password is too common")
