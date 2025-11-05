@@ -55,7 +55,7 @@ class TalkMixin(PermissionRequired):
         return self.request.event.submissions.prefetch_related(
             'slots',
             'resources',
-        ).select_related('submission_type', 'track', 'event')
+        ).select_related('submission_type', 'track', 'event', 'event__organizer')
 
     @cached_property
     def object(self):
@@ -124,7 +124,7 @@ class TalkView(TalkMixin, TemplateView):
             else TalkSlot.objects.none()
         )
 
-        other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event')
+        other_submissions = self.request.event.submissions.filter(slots__in=other_slots).select_related('event', 'event__organizer')
         speakers = (
             self.submission.speakers.all()
             .with_profiles(self.request.event)
@@ -276,26 +276,30 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         if not request.user.is_authenticated:
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.NOT_ALLOWED)
 
-        # First check video is configured or not
-        if 'pretalx_venueless' not in request.event.plugin_list:
-            logger.info('pretalx_venueless plugin is not enabled.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
         event = request.event
-        logger.info('To check settings for event %s', event)
-        if not (venueless_settings := event.venueless_settings):
-            logger.info('venueless settings is missing.')
+        logger.info('Checking video settings for event %s', event)
+        
+        # Try to get video settings from event settings (hierarchical settings system)
+        try:
+            join_url = event.settings.get('venueless_url') or event.settings.get('venueless_join_url')
+            secret = event.settings.get('venueless_secret')
+            issuer = event.settings.get('venueless_issuer')
+            audience = event.settings.get('venueless_audience')
+        except Exception as e:
+            logger.error(f'Error accessing video settings: {e}')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not venueless_settings.join_url:
-            logger.info('venueless_settings.join_url is missing.')
+        
+        if not join_url:
+            logger.info('venueless_url/join_url is missing.')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not venueless_settings.secret:
-            logger.info('venueless_settings.secret is missing.')
+        if not secret:
+            logger.info('venueless_secret is missing.')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not venueless_settings.issuer:
-            logger.info('venueless_settings.issuer is missing.')
+        if not issuer:
+            logger.info('venueless_issuer is missing.')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not venueless_settings.audience:
-            logger.info('venueless_settings.audience is missing.')
+        if not audience:
+            logger.info('venueless_audience is missing.')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # If the logged-in user does not have "orga.view_schedule" permission, we check
@@ -320,8 +324,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             profile["profile_picture"] = request.user.get_avatar_url(request.event)
 
         payload = {
-            "iss": venueless_settings.issuer,
-            "aud": venueless_settings.audience,
+            "iss": issuer,
+            "aud": audience,
             "exp": exp,
             "iat": iat,
             "uid": encode_email(request.user.email),
@@ -333,9 +337,9 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             ),
         }
         token = jwt.encode(
-            payload, venueless_settings.secret, algorithm="HS256"
+            payload, secret, algorithm="HS256"
         )
-        redirect_url = urljoin(venueless_settings.join_url, f'#token={token}')
+        redirect_url = urljoin(join_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
         return JsonResponse(
             {
@@ -369,15 +373,15 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     if 'ticket_link' not in event.display_settings:
         logger.info('display_settings[ticket_link] is missing.')
         return TicketCheckResult.MISCONFIGURED
-    base_url, organizer, event = extract_event_info_from_url(
+    base_url, organizer_slug, event_slug = extract_event_info_from_url(
             event.display_settings['ticket_link']
         )
-    if not organizer or not event or not base_url:
+    if not organizer_slug or not event_slug or not base_url:
         logger.info('display_settings[ticket_link] is not valid.')
         return TicketCheckResult.MISCONFIGURED
     check_payload = {'user_email': user.email}
     # call to ticket to check if user order ticket yet or not
-    api_url = urljoin(base_url, f'api/v1/{organizer}/{event}/ticket-check')
+    api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
     logger.info('To call API %s', api_url)
     # In development, we disable the SSL verification.
     response = requests.post(api_url, json=check_payload, verify=(not settings.DEBUG))

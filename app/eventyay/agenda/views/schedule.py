@@ -40,7 +40,7 @@ class ScheduleMixin:
         if self.version:
             with suppress(Exception):
                 schedule = (
-                    self.request.event.schedules.filter(version__iexact=self.version).select_related('event').first()
+                    self.request.event.schedules.filter(version__iexact=self.version).select_related('event', 'event__organizer').first()
                 )
         schedule = schedule or self.request.event.current_schedule
         if schedule:
@@ -225,4 +225,4 @@ class ChangelogView(EventPermissionRequired, TemplateView):
 
     @context
     def schedules(self):
-        return self.request.event.schedules.all().filter(version__isnull=False).select_related('event')
+        return self.request.event.schedules.all().filter(version__isnull=False).select_related('event', 'event__organizer')

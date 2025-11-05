@@ -33,99 +33,93 @@ def get_schedule_urls(regex_prefix, name_prefix=''):
 
 
 app_name = 'agenda'
+# Note: The {organizer}/{event} prefix is now handled by the parent URL pattern in maindomain_urlconf.py
 urlpatterns = [
     path(
-        '<slug:event>/',
-        include(
-            [
-                path(
-                    'widgets/schedule.js',
-                    widget.widget_script,
-                    name='widget.script',
-                ),
-                path('static/event.css', widget.event_css, name='event.css'),
-                path(
-                    'schedule/changelog/',
-                    schedule.ChangelogView.as_view(),
-                    name='schedule.changelog',
-                ),
-                path('schedule/feed.xml', feed.ScheduleFeed(), name='feed'),
-                # Old widget URL. Keep at least until end of 2024. Will still be used in
-                # a lot of old websites, so possibly just keep it forever.
-                re_path(
-                    '^schedule/widget/v2.[a-z]{2}.js$',
-                    widget.widget_script,
-                    name='widget.script.legacy',
-                ),
-                path(
-                    'schedule/widget/messages.js',
-                    schedule.schedule_messages,
-                    name='widget.messages',
-                ),
-                *get_schedule_urls('schedule'),
-                *get_schedule_urls('schedule/v/<version>', 'versioned-'),
-                path('sneak/', featured.sneakpeek_redirect, name='oldsneak'),
-                path('featured/', featured.FeaturedView.as_view(), name='featured'),
-                path('speaker/', speaker.SpeakerList.as_view(), name='speakers'),
-                path(
-                    'speaker/avatar.svg',
-                    speaker.empty_avatar_view,
-                    name='speakers.avatar',
-                ),
-                path(
-                    'speaker/by-id/<int:pk>/',
-                    speaker.SpeakerRedirect.as_view(),
-                    name='speaker.redirect',
-                ),
-                path('talk/', schedule.ScheduleView.as_view(), name='talks'),
-                path('talk/<slug>/', talk.TalkView.as_view(), name='talk'),
-                path(
-                    'talk/<slug>/og-image',
-                    talk.TalkSocialMediaCard.as_view(),
-                    name='talk-social',
-                ),
-                path(
-                    'talk/<slug>/feedback/',
-                    talk.FeedbackView.as_view(),
-                    name='feedback',
-                ),
-                path(
-                    'talk/<slug>.ics',
-                    talk.SingleICalView.as_view(),
-                    name='ical',
-                ),
-                path(
-                    'talk/review/<slug>',
-                    talk.TalkReviewView.as_view(),
-                    name='review',
-                ),
-                path(
-                    'speaker/<code>/',
-                    speaker.SpeakerView.as_view(),
-                    name='speaker',
-                ),
-                path(
-                    'speaker/<code>/og-image',
-                    speaker.SpeakerSocialMediaCard.as_view(),
-                    name='speaker-social',
-                ),
-                path(
-                    'speaker/<code>/talks.ics',
-                    speaker.SpeakerTalksIcalView.as_view(),
-                    name='speaker.talks.ical',
-                ),
-                path(
-                    'og-image',
-                    EventSocialMediaCard.as_view(),
-                    name='event-social',
-                ),
-                path(
-                    'online-video/join/',
-                    talk.OnlineVideoJoin.as_view(),
-                    name='event.onlinevideo.join',
-                ),
-            ]
-        ),
+        'widgets/schedule.js',
+        widget.widget_script,
+        name='widget.script',
+    ),
+    path('static/event.css', widget.event_css, name='event.css'),
+    path(
+        'schedule/changelog/',
+        schedule.ChangelogView.as_view(),
+        name='schedule.changelog',
+    ),
+    path('schedule/feed.xml', feed.ScheduleFeed(), name='feed'),
+    # Old widget URL. Keep at least until end of 2024. Will still be used in
+    # a lot of old websites, so possibly just keep it forever.
+    re_path(
+        '^schedule/widget/v2.[a-z]{2}.js$',
+        widget.widget_script,
+        name='widget.script.legacy',
+    ),
+    path(
+        'schedule/widget/messages.js',
+        schedule.schedule_messages,
+        name='widget.messages',
+    ),
+    *get_schedule_urls('schedule'),
+    *get_schedule_urls('schedule/v/<version>', 'versioned-'),
+    path('sneak/', featured.sneakpeek_redirect, name='oldsneak'),
+    path('featured/', featured.FeaturedView.as_view(), name='featured'),
+    path('speaker/', speaker.SpeakerList.as_view(), name='speakers'),
+    path(
+        'speaker/avatar.svg',
+        speaker.empty_avatar_view,
+        name='speakers.avatar',
+    ),
+    path(
+        'speaker/by-id/<int:pk>/',
+        speaker.SpeakerRedirect.as_view(),
+        name='speaker.redirect',
+    ),
+    path('talk/', schedule.ScheduleView.as_view(), name='talks'),
+    path('talk/<slug>/', talk.TalkView.as_view(), name='talk'),
+    path(
+        'talk/<slug>/og-image',
+        talk.TalkSocialMediaCard.as_view(),
+        name='talk-social',
+    ),
+    path(
+        'talk/<slug>/feedback/',
+        talk.FeedbackView.as_view(),
+        name='feedback',
+    ),
+    path(
+        'talk/<slug>.ics',
+        talk.SingleICalView.as_view(),
+        name='ical',
+    ),
+    path(
+        'talk/review/<slug>',
+        talk.TalkReviewView.as_view(),
+        name='review',
+    ),
+    path(
+        'speaker/<code>/',
+        speaker.SpeakerView.as_view(),
+        name='speaker',
+    ),
+    path(
+        'speaker/<code>/og-image',
+        speaker.SpeakerSocialMediaCard.as_view(),
+        name='speaker-social',
+    ),
+    path(
+        'speaker/<code>/talks.ics',
+        speaker.SpeakerTalksIcalView.as_view(),
+        name='speaker.talks.ical',
+    ),
+    path(
+        'og-image',
+        EventSocialMediaCard.as_view(),
+        name='event-social',
+    ),
+    path(
+        'online-video/join/',
+        talk.OnlineVideoJoin.as_view(),
+        name='event.onlinevideo.join',
     ),
     path(
         'sw.js',

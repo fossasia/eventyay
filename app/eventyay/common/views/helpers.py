@@ -6,7 +6,7 @@ def is_form_bound(request, form_name, form_param='form'):
     return request.method == 'POST' and request.POST.get(form_param) == form_name
 
 
-def get_static(request, path, content_type):  # pragma: no cover
+def get_static(request, path, content_type, organizer=None, event=None, **kwargs):  # pragma: no cover
     path = settings.BASE_DIR / 'static' / path
     if not path.exists():
         raise Http404()

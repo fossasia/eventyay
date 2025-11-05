@@ -507,7 +507,8 @@ class VideoAccessAuthenticator(View):
             # Choose base site dynamically: prefer current request host (useful for local dev)
             scheme = 'https' if request.is_secure() else 'http'
             base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            # Use new unified URL structure: /{organizer}/{event}/video
+            event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
 
         # If the saved URL points to a different host than the current request (e.g., prod domain),
         # adjust it to the current host so local development goes to localhost.
@@ -517,12 +518,14 @@ class VideoAccessAuthenticator(View):
             if saved.netloc and saved.netloc != current_host:
                 scheme = 'https' if request.is_secure() else 'http'
                 base_site = f"{scheme}://{current_host}"
-                event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+                # Use new unified URL structure: /{organizer}/{event}/video
+                event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
         except Exception:
             # If parsing fails for any reason, fall back to the current request host
             scheme = 'https' if request.is_secure() else 'http'
             base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            # Use new unified URL structure: /{organizer}/{event}/video
+            event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
 
         # Ensure the pretix_venueless plugin is enabled
         current_plugins = set(event.get_plugins())

@@ -43,7 +43,7 @@ class SubmitWizard(EventPageMixin, View):
                 request.access_code = access_code
         if not request.event.cfp.is_open and not request.access_code:
             messages.error(request, _('Proposals are closed'))
-            return redirect(reverse('cfp:event.start', kwargs={'event': request.event.slug}))
+            return redirect(reverse('cfp:event.start', kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug}))
         step = None
         for step in request.event.cfp_flow.steps:
             if not step.is_applicable(request):
@@ -100,4 +100,4 @@ class SubmitWizard(EventPageMixin, View):
                 logging.getLogger('').warning(str(exception))
                 messages.warning(request, phrases.cfp.submission_email_fail)
 
-        return redirect(reverse('cfp:event.user.submissions', kwargs={'event': request.event.slug}))
+        return redirect(reverse('cfp:event.user.submissions', kwargs={'organizer': request.event.organizer.slug, 'event': request.event.slug}))

@@ -14,6 +14,7 @@ from mimetypes import guess_type
 
 from eventyay.config.urls import common_patterns
 from eventyay.multidomain.plugin_handler import plugin_event_urls
+from eventyay.multidomain import redirects
 from eventyay.presale.urls import (
     event_patterns,
     locale_patterns,
@@ -26,24 +27,27 @@ WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
 
 class VideoSPAView(View):
     def get(self, request, *args, **kwargs):
-        # event_identifier is optional; if provided we try pk first then slug
-        event_identifier = kwargs.get('event_identifier')
+        # Now expecting organizer and event from URL pattern: /{organizer}/{event}/video
+        organizer_slug = kwargs.get('organizer')
+        event_slug = kwargs.get('event')
+        
         event = None
-        if event_identifier:
+        if organizer_slug and event_slug:
             try:
-                # pk lookup
-                event = Event.objects.get(pk=event_identifier)
-            except (Event.DoesNotExist, ValueError):  # ValueError if not int
-                try:
-                    event = Event.objects.get(slug=event_identifier)
-                except Event.DoesNotExist:
-                    event = None
+                event = Event.objects.select_related('organizer').get(
+                    slug=event_slug,
+                    organizer__slug=organizer_slug
+                )
+            except Event.DoesNotExist:
+                return HttpResponse('Event not found', status=404)
+        
         index_path = os.path.join(WEBAPP_DIST_DIR, 'index.html')
         if os.path.exists(index_path):
             with open(index_path, 'r') as f:
                 content = f.read()
         else:
             content = '<!-- /video build missing: {} -->'.format(index_path)
+        
         if event:
             # Inject window.venueless config (frontend still expects this name)
             # Mirror structure used in legacy live AppView but adjusted basePath
@@ -59,6 +63,8 @@ class VideoSPAView(View):
                     return None
             # Safely access event.config which may be None
             cfg = event.config or {}
+            # New basePath now includes organizer and event slugs
+            base_path = f"/{event.organizer.slug}/{event.slug}/video"
             injected = {
                 'api': {
                     'base': api_base,
@@ -79,7 +85,7 @@ class VideoSPAView(View):
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
                 # Extra values expected by config.js/theme
-                'basePath': '/video',
+                'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
@@ -87,9 +93,10 @@ class VideoSPAView(View):
             # Always prepend to guarantee execution before any module scripts
             import json as _json
             content = f"<script>window.venueless={_json.dumps(injected)}</script>" + content
-        elif event_identifier:
-            # Event identifier provided but not found -> 404
-            return HttpResponse('Event not found', status=404)
+        else:
+            # No event context -> show generic video landing
+            return HttpResponse('Video component requires event context', status=404)
+        
         resp = HttpResponse(content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
         return resp
@@ -177,15 +184,43 @@ storage_patterns = [
     url(r'^storage/', include('eventyay.storage.urls', namespace='storage')),
 ]
 
-# Adjust urlpatterns: add event_identifier aware pattern excluding assets
-urlpatterns = common_patterns + storage_patterns + [
-    url(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets.legacy'),
-    url(r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets'),
-    # /video/<event_identifier>/... (exclude assets as identifier)
-    url(r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$', VideoSPAView.as_view(), name='video.event.index'),
-    # Plain /video -> maybe show generic splash without event (currently same view without event)
-    url(r'^video/?$', VideoSPAView.as_view(), name='video.index'),
-] + presale_patterns_main + plugin_patterns
+# Unified event patterns for {organizer}/{event}/ that include Talk and Video
+unified_event_patterns = [
+    url(
+        r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
+        include(
+            [
+                # Video patterns under {organizer}/{event}/video/
+                url(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
+                url(r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'),
+                url(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
+                # Talk patterns under {organizer}/{event}/ (agenda and cfp with their namespaces)
+                url(r'', include(('eventyay.agenda.urls', 'agenda'))),
+                url(r'', include(('eventyay.cfp.urls', 'cfp'))),
+            ]
+        )
+    ),
+]
+
+# Legacy redirect patterns for backward compatibility
+legacy_redirect_patterns = [
+    # Legacy video URLs: /video/<event_identifier> -> /{organizer}/{event}/video
+    url(r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$', 
+        redirects.legacy_video_redirect, 
+        name='video.legacy.redirect'),
+    # Legacy talk URLs: /<event>/(path) -> /{organizer}/{event}/(path)
+    # This needs to be more specific to avoid catching presale patterns
+    url(r'^(?P<event_slug>[^/]+)/(schedule|talk|speaker|featured|sneak|cfp|submit|me|login|logout|auth|reset|invitation|online-video|widgets|static|locale|sw\.js)',
+        redirects.legacy_talk_redirect,
+        name='talk.legacy.redirect'),
+    # Legacy event base URL: /<event>/ -> /{organizer}/{event}/
+    url(r'^(?P<event_slug>[^/]+)/$',
+        redirects.legacy_talk_redirect,
+        name='talk.legacy.base.redirect'),
+]
+
+# Adjust urlpatterns: legacy redirects MUST come before presale to catch old talk URLs
+urlpatterns = common_patterns + storage_patterns + legacy_redirect_patterns + unified_event_patterns + presale_patterns_main + plugin_patterns
 
 handler404 = 'eventyay.base.views.errors.page_not_found'
 handler500 = 'eventyay.base.views.errors.server_error'
