@@ -1,5 +1,3 @@
-.. spelling:: checkin
-
 Check-in lists
 ==============
 
@@ -623,7 +621,11 @@ Order position endpoints
       {
         "status": "ok",
         "position": {
-          …
+          "id": 1,
+          "order": "ABC12",
+          "positionid": 1,
+          "item": "Ticket",
+          "checkins": []
         }
       }
 

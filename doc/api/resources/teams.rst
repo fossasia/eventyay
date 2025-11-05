@@ -1,5 +1,3 @@
-.. spelling:: fullname checkin
-
 .. _`rest-teams`:
 
 Teams
@@ -117,7 +115,8 @@ Team endpoints
             "all_events": true,
             "limit_events": [],
             "can_create_events": true,
-            ...
+            "can_change_teams": true,
+            "can_manage_gift_cards": false
           }
         ]
       }
@@ -154,7 +153,8 @@ Team endpoints
         "all_events": true,
         "limit_events": [],
         "can_create_events": true,
-        ...
+        "can_change_teams": true,
+        "can_manage_gift_cards": false
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -181,7 +181,8 @@ Team endpoints
         "all_events": true,
         "limit_events": [],
         "can_create_events": true,
-        ...
+        "can_change_teams": true,
+        "can_manage_gift_cards": false
       }
 
    **Example response**:
@@ -198,7 +199,8 @@ Team endpoints
         "all_events": true,
         "limit_events": [],
         "can_create_events": true,
-        ...
+        "can_change_teams": true,
+        "can_manage_gift_cards": false
       }
 
    :param organizer: The ``slug`` field of the organizer to create a team for
@@ -241,7 +243,8 @@ Team endpoints
         "all_events": true,
         "limit_events": [],
         "can_create_events": true,
-        ...
+        "can_change_teams": true,
+        "can_manage_gift_cards": false
       }
 
    :param organizer: The ``slug`` field of the organizer to modify
@@ -458,7 +461,7 @@ Team invite endpoints
 
 .. http:post:: /api/v1/organizers/(organizer)/teams/(team)/invites/
 
-   Invites someone into the team. Note that if the user already has a pretix account, you will receive a response without
+   Invites someone into the team. Note that if the user already has a eventyay account, you will receive a response without
    an ``id`` and instead of an invite being created, the user will be directly added to the team.
 
    **Example request**:

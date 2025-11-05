@@ -127,11 +127,11 @@ After running ``uv sync```, activate a virtual environment
 
    Do **not** edit the database numbers (0, 1, etc.).
 
-8. **Create a superuser account** (for accessing the admin panel):
+8. **Create a admin user account** (for accessing the admin panel):
 
    .. code-block:: bash
 
-      python manage.py createsuperuser
+      python manage.py create_admin_user
 
 9. **Run the development server**:
 

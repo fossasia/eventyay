@@ -274,6 +274,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         return self.freeze_after and (self.freeze_after <= now())
 
     class urls(EventUrls):
+        """URL patterns for question views."""
         base = '{self.event.cfp.urls.questions}{self.pk}/'
         edit = '{base}edit/'
         delete = '{base}delete/'
