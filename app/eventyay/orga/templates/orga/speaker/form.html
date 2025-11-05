@@ -67,7 +67,7 @@
         {% csrf_token %}
         {% include "common/forms/errors.html" %}
 
-        {{ form.name.as_field_group }}
+        {{ form.fullname.as_field_group }}
         {{ form.email.as_field_group }}
         {% if form.avatar %}
             {% include "common/avatar.html" with user=form.instance.user form=form %}
