@@ -21,6 +21,13 @@ class ComposingFor(models.TextChoices):
     TEAMS = 'teams', 'Teams'
 
 
+class Recipients(models.TextChoices):
+    ORDERS = 'orders', 'Orders'
+    ATTENDEES = 'attendees', 'Attendees'
+    BOTH = 'both', 'Both'
+
+
+
 class EmailQueue(models.Model):
     """
     Stores queued emails composed by organizers for later sending.
@@ -68,9 +75,9 @@ class EmailQueue(models.Model):
     subject = I18nTextField(null=True, blank=True)
     message = I18nTextField(null=True, blank=True)
 
-    reply_to = models.CharField(max_length=100, null=True, blank=True)
+    reply_to = models.CharField(max_length=100, default='', blank=True)
     bcc = models.TextField(null=True, blank=True)  # comma-separated
-    locale = models.CharField(max_length=16, null=True, blank=True)
+    locale = models.CharField(max_length=16, blank=True, default='')
     attachments = ArrayField(base_field=models.UUIDField(), null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -234,9 +241,9 @@ class EmailQueue(models.Model):
                 if pos.attendee_email:
                     attendee_found = True
                     email = pos.attendee_email.strip().lower()
-                    recipients[email]["orders"].add(str(order.pk))
-                    recipients[email]["positions"].add(str(pos.pk))
-                    recipients[email]["products"].add(str(pos.product.pk))
+                    recipients[email]["orders"].add(order.pk)
+                    recipients[email]["positions"].add(pos.pk)
+                    recipients[email]["products"].add(pos.product.pk)
                 else:
                     # No attendee email; maybe fallback later
                     order_fallback_needed = True
@@ -249,16 +256,16 @@ class EmailQueue(models.Model):
                 order.email
             ):
                 email = order.email.strip().lower()
-                recipients[email]["orders"].add(str(order.pk))
+                recipients[email]["orders"].add(order.pk)
                 product_ids = order.positions.values_list('product__pk', flat=True)
-                recipients[email]["products"].update(str(pid) for pid in product_ids)
+                recipients[email]["products"].update(pid for pid in product_ids)
 
             # Explicit inclusion of orders
             if recipients_mode in ("both", "orders") and order.email:
                 email = order.email.strip().lower()
-                recipients[email]["orders"].add(str(order.pk))
+                recipients[email]["orders"].add(order.pk)
                 product_ids = order.positions.values_list('product__pk', flat=True)
-                recipients[email]["products"].update(str(pid) for pid in product_ids)
+                recipients[email]["products"].update(pid for pid in product_ids)
 
         # Clear and insert fresh records
         self.recipients.all().delete()
@@ -289,16 +296,16 @@ class EmailQueueToUser(models.Model):
     :type mail: EmailQueue
 
     :param email: Email address of the recipient.
-    :type email: str
+    :type email: email
     
     :param orders: List of order IDs associated with this recipient.
-    :type orders: list[str]
+    :type orders: list[int]
     
     :param positions: List of order position IDs.
-    :type positions: list[str]
+    :type positions: list[int]
     
     :param products: List of product IDs associated with this user.
-    :type products: list[str]
+    :type products: list[int]
     
     :param team: Team ID if this is a team recipient.
     :type team: int or None
@@ -311,9 +318,9 @@ class EmailQueueToUser(models.Model):
     """
     mail = models.ForeignKey(EmailQueue, on_delete=models.CASCADE, related_name="recipients")
     email = models.EmailField()
-    orders = ArrayField(models.CharField(max_length=64), blank=True, default=list)
-    positions = ArrayField(models.CharField(max_length=64), blank=True, default=list)
-    products = ArrayField(models.CharField(max_length=64), blank=True, default=list)
+    orders = ArrayField(models.BigIntegerField(), blank=True, default=list)
+    positions = ArrayField(models.BigIntegerField(), blank=True, default=list)
+    products = ArrayField(models.BigIntegerField(), blank=True, default=list)
     team = models.IntegerField(null=True, blank=True)
     sent = models.BooleanField(default=False)
     error = models.TextField(null=True, blank=True)
@@ -335,8 +342,8 @@ class EmailQueueFilter(models.Model):
     :param recipients: Target recipient scope: 'orders', 'attendees', or 'both'.
     :type recipients: str
     
-    :param sendto: Email roles or tags to include.
-    :type sendto: list[str]
+    :param send_to: Email roles or tags to include.
+    :type send_to: list[email]
     
     :param products: Filter by product IDs.
     :type products: list[int]
@@ -359,11 +366,11 @@ class EmailQueueFilter(models.Model):
     :param subevents_to: Filter subevents up to this date/time.
     :type subevents_to: datetime or None
     
-    :param created_from: Include orders created after this date/time.
-    :type created_from: datetime or None
+    :param order_created_from: Include orders created after this date/time.
+    :type order_created_from: datetime or None
     
-    :param created_to: Include orders created before this date/time.
-    :type created_to: datetime or None
+    :param order_created_to: Include orders created before this date/time.
+    :type order_created_to: datetime or None
     
     :param orders: Explicit order IDs to include.
     :type orders: list[int]
@@ -373,22 +380,17 @@ class EmailQueueFilter(models.Model):
     """
     mail = models.OneToOneField(EmailQueue, on_delete=models.CASCADE, related_name="filters_data")
 
-    recipients = models.CharField(
-        max_length=10,
-        choices=[("orders", "Orders"), ("attendees", "Attendees"), ("both", "Both")],
-        default="orders",
-        blank=True
-    )
-    sendto = ArrayField(models.CharField(max_length=20), blank=True, default=list)
-    products = ArrayField(models.IntegerField(), blank=True, default=list)
+    recipients = models.CharField(max_length=10, choices=Recipients.choices, default=Recipients.ORDERS, blank=True)
+    send_to = ArrayField(models.EmailField(), blank=True, default=list)
+    products = ArrayField(models.BigIntegerField(), blank=True, default=list)
     checkin_lists = ArrayField(models.IntegerField(), blank=True, default=list)
-    filter_checkins = models.BooleanField(default=False)
+    has_filter_checkins = models.BooleanField(default=False)
     not_checked_in = models.BooleanField(default=False)
     subevent = models.IntegerField(null=True, blank=True)
     subevents_from = models.DateTimeField(null=True, blank=True)
     subevents_to = models.DateTimeField(null=True, blank=True)
-    created_from = models.DateTimeField(null=True, blank=True)
-    created_to = models.DateTimeField(null=True, blank=True)
+    order_created_from = models.DateTimeField(null=True, blank=True)
+    order_created_to = models.DateTimeField(null=True, blank=True)
     orders = ArrayField(models.IntegerField(), blank=True, default=list)
     teams = ArrayField(models.IntegerField(), blank=True, default=list)
 

@@ -50,8 +50,8 @@ class CopyDraftMixin:
                     else:
                         form_kwargs['initial'].update({
                             'recipients': qmf.recipients or [],
-                            'sendto': qmf.sendto or ['p', 'na'],
-                            'filter_checkins': qmf.filter_checkins,
+                            'send_to': qmf.send_to or ['p', 'na'],
+                            'filter_checkins': qmf.has_filter_checkins,
                             'not_checked_in': qmf.not_checked_in,
                         })
 
@@ -70,10 +70,11 @@ class CopyDraftMixin:
                                 # It's possible that the referenced subevent no longer exists; ignore in this case.
                                 pass
 
-                        for field in ['subevents_from', 'subevents_to', 'created_from', 'created_to']:
+                        for field in ['subevents_from', 'subevents_to', 'order_created_from', 'order_created_to']:
                             value = getattr(qmf, field, None)
                             if value:
                                 form_kwargs['initial'][field] = dateutil.parser.isoparse(value) if isinstance(value, str) else value
+
 
             except (EmailQueue.DoesNotExist, ValueError, TypeError) as e:
                 logger.warning('Failed to load EmailQueue for copyToDraft: %s' % e)

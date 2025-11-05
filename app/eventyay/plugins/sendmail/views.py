@@ -69,12 +69,12 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
     def form_valid(self, form):
         qs = Order.objects.filter(event=self.request.event)
-        statusq = Q(status__in=form.cleaned_data['sendto'])
-        if 'overdue' in form.cleaned_data['sendto']:
+        statusq = Q(status__in=form.cleaned_data['send_to'])
+        if 'overdue' in form.cleaned_data['send_to']:
             statusq |= Q(status=Order.STATUS_PENDING, expires__lt=now())
-        if 'pa' in form.cleaned_data['sendto']:
+        if 'pa' in form.cleaned_data['send_to']:
             statusq |= Q(status=Order.STATUS_PENDING, require_approval=True)
-        if 'na' in form.cleaned_data['sendto']:
+        if 'na' in form.cleaned_data['send_to']:
             statusq |= Q(status=Order.STATUS_PENDING, require_approval=False)
         orders = qs.filter(statusq)
 
@@ -107,10 +107,10 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             opq = opq.filter(subevent__date_from__gte=form.cleaned_data.get('subevents_from'))
         if form.cleaned_data.get('subevents_to'):
             opq = opq.filter(subevent__date_from__lt=form.cleaned_data.get('subevents_to'))
-        if form.cleaned_data.get('created_from'):
-            opq = opq.filter(order__datetime__gte=form.cleaned_data.get('created_from'))
-        if form.cleaned_data.get('created_to'):
-            opq = opq.filter(order__datetime__lt=form.cleaned_data.get('created_to'))
+        if form.cleaned_data.get('order_created_from'):
+            opq = opq.filter(order__datetime__gte=form.cleaned_data.get('order_created_from'))
+        if form.cleaned_data.get('order_created_to'):
+            opq = opq.filter(order__datetime__lt=form.cleaned_data.get('order_created_to'))
 
         orders = orders.annotate(match_pos=Exists(opq)).filter(match_pos=True).distinct()
 
@@ -150,7 +150,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             message=form.cleaned_data['message'].data,
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
             locale=self.request.event.settings.locale,
-            reply_to=self.request.event.settings.get('contact_mail'),
+            reply_to=self.request.event.settings.get('contact_mail') or '',
             bcc=self.request.event.settings.get('mail_bcc'),
             composing_for=ComposingFor.ATTENDEES,
         )
@@ -158,17 +158,17 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         EmailQueueFilter.objects.create(
             mail = qm,
             recipients = form.cleaned_data['recipients'],
-            sendto = form.cleaned_data['sendto'],
+            send_to = form.cleaned_data['send_to'],
             orders = list(orders.values_list('pk', flat=True)),
             products = [i.pk for i in form.cleaned_data.get('products')],
             checkin_lists = [cl.pk for cl in form.cleaned_data.get('checkin_lists')],
-            filter_checkins = form.cleaned_data.get('filter_checkins'),
+            has_filter_checkins = form.cleaned_data.get('filter_checkins'),
             not_checked_in = form.cleaned_data.get('not_checked_in'),
             subevent = form.cleaned_data.get('subevent').pk if form.cleaned_data.get('subevent') else None,
             subevents_from = form.cleaned_data.get('subevents_from').isoformat() if form.cleaned_data.get('subevents_from') else None,
             subevents_to = form.cleaned_data.get('subevents_to').isoformat() if form.cleaned_data.get('subevents_to') else None,
-            created_from = form.cleaned_data.get('created_from').isoformat() if form.cleaned_data.get('created_from') else None,
-            created_to = form.cleaned_data.get('created_to').isoformat() if form.cleaned_data.get('created_to') else None,
+            order_created_from = form.cleaned_data.get('order_created_from').isoformat() if form.cleaned_data.get('order_created_from') else None,
+            order_created_to = form.cleaned_data.get('order_created_to').isoformat() if form.cleaned_data.get('order_created_to') else None,
         )
 
         qm.populate_to_users()
@@ -586,7 +586,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             subject=subject.data,
             message=message.data,
             locale=event.settings.locale,
-            reply_to=event.settings.get('contact_mail'),
+            reply_to=event.settings.get('contact_mail') or '',
             bcc=event.settings.get('mail_bcc'),
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
         )
@@ -594,16 +594,16 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         # Create associated filter data for teams
         EmailQueueFilter.objects.create(
             mail=mail_instance,
-            sendto=[],
+            send_to=[],
             products=[],
             checkin_lists=[],
-            filter_checkins=False,
+            has_filter_checkins=False,
             not_checked_in=False,
             subevent=None,
             subevents_from=None,
             subevents_to=None,
-            created_from=None,
-            created_to=None,
+            order_created_from=None,
+            order_created_to=None,
             orders=[],
             teams=[team.pk for team in form.cleaned_data['teams']],
         )

@@ -29,7 +29,7 @@ def contains_web_channel_validate(value):
 
 class MailForm(forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
-    sendto = forms.MultipleChoiceField()  # overridden later
+    send_to = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
     message = forms.CharField(label=_('Message'))
     attachment = CachedFileField(
@@ -91,12 +91,12 @@ class MailForm(forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers of dates starting before'),
         required=False,
     )
-    created_from = forms.SplitDateTimeField(
+    order_created_from = forms.SplitDateTimeField(
         widget=SplitDateTimePickerWidget(),
         label=pgettext_lazy('subevent', 'Only send to customers with orders created after'),
         required=False,
     )
-    created_to = forms.SplitDateTimeField(
+    order_created_to = forms.SplitDateTimeField(
         widget=SplitDateTimePickerWidget(),
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
@@ -166,16 +166,16 @@ class MailForm(forms.Form):
         choices.insert(0, ('pa', _('approval pending')))
         if not event.settings.get('payment_term_expire_automatically', as_type=bool):
             choices.append(('overdue', _('pending with payment overdue')))
-        self.fields['sendto'] = forms.MultipleChoiceField(
+        self.fields['send_to'] = forms.MultipleChoiceField(
             label=_('Send to customers with order status'),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             choices=choices,
         )
-        if not self.initial.get('sendto'):
-            self.initial['sendto'] = ['p', 'na']
-        elif 'n' in self.initial['sendto']:
-            self.initial['sendto'].append('pa')
-            self.initial['sendto'].append('na')
+        if not self.initial.get('send_to'):
+            self.initial['send_to'] = ['p', 'na']
+        elif 'n' in self.initial['send_to']:
+            self.initial['send_to'].append('pa')
+            self.initial['send_to'].append('na')
 
         self.fields['products'].queryset = event.products.all()
         if not self.initial.get('products'):
