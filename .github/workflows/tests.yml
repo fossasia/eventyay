@@ -60,10 +60,15 @@ jobs:
         run: make all compress
       - name: Run tests
         working-directory: ./src
-        run: PRETIX_CONFIG_FILE=tests/travis_${{ matrix.database }}.cfg py.test -n 3 -p no:sugar --cov=./ --cov-report=xml --reruns 3 tests --maxfail=100
+        run: py.test -n 3 -p no:sugar --cov=./ --cov-report=xml --reruns 3 tests --maxfail=100
       - name: Upload coverage
         uses: codecov/codecov-action@v1
         with:
           file: src/coverage.xml
           fail_ci_if_error: true
         if: matrix.database == 'postgres' && matrix.python-version == '3.11' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master')
+    env:
+      EVY_POSTGRES_HOST: localhost
+      EVY_POSTGRES_PORT: 5432
+      EVY_POSTGRES_USER: postgres
+      EVY_POSTGRES_DB: pretix

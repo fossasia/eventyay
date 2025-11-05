@@ -263,6 +263,7 @@ test = [
     "pytest-cache>=1.0",
     "pytest-cov>=6.0.0",
     "pytest-django>=4.9.0",
+    "pytest-env>=1.1.5",
     "pytest-mock>=3.14.0",
     "pytest-rerunfailures>=14.0",
     "pytest-sugar>=1.0.0",
@@ -292,3 +293,7 @@ ignore = ["E722", "E741"]
 
 [tool.setuptools]
 packages = ["eventyay"]
+
+
+[tool.pytest_env]
+EVY_RUNNING_ENVIRONMENT = "testing"

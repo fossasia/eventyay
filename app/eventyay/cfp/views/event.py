@@ -7,8 +7,8 @@ from django.utils.timezone import now
 from django.views.generic import TemplateView
 from django_context_decorator import context
 
-from eventyay.common.views.mixins import PermissionRequired
 from eventyay.base.models import Event
+from eventyay.common.views.mixins import PermissionRequired
 from eventyay.talk_rules.event import get_events_for_user
 
 

@@ -1,6 +1,4 @@
 import logging
-from configparser import RawConfigParser
-from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
