@@ -13,7 +13,7 @@ from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
 from pycountry import currencies
-from pydantic import DirectoryPath, Field, HttpUrl
+from pydantic import Field, HttpUrl
 from pydantic_settings import BaseSettings as _BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
 from redis.asyncio.retry import Retry
@@ -21,8 +21,9 @@ from redis.backoff import ExponentialBackoff
 
 from eventyay import __version__
 
-# To avoid loading unnecessary settings from other applications
-# we only load those which are prefixed with EVY_.
+# To avoid loading unnecessary environment variables
+# designated for other applications
+# we only load those with EVY_ prefix.
 _ENV_PREFIX = 'EVY_'
 _ENV_KEY_ACTIVE_ENVIRONMENT = 'EVY_RUNNING_ENVIRONMENT'
 
@@ -41,7 +42,9 @@ _DEFAULT_DB_NAME = 'eventyay-db'
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-# To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT
+# To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT.
+# For example:
+#   EVY_RUNNING_ENVIRONMENT=production ./manage.py runserver
 class RunningEnvironment(StrEnum):
     PRODUCTION = 'production'
     DEVELOPMENT = 'development'
@@ -73,7 +76,6 @@ class BaseSettings(_BaseSettings):
     # The names follow what is in Django and converted to lowercase.
     debug: bool = False
     secret_key: str
-    data_dir: DirectoryPath = BASE_DIR / 'data'
     postgres_db: str = _DEFAULT_DB_NAME
     # When these values are `None`, "peer" connection method will be used.
     # We just need to have a PostgreSQL user with the same name as Linux user.
@@ -137,8 +139,8 @@ class BaseSettings(_BaseSettings):
             init_settings,
             toml_settings,
             # The following files will override values from TOML files.
+            # We don't support dotenv files, to encourage using TOML files.
             env_settings,
-            dotenv_settings,
             file_secret_settings,
         )
 
@@ -185,12 +187,13 @@ conf = BaseSettings()
 
 # --- Now, provide values to Django's settings. ---
 
-# Note: DEBUG doesn't mean "development". Sometimes we need "debug" in production for troubleshooting,
-# but please use with caution.
+# Note: DEBUG doesn't mean "development".
+# Sometimes we need "debug" in production for troubleshooting,
+# but please use with caution (it can reveal sensitive data like passwords, API keys).
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 
-DATA_DIR = conf.data_dir
+DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
 MEDIA_ROOT = DATA_DIR / 'media'
 PROFILE_DIR = DATA_DIR / 'profiles'
