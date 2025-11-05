@@ -25,9 +25,12 @@ from eventyay import __version__
 # designated for other applications
 # we only load those with EVY_ prefix.
 _ENV_PREFIX = 'EVY_'
+
+# Use this environment variable to choose the running environment.
+# Example: EVY_RUNNING_ENVIRONMENT=production ./manage.py runserver
 _ENV_KEY_ACTIVE_ENVIRONMENT = 'EVY_RUNNING_ENVIRONMENT'
 
-# Our system will look for these TOML configuration files.
+# Our system will look for these TOML configuration files:
 # - eventyay.{active_environment}.toml
 # - eventyay.local.toml
 #
@@ -35,11 +38,16 @@ _ENV_KEY_ACTIVE_ENVIRONMENT = 'EVY_RUNNING_ENVIRONMENT'
 # for current active environment.
 # The 'eventyay.local.toml' is optional, ignored by Git, for developers to override settings
 # to match their personal setup.
+# Sensitive data like passwords, API keys should be put in ".secrets/" directory,
+# where the file names match the setting names, prefixed with "EVY_".
+# For example, to provide `secret_key`, create a file named ".secrets/EVY_SECRET_KEY".
+# Ref: https://docs.pydantic.dev/latest/concepts/pydantic_settings/#secrets
 
 _DEFAULT_DB_NAME = 'eventyay-db'
 
-# The base directory of the project, where "./manage.py" file is located.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+# The root directory of the project, where "./manage.py" file is located.
+PROJECT_ROOT = BASE_DIR.parent
 
 
 # To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT.
@@ -66,16 +74,18 @@ class BaseSettings(_BaseSettings):
 
     After that, the settings will be manipulated to serve Django.
     This class is named "BaseSettings" because the settings it holds are not finalized yet.
+    Doc: https://docs.pydantic.dev/latest/concepts/pydantic_settings/
     """
 
     # Tell Pydantic how to load our configurations.
     model_config = SettingsConfigDict(
         env_prefix=_ENV_PREFIX,
+        secrets_dir=PROJECT_ROOT / '.secrets',
     )
     # Here, starting our settings fields.
     # The names follow what is in Django and converted to lowercase.
     debug: bool = False
-    secret_key: str
+    secret_key: str = 'please-give-one-in-secret-file'
     postgres_db: str = _DEFAULT_DB_NAME
     # When these values are `None`, "peer" connection method will be used.
     # We just need to have a PostgreSQL user with the same name as Linux user.
@@ -130,7 +140,8 @@ class BaseSettings(_BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Insert the TOML which matches the running environment
         toml_files = discover_toml_files()
-        print(f'Loading configuration from: {toml_files}', file=sys.stderr)
+        file_list_for_display = [str(p.relative_to(Path.cwd())) for p in toml_files]
+        print(f'Loading configuration from: {file_list_for_display}', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,
             toml_file=toml_files,
@@ -159,7 +170,7 @@ def discover_toml_files() -> list[Path]:
             candidate = current_dir / name
             if candidate.is_file():
                 toml_files.append(candidate)
-        if current_dir == BASE_DIR:
+        if current_dir == PROJECT_ROOT:
             break
         current_dir = current_dir.parent
     # Sort the files so that the "local" file is loaded last,
@@ -262,7 +273,6 @@ if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
 
 _OURS_APPS = (
-    # agenda, orga and common must be on top to load contexts before forms gets initialized.
     'eventyay.agenda',
     'eventyay.common',
     'eventyay.orga',
@@ -297,7 +307,8 @@ _OURS_APPS = (
     'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
-    # Load local ticket-video plugin
+    # For now, this app is installed from "plugins" folder.
+    # It needs the "tool.uv.sources" entry in pyproject.toml.
     'pretix_venueless',
 )
 
@@ -436,7 +447,7 @@ TEMPLATES = (
     {
         'BACKEND': 'django.template.backends.jinja2.Jinja2',
         'DIRS': [
-            BASE_DIR / 'eventyay' / 'jinja-templates',
+            BASE_DIR / 'jinja-templates',
         ],
         'OPTIONS': {
             'environment': 'eventyay.jinja.environment',
@@ -1124,3 +1135,6 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 # TODO: Move to consts.py
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
+
+print('Secret dirs:', PROJECT_ROOT / '.secrets')
+print('SECRET_KEY', SECRET_KEY)

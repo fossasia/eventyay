@@ -1,3 +1,5 @@
+debug = true
+
 # For development, we just store emails as files.
 email_backend = 'eventyay.base.email.FileSavedEmailBackend'
 

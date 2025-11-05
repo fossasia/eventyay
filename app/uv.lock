@@ -1785,7 +1785,7 @@ requires-dist = [
     { name = "pretalx-pages", git = "https://github.com/fossasia/eventyay-talk-pages.git?rev=a726a10459644f0bfde5019be8abf4f66b77cd27" },
     { name = "pretalx-venueless", git = "https://github.com/fossasia/eventyay-talk-video.git?rev=8c3316a0ee7e801dc9c30b56a3c523c01209bb61" },
     { name = "pretix-pages", git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=a7c33fd26351d409a752baa6989f24be511b5bdd" },
-    { name = "pretix-venueless", git = "https://github.com/fossasia/eventyay-ticket-video.git?rev=c7009367e02584825dc3378e5b3375a4fb613ca7" },
+    { name = "pretix-venueless", editable = "eventyay/plugins/eventyay-ticket-video" },
     { name = "prompt-toolkit", specifier = ">=3.0.51" },
     { name = "propcache", specifier = ">=0.2.1" },
     { name = "protobuf", specifier = ">=5.28.3" },
@@ -3254,11 +3254,13 @@ source = { git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=a7c3
 
 [[package]]
 name = "pretix-venueless"
-version = "1.3.1"
-source = { git = "https://github.com/fossasia/eventyay-ticket-video.git?rev=c7009367e02584825dc3378e5b3375a4fb613ca7#c7009367e02584825dc3378e5b3375a4fb613ca7" }
+source = { editable = "eventyay/plugins/eventyay-ticket-video" }
 dependencies = [
     { name = "pyjwt" },
 ]
+
+[package.metadata]
+requires-dist = [{ name = "pyjwt" }]
 
 [[package]]
 name = "prompt-toolkit"
