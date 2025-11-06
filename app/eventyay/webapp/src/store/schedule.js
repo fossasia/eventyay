@@ -222,21 +222,29 @@ export default {
 		}
 	},
 	actions: {
-		async fetch({state, getters}) {
-			// TODO error handling
-			if (!getters.pretalxScheduleUrl) return
-			// const version = await (await fetch(`${getters.pretalxApiBaseUrl}/schedules/`)).json()
-			// console.log(version.results[0].version)
+		async fetch({state, getters, rootState}) {
 			try {
 				state.errorLoading = null
-				state.schedule = await (await fetch(getters.pretalxScheduleUrl)).json()
-				state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
-					const isDuplicate = acc.some(item => item.session_type === current.session_type)
-					if (!isDuplicate) {
-						acc.push(current)
-					}
-					return acc
-				}, [])
+				
+				if (window.eventyay?.schedule) {
+					state.schedule = window.eventyay.schedule
+				} else if (rootState.world?.schedule) {
+					state.schedule = rootState.world.schedule
+				} else if (getters.pretalxScheduleUrl) {
+					state.schedule = await (await fetch(getters.pretalxScheduleUrl)).json()
+				} else {
+					return
+				}
+				
+				if (state.schedule?.talks) {
+					state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
+						const isDuplicate = acc.some(item => item.session_type === current.session_type)
+						if (!isDuplicate) {
+							acc.push(current)
+						}
+						return acc
+					}, [])
+				}
 			} catch (error) {
 				state.errorLoading = error
 			}

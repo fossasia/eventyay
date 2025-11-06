@@ -6,10 +6,9 @@
 		.speakers
 			router-link.speaker(v-for="speaker of speakers", :to="speaker.attendee ? {name: '', params: {}} : { name: 'schedule:speaker', params: { speakerId: speaker.code } }")
 				img.avatar(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-				identicon(v-else, :user="{id: speaker.name, profile: {display_name: speaker.name}}")
+				identicon(v-else, :user="{id: speaker.code, profile: {display_name: speaker.name || 'Speaker'}}")
 				.content
-					.name {{ speaker.name }}
-					//- this has html ?
+					.name(:class="{'no-name': !speaker.name}") {{ speaker.name || 'Speaker name not provided' }}
 					p.biography {{ speaker.biography }}
 					.sessions(v-if="speaker.sessions.length && speaker.sessions.some(s => s)")
 						h2 {{ $t('schedule/speakers/index:speaker-sessions:header') }}:
@@ -34,22 +33,15 @@ export default {
 		...mapGetters('schedule', ['sessions', 'sessionsLookup'])
 	},
 	async created() {
-		if (this.$store.getters['schedule/pretalxApiBaseUrl']) {
-			this.speakers = (await (await fetch(`${this.$store.getters['schedule/pretalxApiBaseUrl']}/speakers/?limit=999`)).json()).results.sort((a, b) => a.name.localeCompare(b.name))
-			// const speakersToAttendee = await api.call('user.fetch', {pretalx_ids: this.speakers.map(speaker => speaker.code)})
-			for (const speaker of this.speakers) {
-				speaker.sessions = speaker.submissions.map(submission => this.sessionsLookup[submission]).filter(Boolean)
-				// speaker.attendee = speakersToAttendee[speaker.code]
-			}
-		} else {
-			this.$watch('schedule', (schedule) => {
-				if (!schedule) return
-				this.speakers = schedule.speakers.map(speaker => ({
-					...speaker,
-					sessions: this.sessions.filter(session => session.speakers.includes(speaker))
-				})).sort((a, b) => a.name.localeCompare(b.name))
-			}, { immediate: true })
-		}
+		this.$watch('schedule', (schedule) => {
+			if (!schedule) return
+			this.speakers = schedule.speakers.map(speaker => ({
+				...speaker,
+				sessions: this.sessions.filter(session => 
+					session.speakers && session.speakers.some(s => s && s.code === speaker.code)
+				)
+			})).sort((a, b) => a.name.localeCompare(b.name))
+		}, { immediate: true })
 	}
 }
 </script>
@@ -89,6 +81,9 @@ export default {
 		.name
 			font-weight: 500
 			font-size: 16px
+			&.no-name
+				color: $clr-secondary-text-light
+				font-style: italic
 		.biography
 			display: -webkit-box
 			-webkit-box-orient: vertical

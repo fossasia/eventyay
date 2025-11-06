@@ -8,6 +8,7 @@ from django.views.generic import TemplateView, View
 from django.http import HttpResponse, Http404
 from django.views.static import serve as static_serve
 from django.conf import settings
+from django_scopes import scope
 from mimetypes import guess_type
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -59,6 +60,11 @@ class VideoSPAView(View):
                     return None
             # Safely access event.config which may be None
             cfg = event.config or {}
+            
+            with scope(event=event):
+                schedule = event.current_schedule or event.wip_schedule
+                schedule_data = schedule.build_data(all_talks=False) if schedule else None
+            
             injected = {
                 'api': {
                     'base': api_base,
@@ -78,15 +84,15 @@ class VideoSPAView(View):
                 'theme': cfg.get('theme', {}),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
+                'schedule': schedule_data,
                 # Extra values expected by config.js/theme
                 'basePath': '/video',
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
-            # Always prepend to guarantee execution before any module scripts
             import json as _json
-            content = f"<script>window.venueless={_json.dumps(injected)}</script>" + content
+            content = f"<script>window.eventyay={_json.dumps(injected, default=str)}</script>{content}"
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)

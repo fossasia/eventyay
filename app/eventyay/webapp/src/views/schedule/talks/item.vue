@@ -17,21 +17,22 @@
 			.header {{ $t('schedule/talks/item:speakers:header', {count: talk.speakers.length})}}
 			.speakers-list
 				.speaker(v-for="speaker of talk.speakers")
-					img.avatar(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-					router-link.name(v-if="pretalxApiBaseUrl", :to="{name: 'schedule:speaker', params: {speakerId: speaker.code}}") {{ speaker.name }}
-					.name(v-else) {{ speaker.name }}
+					router-link.speaker-link(:to="{name: 'schedule:speaker', params: {speakerId: speaker.code}}")
+						img.avatar-circle(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
+						identicon.avatar-circle(v-else, :user="{id: speaker.code, profile: {display_name: speaker.name || 'Speaker'}}")
+						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || 'Speaker name not provided' }}
 					markdown-content.biography(:markdown="speaker.biography")
-					//- TODO other talks by this speaker
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
 import { mapGetters, mapState } from 'vuex'
 import moment from 'lib/timetravelMoment'
 import MarkdownContent from 'components/MarkdownContent'
+import Identicon from 'components/Identicon'
 import { getIconByFileEnding } from 'lib/filetypes'
 
 export default {
-	components: {MarkdownContent},
+	components: {MarkdownContent, Identicon},
 	props: {
 		talkId: String
 	},
@@ -44,10 +45,10 @@ export default {
 		...mapState(['rooms']),
 		...mapGetters('schedule', ['pretalxApiBaseUrl', 'sessions']),
 		datetime() {
-			return moment(this.talk.slot?.start || this.talk.start).format('L LT') + ' - ' + moment(this.talk.slot?.end || this.talk.end).format('LT')
+			return moment(this.talk.start).format('L LT') + ' - ' + moment(this.talk.end).format('LT')
 		},
 		roomName() {
-			return this.$localize(this.talk.slot?.room || this.talk.room.name)
+			return this.$localize(this.talk.room?.name || this.talk.room)
 		}
 	},
 	watch: {
@@ -59,11 +60,6 @@ export default {
 			},
 			immediate: true
 		}
-	},
-	async created() {
-		// TODO error handling
-		if (!this.pretalxApiBaseUrl) return
-		this.talk = ((talk) => ({ ...talk, slot: talk.slots[0] }))(await (await fetch(`${this.pretalxApiBaseUrl}/submissions/${this.talkId}/?expand=slots,speakers`)).json());
 	},
 	mounted() {
 		this.$nextTick(() => {
@@ -144,14 +140,27 @@ export default {
 			padding: 8px
 			display: flex
 			flex-direction: column
-
-			img
-				max-width: 100%
-				align-self: center
+			.speaker-link
+				display: flex
+				align-items: center
+				gap: 8px
+				text-decoration: none
+				color: $clr-primary-text-light
+				&:hover
+					.name
+						color: var(--clr-primary)
+						text-decoration: underline
+			.avatar-circle
+				border-radius: 50%
+				height: 32px
+				width: 32px
+				flex-shrink: 0
+				object-fit: cover
 			.name
-				display: block
-				margin: 8px 0
 				font-weight: 600
+				&.no-name
+					color: $clr-secondary-text-light
+					font-style: italic
 	+below('m')
 		.talk-wrapper
 			display: block

@@ -625,6 +625,7 @@ class Schedule(PretalxModel):
                         'id': talk.id,
                         'title': (talk.submission.title if talk.submission else talk.description),
                         'abstract': (talk.submission.abstract if talk.submission else None),
+                        'description': (talk.submission.description if talk.submission else None),
                         'speakers': (
                             [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
                         ),
@@ -639,6 +640,7 @@ class Schedule(PretalxModel):
                         'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                         'tags': talk.submission.get_tag(),
                         'session_type': talk.submission.submission_type.name,
+                        'url': (talk.submission.urls.public.full() if talk.submission and hasattr(talk.submission, 'urls') else None),
                     }
                 )
             else:
@@ -675,7 +677,8 @@ class Schedule(PretalxModel):
         result['speakers'] = [
             {
                 'code': user.code,
-                'name': user.fullname,
+                'name': user.fullname or None,
+                'biography': user.event_profile(self.event).biography if user.event_profile(self.event) else '',
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None
