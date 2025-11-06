@@ -19,7 +19,7 @@ classifiers = [
   "Framework :: Django :: 5.1",
 ]
 dependencies = [
-        'Django==5.1.*',
+        'Django==5.2.*',
         'djangorestframework==3.15.*',
         'python-dateutil==2.9.*',
         'isoweek',
@@ -59,8 +59,8 @@ dependencies = [
         'pycparser==2.22',
         'django-redis==5.4.*',
         'redis==7.0.*',
-        'fakeredis==2.26.*',
-        'stripe==13.1.*',
+        'fakeredis==2.32.*',
+        'stripe==13.2.*',
         'chardet==5.2.*',
         'mt-940==4.30.*',
         'django-i18nfield==1.9.*,>=1.9.4',
