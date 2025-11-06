@@ -179,7 +179,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                 ),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': instance,
                     'organizer': self.context['organizer'].name,
                     'team': instance.team.name,
                     'url': build_absolute_uri('control:auth.invite', kwargs={'token': instance.token}),
@@ -234,7 +234,6 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                         user.email,
                         exc_info=True
                     )
-                    
                 self.context['team'].members.add(user)
                 self.context['team'].log_action(
                     'eventyay.team.member.added',
