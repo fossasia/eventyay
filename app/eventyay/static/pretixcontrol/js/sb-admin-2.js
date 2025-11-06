@@ -14,6 +14,7 @@ $(function () {
     const $body = $('body');
     const $sidebar = $('.sidebar');
     const $navbar = $('.navbar');
+    const $pageWrapper = $('#page-wrapper');
     
     function getNavbarHeight() {
         return $navbar.outerHeight() || 50;
@@ -28,9 +29,7 @@ $(function () {
         return window.matchMedia("(max-width: 767px)").matches;
     }
     
-    function isDesktopView() {
-        return window.matchMedia("(min-width: 1025px)").matches;
-    }
+    // Removed unused isDesktopView() after moving hover behavior to CSS
 
     function isTabletOrDesktop() {
         return window.matchMedia("(min-width: 768px)").matches;

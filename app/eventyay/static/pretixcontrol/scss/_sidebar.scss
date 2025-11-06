@@ -294,7 +294,7 @@ body.sidebar-minimized {
     }
 
     ul li {
-      border-bottom: 1px solid darken(#f5f5f5, 6.5%);
+      border-bottom: 1px solid darken($gray-lightest, 6.5%);
       position: relative;
 
       a {
@@ -342,7 +342,7 @@ body.sidebar-minimized {
         
       }
 
-      border-bottom: 2px solid darken(#f5f5f5, 6.5%);
+      border-bottom: 2px solid darken($gray-lightest, 6.5%);
 
       .context-indicator {
         display: inline-block;
@@ -383,4 +383,3 @@ body.sidebar-minimized {
 body.sidebar-minimized .sidebar {
   min-height: 100vh;
 }
-
