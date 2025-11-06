@@ -307,15 +307,15 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
 class ClassicMailRenderer(TemplateBasedMailRenderer):
     verbose_name = _('Default')
     identifier = 'classic'
-    thumbnail_filename = 'eventyay/email/thumb.png'
-    template_name = 'eventyay/email/plainwrapper.jinja'
+    thumbnail_filename = 'pretixbase/email/thumb.png'
+    template_name = 'pretixbase/email/plainwrapper.html'
 
 
 class UnembellishedMailRenderer(TemplateBasedMailRenderer):
     verbose_name = _('Simple with logo')
     identifier = 'simple_logo'
-    thumbnail_filename = 'eventyay/email/thumb_simple_logo.png'
-    template_name = 'eventyay/email/simple_logo.jinja'
+    thumbnail_filename = 'pretixbase/email/thumb_simple_logo.png'
+    template_name = 'pretixbase/email/simple_logo.html'
 
 
 @receiver(register_html_mail_renderers, dispatch_uid='eventyay_email_renderers')

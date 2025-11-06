@@ -141,7 +141,7 @@
                     <strong>{% translate "Some emails failed to send:" %}</strong>
                     <ul class="mb-0">
                         {% for recipient in mail.recipient_errors_preview %}
-                            <li>{{ recipient.email }}: {{ recipient.error }}</li>
+                            <li>{{ recipient.email }}</li>
                         {% endfor %}
                         {% if mail.recipient_error_count > mail.recipient_errors_preview|length %}
                             <li>… {% translate "and more" %}</li>
