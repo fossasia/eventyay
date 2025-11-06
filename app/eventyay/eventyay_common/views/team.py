@@ -76,7 +76,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                 ),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': instance,
                     'organizer': self.request.organizer.name,
                     'team': instance.team.name,
                     'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
@@ -226,9 +226,8 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     logger.warning("Failed to send invitation email to existing user %s", user.email, exc_info=True)
                     messages.warning(
                         self.request,
-                        _('The new member has been added to the team, but the invitation email could not be delivered.')
+                        _('The new member will be added to the team, but the invitation email could not be delivered.')
                     )
-                
                 else:
                     messages.success(self.request, _('The new member has been invited and added to the team.'))
 
