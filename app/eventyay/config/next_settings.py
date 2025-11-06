@@ -557,7 +557,7 @@ EXTRA_LANG_INFO = {
         'name_local': 'Português',
     },
     'sw': {
-        'bid': False,
+        'bidi': False,
         'code': 'sw',
         'name': _('Swahili'),
         'name_local': 'Kiswahili',
@@ -648,7 +648,7 @@ LANGUAGES_INFORMATION = {
         'percentage': 88,
     },
     'pt-br': {
-        'name': _('Brasilian Portuguese'),
+        'name': _('Brazilian Portuguese'),
         'natural_name': 'Português brasileiro',
         'official': False,
         'percentage': 89,
@@ -715,13 +715,6 @@ CACHES = {
 
 # Use Redis for session storage
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-
-STORAGES = {
-    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
-    'staticfiles': {
-        'BACKEND': 'eventyay.base.storage.NoMapManifestStaticFilesStorage',
-    },
-}
 
 # TODO: Remove. Redis is always required.
 HAS_REDIS = bool(REDIS_URL)
@@ -795,6 +788,7 @@ COMPRESS_CSS_FILTERS = (
 
 # Security settings
 X_FRAME_OPTIONS = 'DENY'
+# Video-Security settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
@@ -811,12 +805,6 @@ CORS_ORIGIN_REGEX_WHITELIST = (
         r'^http://localhost:\d+$',
     )
 )
-
-# Video-Security settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-CSP_DEFAULT_SRC = ("'self'", "'unsafe-eval'")
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # URL settings
 ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
