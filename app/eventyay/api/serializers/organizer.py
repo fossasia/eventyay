@@ -228,7 +228,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                         event=None,
                         locale=get_language_without_region(),
                     )
-                except SendMailException as exc:
+                except SendMailException:
                     logger.warning(
                         "Failed to send invitation email to existing user: %s",
                         user.email,
