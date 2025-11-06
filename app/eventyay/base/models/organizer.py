@@ -485,19 +485,27 @@ class TeamInvite(models.Model):
 
         invitation_link = self.invitation_url
         invitation_text = _(
-            """Hi!
-You have been invited to the {name} event organizer team - Please click here to accept:
+            """Hello,
+
+You have been invited to join the team "{name}" for the organizer "{organizer}".
+
+Please click the following link to accept the invitation:
 
 {invitation_link}
 
-See you there,
-The {organizer} team"""
+If you do not want to join, you can safely ignore or delete this email.
+
+Best regards,
+Your event team"""
         ).format(
             name=str(self.team.name),
             invitation_link=invitation_link,
             organizer=str(self.team.organizer.name),
         )
-        invitation_subject = _('You have been invited to an organizer team')
+        invitation_subject = _('You have been invited to join the team "{team}" for "{organizer}"').format(
+            team=str(self.team.name),
+            organizer=str(self.team.organizer.name),
+        )
 
         mail = QueuedMail.objects.create(
             to=self.email,

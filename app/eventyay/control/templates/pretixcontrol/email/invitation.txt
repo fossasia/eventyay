@@ -1,16 +1,14 @@
 {% load i18n %}{% blocktrans with url=url|safe %}Hello,
 
-you have been invited to the following event team
+You have been invited to join the team "{{ team }}" for the organizer "{{ organizer }}".
 
-Organizer: {{ organizer }}
-Team: {{ team }}
-
-If you want to join that team, just click on the following link:
+Please click the following link to accept the invitation:
 {{ url }}
+
+If you are already logged in, you will be automatically added to the team. Otherwise, please log in or create an account to join.
 
 If you do not want to join, you can safely ignore or delete this email.
 
 Best regards,
-
 Your event team
-{% endblocktrans %}
+{% endblocktranslate %}

@@ -173,7 +173,10 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         try:
             mail(
                 instance.email,
-                _('eventyay account invitation'),
+                _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                    team=instance.team.name,
+                    organizer=self.request.organizer.name,
+                ),
                 'pretixcontrol/email/invitation.txt',
                 {
                     'user': self,
@@ -304,16 +307,34 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     )
                     return self.get(request, *args, **kwargs)
 
+                # Send email to registered user and then add them
+                try:
+                    mail(
+                        user.email,
+                        _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                            team=self.object.name,
+                            organizer=self.request.organizer.name,
+                        ),
+                        'pretixcontrol/email/invitation.txt',
+                        {
+                            'user': user,
+                            'organizer': self.request.organizer.name,
+                            'team': self.object.name,
+                            'url': build_global_uri('eventyay_common:organizer.team', kwargs={'organizer': self.request.organizer.slug, 'team': self.object.pk}),
+                        },
+                        event=None,
+                        locale=self.request.LANGUAGE_CODE,
+                    )
+                except SendMailException:
+                    logger.warning("Failed to send invitation to existing member %s", user.email)
+                
                 self.object.members.add(user)
                 self.object.log_action(
-                    'pretix.team.member.added',
+                    'eventyay.team.member.added',
                     user=self.request.user,
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
+                    data={'email': user.email, 'user': user.pk},
                 )
-                messages.success(self.request, _('The new member has been added to the team.'))
+                messages.success(self.request, _('The new member has been invited and added to the team.'))
                 return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():

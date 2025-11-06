@@ -11,6 +11,9 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
 
+import logging
+logger = logging.getLogger(__name__)
+
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
@@ -67,7 +70,10 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         try:
             mail(
                 instance.email,
-                _('eventyay account invitation'),
+                _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                    team=instance.team.name,
+                    organizer=self.request.organizer.name,
+                ),
                 'pretixcontrol/email/invitation.txt',
                 {
                     'user': self,
@@ -198,16 +204,34 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     )
                     return self.get(request, *args, **kwargs)
 
+                # Send email to registered user even if they exist
+                try:
+                    mail(
+                        user.email,
+                        _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                            team=self.object.name,
+                            organizer=self.request.organizer.name,
+                        ),
+                        'pretixcontrol/email/invitation.txt',
+                        {
+                            'user': user,
+                            'organizer': self.request.organizer.name,
+                            'team': self.object.name,
+                            'url': build_global_uri('eventyay_common:organizer.team', kwargs={'organizer': self.request.organizer.slug, 'team': self.object.pk}),
+                        },
+                        event=None,
+                        locale=self.request.LANGUAGE_CODE,
+                    )
+                except SendMailException:
+                    logger.warning("Failed to send invitation email to existing user %s", user.email)
+
                 self.object.members.add(user)
                 self.object.log_action(
                     'eventyay.team.member.added',
                     user=self.request.user,
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
+                    data={'email': user.email, 'user': user.pk},
                 )
-                messages.success(self.request, _('The new member has been added to the team.'))
+                messages.success(self.request, _('The new member has been invited and added to the team.'))
                 return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():

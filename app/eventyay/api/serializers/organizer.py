@@ -173,7 +173,10 @@ class TeamInviteSerializer(serializers.ModelSerializer):
         try:
             mail(
                 instance.email,
-                _('eventyay account invitation'),
+                _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                    team=instance.team.name,
+                    organizer=self.context['organizer'].name,
+                ),
                 'pretixcontrol/email/invitation.txt',
                 {
                     'user': self,
@@ -208,14 +211,30 @@ class TeamInviteSerializer(serializers.ModelSerializer):
             else:
                 if self.context['team'].members.filter(pk=user.pk).exists():
                     raise ValidationError(_('This user already has permissions for this team.'))
-
+                try:
+                    mail(
+                        user.email,
+                        _('You have been invited to join the team "{team}" for "{organizer}"').format(
+                            team=self.context['team'].name,
+                            organizer=self.context['organizer'].name,
+                        ),
+                        'pretixcontrol/email/invitation.txt',
+                        {
+                            'user': user,
+                            'organizer': self.context['organizer'].name,
+                            'team': self.context['team'].name,
+                            'url': build_absolute_uri('control:teams.detail', kwargs={'organizer': self.context['organizer'].slug, 'team': self.context['team'].pk}),
+                        },
+                        event=None,
+                        locale=get_language_without_region(),
+                    )
+                except SendMailException:
+                    logger.warning("Failed to send invitation email to existing user: %s", user.email)
+                    
                 self.context['team'].members.add(user)
                 self.context['team'].log_action(
                     'eventyay.team.member.added',
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
+                    data={'email': user.email, 'user': user.pk},
                     **self.context['log_kwargs'],
                 )
                 return TeamInvite(email=user.email)
