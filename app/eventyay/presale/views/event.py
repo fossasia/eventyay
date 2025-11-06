@@ -857,7 +857,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         # Check if this is an AJAX request (from JavaScript button)
         # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.headers.get('Accept', '').find('application/json') >= 0:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
             # AJAX request - return JSON for JavaScript to handle
             return JsonResponse({'redirect_url': redirect_url}, status=200)
         else:
