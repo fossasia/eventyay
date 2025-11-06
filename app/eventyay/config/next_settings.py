@@ -18,6 +18,7 @@ from pydantic_settings import BaseSettings as _BaseSettings
 from pydantic_settings import PydanticBaseSettingsSource, SettingsConfigDict, TomlConfigSettingsSource
 from redis.asyncio.retry import Retry
 from redis.backoff import ExponentialBackoff
+from rich import print
 
 from eventyay import __version__
 
@@ -48,6 +49,7 @@ _DEFAULT_DB_NAME = 'eventyay-db'
 BASE_DIR = Path(__file__).resolve().parent.parent
 # The root directory of the project, where "./manage.py" file is located.
 PROJECT_ROOT = BASE_DIR.parent
+SECRETS_DIR = PROJECT_ROOT / '.secrets'
 
 
 # To choose the running environment, pass via EVY_RUNNING_ENVIRONMENT.
@@ -80,7 +82,7 @@ class BaseSettings(_BaseSettings):
     # Tell Pydantic how to load our configurations.
     model_config = SettingsConfigDict(
         env_prefix=_ENV_PREFIX,
-        secrets_dir=PROJECT_ROOT / '.secrets',
+        secrets_dir=SECRETS_DIR,
     )
     # Here, starting our settings fields.
     # The names follow what is in Django and converted to lowercase.
@@ -143,11 +145,15 @@ class BaseSettings(_BaseSettings):
         # Insert the TOML which matches the running environment
         toml_files = discover_toml_files()
         file_list_for_display = [str(p.relative_to(Path.cwd())) for p in toml_files]
-        print(f'Loading configuration from: {file_list_for_display}', file=sys.stderr)
+        print(f'Loading configuration from: [blue]{file_list_for_display}[/]', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,
             toml_file=toml_files,
         )
+        if SECRETS_DIR.is_dir():
+            files = tuple(SECRETS_DIR.glob(f'{_ENV_PREFIX}*'))
+            secrets_for_display = [str(p.relative_to(Path.cwd())) for p in files]
+            print(f'Loading secrets from: [blue]{secrets_for_display}[/]', file=sys.stderr)
         return (
             init_settings,
             toml_settings,
