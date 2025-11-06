@@ -1,4 +1,4 @@
-{% load i18n %}{% blocktrans with url=url|safe %}Hello,
+{% load i18n %}{% blocktrans with url=url|safe team=team organizer=organizer %}Hello,
 
 You have been invited to join the team "{{ team }}" for the organizer "{{ organizer }}".
 

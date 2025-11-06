@@ -329,10 +329,12 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                         locale=self.request.LANGUAGE_CODE,
                     )
                 except SendMailException:
+                    self.object.members.add(user)
                     logger.warning("Failed to send invitation to existing member %s", user.email, exc_info=True)
                     messages.warning(self.request, _('The new member was added to the team, but the invitation email could not be sent.'))
                 
                 else:
+                    self.object.members.add(user)
                     messages.success(self.request, _('The new member has been invited and added to the team.'))
                 
                 self.object.members.add(user)

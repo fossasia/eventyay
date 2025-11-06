@@ -228,6 +228,9 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                         self.request,
                         _('The new member has been added to the team, but the invitation email could not be delivered.')
                     )
+                
+                else:
+                    messages.success(self.request, _('The new member has been invited and added to the team.'))
 
                 self.object.members.add(user)
                 self.object.log_action(
@@ -235,7 +238,6 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     user=self.request.user,
                     data={'email': user.email, 'user': user.pk},
                 )
-                messages.success(self.request, _('The new member has been invited and added to the team.'))
                 return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():
