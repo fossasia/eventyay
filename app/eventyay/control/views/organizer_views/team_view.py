@@ -1,3 +1,7 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, ManyToManyField
@@ -13,9 +17,6 @@ from django.views.generic import (
     UpdateView,
 )
 from django_scopes import scopes_disabled
-
-import logging
-logger = logging.getLogger(__name__)
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.auth import User
