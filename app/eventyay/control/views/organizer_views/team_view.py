@@ -14,6 +14,9 @@ from django.views.generic import (
 )
 from django_scopes import scopes_disabled
 
+import logging
+logger = logging.getLogger(__name__)
+
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
@@ -325,10 +328,12 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                         event=None,
                         locale=self.request.LANGUAGE_CODE,
                     )
-                    messages.success(self.request, _('The new member has been invited and added to the team.'))
                 except SendMailException:
-                    logger.warning("Failed to send invitation to existing member %s", user.email)
+                    logger.warning("Failed to send invitation to existing member %s", user.email, exc_info=True)
                     messages.warning(self.request, _('The new member was added to the team, but the invitation email could not be sent.'))
+                
+                else:
+                    messages.success(self.request, _('The new member has been invited and added to the team.'))
                 
                 self.object.members.add(user)
                 self.object.log_action(
