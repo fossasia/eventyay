@@ -271,6 +271,9 @@ test = [
 ]
 
 [tool.uv.sources]
+# It is `editable` because this package is also in development.
+# TODO: We better organize `eventyay-ticket-video` as workspace member,
+# so that we can install it as `non-editable` in production.
 pretix_venueless = { path = './eventyay/plugins/eventyay-ticket-video', editable = true }
 
 [tool.ruff]

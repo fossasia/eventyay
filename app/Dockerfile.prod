@@ -23,12 +23,14 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git build-essential gettext make nodejs
 
+# We need to install pretix-venueless from this local directory
+COPY --exclude=*.egg-info eventyay/plugins/eventyay-ticket-video eventyay/plugins/eventyay-ticket-video
+
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=eventyay/plugins/eventyay-ticket-video,target=eventyay/plugins/eventyay-ticket-video \
     uv sync --locked --no-install-project --no-editable
 
 COPY Makefile Makefile
@@ -86,7 +88,10 @@ RUN chown -R app:app $APP_HOME
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
 COPY --from=builder --chown=app:app $APP_HOME/.venv $APP_HOME/.venv
-# Our app install pretix-venueless from local folder, we may need to copy the egg-info folder from previous stage.
+# Our app needs pretix-venueless to be installed from local folder, we may need to copy the egg-info folder built from the previous stage.
+# TODO: If we install `pretix-venueless` in non-editable mode, the egg-info will not be generated and we don't need to copy.
+# But it seems that the `--no-editable` flag in `uv sync` command does not affect `pretix-venueless`.
+# In the future, if we can make `uv` install `pretix-venueless` in non-editable mode, we can delete the COPY line below. 
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/plugins/eventyay-ticket-video/*.egg-info $APP_HOME/eventyay/plugins/eventyay-ticket-video/
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/global-nav-menu $APP_HOME/eventyay/static/global-nav-menu
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/schedule-editor $APP_HOME/eventyay/static/schedule-editor
