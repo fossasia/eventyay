@@ -29,7 +29,7 @@ def contains_web_channel_validate(value):
 
 class MailForm(forms.Form):
     recipients = forms.ChoiceField(label=_('Send email to'), widget=forms.RadioSelect, initial='orders', choices=[])
-    send_to = forms.MultipleChoiceField()  # overridden later
+    order_status = forms.MultipleChoiceField()  # overridden later
     subject = forms.CharField(label=_('Subject'))
     message = forms.CharField(label=_('Message'))
     attachment = CachedFileField(
@@ -70,7 +70,7 @@ class MailForm(forms.Form):
         required=True,
         queryset=Product.objects.none(),
     )
-    filter_checkins = forms.BooleanField(label=_('Filter check-in status'), required=False)
+    has_filter_checkins = forms.BooleanField(label=_('Filter check-in status'), required=False)
     checkin_lists = SafeModelMultipleChoiceField(
         queryset=CheckinList.objects.none(), required=False
     )  # overridden later
@@ -166,16 +166,16 @@ class MailForm(forms.Form):
         choices.insert(0, ('pa', _('approval pending')))
         if not event.settings.get('payment_term_expire_automatically', as_type=bool):
             choices.append(('overdue', _('pending with payment overdue')))
-        self.fields['send_to'] = forms.MultipleChoiceField(
+        self.fields['order_status'] = forms.MultipleChoiceField(
             label=_('Send to customers with order status'),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             choices=choices,
         )
-        if not self.initial.get('send_to'):
-            self.initial['send_to'] = ['p', 'na']
-        elif 'n' in self.initial['send_to']:
-            self.initial['send_to'].append('pa')
-            self.initial['send_to'].append('na')
+        if not self.initial.get('order_status'):
+            self.initial['order_status'] = ['p', 'na']
+        elif 'n' in self.initial['order_status']:
+            self.initial['order_status'].append('pa')
+            self.initial['order_status'].append('na')
 
         self.fields['products'].queryset = event.products.all()
         if not self.initial.get('products'):

@@ -342,8 +342,8 @@ class EmailQueueFilter(models.Model):
     :param recipients: Target recipient scope: 'orders', 'attendees', or 'both'.
     :type recipients: str
     
-    :param send_to: Email roles or tags to include.
-    :type send_to: list[email]
+    :param order_status: Email roles or tags to include.
+    :type order_status: list[str]
     
     :param products: Filter by product IDs.
     :type products: list[int]
@@ -351,8 +351,8 @@ class EmailQueueFilter(models.Model):
     :param checkin_lists: Check-in list IDs to filter by.
     :type checkin_lists: list[int]
     
-    :param filter_checkins: Whether to filter based on check-in status.
-    :type filter_checkins: bool
+    :param has_filter_checkins: Whether to filter based on check-in status.
+    :type has_filter_checkins: bool
     
     :param not_checked_in: Whether to include only recipients who haven’t checked in.
     :type not_checked_in: bool
@@ -381,7 +381,7 @@ class EmailQueueFilter(models.Model):
     mail = models.OneToOneField(EmailQueue, on_delete=models.CASCADE, related_name="filters_data")
 
     recipients = models.CharField(max_length=10, choices=Recipients.choices, default=Recipients.ORDERS, blank=True)
-    send_to = ArrayField(models.EmailField(), blank=True, default=list)
+    order_status = ArrayField(models.CharField(max_length=20), blank=True, default=list)
     products = ArrayField(models.BigIntegerField(), blank=True, default=list)
     checkin_lists = ArrayField(models.IntegerField(), blank=True, default=list)
     has_filter_checkins = models.BooleanField(default=False)

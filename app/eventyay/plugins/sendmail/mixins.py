@@ -50,8 +50,8 @@ class CopyDraftMixin:
                     else:
                         form_kwargs['initial'].update({
                             'recipients': qmf.recipients or [],
-                            'send_to': qmf.send_to or ['p', 'na'],
-                            'filter_checkins': qmf.has_filter_checkins,
+                            'order_status': qmf.order_status or ['p', 'na'],
+                            'has_filter_checkins': qmf.has_filter_checkins,
                             'not_checked_in': qmf.not_checked_in,
                         })
 

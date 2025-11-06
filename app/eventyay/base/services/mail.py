@@ -184,7 +184,7 @@ def mail(
 
             if not auto_email:
                 if (
-                    event_reply_to is not None 
+                    event_reply_to is not None
                     and event_reply_to != ''
                     and not headers.get('Reply-To')
                 ):

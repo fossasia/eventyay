@@ -69,12 +69,12 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
     def form_valid(self, form):
         qs = Order.objects.filter(event=self.request.event)
-        statusq = Q(status__in=form.cleaned_data['send_to'])
-        if 'overdue' in form.cleaned_data['send_to']:
+        statusq = Q(status__in=form.cleaned_data['order_status'])
+        if 'overdue' in form.cleaned_data['order_status']:
             statusq |= Q(status=Order.STATUS_PENDING, expires__lt=now())
-        if 'pa' in form.cleaned_data['send_to']:
+        if 'pa' in form.cleaned_data['order_status']:
             statusq |= Q(status=Order.STATUS_PENDING, require_approval=True)
-        if 'na' in form.cleaned_data['send_to']:
+        if 'na' in form.cleaned_data['order_status']:
             statusq |= Q(status=Order.STATUS_PENDING, require_approval=False)
         orders = qs.filter(statusq)
 
@@ -84,7 +84,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             product_id__in=[p.pk for p in form.cleaned_data.get('products')],
         )
 
-        if form.cleaned_data.get('filter_checkins'):
+        if form.cleaned_data.get('has_filter_checkins'):
             ql = []
             if form.cleaned_data.get('not_checked_in'):
                 ql.append(Q(checkins__list_id=None))
@@ -156,19 +156,19 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         )
 
         EmailQueueFilter.objects.create(
-            mail = qm,
-            recipients = form.cleaned_data['recipients'],
-            send_to = form.cleaned_data['send_to'],
-            orders = list(orders.values_list('pk', flat=True)),
-            products = [i.pk for i in form.cleaned_data.get('products')],
-            checkin_lists = [cl.pk for cl in form.cleaned_data.get('checkin_lists')],
-            has_filter_checkins = form.cleaned_data.get('filter_checkins'),
-            not_checked_in = form.cleaned_data.get('not_checked_in'),
-            subevent = form.cleaned_data.get('subevent').pk if form.cleaned_data.get('subevent') else None,
-            subevents_from = form.cleaned_data.get('subevents_from').isoformat() if form.cleaned_data.get('subevents_from') else None,
-            subevents_to = form.cleaned_data.get('subevents_to').isoformat() if form.cleaned_data.get('subevents_to') else None,
-            order_created_from = form.cleaned_data.get('order_created_from').isoformat() if form.cleaned_data.get('order_created_from') else None,
-            order_created_to = form.cleaned_data.get('order_created_to').isoformat() if form.cleaned_data.get('order_created_to') else None,
+            mail=qm,
+            recipients=form.cleaned_data['recipients'],
+            order_status=form.cleaned_data['order_status'],
+            orders=list(orders.values_list('pk', flat=True)),
+            products=[i.pk for i in form.cleaned_data.get('products')],
+            checkin_lists=[cl.pk for cl in form.cleaned_data.get('checkin_lists')],
+            has_filter_checkins=form.cleaned_data.get('has_filter_checkins'),
+            not_checked_in=form.cleaned_data.get('not_checked_in'),
+            subevent=form.cleaned_data.get('subevent').pk if form.cleaned_data.get('subevent') else None,
+            subevents_from=form.cleaned_data.get('subevents_from'),
+            subevents_to=form.cleaned_data.get('subevents_to'),
+            order_created_from=form.cleaned_data.get('order_created_from'),
+            order_created_to=form.cleaned_data.get('order_created_to'),
         )
 
         qm.populate_to_users()
@@ -208,7 +208,7 @@ class MailTemplatesView(EventSettingsViewMixin, EventSettingsFormView):
         form = self.get_form()
         if not form.is_valid():
             return self.form_invalid(form)
-        
+
         form.save()
         if form.has_changed():
             self.request.event.log_action(
@@ -309,7 +309,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
         kwargs['event'] = self.request.event
         kwargs['read_only'] = bool(self.object.sent_at)
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['read_only'] = bool(self.object.sent_at)
@@ -396,7 +396,7 @@ class DeleteEmailQueueView(EventPermissionRequiredMixin, TemplateView):
 
     def question(self):
         return _("Do you really want to delete this mail?")
-    
+
     def post(self, request, *args, **kwargs):
         mail = self.mail
         if mail.sent_at:
@@ -426,7 +426,7 @@ class PurgeEmailQueuesView(EventPermissionRequiredMixin, TemplateView):
 
     def get_permission_object(self):
         return self.request.event
-    
+
     def question(self):
         count = EmailQueue.objects.filter(event=self.request.event, sent_at__isnull=True).count()
         return ngettext_lazy(
@@ -508,7 +508,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         kwargs['event'] = self.request.event
         self.load_copy_draft(self.request, kwargs, team_mode=True)
         return kwargs
-    
+
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['output'] = getattr(self, 'output', None)
@@ -594,7 +594,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         # Create associated filter data for teams
         EmailQueueFilter.objects.create(
             mail=mail_instance,
-            send_to=[],
+            order_status=[],
             products=[],
             checkin_lists=[],
             has_filter_checkins=False,
