@@ -17,6 +17,7 @@ ENV PYTHONUNBUFFERED=1
 
 # install system dependencies
 # Repo for newer NodeJS
+RUN apt-get update && apt-get install -y wget gnupg
 RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && \
@@ -66,6 +67,7 @@ RUN mkdir $APP_HOME/static
 WORKDIR $APP_HOME
 
 # install dependencies
+RUN apt-get update && apt-get install -y wget gnupg
 RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext
