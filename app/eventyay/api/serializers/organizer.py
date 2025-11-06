@@ -230,9 +230,9 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     )
                 except SendMailException as exc:
                     logger.warning(
-                        "Failed to send invitation email to existing user: %s. Exception: %s",
+                        "Failed to send invitation email to existing user: %s",
                         user.email,
-                        exc,
+                        exc_info=True
                     )
                     
                 self.context['team'].members.add(user)
