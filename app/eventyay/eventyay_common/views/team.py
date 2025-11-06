@@ -223,7 +223,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                         locale=self.request.LANGUAGE_CODE,
                     )
                 except SendMailException:
-                    logger.warning("Failed to send invitation email to existing user %s", user.email)
+                    logger.warning("Failed to send invitation email to existing user %s", user.email, exc_info=True)
 
                 self.object.members.add(user)
                 self.object.log_action(

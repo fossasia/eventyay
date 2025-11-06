@@ -325,8 +325,10 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                         event=None,
                         locale=self.request.LANGUAGE_CODE,
                     )
+                    messages.success(self.request, _('The new member has been invited and added to the team.'))
                 except SendMailException:
                     logger.warning("Failed to send invitation to existing member %s", user.email)
+                    messages.warning(self.request, _('The new member was added to the team, but the invitation email could not be sent.'))
                 
                 self.object.members.add(user)
                 self.object.log_action(
@@ -334,7 +336,6 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     user=self.request.user,
                     data={'email': user.email, 'user': user.pk},
                 )
-                messages.success(self.request, _('The new member has been invited and added to the team.'))
                 return redirect(self.get_success_url())
 
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():

@@ -228,8 +228,12 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                         event=None,
                         locale=get_language_without_region(),
                     )
-                except SendMailException:
-                    logger.warning("Failed to send invitation email to existing user: %s", user.email)
+                except SendMailException as exc:
+                    logger.warning(
+                        "Failed to send invitation email to existing user: %s. Exception: %s",
+                        user.email,
+                        exc,
+                    )
                     
                 self.context['team'].members.add(user)
                 self.context['team'].log_action(
