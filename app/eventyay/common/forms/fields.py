@@ -56,9 +56,8 @@ class SizeFileInput:
         self.widget.attrs['data-maxsize'] = self.max_size
         self.widget.attrs['data-sizewarning'] = self.size_warning
         
-        current_help = self.help_text or ''
-        if self.size_warning not in current_help:
-            self.help_text = f'{current_help} {self.size_warning}'.strip()
+        if self.size_warning not in (self.help_text or ''):
+            self.help_text = f'{self.help_text} {self.size_warning}'.strip() if self.help_text else self.size_warning
 
     @staticmethod
     def get_size_warning(max_size=None, fallback=True):
@@ -89,9 +88,8 @@ class ExtensionFileInput:
             supported_formats = ', '.join(sorted(self.extensions.keys()))
             extension_help_text = _('Supported formats: {formats}').format(formats=supported_formats)
             
-            current_help = self.help_text or ''
-            if extension_help_text not in current_help:
-                self.help_text = f'{current_help} {extension_help_text}' if current_help else extension_help_text
+            if extension_help_text not in (self.help_text or ''):
+                self.help_text = f'{self.help_text} {extension_help_text}'.strip() if self.help_text else extension_help_text
 
     def validate(self, value):
         super().validate(value)

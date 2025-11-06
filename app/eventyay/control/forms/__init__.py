@@ -159,7 +159,7 @@ class SizeFileField(forms.FileField):
             self.widget.attrs['data-sizewarning'] = size_warning
             
             if size_warning not in (self.help_text or ''):
-                self.help_text = f'{self.help_text} {size_warning}' if self.help_text else size_warning
+                self.help_text = f'{self.help_text} {size_warning}'.strip() if self.help_text else size_warning
 
     @staticmethod
     def _sizeof_fmt(num, suffix='B'):
@@ -195,7 +195,7 @@ class ExtFileField(SizeFileField):
             extension_help = _('Supported formats: {formats}').format(formats=supported_formats)
             
             if extension_help not in (self.help_text or ''):
-                self.help_text = f'{self.help_text} {extension_help}' if self.help_text else extension_help
+                self.help_text = f'{self.help_text} {extension_help}'.strip() if self.help_text else extension_help
 
     def clean(self, *args, **kwargs):
         data = super().clean(*args, **kwargs)
