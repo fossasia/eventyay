@@ -88,11 +88,6 @@ RUN chown -R app:app $APP_HOME
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
 COPY --from=builder --chown=app:app $APP_HOME/.venv $APP_HOME/.venv
-# Our app needs pretix-venueless to be installed from local folder, we may need to copy the egg-info folder built from the previous stage.
-# TODO: If we install `pretix-venueless` in non-editable mode, the egg-info will not be generated and we don't need to copy.
-# But it seems that the `--no-editable` flag in `uv sync` command does not affect `pretix-venueless`.
-# In the future, if we can make `uv` install `pretix-venueless` in non-editable mode, we can delete the COPY line below. 
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/plugins/eventyay-ticket-video/*.egg-info $APP_HOME/eventyay/plugins/eventyay-ticket-video/
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/global-nav-menu $APP_HOME/eventyay/static/global-nav-menu
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/schedule-editor $APP_HOME/eventyay/static/schedule-editor
 COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/webapp $APP_HOME/eventyay/static/webapp
