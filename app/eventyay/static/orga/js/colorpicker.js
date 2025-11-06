@@ -39,17 +39,16 @@ const initColorPicker = (field) => {
 }
 
 const updateContrast = (field, color) => {
-    field.value = color.hex.slice(0, 7)
+    const hexColor = color.hex.slice(0, 7);
+    field.value = hexColor
     field.parentNode.parentNode.querySelector(
         ".colorpicker-preview",
-    ).style.backgroundColor = color.hex
+    ).style.backgroundColor = hexColor
     // Update the live preview CSS variable
     const wrapper = field.closest('.colorpicker-wrapper');
-    const previewContainer = wrapper && wrapper.parentNode
-        ? wrapper.parentNode.querySelector('.colorpicker-update')
-        : null;
+    const previewContainer = wrapper?.parentNode?.querySelector('.colorpicker-update') || null;
     if (previewContainer) {
-        previewContainer.style.setProperty('--color', color.hex.slice(0, 7));
+        previewContainer.style.setProperty('--color', hexColor);
     }
     // We're getting RRGGBBAA, but we don't want the alpha channel
     const c = contrast([255, 255, 255], color.rgba.slice(0, 3))
