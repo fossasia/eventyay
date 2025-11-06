@@ -10,6 +10,10 @@ from django.views.static import serve as static_serve
 from django.conf import settings
 from django_scopes import scope
 from mimetypes import guess_type
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.functional import Promise
+from django.utils.encoding import force_str
+from i18nfield.strings import LazyI18nString
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 
@@ -92,7 +96,14 @@ class VideoSPAView(View):
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
             import json as _json
-            content = f"<script>window.eventyay={_json.dumps(injected, default=str)}</script>{content}"
+
+            class EventyayJSONEncoder(DjangoJSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, (Promise, LazyI18nString)):
+                        return force_str(obj)
+                    return super().default(obj)
+
+            content = f"<script>window.eventyay={_json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}"
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)

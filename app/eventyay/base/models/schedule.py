@@ -640,7 +640,6 @@ class Schedule(PretalxModel):
                         'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
                         'tags': talk.submission.get_tag(),
                         'session_type': talk.submission.submission_type.name,
-                        'url': (talk.submission.urls.public.full() if talk.submission and hasattr(talk.submission, 'urls') else None),
                     }
                 )
             else:
@@ -678,7 +677,7 @@ class Schedule(PretalxModel):
             {
                 'code': user.code,
                 'name': user.fullname or None,
-                'biography': user.event_profile(self.event).biography if user.event_profile(self.event) else '',
+                'biography': getattr(user.event_profile(self.event), 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

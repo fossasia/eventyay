@@ -40,7 +40,7 @@ export default {
 				sessions: this.sessions.filter(session => 
 					session.speakers && session.speakers.some(s => s && s.code === speaker.code)
 				)
-			})).sort((a, b) => a.name.localeCompare(b.name))
+			})).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 		}, { immediate: true })
 	}
 }
