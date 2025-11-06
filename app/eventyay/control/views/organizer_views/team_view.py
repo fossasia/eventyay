@@ -337,7 +337,6 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     self.object.members.add(user)
                     messages.success(self.request, _('The new member has been invited and added to the team.'))
                 
-                self.object.members.add(user)
                 self.object.log_action(
                     'eventyay.team.member.added',
                     user=self.request.user,
