@@ -10,3 +10,4 @@ src/dist/
 .venv
 app/.venv
 app/eventyay/static/CACHE
+*.egg-info
