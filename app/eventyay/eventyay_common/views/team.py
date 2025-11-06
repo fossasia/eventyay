@@ -1,4 +1,7 @@
+import logging
 from urllib.parse import urljoin
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings
 from django.contrib import messages
@@ -10,9 +13,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
-
-import logging
-logger = logging.getLogger(__name__)
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
