@@ -197,16 +197,16 @@ The directory `app/eventyay` is mounted into the docker, thus live editing is su
 Configuration
 -------------
 
-Our configuration are based on TOML files. First of all, check the `BaseSettings` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
+Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
 Other than that, the configuration is divided to three running environments:
 
-* `development`: With default values in *eventyay.development.toml*.
-* `production`: With default values in *eventyay.production.toml*.
-* `testing`: With default values in *eventyay.testing.toml*.
+* ``development``: With default values in *eventyay.development.toml*.
+* ``production``: With default values in *eventyay.production.toml*.
+* ``testing``: With default values in *eventyay.testing.toml*.
 
-The values in these files will override ones in `BaseSettings`.
+The values in these files will override ones in ``BaseSettings``.
 
-Running environment is selected via the `EVY_RUNNING_ENVIRONMENT` environment variable. It is pre-set in *manage.py*, *wsgi.py* and *asgi.py*.
+Running environment is selected via the ``EVY_RUNNING_ENVIRONMENT`` environment variable. It is pre-set in *manage.py*, *wsgi.py* and *asgi.py*.
 For example, if you want to run a command in production environment, you can do:
 
 .. code-block:: bash
@@ -217,24 +217,26 @@ How to override the configuration values
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - Create a file named *eventyay.local.toml* in the same folder as *manage.py* file.
-- Add only the values you want to override in this file. For example, to override the `debug` value in production environment, you only need to add one line:
+- Add only the values you want to override in this file. For example, to override the ``debug`` value in production environment, you only need to add one line:
 
   .. code-block:: toml
 
     debug = true
 
-- You can also override values via environment variables. The environment variable names are the upper case versions of the setting keys, prefixed by `EVY_`.
-  For example, to override the `debug` value in production environment, you can set the environment variable `EVY_DEBUG` to `true`.
+- You can also override values via environment variables. The environment variable names are the upper case versions of the setting keys, prefixed by ``EVY_``.
+  For example, to override the ``debug`` value in production environment, you can set the environment variable ``EVY_DEBUG`` to ``true``.
 
   .. code-block:: bash
 
     export EVY_DEBUG=true
 
+- Dotenv (*.env*) file is also supported, but please be aware that the values from *.env* file will be overriden by environment variables.
+
 - Sensitive data like passwords, API keys should be provided via files in *.secrets* directory, each file for a key.
   The file name follows the pattern of environment variable names above (with prefix), the file content is the value.
-  For example, to provide a value for the `secret_key` setting, you should create a file named `EVY_SECRET_KEY` and put the value inside.
+  For example, to provide a value for the ``secret_key`` setting, you should create a file named ``EVY_SECRET_KEY`` and put the value inside.
 
-- If you deployed the app via Docker containers, you can provide the secret data via [Docker secrets](https://docs.docker.com/engine/swarm/secrets/).
+- If you deployed the app via Docker containers, you can provide the secret data via `Docker secrets`_.
 
 Why TOML?
 ~~~~~~~~~
@@ -243,7 +245,7 @@ TOML has rich data types. In comparison with *ini* format that this project used
 This method is not portable, not understood by other tools and libraries, and error-prone.
 TOML has dedicated syntax for lists, making it easier to read and write such configurations, and developers can use different tools and libraries without worrying about incompatibility.
 
-Note that, due to this reason, overriding configuration via environment variables are not encouraged.
+Due to this reason, overriding configuration via environment variables are not encouraged. The environment variables only have one data type: string!
 
 
 Deployment
@@ -287,3 +289,4 @@ This project is maintained by **FOSSASIA**. See the AUTHORS file for a list of a
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
+.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/

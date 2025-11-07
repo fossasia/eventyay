@@ -82,6 +82,7 @@ class BaseSettings(_BaseSettings):
     # Tell Pydantic how to load our configurations.
     model_config = SettingsConfigDict(
         env_prefix=_ENV_PREFIX,
+        env_file='.env', env_file_encoding='utf-8',
         secrets_dir=SECRETS_DIR,
     )
     # Here, starting our settings fields.
@@ -158,8 +159,10 @@ class BaseSettings(_BaseSettings):
             init_settings,
             toml_settings,
             # The following files will override values from TOML files.
-            # We don't support dotenv files, to encourage using TOML files.
             env_settings,
+            # Though having TOML files, we still support .env file
+            # because we need to share some settings with other tools.
+            dotenv_settings,
             file_secret_settings,
         )
 
