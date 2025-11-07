@@ -32,7 +32,7 @@ just send the pull request and tell us – we'll be glad to help.
 If you add a new feature, please include appropriate documentation into your patch. If you fix a bug,
 please include a regression test, i.e. a test that fails without your changes and passes after applying your changes.
 
-Again: If you get stuck, do not hesitate to contact any of us, or Raphael personally at mail@raphaelmichel.de.
+Again: If you get stuck, do not hesitate to contact us through our GitHub issues or reach out to the FOSSASIA team.
 
 .. _create a pull request: https://help.github.com/articles/creating-a-pull-request/
 .. _GitHub repository: https://github.com/fossasia/eventyay

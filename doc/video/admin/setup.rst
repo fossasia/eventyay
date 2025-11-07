@@ -13,7 +13,7 @@ fast-moving project, and we do not have the capacity to keep multiple different 
              give a good tutorial here, installing eventyay will **require solid Linux experience** to get it right, and
              eventyay is only really useful in combination with other pieces of software (eg. BigBlueButton, live streaming servers, …)
              which are not explained here and complex to install on their own. If this is too much for you, please
-             **reach out to hello@Eventyay.org** to talk about commercial support or our SaaS offering.
+             **reach out to sales@eventyay.com** to talk about commercial support or our SaaS offering.
 
 We tested this guide on the Linux distribution **Debian 10.0** but it should work very similar on other
 modern distributions, especially on all systemd-based ones.
