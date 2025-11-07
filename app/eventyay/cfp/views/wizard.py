@@ -22,6 +22,7 @@ class SubmitStartView(EventPageMixin, View):
         url = reverse(
             'cfp:event.submit',
             kwargs={
+                'organizer': request.event.organizer.slug,
                 'event': request.event.slug,
                 'step': list(request.event.cfp_flow.steps_dict.keys())[0],
                 'tmpid': get_random_string(length=6),

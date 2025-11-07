@@ -210,17 +210,24 @@ legacy_redirect_patterns = [
         name='video.legacy.redirect'),
     # Legacy talk URLs: /<event>/(path) -> /{organizer}/{event}/(path)
     # This needs to be more specific to avoid catching presale patterns
-    url(r'^(?P<event_slug>[^/]+)/(schedule|talk|speaker|featured|sneak|cfp|submit|me|login|logout|auth|reset|invitation|online-video|widgets|static|locale|sw\.js)',
+    url(r'^(?!(?:common|control|orga|admin|api|video|static|media)/)(?P<event_slug>[^/]+)/(schedule|talk|speaker|featured|sneak|cfp|submit|me|login|logout|auth|reset|invitation|online-video|widgets|static|locale|sw\.js)',
         redirects.legacy_talk_redirect,
         name='talk.legacy.redirect'),
     # Legacy event base URL: /<event>/ -> /{organizer}/{event}/
-    url(r'^(?P<event_slug>[^/]+)/$',
+    url(r'^(?!(?:common|control|orga|admin|api|video|static|media)/)(?P<event_slug>[^/]+)/$',
         redirects.legacy_talk_redirect,
         name='talk.legacy.base.redirect'),
 ]
 
 # Adjust urlpatterns: legacy redirects MUST come before presale to catch old talk URLs
-urlpatterns = common_patterns + storage_patterns + legacy_redirect_patterns + unified_event_patterns + presale_patterns_main + plugin_patterns
+urlpatterns = (
+    common_patterns
+    + storage_patterns
+    + legacy_redirect_patterns
+    + presale_patterns_main
+    + unified_event_patterns
+    + plugin_patterns
+)
 
 handler404 = 'eventyay.base.views.errors.page_not_found'
 handler500 = 'eventyay.base.views.errors.server_error'
