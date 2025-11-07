@@ -151,8 +151,9 @@ class BaseSettings(_BaseSettings):
             settings_cls,
             toml_file=toml_files,
         )
-        if SECRETS_DIR.is_dir():
-            files = tuple(SECRETS_DIR.glob(f'{_ENV_PREFIX}*'))
+        if Path('.env').is_file():
+            print('Loading additional configuration from: [blue].env[/]', file=sys.stderr)
+        if SECRETS_DIR.is_dir() and (files := tuple(SECRETS_DIR.glob(f'{_ENV_PREFIX}*'))):
             secrets_for_display = [str(p.relative_to(Path.cwd())) for p in files]
             print(f'Loading secrets from: [blue]{secrets_for_display}[/]', file=sys.stderr)
         return (

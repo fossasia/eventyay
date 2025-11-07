@@ -63,6 +63,7 @@ deployment/data
 *.local.cfg
 *.local.toml
 .secrets
+app/.env
 
 # Emails which are not sent out to Internet are saved here.
 dev-sent-emails
