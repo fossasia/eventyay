@@ -78,7 +78,7 @@ class EmailQueue(models.Model):
     reply_to = models.CharField(max_length=100, default='', blank=True)
     bcc = models.TextField(null=True, blank=True)  # comma-separated
     locale = models.CharField(max_length=16, blank=True, default='')
-    attachments = ArrayField(base_field=models.UUIDField(), null=True, blank=True)
+    attachments = ArrayField(base_field=models.UUIDField(), blank=True, default=list)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -194,7 +194,7 @@ class EmailQueue(models.Model):
             recipient.sent = False
             recipient.error = str(se)
             recipient.save(update_fields=["sent", "error"])
-            logger.exception("SendMailException error while sending to %s: %s", email, str(se))
+            logger.exception("SendMailException error while sending to %s", email)
         except Exception as e:
             recipient.sent = False
             recipient.error = f"Internal error: {str(e)}"
