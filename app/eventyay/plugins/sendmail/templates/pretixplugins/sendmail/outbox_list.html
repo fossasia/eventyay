@@ -57,12 +57,12 @@
                 <th>
                     {{ label }}
                     {% with asc=field desc="-"|add:field %}
-                        <a href="?ordering={{ asc }}{% if query %}&q={{ query }}{% endif %}"
-                           class="{% if current_ordering == asc %}fw-bold{% else %}text-muted{% endif %}">
+                        <a href="?{% if encoded_query %}{{ encoded_query }}&{% endif %}ordering={{ asc }}"
+                        class="{% if current_ordering == asc %}fw-bold{% else %}text-muted{% endif %}">
                             &#9650;
                         </a>
-                        <a href="?ordering={{ desc }}{% if query %}&q={{ query }}{% endif %}"
-                           class="{% if current_ordering == desc %}fw-bold{% else %}text-muted{% endif %}">
+                        <a href="?{% if encoded_query %}{{ encoded_query }}&{% endif %}ordering={{ desc }}"
+                        class="{% if current_ordering == desc %}fw-bold{% else %}text-muted{% endif %}">
                             &#9660;
                         </a>
                     {% endwith %}

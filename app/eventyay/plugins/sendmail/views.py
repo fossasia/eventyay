@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
+from urllib.parse import urlencode
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import language
@@ -235,12 +236,23 @@ class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, Lis
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        query = self.request.GET.get('q', '')
+        ordering = self.request.GET.get('ordering')
+
         ctx['headers'] = [
             ('subject', _('Subject')),
             ('recipient', _('To')),
         ]
-        ctx['current_ordering'] = self.request.GET.get('ordering')
-        ctx['query'] = self.request.GET.get('q', '')
+        ctx['current_ordering'] = ordering
+        ctx['query'] = query
+
+        params = {}
+        if query:
+            params['q'] = query
+        if ordering:
+            params['ordering'] = ordering
+        ctx['encoded_query'] = urlencode(params)
 
         MAX_ERRORS_TO_SHOW = 2
         for mail in ctx['mails']:
@@ -481,13 +493,24 @@ class SentMailView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, ListV
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+
+        query = self.request.GET.get('q', '')
+        ordering = self.request.GET.get('ordering')
+
         ctx['headers'] = [
             ('subject', _('Subject')),
             ('recipient', _('To')),
             ('created', _('Sent at')),
         ]
-        ctx['current_ordering'] = self.request.GET.get('ordering')
-        ctx['query'] = self.request.GET.get('q', '')
+        ctx['current_ordering'] = ordering
+        ctx['query'] = query
+
+        params = {}
+        if query:
+            params['q'] = query
+        if ordering:
+            params['ordering'] = ordering
+        ctx['encoded_query'] = urlencode(params)
 
         MAX_RECIPIENTS_TO_SHOW = 3
         for mail in ctx['mails']:
