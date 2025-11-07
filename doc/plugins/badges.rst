@@ -55,7 +55,7 @@ Endpoints
             "id": 1,
             "name": "Default layout",
             "default": true,
-            "layout": {…},
+            "layout": {"width": 100, "height": 80},
             "background": {},
             "item_assignments": []
           }
@@ -93,7 +93,7 @@ Endpoints
         "id": 1,
         "name": "Default layout",
         "default": true,
-        "layout": {…},
+        "layout": {},
         "background": {},
         "item_assignments": []
       }

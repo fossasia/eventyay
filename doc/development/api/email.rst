@@ -4,7 +4,7 @@
 Writing an HTML e-mail renderer plugin
 ======================================
 
-An email renderer class controls how the HTML part of e-mails sent by pretix is built.
+An email renderer class controls how the HTML part of e-mails sent by eventyay is built.
 The creation of such a plugin is very similar to creating an export output.
 
 Please read :ref:`Creating a plugin <pluginsetup>` first, if you haven't already.
@@ -14,14 +14,14 @@ Output registration
 
 The email HTML renderer API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available email renderers. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.email.BaseHTMLMailRenderer``
+should listen for this signal and return the subclass of ``eventyay.base.email.BaseHTMLMailRenderer``
 that we'll provide in this plugin:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_html_mail_renderers
+    from eventyay.base.signals import register_html_mail_renderers
 
 
     @receiver(register_html_mail_renderers, dispatch_uid="renderer_custom")
@@ -33,7 +33,7 @@ that we'll provide in this plugin:
 The renderer class
 ------------------
 
-.. class:: pretix.base.email.BaseHTMLMailRenderer
+.. class:: eventyay.base.email.BaseHTMLMailRenderer
 
    The central object of each email renderer is the subclass of ``BaseHTMLMailRenderer``.
 
@@ -42,28 +42,46 @@ The renderer class
       The default constructor sets this property to the event we are currently
       working for.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this renderer. This should only contain lowercase letters
+      and in most cases will be the same as your package name.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this renderer. This should be short but self-explanatory.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: thumbnail_filename
+   .. py:attribute:: thumbnail_filename
+
+      The filename of a thumbnail image for this renderer.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: is_available
+   .. py:attribute:: is_available
 
-   .. automethod:: render
+      Whether this renderer is available for the current event.
+
+   .. py:method:: render(plain_body, plain_signature, subject, order=None, position=None)
+
+      This method should generate the HTML part of the email.
+
+      :param plain_body: The body of the email in plain text.
+      :param plain_signature: The signature with event organizer contact details in plain text.
+      :param subject: The email subject.
+      :param order: The order if this email is connected to one, otherwise ``None``.
+      :param position: The order position if this email is connected to one, otherwise ``None``.
+      :return: An HTML string
 
       This is an abstract method, you **must** implement this!
 
 Helper class for template-base renderers
 ----------------------------------------
 
-The email renderer that ships with pretix is based on Django templates to generate HTML.
+The email renderer that ships with eventyay is based on Django templates to generate HTML.
 In case you also want to render emails based on a template, we provided a ready-made base
 class ``TemplateBasedMailRenderer`` that you can re-use to perform the following steps:
 
@@ -79,10 +97,10 @@ To use it, you just need to implement some variables:
 .. code-block:: python
 
     class ClassicMailRenderer(TemplateBasedMailRenderer):
-        verbose_name = _('pretix default')
+        verbose_name = _('Eventyay default')
         identifier = 'classic'
-        thumbnail_filename = 'pretixbase/email/thumb.png'
-        template_name = 'pretixbase/email/plainwrapper.html'
+        thumbnail_filename = 'eventyaybase/email/thumb.png'
+        template_name = 'eventyaybase/email/plainwrapper.html'
 
 The template is passed the following context variables:
 

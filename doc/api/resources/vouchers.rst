@@ -294,9 +294,11 @@ Endpoints
         {
           "id": 1,
           "code": "43K6LKM37FBVR2YG",
-          …
-        }, …
-      }
+          "tag": "testvoucher",
+          "redeemed": 0,
+          "valid_until": null
+        }
+      ]
 
    :param organizer: The ``slug`` field of the organizer to create a vouchers for
    :param event: The ``slug`` field of the event to create a vouchers for

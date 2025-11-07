@@ -1,10 +1,10 @@
-pretix Hosted billing invoices
-==============================
+Eventyay Hosted billing invoices
+================================
 
-This endpoint allows you to access invoices you received for pretix Hosted. It only contains invoices created starting
+This endpoint allows you to access invoices you received for eventyay Hosted. It only contains invoices created starting
 November 2017.
 
-.. note:: Only available on pretix Hosted, not on self-hosted pretix instances.
+.. note:: Only available on eventyay Hosted, not on self-hosted eventyay instances.
 
 Resource description
 --------------------
