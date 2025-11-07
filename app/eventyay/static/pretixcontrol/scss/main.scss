@@ -971,19 +971,19 @@ h1 .label {
 }
 
 #page-wrapper {
-    margin-top: 50px; 
-    height: calc(100vh - 50px);
+    margin-top: var(--navbar-height, 50px);
+    height: calc(100vh - var(--navbar-height, 50px));
     overflow-y: auto;
-    overscroll-behavior: contain; 
-    contain: content; 
+    overscroll-behavior: contain;
+    contain: content;
 }
 
 @media (max-width: $screen-sm-max) {
     #page-wrapper {
-        margin-top: 0;              
-        padding-top: var(--navbar-height, 56px); 
-        height: auto;              
-        overflow-y: visible;     
-        box-sizing: border-box;   
+        margin-top: 0;
+        padding-top: var(--navbar-height, 56px);
+        height: auto;      
+        overflow-y: visible;
+        box-sizing: border-box;
     }
 }

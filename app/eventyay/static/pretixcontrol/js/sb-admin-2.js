@@ -13,7 +13,7 @@ $(function () {
 
     const $body = $('body');
     const $sidebar = $('.sidebar');
-    const $navbar = $('.navbar');
+ toggleSidebar();    const $navbar = $('.navbar');
     const $pageWrapper = $('#page-wrapper');
     
     function getNavbarHeight() {
@@ -28,18 +28,15 @@ $(function () {
     function isMobileView() {
         return window.matchMedia("(max-width: 767px)").matches;
     }
-    
-    // Removed unused isDesktopView() after moving hover behavior to CSS
+
 
     function isTabletOrDesktop() {
         return window.matchMedia("(min-width: 768px)").matches;
     }
 
     function toggleSidebar() {
-        if (isMobileView()) {
-            $body.toggleClass('sidebar-minimized');
-        } else if (isTabletOrDesktop()) {
-            $body.toggleClass('sidebar-minimized');
+        $body.toggleClass('sidebar-minimized');
+        if (isTabletOrDesktop()) {
             localStorage.setItem('sidebar-minimized', $body.hasClass('sidebar-minimized'));
         }
     }
@@ -75,12 +72,10 @@ $(function () {
         toggleSidebar();
     });
 
-   
     let resizeTimeout;
     $(window).on('resize', function () {
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(function() {
-           
             updateCSSVariables();
         }, 150);
     });
@@ -98,11 +93,15 @@ $(function () {
 
     $('ul.nav ul.nav-second-level a.active').parent().parent().addClass('in').parent().addClass('active');
 
-    function stopPropagationHandler(e) {
-        e.stopPropagation();
+    var supportsOverscrollContain = (window.CSS && CSS.supports && CSS.supports('overscroll-behavior: contain'))
+        || ('overscrollBehavior' in document.documentElement.style);
+    if (!supportsOverscrollContain) {
+        function stopPropagationHandler(e) {
+            e.stopPropagation();
+        }
+        [$sidebar, $pageWrapper].forEach(function($el) {
+            $el.on('wheel', stopPropagationHandler);
+            $el.on('touchmove', stopPropagationHandler);
+        });
     }
-    [$sidebar, $pageWrapper].forEach(function($el) {
-        $el.on('wheel', stopPropagationHandler);
-        $el.on('touchmove', stopPropagationHandler);
-    });
 });

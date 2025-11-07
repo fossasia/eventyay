@@ -149,7 +149,7 @@ body.sidebar-minimized {
     left: 0;
     width: 250px;
     background-color: #f8f8f8;
-    z-index: 1;
+    z-index: 12;
     transform: translateX(-100%);
     overflow-y: auto;
     box-shadow: 2px 0 5px rgba(0,0,0,0.2);
@@ -339,7 +339,6 @@ body.sidebar-minimized {
           visibility: visible;
           opacity: 1;
         }
-        
       }
 
       border-bottom: 2px solid darken($gray-lightest, 6.5%);
@@ -374,7 +373,7 @@ body.sidebar-minimized {
       }
     }
   }
-
+  
   body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
     margin-left: 250px;
   }
