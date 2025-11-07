@@ -7,7 +7,7 @@ services:
     command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./data/static:/home/app/web/eventyay/static.dist
-      - ./data/data:/data
+      - ./data/data:/home/app/web/eventyay/data
       - ./eventyay.cfg:/etc/eventyay.cfg:ro
     ports:
       - 8000:8000
