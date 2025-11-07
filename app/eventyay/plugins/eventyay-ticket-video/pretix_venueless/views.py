@@ -226,7 +226,8 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
 
         # Ensure the URL includes the event identifier so VideoSPAView has event context
         # Format: http://localhost:8000/video/event-slug/#token=...
-        if not baseurl.rstrip('/').endswith(self.request.event.slug):
-            baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
+        if baseurl:
+            if baseurl.rstrip('/').split('/')[-1] != self.request.event.slug:
+                baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
 
         return redirect('{}/#token={}'.format(baseurl, token).replace("//#", "/#"))
