@@ -503,12 +503,13 @@ class VideoAccessAuthenticator(View):
             event.settings.venueless_issuer = issuer
         if not event.settings.venueless_audience:
             event.settings.venueless_audience = audience
-        if not event.settings.venueless_url:
-            # Choose base site dynamically: prefer current request host (useful for local dev)
+        def build_video_url(host=None):
             scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            # Use new unified URL structure: /{organizer}/{event}/video
-            event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
+            base_host = host or request.get_host()
+            return f"{scheme}://{base_host}{event.urls.video_base}"
+
+        if not event.settings.venueless_url:
+            event.settings.venueless_url = build_video_url()
 
         # If the saved URL points to a different host than the current request (e.g., prod domain),
         # adjust it to the current host so local development goes to localhost.
@@ -516,16 +517,9 @@ class VideoAccessAuthenticator(View):
             saved = urlparse(str(event.settings.venueless_url))
             current_host = request.get_host()
             if saved.netloc and saved.netloc != current_host:
-                scheme = 'https' if request.is_secure() else 'http'
-                base_site = f"{scheme}://{current_host}"
-                # Use new unified URL structure: /{organizer}/{event}/video
-                event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
+                event.settings.venueless_url = build_video_url(current_host)
         except Exception:
-            # If parsing fails for any reason, fall back to the current request host
-            scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            # Use new unified URL structure: /{organizer}/{event}/video
-            event.settings.venueless_url = f"{base_site}/{event.organizer.slug}/{event.slug}/video"
+            event.settings.venueless_url = build_video_url()
 
         # Ensure the pretix_venueless plugin is enabled
         current_plugins = set(event.get_plugins())

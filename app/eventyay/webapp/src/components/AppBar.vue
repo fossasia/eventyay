@@ -101,16 +101,7 @@ const userProfileEl = ref(null)
 
 function buildBaseSansVideo() {
 	const { protocol, host } = window.location
-	const pathname = window.location.pathname
-	const idx = pathname.indexOf('/video')
-	let basePath = '/'
-	if (idx > -1) {
-		const pre = pathname.substring(0, idx) || '/'
-		basePath = pre.endsWith('/') ? pre : pre + '/'
-	} else {
-		basePath = '/'
-	}
-	return protocol + '//' + host + basePath
+	return `${protocol}//${host}/`
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value

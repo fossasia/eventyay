@@ -4,7 +4,6 @@ from django.views.generic import RedirectView
 from .views import auth, event, locale, robots, user, wizard
 
 app_name = "cfp"
-# Note: The {organizer}/{event} prefix is now handled by the parent URL pattern in maindomain_urlconf.py
 urlpatterns = [
     path("", event.EventStartpage.as_view(), name="event.landing"),
     path("logout", auth.LogoutView.as_view(), name="event.logout"),

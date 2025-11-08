@@ -31,6 +31,7 @@ class VideoSPAView(View):
         organizer_slug = kwargs.get('organizer')
         event_slug = kwargs.get('event')
         
+        # TODO remove debug logging once new video routing is stable
         event = None
         if organizer_slug and event_slug:
             try:
@@ -48,11 +49,11 @@ class VideoSPAView(View):
         else:
             content = '<!-- /video build missing: {} -->'.format(index_path)
         
+        base_href = '/video/'
         if event:
             # Inject window.venueless config (frontend still expects this name)
             # Mirror structure used in legacy live AppView but adjusted basePath
             from django.urls import reverse  # kept for other endpoints
-            import json
             # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
             api_base = f"/api/v1/events/{event.pk}/"  # TODO replace with reverse once API namespace wired
             # Best effort reverse for optional endpoints
@@ -61,10 +62,9 @@ class VideoSPAView(View):
                     return reverse(name, kwargs=kw) if kw else reverse(name)
                 except Exception:
                     return None
-            # Safely access event.config which may be None
             cfg = event.config or {}
-            # New basePath now includes organizer and event slugs
-            base_path = f"/{event.organizer.slug}/{event.slug}/video"
+            base_path = event.urls.video_base.rstrip('/')
+            base_href = event.urls.video_base
             injected = {
                 'api': {
                     'base': api_base,
@@ -92,10 +92,13 @@ class VideoSPAView(View):
             }
             # Always prepend to guarantee execution before any module scripts
             import json as _json
-            content = f"<script>window.venueless={_json.dumps(injected)}</script>" + content
-        else:
-            # No event context -> show generic video landing
-            return HttpResponse('Video component requires event context', status=404)
+            serialized = _json.dumps(injected)
+            content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>" + content
+            if '<base ' not in content.lower():
+                content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
+        elif '<base ' not in content.lower():
+            # Legacy plain /video should still load SPA; ensure assets resolve correctly
+            content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
         
         resp = HttpResponse(content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
@@ -184,7 +187,6 @@ storage_patterns = [
     url(r'^storage/', include('eventyay.storage.urls', namespace='storage')),
 ]
 
-# Unified event patterns for {organizer}/{event}/ that include Talk and Video
 unified_event_patterns = [
     url(
         r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
@@ -204,6 +206,10 @@ unified_event_patterns = [
 
 # Legacy redirect patterns for backward compatibility
 legacy_redirect_patterns = [
+    # Legacy standalone video SPA at /video
+    url(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.legacy.assets'),
+    url(r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.legacy.assets.file'),
+    url(r'^video/?$', VideoSPAView.as_view(), name='video.legacy.index'),
     # Legacy video URLs: /video/<event_identifier> -> /{organizer}/{event}/video
     url(r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$', 
         redirects.legacy_video_redirect, 

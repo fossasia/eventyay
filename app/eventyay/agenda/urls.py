@@ -33,7 +33,6 @@ def get_schedule_urls(regex_prefix, name_prefix=''):
 
 
 app_name = 'agenda'
-# Note: The {organizer}/{event} prefix is now handled by the parent URL pattern in maindomain_urlconf.py
 urlpatterns = [
     path(
         'widgets/schedule.js',

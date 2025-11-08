@@ -4,10 +4,21 @@ let config
 if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 	const { protocol, hostname, port, pathname } = window.location
 	const wsProtocol = protocol === 'https:' ? 'wss' : 'ws'
-	// Expect /video/<event_identifier>/...
 	const segments = pathname.split('/').filter(Boolean)
-	let eventIdentifier = segments[1] // segments[0] === 'video'
-	if (!eventIdentifier) eventIdentifier = 'sample'
+	const videoIndex = segments.lastIndexOf('video')
+	const baseSegments = videoIndex > -1 ? segments.slice(0, videoIndex + 1) : []
+	let basePath = baseSegments.length ? `/${baseSegments.join('/')}` : '/video'
+	if (basePath.length > 1 && basePath.endsWith('/')) {
+		basePath = basePath.slice(0, -1)
+	}
+	let eventIdentifier
+	if (videoIndex > 0 && segments[videoIndex - 1]) {
+		eventIdentifier = segments[videoIndex - 1]
+	} else if (segments[1]) {
+		eventIdentifier = segments[1]
+	} else {
+		eventIdentifier = 'sample'
+	}
 	const hostPort = port ? `${hostname}:${port}` : hostname
 	config = {
 		api: {
@@ -24,7 +35,7 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 		features: [],
 		theme: {
 			logo: {
-				url: '/video/eventyay-video-logo.png',
+				url: `${basePath}/eventyay-video-logo.png`,
 				fitToWidth: false
 			},
 			colors: {
@@ -33,7 +44,7 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 				bbb_background: '#ffffff',
 			}
 		},
-		basePath: '/video'
+		basePath
 	}
 } else {
 	// load from index.html as injected config: prefer window.eventyay (new) else fallback to legacy window.venueless

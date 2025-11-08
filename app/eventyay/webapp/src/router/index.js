@@ -51,7 +51,7 @@ const routes = [
 		}
 	},
 	{
-		path: '/:worldName',
+		path: '/:worldName?',
 		component: App,
 		props: true,
 		children: [

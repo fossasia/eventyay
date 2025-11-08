@@ -24,8 +24,10 @@ export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
   const env = loadEnv(mode, process.cwd(), '')
 
+  const base = mode === 'development' ? '/' : './'
+
   return {
-    base: '/video',
+    base,
     server: {
       host: '0.0.0.0',
       port: 8880,
@@ -52,22 +54,22 @@ export default defineConfig(({ mode }) => {
           theme_color: '#180044',
           icons: [
             {
-              src: '/video/eventyay-logo.192.png',
+              src: 'eventyay-logo.192.png',
               type: 'image/png',
               sizes: '192x192'
             },
             {
-              src: '/video/eventyay-logo.512.png',
+              src: 'eventyay-logo.512.png',
               type: 'image/png',
               sizes: '512x512'
             },
             {
-              src: '/video/eventyay-logo.svg',
+              src: 'eventyay-logo.svg',
               sizes: '192x192',
               type: 'image/svg+xml'
             },
             {
-              src: '/video/eventyay-logo.svg',
+              src: 'eventyay-logo.svg',
               sizes: '512x512',
               type: 'image/svg+xml'
             }

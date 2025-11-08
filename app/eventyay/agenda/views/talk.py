@@ -278,29 +278,19 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
-        
-        # Try to get video settings from event settings (hierarchical settings system)
-        try:
-            join_url = event.settings.get('venueless_url') or event.settings.get('venueless_join_url')
-            secret = event.settings.get('venueless_secret')
-            issuer = event.settings.get('venueless_issuer')
-            audience = event.settings.get('venueless_audience')
-        except Exception as e:
-            logger.error(f'Error accessing video settings: {e}')
+        if not (venueless_settings := event.venueless_settings):
+            logger.info('venueless settings is missing.')
             return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        
-        if not join_url:
-            logger.info('venueless_url/join_url is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not secret:
-            logger.info('venueless_secret is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not issuer:
-            logger.info('venueless_issuer is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        if not audience:
-            logger.info('venueless_audience is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
+        required_fields = (
+            ('join_url', 'venueless_settings.join_url'),
+            ('secret', 'venueless_settings.secret'),
+            ('issuer', 'venueless_settings.issuer'),
+            ('audience', 'venueless_settings.audience'),
+        )
+        for attr, label in required_fields:
+            if not getattr(venueless_settings, attr):
+                logger.info('%s is missing.', label)
+                return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
         # If the logged-in user does not have "orga.view_schedule" permission, we check
         # if he/she owns a ticket.
@@ -324,8 +314,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             profile["profile_picture"] = request.user.get_avatar_url(request.event)
 
         payload = {
-            "iss": issuer,
-            "aud": audience,
+            "iss": venueless_settings.issuer,
+            "aud": venueless_settings.audience,
             "exp": exp,
             "iat": iat,
             "uid": encode_email(request.user.email),
@@ -337,9 +327,9 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             ),
         }
         token = jwt.encode(
-            payload, secret, algorithm="HS256"
+            payload, venueless_settings.secret, algorithm="HS256"
         )
-        redirect_url = urljoin(join_url, f'#token={token}')
+        redirect_url = urljoin(venueless_settings.join_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
         return JsonResponse(
             {

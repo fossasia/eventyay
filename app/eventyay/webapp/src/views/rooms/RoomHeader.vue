@@ -12,7 +12,7 @@
 				// TODO buntpapier does not support replace
 				// hardlink params so home page alias works
 				bunt-link-button(:to="{name: 'room:manage', params: {roomId: room.id}}", replace) manage
-				bunt-link-button(:to="{name: 'room'}", replace) view
+				bunt-link-button(:to="{name: 'room', params: {roomId: room.id}}", replace) view
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
 		recordings-prompt(v-if="showRecordingsPrompt", :room="room", @close="showRecordingsPrompt = false")
