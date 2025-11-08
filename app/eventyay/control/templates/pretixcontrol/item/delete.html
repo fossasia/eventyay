@@ -24,14 +24,14 @@
                             {% plural %}
                             That will cause {{ count }} voucher to be unusable.
                         {% endblocktrans %}
-                        <a href="{% url "control:event.vouchers" organizer=request.organizer.slug event=request.event.slug %}?itemvar={{ item.pk }}"
+                        <a href="{% url "control:event.vouchers" organizer=request.organizer.slug event=request.event.slug %}?productvar={{ product.pk }}"
                            class="btn btn-default">
                             {% trans "Show affected vouchers" %}
                         </a>
                     </div>
                 {% endif %}
             {% else %}
-                <p>{% blocktrans %}You cannot delete the product <strong>{{ item }}</strong> because it already has been ordered, but you can deactivate it.{% endblocktrans %}</p>
+                <p>{% blocktrans %}You cannot delete the product <strong>{{ product }}</strong> because it already has been ordered, but you can deactivate it.{% endblocktrans %}</p>
             {% endif %}
             <div class="form-group submit-group">
                 <a href="{% url "control:event.products" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default btn-cancel">
