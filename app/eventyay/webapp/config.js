@@ -11,21 +11,23 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 	if (basePath.length > 1 && basePath.endsWith('/')) {
 		basePath = basePath.slice(0, -1)
 	}
-	let eventIdentifier
+	let eventSlug
 	if (videoIndex > 0 && segments[videoIndex - 1]) {
-		eventIdentifier = segments[videoIndex - 1]
+		eventSlug = segments[videoIndex - 1]
 	} else if (segments[1]) {
-		eventIdentifier = segments[1]
+		eventSlug = segments[1]
+	} else if (segments[0] && segments[0] !== 'video') {
+		eventSlug = segments[0]
 	} else {
-		eventIdentifier = 'sample'
+		eventSlug = 'sample'
 	}
 	const hostPort = port ? `${hostname}:${port}` : hostname
 	config = {
 		api: {
-			base: `${protocol}//${hostPort}/api/v1/events/${eventIdentifier}/`,
-			socket: `${wsProtocol}://${hostPort}/ws/event/${eventIdentifier}/`,
-			upload: `${protocol}//${hostPort}/storage/${eventIdentifier}/upload/`,
-			scheduleImport: `${protocol}//${hostPort}/storage/${eventIdentifier}/schedule_import/`,
+			base: `${protocol}//${hostPort}/api/v1/events/${eventSlug}/`,
+			socket: `${wsProtocol}://${hostPort}/ws/event/${eventSlug}/`,
+			upload: `${protocol}//${hostPort}/storage/${eventSlug}/upload/`,
+			scheduleImport: `${protocol}//${hostPort}/storage/${eventSlug}/schedule_import/`,
 			feedback: `${protocol}//${hostPort}/_feedback/`,
 		},
 		defaultLocale: 'en',

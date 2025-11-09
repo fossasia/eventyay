@@ -92,7 +92,7 @@ class RecoverView(FormView):
             )
         except User.DoesNotExist:
             messages.error(self.request, phrases.cfp.auth_reset_fail)
-            return redirect(reverse('cfp:event.reset', kwargs={'organizer': self.request.event.organizer.slug, 'event': kwargs.get('event')}))
+            return redirect(reverse('cfp:event.reset', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}))
 
         return super().dispatch(request, *args, **kwargs)
 

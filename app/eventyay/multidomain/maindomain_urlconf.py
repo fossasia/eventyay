@@ -25,6 +25,41 @@ from eventyay.base.models import Event  # Added for /video event context
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
 
+EXCLUDED_LEGACY_PREFIXES = (
+    "common",
+    "control",
+    "orga",
+    "admin",
+    "api",
+    "video",
+    "static",
+    "media",
+)
+
+MATCHED_LEGACY_SUBPATHS = (
+    "schedule",
+    "talk",
+    "speaker",
+    "featured",
+    "sneak",
+    "cfp",
+    "submit",
+    "me",
+    "login",
+    "logout",
+    "auth",
+    "reset",
+    "invitation",
+    "online-video",
+    "widgets",
+    "static",
+    "locale",
+    "sw\\.js",
+)
+
+EXCLUDED_LEGACY_PREFIXES_REGEX = "|".join(EXCLUDED_LEGACY_PREFIXES)
+MATCHED_LEGACY_SUBPATHS_REGEX = "|".join(MATCHED_LEGACY_SUBPATHS)
+
 class VideoSPAView(View):
     def get(self, request, *args, **kwargs):
         # Now expecting organizer and event from URL pattern: /{organizer}/{event}/video
@@ -93,7 +128,7 @@ class VideoSPAView(View):
             # Always prepend to guarantee execution before any module scripts
             import json as _json
             serialized = _json.dumps(injected)
-            content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>" + content
+            content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>{content}"
             if '<base ' not in content.lower():
                 content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
         elif '<base ' not in content.lower():
@@ -215,14 +250,18 @@ legacy_redirect_patterns = [
         redirects.legacy_video_redirect, 
         name='video.legacy.redirect'),
     # Legacy talk URLs: /<event>/(path) -> /{organizer}/{event}/(path)
-    # This needs to be more specific to avoid catching presale patterns
-    url(r'^(?!(?:common|control|orga|admin|api|video|static|media)/)(?P<event_slug>[^/]+)/(schedule|talk|speaker|featured|sneak|cfp|submit|me|login|logout|auth|reset|invitation|online-video|widgets|static|locale|sw\.js)',
+    # This excludes known top-level namespaces before treating the first segment as an event slug.
+    url(
+        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/({MATCHED_LEGACY_SUBPATHS_REGEX})',
         redirects.legacy_talk_redirect,
-        name='talk.legacy.redirect'),
+        name='talk.legacy.redirect',
+    ),
     # Legacy event base URL: /<event>/ -> /{organizer}/{event}/
-    url(r'^(?!(?:common|control|orga|admin|api|video|static|media)/)(?P<event_slug>[^/]+)/$',
+    url(
+        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/$',
         redirects.legacy_talk_redirect,
-        name='talk.legacy.base.redirect'),
+        name='talk.legacy.base.redirect',
+    ),
 ]
 
 # Adjust urlpatterns: legacy redirects MUST come before presale to catch old talk URLs

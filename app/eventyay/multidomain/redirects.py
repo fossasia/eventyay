@@ -23,8 +23,8 @@ def legacy_video_redirect(request, event_identifier):
             event = Event.objects.select_related('organizer').get(pk=int(event_identifier))
         else:
             event = Event.objects.select_related('organizer').get(slug=event_identifier)
-    except Event.DoesNotExist:
-        raise Http404("Event not found")
+    except Event.DoesNotExist as exc:
+        raise Http404("Event not found") from exc
     
     # Preserve the path after the event identifier
     path_parts = request.path.split('/', 3)
@@ -37,7 +37,7 @@ def legacy_video_redirect(request, event_identifier):
     
     # Preserve query string
     if request.GET:
-        new_url += '?' + request.GET.urlencode()
+        new_url += f'?{request.GET.urlencode()}'
     
     return HttpResponsePermanentRedirect(new_url)
 
@@ -72,7 +72,7 @@ def legacy_talk_redirect(request, event_slug):
     
     # Preserve query string
     if request.GET:
-        new_url += '?' + request.GET.urlencode()
+        new_url += f'?{request.GET.urlencode()}'
     
     return HttpResponsePermanentRedirect(new_url)
 
