@@ -3,6 +3,7 @@ Resources and endpoints
 
 .. toctree::
    :maxdepth: 2
+   :hidden:
 
    organizers
    events

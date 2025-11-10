@@ -26,7 +26,7 @@
                     {% plural %}
                     That will cause {{ count }} voucher to be unusable.
                 {% endblocktrans %}
-                <a href="{% url "control:event.vouchers" organizer=request.organizer.slug event=request.event.slug %}?itemvar=q-{{ quota.pk }}"
+                <a href="{% url "control:event.vouchers" organizer=request.organizer.slug event=request.event.slug %}?productvar=q-{{ quota.pk }}"
                    class="btn btn-default">
                     {% trans "Show affected vouchers" %}
                 </a>

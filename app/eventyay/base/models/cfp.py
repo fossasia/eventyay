@@ -65,8 +65,21 @@ def field_helper(cls):
         return self.fields.get(field, default_fields()[field])['visibility'] == 'required'
 
     for field in default_fields().keys():
-        setattr(cls, f'request_{field}', property(partial(is_field_requested, field=field)))
-        setattr(cls, f'require_{field}', property(partial(is_field_required, field=field)))
+        # Create wrapper functions with clean docstrings to avoid RST formatting issues
+        def make_request_getter(field_name):
+            def getter(self):
+                return is_field_requested(self, field_name)
+            getter.__doc__ = f"Check if {field_name} field is requested."
+            return getter
+        
+        def make_require_getter(field_name):
+            def getter(self):
+                return is_field_required(self, field_name)
+            getter.__doc__ = f"Check if {field_name} field is required."
+            return getter
+        
+        setattr(cls, f'request_{field}', property(make_request_getter(field)))
+        setattr(cls, f'require_{field}', property(make_require_getter(field)))
     return cls
 
 
@@ -103,6 +116,7 @@ class CfP(PretalxModel):
     fields = models.JSONField(default=default_fields)
 
     class urls(EventUrls):
+        """URL patterns for public CfP (Call for Proposals) views."""
         base = '{self.event.orga_urls.cfp}'
         editor = '{base}flow/'
         questions = '{base}questions/'

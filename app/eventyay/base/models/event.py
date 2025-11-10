@@ -29,6 +29,7 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
@@ -563,7 +564,7 @@ class Event(
     tickets for.
 
     :param organizer: The organizer this event belongs to
-    :type organizer: Organizer
+    :type organizer: eventyay.base.models.organizer.Organizer
     :param testmode: This event is in test mode
     :type testmode: bool
     :param name: This event's full title
@@ -632,7 +633,7 @@ class Event(
         default=settings.DEFAULT_CURRENCY,
     )
     date_from = models.DateTimeField(verbose_name=_('Event start time'))
-    date_to = models.DateTimeField(null=True, blank=True, verbose_name=_('Event end time'))
+    date_to = models.DateTimeField(verbose_name=_('Event end time'))
     date_admission = models.DateTimeField(null=True, blank=True, verbose_name=_('Admission time'))
     is_public = models.BooleanField(
         default=True,
@@ -747,8 +748,8 @@ class Event(
         blank=True,
         verbose_name=_('Logo'),
         help_text=_(
-            'If you provide a logo image, your event’s name will not be shown in the event header. '
-            'The logo will be scaled down to a height of 140px.'
+            'When you upload a logo, the event name and date will not appear in the header. '
+            'The logo scales to 140 px in height while maintaining aspect ratio.'
         ),
     )
     header_image = models.ImageField(
@@ -757,9 +758,9 @@ class Event(
         blank=True,
         verbose_name=_('Header image'),
         help_text=_(
-            'If you provide a header image, it will be displayed instead of your event’s color and/or header pattern '
-            'at the top of all event pages. It will be center-aligned, so when the window shrinks, '
-            'the center parts will continue to be displayed, and not stretched.'
+            'This image appears at the top of all event pages, replacing the default color or pattern. '
+            'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+            'We recommend an image at least 1170 px wide and 120 px in height for best results.'
         ),
     )
     locale_array = models.TextField(default=settings.LANGUAGE_CODE)
@@ -806,6 +807,7 @@ class Event(
     )
 
     class urls(EventUrls):
+        """URL patterns for public/frontend views of this event."""
         base_path = settings.BASE_PATH
         base = '{base_path}/{self.slug}/'
         login = '{base}login/'
@@ -836,6 +838,7 @@ class Event(
         settings_css = '{base}static/event.css'
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer/admin panel views of this event."""
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/event/{self.slug}/'
         login = '{base}login/'
@@ -889,6 +892,7 @@ class Event(
         new_information = '{base}info/new/'
 
     class api_urls(EventUrls):
+        """URL patterns for API endpoints related to this event."""
         base_path = settings.TALK_BASE_PATH
         base = '{base_path}/api/events/{self.slug}/'
         submissions = '{base}submissions/'
@@ -909,6 +913,7 @@ class Event(
         speaker_information = '{base}speaker-information/'
 
     class tickets_urls(EventUrls):
+        """URL patterns for ticket/control panel views of this event."""
         _full_base_path = settings.BASE_PATH
         base_path = urlparse(_full_base_path).path.rstrip('/')
         base = '{base_path}/control/'
@@ -999,6 +1004,9 @@ class Event(
 
     def save(self, *args, **kwargs):
         was_created = not bool(self.pk)
+        if self.date_from and not self.date_to:
+            self.date_to = self.date_from + timedelta(hours=24)
+
         obj = super().save(*args, **kwargs)
         self.cache.clear()
 
@@ -1370,7 +1378,11 @@ class Event(
         room=None,
         allow_empty_traits=True,
     ):
-        for role, required_traits in self.trait_grants.items():
+        # Ensure trait_grants and roles are not None - use defaults if missing
+        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_roles = self.roles if self.roles is not None else default_roles()
+
+        for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
                 and all(
@@ -1379,14 +1391,16 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
+                role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 if any(
-                    p.value in self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                    p in role_permissions or p.value in role_permissions
                     for p in permissions
                 ):
                     return True
 
         if room:
-            for role, required_traits in room.trait_grants.items():
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
                     and all(
@@ -1395,11 +1409,15 @@ class Event(
                     )
                     and (required_traits or allow_empty_traits)
                 ):
+                    role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                     if any(
-                        p.value in self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                        p in role_permissions or p.value in role_permissions
                         for p in permissions
                     ):
                         return True
+
+        # Return False if no permission was granted
+        return False
 
     def has_permission(self, *, user, permission: Permission, room=None):
         """
@@ -1427,9 +1445,10 @@ class Event(
             return True
 
         roles = user.get_role_grants(room)
+        event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             if any(
-                p.value in self.roles.get(r, SYSTEM_ROLES.get(r, []))
+                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
                 for p in permission
             ):
                 return True
@@ -1460,9 +1479,10 @@ class Event(
             return True
 
         roles = await user.get_role_grants_async(room)
+        event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
             if any(
-                p.value in self.roles.get(r, SYSTEM_ROLES.get(r, []))
+                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
                 for p in permission
             ):
                 return True
@@ -1474,7 +1494,11 @@ class Event(
 
         allow_empty_traits = user.type == User.UserType.PERSON
 
-        for role, required_traits in self.trait_grants.items():
+        # Ensure trait_grants and roles are not None
+        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_roles = self.roles if self.roles is not None else default_roles()
+
+        for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
                 and all(
@@ -1483,12 +1507,13 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(self.roles.get(role, SYSTEM_ROLES.get(role, [])))
+                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
         # Removed user.world_grants loop (attribute not present on unified User model)
 
         for room in self.rooms.all():
-            for role, required_traits in room.trait_grants.items():
+            room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
+            for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
                     and all(
@@ -1501,12 +1526,12 @@ class Event(
                     and (required_traits or allow_empty_traits)
                 ):
                     result[room].update(
-                        self.roles.get(role, SYSTEM_ROLES.get(role, []))
+                        event_roles.get(role, SYSTEM_ROLES.get(role, []))
                     )
 
         for grant in user.room_grants.select_related("room"):
             result[grant.room].update(
-                self.roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
+                event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
             )
         if user.is_silenced:
             for key in result.keys():
@@ -2487,7 +2512,7 @@ class SubEvent(EventMixin, LoggedModel):
         verbose_name=_('Name'),
     )
     date_from = models.DateTimeField(verbose_name=_('Event start time'))
-    date_to = models.DateTimeField(null=True, blank=True, verbose_name=_('Event end time'))
+    date_to = models.DateTimeField(verbose_name=_('Event end time'))
     date_admission = models.DateTimeField(null=True, blank=True, verbose_name=_('Admission time'))
     presale_end = models.DateTimeField(
         null=True,
@@ -2619,6 +2644,9 @@ class SubEvent(EventMixin, LoggedModel):
         from .orders import Order
 
         clear_cache = kwargs.pop('clear_cache', False)
+        if self.date_from and not self.date_to:
+            self.date_to = self.date_from + timedelta(hours=24)
+
         super().save(*args, **kwargs)
         if self.event and clear_cache:
             self.event.cache.clear()

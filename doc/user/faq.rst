@@ -59,7 +59,7 @@ forth could either allow someone to extend their deadline forever, or render som
 back in the past.
 
 Why does eventyay not support any 1D (linear) bar codes?
-------------------------------------------------------
+---------------------------------------------------------
 
 We often get asked, why eventyay depends on QR codes instead of more traditional 1D bar codes. More often than not, people
 tend to already own linear (laser) bar code scanners.

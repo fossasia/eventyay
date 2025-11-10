@@ -4,7 +4,7 @@
 Writing an exporter plugin
 ==========================
 
-An Exporter is a method to export the product and order data in pretix for later use in another
+An Exporter is a method to export the product and order data in eventyay for later use in another
 program.
 
 In this document, we will walk through the creation of an exporter output plugin step by step.
@@ -16,14 +16,14 @@ Exporter registration
 
 The exporter API does not make a lot of usage from signals, however, it does use a signal to get a list of
 all available exporters. Your plugin should listen for this signal and return the subclass of
-``pretix.base.exporter.BaseExporter``
+``eventyay.base.exporter.BaseExporter``
 that we'll provide in this plugin:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_data_exporters
+    from eventyay.base.signals import register_data_exporters
 
 
     @receiver(register_data_exporters, dispatch_uid="exporter_myexporter")
@@ -33,13 +33,13 @@ that we'll provide in this plugin:
 
 Some exporters might also prove to be useful, when provided on an organizer-level. In order to declare your
 exporter as capable of providing exports spanning multiple events, your plugin should listen for this signal
-and return the subclass of ``pretix.base.exporter.BaseExporter`` that we'll provide in this plugin:
+and return the subclass of ``eventyay.base.exporter.BaseExporter`` that we'll provide in this plugin:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_multievent_data_exporters
+    from eventyay.base.signals import register_multievent_data_exporters
 
 
     @receiver(register_multievent_data_exporters, dispatch_uid="multieventexporter_myexporter")
@@ -53,7 +53,7 @@ signals.
 The exporter class
 ------------------
 
-.. class:: pretix.base.exporter.BaseExporter
+.. class:: eventyay.base.exporter.BaseExporter
 
    The central object of each exporter is the subclass of ``BaseExporter``.
 
@@ -62,16 +62,32 @@ The exporter class
       The default constructor sets this property to the event we are currently
       working for.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this exporter. This should only contain lowercase letters
+      and in most cases will be the same as your package name.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this exporter. This should be short but self-explaining.
+      Good examples include 'JSON' or 'Microsoft Excel'.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: export_form_fields
+   .. py:attribute:: export_form_fields
 
-   .. automethod:: render
+      When the event's administrator visits the export page, this property is called to return
+      the configuration fields available. It should return a dictionary where the keys are field
+      names and the values are corresponding Django form fields.
+
+   .. py:method:: render(form_data)
+
+      Render the exported file and return a tuple consisting of a filename, a file type
+      and file content.
+
+      :param form_data: The form data of the export details form
+      :return: A tuple of (filename, content_type, file_content)
 
       This is an abstract method, you **must** override this!
