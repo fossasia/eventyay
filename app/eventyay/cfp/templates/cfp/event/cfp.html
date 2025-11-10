@@ -1,6 +1,7 @@
 {% extends "cfp/event/base.html" %}
 
 {% load event_tags %}
+{% load staff_session %}
 {% load i18n %}
 {% load orga_edit_link %}
 {% load rich_text %}
@@ -8,8 +9,8 @@
 
 {% block content %}
     {% with cfp=request.event.cfp %}
-        {% has_perm "base.list_featured_submission" request.user request.event as can_view_featured_submissions %}
-        {% has_perm "base.update_event" request.user request.event as can_edit_cfp %}
+        {% has_event_perm "base.list_featured_submission" request.user request request.event as can_view_featured_submissions %}
+        {% has_event_perm "base.update_event" request.user request request.event as can_edit_cfp %}
         <div class="d-flex align-items-start">
             <h1>{{ cfp.headline|default:"" }}</h1>
             {% if can_edit_cfp %}
