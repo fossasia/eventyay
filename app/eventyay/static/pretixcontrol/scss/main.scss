@@ -37,7 +37,13 @@ nav.navbar {
     top: 0;
     left: 0;
     right: 0;
+    z-index: 1100;
 }
+
+#wrapper {
+    padding-top: var(--navbar-height, 50px);
+}
+
 .navbar-brand img {
     height: 100%;
     width: auto;
@@ -862,7 +868,9 @@ h1 .label {
     
   
     &.desktop-menu-open {
-        
+        #submenu {
+            display: block;
+        }
     }
     
    
@@ -971,7 +979,6 @@ h1 .label {
 }
 
 #page-wrapper {
-    margin-top: var(--navbar-height, 50px);
     height: calc(100vh - var(--navbar-height, 50px));
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -979,9 +986,15 @@ h1 .label {
 }
 
 @media (max-width: $screen-sm-max) {
+    nav.navbar {
+        position: static;
+    }
+
+    #wrapper {
+        padding-top: 0;
+    }
+
     #page-wrapper {
-        margin-top: 0;
-        padding-top: var(--navbar-height, 56px);
         height: auto;
         overflow-y: visible;
         box-sizing: border-box;
