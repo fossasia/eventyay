@@ -12,7 +12,8 @@
   padding-right: 0;
   z-index: 1;
 
-  &:hover, &:focus {
+  &:hover,
+  &:focus {
     background-color: transparent !important;
     color: rgba(255, 255, 255, 0.8);
     outline: none;
@@ -27,7 +28,7 @@
   }
 }
 
-.navbar-header > .navbar-toggle[data-toggle="collapse"] {
+.navbar-header>.navbar-toggle[data-toggle="collapse"] {
   display: none !important;
 }
 
@@ -36,50 +37,50 @@ body.sidebar-minimized {
     width: 45px;
     overflow: hidden;
 
-    .nav > li > a {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0;
-      padding: 12px 0;
-      text-align: center;
-      width: 100%;
-      height: 45px;
-      box-sizing: border-box;
+    .nav>li {
+      height: 41px;
 
-      span {
-        display: none;
-      }
-
-      .fa, svg {
-        font-size: 1.5rem;
-        margin: 0;
-        padding: 0;
+      >a {
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 0;
+        padding: 10px 0;
         text-align: center;
         width: 100%;
-        height: 100%;
-        position: relative;
-        left: 0;
-      }
+        height: 41px;
+        box-sizing: border-box;
 
-      .fa.fa-fw {
-        width: 100%;
-        text-align: center;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
+        span {
+          display: none;
+        }
 
-      &::after, &::before {
-        display: none;
+        .fa,
+        svg {
+          font-size: 14px;
+          margin: 0;
+          padding: 0;
+          display: inline-block;
+          width: 1.28571429em;
+          text-align: center;
+          line-height: 1;
+          position: static;
+        }
+
+        .fa.fa-fw {
+          width: 1.28571429em;
+          text-align: center;
+          margin: 0;
+        }
+
+        &::after,
+        &::before {
+          display: none;
+        }
       }
     }
 
-    .nav > li > a.arrow {
+    .nav>li>a.arrow {
       display: none;
     }
 
@@ -89,7 +90,7 @@ body.sidebar-minimized {
 
     .context-selector .context-indicator .context-name,
     .context-selector .context-indicator .context-meta {
-        display: none;
+      display: none;
     }
 
     // Style the context-selector dropdown-toggle to match expanded state alignment
@@ -152,17 +153,40 @@ body.sidebar-minimized {
     z-index: 12;
     transform: translateX(-100%);
     overflow-y: auto;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
     transition: transform 0.3s ease;
     height: calc(100vh - var(--navbar-height, 50px));
 
-    .nav > li > a {
-      display: block;
-      font-size: inherit;
-      padding: 10px 15px;
+    .nav>li {
+      height: 41px;
 
-      span {
-        display: inline;
+      >a {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        padding: 10px 15px;
+        height: 41px;
+
+        span {
+          display: inline;
+        }
+
+        .fa,
+        svg {
+          font-size: 14px;
+          margin: 0;
+          margin-right: 10px;
+          display: inline-block;
+          width: 1.28571429em;
+          text-align: center;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+
+        .fa.fa-fw {
+          width: 1.28571429em;
+          text-align: center;
+        }
       }
     }
 
@@ -198,41 +222,50 @@ body.sidebar-minimized {
     overflow-y: auto;
     overflow-x: visible;
 
-    .nav > li > a {
-      display: block;
-      align-items: normal;
-      justify-content: normal;
-      font-size: inherit;
-      padding: 10px 15px;
-      text-align: left;
-      width: auto;
+    .nav>li {
+      height: 41px;
 
-      span {
-        display: inline;
-      }
-
-      .fa, svg {
-        font-size: inherit;
-        margin: 0;
-        padding: 0;
-        display: inline;
-        text-align: inherit;
+      >a {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        font-size: 14px;
+        padding: 10px 15px;
+        text-align: left;
         width: auto;
-        position: static;
-        left: auto;
-      }
+        height: 41px;
 
-      .fa.fa-fw {
-        width: 1.25em;
-        text-align: center;
-      }
+        span {
+          display: inline;
+        }
 
-      &::after, &::before {
-        display: block;
+        .fa,
+        svg {
+          font-size: 14px;
+          margin: 0;
+          margin-right: 10px;
+          padding: 0;
+          display: inline-block;
+          text-align: center;
+          width: 1.28571429em;
+          position: static;
+          line-height: 1;
+          flex-shrink: 0;
+        }
+
+        .fa.fa-fw {
+          width: 1.28571429em;
+          text-align: center;
+        }
+
+        &::after,
+        &::before {
+          display: block;
+        }
       }
     }
 
-    .nav > li > a.arrow {
+    .nav>li>a.arrow {
       display: block;
       position: absolute;
       right: 0;
@@ -249,11 +282,11 @@ body.sidebar-minimized {
       }
     }
 
-    .nav > li.active > a > .fa.arrow:before {
+    .nav>li.active>a>.fa.arrow:before {
       content: "\f107";
     }
 
-    .nav > li > a.has-children {
+    .nav>li>a.has-children {
       margin-right: 40px;
     }
 
@@ -305,7 +338,7 @@ body.sidebar-minimized {
     }
 
     li.active {
-      > ul.nav-second-level {
+      >ul.nav-second-level {
         display: block;
       }
     }
@@ -329,12 +362,13 @@ body.sidebar-minimized {
           height: 2.5em;
           line-height: 2.5em;
         }
-        
+
         .context-icon .fa-circle {
           font-size: 2em;
         }
-        
-        .context-icon .fa-dashboard, .context-icon .fa-group {
+
+        .context-icon .fa-dashboard,
+        .context-icon .fa-group {
           font-size: 1em;
           visibility: visible;
           opacity: 1;
@@ -349,7 +383,7 @@ body.sidebar-minimized {
         padding-right: 2px;
         line-height: 15px;
         vertical-align: middle;
-        
+
         span {
           display: block;
           width: 170px;
@@ -357,14 +391,14 @@ body.sidebar-minimized {
           white-space: nowrap;
           overflow: hidden;
         }
-        
+
         span.context-name {
           font-weight: bold;
           vertical-align: middle;
           font-size: 15px;
           display: block;
         }
-        
+
         span.context-meta {
           opacity: 0.7;
           font-size: 11px;
@@ -373,7 +407,7 @@ body.sidebar-minimized {
       }
     }
   }
-  
+
   body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
     margin-left: 250px;
   }
