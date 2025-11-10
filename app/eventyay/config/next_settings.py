@@ -68,6 +68,12 @@ is_testing = active_environment == RunningEnvironment.TESTING
 is_production = active_environment == RunningEnvironment.PRODUCTION
 
 DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
+DEFAULT_PLUGINS = (
+    'eventyay.plugins.sendmail',
+    'eventyay.plugins.statistics',
+    'eventyay.plugins.checkinlists',
+    'eventyay.plugins.autocheckin',
+)
 
 
 class BaseSettings(_BaseSettings):
@@ -82,7 +88,8 @@ class BaseSettings(_BaseSettings):
     # Tell Pydantic how to load our configurations.
     model_config = SettingsConfigDict(
         env_prefix=_ENV_PREFIX,
-        env_file='.env', env_file_encoding='utf-8',
+        env_file='.env',
+        env_file_encoding='utf-8',
         secrets_dir=SECRETS_DIR,
     )
     # Here, starting our settings fields.
@@ -116,6 +123,7 @@ class BaseSettings(_BaseSettings):
     instance_name: str = 'eventyay'
     auth_backends: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_AUTH_BACKENDS)]
     obligatory_2fa: bool = False
+    plugins_default: Annotated[tuple[str, ...], Field(default_factory=lambda: DEFAULT_PLUGINS)]
     plugins_exclude: Annotated[tuple[str, ...], Field(default_factory=tuple)]
     metrics_enabled: bool = False
     metrics_user: str = 'metrics'
@@ -326,6 +334,8 @@ _OURS_APPS = (
     # It needs the "tool.uv.sources" entry in pyproject.toml.
     'pretix_venueless',
 )
+
+PRETIX_PLUGINS_DEFAULT = conf.plugins_default
 
 # TODO: Merge these two.
 PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
@@ -1107,9 +1117,10 @@ EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
 # TODO: Merge with above.
-PRETIX_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
+PRETIX_ADMIN_AUDIT_COMMENTS = EVENTYAY_ADMIN_AUDIT_COMMENTS
 PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
+PRETIX_EMAIL_NONE_VALUE = EVENTYAY_EMAIL_NONE_VALUE
 
 # TODO: The `pdftk` tool should be auto-detected.
 PDFTK = ''
@@ -1160,3 +1171,4 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 # TODO: Move to consts.py
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
+PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
