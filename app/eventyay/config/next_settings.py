@@ -713,6 +713,10 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
     },
+    'process': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': REDIS_URL,
+    },
     # TODO: Remove. Use the 'default' cache everywhere.
     'redis': {
         'BACKEND': 'django_redis.cache.RedisCache',
