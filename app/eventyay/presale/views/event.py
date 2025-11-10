@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
+from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
@@ -25,6 +26,7 @@ from django.db.models import (
 )
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.formats import get_format
 from django.utils.timezone import now
@@ -958,7 +960,13 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         # Ensure the URL includes the event identifier so VideoSPAView has event context
         # Format: http://localhost:8000/video/event-slug/#token=...
-        if not baseurl.rstrip('/').endswith(self.request.event.slug):
-            baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
+        # Use Django's reverse() to properly construct the video URL path
+        video_path = reverse('video.event.index', kwargs={'event_identifier': self.request.event.slug})
+
+        # Parse the base URL to get scheme and netloc (domain)
+        parsed = urlparse(baseurl)
+
+        # Reconstruct the full URL with the proper path from reverse()
+        baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
 
         return '{}/#token={}'.format(baseurl, token).replace('//#', '/#')
