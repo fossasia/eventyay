@@ -24,6 +24,8 @@ export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
   const env = loadEnv(mode, process.cwd(), '')
 
+  // Use an absolute base during development for dev-server convenience.
+  // Production builds fall back to a relative base so the bundle works from nested paths.
   const base = mode === 'development' ? '/' : './'
 
   return {

@@ -1,8 +1,11 @@
 """Redirect views for backward compatibility with legacy URLs."""
 
+import logging
 from django.http import HttpResponsePermanentRedirect, Http404
 from django.shortcuts import get_object_or_404
 from eventyay.base.models import Event
+
+logger = logging.getLogger(__name__)
 
 
 def legacy_video_redirect(request, event_identifier):
@@ -39,6 +42,7 @@ def legacy_video_redirect(request, event_identifier):
     if request.GET:
         new_url += f'?{request.GET.urlencode()}'
     
+    logger.info("legacy_video_redirect -> %s", new_url)
     return HttpResponsePermanentRedirect(new_url)
 
 
@@ -74,5 +78,6 @@ def legacy_talk_redirect(request, event_slug):
     if request.GET:
         new_url += f'?{request.GET.urlencode()}'
     
+    logger.info("legacy_talk_redirect -> %s", new_url)
     return HttpResponsePermanentRedirect(new_url)
 

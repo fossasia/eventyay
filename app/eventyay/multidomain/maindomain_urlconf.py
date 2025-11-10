@@ -2,8 +2,7 @@ import importlib.util
 import os
 
 from django.apps import apps
-from django.urls import include
-from django.urls import re_path as url
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView, View
 from django.http import HttpResponse, Http404
 from django.views.static import serve as static_serve
@@ -88,7 +87,7 @@ class VideoSPAView(View):
         if event:
             # Inject window.venueless config (frontend still expects this name)
             # Mirror structure used in legacy live AppView but adjusted basePath
-            from django.urls import reverse  # kept for other endpoints
+            from django.urls import reverse
             # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
             api_base = f"/api/v1/events/{event.pk}/"  # TODO replace with reverse once API namespace wired
             # Best effort reverse for optional endpoints
@@ -159,19 +158,19 @@ class VideoAssetView(View):
         raise Http404()
 
 presale_patterns_main = [
-    url(
-        r'',
+    path(
+        '',
         include(
             (
                 locale_patterns
                 + [
-                    url(r'^(?P<organizer>[^/]+)/', include(organizer_patterns)),
-                    url(
+                    re_path(r'^(?P<organizer>[^/]+)/', include(organizer_patterns)),
+                    re_path(
                         r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
                         include(event_patterns),
                     ),
-                    url(
-                        r'^$',
+                    path(
+                        '',
                         TemplateView.as_view(template_name='pretixpresale/index.html'),
                         name='index',
                     ),
@@ -192,11 +191,15 @@ for app in apps.get_app_configs():
                 single_plugin_patterns += urlmod.urlpatterns
             if hasattr(urlmod, 'event_patterns'):
                 patterns = plugin_event_urls(urlmod.event_patterns, plugin=app.name)
-                single_plugin_patterns.append(url(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns)))
+                single_plugin_patterns.append(
+                    re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns))
+                )
             if hasattr(urlmod, 'organizer_patterns'):
                 patterns = urlmod.organizer_patterns
-                single_plugin_patterns.append(url(r'^(?P<organizer>[^/]+)/', include(patterns)))
-            raw_plugin_patterns.append(url(r'', include((single_plugin_patterns, app.label))))
+                single_plugin_patterns.append(
+                    re_path(r'^(?P<organizer>[^/]+)/', include(patterns))
+                )
+            raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
 
 # Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
 try:
@@ -207,64 +210,76 @@ try:
             single_plugin_patterns += urlmod.urlpatterns
         if hasattr(urlmod, 'event_patterns'):
             patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
-            single_plugin_patterns.append(url(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns)))
+            single_plugin_patterns.append(
+                re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns))
+            )
         if hasattr(urlmod, 'organizer_patterns'):
             patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(url(r'^(?P<organizer>[^/]+)/', include(patterns)))
-        raw_plugin_patterns.append(url(r'', include((single_plugin_patterns, 'pretix_venueless'))))
+            single_plugin_patterns.append(
+                re_path(r'^(?P<organizer>[^/]+)/', include(patterns))
+            )
+        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
 except Exception:
     pass
 
-plugin_patterns = [url(r'', include((raw_plugin_patterns, 'plugins')))]
+plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
 
 # Add storage URLs for file uploads
 storage_patterns = [
-    url(r'^storage/', include('eventyay.storage.urls', namespace='storage')),
+    path('storage/', include('eventyay.storage.urls', namespace='storage')),
 ]
 
 unified_event_patterns = [
-    url(
+    re_path(
         r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
-                url(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
-                url(r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'),
-                url(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                # Talk patterns under {organizer}/{event}/ (agenda and cfp with their namespaces)
-                url(r'', include(('eventyay.agenda.urls', 'agenda'))),
-                url(r'', include(('eventyay.cfp.urls', 'cfp'))),
+                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
+                re_path(
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
+                    VideoAssetView.as_view(),
+                    name='video.assets.file',
+                ),
+                re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
+                path('', include(('eventyay.agenda.urls', 'agenda'))),
+                path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
-        )
+        ),
     ),
 ]
 
 # Legacy redirect patterns for backward compatibility
 legacy_redirect_patterns = [
     # Legacy standalone video SPA at /video
-    url(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.legacy.assets'),
-    url(r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.legacy.assets.file'),
-    url(r'^video/?$', VideoSPAView.as_view(), name='video.legacy.index'),
+    re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.legacy.assets'),
+    re_path(
+        r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
+        VideoAssetView.as_view(),
+        name='video.legacy.assets.file',
+    ),
+    re_path(r'^video/?$', VideoSPAView.as_view(), name='video.legacy.index'),
     # Legacy video URLs: /video/<event_identifier> -> /{organizer}/{event}/video
-    url(r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$', 
-        redirects.legacy_video_redirect, 
-        name='video.legacy.redirect'),
+    re_path(
+        r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$',
+        redirects.legacy_video_redirect,
+        name='video.legacy.redirect',
+    ),
     # Legacy talk URLs: /<event>/(path) -> /{organizer}/{event}/(path)
     # This excludes known top-level namespaces before treating the first segment as an event slug.
-    url(
-        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/({MATCHED_LEGACY_SUBPATHS_REGEX})',
+    re_path(
+        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/({MATCHED_LEGACY_SUBPATHS_REGEX})(?:/|$)',
         redirects.legacy_talk_redirect,
         name='talk.legacy.redirect',
     ),
     # Legacy event base URL: /<event>/ -> /{organizer}/{event}/
-    url(
+    re_path(
         rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/$',
         redirects.legacy_talk_redirect,
         name='talk.legacy.base.redirect',
     ),
 ]
 
-# Adjust urlpatterns: legacy redirects MUST come before presale to catch old talk URLs
 urlpatterns = (
     common_patterns
     + storage_patterns

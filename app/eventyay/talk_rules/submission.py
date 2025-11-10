@@ -252,7 +252,7 @@ def is_wip(user, obj):
         schedule = obj.current_schedule
     if schedule is None:
         return True
-    return not getattr(schedule, 'version', None)
+    return getattr(schedule, 'version', None) is None
 
 
 @rules.predicate

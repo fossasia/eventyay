@@ -11,6 +11,9 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 	if (basePath.length > 1 && basePath.endsWith('/')) {
 		basePath = basePath.slice(0, -1)
 	}
+	// Example mappings:
+	//   /video/sample -> eventSlug === 'sample'
+	//   /org/acmeconf/video -> eventSlug === 'acmeconf'
 	let eventSlug
 	if (videoIndex > 0 && segments[videoIndex - 1]) {
 		eventSlug = segments[videoIndex - 1]

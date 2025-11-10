@@ -3,6 +3,7 @@
 {% load staff_session %}
 {% load i18n %}
 {% load rules %}
+{% load event_tags %}
 {% load static %}
 
 <!DOCTYPE html>
@@ -107,7 +108,8 @@
                                     </summary>
                                     <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                                         {% for l, name in request.event.named_locales %}
-                                            <a href="{% url "cfp:locale.set" organizer=request.event.organizer.slug event=request.event.slug %}?locale={{ l }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}"
+                                            {% cfp_locale_switch_url l as locale_switch_url %}
+                                            <a href="{{ locale_switch_url }}"
                                                class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}" role="menuitem" tabindex="-1">{{ name }}</a>
                                         {% endfor %}
                                     </div>
@@ -115,7 +117,8 @@
                             {% else %}
                                 <div class="locales-inline">
                                     {% for l, name in request.event.named_locales %}
-                                        <a href="{% url "cfp:locale.set" organizer=request.event.organizer.slug event=request.event.slug %}?locale={{ l }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}"
+                                        {% cfp_locale_switch_url l as locale_switch_url %}
+                                        <a href="{{ locale_switch_url }}"
                                            class="locale-link {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">
                                             {{ name }}
                                         </a>
@@ -151,7 +154,7 @@
                                         </a>
                                     {% endif %}
                                     <hr>
-                                    <form action="{% url "cfp:event.logout" organizer=request.event.organizer.slug event=request.event.slug %}" method="post">
+                                    <form action="{% url 'common:auth.logout' %}" method="post">
                                         {% csrf_token %}
                                         <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
                                             <i class="fa fa-sign-out mr-2 ml-1"></i>

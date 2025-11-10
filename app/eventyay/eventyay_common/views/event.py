@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -44,6 +45,8 @@ from eventyay.eventyay_common.utils import (
 )
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
+
+logger = logging.getLogger(__name__)
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -510,6 +513,11 @@ class VideoAccessAuthenticator(View):
 
         if not event.settings.venueless_url:
             event.settings.venueless_url = build_video_url()
+            logger.info(
+                "Initialized video_url for event %s to %s",
+                event.slug,
+                event.settings.venueless_url,
+            )
 
         # If the saved URL points to a different host than the current request (e.g., prod domain),
         # adjust it to the current host so local development goes to localhost.
@@ -518,7 +526,16 @@ class VideoAccessAuthenticator(View):
             current_host = request.get_host()
             if saved.netloc and saved.netloc != current_host:
                 event.settings.venueless_url = build_video_url(current_host)
+                logger.info(
+                    "Adjusted video_url for event %s to %s",
+                    event.slug,
+                    event.settings.venueless_url,
+                )
         except Exception:
+            logger.exception(
+                "Failed to parse video_url for event %s; falling back to current host.",
+                event.slug,
+            )
             event.settings.venueless_url = build_video_url()
 
         # Ensure the pretix_venueless plugin is enabled

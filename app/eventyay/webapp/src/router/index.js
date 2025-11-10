@@ -53,7 +53,7 @@ const routes = [
 	{
 		path: '/:worldName?',
 		component: App,
-		props: true,
+		props: route => ({ worldName: route.params.worldName ?? '' }),
 		children: [
 			{
 				// we can't alias this because vue-router links seem to explode

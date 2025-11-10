@@ -81,6 +81,5 @@ urlpatterns = [
         ),
     ),
     path("locale/set", locale.LocaleSet.as_view(), name="locale.set"),
-    path("locale/set", locale.LocaleSet.as_view(), name="locale.set_global"),
     path("robots.txt", robots.robots_txt, name="robots.txt"),
 ]
