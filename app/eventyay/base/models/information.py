@@ -59,6 +59,7 @@ class SpeakerInformation(PretalxModel):
         return self.event
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of speaker information."""
         base = edit = '{self.event.orga_urls.information}{self.pk}/'
         delete = '{base}delete/'
 

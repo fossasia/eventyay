@@ -2080,11 +2080,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a header image, it will be displayed instead of your event’s color '
-                'and/or header pattern at the top of all event pages. It will be center-aligned, '
-                'so when the window shrinks, the center parts will continue to be displayed, you '
-                'can increase the size with the setting below. The image will not be stretched. ' 
-                'Please do not upload files larger than 10.0MB!'
+                'This image appears at the top of all event pages, replacing the default color or pattern. '
+                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+                'We recommend an image at least 1170 px wide and 120 px in height for best results.'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2102,10 +2100,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a logo image, we will by default not show your event name and date '
-                'in the page header. By default, the logo will be scaled down to a height of 140px. '
-                'We recommend not using small details on the picture '
-                'as it will be resized on smaller screens.'
+                'When you upload a logo, the event name and date will not appear in the header. '
+                'The logo scales to 140 px in height while maintaining aspect ratio. '
+                'We recommend not using small details as it will be resized on smaller screens.'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2143,10 +2140,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a logo image, we will by default not show your organization name '
-                'in the page header. By default, we show your logo with a size of up to 1140x120 pixels. You '
-                'can increase the size with the setting below. We recommend not using small details on the picture '
-                'as it will be resized on smaller screens.'
+                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
+                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+                'We recommend an image 1140 px wide and 120 px in height (can be increased with the setting below).'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2174,10 +2170,10 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'This picture will be used as a preview if you post links to your ticket shop on social media. '
-                'Facebook advises to use a picture size of 1200 x 630 pixels, however some platforms like '
-                'WhatsApp and Reddit only show a square preview, so we recommend to make sure it still looks good '
-                'only the center square is shown. If you do not fill this, we will use the logo given above.'
+                'This image is used as a preview when sharing your event link on social media. '
+                'Facebook recommends a size of 1200 × 630 px, but some platforms such as WhatsApp and Reddit '
+                'display a square preview. Ensure the center area of your image looks good in both formats. '
+                'If no image is uploaded, the event logo will be used instead.'
             ),
         ),
         'serializer_class': UploadedFileField,

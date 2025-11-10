@@ -168,20 +168,18 @@ def collect_billing_invoice(
     invoice_voucher: Optional[InvoiceVoucher],
 ) -> CollectBillingResponse:
     """
-    Collect billing data for an event on a monthly basis. This function
-    checks if a billing invoice already exists for the given event and
+    Collect billing data for an event on a monthly basis.
+    
+    This function checks if a billing invoice already exists for the given event and
     month. If not, it checks if there were any paid orders in the last
     month, and if there were, it calculates the total amount and ticket
     fee for the last month and creates a new billing invoice.
 
-    @param event: The event for which to collect billing data.
-    @param last_month_date: The date of the last month for which to collect
-        billing data.
-    @param ticket_rate: The rate of the ticket fee as a decimal.
-    @param invoice_voucher: The voucher for which to calculate the ticket fee
-        discount.
-
-    @return: A CollectBillingResponse object containing a boolean value
+    :param event: The event for which to collect billing data.
+    :param last_month_date: The date of the last month for which to collect billing data.
+    :param ticket_rate: The rate of the ticket fee as a decimal.
+    :param invoice_voucher: The voucher for which to calculate the ticket fee discount.
+    :return: A CollectBillingResponse object containing a boolean value
         indicating whether the billing invoice was created successfully and a
         decimal value indicating the voucher discount.
     """

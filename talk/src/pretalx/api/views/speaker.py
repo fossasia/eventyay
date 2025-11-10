@@ -125,7 +125,7 @@ class SpeakerViewSet(
         context = super().get_serializer_context()
         if not self.event:
             return context
-        context["questions"] = questions_for_user(self.event, self.request.user)
+        context["questions"] = questions_for_user(self.request, self.event, self.request.user)
         # We don’t need to check for anonymisation here, because endpoint access implies
         # that the user isn’t restricted to anonymised content.
         context["submissions"] = self.submissions_for_user

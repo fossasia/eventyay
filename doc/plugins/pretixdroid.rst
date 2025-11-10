@@ -1,10 +1,10 @@
-pretixdroid HTTP API
-====================
+Eventyaydroid HTTP API
+======================
 
-The pretixdroid plugin provides a HTTP API that the `pretixdroid Android app`_
-uses to communicate with the pretix server.
+The eventyaydroid plugin provides a HTTP API that the `eventyaydroid Android app`_
+uses to communicate with the eventyay server.
 
-.. warning:: This API is **DEPRECATED** and will probably go away soon. It is used **only** to serve the pretixdroid
+.. warning:: This API is **DEPRECATED** and will probably go away soon. It is used **only** to serve the eventyaydroid
              Android app. There are no backwards compatibility guarantees on this API. We will not add features that
              are not required for the  Android App. There is a general-purpose :ref:`rest-api` that provides all
              features that you need to check in.
@@ -20,7 +20,7 @@ uses to communicate with the pretix server.
    Support for checking in unpaid tickets has been added.
 
 
-.. http:post:: /pretixdroid/api/(organizer)/(event)/redeem/
+.. http:post:: /eventyaydroid/api/(organizer)/(event)/redeem/
 
    Redeems a ticket, i.e. checks the user in.
 
@@ -28,7 +28,7 @@ uses to communicate with the pretix server.
 
    .. sourcecode:: http
 
-      POST /pretixdroid/api/demoorga/democon/redeem/?key=ABCDEF HTTP/1.1
+      POST /eventyaydroid/api/demoorga/democon/redeem/?key=ABCDEF HTTP/1.1
       Host: demo.eventyay.com
       Accept: application/json, text/javascript
       Content-Type: application/x-www-form-urlencoded
@@ -184,7 +184,7 @@ uses to communicate with the pretix server.
    :statuscode 404: Unknown organizer or event
    :statuscode 403: Invalid authorization key
 
-.. http:get:: /pretixdroid/api/(organizer)/(event)/search/
+.. http:get:: /eventyaydroid/api/(organizer)/(event)/search/
 
    Searches for a ticket.
    At most 25 results will be returned. **Queries with less than 4 characters will always return an empty result set.**
@@ -193,7 +193,7 @@ uses to communicate with the pretix server.
 
    .. sourcecode:: http
 
-      GET /pretixdroid/api/demoorga/democon/search/?key=ABCDEF&query=Peter HTTP/1.1
+      GET /eventyaydroid/api/demoorga/democon/search/?key=ABCDEF&query=Peter HTTP/1.1
       Host: demo.eventyay.com
       Accept: application/json, text/javascript
 
@@ -229,7 +229,7 @@ uses to communicate with the pretix server.
    :statuscode 404: Unknown organizer or event
    :statuscode 403: Invalid authorization key
 
-.. http:get:: /pretixdroid/api/(organizer)/(event)/download/
+.. http:get:: /eventyaydroid/api/(organizer)/(event)/download/
 
    Download data for all tickets.
 
@@ -237,7 +237,7 @@ uses to communicate with the pretix server.
 
    .. sourcecode:: http
 
-      GET /pretixdroid/api/demoorga/democon/download/?key=ABCDEF HTTP/1.1
+      GET /eventyaydroid/api/demoorga/democon/download/?key=ABCDEF HTTP/1.1
       Host: demo.eventyay.com
       Accept: application/json, text/javascript
 
@@ -291,7 +291,7 @@ uses to communicate with the pretix server.
    :statuscode 404: Unknown organizer or event
    :statuscode 403: Invalid authorization key
 
-.. http:get:: /pretixdroid/api/(organizer)/(event)/status/
+.. http:get:: /eventyaydroid/api/(organizer)/(event)/status/
 
    Returns status information, such as the total number of tickets and the
    number of performed check-ins.
@@ -300,7 +300,7 @@ uses to communicate with the pretix server.
 
    .. sourcecode:: http
 
-      GET /pretixdroid/api/demoorga/democon/status/?key=ABCDEF HTTP/1.1
+      GET /eventyaydroid/api/demoorga/democon/status/?key=ABCDEF HTTP/1.1
       Host: demo.eventyay.com
       Accept: application/json, text/javascript
 
@@ -365,4 +365,4 @@ uses to communicate with the pretix server.
    :statuscode 404: Unknown organizer or event
    :statuscode 403: Invalid authorization key
 
-.. _pretixdroid Android app: https://github.com/pretix/pretixdroid
+.. _Eventyaydroid Android app: https://github.com/fossasia/eventyaydroid

@@ -16,14 +16,14 @@ Output registration
 
 The ticket output API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available ticket outputs. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.ticketoutput.BaseTicketOutput``
+should listen for this signal and return the subclass of ``eventyay.base.ticketoutput.BaseTicketOutput``
 that we'll provide in this plugin:
 
 .. code-block:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_ticket_outputs
+    from eventyay.base.signals import register_ticket_outputs
 
 
     @receiver(register_ticket_outputs, dispatch_uid="output_pdf")
@@ -35,7 +35,7 @@ that we'll provide in this plugin:
 The output class
 ----------------
 
-.. class:: pretix.base.ticketoutput.BaseTicketOutput
+.. class:: eventyay.base.ticketoutput.BaseTicketOutput
 
    The central object of each ticket output is the subclass of ``BaseTicketOutput``.
 
@@ -50,34 +50,68 @@ The output class
       use this object to store settings using its ``get`` and ``set`` methods. All settings
       you store are transparently prefixed, so you get your very own settings namespace.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this ticket output.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this ticket output.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: is_enabled
+   .. py:attribute:: is_enabled
 
-   .. autoattribute:: multi_download_enabled
+      Whether this ticket output is enabled.
 
-   .. autoattribute:: settings_form_fields
+   .. py:attribute:: multi_download_enabled
 
-   .. automethod:: settings_content_render
+      Whether downloading multiple tickets at once is enabled.
 
-   .. automethod:: generate
+   .. py:attribute:: settings_form_fields
 
-   .. automethod:: generate_order
+      A dictionary of form fields for the ticket output settings.
 
-   .. autoattribute:: download_button_text
+   .. py:method:: settings_content_render(request)
 
-   .. autoattribute:: download_button_icon
+      Render additional content for the settings page.
 
-   .. autoattribute:: multi_download_button_text
+   .. py:method:: generate(position)
 
-   .. autoattribute:: long_download_button_text
+      Generate a ticket for a single order position.
 
-   .. autoattribute:: preview_allowed
+      :param position: The order position to generate a ticket for.
+      :return: A tuple of (filename, content_type, file_content)
 
-   .. autoattribute:: javascript_required
+   .. py:method:: generate_order(order)
+
+      Generate tickets for all positions in an order.
+
+      :param order: The order to generate tickets for.
+      :return: A tuple of (filename, content_type, file_content)
+
+   .. py:attribute:: download_button_text
+
+      The text for the download button.
+
+   .. py:attribute:: download_button_icon
+
+      The icon for the download button.
+
+   .. py:attribute:: multi_download_button_text
+
+      The text for the multi-download button.
+
+   .. py:attribute:: long_download_button_text
+
+      The long text for the download button.
+
+   .. py:attribute:: preview_allowed
+
+      Whether previewing tickets is allowed.
+
+   .. py:attribute:: javascript_required
+
+      Whether JavaScript is required to use this ticket output.

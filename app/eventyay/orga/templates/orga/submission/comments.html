@@ -1,5 +1,6 @@
 {% extends "orga/submission/base.html" %}
 {% load compress %}
+{% load staff_session %}
 {% load i18n %}
 {% load rules %}
 {% load static %}
@@ -13,7 +14,7 @@
 {% endblock scripts %}
 
 {% block submission_content %}
-    {% has_perm 'base.add_submissioncomment' request.user submission as can_add_comment %}
+    {% has_event_perm 'base.add_submissioncomment' request.user request submission as can_add_comment %}
 
     <div class="comments-list">
         {% if not comments %}
@@ -31,7 +32,7 @@
                     <div class="text-muted ml-auto">
                         {{ comment.created|date:"SHORT_DATETIME_FORMAT" }}
                     </div>
-                    {% has_perm 'base.delete_submissioncomment' request.user comment as can_delete_comment %}
+                    {% has_event_perm 'base.delete_submissioncomment' request.user request comment as can_delete_comment %}
                     {% if can_delete_comment %}
                         <a href="{{ comment.urls.delete }}" class="btn btn-sm btn-danger ml-2">
                             <i class="fa fa-trash" title="{{ phrases.base.delete_button }}"></i>

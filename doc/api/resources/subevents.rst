@@ -1,9 +1,3 @@
-.. spelling::
-
-   geo
-   lat
-   lon
-
 .. _rest-subevents:
 
 Event series dates / Sub-events

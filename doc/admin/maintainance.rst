@@ -5,7 +5,7 @@
 Backups and Monitoring
 ======================
 
-If you host your own pretix instance, you also need to care about the availability
+If you host your own eventyay instance, you also need to care about the availability
 of your service and the safety of your data yourself. This page gives you some
 information that you might need to do so properly.
 
@@ -22,7 +22,7 @@ Database
     want to create a cronjob that does the backups for you on a regular schedule.
 
 Data directory
-    The data directory of your pretix configuration might contain some things that you should
+    The data directory of your eventyay configuration might contain some things that you should
     back up. If you did not specify a secret in your config file, back up the ``.secret`` text
     file in the data directory. If you lose your secret, all currently active user sessions,
     password reset links and similar things will be rendered invalid. Also, you probably want
@@ -40,8 +40,8 @@ non-critical, temporary or cached data.
 Uptime monitoring
 -----------------
 
-To monitor whether your pretix instance is running, you can issue a GET request to
-``https://pretix.mydomain.com/healthcheck/``. This endpoint tests if the connection to the
+To monitor whether your eventyay instance is running, you can issue a GET request to
+``https://eventyay.mydomain.com/healthcheck/``. This endpoint tests if the connection to the
 database, to the configured cache and to redis (if used) is working correctly. If everything
 appears to work fine, an empty response with status code ``200`` is returned.
 If there is a problem, a status code in the ``5xx`` range will be returned.
@@ -51,11 +51,11 @@ If there is a problem, a status code in the ``5xx`` range will be returned.
 Performance monitoring
 ----------------------
 
-If you want to generate detailed performance statistics of your pretix installation, there is an
-endpoint at ``https://pretix.mydomain.com/metrics`` (no slash at the end) which returns a
+If you want to generate detailed performance statistics of your eventyay installation, there is an
+endpoint at ``https://eventyay.mydomain.com/metrics`` (no slash at the end) which returns a
 number of values in the text format understood by monitoring tools like Prometheus_. This data
 is only collected and exposed if you enable it in the :ref:`metrics-settings` section of your
-pretix configuration. You can also configure basic auth credentials there to protect your
+Eventyay configuration. You can also configure basic auth credentials there to protect your
 statistics against unauthorized access. The data is temporarily collected in redis, so the
 performance impact of this feature depends on the connection to your redis database.
 
@@ -71,34 +71,34 @@ really interested in the results.
 Available metrics
 ^^^^^^^^^^^^^^^^^
 
-The metrics available in pretix follow the standard `metric types`_ from the Prometheus world.
+The metrics available in eventyay follow the standard `metric types`_ from the Prometheus world.
 Currently, the following metrics are exported:
 
-pretix_view_requests_total
+eventyay_view_requests_total
     Counter. Counts requests to Django views, labeled with the resolved ``url_name``, the used
     HTTP ``method`` and the ``status_code`` returned.
 
-pretix_view_durations_seconds
+eventyay_view_durations_seconds
     Histogram. Measures duration of requests to Django views, labeled with the resolved
     ``url_name``, the used HTTP ``method`` and the ``status_code`` returned.
 
-pretix_task_runs_total
+eventyay_task_runs_total
     Counter. Counts executions of background tasks, labeled with the ``task_name`` and the
     ``status``. The latter can be ``success``, ``error`` or ``expected-error``.
 
-pretix_task_duration_seconds
+eventyay_task_duration_seconds
     Histogram. Measures duration of successful background task executions, labeled with the
     ``task_name``.
 
-pretix_model_instances
+eventyay_model_instances
     Gauge. Measures number of instances of a certain model within the database, labeled with
-    the ``model`` name. Starting with pretix 3.11, these numbers might only be approximate for
+    the ``model`` name. Starting with eventyay 3.11, these numbers might only be approximate for
     most tables when running on PostgreSQL to mitigate performance impact.
 
-pretix_celery_tasks_queued_count
+eventyay_celery_tasks_queued_count
     The number of background tasks in the worker queue, labeled with ``queue``.
 
-pretix_celery_tasks_queued_age_seconds
+eventyay_celery_tasks_queued_age_seconds
     The age of the longest-waiting in the worker queue in seconds, labeled with ``queue``.
 
 .. _metric types: https://prometheus.io/docs/concepts/metric_types/

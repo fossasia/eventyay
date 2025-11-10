@@ -1,5 +1,6 @@
 {% extends "orga/base.html" %}
 
+{% load staff_session %}
 {% load i18n %}
 {% load rules %}
 
@@ -33,7 +34,7 @@
         </p>
     {% endif %}
 
-    {% has_perm "base.mark_arrived_speakerprofile" request.user request.event as can_mark_speaker %}
+    {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
     <div class="table-responsive-md">
         <table class="table table-sm table-flip table-sticky">
             <thead>

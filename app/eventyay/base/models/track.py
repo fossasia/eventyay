@@ -66,6 +66,7 @@ class Track(OrderedModel, PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for track views."""
         base = edit = '{self.event.cfp.urls.tracks}{self.pk}/'
         delete = '{base}delete/'
         prefilled_cfp = '{self.event.cfp.urls.public}?track={self.slug}'

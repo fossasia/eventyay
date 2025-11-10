@@ -1,8 +1,6 @@
 Invoice settings
 ================
 
-.. spelling:: Inv
-
 The settings at "Settings" → "Invoice" allow you to specify if and how eventyay should generate invoices for your orders.
 
 .. thumbnail:: ../../screens/event/settings_invoice.png

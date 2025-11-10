@@ -150,6 +150,16 @@ class SizeFileField(forms.FileField):
     def __init__(self, *args, **kwargs):
         self.max_size = kwargs.pop('max_size', None)
         super().__init__(*args, **kwargs)
+        
+        if self.max_size:
+            size_warning = _('Please do not upload files larger than {size}!').format(
+                size=SizeFileField._sizeof_fmt(self.max_size)
+            )
+            self.widget.attrs['data-maxsize'] = self.max_size
+            self.widget.attrs['data-sizewarning'] = size_warning
+            
+            if size_warning not in (self.help_text or ''):
+                self.help_text = f'{self.help_text} {size_warning}'.strip() if self.help_text else size_warning
 
     @staticmethod
     def _sizeof_fmt(num, suffix='B'):
@@ -177,6 +187,15 @@ class ExtFileField(SizeFileField):
         ext_whitelist = kwargs.pop('ext_whitelist')
         self.ext_whitelist = [i.lower() for i in ext_whitelist]
         super().__init__(*args, **kwargs)
+        
+        if self.ext_whitelist:
+            self.widget.attrs['accept'] = ','.join(self.ext_whitelist)
+            
+            supported_formats = ', '.join(sorted(self.ext_whitelist))
+            extension_help = _('Supported formats: {formats}').format(formats=supported_formats)
+            
+            if extension_help not in (self.help_text or ''):
+                self.help_text = f'{self.help_text} {extension_help}'.strip() if self.help_text else extension_help
 
     def clean(self, *args, **kwargs):
         data = super().clean(*args, **kwargs)
@@ -185,7 +204,13 @@ class ExtFileField(SizeFileField):
             ext = os.path.splitext(filename)[1]
             ext = ext.lower()
             if ext not in self.ext_whitelist:
-                raise forms.ValidationError(_('Filetype not allowed!'))
+                supported_formats = ', '.join(sorted(self.ext_whitelist))
+                raise forms.ValidationError(
+                    _("The file type '{extension}' is not supported. Please upload one of the supported formats: {formats}.").format(
+                        extension=ext,
+                        formats=supported_formats
+                    )
+                )
         return data
 
 

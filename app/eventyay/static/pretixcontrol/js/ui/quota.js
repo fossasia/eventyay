@@ -20,7 +20,7 @@ $(function () {
 });
 
 $(function () {
-    if (!$("input[name=itemvars]").length) {
+    if (!$("input[name=productvars]").length) {
         return;
     }
     var autofill = ($("#id_name").val() === "");
@@ -29,10 +29,10 @@ $(function () {
         autofill = false;
     })
 
-    $("input[name=itemvars]").change(function () {
+    $("input[name=productvars]").change(function () {
         if (autofill) {
             var names = [];
-            $("input[name=itemvars]:checked").each(function () {
+            $("input[name=productvars]:checked").each(function () {
                 names.push($.trim($(this).closest("label").text()))
             });
             $("#id_name").val(names.join(', '));

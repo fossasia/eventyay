@@ -62,7 +62,7 @@ RUN mkdir $APP_HOME/static
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext
 
 # copy entrypoint.prod.sh
 COPY ./entrypoint.prod.sh .

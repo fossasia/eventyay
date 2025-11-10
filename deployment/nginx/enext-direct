@@ -32,6 +32,13 @@ server {
 		alias /home/fossasia/enext/data/static/;
 	}
 
+	location /media/ {
+    	alias /home/fossasia/enext/data/data/media/;
+    	access_log off;
+    	expires 30d;
+	}
+
+
     listen 443 ssl; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/next.eventyay.com/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/next.eventyay.com/privkey.pem; # managed by Certbot

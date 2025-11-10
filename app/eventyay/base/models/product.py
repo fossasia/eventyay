@@ -170,7 +170,7 @@ class SubEventProductVariation(models.Model):
 
 def filter_available(qs, channel='web', voucher=None, allow_addons=False):
     q = (
-        # IMPORTANT: If this is updated, also update the ItemVariation query
+        # IMPORTANT: If this is updated, also update the ProductVariation query
         # in models/event.py: EventMixin.annotated()
         Q(active=True)
         & Q(Q(available_from__isnull=True) | Q(available_from__lte=now()))

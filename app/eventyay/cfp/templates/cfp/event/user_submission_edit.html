@@ -4,6 +4,7 @@
 {% load event_tags %}
 {% load filesize %}
 {% load formset_tags %}
+{% load staff_session %}
 {% load i18n %}
 {% load rules %}
 {% load static %}
@@ -20,7 +21,7 @@
 {% endblock cfp_header %}
 
 {% block content %}
-    {% has_perm "base.add_speaker_submission" request.user submission as can_invite_speakers %}
+    {% has_event_perm "base.add_speaker_submission" request.user request submission as can_invite_speakers %}
 
     {% include "cfp/includes/user_submission_header.html" %}
 

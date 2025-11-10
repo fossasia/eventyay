@@ -1,6 +1,7 @@
 {% extends "orga/submission/base.html" %}
 
 {% load compress %}
+{% load staff_session %}
 {% load i18n %}
 {% load rich_text %}
 {% load rules %}
@@ -10,9 +11,9 @@
 {% block submission_title %}{% translate "Speakers" %} :: {% endblock submission_title %}
 
 {% block submission_content %}
-    {% has_perm "base.update_submission" request.user submission as can_edit_speakers %}
-    {% has_perm "base.send_queuedmail" request.user request.event as can_send_mails %}
-    {% has_perm "base.mark_arrived_speakerprofile" request.user request.event as can_mark_speaker %}
+    {% has_event_perm "base.update_submission" request.user request submission as can_edit_speakers %}
+    {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
+    {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
     {% if can_edit_speakers %}<div class="alert">
         <form method="POST" class="form d-flex w-100 flex-column">
             {% csrf_token %}

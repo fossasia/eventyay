@@ -276,16 +276,16 @@ Endpoints
       Content-Type: application/json
 
       {
-        "available": true,
-        "available_number": 419,
-        "total_size": 1000,
-        "pending_orders": 25,
-        "paid_orders": 423,
-        "exited_orders": 0,
-        "cart_positions": 7,
-        "blocking_vouchers": 126,
-        "waiting_list": 0
-    }
+         "available": true,
+         "available_number": 419,
+         "total_size": 1000,
+         "pending_orders": 25,
+         "paid_orders": 423,
+         "exited_orders": 0,
+         "cart_positions": 7,
+         "blocking_vouchers": 126,
+         "waiting_list": 0
+      }
 
    Note that ``total_size`` and ``available_number`` are ``null`` in case of unlimited quotas.
 

@@ -136,7 +136,7 @@
                                 {% endif %}
                             </div>
                             <div class="col-sm-4">
-                                {% bootstrap_field position.form.itemvar layout='inline' %}
+                                {% bootstrap_field position.form.productvar layout='inline' %}
                             </div>
                         </div>
 
@@ -224,7 +224,7 @@
                                         {{ add_form.custom_error }}
                                     </div>
                                 {% endif %}
-                                {% bootstrap_field add_form.itemvar layout="control" %}
+                                {% bootstrap_field add_form.productvar layout="control" %}
                                 {% bootstrap_field add_form.price addon_after=request.event.currency layout="control" %}
                                 {% if add_form.addon_to %}
                                     {% bootstrap_field add_form.addon_to layout="control" %}
@@ -256,7 +256,7 @@
                         </div>
                         <div class="panel-body">
                             <div class="form-horizontal">
-                                {% bootstrap_field add_formset.empty_form.itemvar layout="control" %}
+                                {% bootstrap_field add_formset.empty_form.productvar layout="control" %}
                                 {% bootstrap_field add_formset.empty_form.price addon_after=request.event.currency layout="control" %}
                                 {% if add_formset.empty_form.addon_to %}
                                     {% bootstrap_field add_formset.empty_form.addon_to layout="control" %}

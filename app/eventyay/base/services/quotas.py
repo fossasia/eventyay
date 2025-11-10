@@ -42,7 +42,7 @@ class QuotaAvailability:
     Usage example::
 
         qa = QuotaAvailability()
-        qa.queue(quota1, quota2, …)
+        qa.queue(quota1, quota2, ...)
         qa.compute()
         print(qa.results)
 

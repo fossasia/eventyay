@@ -42,6 +42,7 @@ class ReviewScoreCategory(PretalxModel):
     )
 
     class urls(EventUrls):
+        """URL patterns for review phase views."""
         base = '{self.event.orga_urls.review_settings}category/{self.pk}/'
         delete = '{base}delete'
 
@@ -185,6 +186,7 @@ class Review(PretalxModel):
         return super().save(*args, **kwargs)
 
     class urls(EventUrls):
+        """URL patterns for individual review views."""
         base = '{self.submission.orga_urls.reviews}'
         delete = '{base}delete'
 
@@ -270,6 +272,7 @@ class ReviewPhase(OrderedModel, PretalxModel):
         ordering = ('position',)
 
     class urls(EventUrls):
+        """URL patterns for review phase management views."""
         base = '{self.event.orga_urls.review_settings}phase/{self.pk}/'
         delete = '{base}delete'
         activate = '{base}activate'

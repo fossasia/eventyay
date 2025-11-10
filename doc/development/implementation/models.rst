@@ -1,126 +1,118 @@
 .. highlight:: python
    :linenothreshold: 5
 
-.. spelling:: answ contrib
-
 Data model
 ==========
 
-pretix provides the following data(base) models. Every model and every model method or field that is not
+Eventyay provides the following data(base) models. Every model and every model method or field that is not
 documented here is considered private and should not be used by third-party plugins, as it may change
 without advance notice.
 
 User model
 ----------
 
-.. autoclass:: pretix.base.models.User
+.. autoclass:: eventyay.base.models.User
    :members:
 
 Organizers and events
 ---------------------
 
-.. autoclass:: pretix.base.models.Organizer
+.. autoclass:: eventyay.base.models.Organizer
    :members:
 
-.. autoclass:: pretix.base.models.Event
+.. autoclass:: eventyay.base.models.Event
    :members: get_date_from_display, get_time_from_display, get_date_to_display, get_date_range_display, presale_has_ended, presale_is_running, cache, lock, get_plugins, get_mail_backend, payment_term_last, get_payment_providers, get_invoice_renderers, invoice_renderer, settings
 
-.. autoclass:: pretix.base.models.SubEvent
+.. autoclass:: eventyay.base.models.SubEvent
    :members: get_date_from_display, get_time_from_display, get_date_to_display, get_date_range_display, presale_has_ended, presale_is_running
 
-.. autoclass:: pretix.base.models.Team
+.. autoclass:: eventyay.base.models.Team
    :members:
 
-.. autoclass:: pretix.base.models.TeamAPIToken
+.. autoclass:: eventyay.base.models.TeamAPIToken
    :members:
 
-.. autoclass:: pretix.base.models.RequiredAction
+.. autoclass:: eventyay.base.models.RequiredAction
    :members:
 
-.. autoclass:: pretix.base.models.EventMetaProperty
+.. autoclass:: eventyay.base.models.EventMetaProperty
    :members:
 
-.. autoclass:: pretix.base.models.EventMetaValue
+.. autoclass:: eventyay.base.models.EventMetaValue
    :members:
 
-.. autoclass:: pretix.base.models.SubEventMetaValue
+.. autoclass:: eventyay.base.models.SubEventMetaValue
    :members:
 
 
-Items
------
+Products
+--------
 
-.. autoclass:: pretix.base.models.Item
+.. autoclass:: eventyay.base.models.Product
    :members:
 
-.. autoclass:: pretix.base.models.ItemCategory
+.. autoclass:: eventyay.base.models.ProductCategory
    :members:
 
-.. autoclass:: pretix.base.models.ItemVariation
+.. autoclass:: eventyay.base.models.ProductVariation
    :members:
 
-.. autoclass:: pretix.base.models.SubEventItem
-  :members:
-
-.. autoclass:: pretix.base.models.SubEventItemVariation
+.. autoclass:: eventyay.base.models.ProductAddOn
    :members:
 
-.. autoclass:: pretix.base.models.ItemAddOn
+.. autoclass:: eventyay.base.models.Question
    :members:
 
-.. autoclass:: pretix.base.models.Question
-   :members:
-
-.. autoclass:: pretix.base.models.Quota
+.. autoclass:: eventyay.base.models.Quota
    :members:
 
 Carts and Orders
 ----------------
 
-.. autoclass:: pretix.base.models.Order
+.. autoclass:: eventyay.base.models.Order
    :members:
 
-.. autoclass:: pretix.base.models.AbstractPosition
+.. autoclass:: eventyay.base.models.AbstractPosition
    :members:
 
-.. autoclass:: pretix.base.models.OrderPosition
+.. autoclass:: eventyay.base.models.OrderPosition
    :members:
 
-.. autoclass:: pretix.base.models.OrderFee
+.. autoclass:: eventyay.base.models.OrderFee
    :members:
 
-.. autoclass:: pretix.base.models.OrderPayment
+.. autoclass:: eventyay.base.models.OrderPayment
    :members:
 
-.. autoclass:: pretix.base.models.OrderRefund
+.. autoclass:: eventyay.base.models.OrderRefund
    :members:
 
-.. autoclass:: pretix.base.models.CartPosition
+.. autoclass:: eventyay.base.models.CartPosition
    :members:
 
-.. autoclass:: pretix.base.models.QuestionAnswer
+.. autoclass:: eventyay.base.models.QuestionAnswer
    :members:
 
-.. autoclass:: pretix.base.models.Checkin
+.. autoclass:: eventyay.base.models.Checkin
    :members:
 
 Logging
 -------
 
-.. autoclass:: pretix.base.models.LogEntry
+.. autoclass:: eventyay.base.models.LogEntry
    :members:
 
 Invoicing
 ---------
 
-.. autoclass:: pretix.base.models.Invoice
+.. autoclass:: eventyay.base.models.Invoice
    :members:
 
-.. autoclass:: pretix.base.models.InvoiceLine
+.. autoclass:: eventyay.base.models.InvoiceLine
    :members:
 
 Vouchers
 --------
 
-.. autoclass:: pretix.base.models.Voucher
+.. autoclass:: eventyay.base.models.Voucher
    :members:

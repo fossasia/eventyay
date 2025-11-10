@@ -21,6 +21,7 @@ from i18nfield.forms import I18nModelForm
 from rules.contrib.views import PermissionRequiredMixin
 
 from eventyay.common.forms import SearchForm
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
@@ -42,6 +43,9 @@ class ActionFromUrl:
         return self.object
 
     def _check_permission(self, permission_name):
+        if is_admin_mode_active(self.request):
+            return True
+
         return self.request.user.has_perm(permission_name, self.permission_object)
 
     @context

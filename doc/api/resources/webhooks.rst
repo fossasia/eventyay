@@ -28,28 +28,28 @@ action_types                          list of strings            A list of actio
                                                                  valid values
 ===================================== ========================== =======================================================
 
-The following values for ``action_types`` are valid with pretix core:
+The following values for ``action_types`` are valid with eventyay core:
 
-    * ``pretix.event.order.placed``
-    * ``pretix.event.order.placed.require_approval``
-    * ``pretix.event.order.paid``
-    * ``pretix.event.order.canceled``
-    * ``pretix.event.order.reactivated``
-    * ``pretix.event.order.expired``
-    * ``pretix.event.order.modified``
-    * ``pretix.event.order.contact.changed``
-    * ``pretix.event.order.changed.*``
-    * ``pretix.event.order.refund.created.externally``
-    * ``pretix.event.order.approved``
-    * ``pretix.event.order.denied``
-    * ``pretix.event.checkin``
-    * ``pretix.event.checkin.reverted``
-    * ``pretix.event.added``
-    * ``pretix.event.changed``
-    * ``pretix.event.deleted``
-    * ``pretix.subevent.added``
-    * ``pretix.subevent.changed``
-    * ``pretix.subevent.deleted``
+    * ``eventyay.event.order.placed``
+    * ``eventyay.event.order.placed.require_approval``
+    * ``eventyay.event.order.paid``
+    * ``eventyay.event.order.canceled``
+    * ``eventyay.event.order.reactivated``
+    * ``eventyay.event.order.expired``
+    * ``eventyay.event.order.modified``
+    * ``eventyay.event.order.contact.changed``
+    * ``eventyay.event.order.changed.*``
+    * ``eventyay.event.order.refund.created.externally``
+    * ``eventyay.event.order.approved``
+    * ``eventyay.event.order.denied``
+    * ``eventyay.event.checkin``
+    * ``eventyay.event.checkin.reverted``
+    * ``eventyay.event.added``
+    * ``eventyay.event.changed``
+    * ``eventyay.event.deleted``
+    * ``eventyay.subevent.added``
+    * ``eventyay.subevent.changed``
+    * ``eventyay.subevent.deleted``
 
 Installed plugins might register more valid values.
 
@@ -88,7 +88,7 @@ Endpoints
             "target_url": "https://httpstat.us/200",
             "all_events": false,
             "limit_events": ["democon"],
-            "action_types": ["pretix.event.order.modified", "pretix.event.order.changed.*"]
+            "action_types": ["eventyay.event.order.modified", "eventyay.event.order.changed.*"]
           }
         ]
       }
@@ -125,7 +125,7 @@ Endpoints
         "target_url": "https://httpstat.us/200",
         "all_events": false,
         "limit_events": ["democon"],
-        "action_types": ["pretix.event.order.modified", "pretix.event.order.changed.*"]
+        "action_types": ["eventyay.event.order.modified", "eventyay.event.order.changed.*"]
       }
 
    :param organizer: The ``slug`` field of the organizer to fetch
@@ -152,7 +152,7 @@ Endpoints
         "target_url": "https://httpstat.us/200",
         "all_events": false,
         "limit_events": ["democon"],
-        "action_types": ["pretix.event.order.modified", "pretix.event.order.changed.*"]
+        "action_types": ["eventyay.event.order.modified", "eventyay.event.order.changed.*"]
       }
 
    **Example response**:
@@ -169,7 +169,7 @@ Endpoints
         "target_url": "https://httpstat.us/200",
         "all_events": false,
         "limit_events": ["democon"],
-        "action_types": ["pretix.event.order.modified", "pretix.event.order.changed.*"]
+        "action_types": ["eventyay.event.order.modified", "eventyay.event.order.changed.*"]
       }
 
    :param organizer: The ``slug`` field of the organizer to create a webhook for
@@ -214,7 +214,7 @@ Endpoints
         "target_url": "https://httpstat.us/200",
         "all_events": false,
         "limit_events": ["democon"],
-        "action_types": ["pretix.event.order.modified", "pretix.event.order.changed.*"]
+        "action_types": ["eventyay.event.order.modified", "eventyay.event.order.changed.*"]
       }
 
    :param organizer: The ``slug`` field of the organizer to modify

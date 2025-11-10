@@ -147,6 +147,7 @@ class Organizer(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, me
         return self.name
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of this organizer."""
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/organizer/{self.slug}/'
         settings = '{base_path}/orga/organizer/{self.slug}/settings/'
@@ -444,6 +445,7 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         return self.limit_events.all()
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of this team."""
         base = '{self.organizer.orga_urls.teams}{self.pk}/'
         delete = '{base}delete/'
 

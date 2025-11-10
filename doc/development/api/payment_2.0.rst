@@ -3,16 +3,16 @@
 
 .. _`payment2.0`:
 
-Porting a payment provider from pretix 1.x to pretix 2.x
-========================================================
+Porting a payment provider from eventyay 1.x to eventyay 2.x
+============================================================
 
-In pretix 2.x, we changed large parts of the payment provider API. This documentation details the changes we made
-and shows you how you can make an existing pretix 1.x payment provider compatible with pretix 2.x
+In eventyay 2.x, we changed large parts of the payment provider API. This documentation details the changes we made
+and shows you how you can make an existing eventyay 1.x payment provider compatible with eventyay 2.x
 
 Conceptual overview
 -------------------
 
-In pretix 1.x, an order was always directly connected to a payment provider for the full life of an order. As long as
+In eventyay 1.x, an order was always directly connected to a payment provider for the full life of an order. As long as
 an order was unpaid, this could still be changed in some cases, but once an order was paid, no changes to the payment
 provider were possible any more. Additionally, the internal state of orders allowed orders only to be fully paid or
 not paid at all. This leads to a couple of consequences:
@@ -35,7 +35,7 @@ not paid at all. This leads to a couple of consequences:
   We noticed that we copied and repeated large portions of code in all our official payment provider plugins, just
   to deal with some of these cases.
 
-* Sometimes, there is the need to mark an order as refunded within pretix, without automatically triggering a refund
+* Sometimes, there is the need to mark an order as refunded within eventyay, without automatically triggering a refund
   with an external API. Every payment method needed to implement a user interface for this independently.
 
 * If a refund was not possible automatically, there was no way user to track which payments actually have been refunded
@@ -45,8 +45,8 @@ not paid at all. This leads to a couple of consequences:
   information about the first payment was lost from the order object and could only be retrieved from order log data,
   which also made it hard to design a data shredder API to get rid of this data.
 
-In pretix 2.x, we introduced two new models, :py:class:`OrderPayment <pretix.base.models.OrderPayment>` and
-:py:class:`OrderRefund <pretix.base.models.OrderRefund>`. Each instance of these is connected to an order and
+In eventyay 2.x, we introduced two new models, :py:class:`OrderPayment <eventyay.base.models.OrderPayment>` and
+:py:class:`OrderRefund <eventyay.base.models.OrderRefund>`. Each instance of these is connected to an order and
 represents one single attempt to pay or refund a specific amount of money. Each one of these has an individual state,
 can individually fail or succeed, and carries an amount variable that can differ from the order total.
 
@@ -75,7 +75,7 @@ Payment processing
   ``BasePaymentProvider.execute_payment(request, payment)`` that is passed an ``OrderPayment``
   object instead of an ``Order``.
 
-* The function ``pretix.base.services.mark_order_paid`` has been removed, instead call ``payment.confirm()``
+* The function ``eventyay.base.services.mark_order_paid`` has been removed, instead call ``payment.confirm()``
   on a pending ``OrderPayment`` object. If no further payments are required for this order, this will also
   mark the order as paid automatically. Note that ``payment.confirm()`` can still throw a ``QuotaExceededException``,
   however it will still mark the payment as complete (not the order!), so you should catch this exception and

@@ -218,6 +218,7 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for room views."""
         settings_base = edit = '{self.event.orga_urls.room_settings}{self.pk}/'
         delete = '{settings_base}delete/'
 

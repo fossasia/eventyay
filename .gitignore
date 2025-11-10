@@ -19,6 +19,10 @@ __pycache__/
 .mypy_cache/
 .ipython/
 _static/
+# Exception: Track documentation static files
+!doc/_static/
+!doc/talk/_static/
+!doc/video/_static/
 .idea
 .secret
 atlassian-ide-plugin.xml

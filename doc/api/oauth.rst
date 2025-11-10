@@ -1,10 +1,10 @@
 .. _`rest-oauth`:
 
-OAuth authentication / "Connect with eventyay-ticket"
-============================================
+OAuth authentication / "Connect with eventyay"
+==========================================================================
 
-In addition to static tokens, eventyay-ticket supports `OAuth2`_-based authentication starting with
-eventyay-ticket 1.16. This allows you to put a "Connect with eventyay-ticket" button into your website or tool
+In addition to static tokens, eventyay supports `OAuth2`_-based authentication starting with
+eventyay 1.16. This allows you to put a "Connect with eventyay" button into your website or tool
 that allows the user to easily set up a connection between the two systems.
 
 If you haven't worked with OAuth before, have a look at the `OAuth2 Simplified`_ tutorial.
@@ -12,8 +12,8 @@ If you haven't worked with OAuth before, have a look at the `OAuth2 Simplified`_
 Registering an application
 --------------------------
 
-To use OAuth, you need to register your application with the eventyay-ticket instance you want to connect to.
-In order to do this, log in to your eventyay-ticket account and go to your user settings. Click on "Authorized applications"
+To use OAuth, you need to register your application with the eventyay instance you want to connect to.
+In order to do this, log in to your eventyay account and go to your user settings. Click on "Authorized applications"
 first and then on "Manage your own apps". From there, you can "Create a new application".
 
 You should fill in a descriptive name of your application that allows users to recognize who you are. You also need to
@@ -41,7 +41,7 @@ query or to the first redirect URL configured in your application settings.
 On successful registration, we will append the query parameter ``code`` to the URL containing an authorization code.
 For example, we might redirect the user to this URL::
 
-    https://pretalx.com/?code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&state=e3KCh9mfx07qxU4bRpXk
+    https://eventyay.com/?code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&state=e3KCh9mfx07qxU4bRpXk
 
 You will need this ``code`` parameter to perform the next step.
 
@@ -72,7 +72,7 @@ parameter that you used for the authorization.
       Accept: application/json, text/javascript
       Authorization: Basic bHNMaTBoTkwwdms1M21FZFlqTkp4SFVuMVBjTzFSNndWZzgxZExOVDplSmpzZVA0UjJMN0hMcjBiS0p1b3BmbnJtT2cyY3NDeTdYaFVVZ0FoalhUU0NhZHhRTjk3cVNvMkpPaXlWTFpQOEozaTVQd1FVdFIwNUNycG5ac2Z0bXJjdmNTbkZ1SkFmb2ZsUTdZUDRpSjZNTWFYTHIwQ0FpNlhIRFJjV1Awcg==
 
-      grant_type=authorization_code&code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&redirect_uri=https://pretalx.com
+      grant_type=authorization_code&code=eYBBf8gmeD4E01HLoj0XflqO4Lg3Cw&redirect_uri=https://eventyay.com
 
    **Example response**:
 
@@ -107,9 +107,9 @@ You can supply a valid access token as a ``Bearer``-type token in the ``Authoriz
 .. sourcecode:: http
    :emphasize-lines: 3
 
-       GET /api/v1/organizers/ HTTP/1.1
-       Host: eventyay.com
-       Authorization: Bearer i3ytqTSRWsKp16fqjekHXa4tdM4qNC
+   GET /api/v1/organizers/ HTTP/1.1
+   Host: eventyay.com
+   Authorization: Bearer i3ytqTSRWsKp16fqjekHXa4tdM4qNC
 
 Refreshing an access token
 --------------------------
@@ -162,7 +162,7 @@ endpoint to revoke it.
    :statuscode 401: Authentication failure
 
 If you want to revoke your client secret, you can generate a new one in the list of your managed applications in the
-eventyay-ticket user interface.
+eventyay user interface.
 
 Fetching the user profile
 -------------------------

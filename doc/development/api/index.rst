@@ -1,7 +1,25 @@
 Plugin development
 ==================
 
-Contents:
+Core API Documentation
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   talk_models
+   video_models
+   unified_models
+   ticket_reference
+   signals
+   services
+   services_reference
+   core_modules
+   features_modules
+   component_modules
+
+Plugin Development
+------------------
 
 .. toctree::
    :maxdepth: 2

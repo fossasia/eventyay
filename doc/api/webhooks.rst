@@ -3,10 +3,10 @@
 Webhooks
 ========
 
-pretix can send webhook calls to notify your application of any changes that happen inside pretix. This is especially
+Eventyay can send webhook calls to notify your application of any changes that happen inside eventyay. This is especially
 useful for everything triggered by an actual user, such as a new ticket sale or the arrival of a payment.
 
-You can register any number of webhook URLs that pretix will notify any time one of the supported events occurs inside
+You can register any number of webhook URLs that eventyay will notify any time one of the supported events occurs inside
 your organizer account. A great example use case of webhooks would be to add the buyer to your mailing list every time
 a new order comes in.
 
@@ -19,7 +19,7 @@ You can find the list of your active webhooks in the "Webhook" section of your o
    :align: center
    :class: screenshot
 
-Click "Create webhook" if you want to add a new URL. You will then be able to enter the URL pretix shall call for
+Click "Create webhook" if you want to add a new URL. You will then be able to enter the URL eventyay shall call for
 notifications. You need to select any number of notification types that you want to receive and you can optionally
 filter the events you want to receive notifications for.
 
@@ -51,7 +51,7 @@ In Django, you would create a view like this::
 
 More samples for the language of your choice are easy to find online.
 
-The exact body of the request varies by notification type, but for the main types included with pretix core, such as
+The exact body of the request varies by notification type, but for the main types included with eventyay core, such as
 those related to changes of an order, it will look like this::
 
     {
@@ -59,7 +59,7 @@ those related to changes of an order, it will look like this::
       "organizer": "acmecorp",
       "event": "democon",
       "code": "ABC23",
-      "action": "pretix.event.order.placed"
+      "action": "eventyay.event.order.placed"
     }
 
 Notifications regarding a check-in will contain more details like ``orderposition_id``
@@ -89,17 +89,17 @@ Responding to a webhook
 
 If you successfully received a webhook call, your endpoint should return a HTTP status code between ``200`` and ``299``.
 If any other status code is returned, we will assume you did not receive the call. This does mean that any redirection
-or ``304 Not Modified`` response will be treated as a failure. pretix will not follow any ``301`` or ``302`` redirect
-headers and pretix will ignore all other information in your response headers or body.
+or ``304 Not Modified`` response will be treated as a failure. eventyay will not follow any ``301`` or ``302`` redirect
+headers and eventyay will ignore all other information in your response headers or body.
 
-If we do not receive a status code in the range of ``200`` and ``299``, pretix will retry to deliver for up to three
+If we do not receive a status code in the range of ``200`` and ``299``, eventyay will retry to deliver for up to three
 days with an exponential back off. Therefore, we recommend that you implement your endpoint in a way where calling it
 multiple times for the same event due to a perceived error does not do any harm.
 
 There is only one exception: If status code ``410 Gone`` is returned, we will assume the
 endpoint does not exist any more and automatically disable the webhook.
 
-.. note:: If you use a self-hosted version of pretix (i.e. not our SaaS offering at eventyay.com) and you did not
+.. note:: If you use a self-hosted version of eventyay (i.e. not our SaaS offering at eventyay.com) and you did not
           configure a background task queue, failed webhooks will not be retried.
 
 Debugging webhooks

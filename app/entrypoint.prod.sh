@@ -8,6 +8,8 @@ done
 
 echo "PostgreSQL started"
 
+echo "============== compiling translation messages ================"
+python manage.py compilemessages
 echo "============== running collectstatic ================"
 python manage.py collectstatic --noinput
 echo "============== running compress ====================="

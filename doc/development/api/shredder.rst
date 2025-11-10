@@ -6,7 +6,7 @@
 Writing a data shredder
 =======================
 
-If your plugin adds the ability to store personal data within pretix, you should also implement a "data shredder"
+If your plugin adds the ability to store personal data within eventyay, you should also implement a "data shredder"
 to anonymize or pseudonymize the data later.
 
 Shredder registration
@@ -14,14 +14,14 @@ Shredder registration
 
 The data shredder API does not make a lot of usage from signals, however, it
 does use a signal to get a list of all available data shredders. Your plugin
-should listen for this signal and return the subclass of ``pretix.base.shredder.BaseDataShredder``
+should listen for this signal and return the subclass of ``eventyay.base.shredder.BaseDataShredder``
 that we'll provide in this plugin:
 
 .. sourcecode:: python
 
     from django.dispatch import receiver
 
-    from pretix.base.signals import register_data_shredders
+    from eventyay.base.signals import register_data_shredders
 
 
     @receiver(register_data_shredders, dispatch_uid="custom_data_shredders")
@@ -33,7 +33,7 @@ that we'll provide in this plugin:
 The shredder class
 ------------------
 
-.. class:: pretix.base.shredder.BaseDataShredder
+.. class:: eventyay.base.shredder.BaseDataShredder
 
    The central object of each data shredder is the subclass of ``BaseDataShredder``.
 
@@ -42,21 +42,33 @@ The shredder class
       The default constructor sets this property to the event we are currently
       working for.
 
-   .. autoattribute:: identifier
+   .. py:attribute:: identifier
+
+      A short and unique identifier for this data shredder.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: verbose_name
+   .. py:attribute:: verbose_name
+
+      A human-readable name for this data shredder.
 
       This is an abstract attribute, you **must** override this!
 
-   .. autoattribute:: description
+   .. py:attribute:: description
+
+      A description of what data this shredder will remove or anonymize.
 
       This is an abstract attribute, you **must** override this!
 
-   .. automethod:: generate_files
+   .. py:method:: generate_files()
 
-   .. automethod:: shred_data
+      Generate export files containing the data that will be shredded. This is called before ``shred_data()``.
+
+      :return: A generator yielding tuples of (filename, content_type, file_content).
+
+   .. py:method:: shred_data()
+
+      Actually shred (anonymize/delete) the data. This should be wrapped in a database transaction.
 
 Example
 -------
@@ -82,7 +94,7 @@ looks like this:
         def shred_data(self):
             InvoiceAddress.objects.filter(order__event=self.event).delete()
 
-            for le in self.event.logentry_set.filter(action_type="pretix.event.order.modified"):
+            for le in self.event.logentry_set.filter(action_type="eventyay.event.order.modified"):
                 d = le.parsed_data
                 if 'invoice_data' in d and not isinstance(d['invoice_data'], bool):
                     for field in d['invoice_data']:
