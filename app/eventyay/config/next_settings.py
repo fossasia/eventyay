@@ -588,7 +588,7 @@ EXTRA_LANG_INFO = {
 
 django.conf.locale.LANG_INFO.update(EXTRA_LANG_INFO)
 
-# TODO: Move to consts.py
+# TODO: Find more data from pretalx and move to consts.py
 LANGUAGES_INFORMATION = {
     'en': {
         'name': _('English'),
