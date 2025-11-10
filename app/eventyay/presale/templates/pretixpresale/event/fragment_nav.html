@@ -3,37 +3,68 @@
 {% load eventurl %}
 {% load event_tags %}
 
-<nav id="schedule-nav"{% if with_margin %} class="p-3"{% endif %}>
-    <div class="navigation">
+<nav style="margin-top: 10px; margin-bottom: 3rem">
+    <div class="navigation" style="font-size: 1.65rem; display: flex; gap: 2rem; margin-top: 0">
+        {% comment %} <a href="" class="header-tab {% if request.path_info == '/' or request.path_info == '/tickets' %}underline{% endif %}">
+            <i class="fa fa-info-circle"></i> {% translate "Info" %}
+        </a> {% endcomment %}
+
+        <a target="_blank" class="header-tab underline">
+            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+        </a>
+
         {% if request.event|get_feature_flag:'show_schedule' %}
-            <div class="navigation-button">
-                <a href="{{ request.event.talk_schedule_url }}" class="header-nav btn btn-outline-success">
-                    <i class="fa fa-calendar"></i> {% translate "Schedule" %}
-                </a>
-            </div>
-            <div class="navigation-button">
-                <a href="{{ request.event.talk_session_url }}" class="header-nav btn btn-outline-success">
-                    <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
-                </a>
-            </div>
-            <div class="navigation-button">
-                <a href="{{ request.event.talk_speaker_url }}" class="header-nav btn btn-outline-success">
-                    <i class="fa fa-group"></i> {% translate "Speakers" %}
-                </a>
-            </div>
+            <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
+                <i class="fa fa-calendar"></i> {% translate "Schedule" %}
+            </a>
+
+            <a href="{{ request.event.talk_session_url }}" class="header-tab">
+                <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
+            </a>
+
+            <a href="{{ request.event.talk_speaker_url }}" class="header-tab">
+                <i class="fa fa-group"></i> {% translate "Speakers" %}
+            </a>
         {% endif %}
-        <div class="navigation-button">
-            <a target="_blank" class="header-nav btn btn-outline-success" data-toggle="popover">
-                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+
+        {% with cfp=request.event.cfp %}
+        <a class="header-tab {% if not cfp.is_open and not access_code.is_valid %}disabled{% endif %}"
+            href="{{ request.event.urls.submit }}{{ submit_qs }}">
+            {% if cfp.is_open or access_code.is_valid %}
+                <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+            {% endif %}
+        </a>
+        {% endwith %}
+
+        <div class="video-link">
+            <a join-event-link class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+                href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
+                <i class="fa fa-video-camera"></i> {% translate "Videos" %}
             </a>
         </div>
-        {% if is_video_plugin_enabled %}
-            <div class="video-link">
-                <a join-event-link class="header-nav btn btn-outline-success join-event"
-                    href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
-                    <i class="fa fa-video-camera"></i> {% translate "Join online event" %}
-                </a>
-            </div>
-        {% endif %}
     </div>
 </nav>
+
+<style>
+.navigation a {
+    cursor: pointer;
+    position: relative;
+    text-decoration: none;
+    padding-bottom: 4px;
+}
+
+.navigation a.underline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -10px;
+    width: calc(100% + 20px);
+    height: 2px;
+    background-color: currentColor;
+}
+
+.navigation a:not(.underline):hover {
+    border-bottom: 2px dotted currentColor;
+}
+
+</style>

@@ -24,6 +24,12 @@
 {% endblock nav_link %}
 
 {% block header_tabs %}
+    {% comment %} <a href="{}" class="header-tab">
+        <i class="fa fa-info-circle"></i> {% translate "Info" %}
+    </a> {% endcomment %}
+    <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
+        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+    </a>
     {% if schedule or request.event.current_schedule %}
         <a href="{{ request.event.urls.schedule }}" class="header-tab {% if "/schedule/" in request.path_info %}active{% endif %}">
             <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
@@ -44,11 +50,15 @@
             <i class="fa fa-link"></i> {{ link.label }}
         </a>
     {% endfor %}
-    {% if request.event.display_settings.ticket_link %}
-        <a href="{{ request.event.display_settings.ticket_link }}" class="header-tab">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+
+    {% with cfp=request.event.cfp %}
+        <a class="header-tab {% if not cfp.is_open and not access_code.is_valid %}disabled{% endif %}"
+            href="{{ request.event.urls.submit }}{{ submit_qs }}">
+            {% if cfp.is_open or access_code.is_valid %}
+                <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+            {% endif %}
         </a>
-    {% endif %}
+    {% endwith %}
 
     <a id="join-event-link" href='{% url "agenda:event.onlinevideo.join" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-tab">
         <i class="fa fa-video-camera"></i> {% translate "Videos" %}

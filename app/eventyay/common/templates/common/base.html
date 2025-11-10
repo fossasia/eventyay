@@ -81,22 +81,17 @@
                 {% endblocktranslate %}
             </div>
         {% endif %}
-        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
+        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container" style="{% if '/schedule/' in request.path_info or '/talk' in request.path_info or '/speaker/' in request.path_info %}margin-top: 6.2rem; {% else %}margin-top: 3.8rem{% endif %}">
             <header>
-                <h1>
-                    <a href="{% block nav_link %}{% endblock nav_link %}">
-                        {% if request.event and request.event.logo %}
-                            <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
-                        {% elif request.event %}
-                            {{ request.event.name }}
-                        {% endif %}
-                    </a>
-                </h1>
-                <div class="header-wrapper">
-                    <div id="header-tabs">
-                        {% block header_tabs %}{% endblock header_tabs %}
+                <h1 style="display: flex; margin-bottom: 14px">
+                    <div class="event-logo">
+                        <a href="{% block nav_link %}{% endblock nav_link %}">
+                            {% if request.event and request.event.logo %}
+                                <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}" style="border-radius: 10px;">
+                            {% endif %}
+                        </a>
                     </div>
-                    <div class="header-row-right">
+                    <div class="header-row-right" style="display: flex; align-items: flex-end; font-size: 1rem;">
                         {% if request.event and request.event.locales|length > 1 and not is_html_export %}
                             {% if request.event.locales|length > 3 %}
                                 <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
@@ -134,30 +129,38 @@
                                     {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
                                 </summary>
                                 <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                                    <a href="{% url "cfp:event.user.submissions" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-sticky-note-o mr-2"></i>
+                                    <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-user mr-2 mb-1"></i>
+                                        {% translate "My Account" %}
+                                    </a>
+                                    <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-address-card-o mr-2 mb-1"></i>
+                                        {% translate "My Talk Profile" %}
+                                    </a>
+                                    <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-shopping-cart mr-2 mb-1"></i>
+                                        {% translate "My Orders" %}
+                                    </a>
+                                    <a href="{% url "cfp:event.user.submissions" event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
                                         {% translate "My proposals" %}
                                     </a>
                                     <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-envelope mr-2"></i>
+                                        <i class="fa fa-envelope mr-2 mb-1"></i>
                                         {% translate "My Emails" %}
-                                    </a>
-                                    <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-address-card-o mr-2"></i>
-                                        {% translate "My profile" %}
                                     </a>
                                     {% if can_see_orga_area %}
                                         <hr>
-                                        <a href="{{ request.event.orga_urls.base }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-gears mr-2"></i>
-                                            {% translate "Organiser area" %}
+                                        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                            <i class="fa fa-gears mr-2 mb-1"></i>
+                                            {% translate "Organizer area" %}
                                         </a>
                                     {% endif %}
                                     <hr>
                                     <form action="{% url 'common:auth.logout' %}" method="post">
                                         {% csrf_token %}
                                         <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
-                                            <i class="fa fa-sign-out mr-2 ml-1"></i>
+                                            <i class="fa fa-sign-out mr-2 mb-1 ml-1"></i>
                                             {% translate "Logout" %}
                                         </button>
                                     </form>
@@ -170,6 +173,11 @@
                                 <a href="{% url "orga:login" %}">login</a>
                             {% endif %}
                         {% endif %}
+                    </div>
+                </h1>
+                <div class="header-wrapper" style="display: block !important;">
+                    <div id="header-tabs">
+                        {% block header_tabs %}{% endblock header_tabs %}
                     </div>
                 </div>
             </header>
