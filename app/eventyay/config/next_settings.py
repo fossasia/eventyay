@@ -133,6 +133,8 @@ class BaseSettings(_BaseSettings):
     twitter_client_secret: str = ''
     linkedin_client_id: str = ''
     linkedin_client_secret: str = ''
+    # Ask to provide comments when making changes in the admin interface.
+    admin_audit_comments_asked: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -1100,11 +1102,12 @@ EVENTYAY_PASSWORD_RESET = True
 EVENTYAY_LONG_SESSIONS = True
 # Ref: https://docs.pretix.eu/dev/development/api/auth.html
 EVENTYAY_AUTH_BACKENDS = conf.auth_backends
-EVENTYAY_ADMIN_AUDIT_COMMENTS = True
+EVENTYAY_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
 EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
 # TODO: Merge with above.
+PRETIX_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
 PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
 
