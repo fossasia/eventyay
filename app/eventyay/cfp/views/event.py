@@ -22,7 +22,7 @@ class EventPageMixin(PermissionRequired):
 # check login first, then permission so users get redirected to /login, if they are missing one
 class LoggedInEventPageMixin(LoginRequiredMixin, EventPageMixin):
     def get_login_url(self) -> str:
-        return reverse('cfp:event.login', kwargs={'event': self.request.event.slug})
+        return reverse('cfp:event.login', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug})
 
 
 class EventStartpage(EventPageMixin, TemplateView):

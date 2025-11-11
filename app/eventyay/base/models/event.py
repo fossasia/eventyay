@@ -809,7 +809,7 @@ class Event(
     class urls(EventUrls):
         """URL patterns for public/frontend views of this event."""
         base_path = settings.BASE_PATH
-        base = '{base_path}/{self.slug}/'
+        base = '{base_path}/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         logout = '{base}logout'
         auth = '{base}auth/'
@@ -836,6 +836,7 @@ class Event(
         schedule_widget_data = '{schedule}widgets/schedule.json'
         schedule_widget_script = '{base}widgets/schedule.js'
         settings_css = '{base}static/event.css'
+        video_base = '{base}video/'
 
     class orga_urls(EventUrls):
         """URL patterns for organizer/admin panel views of this event."""
@@ -1054,6 +1055,23 @@ class Event(
         from eventyay.base.services import locking
 
         return locking.LockManager(self)
+
+    def __getstate__(self):
+        """
+        Custom pickle method to exclude unpicklable cached properties like 'cache'
+        which contains thread locks that cannot be serialized.
+        """
+        state = self.__dict__.copy()
+        # Remove the cache property if it has been accessed (it contains unpicklable thread locks)
+        state.pop('cache', None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Custom unpickle method to restore the Event instance.
+        The cache property will be recreated on first access thanks to @cached_property.
+        """
+        self.__dict__.update(state)
 
     def get_mail_backend(self, timeout=None, force_custom=False):
         """

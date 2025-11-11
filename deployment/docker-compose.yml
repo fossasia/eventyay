@@ -70,7 +70,7 @@ services:
       test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
 
   watchtower:
-    image: containrrr/watchtower
+    image: nickfedor/watchtower
     container_name: eventyay-next-watchtower
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock

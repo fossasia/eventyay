@@ -8,7 +8,7 @@ const currentYear = new Date().getFullYear()
 const NODE_PATH = process.env.NODE_PATH
 
 module.exports = {
-	publicPath: '/video', // global path setting
+	publicPath: './', // global path setting to support nested deployment
 	devServer: {
 		host: '0.0.0.0',
 		port: 8880,
@@ -26,15 +26,15 @@ module.exports = {
 		themeColor: '#180044',
 		manifestOptions: {
 			icons: [{
-				src: '/video/eventyay-logo.192.png',
+				src: 'eventyay-logo.192.png',
 				type: 'image/png',
 				sizes: '192x192'
 			}, {
-				src: '/video/eventyay-logo.512.png',
+				src: 'eventyay-logo.512.png',
 				type: 'image/png',
 				sizes: '512x512'
 			}, {
-				src: '/video/eventyay-logo.svg',
+				src: 'eventyay-logo.svg',
 				sizes: '192x192 512x512'
 			}],
 		},

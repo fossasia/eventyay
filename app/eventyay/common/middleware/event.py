@@ -82,7 +82,16 @@ class EventPermissionMiddleware:
                         .values('pk')[:1]
                     )
                     queryset = queryset.annotate(_current_schedule_pk=Subquery(latest_schedule_subquery))
-                    request.event = get_object_or_404(queryset, slug__iexact=event_slug)
+                    
+                    # If organizer is in URL, ensure event belongs to that organizer
+                    if organizer_slug:
+                        request.event = get_object_or_404(
+                            queryset, 
+                            slug__iexact=event_slug,
+                            organizer__slug__iexact=organizer_slug
+                        )
+                    else:
+                        request.event = get_object_or_404(queryset, slug__iexact=event_slug)
                 except ValueError:
                     # Happens mostly on malformed or malicious input
                     raise Http404()

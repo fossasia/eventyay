@@ -42,7 +42,7 @@
 								span(v-for="speaker, index of editorSession.speakers")
 									a(:href="`/orga/event/${eventSlug}/speakers/${speaker.code}/`") {{speaker.name || speaker.code}}
 									span(v-if="index != editorSession.speakers.length - 1") {{', '}}
-								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('names not shared by speaker') }})
+								span.text-warning(v-if="editorSession.speakers.some(s => !s.name)")  ({{ $t('some speakers have not shared their names') }})
 						.data-row(v-else).form-group.row
 							label.data-label.col-form-label.col-md-3 {{ $t('Title') }}
 							.col-md-9

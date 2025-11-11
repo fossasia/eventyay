@@ -150,6 +150,7 @@ export default {
 .c-room-edit-form
 	flex: auto
 	min-height: 0
+	height: 100vh
 	display: flex
 	flex-direction: column
 	.scroll-wrapper

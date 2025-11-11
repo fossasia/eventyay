@@ -12,11 +12,11 @@
 				// TODO buntpapier does not support replace
 				// hardlink params so home page alias works
 				bunt-link-button(:to="{name: 'room:manage', params: {roomId: room.id}}", replace) manage
-				bunt-link-button(:to="{name: 'room'}", replace) view
+				bunt-link-button(:to="{name: 'room', params: {roomId: room.id}}", replace) view
 	router-view(:room="room", :modules="modules")
 	transition(name="prompt")
-		recordings-prompt(v-if="showRecordingsPrompt", :room="room", @close="showRecordingsPrompt = false")
-		QRCodePrompt(v-else-if="showQRCodePrompt", :room="room", @close="showQRCodePrompt = false")
+		recordings-prompt(v-if="showRecordingsPrompt && room", :room="room", @close="showRecordingsPrompt = false")
+		QRCodePrompt(v-else-if="showQRCodePrompt && room", :room="room", @close="showQRCodePrompt = false")
 </template>
 <script>
 // TODO
@@ -52,16 +52,19 @@ export default {
 			return this.rooms.find(room => room.id === this.roomId)
 		},
 		roomType() {
-			return inferRoomType(this.room).id
+			if (!this.room) return null
+			const type = inferRoomType(this.room)
+			return type ? type.id : null
 		},
 		modules() {
-			return this.room?.modules.reduce((acc, module) => {
+			if (!this.room || !this.room.modules) return {}
+			return this.room.modules.reduce((acc, module) => {
 				acc[module.type] = module
 				return acc
 			}, {})
 		},
 		currentSession() {
-			if (!this.$features.enabled('schedule-control')) return
+			if (!this.$features.enabled('schedule-control') || !this.room) return
 			return this.currentSessionPerRoom?.[this.room.id]?.session
 		},
 		canManage() {

@@ -1,7 +1,7 @@
 <template lang="pug">
 .c-app-bar
 	.left
-		button.hamburger(v-if="showActions", type="button", @click="$emit('toggleSidebar')", @touchend="$emit('toggleSidebar')", aria-label="Toggle navigation")
+		button.hamburger(v-if="showActions", type="button", @click.stop="$emit('toggleSidebar')", aria-label="Toggle navigation")
 			span.bar
 			span.bar
 			span.bar
@@ -32,6 +32,7 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import theme from 'theme'
 import Avatar from 'components/Avatar'
+import config from 'config'
 
 const props = defineProps({
 	showActions: {
@@ -101,16 +102,22 @@ const userProfileEl = ref(null)
 
 function buildBaseSansVideo() {
 	const { protocol, host } = window.location
-	const pathname = window.location.pathname
-	const idx = pathname.indexOf('/video')
-	let basePath = '/'
-	if (idx > -1) {
-		const pre = pathname.substring(0, idx) || '/'
-		basePath = pre.endsWith('/') ? pre : pre + '/'
-	} else {
-		basePath = '/'
+	const basePath = config?.basePath ?? ''
+	if (!basePath) {
+		return `${protocol}//${host}/`
 	}
-	return protocol + '//' + host + basePath
+	const segments = basePath.split('/').filter(Boolean)
+	const videoIndex = segments.lastIndexOf('video')
+	if (videoIndex === -1) {
+		return `${protocol}//${host}/`
+	}
+	const prefixEnd = Math.max(0, videoIndex - 2)
+	const prefixSegments = segments.slice(0, prefixEnd)
+	const prefix =
+		prefixSegments.length > 0
+			? `/${prefixSegments.join('/')}/`
+			: '/'
+	return `${protocol}//${host}${prefix}`
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
@@ -123,7 +130,7 @@ function logout() {
 	localStorage.removeItem('token')
 	localStorage.removeItem('clientId')
 	// Navigate to Django logout which handles session and redirects to login
-	const logoutUrl = '/common/logout/'
+	const logoutUrl = buildBaseSansVideo() + 'common/logout/'
 	window.location.href = logoutUrl
 }
 function onMenuItem(item) {
@@ -207,8 +214,6 @@ onBeforeUnmount(() => {
 	justify-content: space-between
 	padding: 0 8px
 	background-color: var(--clr-sidebar)
-	border-bottom: 2px solid var(--clr-primary)
-	box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 3px 9px -2px rgba(0,0,0,0.35)
 	white-space: nowrap
 	overflow: visible
 	z-index: 120
@@ -231,6 +236,8 @@ onBeforeUnmount(() => {
 			justify-content: center
 			align-items: flex-start
 			cursor: pointer
+			-webkit-tap-highlight-color: transparent
+			outline: none
 			&:focus-visible
 				outline: 2px solid var(--clr-primary)
 				outline-offset: 2px
@@ -240,11 +247,8 @@ onBeforeUnmount(() => {
 				height: 3px
 				background: var(--clr-sidebar-text-primary)
 				border-radius: 2px
-				transition: background .2s
 				&:not(:last-child)
 					margin-bottom: 5px
-			&:hover .bar
-				background: var(--clr-sidebar-text-secondary)
 	.logo
 		margin-left: 0
 		font-size: 24px
@@ -326,7 +330,7 @@ onBeforeUnmount(() => {
 			border-radius: 2px
 			box-shadow: 0 3px 8px rgba(0,0,0,0.175), 0 1px 3px rgba(0,0,0,0.105)
 			padding: 6px 0
-			z-index: 130
+			z-index: 120
 			font-size: 14px
 			user-select: none
 			.menu-item

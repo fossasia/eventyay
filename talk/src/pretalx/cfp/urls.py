@@ -88,7 +88,6 @@ urlpatterns = [
             ]
         ),
     ),
-    path("locale/set", locale.LocaleSet.as_view(), name="locale.set_global"),
     path(
         "control/<path:path>",
         RedirectView.as_view(url="/orga/%(path)s"),
