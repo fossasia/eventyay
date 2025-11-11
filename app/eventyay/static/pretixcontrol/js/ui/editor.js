@@ -95,7 +95,7 @@ fabric.Textarea.fromObject = function (object, callback, forceAsync) {
 };
 
 
-var editor = {
+const editor = {
     $pdfcv: null,
     $fcv: null,
     $cva: null,
@@ -131,20 +131,20 @@ var editor = {
     },
 
     dump: function (objs) {
-        var d = [];
+        let d = [];
         objs = objs || editor.fabric.getObjects();
 
-        for (var i in objs) {
-            var o = objs[i];
-            var top = o.top;
-            var left = o.left;
+        for (let i in objs) {
+            let o = objs[i];
+            let top = o.top;
+            let left = o.left;
             if (o.group) {
                 top += o.group.top + o.group.height / 2;
                 left += o.group.left + o.group.width / 2;
             }
             if (o.type === "textarea") {
-                var col = (new fabric.Color(o.fill))._source;
-                var bottom = editor.pdf_viewport.height - o.height - top;
+                let col = (new fabric.Color(o.fill))._source;
+                let bottom = editor.pdf_viewport.height - o.height - top;
                 if (o.downward) {
                     bottom = editor.pdf_viewport.height - top;
                 }
@@ -253,8 +253,8 @@ var editor = {
 
     load: function(data) {
         editor.fabric.clear();
-        for (var i in data) {
-            var d = data[i], o;
+        for (let i in data) {
+            let d = data[i];
             editor._add_from_data(d);
         }
         editor.fabric.renderAll();
@@ -271,51 +271,47 @@ var editor = {
     },
 
     _load_pdf: function (dump) {
-        // TODO: Loading indicators
-        var url = editor.pdf_url;
-        // TODO: Handle cross-origin issues if static files are on a different origin
-        PDFJS.workerSrc = editor.$pdfcv.attr("data-worker-url");
+    // Set the worker source for PDF.js
+    PDFJS.workerSrc = editor.$pdfcv.attr("data-worker-url");
 
-        // Asynchronous download of PDF
-        var loadingTask = PDFJS.getDocument(url);
-        loadingTask.promise.then(function (pdf) {
-            console.log('PDF loaded');
+    PDFJS.getDocument(editor.pdf_url).promise.then(function (pdf) {
+        editor.pdf = pdf;
+        pdf.getPage(1).then(function (page) {
+            let canvas = editor.$pdfcv.get(0);
+            let containerWidth = editor.$cva.width();
+            // Use the actual container height or calculate it more accurately
+            let containerHeight = editor.$cva.height() || Math.min(window.innerHeight - 100, 1000);
+            let pageViewport = page.getViewport(1.0);
+            let scaleX = containerWidth / pageViewport.width;
+            let scaleY = containerHeight / pageViewport.height;
+            let scale = Math.min(scaleX, scaleY) * 1.0; // Increased to 1.0 (100%) for maximum size
+            let viewport = page.getViewport(scale);
+            // Prepare canvas using PDF page dimensions
+            let context = canvas.getContext('2d');
+            context.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
 
-            // Fetch the first page
-            var pageNumber = 1;
-            pdf.getPage(pageNumber).then(function (page) {
-                console.log('Page loaded');
-                var canvas = document.getElementById('pdf-canvas');
+            editor.pdf_page = page;
+            editor.pdf_scale = scale;
+            editor.pdf_viewport = viewport;
 
-                var scale = editor.$cva.width() / page.getViewport(1.0).width;
-                var viewport = page.getViewport(scale);
-
-                // Prepare canvas using PDF page dimensions
-                var context = canvas.getContext('2d');
-                context.clearRect(0, 0, canvas.width, canvas.height);
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-
-                editor.pdf_page = page;
-                editor.pdf_scale = scale;
-                editor.pdf_viewport = viewport;
-
-                // Render PDF page into canvas context
-                var renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
-                var renderTask = page.render(renderContext);
-                renderTask.then(function () {
-                    console.log('Page rendered');
-                    editor._init_fabric(dump);
-                });
+            // Render PDF page into canvas context
+            let renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            let renderTask = page.render(renderContext);
+            renderTask.then(function () {
+                console.log('Page rendered');
+                editor._init_fabric(dump);
             });
-        }, function (reason) {
-            var msg = gettext('The PDF background file could not be loaded for the following reason:');
-            editor._error(msg + ' ' + reason);
         });
-    },
+    }, function (reason) {
+        let msg = gettext('The PDF background file could not be loaded for the following reason:');
+        editor._error(msg + ' ' + reason);
+    });
+},
 
     _init_fabric: function (dump) {
         editor.$fcv.get(0).width = editor.$pdfcv.get(0).width;
@@ -804,7 +800,7 @@ var editor = {
 
     _replace_pdf_file: function (url) {
         editor.pdf_url = url;
-        d = editor.dump();
+        const d = editor.dump();
         editor.fabric.dispose();
         editor._load_pdf(d);
     },
@@ -860,7 +856,19 @@ var editor = {
         editor.$cva.get(0).tabIndex = 1000;
         editor.$cva.on("keydown", editor._on_keydown);
         $("#editor-save").on("click", editor._save);
-        $("#editor-preview").on("click", editor._preview);
+        // Removed: $("#editor-preview").on("click", editor._preview);
+
+        // Implement proper debouncing for window resize
+        let resizeTimeout;
+        $(window).on('resize', function() {
+            if (editor.pdf_page && editor._fabric_loaded) {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function() {
+                    editor._load_pdf(editor.dump());
+                }, 250); // Increased timeout for better performance
+            }
+        });
+
         window.onbeforeunload = function () {
             if (editor.dirty) {
                 return gettext("Do you really want to leave the editor without saving your changes?");
