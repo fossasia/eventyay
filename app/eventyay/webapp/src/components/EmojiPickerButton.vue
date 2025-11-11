@@ -108,6 +108,11 @@ export default {
 .c-emoji-picker-button
 	.btn-emoji-picker
 		icon-button-style()
+		-webkit-tap-highlight-color: transparent
+		outline: none
+		&:focus-visible
+			outline: 2px solid var(--clr-primary, $clr-primary)
+			outline-offset: 2px
 		svg
 			path
 				fill: $clr-primary-text-light
