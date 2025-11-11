@@ -155,7 +155,6 @@ const editor = {
                     bottom: editor._px2mm(bottom).toFixed(2),
                     fontsize: editor._px2pt(o.fontSize).toFixed(1),
                     color: col,
-                    //lineheight: o.lineHeight,
                     fontfamily: o.fontFamily,
                     bold: o.fontWeight === 'bold',
                     italic: o.fontStyle === 'italic',
@@ -236,7 +235,6 @@ const editor = {
             }
             o.set('width', editor._mm2px(d.width));
             if (d.locale) {
-                // The data format allows to set the locale per text field but we currently only expose a global field
                 $("#pdf-info-locale").val(d.locale);
             }
         }
@@ -279,14 +277,12 @@ const editor = {
         pdf.getPage(1).then(function (page) {
             let canvas = editor.$pdfcv.get(0);
             let containerWidth = editor.$cva.width();
-            // Use the actual container height or calculate it more accurately
             let containerHeight = editor.$cva.height() || Math.min(window.innerHeight - 100, 1000);
             let pageViewport = page.getViewport(1.0);
             let scaleX = containerWidth / pageViewport.width;
             let scaleY = containerHeight / pageViewport.height;
-            let scale = Math.min(scaleX, scaleY) * 1.0; // Increased to 1.0 (100%) for maximum size
+            let scale = Math.min(scaleX, scaleY) * 1.0; 
             let viewport = page.getViewport(scale);
-            // Prepare canvas using PDF page dimensions
             let context = canvas.getContext('2d');
             context.clearRect(0, 0, canvas.width, canvas.height);
             canvas.height = viewport.height;
@@ -296,7 +292,6 @@ const editor = {
             editor.pdf_scale = scale;
             editor.pdf_viewport = viewport;
 
-            // Render PDF page into canvas context
             let renderContext = {
                 canvasContext: context,
                 viewport: viewport
@@ -403,7 +398,6 @@ const editor = {
             var col = (new fabric.Color(o.fill))._source;
             $("#toolbox-col").val("#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1));
             $("#toolbox-fontsize").val(editor._px2pt(o.fontSize).toFixed(1));
-            //$("#toolbox-lineheight").val(o.lineHeight);
             $("#toolbox-fontfamily").val(o.fontFamily);
             $("#toolbox").find("button[data-action=bold]").toggleClass('active', o.fontWeight === 'bold');
             $("#toolbox").find("button[data-action=italic]").toggleClass('active', o.fontStyle === 'italic');
@@ -856,16 +850,14 @@ const editor = {
         editor.$cva.get(0).tabIndex = 1000;
         editor.$cva.on("keydown", editor._on_keydown);
         $("#editor-save").on("click", editor._save);
-        // Removed: $("#editor-preview").on("click", editor._preview);
 
-        // Implement proper debouncing for window resize
         let resizeTimeout;
         $(window).on('resize', function() {
             if (editor.pdf_page && editor._fabric_loaded) {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(function() {
                     editor._load_pdf(editor.dump());
-                }, 250); // Increased timeout for better performance
+                }, 250); 
             }
         });
 

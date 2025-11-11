@@ -394,22 +394,12 @@
                         <span class="fa fa-qrcode"></span>
                         {% trans "Attendee QR Code" %}
                     </button>
-                    <!--<button class="btn btn-default btn-block" id="editor-add-qrcode-lead"
-                            data-content="pseudonymization_id"
-                            disabled>
-                        <span class="fa fa-qrcode"></span>
-                        {% trans "QR code for Lead Scanning" %}
-                    </button>-->
                     <button class="btn btn-default btn-block" id="editor-add-poweredby"
                             data-content="dark"
                             disabled>
                         <span class="fa fa-image"></span>
                         {% trans "eventyay Logo" %}
                     </button>
-                    <!--<button class="btn btn-default btn-block" id="editor-add-image" disabled>
-                        <span class="fa fa-image"></span>
-                        {% trans "Dynamic image" %}
-                    </button>-->
                 </div>
             </div>
 
@@ -418,7 +408,6 @@
                     {% csrf_token %}
                     <input type="hidden" value="" name="data">
                     <input type="hidden" value="" name="background">
-                    <!-- Preview input and button removed -->
                     <button type="submit" class="btn btn-primary btn-lg btn-save" id="editor-save">
                         {% trans "Save" %}
                     </button>
