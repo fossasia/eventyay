@@ -42,9 +42,6 @@ header {
   .header-wrapper {
     width: 100%;
     max-width: calc(100vw - 8px);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
     word-break: keep-all;
     flex-wrap: nowrap;
   }
@@ -76,6 +73,8 @@ header {
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
+    align-items: flex-end;
+    font-size: 1rem;
 
     /* Inline locale links */
     .locales-inline {
@@ -135,6 +134,11 @@ header {
       }
     }
   }
+}
+
+.public-event-header {
+  display: flex;
+  margin-bottom: 14px
 }
 
 #main-card {
@@ -251,6 +255,12 @@ footer {
       #event-logo {
         max-height: 120px;
       }
+    }
+
+    .header-wrapper {
+      overflow: scroll;
+      background: var(--color-bg);
+      padding-bottom: 6rem;
     }
 
     .user-row {

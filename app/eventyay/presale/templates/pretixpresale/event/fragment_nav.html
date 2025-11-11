@@ -3,12 +3,8 @@
 {% load eventurl %}
 {% load event_tags %}
 
-<nav style="margin-top: 10px; margin-bottom: 3rem">
-    <div class="navigation" style="font-size: 1.65rem; display: flex; gap: 2rem; margin-top: 0">
-        {% comment %} <a href="" class="header-tab {% if request.path_info == '/' or request.path_info == '/tickets' %}underline{% endif %}">
-            <i class="fa fa-info-circle"></i> {% translate "Info" %}
-        </a> {% endcomment %}
-
+<nav style="margin-top: 10px; margin-bottom: 3rem; overflow: scroll;">
+    <div class="navigation" style="font-size: 1.65rem; display: flex; gap: 2rem;">
         <a target="_blank" class="header-tab underline">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>

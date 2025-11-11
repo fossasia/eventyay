@@ -81,9 +81,9 @@
                 {% endblocktranslate %}
             </div>
         {% endif %}
-        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container" style="{% if '/schedule/' in request.path_info or '/talk' in request.path_info or '/speaker/' in request.path_info %}margin-top: 6.2rem; {% else %}margin-top: 3.8rem{% endif %}">
+        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container" style="margin-top: 3.8rem">
             <header>
-                <h1 style="display: flex; margin-bottom: 14px">
+                <h1 class="public-event-header">
                     <div class="event-logo">
                         <a href="{% block nav_link %}{% endblock nav_link %}">
                             {% if request.event and request.event.logo %}
@@ -91,7 +91,7 @@
                             {% endif %}
                         </a>
                     </div>
-                    <div class="header-row-right" style="display: flex; align-items: flex-end; font-size: 1rem;">
+                    <div class="header-row-right">
                         {% if request.event and request.event.locales|length > 1 and not is_html_export %}
                             {% if request.event.locales|length > 3 %}
                                 <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
@@ -141,7 +141,7 @@
                                         <i class="fa fa-shopping-cart mr-2 mb-1"></i>
                                         {% translate "My Orders" %}
                                     </a>
-                                    <a href="{% url "cfp:event.user.submissions" event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                    <a href="{% url "cfp:event.user.submissions"  organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
                                         <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
                                         {% translate "My proposals" %}
                                     </a>
@@ -175,7 +175,7 @@
                         {% endif %}
                     </div>
                 </h1>
-                <div class="header-wrapper" style="display: block !important;">
+                <div class="header-wrapper">
                     <div id="header-tabs">
                         {% block header_tabs %}{% endblock header_tabs %}
                     </div>
