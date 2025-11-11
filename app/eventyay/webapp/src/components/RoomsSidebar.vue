@@ -1,7 +1,6 @@
 <template lang="pug">
 transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel", @click.capture="onSidebarClickCapture")
-		bunt-icon-button#btn-close-sidebar(v-if="!$mq.above['m']", @click="$emit('close')") menu
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)", @click="onNavigate")
@@ -235,15 +234,13 @@ export default {
 	display: flex
 	flex-direction: column
 	position: fixed
-	top: 0
+	top: 48px
 	left: 0
-	z-index: 110
+	z-index: 125
 	width: var(--sidebar-width)
-	padding: calc(48px + 16px) 0 16px 0
-	height: var(--vh100)
-	box-sizing: border-box
-	// Visual separation shadow similar to app bar
-	box-shadow: 0 2px 4px rgba(0,0,0,0.22), 0 3px 9px -2px rgba(0,0,0,0.35)
+	height: calc(var(--vh100) - 48px)
+	// Start off-screen on mobile, visible on desktop
+	transform: translateX(0)
 	// Animate open/close on all screen sizes
 	&.sidebar-enter-active, &.sidebar-leave-active
 		transition: transform .2s ease

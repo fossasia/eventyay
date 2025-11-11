@@ -3,7 +3,8 @@
 	.inputs
 		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('profile/ChangeAvatar:button-randomize:label') }}
 		span {{ $t('profile/ChangeAvatar:or') }}
-		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
+		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
+	.upload-info Maximum file size: 10 MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels.
 	.image-wrapper
 		.file-error(v-if="fileError")
 			.mdi.mdi-alert-octagon
@@ -21,6 +22,9 @@ import Identicon from 'components/Identicon'
 import UploadButton from 'components/UploadButton'
 
 const MAX_AVATAR_SIZE = 128
+const MAX_FILE_SIZE_MB = 10
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+const ALLOWED_FORMATS = ['image/png', 'image/jpg', 'image/jpeg']
 
 // Props & Emits
 const props = defineProps({
@@ -61,6 +65,23 @@ function fileSelected(event) {
 	emit('blockSave', false)
 	if (event.target.files.length !== 1) return
 	const avatarFile = event.target.files[0]
+	
+	// Validate file size (10MB max)
+	if (avatarFile.size > MAX_FILE_SIZE_BYTES) {
+		fileError.value = `File size exceeds ${MAX_FILE_SIZE_MB} MB. Please choose a smaller image.`
+		emit('blockSave', true)
+		event.target.value = ''
+		return
+	}
+	
+	// Validate file format
+	if (!ALLOWED_FORMATS.includes(avatarFile.type)) {
+		fileError.value = 'Invalid file format. Only PNG, JPG, and JPEG images are allowed.'
+		emit('blockSave', true)
+		event.target.value = ''
+		return
+	}
+	
 	const reader = new FileReader()
 	reader.readAsDataURL(avatarFile)
 	event.target.value = ''
@@ -129,6 +150,15 @@ defineExpose({ update })
 .c-change-avatar
 	display: flex
 	flex-direction: column
+	.upload-info
+		font-size: 12px
+		color: rgba(0, 0, 0, 0.6)
+		margin: 8px 0
+		padding: 8px 12px
+		background: rgba(33, 133, 208, 0.08)
+		border-left: 3px solid var(--clr-primary, #2185d0)
+		border-radius: 2px
+		line-height: 1.5
 	align-items: center
 	.c-identicon
 		cursor: pointer
