@@ -31,10 +31,9 @@ export default {
 	.emoji-mart-emoji
 		-webkit-tap-highlight-color: transparent
 		outline: none
-		&:focus
-			outline: none
-		&:active
-			outline: none
+		&:focus-visible
+			outline: 2px solid var(--focus-color, $clr-primary)
+			outline-offset: 2px
 		span
 			image-rendering: -webkit-optimize-contrast
 </style>

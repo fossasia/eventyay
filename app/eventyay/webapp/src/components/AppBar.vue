@@ -229,12 +229,11 @@ onBeforeUnmount(() => {
 			justify-content: center
 			align-items: flex-start
 			cursor: pointer
-			outline: none
 			-webkit-tap-highlight-color: transparent
-			&:focus
-				outline: none
-			&:active
-				outline: none
+			outline: none
+			&:focus-visible
+				outline: 2px solid var(--clr-primary)
+				outline-offset: 2px
 			.bar
 				display: block
 				width: 22px

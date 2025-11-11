@@ -110,10 +110,9 @@ export default {
 		icon-button-style()
 		-webkit-tap-highlight-color: transparent
 		outline: none
-		&:focus
-			outline: none
-		&:active
-			outline: none
+		&:focus-visible
+			outline: 2px solid var(--clr-primary, $clr-primary)
+			outline-offset: 2px
 		svg
 			path
 				fill: $clr-primary-text-light
