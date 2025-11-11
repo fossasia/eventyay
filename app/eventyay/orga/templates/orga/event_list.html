@@ -1,6 +1,7 @@
 {% extends "orga/base.html" %}
 
 {% load compress %}
+{% load staff_session %}
 {% load i18n %}
 {% load rules %}
 {% load static %}
@@ -14,7 +15,7 @@
 {% endblock stylesheets %}
 
 {% block content %}
-    {% has_perm "base.create_event" request.user request.user as can_create_event %}
+    {% has_event_perm "base.create_event" request.user request request.user as can_create_event %}
 
     {% if current_orga_events or past_orga_events or can_create_event %}
         <form class="mb-4 m-2">

@@ -748,8 +748,8 @@ class Event(
         blank=True,
         verbose_name=_('Logo'),
         help_text=_(
-            'If you provide a logo image, your event’s name will not be shown in the event header. '
-            'The logo will be scaled down to a height of 140px.'
+            'When you upload a logo, the event name and date will not appear in the header. '
+            'The logo scales to 140 px in height while maintaining aspect ratio.'
         ),
     )
     header_image = models.ImageField(
@@ -758,9 +758,9 @@ class Event(
         blank=True,
         verbose_name=_('Header image'),
         help_text=_(
-            'If you provide a header image, it will be displayed instead of your event’s color and/or header pattern '
-            'at the top of all event pages. It will be center-aligned, so when the window shrinks, '
-            'the center parts will continue to be displayed, and not stretched.'
+            'This image appears at the top of all event pages, replacing the default color or pattern. '
+            'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+            'We recommend an image at least 1170 px wide and 120 px in height for best results.'
         ),
     )
     locale_array = models.TextField(default=settings.LANGUAGE_CODE)
@@ -1054,6 +1054,23 @@ class Event(
         from eventyay.base.services import locking
 
         return locking.LockManager(self)
+
+    def __getstate__(self):
+        """
+        Custom pickle method to exclude unpicklable cached properties like 'cache'
+        which contains thread locks that cannot be serialized.
+        """
+        state = self.__dict__.copy()
+        # Remove the cache property if it has been accessed (it contains unpicklable thread locks)
+        state.pop('cache', None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Custom unpickle method to restore the Event instance.
+        The cache property will be recreated on first access thanks to @cached_property.
+        """
+        self.__dict__.update(state)
 
     def get_mail_backend(self, timeout=None, force_custom=False):
         """
