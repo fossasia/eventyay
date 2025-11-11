@@ -85,8 +85,8 @@ import MenuDropdown from 'components/MenuDropdown'
 import Prompt from 'components/Prompt'
 import Poll from 'components/Poll'
 
-const DATETIME_FORMAT = 'DD.MM. LT'
-const TIME_FORMAT = 'LT'
+const DATETIME_FORMAT = 'MMM D, h:mm A'
+const TIME_FORMAT = 'h:mm A'
 
 export default {
 	name: 'ChatMessage',
@@ -219,8 +219,9 @@ export default {
 	&.readonly
 		pointer-events: none
 	.timestamp
-		font-size: 11px
+		font-size: 12px
 		color: $clr-secondary-text-light
+		white-space: nowrap
 	.avatar-column
 		flex: none
 		width: 28px
