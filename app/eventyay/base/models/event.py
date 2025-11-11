@@ -1056,6 +1056,23 @@ class Event(
 
         return locking.LockManager(self)
 
+    def __getstate__(self):
+        """
+        Custom pickle method to exclude unpicklable cached properties like 'cache'
+        which contains thread locks that cannot be serialized.
+        """
+        state = self.__dict__.copy()
+        # Remove the cache property if it has been accessed (it contains unpicklable thread locks)
+        state.pop('cache', None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Custom unpickle method to restore the Event instance.
+        The cache property will be recreated on first access thanks to @cached_property.
+        """
+        self.__dict__.update(state)
+
     def get_mail_backend(self, timeout=None, force_custom=False):
         """
         Returns an email server connection, either by using the system-wide connection
