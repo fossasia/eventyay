@@ -32,6 +32,7 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import theme from 'theme'
 import Avatar from 'components/Avatar'
+import config from 'config'
 
 const props = defineProps({
 	showActions: {
@@ -101,16 +102,22 @@ const userProfileEl = ref(null)
 
 function buildBaseSansVideo() {
 	const { protocol, host } = window.location
-	const pathname = window.location.pathname
-	const idx = pathname.indexOf('/video')
-	let basePath = '/'
-	if (idx > -1) {
-		const pre = pathname.substring(0, idx) || '/'
-		basePath = pre.endsWith('/') ? pre : pre + '/'
-	} else {
-		basePath = '/'
+	const basePath = config?.basePath ?? ''
+	if (!basePath) {
+		return `${protocol}//${host}/`
 	}
-	return protocol + '//' + host + basePath
+	const segments = basePath.split('/').filter(Boolean)
+	const videoIndex = segments.lastIndexOf('video')
+	if (videoIndex === -1) {
+		return `${protocol}//${host}/`
+	}
+	const prefixEnd = Math.max(0, videoIndex - 2)
+	const prefixSegments = segments.slice(0, prefixEnd)
+	const prefix =
+		prefixSegments.length > 0
+			? `/${prefixSegments.join('/')}/`
+			: '/'
+	return `${protocol}//${host}${prefix}`
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
@@ -123,7 +130,7 @@ function logout() {
 	localStorage.removeItem('token')
 	localStorage.removeItem('clientId')
 	// Navigate to Django logout which handles session and redirects to login
-	const logoutUrl = '/common/logout/'
+	const logoutUrl = buildBaseSansVideo() + 'common/logout/'
 	window.location.href = logoutUrl
 }
 function onMenuItem(item) {

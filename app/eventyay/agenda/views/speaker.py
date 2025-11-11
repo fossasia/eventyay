@@ -33,7 +33,7 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
     def get_queryset(self):
         qs = (
             SpeakerProfile.objects.filter(user__in=self.request.event.speakers, event=self.request.event)
-            .select_related('user', 'event')
+            .select_related('user', 'event', 'event__organizer')
             .order_by('user__fullname')
         )
         qs = self.filter_queryset(qs)
@@ -58,7 +58,7 @@ class SpeakerView(PermissionRequired, TemplateView):
     def profile(self):
         return (
             SpeakerProfile.objects.filter(event=self.request.event, user__code__iexact=self.kwargs['code'])
-            .select_related('user')
+            .select_related('user', 'event', 'event__organizer')
             .first()
         )
 
@@ -71,7 +71,7 @@ class SpeakerView(PermissionRequired, TemplateView):
             self.request.event.current_schedule.talks.filter(
                 submission__speakers__code=self.kwargs['code'], is_visible=True
             )
-            .select_related('submission', 'room', 'submission__event')
+            .select_related('submission', 'room', 'submission__event', 'submission__event__organizer')
             .prefetch_related('submission__speakers')
         )
 
@@ -140,7 +140,7 @@ class SpeakerSocialMediaCard(SocialMediaCardMixin, SpeakerView):
 
 
 @cache_page(60 * 60)
-def empty_avatar_view(request, event):
+def empty_avatar_view(request, organizer=None, event=None):
     # cached for an hour
     color = request.event.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
     avatar_template = f"""<svg
