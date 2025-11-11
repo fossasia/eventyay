@@ -45,7 +45,7 @@ def event():
     event = Event.objects.last()
     with scope(event=event):
         event.name = "Meta Event Tech Alternative"
-        event.is_public = True
+        event.live = True
         event.email = "orga@orga.org"
         event.date_from = dt.date.today()
         event.date_to = dt.date.today() + dt.timedelta(days=1)

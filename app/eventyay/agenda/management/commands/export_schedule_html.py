@@ -22,7 +22,7 @@ SERVER_NAME = settings.SITE_URL.split('://')[1]
 @contextlib.contextmanager
 def fake_admin(event):
     with rolledback_transaction():
-        event.is_public = True
+        event.live = True
         event.custom_domain = None
         event.feature_flags['show_schedule'] = True
         event.save()

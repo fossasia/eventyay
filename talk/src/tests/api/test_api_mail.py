@@ -22,11 +22,11 @@ def test_mail_template_serializer(mail_template):
         }
 
 
-@pytest.mark.parametrize("is_public", (True, False))
+@pytest.mark.parametrize("live", (True, False))
 @pytest.mark.django_db
-def test_cannot_see_mail_templates(client, mail_template, is_public):
+def test_cannot_see_mail_templates(client, mail_template, live):
     with scope(event=mail_template.event):
-        mail_template.event.is_public = is_public
+        mail_template.event.live = live
         mail_template.event.save()
     response = client.get(mail_template.event.api_urls.mail_templates, follow=True)
     assert response.status_code == 401

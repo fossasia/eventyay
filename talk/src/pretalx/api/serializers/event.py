@@ -12,7 +12,7 @@ class EventListSerializer(ModelSerializer):
         fields = [
             "name",
             "slug",
-            "is_public",
+            "live",
             "date_from",
             "date_to",
             "timezone",

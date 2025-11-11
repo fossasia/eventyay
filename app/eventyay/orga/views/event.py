@@ -188,7 +188,7 @@ class EventLive(EventSettingsPermission, TemplateView):
         event = request.event
         action = request.POST.get('action')
         if action == 'activate':
-            if event.is_public:
+            if event.live:
                 messages.success(request, _('This event was already live.'))
             else:
                 responses = activate_event.send_robust(event, request=request)
@@ -201,7 +201,7 @@ class EventLive(EventSettingsPermission, TemplateView):
                         mark_safe('\n'.join(render_markdown(e) for e in exceptions)),
                     )
                 else:
-                    event.is_public = True
+                    event.live = True
                     event.save()
                     event.log_action(
                         'eventyay.event.activate',
@@ -214,10 +214,10 @@ class EventLive(EventSettingsPermission, TemplateView):
                         if isinstance(response[1], str):
                             messages.success(request, response[1])
         else:  # action == 'deactivate'
-            if not event.is_public:
+            if not event.live:
                 messages.success(request, _('This event was already hidden.'))
             else:
-                event.is_public = False
+                event.live = False
                 event.save()
                 event.log_action(
                     'eventyay.event.deactivate',

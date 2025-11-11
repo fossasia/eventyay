@@ -6,7 +6,7 @@ from pretalx.agenda.rules import is_agenda_visible, is_speaker_viewable
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "is_public,show_schedule,has_schedule,result",
+    "live,show_schedule,has_schedule,result",
     (
         (True, True, True, True),
         (True, True, False, False),
@@ -16,10 +16,10 @@ from pretalx.agenda.rules import is_agenda_visible, is_speaker_viewable
     ),
 )
 def test_agenda_permission_is_agenda_visible(
-    is_public, show_schedule, has_schedule, result, event
+    live, show_schedule, has_schedule, result, event
 ):
     with scope(event=event):
-        event.is_public = is_public
+        event.live = live
         event.feature_flags["show_schedule"] = show_schedule
         event.save()
         if has_schedule:

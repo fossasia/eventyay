@@ -513,7 +513,7 @@ def test_cannot_see_tracks(client, track):
 @pytest.mark.django_db
 def test_can_see_tracks_public_event(client, track, slot):
     with scope(event=track.event):
-        track.event.is_public = True
+        track.event.live = True
         track.event.save()
     response = client.get(track.event.api_urls.tracks, follow=True)
     content = json.loads(response.text)
@@ -709,7 +709,7 @@ def test_submission_type_serializer(submission_type):
 @pytest.mark.django_db
 def test_cannot_see_submission_types(client, submission_type):
     with scope(event=submission_type.event):
-        submission_type.event.is_public = False
+        submission_type.event.live = False
         submission_type.event.save()
     response = client.get(submission_type.event.api_urls.submission_types, follow=True)
     assert response.status_code == 401
@@ -1362,7 +1362,7 @@ def test_public_submission_expandable_fields(
     client, event, slot, answer, track, speaker_answer
 ):
     with scope(event=slot.submission.event):
-        slot.submission.event.is_public = True
+        slot.submission.event.live = True
         slot.submission.event.save()
         slot.submission.state = SubmissionStates.ACCEPTED
         slot.submission.track = track

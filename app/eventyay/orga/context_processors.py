@@ -66,7 +66,7 @@ def orga_events(request):
     context['html_head'] = ''.join(collect_signal(html_head, {'sender': request.event, 'request': request}))
 
     if (
-        not request.event.is_public
+        not request.event.live
         and request.event.custom_domain
         and request.user.has_perm('base.view_event', request.event)
     ):

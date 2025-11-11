@@ -116,7 +116,7 @@ def event(organiser):
     with scopes_disabled():
         event = Event.objects.create(
             name="Fancy testevent",
-            is_public=True,
+            live=True,
             slug="test",
             email="orga@orga.org",
             date_from=today,
@@ -136,7 +136,7 @@ def other_event(other_organiser):
     with scopes_disabled():
         event = Event.objects.create(
             name="Boring testevent",
-            is_public=True,
+            live=True,
             slug="other",
             email="orga2@orga.org",
             date_from=dt.date.today() + dt.timedelta(days=1),
@@ -156,7 +156,7 @@ def multilingual_event(organiser):
         today = dt.date.today()
         event = Event.objects.create(
             name="Fancy testevent",
-            is_public=True,
+            live=True,
             slug="test2",
             email="orga@orga.org",
             date_from=today,

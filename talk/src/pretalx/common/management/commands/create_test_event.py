@@ -78,7 +78,7 @@ Feel free to look around, but don\'t be alarmed if something doesn\'t quite make
                 name="DemoCon",
                 slug=slug,
                 organiser=organiser,
-                is_public=True,
+                live=True,
                 date_from=event_start.date(),
                 date_to=event_start.date() + dt.timedelta(days=2),
                 timezone="Europe/Berlin",

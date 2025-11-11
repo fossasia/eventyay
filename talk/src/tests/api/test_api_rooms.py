@@ -51,7 +51,7 @@ def test_cannot_see_rooms(client, room):
 @pytest.mark.django_db
 def test_can_see_rooms_public_event(client, room, slot):
     with scope(event=room.event):
-        room.event.is_public = True
+        room.event.live = True
         room.event.save()
     response = client.get(room.event.api_urls.rooms, follow=True)
     content = json.loads(response.text)

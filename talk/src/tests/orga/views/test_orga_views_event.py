@@ -275,40 +275,40 @@ def test_event_remove_relevant_locales(multilingual_event, orga_client):
 
 
 @pytest.mark.django_db
-def test_toggle_event_is_public(event, orga_client):
-    assert event.is_public
+def test_toggle_event_live(event, orga_client):
+    assert event.live
     response = orga_client.get(event.orga_urls.live, follow=True)
     assert response.status_code == 200
     event.refresh_from_db()
-    assert event.is_public
+    assert event.live
     response = orga_client.post(
         event.orga_urls.live, {"action": "activate"}, follow=True
     )
     assert response.status_code == 200
     event.refresh_from_db()
-    assert event.is_public
+    assert event.live
     response = orga_client.post(
         event.orga_urls.live, {"action": "deactivate"}, follow=True
     )
     assert response.status_code == 200
     event.refresh_from_db()
-    assert not event.is_public
+    assert not event.live
     response = orga_client.post(
         event.orga_urls.live, {"action": "deactivate"}, follow=True
     )
     assert response.status_code == 200
     event.refresh_from_db()
-    assert not event.is_public
+    assert not event.live
     response = orga_client.post(
         event.orga_urls.live, {"action": "activate"}, follow=True
     )
     assert response.status_code == 200
     event.refresh_from_db()
-    assert event.is_public
+    assert event.live
 
 
 @pytest.mark.django_db
-def test_toggle_event_is_public_without_warnings(
+def test_toggle_event_live_without_warnings(
     event, orga_client, default_submission_type, question, submission_type
 ):
     with scope(event=event):
@@ -316,25 +316,25 @@ def test_toggle_event_is_public_without_warnings(
         event.cfp.fields["track"]["visbility"] = "optional"
         event.cfp.save()
         event.landing_page_text = "a" * 100
-        event.is_public = False
+        event.live = False
         event.feature_flags["use_track"] = True
         event.save()
     response = orga_client.get(event.orga_urls.live, follow=True)
     assert response.status_code == 200
     event.refresh_from_db()
-    assert not event.is_public
+    assert not event.live
     response = orga_client.post(
         event.orga_urls.live, {"action": "activate"}, follow=True
     )
     assert response.status_code == 200
     event.refresh_from_db()
-    assert event.is_public
+    assert event.live
 
 
 @pytest.mark.django_db
 def test_toggle_event_cannot_activate_due_to_plugin(event, orga_client):
     with scope(event=event):
-        event.is_public = False
+        event.live = False
         event.slug = "donottakelive"
         event.plugins = "tests"
         event.save()
@@ -344,13 +344,13 @@ def test_toggle_event_cannot_activate_due_to_plugin(event, orga_client):
     assert response.status_code == 200
     assert "It's not safe to go alone take this" in response.text
     event.refresh_from_db()
-    assert not event.is_public
+    assert not event.live
 
 
 @pytest.mark.django_db
 def test_toggle_event_can_take_live_with_plugins(event, orga_client):
     with scope(event=event):
-        event.is_public = False
+        event.live = False
         event.plugins = "tests"
         event.save()
     response = orga_client.post(
@@ -359,7 +359,7 @@ def test_toggle_event_can_take_live_with_plugins(event, orga_client):
     assert response.status_code == 200
     assert "It's not safe to go alone take this" not in response.text
     event.refresh_from_db()
-    assert event.is_public
+    assert event.live
 
 
 @pytest.mark.django_db
