@@ -266,7 +266,7 @@ class EventAdminToken(AdminBase, DetailView):
             # For local development, use the current request's host
             scheme = 'https' if request.is_secure() else 'http'
             host = request.get_host()
-            video_url = f"{scheme}://{host}/video/{event.slug}#token={token}"
+            video_url = f"{scheme}://{host}{event.urls.video_base}#token={token}"
 
         return redirect(video_url)
 

@@ -93,10 +93,10 @@
     "FIRST_DAY_OF_WEEK": 0,
     "MONTH_DAY_FORMAT": "F j",
     "NUMBER_GROUPING": 3,
-    "SHORT_DATETIME_FORMAT": "Y-m-d H:i",
-    "SHORT_DATE_FORMAT": "Y-m-d",
+    "SHORT_DATETIME_FORMAT": "m/d/Y P",
+    "SHORT_DATE_FORMAT": "m/d/Y",
     "THOUSAND_SEPARATOR": ",",
-    "TIME_FORMAT": "H:i",
+    "TIME_FORMAT": "P",
     "TIME_INPUT_FORMATS": [
       "%H:%M:%S",
       "%H:%M:%S.%f",
