@@ -1,7 +1,16 @@
 {% extends "eventyay_common/events/create_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+
 {% block form %}
+
+{# ------------------------------------------------------------ #}
+{# TODO: Reintroduce component selection when unified system is stable #}
+{# The following section has been commented out to remove #}
+{# unstable component-selection logic (Tickets / Talk / Video). #}
+{# ------------------------------------------------------------ #}
+
+<!-- {#
     <div class="form-group">
         <label class="col-md-3 control-label">{% trans "Create this event for" %}</label>
         <div class="col-md-9">
@@ -41,51 +50,72 @@
             </div>
         </div>
     </div>
+
     {% bootstrap_field form.is_video_creation layout="horizontal" %}
-    {% bootstrap_field form.organizer layout="horizontal" %}
-    <div class="form-group">
-        <label class="col-md-3 control-label">{% trans "Event type" %}</label>
-            <div class="col-md-9">
-                <div class="big-radio radio">
-                    <label>
-                        <input type="radio" value="" name="{{ form.has_subevents.html_name }}" {% if not form.has_subevents.value %}checked{% endif %}>
-                        <span class="fa fa-calendar-o"></span>
-                        <strong>{% trans "Singular event or non-event shop" %}</strong><br>
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                An event with individual configuration. If you create more events later, you can copy
-                                the event to save yourself some work.
-                            {% endblocktrans %}
-                        </div>
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                Examples: Conferences, workshops, trade fairs, one-off concerts, sale of digital content,
-                                multi-day events with combination tickets.
-                            {% endblocktrans %}
-                        </div>
-                    </label>
+    #} -->
+
+{# Organizer field retained — required #}
+{% bootstrap_field form.organizer layout="horizontal" %}
+
+<div class="form-group">
+    <label class="col-md-3 control-label">{% trans "Event type" %}</label>
+    <div class="col-md-9">
+
+        {# Singular event option kept active #}
+        <div class="big-radio radio">
+            <label>
+                <input type="radio" value="" name="{{ form.has_subevents.html_name }}" {% if not form.has_subevents.value %}checked{% endif %}>
+
+
+                <span class="fa fa-calendar-o"></span>
+                <strong>{% trans "Singular event or non-event shop" %}</strong><br>
+                <div class="help-block">
+                    {% blocktrans trimmed %}
+                    An event with individual configuration. If you create more events later, you can copy
+                    the event to save yourself some work.
+                    {% endblocktrans %}
                 </div>
-                <div class="big-radio radio">
-                    <label>
-                        <input type="radio" value="on" name="{{ form.has_subevents.html_name }}" {% if form.has_subevents.avalue %}checked{% endif %}>
-                        <span class="fa fa-calendar"></span>
-                        <strong>{% trans "Event series or time slot booking" %}</strong>
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                A series of events that share the same configuration. They can still be different in
-                                their dates, locations, prices, and capacities.
-                            {% endblocktrans %}
-                        </div>
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                Examples: Multiple presentations of the same show, same concert in multiple locations,
-                                museums, libraries, or swimming pools,
-                                events that need to be booked together in one cart.
-                            {% endblocktrans %}
-                        </div>
-                    </label>
+                <div class="help-block">
+                    {% blocktrans trimmed %}
+                    Examples: Conferences, workshops, trade fairs, one-off concerts, sale of digital content,
+                    multi-day events with combination tickets.
+                    {% endblocktrans %}
                 </div>
-            </div>
+            </label>
         </div>
-    {% bootstrap_field form.locales layout="horizontal" %}
+
+        {# ------------------------------------------------------------ #}
+        {# TODO: Re-enable event series creation after unified scheduling logic is tested #}
+        {# The following 'Event series or time slot booking' section has #}
+        {# been commented out to simplify creation and prevent sync bugs. #}
+        {# ------------------------------------------------------------ #}
+
+        <!-- {# -->
+        <div class="big-radio radio">
+            <label>
+                <input type="radio" value="on" name="{{ form.has_subevents.html_name }}" {% if form.has_subevents.avalue %}checked{% endif %}>
+                <span class="fa fa-calendar"></span>
+                <strong>{% trans "Event series or time slot booking" %}</strong>
+                <div class="help-block">
+                    {% blocktrans trimmed %}
+                    A series of events that share the same configuration. They can still be different in
+                    their dates, locations, prices, and capacities.
+                    {% endblocktrans %}
+                </div>
+                <div class="help-block">
+                    {% blocktrans trimmed %}
+                    Examples: Multiple presentations of the same show, same concert in multiple locations,
+                    museums, libraries, or swimming pools,
+                    events that need to be booked together in one cart.
+                    {% endblocktrans %}
+                </div>
+            </label>
+        </div>
+        <!-- #} -->
+
+    </div>
+</div>
+
+{% bootstrap_field form.locales layout="horizontal" %}
+
 {% endblock %}
