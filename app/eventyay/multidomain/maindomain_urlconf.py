@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import json
 
 from django.apps import apps
 from django.urls import include
@@ -53,7 +54,6 @@ class VideoSPAView(View):
             # Inject window.venueless config (frontend still expects this name)
             # Mirror structure used in legacy live AppView but adjusted basePath
             from django.urls import reverse  # kept for other endpoints
-            import json
             # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
             api_base = f"/api/v1/events/{event.pk}/"  # TODO replace with reverse once API namespace wired
             # Best effort reverse for optional endpoints
@@ -103,7 +103,7 @@ class VideoSPAView(View):
                         return force_str(obj)
                     return super().default(obj)
 
-            content = f"<script>window.eventyay={_json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}"
+            content = f"<script>window.eventyay={json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}"
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)

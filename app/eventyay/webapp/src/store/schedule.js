@@ -238,8 +238,11 @@ export default {
 				
 				if (state.schedule?.talks) {
 					state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
-						if (!current.session_type) { return acc }
-						const isDuplicate = acc.some(item => item.session_type === current.session_type)
+						const sessionType = current.session_type
+						if (!sessionType) {
+							return acc
+						}
+						const isDuplicate = acc.some(item => item.session_type && item.session_type === sessionType)
 						if (!isDuplicate) {
 							acc.push(current)
 						}
