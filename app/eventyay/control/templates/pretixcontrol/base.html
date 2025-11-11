@@ -289,7 +289,7 @@
                                                     <span class="fa fa-fw fa-{{ nav.icon }}"></span>
                                                 {% endif %}
                                             {% endif %}
-                                            {{ nav.label }}
+                                            <span class="sidebar-text">{{ nav.label }}</span>
                                         </a>
                                         {% if nav.children %}
                                             <a href="#" class="arrow">
@@ -301,7 +301,7 @@
                                                         <a href="{{ item.url }}"
                                                                 {% if item.external %}target="_blank"{% endif %}
                                                                 {% if item.active %}class="active"{% endif %}>
-                                                            {{ item.label }}
+                                                            <span class="sidebar-text">{{ item.label }}</span>
                                                         </a>
                                                     </li>
                                                 {% endfor %}
