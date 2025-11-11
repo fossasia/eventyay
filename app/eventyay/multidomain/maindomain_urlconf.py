@@ -1,5 +1,6 @@
 import importlib.util
 import os
+import json
 
 from django.apps import apps
 from django.urls import include, path, re_path
@@ -7,7 +8,12 @@ from django.views.generic import TemplateView, View
 from django.http import HttpResponse, Http404
 from django.views.static import serve as static_serve
 from django.conf import settings
+from django_scopes import scope
 from mimetypes import guess_type
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.functional import Promise
+from django.utils.encoding import force_str
+from i18nfield.strings import LazyI18nString
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 
@@ -97,6 +103,11 @@ class VideoSPAView(View):
                 except Exception:
                     return None
             cfg = event.config or {}
+            
+            with scope(event=event):
+                schedule = event.current_schedule or event.wip_schedule
+                schedule_data = schedule.build_data(all_talks=False) if schedule else None
+            
             base_path = event.urls.video_base.rstrip('/')
             base_href = event.urls.video_base
             injected = {
@@ -118,14 +129,25 @@ class VideoSPAView(View):
                 'theme': cfg.get('theme', {}),
                 'video_player': cfg.get('video_player', {}),
                 'mux': cfg.get('mux', {}),
+                'schedule': schedule_data,
                 # Extra values expected by config.js/theme
                 'basePath': base_path,
                 'defaultLocale': 'en',
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
-            # Always prepend to guarantee execution before any module scripts
             import json as _json
+
+            class EventyayJSONEncoder(DjangoJSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, (Promise, LazyI18nString)):
+                        return force_str(obj)
+                    return super().default(obj)
+
+            content = f"<script>window.eventyay={json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}"
+        elif event_identifier:
+            # Event identifier provided but not found -> 404
+            return HttpResponse('Event not found', status=404)
             serialized = _json.dumps(injected)
             content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>{content}"
             if '<base ' not in content.lower():
