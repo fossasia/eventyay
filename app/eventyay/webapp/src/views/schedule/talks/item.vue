@@ -45,15 +45,11 @@ export default {
 		...mapState(['rooms']),
 		...mapGetters('schedule', ['pretalxApiBaseUrl', 'sessions']),
 		datetime() {
-			if (!this.talk) {
-				return ''
-			}
+			if (!this.talk) { return '' }
 			return moment(this.talk.start).format('L LT') + ' - ' + moment(this.talk.end).format('LT')
 		},
 		roomName() {
-			if (!this.talk) {
-				return ''
-			}
+			if (!this.talk) { return '' }
 			return this.$localize(this.talk.room?.name || this.talk.room)
 		}
 	},
