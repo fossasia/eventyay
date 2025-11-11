@@ -112,7 +112,7 @@ $(function () {
           </a>
       </div>
       <div class="profile-menu">
-          <a href="${basePath}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
               <i class="fa fa-address-card-o"></i> ${window.gettext('My Talk Profile')}
           </a>
       </div>
@@ -122,12 +122,12 @@ $(function () {
           </a>
       </div>
       <div class="profile-menu">
-          <a href="${basePath}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
               <i class="fa fa-sticky-note-o"></i> ${window.gettext('My Proposals')}
           </a>
       </div>
       <div class="profile-menu">
-          <a href="${basePath}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
               <i class="fa fa-envelope"></i> ${window.gettext('My Emails')}
           </a>
       </div>`,
