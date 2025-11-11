@@ -899,6 +899,17 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 STATICI18N_ROOT = os.path.join(BASE_DIR, 'static')
+STATICI18N_OUTPUT_DIR = 'jsi18n'
+STATICI18N_PACKAGES = (
+    'eventyay.common',
+    'eventyay.presale',
+    'eventyay.control',
+    'eventyay.base',
+    'eventyay.eventyay_common',
+    'eventyay.agenda',
+    'eventyay.orga',
+    'eventyay.submission',
+)
 FRONTEND_DIR = BASE_DIR / 'frontend'
 
 VITE_DEV_SERVER_PORT = 8080
