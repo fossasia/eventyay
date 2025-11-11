@@ -52,8 +52,17 @@ const DEFAULT_COLORS = {
 	bbb_background: '#ffffff',
 }
 
+const resolveAssetPath = (relativePath) => {
+	const basePath = config.basePath || ''
+	if (!basePath || basePath === '/') {
+		return `/${relativePath}`
+	}
+	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+	return `${normalized}/${relativePath}`
+}
+
 const DEFAULT_LOGO = {
-	url: '/video/eventyay-video-logo.png',
+	url: resolveAssetPath('eventyay-video-logo.png'),
 	fitToWidth: false
 }
 

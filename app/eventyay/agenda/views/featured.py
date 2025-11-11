@@ -28,7 +28,7 @@ class FeaturedView(EventPermissionRequired, TemplateView):
                     SubmissionStates.DELETED,
                 ]
             )
-            .select_related('event', 'submission_type')
+            .select_related('event', 'event__organizer', 'submission_type')
             .prefetch_related('speakers')
             .order_by('title')
         )

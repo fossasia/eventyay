@@ -809,7 +809,7 @@ class Event(
     class urls(EventUrls):
         """URL patterns for public/frontend views of this event."""
         base_path = settings.BASE_PATH
-        base = '{base_path}/{self.slug}/'
+        base = '{base_path}/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         logout = '{base}logout'
         auth = '{base}auth/'
@@ -836,6 +836,7 @@ class Event(
         schedule_widget_data = '{schedule}widgets/schedule.json'
         schedule_widget_script = '{base}widgets/schedule.js'
         settings_css = '{base}static/event.css'
+        video_base = '{base}video/'
 
     class orga_urls(EventUrls):
         """URL patterns for organizer/admin panel views of this event."""
