@@ -602,14 +602,14 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         if fdata.get('created_from') or fdata.get('created_to'):
             browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
 
-            def localize(dt_value):
+            def attach_timezone(dt_value):
                 dt_naive = dt_value.replace(tzinfo=None) if not timezone.is_naive(dt_value) else dt_value
-                return browser_tz.localize(dt_naive)
+                return dt_naive.replace(tzinfo=browser_tz)
 
             if fdata.get('created_from'):
-                qs = qs.filter(datetime__gte=localize(fdata['created_from']))
+                qs = qs.filter(datetime__gte=attach_timezone(fdata['created_from']))
             if fdata.get('created_to'):
-                qs = qs.filter(datetime__lt=localize(fdata['created_to']))
+                qs = qs.filter(datetime__lt=attach_timezone(fdata['created_to']))
         if fdata.get('comment'):
             qs = qs.filter(comment__icontains=fdata.get('comment'))
         if fdata.get('sales_channel'):

@@ -2,7 +2,6 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from typing import Any, Dict, Iterable, List, Tuple
 
-import pytz
 from django.db.models import (
     Case,
     Count,
@@ -114,14 +113,14 @@ def order_overview(
         products = products.filter(admission=True)
 
     if date_from and isinstance(date_from, date):
-        tz = get_browser_timezone(browser_timezone) if browser_timezone else pytz.UTC
+        tz = get_browser_timezone(browser_timezone)
         date_from = make_aware(
             datetime.combine(date_from, time(hour=0, minute=0, second=0, microsecond=0)),
             tz,
         )
 
     if date_until and isinstance(date_until, date):
-        tz = get_browser_timezone(browser_timezone) if browser_timezone else pytz.UTC
+        tz = get_browser_timezone(browser_timezone)
         date_until = make_aware(
             datetime.combine(
                 date_until + timedelta(days=1),

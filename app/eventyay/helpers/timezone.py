@@ -1,30 +1,29 @@
-"""
-Timezone conversion utilities for browser timezone support
-"""
-import pytz
+"""Timezone conversion utilities for browser timezone support."""
+from typing import Optional
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 
-def get_browser_timezone(source, fallback='UTC'):
+def get_browser_timezone(tz_string: Optional[str], fallback: str = 'UTC') -> ZoneInfo:
     """
-    Resolve a pytz timezone from user-provided input.
+    Resolve a :class:`zoneinfo.ZoneInfo` from user-provided input.
 
     Args:
-        source: Either a timezone string or a mapping with a ``browser_timezone`` key.
-        fallback: Fallback timezone string if no usable timezone is provided (default: 'UTC').
+        tz_string: Timezone identifier provided by the browser.
+        fallback: Identifier to use when ``tz_string`` is empty or invalid (default: ``'UTC'``).
 
     Returns:
-        pytz timezone object.
+        :class:`zoneinfo.ZoneInfo` instance representing the resolved timezone.
     """
-    if isinstance(source, str):
-        browser_tz_str = source or fallback
-    else:
-        try:
-            browser_tz_str = source.get('browser_timezone', fallback) or fallback
-        except AttributeError:
-            browser_tz_str = fallback
+    candidates = [tz_string, fallback, 'UTC']
 
-    try:
-        return pytz.timezone(browser_tz_str)
-    except pytz.UnknownTimeZoneError:
-        return pytz.UTC
+    for candidate in candidates:
+        if not candidate:
+            continue
+        try:
+            return ZoneInfo(candidate)
+        except ZoneInfoNotFoundError:
+            continue
+
+    # ``UTC`` should always be available, but return it explicitly to satisfy type checkers.
+    return ZoneInfo('UTC')
 
