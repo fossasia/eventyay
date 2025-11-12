@@ -4376,8 +4376,8 @@ msgstr "U2F  uyumlu donanım belirteci (ör. Yubikey)"
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
 "Geçersiz yer tutucu sözdizimi: \"}\" yerine farklı sayıda bir \"{\" "
 "kullandınız."
@@ -6474,8 +6474,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -11750,8 +11750,8 @@ msgstr "{list} listesindeki {posid} pozisyonunun check-in'i geri alındı."
 #: pretix/control/logdisplay.py:231
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "Position #{posid} has been checked in again at {datetime} on list "
-#| "\"{list}\"."
+#| "Position #{posid} has been checked in again at {datetime} on list \"{list}"
+#| "\"."
 msgid ""
 "Position #{posid} has been checked out at {datetime} for list \"{list}\"."
 msgstr ""
@@ -11766,8 +11766,8 @@ msgstr "Pozisyon #{posid} \"{list}\" listesi için incelendi."
 #: pretix/control/logdisplay.py:243
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "Position #{posid} has been checked in again at {datetime} on list "
-#| "\"{list}\"."
+#| "Position #{posid} has been checked in again at {datetime} on list \"{list}"
+#| "\"."
 msgid ""
 "Position #{posid} has been checked in at {datetime} for list \"{list}\"."
 msgstr ""
@@ -11939,8 +11939,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:304
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid ""
 "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr ""
@@ -12606,8 +12606,8 @@ msgstr "Kullanıcı şu mesajı doğruladı: \"{}\""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 "# {posid} konumu, \"{list}\" listesindeki {datetime}'da manuel olarak "
 "kontrol edildi."
