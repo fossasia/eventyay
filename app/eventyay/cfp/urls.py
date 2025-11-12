@@ -33,11 +33,13 @@ urlpatterns = [
         name="invitation.view",
     ),
     path("me/", user.ProfileView.as_view(), name="event.user.view"),
-    path(
-        "me/delete",
-        user.DeleteAccountView.as_view(),
-        name="event.user.delete",
-    ),
+    # TODO: Commented out delete route — current impl doesn’t fully remove user data.
+    # Rebuild properly in Account Settings.
+    # path(
+    #     "me/delete",
+    #     user.DeleteAccountView.as_view(),
+    #     name="event.user.delete",
+    # ),
     path(
         "me/submissions/",
         user.SubmissionsListView.as_view(),

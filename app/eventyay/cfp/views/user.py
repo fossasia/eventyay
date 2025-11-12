@@ -420,6 +420,8 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         return redirect(self.object.urls.user_base)
 
 
+# TODO: Delete view only calls user.deactivate() — doesn’t actually remove user data.
+# Needs full data cleanup, rework when Account Settings is implemented.
 class DeleteAccountView(LoggedInEventPageMixin, View):
     @staticmethod
     def post(request, event):
