@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# pretix documentation build configuration file, created by
-# sphinx-quickstart on Mon Sep  8 15:13:08 2014.
+# Eventyay documentation build configuration file
 #
 # This file is execfile()d with the current directory set to its
 # containing dir.
@@ -13,30 +12,96 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-from docutils.parsers.rst.directives.admonitions import BaseAdmonition
-from sphinx.util import compat
-
-compat.make_admonition = BaseAdmonition  # See https://github.com/spinus/sphinxcontrib-images/issues/41
-
 import os
 import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-from datetime import date
 
-sys.path.insert(0, os.path.abspath('../src'))
+sys.path.insert(0, os.path.abspath('../app'))
 
 import django
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'pretix.testutils.settings')
-django.setup()
+# Set minimal config file for documentation builds
+os.environ.setdefault('EVENTYAY_CONFIG_FILE', os.path.join(os.path.dirname(__file__), 'eventyay-docs.cfg'))
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
+os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
+os.environ.setdefault('REDIS_URL', 'redis://localhost:6379/0')
+
+# Configure minimal logging before Django loads to prevent rich handler errors
+import logging
+logging.basicConfig(level=logging.WARNING, format='[%(levelname)s] %(message)s')
+
+# Patch urlman to handle documentation builds gracefully
+try:
+    import urlman
+    original_urls_getattribute = urlman.Urls.__getattribute__
+    
+    def patched_getattribute(self, name):
+        try:
+            return original_urls_getattribute(self, name)
+        except Exception:
+            # During docs build, return a placeholder for missing attributes
+            if name in ('__wrapped__', '__name__'):
+                return self.__class__.__name__
+            raise
+    
+    urlman.Urls.__getattribute__ = patched_getattribute
+except Exception:
+    # urlman not available or patching failed, continue anyway
+    pass
+
+# Configure Django and override LOGGING settings for documentation builds
+# This must be done AFTER django.setup() to avoid triggering early settings initialization
+try:
+    django.setup()
+    
+    # Override Django logging configuration after setup to use simple console logging
+    # This prevents complex handlers (like 'rich') from being used during docs build
+    import logging.config
+    
+    SIMPLE_LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '[{levelname}] {message}',
+                'style': '{',
+            },
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple',
+                'level': 'WARNING',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+                'propagate': False,
+            },
+        },
+        'root': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+        },
+    }
+    
+    # Reconfigure logging after Django setup
+    logging.config.dictConfig(SIMPLE_LOGGING)
+    
+except Exception as e:
+    # Documentation build can continue even if Django setup fails
+    print(f"Warning: Django setup failed: {e}")
 
 
 try:
+    import enchant  # noqa: F401
     HAS_PYENCHANT = True
-except:
+except ImportError:
     HAS_PYENCHANT = False
 
 # -- General configuration ------------------------------------------------
@@ -54,9 +119,21 @@ extensions = [
     'sphinxcontrib.httpdomain',
     'sphinxcontrib.images',
     'sphinxemoji.sphinxemoji',
+    'sphinx_rtd_theme',
 ]
 if HAS_PYENCHANT:
     extensions.append('sphinxcontrib.spelling')
+
+# Configure autodoc to continue on import errors
+# We want to document what works, and show warnings for what doesn't
+autodoc_default_options = {
+    'members': True,
+    'undoc-members': False,
+    'show-inheritance': True,
+}
+
+# Don't fail the build on autodoc import errors
+autodoc_warningiserror = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -71,19 +148,22 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'pretix'
-copyright = '2014-{}, Raphael Michel'.format(date.today().year)
+project = 'Ticket Component'
+copyright = '2025 Apache 2.0 License by contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-from pretix import __version__
-
-version = '.'.join(__version__.split('.')[:2])
-# The full version, including alpha/beta/rc tags.
-release = __version__
+# Note: version and release are read by Sphinx from this module's namespace
+try:
+    from eventyay import __version__
+    version = '.'.join(__version__.split('.')[:2])
+    release = __version__
+except ImportError:
+    version = '1.0'
+    release = '1.0.0'
 
 # The language for content autogenerated by Sphinx. Refer to documentation
 # for a list of supported languages.
@@ -97,7 +177,11 @@ release = __version__
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build']
+exclude_patterns = [
+    '_build',
+    '.venv',
+    'venv',
+]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -135,7 +219,19 @@ pygments_style = 'sphinx'
 # documentation.
 html_theme_options = {
     'logo_only': True,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': False,
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False
 }
+
+# Add custom CSS files
+html_css_files = [
+    'eventyay_custom.css',
+]
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []
@@ -149,21 +245,24 @@ html_theme_options = {
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'images/logo-white.svg'
+html_logo = 'images/eventyay-logo.svg'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-# html_favicon = None
+html_favicon = 'images/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = [
     '_static',
-    os.path.abspath('../src/pretix/static/fonts/'),
-    os.path.abspath('../src/pretix/static/fontawesome/fonts/'),
 ]
+# Try to add fonts if they exist
+if os.path.exists(os.path.abspath('../app/eventyay/static/fonts/')):
+    html_static_path.append(os.path.abspath('../app/eventyay/static/fonts/'))
+if os.path.exists(os.path.abspath('../app/eventyay/static/fontawesome/fonts/')):
+    html_static_path.append(os.path.abspath('../app/eventyay/static/fontawesome/fonts/'))
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -183,7 +282,7 @@ html_static_path = [
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-html_additional_pages = {'index': 'index.html'}
+# html_additional_pages = {}
 
 # If false, no module index is generated.
 html_domain_indices = False
@@ -212,10 +311,10 @@ html_show_sourcelink = True
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'pretixdoc'
+htmlhelp_basename = 'eventyaydoc'
 
-html_theme = 'pretix_theme'
-html_theme_path = [os.path.abspath('_themes')]
+html_theme = 'sphinx_rtd_theme'
+# html_theme_path = [os.path.abspath('_themes')]
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -233,7 +332,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    ('index', 'pretix.tex', 'pretix Documentation', 'Raphael Michel', 'manual'),
+    ('index', 'eventyay.tex', 'Eventyay Documentation', 'FOSSASIA', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -261,7 +360,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [('index', 'pretix', 'pretix Documentation', ['Raphael Michel'], 1)]
+man_pages = [('index', 'eventyay', 'Eventyay Documentation', ['FOSSASIA'], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -275,11 +374,11 @@ man_pages = [('index', 'pretix', 'pretix Documentation', ['Raphael Michel'], 1)]
 texinfo_documents = [
     (
         'index',
-        'pretix',
-        'pretix Documentation',
-        'Raphael Michel',
-        'pretix',
-        'One line description of project.',
+        'eventyay',
+        'Eventyay Documentation',
+        'FOSSASIA',
+        'eventyay',
+        'Open source event management platform',
         'Miscellaneous',
     ),
 ]
@@ -322,6 +421,32 @@ if HAS_PYENCHANT:
     spelling_show_suggestions = True
 
     # List of filter classes to be added to the tokenizer that produces words to be checked.
-    from checkin_filter import CheckinFilter
+    # Note: spelling_filters is read by sphinxcontrib.spelling extension
+    try:
+        from checkin_filter import CheckinFilter
+        spelling_filters = [CheckinFilter]
+    except ImportError:
+        # checkin_filter module not available, skip custom filters
+        spelling_filters = []
 
-    spelling_filters = [CheckinFilter]
+
+def autodoc_skip_member(app, what, name, obj, skip, options):
+    """
+    Skip URL descriptor attributes that cause autodoc issues.
+    
+    Django urlman creates nested 'urls' classes as descriptors. These don't have
+    proper __objclass__ attributes and cause autodoc to fail when trying to document them.
+    We skip these entirely as they are implementation details.
+    """
+    # Skip all urlman URL descriptor attributes
+    if name in ('urls', 'orga_urls', 'api_urls', 'tickets_urls'):
+        return True
+    # Also skip any attribute ending with _urls
+    if name.endswith('_urls'):
+        return True
+    return skip
+
+
+def setup(app):
+    """Setup function for Sphinx."""
+    app.connect('autodoc-skip-member', autodoc_skip_member)

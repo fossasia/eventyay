@@ -4,17 +4,33 @@ let config
 if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 	const { protocol, hostname, port, pathname } = window.location
 	const wsProtocol = protocol === 'https:' ? 'wss' : 'ws'
-	// Expect /video/<event_identifier>/...
 	const segments = pathname.split('/').filter(Boolean)
-	let eventIdentifier = segments[1] // segments[0] === 'video'
-	if (!eventIdentifier) eventIdentifier = 'sample'
+	const videoIndex = segments.lastIndexOf('video')
+	const baseSegments = videoIndex > -1 ? segments.slice(0, videoIndex + 1) : []
+	let basePath = baseSegments.length ? `/${baseSegments.join('/')}` : '/video'
+	if (basePath.length > 1 && basePath.endsWith('/')) {
+		basePath = basePath.slice(0, -1)
+	}
+	// Example mappings:
+	//   /video/sample -> eventSlug === 'sample'
+	//   /org/acmeconf/video -> eventSlug === 'acmeconf'
+	let eventSlug
+	if (videoIndex > 0 && segments[videoIndex - 1]) {
+		eventSlug = segments[videoIndex - 1]
+	} else if (segments[1]) {
+		eventSlug = segments[1]
+	} else if (segments[0] && segments[0] !== 'video') {
+		eventSlug = segments[0]
+	} else {
+		eventSlug = 'sample'
+	}
 	const hostPort = port ? `${hostname}:${port}` : hostname
 	config = {
 		api: {
-			base: `${protocol}//${hostPort}/api/v1/events/${eventIdentifier}/`,
-			socket: `${wsProtocol}://${hostPort}/ws/event/${eventIdentifier}/`,
-			upload: `${protocol}//${hostPort}/storage/${eventIdentifier}/upload/`,
-			scheduleImport: `${protocol}//${hostPort}/storage/${eventIdentifier}/schedule_import/`,
+			base: `${protocol}//${hostPort}/api/v1/events/${eventSlug}/`,
+			socket: `${wsProtocol}://${hostPort}/ws/event/${eventSlug}/`,
+			upload: `${protocol}//${hostPort}/storage/${eventSlug}/upload/`,
+			scheduleImport: `${protocol}//${hostPort}/storage/${eventSlug}/schedule_import/`,
 			feedback: `${protocol}//${hostPort}/_feedback/`,
 		},
 		defaultLocale: 'en',
@@ -24,7 +40,7 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 		features: [],
 		theme: {
 			logo: {
-				url: '/video/eventyay-video-logo.png',
+				url: `${basePath}/eventyay-video-logo.png`,
 				fitToWidth: false
 			},
 			colors: {
@@ -33,7 +49,7 @@ if (ENV_DEVELOPMENT || (!window.venueless && !window.eventyay)) {
 				bbb_background: '#ffffff',
 			}
 		},
-		basePath: '/video'
+		basePath
 	}
 } else {
 	// load from index.html as injected config: prefer window.eventyay (new) else fallback to legacy window.venueless

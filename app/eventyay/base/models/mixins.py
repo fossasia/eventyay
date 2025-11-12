@@ -211,7 +211,8 @@ class PretalxModel(
     metaclass=RulesModelBase,
 ):
     """
-    Base model for most pretalx models. Suitable for plugins.
+    Base model for most Eventyay models. Suitable for plugins.
+    Provides scoped object management, logging, timestamps, and file cleanup.
     """
 
     objects = ScopedManager(event='event')

@@ -166,6 +166,17 @@ select {
   text-transform: none;
 }
 
+.admin-mode {
+  color: var(--color-offwhite);
+  margin-right: 16px;
+}
+
+.end-admin-mode {
+  padding: 12px;
+  margin-right: 16px;
+  background-color: red;
+}
+
 ::-moz-focus-inner {
   padding: 0;
   border-style: none;

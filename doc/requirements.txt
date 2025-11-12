@@ -1,10 +1,11 @@
 -e ../
-sphinx==2.3.*
+sphinx
 sphinx-rtd-theme
 sphinxcontrib-httpdomain
 sphinxcontrib-images
-sphinxcontrib-spelling==4.*
+sphinxcontrib-spelling
 sphinxemoji
 pygments-markdown-lexer
+rich
 # See https://github.com/rfk/pyenchant/pull/130
 git+https://github.com/raphaelm/pyenchant.git@patch-1#egg=pyenchant

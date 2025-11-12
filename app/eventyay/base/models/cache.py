@@ -3,12 +3,11 @@ import os
 import random
 import time
 
-from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from django.core.cache import caches
 from django.db import models, transaction
 
-from eventyay.core.utils.redis import aredis
+from eventyay.core.utils.redis import aredis, sredis
 
 SETIFHIGHER = """local c = tonumber(redis.call('get', KEYS[1]));
 if c then
@@ -44,12 +43,12 @@ class VersionedModel(models.Model):
             kwargs["update_fields"].append("version")
         self.version += 1
         r = super().save(*args, **kwargs)
-        transaction.on_commit(async_to_sync(self._set_cache_version))
+        transaction.on_commit(self._set_cache_version_sync)
         return r
 
     def delete(self, *args, **kwargs):
         r = super().delete(*args, **kwargs)
-        transaction.on_commit(async_to_sync(self._set_cache_deleted))
+        transaction.on_commit(self._set_cache_deleted_sync)
         return r
 
     def touch(self):
@@ -92,7 +91,7 @@ class VersionedModel(models.Model):
         await database_sync_to_async(self.refresh_from_db)()
         cache.set(self._cachekey, self, timeout=600)
         if latest_version < self.version:
-            await self._set_cache_version()
+            await self._set_cache_version_async()
 
     def clear_caches(self):
         pass
@@ -125,7 +124,18 @@ class VersionedModel(models.Model):
         self.clear_caches()
         self.__refresh_time = time.time()
 
-    async def _set_cache_version(self):
+    def _set_cache_version_sync(self):
+        with sredis(self._cachekey) as redis_conn:
+            redis_conn.eval(
+                SETIFHIGHER,
+                1,
+                f"{self._cachekey}:version",
+                self.version,
+            )
+
+        self._cache_post_update()
+
+    async def _set_cache_version_async(self):
         async with aredis(self._cachekey) as redis:
             await redis.eval(
                 SETIFHIGHER,
@@ -134,11 +144,21 @@ class VersionedModel(models.Model):
                 self.version,
             )
 
+        self._cache_post_update()
+
+    def _cache_post_update(self):
         cache = caches["process"]
         cache.set(self._cachekey, self, timeout=600)
         self.__refresh_time = time.time()
 
-    async def _set_cache_deleted(self):
+    def _set_cache_deleted_sync(self):
+        with sredis(self._cachekey) as redis_conn:
+            redis_conn.set(
+                f"{self._cachekey}:version",
+                "deleted",
+            )
+
+    async def _set_cache_deleted_async(self):
         async with aredis(self._cachekey) as redis:
             await redis.set(
                 f"{self._cachekey}:version",

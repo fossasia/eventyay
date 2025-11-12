@@ -97,6 +97,21 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
+    def create_adminuser(self, email: str, password: str = None):
+        """
+        Command: python manage.py create_admin_user
+        Create an admin user without setting is_superuser to True.
+        """
+        if password is None:
+            raise ValueError("You must provide a password")
+
+        user = self.model(email=email)
+        user.is_staff = True
+        user.is_administrator = True
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
 
 def generate_notifications_token():
     return get_random_string(length=32)
@@ -733,6 +748,7 @@ the eventyay robot"""
     reset_password.alters_data = True
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views related to this user."""
         admin = '/orga/admin/users/{self.code}/'
 
     @transaction.atomic

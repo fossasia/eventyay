@@ -99,7 +99,7 @@ prepended
 prepending
 preprocessor
 presale
-pretix
+Eventyay
 pretixSCAN
 pretixdroid
 pretixPOS
