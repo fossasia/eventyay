@@ -4340,8 +4340,8 @@ msgstr "Token matériel compatible U2F (par ex. Yubikey)"
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
 "Syntaxe de substitution invalide:  vous devriez utiliser des numéros "
 "différents de \"{\" ou de \"}\"."
@@ -6484,8 +6484,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -11814,8 +11814,8 @@ msgstr "La liste d'enregistrement a été supprimée."
 #: pretix/control/logdisplay.py:231
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "Position #{posid} has been checked in again at {datetime} on list "
-#| "\"{list}\"."
+#| "Position #{posid} has been checked in again at {datetime} on list \"{list}"
+#| "\"."
 msgid ""
 "Position #{posid} has been checked out at {datetime} for list \"{list}\"."
 msgstr ""
@@ -11831,8 +11831,8 @@ msgstr "Position #{posid} a été scannée pour la liste \"{list}\"."
 #: pretix/control/logdisplay.py:243
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "Position #{posid} has been checked in again at {datetime} on list "
-#| "\"{list}\"."
+#| "Position #{posid} has been checked in again at {datetime} on list \"{list}"
+#| "\"."
 msgid ""
 "Position #{posid} has been checked in at {datetime} for list \"{list}\"."
 msgstr ""
@@ -12008,8 +12008,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:304
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid ""
 "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr "L'adresse e-mail a été changée de \"{old_email}\" en \"{new_email}\"."
@@ -12707,8 +12707,8 @@ msgstr "L'utilisateur a confirmé le message suivant : \"{}\""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 "Position #{posid} a été cochée vérifiée manuellement à {datetime} sur la "
 "liste \"{list}\"."
@@ -19058,9 +19058,9 @@ msgid ""
 "a six-character code. Please enter this code here to confirm that you "
 "successfully downloaded the file."
 msgstr ""
-"Dans le fichier téléchargé, il y a un fichier texte nommé \"CONFIRM_CODE."
-"txt\" avec un code à six caractères. Veuillez entrer ce code ici pour "
-"confirmer que vous avez bien téléchargé le fichier."
+"Dans le fichier téléchargé, il y a un fichier texte nommé "
+"\"CONFIRM_CODE.txt\" avec un code à six caractères. Veuillez entrer ce code "
+"ici pour confirmer que vous avez bien téléchargé le fichier."
 
 #: pretix/control/templates/pretixcontrol/shredder/download.html:53
 #, fuzzy
@@ -26942,8 +26942,8 @@ msgstr ""
 #~ "Cette traduction n'est pas maintenue par l'équipe de pretix. Nous ne "
 #~ "pouvons pas garantir son exactitude et les fonctionnalités nouvelles ou "
 #~ "récemment modifiées peuvent ne pas être traduites et s'afficheront en "
-#~ "anglais à la place. Vous pouvez nous aider à traduire sur translate."
-#~ "eventyay.com."
+#~ "anglais à la place. Vous pouvez nous aider à traduire sur "
+#~ "translate.eventyay.com."
 
 #, fuzzy
 #~| msgid "Your event can not be deleted as it already contains orders."
@@ -27893,8 +27893,8 @@ msgstr ""
 
 #~ msgid "This is a ticket presale system powered by <a %(a_attr)s>pretix</a>."
 #~ msgstr ""
-#~ "Il s'agit d'un système de prévente de billets alimenté par <a "
-#~ "%(a_attr)s>pretix</a>."
+#~ "Il s'agit d'un système de prévente de billets alimenté par <a %"
+#~ "(a_attr)s>pretix</a>."
 
 #~ msgid "Public email address for contacting the organizer"
 #~ msgstr "Adresse e-mail publique pour contacter l'organisateur"
