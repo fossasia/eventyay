@@ -178,7 +178,15 @@ class User(
         unique=True, db_index=True, null=True, blank=True, verbose_name=_('E-mail'), max_length=190
     )
     fullname = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('Full name'))
-    wikimedia_username = models.CharField(max_length=255, blank=True, null=True, verbose_name=('Wikimedia username'))
+    wikimedia_username = models.CharField(max_length=255, blank=True, null=True, verbose_name=_('Wikimedia username'))
+    original_sso_username = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        editable=False,
+        verbose_name=_('Original SSO username'),
+        help_text=_('The username from SSO provider at first login. Used for Trust & Safety. Non-editable.')
+    )
     is_active = models.BooleanField(default=True, verbose_name=_('Is active'))
     is_staff = models.BooleanField(default=False, verbose_name=_('Is site admin'))
     date_joined = models.DateTimeField(auto_now_add=True, verbose_name=_('Date joined'))

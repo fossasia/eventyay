@@ -42,8 +42,11 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         User model fields from the social provider's data.
         
         This method is called BEFORE the user is saved, so it's the perfect place
-        to extract and populate the wikimedia_username from OAuth extra_data.
+        to extract and populate the wikimedia_username and original_sso_username
+        from OAuth extra_data.
         
+        - Extracts and stores wikimedia_username (editable display name)
+        - Stores original_sso_username (permanent, non-editable, for Trust & Safety)
         """
         # Call parent to populate standard fields (email, username, etc.)
         user = super().populate_user(request, sociallogin, data)
@@ -63,7 +66,15 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         
         if wikimedia_username:
             logger.info(f'Extracted wikimedia_username: {wikimedia_username}')
+            
+            # Set wikimedia_username (this can be updated on subsequent logins)
             user.wikimedia_username = wikimedia_username
+            
+            # Set original_sso_username ONLY if not already set (permanent record)
+            # This preserves the username from FIRST login for Trust & Safety
+            if not user.original_sso_username:
+                user.original_sso_username = wikimedia_username
+                logger.info(f'Stored original_sso_username (first login): {wikimedia_username}')
         else:
             logger.warning(f'Could not extract wikimedia_username from extra_data: {extra_data}')
         
@@ -77,6 +88,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         Use this hook to update existing users' wikimedia_username if they log in
         again and their username has changed on MediaWiki.
         
+        IMPORTANT: This does NOT update original_sso_username - that field is
+        immutable after first login (Trust & Safety requirement #1214).
         """
         # Only process MediaWiki logins
         if sociallogin.account.provider != 'mediawiki':
@@ -91,8 +104,19 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         extra_data = sociallogin.account.extra_data
         wikimedia_username = extra_data.get('username') or extra_data.get('realname') or ''
         
+        update_fields = []
+        
         if wikimedia_username and sociallogin.user.wikimedia_username != wikimedia_username:
             logger.info(f'Updating wikimedia_username for existing user {sociallogin.user.email}: '
                        f'{sociallogin.user.wikimedia_username} -> {wikimedia_username}')
             sociallogin.user.wikimedia_username = wikimedia_username
-            sociallogin.user.save(update_fields=['wikimedia_username'])
+            update_fields.append('wikimedia_username')
+        
+        # Set original_sso_username if not yet set (handles edge case of existing users)
+        if wikimedia_username and not sociallogin.user.original_sso_username:
+            sociallogin.user.original_sso_username = wikimedia_username
+            update_fields.append('original_sso_username')
+            logger.info(f'Backfilling original_sso_username for existing user: {wikimedia_username}')
+        
+        if update_fields:
+            sociallogin.user.save(update_fields=update_fields)
