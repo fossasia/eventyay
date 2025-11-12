@@ -38,16 +38,13 @@ class ContactForm(forms.Form):
         # Make email optional for Wikimedia users
         if self.request and self.request.user and is_wikimedia_user(self.request.user):
             self.fields['email'].required = False
-            self.fields['email'].help_text = _('E-mail (optional for Wikimedia users)')
-        else:
-            self.fields['email'].required = True
+            self.fields['email'].help_text = _('E-mail address (optional for Wikimedia users)')
 
         if self.event.settings.order_email_asked_twice:
             self.fields['email_repeat'] = forms.EmailField(
                 label=_('E-mail address (repeated)'),
                 help_text=_('Please enter the same email address again to make sure you typed it correctly.'),
             )
-            # Make email_repeat optional for Wikimedia users too
             if self.request and self.request.user and is_wikimedia_user(self.request.user):
                 self.fields['email_repeat'].required = False
 
@@ -94,11 +91,9 @@ class ContactForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-
         # For Wikimedia users, skip email validation
         if self.request and self.request.user and is_wikimedia_user(self.request.user):
             return cleaned_data
-
         # Validate email_repeat matches email if both are provided
         if (
             self.event.settings.order_email_asked_twice

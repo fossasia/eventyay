@@ -40,7 +40,6 @@ from eventyay.common.image import create_thumbnail
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.urls import EventUrls
 from eventyay.helpers.urls import build_absolute_uri
-from eventyay.person.utils import is_placeholder_email
 from eventyay.talk_rules.person import is_administrator
 
 from ...helpers.u2f import pub_key_from_der, websafe_decode
@@ -361,8 +360,7 @@ class User(
     def send_security_notice(self, messages, email=None):
         from eventyay.base.services.mail import SendMailException, mail
 
-        # Skip email notifications for placeholder Wikimedia emails
-        if is_placeholder_email(self.email):
+        if not self.email:
             return
 
         try:
@@ -384,8 +382,7 @@ class User(
     def send_password_reset(self, request: HttpRequest):
         from eventyay.base.services.mail import mail
 
-        # Skip email notifications for placeholder Wikimedia emails
-        if is_placeholder_email(self.email):
+        if not self.email:
             return
 
         subject = _('Password recovery')
@@ -703,8 +700,7 @@ class User(
 
         self.log_action(action='eventyay.user.password.reset', user=user)
 
-        # Skip email notifications for placeholder Wikimedia emails
-        if is_placeholder_email(self.email):
+        if not self.email:
             return
 
         context = {
@@ -750,8 +746,7 @@ the eventyay robot"""
 
         self.log_action(action='eventyay.user.password.changed', user=self)
 
-        # Skip email notifications for placeholder Wikimedia emails
-        if is_placeholder_email(self.email):
+        if not self.email:
             return
 
         context = {

@@ -18,8 +18,6 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.eventyay_common.views.auth import process_login_and_set_cookie
 from eventyay.helpers.urls import build_absolute_uri
-from eventyay.person.utils import get_or_create_email_for_wikimedia_user
-
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
@@ -108,15 +106,9 @@ class OAuthReturnView(View):
                 # Use social account ID as fallback
                 wikimedia_username = f"wm_{social_account.uid}"
 
-        # Generate placeholder email for Wikimedia users without email
-        final_email = get_or_create_email_for_wikimedia_user(
-            wikimedia_username, 
-            email,
-            user_id=social_account.uid if social_account else None
-        )
+        final_email = email if (email and str(email).strip()) else None
 
         # For Wikimedia users, look up by wikimedia_username instead of email
-        # to avoid collisions between placeholder emails
         if social_account:
             user, created = User.objects.get_or_create(
                 wikimedia_username=wikimedia_username,
