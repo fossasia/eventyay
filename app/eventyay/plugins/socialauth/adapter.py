@@ -44,7 +44,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         This method is called BEFORE the user is saved, so it's the perfect place
         to extract and populate the wikimedia_username from OAuth extra_data.
         
-        Fixes issue #1214: SSO Username Mapping
         """
         # Call parent to populate standard fields (email, username, etc.)
         user = super().populate_user(request, sociallogin, data)
@@ -78,7 +77,6 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         Use this hook to update existing users' wikimedia_username if they log in
         again and their username has changed on MediaWiki.
         
-        Fixes issue #1214: SSO Username Mapping
         """
         # Only process MediaWiki logins
         if sociallogin.account.provider != 'mediawiki':
