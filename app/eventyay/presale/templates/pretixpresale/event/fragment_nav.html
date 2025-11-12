@@ -25,7 +25,7 @@
 
         {% with cfp=request.event.cfp %}
         <a class="header-tab {% if not cfp.is_open and not access_code.is_valid %}disabled{% endif %}"
-            href="{{ request.event.urls.submit }}{{ submit_qs }}">
+            href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
             {% if cfp.is_open or access_code.is_valid %}
                 <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
             {% endif %}
