@@ -313,11 +313,26 @@ def test_checkins_list_mixed(client, checkin_list_env, query, expected):
     assert item_keys == expected
 
 
+def _validate_position_for_checkin_list(position, checkin_list):
+    """
+    Validate that an OrderPosition belongs to the event and is allowed in the check-in list.
+    """
+    if position.order.event != checkin_list.event:
+        return False
+    
+    if checkin_list.all_products:
+        return True
+    
+    return position.item in checkin_list.limit_products.all()
+
+
 @pytest.mark.django_db
 def test_manual_checkins(client, checkin_list_env):
     client.login(email='dummy@dummy.dummy', password='dummy')
     with scopes_disabled():
         assert not checkin_list_env[5][3].checkins.exists()
+    
+    # Test with valid position
     client.post(
         '/control/event/dummy/dummy/checkinlists/{}/'.format(checkin_list_env[6].pk),
         {'checkin': [checkin_list_env[5][3].pk]},
@@ -327,6 +342,60 @@ def test_manual_checkins(client, checkin_list_env):
     assert LogEntry.objects.filter(
         action_type='pretix.event.checkin', object_id=checkin_list_env[5][3].order.pk
     ).exists()
+
+
+@pytest.mark.django_db
+def test_manual_checkins_unauthorized_position(client, checkin_list_env):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    
+    # Create a position from a different event that shouldn't be checkable
+    other_orga = Organizer.objects.create(name='Other', slug='other')
+    other_event = Event.objects.create(
+        organizer=other_orga,
+        name='Other Event',
+        slug='other',
+        date_from=now(),
+    )
+    other_item = Item.objects.create(event=other_event, name='Other Ticket', default_price=23, admission=True)
+    other_order = Order.objects.create(
+        code='OTHER',
+        event=other_event,
+        email='other@dummy.test',
+        status=Order.STATUS_PAID,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=23,
+        locale='en',
+    )
+    other_position = OrderPosition.objects.create(
+        order=other_order,
+        item=other_item,
+        variation=None,
+        price=Decimal('23'),
+        attendee_name_parts={'full_name': 'Other'},
+    )
+    
+    # Try to check in the unauthorized position
+    with scopes_disabled():
+        assert not _validate_position_for_checkin_list(other_position, checkin_list_env[6])
+        initial_checkin_count = Checkin.objects.count()
+        initial_log_count = LogEntry.objects.count()
+    
+    client.post(
+        '/control/event/dummy/dummy/checkinlists/{}/'.format(checkin_list_env[6].pk),
+        {'checkin': [other_position.pk]},
+    )
+    
+    # Verify the unauthorized position was not checked in
+    with scopes_disabled():
+        assert Checkin.objects.count() == initial_checkin_count
+        assert not other_position.checkins.exists()
+        # Verify no log entries were created for the unauthorized operation
+        assert LogEntry.objects.count() == initial_log_count
+        assert not LogEntry.objects.filter(
+            action_type='pretix.event.checkin',
+            object_id=other_position.order.pk
+        ).exists()
 
 
 @pytest.mark.django_db
@@ -351,6 +420,61 @@ def test_manual_checkins_revert(client, checkin_list_env):
         action_type='pretix.event.checkin.reverted',
         object_id=checkin_list_env[5][3].order.pk,
     ).exists()
+
+
+@pytest.mark.django_db
+def test_manual_checkins_revert_unauthorized_position(client, checkin_list_env):
+    client.login(email='dummy@dummy.dummy', password='dummy')
+    
+    # Create a position from a different event
+    other_orga = Organizer.objects.create(name='Other', slug='other')
+    other_event = Event.objects.create(
+        organizer=other_orga,
+        name='Other Event',
+        slug='other',
+        date_from=now(),
+    )
+    other_item = Item.objects.create(event=other_event, name='Other Ticket', default_price=23, admission=True)
+    other_order = Order.objects.create(
+        code='OTHER',
+        event=other_event,
+        email='other@dummy.test',
+        status=Order.STATUS_PAID,
+        datetime=now(),
+        expires=now() + timedelta(days=10),
+        total=23,
+        locale='en',
+    )
+    other_position = OrderPosition.objects.create(
+        order=other_order,
+        item=other_item,
+        variation=None,
+        price=Decimal('23'),
+        attendee_name_parts={'full_name': 'Other'},
+    )
+    
+    # Create a checkin for the unauthorized position (simulating it was somehow created)
+    with scopes_disabled():
+        Checkin.objects.create(position=other_position, list=checkin_list_env[6])
+        initial_checkin_count = Checkin.objects.count()
+        initial_log_count = LogEntry.objects.count()
+    
+    # Try to revert the unauthorized position
+    client.post(
+        '/control/event/dummy/dummy/checkinlists/{}/'.format(checkin_list_env[6].pk),
+        {'checkin': [other_position.pk], 'revert': 'true'},
+    )
+    
+    # Verify the unauthorized position checkin was not reverted
+    with scopes_disabled():
+        assert Checkin.objects.count() == initial_checkin_count
+        assert other_position.checkins.exists()
+        # Verify no log entries were created for the unauthorized operation
+        assert LogEntry.objects.count() == initial_log_count
+        assert not LogEntry.objects.filter(
+            action_type='pretix.event.checkin.reverted',
+            object_id=other_position.order.pk
+        ).exists()
 
 
 @pytest.fixture
