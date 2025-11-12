@@ -62,9 +62,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
 
         # Extract wikimedia username from extra_data
         # MediaWiki provides 'username' field, fallback to 'realname' if not present
-        wikimedia_username = extra_data.get('username') or extra_data.get('realname') or ''
-        
-        if wikimedia_username:
+        # Use named expression for cleaner code
+        if (wikimedia_username := extra_data.get('username') or extra_data.get('realname') or ''):
             logger.info(f'Extracted wikimedia_username: {wikimedia_username}')
             
             # Set wikimedia_username (this can be updated on subsequent logins)
@@ -72,6 +71,8 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
             
             # Set original_sso_username ONLY if not already set (permanent record)
             # This preserves the username from FIRST login for Trust & Safety
+            # Note: For new users (no pk), this is safe. For existing users with pk,
+            # pre_social_login hook handles backfilling with proper database-level protection
             if not user.original_sso_username:
                 user.original_sso_username = wikimedia_username
                 logger.info(f'Stored original_sso_username (first login): {wikimedia_username}')
