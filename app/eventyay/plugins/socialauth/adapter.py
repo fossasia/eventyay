@@ -36,20 +36,23 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         logger.error('Error while authorizing with %s: %s - %s', provider, error, exception)
         raise ImmediateHttpResponse(HttpResponseRedirect(reverse('control:index')))
 
-    def pre_social_login(self, request, sociallogin):
+    def populate_user(self, request, sociallogin, data):
         """
-        Invoked after a user successfully authenticates via a social provider,
-        but before the login is fully processed.
+        Hook called after a user successfully authenticates, used to populate 
+        User model fields from the social provider's data.
         
-        This is the ideal place to extract and populate the wikimedia_username
-        from the OAuth provider's extra_data.
+        This method is called BEFORE the user is saved, so it's the perfect place
+        to extract and populate the wikimedia_username from OAuth extra_data.
         
         Fixes issue #1214: SSO Username Mapping
         """
+        # Call parent to populate standard fields (email, username, etc.)
+        user = super().populate_user(request, sociallogin, data)
+        
         # Only process MediaWiki logins
         if sociallogin.account.provider != 'mediawiki':
-            logger.debug(f'Skipping pre_social_login for provider: {sociallogin.account.provider}')
-            return
+            logger.debug(f'Skipping wikimedia_username extraction for provider: {sociallogin.account.provider}')
+            return user
 
         # Extract extra_data from the social account
         extra_data = sociallogin.account.extra_data
@@ -61,16 +64,37 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         
         if wikimedia_username:
             logger.info(f'Extracted wikimedia_username: {wikimedia_username}')
-            
-            # Populate the user's wikimedia_username field
-            user = sociallogin.user
             user.wikimedia_username = wikimedia_username
-            
-            # Save if user already exists (update case)
-            if user.pk:
-                user.save(update_fields=['wikimedia_username'])
-                logger.info(f'Updated existing user {user.email} with wikimedia_username: {wikimedia_username}')
-            else:
-                logger.info(f'Will create new user with wikimedia_username: {wikimedia_username}')
         else:
             logger.warning(f'Could not extract wikimedia_username from extra_data: {extra_data}')
+        
+        return user
+
+    def pre_social_login(self, request, sociallogin):
+        """
+        Invoked just after a user successfully authenticates via a social provider,
+        but before the login is actually processed.
+        
+        Use this hook to update existing users' wikimedia_username if they log in
+        again and their username has changed on MediaWiki.
+        
+        Fixes issue #1214: SSO Username Mapping
+        """
+        # Only process MediaWiki logins
+        if sociallogin.account.provider != 'mediawiki':
+            return
+
+        # If this is a new user (no pk yet), populate_user will handle it
+        if not sociallogin.user or not sociallogin.user.pk:
+            logger.debug('New user, populate_user will set wikimedia_username')
+            return
+
+        # For existing users, update wikimedia_username if it has changed
+        extra_data = sociallogin.account.extra_data
+        wikimedia_username = extra_data.get('username') or extra_data.get('realname') or ''
+        
+        if wikimedia_username and sociallogin.user.wikimedia_username != wikimedia_username:
+            logger.info(f'Updating wikimedia_username for existing user {sociallogin.user.email}: '
+                       f'{sociallogin.user.wikimedia_username} -> {wikimedia_username}')
+            sociallogin.user.wikimedia_username = wikimedia_username
+            sociallogin.user.save(update_fields=['wikimedia_username'])
