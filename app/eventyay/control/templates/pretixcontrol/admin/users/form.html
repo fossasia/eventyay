@@ -3,7 +3,7 @@
 {% load bootstrap3 %}
 {% block title %}{% trans "User" %}{% endblock %}
 {% block content %}
-    <h1>{% trans "User" %} {{ user.email }}</h1>
+    <h1>{% trans "User" %} {{ user.email|default:"—" }}</h1>
     <p>
         {% if user.auth_backend == "native" %}
             <form action='{% url "eventyay_admin:admin.users.reset" id=user.pk %}' method="post" class="form-inline helper-display-inline">
