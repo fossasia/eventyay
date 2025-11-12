@@ -138,7 +138,7 @@ header {
 
 .public-event-header {
   display: flex;
-  margin-bottom: 14px
+  margin-bottom: 14px;
 }
 
 #main-card {
@@ -258,7 +258,7 @@ footer {
     }
 
     .header-wrapper {
-      overflow: scroll;
+      overflow: auto;
       background: var(--color-bg);
       padding-bottom: 6rem;
     }

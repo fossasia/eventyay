@@ -24,12 +24,16 @@
         {% endif %}
 
         {% with cfp=request.event.cfp %}
-        <a class="header-tab {% if not cfp.is_open and not access_code.is_valid %}disabled{% endif %}"
-            href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
             {% if cfp.is_open or access_code.is_valid %}
-                <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+                <a class="header-tab"
+                    href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
+                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+                </a>
+            {% else %}
+                <a class="header-tab disabled" tabindex="-1" aria-disabled="true" href="#">
+                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
+                </a>
             {% endif %}
-        </a>
         {% endwith %}
 
         <div class="video-link">

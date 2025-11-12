@@ -1,0 +1,43 @@
+{% load i18n %}
+{% load safelink %}
+
+<a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
+    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+</a>
+{% if schedule or request.event.current_schedule %}
+    <a href="{{ request.event.urls.schedule }}" class="header-tab {% if "/schedule/" in request.path_info %}active{% endif %}">
+        <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
+    </a>
+{% endif %}
+{% if request.event.display_settings.schedule_display != "list" %}
+    <a href="{{ request.event.urls.talks }}" class="header-tab {% if "/talk/" in request.path_info %} active{% endif %}">
+        <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
+    </a>
+{% endif %}
+{% if schedule or request.event.current_schedule %}
+    <a href="{{ request.event.urls.speakers }}" class="header-tab {% if "/speaker/" in request.path_info %} active{% endif %}">
+        <i class="fa fa-group"></i> {{ phrases.schedule.speakers }}
+    </a>
+{% endif %}
+{% for link in header_links %}
+    <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
+        <i class="fa fa-link"></i> {{ link.label }}
+    </a>
+{% endfor %}
+
+{% with cfp=request.event.cfp %}
+    {% if cfp.is_open or access_code.is_valid %}
+        <a class="header-tab {% if "/cfp" in request.path_info %} active{% endif %}"
+            href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
+            <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+        </a>
+    {% else %}
+        <a class="header-tab disabled" tabindex="-1" aria-disabled="true" href="#">
+            <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
+        </a>
+    {% endif %}
+{% endwith %}
+
+<a id="join-event-link" href='{% url "agenda:event.onlinevideo.join" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-tab">
+    <i class="fa fa-video-camera"></i> {% translate "Videos" %}
+</a>
