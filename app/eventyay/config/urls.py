@@ -1,5 +1,6 @@
 import importlib.util
 
+from django.apps import apps
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
@@ -60,6 +61,22 @@ orga_patterns = [
 # Note: agenda and cfp patterns are now included under {organizer}/{event} in maindomain_urlconf.py
 # They are no longer at the root level
 
+# Auto-discover and load plugin URLs (similar to maindomain_urlconf.py)
+raw_plugin_patterns = []
+for app in apps.get_app_configs():
+    if hasattr(app, 'EventyayPluginMeta'):
+        if importlib.util.find_spec(app.name + '.urls'):
+            urlmod = importlib.import_module(app.name + '.urls')
+            single_plugin_patterns = []
+            if hasattr(urlmod, 'urlpatterns'):
+                single_plugin_patterns += urlmod.urlpatterns
+            # Note: event_patterns and organizer_patterns are handled in maindomain_urlconf.py
+            # Here we only include the global urlpatterns
+            if single_plugin_patterns:
+                raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
+
+plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))] if raw_plugin_patterns else []
+
 debug_patterns = []
 
 if settings.DEBUG and importlib.util.find_spec('debug_toolbar'):
@@ -74,4 +91,5 @@ common_patterns = (
     + page_patterns
     + admin_patterns
     + orga_patterns
+    + plugin_patterns
 )
