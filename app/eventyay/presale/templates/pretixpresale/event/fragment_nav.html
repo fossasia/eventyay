@@ -36,10 +36,10 @@
             {% endif %}
         {% endwith %}
 
-        <div class="video-link">
+        <div class="video-link" >
             <a join-event-link class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                 href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
-                <i class="fa fa-video-camera"></i> {% translate "Videos" %}
+                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
             </a>
         </div>
     </div>
@@ -67,4 +67,21 @@
     border-bottom: 2px dotted currentColor;
 }
 
+@media (min-width: 375px) {
+    .video-link {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 1000px) {
+    .video-link {
+        margin-left: 20rem;
+    }
+}
+
+@media (min-width: 1200px) {
+    .video-link {
+        margin-left: 40rem;
+    }
+}
 </style>

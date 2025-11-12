@@ -217,15 +217,25 @@ footer {
   }
 }
 
+.video-link {
+  margin-left: 24rem;
+}
+
 @media (max-width: 1200px) {
   .user-logs {
     display: none;
+  }
+  .video-link {
+    margin-left: 20rem;
   }
 }
 
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
+  }
+  .video-link {
+    margin-left: 10rem;
   }
 }
 
@@ -236,6 +246,9 @@ footer {
       flex-direction: column-reverse;
       align-items: flex-start;
     }
+  }
+  .video-link {
+    margin-left: 0rem;
   }
 }
 
@@ -324,5 +337,8 @@ footer {
         width: 100%;
       }
     }
+  }
+  .video-link {
+    margin-left: 0;
   }
 }

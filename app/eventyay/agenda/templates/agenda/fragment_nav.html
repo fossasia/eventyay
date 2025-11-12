@@ -38,6 +38,6 @@
     {% endif %}
 {% endwith %}
 
-<a id="join-event-link" href='{% url "agenda:event.onlinevideo.join" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-tab">
-    <i class="fa fa-video-camera"></i> {% translate "Videos" %}
+<a id="join-event-link" href='{% url "agenda:event.onlinevideo.join" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-tab video-link">
+    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
 </a>
