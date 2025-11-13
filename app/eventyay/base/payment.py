@@ -1254,7 +1254,9 @@ class GiftCardPayment(BasePaymentProvider):
 
         cs = cart_session(request)
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.filter(secret__iexact=request.POST.get('giftcard')).first()
+            if not gc:
+                raise GiftCard.DoesNotExist()
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1335,7 +1337,9 @@ class GiftCardPayment(BasePaymentProvider):
                 return
 
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.filter(secret__iexact=request.POST.get('giftcard')).first()
+            if not gc:
+                raise GiftCard.DoesNotExist()
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
