@@ -1,5 +1,6 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
+{% load query_replace %}
 
 {% block content %}
 <nav id="event-nav" class="header-nav">
@@ -40,12 +41,12 @@
                 <th>
                     {{ label }}
                     {% with asc=field desc="-"|add:field %}
-                        <a href="?{% if encoded_query %}{{ encoded_query }}&{% endif %}ordering={{ asc }}"
-                        class="text-decoration-none {% if current_ordering == asc %}fw-bold{% endif %}">
+                        <a href="?{% query_replace ordering=asc %}"
+                        class="{% if current_ordering == asc %}fw-bold{% else %}text-muted{% endif %}">
                             &#9650;
                         </a>
-                        <a href="?{% if encoded_query %}{{ encoded_query }}&{% endif %}ordering={{ desc }}"
-                        class="text-decoration-none {% if current_ordering == desc %}fw-bold{% endif %}">
+                        <a href="?{% query_replace ordering=desc %}"
+                        class="{% if current_ordering == desc %}fw-bold{% else %}text-muted{% endif %}">
                             &#9660;
                         </a>
                     {% endwith %}

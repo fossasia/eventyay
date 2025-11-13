@@ -247,13 +247,6 @@ class OutboxListView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, Lis
         ctx['current_ordering'] = ordering
         ctx['query'] = query
 
-        params = {}
-        if query:
-            params['q'] = query
-        if ordering:
-            params['ordering'] = ordering
-        ctx['encoded_query'] = urlencode(params)
-
         MAX_ERRORS_TO_SHOW = 2
         for mail in ctx['mails']:
             mail.recipient_emails_display = ", ".join(mail.get_recipient_emails())
@@ -504,13 +497,6 @@ class SentMailView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, ListV
         ]
         ctx['current_ordering'] = ordering
         ctx['query'] = query
-
-        params = {}
-        if query:
-            params['q'] = query
-        if ordering:
-            params['ordering'] = ordering
-        ctx['encoded_query'] = urlencode(params)
 
         MAX_RECIPIENTS_TO_SHOW = 3
         for mail in ctx['mails']:
