@@ -113,6 +113,7 @@ export default {
 			if (this.v$.$invalid) return
 			if (!this.config) return
 
+			this.error = null
 			// Cleanup empty strings in text overwrites
 			for (const key of Object.keys(this.config.theme.textOverwrites)) {
 				if (!this.config.theme.textOverwrites[key]) {

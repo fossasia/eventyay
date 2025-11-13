@@ -157,6 +157,7 @@ function injectThemeVariables() {
 }
 
 populateColorObjects(themeConfig.colors)
+injectThemeVariables()
 
 export default themeConfig
 export { themeVariables, colors, DEFAULT_COLORS, DEFAULT_LOGO, DEFAULT_IDENTICONS }
@@ -168,6 +169,7 @@ export function computeForegroundColor(bgColor) {
 export function computeForegroundSidebarColor(newColors) {
 	if (!newColors) return
 	populateColorObjects({...themeConfig.colors, ...newColors})
+	injectThemeVariables()
 }
 
 export async function getThemeConfig() {
