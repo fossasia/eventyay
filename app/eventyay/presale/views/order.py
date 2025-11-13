@@ -1103,11 +1103,14 @@ class OrderDownloadMixin:
                     )
                 else:
                     # Fallback if order_position is not available
-                    resp['Content-Disposition'] = 'attachment; filename="{}-{}{}}"'.format(
-                        self.request.event.slug.upper(),
-                        self.order.code,
-                        value.extension,
+                    resp['Content-Disposition'] = (
+                        'attachment; filename="{}-{}{}"'.format(
+                            self.request.event.slug.upper(),
+                            self.order.code,
+                            value.extension,
+                        )
                     )
+                    return resp
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
