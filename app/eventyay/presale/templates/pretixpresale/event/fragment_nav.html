@@ -37,7 +37,7 @@
         {% endwith %}
 
         <div class="video-link">
-            <a join-event-link class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+            <a id='join-event-link' class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                 href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
                 <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
             </a>
