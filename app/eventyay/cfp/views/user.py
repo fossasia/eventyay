@@ -420,9 +420,15 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         return redirect(self.object.urls.user_base)
 
 
-# TODO: Delete view only calls user.deactivate() — doesn’t actually remove user data.
-# Needs full data cleanup, rework when Account Settings is implemented.
 class DeleteAccountView(LoggedInEventPageMixin, View):
+    """
+    Account deletion view - currently disabled by default.
+    
+    TODO: Current implementation only calls user.deactivate() and does not fully remove user data and 
+    is not GDPR compliant and will need a complete rework with proper data cleanup, once Account settings feature implemented. 
+    
+    This view is only accessible when the ENABLE_ACCOUNT_DELETION feature flag is enabled.
+    """
     @staticmethod
     def post(request, event):
         if request.POST.get('really'):

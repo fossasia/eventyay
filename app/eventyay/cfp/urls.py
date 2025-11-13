@@ -1,5 +1,6 @@
 from django.urls import include, path
 from django.views.generic import RedirectView
+from django.conf import settings
 
 from .views import auth, event, locale, robots, user, wizard
 
@@ -33,13 +34,6 @@ urlpatterns = [
         name="invitation.view",
     ),
     path("me/", user.ProfileView.as_view(), name="event.user.view"),
-    # TODO: Commented out delete route — current impl doesn’t fully remove user data.
-    # Rebuild properly in Account Settings.
-    # path(
-    #     "me/delete",
-    #     user.DeleteAccountView.as_view(),
-    #     name="event.user.delete",
-    # ),
     path(
         "me/submissions/",
         user.SubmissionsListView.as_view(),
@@ -85,3 +79,15 @@ urlpatterns = [
     path("locale/set", locale.LocaleSet.as_view(), name="locale.set"),
     path("robots.txt", robots.robots_txt, name="robots.txt"),
 ]
+
+# Conditionally add account deletion route based on feature flag
+# TODO: Current implementation doesn't fully remove user data (not GDPR compliant)
+# Will be properly implemented in Account Settings
+if getattr(settings, 'ENABLE_ACCOUNT_DELETION', False):
+    urlpatterns.append(
+        path(
+            "me/delete",
+            user.DeleteAccountView.as_view(),
+            name="event.user.delete",
+        )
+    )

@@ -1045,6 +1045,10 @@ EVENTYAY_OBLIGATORY_2FA = config.getboolean('eventyay', 'obligatory_2fa', fallba
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
 
+# Feature flags
+# TODO: Enable when GDPR-compliant account deletion is implemented
+ENABLE_ACCOUNT_DELETION = config.getboolean('features', 'enable_account_deletion', fallback=False)
+
 PDFTK = config.get('tools', 'pdftk', fallback=None)
 PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
