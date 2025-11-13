@@ -175,7 +175,7 @@ def mail(
             timezone = event.timezone
             renderer = event.get_html_mail_renderer()
             if not auto_email:
-                if event_bcc is not None and event_bcc != '':  # Use custom BCC if specified
+                if event_bcc:  # Use custom BCC if specified
                     for bcc_mail in event_bcc.split(','):
                         bcc.append(bcc_mail.strip())
             elif event.settings.mail_bcc:
@@ -184,8 +184,7 @@ def mail(
 
             if not auto_email:
                 if (
-                    event_reply_to is not None
-                    and event_reply_to != ''
+                    event_reply_to
                     and not headers.get('Reply-To')
                 ):
                     headers['Reply-To'] = event_reply_to          

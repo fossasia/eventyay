@@ -38,7 +38,7 @@ class EmailQueue(models.Model):
     :type user: User
 
     :param composing_for: To whom the organizer is composing email for. Either "attendees" or "teams"
-    :type raw_composing_for: str
+    :type composing_for: str
 
     :param subject: The untranslated subject, stored as an i18n-aware string.
                         (e.g., {"en": "Hello", "de": "Hallo"}).
@@ -117,13 +117,11 @@ class EmailQueue(models.Model):
 
         subject = LazyI18nString(self.subject)
         message = LazyI18nString(self.message)
-        changed = False
 
         for recipient in recipients:
             if recipient.sent:
                 continue
-            result = self._send_to_recipient(recipient, subject, message)
-            changed = changed or result
+            self._send_to_recipient(recipient, subject, message)
 
         self._finalize_send_status()
         return True
@@ -190,6 +188,7 @@ class EmailQueue(models.Model):
             )
             recipient.sent = True
             recipient.error = None
+            recipient.save(update_fields=["sent", "error"])
         except SendMailException as se:
             recipient.sent = False
             recipient.error = str(se)
@@ -201,7 +200,6 @@ class EmailQueue(models.Model):
             recipient.save(update_fields=["sent", "error"])
             logger.exception("Unexpected error while sending to %s", email)
 
-        recipient.save(update_fields=["sent", "error"])
         return True
 
     def get_recipient_emails(self):

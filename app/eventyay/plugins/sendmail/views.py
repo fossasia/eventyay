@@ -35,19 +35,6 @@ from . import forms
 logger = logging.getLogger(__name__)
 
 
-def stringify_uuids(obj):
-    """
-    Recursively converts UUIDs to strings inside a nested dict or list
-    """
-    if isinstance(obj, dict):
-        return {k: stringify_uuids(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [stringify_uuids(i) for i in obj]
-    elif isinstance(obj, uuid.UUID):
-        return str(obj)
-    return obj
-
-
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
     permission_required = 'can_change_orders'
     template_name = 'pretixplugins/sendmail/compose_choice.html'
@@ -289,7 +276,7 @@ class SendEmailQueueView(EventPermissionRequiredMixin, View):
             send_queued_mail.apply_async(args=[request.event.pk, mail.pk])
             messages.success(
                 request,
-                _('The mail has been sent.')
+                _('The mail has been queued for sending.')
             )
 
         return HttpResponseRedirect(reverse('plugins:sendmail:outbox', kwargs={
@@ -327,7 +314,7 @@ class EditEmailQueueView(EventPermissionRequiredMixin, UpdateView):
             ctx['attachments_files'] = []
 
         ctx['output'] = getattr(self, 'output', None)
-        
+
         return ctx
 
     def form_invalid(self, form):

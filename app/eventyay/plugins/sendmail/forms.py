@@ -573,7 +573,7 @@ class TeamMailForm(forms.Form):
         if isinstance(locales, str):
             locales = [locales]
 
-        placeholder_keys = get_available_placeholders(self.event, ['event', 'team']).keys()                        
+        placeholder_keys = get_available_placeholders(self.event, ['event', 'team']).keys()
         placeholder_text = _("Available placeholders: ") + ', '.join(f"{{{key}}}" for key in sorted(placeholder_keys))
 
         self.fields['subject'] = I18nFormField(
