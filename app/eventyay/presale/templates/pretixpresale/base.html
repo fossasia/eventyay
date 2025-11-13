@@ -13,6 +13,9 @@
     <title>{% block thetitle %}{% endblock %}</title>
     {% if css_file %}
         <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/scss/custom.css" %}" />
+        {% endcompress %}
     {% else %}
         {% compress css %}
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
@@ -59,7 +62,7 @@
             <img id="header-image" src="{{ MEDIA_PREFIX }}{{ event_logo }}" alt="{{ event.name }}" class="event-logo" />
         {% endif %}
 </div>
-<header {% if event_logo %} class="custom-header" {% endif %} style="margin-top: -3.8rem;">
+<header {% if event_logo %} class="custom-header" {% endif %} >
 {% block above %}
 {% endblock %}
 </header>

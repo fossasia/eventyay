@@ -3,9 +3,9 @@
 {% load eventurl %}
 {% load event_tags %}
 
-<nav style="margin-top: 10px; margin-bottom: 3rem; overflow: scroll;">
-    <div class="navigation" style="font-size: 1.65rem; display: flex; gap: 2rem;">
-        <a class="header-tab underline">
+<nav id='header-nav-bar'>
+    <div class="navigation">
+        <a href="#" class="header-tab underline">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
 
@@ -36,7 +36,7 @@
             {% endif %}
         {% endwith %}
 
-        <div class="video-link" >
+        <div class="video-link">
             <a join-event-link class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                 href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
                 <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
@@ -44,44 +44,3 @@
         </div>
     </div>
 </nav>
-
-<style>
-.navigation a {
-    cursor: pointer;
-    position: relative;
-    text-decoration: none;
-    padding-bottom: 4px;
-}
-
-.navigation a.underline::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: -10px;
-    width: calc(100% + 20px);
-    height: 2px;
-    background-color: currentColor;
-}
-
-.navigation a:not(.underline):hover {
-    border-bottom: 2px dotted currentColor;
-}
-
-@media (min-width: 375px) {
-    .video-link {
-        margin-left: 0;
-    }
-}
-
-@media (min-width: 1000px) {
-    .video-link {
-        margin-left: 20rem;
-    }
-}
-
-@media (min-width: 1200px) {
-    .video-link {
-        margin-left: 40rem;
-    }
-}
-</style>

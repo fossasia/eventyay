@@ -37,6 +37,7 @@ header {
 
   #event-logo {
     max-height: 140px;
+    border-radius: 10px;
   }
 
   .header-wrapper {
@@ -136,6 +137,10 @@ header {
   }
 }
 
+#join-event-link {
+  margin-left: auto;
+}
+
 .public-event-header {
   display: flex;
   margin-bottom: 14px;
@@ -184,6 +189,7 @@ footer {
   margin-right: auto;
   margin-left: auto;
   max-width: 1140px;
+  margin-top: 3.8rem !important;
 }
 
 .url-links {
@@ -217,38 +223,27 @@ footer {
   }
 }
 
-.video-link {
-  margin-left: 24rem;
-}
-
 @media (max-width: 1200px) {
   .user-logs {
     display: none;
-  }
-  .video-link {
-    margin-left: 20rem;
   }
 }
 
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
-  }
-  .video-link {
-    margin-left: 10rem;
+    margin-top: 3.8rem !important;
   }
 }
 
 @media (max-width: 768px) {
   #main-container {
     max-width: 720px;
+    margin-top: 3.8rem !important;
     header .header-wrapper {
       flex-direction: column-reverse;
       align-items: flex-start;
     }
-  }
-  .video-link {
-    margin-left: 0rem;
   }
 }
 
@@ -257,6 +252,7 @@ footer {
     padding: 0;
     padding-top: 20px;
     width: 100%;
+    margin-top: 3.8rem !important;
 
     main {
       width: 100%;
@@ -267,6 +263,7 @@ footer {
       padding: 0;
       #event-logo {
         max-height: 120px;
+        border-radius: 10px;
       }
     }
 
@@ -337,8 +334,5 @@ footer {
         width: 100%;
       }
     }
-  }
-  .video-link {
-    margin-left: 0;
   }
 }

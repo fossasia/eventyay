@@ -81,13 +81,13 @@
                 {% endblocktranslate %}
             </div>
         {% endif %}
-        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container" style="margin-top: 3.8rem">
+        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
                 <h1 class="public-event-header">
                     <div class="event-logo">
                         <a href="{% block nav_link %}{% endblock nav_link %}">
                             {% if request.event and request.event.logo %}
-                                <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}" style="border-radius: 10px;">
+                                <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
                             {% endif %}
                         </a>
                     </div>
