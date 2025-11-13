@@ -68,7 +68,7 @@ dependencies = [
         'tqdm==4.*',
         'vobject==0.9.*',
         'pycountry',
-        'django-countries==8.0.*',
+        'django-countries==8.1.*',
         'pyuca', # for better sorting of country names in django-countries
         'defusedcsv>=1.1.0',
         'vat_moss_forked==2020.3.20.0.11.0',
