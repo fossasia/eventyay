@@ -2499,7 +2499,7 @@ class ExportMixin:
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
             if test_form.is_valid():
-                initial = {k: v for k, v in test_form.cleaned_data.items() if ex.identifier + '-' + k in self.request.GET}
+                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
             else:
                 initial = {}
 
