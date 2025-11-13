@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
@@ -33,7 +33,7 @@ from .models import BadgeLayout
 class BadgePluginEnabledMixin:
 
     def dispatch(self, request, *args, **kwargs):
-        if 'pretix.plugins.badges' not in request.event.get_plugins():
+        if 'eventyay.plugins.badges' not in request.event.get_plugins():
             return redirect('control:event.settings.plugins', 
                           organizer=request.event.organizer.slug, 
                           event=request.event.slug)
@@ -46,7 +46,7 @@ class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, List
     context_object_name = 'layouts'
 
     def get_queryset(self):
-        return self.request.event.badge_layouts.prefetch_related('item_assignments')
+        return self.request.event.badge_layouts.prefetch_related('product_assignments')
 
 
 class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, CreateView):
@@ -67,7 +67,7 @@ class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Create
         if form.instance.background and form.instance.background.name:
             form.instance.background.save('background.pdf', form.instance.background)
         form.instance.log_action(
-            'pretix.plugins.badges.layout.added',
+            'eventyay.plugins.badges.layout.added',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
@@ -153,7 +153,7 @@ class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Delete
     @transaction.atomic
     def form_valid(self, form):
         self.object = self.get_object()
-        self.object.log_action(action='pretix.plugins.badges.layout.deleted', user=self.request.user)
+        self.object.log_action(action='eventyay.plugins.badges.layout.deleted', user=self.request.user)
         self.object.delete()
         if not self.request.event.badge_layouts.filter(default=True).exists():
             f = self.request.event.badge_layouts.first()
@@ -162,6 +162,45 @@ class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Delete
                 f.save(update_fields=['default'])
         messages.success(self.request, _('The selected badge layout been deleted.'))
         return redirect(self.get_success_url())
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'plugins:badges:index',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+
+
+class LayoutEdit(BadgePluginEnabledMixin, EventPermissionRequiredMixin, UpdateView):
+    model = BadgeLayout
+    form_class = BadgeLayoutForm
+    template_name = 'pretixplugins/badges/edit.html'
+    permission = 'can_change_event_settings'
+    context_object_name = 'layout'
+
+    def get_object(self, queryset=None) -> BadgeLayout:
+        try:
+            return self.request.event.badge_layouts.get(id=self.kwargs['layout'])
+        except BadgeLayout.DoesNotExist:
+            raise Http404(_('The requested badge layout does not exist.'))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        messages.success(self.request, _('Your changes have been saved.'))
+        if form.has_changed():
+            self.object.log_action(
+                action='eventyay.plugins.badges.layout.changed',
+                user=self.request.user,
+                data={k: form.cleaned_data.get(k) for k in form.changed_data},
+            )
+        return super().form_valid(form)
 
     def get_success_url(self) -> str:
         return reverse(
@@ -189,7 +228,7 @@ class LayoutEditorView(BaseEditorView):
         self.layout.layout = self.request.POST.get('data')
         self.layout.save(update_fields=['layout'])
         self.layout.log_action(
-            action='pretix.plugins.badges.layout.changed',
+            action='eventyay.plugins.badges.layout.changed',
             user=self.request.user,
             data={'layout': self.request.POST.get('data')},
         )

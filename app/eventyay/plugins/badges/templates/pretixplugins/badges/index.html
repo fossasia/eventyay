@@ -39,20 +39,26 @@
                 <thead>
                 <tr>
                     <th>{% trans "Name" %}</th>
+                    <th>{% trans "Category" %}</th>
                     <th>{% trans "Default" %}</th>
-                    <th class="action-col-2"></th>
+                    <th class="action-col-3"></th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for l in layouts %}
                     <tr>
                         <td>
-                            {% if "can_change_event_settings" in request.eventpermset %}
-                                <strong><a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}">
+                            <strong>
+                                <a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}">
                                     {{ l.name }}
-                                </a></strong>
+                                </a>
+                            </strong>
+                        </td>
+                        <td>
+                            {% if l.category %}
+                                {{ l.category.name }}
                             {% else %}
-                                <strong>{{ l.name }}</strong>
+                                <em>{% trans "No category" %}</em>
                             {% endif %}
                         </td>
                         <td>
@@ -74,7 +80,8 @@
                         </td>
                         <td class="text-right flip">
                             {% if "can_change_event_settings" in request.eventpermset %}
-                                <a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
+                                <a href="{% url "plugins:badges:edit_metadata" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-default btn-sm" title="{% trans "Edit metadata" %}" data-toggle="tooltip"><i class="fa fa-edit"></i></a>
+                                <a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-default btn-sm" title="{% trans "Edit design" %}" data-toggle="tooltip"><i class="fa fa-paint-brush"></i></a>
                                 <a href="{% url "plugins:badges:add" organizer=request.event.organizer.slug event=request.event.slug %}?copy_from={{ l.id }}"
                                         class="btn btn-default btn-sm" title="{% trans "Clone" %}" data-toggle="tooltip"><i class="fa fa-copy"></i></a>
                                 <a href="{% url "plugins:badges:delete" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>

@@ -9,7 +9,15 @@ from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
 class BadgeLayoutForm(forms.ModelForm):
     class Meta:
         model = BadgeLayout
-        fields = ('name',)
+        fields = ('name', 'category')
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        if event:
+            # Filter categories to only those belonging to this event
+            self.fields['category'].queryset = event.categories.all()
+            self.fields['category'].required = False
 
 
 NoLayoutSingleton = BadgeLayout(pk='-')
