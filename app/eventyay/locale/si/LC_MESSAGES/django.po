@@ -3520,8 +3520,8 @@ msgstr ""
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
 
 #: pretix/base/forms/validators.py:39
@@ -5367,8 +5367,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -10442,8 +10442,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 
 #: pretix/control/logdisplay.py:503
