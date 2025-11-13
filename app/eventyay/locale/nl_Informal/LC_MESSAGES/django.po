@@ -4198,8 +4198,8 @@ msgstr "WebAuthn-compatibel hardware-token (bijvoorbeeld Yubikey)"
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
 "Ongeldige plaatsaanduiding syntaxis: er is een verschil in het aantal "
 "gebruikte \"{\" en \"}\"."
@@ -6241,8 +6241,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -6739,8 +6739,8 @@ msgstr "Er is een nieuwe bestelling geplaatst: {order.code}"
 #, python-brace-format
 msgid "A new order has been placed that requires approval: {order.code}"
 msgstr ""
-"Er is een nieuwe bestelling geplaatst die moet worden goedgekeurd: {order."
-"code}"
+"Er is een nieuwe bestelling geplaatst die moet worden goedgekeurd: "
+"{order.code}"
 
 #: pretix/base/notifications.py:237
 #, python-brace-format
@@ -11175,8 +11175,8 @@ msgstr ""
 msgid ""
 "Unknown scan of code \"{barcode}…\" for list \"{list}\", type \"{type}\"."
 msgstr ""
-"Onbekende scan van code \"{barcode}…\" voor lijst \"{list}\", type "
-"\"{type}\"."
+"Onbekende scan van code \"{barcode}…\" voor lijst \"{list}\", type \"{type}"
+"\"."
 
 #: pretix/control/logdisplay.py:189
 #, python-brace-format
@@ -11193,8 +11193,8 @@ msgid ""
 "Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
 "uploaded."
 msgstr ""
-"Scan van ingetrokken code \"{barcode}\" voor lijst \"{list}\", type "
-"\"{type}\" is geüpload."
+"Scan van ingetrokken code \"{barcode}\" voor lijst \"{list}\", type \"{type}"
+"\" is geüpload."
 
 #: pretix/control/logdisplay.py:210
 #, python-brace-format
@@ -11202,8 +11202,8 @@ msgid ""
 "Denied scan of position #{posid} at {datetime} for list \"{list}\", type "
 "\"{type}\", error code \"{errorcode}\"."
 msgstr ""
-"Een scan voor plaats #{posid} is geweigerd om {datetime} voor lijst "
-"\"{list}\", type \"{type}\". Foutcode: \"{errorcode}\"."
+"Een scan voor plaats #{posid} is geweigerd om {datetime} voor lijst \"{list}"
+"\", type \"{type}\". Foutcode: \"{errorcode}\"."
 
 #: pretix/control/logdisplay.py:221
 #, python-brace-format
@@ -12010,8 +12010,8 @@ msgstr "De gebruiker bevestigde het volgende bericht: \"{}\""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 "Plaats #{posid} is handmatig gemarkeerd als ingecheckt op {datetime} op "
 "lijst \"{list}\"."
@@ -18017,9 +18017,9 @@ msgid ""
 "a six-character code. Please enter this code here to confirm that you "
 "successfully downloaded the file."
 msgstr ""
-"Het gedownloade bestand bevat een tekstbestand met de naam \"CONFIRM_CODE."
-"txt\" met een code van zes tekens. Voer deze code hier in om te bevestigen "
-"dat je het bestand juist hebt gedownload."
+"Het gedownloade bestand bevat een tekstbestand met de naam "
+"\"CONFIRM_CODE.txt\" met een code van zes tekens. Voer deze code hier in om "
+"te bevestigen dat je het bestand juist hebt gedownload."
 
 #: pretix/control/templates/pretixcontrol/shredder/download.html:53
 msgid "Confirmation code"
