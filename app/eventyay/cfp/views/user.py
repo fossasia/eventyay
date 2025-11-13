@@ -424,8 +424,8 @@ class DeleteAccountView(LoggedInEventPageMixin, View):
     """
     Account deletion view - currently disabled by default.
     
-    TODO: Current implementation only calls user.deactivate() and does not fully remove user data and 
-    is not GDPR compliant and will need a complete rework with proper data cleanup, once Account settings feature implemented. 
+    TODO: Current implementation only calls user.deactivate() and does not fully remove user data (not GDPR compliant). 
+    A complete rework with proper data cleanup will be needed once the Account settings feature is implemented. 
     
     This view is only accessible when the ENABLE_ACCOUNT_DELETION feature flag is enabled.
     """

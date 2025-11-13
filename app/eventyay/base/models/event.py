@@ -818,7 +818,7 @@ class Event(
         reset = '{base}reset'
         submit = '{base}submit/'
         user = '{base}me/'
-        # TODO:  Disabled user_delete URL — delete endpoint is incomplete/broken.
+        # TODO: Disabled user_delete URL — delete endpoint is incomplete/broken.
         # Will restore once proper deletion logic is ready.
         # user_delete = '{base}me/delete'
         user_submissions = '{user}submissions/'
