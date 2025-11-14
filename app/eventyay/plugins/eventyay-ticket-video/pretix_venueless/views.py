@@ -1,7 +1,9 @@
 import datetime
 import hashlib
+import logging
 import random
 import string
+from urllib.parse import urlparse, urlunparse
 
 import jwt
 from django import forms
@@ -27,6 +29,8 @@ from eventyay.control.views.event import (
 )
 from eventyay.presale.views import EventViewMixin
 from eventyay.presale.views.order import OrderPositionDetailMixin
+
+logger = logging.getLogger(__name__)
 
 
 class VenuelessSettingsForm(SettingsForm):
@@ -219,15 +223,26 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
 
         baseurl = self.request.event.settings.venueless_url
         if kwargs.get("view_schedule") == 'True':
-            return redirect(self.request.event.settings.venueless_talk_schedule_url)
+            redirect_url = self.request.event.settings.venueless_talk_schedule_url
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         if '{token}' in baseurl:
             # Hidden feature to support other kinds of installations
-            return redirect(baseurl.format(token=token))
+            redirect_url = baseurl.format(token=token)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
 
         # Ensure the URL includes the event identifier so VideoSPAView has event context
         # Format: http://localhost:8000/video/event-slug/#token=...
-        if baseurl:
-            if baseurl.rstrip('/').split('/')[-1] != self.request.event.slug:
-                baseurl = '{}/{}'.format(baseurl.rstrip('/'), self.request.event.slug)
+        # Use Django's reverse() to properly construct the video URL path
+        video_path = reverse('video.event.index', kwargs={'event_identifier': self.request.event.slug})
 
-        return redirect('{}/#token={}'.format(baseurl, token).replace("//#", "/#"))
+        # Parse the base URL to get scheme and netloc (domain)
+        parsed = urlparse(baseurl)
+
+        # Reconstruct the full URL with the proper path from reverse()
+        baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
+
+        redirect_url = '{}/#token={}'.format(baseurl, token).replace("//#", "/#")
+        logger.info('Redirecting to %s...', redirect_url)
+        return redirect(redirect_url)

@@ -437,14 +437,15 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
-            return redirect(eventreverse(request.event, 'presale:event.index', kwargs=kwargs))
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            return redirect(
-                eventreverse(request.event, 'presale:event.index', kwargs=kwargs)
-                + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
-            )
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
             # We've been passed data from a widget, we need to create a cart session to store it.
             get_or_create_cart_id(request)
@@ -486,7 +487,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 return super().get(request, *args, **kwargs)
         else:
             if 'subevent' in kwargs:
-                return redirect(self.get_index_url())
+                redirect_url = self.get_index_url()
+                logger.info('Redirecting to %s...', redirect_url)
+                return redirect(redirect_url)
             else:
                 return super().get(request, *args, **kwargs)
 
@@ -736,14 +739,15 @@ class SeatingPlanView(EventViewMixin, TemplateView):
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
-            return redirect(eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs))
+            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            return redirect(
-                eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs)
-                + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
-            )
+            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
             # We've been passed data from a widget, we need to create a cart session to store it.
             get_or_create_cart_id(request)
@@ -831,7 +835,9 @@ class EventAuth(View):
                 raise PermissionDenied(_('Please go back and try again.'))
 
         request.session['pretix_event_access_{}'.format(request.event.pk)] = parent
-        return redirect(eventreverse(request.event, 'presale:event.index'))
+        redirect_url = eventreverse(request.event, 'presale:event.index')
+        logger.info('Redirecting to %s...', redirect_url)
+        return redirect(redirect_url)
 
 
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
@@ -864,6 +870,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
             return JsonResponse({'redirect_url': redirect_url}, status=200)
         else:
             # Direct browser access - do a server-side redirect
+            logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
 
     def validate_access(self, request, *args, **kwargs):

@@ -92,7 +92,7 @@ class RoomQuerySet(models.QuerySet):
         # When our user has traits, this is automatically ensured by the ALL() statement, but when traits=[] we
         # need to do a special case check since "IN ()" is not valid SQL
         for i, role in enumerate(roles):
-            if traits:
+            if traits and len(traits) > 0:
                 ext = ""
                 ext_args = []
                 if not allow_empty_traits:
