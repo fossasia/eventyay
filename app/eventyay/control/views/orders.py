@@ -2499,10 +2499,8 @@ class ExportMixin:
             # Use form parse cycle to generate useful defaults
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            if test_form.is_valid():
-                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
-            else:
-                initial = {}
+            test_form.is_valid()  # Populate cleaned_data with valid fields
+            initial = {k: v for k, v in getattr(test_form, 'cleaned_data', {}).items() if f'{ex.identifier}-{k}' in self.request.GET}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),

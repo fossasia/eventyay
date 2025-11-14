@@ -46,21 +46,19 @@ class ExportMixin:
             organizer=self.request.organizer
         )
         responses = register_multievent_data_exporters.send(self.request.organizer)
-        identifier = self.request.GET.get('identifier') or self.request.POST.get('exporter')
+        id = self.request.GET.get('identifier') or self.request.POST.get('exporter')
         for ex in sorted(
             [response(events) for r, response in responses if response],
             key=lambda ex: str(ex.verbose_name),
         ):
-            if identifier and ex.identifier != identifier:
+            if id and ex.identifier != id:
                 continue
 
             # Use form parse cycle to generate useful defaults
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            if test_form.is_valid():
-                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
-            else:
-                initial = {}
+            test_form.is_valid()  # Populate cleaned_data with valid fields
+            initial = {k: v for k, v in getattr(test_form, 'cleaned_data', {}).items() if f'{ex.identifier}-{k}' in self.request.GET}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),
