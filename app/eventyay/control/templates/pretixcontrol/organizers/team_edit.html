@@ -39,6 +39,14 @@
             {% bootstrap_field form.can_view_vouchers layout="control" %}
             {% bootstrap_field form.can_change_vouchers layout="control" %}
         </fieldset>
+        <fieldset>
+            <legend>{% trans "Talk permissions" %}</legend>
+            {% bootstrap_field form.can_change_submissions layout="control" %}
+            {% bootstrap_field form.is_reviewer layout="control" %}
+            {% bootstrap_field form.force_hide_speaker_names layout="control" %}
+            {% bootstrap_field form.limit_tracks layout="control" %}
+        </fieldset>
+
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}
