@@ -233,9 +233,12 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
             return redirect(redirect_url)
 
         # Ensure the URL includes the event identifier so VideoSPAView has event context
-        # Format: http://localhost:8000/video/event-slug/#token=...
+        # Format: http://localhost:8000/organizer-slug/event-slug/video/#token=...
         # Use Django's reverse() to properly construct the video URL path
-        video_path = reverse('video.event.index', kwargs={'event_identifier': self.request.event.slug})
+        video_path = reverse('video.spa', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug
+        })
 
         # Parse the base URL to get scheme and netloc (domain)
         parsed = urlparse(baseurl)
