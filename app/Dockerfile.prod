@@ -98,6 +98,19 @@ USER app
 # Expose virtual env
 ENV VIRTUAL_ENV="$APP_HOME/.venv"
 ENV PATH="$APP_HOME/.venv/bin:$PATH"
+ENV EVY_RUNNING_ENVIRONMENT=production
+
+
+RUN python manage.py compilemessages
+RUN python manage.py compilejsi18n
+RUN python manage.py collectstatic --noinput
+#RUN python manage.py compress
+
+# Now all the files are in $APP_HOME/eventyay/static.dist
+# but this will be overloaded with a shared volume
+RUN mkdir $APP_HOME/eventyay/static.dist.backup && \
+    mv $APP_HOME/eventyay/static.dist/* $APP_HOME/eventyay/static.dist.backup
+
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
