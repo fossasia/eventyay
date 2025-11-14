@@ -79,10 +79,7 @@ class ExportForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get('export_format') == 'csv' and 'data_delimiter' in self.fields and not data.get('data_delimiter'):
-            self.add_error(
-                'data_delimiter',
-                forms.ValidationError(_('Please select a delimiter for your CSV export.')),
-            )
+            data['data_delimiter'] = 'newline'
         return data
 
     def get_object_attribute(self, obj, attribute):
@@ -137,7 +134,7 @@ class ExportForm(forms.Form):
         for row in data:
             for key, value in row.items():
                 if isinstance(value, list):
-                    row[key] = delimiter.join(value)
+                    row[key] = delimiter.join(str(item) for item in value if item is not None)
 
         output = StringIO()
         writer = csv.DictWriter(output, fieldnames=data[0].keys())
