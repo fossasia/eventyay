@@ -9,7 +9,7 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import Event, User, WaitingListEntry
 from eventyay.base.models.waitinglist import WaitingListException
 from eventyay.base.services.tasks import EventTask
-from eventyay.base.signals import periodic_task
+from eventyay.base.signals import order_canceled, order_changed, periodic_task
 from eventyay.celery_app import app
 
 
@@ -25,8 +25,8 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
 
     qs = (
         WaitingListEntry.objects.filter(event=event, voucher__isnull=True)
-        .select_related('item', 'variation', 'subevent')
-        .prefetch_related('item__quotas', 'variation__quotas')
+        .select_related('product', 'variation', 'subevent')
+        .prefetch_related('product__quotas', 'variation__quotas')
         .order_by('-priority', 'created')
     )
 
@@ -38,7 +38,7 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
 
     with event.lock():
         for wle in qs:
-            if (wle.item, wle.variation, wle.subevent) in gone:
+            if (wle.product, wle.variation, wle.subevent) in gone:
                 continue
 
             ev = wle.subevent or event
@@ -46,19 +46,19 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
                 continue
             if wle.subevent and not wle.subevent.presale_is_running:
                 continue
-            if not wle.item.is_available():
-                gone.add((wle.item, wle.variation, wle.subevent))
+            if not wle.product.is_available():
+                gone.add((wle.product, wle.variation, wle.subevent))
                 continue
 
             quotas = (
                 wle.variation.quotas.filter(subevent=wle.subevent)
                 if wle.variation
-                else wle.item.quotas.filter(subevent=wle.subevent)
+                else wle.product.quotas.filter(subevent=wle.subevent)
             )
             availability = (
                 wle.variation.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
                 if wle.variation
-                else wle.item.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
+                else wle.product.check_quotas(count_waitinglist=False, _cache=quota_cache, subevent=wle.subevent)
             )
             if availability[1] is None or availability[1] > 0:
                 try:
@@ -74,7 +74,7 @@ def assign_automatically(event: Event, user_id: int = None, subevent_id: int = N
                         quota_cache[q.pk][1] - 1 if quota_cache[q.pk][1] is not None else sys.maxsize,
                     )
             else:
-                gone.add((wle.item, wle.variation, wle.subevent))
+                gone.add((wle.product, wle.variation, wle.subevent))
 
     return sent
 
@@ -96,3 +96,71 @@ def process_waitinglist(sender, **kwargs):
     for e in qs:
         if e.settings.waiting_list_auto and (e.presale_is_running or e.has_subevents):
             assign_automatically.apply_async(args=(e.pk,))
+
+
+@receiver(signal=order_canceled, dispatch_uid='waitinglist_order_canceled')
+def on_order_canceled(sender, order, **kwargs):
+    """
+    When an order is canceled, immediately trigger waiting list assignment
+    if automatic assignment is enabled for the event.
+    """
+    event = sender
+    
+    # Check if waiting list auto-assignment is enabled
+    if not event.settings.get('waiting_list_enabled', as_type=bool):
+        return
+    
+    if not event.settings.get('waiting_list_auto', as_type=bool):
+        return
+    
+    # Check if event is still selling tickets
+    if not (event.presale_is_running or event.has_subevents):
+        return
+    
+    # Get unique subevents from canceled order positions
+    subevents = set()
+    for position in order.positions.all():
+        if position.subevent:
+            subevents.add(position.subevent.pk)
+    
+    # Trigger assignment for the main event
+    if not subevents or not event.has_subevents:
+        assign_automatically.apply_async(args=(event.pk,))
+    else:
+        # Trigger assignment for each affected subevent
+        for subevent_id in subevents:
+            assign_automatically.apply_async(args=(event.pk, None, subevent_id))
+
+
+@receiver(signal=order_changed, dispatch_uid='waitinglist_order_changed')
+def on_order_changed(sender, order, **kwargs):
+    """
+    When an order is modified (e.g., positions canceled), immediately trigger
+    waiting list assignment if automatic assignment is enabled for the event.
+    """
+    event = sender
+    
+    # Check if waiting list auto-assignment is enabled
+    if not event.settings.get('waiting_list_enabled', as_type=bool):
+        return
+    
+    if not event.settings.get('waiting_list_auto', as_type=bool):
+        return
+    
+    # Check if event is still selling tickets
+    if not (event.presale_is_running or event.has_subevents):
+        return
+    
+    # Get unique subevents from order positions
+    subevents = set()
+    for position in order.positions.all():
+        if position.subevent:
+            subevents.add(position.subevent.pk)
+    
+    # Trigger assignment for the main event
+    if not subevents or not event.has_subevents:
+        assign_automatically.apply_async(args=(event.pk,))
+    else:
+        # Trigger assignment for each affected subevent
+        for subevent_id in subevents:
+            assign_automatically.apply_async(args=(event.pk, None, subevent_id))
