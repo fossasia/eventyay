@@ -9,7 +9,7 @@
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
 
-        {% if request.event|get_feature_flag:'show_schedule' %}
+        {% if schedule or request.event.current_schedule %}
             <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
                 <i class="fa fa-calendar"></i> {% translate "Schedule" %}
             </a>
