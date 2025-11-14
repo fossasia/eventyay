@@ -521,6 +521,12 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
             )
             return self.delete_view(request, *args, **kwargs)
         except Exception as e:
+            # Log the unexpected error for debugging
+            logger.exception(
+                'Unexpected error during room deletion for room %s: %s',
+                kwargs.get('pk', 'unknown'),
+                str(e)
+            )
             messages.error(
                 request,
                 _('An error occurred while deleting the room: {}').format(str(e)),
