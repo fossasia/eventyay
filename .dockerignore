@@ -11,3 +11,4 @@ src/dist/
 app/.venv
 app/eventyay/static/CACHE
 *.egg-info
+**/__pycache__
