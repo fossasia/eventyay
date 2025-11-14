@@ -749,10 +749,10 @@ class CheckinLogList(ListExporter):
                 (
                     'items',
                     forms.ModelMultipleChoiceField(
-                        queryset=self.event.items.all(),
+                        queryset=self.event.products.all(),
                         label=_('Limit to products'),
                         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
-                        initial=self.event.items.all(),
+                        initial=self.event.products.all(),
                     ),
                 ),
             ]
