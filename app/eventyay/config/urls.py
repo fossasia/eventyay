@@ -53,12 +53,12 @@ admin_patterns = [
     path('admin/', include(('eventyay.control.urls_admin', 'eventyay_admin'))),
 ]
 
-talk_patterns = [
+orga_patterns = [
     path('orga/', include('eventyay.orga.urls')),
-    path('', include('eventyay.agenda.urls', namespace='agenda')),
-    path('', include('eventyay.cfp.urls', namespace='cfp')),
-    url(r'^redirect/$', redirect.redir_view, name='redirect'),
 ]
+
+# Note: agenda and cfp patterns are now included under {organizer}/{event} in maindomain_urlconf.py
+# They are no longer at the root level
 
 debug_patterns = []
 
@@ -73,5 +73,5 @@ common_patterns = (
     + eventyay_common_patterns
     + page_patterns
     + admin_patterns
-    + talk_patterns
+    + orga_patterns
 )

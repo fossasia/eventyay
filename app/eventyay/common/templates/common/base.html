@@ -3,6 +3,7 @@
 {% load staff_session %}
 {% load i18n %}
 {% load rules %}
+{% load event_tags %}
 {% load static %}
 
 <!DOCTYPE html>
@@ -82,18 +83,13 @@
         {% endif %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
-                <h1>
-                    <a href="{% block nav_link %}{% endblock nav_link %}">
-                        {% if request.event and request.event.logo %}
-                            <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
-                        {% elif request.event %}
-                            {{ request.event.name }}
-                        {% endif %}
-                    </a>
-                </h1>
-                <div class="header-wrapper">
-                    <div id="header-tabs">
-                        {% block header_tabs %}{% endblock header_tabs %}
+                <h1 class="public-event-header">
+                    <div class="event-logo">
+                        <a href="{% block nav_link %}{% endblock nav_link %}">
+                            {% if request.event and request.event.logo %}
+                                <img loading="lazy" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
+                            {% endif %}
+                        </a>
                     </div>
                     <div class="header-row-right">
                         {% if request.event and request.event.locales|length > 1 and not is_html_export %}
@@ -107,7 +103,8 @@
                                     </summary>
                                     <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                                         {% for l, name in request.event.named_locales %}
-                                            <a href="{% url "cfp:locale.set" event=request.event.slug %}?locale={{ l }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}"
+                                            {% cfp_locale_switch_url l as locale_switch_url %}
+                                            <a href="{{ locale_switch_url }}"
                                                class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}" role="menuitem" tabindex="-1">{{ name }}</a>
                                         {% endfor %}
                                     </div>
@@ -115,7 +112,8 @@
                             {% else %}
                                 <div class="locales-inline">
                                     {% for l, name in request.event.named_locales %}
-                                        <a href="{% url "cfp:locale.set" event=request.event.slug %}?locale={{ l }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}"
+                                        {% cfp_locale_switch_url l as locale_switch_url %}
+                                        <a href="{{ locale_switch_url }}"
                                            class="locale-link {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">
                                             {{ name }}
                                         </a>
@@ -131,30 +129,39 @@
                                     {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
                                 </summary>
                                 <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                                    <a href="{% url "cfp:event.user.submissions" event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-sticky-note-o mr-2"></i>
+                                    <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-shopping-cart mr-2 mb-1"></i>
+                                        {% translate "My orders" %}
+                                    </a>
+                                    <a href="{% url "cfp:event.user.submissions"  organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
                                         {% translate "My proposals" %}
                                     </a>
-                                    <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-envelope mr-2"></i>
-                                        {% translate "My Emails" %}
-                                    </a>
                                     <a href="{{ request.event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                        <i class="fa fa-address-card-o mr-2"></i>
-                                        {% translate "My profile" %}
+                                        <i class="fa fa-address-card-o mr-2 mb-1"></i>
+                                        {% translate "Speaker profile" %}
+                                    </a>
+                                    <a href="{{ request.event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-envelope mr-2 mb-1"></i>
+                                        {% translate "Event emails" %}
+                                    </a>
+                                    <hr>
+                                    <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-user mr-2 mb-1"></i>
+                                        {% translate "Account" %}
                                     </a>
                                     {% if can_see_orga_area %}
                                         <hr>
-                                        <a href="{{ request.event.orga_urls.base }}" class="dropdown-item" role="menuitem" tabindex="-1">
-                                            <i class="fa fa-gears mr-2"></i>
-                                            {% translate "Organiser area" %}
+                                        <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                            <i class="fa fa-gears mr-2 mb-1"></i>
+                                            {% translate "Organizer area" %}
                                         </a>
                                     {% endif %}
                                     <hr>
-                                    <form action="{% url "cfp:event.logout" event=request.event.slug %}" method="post">
+                                    <form action="{% url 'common:auth.logout' %}" method="post">
                                         {% csrf_token %}
                                         <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
-                                            <i class="fa fa-sign-out mr-2 ml-1"></i>
+                                            <i class="fa fa-sign-out mr-2 mb-1 ml-1"></i>
                                             {% translate "Logout" %}
                                         </button>
                                     </form>
@@ -167,6 +174,11 @@
                                 <a href="{% url "orga:login" %}">login</a>
                             {% endif %}
                         {% endif %}
+                    </div>
+                </h1>
+                <div class="header-wrapper">
+                    <div id="header-tabs">
+                        {% block header_tabs %}{% endblock header_tabs %}
                     </div>
                 </div>
             </header>

@@ -59,6 +59,11 @@ export default {
 		icon-button-style()
 		height: 27px !important
 		width: 27px !important
+		-webkit-tap-highlight-color: transparent
+		outline: none
+		&:focus-visible
+			outline: 2px solid var(--clr-primary, $clr-primary)
+			outline-offset: 2px
 		&:not(:first-child)
 			margin-left: 8px
 	.emoji

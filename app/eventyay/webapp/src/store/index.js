@@ -21,6 +21,7 @@ export default new Vuex.Store({
 		socketCloseCode: null,
 		fatalConnectionError: null,
 		fatalError: null,
+		roomFatalErrors: {},
 		user: null,
 		world: null,
 		rooms: null,
@@ -97,6 +98,8 @@ export default new Vuex.Store({
 			api.on('joined', async(serverState) => {
 				state.connected = true
 				state.socketCloseCode = null
+				state.fatalConnectionError = null
+				state.fatalError = null
 				state.user = serverState['user.config']
 				// state.user.profile = {}
 				state.world = serverState['world.config'].world
@@ -107,10 +110,6 @@ export default new Vuex.Store({
 				commit('exhibition/setData', serverState.exhibition)
 				commit('announcement/setAnnouncements', serverState.announcements)
 				commit('updateRooms', serverState['world.config'].rooms)
-				// rejoin room if reconnecting
-				if (state.activeRoom) {
-					dispatch('changeRoom', state.activeRoom)
-				}
 				// TODO ?
 				// if (!state.user.profile.display_name) {
 				// 	router.push('/').catch(() => {}) // force new users to welcome page
@@ -135,10 +134,18 @@ export default new Vuex.Store({
 						state.fatalConnectionError = error
 						api.close()
 						break
-					case 'server.fatal':
-						state.fatalError = error
-						api.close()
+					case 'server.fatal': {
+						const roomId = state.activeRoom?.id ?? null
+						const errorWithContext = {...error, roomId}
+						state.fatalError = errorWithContext
+						if (roomId) {
+							state.roomFatalErrors = {
+								...state.roomFatalErrors,
+								[roomId]: errorWithContext
+							}
+						}
 						break
+					}
 				}
 				// TODO handle generic fatal error?
 			})
@@ -163,9 +170,22 @@ export default new Vuex.Store({
 			state.activeRoom = room
 			state.reactions = null
 			state.roomViewers = null
+			if (room && state.roomFatalErrors?.[room.id]) {
+				// preserve the last fatal error for the room without attempting to reconnect immediately
+				return
+			}
 			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(module.type))) {
-				const { viewers } = await api.call('room.enter', {room: room.id})
-				state.roomViewers = viewers
+				try {
+					const { viewers } = await api.call('room.enter', {room: room.id})
+					state.roomViewers = viewers
+					if (state.roomFatalErrors?.[room.id]) {
+						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
+						state.roomFatalErrors = rest
+					}
+				} catch (error) {
+					// Allow ApiError instances to bubble into the websocket error handler
+					console.error('[store/changeRoom] Failed to enter room', room?.id, error)
+				}
 			}
 			dispatch('question/changeRoom', room)
 			dispatch('poll/changeRoom', room)
