@@ -13,7 +13,7 @@ def control_nav_import(sender, request=None, **kwargs):
         return []
     return [
         {
-            'label': _('Mails'),
+            'label': _('Message center'),
             'url': reverse(
                 'plugins:sendmail:outbox',
                 kwargs={
@@ -44,7 +44,7 @@ def control_nav_import(sender, request=None, **kwargs):
                     ),
                 },
                 {
-                    'label': _('Compose emails'),
+                    'label': _('Compose'),
                     'url': reverse(
                         'plugins:sendmail:compose_email_choice',
                         kwargs={
@@ -62,7 +62,7 @@ def control_nav_import(sender, request=None, **kwargs):
                     ),
                 },
                 {
-                    'label': _('Sent emails'),
+                    'label': _('Sent'),
                     'url': reverse(
                         'plugins:sendmail:sent',
                         kwargs={
