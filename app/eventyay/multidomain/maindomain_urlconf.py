@@ -70,7 +70,8 @@ class VideoSPAView(View):
         # Now expecting organizer and event from URL pattern: /{organizer}/{event}/video
         organizer_slug = kwargs.get('organizer')
         event_slug = kwargs.get('event')
-        
+        event_identifier = kwargs.get('event_identifier')
+
         # TODO remove debug logging once new video routing is stable
         event = None
         if organizer_slug and event_slug:
@@ -136,8 +137,6 @@ class VideoSPAView(View):
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
-            import json as _json
-
             class EventyayJSONEncoder(DjangoJSONEncoder):
                 def default(self, obj):
                     if isinstance(obj, (Promise, LazyI18nString)):
@@ -148,14 +147,11 @@ class VideoSPAView(View):
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)
-            serialized = _json.dumps(injected)
-            content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>{content}"
-            if '<base ' not in content.lower():
-                content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
-        elif '<base ' not in content.lower():
-            # Legacy plain /video should still load SPA; ensure assets resolve correctly
+
+        if '<base ' not in content.lower():
+            # Ensure assets resolve correctly regardless of nested route
             content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
-        
+
         resp = HttpResponse(content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
         return resp
