@@ -114,7 +114,7 @@ export default {
 		...mapState('schedule', ['schedule']),
 		...mapState('chat', ['joinedChannels', 'call']),
 		...mapState('exhibition', ['staffedExhibitions']),
-		...mapGetters(['hasPermission']),
+		...mapGetters(['hasPermission', 'visibleRooms']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
@@ -123,10 +123,6 @@ export default {
 			return {
 				transform: `translateX(${this.pointerMovementX}px)`
 			}
-		},
-		visibleRooms() {
-			if (!this.rooms) return []
-			return this.rooms.filter(room => !room.hidden && !room.sidebar_hidden && room.setup_complete)
 		},
 		homeRoom() {
 			return this.visibleRooms[0] || null

@@ -101,22 +101,8 @@ export default {
 			immediate: true,
 			handler(config) {
 				if (!config) return
-				if (config.hidden === undefined) config.hidden = false
-				if (config.sidebar_hidden === undefined) {
-					config.sidebar_hidden = !config.setup_complete
-				}
-			}
-		},
-		'config.hidden'(value) {
-			if (value) {
-				this.config.sidebar_hidden = true
-			} else if (!this.config.setup_complete) {
-				this.config.sidebar_hidden = true
-			}
-		},
-		'config.setup_complete'(value) {
-			if (!value) {
-				this.config.sidebar_hidden = true
+				this.applyVisibilityDefaults(config)
+				this.syncSidebarHidden()
 			}
 		},
 		inferredType(newType) {
@@ -139,6 +125,9 @@ export default {
 		showVideoSettingsTitle() {
 			const videoTypes = ['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-roulette']
 			return videoTypes.includes(this.inferredType?.id)
+		},
+		visibilityDependencies() {
+			return [this.config?.hidden, this.config?.setup_complete]
 		},
 		sidebarHiddenDisabled() {
 			return !this.config.setup_complete || this.config.hidden
@@ -178,6 +167,18 @@ export default {
 		return { config }
 	},
 	methods: {
+		applyVisibilityDefaults(config) {
+			if (config.hidden === undefined) config.hidden = false
+			if (config.sidebar_hidden === undefined) {
+				config.sidebar_hidden = !config.setup_complete
+			}
+		},
+		syncSidebarHidden() {
+			if (!this.config) return
+			if (this.config.hidden || !this.config.setup_complete) {
+				this.config.sidebar_hidden = true
+			}
+		},
 		selectType(typeId) {
 			const type = this.roomTypes.find(t => t.id === typeId)
 			if (!type) return

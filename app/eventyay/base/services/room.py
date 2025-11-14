@@ -127,7 +127,9 @@ def reorder_rooms(event, id_list, by_user):
             return sys.maxsize, r.sorting_priority, r.name
 
     all_rooms = list(
-        event.rooms.filter(deleted=False).only("id", "name", "sorting_priority")
+        event.rooms.filter(deleted=False)
+        .only("id", "name", "sorting_priority")
+        .order_by("sorting_priority", "name", "id")
     )
     all_rooms.sort(key=key)
     to_update = []

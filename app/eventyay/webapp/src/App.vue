@@ -43,7 +43,7 @@
 	.fatal-error(v-if="currentFatalError") {{ currentFatalError.message || currentFatalError.code }}
 </template>
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -67,6 +67,7 @@ export default {
 		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'socketCloseCode', 'world', 'rooms', 'user', 'mediaSourcePlaceholderRect', 'userLocale', 'userTimezone', 'roomFatalErrors']),
 		...mapState('notifications', ['askingPermission']),
 		...mapState('chat', ['call']),
+		...mapGetters(['visibleRooms']),
 		currentFatalError() {
 			if (this.room && this.roomFatalErrors?.[this.room.id]) {
 				return this.roomFatalErrors[this.room.id]
@@ -76,10 +77,6 @@ export default {
 				if (backgroundFatal) return backgroundFatal
 			}
 			return this.fatalError?.roomId ? (this.room && this.fatalError.roomId === this.room.id ? this.fatalError : null) : this.fatalError
-		},
-		visibleRooms() {
-			if (!this.rooms) return []
-			return this.rooms.filter(room => !room.hidden && !room.sidebar_hidden && room.setup_complete)
 		},
 		room() {
 			const routeName = this.$route?.name
@@ -277,7 +274,7 @@ export default {
 			if (this.room && !this.visibleRooms.includes(this.room)) {
 				this.$router.push('/').catch(() => {})
 			}
-			if (!this.backgroundRoom && !this.rooms.includes(this.backgroundRoom)) {
+			if (this.backgroundRoom && !this.rooms.includes(this.backgroundRoom)) {
 				this.backgroundRoom = null
 			}
 		}
