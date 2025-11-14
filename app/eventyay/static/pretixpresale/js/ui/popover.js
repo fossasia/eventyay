@@ -107,11 +107,6 @@ $(function () {
   const blocks = [
     `<div data-name="popover-profile-menu">
       <div class="profile-menu">
-          <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-address-card-o"></i> ${window.gettext('Speaker Profile')}
-          </a>
-      </div>
-      <div class="profile-menu">
           <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
               <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
           </a>
@@ -119,6 +114,11 @@ $(function () {
       <div class="profile-menu">
           <a href="${basePath}/${organizerName}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
               <i class="fa fa-sticky-note-o"></i> ${window.gettext('My proposals')}
+          </a>
+      </div>
+      <div class="profile-menu">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-address-card-o"></i> ${window.gettext('Speaker profile')}
           </a>
       </div>
       <div class="profile-menu">
