@@ -46,7 +46,7 @@ const updateContrast = (field, color) => {
     ).style.backgroundColor = hexColor
     // Update the live preview CSS variable
     const wrapper = field.closest('.colorpicker-wrapper');
-    const previewContainer = wrapper?.parentNode?.querySelector('.colorpicker-update') || null;
+    const previewContainer = wrapper?.parentNode?.querySelector('.colorpicker-update');
     if (previewContainer) {
         previewContainer.style.setProperty('--color', hexColor);
     }
