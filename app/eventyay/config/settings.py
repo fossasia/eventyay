@@ -1063,7 +1063,6 @@ VITE_IGNORE = False  # Used to ignore `collectstatic`/`rebuild`
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
-    ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
 )
 # COMPRESS_ROOT = os.path.join(BASE_DIR, 'static/')
 COMPRESS_ENABLED = COMPRESS_OFFLINE = not debug_fallback

@@ -802,7 +802,6 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
-    ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
 )
 COMPRESS_ENABLED = COMPRESS_OFFLINE = is_production
 COMPRESS_CSS_FILTERS = (
