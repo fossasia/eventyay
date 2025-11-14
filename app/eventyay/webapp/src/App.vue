@@ -77,12 +77,16 @@ export default {
 			}
 			return this.fatalError?.roomId ? (this.room && this.fatalError.roomId === this.room.id ? this.fatalError : null) : this.fatalError
 		},
+		visibleRooms() {
+			if (!this.rooms) return []
+			return this.rooms.filter(room => !room.hidden && !room.sidebar_hidden && room.setup_complete)
+		},
 		room() {
 			const routeName = this.$route?.name
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
-			if (routeName === 'home') return this.rooms?.[0]
-			return this.rooms?.find(room => room.id === this.$route.params.roomId)
+			if (routeName === 'home') return this.visibleRooms?.[0]
+			return this.visibleRooms?.find(room => room.id === this.$route.params.roomId)
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -270,7 +274,7 @@ export default {
 			}
 		},
 		roomListChange() {
-			if (this.room && !this.rooms.includes(this.room)) {
+			if (this.room && !this.visibleRooms.includes(this.room)) {
 				this.$router.push('/').catch(() => {})
 			}
 			if (!this.backgroundRoom && !this.rooms.includes(this.backgroundRoom)) {

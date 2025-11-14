@@ -13,8 +13,21 @@
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="filteredRooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
-			RoomListItem(v-for="(room, index) of filteredRooms" :index="index", :key="index", :room="room", :disabled="filteredRooms !== rooms")
+			.visibility Visibility
+			.actions Actions
+		template(v-if="rooms")
+			SlickList.tbody(
+				v-if="!search",
+				v-model:list="rooms",
+				lockAxis="y",
+				:valueKey="'id'",
+				:useDragHandle="true",
+				v-scrollbar.y="",
+				@update:list="onListSort"
+			)
+				RoomListItem(v-for="(room, index) of rooms" :index="index", :key="room.id", :room="room", :disabled="rooms.length < 2")
+			.table-body(v-else, v-scrollbar.y="")
+				RoomListItem(v-for="room of filteredRooms", :key="room.id", :room="room", :disabled="true")
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -75,10 +88,12 @@ export default {
 			}
 		},
 		async onListSort() {
+			const idList = this.rooms.map(room => String(room.id))
 			try {
-				this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
+				this.rooms = await api.call('room.config.reorder', idList)
 			} catch (e) {
 				console.error(e)
+				this.fetchRooms()
 			}
 			// TODO error handling
 		}
@@ -102,6 +117,8 @@ export default {
 			align-items: center
 			.bunt-button:not(:last-child)
 				margin-right: 16px
+			h2
+				margin: 16px
 			.btn-create
 				themed-button-primary()
 	h2
@@ -114,6 +131,19 @@ export default {
 		background-color: $clr-white
 	.rooms-list
 		flex-table()
+		.header
+			margin-bottom: 0
+			padding-bottom: 8px
+			border-bottom: border-separator()
+		.slick-list
+			margin-top: 0
+		.table-row
+			width: 100%
+			box-sizing: border-box
+		.table-body
+			display: block
+			max-height: calc(100vh - 260px)
+			overflow: auto
 		.room
 			display: flex
 			align-items: center
@@ -123,4 +153,10 @@ export default {
 		.name
 			flex: auto
 			ellipsis()
+		.visibility
+			width: 80px
+			text-align: center
+		.actions
+			width: 160px
+			text-align: right
 </style>

@@ -71,6 +71,15 @@ async def get_viewers(event: Event, room: Room):
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
+    extra_fields = []
+    if room.module_config and not room.setup_complete:
+        room.setup_complete = True
+        extra_fields.append("setup_complete")
+        if room.sidebar_hidden:
+            room.sidebar_hidden = False
+            extra_fields.append("sidebar_hidden")
+    if extra_fields:
+        update_fields = list(set(update_fields) | set(extra_fields))
     room.save(update_fields=update_fields)
     new = RoomConfigSerializer(room).data
 
