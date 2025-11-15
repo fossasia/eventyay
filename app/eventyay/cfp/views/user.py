@@ -219,12 +219,11 @@ class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormVie
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:
             return get_login_redirect(request)
-        self.request = request
-        self.args = args
-        self.kwargs = kwargs
+        # Call super().dispatch() first to properly initialize request attributes
+        response = super().dispatch(request, *args, **kwargs)
         if not request.user.has_perm('base.is_speaker_submission', self.submission):
             self.template_name = 'cfp/event/user_submission_confirm_error.html'
-        return super().dispatch(request, *args, **kwargs)
+        return response
 
     @cached_property
     def speaker_profile(self):
