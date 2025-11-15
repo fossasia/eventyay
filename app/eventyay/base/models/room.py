@@ -99,9 +99,6 @@ class RoomQuerySet(models.QuerySet):
                     ext = " AND jsonb_array_length(trait_grants->%s) > 0"
                     ext_args.append(role)
 
-                # Build IN clause with proper placeholders for each trait
-                in_placeholders = ','.join(['%s'] * len(traits))
-
                 qs = qs.annotate(
                     **{
                         f"has_role_{i}": RawSQL(
@@ -111,8 +108,8 @@ class RoomQuerySet(models.QuerySet):
                             TRUE = ALL(
                                 SELECT (
                                     CASE jsonb_typeof(d{i}.elem)
-                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{"{}"}' IN ({in_placeholders}) )
-                                        ELSE d{i}.elem#>>'{"{}"}' IN ({in_placeholders})
+                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s) )
+                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s)
                                     END
                                 ) FROM jsonb_array_elements( trait_grants->%s ) AS d{i}(elem)
                             ) {ext}
@@ -120,8 +117,8 @@ class RoomQuerySet(models.QuerySet):
                             (
                                 role,  # ? check
                                 role,  # IS NOT NULL check
-                                *traits,  # IN check - expand traits as individual params
-                                *traits,  # IN check - expand traits as individual params
+                                traits,  # = ANY check (array for first case)
+                                traits,  # = ANY check (array for second case)
                                 role,  # jsonb_array_elements
                                 *ext_args,
                             ),
