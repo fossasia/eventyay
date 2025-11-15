@@ -43,6 +43,10 @@ class RoomQuerySet(models.QuerySet):
 
         traits = traits or user.traits
         allow_empty_traits = not user or user.type == User.UserType.PERSON
+        # Ensure traits is always a proper list of strings for SQL parameterization
+        if traits and isinstance(traits, str):
+            # e.g. "(trait1,trait2)" → ["trait1", "trait2"]
+            traits = [t.strip(" '") for t in traits.strip("()").split(",") if t.strip()]
         if event.has_permission_implicit(
             traits=traits,
             permissions=[permission],
@@ -92,7 +96,7 @@ class RoomQuerySet(models.QuerySet):
         # When our user has traits, this is automatically ensured by the ALL() statement, but when traits=[] we
         # need to do a special case check since "IN ()" is not valid SQL
         for i, role in enumerate(roles):
-            if traits:
+            if traits and len(traits) > 0:
                 ext = ""
                 ext_args = []
                 if not allow_empty_traits:
@@ -108,8 +112,8 @@ class RoomQuerySet(models.QuerySet):
                             TRUE = ALL(
                                 SELECT (
                                     CASE jsonb_typeof(d{i}.elem)
-                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{"{}"}' IN %s )
-                                        ELSE d{i}.elem#>>'{"{}"}' IN %s
+                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s::text[]) )
+                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s::text[])
                                     END
                                 ) FROM jsonb_array_elements( trait_grants->%s ) AS d{i}(elem)
                             ) {ext}
@@ -117,8 +121,8 @@ class RoomQuerySet(models.QuerySet):
                             (
                                 role,  # ? check
                                 role,  # IS NOT NULL check
-                                tuple(traits),  # IN check
-                                tuple(traits),  # IN check
+                                traits,  # = ANY check (array for first case)
+                                traits,  # = ANY check (array for second case)
                                 role,  # jsonb_array_elements
                                 *ext_args,
                             ),
@@ -155,7 +159,7 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     The Room object stores some meta information. Most, like capacity,
     are not in use right now.
     """
-    
+
     log_prefix = "pretalx.room"
 
     deleted = models.BooleanField(default=False)
