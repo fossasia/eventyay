@@ -43,6 +43,10 @@ class RoomQuerySet(models.QuerySet):
 
         traits = traits or user.traits
         allow_empty_traits = not user or user.type == User.UserType.PERSON
+        # Ensure traits is always a proper list of strings for SQL parameterization
+        if traits and isinstance(traits, str):
+            # e.g. "(trait1,trait2)" → ["trait1", "trait2"]
+            traits = [t.strip(" '") for t in traits.strip("()").split(",") if t.strip()]
         if event.has_permission_implicit(
             traits=traits,
             permissions=[permission],
