@@ -25,6 +25,9 @@ from pretix.control.permissions import (
     AdministratorPermissionRequiredMixin,
     StaffMemberRequiredMixin,
 )
+from django.utils.timezone import now
+from django.utils.translation import gettext_noop
+from i18nfield.strings import LazyI18nString
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +117,29 @@ class UpdateCheckView(StaffMemberRequiredMixin, FormView):
         if 'trigger' in request.POST:
             update_check.apply()
             return redirect(self.get_success_url())
+        elif 'send_test_email' in request.POST:
+            gs = GlobalSettingsObject()
+            email = gs.settings.get('update_check_email')
+            if not email:
+                messages.error(self.request, _('Please enter an email before sending a test.'))
+            else:
+                try:
+                    from pretix.base.services.mail import mail
+                    mail(
+                        email,
+                    _('Eventyay update notification test'),
+                    LazyI18nString.from_gettext(
+                        gettext_noop('This is a test email to verify your SMTP configuration.')
+                    ),
+                    {}
+                )
+                    messages.success(self.request, _('Test email sent successfully.'))
+                    gs.settings.set('last_notification_sent', now().isoformat())
+                except Exception as e:
+                    messages.error(self.request, _('SMTP error: {0}').format(str(e)))
+            return redirect(self.get_success_url())
         return super().post(request, *args, **kwargs)
+        
 
     def form_valid(self, form):
         form.save()

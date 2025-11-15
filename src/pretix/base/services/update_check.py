@@ -19,6 +19,9 @@ from pretix.base.signals import periodic_task
 from pretix.celery_app import app
 from pretix.helpers.urls import build_absolute_uri
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 @receiver(signal=periodic_task)
 def run_update_check(sender, **kwargs):
@@ -71,26 +74,48 @@ def update_check():
         gs.settings.set('update_check_last', now())
         gs.settings.set('update_check_result', {'error': 'unavailable'})
 
-
 def send_update_notification_email():
     gs = GlobalSettingsObject()
-    if not gs.settings.update_check_email:
+    admin_email = gs.settings.get('update_check_email')
+    
+    if not admin_email:
         return
 
-    mail(
-        gs.settings.update_check_email,
-        _('pretix update available'),
-        LazyI18nString.from_gettext(
-            gettext_noop(
-                'Hi!\n\nAn update is available for pretix or for one of the plugins you installed in your '
-                'pretix installation. Please click on the following link for more information:\n\n {url} \n\n'
-                'You can always find information on the latest updates on the eventyay.com blog:\n\n'
-                'https://eventyay.com/about/en/blog/'
-                '\n\nBest,\n\nyour pretix developers'
+    update_result = gs.settings.get('update_check_result')
+    if not update_result or 'version' not in update_result:
+        return
+
+    latest_version = update_result['version'].get('latest')
+    last_notified = gs.settings.get('last_notified_release')
+    
+    # Only send if new release and we haven't notified about this version yet
+    if latest_version and latest_version != last_notified:
+        try:
+            mail(
+                admin_email,
+                _('Eventyay update available: v{0}').format(latest_version),
+                LazyI18nString.from_gettext(
+                    gettext_noop(
+                        'A new Eventyay version is available.\n\n'
+                        'Current: {current}\n'
+                        'Latest: {latest}\n\n'
+                        'Release notes:\n'
+                        'https://github.com/fossasia/eventyay-tickets/releases/tag/{latest}\n\n'
+                        'You received this because this address is configured under:\n'
+                        'Admin → Global Settings → Update'
+                    )
+                ),
+
+                {
+                    'current': update_result['version'].get('current'),
+                    'latest': latest_version,
+                },
             )
-        ),
-        {'url': build_absolute_uri('control:admin.global.update')},
-    )
+            gs.settings.set('last_notified_release', latest_version)
+            gs.settings.set('last_notification_sent', now().isoformat())
+        except Exception as e:
+            logger.error('Failed to send update notification email: %s', e)
+
 
 
 def check_result_table():
