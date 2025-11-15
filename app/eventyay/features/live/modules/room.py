@@ -179,19 +179,30 @@ class RoomModule(BaseModule):
                 )
 
     async def _update_view_count(self, room, actual_view_count):
+        from eventyay.base.models.room import approximate_view_number
+        
         async with aredis(f"room:approxcount:known:{room.pk}") as redis:
             prev_value = await redis.getset(
                 f"room:approxcount:known:{room.pk}", actual_view_count
             )
             if prev_value != actual_view_count:
                 await redis.expire(f"room:approxcount:known:{room.pk}", 900)
-                # broadcast actual viewer count instead of approximate text
+                
+                # Check if this is a stage room that should show actual numeric counts
+                is_stage_room = any(
+                    module.get('type') in ['livestream.native', 'livestream.youtube', 'livestream.iframe']
+                    for module in room.module_config or []
+                )
+                
+                # For stage rooms, use actual count; for video chat rooms, use approximate text
+                users_value = actual_view_count if is_stage_room else approximate_view_number(actual_view_count)
+                
                 await self.consumer.channel_layer.group_send(
                     GROUP_EVENT.format(id=self.consumer.event.pk),
                     {
                         "type": "event.user_count_change",
                         "room": str(room.pk),
-                        "users": actual_view_count,
+                        "users": users_value,
                     },
                 )
 
