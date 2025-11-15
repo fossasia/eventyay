@@ -112,8 +112,8 @@ class RoomQuerySet(models.QuerySet):
                             TRUE = ALL(
                                 SELECT (
                                     CASE jsonb_typeof(d{i}.elem)
-                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s) )
-                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s)
+                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s::text[]) )
+                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s::text[])
                                     END
                                 ) FROM jsonb_array_elements( trait_grants->%s ) AS d{i}(elem)
                             ) {ext}
