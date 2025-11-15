@@ -3671,11 +3671,11 @@ msgstr "Ar WebAuthn saderīgs aparatūras marķieris (piemēram, Yubikey)"
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
-"Nederīga viettura sintakse: jūs izmantojāt atšķirīgu numuru \"{\" than of "
-"\"}\"."
+"Nederīga viettura sintakse: jūs izmantojāt atšķirīgu numuru \"{\" than of \"}"
+"\"."
 
 #: pretix/base/forms/validators.py:39
 #, python-format
@@ -5557,9 +5557,9 @@ msgid ""
 "Someone with this setting can get access to most data of all of your events, "
 "i.e. via privacy reports, so be careful who you add to this team!"
 msgstr ""
-"Kāds ar šo iestatījumu var piekļūt lielākajai daļai jūsu pasākumu datiem, t."
-"i., izmantojot privātuma pārskatus, tāpēc esiet uzmanīgs, ko pievienojat šai "
-"komandai!"
+"Kāds ar šo iestatījumu var piekļūt lielākajai daļai jūsu pasākumu datiem, "
+"t.i., izmantojot privātuma pārskatus, tāpēc esiet uzmanīgs, ko pievienojat "
+"šai komandai!"
 
 #: pretix/base/models/organizer.py:217
 msgid "Can manage gift cards"
@@ -5712,8 +5712,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -11283,8 +11283,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 
 #: pretix/control/logdisplay.py:503
