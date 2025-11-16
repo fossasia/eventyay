@@ -22,7 +22,7 @@ from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.helpers.timezone import get_browser_timezone
+from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
 from eventyay.plugins.sendmail.mixins import CopyDraftMixin, QueryFilterOrderingMixin
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueFilter, EmailQueueToUser
@@ -101,8 +101,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             browser_tz = get_browser_timezone(form.cleaned_data.get('browser_timezone'))
 
             def attach_timezone(dt_value):
-                dt_naive = dt_value.replace(tzinfo=None)
-                return dt_naive.replace(tzinfo=browser_tz)
+                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
 
             if form.cleaned_data.get('order_created_from'):
                 opq = opq.filter(order__datetime__gte=attach_timezone(form.cleaned_data['order_created_from']))

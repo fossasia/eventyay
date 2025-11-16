@@ -633,7 +633,13 @@
                                                     <span class="order-datetime" data-datetime="{{ p.created.isoformat }}">{{ p.created|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></span>
                                                 {% endif %}
                                             </td>
-                                            <td class="order-datetime" data-datetime="{{ p.payment_date.isoformat }}">{{ p.payment_date|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span></td>
+                                            <td class="order-datetime">
+                                                {% if p.payment_date %}
+                                                    <span class="order-datetime" data-datetime="{{ p.payment_date.isoformat }}">
+                                                        {{ p.payment_date|date:"SHORT_DATETIME_FORMAT" }} <span class="text-muted tz-indicator-inline"></span>
+                                                    </span>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 {{ p.payment_provider.verbose_name }}
                                                 {% if p.state == "pending" or p.state == "created" %}

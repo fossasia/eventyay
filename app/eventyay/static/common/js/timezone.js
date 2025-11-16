@@ -1,5 +1,9 @@
 /**
  * Browser timezone detection and datetime conversion utilities.
+ *
+ * Note: Client-side formatting intentionally uses the user's locale via
+ * Date#toLocaleString, which may differ from Django's SHORT_DATETIME_FORMAT.
+ * This is by design to reflect the browser's preferences.
  */
 const detectBrowserTimezone = () => {
     try {
