@@ -278,17 +278,16 @@ class OnlineVideoJoin(EventPermissionRequired, View):
 
         event = request.event
         logger.info('Checking video settings for event %s', event)
-        if not (venueless_settings := event.venueless_settings):
-            logger.info('venueless settings is missing.')
-            return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
-        required_fields = (
-            ('join_url', 'venueless_settings.join_url'),
-            ('secret', 'venueless_settings.secret'),
-            ('issuer', 'venueless_settings.issuer'),
-            ('audience', 'venueless_settings.audience'),
+        # Use event settings (same schema as presale JoinOnlineVideoView)
+        settings_obj = event.settings
+        required_settings = (
+            ('venueless_url', 'event.settings.venueless_url'),
+            ('venueless_secret', 'event.settings.venueless_secret'),
+            ('venueless_issuer', 'event.settings.venueless_issuer'),
+            ('venueless_audience', 'event.settings.venueless_audience'),
         )
-        for attr, label in required_fields:
-            if not getattr(venueless_settings, attr):
+        for attr, label in required_settings:
+            if not getattr(settings_obj, attr, None):
                 logger.info('%s is missing.', label)
                 return HttpResponse(status=HTTPStatus.FORBIDDEN, content=VideoJoinError.MISCONFIGURED)
 
@@ -314,8 +313,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             profile["profile_picture"] = request.user.get_avatar_url(request.event)
 
         payload = {
-            "iss": venueless_settings.issuer,
-            "aud": venueless_settings.audience,
+            "iss": settings_obj.venueless_issuer,
+            "aud": settings_obj.venueless_audience,
             "exp": exp,
             "iat": iat,
             "uid": encode_email(request.user.email),
@@ -326,10 +325,8 @@ class OnlineVideoJoin(EventPermissionRequired, View):
                 }
             ),
         }
-        token = jwt.encode(
-            payload, venueless_settings.secret, algorithm="HS256"
-        )
-        redirect_url = urljoin(venueless_settings.join_url, f'#token={token}')
+        token = jwt.encode(payload, settings_obj.venueless_secret, algorithm="HS256")
+        redirect_url = urljoin(settings_obj.venueless_url, f'#token={token}')
         logger.info('Redirect URL to Video: %s', redirect_url)
         return JsonResponse(
             {

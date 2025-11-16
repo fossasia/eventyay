@@ -99,7 +99,7 @@ $(function () {
 
   // Constructing logout path using URLSearchParams
   const logoutParams = new URLSearchParams({ back: backUrl });
-  const logoutPath = `/control/logout?${logoutParams}`;
+  const logoutPath = `/common/logout?${logoutParams}`;
 
   const profilePath = '/common/account/';
   const orderPath = '/common/orders/';
