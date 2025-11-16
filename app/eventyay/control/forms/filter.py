@@ -598,7 +598,6 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             ).distinct()
         if fdata.get('email'):
             qs = qs.filter(email__icontains=fdata.get('email'))
-        
         if fdata.get('created_from') or fdata.get('created_to'):
             browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
 
