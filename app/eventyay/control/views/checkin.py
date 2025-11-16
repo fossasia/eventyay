@@ -298,7 +298,7 @@ class CheckinListCreate(EventPermissionRequiredMixin, CreateView):
         messages.success(self.request, _('The new check-in list has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.event.checkinlist.added',
+            'eventyay.event.checkinlist.added',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
@@ -332,7 +332,7 @@ class CheckinListUpdate(EventPermissionRequiredMixin, UpdateView):
         messages.success(self.request, _('Your changes have been saved.'))
         if form.has_changed():
             self.object.log_action(
-                'pretix.event.checkinlist.changed',
+                'eventyay.event.checkinlist.changed',
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
@@ -370,7 +370,7 @@ class CheckinListDelete(EventPermissionRequiredMixin, DeleteView):
         self.object = self.get_object()
         success_url = self.get_success_url()
         self.object.checkins.all().delete()
-        self.object.log_action(action='pretix.event.checkinlists.deleted', user=self.request.user)
+        self.object.log_action(action='eventyay.event.checkinlists.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected list has been deleted.'))
         return HttpResponseRedirect(success_url)

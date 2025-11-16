@@ -33,7 +33,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
     data = json.loads(logentry.data)
 
     text = _('The order has been changed:')
-    if logentry.action_type == 'eventyay.event.order.changed.product':
+    if action_type == 'eventyay.event.order.changed.product':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(product__event=event, pk=data['old_variation']))
@@ -51,7 +51,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.seat':
+    elif action_type == 'eventyay.event.order.changed.seat':
         return (
             text
             + ' '
@@ -61,7 +61,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_seat=data.get('new_seat'),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.subevent':
+    elif action_type == 'eventyay.event.order.changed.subevent':
         old_se = str(event.subevents.get(pk=data['old_subevent']))
         new_se = str(event.subevents.get(pk=data['new_subevent']))
         return (
@@ -77,7 +77,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.price':
+    elif action_type == 'eventyay.event.order.changed.price':
         return (
             text
             + ' '
@@ -87,7 +87,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.tax_rule':
+    elif action_type == 'eventyay.event.order.changed.tax_rule':
         if 'positionid' in data:
             return (
                 text
@@ -108,9 +108,9 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                     new_rule=TaxRule.objects.get(pk=data['new_taxrule']),
                 )
             )
-    elif logentry.action_type == 'eventyay.event.order.changed.addfee':
+    elif action_type == 'eventyay.event.order.changed.addfee':
         return text + ' ' + str(_('A fee has been added'))
-    elif logentry.action_type == 'eventyay.event.order.changed.feevalue':
+    elif action_type == 'eventyay.event.order.changed.feevalue':
         return (
             text
             + ' '
@@ -119,7 +119,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.cancelfee':
+    elif action_type == 'eventyay.event.order.changed.cancelfee':
         return (
             text
             + ' '
@@ -127,7 +127,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.cancel':
+    elif action_type == 'eventyay.event.order.changed.cancel':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(pk=data['old_variation']))
@@ -140,7 +140,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.add':
+    elif action_type == 'eventyay.event.order.changed.add':
         product = str(event.products.get(pk=data['product']))
         if data['variation']:
             product += ' - ' + str(ProductVariation.objects.get(product__event=event, pk=data['variation']))
@@ -166,7 +166,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                     price=money_filter(Decimal(data['price']), event.currency),
                 )
             )
-    elif logentry.action_type == 'eventyay.event.order.changed.secret':
+    elif action_type == 'eventyay.event.order.changed.secret':
         return (
             text
             + ' '
@@ -174,7 +174,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 posid=data.get('positionid', '?'),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.split':
+    elif action_type == 'eventyay.event.order.changed.split':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(pk=data['old_variation']))
@@ -196,7 +196,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.split_from':
+    elif action_type == 'eventyay.event.order.changed.split_from':
         return _('This order has been created by splitting the order {order}').format(
             order=data['original_order'],
         )
@@ -220,7 +220,7 @@ def _display_checkin(event, logentry):
     else:
         checkin_list = _('(unknown)')
 
-    if logentry.action_type == 'eventyay.event.checkin.unknown':
+    if action_type == 'eventyay.event.checkin.unknown':
         if show_dt:
             return _('Unknown scan of code "{barcode}…" at {datetime} for list "{list}", type "{type}".').format(
                 posid=data.get('positionid'),
@@ -237,7 +237,7 @@ def _display_checkin(event, logentry):
                 list=checkin_list,
             )
 
-    if logentry.action_type == 'eventyay.event.checkin.revoked':
+    if action_type == 'eventyay.event.checkin.revoked':
         if show_dt:
             return _(
                 'Scan scan of revoked code "{barcode}…" at {datetime} for list "{list}", type "{type}", was uploaded.'
@@ -256,7 +256,7 @@ def _display_checkin(event, logentry):
                 list=checkin_list,
             )
 
-    if logentry.action_type == 'eventyay.event.checkin.denied':
+    if action_type == 'eventyay.event.checkin.denied':
         if show_dt:
             return _(
                 'Denied scan of position #{posid} at {datetime} for list "{list}", type "{type}", '
@@ -312,8 +312,34 @@ def _display_checkin(event, logentry):
         )
 
 
+# Map legacy pretix.* AND pretalx.* action types to eventyay.* for backward compatibility
+# This ensures old log entries with legacy prefixes still display correctly
+PRETIX_LEGACY_ALIASES = {
+    # pretix.* (old ticketing system) mappings
+    'pretix.event.quota.added': 'eventyay.event.quota.added',
+    'pretix.event.quota.changed': 'eventyay.event.quota.changed',
+    'pretix.event.quota.deleted': 'eventyay.event.quota.deleted',
+    'pretix.event.quota.opened': 'eventyay.event.quota.opened',
+    'pretix.event.quota.closed': 'eventyay.event.quota.closed',
+    'pretix.subevent.quota.added': 'eventyay.subevent.quota.added',
+    'pretix.subevent.quota.changed': 'eventyay.subevent.quota.changed',
+    'pretix.subevent.quota.deleted': 'eventyay.subevent.quota.deleted',
+    'pretix.event.category.added': 'eventyay.event.category.added',
+    'pretix.team.created': 'eventyay.team.created',
+    'pretix.user.settings.changed': 'eventyay.user.settings.changed',
+    
+    # pretalx.* (old talk system) mappings - map to eventyay equivalents
+    'pretalx.room.create': 'eventyay.room.create',
+    'pretalx.room.update': 'eventyay.room.update',
+    'pretalx.room.delete': 'eventyay.room.delete',
+}
+
+
 @receiver(signal=logentry_display, dispatch_uid='eventyaycontrol_logentry_display')
 def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs):
+    # Map legacy pretix.* prefixes to eventyay.* for backward compatibility
+    action_type = PRETIX_LEGACY_ALIASES.get(logentry.action_type, logentry.action_type)
+    
     plains = {
         'eventyay.object.cloned': _('This object has been created by cloning.'),
         'eventyay.organizer.changed': _('The organizer has been changed.'),
@@ -508,6 +534,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.gate.created': _('The gate has been created.'),
         'eventyay.gate.changed': _('The gate has been changed.'),
         'eventyay.gate.deleted': _('The gate has been deleted.'),
+        'eventyay.room.create': _('A new room was added.'),
+        'eventyay.room.update': _('A room was modified.'),
+        'eventyay.room.delete': _('A room was deleted.'),
         'eventyay.subevent.deleted': pgettext_lazy('subevent', 'The event date has been deleted.'),
         'eventyay.subevent.canceled': pgettext_lazy('subevent', 'The event date has been canceled.'),
         'eventyay.subevent.changed': pgettext_lazy('subevent', 'The event date has been changed.'),
@@ -524,6 +553,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.giftcards.created': _('The gift card has been created.'),
         'eventyay.giftcards.modified': _('The gift card has been changed.'),
         'eventyay.giftcards.transaction.manual': _('A manual transaction has been performed.'),
+        'eventyay.property.deleted': _('The property has been deleted.'),
+        'eventyay.plugins.badges.layout.deleted': _('The badge layout has been deleted.'),
     }
 
     try:
@@ -531,7 +562,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     except (TypeError, json.JSONDecodeError):
         data = {}
 
-    if logentry.action_type.startswith('eventyay.event.product.variation'):
+    if action_type.startswith('eventyay.event.product.variation'):
         if 'value' not in data:
             # Backwards compatibility
             var = ProductVariation.objects.filter(id=data['id']).first()
@@ -542,20 +573,20 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         else:
             data['value'] = LazyI18nString(data['value'])
 
-    if logentry.action_type in plains:
+    if action_type in plains:
         data = defaultdict(lambda: '?', data)
-        return plains[logentry.action_type].format_map(data)
+        return plains[action_type].format_map(data)
 
-    if logentry.action_type.startswith('eventyay.event.order.changed'):
+    if action_type.startswith('eventyay.event.order.changed'):
         return _display_order_changed(sender, logentry)
 
-    if logentry.action_type.startswith('eventyay.event.payment.provider.'):
+    if action_type.startswith('eventyay.event.payment.provider.'):
         return _('The settings of a payment provider have been changed.')
 
-    if logentry.action_type.startswith('eventyay.event.tickets.provider.'):
+    if action_type.startswith('eventyay.event.tickets.provider.'):
         return _('The settings of a ticket output provider have been changed.')
 
-    if logentry.action_type == 'eventyay.event.order.consent':
+    if action_type == 'eventyay.event.order.consent':
         return _('The user confirmed the following message: "{}"').format(
             bleach.clean(logentry.parsed_data.get('msg'), tags=[], strip=True)
         )
@@ -563,7 +594,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if sender and logentry.action_type.startswith('eventyay.event.checkin'):
         return _display_checkin(sender, logentry)
 
-    if logentry.action_type == 'eventyay.control.views.checkin':
+    if action_type == 'eventyay.control.views.checkin':
         # deprecated
         dt = dateutil.parser.parse(data.get('datetime'))
         tz = pytz.timezone(sender.settings.timezone)
@@ -586,7 +617,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             posid=data.get('positionid'), datetime=dt_formatted, list=checkin_list
         )
 
-    if logentry.action_type in (
+    if action_type in (
         'eventyay.control.views.checkin.reverted',
         'eventyay.event.checkin.reverted',
     ):
@@ -603,33 +634,33 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             list=checkin_list,
         )
 
-    if logentry.action_type == 'eventyay.team.member.added':
+    if action_type == 'eventyay.team.member.added':
         return _('{user} has been added to the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.member.removed':
+    if action_type == 'eventyay.team.member.removed':
         return _('{user} has been removed from the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.member.joined':
+    if action_type == 'eventyay.team.member.joined':
         return _('{user} has joined the team using the invite sent to {email}.').format(
             user=data.get('email'), email=data.get('invite_email')
         )
 
-    if logentry.action_type == 'eventyay.team.invite.created':
+    if action_type == 'eventyay.team.invite.created':
         return _('{user} has been invited to the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.invite.resent':
+    if action_type == 'eventyay.team.invite.resent':
         return _('Invite for {user} has been resent.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.invite.deleted':
+    if action_type == 'eventyay.team.invite.deleted':
         return _('The invite for {user} has been revoked.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.token.created':
+    if action_type == 'eventyay.team.token.created':
         return _('The token "{name}" has been created.').format(name=data.get('name'))
 
-    if logentry.action_type == 'eventyay.team.token.deleted':
+    if action_type == 'eventyay.team.token.deleted':
         return _('The token "{name}" has been revoked.').format(name=data.get('name'))
 
-    if logentry.action_type == 'eventyay.user.settings.changed':
+    if action_type == 'eventyay.user.settings.changed':
         text = str(_('Your account settings have been changed.'))
         if 'email' in data:
             text = text + ' ' + str(_('Your email address has been changed to {email}.').format(email=data['email']))
@@ -641,8 +672,12 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             text = text + ' ' + str(_('Your account has been disabled.'))
         return text
 
-    if logentry.action_type == 'eventyay.control.auth.user.impersonated':
+    if action_type == 'eventyay.control.auth.user.impersonated':
         return str(_('You impersonated {}.')).format(data['other_email'])
 
-    if logentry.action_type == 'eventyay.control.auth.user.impersonate_stopped':
+    if action_type == 'eventyay.control.auth.user.impersonate_stopped':
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
+
+
+# Ensure the signal is connected (backup in case decorator doesn't work)
+logentry_display.connect(eventyaycontrol_logentry_display, dispatch_uid='eventyaycontrol_logentry_display')
