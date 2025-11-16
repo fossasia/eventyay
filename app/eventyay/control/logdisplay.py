@@ -811,5 +811,3 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
 
 
-# Ensure the signal is connected (backup in case decorator doesn't work)
-logentry_display.connect(eventyaycontrol_logentry_display, dispatch_uid='eventyaycontrol_logentry_display')
