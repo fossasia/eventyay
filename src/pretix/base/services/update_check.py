@@ -112,7 +112,7 @@ def send_update_notification_email():
                 },
             )
             gs.settings.set('last_notified_release', latest_version)
-            gs.settings.set('last_notification_sent', now().isoformat())
+            gs.settings.set('last_notification_sent', now())
         except Exception as e:
             logger.error('Failed to send update notification email: %s', e)
 

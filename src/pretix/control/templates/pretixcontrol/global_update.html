@@ -81,7 +81,7 @@
             <div class="form-group">
                 <label class="col-md-2 control-label">{% trans "Admin update email" %}</label>
                 <div class="col-md-10">
-                    <input type="text" name="update_check_email" value="{{ gs.settings.update_check_email }}" class="form-control">
+                    <input type="email" name="update_check_email" value="{{ gs.settings.update_check_email }}" class="form-control">
                     <small class="form-text text-muted">{% trans "We will notify you at this address if we detect that a new update is available." %}</small>
                 </div>
             </div>
@@ -92,14 +92,13 @@
                 </div>
             </div>
         </form>
-        
         <hr/>
         <h4>{% trans "Status" %}</h4>
         <ul>
             <li>{% trans "Current version" %}: {{ gs.settings.update_check_result.version.current|default:"—" }}</li>
             <li>{% trans "Latest version" %}: {{ gs.settings.update_check_result.version.latest|default:"—" }}</li>
             <li>{% trans "Last checked" %}: {{ gs.settings.update_check_last|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</li>
-            <li>{% trans "Last notification sent" %}: {{ gs.settings.last_notification_sent|default:"—" }}</li>
+            <li>{% trans "Last notification sent" %}: {{ gs.settings.last_notification_sent|date:"SHORT_DATETIME_FORMAT"|default:"—" }}</li>
         </ul>
     </fieldset>
     <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">

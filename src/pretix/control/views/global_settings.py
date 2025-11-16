@@ -134,12 +134,10 @@ class UpdateCheckView(StaffMemberRequiredMixin, FormView):
                     {}
                 )
                     messages.success(self.request, _('Test email sent successfully.'))
-                    gs.settings.set('last_notification_sent', now().isoformat())
                 except Exception as e:
                     messages.error(self.request, _('SMTP error: {0}').format(str(e)))
             return redirect(self.get_success_url())
         return super().post(request, *args, **kwargs)
-        
 
     def form_valid(self, form):
         form.save()
