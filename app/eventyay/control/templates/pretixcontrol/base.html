@@ -272,7 +272,7 @@
                                 <li class="testmode">
                                     <a href="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}">
                                         <i class="fa fa-warning fa-fw"></i>
-                                        {% trans "TEST MODE" %}
+                                        <span class="sidebar-text">{% trans "TEST MODE" %}</span>
                                     </a>
                                 </li>
                             {% endif %}
