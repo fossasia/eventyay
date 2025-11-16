@@ -397,7 +397,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 name += '<br/>' + iac
 
             item = '{} ({})'.format(
-                str(op.item) + (' – ' + str(op.variation.value) if op.variation else ''),
+                str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
                 money_filter(op.price, self.event.currency),
             )
             if self.event.has_subevents and not cl.subevent:
@@ -411,7 +411,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             if op.seat:
                 item += '<br/>' + str(op.seat)
             row = [
-                '!!' if op.item.checkin_attention or op.order.checkin_attention else '',
+                '!!' if op.product.checkin_attention or op.order.checkin_attention else '',
                 CBFlowable(bool(op.last_checked_in)),
                 '✘' if op.order.status != Order.STATUS_PAID else '✔',
                 op.order.code,
@@ -577,7 +577,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                         ).get(k, '')
                     )
             row += [
-                str(op.item) + (' – ' + str(op.variation.value) if op.variation else ''),
+                str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
                 op.price,
                 date_format(
                     last_checked_in.astimezone(self.event.timezone),
@@ -639,7 +639,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             row.append(op.voucher.code if op.voucher else '')
             row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%Y-%m-%d'))
             row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S %Z'))
-            row.append(_('Yes') if op.order.checkin_attention or op.item.checkin_attention else _('No'))
+            row.append(_('Yes') if op.order.checkin_attention or op.product.checkin_attention else _('No'))
             row.append(op.order.comment or '')
 
             if op.seat:

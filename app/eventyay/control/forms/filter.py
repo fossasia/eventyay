@@ -1,8 +1,6 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
-
-import pytz
 from django import forms
 from django.apps import apps
 from django.conf import settings
