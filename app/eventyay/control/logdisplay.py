@@ -29,7 +29,7 @@ from eventyay.base.templatetags.money import money_filter
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 
-def _display_order_changed(event: Event, logentry: LogEntry):
+def _display_order_changed(event: Event, logentry: LogEntry, action_type: str):
     data = json.loads(logentry.data)
 
     text = _('The order has been changed:')
@@ -202,7 +202,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
         )
 
 
-def _display_checkin(event, logentry):
+def _display_checkin(event, logentry, action_type: str):
     data = logentry.parsed_data
 
     show_dt = False
@@ -315,7 +315,7 @@ def _display_checkin(event, logentry):
 # Map legacy pretix.* AND pretalx.* action types to eventyay.* for backward compatibility
 # This ensures old log entries with legacy prefixes still display correctly
 PRETIX_LEGACY_ALIASES = {
-    # pretix.* (old ticketing system) mappings
+    # pretix.* (old ticketing system) mappings - comprehensive list from all 47+ changes
     'pretix.event.quota.added': 'eventyay.event.quota.added',
     'pretix.event.quota.changed': 'eventyay.event.quota.changed',
     'pretix.event.quota.deleted': 'eventyay.event.quota.deleted',
@@ -325,8 +325,71 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.subevent.quota.changed': 'eventyay.subevent.quota.changed',
     'pretix.subevent.quota.deleted': 'eventyay.subevent.quota.deleted',
     'pretix.event.category.added': 'eventyay.event.category.added',
+    'pretix.event.category.deleted': 'eventyay.event.category.deleted',
     'pretix.team.created': 'eventyay.team.created',
+    'pretix.team.deleted': 'eventyay.team.deleted',
+    'pretix.team.member.added': 'eventyay.team.member.added',
+    'pretix.team.member.removed': 'eventyay.team.member.removed',
+    'pretix.team.member.joined': 'eventyay.team.member.joined',
+    'pretix.team.member.left': 'eventyay.team.member.left',
+    'pretix.team.token.created': 'eventyay.team.token.created',
     'pretix.user.settings.changed': 'eventyay.user.settings.changed',
+    'pretix.user.settings.2fa.enabled': 'eventyay.user.settings.2fa.enabled',
+    'pretix.user.settings.2fa.disabled': 'eventyay.user.settings.2fa.disabled',
+    'pretix.user.settings.2fa.device.added': 'eventyay.user.settings.2fa.device.added',
+    'pretix.user.settings.2fa.regenemergency': 'eventyay.user.settings.2fa.regenemergency',
+    'pretix.user.settings.notifications.enabled': 'eventyay.user.settings.notifications.enabled',
+    'pretix.user.settings.notifications.disabled': 'eventyay.user.settings.notifications.disabled',
+    'pretix.user.anonymized': 'eventyay.user.anonymized',
+    'pretix.control.auth.user.forgot_password.mail_sent': 'eventyay.control.auth.user.forgot_password.mail_sent',
+    'pretix.voucher.added': 'eventyay.voucher.added',
+    'pretix.voucher.changed': 'eventyay.voucher.changed',
+    'pretix.voucher.deleted': 'eventyay.voucher.deleted',
+    'pretix.voucher.redeemed': 'eventyay.voucher.redeemed',
+    'pretix.event.product.added': 'eventyay.event.product.added',
+    'pretix.event.product.changed': 'eventyay.event.product.changed',
+    'pretix.event.product.deleted': 'eventyay.event.product.deleted',
+    'pretix.event.order.modified': 'eventyay.event.order.modified',
+    'pretix.event.order.unpaid': 'eventyay.event.order.unpaid',
+    'pretix.event.order.secret.changed': 'eventyay.event.order.secret.changed',
+    'pretix.event.order.expirychanged': 'eventyay.event.order.expirychanged',
+    'pretix.event.order.expired': 'eventyay.event.order.expired',
+    'pretix.event.order.paid': 'eventyay.event.order.paid',
+    'pretix.event.order.refunded': 'eventyay.event.order.refunded',
+    'pretix.event.order.canceled': 'eventyay.event.order.canceled',
+    'pretix.event.order.reactivated': 'eventyay.event.order.reactivated',
+    'pretix.event.order.placed': 'eventyay.event.order.placed',
+    'pretix.event.order.approved': 'eventyay.event.order.approved',
+    'pretix.event.order.denied': 'eventyay.event.order.denied',
+    'pretix.event.order.invoice.generated': 'eventyay.event.order.invoice.generated',
+    'pretix.event.order.invoice.regenerated': 'eventyay.event.order.invoice.regenerated',
+    'pretix.event.order.invoice.reissued': 'eventyay.event.order.invoice.reissued',
+    'pretix.event.order.changed': 'eventyay.event.order.changed',
+    'pretix.event.order.changed.item': 'eventyay.event.order.changed.item',
+    'pretix.event.settings': 'eventyay.event.settings',
+    'pretix.event.live.activated': 'eventyay.event.live.activated',
+    'pretix.event.live.deactivated': 'eventyay.event.live.deactivated',
+    'pretix.event.testmode.activated': 'eventyay.event.testmode.activated',
+    'pretix.event.testmode.deactivated': 'eventyay.event.testmode.deactivated',
+    'pretix.subevent.added': 'eventyay.subevent.added',
+    'pretix.subevent.changed': 'eventyay.subevent.changed',
+    'pretix.subevent.deleted': 'eventyay.subevent.deleted',
+    'pretix.device.created': 'eventyay.device.created',
+    'pretix.device.revoked': 'eventyay.device.revoked',
+    'pretix.gate.created': 'eventyay.gate.created',
+    'pretix.gate.deleted': 'eventyay.gate.deleted',
+    'pretix.giftcards.created': 'eventyay.giftcards.created',
+    'pretix.giftcards.modified': 'eventyay.giftcards.modified',
+    'pretix.property.created': 'eventyay.property.created',
+    'pretix.property.deleted': 'eventyay.property.deleted',
+    'pretix.event.orders.waitinglist.deleted': 'eventyay.event.orders.waitinglist.deleted',
+    'pretix.event.checkin': 'eventyay.event.checkin',
+    'pretix.event.checkin.unknown': 'eventyay.event.checkin.unknown',
+    'pretix.event.checkin.revoked': 'eventyay.event.checkin.revoked',
+    'pretix.event.checkin.denied': 'eventyay.event.checkin.denied',
+    'pretix.event.checkin.reverted': 'eventyay.event.checkin.reverted',
+    'pretix.control.views.checkin': 'eventyay.control.views.checkin',
+    'pretix.control.views.checkin.reverted': 'eventyay.control.views.checkin.reverted',
     
     # pretalx.* (old talk system) mappings - map to eventyay equivalents
     'pretalx.room.create': 'eventyay.room.create',
@@ -578,7 +641,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         return plains[action_type].format_map(data)
 
     if action_type.startswith('eventyay.event.order.changed'):
-        return _display_order_changed(sender, logentry)
+        return _display_order_changed(sender, logentry, action_type)
 
     if action_type.startswith('eventyay.event.payment.provider.'):
         return _('The settings of a payment provider have been changed.')
@@ -591,8 +654,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             bleach.clean(logentry.parsed_data.get('msg'), tags=[], strip=True)
         )
 
-    if sender and logentry.action_type.startswith('eventyay.event.checkin'):
-        return _display_checkin(sender, logentry)
+    if sender and action_type.startswith('eventyay.event.checkin'):
+        return _display_checkin(sender, logentry, action_type)
 
     if action_type == 'eventyay.control.views.checkin':
         # deprecated
