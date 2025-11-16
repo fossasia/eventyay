@@ -113,7 +113,7 @@ async function save() {
 			track_room_views: config.value.track_room_views,
 			track_world_views: config.value.track_world_views
 		}
-		if (features?.enabled?.('conftool')) {
+		if (features?.enabled('conftool')) {
 			patch.conftool_url = config.value.conftool_url
 			patch.conftool_password = config.value.conftool_password
 		}
