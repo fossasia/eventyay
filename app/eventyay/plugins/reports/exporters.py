@@ -697,7 +697,6 @@ class OrderTaxListReport(MultiSheetListExporter):
         date_until = form_data.get('date_until')
         date_filter = form_data.get('date_axis')
         browser_tz = get_browser_timezone(form_data.get('browser_timezone'))
-        
         if date_from:
             if isinstance(date_from, str):
                 date_from = parse(date_from).date()
