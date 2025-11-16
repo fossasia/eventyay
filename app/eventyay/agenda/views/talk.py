@@ -364,7 +364,7 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     base_url = settings.EVENTYAY_TICKET_BASE_PATH
     # Normalize base URL to keep urljoin from dropping path segments
     if not base_url.endswith('/'):
-        base_url = base_url + '/'
+        base_url = f'{base_url}/'
     organizer_slug = event.organizer.slug
     event_slug = event.slug
     check_payload = {'user_email': user.email}
