@@ -380,12 +380,12 @@ async def test_user_count(world, stream_room):
         response = await c1.receive_json_from()
         assert response == [
             "world.user_count_change",
-            {"room": str(stream_room.pk), "users": "few"},
+            {"room": str(stream_room.pk), "users": 1},
         ]
         response = await c2.receive_json_from()
         assert response == [
             "world.user_count_change",
-            {"room": str(stream_room.pk), "users": "few"},
+            {"room": str(stream_room.pk), "users": 1},
         ]
 
         await c2.send_json_to(["room.enter", 123, {"room": str(stream_room.pk)}])
@@ -401,12 +401,12 @@ async def test_user_count(world, stream_room):
         response = await c1.receive_json_from()
         assert response == [
             "world.user_count_change",
-            {"room": str(stream_room.pk), "users": "none"},
+            {"room": str(stream_room.pk), "users": 0},
         ]
         response = await c2.receive_json_from()
         assert response == [
             "world.user_count_change",
-            {"room": str(stream_room.pk), "users": "none"},
+            {"room": str(stream_room.pk), "users": 0},
         ]
 
 

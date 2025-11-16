@@ -318,6 +318,7 @@ export default {
 			.icon-viewer
 				&::before
 					line-height: 32px
+					color: var(--clr-sidebar-text-disabled)
 
 			&.starts-with-emoji
 				padding: 0 18px
@@ -427,6 +428,7 @@ export default {
 						ellipsis()
 						flex: 1
 						max-width: max-content
+						color: var(--clr-sidebar-text-disabled)
 						&::before
 							content: '\F050D'
 							font-family: "Material Design Icons"
@@ -501,4 +503,8 @@ export default {
 			line-height: 1
 	.room-attendee
 		display: flex
+		align-items: center
+		.name
+			color: var(--clr-sidebar-text-disabled)
+			margin-left: 4px
 </style>

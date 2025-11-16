@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.utils.timezone import now
 from sentry_sdk import add_breadcrumb, configure_scope
 
-from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer
+from eventyay.base.models.room import AnonymousInvite, RoomConfigSerializer, approximate_view_number
 from eventyay.core.permissions import Permission
 from eventyay.base.services.poll import get_polls, get_voted_polls
 from eventyay.base.services.reactions import store_reaction
@@ -51,6 +51,13 @@ from eventyay.features.live.exceptions import ConsumerException
 from eventyay.features.live.modules.base import BaseModule
 
 logger = logging.getLogger(__name__)
+
+# Module types that are considered stage rooms and show exact user counts
+STAGE_ROOM_MODULE_TYPES = {
+    'livestream.native',
+    'livestream.youtube',
+    'livestream.iframe'
+}
 
 
 class RoomModule(BaseModule):
@@ -179,22 +186,24 @@ class RoomModule(BaseModule):
                 )
 
     async def _update_view_count(self, room, actual_view_count):
-        from eventyay.base.models.room import approximate_view_number
         
         async with aredis(f"room:approxcount:known:{room.pk}") as redis:
             prev_value = await redis.getset(
                 f"room:approxcount:known:{room.pk}", actual_view_count
             )
+            prev_value = int(prev_value) if prev_value is not None else None
             if prev_value != actual_view_count:
                 await redis.expire(f"room:approxcount:known:{room.pk}", 900)
                 
-                # Check if this is a stage room that should show actual numeric counts
+                # Stage rooms show exact counts, video chat rooms show approximate counts for privacy
+                # Stage: livestream.youtube, livestream.iframe -> exact numbers
+                # Video chat: livestream.native, BBB -> "none"/"few"/"many"
                 is_stage_room = any(
-                    module.get('type') in ['livestream.native', 'livestream.youtube', 'livestream.iframe']
+                    module.get('type') in STAGE_ROOM_MODULE_TYPES
                     for module in room.module_config or []
                 )
                 
-                # For stage rooms, use actual count; for video chat rooms, use approximate text
+                # For stage rooms, use actual count; for stream/video chat rooms, use approximate text
                 users_value = actual_view_count if is_stage_room else approximate_view_number(actual_view_count)
                 
                 await self.consumer.channel_layer.group_send(
