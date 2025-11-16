@@ -677,7 +677,6 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.question.option.deleted': _('The answer option has been deleted.'),
         'eventyay.control.auth.user.impersonated': _('User impersonation has started.'),
         'eventyay.control.auth.user.impersonate_stopped': _('User impersonation has been stopped.'),
-        'eventyay.event.category.changed': _('The category has been changed.'),
     }
 
     try:
