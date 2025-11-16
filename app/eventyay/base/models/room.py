@@ -160,7 +160,7 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     are not in use right now.
     """
 
-    log_prefix = "pretalx.room"
+    log_prefix = "eventyay.room"
 
     deleted = models.BooleanField(default=False)
     description = I18nCharField(
