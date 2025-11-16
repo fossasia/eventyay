@@ -52,7 +52,7 @@ class SpeakerInformation(PretalxModel):
         upload_to=resource_path,
     )
 
-    log_prefix = 'eventyay.information'
+    log_prefix = 'eventyay.speaker_information'
 
     @property
     def log_parent(self):
