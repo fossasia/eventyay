@@ -413,6 +413,7 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.plugins.ticketoutputpdf.layout.changed': 'eventyay.plugins.ticketoutputpdf.layout.changed',
     'pretix.plugins.badges.layout.added': 'eventyay.plugins.badges.layout.added',
     'pretix.plugins.badges.layout.changed': 'eventyay.plugins.badges.layout.changed',
+    'pretix.plugins.badges.layout.deleted': 'eventyay.plugins.badges.layout.deleted',
     'pretix.team.invite.deleted': 'eventyay.team.invite.deleted',
     'pretix.team.invite.resent': 'eventyay.team.invite.resent',
     'pretix.team.invite.created': 'eventyay.team.invite.created',
