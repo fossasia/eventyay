@@ -428,6 +428,19 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.device.changed': 'eventyay.device.changed',
     'pretix.property.changed': 'eventyay.property.changed',
     
+    # Additional order and email action mappings for complete coverage
+    'pretix.event.order.contact.confirmed': 'eventyay.event.order.contact.confirmed',
+    'pretix.event.order.comment': 'eventyay.event.order.comment',
+    'pretix.event.order.checkin_attention': 'eventyay.event.order.checkin_attention',
+    'pretix.event.order.phone.changed': 'eventyay.event.order.phone.changed',
+    'pretix.event.order.locale.changed': 'eventyay.event.order.locale.changed',
+    'pretix.event.order.email.attachments.skipped': 'eventyay.event.order.email.attachments.skipped',
+    'pretix.event.order.email.error': 'eventyay.event.order.email.error',
+    'pretix.event.order.email.event_canceled': 'eventyay.event.order.email.event_canceled',
+    'pretix.event.order.email.expire_warning_sent': 'eventyay.event.order.email.expire_warning_sent',
+    'pretix.subevent.canceled': 'eventyay.subevent.canceled',
+    'pretix.voucher.sent': 'eventyay.voucher.sent',
+    
     # pretalx.* (old talk system) mappings - map to eventyay equivalents
     'pretalx.room.create': 'eventyay.room.create',
     'pretalx.room.update': 'eventyay.room.update',
