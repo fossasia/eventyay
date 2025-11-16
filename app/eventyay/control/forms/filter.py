@@ -600,7 +600,7 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
 
             def attach_timezone(dt_value):
-                dt_naive = dt_value.replace(tzinfo=None) if not timezone.is_naive(dt_value) else dt_value
+                dt_naive = dt_value.replace(tzinfo=None)
                 return dt_naive.replace(tzinfo=browser_tz)
 
             if fdata.get('created_from'):

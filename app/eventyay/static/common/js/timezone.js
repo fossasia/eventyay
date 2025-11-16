@@ -49,7 +49,7 @@ const convertDateTimes = () => {
             });
             cell.textContent = formatted;
         } catch (e) {
-            console.error("timezone js failed to convert datetime:", e);
+            console.error("timezone.js failed to convert datetime:", e);
             // Swallow parsing exceptions so server-rendered content remains intact.
         }
     });
