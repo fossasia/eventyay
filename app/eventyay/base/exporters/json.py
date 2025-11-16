@@ -15,7 +15,6 @@ class JSONExporter(BaseExporter):
 
     def render(self, form_data):
         event_tz = pytz.timezone(self.event.settings.timezone)
-        
         jo = {
             'event': {
                 'name': str(self.event.name),
