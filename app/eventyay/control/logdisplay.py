@@ -439,6 +439,12 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.event.order.email.error': 'eventyay.event.order.email.error',
     'pretix.event.order.email.event_canceled': 'eventyay.event.order.email.event_canceled',
     'pretix.event.order.email.expire_warning_sent': 'eventyay.event.order.email.expire_warning_sent',
+    'pretix.event.order.email.custom_sent': 'eventyay.event.order.email.custom_sent',
+    'pretix.event.order.position.email.custom_sent': 'eventyay.event.order.position.email.custom_sent',
+    'pretix.event.order.cancellationrequest.deleted': 'eventyay.event.order.cancellationrequest.deleted',
+    'pretix.event.order.placed.require_approval': 'eventyay.event.order.placed.require_approval',
+    'pretix.event.order.overpaid': 'eventyay.event.order.overpaid',
+    'pretix.event.order.refund.created.externally': 'eventyay.event.order.refund.created.externally',
     'pretix.subevent.canceled': 'eventyay.subevent.canceled',
     'pretix.voucher.sent': 'eventyay.voucher.sent',
     
