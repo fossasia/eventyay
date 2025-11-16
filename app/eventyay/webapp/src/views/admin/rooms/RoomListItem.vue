@@ -24,7 +24,10 @@ export default {
 			return this.isConfigured ? 'Configure' : 'Complete Setup'
 		},
 		visibilityIconClass() {
-			return this.room.hidden || this.room.sidebar_hidden || !this.room.setup_complete ? 'fa-eye-slash' : 'fa-eye'
+			if (this.room.hidden) return 'fa-eye-slash hidden-room'
+			if (!this.room.setup_complete) return 'fa-eye-slash setup-incomplete'
+			if (this.room.sidebar_hidden) return 'fa-eye-slash sidebar-hidden'
+			return 'fa-eye visible-room'
 		}
 	},
 	methods: {

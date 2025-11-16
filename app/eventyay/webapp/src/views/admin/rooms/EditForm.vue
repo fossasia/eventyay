@@ -27,14 +27,16 @@
 				.visibility-controls
 					h3 Visibility
 					bunt-checkbox(name="hidden", v-model="config.hidden", class="visibility-option") Hide this room from schedule-editor
-					bunt-checkbox(
-						name="sidebar_hidden",
-						v-model="config.sidebar_hidden",
-						:disabled="sidebarHiddenDisabled",
-						class="visibility-option"
-					) Hide from Sidebar
-					small(v-if="!config.setup_complete") Hidden from the sidebar until setup is complete.
-					small(v-else-if="config.hidden") Hidden rooms are always removed from the sidebar.
+					template(v-if="config.setup_complete")
+						bunt-checkbox(
+							name="sidebar_hidden",
+							v-model="config.sidebar_hidden",
+							:disabled="config.hidden",
+							class="visibility-option"
+						) Hide from Sidebar
+						small(v-if="config.hidden") Hidden rooms are always removed from the sidebar.
+					template(v-else)
+						small Hidden from the sidebar until setup is complete.
 			template(v-if="inferredType && typeComponents[inferredType.id]")
 				.video-settings(v-if="showVideoSettingsTitle")
 					h3 Video Settings
@@ -126,12 +128,6 @@ export default {
 			const videoTypes = ['stage', 'channel-bbb', 'channel-janus', 'channel-zoom', 'channel-roulette']
 			return videoTypes.includes(this.inferredType?.id)
 		},
-		visibilityDependencies() {
-			return [this.config?.hidden, this.config?.setup_complete]
-		},
-		sidebarHiddenDisabled() {
-			return !this.config.setup_complete || this.config.hidden
-		},
 		localizedName: {
 			get() {
 				return this.$localize(this.config.name)
@@ -168,14 +164,15 @@ export default {
 	},
 	methods: {
 		applyVisibilityDefaults(config) {
-			if (config.hidden === undefined) config.hidden = false
-			if (config.sidebar_hidden === undefined) {
+			if (config.hidden == null) config.hidden = false
+			if (config.sidebar_hidden == null) {
 				config.sidebar_hidden = !config.setup_complete
 			}
 		},
 		syncSidebarHidden() {
 			if (!this.config) return
-			if (this.config.hidden || !this.config.setup_complete) {
+			// Enforce business rule: sidebar_hidden must be true if hidden is true or setup is incomplete
+			if ((this.config.hidden || !this.config.setup_complete) && !this.config.sidebar_hidden) {
 				this.config.sidebar_hidden = true
 			}
 		},

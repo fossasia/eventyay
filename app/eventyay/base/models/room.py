@@ -224,6 +224,8 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     force_join = models.BooleanField(default=False)
     setup_complete = models.BooleanField(default=False)
     hidden = models.BooleanField(default=False)
+    # Default is True (hidden) for safety - rooms should be hidden until configured.
+    # The _create_room function and migration explicitly set this based on module_config.
     sidebar_hidden = models.BooleanField(default=True)
 
     objects = RoomQuerySet.as_manager()

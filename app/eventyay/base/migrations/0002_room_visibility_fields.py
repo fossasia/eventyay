@@ -4,11 +4,21 @@ from django.db import migrations, models
 def set_initial_visibility(apps, schema_editor):
     Room = apps.get_model("base", "Room")
     batch = []
-    for room in Room.objects.all().iterator():
+    batch_size = 1000
+    for room in Room.objects.all().iterator(chunk_size=batch_size):
         has_modules = bool(room.module_config)
         room.setup_complete = has_modules
         room.sidebar_hidden = not has_modules
         batch.append(room)
+        if len(batch) >= batch_size:
+            Room.objects.bulk_update(
+                batch,
+                fields=[
+                    "setup_complete",
+                    "sidebar_hidden",
+                ],
+            )
+            batch = []
     if batch:
         Room.objects.bulk_update(
             batch,

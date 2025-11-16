@@ -27,7 +27,7 @@
 			)
 				RoomListItem(v-for="(room, index) of rooms" :index="index", :key="room.id", :room="room", :disabled="rooms.length < 2")
 			.table-body(v-else, v-scrollbar.y="")
-				RoomListItem(v-for="room of filteredRooms", :key="room.id", :room="room", :disabled="true")
+				RoomListItem(v-for="room of filteredRooms", :key="room.id", :room="room", :disabled="filteredRooms.length < 2")
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -89,13 +89,15 @@ export default {
 		},
 		async onListSort() {
 			const idList = this.rooms.map(room => String(room.id))
+			const previousOrder = [...this.rooms]
 			try {
 				this.rooms = await api.call('room.config.reorder', idList)
 			} catch (e) {
 				console.error(e)
-				this.fetchRooms()
+				// Rollback to previous order on error
+				this.rooms = previousOrder
+				await this.fetchRooms()
 			}
-			// TODO error handling
 		}
 	}
 }

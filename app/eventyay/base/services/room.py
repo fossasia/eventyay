@@ -122,9 +122,9 @@ def delete_room(event, room, by_user):
 def reorder_rooms(event, id_list, by_user):
     def key(r):
         try:
-            return id_list.index(str(r.id)), r.sorting_priority, r.name
+            return id_list.index(str(r.id)), r.sorting_priority, r.name, r.id
         except Exception:
-            return sys.maxsize, r.sorting_priority, r.name
+            return sys.maxsize, r.sorting_priority, r.name, r.id
 
     all_rooms = list(
         event.rooms.filter(deleted=False)

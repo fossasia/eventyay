@@ -274,7 +274,7 @@ export default {
 			if (this.room && !this.visibleRooms.includes(this.room)) {
 				this.$router.push('/').catch(() => {})
 			}
-			if (this.backgroundRoom && !this.rooms.includes(this.backgroundRoom)) {
+			if (this.backgroundRoom && !this.visibleRooms.includes(this.backgroundRoom)) {
 				this.backgroundRoom = null
 			}
 		}
