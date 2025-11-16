@@ -4,9 +4,9 @@ transition(name="sidebar")
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)", @click="onNavigate")
-				router-link.room(:to="{name: 'schedule'}", @click="onNavigate") {{ $t('RoomsSidebar:schedule:label') }}
-				router-link.room(:to="{name: 'schedule:sessions'}", @click="onNavigate") {{ $t('RoomsSidebar:session:label') }}
-				router-link.room(:to="{name: 'schedule:speakers'}", @click="onNavigate") {{ $t('RoomsSidebar:speaker:label') }}
+				router-link.room(v-if="hasPublishedSchedule", :to="{name: 'schedule'}", @click="onNavigate") {{ $t('RoomsSidebar:schedule:label') }}
+				router-link.room(v-if="hasPublishedSchedule", :to="{name: 'schedule:sessions'}", @click="onNavigate") {{ $t('RoomsSidebar:session:label') }}
+				router-link.room(v-if="hasPublishedSchedule", :to="{name: 'schedule:speakers'}", @click="onNavigate") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
 					router-link.room(v-if="page !== rooms[0]", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)", @click="onNavigate")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
@@ -143,7 +143,8 @@ export default {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session
-					if (this.$features.enabled('schedule-control')) {
+					// Only show session information if the schedule is published
+					if (this.$features.enabled('schedule-control') && this.hasPublishedSchedule) {
 						session = this.currentSessionPerRoom?.[room.id]?.session
 					}
 					const notifications = this.notificationCount(room.modules.find(m => m.type === 'chat.native')?.channel_id)
@@ -182,6 +183,11 @@ export default {
 		},
 		worldHasPosters() {
 			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
+		},
+		hasPublishedSchedule() {
+			// Only show schedule-related items if there's a published schedule
+			// The schedule is considered published if it has a version (not WIP)
+			return this.schedule && this.schedule.version
 		},
 	},
 	methods: {

@@ -9,7 +9,7 @@
         <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
     </a>
 {% endif %}
-{% if request.event.display_settings.schedule_display != "list" %}
+{% if (schedule or request.event.current_schedule) and request.event.display_settings.schedule_display != "list" %}
     <a href="{{ request.event.urls.talks }}" class="header-tab {% if "/talk/" in request.path_info %} active{% endif %}">
         <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
     </a>
