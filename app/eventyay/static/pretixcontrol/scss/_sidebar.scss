@@ -38,22 +38,30 @@ body.sidebar-minimized {
     overflow: hidden;
 
     .nav>li {
+      height: 41px;
+
       >a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 10px 0;
-        overflow: hidden;
-        white-space: nowrap;
+        display: block;
+        padding: 10px 15px;
+        font-size: 14px;
+        height: 41px;
+        line-height: 21px;
 
         .fa,
         svg {
-          margin-right: 0;
+          margin-right: 5px;
           font-size: 14px;
+          width: 1.28571429em;
+          text-align: center;
+          display: inline-block;
           flex-shrink: 0;
         }
 
-        // Hide all text spans
+        .fa.fa-fw {
+          width: 1.28571429em;
+        }
+
+        // Hide all text spans in minimized state
         .fa+.sidebar-text,
         svg+.sidebar-text,
         .sidebar-text {
