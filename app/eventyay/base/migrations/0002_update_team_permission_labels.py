@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False,
                 help_text='Can edit submission details, change proposal states (accept/reject/waitlist), manage submission metadata, and oversee the review workflow. This provides full management permissions beyond standard reviewing.',
-                verbose_name='Reviewer Manager — can edit and manage submissions'
+                verbose_name='Can edit and manage submissions'
             ),
         ),
         migrations.AlterField(
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
             field=models.BooleanField(
                 default=False,
                 help_text='Can review and provide feedback on submissions but cannot edit details or change submission states.',
-                verbose_name='Reviewer — can only review submissions'
+                verbose_name='Reviewer'
             ),
         ),
     ]
