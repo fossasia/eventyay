@@ -126,18 +126,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         ),
         required=False,
     )
-    ticket_link = forms.URLField(
-        label=_('Event ticket shop URL'),
-        help_text=_('Ticket shop link will be shown on event menu. '),
-        widget=forms.TextInput(attrs={'placeholder': 'e.g: https://tickets-dev.eventyay.com/2024/wikimania/'}),
-        required=False,
-    )
-    video_link = forms.URLField(
-        label=_('Video Live URL'),
-        help_text=('Online video link will be shown on event menu.'),
-        widget=forms.TextInput(attrs={'placeholder': ' e.g: https://app.eventyay.com/video'}),
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -351,8 +339,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'use_feedback': 'feature_flags',
             'export_html_on_release': 'feature_flags',
             'html_export_url': 'display_settings',
-            'ticket_link': 'display_settings',
-            'video_link': 'display_settings',
             'header_pattern': 'display_settings',
             'meta_noindex': 'display_settings',
         }

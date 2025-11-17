@@ -155,10 +155,6 @@ export default {
 			},
 			deep: true
 		},
-		$route() {
-			// Always close the sidebar after navigation for consistent drawer UX on all screen sizes
-			this.showSidebar = false
-		},
 		stageStreamCollapsed: {
 			handler() {
 				this.$store.commit('updateStageStreamCollapsed', this.stageStreamCollapsed)
