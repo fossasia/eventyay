@@ -22,7 +22,7 @@ from eventyay.plugins.ticketoutputpdf.models import (
 )
 from eventyay.plugins.ticketoutputpdf.signals import override_layout
 
-logger = logging.getLogger('pretix.plugins.ticketoutputpdf')
+logger = logging.getLogger('eventyay.plugins.ticketoutputpdf')
 
 
 class PdfTicketOutput(BaseTicketOutput):
