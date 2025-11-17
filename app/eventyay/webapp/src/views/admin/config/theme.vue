@@ -54,8 +54,11 @@ export default {
 	},
 	computed: {
 		strings() {
-			// access i18n dict via undocumented api
-			return i18n.store.data[this.config.locale].translation
+			const store = i18n?.store?.data
+			if (!store || !this.config) return {}
+			const locale = this.config.locale
+			const localeData = store[locale] || store.en || Object.values(store)[0]
+			return localeData?.translation || {}
 		},
 		identiconStyles() {
 			return Object.entries(identiconRenderers).map(([id, renderer]) => ({
