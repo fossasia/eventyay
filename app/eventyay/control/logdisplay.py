@@ -29,11 +29,11 @@ from eventyay.base.templatetags.money import money_filter
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 
-def _display_order_changed(event: Event, logentry: LogEntry):
+def _display_order_changed(event: Event, logentry: LogEntry, action_type: str):
     data = json.loads(logentry.data)
 
     text = _('The order has been changed:')
-    if logentry.action_type == 'eventyay.event.order.changed.product':
+    if action_type == 'eventyay.event.order.changed.product':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(product__event=event, pk=data['old_variation']))
@@ -51,7 +51,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.seat':
+    elif action_type == 'eventyay.event.order.changed.seat':
         return (
             text
             + ' '
@@ -61,7 +61,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_seat=data.get('new_seat'),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.subevent':
+    elif action_type == 'eventyay.event.order.changed.subevent':
         old_se = str(event.subevents.get(pk=data['old_subevent']))
         new_se = str(event.subevents.get(pk=data['new_subevent']))
         return (
@@ -77,7 +77,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.price':
+    elif action_type == 'eventyay.event.order.changed.price':
         return (
             text
             + ' '
@@ -87,7 +87,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.tax_rule':
+    elif action_type == 'eventyay.event.order.changed.tax_rule':
         if 'positionid' in data:
             return (
                 text
@@ -108,9 +108,9 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                     new_rule=TaxRule.objects.get(pk=data['new_taxrule']),
                 )
             )
-    elif logentry.action_type == 'eventyay.event.order.changed.addfee':
+    elif action_type == 'eventyay.event.order.changed.addfee':
         return text + ' ' + str(_('A fee has been added'))
-    elif logentry.action_type == 'eventyay.event.order.changed.feevalue':
+    elif action_type == 'eventyay.event.order.changed.feevalue':
         return (
             text
             + ' '
@@ -119,7 +119,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 new_price=money_filter(Decimal(data['new_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.cancelfee':
+    elif action_type == 'eventyay.event.order.changed.cancelfee':
         return (
             text
             + ' '
@@ -127,7 +127,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.cancel':
+    elif action_type == 'eventyay.event.order.changed.cancel':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(pk=data['old_variation']))
@@ -140,7 +140,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.add':
+    elif action_type == 'eventyay.event.order.changed.add':
         product = str(event.products.get(pk=data['product']))
         if data['variation']:
             product += ' - ' + str(ProductVariation.objects.get(product__event=event, pk=data['variation']))
@@ -166,7 +166,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                     price=money_filter(Decimal(data['price']), event.currency),
                 )
             )
-    elif logentry.action_type == 'eventyay.event.order.changed.secret':
+    elif action_type == 'eventyay.event.order.changed.secret':
         return (
             text
             + ' '
@@ -174,7 +174,7 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 posid=data.get('positionid', '?'),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.split':
+    elif action_type == 'eventyay.event.order.changed.split':
         old_product = str(event.products.get(pk=data['old_product']))
         if data['old_variation']:
             old_product += ' - ' + str(ProductVariation.objects.get(pk=data['old_variation']))
@@ -196,13 +196,13 @@ def _display_order_changed(event: Event, logentry: LogEntry):
                 old_price=money_filter(Decimal(data['old_price']), event.currency),
             )
         )
-    elif logentry.action_type == 'eventyay.event.order.changed.split_from':
+    elif action_type == 'eventyay.event.order.changed.split_from':
         return _('This order has been created by splitting the order {order}').format(
             order=data['original_order'],
         )
 
 
-def _display_checkin(event, logentry):
+def _display_checkin(event, logentry, action_type: str):
     data = logentry.parsed_data
 
     show_dt = False
@@ -220,7 +220,7 @@ def _display_checkin(event, logentry):
     else:
         checkin_list = _('(unknown)')
 
-    if logentry.action_type == 'eventyay.event.checkin.unknown':
+    if action_type == 'eventyay.event.checkin.unknown':
         if show_dt:
             return _('Unknown scan of code "{barcode}…" at {datetime} for list "{list}", type "{type}".').format(
                 posid=data.get('positionid'),
@@ -237,7 +237,7 @@ def _display_checkin(event, logentry):
                 list=checkin_list,
             )
 
-    if logentry.action_type == 'eventyay.event.checkin.revoked':
+    if action_type == 'eventyay.event.checkin.revoked':
         if show_dt:
             return _(
                 'Scan scan of revoked code "{barcode}…" at {datetime} for list "{list}", type "{type}", was uploaded.'
@@ -256,7 +256,7 @@ def _display_checkin(event, logentry):
                 list=checkin_list,
             )
 
-    if logentry.action_type == 'eventyay.event.checkin.denied':
+    if action_type == 'eventyay.event.checkin.denied':
         if show_dt:
             return _(
                 'Denied scan of position #{posid} at {datetime} for list "{list}", type "{type}", '
@@ -312,8 +312,154 @@ def _display_checkin(event, logentry):
         )
 
 
+# Map legacy pretix.* AND pretalx.* action types to eventyay.* for backward compatibility
+# This ensures old log entries with legacy prefixes still display correctly
+PRETIX_LEGACY_ALIASES = {
+    # pretix.* (old ticketing system) mappings - comprehensive list from all 47+ changes
+    'pretix.event.quota.added': 'eventyay.event.quota.added',
+    'pretix.event.quota.changed': 'eventyay.event.quota.changed',
+    'pretix.event.quota.deleted': 'eventyay.event.quota.deleted',
+    'pretix.event.quota.opened': 'eventyay.event.quota.opened',
+    'pretix.event.quota.closed': 'eventyay.event.quota.closed',
+    'pretix.subevent.quota.added': 'eventyay.subevent.quota.added',
+    'pretix.subevent.quota.changed': 'eventyay.subevent.quota.changed',
+    'pretix.subevent.quota.deleted': 'eventyay.subevent.quota.deleted',
+    'pretix.event.category.added': 'eventyay.event.category.added',
+    'pretix.event.category.deleted': 'eventyay.event.category.deleted',
+    'pretix.team.created': 'eventyay.team.created',
+    'pretix.team.deleted': 'eventyay.team.deleted',
+    'pretix.team.member.added': 'eventyay.team.member.added',
+    'pretix.team.member.removed': 'eventyay.team.member.removed',
+    'pretix.team.member.joined': 'eventyay.team.member.joined',
+    'pretix.team.member.left': 'eventyay.team.member.left',
+    'pretix.team.token.created': 'eventyay.team.token.created',
+    'pretix.user.settings.changed': 'eventyay.user.settings.changed',
+    'pretix.user.settings.2fa.enabled': 'eventyay.user.settings.2fa.enabled',
+    'pretix.user.settings.2fa.disabled': 'eventyay.user.settings.2fa.disabled',
+    'pretix.user.settings.2fa.device.added': 'eventyay.user.settings.2fa.device.added',
+    'pretix.user.settings.2fa.regenemergency': 'eventyay.user.settings.2fa.regenemergency',
+    'pretix.user.settings.notifications.enabled': 'eventyay.user.settings.notifications.enabled',
+    'pretix.user.settings.notifications.disabled': 'eventyay.user.settings.notifications.disabled',
+    'pretix.user.anonymized': 'eventyay.user.anonymized',
+    'pretix.control.auth.user.forgot_password.mail_sent': 'eventyay.control.auth.user.forgot_password.mail_sent',
+    'pretix.voucher.added': 'eventyay.voucher.added',
+    'pretix.voucher.changed': 'eventyay.voucher.changed',
+    'pretix.voucher.deleted': 'eventyay.voucher.deleted',
+    'pretix.voucher.redeemed': 'eventyay.voucher.redeemed',
+    'pretix.event.product.added': 'eventyay.event.product.added',
+    'pretix.event.product.changed': 'eventyay.event.product.changed',
+    'pretix.event.product.deleted': 'eventyay.event.product.deleted',
+    'pretix.event.order.modified': 'eventyay.event.order.modified',
+    'pretix.event.order.unpaid': 'eventyay.event.order.unpaid',
+    'pretix.event.order.secret.changed': 'eventyay.event.order.secret.changed',
+    'pretix.event.order.expirychanged': 'eventyay.event.order.expirychanged',
+    'pretix.event.order.expired': 'eventyay.event.order.expired',
+    'pretix.event.order.paid': 'eventyay.event.order.paid',
+    'pretix.event.order.refunded': 'eventyay.event.order.refunded',
+    'pretix.event.order.canceled': 'eventyay.event.order.canceled',
+    'pretix.event.order.reactivated': 'eventyay.event.order.reactivated',
+    'pretix.event.order.placed': 'eventyay.event.order.placed',
+    'pretix.event.order.approved': 'eventyay.event.order.approved',
+    'pretix.event.order.denied': 'eventyay.event.order.denied',
+    'pretix.event.order.invoice.generated': 'eventyay.event.order.invoice.generated',
+    'pretix.event.order.invoice.regenerated': 'eventyay.event.order.invoice.regenerated',
+    'pretix.event.order.invoice.reissued': 'eventyay.event.order.invoice.reissued',
+    'pretix.event.order.changed': 'eventyay.event.order.changed',
+    'pretix.event.order.changed.item': 'eventyay.event.order.changed.item',
+    'pretix.event.settings': 'eventyay.event.settings',
+    'pretix.event.live.activated': 'eventyay.event.live.activated',
+    'pretix.event.live.deactivated': 'eventyay.event.live.deactivated',
+    'pretix.event.testmode.activated': 'eventyay.event.testmode.activated',
+    'pretix.event.testmode.deactivated': 'eventyay.event.testmode.deactivated',
+    'pretix.subevent.added': 'eventyay.subevent.added',
+    'pretix.subevent.changed': 'eventyay.subevent.changed',
+    'pretix.subevent.deleted': 'eventyay.subevent.deleted',
+    'pretix.device.created': 'eventyay.device.created',
+    'pretix.device.revoked': 'eventyay.device.revoked',
+    'pretix.gate.created': 'eventyay.gate.created',
+    'pretix.gate.deleted': 'eventyay.gate.deleted',
+    'pretix.giftcards.created': 'eventyay.giftcards.created',
+    'pretix.giftcards.modified': 'eventyay.giftcards.modified',
+    'pretix.property.created': 'eventyay.property.created',
+    'pretix.property.deleted': 'eventyay.property.deleted',
+    'pretix.event.orders.waitinglist.deleted': 'eventyay.event.orders.waitinglist.deleted',
+    'pretix.event.checkin': 'eventyay.event.checkin',
+    'pretix.event.checkin.unknown': 'eventyay.event.checkin.unknown',
+    'pretix.event.checkin.revoked': 'eventyay.event.checkin.revoked',
+    'pretix.event.checkin.denied': 'eventyay.event.checkin.denied',
+    'pretix.event.checkin.reverted': 'eventyay.event.checkin.reverted',
+    'pretix.control.views.checkin': 'eventyay.control.views.checkin',
+    'pretix.control.views.checkin.reverted': 'eventyay.control.views.checkin.reverted',
+    
+    # Additional mappings for complete backward compatibility
+    'pretix.event.category.changed': 'eventyay.event.category.changed',
+    'pretix.event.question.added': 'eventyay.event.question.added',
+    'pretix.event.question.changed': 'eventyay.event.question.changed',
+    'pretix.event.question.deleted': 'eventyay.event.question.deleted',
+    'pretix.event.question.option.added': 'eventyay.event.question.option.added',
+    'pretix.event.question.option.changed': 'eventyay.event.question.option.changed',
+    'pretix.event.question.option.deleted': 'eventyay.event.question.option.deleted',
+    'pretix.event.checkinlist.added': 'eventyay.event.checkinlist.added',
+    'pretix.event.checkinlist.changed': 'eventyay.event.checkinlist.changed',
+    'pretix.event.checkinlists.deleted': 'eventyay.event.checkinlists.deleted',  # Note: typo exists in codebase
+    'pretix.event.order.refund.requested': 'eventyay.event.order.refund.requested',
+    'pretix.event.order.payment.canceled': 'eventyay.event.order.payment.canceled',
+    'pretix.event.order.payment.canceled.failed': 'eventyay.event.order.payment.canceled.failed',
+    'pretix.event.order.payment.failed': 'eventyay.event.order.payment.failed',
+    'pretix.event.order.refund.canceled': 'eventyay.event.order.refund.canceled',
+    'pretix.event.order.refund.created': 'eventyay.event.order.refund.created',
+    'pretix.plugins.ticketoutputpdf.layout.added': 'eventyay.plugins.ticketoutputpdf.layout.added',
+    'pretix.plugins.ticketoutputpdf.layout.deleted': 'eventyay.plugins.ticketoutputpdf.layout.deleted',
+    'pretix.plugins.ticketoutputpdf.layout.changed': 'eventyay.plugins.ticketoutputpdf.layout.changed',
+    'pretix.plugins.badges.layout.added': 'eventyay.plugins.badges.layout.added',
+    'pretix.plugins.badges.layout.changed': 'eventyay.plugins.badges.layout.changed',
+    'pretix.plugins.badges.layout.deleted': 'eventyay.plugins.badges.layout.deleted',
+    'pretix.team.invite.deleted': 'eventyay.team.invite.deleted',
+    'pretix.team.invite.resent': 'eventyay.team.invite.resent',
+    'pretix.team.invite.created': 'eventyay.team.invite.created',
+    'pretix.team.token.deleted': 'eventyay.team.token.deleted',
+    'pretix.user.settings.2fa.device.deleted': 'eventyay.user.settings.2fa.device.deleted',
+    'pretix.user.settings.notifications.changed': 'eventyay.user.settings.notifications.changed',
+    'pretix.control.auth.user.impersonated': 'eventyay.control.auth.user.impersonated',
+    'pretix.control.auth.user.impersonate_stopped': 'eventyay.control.auth.user.impersonate_stopped',
+    'pretix.giftcards.acceptance.added': 'eventyay.giftcards.acceptance.added',
+    'pretix.giftcards.acceptance.removed': 'eventyay.giftcards.acceptance.removed',
+    'pretix.giftcards.transaction.manual': 'eventyay.giftcards.transaction.manual',
+    'pretix.gate.changed': 'eventyay.gate.changed',
+    'pretix.device.changed': 'eventyay.device.changed',
+    'pretix.property.changed': 'eventyay.property.changed',
+    
+    # Additional order and email action mappings for complete coverage
+    'pretix.event.order.contact.confirmed': 'eventyay.event.order.contact.confirmed',
+    'pretix.event.order.comment': 'eventyay.event.order.comment',
+    'pretix.event.order.checkin_attention': 'eventyay.event.order.checkin_attention',
+    'pretix.event.order.phone.changed': 'eventyay.event.order.phone.changed',
+    'pretix.event.order.locale.changed': 'eventyay.event.order.locale.changed',
+    'pretix.event.order.email.attachments.skipped': 'eventyay.event.order.email.attachments.skipped',
+    'pretix.event.order.email.error': 'eventyay.event.order.email.error',
+    'pretix.event.order.email.event_canceled': 'eventyay.event.order.email.event_canceled',
+    'pretix.event.order.email.expire_warning_sent': 'eventyay.event.order.email.expire_warning_sent',
+    'pretix.event.order.email.custom_sent': 'eventyay.event.order.email.custom_sent',
+    'pretix.event.order.position.email.custom_sent': 'eventyay.event.order.position.email.custom_sent',
+    'pretix.event.order.cancellationrequest.deleted': 'eventyay.event.order.cancellationrequest.deleted',
+    'pretix.event.order.placed.require_approval': 'eventyay.event.order.placed.require_approval',
+    'pretix.event.order.overpaid': 'eventyay.event.order.overpaid',
+    'pretix.event.order.refund.created.externally': 'eventyay.event.order.refund.created.externally',
+    'pretix.subevent.canceled': 'eventyay.subevent.canceled',
+    'pretix.voucher.sent': 'eventyay.voucher.sent',
+    
+    # pretalx.* (old talk system) mappings - map to eventyay equivalents
+    'pretalx.room.create': 'eventyay.room.create',
+    'pretalx.room.update': 'eventyay.room.update',
+    'pretalx.room.delete': 'eventyay.room.delete',
+}
+
+
 @receiver(signal=logentry_display, dispatch_uid='eventyaycontrol_logentry_display')
 def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs):
+    # Map legacy pretix.* prefixes to eventyay.* for backward compatibility
+    action_type = PRETIX_LEGACY_ALIASES.get(logentry.action_type, logentry.action_type)
+    
     plains = {
         'eventyay.object.cloned': _('This object has been created by cloning.'),
         'eventyay.organizer.changed': _('The organizer has been changed.'),
@@ -471,16 +617,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.quota.opened': _('The quota has been re-opened.'),
         'eventyay.event.category.added': _('The category has been added.'),
         'eventyay.event.category.deleted': _('The category has been deleted.'),
-        'eventyay.event.category.changed': _('The category has been changed.'),
-        'eventyay.event.question.added': _('The question has been added.'),
-        'eventyay.event.question.deleted': _('The question has been deleted.'),
-        'eventyay.event.question.changed': _('The question has been changed.'),
         'eventyay.event.taxrule.added': _('The tax rule has been added.'),
         'eventyay.event.taxrule.deleted': _('The tax rule has been deleted.'),
         'eventyay.event.taxrule.changed': _('The tax rule has been changed.'),
-        'eventyay.event.checkinlist.added': _('The check-in list has been added.'),
-        'eventyay.event.checkinlist.deleted': _('The check-in list has been deleted.'),
-        'eventyay.event.checkinlist.changed': _('The check-in list has been changed.'),
         'eventyay.event.settings': _('The event settings have been changed.'),
         'eventyay.event.tickets.settings': _('The ticket download settings have been changed.'),
         'eventyay.event.plugins.enabled': _('A plugin has been enabled.'),
@@ -491,9 +630,6 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.testmode.deactivated': _('The test mode has been disabled.'),
         'eventyay.event.added': _('The event has been created.'),
         'eventyay.event.changed': _('The event details have been changed.'),
-        'eventyay.event.question.option.added': _('An answer option has been added to the question.'),
-        'eventyay.event.question.option.deleted': _('An answer option has been removed from the question.'),
-        'eventyay.event.question.option.changed': _('An answer option has been changed.'),
         'eventyay.event.permissions.added': _('A user has been added to the event team.'),
         'eventyay.event.permissions.invited': _('A user has been invited to the event team.'),
         'eventyay.event.permissions.changed': _("A user's permissions have been changed."),
@@ -508,6 +644,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.gate.created': _('The gate has been created.'),
         'eventyay.gate.changed': _('The gate has been changed.'),
         'eventyay.gate.deleted': _('The gate has been deleted.'),
+        'eventyay.room.create': _('A new room was added.'),
+        'eventyay.room.update': _('A room was modified.'),
+        'eventyay.room.delete': _('A room was deleted.'),
         'eventyay.subevent.deleted': pgettext_lazy('subevent', 'The event date has been deleted.'),
         'eventyay.subevent.canceled': pgettext_lazy('subevent', 'The event date has been canceled.'),
         'eventyay.subevent.changed': pgettext_lazy('subevent', 'The event date has been changed.'),
@@ -524,6 +663,26 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.giftcards.created': _('The gift card has been created.'),
         'eventyay.giftcards.modified': _('The gift card has been changed.'),
         'eventyay.giftcards.transaction.manual': _('A manual transaction has been performed.'),
+        'eventyay.property.deleted': _('The property has been deleted.'),
+        'eventyay.property.changed': _('The property has been changed.'),
+        'eventyay.plugins.badges.layout.deleted': _('The badge layout has been deleted.'),
+        'eventyay.plugins.badges.layout.added': _('A new badge layout has been created.'),
+        'eventyay.plugins.badges.layout.changed': _('The badge layout has been changed.'),
+        'eventyay.plugins.ticketoutputpdf.layout.added': _('A new ticket layout has been created.'),
+        'eventyay.plugins.ticketoutputpdf.layout.deleted': _('The ticket layout has been deleted.'),
+        'eventyay.plugins.ticketoutputpdf.layout.changed': _('The ticket layout has been changed.'),
+        'eventyay.event.checkinlist.added': _('A new check-in list has been created.'),
+        'eventyay.event.checkinlist.changed': _('The check-in list has been changed.'),
+        'eventyay.event.checkinlist.deleted': _('The check-in list has been deleted.'),
+        'eventyay.event.checkinlists.deleted': _('The check-in list has been deleted.'),  # Typo variant
+        'eventyay.event.question.added': _('A new question has been created.'),
+        'eventyay.event.question.changed': _('The question has been changed.'),
+        'eventyay.event.question.deleted': _('The question has been deleted.'),
+        'eventyay.event.question.option.added': _('A new answer option has been created.'),
+        'eventyay.event.question.option.changed': _('The answer option has been changed.'),
+        'eventyay.event.question.option.deleted': _('The answer option has been deleted.'),
+        'eventyay.control.auth.user.impersonated': _('User impersonation has started.'),
+        'eventyay.control.auth.user.impersonate_stopped': _('User impersonation has been stopped.'),
     }
 
     try:
@@ -531,7 +690,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     except (TypeError, json.JSONDecodeError):
         data = {}
 
-    if logentry.action_type.startswith('eventyay.event.product.variation'):
+    if action_type.startswith('eventyay.event.product.variation'):
         if 'value' not in data:
             # Backwards compatibility
             var = ProductVariation.objects.filter(id=data['id']).first()
@@ -542,28 +701,28 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         else:
             data['value'] = LazyI18nString(data['value'])
 
-    if logentry.action_type in plains:
+    if action_type in plains:
         data = defaultdict(lambda: '?', data)
-        return plains[logentry.action_type].format_map(data)
+        return plains[action_type].format_map(data)
 
-    if logentry.action_type.startswith('eventyay.event.order.changed'):
-        return _display_order_changed(sender, logentry)
+    if action_type.startswith('eventyay.event.order.changed'):
+        return _display_order_changed(sender, logentry, action_type)
 
-    if logentry.action_type.startswith('eventyay.event.payment.provider.'):
+    if action_type.startswith('eventyay.event.payment.provider.'):
         return _('The settings of a payment provider have been changed.')
 
-    if logentry.action_type.startswith('eventyay.event.tickets.provider.'):
+    if action_type.startswith('eventyay.event.tickets.provider.'):
         return _('The settings of a ticket output provider have been changed.')
 
-    if logentry.action_type == 'eventyay.event.order.consent':
+    if action_type == 'eventyay.event.order.consent':
         return _('The user confirmed the following message: "{}"').format(
             bleach.clean(logentry.parsed_data.get('msg'), tags=[], strip=True)
         )
 
-    if sender and logentry.action_type.startswith('eventyay.event.checkin'):
-        return _display_checkin(sender, logentry)
+    if sender and action_type.startswith('eventyay.event.checkin'):
+        return _display_checkin(sender, logentry, action_type)
 
-    if logentry.action_type == 'eventyay.control.views.checkin':
+    if action_type == 'eventyay.control.views.checkin':
         # deprecated
         dt = dateutil.parser.parse(data.get('datetime'))
         tz = pytz.timezone(sender.settings.timezone)
@@ -586,7 +745,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             posid=data.get('positionid'), datetime=dt_formatted, list=checkin_list
         )
 
-    if logentry.action_type in (
+    if action_type in (
         'eventyay.control.views.checkin.reverted',
         'eventyay.event.checkin.reverted',
     ):
@@ -603,33 +762,33 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             list=checkin_list,
         )
 
-    if logentry.action_type == 'eventyay.team.member.added':
+    if action_type == 'eventyay.team.member.added':
         return _('{user} has been added to the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.member.removed':
+    if action_type == 'eventyay.team.member.removed':
         return _('{user} has been removed from the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.member.joined':
+    if action_type == 'eventyay.team.member.joined':
         return _('{user} has joined the team using the invite sent to {email}.').format(
             user=data.get('email'), email=data.get('invite_email')
         )
 
-    if logentry.action_type == 'eventyay.team.invite.created':
+    if action_type == 'eventyay.team.invite.created':
         return _('{user} has been invited to the team.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.invite.resent':
+    if action_type == 'eventyay.team.invite.resent':
         return _('Invite for {user} has been resent.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.invite.deleted':
+    if action_type == 'eventyay.team.invite.deleted':
         return _('The invite for {user} has been revoked.').format(user=data.get('email'))
 
-    if logentry.action_type == 'eventyay.team.token.created':
+    if action_type == 'eventyay.team.token.created':
         return _('The token "{name}" has been created.').format(name=data.get('name'))
 
-    if logentry.action_type == 'eventyay.team.token.deleted':
+    if action_type == 'eventyay.team.token.deleted':
         return _('The token "{name}" has been revoked.').format(name=data.get('name'))
 
-    if logentry.action_type == 'eventyay.user.settings.changed':
+    if action_type == 'eventyay.user.settings.changed':
         text = str(_('Your account settings have been changed.'))
         if 'email' in data:
             text = text + ' ' + str(_('Your email address has been changed to {email}.').format(email=data['email']))
@@ -641,8 +800,10 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
             text = text + ' ' + str(_('Your account has been disabled.'))
         return text
 
-    if logentry.action_type == 'eventyay.control.auth.user.impersonated':
+    if action_type == 'eventyay.control.auth.user.impersonated':
         return str(_('You impersonated {}.')).format(data['other_email'])
 
-    if logentry.action_type == 'eventyay.control.auth.user.impersonate_stopped':
+    if action_type == 'eventyay.control.auth.user.impersonate_stopped':
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
+
+
