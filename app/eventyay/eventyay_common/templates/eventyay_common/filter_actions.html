@@ -1,0 +1,12 @@
+{% load i18n %}
+
+<div class="filter-actions">
+    <button class="btn btn-primary filter-btn" type="button" aria-label="{% translate 'Filter' %}">
+        <span class="fa fa-filter"></span>
+        <span class="sr-only">{% translate "Filter" %}</span>
+    </button>
+    <button class="btn btn-default clear-btn" type="button" aria-label="{% translate 'Clear filters' %}" title="{% translate 'Clear filters' %}">
+        <span class="fa fa-eraser"></span>
+        <span class="sr-only">{% translate "Clear filters" %}</span>
+    </button>
+</div>
