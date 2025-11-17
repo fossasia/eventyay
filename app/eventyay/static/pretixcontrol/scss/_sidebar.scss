@@ -36,6 +36,7 @@ body.sidebar-minimized {
   .sidebar {
     width: 45px;
     overflow: hidden;
+    transition: none;
 
     .nav>li {
       >a {
@@ -46,7 +47,7 @@ body.sidebar-minimized {
           margin-right: 5px;
         }
 
-        i + .sidebar-text {
+        .sidebar-text {
           display: none;
         }
       }
@@ -171,12 +172,13 @@ body.sidebar-minimized {
     width: 250px;
     overflow-y: auto;
     overflow-x: visible;
+    transition: none;
 
     .nav>li {
       >a {
         padding: 10px 15px;
 
-        i + .sidebar-text {
+        .sidebar-text {
           display: inline-block;
         }
 
