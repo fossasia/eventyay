@@ -232,6 +232,9 @@ def render_pdf(event, positions, opt):
     if pagebuffer:
         render_page(pagebuffer)
 
+    if not any:
+        raise OrderError(_('None of the selected products is configured to print badges.'))
+    
     output_pdf_writer.add_metadata(
         {
             '/Title': 'Badges',
@@ -240,8 +243,6 @@ def render_pdf(event, positions, opt):
     )
     output_pdf_writer.write(outbuffer)
     outbuffer.seek(0)
-    if not any:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
     return outbuffer
 
 

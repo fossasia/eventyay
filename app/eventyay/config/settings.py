@@ -380,6 +380,9 @@ DATABASES = {
     }
 }
 
+# Feature flag for JSON field support (PostgreSQL only)
+JSON_FIELD_AVAILABLE = DATABASES['default']['ENGINE'].split('.')[-1] == 'postgresql'
+
 
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',

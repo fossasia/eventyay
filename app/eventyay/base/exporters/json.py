@@ -52,7 +52,7 @@ class JSONExporter(BaseExporter):
                             for variation in item.variations.all()
                         ],
                     }
-                    for item in self.event.items.select_related('tax_rule').prefetch_related('variations')
+                    for item in self.event.products.select_related('tax_rule').prefetch_related('variations')
                 ],
                 'questions': [
                     {
@@ -80,7 +80,7 @@ class JSONExporter(BaseExporter):
                         'positions': [
                             {
                                 'id': position.id,
-                                'item': position.item_id,
+                                'item': position.product_id,
                                 'variation': position.variation_id,
                                 'price': position.price,
                                 'attendee_name': position.attendee_name,
@@ -104,10 +104,10 @@ class JSONExporter(BaseExporter):
                     {
                         'id': quota.id,
                         'size': quota.size,
-                        'items': [item.id for item in quota.items.all()],
+                        'items': [item.id for item in quota.products.all()],
                         'variations': [variation.id for variation in quota.variations.all()],
                     }
-                    for quota in self.event.quotas.all().prefetch_related('items', 'variations')
+                    for quota in self.event.quotas.all().prefetch_related('products', 'variations')
                 ],
             }
         }
