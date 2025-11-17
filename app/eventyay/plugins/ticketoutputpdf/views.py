@@ -90,7 +90,7 @@ class LayoutCreate(EventPermissionRequiredMixin, CreateView):
         if form.instance.background and form.instance.background.name:
             form.instance.background.save('background.pdf', form.instance.background)
         form.instance.log_action(
-            'pretix.plugins.ticketoutputpdf.layout.added',
+            'eventyay.plugins.ticketoutputpdf.layout.added',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
@@ -177,7 +177,7 @@ class LayoutDelete(EventPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object = self.get_object()
         self.object.log_action(
-            action='pretix.plugins.ticketoutputpdf.layout.deleted',
+            action='eventyay.plugins.ticketoutputpdf.layout.deleted',
             user=self.request.user,
         )
         self.object.delete()
@@ -237,7 +237,7 @@ class LayoutEditorView(BaseEditorView):
         self.layout.layout = self.request.POST.get('data')
         self.layout.save(update_fields=['layout'])
         self.layout.log_action(
-            action='pretix.plugins.ticketoutputpdf.layout.changed',
+            action='eventyay.plugins.ticketoutputpdf.layout.changed',
             user=self.request.user,
             data={'layout': self.request.POST.get('data')},
         )
