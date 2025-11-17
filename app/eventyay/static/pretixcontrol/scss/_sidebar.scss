@@ -46,11 +46,7 @@ body.sidebar-minimized {
           margin-right: 5px;
         }
 
-        // Hide all text spans in minimized state - simple Talk approach
-        .fa+.sidebar-text,
-        svg+.sidebar-text,
-        i+.sidebar-text,
-        .sidebar-text {
+        i + .sidebar-text {
           display: none;
         }
       }
@@ -64,42 +60,21 @@ body.sidebar-minimized {
       display: none;
     }
 
-    .context-selector .context-indicator .context-name,
-    .context-selector .context-indicator .context-meta {
-      display: none;
-    }
-
-    // Style the context-selector dropdown-toggle to match expanded state alignment
     .context-selector {
       .dropdown-toggle {
-        padding: 10px 0;
+        padding: 8px 0 8px 4px;
         display: flex;
         align-items: center;
-        justify-content: center;
         text-decoration: none;
         position: relative;
-        width: 100%;
 
         span.caret {
           display: none;
         }
 
         .context-icon {
-          width: 2.5em;
-          height: 2.5em;
-          line-height: 2.5em;
-          margin: 0;
-        }
-
-        .context-icon .fa-circle {
-          font-size: 2em;
-        }
-
-        .context-icon .fa-dashboard,
-        .context-icon .fa-group {
-          font-size: 1em;
-          visibility: visible;
-          opacity: 1;
+          min-width: 38px;
+          flex-shrink: 0;
         }
 
         .context-indicator {
@@ -130,7 +105,6 @@ body.sidebar-minimized {
     transform: translateX(-100%);
     overflow-y: auto;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-    transition: transform 0.3s ease;
     height: calc(100vh - var(--navbar-height, 50px));
 
     .nav>li {
@@ -202,11 +176,8 @@ body.sidebar-minimized {
       >a {
         padding: 10px 15px;
 
-        // Show text spans when hovering - simple Talk approach
-        .fa+.sidebar-text,
-        svg+.sidebar-text,
-        .sidebar-text {
-          display: inline;
+        i + .sidebar-text {
+          display: inline-block;
         }
 
         .fa,
@@ -296,8 +267,10 @@ body.sidebar-minimized {
 
     .context-selector {
       .dropdown-toggle {
-        padding: 10px 20px 9px 7px;
-        display: block;
+        padding: 8px 0 8px 4px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
         text-decoration: none;
         position: relative;
 
@@ -309,35 +282,21 @@ body.sidebar-minimized {
         }
 
         .context-icon {
-          width: 2.5em;
-          height: 2.5em;
-          line-height: 2.5em;
-        }
-
-        .context-icon .fa-circle {
-          font-size: 2em;
-        }
-
-        .context-icon .fa-dashboard,
-        .context-icon .fa-group {
-          font-size: 1em;
-          visibility: visible;
-          opacity: 1;
+          min-width: 38px;
+          flex-shrink: 0;
         }
       }
 
       border-bottom: 2px solid darken($gray-lightest, 6.5%);
 
       .context-indicator {
-        display: inline-block;
-        padding-left: 5px;
-        padding-right: 2px;
-        line-height: 15px;
-        vertical-align: middle;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+        overflow: hidden;
+        margin-left: 6px;
 
         span {
-          display: block;
-          width: 170px;
           text-overflow: ellipsis;
           white-space: nowrap;
           overflow: hidden;
@@ -345,15 +304,12 @@ body.sidebar-minimized {
 
         span.context-name {
           font-weight: bold;
-          vertical-align: middle;
           font-size: 15px;
-          display: block;
         }
 
         span.context-meta {
           opacity: 0.7;
           font-size: 11px;
-          display: block;
         }
       }
     }
