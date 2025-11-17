@@ -79,7 +79,7 @@ class ExportForm(forms.Form):
     def clean(self):
         data = super().clean()
         if data.get('export_format') == 'csv' and 'data_delimiter' in self.fields and not data.get('data_delimiter'):
-            data['data_delimiter'] = 'newline'
+            data['data_delimiter'] = 'comma'
         return data
 
     def get_object_attribute(self, obj, attribute):

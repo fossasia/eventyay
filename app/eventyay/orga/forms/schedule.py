@@ -1,3 +1,4 @@
+import logging
 from django import forms
 from django.db.models import Prefetch
 from django.utils.functional import cached_property
@@ -193,7 +194,16 @@ class ScheduleExportForm(ExportForm):
         return question.answers.filter(submission=obj).first()
 
     def _get_speaker_ids_value(self, obj):
-        return [code for code in obj.speakers.all().values_list('code', flat=True) if code]
+        codes = []
+        for code in obj.speakers.all().values_list('code', flat=True):
+            if not code:
+                logging.warning(
+                    "Speaker for submission %s is missing a code.",
+                    getattr(obj, 'id', obj),
+                )
+            else:
+                codes.append(code)
+        return codes
 
     def _get_speaker_names_value(self, obj):
         return [name for name in obj.speakers.all().values_list('fullname', flat=True) if name]
