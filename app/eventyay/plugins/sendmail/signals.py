@@ -13,38 +13,64 @@ def control_nav_import(sender, request=None, **kwargs):
         return []
     return [
         {
-            'label': _('Mails'),
+            'label': _('Message center'),
             'url': reverse(
-                'plugins:sendmail:send',
+                'plugins:sendmail:outbox',
                 kwargs={
                     'event': request.event.slug,
                     'organizer': request.event.organizer.slug,
                 },
             ),
-            'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'send'),
+            'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'outbox'),
             'icon': 'envelope',
             'children': [
                 {
-                    'label': _('Compose emails'),
+                    'label': _('Outbox'),
                     'url': reverse(
-                        'plugins:sendmail:send',
+                        'plugins:sendmail:outbox',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'send'),
+                    'active': (
+                        url.namespace == 'plugins:sendmail' and
+                        url.url_name in {
+                            'outbox',
+                            'edit_mail',
+                            'delete_single',
+                            'purge_all'
+                        }
+                    ),
                 },
                 {
-                    'label': _('Sent emails'),
+                    'label': _('Compose'),
                     'url': reverse(
-                        'plugins:sendmail:history',
+                        'plugins:sendmail:compose_email_choice',
                         kwargs={
                             'event': request.event.slug,
                             'organizer': request.event.organizer.slug,
                         },
                     ),
-                    'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'history'),
+                    'active': (
+                        url.namespace == 'plugins:sendmail' and
+                        url.url_name in {
+                            'compose_email_choice',
+                            'compose_email_teams',
+                            'send'
+                        }
+                    ),
+                },
+                {
+                    'label': _('Sent'),
+                    'url': reverse(
+                        'plugins:sendmail:sent',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': (url.namespace == 'plugins:sendmail' and url.url_name == 'sent'),
                 },
                 {
                     'label': _('Templates'),
@@ -65,9 +91,9 @@ def control_nav_import(sender, request=None, **kwargs):
 @receiver(signal=logentry_display)
 def pretixcontrol_logentry_display(sender, logentry, **kwargs):
     plains = {
-        'pretix.plugins.sendmail.sent': _('Email was sent'),
-        'pretix.plugins.sendmail.order.email.sent': _('The order received a mass email.'),
-        'pretix.plugins.sendmail.order.email.sent.attendee': _('A ticket holder of this order received a mass email.'),
+        'eventyay.plugins.sendmail.sent': _('Email was sent'),
+        'eventyay.plugins.sendmail.order.email.sent': _('The order received a mass email.'),
+        'eventyay.plugins.sendmail.order.email.sent.attendee': _('A ticket holder of this order received a mass email.'),
     }
     if logentry.action_type in plains:
         return plains[logentry.action_type]

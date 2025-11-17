@@ -34,7 +34,7 @@ class LogoutView(View):
         return response
 
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponseRedirect:
-        return redirect(reverse('cfp:event.start', kwargs={'event': self.request.event.slug}))
+        return redirect(reverse('cfp:event.start', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}))
 
 
 class LoginView(GenericLoginView):
@@ -68,7 +68,7 @@ class ResetView(EventPageMixin, GenericResetView):
     template_name = 'cfp/event/reset.html'
 
     def get_success_url(self):
-        return reverse('cfp:event.login', kwargs={'event': self.request.event.slug})
+        return reverse('cfp:event.login', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug})
 
 
 class RecoverView(FormView):
@@ -92,14 +92,14 @@ class RecoverView(FormView):
             )
         except User.DoesNotExist:
             messages.error(self.request, phrases.cfp.auth_reset_fail)
-            return redirect(reverse('cfp:event.reset', kwargs={'event': kwargs.get('event')}))
+            return redirect(reverse('cfp:event.reset', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}))
 
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         self.user.change_password(form.cleaned_data['password'])
         messages.success(self.request, phrases.cfp.auth_reset_success)
-        return redirect(reverse('cfp:event.login', kwargs={'event': self.request.event.slug}))
+        return redirect(reverse('cfp:event.login', kwargs={'organizer': self.request.event.organizer.slug, 'event': self.request.event.slug}))
 
 
 class EventAuth(View):
