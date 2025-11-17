@@ -30,7 +30,7 @@
 <script>
 import { useVuelidate } from '@vuelidate/core'
 import api from 'lib/api'
-import { DEFAULT_COLORS, DEFAULT_LOGO, DEFAULT_IDENTICONS } from 'theme'
+import { DEFAULT_COLORS, DEFAULT_LOGO, DEFAULT_IDENTICONS, applyThemeConfig } from 'theme'
 import i18n from 'i18n'
 import ColorPicker from 'components/ColorPicker'
 import UploadUrlInput from 'components/UploadUrlInput'
@@ -113,6 +113,7 @@ export default {
 			if (this.v$.$invalid) return
 			if (!this.config) return
 
+			this.error = null
 			// Cleanup empty strings in text overwrites
 			for (const key of Object.keys(this.config.theme.textOverwrites)) {
 				if (!this.config.theme.textOverwrites[key]) {
@@ -123,10 +124,17 @@ export default {
 			this.saving = true
 			try {
 				await api.call('world.config.patch', {theme: this.config.theme})
-				location.reload() // Theme config is only activated after reload
+				const themePayload = {
+					colors: {...DEFAULT_COLORS, ...this.config.theme.colors},
+					logo: {...DEFAULT_LOGO, ...this.config.theme.logo},
+					streamOfflineImage: this.config.theme.streamOfflineImage ?? null,
+					identicons: {...DEFAULT_IDENTICONS, ...this.config.theme.identicons}
+				}
+				applyThemeConfig(themePayload)
 			} catch (error) {
 				console.error(error.apiError || error)
 				this.error = error.apiError?.code || error.message || error.toString()
+			} finally {
 				this.saving = false
 			}
 		},
