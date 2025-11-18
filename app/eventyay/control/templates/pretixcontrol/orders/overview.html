@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load order_overview %}
+{% load static %}
 {% block title %}{% trans "Order overview" %}{% endblock %}
 {% block content %}
     {% url "control:event.orders" organizer=request.event.organizer.slug event=request.event.slug as listurl %}
@@ -40,6 +41,7 @@
             <div class="col-lg-2 col-sm-6 col-xs-6">
                 {% bootstrap_field filter_form.date_until layout='inline' %}
             </div>
+            {{ filter_form.browser_timezone }}
             <div class="col-lg-1 col-lg-offset-3 col-sm-6 col-xs-6">
                 <button class="btn btn-primary btn-block" type="submit">
                     <span class="fa fa-filter"></span>
@@ -180,4 +182,7 @@
     <p class="help-block">
         ¹ {% trans "If you click links in this column, you will only find orders that are canceled completely, while the numbers also include single canceled positions within valid orders." %}
     </p>
+{% endblock %}
+{% block custom_header %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
