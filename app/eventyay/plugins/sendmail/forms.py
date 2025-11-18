@@ -101,6 +101,11 @@ class MailForm(forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
     )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+    )
 
     def clean(self):
         d = super().clean()
