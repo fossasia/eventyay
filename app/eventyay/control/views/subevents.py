@@ -164,7 +164,7 @@ class SubEventDelete(EventPermissionRequiredMixin, DeleteView):
             )
             return HttpResponseRedirect(self.get_success_url())
         else:
-            self.object.log_action('pretix.subevent.deleted', user=self.request.user)
+            self.object.log_action('eventyay.subevent.deleted', user=self.request.user)
             CartPosition.objects.filter(addon_to__subevent=self.object).delete()
             self.object.cartposition_set.all().delete()
             self.object.delete()
@@ -313,7 +313,7 @@ class SubEventEditorMixin(MetaDataEditorMixin):
                 if not form.instance.pk:
                     continue
                 form.instance.checkins.all().delete()
-                form.instance.log_action(action='pretix.event.checkinlist.deleted', user=self.request.user)
+                form.instance.log_action(action='eventyay.event.checkinlist.deleted', user=self.request.user)
                 form.instance.delete()
                 form.instance.pk = None
             elif form.has_changed():
@@ -323,7 +323,7 @@ class SubEventEditorMixin(MetaDataEditorMixin):
                 change_data = {k: form.cleaned_data.get(k) for k in form.changed_data}
                 change_data['id'] = form.instance.pk
                 form.instance.log_action(
-                    'pretix.event.checkinlist.changed',
+                    'eventyay.event.checkinlist.changed',
                     user=self.request.user,
                     data={k: form.cleaned_data.get(k) for k in form.changed_data},
                 )
@@ -339,7 +339,7 @@ class SubEventEditorMixin(MetaDataEditorMixin):
             change_data = {k: form.cleaned_data.get(k) for k in form.changed_data}
             change_data['id'] = form.instance.pk
             form.instance.log_action(
-                action='pretix.event.checkinlist.added',
+                action='eventyay.event.checkinlist.added',
                 user=self.request.user,
                 data=change_data,
             )
@@ -349,9 +349,9 @@ class SubEventEditorMixin(MetaDataEditorMixin):
             if form in self.formset.deleted_forms:
                 if not form.instance.pk:
                     continue
-                form.instance.log_action(action='pretix.event.quota.deleted', user=self.request.user)
+                form.instance.log_action(action='eventyay.event.quota.deleted', user=self.request.user)
                 obj.log_action(
-                    'pretix.subevent.quota.deleted',
+                    'eventyay.subevent.quota.deleted',
                     user=self.request.user,
                     data={'id': form.instance.pk},
                 )
@@ -363,12 +363,12 @@ class SubEventEditorMixin(MetaDataEditorMixin):
                 change_data = {k: form.cleaned_data.get(k) for k in form.changed_data}
                 change_data['id'] = form.instance.pk
                 obj.log_action(
-                    'pretix.subevent.quota.changed',
+                    'eventyay.subevent.quota.changed',
                     user=self.request.user,
                     data={k: form.cleaned_data.get(k) for k in form.changed_data},
                 )
                 form.instance.log_action(
-                    'pretix.event.quota.changed',
+                    'eventyay.event.quota.changed',
                     user=self.request.user,
                     data={k: form.cleaned_data.get(k) for k in form.changed_data},
                 )
@@ -384,11 +384,11 @@ class SubEventEditorMixin(MetaDataEditorMixin):
             change_data = {k: form.cleaned_data.get(k) for k in form.changed_data}
             change_data['id'] = form.instance.pk
             form.instance.log_action(
-                action='pretix.event.quota.added',
+                action='eventyay.event.quota.added',
                 user=self.request.user,
                 data=change_data,
             )
-            obj.log_action('pretix.subevent.quota.added', user=self.request.user, data=change_data)
+            obj.log_action('eventyay.subevent.quota.added', user=self.request.user, data=change_data)
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -513,7 +513,7 @@ class SubEventUpdate(EventPermissionRequiredMixin, SubEventEditorMixin, UpdateVi
                         for k in f.changed_data
                     }
                 )
-            self.object.log_action('pretix.subevent.changed', user=self.request.user, data=data)
+            self.object.log_action('eventyay.subevent.changed', user=self.request.user, data=data)
         for f in self.plugin_forms:
             f.subevent = self.object
             f.save()
@@ -591,7 +591,7 @@ class SubEventCreate(SubEventEditorMixin, EventPermissionRequiredMixin, CreateVi
                     for k in f.cleaned_data
                 }
             )
-        form.instance.log_action('pretix.subevent.added', data=dict(data), user=self.request.user)
+        form.instance.log_action('eventyay.subevent.added', data=dict(data), user=self.request.user)
 
         self.save_formset(form.instance)
         self.save_cl_formset(form.instance)
@@ -633,7 +633,7 @@ class SubEventBulkAction(SubEventQueryMixin, EventPermissionRequiredMixin, View)
         if request.POST.get('action') == 'disable':
             for obj in self.get_queryset():
                 obj.log_action(
-                    'pretix.subevent.changed',
+                    'eventyay.subevent.changed',
                     user=self.request.user,
                     data={'active': False},
                 )
@@ -646,7 +646,7 @@ class SubEventBulkAction(SubEventQueryMixin, EventPermissionRequiredMixin, View)
         elif request.POST.get('action') == 'enable':
             for obj in self.get_queryset():
                 obj.log_action(
-                    'pretix.subevent.changed',
+                    'eventyay.subevent.changed',
                     user=self.request.user,
                     data={'active': True},
                 )
@@ -670,11 +670,11 @@ class SubEventBulkAction(SubEventQueryMixin, EventPermissionRequiredMixin, View)
                 if obj.allow_delete():
                     CartPosition.objects.filter(addon_to__subevent=obj).delete()
                     obj.cartposition_set.all().delete()
-                    obj.log_action('pretix.subevent.deleted', user=self.request.user)
+                    obj.log_action('eventyay.subevent.deleted', user=self.request.user)
                     obj.delete()
                 else:
                     obj.log_action(
-                        'pretix.subevent.changed',
+                        'eventyay.subevent.changed',
                         user=self.request.user,
                         data={'active': False},
                     )
@@ -906,7 +906,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
         for se in subevents:
             log_entries.append(
                 se.log_action(
-                    'pretix.subevent.added',
+                    'eventyay.subevent.added',
                     data=data,
                     user=self.request.user,
                     save=False,
@@ -971,7 +971,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
                 change_data['id'] = i.pk
                 log_entries.append(
                     i.log_action(
-                        action='pretix.event.quota.added',
+                        action='eventyay.event.quota.added',
                         user=self.request.user,
                         data=change_data,
                         save=False,
@@ -979,7 +979,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
                 )
                 log_entries.append(
                     se.log_action(
-                        'pretix.subevent.quota.added',
+                        'eventyay.subevent.quota.added',
                         user=self.request.user,
                         data=change_data,
                         save=False,
@@ -1004,7 +1004,7 @@ class SubEventBulkCreate(SubEventEditorMixin, EventPermissionRequiredMixin, Crea
                 change_data['id'] = i.pk
                 log_entries.append(
                     i.log_action(
-                        action='pretix.event.checkinlist.added',
+                        action='eventyay.event.checkinlist.added',
                         user=self.request.user,
                         data=change_data,
                         save=False,
@@ -1232,7 +1232,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                     q = list(se.checkinlist_set.all())[qidx]
                     log_entries += [
                         q.log_action(
-                            action='pretix.event.checkinlist.deleted',
+                            action='eventyay.event.checkinlist.deleted',
                             user=self.request.user,
                             save=False,
                         ),
@@ -1255,7 +1255,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                     change_data['id'] = q.pk
                     log_entries.append(
                         q.log_action(
-                            action='pretix.event.checkinlist.added',
+                            action='eventyay.event.checkinlist.added',
                             user=self.request.user,
                             data=change_data,
                             save=False,
@@ -1280,7 +1280,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                             q.gates.set(f.cleaned_data.get('limit_products', []))
                         log_entries.append(
                             q.log_action(
-                                action='pretix.event.checkinlist.changed',
+                                action='eventyay.event.checkinlist.changed',
                                 user=self.request.user,
                                 data=change_data,
                                 save=False,
@@ -1312,12 +1312,12 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                         to_delete_quota_ids.append(q.pk)
                         log_entries += [
                             q.log_action(
-                                action='pretix.event.quota.deleted',
+                                action='eventyay.event.quota.deleted',
                                 user=self.request.user,
                                 save=False,
                             ),
                             se.log_action(
-                                'pretix.subevent.quota.deleted',
+                                'eventyay.subevent.quota.deleted',
                                 user=self.request.user,
                                 data={'id': q.pk},
                                 save=False,
@@ -1351,12 +1351,12 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                     q = list(se.quotas.all())[qidx]
                     log_entries += [
                         q.log_action(
-                            action='pretix.event.quota.deleted',
+                            action='eventyay.event.quota.deleted',
                             user=self.request.user,
                             save=False,
                         ),
                         se.log_action(
-                            'pretix.subevent.quota.deleted',
+                            'eventyay.subevent.quota.deleted',
                             user=self.request.user,
                             data={'id': q.pk},
                             save=False,
@@ -1379,7 +1379,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                     change_data['id'] = q.pk
                     log_entries.append(
                         q.log_action(
-                            action='pretix.event.quota.added',
+                            action='eventyay.event.quota.added',
                             user=self.request.user,
                             data=change_data,
                             save=False,
@@ -1387,7 +1387,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                     )
                     log_entries.append(
                         se.log_action(
-                            'pretix.subevent.quota.added',
+                            'eventyay.subevent.quota.added',
                             user=self.request.user,
                             data=change_data,
                             save=False,
@@ -1406,7 +1406,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
                             q.variations.set(selected_variations)
                         log_entries.append(
                             q.log_action(
-                                action='pretix.event.quota.added',
+                                action='eventyay.event.quota.added',
                                 user=self.request.user,
                                 data=change_data,
                                 save=False,
@@ -1681,7 +1681,7 @@ class SubEventBulkEdit(SubEventQueryMixin, EventPermissionRequiredMixin, FormVie
         for obj in self.get_queryset():
             log_entries.append(
                 obj.log_action(
-                    'pretix.subevent.changed',
+                    'eventyay.subevent.changed',
                     data=data,
                     user=self.request.user,
                     save=False,
