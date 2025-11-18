@@ -48,11 +48,15 @@
                 {% for l in layouts %}
                     <tr>
                         <td>
-                            <strong>
-                                <a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}">
-                                    {{ l.name }}
-                                </a>
-                            </strong>
+                            {% if "can_change_event_settings" in request.eventpermset %}
+                                <strong>
+                                    <a href="{% url "plugins:badges:edit" organizer=request.event.organizer.slug event=request.event.slug layout=l.id %}">
+                                        {{ l.name }}
+                                    </a>
+                                </strong>
+                            {% else %}
+                                <strong>{{ l.name }}</strong>
+                            {% endif %}
                         </td>
                         <td>
                             {% if l.category %}

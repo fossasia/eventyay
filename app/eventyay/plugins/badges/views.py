@@ -99,6 +99,7 @@ class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Create
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
 
         if self.copy_from:
             i = modelcopy(self.copy_from)

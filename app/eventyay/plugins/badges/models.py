@@ -1,4 +1,5 @@
 import json
+import logging
 import string
 from io import BytesIO
 
@@ -6,8 +7,11 @@ from django.db import models
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 from eventyay.base.models import LoggedModel
+
+logger = logging.getLogger(__name__)
 
 
 def bg_name(instance, filename: str) -> str:
@@ -50,6 +54,17 @@ class BadgeLayout(LoggedModel):
     def __str__(self):
         return self.name
 
+    def clean(self):
+        """Validate that category belongs to the same event as the badge layout."""
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if self.category and self.event:
+            if self.category.event_id != self.event_id:
+                raise ValidationError({
+                    'category': _('The badge layout\'s category must belong to the same event as the badge layout.')
+                })
+
     def save(self, *args, **kwargs):
         if self.background and hasattr(self.background, 'chunks'):
             try:
@@ -63,8 +78,21 @@ class BadgeLayout(LoggedModel):
                 height = round(float(page.mediabox.height) * 0.352777778, 2)
                 orientation = 'portrait' if height > width else 'landscape'
                 self.size = json.dumps([{'width': width, 'height': height, 'orientation': orientation}])
-            except Exception:
-                pass
+            except (PdfReadError, KeyError, IndexError, ValueError) as e:
+                logger.warning(
+                    'Failed to extract dimensions from badge background PDF for layout %s (event: %s): %s',
+                    self.pk or 'new',
+                    self.event.slug if self.event else 'unknown',
+                    str(e)
+                )
+            except Exception as e:
+                logger.error(
+                    'Unexpected error processing badge background PDF for layout %s (event: %s): %s',
+                    self.pk or 'new',
+                    self.event.slug if self.event else 'unknown',
+                    str(e),
+                    exc_info=True
+                )
         super().save(*args, **kwargs)
 
 
