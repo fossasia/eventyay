@@ -23,7 +23,7 @@ const handleFeaturedChange = (element) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("pretalx_csrftoken"),
+            "X-CSRFToken": getCsrfToken(),
         },
         credentials: "include",
     }
@@ -50,6 +50,17 @@ const initScrollPosition = () => {
         window.scroll(window.scrollX, Math.max(oldScrollY, window.innerHeight))
         sessionStorage.removeItem("scroll-position")
     }
+}
+
+const getCsrfToken = () => {
+    const cookieNames = ["eventyay_csrftoken", "pretalx_csrftoken", "csrftoken"]
+    for (const name of cookieNames) {
+        const value = getCookie(name)
+        if (value) {
+            return value
+        }
+    }
+    return ""
 }
 
 const getCookie = (name) => {
