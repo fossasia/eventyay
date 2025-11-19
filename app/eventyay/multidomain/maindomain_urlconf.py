@@ -16,6 +16,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 from eventyay.config.urls import common_patterns
@@ -183,9 +184,9 @@ presale_patterns_main = [
             (
                 locale_patterns
                 + [
-                    re_path(r'^(?P<organizer>[^/]+)/', include(organizer_patterns)),
+                    re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(organizer_patterns)),
                     re_path(
-                        r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
+                        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
                         include(event_patterns),
                     ),
                     path(
@@ -211,12 +212,12 @@ for app in apps.get_app_configs():
             if hasattr(urlmod, 'event_patterns'):
                 patterns = plugin_event_urls(urlmod.event_patterns, plugin=app.name)
                 single_plugin_patterns.append(
-                    path('<slug:organizer>/<slug:event>/', include(patterns))
+                    path('<orgslug:organizer>/<slug:event>/', include(patterns))
                 )
             if hasattr(urlmod, 'organizer_patterns'):
                 patterns = urlmod.organizer_patterns
                 single_plugin_patterns.append(
-                    path('<slug:organizer>/', include(patterns))
+                    path('<orgslug:organizer>/', include(patterns))
                 )
             raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
             logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
@@ -231,12 +232,12 @@ try:
         if hasattr(urlmod, 'event_patterns'):
             patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns))
+                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/', include(patterns))
             )
         if hasattr(urlmod, 'organizer_patterns'):
             patterns = urlmod.organizer_patterns
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[^/]+)/', include(patterns))
+                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(patterns))
             )
         raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
 except TypeError:
@@ -251,7 +252,7 @@ storage_patterns = [
 
 unified_event_patterns = [
     re_path(
-        r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
+        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
