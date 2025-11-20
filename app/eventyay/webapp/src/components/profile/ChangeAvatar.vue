@@ -118,54 +118,56 @@ function pixelsRestrictions({ minWidth, minHeight, maxWidth, maxHeight }) {
 }
 
 async function update() {
-		const { canvas } = cropperRef.value?.getResult() || {}
-		if (!canvas) {
-			emit('update:modelValue', { identicon: identiconValue.value })
-			return
-		}
-		if (!changedImage.value) return
+	const { canvas } = cropperRef.value?.getResult() || {}
+	if (!canvas) {
+		emit('update:modelValue', { identicon: identiconValue.value })
+		return
+	}
+	if (!changedImage.value) return
 
 	const processed = await createAvatarBlob(canvas)
 	if (!processed) {
-			fileError.value = 'Failed to process image. Please try a different file.'
-			emit('blockSave', true)
-			return
-		}
+		fileError.value = proxy.$t('profile/ChangeAvatar:error:process-failed')
+		emit('blockSave', true)
+		return
+	}
 	const { blob: resizedBlob, dimension } = processed
-	console.info('[avatar-upload] original size:', selectedFileSize.value || 0, 'bytes; upload size:', resizedBlob.size, 'bytes; dimension:', dimension + 'px')
+	if (ENV_DEVELOPMENT) {
+		console.info('[avatar-upload] original size:', selectedFileSize.value || 0, 'bytes; upload size:', resizedBlob.size, 'bytes; dimension:', dimension + 'px')
+	}
 
-		await new Promise((resolve) => {
-			const request = api.uploadFile(resizedBlob, 'avatar.png', null, dimension, dimension)
-			const handleFailure = (status, responseText) => {
-				let message = 'Failed to upload avatar. Please try again.'
-				if (status === 413) {
-					message = 'Uploaded image is too large. Please choose a smaller file.'
-				}
-				console.error('[avatar-upload]', status, responseText)
-				fileError.value = message
-				emit('blockSave', true)
-				resolve()
+	await new Promise((resolve) => {
+		const request = api.uploadFile(resizedBlob, 'avatar.png', null, dimension, dimension)
+		const handleFailure = (status, responseText) => {
+			let message = proxy.$t('profile/ChangeAvatar:error:upload-failed')
+			if (status === 413) {
+				message = proxy.$t('profile/ChangeAvatar:error:file-too-large')
 			}
-			request.addEventListener('load', () => {
-				const status = request.status
-				const responseText = request.responseText || ''
-				const contentType = request.getResponseHeader('content-type') || ''
-				if (status < 200 || status >= 300 || !contentType.includes('application/json')) {
-					return handleFailure(status, responseText)
-				}
-				try {
-					const response = JSON.parse(responseText)
-					emit('update:modelValue', { url: response.url })
-					emit('blockSave', false)
-					resolve()
-				} catch (error) {
-					return handleFailure(status, responseText)
-				}
-			})
-			request.addEventListener('error', () => {
-				handleFailure(request.status, request.responseText)
-			})
+			console.error('[avatar-upload]', status, responseText)
+			fileError.value = message
+			emit('blockSave', true)
+			resolve()
+		}
+		request.addEventListener('load', () => {
+			const status = request.status
+			const responseText = request.responseText || ''
+			const contentType = request.getResponseHeader('content-type') || ''
+			if (status < 200 || status >= 300 || !contentType.includes('application/json')) {
+				return handleFailure(status, responseText)
+			}
+			try {
+				const response = JSON.parse(responseText)
+				emit('update:modelValue', { url: response.url })
+				emit('blockSave', false)
+				resolve()
+			} catch (error) {
+				return handleFailure(status, responseText)
+			}
 		})
+		request.addEventListener('error', () => {
+			handleFailure(request.status, request.responseText)
+		})
+	})
 }
 
 function createAvatarBlob(sourceCanvas) {
