@@ -196,14 +196,13 @@ class RoomModule(BaseModule):
                 await redis.expire(f"room:approxcount:known:{room.pk}", 900)
                 
                 # Stage rooms show exact counts, video chat rooms show approximate counts for privacy
-                # Stage: livestream.youtube, livestream.iframe -> exact numbers
-                # Video chat: livestream.native, BBB -> "none"/"few"/"many"
+                # Stage: livestream.youtube, livestream.iframe, livestream.native -> exact numbers
+                # Video chat: BBB -> "none"/"few"/"many"
                 is_stage_room = any(
                     module.get('type') in STAGE_ROOM_MODULE_TYPES
                     for module in room.module_config or []
                 )
                 
-                # For stage rooms, use actual count; for stream/video chat rooms, use approximate text
                 users_value = actual_view_count if is_stage_room else approximate_view_number(actual_view_count)
                 
                 await self.consumer.channel_layer.group_send(
