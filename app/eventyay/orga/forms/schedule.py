@@ -16,6 +16,9 @@ from eventyay.schedule.utils import guess_schedule_version
 from eventyay.base.models.submission import Submission, SubmissionStates
 
 
+logger = logging.getLogger(__name__)
+
+
 class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
     default_renderer = InlineFormRenderer
 
@@ -197,7 +200,7 @@ class ScheduleExportForm(ExportForm):
         codes = []
         for code in obj.speakers.all().values_list('code', flat=True):
             if not code:
-                logging.warning(
+                logger.warning(
                     "Speaker for submission %s is missing a code.",
                     getattr(obj, 'id', obj),
                 )
