@@ -307,15 +307,15 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
 class ClassicMailRenderer(TemplateBasedMailRenderer):
     verbose_name = _('Default')
     identifier = 'classic'
-    thumbnail_filename = 'eventyay/email/thumb.png'
-    template_name = 'eventyay/email/plainwrapper.jinja'
+    thumbnail_filename = 'pretixbase/email/thumb.png'
+    template_name = 'pretixbase/email/plainwrapper.html'
 
 
 class UnembellishedMailRenderer(TemplateBasedMailRenderer):
     verbose_name = _('Simple with logo')
     identifier = 'simple_logo'
-    thumbnail_filename = 'eventyay/email/thumb_simple_logo.png'
-    template_name = 'eventyay/email/simple_logo.jinja'
+    thumbnail_filename = 'pretixbase/email/thumb_simple_logo.png'
+    template_name = 'pretixbase/email/simple_logo.html'
 
 
 @receiver(register_html_mail_renderers, dispatch_uid='eventyay_email_renderers')
@@ -418,8 +418,11 @@ def get_email_context(**kwargs):
         if not isinstance(val, (list, tuple)):
             val = [val]
         for v in val:
-            if all(rp in kwargs for rp in v.required_context):
-                ctx[v.identifier] = v.render(kwargs)
+            try:
+                if all(rp in kwargs for rp in v.required_context):
+                    ctx[v.identifier] = v.render(kwargs)
+            except (KeyError, AttributeError, TypeError, ValueError) as e:
+                logger.warning("Skipping placeholder %s due to error: %s", v.identifier, e)
     logger.info('Email context: %s', ctx)
     return ctx
 

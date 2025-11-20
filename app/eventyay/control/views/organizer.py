@@ -187,7 +187,7 @@ class EventMetaPropertyCreateView(OrganizerDetailViewMixin, OrganizerPermissionR
         form.instance.organizer = self.request.organizer
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.property.created',
+            'eventyay.property.created',
             user=self.request.user,
             data={k: getattr(self.object, k) for k in form.changed_data},
         )
@@ -223,7 +223,7 @@ class EventMetaPropertyUpdateView(OrganizerDetailViewMixin, OrganizerPermissionR
     def form_valid(self, form):
         if form.has_changed():
             self.object.log_action(
-                'pretix.property.changed',
+                'eventyay.property.changed',
                 user=self.request.user,
                 data={k: getattr(self.object, k) for k in form.changed_data},
             )
@@ -260,7 +260,7 @@ class EventMetaPropertyDeleteView(OrganizerDetailViewMixin, OrganizerPermissionR
     def form_valid(self, form):
         success_url = self.get_success_url()
         self.object = self.get_object()
-        self.object.log_action('pretix.property.deleted', user=self.request.user)
+        self.object.log_action('eventyay.property.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected property has been deleted.'))
         return redirect(success_url)

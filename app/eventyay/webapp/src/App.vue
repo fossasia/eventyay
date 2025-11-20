@@ -28,7 +28,7 @@
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
 			media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
 			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
-			media-source(v-else-if="backgroundRoom", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
+			media-source(v-else-if="backgroundRoom && !hasFatalError(backgroundRoom)", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
 			#media-source-iframes
 			notifications(:hasBackgroundMedia="!!backgroundRoom")
 			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
@@ -36,11 +36,11 @@
 				greeting-prompt(v-if="!user.profile.greeted")
 			.native-permission-blocker(v-if="askingPermission")
 		rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
-	.connecting(v-else-if="!fatalError")
+	.connecting(v-else-if="!currentFatalError")
 		bunt-progress-circular(size="huge")
 		.details(v-if="socketCloseCode == 1006") {{ $t('App:error-code:1006') }}
 		.details(v-if="socketCloseCode") {{ $t('App:error-code:text') }}: {{ socketCloseCode }}
-	.fatal-error(v-if="fatalError") {{ fatalError.message }}
+	.fatal-error(v-if="currentFatalError") {{ currentFatalError.message || currentFatalError.code }}
 </template>
 <script>
 import { mapState } from 'vuex'
@@ -64,9 +64,19 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'socketCloseCode', 'world', 'rooms', 'user', 'mediaSourcePlaceholderRect', 'userLocale', 'userTimezone']),
+		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'socketCloseCode', 'world', 'rooms', 'user', 'mediaSourcePlaceholderRect', 'userLocale', 'userTimezone', 'roomFatalErrors']),
 		...mapState('notifications', ['askingPermission']),
 		...mapState('chat', ['call']),
+		currentFatalError() {
+			if (this.room && this.roomFatalErrors?.[this.room.id]) {
+				return this.roomFatalErrors[this.room.id]
+			}
+			if (!this.room && this.$route?.name && this.roomFatalErrors) {
+				const backgroundFatal = this.backgroundRoom && this.roomFatalErrors[this.backgroundRoom.id]
+				if (backgroundFatal) return backgroundFatal
+			}
+			return this.fatalError?.roomId ? (this.room && this.fatalError.roomId === this.room.id ? this.fatalError : null) : this.fatalError
+		},
 		room() {
 			const routeName = this.$route?.name
 			if (!routeName) return
@@ -82,6 +92,7 @@ export default {
 			}, {})
 		},
 		roomHasMedia() {
+			if (this.hasFatalError(this.room)) return false
 			return this.room?.modules.some(module => mediaModules.includes(module.type))
 		},
 		stageStreamCollapsed() {
@@ -136,9 +147,13 @@ export default {
 		rooms: 'roomListChange',
 		room: 'roomChange',
 		call: 'callChange',
-		$route() {
-			// Always close the sidebar after navigation for consistent drawer UX on all screen sizes
-			this.showSidebar = false
+		roomFatalErrors: {
+			handler() {
+				if (this.backgroundRoom && this.hasFatalError(this.backgroundRoom)) {
+					this.backgroundRoom = null
+				}
+			},
+			deep: true
 		},
 		stageStreamCollapsed: {
 			handler() {
@@ -161,6 +176,9 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		hasFatalError(room) {
+			return !!(room && this.roomFatalErrors?.[room.id])
+		},
 		onKeydown(e) {
 			if ((e.key === 'Escape' || e.key === 'Esc') && this.showSidebar) {
 				this.showSidebar = false
@@ -211,6 +229,11 @@ export default {
 				title += ` | ${newRoom.name}`
 			}
 			document.title = title
+			if (this.hasFatalError(newRoom)) {
+				this.$store.dispatch('changeRoom', newRoom)
+				this.backgroundRoom = null
+				return
+			}
 			this.$store.dispatch('changeRoom', newRoom)
 			const isExclusive = module => module.type === 'call.bigbluebutton' || module.type === 'call.zoom'
 			if (!this.$mq.above.m) return // no background rooms for mobile
@@ -227,6 +250,7 @@ export default {
 				this.rooms.includes(oldRoom) &&
 				!this.backgroundRoom &&
 				oldRoom.modules.some(module => mediaModules.includes(module.type)) &&
+				!this.hasFatalError(oldRoom) &&
 				primaryWasPlaying &&
 				// don't background bbb room when switching to new bbb room
 				!(newRoom?.modules.some(isExclusive) && oldRoom?.modules.some(isExclusive)) &&

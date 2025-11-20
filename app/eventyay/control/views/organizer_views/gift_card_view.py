@@ -66,7 +66,7 @@ class GiftCardListView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
             if o:
                 self.request.organizer.gift_card_issuer_acceptance.get_or_create(issuer=o)
                 self.request.organizer.log_action(
-                    'pretix.giftcards.acceptance.added',
+                    'eventyay.giftcards.acceptance.added',
                     data={'issuer': o.slug},
                     user=request.user,
                 )
@@ -76,7 +76,7 @@ class GiftCardListView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
             if o:
                 self.request.organizer.gift_card_issuer_acceptance.filter(issuer=o).delete()
                 self.request.organizer.log_action(
-                    'pretix.giftcards.acceptance.removed',
+                    'eventyay.giftcards.acceptance.removed',
                     data={'issuer': o.slug},
                     user=request.user,
                 )
@@ -140,7 +140,7 @@ class GiftCardDetailView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
                         r.state = OrderPayment.PAYMENT_STATE_FAILED
                         r.save()
                         t.order.log_action(
-                            'pretix.event.order.payment.failed',
+                            'eventyay.event.order.payment.failed',
                             {
                                 'local_id': r.local_id,
                                 'provider': r.provider,
@@ -167,7 +167,7 @@ class GiftCardDetailView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
                         text=request.POST.get('text') or None,
                     )
                     self.object.log_action(
-                        'pretix.giftcards.transaction.manual',
+                        'eventyay.giftcards.transaction.manual',
                         data={'value': value, 'text': request.POST.get('text')},
                         user=self.request.user,
                     )
@@ -209,10 +209,10 @@ class GiftCardCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
         form.instance.issuer = self.request.organizer
         super().form_valid(form)
         form.instance.transactions.create(value=form.cleaned_data['value'])
-        form.instance.log_action('pretix.giftcards.created', user=self.request.user, data={})
+        form.instance.log_action('eventyay.giftcards.created', user=self.request.user, data={})
         if form.cleaned_data['value']:
             form.instance.log_action(
-                'pretix.giftcards.transaction.manual',
+                'eventyay.giftcards.transaction.manual',
                 user=self.request.user,
                 data={'value': form.cleaned_data['value']},
             )
@@ -243,7 +243,7 @@ class GiftCardUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMi
         messages.success(self.request, _('The gift card has been changed.'))
         super().form_valid(form)
         form.instance.log_action(
-            'pretix.giftcards.modified',
+            'eventyay.giftcards.modified',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )

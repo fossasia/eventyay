@@ -83,7 +83,7 @@ def _send_mail(
                 real_subject,
                 message,
                 email_context,
-                'pretix.event.order.email.event_canceled',
+                'eventyay.event.order.email.event_canceled',
                 user,
             )
         except SendMailException:
@@ -108,7 +108,7 @@ def _send_mail(
                         real_subject,
                         message,
                         email_context,
-                        'pretix.event.order.email.event_canceled',
+                        'eventyay.event.order.email.event_canceled',
                         position=p,
                         user=user,
                     )
@@ -191,13 +191,13 @@ def cancel_event(
 
         for se in subevents:
             se.log_action(
-                'pretix.subevent.canceled',
+                'eventyay.subevent.canceled',
                 user=user,
             )
             se.active = False
             se.save(update_fields=['active'])
             se.log_action(
-                'pretix.subevent.changed',
+                'eventyay.subevent.changed',
                 user=user,
                 data={'active': False, '_source': 'cancel_event'},
             )

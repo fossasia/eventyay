@@ -402,7 +402,7 @@ class ProductCreateForm(I18nModelForm):
                 quota = self.cleaned_data.get('quota_add_existing')
                 quota.products.add(self.instance)
                 quota.log_action(
-                    'pretix.event.quota.changed',
+                    'eventyay.event.quota.changed',
                     user=self.user,
                     data={'product_added': self.instance.pk},
                 )
@@ -413,7 +413,7 @@ class ProductCreateForm(I18nModelForm):
                 quota = Quota.objects.create(event=self.event, name=quota_name, size=quota_size)
                 quota.products.add(self.instance)
                 quota.log_action(
-                    'pretix.event.quota.added',
+                    'eventyay.event.quota.added',
                     user=self.user,
                     data={
                         'name': quota_name,

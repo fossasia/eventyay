@@ -1,7 +1,6 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
-
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -19,6 +18,7 @@ from django.db.models.functions import Coalesce, ExtractWeekDay
 from django.urls import reverse, reverse_lazy
 from django.utils.formats import date_format, localize
 from django.utils.functional import cached_property
+from django.utils import timezone
 from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +28,7 @@ from eventyay.base.forms.widgets import (
     DatePickerWidget,
     SplitDateTimePickerWidget,
 )
+from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.base.models import (
     Checkin,
     Event,
@@ -470,6 +471,12 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         label=_('Order placed before'),
         required=False,
     )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+        label=_('Timezone'),
+    )
     email = forms.CharField(required=False, label=_('E-mail address'))
     comment = forms.CharField(required=False, label=_('Comment'))
     locale = forms.ChoiceField(required=False, label=_('Locale'), choices=settings.LANGUAGES)
@@ -589,10 +596,16 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             ).distinct()
         if fdata.get('email'):
             qs = qs.filter(email__icontains=fdata.get('email'))
-        if fdata.get('created_from'):
-            qs = qs.filter(datetime__gte=fdata.get('created_from'))
-        if fdata.get('created_to'):
-            qs = qs.filter(datetime__lte=fdata.get('created_to'))
+        if fdata.get('created_from') or fdata.get('created_to'):
+            browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
+
+            def attach_timezone(dt_value):
+                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
+
+            if fdata.get('created_from'):
+                qs = qs.filter(datetime__gte=attach_timezone(fdata['created_from']))
+            if fdata.get('created_to'):
+                qs = qs.filter(datetime__lt=attach_timezone(fdata['created_to']))
         if fdata.get('comment'):
             qs = qs.filter(comment__icontains=fdata.get('comment'))
         if fdata.get('sales_channel'):
@@ -1780,6 +1793,12 @@ class OverviewFilterForm(FilterForm):
         label=_('Date until'),
         required=False,
         widget=DatePickerWidget,
+    )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+        label=_('Timezone'),
     )
 
     def __init__(self, *args, **kwargs):

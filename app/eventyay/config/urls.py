@@ -4,16 +4,12 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 from django.urls import re_path as url
-from django.views.generic import RedirectView
 
 import eventyay.control.urls
 import eventyay.eventyay_common.urls
 import eventyay.presale.urls
-from eventyay.base.views import health, redirect
+from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
-from eventyay.base.views import js_helpers
-from eventyay.base.views import cachedfiles, csp, health, js_catalog, metrics, redirect
-
 
 base_patterns = [
     url(

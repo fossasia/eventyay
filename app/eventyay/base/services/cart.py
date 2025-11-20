@@ -915,7 +915,7 @@ class CartManager:
             for iao in product.addons.all():
                 selected = selected_addons[cp.id, iao.addon_category_id]
                 n_per_i = Counter()
-                for (i, v), c in selected.products():
+                for (i, v), c in selected.items():
                     n_per_i[i] += c
                 if sum(selected.values()) > iao.max_count:
                     # TODO: Proper i18n

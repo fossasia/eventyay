@@ -68,7 +68,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
                 self.request.user.send_security_notice(msgs, email=self._old_email)
 
         sup = super().form_valid(form)
-        self.request.user.log_action('pretix.user.settings.changed', user=self.request.user, data=data)
+        self.request.user.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
 
         update_session_auth_hash(self.request, self.request.user)
         return sup
@@ -123,9 +123,9 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
 
             messages.success(request, _('Your notification settings have been saved.'))
             if request.user.notifications_send:
-                self.request.user.log_action('pretix.user.settings.notifications.disabled', user=self.request.user)
+                self.request.user.log_action('eventyay.user.settings.notifications.disabled', user=self.request.user)
             else:
-                self.request.user.log_action('pretix.user.settings.notifications.enabled', user=self.request.user)
+                self.request.user.log_action('eventyay.user.settings.notifications.enabled', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
                 dest += '?event={}'.format(self.event.pk)
@@ -165,7 +165,7 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
                         ).update(enabled=True)
 
             messages.success(request, _('Your notification settings have been saved.'))
-            self.request.user.log_action('pretix.user.settings.notifications.changed', user=self.request.user)
+            self.request.user.log_action('eventyay.user.settings.notifications.changed', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
                 dest += '?event={}'.format(self.event.pk)

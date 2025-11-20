@@ -76,6 +76,8 @@ def mail(
     *,
     headers: dict = None,
     sender: str = None,
+    event_bcc: str = None,
+    event_reply_to: str = None,
     invoices: Sequence = None,
     attach_tickets=False,
     auto_email=True,
@@ -172,11 +174,21 @@ def mail(
         if event:
             timezone = event.timezone
             renderer = event.get_html_mail_renderer()
-            if event.settings.mail_bcc:
+            if not auto_email:
+                if event_bcc:  # Use custom BCC if specified
+                    for bcc_mail in event_bcc.split(','):
+                        bcc.append(bcc_mail.strip())
+            elif event.settings.mail_bcc:
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if (
+            if not auto_email:
+                if (
+                    event_reply_to
+                    and not headers.get('Reply-To')
+                ):
+                    headers['Reply-To'] = event_reply_to          
+            elif (
                 event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
                 and event.settings.contact_mail
                 and not headers.get('Reply-To')
@@ -394,7 +406,7 @@ def mail_send_task(
                                     'likely too large to arrive.'
                                 )
                                 order.log_action(
-                                    'pretix.event.order.email.attachments.skipped',
+                                    'eventyay.event.order.email.attachments.skipped',
                                     data={
                                         'subject': 'Attachments skipped',
                                         'message': message,
@@ -468,7 +480,7 @@ def mail_send_task(
                 except MaxRetriesExceededError:
                     if order:
                         order.log_action(
-                            'pretix.event.order.email.error',
+                            'eventyay.event.order.email.error',
                             data={
                                 'subject': 'SMTP code {}, max retries exceeded'.format(e.smtp_code),
                                 'message': e.smtp_error.decode()
@@ -483,7 +495,7 @@ def mail_send_task(
             logger.exception('Error sending email')
             if order:
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'SMTP code {}'.format(e.smtp_code),
                         'message': e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error),
@@ -513,7 +525,7 @@ def mail_send_task(
                     message.append(f'{e}: {val[0]} {val[1].decode()}')
 
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'SMTP error',
                         'message': '\n'.join(message),
@@ -540,7 +552,7 @@ def mail_send_task(
                 except MaxRetriesExceededError:
                     if order:
                         order.log_action(
-                            'pretix.event.order.email.error',
+                            'eventyay.event.order.email.error',
                             data={
                                 'subject': 'Internal error',
                                 'message': 'Max retries exceeded',
@@ -551,7 +563,7 @@ def mail_send_task(
                     raise e
             if order:
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'Internal error',
                         'message': str(e),

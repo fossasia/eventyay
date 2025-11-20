@@ -360,15 +360,13 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
     # NOTE: It doesn't work with the Docker setup for development, because we use fake domain then,
     and inside the container, the fake domain points to the container itself, not the host.
     """
-    if 'ticket_link' not in event.display_settings:
-        logger.info('display_settings[ticket_link] is missing.')
-        return TicketCheckResult.MISCONFIGURED
-    base_url, organizer_slug, event_slug = extract_event_info_from_url(
-            event.display_settings['ticket_link']
-        )
-    if not organizer_slug or not event_slug or not base_url:
-        logger.info('display_settings[ticket_link] is not valid.')
-        return TicketCheckResult.MISCONFIGURED
+    # Use unified ticket base path and event slugs; no manual URL needed
+    base_url = settings.EVENTYAY_TICKET_BASE_PATH
+    # Normalize base URL to keep urljoin from dropping path segments
+    if not base_url.endswith('/'):
+        base_url = f'{base_url}/'
+    organizer_slug = event.organizer.slug
+    event_slug = event.slug
     check_payload = {'user_email': user.email}
     # call to ticket to check if user order ticket yet or not
     api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')

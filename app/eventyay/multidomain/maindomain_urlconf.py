@@ -1,34 +1,36 @@
 import importlib.util
-import os
 import json
+import logging
+import os
+from mimetypes import guess_type
 
 from django.apps import apps
-from django.urls import include, path, re_path
-from django.views.generic import TemplateView, View
-from django.http import HttpResponse, Http404
-from django.views.static import serve as static_serve
-from django.conf import settings
-from django_scopes import scope
-from mimetypes import guess_type
 from django.core.serializers.json import DjangoJSONEncoder
-from django.utils.functional import Promise
+from django.http import Http404, HttpResponse
+from django.urls import include, path, re_path
 from django.utils.encoding import force_str
+from django.utils.functional import Promise
+from django.views.generic import TemplateView, View
+from django.views.static import serve as static_serve
+from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
-# Ticket-video integration: plugin URLs are auto-included via plugin handler below.
+from eventyay.base.models import Event  # Added for /video event context
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
+# Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 from eventyay.config.urls import common_patterns
-from eventyay.multidomain.plugin_handler import plugin_event_urls
 from eventyay.multidomain import redirects
+from eventyay.multidomain.plugin_handler import plugin_event_urls
 from eventyay.presale.urls import (
     event_patterns,
     locale_patterns,
     organizer_patterns,
 )
-from eventyay.base.models import Event  # Added for /video event context
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
+logger = logging.getLogger(__name__)
 
 EXCLUDED_LEGACY_PREFIXES = (
     "common",
@@ -70,7 +72,8 @@ class VideoSPAView(View):
         # Now expecting organizer and event from URL pattern: /{organizer}/{event}/video
         organizer_slug = kwargs.get('organizer')
         event_slug = kwargs.get('event')
-        
+        event_identifier = kwargs.get('event_identifier')
+
         # TODO remove debug logging once new video routing is stable
         event = None
         if organizer_slug and event_slug:
@@ -81,14 +84,14 @@ class VideoSPAView(View):
                 )
             except Event.DoesNotExist:
                 return HttpResponse('Event not found', status=404)
-        
+
         index_path = os.path.join(WEBAPP_DIST_DIR, 'index.html')
         if os.path.exists(index_path):
             with open(index_path, 'r') as f:
                 content = f.read()
         else:
             content = '<!-- /video build missing: {} -->'.format(index_path)
-        
+
         base_href = '/video/'
         if event:
             # Inject window.venueless config (frontend still expects this name)
@@ -103,11 +106,11 @@ class VideoSPAView(View):
                 except Exception:
                     return None
             cfg = event.config or {}
-            
+
             with scope(event=event):
                 schedule = event.current_schedule or event.wip_schedule
                 schedule_data = schedule.build_data(all_talks=False) if schedule else None
-            
+
             base_path = event.urls.video_base.rstrip('/')
             base_href = event.urls.video_base
             injected = {
@@ -136,8 +139,6 @@ class VideoSPAView(View):
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
-            import json as _json
-
             class EventyayJSONEncoder(DjangoJSONEncoder):
                 def default(self, obj):
                     if isinstance(obj, (Promise, LazyI18nString)):
@@ -148,14 +149,11 @@ class VideoSPAView(View):
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)
-            serialized = _json.dumps(injected)
-            content = f"<script>window.eventyay={serialized};window.venueless={serialized};</script>{content}"
-            if '<base ' not in content.lower():
-                content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
-        elif '<base ' not in content.lower():
-            # Legacy plain /video should still load SPA; ensure assets resolve correctly
+
+        if '<base ' not in content.lower():
+            # Ensure assets resolve correctly regardless of nested route
             content = content.replace('<head>', f'<head><base href="{base_href}">', 1)
-        
+
         resp = HttpResponse(content, content_type='text/html')
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
         return resp
@@ -186,9 +184,9 @@ presale_patterns_main = [
             (
                 locale_patterns
                 + [
-                    re_path(r'^(?P<organizer>[^/]+)/', include(organizer_patterns)),
+                    re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(organizer_patterns)),
                     re_path(
-                        r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
+                        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
                         include(event_patterns),
                     ),
                     path(
@@ -214,14 +212,15 @@ for app in apps.get_app_configs():
             if hasattr(urlmod, 'event_patterns'):
                 patterns = plugin_event_urls(urlmod.event_patterns, plugin=app.name)
                 single_plugin_patterns.append(
-                    re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns))
+                    path('<orgslug:organizer>/<slug:event>/', include(patterns))
                 )
             if hasattr(urlmod, 'organizer_patterns'):
                 patterns = urlmod.organizer_patterns
                 single_plugin_patterns.append(
-                    re_path(r'^(?P<organizer>[^/]+)/', include(patterns))
+                    path('<orgslug:organizer>/', include(patterns))
                 )
             raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
+            logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
 
 # Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
 try:
@@ -233,16 +232,16 @@ try:
         if hasattr(urlmod, 'event_patterns'):
             patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/', include(patterns))
+                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/', include(patterns))
             )
         if hasattr(urlmod, 'organizer_patterns'):
             patterns = urlmod.organizer_patterns
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[^/]+)/', include(patterns))
+                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(patterns))
             )
         raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
-except Exception:
-    pass
+except TypeError:
+    logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
 
@@ -253,7 +252,7 @@ storage_patterns = [
 
 unified_event_patterns = [
     re_path(
-        r'^(?P<organizer>[^/]+)/(?P<event>[^/]+)/',
+        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
@@ -305,10 +304,12 @@ legacy_redirect_patterns = [
 urlpatterns = (
     common_patterns
     + storage_patterns
+    # The plugins patterns must be before legacy_redirect_patterns and presale_patterns_main
+    # to avoid misdetection of plugin prefixes and organizer/event slugs.
+    + plugin_patterns
     + legacy_redirect_patterns
     + presale_patterns_main
     + unified_event_patterns
-    + plugin_patterns
 )
 
 handler404 = 'eventyay.base.views.errors.page_not_found'

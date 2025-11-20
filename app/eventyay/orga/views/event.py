@@ -106,8 +106,6 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
-            'localisation': _('Localisation'),
             'display': _('Display settings'),
             'texts': _('Texts'),
         }

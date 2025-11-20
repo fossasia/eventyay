@@ -44,12 +44,12 @@
 						span.emoji-text  {{ getEmojiDataFromNative(reactionTooltip.emoji).short_names[0] }}
 		.actions(v-if="!readonly")
 			emoji-picker-button(@selected="addReaction", strategy="fixed", placement="bottom-end", :offset="[36, 3]", icon-style="plus")
-			menu-dropdown(v-if="(hasPermission('room:chat.moderate') || message.sender === user.id)", v-model="selected", placement="bottom-end", strategy="fixed", :offset="[0, 3]")
+			menu-dropdown(v-if="hasMessageActions", v-model="selected", placement="bottom-end", strategy="fixed", :offset="[0, 3]")
 				template(#button="{toggle}")
 					bunt-icon-button(@click="toggle") dots-vertical
 				template(#menu)
-					.edit-message(v-if="message.sender === user.id && message.content.type !== 'call'", @click="startEditingMessage") {{ $t('ChatMessage:message-edit:label') }}
-					.delete-message(@click="selected = false, showDeletePrompt = true") {{ $t('ChatMessage:message-delete:label') }}
+					.edit-message(v-if="canEditMessage", @click="startEditingMessage") {{ $t('ChatMessage:message-edit:label') }}
+					.delete-message(v-if="canDeleteMessage", @click="selected = false, showDeletePrompt = true") {{ $t('ChatMessage:message-delete:label') }}
 	template(v-else-if="message.event_type === 'channel.member'")
 		.system-content {{ senderDisplayName }} {{ message.content.membership === 'join' ? $t('ChatMessage:join-message:text') : $t('ChatMessage:leave-message:text') }}
 	template(v-else-if="message.event_type === 'channel.poll' && poll")
@@ -117,6 +117,7 @@ export default {
 		...mapState('chat', ['usersLookup']),
 		...mapState('poll', ['polls']),
 		...mapGetters(['hasPermission']),
+		...mapGetters('chat', ['activeJoinedChannel']),
 		isSystemMessage() {
 			return this.message.event_type !== 'channel.message'
 		},
@@ -155,6 +156,21 @@ export default {
 		},
 		poll() {
 			return this.polls?.find(p => p.id === this.message.content?.poll_id)
+		},
+		isDirectChannel() {
+			return Boolean(this.activeJoinedChannel?.members?.length)
+		},
+		canModerateCurrentChannel() {
+			return !this.isDirectChannel && this.hasPermission('room:chat.moderate')
+		},
+		canEditMessage() {
+			return this.message.sender === this.user.id && this.message.content.type !== 'call'
+		},
+		canDeleteMessage() {
+			return this.message.sender === this.user.id || this.canModerateCurrentChannel
+		},
+		hasMessageActions() {
+			return this.canEditMessage || this.canDeleteMessage
 		}
 	},
 	methods: {

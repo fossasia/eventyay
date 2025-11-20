@@ -90,7 +90,7 @@ class AllTicketsPDF(BaseExporter):
         qs = (
             OrderPosition.objects.filter(order__event__in=self.events)
             .prefetch_related('answers', 'answers__question')
-            .select_related('order', 'item', 'variation', 'addon_to')
+            .select_related('order', 'product', 'variation', 'addon_to')
         )
 
         if form_data.get('include_pending'):
@@ -150,8 +150,8 @@ class AllTicketsPDF(BaseExporter):
 
             with language(op.order.locale, o.event.settings.region):
                 layout = o.layout_map.get(
-                    (op.item_id, op.order.sales_channel),
-                    o.layout_map.get((op.item_id, 'web'), o.default_layout),
+                    (op.product_id, op.order.sales_channel),
+                    o.layout_map.get((op.product_id, 'web'), o.default_layout),
                 )
                 outbuffer = o._draw_page(layout, op, op.order)
                 merger.append(ContentFile(outbuffer.read()))
