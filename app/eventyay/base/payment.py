@@ -1253,21 +1253,14 @@ class GiftCardPayment(BasePaymentProvider):
                 return
 
         cs = cart_session(request)
+        
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+        
         try:
-            gc = self.event.organizer.accepted_gift_cards.filter(secret__iexact=request.POST.get('giftcard')).first()
-            if not gc:
-                # Check if user entered a voucher code instead
-                if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
-                    messages.warning(
-                        request,
-                        _(
-                            'You entered a voucher instead of a gift card. Vouchers can only be entered on the first page '
-                            'of the shop below the product selection.'
-                        ),
-                    )
-                else:
-                    messages.error(request, _('This gift card is not known.'))
-                return
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1318,6 +1311,17 @@ class GiftCardPayment(BasePaymentProvider):
             if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
                 kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
             return eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
+        except GiftCard.DoesNotExist:
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
+                messages.warning(
+                    request,
+                    _(
+                        'You entered a voucher instead of a gift card. Vouchers can only be entered on the first page '
+                        'of the shop below the product selection.'
+                    ),
+                )
+            else:
+                messages.error(request, _('This gift card is not known.'))
         except GiftCard.MultipleObjectsReturned:
             messages.error(
                 request,
@@ -1326,6 +1330,9 @@ class GiftCardPayment(BasePaymentProvider):
                     'Please contact the organizer of this event.'
                 ),
             )
+        except Exception as e:
+            logger.exception('Unexpected error during gift card lookup in checkout_prepare')
+            messages.error(request, _('An error occurred while processing your gift card. Please try again or contact support.'))
 
     def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None]:
         for p in payment.order.positions.all():
@@ -1336,21 +1343,13 @@ class GiftCardPayment(BasePaymentProvider):
                 )
                 return
 
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+
         try:
-            gc = self.event.organizer.accepted_gift_cards.filter(secret__iexact=request.POST.get('giftcard')).first()
-            if not gc:
-                # Check if user entered a voucher code instead
-                if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
-                    messages.warning(
-                        request,
-                        _(
-                            'You entered a voucher instead of a gift card. Vouchers can only be entered on the first page '
-                            'of the shop below the product selection.'
-                        ),
-                    )
-                else:
-                    messages.error(request, _('This gift card is not known.'))
-                return
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1371,6 +1370,17 @@ class GiftCardPayment(BasePaymentProvider):
             payment.save()
 
             return True
+        except GiftCard.DoesNotExist:
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
+                messages.warning(
+                    request,
+                    _(
+                        'You entered a voucher instead of a gift card. Vouchers can only be entered on the first page '
+                        'of the shop below the product selection.'
+                    ),
+                )
+            else:
+                messages.error(request, _('This gift card is not known.'))
         except GiftCard.MultipleObjectsReturned:
             messages.error(
                 request,
@@ -1379,6 +1389,10 @@ class GiftCardPayment(BasePaymentProvider):
                     'Please contact the organizer of this event.'
                 ),
             )
+        except Exception as e:
+
+            logger.exception('Unexpected error during gift card lookup in payment_prepare')
+            messages.error(request, _('An error occurred while processing your gift card. Please try again or contact support.'))
 
     def execute_payment(self, request: HttpRequest, payment: OrderPayment) -> str:
         # This method will only be called when retrying payments, e.g. after a payment_prepare call. It is not called
