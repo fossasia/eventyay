@@ -2,8 +2,22 @@ from contextlib import suppress
 from urllib.parse import urljoin, urlparse
 
 from django.conf import settings
-from django.urls import resolve, reverse
+from django.urls import register_converter, resolve, reverse
 from urlman import Urls
+
+
+# Custom path converter for organizer slugs that allows dots
+class OrganizerSlugConverter:
+    regex = r'[a-zA-Z0-9_.-]+'
+
+    def to_python(self, value):
+        return value
+
+    def to_url(self, value):
+        return value
+
+
+register_converter(OrganizerSlugConverter, 'orgslug')
 
 
 def get_base_url(event=None, url=None):

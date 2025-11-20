@@ -7,6 +7,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
+from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
@@ -25,6 +26,7 @@ from django.db.models import (
 )
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.formats import get_format
 from django.utils.timezone import now
@@ -435,14 +437,15 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
-            return redirect(eventreverse(request.event, 'presale:event.index', kwargs=kwargs))
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            return redirect(
-                eventreverse(request.event, 'presale:event.index', kwargs=kwargs)
-                + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
-            )
+            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
             # We've been passed data from a widget, we need to create a cart session to store it.
             get_or_create_cart_id(request)
@@ -484,7 +487,9 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 return super().get(request, *args, **kwargs)
         else:
             if 'subevent' in kwargs:
-                return redirect(self.get_index_url())
+                redirect_url = self.get_index_url()
+                logger.info('Redirecting to %s...', redirect_url)
+                return redirect(redirect_url)
             else:
                 return super().get(request, *args, **kwargs)
 
@@ -734,14 +739,15 @@ class SeatingPlanView(EventViewMixin, TemplateView):
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
-            return redirect(eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs))
+            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            return redirect(
-                eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs)
-                + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
-            )
+            redirect_url = eventreverse(request.event, 'presale:event.seatingplan', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
             # We've been passed data from a widget, we need to create a cart session to store it.
             get_or_create_cart_id(request)
@@ -829,7 +835,9 @@ class EventAuth(View):
                 raise PermissionDenied(_('Please go back and try again.'))
 
         request.session['pretix_event_access_{}'.format(request.event.pk)] = parent
-        return redirect(eventreverse(request.event, 'presale:event.index'))
+        redirect_url = eventreverse(request.event, 'presale:event.index')
+        logger.info('Redirecting to %s...', redirect_url)
+        return redirect(redirect_url)
 
 
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
@@ -853,10 +861,17 @@ class JoinOnlineVideoView(EventViewMixin, View):
             # Show popup
             return HttpResponse(status=403, content='user_not_allowed')
 
-        return JsonResponse(
-            {'redirect_url': self.generate_token_url(request, order_position, order)},
-            status=200,
-        )
+        redirect_url = self.generate_token_url(request, order_position, order)
+
+        # Check if this is an AJAX request (from JavaScript button)
+        # If not (e.g., direct URL access), do a server-side redirect instead of returning JSON
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            # AJAX request - return JSON for JavaScript to handle
+            return JsonResponse({'redirect_url': redirect_url}, status=200)
+        else:
+            # Direct browser access - do a server-side redirect
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
 
     def validate_access(self, request, *args, **kwargs):
         if not hasattr(self.request, 'user'):
@@ -865,15 +880,20 @@ class JoinOnlineVideoView(EventViewMixin, View):
         if not self.request.user.is_authenticated:
             # Customer not logged in yet
             return False, None, None
-        # Get all orders of customer which belong to this event
+        # Get all PAID orders of customer which belong to this event
+        # CRITICAL FIX: Only paid orders should grant video access
         order_list = (
-            Order.objects.filter(Q(event=self.request.event) & (Q(email__iexact=self.request.user.email)))
+            Order.objects.filter(
+                Q(event=self.request.event)
+                & Q(email__iexact=self.request.user.email)
+                & Q(status=Order.STATUS_PAID)  # Only paid orders
+            )
             .select_related('event')
             .order_by('-datetime')
         )
         # Check qs is empty
         if not order_list:
-            # no order placed yet
+            # no paid order found
             return False, None, None
         # Check if Event allow all ticket type to join
         if self.request.event.settings.venueless_all_products:
@@ -944,4 +964,19 @@ class JoinOnlineVideoView(EventViewMixin, View):
 
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         baseurl = self.request.event.settings.venueless_url
+
+        # Ensure the URL includes the event identifier so VideoSPAView has event context
+        # Format: http://localhost:8000/organizer-slug/event-slug/video/#token=...
+        # Use Django's reverse() to properly construct the video URL path
+        video_path = reverse('video.spa', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug
+        })
+
+        # Parse the base URL to get scheme and netloc (domain)
+        parsed = urlparse(baseurl)
+
+        # Reconstruct the full URL with the proper path from reverse()
+        baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
+
         return '{}/#token={}'.format(baseurl, token).replace('//#', '/#')

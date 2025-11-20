@@ -4,6 +4,7 @@
 {% load urlreplace %}
 {% load money %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{% trans "Orders" %}{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
@@ -116,7 +117,7 @@
                     <th>{% trans "User" %}
                         <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'email' %}"><i class="fa fa-caret-up"></i></a></th>
-                    <th>{% trans "Order date" %}
+                    <th>{% trans "Order date" %} <span class="text-muted" id="tz-indicator"></span>
                         <a href="?{% url_replace request 'ordering' '-datetime' %}"><i class="fa fa-caret-down"></i></a>
                         <a href="?{% url_replace request 'ordering' 'datetime' %}"><i class="fa fa-caret-up"></i></a>
                     </th>
@@ -148,7 +149,7 @@
                                 <br>{{ o.invoice_address.name }}
                             {% endif %}
                         </td>
-                        <td>
+                        <td class="order-datetime" data-datetime="{{ o.datetime.isoformat }}">
                             <span class="fa fa-{{ o.sales_channel_obj.icon }} text-muted"
                                   data-toggle="tooltip" title="{% trans o.sales_channel_obj.verbose_name %}"></span>
                             {{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}
@@ -217,4 +218,7 @@
         </div>
         {% include "pretixcontrol/pagination.html" %}
     {% endif %}
+{% endblock %}
+{% block custom_header %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
