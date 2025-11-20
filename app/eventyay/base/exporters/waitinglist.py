@@ -115,7 +115,7 @@ class WaitingListExporter(ListExporter):
             # which event should be used to output dates in columns "Start date" and "End date"
             event_for_date_columns = entry.subevent if entry.subevent else entry.event
             tz = pytz.timezone(entry.event.settings.timezone)
-            datetime_format = '%Y-%m-%d %H:%M:%S'
+            datetime_format = '%Y-%m-%d %H:%M:%S %Z'
 
             row = [
             entry.created.astimezone(tz).strftime(datetime_format),  # alternative: .isoformat(),

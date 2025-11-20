@@ -643,7 +643,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             row.append(op.company or ia.company)
             row.append(op.voucher.code if op.voucher else '')
             row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%Y-%m-%d'))
-            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S'))
+            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S %Z'))
             row.append(_('Yes') if op.order.checkin_attention or op.product.checkin_attention else _('No'))
             row.append(op.order.comment or '')
 

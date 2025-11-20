@@ -388,7 +388,6 @@ class OrderListExporter(MultiSheetListExporter):
         yield self.ProgressSetTotal(total=qs.count())
         for order in qs.order_by('datetime').iterator():
             tz = pytz.timezone(self.event_object_cache[order.event_id].settings.timezone)
-
             row = [
                 self.event_object_cache[order.event_id].slug,
                 order.code,
@@ -397,7 +396,7 @@ class OrderListExporter(MultiSheetListExporter):
                 order.email,
                 str(order.phone) if order.phone else '',
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
             ]
             try:
                 row += [
@@ -424,7 +423,7 @@ class OrderListExporter(MultiSheetListExporter):
                 )
 
             row += [
-                order.payment_date.astimezone(tz).strftime('%Y-%m-%d') if order.payment_date else '',
+                order.payment_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z') if order.payment_date else '',
                 full_fee_sum_cache.get(order.id) or Decimal('0.00'),
                 order.locale,
             ]
@@ -548,7 +547,7 @@ class OrderListExporter(MultiSheetListExporter):
                 order.email,
                 str(order.phone) if order.phone else '',
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
                 op.get_fee_type_display(),
                 op.description,
                 op.value,
@@ -728,21 +727,21 @@ class OrderListExporter(MultiSheetListExporter):
                     order.email,
                     str(order.phone) if order.phone else '',
                     order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                    order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                    order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
                 ]
                 if has_subevents:
                     if op.subevent:
                         row.append(op.subevent.name)
                         row.append(
                             op.subevent.date_from.astimezone(self.event_object_cache[order.event_id].timezone).strftime(
-                                '%Y-%m-%d %H:%M:%S'
+                                '%Y-%m-%d %H:%M:%S %Z'
                             )
                         )
                         if op.subevent.date_to:
                             row.append(
                                 op.subevent.date_to.astimezone(
                                     self.event_object_cache[order.event_id].timezone
-                                ).strftime('%Y-%m-%d %H:%M:%S')
+                                ).strftime('%Y-%m-%d %H:%M:%S %Z')
                             )
                         else:
                             row.append('')
@@ -920,16 +919,16 @@ class PaymentListExporter(ListExporter):
         for obj in objs:
             tz = pytz.timezone(obj.order.event.settings.timezone)
             if isinstance(obj, OrderPayment) and obj.payment_date:
-                d2 = obj.payment_date.astimezone(tz).date().strftime('%Y-%m-%d')
+                d2 = obj.payment_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
             elif isinstance(obj, OrderRefund) and obj.execution_date:
-                d2 = obj.execution_date.astimezone(tz).date().strftime('%Y-%m-%d')
+                d2 = obj.execution_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
             else:
                 d2 = ''
             row = [
                 obj.order.event.slug,
                 obj.order.code,
                 obj.full_id,
-                obj.created.astimezone(tz).date().strftime('%Y-%m-%d'),
+                obj.created.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
                 d2,
                 obj.get_state_display(),
                 obj.state,
@@ -990,9 +989,9 @@ class QuotaListExporter(ListExporter):
             if has_subevents:
                 if quota.subevent:
                     row.append(quota.subevent.name)
-                    row.append(quota.subevent.date_from.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S'))
+                    row.append(quota.subevent.date_from.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S %Z'))
                     if quota.subevent.date_to:
-                        row.append(quota.subevent.date_to.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S'))
+                        row.append(quota.subevent.date_to.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S %Z'))
                     else:
                         row.append('')
                 else:
@@ -1044,7 +1043,7 @@ class GiftcardRedemptionListExporter(ListExporter):
                 obj.order.event.slug,
                 obj.order.code,
                 obj.full_id,
-                obj.created.astimezone(tz).date().strftime('%Y-%m-%d'),
+                obj.created.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
                 gc.secret,
                 obj.amount * (-1 if isinstance(obj, OrderRefund) else 1),
                 gc.issuer,
@@ -1169,8 +1168,8 @@ def generate_GiftCardListExporter(organizer):  # hackhack
                 row = [
                     obj.secret,
                     _('Yes') if obj.testmode else _('No'),
-                    obj.issuance.astimezone(tz).date().strftime('%Y-%m-%d'),
-                    obj.expires.astimezone(tz).date().strftime('%Y-%m-%d') if obj.expires else '',
+                    obj.issuance.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
+                    obj.expires.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z') if obj.expires else '',
                     obj.conditions or '',
                     obj.currency,
                     obj.cached_value,

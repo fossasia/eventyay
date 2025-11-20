@@ -1,14 +1,10 @@
 import datetime as dt
-import socket
 from decimal import Decimal
-from urllib.parse import urlparse
 
 from django import forms
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.core.validators import RegexValidator
-from django.db.models import F, Q
 from django.forms import inlineformset_factory
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
@@ -27,15 +23,12 @@ from eventyay.common.forms.renderers import InlineFormLabelRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
     EnhancedSelectMultiple,
-    HtmlDateInput,
     HtmlDateTimeInput,
-    TextInputWithAddon,
 )
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event, EventExtraLink
 from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
-from eventyay.base.models import Availability, TalkSlot
 from eventyay.base.models import ReviewPhase, ReviewScore, ReviewScoreCategory
 
 ENCRYPTED_PASSWORD_PLACEHOLDER = '*' * 24
@@ -46,33 +39,7 @@ SCHEDULE_DISPLAY_CHOICES = (
 )
 
 
-def make_naive(moment):
-    return dt.datetime(
-        year=moment.year,
-        month=moment.month,
-        day=moment.day,
-        hour=moment.hour,
-        minute=moment.minute,
-    )
-
-
 class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
-    locales = forms.MultipleChoiceField(
-        label=_('Active languages'),
-        choices=[],
-        widget=MultipleLanguagesWidget,
-        help_text=_(
-            'Users will be able to use eventyay in these languages, and you will be able to provide all texts in these'
-            ' languages. If you don’t provide a text in the language a user selects, it will be shown in your event’s'
-            ' default language instead.'
-        ),
-    )
-    content_locales = forms.MultipleChoiceField(
-        label=_('Content languages'),
-        choices=[],
-        widget=EnhancedSelectMultiple,
-        help_text=_('Users will be able to submit proposals in these languages.'),
-    )
     custom_css_text = forms.CharField(
         required=False,
         widget=forms.Textarea(),
@@ -138,57 +105,12 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     def __init__(self, *args, **kwargs):
         self.is_administrator = kwargs.pop('is_administrator', False)
         super().__init__(*args, **kwargs)
-        site_url = settings.SITE_URL.split('://')[-1]
-        site_url = f'<code>{site_url}</code>'
-        self.fields['custom_domain'].help_text += '. ' + _(
-            'Make sure to point a CNAME record from your domain to {site_url}.'
-        ).format(site_url=site_url)
-        self.initial['locales'] = self.instance.locale_array.split(',')
-        self.initial['content_locales'] = self.instance.content_locale_array.split(',')
         self.initial['custom_css_text'] = self.instance.custom_css.read().decode() if self.instance.custom_css else ''
         self.fields['show_featured'].help_text = (
             str(self.fields['show_featured'].help_text)
             + ' '
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
-        if self.instance.custom_domain:
-            self.fields['slug'].widget.addon_before = f'{self.instance.custom_domain}/'
-        if not self.is_administrator:
-            self.fields['slug'].disabled = True
-            self.fields['slug'].help_text = _(
-                'Please contact your administrator if you need to change the short name of your event.'
-            )
-        self.fields['date_to'].help_text = _(
-            'Any sessions you have scheduled already will be moved if you change the event dates. You will have to release a new schedule version to notify all speakers.'
-        )
-        self.fields['locales'].choices = [
-            choice
-            for choice in settings.LANGUAGES
-            if settings.LANGUAGES_INFORMATION[choice[0]].get('visible', True)
-            or choice[0] in self.instance.plugin_locales
-        ]
-        self.fields['content_locales'].choices = self.instance.available_content_locales
-
-    def clean_custom_domain(self):
-        data = self.cleaned_data['custom_domain']
-        if not data:
-            return data
-        data = data.lower()
-        if data in (urlparse(settings.SITE_URL).hostname, settings.SITE_URL):
-            raise ValidationError(_('Please do not choose the default domain as custom event domain.'))
-        if not data.startswith('https://'):
-            data = data[len('http://') :] if data.startswith('http://') else data
-            data = 'https://' + data
-        data = data.rstrip('/')
-        try:
-            socket.gethostbyname(data[len('https://') :])
-        except OSError:
-            raise forms.ValidationError(
-                _(
-                    'The domain “{domain}” does not have a name server entry at this time. Please make sure the domain is working before configuring it here.'
-                ).format(domain=data)
-            )
-        return data
 
     def clean_custom_css(self):
         if self.cleaned_data.get('custom_css') or self.files.get('custom_css'):
@@ -215,27 +137,11 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
 
     def clean(self):
         data = super().clean()
-        date_from = data.get('date_from')
-        date_to = data.get('date_to')
-        if date_from and date_to and date_from > date_to:
-            error = forms.ValidationError(phrases.orga.event_date_start_invalid)
-            self.add_error('date_from', error)
-        if data.get('locale') not in data.get('locales', []):
-            error = forms.ValidationError(
-                _('Your default language needs to be one of your active languages.'),
-            )
-            self.add_error('locale', error)
         return data
 
     def save(self, *args, **kwargs):
-        self.instance.locale_array = ','.join(self.cleaned_data['locales'])
-        self.instance.content_locale_array = ','.join(self.cleaned_data['content_locales'])
-        if any(key in self.changed_data for key in ('date_from', 'date_to')):
-            self.change_dates()
-        if 'timezone' in self.changed_data:
-            self.change_timezone()
         result = super().save(*args, **kwargs)
-        css_text = self.cleaned_data['custom_css_text']
+        css_text = self.cleaned_data.get('custom_css_text', '')
         for image_field in ('logo', 'header_image'):
             if image_field in self.changed_data:
                 self.instance.process_image(image_field)
@@ -243,75 +149,11 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             self.instance.custom_css.save(self.instance.slug + '.css', ContentFile(css_text))
         return result
 
-    def change_dates(self):
-        """Changes dates of current WIP slots, or deschedules them."""
-
-        old_instance = Event.objects.get(pk=self.instance.pk)
-        if not self.instance.wip_schedule.talks.filter(start__isnull=False).exists():
-            return
-        new_date_from = self.cleaned_data['date_from']
-        new_date_to = self.cleaned_data['date_to']
-        start_delta = new_date_from - old_instance.date_from
-        end_delta = new_date_to - old_instance.date_to
-        shortened = (new_date_to - new_date_from) < (old_instance.date_to - old_instance.date_from)
-
-        if start_delta and end_delta:
-            # The event was moved, and we will move all talks with it.
-            self._move_by(start_delta)
-
-        # Otherwise, the event got longer, no need to do anything.
-        # We *could* move all talks towards the new start date, but I'm
-        # not convinced that this is the actual use case.
-        # I think it's more likely that people add a new day to the start.
-        if shortened:
-            # The event was shortened, de-schedule all talks outside the range
-            self.instance.wip_schedule.talks.filter(
-                Q(start__date__gt=new_date_to) | Q(start__date__lt=new_date_from),
-            ).update(start=None, end=None, room=None)
-            Availability.objects.filter(
-                Q(end__date__gt=new_date_to) | Q(start__date__lt=new_date_from),
-                event=self.instance.event,
-            ).delete()
-
-    def change_timezone(self):
-        """Changes times of all current wip slots, on the assumption that a
-        change in timezone is usually not intentional, and people would like to
-        keep the apparent time rather the absolute one."""
-
-        old_instance = Event.objects.get(pk=self.instance.pk)
-        first_slot = self.instance.wip_schedule.talks.filter(start__isnull=False).first()
-        if not first_slot:
-            return
-
-        old_start = make_naive(first_slot.start.astimezone(old_instance.tz))
-        new_start = make_naive(first_slot.start.astimezone(self.instance.tz))
-
-        delta = old_start - new_start
-        if delta:
-            self._move_by(delta, past=True)
-
-    def _move_by(self, delta, past=False):
-        if past:
-            talk_queryset = TalkSlot.objects.filter(schedule__event=self.instance)
-        else:
-            talk_queryset = self.instance.wip_schedule.talks
-        for key in ('start', 'end'):
-            filt = {f'{key}__isnull': False}
-            update = {key: F(key) + delta}
-            talk_queryset.filter(**filt).update(**update)
-            Availability.objects.filter(event=self.instance).filter(**filt).update(**update)
 
     class Meta:
         model = Event
         fields = [
-            'name',
-            'slug',
-            'date_from',
-            'date_to',
-            'timezone',
             'email',
-            'locale',
-            'custom_domain',
             'primary_color',
             'custom_css',
             'logo',
@@ -323,13 +165,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'logo': ImageField,
             'header_image': ImageField,
             'primary_color': ColorField,
-        }
-        widgets = {
-            'date_from': HtmlDateInput(attrs={'data-date-before': '#id_date_to'}),
-            'date_to': HtmlDateInput(attrs={'data-date-after': '#id_date_from'}),
-            'locale': EnhancedSelect,
-            'timezone': EnhancedSelect,
-            'slug': TextInputWithAddon(addon_before=settings.SITE_URL + '/'),
         }
         json_fields = {
             'imprint_url': 'display_settings',
