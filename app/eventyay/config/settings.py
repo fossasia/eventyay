@@ -380,9 +380,6 @@ DATABASES = {
     }
 }
 
-# JSON field support is available in PostgreSQL
-JSON_FIELD_AVAILABLE = DATABASES['default']['ENGINE'].split('.')[-1] == 'postgresql'
-
 
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
@@ -814,7 +811,6 @@ redis_connection_kwargs = {
 
 REDIS_URL = config.get('redis', 'location')
 HAS_REDIS = bool(REDIS_URL)
-JSON_FIELD_AVAILABLE = True
 REDIS_HOSTS = [
     {
         'address': REDIS_URL,
