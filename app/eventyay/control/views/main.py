@@ -258,7 +258,7 @@ class EventWizard(SafeSessionWizardView):
             logdata = {}
             for f in form_list:
                 logdata.update({k: v for k, v in f.cleaned_data.items()})
-            event.log_action('pretix.event.settings', user=self.request.user, data=logdata)
+            event.log_action('eventyay.event.settings', user=self.request.user, data=logdata)
 
             if copy_data and copy_data['copy_from_event']:
                 from_event = copy_data['copy_from_event']

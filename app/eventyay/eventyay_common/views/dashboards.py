@@ -50,7 +50,7 @@ from eventyay.helpers.plugin_enable import is_video_enabled
 from ...base.models.orders import CancellationRequest
 from ..utils import EventCreatedFor, get_subevent
 
-OVERVIEW_BANLIST = ['pretix.plugins.sendmail.order.email.sent']
+OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:

@@ -37,7 +37,7 @@ def notify_incomplete_payment(o: Order):
                 email_subject,
                 email_template,
                 email_context,
-                'pretix.event.order.email.expire_warning_sent',
+                'eventyay.event.order.email.expire_warning_sent',
             )
         except SendMailException:
             logger.exception('Reminder email could not be sent')
@@ -55,7 +55,7 @@ def cancel_old_payments(order):
             with transaction.atomic():
                 p.payment_provider.cancel_payment(p)
                 order.log_action(
-                    'pretix.event.order.payment.canceled',
+                    'eventyay.event.order.payment.canceled',
                     {
                         'local_id': p.local_id,
                         'provider': p.provider,
@@ -63,7 +63,7 @@ def cancel_old_payments(order):
                 )
         except PaymentException as e:
             order.log_action(
-                'pretix.event.order.payment.canceled.failed',
+                'eventyay.event.order.payment.canceled.failed',
                 {'local_id': p.local_id, 'provider': p.provider, 'error': str(e)},
             )
 

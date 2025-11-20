@@ -165,7 +165,7 @@ def import_orders(event: Event, fileid: str, settings: dict, locale: str, user) 
                     for c in cols:
                         c.save(o)
                     o.log_action(
-                        'pretix.event.order.placed',
+                        'eventyay.event.order.placed',
                         user=user,
                         data={'source': 'import'},
                     )
