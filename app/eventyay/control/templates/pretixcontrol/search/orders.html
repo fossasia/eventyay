@@ -4,6 +4,7 @@
 {% load urlreplace %}
 {% load money %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{% trans "Order search" %}{% endblock %}
 {% block content %}
     <h1>{% trans "Order search" %}</h1>
@@ -47,7 +48,7 @@
                 <th>{% trans "User" %}
                     <a href="?{% url_replace request 'ordering' '-email' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'email' %}"><i class="fa fa-caret-up"></i></a></th>
-                <th>{% trans "Order date" %}
+                <th>{% trans "Order date" %} <span class="text-muted" id="tz-indicator"></span>
                     <a href="?{% url_replace request 'ordering' '-datetime' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'datetime' %}"><i class="fa fa-caret-up"></i></a></th>
                 <th class="text-right flip">{% trans "Order total" %}
@@ -77,7 +78,7 @@
                             <br>{{ o.invoice_address.name }}
                         {% endif %}
                     </td>
-                    <td>{{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
+                    <td class="order-datetime" data-datetime="{{ o.datetime.isoformat }}">{{ o.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
                     <td class="text-right flip">
                         {% if o.has_cancellation_request %}
                             <span class="label label-warning">{% trans "CANCELLATION REQUESTED" %}</span>
@@ -109,4 +110,7 @@
         </table>
     </div>
     {% include "pretixcontrol/pagination_huge.html" %}
+{% endblock %}
+{% block custom_header %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
