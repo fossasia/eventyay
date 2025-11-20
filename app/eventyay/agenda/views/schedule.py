@@ -116,7 +116,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             result = draw_ascii_schedule(data, output_format=output_format)
         except StopIteration:  # pragma: no cover
             result = draw_ascii_schedule(data, output_format='list')
-        result += '\n\n  📆 powered by eventyay'
+        result += '\n\n  powered by eventyay'
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):

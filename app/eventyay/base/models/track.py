@@ -51,7 +51,7 @@ class Track(OrderedModel, PretalxModel):
         default=False,
     )
 
-    log_prefix = 'pretalx.track'
+    log_prefix = 'eventyay.track'
 
     class Meta:
         ordering = ('position',)

@@ -62,7 +62,7 @@ class MailTemplate(PretalxModel):
     special cases, for now.
     """
 
-    log_prefix = 'pretalx.mail_template'
+    log_prefix = 'eventyay.mail_template'
 
     event = models.ForeignKey(
         to='Event',

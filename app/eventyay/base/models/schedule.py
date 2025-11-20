@@ -102,7 +102,7 @@ class Schedule(PretalxModel):
         wip_schedule = Schedule.objects.create(event=self.event)
 
         self.save(update_fields=['published', 'version', 'comment'])
-        self.log_action('pretalx.schedule.release', person=user, orga=True)
+        self.log_action('eventyay.schedule.release', person=user, orga=True)
 
         # Set visibility
         self.talks.all().update(is_visible=False)
