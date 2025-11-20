@@ -167,6 +167,20 @@ class BaseCfPStep:
     def get_csp_update(self, request):
         pass
 
+    def __getstate__(self):
+        """
+        Ensure that pickling this step (e.g. when the surrounding flow is cached)
+        does not attempt to serialise request-specific objects such as the resolver
+        match, which are not picklable.
+        """
+        state = self.__dict__.copy()
+        state.pop('request', None)
+        state.pop('cfp_session', None)
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.request = None
 
 class TemplateFlowStep(TemplateResponseMixin, BaseCfPStep):
     template_name = 'cfp/event/submission_base.html'

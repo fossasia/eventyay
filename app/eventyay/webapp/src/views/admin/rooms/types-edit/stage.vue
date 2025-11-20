@@ -26,11 +26,11 @@
 		.bunt-switch-container
 			bunt-switch(name="enablePrivacyEnhancedMode", v-model="enablePrivacyEnhancedMode", label="Enable No-Cookies")
 			bunt-switch(name="loop", v-model="loop", label="Loop")
-			bunt-switch(name="modestBranding", v-model="modestBranding", label=" Enable Modest Branding")
-			bunt-switch(name="hideControls", v-model="hideControls", label="Enable Hide Controls")
-			bunt-switch(name="noRelated", v-model="noRelated", label=" Enable No Related info")
-			bunt-switch(name="disableKb", v-model="disableKb", label="Enable Keyboard Controls")
-			bunt-switch(name="showInfo", v-model="showInfo", label="Enable No Show Info")
+			bunt-switch(name="modestBranding", v-model="modestBranding", label="Enable Modest Branding")
+			bunt-switch(name="hideControls", v-model="hideControls", label="Hide Controls", hint="Note: Hiding controls disables autoplay (browsers require muted autoplay, but users can't unmute without controls)")
+			bunt-switch(name="noRelated", v-model="noRelated", label="Hide Related Videos")
+			bunt-switch(name="disableKb", v-model="disableKb", label="Disable Keyboard Controls")
+			bunt-switch(name="showInfo", v-model="showInfo", label="Hide Video Info")
 	bunt-input(v-else-if="modules['livestream.iframe']", name="iframe-player", v-model="modules['livestream.iframe'].config.url", label="Iframe player url", hint="iframe player should be autoplaying and support resizing to small sizes for background playing")
 	sidebar-addons(v-bind="$props")
 </template>

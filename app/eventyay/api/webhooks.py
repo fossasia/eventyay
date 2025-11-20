@@ -175,51 +175,51 @@ class ParametrizedOrderPositionWebhookEvent(ParametrizedOrderWebhookEvent):
 def register_default_webhook_events(sender, **kwargs):
     return (
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.placed',
+            'eventyay.event.order.placed',
             _('New order placed'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.placed.require_approval',
+            'eventyay.event.order.placed.require_approval',
             _('New order requires approval'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.paid',
+            'eventyay.event.order.paid',
             _('Order marked as paid'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.canceled',
+            'eventyay.event.order.canceled',
             _('Order canceled'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.reactivated',
+            'eventyay.event.order.reactivated',
             _('Order reactivated'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.expired',
+            'eventyay.event.order.expired',
             _('Order expired'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.modified',
+            'eventyay.event.order.modified',
             _('Order information changed'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.contact.changed',
+            'eventyay.event.order.contact.changed',
             _('Order contact address changed'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.changed.*',
+            'eventyay.event.order.changed.*',
             _('Order changed'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.refund.created.externally',
+            'eventyay.event.order.refund.created.externally',
             _('External refund of payment'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.approved',
+            'eventyay.event.order.approved',
             _('Order approved'),
         ),
         ParametrizedOrderWebhookEvent(
-            'pretix.event.order.denied',
+            'eventyay.event.order.denied',
             _('Order denied'),
         ),
         ParametrizedOrderPositionWebhookEvent(
@@ -243,15 +243,15 @@ def register_default_webhook_events(sender, **kwargs):
             _('Event details changed'),
         ),
         ParametrizedSubEventWebhookEvent(
-            'pretix.subevent.added',
+            'eventyay.subevent.added',
             pgettext_lazy('subevent', 'Event series date added'),
         ),
         ParametrizedSubEventWebhookEvent(
-            'pretix.subevent.changed',
+            'eventyay.subevent.changed',
             pgettext_lazy('subevent', 'Event series date changed'),
         ),
         ParametrizedSubEventWebhookEvent(
-            'pretix.subevent.deleted',
+            'eventyay.subevent.deleted',
             pgettext_lazy('subevent', 'Event series date deleted'),
         ),
     )

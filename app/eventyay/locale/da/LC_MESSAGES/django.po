@@ -4241,8 +4241,8 @@ msgstr "U2F-kompatibel hardware-token (fx Yubikey)"
 
 #: pretix/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of "
-"\"}\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
+"\"."
 msgstr ""
 "Ugyldig pladsholdersyntaks: Du har ikke brugt samme antal \"{\" og \"}\"."
 
@@ -6317,8 +6317,8 @@ msgstr ""
 
 #: pretix/base/models/page.py:36
 msgid ""
-"Require the user to acknowledge this page before the sign up is created (e."
-"g. for terms of service)."
+"Require the user to acknowledge this page before the sign up is created "
+"(e.g. for terms of service)."
 msgstr ""
 
 #: pretix/base/models/page.py:40
@@ -11285,8 +11285,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:71
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid "Tax rule of position #{posid} changed from {old_rule} to {new_rule}."
 msgstr ""
 "E-mailadressen er blevet ændret fra \"{old_email}\" til \"{new_email}\"."
@@ -11294,8 +11294,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:78
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid "Tax rule of fee #{fee} changed from {old_rule} to {new_rule}."
 msgstr ""
 "E-mailadressen er blevet ændret fra \"{old_email}\" til \"{new_email}\"."
@@ -11309,8 +11309,8 @@ msgstr "Kvoten er blevet tilføjet."
 #: pretix/control/logdisplay.py:87
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid "A fee was changed from {old_price} to {new_price}."
 msgstr ""
 "E-mailadressen er blevet ændret fra \"{old_email}\" til \"{new_email}\"."
@@ -11586,8 +11586,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:304
 #, fuzzy, python-brace-format
 #| msgid ""
-#| "The email address has been changed from \"{old_email}\" to "
-#| "\"{new_email}\"."
+#| "The email address has been changed from \"{old_email}\" to \"{new_email}"
+#| "\"."
 msgid ""
 "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr ""
@@ -12288,8 +12288,8 @@ msgstr ""
 #: pretix/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list "
-"\"{list}\"."
+"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
+"\"."
 msgstr ""
 
 #: pretix/control/logdisplay.py:503
