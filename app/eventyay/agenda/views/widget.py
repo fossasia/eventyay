@@ -15,11 +15,11 @@ WIDGET_JS_CHECKSUM = None
 WIDGET_PATH = 'agenda/js/pretalx-schedule.min.js'
 
 
-def color_etag(request, event, **kwargs):
+def color_etag(request, organizer=None, event=None, **kwargs):
     return request.event.primary_color or 'none'
 
 
-def widget_js_etag(request, event, **kwargs):
+def widget_js_etag(request, organizer=None, event=None, **kwargs):
     # The widget is stable across all events, we just return a checksum of the JS file
     # to make sure clients reload the widget when it changes.
     global WIDGET_JS_CHECKSUM
@@ -30,7 +30,7 @@ def widget_js_etag(request, event, **kwargs):
     return WIDGET_JS_CHECKSUM
 
 
-def is_public_and_versioned(request, event, version=None):
+def is_public_and_versioned(request, organizer=None, event=None, version=None, **kwargs):
     if version and version == 'wip':
         # We never cache the wip schedule
         return False
@@ -41,7 +41,7 @@ def is_public_and_versioned(request, event, version=None):
     return True
 
 
-def version_prefix(request, event, version=None):
+def version_prefix(request, organizer=None, event=None, version=None, **kwargs):
     """On non-versioned pages, we want cache-invalidation on schedule
     release."""
     if not version and request.event.current_schedule:
@@ -60,7 +60,7 @@ def version_prefix(request, event, version=None):
     },
 )
 @csp_exempt()
-def widget_data(request, event, version=None):
+def widget_data(request, organizer=None, event=None, version=None, **kwargs):
     # Caching this page is tricky: We need the user to occasionally
     # ask for new data, and we definitely need to give them new data on schedule
     # release. This is because some information can change at any time, not just
@@ -107,7 +107,7 @@ def widget_data(request, event, version=None):
 
 @condition(etag_func=widget_js_etag)
 @csp_exempt()
-def widget_script(request, event):
+def widget_script(request, organizer=None, event=None, **kwargs):
     # This page basically just serves a static file under a known path (ideally, the
     # administrators could and should even turn on gzip compression for the
     # /<event>/widget/schedule.js path, as it cuts down the transferred data
@@ -126,7 +126,7 @@ def widget_script(request, event):
 @condition(etag_func=color_etag)
 @cache_page(5 * 60)
 @csp_exempt()
-def event_css(request, event):
+def event_css(request, organizer=None, event=None, **kwargs):
     # If this event has custom colours, we send back a simple CSS file that sets the
     # root colours for the event.
     result = ''
