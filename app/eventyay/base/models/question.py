@@ -247,7 +247,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllTalkQuestionManager)
 
-    log_prefix = 'pretalx.question'
+    log_prefix = 'eventyay.question'
 
     class Meta:
         ordering = ('position', 'id')

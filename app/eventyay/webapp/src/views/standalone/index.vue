@@ -1,6 +1,6 @@
 <template lang="pug">
 #standalone-app(:class="{fullscreen, 'themed-bg': themedBackground}", :style="[style, themeVariables]")
-	.fatal-indicator.mdi.mdi-alert-octagon(v-if="fatalError || fatalConnectionError", :title="errorMessage")
+	.fatal-indicator.mdi.mdi-alert-octagon(v-if="currentFatalError || fatalConnectionError", :title="errorMessage")
 	.content(v-else-if="world")
 		router-view(:room="room", :config="config")
 	bunt-progress-circular(v-else, size="small")
@@ -32,9 +32,16 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'user', 'world', 'rooms']),
+		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'user', 'world', 'rooms', 'roomFatalErrors']),
+		currentFatalError() {
+			const roomId = this.room?.id
+			if (roomId && this.roomFatalErrors?.[roomId]) {
+				return this.roomFatalErrors[roomId]
+			}
+			return this.fatalError?.roomId ? (roomId && this.fatalError.roomId === roomId ? this.fatalError : null) : this.fatalError
+		},
 		errorMessage() {
-			return this.fatalConnectionError?.code || this.fatalError?.message
+			return this.fatalConnectionError?.code || this.currentFatalError?.message || this.currentFatalError?.code || this.fatalError?.message
 		},
 		room() {
 			return this.rooms?.find(room => room.id === this.$route.params.roomId) || this.rooms?.[0]
