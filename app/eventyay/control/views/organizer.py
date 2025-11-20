@@ -54,11 +54,13 @@ class ExportMixin:
             if id and ex.identifier != id:
                 continue
 
-            # Use form parse cycle to generate useful defaults
+            # Try to extract initial values from GET parameters
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            test_form.is_valid()  # Attempt to populate cleaned_data; use getattr for safe access as validation result is not checked
-            initial = {k: v for k, v in getattr(test_form, 'cleaned_data', {}).items() if f'{ex.identifier}-{k}' in self.request.GET}
+            if test_form.is_valid():
+                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+            else:
+                initial = {}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),
