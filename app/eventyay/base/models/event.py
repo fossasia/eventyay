@@ -2081,8 +2081,7 @@ class Event(
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
         if hasattr(self, 'settings') and 'locales' in self.settings._cache():
-            locales = self.settings.get('locales', as_type=list)
-            if locales:
+            if locales := self.settings.get('locales', as_type=list):
                 return locales
         return [code for code in self.locale_array.split(',') if code]
 
@@ -2090,8 +2089,7 @@ class Event(
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
         if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
-            locales = self.settings.get('content_locales', as_type=list)
-            if locales:
+            if locales := self.settings.get('content_locales', as_type=list):
                 return locales
         fallback = [code for code in self.content_locale_array.split(',') if code]
         return fallback or self.locales
@@ -2117,7 +2115,10 @@ class Event(
         default_locale: str | None = None,
     ) -> None:
         locales_list = list(locales or [])
-        content_locales_list = list(content_locales or []) or locales_list
+        if content_locales is None:
+            content_locales_list = locales_list
+        else:
+            content_locales_list = list(content_locales)
         if locales_list:
             self.locale_array = ','.join(locales_list)
         if content_locales_list:

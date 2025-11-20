@@ -866,7 +866,7 @@ DEFAULT_SETTINGS = {
             widget=MultipleLanguagesWidget,
             required=True,
             label=_('Content languages'),
-            help_text=_('Languages that speakers can select for their submissions.'),
+            help_text=_('Languages that speakers can select for their submissions. Content languages should be a subset of active languages.'),
         ),
     },
     'locale': {
