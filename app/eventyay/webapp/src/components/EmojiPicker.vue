@@ -28,6 +28,12 @@ export default {
 </script>
 <style lang="stylus">
 .c-emoji-picker
-	.emoji-mart-emoji span
-		image-rendering: -webkit-optimize-contrast
+	.emoji-mart-emoji
+		-webkit-tap-highlight-color: transparent
+		outline: none
+		&:focus-visible
+			outline: 2px solid var(--focus-color, $clr-primary)
+			outline-offset: 2px
+		span
+			image-rendering: -webkit-optimize-contrast
 </style>

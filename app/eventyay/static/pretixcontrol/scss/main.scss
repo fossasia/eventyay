@@ -10,6 +10,8 @@
 @import "_flags.scss";
 @import "_orders.scss";
 @import "_dashboard.scss";
+@import "_sidebar.scss";
+@import "mails.scss";
 @import "../../pretixbase/scss/webfont.scss";
 @import "../../fileupload/jquery.fileupload.scss";
 @import "../../leaflet/leaflet.scss";
@@ -32,7 +34,17 @@ footer {
 
 nav.navbar {
     margin: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1100;
 }
+
+#wrapper {
+    padding-top: var(--navbar-height, 50px);
+}
+
 .navbar-brand img {
     height: 100%;
     width: auto;
@@ -857,7 +869,9 @@ h1 .label {
     
   
     &.desktop-menu-open {
-        
+        #submenu {
+            display: block;
+        }
     }
     
    
@@ -962,5 +976,28 @@ h1 .label {
             transform: translateY(0);
             opacity: 1;
         }
+    }
+}
+
+#page-wrapper {
+    height: calc(100vh - var(--navbar-height, 50px));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    contain: content;
+}
+
+@media (max-width: $screen-sm-max) {
+    nav.navbar {
+        position: static;
+    }
+
+    #wrapper {
+        padding-top: 0;
+    }
+
+    #page-wrapper {
+        height: auto;
+        overflow-y: visible;
+        box-sizing: border-box;
     }
 }

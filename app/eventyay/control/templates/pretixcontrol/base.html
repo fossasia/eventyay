@@ -91,17 +91,14 @@
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
             {% if request.organizer %}data-organizer="{{ request.organizer.slug }}"{% endif %}
             {% if request.event %}data-event="{{ request.event.slug }}"{% endif %}
-            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs">
+            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs sidebar-minimized">
         <div id="wrapper">
             <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+                <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar">
+                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                    <i class="fa fa-bars fa-lg"></i>
+                </button>
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle"
-                            data-toggle="collapse" data-target=".navbar-nav-collapse">
-                        <span class="sr-only">{% trans "Toggle navigation" %}</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
                     {% if request.event %}
                         {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event "presale:event.auth" %}" method="post"
@@ -275,7 +272,7 @@
                                 <li class="testmode">
                                     <a href="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}">
                                         <i class="fa fa-warning fa-fw"></i>
-                                        {% trans "TEST MODE" %}
+                                        <span class="sidebar-text">{% trans "TEST MODE" %}</span>
                                     </a>
                                 </li>
                             {% endif %}
@@ -292,7 +289,7 @@
                                                     <span class="fa fa-fw fa-{{ nav.icon }}"></span>
                                                 {% endif %}
                                             {% endif %}
-                                            {{ nav.label }}
+                                            <span class="sidebar-text">{{ nav.label }}</span>
                                         </a>
                                         {% if nav.children %}
                                             <a href="#" class="arrow">
@@ -304,7 +301,7 @@
                                                         <a href="{{ item.url }}"
                                                                 {% if item.external %}target="_blank"{% endif %}
                                                                 {% if item.active %}class="active"{% endif %}>
-                                                            {{ item.label }}
+                                                            <span class="sidebar-text">{{ item.label }}</span>
                                                         </a>
                                                     </li>
                                                 {% endfor %}

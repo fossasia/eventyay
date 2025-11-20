@@ -102,7 +102,7 @@ class Schedule(PretalxModel):
         wip_schedule = Schedule.objects.create(event=self.event)
 
         self.save(update_fields=['published', 'version', 'comment'])
-        self.log_action('pretalx.schedule.release', person=user, orga=True)
+        self.log_action('eventyay.schedule.release', person=user, orga=True)
 
         # Set visibility
         self.talks.all().update(is_visible=False)
@@ -625,6 +625,7 @@ class Schedule(PretalxModel):
                         'id': talk.id,
                         'title': (talk.submission.title if talk.submission else talk.description),
                         'abstract': (talk.submission.abstract if talk.submission else None),
+                        'description': (talk.submission.description if talk.submission else None),
                         'speakers': (
                             [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
                         ),
@@ -675,7 +676,8 @@ class Schedule(PretalxModel):
         result['speakers'] = [
             {
                 'code': user.code,
-                'name': user.fullname,
+                'name': user.fullname or None,
+                'biography': getattr(user.event_profile(self.event), 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

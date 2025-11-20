@@ -288,7 +288,7 @@ def submissions_for_user(event, user):
 @rules.predicate
 def is_wip(user, obj):
     schedule = getattr(obj, "schedule", None) or obj
-    return not schedule.version
+    return getattr(schedule, "version", None) is None
 
 
 @rules.predicate
