@@ -406,7 +406,7 @@ def mail_send_task(
                                     'likely too large to arrive.'
                                 )
                                 order.log_action(
-                                    'pretix.event.order.email.attachments.skipped',
+                                    'eventyay.event.order.email.attachments.skipped',
                                     data={
                                         'subject': 'Attachments skipped',
                                         'message': message,
@@ -480,7 +480,7 @@ def mail_send_task(
                 except MaxRetriesExceededError:
                     if order:
                         order.log_action(
-                            'pretix.event.order.email.error',
+                            'eventyay.event.order.email.error',
                             data={
                                 'subject': 'SMTP code {}, max retries exceeded'.format(e.smtp_code),
                                 'message': e.smtp_error.decode()
@@ -495,7 +495,7 @@ def mail_send_task(
             logger.exception('Error sending email')
             if order:
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'SMTP code {}'.format(e.smtp_code),
                         'message': e.smtp_error.decode() if isinstance(e.smtp_error, bytes) else str(e.smtp_error),
@@ -525,7 +525,7 @@ def mail_send_task(
                     message.append(f'{e}: {val[0]} {val[1].decode()}')
 
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'SMTP error',
                         'message': '\n'.join(message),
@@ -552,7 +552,7 @@ def mail_send_task(
                 except MaxRetriesExceededError:
                     if order:
                         order.log_action(
-                            'pretix.event.order.email.error',
+                            'eventyay.event.order.email.error',
                             data={
                                 'subject': 'Internal error',
                                 'message': 'Max retries exceeded',
@@ -563,7 +563,7 @@ def mail_send_task(
                     raise e
             if order:
                 order.log_action(
-                    'pretix.event.order.email.error',
+                    'eventyay.event.order.email.error',
                     data={
                         'subject': 'Internal error',
                         'message': str(e),
