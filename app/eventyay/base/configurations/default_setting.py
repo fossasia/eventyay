@@ -849,7 +849,24 @@ DEFAULT_SETTINGS = {
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=_('Available languages'),
+            label=_('Active languages'),
+        ),
+    },
+    'content_locales': {
+        'default': json.dumps([settings.LANGUAGE_CODE]),
+        'type': list,
+        'serializer_class': ListMultipleChoiceField,
+        'serializer_kwargs': dict(
+            choices=settings.LANGUAGES,
+            required=True,
+        ),
+        'form_class': forms.MultipleChoiceField,
+        'form_kwargs': dict(
+            choices=settings.LANGUAGES,
+            widget=MultipleLanguagesWidget,
+            required=True,
+            label=_('Content languages'),
+            help_text=_('Languages that speakers can select for their submissions. Content languages should be a subset of active languages.'),
         ),
     },
     'locale': {
