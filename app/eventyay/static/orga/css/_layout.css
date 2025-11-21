@@ -56,13 +56,14 @@ body {
   }
 }
 
-.submission_featured {
+td.submission_featured {
   position: relative;
+  vertical-align: middle !important;
   text-align: center;
-  vertical-align: middle;
 
   .form-check {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
     margin: 0;
   }
 
@@ -71,10 +72,6 @@ body {
     right: 30%;
     top: 50%;
     transform: translateY(-50%);
-  }
-
-  input[type="checkbox"] {
-    margin: 0;
   }
 
   .done {

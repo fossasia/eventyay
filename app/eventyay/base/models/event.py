@@ -71,7 +71,6 @@ from .mixins import OrderedModel, PretalxModel
 from .organizer import Organizer, OrganizerBillingModel, Team
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
-LANGUAGE_NAMES = {code: name for code, name in settings.LANGUAGES}
 
 def event_css_path(instance, filename):
     return path_with_hash(filename, base_path=f"{instance.slug}/css/")
@@ -2115,7 +2114,7 @@ class Event(
     def named_content_locales(self) -> list:
         locale_names = dict(self.available_content_locales)
         # locale_names['en-us'] = locale_names['en']
-        locale_names.update(LANGUAGE_NAMES)
+        locale_names |= LANGUAGE_NAMES
         return [(code, locale_names.get(code, code)) for code in self.content_locales]
 
     @cached_property
