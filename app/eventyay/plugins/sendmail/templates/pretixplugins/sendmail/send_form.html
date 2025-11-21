@@ -1,6 +1,7 @@
 {% extends "pretixcontrol/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 {% block title %}{% translate "Email editor" %}{% endblock %}
 {% block content %}
     <nav id="event-nav" class="header-nav">
@@ -15,7 +16,7 @@
     {% block inner %}
         <form class="form-horizontal" method="post" action="" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div class="tabbed-form">
                 <!-- Recipients Section -->
                 <fieldset>
@@ -30,6 +31,7 @@
                     {% endif %}
                     {% bootstrap_field form.order_created_from layout='horizontal' %}
                     {% bootstrap_field form.order_created_to layout='horizontal' %}
+                    {{ form.browser_timezone }}
                     {% bootstrap_field form.products layout='horizontal' %}
                     <div class="row">
                         <div class="col-md-9 col-md-offset-3">
@@ -84,4 +86,7 @@
             </div>
         </form>
     {% endblock %}
+{% endblock %}
+{% block custom_header %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}
