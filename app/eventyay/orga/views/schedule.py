@@ -507,28 +507,9 @@ class RoomView(OrderActionMixin, OrgaCRUDView):
         return _('Rooms')
 
     def delete_handler(self, request, *args, **kwargs):
-        try:
-            # Use soft delete to sync with video component
-            obj = self.get_object()
-            obj.deleted = True
-            obj.save(update_fields=['deleted'])
-            messages.success(request, _('The selected room has been deleted.'))
-            return redirect(self.get_success_url())
-        except ProtectedError:
-            messages.error(
-                request,
-                _('There is or was a session scheduled in this room. It cannot be deleted.'),
-            )
-            return self.delete_view(request, *args, **kwargs)
-        except Exception as e:
-            # Log the unexpected error for debugging
-            logger.exception(
-                'Unexpected error during room deletion for room %s: %s',
-                kwargs.get('pk', 'unknown'),
-                str(e)
-            )
-            messages.error(
-                request,
-                _('An error occurred while deleting the room: {}').format(str(e)),
-            )
-            return self.delete_view(request, *args, **kwargs)
+        # Use soft delete to sync with video component
+        obj = self.get_object()
+        obj.deleted = True
+        obj.save(update_fields=['deleted'])
+        messages.success(request, _('The selected room has been deleted.'))
+        return redirect(self.get_success_url())
