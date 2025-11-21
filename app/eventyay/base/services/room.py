@@ -71,6 +71,15 @@ async def get_viewers(event: Event, room: Room):
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
+    extra_fields = []
+    if room.module_config and not room.setup_complete:
+        room.setup_complete = True
+        extra_fields.append("setup_complete")
+        if room.sidebar_hidden:
+            room.sidebar_hidden = False
+            extra_fields.append("sidebar_hidden")
+    if extra_fields:
+        update_fields = list(set(update_fields) | set(extra_fields))
     room.save(update_fields=update_fields)
     new = RoomConfigSerializer(room).data
 
@@ -113,12 +122,14 @@ def delete_room(event, room, by_user):
 def reorder_rooms(event, id_list, by_user):
     def key(r):
         try:
-            return id_list.index(str(r.id)), r.sorting_priority, r.name
+            return id_list.index(str(r.id)), r.sorting_priority, r.name, r.id
         except Exception:
-            return sys.maxsize, r.sorting_priority, r.name
+            return sys.maxsize, r.sorting_priority, r.name, r.id
 
     all_rooms = list(
-        event.rooms.filter(deleted=False).only("id", "name", "sorting_priority")
+        event.rooms.filter(deleted=False)
+        .only("id", "name", "sorting_priority")
+        .order_by("sorting_priority", "name", "id")
     )
     all_rooms.sort(key=key)
     to_update = []
