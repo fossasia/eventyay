@@ -24,9 +24,10 @@ class EventCommonSettingsForm(SettingsForm):
     )
 
     auto_fields = [
-        "locales",
-        "locale",
-        "region",
+        'locales',
+        'content_locales',
+        'locale',
+        'region',
         "contact_mail",
         "imprint_url",
         'logo_image',
@@ -57,6 +58,8 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+        if self.event and 'content_locales' in self.fields:
+            self.fields['content_locales'].initial = self.event.content_locales
 
 
 class EventUpdateForm(I18nModelForm):
