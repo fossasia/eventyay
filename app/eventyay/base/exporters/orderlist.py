@@ -314,16 +314,19 @@ class OrderListExporter(MultiSheetListExporter):
             _('Order total'),
             _('Status'),
             _('Email'),
+        ]
+
+        # Add wikimedia_username header if setting is enabled
+        if should_include_wikimedia:
+            headers.append(_('Wikimedia username'))
+
+        headers += [
             _('Phone number'),
             _('Order date'),
             _('Order time'),
             _('Company'),
             _('Name'),
         ]
-
-        # Add wikimedia_username header if setting is enabled
-        if should_include_wikimedia:
-            headers.insert(headers.index(_('Phone number')), _('Wikimedia username'))
 
         name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
         if name_scheme and len(name_scheme['fields']) > 1:
@@ -413,15 +416,18 @@ class OrderListExporter(MultiSheetListExporter):
                 order.total,
                 order.get_status_display(),
                 order.email,
-                str(order.phone) if order.phone else '',
-                order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
             ]
 
             # Add wikimedia_username if setting is enabled (insert before phone number)
             if should_include_wikimedia:
                 wikimedia_username = getattr(order, 'wikimedia_username', '') or ''
-                row.insert(5, wikimedia_username)
+                row.append(wikimedia_username)
+
+            row += [
+                str(order.phone) if order.phone else '',
+                order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
+                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
+            ]
 
             try:
                 row += [
