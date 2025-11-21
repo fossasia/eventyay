@@ -59,15 +59,22 @@ body {
 .submission_featured {
   position: relative;
   text-align: center;
+  vertical-align: middle;
+
+  .form-check {
+    display: inline-block;
+    margin: 0;
+  }
 
   i {
     position: absolute;
     right: 30%;
-    top: 12px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   input[type="checkbox"] {
-    margin-right: 16px;
+    margin: 0;
   }
 
   .done {
