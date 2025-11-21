@@ -34,6 +34,7 @@ from eventyay.base.models import (
     Order,
     OrderPosition,
     Question,
+    User,
 )
 from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
 from eventyay.base.services.quotas import QuotaAvailability
@@ -277,6 +278,12 @@ class OrderListExporter(MultiSheetListExporter):
             .annotate(k=Count('id'))
             .values('k')
         )
+
+        # Always load wikimedia_username (lightweight data)
+        wikimedia_query = User.objects.filter(
+            email=OuterRef('email')
+        ).values('wikimedia_username')[:1]
+
         qs = (
             Order.objects.filter(event__in=self.events)
             .annotate(
@@ -284,6 +291,7 @@ class OrderListExporter(MultiSheetListExporter):
                 payment_providers=Subquery(p_providers, output_field=CharField()),
                 invoice_numbers=Subquery(i_numbers, output_field=CharField()),
                 pcnt=Subquery(s, output_field=IntegerField()),
+                wikimedia_username=Subquery(wikimedia_query, output_field=CharField()),
             )
             .select_related('invoice_address')
         )
@@ -293,6 +301,12 @@ class OrderListExporter(MultiSheetListExporter):
         if form_data['paid_only']:
             qs = qs.filter(status=Order.STATUS_PAID)
         tax_rates = self._get_all_tax_rates(qs)
+
+        # Check if we need to include wikimedia_username in the export
+        should_include_wikimedia = any(
+            self.event_object_cache[event_id].settings.get('include_wikimedia_username', False)
+            for event_id in self.event_object_cache.keys()
+        )
 
         headers = [
             _('Event slug'),
@@ -306,6 +320,11 @@ class OrderListExporter(MultiSheetListExporter):
             _('Company'),
             _('Name'),
         ]
+
+        # Add wikimedia_username header if setting is enabled
+        if should_include_wikimedia:
+            headers.insert(headers.index(_('Phone number')), _('Wikimedia username'))
+
         name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
         if name_scheme and len(name_scheme['fields']) > 1:
             for k, label, w in name_scheme['fields']:
@@ -398,6 +417,12 @@ class OrderListExporter(MultiSheetListExporter):
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
                 order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
             ]
+
+            # Add wikimedia_username if setting is enabled (insert before phone number)
+            if should_include_wikimedia:
+                wikimedia_username = getattr(order, 'wikimedia_username', '') or ''
+                row.insert(5, wikimedia_username)
+
             try:
                 row += [
                     order.invoice_address.company,

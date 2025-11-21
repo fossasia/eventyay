@@ -197,6 +197,15 @@ DEFAULT_SETTINGS = {
             help_text=_('Require attendees to enter their primary email address twice to help prevent errors.'),
         ),
     },
+    'include_wikimedia_username': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Add the Wikimedia ID for users authenticated via Wikimedia'),
+        ),
+    },
     'order_phone_asked': {
         'default': 'False',
         'type': bool,
