@@ -1330,9 +1330,6 @@ class GiftCardPayment(BasePaymentProvider):
                     'Please contact the organizer of this event.'
                 ),
             )
-        except Exception as e:
-            logger.exception('Unexpected error during gift card lookup in checkout_prepare')
-            messages.error(request, _('An error occurred while processing your gift card. Please try again or contact support.'))
 
     def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None]:
         for p in payment.order.positions.all():
@@ -1389,10 +1386,6 @@ class GiftCardPayment(BasePaymentProvider):
                     'Please contact the organizer of this event.'
                 ),
             )
-        except Exception as e:
-
-            logger.exception('Unexpected error during gift card lookup in payment_prepare')
-            messages.error(request, _('An error occurred while processing your gift card. Please try again or contact support.'))
 
     def execute_payment(self, request: HttpRequest, payment: OrderPayment) -> str:
         # This method will only be called when retrying payments, e.g. after a payment_prepare call. It is not called
