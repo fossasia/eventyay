@@ -445,7 +445,7 @@ aside.sidebar {
   vertical-align: middle;
   margin-left: 4px;
   margin-right: 10px;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .navbar #global-nav-menu button {
@@ -469,6 +469,7 @@ aside.sidebar {
 
 nav.navbar,
 .navbar {
+  font-weight: 500;
   display: flex;
   align-items: center;
   flex-flow: row nowrap;
@@ -489,7 +490,6 @@ nav.navbar,
 
   .navbar-brand {
     padding-top: 0.3125rem;
-    font-weight: normal;
     padding-bottom: 0.3125rem;
     margin-right: 1rem;
     font-size: 20px;
@@ -538,7 +538,6 @@ nav.navbar,
   button {
     color: var(--color-offwhite);
     font-size: 14px;
-    font-weight: normal;
 
     &:hover {
       text-decoration: none;

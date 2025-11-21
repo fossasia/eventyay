@@ -39,12 +39,13 @@ nav.navbar {
     left: 0;
     right: 0;
     z-index: 1100;
+    font-weight: 500;
     
     &.navbar-inverse {
         .navbar-top-links a,
         .btn-link {
             color: $navbar-link-color;
-            font-weight: normal;
+            font-weight: 500;
     
             i {
                 color: $navbar-link-color;
@@ -74,7 +75,6 @@ nav.navbar {
 nav.navbar.navbar-inverse #sidebar-toggle,
 .navbar-inverse #sidebar-toggle {
     color: $navbar-link-color;
-    font-weight: normal;
     
     i.fa-bars {
         margin-top: 3px;
@@ -94,7 +94,6 @@ nav.navbar.navbar-inverse #sidebar-toggle,
 nav.navbar.navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand {
     padding-top: 0.3125rem;
-    font-weight: normal;
     padding-bottom: 0.3125rem;
     margin-right: 1rem;
     margin-top: 0;
@@ -129,13 +128,11 @@ nav.navbar.navbar-inverse .navbar-brand,
 nav.navbar .danger, nav.navbar .danger:hover, nav.navbar .danger:active {
     background: $brand-danger !important;
     font-size: 14px;
-    font-weight: normal;
 }
 
 nav.navbar.navbar-inverse .header-nav,
 .navbar-inverse .header-nav {
     font-size: 14px;
-    font-weight: normal;
     color: $navbar-link-color;
     
     .fa-caret-down {
@@ -174,7 +171,6 @@ nav.navbar.navbar-inverse #button-sudo,
     min-height: 50px;
     border: none;
     font-size: 14px;
-    font-weight: normal;
     color: $navbar-link-color;
     
     i {
