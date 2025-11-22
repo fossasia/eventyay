@@ -1253,8 +1253,14 @@ class GiftCardPayment(BasePaymentProvider):
                 return
 
         cs = cart_session(request)
+        
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+        
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1306,7 +1312,7 @@ class GiftCardPayment(BasePaymentProvider):
                 kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
             return eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
         except GiftCard.DoesNotExist:
-            if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
                 messages.warning(
                     request,
                     _(
@@ -1334,8 +1340,13 @@ class GiftCardPayment(BasePaymentProvider):
                 )
                 return
 
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1357,7 +1368,7 @@ class GiftCardPayment(BasePaymentProvider):
 
             return True
         except GiftCard.DoesNotExist:
-            if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
                 messages.warning(
                     request,
                     _(
