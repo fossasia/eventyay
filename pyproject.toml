@@ -58,7 +58,7 @@ dependencies = [
         'babel',
         'pycparser==2.22',
         'django-redis==5.4.*',
-        'redis==7.0.*',
+        'redis==7.1.*',
         'fakeredis==2.32.*',
         'stripe==14.0.*',
         'chardet==5.2.*',
