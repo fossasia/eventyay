@@ -79,7 +79,7 @@ class SubmissionForm(ReadOnlyFlag, RequestRequire, forms.ModelForm):
         if not self.instance.pk or self.instance.state in SubmissionStates.accepted_states:
             self.fields['room'] = forms.ModelChoiceField(
                 required=False,
-                queryset=event.rooms.filter(deleted=False),
+                queryset=event.rooms.filter(deleted=False, hidden=False),
                 label=TalkSlot._meta.get_field('room').verbose_name,
                 initial=initial_slot.get('room'),
                 widget=EnhancedSelect,
