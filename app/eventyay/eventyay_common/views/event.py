@@ -263,6 +263,7 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            event.settings.set('content_locales', foundation_data['locales'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -280,6 +281,7 @@ class EventCreateView(SafeSessionWizardView):
                     'timezone': str(basics_data.get('timezone')),
                     'locale': event.settings.locale,
                     'locales': event.settings.locales,
+                    'content_locales': event.settings.get('content_locales', as_type=list),
                     'is_video_creation': final_is_video_creation,
                 }
 
@@ -354,6 +356,11 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
 

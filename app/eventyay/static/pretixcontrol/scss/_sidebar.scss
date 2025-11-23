@@ -1,13 +1,14 @@
 .navbar-toggle-sidebar {
-  display: block;
+  display: flex;
+  align-items: baseline;
   float: left;
-  font-size: 16px;
+  font-size: 14px;
   margin-left: 10px;
   background-color: transparent !important;
   border: none;
   padding: 0.5rem;
   color: #fff;
-  margin-top: 8px;
+  margin-top: 12px;
   margin-right: 0;
   padding-right: 0;
   z-index: 1;

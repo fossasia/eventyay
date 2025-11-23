@@ -282,6 +282,7 @@ class EventWizard(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            event.settings.set('content_locales', foundation_data['locales'])
 
         if (copy_data and copy_data['copy_from_event']) or self.clone_from or event.has_subevents:
             return redirect(

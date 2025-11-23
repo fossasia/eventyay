@@ -412,12 +412,24 @@ LANGUAGES_INFORMATION = {
         "official": False,
         "percentage": 96,
     },
+    "id": {
+        "name": _("Indonesian"),
+        "natural_name": "Bahasa Indonesia",
+        "official": False,
+        "percentage": 90,
+    },
     "ja-jp": {
         "name": _("Japanese"),
         "natural_name": "日本語",
         "official": False,
         "percentage": 62,
         "public_code": "jp",
+    },
+    "ko": {
+        "name": _("Korean"),
+        "natural_name": "한국어",
+        "official": False,
+        "percentage": 88,
     },
     "nl": {
         "name": _("Dutch"),
