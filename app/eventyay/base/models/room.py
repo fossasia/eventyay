@@ -41,8 +41,29 @@ class RoomQuerySet(models.QuerySet):
     ):
         from .auth import RoomGrant, EventGrant
 
-        traits = traits or user.traits
+        # Normalize traits input
+        # - If traits is explicitly provided, use it; otherwise, read from user when available
+        # - Always coerce to a simple list[str] for proper DB array parameterization
+        if traits is None:
+            if user is not None:
+                traits = user.traits
+            else:
+                traits = []
+
         allow_empty_traits = not user or user.type == User.UserType.PERSON
+
+        # Ensure traits is always a proper list of strings for SQL parameterization
+        if isinstance(traits, str):
+            # Accept legacy "(a,b,c)" string format by parsing it into a list
+            traits = [t.strip() for t in traits.strip("()").split(",") if t.strip()]
+        else:
+            try:
+                # Convert any iterable (set/tuple/queryset) to a list of strings
+                traits = [str(t) for t in list(traits or [])]
+            except TypeError:
+                # Non-iterables (shouldn't happen) fallback to empty list
+                traits = []
+
         if event.has_permission_implicit(
             traits=traits,
             permissions=[permission],
@@ -108,8 +129,8 @@ class RoomQuerySet(models.QuerySet):
                             TRUE = ALL(
                                 SELECT (
                                     CASE jsonb_typeof(d{i}.elem)
-                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s) )
-                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s)
+                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s::text[]) )
+                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s::text[])
                                     END
                                 ) FROM jsonb_array_elements( trait_grants->%s ) AS d{i}(elem)
                             ) {ext}
@@ -156,7 +177,7 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     are not in use right now.
     """
 
-    log_prefix = "pretalx.room"
+    log_prefix = "eventyay.room"
 
     deleted = models.BooleanField(default=False)
     description = I18nCharField(
@@ -201,6 +222,11 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     pretalx_id = models.IntegerField(default=0)
     schedule_data = JSONField(null=True, blank=True)
     force_join = models.BooleanField(default=False)
+    setup_complete = models.BooleanField(default=False)
+    hidden = models.BooleanField(default=False)
+    # Default is True (hidden) for safety - rooms should be hidden until configured.
+    # The _create_room function and migration explicitly set this based on module_config.
+    sidebar_hidden = models.BooleanField(default=True)
 
     objects = RoomQuerySet.as_manager()
 
@@ -290,6 +316,9 @@ class RoomConfigSerializer(I18nAwareModelSerializer):
             "pretalx_id",
             "force_join",
             "schedule_data",
+            "setup_complete",
+            "hidden",
+            "sidebar_hidden",
         )
 
 

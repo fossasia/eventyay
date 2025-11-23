@@ -43,7 +43,7 @@
 	.fatal-error(v-if="currentFatalError") {{ currentFatalError.message || currentFatalError.code }}
 </template>
 <script>
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -67,6 +67,7 @@ export default {
 		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'socketCloseCode', 'world', 'rooms', 'user', 'mediaSourcePlaceholderRect', 'userLocale', 'userTimezone', 'roomFatalErrors']),
 		...mapState('notifications', ['askingPermission']),
 		...mapState('chat', ['call']),
+		...mapGetters(['visibleRooms']),
 		currentFatalError() {
 			if (this.room && this.roomFatalErrors?.[this.room.id]) {
 				return this.roomFatalErrors[this.room.id]
@@ -81,8 +82,8 @@ export default {
 			const routeName = this.$route?.name
 			if (!routeName) return
 			if (routeName.startsWith && routeName.startsWith('admin')) return
-			if (routeName === 'home') return this.rooms?.[0]
-			return this.rooms?.find(room => room.id === this.$route.params.roomId)
+			if (routeName === 'home') return this.visibleRooms?.[0]
+			return this.visibleRooms?.find(room => room.id === this.$route.params.roomId)
 		},
 		// TODO since this is used EVERYWHERE, use provide/inject?
 		modules() {
@@ -154,10 +155,6 @@ export default {
 				}
 			},
 			deep: true
-		},
-		$route() {
-			// Always close the sidebar after navigation for consistent drawer UX on all screen sizes
-			this.showSidebar = false
 		},
 		stageStreamCollapsed: {
 			handler() {
@@ -274,10 +271,10 @@ export default {
 			}
 		},
 		roomListChange() {
-			if (this.room && !this.rooms.includes(this.room)) {
+			if (this.room && !this.visibleRooms.includes(this.room)) {
 				this.$router.push('/').catch(() => {})
 			}
-			if (!this.backgroundRoom && !this.rooms.includes(this.backgroundRoom)) {
+			if (this.backgroundRoom && !this.visibleRooms.includes(this.backgroundRoom)) {
 				this.backgroundRoom = null
 			}
 		}

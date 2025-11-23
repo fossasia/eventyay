@@ -1,4 +1,4 @@
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings
@@ -7,9 +7,9 @@ from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
+from django.utils.crypto import get_random_string
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-from django.utils.crypto import get_random_string
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -78,7 +78,7 @@ class EventWizardFoundationForm(forms.Form):
         # Make organizer required only if more than one exists
         organizer_count = qs.count()
         is_required = organizer_count > 1
-        
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
@@ -176,11 +176,11 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        
+
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
             charset = list('abcdefghjklmnpqrstuvwxyz3789')
-            
+
             # Try different lengths until we find a unique slug
             length = 6
             counter = 0
@@ -192,11 +192,11 @@ class EventWizardBasicsForm(I18nModelForm):
                     # Fallback: add counter to ensure uniqueness
                     candidate = f'{get_random_string(length=4, allowed_chars=charset)}{counter}'
                     counter += 1
-                
+
                 if not self.organizer.events.filter(slug__iexact=candidate).exists():
                     self.initial['slug'] = candidate
                     break
-        
+
         if self.has_subevents:
             del self.fields['presale_start']
             del self.fields['presale_end']
@@ -549,6 +549,7 @@ class EventSettingsForm(SettingsForm):
         'banner_text',
         'banner_text_bottom',
         'order_email_asked_twice',
+        'include_wikimedia_username',
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
@@ -1451,7 +1452,7 @@ class QuickSetupForm(I18nForm):
         plugins_active = self.obj.get_plugins()
         if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
             del self.fields['payment_stripe__enabled']
-        if 'pretix.plugins.banktransfer' not in plugins_active:
+        if 'eventyay.plugins.banktransfer' not in plugins_active:
             del self.fields['payment_banktransfer__enabled']
         self.fields['payment_banktransfer_bank_details'].required = False
         for f in self.fields.values():
