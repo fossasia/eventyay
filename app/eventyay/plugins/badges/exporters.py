@@ -234,7 +234,6 @@ def render_pdf(event, positions, opt):
 
     if not any:
         raise OrderError(_('None of the selected products is configured to print badges.'))
-    
     output_pdf_writer.add_metadata(
         {
             '/Title': 'Badges',
