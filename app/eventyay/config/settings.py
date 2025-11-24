@@ -380,9 +380,6 @@ DATABASES = {
     }
 }
 
-# Feature flag for JSON field support (PostgreSQL only)
-JSON_FIELD_AVAILABLE = DATABASES['default']['ENGINE'].split('.')[-1] == 'postgresql'
-
 
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
@@ -814,6 +811,7 @@ redis_connection_kwargs = {
 
 REDIS_URL = config.get('redis', 'location')
 HAS_REDIS = bool(REDIS_URL)
+# eventyay only supports PostgreSQL, so JSONField is always available
 JSON_FIELD_AVAILABLE = True
 REDIS_HOSTS = [
     {
