@@ -62,6 +62,8 @@ const config = ref(null)
 const hlsConfig = ref('')
 const saving = ref(false)
 const error = ref(null)
+const instance = getCurrentInstance()
+const features = instance?.proxy?.$features
 
 // Computed replacements for former mixin + option API computeds
 const momentLocales = computed(() => momentLocaleSet)
@@ -111,8 +113,7 @@ async function save() {
 			track_room_views: config.value.track_room_views,
 			track_world_views: config.value.track_world_views
 		}
-		const { proxy } = getCurrentInstance() // access global features plugin
-		if (proxy?.$features?.enabled('conftool')) {
+		if (features?.enabled('conftool')) {
 			patch.conftool_url = config.value.conftool_url
 			patch.conftool_password = config.value.conftool_password
 		}

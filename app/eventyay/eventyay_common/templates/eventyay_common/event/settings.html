@@ -130,6 +130,7 @@
             <fieldset>
                 <legend>{% trans "Localization" %}</legend>
                 {% bootstrap_field sform.locales layout="control" %}
+                {% if sform.content_locales %}{% bootstrap_field sform.content_locales layout="control" %}{% endif %}
                 {% bootstrap_field sform.locale layout="control" %}
                 {% bootstrap_field sform.timezone layout="control" %}
                 {% bootstrap_field sform.region layout="control" %}

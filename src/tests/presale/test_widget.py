@@ -147,7 +147,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
         data = json.loads(response.content.decode())
         assert data == {
             'error': 'Tickets for this event cannot be purchased on this sales channel.',
-            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
         }
         self.assertEqual(response.status_code, 200)
         response = self.client.post(
@@ -172,7 +172,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             'waiting_list_enabled': False,
             'error': None,
             'has_seating_plan': False,
-            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
             'items_by_category': [
                 {
                     'items': [
@@ -334,7 +334,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             'vouchers_exist': True,
             'waiting_list_enabled': False,
             'error': None,
-            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
             'items_by_category': [
                 {
                     'items': [
@@ -393,7 +393,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             'has_seating_plan': False,
             'waiting_list_enabled': False,
             'error': None,
-            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
             'items_by_category': [
                 {
                     'items': [
@@ -459,7 +459,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             'date_range': f'Dec. 26, {self.event.date_from.year} 00:00',
             'frontpage_text': '',
             'currency': 'EUR',
-            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+            'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
             'show_variations_expanded': False,
             'display_net_prices': False,
             'has_seating_plan': False,
@@ -582,7 +582,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
                 'list_type': 'list',
                 'name': '30C3',
                 'frontpage_text': '',
-                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
                 'events': [
                     {
                         'name': 'Present',
@@ -648,7 +648,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
                 'date': '2019-01-01',
                 'name': '30C3',
                 'frontpage_text': '',
-                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
                 'weeks': [
                     [
                         None,
@@ -773,7 +773,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
                 'name': '30C3',
                 'frontpage_text': '',
                 'week': [2019, 1],
-                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
                 'days': [
                     {
                         'day_formatted': 'Mon, Dec 31st',
@@ -918,7 +918,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             response = self.client.get('/%s/widget/product_list' % (self.orga.slug,))
             data = json.loads(response.content.decode())
             assert data == {
-                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
                 'events': [
                     {
                         'availability': {'color': 'none', 'text': 'Event series'},
@@ -1023,7 +1023,7 @@ class WidgetCartTest(CartTestMixin, TestCase):
             assert data == {
                 'date': '2019-01-01',
                 'list_type': 'calendar',
-                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">event ticketing powered by eventyay</a>',
+                'poweredby': '<a href="https://eventyay.com" target="_blank" rel="noopener">powered by eventyay</a>',
                 'weeks': [
                     [
                         None,

@@ -127,12 +127,14 @@ def process_event_webhook(event_data):
     try:
         action = event_data.get("action")
         organiser = get_object_or_404(Organiser, slug=event_data.get("organiser_slug"))
+        locales = event_data.get("locales") or []
+        content_locales = event_data.get("content_locales") or locales
         if action == Action.CREATE:
             with scopes_disabled():
                 event = Event.objects.create(
                     organiser=organiser,
-                    locale_array=",".join(event_data.get("locales")),
-                    content_locale_array=",".join(event_data.get("locales")),
+                    locale_array=",".join(locales),
+                    content_locale_array=",".join(content_locales),
                     name=event_data.get("name"),
                     slug=event_data.get("slug"),
                     timezone=event_data.get("timezone"),
@@ -157,8 +159,8 @@ def process_event_webhook(event_data):
             event.name = event_data.get("name")
             event.date_from = datetime.fromisoformat(event_data["date_from"])
             event.date_to = datetime.fromisoformat(event_data["date_to"])
-            event.locale_array = ",".join(event_data.get("locales"))
-            event.content_locale_array = ",".join(event_data.get("locales"))
+            event.locale_array = ",".join(locales)
+            event.content_locale_array = ",".join(content_locales)
             event.timezone = event_data.get("timezone")
             event.locale = event_data.get("locale")
             event.plugins = (
