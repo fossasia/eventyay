@@ -145,7 +145,6 @@ class AllTicketsPDF(BaseExporter):
         for op in qs:
             if not op.generate_ticket:
                 continue
-            
             any_tickets = True
             if op.order.event != o.event:
                 o = PdfTicketOutput(op.event)
