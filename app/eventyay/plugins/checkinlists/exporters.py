@@ -315,7 +315,6 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             # Return empty story instead of None
             from reportlab.platypus import Paragraph
             return [Paragraph("No check-in list selected.", self.get_style())]
-        
         cl = self.event.checkin_lists.get(pk=form_data['list'])
 
         questions = tuple(Question.objects.filter(event=self.event, id__in=form_data.get('questions', [])))
