@@ -187,6 +187,7 @@ def default_feature_flags():
         "present_multiple_times": False,
         "submission_public_review": True,
         "chat-moderation": True,
+        "polls": True,
     }
 
 def default_display_settings():
