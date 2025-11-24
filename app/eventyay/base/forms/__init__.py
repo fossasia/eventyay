@@ -182,7 +182,7 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
         if attrs:
             if 'class' in attrs:
                 default_attrs['class'] = default_attrs['class'] + ' ' + attrs['class']
-            default_attrs.update(attrs)
+            default_attrs |= attrs
         super().__init__(attrs=default_attrs, **kwargs)
 
     def render(self, name, value, attrs=None, renderer=None):
@@ -191,6 +191,11 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
         js_code = """
         <script>
         (function() {
+            if (window.autoExpandTextareaInitialized) {
+                return;
+            }
+            window.autoExpandTextareaInitialized = true;
+            
             function autoExpandTextarea(textarea) {
                 if (!textarea || textarea.hasAttribute('data-auto-expand-init')) return;
                 textarea.setAttribute('data-auto-expand-init', 'true');
@@ -210,9 +215,14 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
                 adjustHeight();
             }
 
-            document.addEventListener('DOMContentLoaded', function() {
+            function initializeAutoExpandTextareas() {
                 document.querySelectorAll('textarea[data-auto-expand="true"]').forEach(autoExpandTextarea);
-            });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeAutoExpandTextareas);
+            } else {
+                initializeAutoExpandTextareas();
+            }
 
             // Handle dynamically added textareas (for i18n tabs)
             if (typeof MutationObserver !== 'undefined') {
