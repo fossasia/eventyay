@@ -118,16 +118,16 @@ class WaitingListExporter(ListExporter):
             datetime_format = '%Y-%m-%d %H:%M:%S %Z'
 
             row = [
-            entry.created.astimezone(tz).strftime(datetime_format),  # alternative: .isoformat(),
-            entry.name,
-            entry.email,
-            entry.phone,
-            str(entry.product) if entry.product else '',
-            str(entry.variation) if entry.variation else '',
-            entry.event.slug,
-            entry.event.name,
-            entry.subevent.name if entry.subevent else '',
-            event_for_date_columns.date_from.astimezone(tz).strftime(datetime_format),
+                entry.created.astimezone(tz).strftime(datetime_format),  # alternative: .isoformat(),
+                entry.name,
+                entry.email,
+                entry.phone,
+                str(entry.product) if entry.product else '',
+                str(entry.variation) if entry.variation else '',
+                entry.event.slug,
+                entry.event.name,
+                entry.subevent.name if entry.subevent else '',
+                event_for_date_columns.date_from.astimezone(tz).strftime(datetime_format),
                 event_for_date_columns.date_to.astimezone(tz).strftime(datetime_format)
                 if event_for_date_columns.date_to
                 else '',
