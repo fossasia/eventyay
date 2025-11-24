@@ -167,6 +167,75 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         return super().format_output(rendered_widgets, id_)
 
 
+class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
+    """
+    An auto-expanding textarea widget for internationalized text fields.
+    Automatically adjusts height based on content with a maximum height limit.
+    """
+    
+    def __init__(self, attrs=None, **kwargs):
+        default_attrs = {
+            'class': 'form-control auto-expanding-textarea',
+            'data-auto-expand': 'true',
+            'style': 'min-height: 80px; max-height: 300px; overflow-y: hidden; resize: vertical; transition: height 0.2s ease-in-out;'
+        }
+        if attrs:
+            if 'class' in attrs:
+                default_attrs['class'] = default_attrs['class'] + ' ' + attrs['class']
+            default_attrs.update(attrs)
+        super().__init__(attrs=default_attrs, **kwargs)
+
+    def render(self, name, value, attrs=None, renderer=None):
+        html = super().render(name, value, attrs, renderer)
+        
+        js_code = """
+        <script>
+        (function() {
+            function autoExpandTextarea(textarea) {
+                if (!textarea || textarea.hasAttribute('data-auto-expand-init')) return;
+                textarea.setAttribute('data-auto-expand-init', 'true');
+
+                function adjustHeight() {
+                    textarea.style.height = 'auto';
+                    var scrollHeight = textarea.scrollHeight;
+                    var minHeight = 80;
+                    var maxHeight = 300;
+                    var newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
+                    textarea.style.height = newHeight + 'px';
+                    textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
+                }
+
+                textarea.addEventListener('input', adjustHeight);
+                textarea.addEventListener('paste', function() { setTimeout(adjustHeight, 10); });
+                adjustHeight();
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+                document.querySelectorAll('textarea[data-auto-expand="true"]').forEach(autoExpandTextarea);
+            });
+
+            // Handle dynamically added textareas (for i18n tabs)
+            if (typeof MutationObserver !== 'undefined') {
+                var observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        mutation.addedNodes.forEach(function(node) {
+                            if (node.nodeType === 1) {
+                                var textareas = node.querySelectorAll ? 
+                                    node.querySelectorAll('textarea[data-auto-expand="true"]') : [];
+                                textareas.forEach(autoExpandTextarea);
+                            }
+                        });
+                    });
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        })();
+        </script>
+        """
+        
+        return html + js_code
+
+
 class I18nURLFormField(i18nfield.forms.I18nFormField):
     """
     Custom form field to handle internationalized URL inputs. It extends the I18nFormField
