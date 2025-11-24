@@ -20,7 +20,6 @@ from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 from eventyay.config.urls import common_patterns
-from eventyay.multidomain import redirects
 from eventyay.multidomain.plugin_handler import plugin_event_urls
 from eventyay.presale.urls import (
     event_patterns,
@@ -32,40 +31,6 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
 logger = logging.getLogger(__name__)
 
-EXCLUDED_LEGACY_PREFIXES = (
-    "common",
-    "control",
-    "orga",
-    "admin",
-    "api",
-    "video",
-    "static",
-    "media",
-)
-
-MATCHED_LEGACY_SUBPATHS = (
-    "schedule",
-    "talk",
-    "speaker",
-    "featured",
-    "sneak",
-    "cfp",
-    "submit",
-    "me",
-    "login",
-    "logout",
-    "auth",
-    "reset",
-    "invitation",
-    "online-video",
-    "widgets",
-    "static",
-    "locale",
-    "sw\\.js",
-)
-
-EXCLUDED_LEGACY_PREFIXES_REGEX = "|".join(EXCLUDED_LEGACY_PREFIXES)
-MATCHED_LEGACY_SUBPATHS_REGEX = "|".join(MATCHED_LEGACY_SUBPATHS)
 
 class VideoSPAView(View):
     def get(self, request, *args, **kwargs):
@@ -270,44 +235,12 @@ unified_event_patterns = [
     ),
 ]
 
-# Legacy redirect patterns for backward compatibility
-legacy_redirect_patterns = [
-    # Legacy standalone video SPA at /video
-    re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.legacy.assets'),
-    re_path(
-        r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
-        VideoAssetView.as_view(),
-        name='video.legacy.assets.file',
-    ),
-    re_path(r'^video/?$', VideoSPAView.as_view(), name='video.legacy.index'),
-    # Legacy video URLs: /video/<event_identifier> -> /{organizer}/{event}/video
-    re_path(
-        r'^video/(?P<event_identifier>(?!assets)[^/]+)(?:/.*)?$',
-        redirects.legacy_video_redirect,
-        name='video.legacy.redirect',
-    ),
-    # Legacy talk URLs: /<event>/(path) -> /{organizer}/{event}/(path)
-    # This excludes known top-level namespaces before treating the first segment as an event slug.
-    re_path(
-        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/({MATCHED_LEGACY_SUBPATHS_REGEX})(?:/|$)',
-        redirects.legacy_talk_redirect,
-        name='talk.legacy.redirect',
-    ),
-    # Legacy event base URL: /<event>/ -> /{organizer}/{event}/
-    re_path(
-        rf'^(?!(?:{EXCLUDED_LEGACY_PREFIXES_REGEX})/)(?P<event_slug>[^/]+)/$',
-        redirects.legacy_talk_redirect,
-        name='talk.legacy.base.redirect',
-    ),
-]
-
 urlpatterns = (
     common_patterns
     + storage_patterns
-    # The plugins patterns must be before legacy_redirect_patterns and presale_patterns_main
+    # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
     + plugin_patterns
-    + legacy_redirect_patterns
     + presale_patterns_main
     + unified_event_patterns
 )
