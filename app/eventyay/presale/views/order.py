@@ -1085,7 +1085,7 @@ class OrderDownloadMixin:
                 return resp
             else:
                 resp = FileResponse(value.file.file, content_type=value.type)
-                if self.order_position and self.order_position.subevent:
+                if self.order_position.subevent:
                     # Subevent date in filename improves accessibility e.g. for screen reader users
                     resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
                         self.request.event.slug.upper(),
@@ -1094,23 +1094,13 @@ class OrderDownloadMixin:
                         self.order_position.subevent.date_from.strftime('%Y_%m_%d'),
                         value.extension,
                     )
-                elif self.order_position:
+                else:
                     resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
                         self.request.event.slug.upper(),
                         self.order.code,
                         self.order_position.positionid,
                         value.extension,
                     )
-                else:
-                    # Fallback if order_position is not available
-                    resp['Content-Disposition'] = (
-                        'attachment; filename="{}-{}{}"'.format(
-                            self.request.event.slug.upper(),
-                            self.order.code,
-                            value.extension,
-                        )
-                    )
-                    return resp
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
