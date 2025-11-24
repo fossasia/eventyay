@@ -54,7 +54,7 @@ dependencies = [
         'django-markup',
         'markdown==3.10',
         'bleach==6.3.*',
-        'sentry-sdk==2.45.*',
+        'sentry-sdk==2.46.*',
         'babel',
         'pycparser==2.22',
         'django-redis==5.4.*',
