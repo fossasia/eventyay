@@ -510,20 +510,18 @@ class OrderDownload(AsyncAction, OrderView):
                 return resp
             else:
                 resp = FileResponse(value.file.file, content_type=value.type)
-                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
+                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
                     self.request.event.slug.upper(),
                     self.order.code,
                     self.order_position.positionid,
-                    self.output.identifier,
                     value.extension,
                 )
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
                 self.request.event.slug.upper(),
                 self.order.code,
-                self.output.identifier,
                 value.extension,
             )
             return resp
