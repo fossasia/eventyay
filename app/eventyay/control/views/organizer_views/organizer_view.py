@@ -283,13 +283,6 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
             return self.get(request)
 
 
-class OrganizerTeamView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
-    model = Organizer
-    template_name = 'pretixcontrol/organizers/teams.html'
-    permission = 'can_change_permissions'
-    context_object_name = 'organizer'
-
-
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
     model = Event
     template_name = 'pretixcontrol/organizers/detail.html'
