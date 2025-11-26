@@ -59,20 +59,25 @@ class ContactForm(forms.Form):
             )
 
         if event.settings.order_phone_asked:
+            self.fields['phone'].required = True
+            self.fields['phone'].help_text = event.settings.checkout_phone_helptext
             with language(get_babel_locale()):
                 default_country = guess_country(event)
                 default_prefix = None
+                phone_initial = ''
                 for prefix, values in _COUNTRY_CODE_TO_REGION_CODE.items():
                     if str(default_country) in values:
                         default_prefix = prefix
-                try:
-                    initial = self.initial.pop('phone', None)
-                    initial = PhoneNumber().from_string(initial) if initial else '+{}.'.format(default_prefix)
-                except NumberParseException:
-                    initial = None
-            self.fields['phone'].required = event.settings.order_phone_required
-            self.fields['phone'].help_text = event.settings.checkout_phone_helptext
-            self.fields['phone'].initial = initial
+                        break
+                if passed_initial := self.initial.get('phone'):
+                    try:
+                        phone_number = PhoneNumber().from_string(passed_initial)
+                        phone_initial = str(phone_number)
+                    except NumberParseException:
+                        pass
+                elif default_prefix:
+                    phone_initial = f'+{default_prefix}.'
+            self.fields['phone'].initial = phone_initial
         else:
             del self.fields['phone']
 
