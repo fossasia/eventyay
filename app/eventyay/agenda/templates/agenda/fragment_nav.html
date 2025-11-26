@@ -10,12 +10,12 @@
     </a>
 {% endif %}
 {% if request.event.display_settings.schedule_display != "list" %}
-    <a href="{{ request.event.urls.talks }}" class="header-tab {% if "/talk/" in request.path_info %} active{% endif %}">
+    <a href="{{ request.event.urls.talks }}" class="header-tab {% if "/sessions/" in request.path_info %} active{% endif %}">
         <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
     </a>
 {% endif %}
 {% if schedule or request.event.current_schedule %}
-    <a href="{{ request.event.urls.speakers }}" class="header-tab {% if "/speaker/" in request.path_info %} active{% endif %}">
+    <a href="{{ request.event.urls.speakers }}" class="header-tab {% if "/speakers/" in request.path_info %} active{% endif %}">
         <i class="fa fa-group"></i> {{ phrases.schedule.speakers }}
     </a>
 {% endif %}

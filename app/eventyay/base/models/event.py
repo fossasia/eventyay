@@ -825,8 +825,8 @@ class Event(
         schedule = '{base}schedule/'
         schedule_nojs = '{schedule}nojs'
         featured = '{base}featured/'
-        talks = '{base}talk/'
-        speakers = '{base}speaker/'
+        talks = '{base}sessions/'
+        speakers = '{base}speakers/'
         changelog = '{schedule}changelog/'
         feed = '{schedule}feed.xml'
         export = '{schedule}export/'
@@ -1890,18 +1890,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/schedule')
-        return url
+        return self.urls.schedule.full
 
     @property
     def talk_session_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/talk')
-        return url
+        return self.urls.talks.full
 
     @property
     def talk_speaker_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/speaker')
-        return url
+        return self.urls.speakers.full
 
     @property
     def talk_dashboard_url(self):
