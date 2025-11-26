@@ -1,5 +1,4 @@
 {% extends "eventyay_common/event/settings_base.html" %}
-{% load static %}
 {% load i18n %}
 {% load bootstrap3 %}
 {% load static %}
@@ -7,224 +6,226 @@
 {% load formset_tags %}
 {% block title %}{% trans "General settings" %}{% endblock %}
 {% block custom_header %}
-    {{ block.super }}
-    <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
+{{ block.super }}
+<link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
+{{ sform.media }}
 {% endblock %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
-            </div>
-            <div class="navigation-button">
-                <a href="#" class="header-nav btn btn-outline-success active">
-                    <i class="fa fa-home"></i> {% trans "Home" %}
-                </a>
-                <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
-                   class="header-nav btn btn-outline-success">
-                    <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-                </a>
-                {% if is_talk_event_created %}
-                <a href="{{ request.event.talk_dashboard_url }}" class="header-nav btn btn-outline-success">
-                    <i class="fa fa-group"></i> {% trans "Talks" %}
-                </a>
-                {% endif %}
-                {% if is_video_enabled %}
-                    <a class="header-nav btn btn-outline-success"
-                       href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
-                       title="{% trans 'Access videos related to this event' %}">
-                        <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-                    </a>
-                {% endif %}
-            </div>
+<nav id="event-nav" class="header-nav">
+    <div class="navigation">
+        <div class="navigation-title">
+            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
         </div>
-    </nav>
-    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% bootstrap_form_errors form %}
-		{% bootstrap_form_errors sform %} {# Added to show sform errors #}
-        <div class="tabbed-form">
-            <fieldset>
-                <legend>{% trans "Basics" %}</legend>
-                {% bootstrap_field form.name layout="control" %}
-                {% bootstrap_field form.slug layout="control" %}
-                {% if form.domain %} {# Conditionally show if domain field is added to form #}
-                    {% bootstrap_field form.domain layout="control" %}
-                {% endif %}
-                {% bootstrap_field form.date_from layout="control" %}
-                {% bootstrap_field form.date_to layout="control" %}
-                {% bootstrap_field form.date_admission layout="control" %}
-                {% include "pretixcontrol/event/fragment_geodata.html" %}
-                {% bootstrap_field sform.contact_mail layout="control" %}
-                {% bootstrap_field sform.imprint_url layout="control" %}
-                {% bootstrap_field form.is_public layout="control" %} 
-                <div class="setting-part">
-                    <div class="form-group setting-form">
-                        <label class="col-md-3 control-label">{% trans "Tickets system" %}</label>
-                        <div class="col-md-9 col-value">
-                            <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
-                                    data-target="#alert-modal-disabled">
-                                {% trans "Enabled" %}
-                            </button>
-                            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
-                            class="btn btn-sm btn-default" title='{% trans "Dashboard" %}'
+        <div class="navigation-button">
+            <a href="#" class="header-nav btn btn-outline-success active">
+                <i class="fa fa-home"></i> {% trans "Home" %}
+            </a>
+            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+                class="header-nav btn btn-outline-success">
+                <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+            </a>
+            {% if is_talk_event_created %}
+            <a href="{{ request.event.talk_dashboard_url }}" class="header-nav btn btn-outline-success">
+                <i class="fa fa-group"></i> {% trans "Talks" %}
+            </a>
+            {% endif %}
+            {% if is_video_enabled %}
+            <a class="header-nav btn btn-outline-success"
+                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                title="{% trans 'Access videos related to this event' %}">
+                <i class="fa fa-video-camera"></i> {% trans "Videos" %}
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+<form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    <div class="tabbed-form">
+        <fieldset>
+            <legend>{% trans "Basics" %}</legend>
+            {% bootstrap_field form.name layout="control" %}
+            {% bootstrap_field form.slug layout="control" %}
+            {% if form.domain %} {# Conditionally show if domain field is added to form #}
+            {% bootstrap_field form.domain layout="control" %}
+            {% endif %}
+            {% bootstrap_field form.date_from layout="control" %}
+            {% bootstrap_field form.date_to layout="control" %}
+            {% bootstrap_field form.date_admission layout="control" %}
+            {% include "pretixcontrol/event/fragment_geodata.html" %}
+            {% bootstrap_field sform.contact_mail layout="control" %}
+            {% bootstrap_field sform.imprint_url layout="control" %}
+            {% bootstrap_field form.is_public layout="control" %}
+            <div class="setting-part">
+                <div class="form-group setting-form">
+                    <label class="col-md-3 control-label">{% trans "Tickets system" %}</label>
+                    <div class="col-md-9 col-value">
+                        <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
+                            data-target="#alert-modal-disabled">
+                            {% trans "Enabled" %}
+                        </button>
+                        <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+                            class="btn btn-sm btn-default" title='{% trans "Dashboard" %}' data-toggle="tooltip">
+                            <span class="fa fa-dashboard"></span>
+                        </a>
+                        <a href='{% url "control:event.settings" organizer=request.organizer.slug event=request.event.slug %}'
+                            class="btn btn-sm btn-default" title='{% trans "Setting" %}' data-toggle="tooltip">
+                            <span class="fa fa-edit"></span>
+                        </a>
+                    </div>
+                </div>
+                <div class="form-group setting-form">
+                    <label class="col-md-3 control-label">{% trans "Talks system" %}</label>
+                    <div class="col-md-9 col-value">
+                        {% if is_talk_event_created %}
+                        <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
+                            data-target="#alert-modal-disabled">
+                            {% trans "Enabled" %}
+                        </button>
+                        <a href='{{ request.event.talk_dashboard_url }}' class="btn btn-sm btn-default"
+                            title='{% trans "Dashboard" %}' data-toggle="tooltip">
+                            <span class="fa fa-dashboard"></span>
+                        </a>
+                        <a href='{{ request.event.talk_settings_url }}' class="btn btn-sm btn-default"
+                            title='{% trans "Settings" %}' data-toggle="tooltip">
+                            <span class="fa fa-edit"></span>
+                        </a>
+                        {% else %}
+                        <button type="button" class="btn btn-sm btn-default disabled-btn" data-toggle="modal"
+                            data-target="#alert-modal-enable-talk">
+                            {% trans "Disabled" %}
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="form-group custom-form">
+                    <label class="col-md-3 control-label">{% trans "Video system" %}</label>
+                    <div class="col-md-9 col-value">
+                        {% if is_video_enabled %}
+                        <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
+                            data-target="#alert-modal-disabled">
+                            {% trans "Enabled" %}
+                        </button>
+                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+                            class="btn btn-sm btn-default" title='{% trans "Video Configuration" %}'
                             data-toggle="tooltip">
-                                <span class="fa fa-dashboard"></span>
-                            </a>
-                            <a href='{% url "control:event.settings" organizer=request.organizer.slug event=request.event.slug %}'
-                            class="btn btn-sm btn-default" title='{% trans "Setting" %}'
-                            data-toggle="tooltip">
-                                <span class="fa fa-edit"></span>
-                            </a>
-                        </div>
-                    </div>
-                    <div class="form-group setting-form">
-                        <label class="col-md-3 control-label">{% trans "Talks system" %}</label>
-                        <div class="col-md-9 col-value">
-                            {% if is_talk_event_created %}
-                                <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
-                                        data-target="#alert-modal-disabled">
-                                    {% trans "Enabled" %}
-                                </button>
-                                <a href='{{ request.event.talk_dashboard_url }}'
-                                    class="btn btn-sm btn-default" title='{% trans "Dashboard" %}'
-                                    data-toggle="tooltip">
-                                    <span class="fa fa-dashboard"></span>
-                                </a>
-                                <a href='{{ request.event.talk_settings_url }}'
-                                    class="btn btn-sm btn-default" title='{% trans "Settings" %}'
-                                    data-toggle="tooltip">
-                                    <span class="fa fa-edit"></span>
-                                </a>
-                            {% else %}
-                                <button type="button" class="btn btn-sm btn-default disabled-btn" data-toggle="modal"
-                                        data-target="#alert-modal-enable-talk">
-                                    {% trans "Disabled" %}
-                                </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="form-group custom-form">
-                        <label class="col-md-3 control-label">{% trans "Video system" %}</label>
-                        <div class="col-md-9 col-value">
-                            {% if is_video_enabled %}
-                                <button type="button" class="btn btn-sm btn-default enabled-btn" data-toggle="modal"
-                                        data-target="#alert-modal-disabled">
-                                    {% trans "Enabled" %}
-                                </button>
-                                <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
-                                        class="btn btn-sm btn-default" title='{% trans "Video Configuration" %}'
-                                        data-toggle="tooltip">
-                                    <span class="fa fa-edit"></span>
-                                </a>
-                            {% else %}
-                                <button type="button" class="btn btn-sm btn-default disabled-btn" data-toggle="modal"
-                                        data-target="#alert-modal-enable-video">
-                                    {% trans "Disabled" %}
-                                </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Localization" %}</legend>
-                {% bootstrap_field sform.locales layout="control" %}
-                {% if sform.content_locales %}{% bootstrap_field sform.content_locales layout="control" %}{% endif %}
-                {% bootstrap_field sform.locale layout="control" %}
-                {% bootstrap_field sform.timezone layout="control" %}
-                {% bootstrap_field sform.region layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{{ _('Texts') }}</legend>
-                {% bootstrap_field sform.frontpage_text layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{{ _('Design') }}</legend>
-                {% bootstrap_field sform.event_logo_image layout="control" %}
-                {% bootstrap_field sform.logo_show_title layout="control" %}
-                {% bootstrap_field sform.logo_image layout="control" %}
-                {% bootstrap_field sform.logo_image_large layout="control" %}
-                {% bootstrap_field sform.og_image layout="control" %}
-                {% url "control:organizer.edit" organizer=request.organizer.slug as org_url %}
-                {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
-                    {% bootstrap_field sform.primary_color layout="control" %}
-                    {% bootstrap_field sform.theme_color_success layout="control" %}
-                    {% bootstrap_field sform.theme_color_danger layout="control" %}
-                    {% bootstrap_field sform.theme_color_background layout="control" %}
-                    {% bootstrap_field sform.hover_button_color layout="control" %}
-                    {% bootstrap_field sform.theme_round_borders layout="control" %}
-                    {% bootstrap_field sform.primary_font layout="control" %}
-                {% endpropagated %}
-            </fieldset>
-        </div>
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Save" %}
-            </button>
-        </div>
-    
-        <div class="modal popup-modal" id="alert-modal-enable-talk" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="modal-card">
-                            <div class="modal-card-icon">
-                                <i class="fa fa-cog big-rotating-icon"></i>
-                            </div>
-                            <div class="modal-card-content">
-                                <h3>{% trans "Component not enabled!" %}</h3>
-                                <p>{% trans "Do you want to enable the feature?" %}</p>
-                                <div class="button-group">
-                                    <button class="btn btn-primary" name="enable_talk_system" value="enable">{% trans "Yes" %}</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                </div>
-                            </div>
-                        </div>
+                            <span class="fa fa-edit"></span>
+                        </a>
+                        {% else %}
+                        <button type="button" class="btn btn-sm btn-default disabled-btn" data-toggle="modal"
+                            data-target="#alert-modal-enable-video">
+                            {% trans "Disabled" %}
+                        </button>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-        </div>
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Localization" %}</legend>
+            {% bootstrap_field sform.locales layout="control" %}
+            {% bootstrap_field sform.locale layout="control" %}
+            {% bootstrap_field sform.timezone layout="control" %}
+            {% bootstrap_field sform.region layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{{ _('Texts') }}</legend>
+            {% bootstrap_field sform.frontpage_text layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{{ _('Design') }}</legend>
+            {% bootstrap_field sform.event_logo_image layout="control" %}
+            {% bootstrap_field sform.logo_show_title layout="control" %}
+            {% bootstrap_field sform.logo_image layout="control" %}
+            {% bootstrap_field sform.logo_image_large layout="control" %}
+            {% bootstrap_field sform.og_image layout="control" %}
+            {% url "control:organizer.edit" organizer=request.organizer.slug as org_url %}
+            {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
+            {% bootstrap_field sform.primary_color layout="control" %}
+            {% bootstrap_field sform.theme_color_success layout="control" %}
+            {% bootstrap_field sform.theme_color_danger layout="control" %}
+            {% bootstrap_field sform.theme_color_background layout="control" %}
+            {% bootstrap_field sform.hover_button_color layout="control" %}
+            {% bootstrap_field sform.theme_round_borders layout="control" %}
+            {% bootstrap_field sform.primary_font layout="control" %}
+            {% endpropagated %}
+        </fieldset>
+    </div>
+    <div class="form-group submit-group">
+        <button type="submit" class="btn btn-primary btn-save">
+            {% trans "Save" %}
+        </button>
+    </div>
 
-        <div class="modal popup-modal" id="alert-modal-enable-video" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="modal-card">
-                            <div class="modal-card-icon">
-                                <i class="fa fa-cog big-rotating-icon"></i>
-                            </div>
-                            <div class="modal-card-content">
-                                <h3>{% trans "Component not enabled!" %}</h3>
-                                <p>{% trans "Do you want to enable the feature?" %}</p>
-                                <div class="button-group">
-                                    <button class="btn btn-primary" name="enable_video_system" value="enable">{% trans "Yes" %}</button>
-                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
-                                </div>
+    <div class="modal popup-modal" id="alert-modal-enable-talk" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-card">
+                        <div class="modal-card-icon">
+                            <i class="fa fa-cog big-rotating-icon"></i>
+                        </div>
+                        <div class="modal-card-content">
+                            <h3>{% trans "Component not enabled!" %}</h3>
+                            <p>{% trans "Do you want to enable the feature?" %}</p>
+                            <div class="button-group">
+                                <button class="btn btn-primary" name="enable_talk_system" value="enable">{% trans "Yes"
+                                    %}</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel"
+                                    %}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="modal popup-modal" id="alert-modal-disabled" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-body">
-                        <div class="modal-card">
-                            <div class="modal-card-icon">
-                                <i class="fa fa-cog big-rotating-icon"></i>
-                            </div>
-                            <div class="modal-card-content">
-                                <h3>{% trans "Component is enabled!" %}</h3>
-                                <p>{% trans "The feature cannot be disabled, but if you do not publish it, it will not show up publicly." %}</p>
-                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
+    <div class="modal popup-modal" id="alert-modal-enable-video" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-card">
+                        <div class="modal-card-icon">
+                            <i class="fa fa-cog big-rotating-icon"></i>
+                        </div>
+                        <div class="modal-card-content">
+                            <h3>{% trans "Component not enabled!" %}</h3>
+                            <p>{% trans "Do you want to enable the feature?" %}</p>
+                            <div class="button-group">
+                                <button class="btn btn-primary" name="enable_video_system" value="enable">{% trans "Yes"
+                                    %}</button>
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel"
+                                    %}</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </form>
+    </div>
+
+    <div class="modal popup-modal" id="alert-modal-disabled" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-card">
+                        <div class="modal-card-icon">
+                            <i class="fa fa-cog big-rotating-icon"></i>
+                        </div>
+                        <div class="modal-card-content">
+                            <h3>{% trans "Component is enabled!" %}</h3>
+                            <p>{% trans "The feature cannot be disabled, but if you do not publish it, it will not show
+                                up publicly." %}</p>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok"
+                                %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
 {% endblock %}

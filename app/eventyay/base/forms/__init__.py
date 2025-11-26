@@ -165,121 +165,57 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         )
         rendered_widgets.append(f'<div class="i18n-field-markdown-note">{markdown_note}</div>')
         return super().format_output(rendered_widgets, id_)
-
+        
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
-    """
-    An auto-expanding textarea widget for internationalized text fields.
-    Automatically adjusts height based on content with a maximum height limit.
-    """
-    
+
     def __init__(self, attrs=None, **kwargs):
         default_attrs = {
             'class': 'form-control auto-expanding-textarea',
             'data-auto-expand': 'true',
-            'style': 'min-height: 80px; max-height: 300px; overflow-y: hidden; resize: vertical; transition: height 0.2s ease-in-out;'
+            'style': 'min-height: 80px; max-height: 300px; overflow-y: auto; resize: vertical; transition: height 0.2s ease-in-out;'
         }
         if attrs:
             if 'class' in attrs:
                 default_attrs['class'] = default_attrs['class'] + ' ' + attrs['class']
-            default_attrs |= attrs
+            if 'style' in attrs:
+                default_attrs['style'] = default_attrs['style'] + '; ' + attrs['style']
+            attrs_copy = attrs.copy()
+            attrs_copy.pop('class', None)
+            attrs_copy.pop('style', None)
+            default_attrs.update(attrs_copy)
         super().__init__(attrs=default_attrs, **kwargs)
 
-    def render(self, name, value, attrs=None, renderer=None):
-        html = super().render(name, value, attrs, renderer)
+    class Media:
+        js = ('eventyay-common/js/auto-expanding-textarea.js',)
         
-        js_code = """
-        <script>
-        (function() {
-            if (window.autoExpandTextareaInitialized) {
-                return;
-            }
-            window.autoExpandTextareaInitialized = true;
-            
-            function autoExpandTextarea(textarea) {
-                if (!textarea || textarea.hasAttribute('data-auto-expand-init')) return;
-                textarea.setAttribute('data-auto-expand-init', 'true');
-
-                function adjustHeight() {
-                    textarea.style.height = 'auto';
-                    var scrollHeight = textarea.scrollHeight;
-                    var minHeight = 80;
-                    var maxHeight = 300;
-                    var newHeight = Math.max(minHeight, Math.min(scrollHeight, maxHeight));
-                    textarea.style.height = newHeight + 'px';
-                    textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
-                }
-
-                textarea.addEventListener('input', adjustHeight);
-                textarea.addEventListener('paste', function() { setTimeout(adjustHeight, 10); });
-                adjustHeight();
-            }
-
-            function initializeAutoExpandTextareas() {
-                document.querySelectorAll('textarea[data-auto-expand="true"]').forEach(autoExpandTextarea);
-            }
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initializeAutoExpandTextareas);
-            } else {
-                initializeAutoExpandTextareas();
-            }
-
-            // Handle dynamically added textareas (for i18n tabs)
-            if (typeof MutationObserver !== 'undefined') {
-                var observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        mutation.addedNodes.forEach(function(node) {
-                            if (node.nodeType === 1) {
-                                var textareas = node.querySelectorAll ? 
-                                    node.querySelectorAll('textarea[data-auto-expand="true"]') : [];
-                                textareas.forEach(autoExpandTextarea);
-                            }
-                        });
-                    });
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
-            }
-        })();
-        </script>
-        """
-        
-        return html + js_code
-
 
 class I18nURLFormField(i18nfield.forms.I18nFormField):
     """
     Custom form field to handle internationalized URL inputs. It extends the I18nFormField
     and ensures that all provided URLs are valid.
-
     Methods:
         clean(value: LazyI18nString) -> LazyI18nString:
             Validates the URL(s) in the provided internationalized input.
     """
-
     def clean(self, value) -> LazyI18nString:
         """
         Cleans and validates the internationalized URL input.
-
         Args:
             value (LazyI18nString): The input value to clean and validate.
-
         Returns:
             LazyI18nString: The cleaned and validated input value.
-
         Raises:
             ValidationError: If any of the URLs are invalid.
         """
         value = super().clean(value)
         if not value:
             return value
-
         url_validator = URLValidator()
-
         if isinstance(value.data, dict):
             for val in value.data.values():
                 if val:
                     url_validator(val)
         else:
             url_validator(value.data)
-
         return value
