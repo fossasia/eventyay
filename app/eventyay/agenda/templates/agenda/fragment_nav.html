@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load safelink %}
+{% load event_tags %}
 
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
@@ -14,7 +15,7 @@
         <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
     </a>
 {% endif %}
-{% if schedule or request.event.current_schedule %}
+{% if request.event.speakers.exists %}
     <a href="{{ request.event.urls.speakers }}" class="header-tab {% if "/speakers/" in request.path_info %} active{% endif %}">
         <i class="fa fa-group"></i> {{ phrases.schedule.speakers }}
     </a>

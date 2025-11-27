@@ -18,9 +18,11 @@
                 <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
             </a>
 
-            <a href="{{ request.event.talk_speaker_url }}" class="header-tab">
-                <i class="fa fa-group"></i> {% translate "Speakers" %}
-            </a>
+            {% if request.event.speakers.exists %}
+                <a href="{{ request.event.talk_speaker_url }}" class="header-tab">
+                    <i class="fa fa-group"></i> {% translate "Speakers" %}
+                </a>
+            {% endif %}
         {% endif %}
 
         {% with cfp=request.event.cfp %}

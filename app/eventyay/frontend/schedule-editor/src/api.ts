@@ -90,9 +90,9 @@ const api = {
   },
 
   async saveTalk(talk: TalkPayload,{ action = 'PATCH' }: { action?: string } = {}): Promise<Talk | void> {
-    const url = new URL(window.location.href);
-    url.pathname = `${url.pathname}api/talks/${talk.id ? `${talk.id}/` : ''}`;
-    url.search = window.location.search;
+    const talksBase = `${basePath}/orga/event/${this.eventSlug}/schedule/api/talks/`;
+    const urlPath = talk.id ? `${talksBase}${talk.id}/` : talksBase;
+    const url = urlPath + window.location.search;
 
     let payload: HttpRequestBody = null;
     if (action !== 'DELETE') {
@@ -117,7 +117,7 @@ const api = {
       };
     }
     
-    const response = await this.http<Talk>(action, url.toString(), payload);
+    const response = await this.http<Talk>(action, url, payload);
     
     if (action !== 'DELETE') {
       return TalkSchema.parse(response);
