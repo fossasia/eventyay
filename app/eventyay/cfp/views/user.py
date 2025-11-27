@@ -359,7 +359,17 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def object(self):
         return self.get_object()
 
+    def get(self, request, *args, **kwargs):
+        if not self.object.editable:
+            messages.error(request, phrases.cfp.submission_uneditable)
+            return redirect(self.object.urls.user_base)
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
+        if not self.object.editable:
+            messages.error(request, phrases.cfp.submission_uneditable)
+            return redirect(self.object.urls.user_base)
+
         form = self.get_form()
         if form.is_valid() and self.qform.is_valid():
             return self.form_valid(form)
