@@ -61,7 +61,7 @@ from eventyay.base.models import (
     generate_secret,
 )
 from eventyay.base.models.orders import QuestionAnswer, RevokedTicketSecret
-from eventyay.base.payment import PaymentException
+from eventyay.base.payment import PaymentException, PaymentAlreadyConfirmedException
 from eventyay.base.pdf import get_images
 from eventyay.base.secrets import assign_ticket_secret
 from eventyay.base.services import tickets
@@ -1238,6 +1238,8 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                 send_mail=send_mail,
                 force=force,
             )
+        except PaymentAlreadyConfirmedException as e:
+            return Response({'detail': str(e)}, status=status.HTTP_409_CONFLICT)
         except Quota.QuotaExceededException as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except PaymentException as e:
