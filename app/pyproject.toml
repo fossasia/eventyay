@@ -230,6 +230,7 @@ dependencies = [
     "webencodings>=0.5.1",
     "websockets>=15.0.1",
     "whitenoise>=6.8.2",
+    "wlc>=1.16.1",
     "xmlschema>=3.4.3",
     "yarl>=1.18.3",
     "zipp>=3.21.0",
