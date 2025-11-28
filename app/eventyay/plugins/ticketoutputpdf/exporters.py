@@ -71,7 +71,7 @@ class AllTicketsPDF(BaseExporter):
                                 )
                                 for k, label, w in name_scheme['fields']
                             ]
-                            if settings.JSON_FIELD_AVAILABLE and name_scheme and len(name_scheme['fields']) > 1
+                            if name_scheme and len(name_scheme['fields']) > 1
                             else []
                         ),
                     ),
