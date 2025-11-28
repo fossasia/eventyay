@@ -368,6 +368,14 @@ class EventUpdate(
 
         if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
             regenerate_css.apply_async(args=(self.request.event.pk,))
+            messages.success(
+                self.request,
+                _(
+                    'Your changes have been saved. Please note that it can '
+                    'take a short period of time until your changes become '
+                    'active.'
+                ),
+            )
 
         return super().form_valid(form)
 
