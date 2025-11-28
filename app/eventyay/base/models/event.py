@@ -71,7 +71,6 @@ from .mixins import OrderedModel, PretalxModel
 from .organizer import Organizer, OrganizerBillingModel, Team
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
-LANGUAGE_NAMES = {code: name for code, name in settings.LANGUAGES}
 
 def event_css_path(instance, filename):
     return path_with_hash(filename, base_path=f"{instance.slug}/css/")
@@ -187,6 +186,7 @@ def default_feature_flags():
         "present_multiple_times": False,
         "submission_public_review": True,
         "chat-moderation": True,
+        "polls": True,
     }
 
 def default_display_settings():
@@ -824,8 +824,8 @@ class Event(
         schedule = '{base}schedule/'
         schedule_nojs = '{schedule}nojs'
         featured = '{base}featured/'
-        talks = '{base}talk/'
-        speakers = '{base}speaker/'
+        talks = '{base}sessions/'
+        speakers = '{base}speakers/'
         changelog = '{schedule}changelog/'
         feed = '{schedule}feed.xml'
         export = '{schedule}export/'
@@ -1889,18 +1889,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/schedule')
-        return url
+        return self.urls.schedule.full
 
     @property
     def talk_session_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/talk')
-        return url
+        return self.urls.talks.full
 
     @property
     def talk_speaker_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/speaker')
-        return url
+        return self.urls.speakers.full
 
     @property
     def talk_dashboard_url(self):
@@ -2148,7 +2145,7 @@ class Event(
         # Content locales can be anything eventyay knows as a language, merged with
         # this event's plugin locales.
 
-        locale_names = dict(default_django_settings.LANGUAGES)
+        locale_names = dict(settings.LANGUAGES)
         locale_names.update(self.named_plugin_locales)
         return sorted([(key, value) for key, value in locale_names.items()])
 
@@ -2156,7 +2153,8 @@ class Event(
     def named_content_locales(self) -> list:
         locale_names = dict(self.available_content_locales)
         # locale_names['en-us'] = locale_names['en']
-        return [(code, locale_names[code]) for code in self.content_locales]
+        locale_names |= LANGUAGE_NAMES
+        return [(code, locale_names.get(code, code)) for code in self.content_locales]
 
     @cached_property
     def named_plugin_locales(self) -> list:
