@@ -1226,7 +1226,6 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
                 {'detail': f'Payment {payment.full_id} has already been confirmed.'},
                 status=status.HTTP_409_CONFLICT,
             )
-        
         if payment.state not in (
             OrderPayment.PAYMENT_STATE_PENDING,
             OrderPayment.PAYMENT_STATE_CREATED,
