@@ -298,7 +298,7 @@ class OrderListExporter(MultiSheetListExporter):
 
         qs = self._date_filter(qs, form_data, rel='')
 
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(status=Order.STATUS_PAID)
         tax_rates = self._get_all_tax_rates(qs)
 
@@ -529,7 +529,7 @@ class OrderListExporter(MultiSheetListExporter):
             )
             .select_related('order', 'order__invoice_address', 'tax_rule')
         )
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(order__status=Order.STATUS_PAID)
 
         qs = self._date_filter(qs, form_data, rel='order__')
@@ -645,14 +645,14 @@ class OrderListExporter(MultiSheetListExporter):
             .select_related(
                 'order',
                 'order__invoice_address',
-                'item',
+                'product',
                 'variation',
                 'voucher',
                 'tax_rule',
             )
             .prefetch_related('answers', 'answers__question', 'answers__options')
         )
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(order__status=Order.STATUS_PAID)
 
         qs = self._date_filter(qs, form_data, rel='order__')
@@ -709,7 +709,7 @@ class OrderListExporter(MultiSheetListExporter):
         for q in questions:
             if q.type == Question.TYPE_CHOICE_MULTIPLE:
                 options[q.pk] = []
-                if form_data['group_multiple_choice']:
+                if form_data.get('group_multiple_choice', False):
                     for o in q.options.all():
                         options[q.pk].append(o)
                     headers.append(str(q.question))
@@ -781,7 +781,7 @@ class OrderListExporter(MultiSheetListExporter):
                         row.append('')
                         row.append('')
                 row += [
-                    str(op.item),
+                    str(op.product),
                     str(op.variation) if op.variation else '',
                     op.price,
                     op.tax_rate,
@@ -828,7 +828,7 @@ class OrderListExporter(MultiSheetListExporter):
                         acache[a.question_id] = str(a)
                 for q in questions:
                     if q.type == Question.TYPE_CHOICE_MULTIPLE:
-                        if form_data['group_multiple_choice']:
+                        if form_data.get('group_multiple_choice', False):
                             row.append(
                                 ', '.join(str(o.answer) for o in options[q.pk] if o.pk in acache.get(q.pk, set()))
                             )

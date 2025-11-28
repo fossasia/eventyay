@@ -33,9 +33,9 @@ class BankTransfer(BasePaymentProvider):
                     forms.BooleanField(
                         label=_(
                             'I have understood that people will pay the ticket price directly to my bank account and '
-                            'pretix cannot automatically know what payments arrived. Therefore, I will either mark '
+                            'eventyay cannot automatically know what payments arrived. Therefore, I will either mark '
                             'payments as complete manually, or regularly import a digital bank statement in order to '
-                            'give pretix the required information.'
+                            'give eventyay the required information.'
                         ),
                         required=True,
                     ),

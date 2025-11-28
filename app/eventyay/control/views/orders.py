@@ -510,20 +510,18 @@ class OrderDownload(AsyncAction, OrderView):
                 return resp
             else:
                 resp = FileResponse(value.file.file, content_type=value.type)
-                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
+                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
                     self.request.event.slug.upper(),
                     self.order.code,
                     self.order_position.positionid,
-                    self.output.identifier,
                     value.extension,
                 )
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
                 self.request.event.slug.upper(),
                 self.order.code,
-                self.output.identifier,
                 value.extension,
             )
             return resp
@@ -2497,11 +2495,13 @@ class ExportMixin:
             if self.request.GET.get('identifier') and ex.identifier != self.request.GET.get('identifier'):
                 continue
 
-            # Use form parse cycle to generate useful defaults
+            # Try to extract initial values from GET parameters
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            test_form.is_valid()
-            initial = {k: v for k, v in test_form.cleaned_data.items() if ex.identifier + '-' + k in self.request.GET}
+            if test_form.is_valid():
+                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+            else:
+                initial = {}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),

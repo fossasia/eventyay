@@ -1,7 +1,8 @@
 import importlib
 
 from django.apps import apps
-from django.urls import include
+from django.http import HttpResponsePermanentRedirect
+from django.urls import include, path
 from django.urls import re_path as url
 from rest_framework import routers
 
@@ -9,14 +10,23 @@ from eventyay.api.views import cart
 
 from ..eventyay_common.views.billing import BillingInvoicePreview
 from .views import (
+    access_code,
     checkin,
     device,
     event,
     exporters,
-    product,
+    mail,
     oauth,
     order,
     organizer,
+    product,
+    question,
+    review,
+    room,
+    schedule,
+    speaker,
+    speaker_information,
+    submission,
     upload,
     user,
     version,
@@ -25,6 +35,20 @@ from .views import (
     webhooks,
 )
 from .views.stripe import stripe_webhook_view
+
+
+def talks_to_submissions_redirect(request, event, subpath):
+    """
+    Redirects requests from /events/.../talks/... to /events/.../submissions/...
+    preserving the subpath and query parameters.
+    """
+    new_path = request.path.replace("/talks/", "/submissions/", 1)
+
+    query_string = request.META.get('QUERY_STRING', '')
+    if query_string:
+        new_path += '?' + query_string
+
+    return HttpResponsePermanentRedirect(new_path)
 
 router = routers.DefaultRouter()
 router.register(r'organizers', organizer.OrganizerViewSet)
@@ -61,6 +85,21 @@ event_router.register(r'waitinglistentries', waitinglist.WaitingListViewSet)
 event_router.register(r'checkinlists', checkin.CheckinListViewSet)
 event_router.register(r'cartpositions', cart.CartPositionViewSet)
 event_router.register(r'exporters', exporters.EventExportersViewSet, basename='exporters')
+event_router.register('submissions', submission.SubmissionViewSet, basename='submission')
+event_router.register('schedules', schedule.ScheduleViewSet, basename='schedule')
+event_router.register('slots', schedule.TalkSlotViewSet, basename='slots')
+event_router.register('tags', submission.TagViewSet, basename='tag')
+event_router.register('submission-types', submission.SubmissionTypeViewSet, basename='submission_type')
+event_router.register('tracks', submission.TrackViewSet, basename='track')
+event_router.register('mail-templates', mail.MailTemplateViewSet, basename='mail_template')
+event_router.register('access-codes', access_code.SubmitterAccessCodeViewSet, basename='access_code')
+event_router.register('speakers', speaker.SpeakerViewSet, basename='speaker')
+event_router.register('reviews', review.ReviewViewSet, basename='review')
+event_router.register('rooms', room.RoomViewSet, basename='room')
+event_router.register('talkquestions', question.QuestionViewSet, basename='talkquestion')
+event_router.register('answers', question.AnswerViewSet, basename='answer')
+event_router.register('question-options', question.AnswerOptionViewSet, basename='question_option')
+event_router.register('speaker-information', speaker_information.SpeakerInformationViewSet, basename='speaker_information',)
 
 checkinlist_router = routers.DefaultRouter()
 checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
@@ -166,5 +205,30 @@ urlpatterns = [
         r'(?P<organizer>[^/]+)/(?P<event>[^/]+)/ticket-check',
         event.CustomerOrderCheckView.as_view(),
         name='event.ticket-check',
+    ),
+    
+    # We redirect the old pre-filtered /talks/ endpoint to  /submissions/
+    path(
+        'events/<slug:event>/talks/<path:subpath>',
+        talks_to_submissions_redirect,
+        name='event_talks_redirect',
+    ),
+    # The favourites endpoints are separate, as they are functions, not viewsets.
+    # They need to be separate from the viewset in order to permit session
+    # authentication.
+    path(
+        'events/<slug:event>/submissions/favourites/',
+        submission.favourites_view,
+        name='submission.favourites',
+    ),
+    path(
+        'events/<slug:event>/submissions/<slug:code>/favourite/',
+        submission.favourite_view,
+        name='submission.favourite',
+    ),
+    path('events/<slug:event>/', include(event_router.urls)),
+    path(
+        'events/<slug:event>/favourite-talk/',
+        submission.SubmissionFavouriteDeprecatedView.as_view(),
     ),
 ]

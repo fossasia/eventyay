@@ -257,7 +257,10 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         data["trait_grants"] = {}
     has_modules = bool(data.get("module_config"))
     data.setdefault("setup_complete", has_modules)
-    data.setdefault("sidebar_hidden", not has_modules)
+    # Hidden rooms disappear from the schedule editor, this keeps them visible by default
+    data.setdefault("hidden", False)
+    # Sidebar should not display a room until a room is configured
+    data.setdefault("sidebar_hidden", data["hidden"] or not data["setup_complete"])
 
     if (
         data.get("event")
