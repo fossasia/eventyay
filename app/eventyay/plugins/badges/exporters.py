@@ -232,6 +232,8 @@ def render_pdf(event, positions, opt):
     if pagebuffer:
         render_page(pagebuffer)
 
+    if not any:
+        raise OrderError(_('None of the selected products is configured to print badges.'))
     output_pdf_writer.add_metadata(
         {
             '/Title': 'Badges',
@@ -240,8 +242,6 @@ def render_pdf(event, positions, opt):
     )
     output_pdf_writer.write(outbuffer)
     outbuffer.seek(0)
-    if not any:
-        raise OrderError(_('None of the selected products is configured to print badges.'))
     return outbuffer
 
 
@@ -321,7 +321,7 @@ class BadgeExporter(BaseExporter):
                                 )
                                 for k, label, w in name_scheme['fields']
                             ]
-                            if settings.JSON_FIELD_AVAILABLE and len(name_scheme['fields']) > 1
+                            if len(name_scheme['fields']) > 1
                             else []
                         ),
                     ),

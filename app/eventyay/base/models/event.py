@@ -186,6 +186,7 @@ def default_feature_flags():
         "present_multiple_times": False,
         "submission_public_review": True,
         "chat-moderation": True,
+        "polls": True,
     }
 
 def default_display_settings():
@@ -2079,12 +2080,53 @@ class Event(
     @cached_property
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
-        return self.locale_array.split(',')
+        if hasattr(self, 'settings') and 'locales' in self.settings._cache():
+            if locales := self.settings.get('locales', as_type=list):
+                return locales
+        return [code for code in self.locale_array.split(',') if code]
 
     @cached_property
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
-        return self.content_locale_array.split(',')
+        if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
+            if locales := self.settings.get('content_locales', as_type=list):
+                return locales
+        fallback = [code for code in self.content_locale_array.split(',') if code]
+        return fallback or self.locales
+
+    def _clear_language_caches(self):
+        for attr in [
+            'locales',
+            'content_locales',
+            'is_multilingual',
+            'named_locales',
+            'available_content_locales',
+            'named_content_locales',
+            'named_plugin_locales',
+            'plugin_locales',
+        ]:
+            self.__dict__.pop(attr, None)
+
+    def update_language_configuration(
+        self,
+        *,
+        locales: list[str] | None = None,
+        content_locales: list[str] | None = None,
+        default_locale: str | None = None,
+    ) -> None:
+        locales_list = list(locales or [])
+        if content_locales is None:
+            content_locales_list = locales_list
+        else:
+            content_locales_list = list(content_locales)
+        if locales_list:
+            self.locale_array = ','.join(locales_list)
+        if content_locales_list:
+            self.content_locale_array = ','.join(content_locales_list)
+        if default_locale:
+            self.locale = default_locale
+        if locales_list or content_locales_list or default_locale:
+            self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
