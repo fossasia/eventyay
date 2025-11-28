@@ -8,23 +8,22 @@ from rest_framework.serializers import (
     SlugRelatedField,
 )
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.question import AnswerSerializer
-from pretalx.api.serializers.room import AvailabilitySerializer
-from pretalx.api.serializers.submission import ResourceSerializer
-from pretalx.api.versions import LEGACY, register_serializer
-from pretalx.person.models import SpeakerProfile, User
-from pretalx.schedule.models import Availability, Room, Schedule, TalkSlot
-from pretalx.submission.models import (
-    Answer,
-    AnswerOption,
-    Question,
-    Resource,
-    Review,
-    Submission,
-    SubmissionStates,
-    Tag,
-)
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.question import AnswerSerializer
+from eventyay.api.serializers.room import AvailabilitySerializer
+from eventyay.api.serializers.submission import ResourceSerializer
+from eventyay.api.versions import LEGACY, register_serializer
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.auth import User
+from eventyay.base.models.availability import Availability
+from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion
+from eventyay.base.models.room import Room
+from eventyay.base.models.schedule import Schedule
+from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.resource import Resource
+from eventyay.base.models.review import Review
+from eventyay.base.models.submission import Submission, SubmissionStates
+from eventyay.base.models.tag import Tag
 
 
 class LegacySubmitterSerializer(ModelSerializer):
@@ -342,7 +341,7 @@ class LegacyQuestionSerializer(ModelSerializer):
     options = LegacyAnswerOptionSerializer(many=True, required=False)
 
     class Meta:
-        model = Question
+        model = TalkQuestion
         fields = (
             "id",
             "variant",
@@ -377,7 +376,7 @@ class LegacyAnswerSerializer(ModelSerializer):
         required=False,
     )
     options = LegacyAnswerOptionSerializer(many=True, required=False)
-    question = LegacyQuestionSerializer(Question.objects.none())
+    question = LegacyQuestionSerializer(TalkQuestion.objects.none())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

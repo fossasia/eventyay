@@ -12,12 +12,12 @@ from rest_framework import exceptions, serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.team import TeamInviteSerializer, TeamSerializer
-from pretalx.event.models import Team, TeamInvite
-from pretalx.event.models.organiser import check_access_permissions
-from pretalx.person.models import User
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.team import TeamInviteSerializer, TeamSerializer
+from eventyay.base.models.organizer import Team, TeamInvite
+from eventyay.base.models.organizer import check_access_permissions
+from eventyay.base.models.auth import User
 
 
 class TeamInviteCreateSerializer(serializers.Serializer):
@@ -57,8 +57,8 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = (
-            self.request.organiser.teams.all()
-            .select_related("organiser")
+            self.request.organizer.teams.all()
+            .select_related("organizer")
             .order_by("pk")
         )
         if fields := self.check_expanded_fields("members", "limit_tracks", "invites"):
@@ -73,17 +73,17 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 super().perform_update(serializer)
-                check_access_permissions(self.request.organiser)
+                check_access_permissions(self.request.organizer)
         except Exception as e:
             raise exceptions.ValidationError(str(e))
 
     def perform_destroy(self, instance):
         try:
             with transaction.atomic():
-                organiser = instance.organiser
+                organizer = instance.organizer
                 instance.logged_actions().delete()
                 super().perform_destroy(instance)
-                check_access_permissions(organiser)
+                check_access_permissions(organizer)
         except Exception as e:
             raise exceptions.ValidationError(str(e))
 
@@ -131,7 +131,7 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         email = invite.email
         invite.delete()
         team.log_action(
-            "pretalx.team.invite.orga.retract",
+            "eventyay.team.invite.orga.retract",
             person=request.user,
             orga=True,
             data={"email": email},
@@ -167,9 +167,9 @@ class TeamViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         try:
             with transaction.atomic():
                 team.members.remove(user_to_remove)
-                check_access_permissions(self.request.organiser)
+                check_access_permissions(self.request.organizer)
                 team.log_action(
-                    "pretalx.team.remove_member",
+                    "eventyay.team.remove_member",
                     person=request.user,
                     orga=True,
                     data={

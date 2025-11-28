@@ -1,8 +1,9 @@
 import django_filters
 from django_scopes import scopes_disabled
 
-from pretalx.person.models import User
-from pretalx.submission.models import Review, Submission
+from eventyay.base.models.auth import User
+from eventyay.base.models.submission import Submission
+from eventyay.base.models.review import Review
 
 with scopes_disabled():
 

@@ -3,22 +3,22 @@ from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions
 from rest_framework.serializers import PrimaryKeyRelatedField, SlugRelatedField
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.fields import UploadedFileField
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.person.models import User
-from pretalx.submission.models import (
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.fields import UploadedFileField
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models import User
+from eventyay.base.models.question import (
     Answer,
     AnswerOption,
-    Question,
-    QuestionTarget,
-    QuestionVariant,
-    Review,
-    Submission,
-    SubmissionType,
-    Track,
+    TalkQuestion,
+    TalkQuestionTarget,
+    TalkQuestionVariant,
 )
-from pretalx.submission.rules import questions_for_user
+from eventyay.base.models.review import Review
+from eventyay.base.models.submission import Submission
+from eventyay.base.models.track import Track
+from eventyay.base.models.type import SubmissionType
+from eventyay.talk_rules.submission import questions_for_user
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -30,7 +30,7 @@ class AnswerOptionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         fields = ("id", "question", "answer", "position")
         expandable_fields = {
             "question": (
-                "pretalx.api.serializers.question.QuestionSerializer",
+                "eventyay.api.serializers.question.QuestionSerializer",
                 {"read_only": True, "omit": ["options"]},
             )
         }
@@ -42,7 +42,7 @@ class AnswerOptionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 # we might as well use it to isolate the create action fully.
 @register_serializer(versions=CURRENT_VERSIONS)
 class AnswerOptionCreateSerializer(AnswerOptionSerializer):
-    question = PrimaryKeyRelatedField(read_only=False, queryset=Question.objects.none())
+    question = PrimaryKeyRelatedField(read_only=False, queryset=TalkQuestion.objects.none())
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,12 +52,12 @@ class AnswerOptionCreateSerializer(AnswerOptionSerializer):
                 manager="all_objects"
             ).filter(
                 variant__in=[
-                    QuestionVariant.CHOICES,
-                    QuestionVariant.MULTIPLE,
+                    TalkQuestionVariant.CHOICES,
+                    TalkQuestionVariant.MULTIPLE,
                 ]
             )
         else:
-            self.fields["question"].queryset = Question.objects.none()
+            self.fields["question"].queryset = TalkQuestion.objects.none()
 
     class Meta(AnswerOptionSerializer.Meta):
         expandable_fields = None
@@ -66,7 +66,7 @@ class AnswerOptionCreateSerializer(AnswerOptionSerializer):
 @register_serializer(versions=CURRENT_VERSIONS)
 class QuestionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     class Meta:
-        model = Question
+        model = TalkQuestion
         fields = (
             "id",
             "question",
@@ -92,7 +92,7 @@ class QuestionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         )
         expandable_fields = {
             "options": (
-                "pretalx.api.serializers.question.AnswerOptionSerializer",
+                "eventyay.api.serializers.question.AnswerOptionSerializer",
                 {
                     "many": True,
                     "read_only": True,
@@ -100,11 +100,11 @@ class QuestionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
                 },
             ),
             "tracks": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"many": True, "read_only": True},
             ),
             "submission_types": (
-                "pretalx.api.serializers.submission.SubmissionTypeSerializer",
+                "eventyay.api.serializers.submission.SubmissionTypeSerializer",
                 {"many": True, "read_only": True},
             ),
         }
@@ -195,15 +195,15 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         )
         expandable_fields = {
             "question": (
-                "pretalx.api.serializers.question.QuestionSerializer",
+                "eventyay.api.serializers.question.QuestionSerializer",
                 {"read_only": True, "omit": ("options",)},
             ),
             "options": (
-                "pretalx.api.serializers.question.AnswerOptionSerializer",
+                "eventyay.api.serializers.question.AnswerOptionSerializer",
                 {"many": True, "read_only": True, "omit": ("question",)},
             ),
             "person": (
-                "pretalx.api.serializers.speaker.SpeakerSerializer",
+                "eventyay.api.serializers.speaker.SpeakerSerializer",
                 {"read_only": True, "omit": ("answers",)},
             ),
             # submissions and reviews are currently not expandable due to permissions
@@ -215,7 +215,7 @@ class AnswerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
 
 @register_serializer(versions=CURRENT_VERSIONS)
 class AnswerCreateSerializer(AnswerSerializer):
-    question = PrimaryKeyRelatedField(queryset=Question.objects.none())
+    question = PrimaryKeyRelatedField(queryset=TalkQuestion.objects.none())
     submission = SlugRelatedField(
         queryset=Submission.objects.none(),
         slug_field="code",
@@ -256,7 +256,7 @@ class AnswerCreateSerializer(AnswerSerializer):
     def validate(self, data):
         question = self.get_with_fallback(data, "question")
 
-        if question.variant in (QuestionVariant.CHOICES, QuestionVariant.MULTIPLE):
+        if question.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
             options = self.get_with_fallback(data, "options")
             if not options:
                 raise exceptions.ValidationError(
@@ -276,29 +276,29 @@ class AnswerCreateSerializer(AnswerSerializer):
         submission = self.get_with_fallback(data, "submission")
         review = self.get_with_fallback(data, "review")
         person = self.get_with_fallback(data, "person")
-        if target == QuestionTarget.SUBMISSION and not submission:
+        if target == TalkQuestionTarget.SUBMISSION and not submission:
             raise exceptions.ValidationError(
                 {"submission": "This field is required for submission questions."}
             )
-        if target == QuestionTarget.REVIEWER and not review:
+        if target == TalkQuestionTarget.REVIEWER and not review:
             raise exceptions.ValidationError(
                 {"review": "This field is required for reviewer questions."}
             )
-        if target == QuestionTarget.SPEAKER and not person:
+        if target == TalkQuestionTarget.SPEAKER and not person:
             raise exceptions.ValidationError(
                 {"person": "This field is required for speaker questions."}
             )
 
         # Only allow the field matching the question target
-        if target == QuestionTarget.SUBMISSION and review:
+        if target == TalkQuestionTarget.SUBMISSION and review:
             raise exceptions.ValidationError(
                 {"review": "Cannot set review for submission question."}
             )
-        if target == QuestionTarget.REVIEWER and submission:
+        if target == TalkQuestionTarget.REVIEWER and submission:
             raise exceptions.ValidationError(
                 {"submission": "Cannot set submission for reviewer question."}
             )
-        if target == QuestionTarget.SPEAKER and submission:
+        if target == TalkQuestionTarget.SPEAKER and submission:
             raise exceptions.ValidationError(
                 {"submission": "Cannot set submission for speaker question."}
             )

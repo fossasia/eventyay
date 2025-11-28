@@ -3,12 +3,13 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 from rest_framework.permissions import SAFE_METHODS
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.filters.review import ReviewFilter
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.review import ReviewSerializer, ReviewWriteSerializer
-from pretalx.submission.models import Review, Submission
-from pretalx.submission.rules import get_reviewable_submissions
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.filters.review import ReviewFilter
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.review import ReviewSerializer, ReviewWriteSerializer
+from eventyay.base.models.review import Review
+from eventyay.base.models.submission import Submission
+from eventyay.talk_rules.submission import get_reviewable_submissions
 
 
 @extend_schema_view(

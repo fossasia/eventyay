@@ -4,10 +4,10 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, pagination, viewsets
 from rest_framework.permissions import SAFE_METHODS
 
-from pretalx.api.documentation import build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.room import RoomOrgaSerializer, RoomSerializer
-from pretalx.schedule.models import Room
+from eventyay.api.documentation import build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
+from eventyay.base.models.room import Room
 
 
 class RoomPagination(pagination.LimitOffsetPagination):

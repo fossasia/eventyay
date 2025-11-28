@@ -1,10 +1,10 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.speaker_information import SpeakerInformationSerializer
-from pretalx.person.models import SpeakerInformation
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
+from eventyay.base.models.information import SpeakerInformation
 
 
 @extend_schema_view(

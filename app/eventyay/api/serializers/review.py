@@ -2,16 +2,16 @@ from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import SlugRelatedField
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.question import AnswerSerializer
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.person.models import User
-from pretalx.submission.models import (
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.question import AnswerSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.auth import User
+from eventyay.base.models.review import (
     Review,
     ReviewScore,
     ReviewScoreCategory,
-    Submission,
 )
+from eventyay.base.models.submission import Submission
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -29,7 +29,7 @@ class ReviewScoreCategorySerializer(PretalxSerializer):
         )
         expandable_fields = {
             "limit_tracks": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"read_only": True, "many": True},
             ),
         }
@@ -42,7 +42,7 @@ class ReviewScoreSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         fields = ("id", "category", "value", "label")
         expandable_fields = {
             "category": (
-                "pretalx.api.serializers.review.ReviewScoreCategorySerializer",
+                "eventyay.api.serializers.review.ReviewScoreCategorySerializer",
                 {"read_only": True},
             ),
         }
@@ -87,19 +87,19 @@ class ReviewWriteSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         read_only_fields = ("submission",)
         expandable_fields = {
             "submission": (
-                "pretalx.api.serializers.submission.SubmissionSerializer",
+                "eventyay.api.serializers.submission.SubmissionSerializer",
                 {"read_only": True, "omit": ("slots",)},
             ),
             "answers": (
-                "pretalx.api.serializers.question.AnswerSerializer",
+                "eventyay.api.serializers.question.AnswerSerializer",
                 {"read_only": True, "many": True},
             ),
             "user": (
-                "pretalx.api.serializers.review.ReviewerSerializer",
+                "eventyay.api.serializers.review.ReviewerSerializer",
                 {"read_only": True},
             ),
             "scores": (
-                "pretalx.api.serializers.review.ReviewScoreSerializer",
+                "eventyay.api.serializers.review.ReviewScoreSerializer",
                 {"read_only": True, "many": True},
             ),
         }

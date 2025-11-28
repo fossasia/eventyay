@@ -9,9 +9,10 @@ from rest_framework.serializers import (
     SlugRelatedField,
 )
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.schedule.models import Schedule, TalkSlot
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.schedule import Schedule
+from eventyay.base.models.slot import TalkSlot
 
 
 @register_serializer()
@@ -44,7 +45,7 @@ class ScheduleSerializer(ScheduleListSerializer):
         fields = ScheduleListSerializer.Meta.fields + ["comment", "slots"]
         extra_expandable_fields = {
             "slots": (
-                "pretalx.api.serializers.schedule.TalkSlotSerializer",
+                "eventyay.api.serializers.schedule.TalkSlotSerializer",
                 {"read_only": True, "many": True, "omit": ("schedule",)},
             )
         }
@@ -88,15 +89,15 @@ class TalkSlotSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         read_only_fields = ["submission", "schedule"]
         expandable_fields = {
             "submission": (
-                "pretalx.api.serializers.submission.SubmissionSerializer",
+                "eventyay.api.serializers.submission.SubmissionSerializer",
                 {"read_only": True, "omit": ("slots",)},
             ),
             "schedule": (
-                "pretalx.api.serializers.schedule.ScheduleSerializer",
+                "eventyay.api.serializers.schedule.ScheduleSerializer",
                 {"read_only": True, "omit": ("slots", "speakers")},
             ),
             "room": (
-                "pretalx.api.serializers.room.RoomSerializer",
+                "eventyay.api.serializers.room.RoomSerializer",
                 {"read_only": True},
             ),
         }
