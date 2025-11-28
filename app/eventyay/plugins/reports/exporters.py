@@ -375,19 +375,22 @@ class OverviewReport(Report):
             if tup[0]:
                 tdata.append([Paragraph(str(tup[0].name), tstyle_bold)])
                 for l, s in states:
-                    tdata[-1].append(str(tup[0].num[l][0]))
-                    tdata[-1].append(floatformat(tup[0].num[l][2 if net else 1], places))
+                    num_data = tup[0].num.get(l, (0, 0, 0)) if hasattr(tup[0], 'num') and tup[0].num else (0, 0, 0)
+                    tdata[-1].append(str(num_data[0]))
+                    tdata[-1].append(floatformat(num_data[2 if net else 1], places))
             for item in tup[1]:
                 tdata.append([str(item)])
                 for l, s in states:
-                    tdata[-1].append(str(item.num[l][0]))
-                    tdata[-1].append(floatformat(item.num[l][2 if net else 1], places))
+                    num_data = item.num.get(l, (0, 0, 0)) if hasattr(item, 'num') and item.num else (0, 0, 0)
+                    tdata[-1].append(str(num_data[0]))
+                    tdata[-1].append(floatformat(num_data[2 if net else 1], places))
                 if item.has_variations:
                     for var in item.all_variations:
                         tdata.append([Paragraph('          ' + str(var), tstyle)])
                         for l, s in states:
-                            tdata[-1].append(str(var.num[l][0]))
-                            tdata[-1].append(floatformat(var.num[l][2 if net else 1], places))
+                            num_data = var.num.get(l, (0, 0, 0)) if hasattr(var, 'num') and var.num else (0, 0, 0)
+                            tdata[-1].append(str(num_data[0]))
+                            tdata[-1].append(floatformat(num_data[2 if net else 1], places))
 
         tdata.append(
             [
@@ -395,8 +398,10 @@ class OverviewReport(Report):
             ]
         )
         for l, s in states:
-            tdata[-1].append(str(total['num'][l][0]))
-            tdata[-1].append(floatformat(total['num'][l][2 if net else 1], places))
+            # Safeguard for empty data
+            num_data = total.get('num', {}).get(l, (0, 0, 0))
+            tdata[-1].append(str(num_data[0]))
+            tdata[-1].append(floatformat(num_data[2 if net else 1], places))
 
         table = Table(tdata, colWidths=colwidths, repeatRows=3)
         table.setStyle(TableStyle(tstyledata))
