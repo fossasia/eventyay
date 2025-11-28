@@ -27,38 +27,38 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.legacy import (
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.legacy import (
     LegacySubmissionOrgaSerializer,
     LegacySubmissionReviewerSerializer,
     LegacySubmissionSerializer,
 )
-from pretalx.api.serializers.submission import (
+from eventyay.api.serializers.submission import (
     SubmissionOrgaSerializer,
     SubmissionSerializer,
     SubmissionTypeSerializer,
     TagSerializer,
     TrackSerializer,
 )
-from pretalx.api.versions import LEGACY
-from pretalx.common import exceptions
-from pretalx.person.models import User
-from pretalx.common.auth import TokenAuthentication
-from pretalx.common.exceptions import SubmissionError
-from pretalx.submission.models import (
+from eventyay.api.versions import LEGACY
+from eventyay.common import exceptions
+from eventyay.base.models.auth import User
+from eventyay.common.auth import TokenAuthentication
+from eventyay.common.exceptions import SubmissionError
+from eventyay.base.models.submission import (
     Submission,
     SubmissionStates,
-    SubmissionType,
-    Tag,
-    Track,
 )
-from pretalx.submission.rules import (
+from eventyay.base.models.tag import Tag
+from eventyay.base.models.track import Track
+from eventyay.base.models.type import SubmissionType
+from eventyay.talk_rules.submission import (
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
 )
-from pretalx.submission.models.submission import (
+from eventyay.base.models.submission import (
     SubmissionFavouriteDeprecated,
     SubmissionFavouriteDeprecatedSerializer,
 )
@@ -173,10 +173,10 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     def get_legacy_queryset(self):  # pragma: no cover
         base_qs = self.event.submissions.all().order_by("code")
         if not self.request.user.has_perm(
-            "submission.orga_list_submission", self.event
+            "base.orga_list_submission", self.event
         ):
             if (
-                not self.request.user.has_perm("schedule.list_schedule", self.event)
+                not self.request.user.has_perm("base.list_schedule", self.event)
                 or not self.event.current_schedule
             ):
                 return Submission.objects.none()
@@ -188,9 +188,9 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         return base_qs
 
     def get_legacy_serializer_class(self):  # pragma: no cover
-        if self.request.user.has_perm("submission.orga_update_submission", self.event):
+        if self.request.user.has_perm("base.orga_update_submission", self.event):
             return LegacySubmissionOrgaSerializer
-        if self.request.user.has_perm("submission.orga_list_submission", self.event):
+        if self.request.user.has_perm("base.orga_list_submission", self.event):
             return LegacySubmissionReviewerSerializer
         return LegacySubmissionSerializer
 
@@ -200,7 +200,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         )
         can_view_speakers = self.request.user.has_perm(
             "schedule.list_schedule", self.event
-        ) or self.request.user.has_perm("person.orga_list_speakerprofile", self.event)
+        ) or self.request.user.has_perm("base.orga_list_speakerprofile", self.event)
         if self.request.query_params.get("anon"):
             can_view_speakers = False
         return super().get_serializer(
@@ -224,7 +224,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     @cached_property
     def is_orga(self):
         return self.event and self.request.user.has_perm(
-            "submission.orga_list_submission", self.event
+            "base.orga_list_submission", self.event
         )
 
     def get_serializer(self, *args, **kwargs):
@@ -381,7 +381,7 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 @permission_classes([IsAuthenticated])
 @authentication_classes((SessionAuthentication, TokenAuthentication))
 def favourites_view(request, event):
-    if not request.user.has_perm("schedule.list_schedule", request.event):
+    if not request.user.has_perm("base.list_schedule", request.event):
         raise PermissionDenied()
     return Response(
         [
@@ -406,7 +406,7 @@ def favourites_view(request, event):
 @permission_classes([IsAuthenticated])
 @authentication_classes((SessionAuthentication, TokenAuthentication))
 def favourite_view(request, event, code):
-    if not request.user.has_perm("schedule.list_schedule", request.event):
+    if not request.user.has_perm("base.list_schedule", request.event):
         raise PermissionDenied()
     submission = (
         submissions_for_user(request.event, request.user)

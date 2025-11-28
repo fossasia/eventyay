@@ -8,18 +8,18 @@ from rest_framework.serializers import (
     EmailField,
     SerializerMethodField,
     URLField,
-    ModelSerializer,
 )
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.availability import (
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.availability import (
     AvailabilitiesMixin,
     AvailabilitySerializer,
 )
-from pretalx.api.serializers.fields import UploadedFileField
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.person.models import SpeakerProfile, User
-from pretalx.submission.models import QuestionTarget
+from eventyay.api.serializers.fields import UploadedFileField
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.auth import User
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.question import TalkQuestionTarget
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -63,7 +63,7 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         qs = obj.answers.filter(
             question__in=questions,
             question__event=self.event,
-            question__target=QuestionTarget.SPEAKER,
+            question__target=TalkQuestionTarget.SPEAKER,
         )
         if serializer := self.get_extra_flex_field("answers", qs):
             return serializer.data
@@ -81,20 +81,20 @@ class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         fields = ("code", "name", "biography", "submissions", "avatar_url", "avatar_source", "avatar_license", "answers")
         expandable_fields = {
             "submissions": (
-                "pretalx.api.serializers.submission.SubmissionSerializer",
+                "eventyay.api.serializers.submission.SubmissionSerializer",
                 {"read_only": True, "many": True},
             ),
         }
         extra_expandable_fields = {
             "answers": (
-                "pretalx.api.serializers.question.AnswerSerializer",
+                "eventyay.api.serializers.question.AnswerSerializer",
                 {
                     "many": True,
                     "read_only": True,
                 },
             ),
             "submissions": (
-                "pretalx.api.serializers.submission.SubmissionSerializer",
+                "eventyay.api.serializers.submission.SubmissionSerializer",
                 {
                     "many": True,
                     "read_only": True,
@@ -131,7 +131,7 @@ class SpeakerOrgaSerializer(AvailabilitiesMixin, SpeakerSerializer):
         )
         expandable_fields = {
             "submissions": (
-                "pretalx.api.serializers.submission.SubmissionSerializer",
+                "eventyay.api.serializers.submission.SubmissionSerializer",
                 {"read_only": True, "many": True},
             ),
         }

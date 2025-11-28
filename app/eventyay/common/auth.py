@@ -1,7 +1,7 @@
 from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication
 
-from pretalx.person.models import UserApiToken
+from eventyay.base.models.auth_token import UserApiToken
 
 
 class UserTokenAuthentication(TokenAuthentication):

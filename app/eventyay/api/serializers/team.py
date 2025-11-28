@@ -1,11 +1,12 @@
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.event.models import Event, Team, TeamInvite
-from pretalx.person.models import User
-from pretalx.submission.models import Track
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.event import Event, Team
+from eventyay.base.models.organizer import Team, TeamInvite
+from eventyay.base.models.auth import User
+from eventyay.base.models.track import Track
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -65,7 +66,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         )
         expandable_fields = {
             "limit_tracks": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"many": True},
             ),
             "members": (TeamMemberSerializer, {"many": True, "required": False}),

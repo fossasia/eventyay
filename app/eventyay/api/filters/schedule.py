@@ -1,9 +1,11 @@
 import django_filters
 from django_scopes import scopes_disabled
 
-from pretalx.person.models import User
-from pretalx.schedule.models import Room, Schedule, TalkSlot
-from pretalx.submission.models import Submission
+from eventyay.base.models.auth import User
+from eventyay.base.models.schedule import Schedule
+from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.room import Room
+from eventyay.base.models.submission import Submission
 
 with scopes_disabled():
 

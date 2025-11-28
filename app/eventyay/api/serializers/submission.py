@@ -5,18 +5,17 @@ from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 from rest_framework import exceptions, serializers
 from rest_framework.serializers import ModelSerializer, SerializerMethodField
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.fields import UploadedFileField
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.person.models import SpeakerProfile, User
-from pretalx.submission.models import (
-    QuestionTarget,
-    Resource,
-    Submission,
-    SubmissionType,
-    Tag,
-    Track,
-)
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.fields import UploadedFileField
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.auth import User
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.question import TalkQuestionTarget
+from eventyay.base.models.resource import Resource
+from eventyay.base.models.submission import Submission
+from eventyay.base.models.tag import Tag
+from eventyay.base.models.track import Track
+from eventyay.base.models.type import SubmissionType
 
 
 @register_serializer()
@@ -190,7 +189,7 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         qs = obj.answers.filter(
             question__in=questions,
             question__event=self.event,
-            question__target=QuestionTarget.SUBMISSION,
+            question__target=TalkQuestionTarget.SUBMISSION,
         )
         if serializer := self.get_extra_flex_field("answers", qs):
             return serializer.data
@@ -233,33 +232,33 @@ class SubmissionSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         read_only_fields = ("code", "state")
         expandable_fields = {
             "submission_type": (
-                "pretalx.api.serializers.submission.SubmissionTypeSerializer",
+                "eventyay.api.serializers.submission.SubmissionTypeSerializer",
                 {"read_only": True},
             ),
             "tags": (
-                "pretalx.api.serializers.submission.TagSerializer",
+                "eventyay.api.serializers.submission.TagSerializer",
                 {"many": True, "read_only": True},
             ),
             "track": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"read_only": True},
             ),
             "resources": (
-                "pretalx.api.serializers.submission.ResourceSerializer",
+                "eventyay.api.serializers.submission.ResourceSerializer",
                 {"many": True, "read_only": True},
             ),
         }
         extra_expandable_fields = {
             "slots": (
-                "pretalx.api.serializers.schedule.TalkSlotSerializer",
+                "eventyay.api.serializers.schedule.TalkSlotSerializer",
                 {"many": True, "read_only": True, "omit": ("submission", "schedule")},
             ),
             "answers": (
-                "pretalx.api.serializers.question.AnswerSerializer",
+                "eventyay.api.serializers.question.AnswerSerializer",
                 {"many": True, "read_only": True},
             ),
             "speakers": (
-                "pretalx.api.serializers.speaker.SpeakerSerializer",
+                "eventyay.api.serializers.speaker.SpeakerSerializer",
                 {"many": True, "read_only": True},
             ),
         }

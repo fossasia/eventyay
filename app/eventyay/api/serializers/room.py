@@ -1,12 +1,12 @@
 from rest_framework.serializers import UUIDField
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.serializers.availability import (
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.serializers.availability import (
     AvailabilitiesMixin,
     AvailabilitySerializer,
 )
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.schedule.models import Room
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.room import Room
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
