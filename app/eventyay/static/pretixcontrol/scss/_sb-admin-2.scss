@@ -50,6 +50,8 @@ body {
 .navbar-top-links li a {
     padding: 15px;
     min-height: 50px;
+    font-size: 14px;
+    font-weight: normal;
 }
 
 .navbar-top-links .dropdown-menu li {
@@ -153,7 +155,7 @@ body {
 }
 
 .sidebar .context-selector {
-    a {
+    .dropdown-toggle {
         padding: 10px 20px 9px 7px;
         display: block;
         text-decoration: none;
@@ -165,12 +167,19 @@ body {
             top: 50%;
             margin-top: -2px;
         }
-        &:hover, &:focus {
-            text-decoration: none;
-            background-color: $gray-lighter;
+        .context-icon {
+            width: 2.5em;
+            height: 2.5em;
+            line-height: 2.5em;
         }
-        .fa-stack .fa-calendar {
-          font-size: 18px;
+        .context-icon .fa-circle {
+            font-size: 2em;
+        }
+        .context-icon .fa-dashboard, .context-icon .fa-group {
+            font-size: 1em;
+            // Ensure visibility
+            visibility: visible;
+            opacity: 1;
         }
     }
     border-bottom: 2px solid darken($gray-lightest, 6.5%);
@@ -183,7 +192,7 @@ body {
         vertical-align: middle;
         span {
             display: block;
-            width: 160px;
+            width: 170px;
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
@@ -191,6 +200,7 @@ body {
         span.context-name {
             font-weight: bold;
             vertical-align: middle;
+            font-size: 15px;
         }
         span.context-meta {
             opacity: 0.7;
@@ -202,10 +212,17 @@ body {
 @media(min-width:768px) {
     .sidebar {
         z-index: 1;
-        position: absolute;
+        position: fixed;
         width: 250px;
         margin-top: 51px;
         top: 0;
+        bottom: 0;
+        height: calc(100vh - 50px);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+        overscroll-behavior: contain;
+        contain: strict;
     }
 
     .navbar-top-links .dropdown-messages,

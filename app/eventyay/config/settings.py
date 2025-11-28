@@ -455,6 +455,8 @@ ALL_LANGUAGES = [
     ('fi', _('Finnish')),
     ('el', _('Greek')),
     ('it', _('Italian')),
+    ('id', _('Indonesian')),
+    ('ko', _('Korean')),
     ('lv', _('Latvian')),
     ('pl', _('Polish')),
     ('pt-pt', _('Portuguese (Portugal)')),
@@ -624,12 +626,24 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 95,
     },
+    'id': {
+        'name': _('Indonesian'),
+        'natural_name': 'Bahasa Indonesia',
+        'official': False,
+        'percentage': 90,
+    },
     'ja-jp': {
         'name': _('Japanese'),
         'natural_name': '日本語',
         'official': False,
         'percentage': 69,
         'public_code': 'jp',
+    },
+    'ko': {
+        'name': _('Korean'),
+        'natural_name': '한국어',
+        'official': False,
+        'percentage': 88,
     },
     'nl': {
         'name': _('Dutch'),
@@ -899,6 +913,17 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 STATICI18N_ROOT = os.path.join(BASE_DIR, 'static')
+STATICI18N_OUTPUT_DIR = 'jsi18n'
+STATICI18N_PACKAGES = (
+    'eventyay.common',
+    'eventyay.presale',
+    'eventyay.control',
+    'eventyay.base',
+    'eventyay.eventyay_common',
+    'eventyay.agenda',
+    'eventyay.orga',
+    'eventyay.submission',
+)
 FRONTEND_DIR = BASE_DIR / 'frontend'
 
 VITE_DEV_SERVER_PORT = 8080

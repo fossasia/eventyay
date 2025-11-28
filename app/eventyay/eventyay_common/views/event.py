@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -44,6 +45,8 @@ from eventyay.eventyay_common.utils import (
 )
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
+
+logger = logging.getLogger(__name__)
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -260,6 +263,7 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            event.settings.set('content_locales', foundation_data['locales'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -277,6 +281,7 @@ class EventCreateView(SafeSessionWizardView):
                     'timezone': str(basics_data.get('timezone')),
                     'locale': event.settings.locale,
                     'locales': event.settings.locales,
+                    'content_locales': event.settings.get('content_locales', as_type=list),
                     'is_video_creation': final_is_video_creation,
                 }
 
@@ -351,6 +356,11 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
 
@@ -503,11 +513,18 @@ class VideoAccessAuthenticator(View):
             event.settings.venueless_issuer = issuer
         if not event.settings.venueless_audience:
             event.settings.venueless_audience = audience
-        if not event.settings.venueless_url:
-            # Choose base site dynamically: prefer current request host (useful for local dev)
+        def build_video_url(host=None):
             scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            base_host = host or request.get_host()
+            return f"{scheme}://{base_host}{event.urls.video_base}"
+
+        if not event.settings.venueless_url:
+            event.settings.venueless_url = build_video_url()
+            logger.info(
+                "Initialized video_url for event %s to %s",
+                event.slug,
+                event.settings.venueless_url,
+            )
 
         # If the saved URL points to a different host than the current request (e.g., prod domain),
         # adjust it to the current host so local development goes to localhost.
@@ -515,14 +532,18 @@ class VideoAccessAuthenticator(View):
             saved = urlparse(str(event.settings.venueless_url))
             current_host = request.get_host()
             if saved.netloc and saved.netloc != current_host:
-                scheme = 'https' if request.is_secure() else 'http'
-                base_site = f"{scheme}://{current_host}"
-                event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+                event.settings.venueless_url = build_video_url(current_host)
+                logger.info(
+                    "Adjusted video_url for event %s to %s",
+                    event.slug,
+                    event.settings.venueless_url,
+                )
         except Exception:
-            # If parsing fails for any reason, fall back to the current request host
-            scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            logger.exception(
+                "Failed to parse video_url for event %s; falling back to current host.",
+                event.slug,
+            )
+            event.settings.venueless_url = build_video_url()
 
         # Ensure the pretix_venueless plugin is enabled
         current_plugins = set(event.get_plugins())

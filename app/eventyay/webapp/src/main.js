@@ -23,26 +23,11 @@ import i18n, { init as i18nInit } from 'i18n'
 import { emojiPlugin } from 'lib/emoji'
 import features from 'features'
 import config from 'config'
-import theme, { computeForegroundSidebarColor, getThemeConfig, DEFAULT_COLORS, DEFAULT_LOGO, DEFAULT_IDENTICONS, themeVariables } from 'theme'
+import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
 
-async function setThemeConfig() {
-    const themeData = await getThemeConfig()
-    theme.logo = themeData.logo
-    theme.identicons = themeData.identicons
-    theme.colors = themeData.colors
-    theme.streamOfflineImage = themeData.streamOfflineImage
-    computeForegroundSidebarColor(themeData.colors)
-    // Inject theme variables into DOM
-    if (typeof window !== 'undefined' && document && document.documentElement) {
-      for (const [key, value] of Object.entries(themeVariables)) {
-        document.documentElement.style.setProperty(key, value)
-      }
-    }
-}
-
 async function init({ token, inviteToken }) {
-  await setThemeConfig()
+  await loadThemeConfig()
   const app = createApp(RouterView)
   app.use(store)
   app.use(router)

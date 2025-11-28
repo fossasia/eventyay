@@ -40,7 +40,7 @@ class ScheduleMixin:
         if self.version:
             with suppress(Exception):
                 schedule = (
-                    self.request.event.schedules.filter(version__iexact=self.version).select_related('event').first()
+                    self.request.event.schedules.filter(version__iexact=self.version).select_related('event', 'event__organizer').first()
                 )
         schedule = schedule or self.request.event.current_schedule
         if schedule:
@@ -116,7 +116,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             result = draw_ascii_schedule(data, output_format=output_format)
         except StopIteration:  # pragma: no cover
             result = draw_ascii_schedule(data, output_format='list')
-        result += '\n\n  📆 powered by eventyay'
+        result += '\n\n  powered by eventyay'
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
@@ -171,7 +171,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def show_talk_list(self):
-        return self.request.path.endswith('/talk/') or self.request.event.display_settings['schedule'] == 'list'
+        return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
 
 
 @cache_page(60 * 60 * 24)
@@ -225,4 +225,4 @@ class ChangelogView(EventPermissionRequired, TemplateView):
 
     @context
     def schedules(self):
-        return self.request.event.schedules.all().filter(version__isnull=False).select_related('event')
+        return self.request.event.schedules.all().filter(version__isnull=False).select_related('event', 'event__organizer')
