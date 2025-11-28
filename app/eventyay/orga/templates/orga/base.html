@@ -148,15 +148,6 @@
                     {# The menu built by Vue 3 app will be mounted here. The ID must match. #}
                     <div id='global-nav-menu' class='d-inline-block' />
                 </li>
-                <li class="nav-item">
-                    <form action="{% url "eventyay_common:auth.logout" %}" method="post">
-                        {% csrf_token %}
-                        <button class="nav-link active font-text ml-1" type="submit">
-                            <i class="fa fa-sign-out"></i>
-                            <span>{% trans "Log out" %}</span>
-                        </button>
-                    </form>
-                </li>
             </ul>
         </nav>
         {% staff_need_to_explain request.user as staff_need_to_explain %}
