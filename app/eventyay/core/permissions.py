@@ -15,6 +15,7 @@ class Permission(Enum):
     EVENT_ROOMS_CREATE_POSTER = "event:rooms.create.poster"
     EVENT_USERS_LIST = "event:users.list"
     EVENT_USERS_MANAGE = "event:users.manage"
+    EVENT_KIOSKS_MANAGE = "event:kiosks.manage"
     EVENT_CHAT_DIRECT = "event:chat.direct"
     EVENT_EXHIBITION_CONTACT = "event:exhibition.contact"
     EVENT_CONNECTIONS_UNLIMITED = "event:connections.unlimited"
@@ -75,5 +76,34 @@ SYSTEM_ROLES = {
         Permission.ROOM_POLL_READ.value,
         Permission.ROOM_POLL_VOTE.value,
         Permission.ROOM_VIEW.value,
+    ],
+    "video_stage_manager": [
+        Permission.EVENT_ROOMS_CREATE_STAGE.value,
+    ],
+    "video_channel_manager": [
+        Permission.EVENT_ROOMS_CREATE_CHAT.value,
+        Permission.EVENT_ROOMS_CREATE_BBB.value,
+    ],
+    "video_direct_messaging": [
+        Permission.EVENT_CHAT_DIRECT.value,
+    ],
+    "video_announcement_manager": [
+        Permission.EVENT_ANNOUNCE.value,
+    ],
+    "video_user_viewer": [
+        Permission.EVENT_USERS_LIST.value,
+    ],
+    "video_user_moderator": [
+        Permission.EVENT_USERS_MANAGE.value,
+    ],
+    "video_room_manager": [
+        Permission.ROOM_UPDATE.value,
+        Permission.ROOM_DELETE.value,
+    ],
+    "video_kiosk_manager": [
+        Permission.EVENT_KIOSKS_MANAGE.value,
+    ],
+    "video_config_manager": [
+        Permission.EVENT_UPDATE.value,
     ],
 }

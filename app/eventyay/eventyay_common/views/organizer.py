@@ -100,6 +100,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         self._team_create_form_override = None
         self._forced_section = None
         self._selected_team_override = None
+        self._selected_panel_override = None
         return super().dispatch(request, *args, **kwargs)
 
     @cached_property
@@ -147,7 +148,12 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         ctx = super().get_context_data(**kwargs)
         ctx['can_manage_teams'] = self.can_manage_teams
         ctx['active_section'] = self._forced_section or self.request.GET.get('section', 'general')
-        ctx['selected_team_id'] = self._selected_team_override or self.request.GET.get('team')
+        selected_team_id = self._selected_team_override or self.request.GET.get('team')
+        selected_panel = self._selected_panel_override or self.request.GET.get('panel')
+        if selected_team_id and not selected_panel:
+            selected_panel = 'permissions'
+        ctx['selected_team_id'] = selected_team_id
+        ctx['selected_panel'] = selected_panel
 
         if self.can_manage_teams:
             teams_qs = self._get_team_queryset()
@@ -155,7 +161,9 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             # Iterate within scopes_disabled to avoid scope errors when accessing related objects
             with scopes_disabled():
                 ctx['teams'] = list(teams_qs)
-                ctx['team_panels'] = [self._build_team_panel(team, ctx['selected_team_id']) for team in ctx['teams']]
+                ctx['team_panels'] = [
+                    self._build_team_panel(team, selected_team_id, selected_panel) for team in ctx['teams']
+                ]
         else:
             ctx['teams'] = []
             ctx['team_panels'] = []
@@ -205,7 +213,12 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         with scopes_disabled():
             return TeamForm(prefix='team-create', organizer=self.request.organizer)
 
-    def _build_team_panel(self, team, selected_team_id):
+    def _build_team_panel(self, team, selected_team_id, selected_panel):
+        is_selected_team = str(team.pk) == str(selected_team_id) if selected_team_id else False
+        open_panel = selected_panel if is_selected_team else None
+        open_permissions = open_panel in (None, 'permissions') and is_selected_team
+        open_members = open_panel == 'members'
+
         override = self._team_form_overrides.get(team.pk, {})
         form = override.get('form')
         if form is None:
@@ -231,7 +244,8 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             'invites': team.invites.all(),
             'tokens': team.active_tokens,
             'can_delete': self._can_delete_team(team),
-            'is_selected': str(team.pk) == str(selected_team_id) if selected_team_id else False,
+            'is_permissions_open': open_permissions,
+            'is_members_open': open_members,
         }
 
     def _team_form_prefix(self, team: Team) -> str:
@@ -243,6 +257,10 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
     def _token_form_prefix(self, team: Team) -> str:
         return f'{self._team_form_prefix(team)}-token'
 
+    def _set_panel_override(self, team_id, panel_key):
+        self._selected_team_override = str(team_id)
+        self._selected_panel_override = panel_key
+
     def _set_team_override(self, team_id, *, form=None, invite_form=None, token_form=None):
         override = self._team_form_overrides.setdefault(team_id, {})
         if form is not None:
@@ -252,11 +270,13 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         if token_form is not None:
             override['token_form'] = token_form
 
-    def _teams_tab_url(self, team_id=None, section='teams', anchor='organizer-messages'):
+    def _teams_tab_url(self, team_id=None, section='teams', panel=None, anchor='organizer-messages'):
         base = reverse('eventyay_common:organizer.update', kwargs={'organizer': self.request.organizer.slug})
         query = {'section': section}
         if team_id:
             query['team'] = team_id
+        if panel:
+            query['panel'] = panel
         url = f'{base}?{urlencode(query)}'
         if anchor:
             url = f'{url}#{anchor}'
@@ -325,7 +345,6 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 prefix=self._team_form_prefix(team),
             )
         self._forced_section = 'permissions'
-        self._selected_team_override = str(team.pk)
 
         if form.is_valid():
             with transaction.atomic():
@@ -343,19 +362,19 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _("Changes to the team '%(team_name)s' have been saved.") % {'team_name': team_name},
             )
-            return redirect(self._teams_tab_url(team.pk, section='permissions'))
+            return redirect(self._teams_tab_url(section='permissions'))
 
         messages.error(
             self.request,
             _('Something went wrong, your changes could not be saved.'),
         )
+        self._set_panel_override(team.pk, 'permissions')
         self._set_team_override(team.pk, form=form)
         return self._render_with_team_errors('permissions')
 
     def _handle_team_members(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
-        self._selected_team_override = str(team.pk)
         invite_form = InviteForm(
             data=(self.request.POST if 'user' in self.request.POST else None),
             prefix=self._invite_form_prefix(team),
@@ -384,7 +403,8 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                                 'be left with the permission to change teams.'
                             ),
                         )
-                        return redirect(self._teams_tab_url(team.pk, section='permissions'))
+                        self._set_panel_override(team.pk, 'members')
+                        return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
                     team.members.remove(user)
                     team.log_action(
                         'eventyay.team.member.removed',
@@ -399,6 +419,8 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     invite = team.invites.get(pk=post.get('remove-invite'))
                 except (TeamInvite.DoesNotExist, ValueError):
                     messages.error(request, _('Invalid invite selected.'))
+                    self._set_panel_override(team.pk, 'members')
+                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
                 else:
                     invite.delete()
                     team.log_action(
@@ -414,6 +436,8 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     invite = team.invites.get(pk=post.get('resend-invite'))
                 except (TeamInvite.DoesNotExist, ValueError):
                     messages.error(request, _('Invalid invite selected.'))
+                    self._set_panel_override(team.pk, 'members')
+                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
                 else:
                     self._send_invite(invite)
                     team.log_action(
@@ -433,6 +457,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                             request,
                             _('This user already has been invited for this team.'),
                         )
+                        self._set_panel_override(team.pk, 'members')
                         self._set_team_override(team.pk, invite_form=invite_form)
                         return self._render_with_team_errors('permissions')
                     if 'native' not in get_auth_backends():
@@ -440,6 +465,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                             request,
                             _('Users need to have a eventyay account before they can be invited.'),
                         )
+                        self._set_panel_override(team.pk, 'members')
                         self._set_team_override(team.pk, invite_form=invite_form)
                         return self._render_with_team_errors('permissions')
 
@@ -458,6 +484,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                             request,
                             _('This user already has permissions for this team.'),
                         )
+                        self._set_panel_override(team.pk, 'members')
                         self._set_team_override(team.pk, invite_form=invite_form)
                         return self._render_with_team_errors('permissions')
 
@@ -471,13 +498,13 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     return redirect(self._teams_tab_url(team.pk, section='permissions'))
 
         messages.error(request, _('Your changes could not be saved.'))
+        self._set_panel_override(team.pk, 'members')
         self._set_team_override(team.pk, invite_form=invite_form)
         return self._render_with_team_errors('permissions')
 
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
-        self._selected_team_override = str(team.pk)
         token_form = TokenForm(
             data=(self.request.POST if 'name' in self.request.POST else None),
             prefix=self._token_form_prefix(team),
@@ -491,6 +518,8 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     token = team.tokens.get(pk=post.get('remove-token'))
                 except (TeamAPIToken.DoesNotExist, ValueError):
                     messages.error(self.request, _('Invalid token selected.'))
+                    self._set_panel_override(team.pk, 'members')
+                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
                 else:
                     token.active = False
                     token.save()
@@ -520,6 +549,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 return redirect(self._teams_tab_url(team.pk, section='permissions'))
 
         messages.error(self.request, _('Your changes could not be saved.'))
+        self._set_panel_override(team.pk, 'members')
         self._set_team_override(team.pk, token_form=token_form)
         return self._render_with_team_errors('permissions')
 

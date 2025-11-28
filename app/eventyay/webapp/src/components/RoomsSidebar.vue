@@ -37,7 +37,7 @@ transition(name="sidebar")
 				.buffer
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
 				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
-			.chats(role="group", aria-describedby="chats-title")
+			.chats(v-if="roomsByType.videoChat.length || roomsByType.textChat.length || hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", role="group", aria-describedby="chats-title")
 				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="chat === rooms[0] ? {name: 'home'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
@@ -48,10 +48,10 @@ transition(name="sidebar")
 					.notifications(v-if="chat.notifications") {{ chat.notifications }}
 					bunt-icon-button(@click.prevent.stop="$store.dispatch('chat/leaveChannel', {channelId: chat.room.modules[0].channel_id})") close
 				bunt-button#btn-browse-channels-trailing(v-if="worldHasTextChannels", @click="showChannelBrowser = true") {{ $t('RoomsSidebar:browse-channels-button:label') }}
-			.group-title#dm-title(v-if="directMessageChannels.length || hasPermission('world:chat.direct')")
+			.group-title#dm-title(v-if="hasPermission('world:chat.direct')")
 				span {{ $t('RoomsSidebar:direct-messages-headline:text') }}
-				bunt-icon-button(v-if="hasPermission('world:chat.direct')", tooltip="open a direct message", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
-			.direct-messages(role="group", aria-describedby="dm-title")
+				bunt-icon-button(tooltip="open a direct message", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
+			.direct-messages(v-if="hasPermission('world:chat.direct') && directMessageChannels.length", role="group", aria-describedby="dm-title")
 				router-link.direct-message(v-for="channel of directMessageChannels", :to="{name: 'channel', params: {channelId: channel.id}}", :class="{unread: hasUnreadMessages(channel.id)}")
 					i.bunt-icon.mdi(v-if="call && call.channel === channel.id", aria-hidden="true").mdi-phone
 					.name {{ getDMChannelName(channel) }}
@@ -73,8 +73,8 @@ transition(name="sidebar")
 					router-link.room(:to="{name: 'admin:announcements'}", v-if="hasPermission('world:announce')") {{ $t('RoomsSidebar:admin-announcements:label') }}
 					router-link.room(:to="{name: 'admin:users'}", v-if="hasPermission('world:users.list')") {{ $t('RoomsSidebar:admin-users:label') }}
 					router-link.room(:to="{name: 'admin:rooms:index'}", v-if="hasPermission('room:update')") {{ $t('RoomsSidebar:admin-rooms:label') }}
-					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:users.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
-					router-link.room(:to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
+					router-link.room(:to="{name: 'admin:kiosks:index'}", v-if="hasPermission('world:kiosks.manage')") {{ $t('RoomsSidebar:admin-kiosks:label') }}
+					router-link.room(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}") {{ $t('RoomsSidebar:admin-config:label') }}
 		transition(name="prompt")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")

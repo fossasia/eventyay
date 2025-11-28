@@ -65,6 +65,18 @@ from eventyay.api.utils import get_protocol
 
 logger = logging.getLogger(__name__)
 
+VIDEO_TRAIT_ROLE_MAP = {
+    'video_stage_manager': 'video_stage_manager',
+    'video_channel_manager': 'video_channel_manager',
+    'video_direct_messaging': 'video_direct_messaging',
+    'video_announcement_manager': 'video_announcement_manager',
+    'video_user_viewer': 'video_user_viewer',
+    'video_user_moderator': 'video_user_moderator',
+    'video_room_manager': 'video_room_manager',
+    'video_kiosk_manager': 'video_kiosk_manager',
+    'video_config_manager': 'video_config_manager',
+}
+
 with scopes_disabled():
 
     class EventFilter(FilterSet):
@@ -325,8 +337,12 @@ class CreateEventView(APIView):
 
             title = titles.get(locale) or titles.get("en") or title_default
 
-            attendee_trait_grants = request.data.get("traits", {}).get("attendee", "")
-            if not isinstance(attendee_trait_grants, str):
+            traits_payload = request.data.get("traits") or {}
+            if not isinstance(traits_payload, dict):
+                raise ValidationError("Traits must be provided as an object.")
+
+            attendee_trait_grants = traits_payload.get("attendee", "")
+            if attendee_trait_grants and not isinstance(attendee_trait_grants, str):
                 raise ValidationError("Attendee traits must be a string")
 
             trait_grants = {
@@ -336,6 +352,15 @@ class CreateEventView(APIView):
                 ),
                 "scheduleuser": ["schedule-update"],
             }
+
+            for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
+                trait_value = traits_payload.get(trait_name, "")
+                if trait_value:
+                    if not isinstance(trait_value, str):
+                        raise ValidationError(
+                            f"Trait '{trait_name}' must be a string value."
+                        )
+                    trait_grants[role_name] = [trait_value]
 
             # if event already exists, update it, otherwise create a new event
             event_id = request.data.get("id")

@@ -52,7 +52,7 @@ from eventyay.common.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
-from eventyay.core.permissions import Permission, SYSTEM_ROLES
+from eventyay.core.permissions import MAX_PERMISSIONS_IF_SILENCED, Permission, SYSTEM_ROLES
 from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.helpers.database import GroupConcat
@@ -82,7 +82,6 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
-        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -157,6 +156,19 @@ def default_grants():
         "admin": ["admin"],
         "scheduleuser": ["schedule-update"],
     }
+
+
+VIDEO_TRAIT_ROLE_MAP = {
+    "video_stage_manager": "video_stage_manager",
+    "video_channel_manager": "video_channel_manager",
+    "video_direct_messaging": "video_direct_messaging",
+    "video_announcement_manager": "video_announcement_manager",
+    "video_user_viewer": "video_user_viewer",
+    "video_user_moderator": "video_user_moderator",
+    "video_room_manager": "video_room_manager",
+    "video_kiosk_manager": "video_kiosk_manager",
+    "video_config_manager": "video_config_manager",
+}
 
 
 FEATURE_FLAGS = [
@@ -1394,6 +1406,16 @@ class Event(
         if exc and allow_raise:
             raise exc
 
+    def _get_trait_grants_with_defaults(self):
+        base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        slug = getattr(self, "slug", None) or getattr(self, "id", None)
+        if not slug:
+            return base_trait_grants
+        augmented = dict(base_trait_grants)
+        for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
+            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
+        return augmented
+
     def has_permission_implicit(
         self,
         *,
@@ -1403,7 +1425,7 @@ class Event(
         allow_empty_traits=True,
     ):
         # Ensure trait_grants and roles are not None - use defaults if missing
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
@@ -1519,7 +1541,7 @@ class Event(
         allow_empty_traits = user.type == User.UserType.PERSON
 
         # Ensure trait_grants and roles are not None
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():

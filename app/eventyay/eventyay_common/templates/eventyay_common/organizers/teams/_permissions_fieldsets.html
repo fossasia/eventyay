@@ -43,3 +43,16 @@
     {% endwith %}
 </fieldset>
 
+<fieldset>
+    <legend>{% translate "Video permissions" %}</legend>
+    {% bootstrap_field form.can_video_create_stages layout="control" %}
+    {% bootstrap_field form.can_video_create_channels layout="control" %}
+    {% bootstrap_field form.can_video_direct_message layout="control" %}
+    {% bootstrap_field form.can_video_manage_announcements layout="control" %}
+    {% bootstrap_field form.can_video_view_users layout="control" %}
+    {% bootstrap_field form.can_video_manage_users layout="control" %}
+    {% bootstrap_field form.can_video_manage_rooms layout="control" %}
+    {% bootstrap_field form.can_video_manage_kiosks layout="control" %}
+    {% bootstrap_field form.can_video_manage_configuration layout="control" %}
+</fieldset>
+

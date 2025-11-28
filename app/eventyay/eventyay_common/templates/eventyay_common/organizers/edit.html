@@ -84,7 +84,8 @@
                 <p class="text-muted">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
 
                 {% for panel in team_panels %}
-                <div class="panel panel-default mt-3 team-permissions-panel">
+                <div class="panel-group team-permissions-panel" id="team-accordion-{{ panel.team.pk }}">
+                    <div class="panel panel-default mt-3">
                     <div class="panel-heading clearfix">
                         <div class="team-heading-main">
                             <h3 class="panel-title">{{ panel.team.name }}</h3>
@@ -135,8 +136,17 @@
                                         class="btn btn-primary btn-sm"
                                         data-toggle="collapse"
                                         data-target="#team-permissions-{{ panel.team.pk }}"
-                                        aria-expanded="{% if panel.is_selected %}true{% else %}false{% endif %}">
-                                    <i class="fa fa-edit"></i> {% translate "Edit permissions" %}
+                                        aria-expanded="{% if panel.is_permissions_open %}true{% else %}false{% endif %}">
+                                    <i class="fa fa-sliders"></i> {% translate "Team permissions" %}
+                                </button>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button"
+                                        class="btn btn-default btn-sm"
+                                        data-toggle="collapse"
+                                        data-target="#team-members-{{ panel.team.pk }}"
+                                        aria-expanded="{% if panel.is_members_open %}true{% else %}false{% endif %}">
+                                    <i class="fa fa-users"></i> {% translate "Members & API" %}
                                 </button>
                             </div>
                             <form action="" method="post"
@@ -152,24 +162,30 @@
                             </form>
                         </div>
                     </div>
-                    <div id="team-permissions-{{ panel.team.pk }}" class="panel-collapse collapse {% if panel.is_selected %}in{% endif %}">
+                    <div id="team-permissions-{{ panel.team.pk }}"
+                         class="panel-collapse collapse {% if panel.is_permissions_open %}in{% endif %}"
+                         data-parent="#team-accordion-{{ panel.team.pk }}">
+                        <div class="panel-body">
+                            <form action="" method="post" class="team-permissions-form form-horizontal">
+                                {% csrf_token %}
+                                <input type="hidden" name="team_action" value="update">
+                                <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
+                                {% bootstrap_form_errors panel.form %}
+                                {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=panel.form %}
+                                <div class="form-group submit-group">
+                                    <button type="submit" class="btn btn-primary btn-save">
+                                        {% translate "Save permissions" %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="team-members-{{ panel.team.pk }}"
+                         class="panel-collapse collapse {% if panel.is_members_open %}in{% endif %}"
+                         data-parent="#team-accordion-{{ panel.team.pk }}">
                         <div class="panel-body">
                             <div class="row">
-                                <div class="col-md-7">
-                                    <form action="" method="post" class="team-permissions-form form-horizontal">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="team_action" value="update">
-                                        <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
-                                        {% bootstrap_form_errors panel.form %}
-                                        {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=panel.form %}
-                                        <div class="form-group submit-group">
-                                            <button type="submit" class="btn btn-primary btn-save">
-                                                {% translate "Save permissions" %}
-                                            </button>
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="col-md-5">
+                                <div class="col-md-6">
                                     <h4>{% translate "Members & invites" %}</h4>
                                     <form action="" method="post" class="team-members-form">
                                         {% csrf_token %}
@@ -251,8 +267,9 @@
                                             </tfoot>
                                         </table>
                                     </form>
-
-                                    <h4 class="mt-4">{% translate "API tokens" %}</h4>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>{% translate "API tokens" %}</h4>
                                     <form action="" method="post" class="team-token-form">
                                         {% csrf_token %}
                                         <input type="hidden" name="team_action" value="tokens">
@@ -302,6 +319,7 @@
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
                 {% empty %}
                 <div class="alert alert-info">

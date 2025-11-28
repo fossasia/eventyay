@@ -53,13 +53,35 @@ export default {
 			return this.types.find(type => type.id === this.type)
 		}
 	},
-	created() {},
-	mounted() {
-		this.$nextTick(() => {
-		})
+	watch: {
+		types: {
+			immediate: true,
+			handler(types) {
+				// If no types available, reset to null
+				if (types.length === 0) {
+					this.type = null
+				} else if (!types.find(t => t.id === this.type)) {
+					// If current type is not available, select first available
+					this.type = types[0].id
+				}
+			}
+		}
 	},
 	methods: {
 		async create() {
+			// Check if any types are available
+			if (this.types.length === 0) {
+				return
+			}
+
+			// Verify permission for selected type
+			if (this.type === 'text' && !this.hasPermission('world:rooms.create.chat')) {
+				return
+			}
+			if (this.type === 'video' && !this.hasPermission('world:rooms.create.bbb')) {
+				return
+			}
+
 			this.loading = true
 			const modules = []
 			if (this.type === 'text') {
