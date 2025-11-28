@@ -54,6 +54,7 @@ class JSONExporter(BaseExporter):
                             for variation in product.variations.all()
                         ],
                     }
+
                     for product in self.event.products.select_related('tax_rule').prefetch_related('variations')
                 ],
                 'questions': [

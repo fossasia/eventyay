@@ -185,7 +185,7 @@ class CheckInListMixin(BaseExporter):
             )
             .select_related(
                 'order',
-                'item',
+                'product',
                 'variation',
                 'addon_to',
                 'order__invoice_address',
@@ -195,7 +195,7 @@ class CheckInListMixin(BaseExporter):
         )
 
         if not cl.all_products:
-            qs = qs.filter(item__in=cl.limit_products.values_list('id', flat=True))
+            qs = qs.filter(product__in=cl.limit_products.values_list('id', flat=True))
 
         if cl.subevent:
             qs = qs.filter(subevent=cl.subevent)
@@ -311,9 +311,13 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
         return pagesizes.landscape(pagesizes.A4)
 
     def get_story(self, doc, form_data):
+        if 'list' not in form_data or not form_data['list']:
+            # Return empty story instead of None
+            from reportlab.platypus import Paragraph
+            return [Paragraph("No check-in list selected.", self.get_style())]
         cl = self.event.checkin_lists.get(pk=form_data['list'])
 
-        questions = tuple(Question.objects.filter(event=self.event, id__in=form_data['questions']))
+        questions = tuple(Question.objects.filter(event=self.event, id__in=form_data.get('questions', [])))
 
         headlinestyle = self.get_style()
         headlinestyle.fontSize = 15
@@ -703,7 +707,7 @@ class CheckinLogList(ListExporter):
         yield self.ProgressSetTotal(total=qs.count())
 
         qs = qs.select_related(
-            'position__item',
+            'position__product',
             'position__order',
             'position__order__invoice_address',
             'position',
@@ -724,7 +728,7 @@ class CheckinLogList(ListExporter):
                 ci.position.order.code,
                 ci.position.positionid,
                 ci.position.secret,
-                str(ci.position.item),
+                str(ci.position.product),
                 ci.position.attendee_name or ia.name,
                 str(ci.device),
                 _('Yes') if ci.forced else _('No'),
