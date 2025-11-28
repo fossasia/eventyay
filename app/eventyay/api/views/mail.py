@@ -1,10 +1,10 @@
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
 
-from pretalx.api.documentation import build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.mail import MailTemplateSerializer
-from pretalx.mail.models import MailTemplate
+from eventyay.api.documentation import build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.mail import MailTemplateSerializer
+from eventyay.base.models.mail import MailTemplate
 
 
 @extend_schema_view(

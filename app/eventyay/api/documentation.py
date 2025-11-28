@@ -1,7 +1,7 @@
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter
 
-from pretalx.mail.models import MailTemplateRoles
+from eventyay.base.models.mail import MailTemplateRoles
 
 
 def build_expand_docs(*params):
@@ -58,7 +58,7 @@ def postprocess_schema(result, generator, request, public):
         {
             "name": "teams",
             "description": (
-                "Access permissions for events are organised in teams within an organiser. "
+                "Access permissions for events are organised in teams within an organizer. "
                 "This is the only API endpoint that does not use the event setting on your access token, as teams exist outside the event structure."
             ),
         },
@@ -78,14 +78,14 @@ def postprocess_schema(result, generator, request, public):
         },
         {
             "name": "speakers",
-            "description": "Speakers can currently only updated, not created or deleted, as a speaker refers to a user object, and users can only be deleted by administrators. Organisers will see additional fields in the API, in line with the response to the update actions.",
+            "description": "Speakers can currently only updated, not created or deleted, as a speaker refers to a user object, and users can only be deleted by administrators. organizers will see additional fields in the API, in line with the response to the update actions.",
         },
         {
             "name": "schedules",
             "description": (
                 "In pretalx, an event’s schedule is versioned, and each version is a schedule object in the API. "
                 "In addition to the normal ID based routing, you can use the `latest` shortcut to see the current public schedule, "
-                "and as organiser, the `wip` shortcut will show the current unpublished working copy. "
+                "and as organizer, the `wip` shortcut will show the current unpublished working copy. "
                 "As retrieving the fully expanded endpoint is expensive on the pretalx side, "
                 "consider using the redirect offered at ``by-version/?version=latest`` to check for a new release."
             ),
@@ -100,7 +100,7 @@ def postprocess_schema(result, generator, request, public):
         },
         {
             "name": "rooms",
-            "description": "Rooms are part of conference schedules. Only once the conference schedule is public will the rooms API be available to unauthenticated users. Authenticated organisers will see additional fields in the API, in line with the create and update actions.",
+            "description": "Rooms are part of conference schedules. Only once the conference schedule is public will the rooms API be available to unauthenticated users. Authenticated organizers will see additional fields in the API, in line with the create and update actions.",
         },
         {
             "name": "submission-types",
@@ -112,7 +112,7 @@ def postprocess_schema(result, generator, request, public):
         },
         {
             "name": "tags",
-            "description": "Tags are currently only used in the organiser backend and not publicly. As such, all tag endpoints require authentication.",
+            "description": "Tags are currently only used in the organizer backend and not publicly. As such, all tag endpoints require authentication.",
             "externalDocs": {
                 "url": "https://docs.pretalx.org/user/sessions/#tags",
                 "description": "User documentation",
@@ -129,7 +129,7 @@ def postprocess_schema(result, generator, request, public):
         {
             "name": "questions",
             "description": (
-                "The questions resource represents all fields created by organisers via the flexible “custom fields” model, "
+                "The questions resource represents all fields created by organizers via the flexible “custom fields” model, "
                 "with the answers available under the ``/answers/`` endpoint."
             ),
         },
@@ -142,7 +142,7 @@ def postprocess_schema(result, generator, request, public):
         {
             "name": "answers",
             "description": (
-                "The answers resource represents all data collected by organisers via the flexible “custom fields” model, which "
+                "The answers resource represents all data collected by organizers via the flexible “custom fields” model, which "
                 "allows for nearly arbitrary data collection from speakers or reviewers. "
             ),
         },

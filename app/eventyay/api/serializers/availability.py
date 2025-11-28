@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework.serializers import BooleanField, ModelSerializer
 
-from pretalx.schedule.models import Availability
+from eventyay.base.models.availability import Availability
 
 
 class AvailabilitySerializer(ModelSerializer):

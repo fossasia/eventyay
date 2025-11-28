@@ -7,7 +7,7 @@ from rest_flex_fields.utils import split_levels
 from rest_framework import exceptions
 from rest_framework.serializers import ModelSerializer
 
-from pretalx.api.versions import get_api_version_from_request, get_serializer_by_version
+from eventyay.api.versions import get_api_version_from_request, get_serializer_by_version
 
 
 class ApiVersionException(exceptions.APIException):
