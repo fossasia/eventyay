@@ -141,10 +141,11 @@ class AllTicketsPDF(BaseExporter):
             )
 
         o = PdfTicketOutput(Event.objects.none())
+        any_tickets = False
         for op in qs:
             if not op.generate_ticket:
                 continue
-
+            any_tickets = True
             if op.order.event != o.event:
                 o = PdfTicketOutput(op.event)
 
@@ -155,6 +156,9 @@ class AllTicketsPDF(BaseExporter):
                 )
                 outbuffer = o._draw_page(layout, op, op.order)
                 merger.append(ContentFile(outbuffer.read()))
+
+        if not any_tickets:
+            return None
 
         outbuffer = BytesIO()
         merger.write(outbuffer)
