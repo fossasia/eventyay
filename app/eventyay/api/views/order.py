@@ -1221,6 +1221,12 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         force = request.data.get('force', False)
         send_mail = request.data.get('send_email', True)
 
+        if payment.state == OrderPayment.PAYMENT_STATE_CONFIRMED:
+            return Response(
+                {'detail': f'Payment {payment.full_id} has already been confirmed.'},
+                status=status.HTTP_409_CONFLICT,
+            )
+        
         if payment.state not in (
             OrderPayment.PAYMENT_STATE_PENDING,
             OrderPayment.PAYMENT_STATE_CREATED,
