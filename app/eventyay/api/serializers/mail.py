@@ -1,9 +1,9 @@
 from rest_framework import exceptions
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.mail.context import get_invalid_placeholders
-from pretalx.mail.models import MailTemplate
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.mail.context import get_invalid_placeholders
+from eventyay.base.models.mail import MailTemplate
 
 
 @register_serializer(versions=CURRENT_VERSIONS)

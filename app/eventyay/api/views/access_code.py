@@ -3,10 +3,10 @@ from django.db.models.deletion import ProtectedError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, viewsets
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.access_code import SubmitterAccessCodeSerializer
-from pretalx.submission.models import SubmitterAccessCode
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.access_code import SubmitterAccessCodeSerializer
+from eventyay.base.models.access_code import SubmitterAccessCode
 
 
 @extend_schema_view(

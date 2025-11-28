@@ -5,9 +5,9 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, viewsets
 from rest_framework.permissions import SAFE_METHODS
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.question import (
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.question import (
     AnswerCreateSerializer,
     AnswerOptionCreateSerializer,
     AnswerOptionSerializer,
@@ -15,8 +15,8 @@ from pretalx.api.serializers.question import (
     QuestionOrgaSerializer,
     QuestionSerializer,
 )
-from pretalx.submission.models import Answer, AnswerOption, Question, QuestionVariant
-from pretalx.submission.rules import questions_for_user
+from eventyay.base.models.question import Answer, AnswerOption, TalkQuestion, TalkQuestionVariant
+from eventyay.talk_rules.submission import questions_for_user
 
 OPTIONS_HELP = (
     "Please note that any update to the options field will delete the "
@@ -45,7 +45,7 @@ OPTIONS_HELP = (
     destroy=extend_schema(summary="Delete Question"),
 )
 class QuestionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
-    queryset = Question.objects.none()
+    queryset = TalkQuestion.objects.none()
     serializer_class = QuestionSerializer
     filterset_fields = ("is_public", "is_visible_to_reviewers", "target", "variant")
     search_fields = ("question",)
@@ -115,7 +115,7 @@ class AnswerOptionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         questions = questions_for_user(self.request, self.event, self.request.user)
         queryset = AnswerOption.objects.filter(
             question__in=questions,
-            question__variant__in=[QuestionVariant.CHOICES, QuestionVariant.MULTIPLE],
+            question__variant__in=[TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE],
         ).select_related("question", "question__event")
         for field in self.check_expanded_fields(
             "question.tracks", "question.submission_types"

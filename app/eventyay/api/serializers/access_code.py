@@ -1,8 +1,8 @@
 from rest_flex_fields.serializers import FlexFieldsSerializerMixin
 
-from pretalx.api.mixins import PretalxSerializer
-from pretalx.api.versions import CURRENT_VERSIONS, register_serializer
-from pretalx.submission.models import SubmitterAccessCode
+from eventyay.api.mixins import PretalxSerializer
+from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
+from eventyay.base.models.access_code import SubmitterAccessCode
 
 
 @register_serializer(versions=CURRENT_VERSIONS)
@@ -20,11 +20,11 @@ class SubmitterAccessCodeSerializer(FlexFieldsSerializerMixin, PretalxSerializer
         )
         expandable_fields = {
             "track": (
-                "pretalx.api.serializers.submission.TrackSerializer",
+                "eventyay.api.serializers.submission.TrackSerializer",
                 {"read_only": True},
             ),
             "submission_type": (
-                "pretalx.api.serializers.submission.SubmissionTypeSerializer",
+                "eventyay.api.serializers.submission.SubmissionTypeSerializer",
                 {"read_only": True},
             ),
         }

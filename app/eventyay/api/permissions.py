@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from pretalx.person.rules import is_only_reviewer
+from eventyay.talk_rules.person import is_only_reviewer
 
 MODEL_PERMISSION_MAP = {
     "list": "list",
@@ -22,7 +22,7 @@ MODEL_PERMISSION_MAP = {
 class ApiPermission(BasePermission):
 
     def get_permission_object(self, view, obj, request, detail=False):
-        return obj or getattr(request, "event", None) or request.organiser
+        return obj or getattr(request, "event", None) or request.organizer
 
     def has_permission(self, request, view):
         return self._has_permission(view, None, request)

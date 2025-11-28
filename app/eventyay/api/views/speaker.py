@@ -4,21 +4,21 @@ from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import filters, mixins, viewsets
 from rest_framework.permissions import SAFE_METHODS
 
-from pretalx.api.documentation import build_expand_docs, build_search_docs
-from pretalx.api.mixins import PretalxViewSetMixin
-from pretalx.api.serializers.legacy import (
+from eventyay.api.documentation import build_expand_docs, build_search_docs
+from eventyay.api.mixins import PretalxViewSetMixin
+from eventyay.api.serializers.legacy import (
     LegacySpeakerOrgaSerializer,
     LegacySpeakerReviewerSerializer,
     LegacySpeakerSerializer,
 )
-from pretalx.api.serializers.speaker import (
+from eventyay.api.serializers.speaker import (
     SpeakerOrgaSerializer,
     SpeakerSerializer,
     SpeakerUpdateSerializer,
 )
-from pretalx.api.versions import LEGACY
-from pretalx.person.models import SpeakerProfile
-from pretalx.submission.rules import (
+from eventyay.api.versions import LEGACY
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.talk_rules.submission import (
     questions_for_user,
     speaker_profiles_for_user,
     submissions_for_user,
@@ -38,7 +38,7 @@ class SpeakerSearchFilter(filters.SearchFilter):
         parameters=[
             build_search_docs(
                 "name",
-                extra_description="Organiser search also includes email addresses.",
+                extra_description="Organizer search also includes email addresses.",
             ),
             build_expand_docs("submissions", "answers", "answers.question"),
         ],
@@ -75,14 +75,14 @@ class SpeakerViewSet(
     filter_backends = (SpeakerSearchFilter, DjangoFilterBackend)
 
     def get_legacy_serializer_class(self):  # pragma: no cover
-        if self.request.user.has_perm("submission.orga_update_submission", self.event):
+        if self.request.user.has_perm("base.orga_update_submission", self.event):
             return LegacySpeakerOrgaSerializer
-        if self.request.user.has_perm("person.orga_list_speakerprofile", self.event):
+        if self.request.user.has_perm("base.orga_list_speakerprofile", self.event):
             return LegacySpeakerReviewerSerializer
         return LegacySpeakerSerializer
 
     def get_legacy_queryset(self):  # pragma: no cover
-        if self.request.user.has_perm("person.orga_list_speakerprofile", self.event):
+        if self.request.user.has_perm("base.orga_list_speakerprofile", self.event):
             return SpeakerProfile.objects.filter(event=self.event, user__isnull=False)
         if self.event.current_schedule and self.event.get_feature_flag("show_schedule"):
             return SpeakerProfile.objects.filter(
@@ -103,7 +103,7 @@ class SpeakerViewSet(
     @cached_property
     def is_orga(self):
         return self.event and self.request.user.has_perm(
-            "submission.orga_list_submission", self.event
+            "base.orga_list_submission", self.event
         )
 
     def get_unversioned_serializer_class(self):
