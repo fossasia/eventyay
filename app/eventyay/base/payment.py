@@ -337,7 +337,7 @@ class BasePaymentProvider:
                             'payment provider. <a href="{docs_url}" target="_blank" rel="noopener">Click here '
                             "for detailed information on what this does.</a> Don't forget to set the correct fees "
                             'above!'
-                        ).format(docs_url='https://docs.eventyay.com/en/latest/user/payments/fees.html'),
+                        ).format(docs_url='https://docs.eventyay.com/'),
                         required=False,
                     ),
                 ),
