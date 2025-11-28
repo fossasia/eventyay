@@ -321,7 +321,7 @@ class BadgeExporter(BaseExporter):
                                 )
                                 for k, label, w in name_scheme['fields']
                             ]
-                            if settings.JSON_FIELD_AVAILABLE and len(name_scheme['fields']) > 1
+                            if len(name_scheme['fields']) > 1
                             else []
                         ),
                     ),
