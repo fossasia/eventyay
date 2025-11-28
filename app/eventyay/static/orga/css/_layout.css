@@ -56,18 +56,22 @@ body {
   }
 }
 
-.submission_featured {
+td.submission_featured {
   position: relative;
+  vertical-align: middle !important;
   text-align: center;
+
+  .form-check {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+  }
 
   i {
     position: absolute;
     right: 30%;
-    top: 12px;
-  }
-
-  input[type="checkbox"] {
-    margin-right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .done {
