@@ -92,7 +92,8 @@ const api = {
   async saveTalk(talk: TalkPayload,{ action = 'PATCH' }: { action?: string } = {}): Promise<Talk | void> {
     const talksBase = `${basePath}/orga/event/${this.eventSlug}/schedule/api/talks/`;
     const urlPath = talk.id ? `${talksBase}${talk.id}/` : talksBase;
-    const url = urlPath + window.location.search;
+    const params = new URLSearchParams(window.location.search);
+    const url = params.toString() ? `${urlPath}?${params.toString()}` : urlPath;
 
     let payload: HttpRequestBody = null;
     if (action !== 'DELETE') {

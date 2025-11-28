@@ -171,7 +171,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def show_talk_list(self):
-        return self.request.path.endswith('/talk/') or self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
+        return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
 
 
 @cache_page(60 * 60 * 24)

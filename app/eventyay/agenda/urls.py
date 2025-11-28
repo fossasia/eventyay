@@ -60,7 +60,6 @@ urlpatterns = [
     ),
     *get_schedule_urls('schedule'),
     *get_schedule_urls('schedule/v/<version>', 'versioned-'),
-    path('sneak/', featured.sneakpeek_redirect, name='oldsneak'),
     path('featured/', featured.FeaturedView.as_view(), name='featured'),
     path('speakers/', speaker.SpeakerList.as_view(), name='speakers'),
     path(
@@ -75,7 +74,6 @@ urlpatterns = [
     ),
     path('sessions/', schedule.ScheduleView.as_view(), name='talks'),
     path('talk/<slug>/', talk.TalkView.as_view(), name='talk.detail'),
-    path('talk/', schedule.ScheduleView.as_view(), name='talk'),
     path(
         'talk/<slug>/og-image',
         talk.TalkSocialMediaCard.as_view(),
