@@ -30,16 +30,26 @@ export default {
 	},
 	computed: {
 		shortUrl() {
-			return this.url.replace(/^https?:\/\//, '')
+			return this.url ? this.url.replace(/^https?:\/\//, '') : ''
 		},
 		downloadUrl() {
-			return `data:image/svg+xml;base64,${btoa(this.qrcode)}`
+			return this.qrcode ? `data:image/svg+xml;base64,${btoa(this.qrcode)}` : ''
 		}
 	},
 	async created() {
-		const { url } = await api.call('room.invite.anonymous.link', {room: this.room.id})
-		this.url = url
-		this.qrcode = await QRCode.toString(this.url, {type: 'svg', margin: 1})
+		if (!this.room || !this.room.id) {
+			console.error('QRCodePrompt: room or room.id is undefined')
+			this.$emit('close')
+			return
+		}
+		try {
+			const { url } = await api.call('room.invite.anonymous.link', {room: this.room.id})
+			this.url = url
+			this.qrcode = await QRCode.toString(this.url, {type: 'svg', margin: 1})
+		} catch (error) {
+			console.error('Failed to generate QR code:', error)
+			this.$emit('close')
+		}
 	}
 }
 </script>
@@ -47,6 +57,7 @@ export default {
 .c-qrcode-prompt
 	.prompt-wrapper
 		width: 640px
+		max-width: 90vw
 	.content
 		display: flex
 		flex-direction: column
@@ -62,7 +73,24 @@ export default {
 			text-align: center
 		svg
 			width: 520px
+			max-width: 100%
+			height: auto
 		.url
 			margin: 16px
 			font-size: 24px
+	@media (max-width: 768px)
+		.prompt-wrapper
+			width: 95vw
+			max-width: 400px
+		.content
+			padding: 16px
+			h1
+				font-size: 20px
+			svg
+				width: 100%
+				max-width: 280px
+			.url
+				margin: 12px
+				font-size: 16px
+				word-break: break-all
 </style>

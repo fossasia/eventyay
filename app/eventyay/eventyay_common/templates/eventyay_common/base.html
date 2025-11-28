@@ -52,7 +52,6 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/dashboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
-            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/geo.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
@@ -63,14 +62,15 @@
             <script type="text/javascript" src="{% static "are-you-sure/jquery.are-you-sure.js" %}"></script>
             <script type="text/javascript" src="{% static "eventyay-common/js/ui/popover.js" %}"></script>
             <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
+            <script type="text/javascript" src="{% static "eventyay-common/js/ui/team.js" %}"></script>
 		{% endcompress %}
         {{ html_head|safe }}
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {% if development_warning or debug_warning %}
-            <link rel="shortcut icon" href="{% static "pretixbase/img/favicon-debug.ico" %}">
+            <link rel="shortcut icon" href="{% static "common/img/icons/favicon_debug.ico" %}">
         {% else %}
-            <link rel="shortcut icon" href="{% static "pretixbase/img/favicon.ico" %}">
+            <link rel="shortcut icon" href="{% static "common/img/icons/favicon.ico" %}">
             <link rel="icon" type="image/png" sizes="32x32" href="{% static "pretixbase/img/icons/favicon-32x32.png" %}">
             <link rel="icon" type="image/png" sizes="194x194" href="{% static "pretixbase/img/icons/favicon-194x194.png" %}">
             <link rel="icon" type="image/png" sizes="16x16" href="{% static "pretixbase/img/icons/favicon-16x16.png" %}">
@@ -92,17 +92,14 @@
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
             {% if request.organizer %}data-organizer="{{ request.organizer.slug }}"{% endif %}
             {% if request.event %}data-event="{{ request.event.slug }}"{% endif %}
-            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs">
+            data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs sidebar-minimized">
         <div id="wrapper">
             <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+                <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar">
+                    <span class="sr-only">{% trans "Toggle sidebar" %}</span>
+                    <i class="fa fa-bars fa-lg"></i>
+                </button>
                 <div class="navbar-header">
-                    <button type="button" class="navbar-toggle"
-                            data-toggle="collapse" data-target=".navbar-nav-collapse">
-                        <span class="sr-only">{% trans "Toggle navigation" %}</span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
                     {% if request.event %}
                         {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event 'presale:event.auth' %}" method="post"
@@ -171,12 +168,6 @@
                             <i class="fa fa-solid fa-caret-down"></i>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'common:auth.logout' %}" title="{% trans "Log out" %}">
-                            <i class="fa fa-sign-out"></i>
-                            <span class="visible-xs-inline">{% trans "Log out" %}</span>
-                        </a>
-                    </li>
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
@@ -231,7 +222,7 @@
                                                     <span class="fa fa-fw fa-{{ nav.icon }}"></span>
                                                 {% endif %}
                                             {% endif %}
-                                            {{ nav.label }}
+                                            <span class="sidebar-text">{{ nav.label }}</span>
                                         </a>
                                         {% if nav.children %}
                                             <a href="#" class="arrow">
@@ -243,7 +234,7 @@
                                                         <a href="{{ item.url }}"
                                                                 {% if item.external %}target="_blank"{% endif %}
                                                                 {% if item.active %}class="active"{% endif %}>
-                                                            {{ item.label }}
+                                                            <span class="sidebar-text">{{ item.label }}</span>
                                                         </a>
                                                     </li>
                                                 {% endfor %}
@@ -266,7 +257,7 @@
                     <ul>
                         {% for s in staff_need_to_explain %}
                             <li>
-                                <a href="{% url "control:admin.user.sudo.edit" id=s.pk %}">#{{ s.pk }}</a>
+                                <a href="{% url "eventyay_admin:admin.user.sudo.edit" id=s.pk %}">#{{ s.pk }}</a>
                             </li>
                         {% endfor %}
                     </ul>
@@ -277,7 +268,7 @@
                     <span class="fa fa-user-secret"></span>
                     {% blocktrans with user=request.user%}You are currently working on behalf of {{ user }}.{% endblocktrans %}
 
-                    <form action="{% url 'control:admin.users.impersonate.stop' %}" method="post" class="helper-display-inline">
+                    <form action="{% url 'eventyay_admin:admin.users.impersonate.stop' %}" method="post" class="helper-display-inline">
                         {% csrf_token %}
                         <button class="btn btn-default btn-sm">
                             {% trans "Stop impersonating" %}
@@ -290,7 +281,7 @@
                     <span class="fa fa-bell"></span>
                     {{ global_settings.banner_message }}
                     {% if global_settings.banner_message_detail %}
-                        <a href="{% url 'control:admin.global.message' %}">
+                        <a href="{% url 'eventyay_admin:admin.global.message' %}">
                             {% trans "Read more" %}
                         </a>
                     {% endif %}
@@ -322,7 +313,7 @@
                     {% endif %}
                     {% if warning_update_check_active %}
                         <div class="alert alert-info">
-                            <a href="{% url "control:admin.global.update" %}">
+                            <a href="{% url "eventyay_admin:admin.global.update" %}">
                                 {% blocktrans trimmed %}
                                 The system automatically checks for updates in the background.
                                 {% endblocktrans %}

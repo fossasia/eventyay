@@ -21,6 +21,7 @@ from i18nfield.forms import I18nModelForm
 from rules.contrib.views import PermissionRequiredMixin
 
 from eventyay.common.forms import SearchForm
+from eventyay.common.permissions import is_admin_mode_active
 from eventyay.common.text.phrases import phrases
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
@@ -42,6 +43,9 @@ class ActionFromUrl:
         return self.object
 
     def _check_permission(self, permission_name):
+        if is_admin_mode_active(self.request):
+            return True
+
         return self.request.user.has_perm(permission_name, self.permission_object)
 
     @context
@@ -213,6 +217,24 @@ class PermissionRequired(PermissionRequiredMixin):
                     self.get_permission_object = lambda self: getattr(self, key)  # noqa
 
     def has_permission(self):
+        """Check if user has permission, with admin mode support.
+
+        If the user has an active staff session (admin mode), grant full access.
+        Otherwise, perform normal permission checks.
+        """
+        request = getattr(self, 'request', None)
+
+        # Check for admin mode / active staff session
+        if request and hasattr(request, 'user') and hasattr(request.user, 'has_active_staff_session') and request.user.has_active_staff_session(request.session.session_key):
+            logger.debug(
+                'User %s has active staff session - granting admin access to %s',
+                request.user,
+                request.path
+            )
+            return True
+
+
+        # Normal permission check
         result = None
         result = super().has_permission()
         logger.debug(
@@ -222,7 +244,6 @@ class PermissionRequired(PermissionRequiredMixin):
             result,
         )
         if not result:
-            request = getattr(self, 'request', None)
             if request and hasattr(request, 'event'):
                 key = f'eventyay_event_access_{request.event.pk}'
                 if key in request.session:

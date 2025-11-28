@@ -115,7 +115,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
 
     def get_queryset(self):
         return (
-            questions_for_user(self.request.event, self.request.user)
+            questions_for_user(self.request, self.request.event, self.request.user)
             .annotate(answer_count=Count('answers'))
             .order_by('position')
         )
@@ -505,7 +505,6 @@ class AccessCodeSend(PermissionRequired, UpdateView):
             data={'email': form.cleaned_data['to']},
         )
         return result
-
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class CfPFlowEditor(EventPermissionRequired, TemplateView):

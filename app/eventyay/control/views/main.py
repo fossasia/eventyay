@@ -258,7 +258,7 @@ class EventWizard(SafeSessionWizardView):
             logdata = {}
             for f in form_list:
                 logdata.update({k: v for k, v in f.cleaned_data.items()})
-            event.log_action('pretix.event.settings', user=self.request.user, data=logdata)
+            event.log_action('eventyay.event.settings', user=self.request.user, data=logdata)
 
             if copy_data and copy_data['copy_from_event']:
                 from_event = copy_data['copy_from_event']
@@ -282,6 +282,7 @@ class EventWizard(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            event.settings.set('content_locales', foundation_data['locales'])
 
         if (copy_data and copy_data['copy_from_event']) or self.clone_from or event.has_subevents:
             return redirect(

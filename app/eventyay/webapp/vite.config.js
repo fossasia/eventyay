@@ -1,10 +1,9 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import ReactivityTransform from '@vue-macros/reactivity-transform/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import visualizer from 'rollup-plugin-visualizer'
 import path from 'path'
-import inject from '@rollup/plugin-inject'
 import commonjs from '@rollup/plugin-commonjs'
 import eslint from 'vite-plugin-eslint'
 
@@ -23,9 +22,14 @@ const stylusOptions = {
 
 export default defineConfig(({ mode }) => {
   const currentYear = new Date().getFullYear()
-  
+  const env = loadEnv(mode, process.cwd(), '')
+
+  // Use an absolute base during development for dev-server convenience.
+  // Production builds fall back to a relative base so the bundle works from nested paths.
+  const base = mode === 'development' ? '/' : './'
+
   return {
-    base: '/video',
+    base,
     server: {
       host: '0.0.0.0',
       port: 8880,
@@ -44,7 +48,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       vue(),
       ReactivityTransform(),
-      // Enable PWA in production builds
+      // Enable PWA only in production builds (avoid SW claim issues during dev)
       mode === 'production' && VitePWA({
         registerType: 'autoUpdate',
         manifest: {
@@ -52,22 +56,22 @@ export default defineConfig(({ mode }) => {
           theme_color: '#180044',
           icons: [
             {
-              src: '/video/eventyay-logo.192.png',
+              src: 'eventyay-logo.192.png',
               type: 'image/png',
               sizes: '192x192'
             },
             {
-              src: '/video/eventyay-logo.512.png',
+              src: 'eventyay-logo.512.png',
               type: 'image/png',
               sizes: '512x512'
             },
             {
-              src: '/video/eventyay-logo.svg',
+              src: 'eventyay-logo.svg',
               sizes: '192x192',
               type: 'image/svg+xml'
             },
             {
-              src: '/video/eventyay-logo.svg',
+              src: 'eventyay-logo.svg',
               sizes: '512x512',
               type: 'image/svg+xml'
             }
@@ -137,14 +141,17 @@ export default defineConfig(({ mode }) => {
       ],
       exclude: [
         'pdfjs-dist',
-        '@pretalx/schedule'
+        '@pretalx/schedule' // excluded pretalx since local components replace its usage
       ],
       esbuildOptions: {
         target: 'esnext'
       }
     },
     build: {
+      outDir: env.OUT_DIR ? `${env.OUT_DIR}/webapp` : 'dist',
+      emptyOutDir: false,
       target: 'esnext',
+      sourcemap: true, // Added for debugging vendor-webrtc issue
       chunkSizeWarningLimit: 1250,
       rollupOptions: {
         input: {
@@ -153,14 +160,16 @@ export default defineConfig(({ mode }) => {
         },
         output: {
           entryFileNames: (chunkInfo) => {
-            return chunkInfo.name === 'preloader' 
-              ? '[name].js' 
+            return chunkInfo.name === 'preloader'
+              ? '[name].js'
               : 'assets/[name]-[hash].js'
           },
           // Manual chunking to keep the main app bundle small and
           // isolate large vendor assets.
           manualChunks(id) {
             if (id.includes('node_modules')) {
+              // Consolidate WebRTC libs to a single chunk to avoid evaluation order races
+              if (id.includes('janus-gateway') || id.includes('webrtc-adapter')) return 'vendor-rtc'
               if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
               if (id.includes('pdfjs-dist')) return 'vendor-pdfjs'
               if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
@@ -171,10 +180,9 @@ export default defineConfig(({ mode }) => {
               if (id.includes('buntpapier')) return 'vendor-buntpapier'
               if (id.includes('preact')) return 'vendor-preact'
               if (id.includes('vue') || id.includes('vue-router') || id.includes('vuex') || id.includes('vue-virtual-scroller')) return 'vendor-vue'
-              if (id.includes('@pretalx/schedule')) return 'vendor-pretalx'
+              // removed pretalx chunk assignment since library removed from usage
               if (id.includes('emoji-mart') || id.includes('emoji-datasource-twitter') || id.includes('emoji-regex') || id.includes('twemoji-emojis')) return 'vendor-emoji'
               if (id.includes('hls.js')) return 'vendor-hls'
-              if (id.includes('pdfjs-dist')) return 'vendor-pdfjs'
               if (id.includes('core-js')) return 'vendor-corejs'
               if (id.includes('dompurify')) return 'vendor-dompurify'
               if (id.includes('sanitize-html')) return 'vendor-sanitizehtml'
@@ -185,7 +193,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('qrcode')) return 'vendor-qrcode'
               if (id.includes('random-js')) return 'vendor-randomjs'
               if (id.includes('web-animations-js')) return 'vendor-webanimations'
-              if (id.includes('webrtc-adapter')) return 'vendor-webrtc'
               return 'vendor'
             }
           }
@@ -194,9 +201,6 @@ export default defineConfig(({ mode }) => {
           commonjs({
             include: /node_modules\/janus-gateway/,
             requireReturnsDefault: 'auto'
-          }),
-          inject({
-            adapter: ['webrtc-adapter', 'default']
           })
         ]
       }

@@ -95,6 +95,10 @@ onBeforeUnmount(() => {
         <div class='i-fa-shopping-cart h-3 w-3'></div>
         <div>My orders</div>
       </a>
+      <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/sessions/'>
+        <div class='i-fa-sticky-note-o h-3 w-3'></div>
+        <div>My sessions</div>
+      </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/events/'>
         <div class='i-fa-calendar h-3 w-3'></div>
         <div>My events</div>
@@ -107,7 +111,7 @@ onBeforeUnmount(() => {
         <div class='i-fa-user h-3 w-3'></div>
         <div>Accounts</div>
       </a>
-      <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/control/admin/'>
+      <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/admin/'>
         <div class='i-fa-cog h-3 w-3'></div>
         <div>Admin</div>
       </a>

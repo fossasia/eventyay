@@ -61,7 +61,7 @@ class SubmitterAccessCode(GenerateCode, PretalxModel):
 
     _code_length = 32
 
-    log_prefix = 'pretalx.access_code'
+    log_prefix = 'eventyay.access_code'
 
     class Meta:
         unique_together = (('event', 'code'),)
@@ -74,6 +74,7 @@ class SubmitterAccessCode(GenerateCode, PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for SubmitterAccessCode model views."""
         base = edit = '{self.event.cfp.urls.access_codes}{self.code}/'
         send = '{base}send'
         delete = '{base}delete/'

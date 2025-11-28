@@ -52,13 +52,14 @@ class SpeakerInformation(PretalxModel):
         upload_to=resource_path,
     )
 
-    log_prefix = 'speaker_information'
+    log_prefix = 'eventyay.speaker_information'
 
     @property
     def log_parent(self):
         return self.event
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of speaker information."""
         base = edit = '{self.event.orga_urls.information}{self.pk}/'
         delete = '{base}delete/'
 

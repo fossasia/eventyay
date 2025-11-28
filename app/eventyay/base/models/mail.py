@@ -62,7 +62,7 @@ class MailTemplate(PretalxModel):
     special cases, for now.
     """
 
-    log_prefix = 'pretalx.mail_template'
+    log_prefix = 'eventyay.mail_template'
 
     event = models.ForeignKey(
         to='Event',
@@ -115,6 +115,7 @@ class MailTemplate(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for mail template views."""
         base = edit = '{self.event.orga_urls.mail_templates}{self.pk}/'
         delete = '{base}delete/'
 
@@ -344,6 +345,7 @@ class QueuedMail(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for queued mail views."""
         base = edit = '{self.event.orga_urls.mail}{self.pk}/'
         delete = '{base}delete'
         send = '{base}send'

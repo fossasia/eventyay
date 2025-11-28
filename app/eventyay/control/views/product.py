@@ -13,6 +13,7 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import redirect
 from django.urls import resolve, reverse
@@ -161,7 +162,7 @@ class CategoryDelete(EventPermissionRequiredMixin, DeleteView):
             product.category = None
             product.save()
         success_url = self.get_success_url()
-        self.object.log_action('pretix.event.category.deleted', user=self.request.user)
+        self.object.log_action('eventyay.event.category.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected category has been deleted.'))
         return HttpResponseRedirect(success_url)
@@ -195,7 +196,7 @@ class CategoryUpdate(EventPermissionRequiredMixin, UpdateView):
         messages.success(self.request, _('Your changes have been saved.'))
         if form.has_changed():
             self.object.log_action(
-                'pretix.event.category.changed',
+                'eventyay.event.category.changed',
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
@@ -256,7 +257,7 @@ class CategoryCreate(EventPermissionRequiredMixin, CreateView):
         messages.success(self.request, _('The new category has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.event.category.added',
+            'eventyay.event.category.added',
             data=dict(form.cleaned_data),
             user=self.request.user,
         )
@@ -472,7 +473,7 @@ class QuestionDelete(EventPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object = self.get_object()
         success_url = self.get_success_url()
-        self.object.log_action(action='pretix.event.question.deleted', user=self.request.user)
+        self.object.log_action(action='eventyay.event.question.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected question has been deleted.'))
         return HttpResponseRedirect(success_url)
@@ -518,7 +519,7 @@ class QuestionMixin:
                     if not form.instance.pk:
                         continue
                     obj.log_action(
-                        'pretix.event.question.option.deleted',
+                        'eventyay.event.question.option.deleted',
                         user=self.request.user,
                         data={'id': form.instance.pk},
                     )
@@ -539,7 +540,7 @@ class QuestionMixin:
                     change_data = {k: form.cleaned_data.get(k) for k in form.changed_data}
                     change_data['id'] = form.instance.pk
                     obj.log_action(
-                        'pretix.event.question.option.added' if created else 'pretix.event.question.option.changed',
+                        'eventyay.event.question.option.added' if created else 'eventyay.event.question.option.changed',
                         user=self.request.user,
                         data=change_data,
                     )
@@ -688,7 +689,7 @@ class QuestionUpdate(EventPermissionRequiredMixin, QuestionMixin, UpdateView):
 
         if form.has_changed():
             self.object.log_action(
-                'pretix.event.question.changed',
+                'eventyay.event.question.changed',
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
@@ -751,7 +752,7 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
         messages.success(self.request, _('The new question has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.event.question.added',
+            'eventyay.event.question.added',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
@@ -765,6 +766,32 @@ class QuestionCreate(EventPermissionRequiredMixin, QuestionMixin, CreateView):
 class DescriptionCreate(QuestionCreate):
     form_class = DescriptionForm
     template_name = 'pretixcontrol/items/description_edit.html'
+
+
+@event_permission_required('can_view_items')
+def question_options_ajax(request, organizer, event, question):
+    try:
+        question_obj = request.event.questions.get(id=question)
+        
+        if question_obj.type == Question.TYPE_BOOLEAN:
+            options = [
+                {'identifier': 'True', 'answer': str(_('Yes'))},
+                {'identifier': 'False', 'answer': str(_('No'))}
+            ]
+        else:
+            options = []
+            for option in question_obj.options.all():
+                options.append({
+                    'identifier': option.identifier,
+                    'answer': str(option.answer)
+                })
+        
+        return JsonResponse({
+            'type': question_obj.type,
+            'options': options
+        })
+    except Question.DoesNotExist:
+        return JsonResponse({'error': 'Question not found'}, status=404)
 
 
 class QuotaList(PaginationMixin, ListView):
@@ -837,7 +864,7 @@ class QuotaCreate(EventPermissionRequiredMixin, CreateView):
         messages.success(self.request, _('The new quota has been created.'))
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.event.quota.added',
+            'eventyay.event.quota.added',
             user=self.request.user,
             data=dict(form.cleaned_data),
         )
@@ -1016,15 +1043,15 @@ class QuotaView(ChartContainingView, DetailView):
         if 'reopen' in request.POST:
             quota.closed = False
             quota.save(update_fields=['closed'])
-            quota.log_action('pretix.event.quota.opened', user=request.user)
+            quota.log_action('eventyay.event.quota.opened', user=request.user)
             messages.success(request, _('The quota has been re-opened.'))
         if 'disable' in request.POST:
             quota.closed = False
             quota.close_when_sold_out = False
             quota.save(update_fields=['closed', 'close_when_sold_out'])
-            quota.log_action('pretix.event.quota.opened', user=request.user)
+            quota.log_action('eventyay.event.quota.opened', user=request.user)
             quota.log_action(
-                'pretix.event.quota.changed',
+                'eventyay.event.quota.changed',
                 user=self.request.user,
                 data={'close_when_sold_out': False},
             )
@@ -1063,7 +1090,7 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
         messages.success(self.request, _('Your changes have been saved.'))
         if form.has_changed():
             self.object.log_action(
-                'pretix.event.quota.changed',
+                'eventyay.event.quota.changed',
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
@@ -1073,13 +1100,13 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
                 if form.initial.get('subevent'):
                     se = SubEvent.objects.get(event=self.request.event, pk=form.initial.get('subevent'))
                     se.log_action(
-                        'pretix.subevent.quota.deleted',
+                        'eventyay.subevent.quota.deleted',
                         user=self.request.user,
                         data={'id': form.instance.pk},
                     )
                 if form.instance.subevent:
                     form.instance.subevent.log_action(
-                        'pretix.subevent.quota.added',
+                        'eventyay.subevent.quota.added',
                         user=self.request.user,
                         data={'id': form.instance.pk},
                     )
@@ -1123,7 +1150,7 @@ class QuotaDelete(EventPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object = self.get_object()
         success_url = self.get_success_url()
-        self.object.log_action(action='pretix.event.quota.deleted', user=self.request.user)
+        self.object.log_action(action='eventyay.event.quota.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected quota has been deleted.'))
         return HttpResponseRedirect(success_url)
@@ -1561,3 +1588,28 @@ class ProductDelete(EventPermissionRequiredMixin, DeleteView):
                 'event': self.request.event.slug,
             },
         )
+
+
+@event_permission_required('can_change_items')
+def question_options_ajax(request, organizer, event, question):
+    try:
+        question_obj = request.event.questions.get(id=question)
+        if question_obj.type == Question.TYPE_BOOLEAN:
+            options = [
+                {'identifier': 'True', 'answer': str(_('Yes'))},
+                {'identifier': 'False', 'answer': str(_('No'))}
+            ]
+        else:
+            options = []
+            for option in question_obj.options.all():
+                options.append({
+                    'identifier': option.identifier,
+                    'answer': str(option.answer)
+                })
+        
+        return JsonResponse({
+            'type': question_obj.type,
+            'options': options
+        })
+    except Question.DoesNotExist:
+        return JsonResponse({'error': 'Question not found'}, status=404)

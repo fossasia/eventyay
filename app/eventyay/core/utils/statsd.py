@@ -101,7 +101,7 @@ async def statsd():
     if not hasattr(_state, "client"):
         if settings.STATSD_HOST:
             _state.client = StatsD(
-                asyncio.get_event_loop(),
+                asyncio.get_running_loop(),
                 settings.STATSD_HOST,
                 int(settings.STATSD_PORT),
                 "eventyay",

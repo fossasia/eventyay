@@ -12,7 +12,7 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true")
+	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
@@ -67,8 +67,13 @@ const inRoomManager = computed(() => route.name === 'room:manage')
 
 watch(() => props.background, (value) => {
 	if (!iframeEl.value) return
-	if (value) iframeEl.value.classList.add('background')
-	else iframeEl.value.classList.remove('background')
+	if (value) {
+		iframeEl.value.classList.add('background')
+		iframeEl.value.classList.add('size-tiny')
+	} else {
+		iframeEl.value.classList.remove('background')
+		iframeEl.value.classList.remove('size-tiny')
+	}
 })
 
 watch(module, (value, oldValue) => {
@@ -129,34 +134,51 @@ async function initializeIframe(mute) {
 				iframeUrl = module.value.config.url
 				break
 			}
-					case 'livestream.youtube': {
-						const ytid = youtubeTransUrl.value || module.value.config.ytid
-						iframeUrl = getYoutubeUrl(
-							ytid,
-							autoplay.value,
-							mute,
-							module.value.config.hideControls,
-							module.value.config.noRelated,
-							module.value.config.showinfo,
-							module.value.config.disableKb,
-							module.value.config.loop,
-							module.value.config.modestBranding,
-							module.value.config.enablePrivacyEnhancedMode
-						)
-						break
-					}
+		case 'livestream.youtube': {
+			const ytid = youtubeTransUrl.value || module.value.config.ytid
+			const config = module.value.config
+			// Smart muting logic to balance autoplay and user control:
+			// - Always mute if already muted (e.g., for language translation)
+			// - Mute for autoplay ONLY if controls are visible (so user can unmute)
+			// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
+			const shouldMute = mute || (autoplay.value && !config.hideControls)
+			iframeUrl = getYoutubeUrl(
+				ytid,
+				autoplay.value,
+				shouldMute,
+				config.hideControls,
+				config.noRelated,
+				config.showinfo,
+				config.disableKb,
+				config.loop,
+				config.modestBranding,
+				config.enablePrivacyEnhancedMode
+			)
+			break
 		}
-		if (!iframeUrl || isUnmounted.value) return
-		const iframe = document.createElement('iframe')
-		iframe.src = iframeUrl
-		iframe.classList.add('iframe-media-source')
-		if (hideIfBackground) {
-			iframe.classList.add('hide-if-background')
-		}
-		iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
-		iframe.allowFullscreen = true
-		iframe.setAttribute('allowusermedia', 'true')
-		iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox#media-source-iframes
+	}
+	if (!iframeUrl || isUnmounted.value) return
+	const iframe = document.createElement('iframe')
+	iframe.src = iframeUrl
+	iframe.classList.add('iframe-media-source')
+	if (hideIfBackground) {
+		iframe.classList.add('hide-if-background')
+	}
+	// Add background and size-tiny classes if in background mode
+	if (props.background) {
+		iframe.classList.add('background')
+		iframe.classList.add('size-tiny')
+	}
+	// Set iframe permissions and attributes
+	iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
+	iframe.allowFullscreen = true
+	iframe.setAttribute('allowusermedia', 'true')
+	iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
+	// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+	// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+	if (module.value?.type === 'livestream.youtube') {
+		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+	}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
@@ -202,17 +224,38 @@ function handleLanguageChange(languageUrl) {
 }
 
 function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
-	const params = new URLSearchParams({
-		autoplay: autoplayVal ? '1' : '0',
-		mute: mute ? '1' : '0',
-		controls: hideControls ? '0' : '1',
-		rel: noRelated ? '0' : '1',
-		showinfo: showinfo ? '0' : '1',
-		disablekb: disableKb ? '1' : '0',
-		loop: loop ? '1' : '0',
-		modestbranding: modestBranding ? '1' : '0',
-		playlist: ytid,
-	})
+	const params = new URLSearchParams()
+	
+	// Always add autoplay and mute as they control core functionality
+	params.append('autoplay', autoplayVal ? '1' : '0')
+	params.append('mute', mute ? '1' : '0')
+	
+	// Only add optional parameters when explicitly enabled
+	if (hideControls) {
+		params.append('controls', '0')
+	}
+	
+	if (noRelated) {
+		params.append('rel', '0')
+	}
+	
+	if (showinfo) {
+		params.append('showinfo', '0')
+	}
+	
+	if (disableKb) {
+		params.append('disablekb', '1')
+	}
+	
+	if (loop) {
+		params.append('loop', '1')
+		// Loop requires playlist parameter to work properly
+		params.append('playlist', ytid)
+	}
+	
+	if (modestBranding) {
+		params.append('modestbranding', '1')
+	}
 
 	const domain = enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
 	return `https://${domain}/embed/${ytid}?${params}`
@@ -220,9 +263,10 @@ function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinf
 
 // Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided the retun null
+	// Checks if the languageUrl is not provided then return null
 	if (!languageUrl) return null
 	const config = module.value?.config || {}
+	const origin = window.location.origin
 	const params = new URLSearchParams({
 		enablejsapi: '1',
 		autoplay: '1',
@@ -233,6 +277,7 @@ function getLanguageIframeUrl(languageUrl) {
 		rel: '0',
 		showinfo: '0',
 		playlist: languageUrl,
+		origin, // Required when using enablejsapi=1 (fixes Error 153)
 	})
 
 	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
@@ -251,7 +296,7 @@ defineExpose({ isPlaying })
 		z-index: 101
 	.background-room
 		position: fixed
-		top: 55px
+		top: 51px
 		right: 4px
 		card()
 		display: flex
@@ -283,26 +328,27 @@ defineExpose({ isPlaying })
 			top: 51px
 	.background-room-enter-active, .background-room-leave-active
 		transition: transform .3s ease
+	// .background-room-enter-active
+	// 	transition-delay: .1s
 	.background-room-enter-from, .background-room-leave-to
 		transform: translate(calc(-1 * var(--chatbar-width)), 52px)
 .c-media-source .c-livestream, .c-media-source .c-januscall, .c-media-source .c-januschannelcall, iframe.iframe-media-source
 	position: fixed
+	transition: all .3s ease
 	&.size-tiny, &.background
-		bottom: calc(var(--vh100) - 48px - 3px)
+		bottom: calc(var(--vh100) - 48px - 51px)
 		right: 4px + 36px + 4px
 		+below('l')
 			bottom: calc(var(--vh100) - 48px - 48px - 3px)
 	&:not(.size-tiny):not(.background)
-		top: 105px
+		top: 104px
 		width: var(--mediasource-placeholder-width)
 		height: var(--mediasource-placeholder-height)
-		// When content area is shifted due to sidebar-open, account for sidebar width on the right edge
-		.app-content.sidebar-open &
-			right: calc(100vw - var(--sidebar-width) - var(--mediasource-placeholder-width))
-		// Otherwise anchor to right edge of viewport
-		.app-content:not(.sidebar-open) &
+		+below('l')
+			bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
 			right: calc(100vw - var(--mediasource-placeholder-width))
 iframe.iframe-media-source
+	transition: all .3s ease
 	border: none
 	&.background
 		pointer-events: none
@@ -312,11 +358,4 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
-// When sidebar is collapsed (no .sidebar-open on .app-content) and media is in normal size, anchor it under the fixed AppBar at left edge
-.app-content:not(.sidebar-open) .c-media-source .c-livestream:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source .c-januscall:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source .c-januschannelcall:not(.size-tiny):not(.background),
-.app-content:not(.sidebar-open) .c-media-source iframe.iframe-media-source:not(.size-tiny):not(.background)
-	left: 0
-	right: auto
 </style>

@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count
+from django.db.models import Count, ManyToManyField
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -12,6 +12,7 @@ from django.views.generic import (
     ListView,
     UpdateView,
 )
+from django_scopes import scopes_disabled
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.auth import User
@@ -45,6 +46,7 @@ class TeamCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             kwargs={'organizer': self.request.organizer.slug, 'team': self.object.pk},
         )
 
+    @scopes_disabled()
     def form_valid(self, form):
         messages.success(
             self.request,
@@ -54,14 +56,21 @@ class TeamCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         ret = super().form_valid(form)
         form.instance.members.add(self.request.user)
         form.instance.log_action(
-            'pretix.team.created',
+            'eventyay.team.created',
             user=self.request.user,
-            data={
-                k: getattr(self.object, k) if k != 'limit_events' else [e.id for e in getattr(self.object, k).all()]
-                for k in form.changed_data
-            },
+            data=self._build_changed_data_dict(form, self.object),
         )
         return ret
+    
+    def _build_changed_data_dict(self, form, obj):
+        data = {}
+        for k in form.changed_data:
+            field = self.model._meta.get_field(k)
+            if isinstance(field, ManyToManyField):
+                data[k] = [e.id for e in getattr(obj, k).all()]
+            else:
+                data[k] = getattr(obj, k)
+        return data
 
     def form_invalid(self, form):
         messages.error(self.request, _('Your changes could not be saved.'))
@@ -102,7 +111,7 @@ class TeamDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         success_url = self.get_success_url()
         self.object = self.get_object()
         if self.is_allowed():
-            self.object.log_action('pretix.team.deleted', user=self.request.user)
+            self.object.log_action('eventyay.team.deleted', user=self.request.user)
             self.object.delete()
             messages.success(self.request, _('The selected team has been deleted.'))
             return redirect(success_url)
@@ -170,7 +179,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     'user': self,
                     'organizer': self.request.organizer.name,
                     'team': instance.team.name,
-                    'url': build_global_uri('control:auth.invite', kwargs={'token': instance.token}),
+                    'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
                 },
                 event=None,
                 locale=self.request.LANGUAGE_CODE,
@@ -205,7 +214,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                 else:
                     self.object.members.remove(user)
                     self.object.log_action(
-                        'pretix.team.member.removed',
+                        'eventyay.team.member.removed',
                         user=self.request.user,
                         data={'email': user.email, 'user': user.pk},
                     )
@@ -221,7 +230,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             else:
                 invite.delete()
                 self.object.log_action(
-                    'pretix.team.invite.deleted',
+                    'eventyay.team.invite.deleted',
                     user=self.request.user,
                     data={'email': invite.email},
                 )
@@ -237,7 +246,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             else:
                 self._send_invite(invite)
                 self.object.log_action(
-                    'pretix.team.invite.resent',
+                    'eventyay.team.invite.resent',
                     user=self.request.user,
                     data={'email': invite.email},
                 )
@@ -254,7 +263,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                 token.active = False
                 token.save()
                 self.object.log_action(
-                    'pretix.team.token.deleted',
+                    'eventyay.team.token.deleted',
                     user=self.request.user,
                     data={'name': token.name},
                 )
@@ -281,7 +290,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                 invite = self.object.invites.create(email=self.add_form.cleaned_data['user'])
                 self._send_invite(invite)
                 self.object.log_action(
-                    'pretix.team.invite.created',
+                    'eventyay.team.invite.created',
                     user=self.request.user,
                     data={'email': self.add_form.cleaned_data['user']},
                 )
@@ -297,7 +306,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
                 self.object.members.add(user)
                 self.object.log_action(
-                    'pretix.team.member.added',
+                    'eventyay.team.member.added',
                     user=self.request.user,
                     data={
                         'email': user.email,
@@ -310,7 +319,7 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         elif 'name' in self.request.POST and self.add_token_form.is_valid() and self.add_token_form.has_changed():
             token = self.object.tokens.create(name=self.add_token_form.cleaned_data['name'])
             self.object.log_action(
-                'pretix.team.token.created',
+                'eventyay.team.token.created',
                 user=self.request.user,
                 data={'name': self.add_token_form.cleaned_data['name'], 'id': token.pk},
             )
@@ -355,15 +364,26 @@ class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             kwargs={'organizer': self.request.organizer.slug, 'team': self.object.pk},
         )
 
+    @scopes_disabled()
     def form_valid(self, form):
         if form.has_changed():
+            data = {}
+
+            for field in form.changed_data:
+                field_value = getattr(self.object, field)
+                if isinstance(self.object._meta.get_field(field), ManyToManyField):
+                    data[field] = [obj.id for obj in field_value.all()]
+                else:
+                    data[field] = field_value
+            
+            for field in self.object._meta.many_to_many:
+                field_value = getattr(self.object, field.name)
+                data[field.name] = [obj.id for obj in field_value.all()]
+
             self.object.log_action(
-                'pretix.team.changed',
+                'eventyay.team.changed',
                 user=self.request.user,
-                data={
-                    k: getattr(self.object, k) if k != 'limit_events' else [e.id for e in getattr(self.object, k).all()]
-                    for k in form.changed_data
-                },
+                data=data,
             )
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)

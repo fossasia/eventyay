@@ -21,6 +21,7 @@ export default new Vuex.Store({
 		socketCloseCode: null,
 		fatalConnectionError: null,
 		fatalError: null,
+		roomFatalErrors: {},
 		user: null,
 		world: null,
 		rooms: null,
@@ -54,6 +55,10 @@ export default new Vuex.Store({
 				lookup[room.id] = room
 				return lookup
 			}, {})
+		},
+		visibleRooms(state) {
+			if (!state.rooms) return []
+			return state.rooms.filter(room => !room.hidden && !room.sidebar_hidden && room.setup_complete)
 		}
 	},
 	mutations: {
@@ -97,6 +102,8 @@ export default new Vuex.Store({
 			api.on('joined', async(serverState) => {
 				state.connected = true
 				state.socketCloseCode = null
+				state.fatalConnectionError = null
+				state.fatalError = null
 				state.user = serverState['user.config']
 				// state.user.profile = {}
 				state.world = serverState['world.config'].world
@@ -107,10 +114,6 @@ export default new Vuex.Store({
 				commit('exhibition/setData', serverState.exhibition)
 				commit('announcement/setAnnouncements', serverState.announcements)
 				commit('updateRooms', serverState['world.config'].rooms)
-				// rejoin room if reconnecting
-				if (state.activeRoom) {
-					dispatch('changeRoom', state.activeRoom)
-				}
 				// TODO ?
 				// if (!state.user.profile.display_name) {
 				// 	router.push('/').catch(() => {}) // force new users to welcome page
@@ -135,10 +138,18 @@ export default new Vuex.Store({
 						state.fatalConnectionError = error
 						api.close()
 						break
-					case 'server.fatal':
-						state.fatalError = error
-						api.close()
+					case 'server.fatal': {
+						const roomId = state.activeRoom?.id ?? null
+						const errorWithContext = {...error, roomId}
+						state.fatalError = errorWithContext
+						if (roomId) {
+							state.roomFatalErrors = {
+								...state.roomFatalErrors,
+								[roomId]: errorWithContext
+							}
+						}
 						break
+					}
 				}
 				// TODO handle generic fatal error?
 			})
@@ -163,9 +174,22 @@ export default new Vuex.Store({
 			state.activeRoom = room
 			state.reactions = null
 			state.roomViewers = null
+			if (room && state.roomFatalErrors?.[room.id]) {
+				// preserve the last fatal error for the room without attempting to reconnect immediately
+				return
+			}
 			if (room?.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.zoom', 'call.janus'].includes(module.type))) {
-				const { viewers } = await api.call('room.enter', {room: room.id})
-				state.roomViewers = viewers
+				try {
+					const { viewers } = await api.call('room.enter', {room: room.id})
+					state.roomViewers = viewers
+					if (state.roomFatalErrors?.[room.id]) {
+						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
+						state.roomFatalErrors = rest
+					}
+				} catch (error) {
+					// Allow ApiError instances to bubble into the websocket error handler
+					console.error('[store/changeRoom] Failed to enter room', room?.id, error)
+				}
 			}
 			dispatch('question/changeRoom', room)
 			dispatch('poll/changeRoom', room)
@@ -215,11 +239,33 @@ export default new Vuex.Store({
 			state.permission = permissions
 			commit('updateRooms', rooms)
 		},
+		// Backwards-compat: server emits 'event.updated' with a payload that contains both
+		// 'world' and 'event' keys. Mirror the 'world.updated' handling here.
+		'api::event.updated'({state, commit, dispatch}, payload) {
+			const world = payload.world || payload.event || payload
+			const rooms = payload.rooms || []
+			const permissions = payload.permissions
+			state.world = world
+			state.permission = permissions
+			commit('updateRooms', rooms)
+		},
 		'api::world.schedule.updated'({state, commit, dispatch}, pretalx) {
 			state.world.pretalx = pretalx
 			dispatch('schedule/fetch', {root: true})
 		},
+		// Backwards-compat: server emits 'event.schedule.updated' with pretalx config
+		'api::event.schedule.updated'({state, commit, dispatch}, pretalx) {
+			if (!state.world) state.world = {}
+			state.world.pretalx = pretalx
+			dispatch('schedule/fetch', {root: true})
+		},
 		'api::world.user_count_change'({state, commit, dispatch}, {room, users}) {
+			room = state.rooms.find(r => r.id === room)
+			room.users = users
+			commit('updateRooms', state.rooms)
+		},
+		// Backwards-compat: server emits 'event.user_count_change'
+		'api::event.user_count_change'({state, commit, dispatch}, {room, users}) {
 			room = state.rooms.find(r => r.id === room)
 			room.users = users
 			commit('updateRooms', state.rooms)

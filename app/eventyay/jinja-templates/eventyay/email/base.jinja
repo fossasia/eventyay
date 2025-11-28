@@ -197,7 +197,7 @@
             <table cellpadding='20'><tr><td align='center'>
           <![endif]-->
           {% if event %}
-            <h2><a href="{{ url_for('presale:event.index', event=event) }}" target='_blank'>{{ event.name }}</a></h2>
+            <h2><a href="{{ url_for('presale:event.index', organizer=event.organizer.slug, event=event.slug) }}" target='_blank'>{{ event.name }}</a></h2>
           {% else %}
             <h2><a href='{{ site_url }}' target='_blank'>{{ site }}</a></h2>
           {% endif %}

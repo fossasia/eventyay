@@ -267,7 +267,7 @@ class EventSerializer(I18nAwareModelSerializer):
 
         # Product Meta properties
         if product_meta_properties is not None:
-            for key, value in product_meta_properties.products():
+            for key, value in product_meta_properties.items():
                 event.product_meta_properties.create(name=key, default=value, event=event)
 
         # Seats
@@ -664,6 +664,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'locales',
         'locale',
         'region',
+        'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
         'show_quota_left',
@@ -778,6 +779,7 @@ class EventSettingsSerializer(SettingsSerializer):
         'primary_font',
         'logo_image',
         'logo_image_large',
+        'event_logo_image',
         'logo_show_title',
         'og_image',
     ]

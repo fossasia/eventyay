@@ -5,12 +5,29 @@
 			h2 Rooms
 			bunt-link-button.btn-create(:to="{name: 'admin:rooms:new'}") Create a new room
 		bunt-input.search(name="search", placeholder="Search rooms", icon="search", v-model="search")
-	.rooms-list
+	.error(v-if="error")
+		span Failed to load rooms.
+		span(v-if="errorCode")  ({{ errorCode }})
+		span(v-if="errorCode === 'protocol.denied'")  You likely lack admin permissions.
+	.rooms-list(v-else)
 		.header
 			.drag
 			.name Name
-		SlickList.tbody(v-if="filteredRooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
-			RoomListItem(v-for="(room, index) of filteredRooms" :index="index", :key="index", :room="room", :disabled="filteredRooms !== rooms")
+			.visibility Visibility
+			.actions Actions
+		template(v-if="rooms")
+			SlickList.tbody(
+				v-if="!search",
+				v-model:list="rooms",
+				lockAxis="y",
+				:valueKey="'id'",
+				:useDragHandle="true",
+				v-scrollbar.y="",
+				@update:list="onListSort"
+			)
+				RoomListItem(v-for="(room, index) of rooms" :index="index", :key="room.id", :room="room", :disabled="rooms.length < 2")
+			.table-body(v-else, v-scrollbar.y="")
+				RoomListItem(v-for="room of filteredRooms", :key="room.id", :room="room", :disabled="filteredRooms.length < 2")
 		bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 <script>
@@ -26,23 +43,61 @@ export default {
 	data() {
 		return {
 			rooms: null,
-			search: ''
+			search: '',
+			error: null,
+			errorCode: null,
+			_unwatchConnected: null
 		}
 	},
 	computed: {
 		filteredRooms() {
 			if (!this.rooms) return
 			if (!this.search) return this.rooms
-			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), room.name.toLowerCase()))
+			return this.rooms.filter(room => room.id === this.search.trim() || fuzzysearch(this.search.toLowerCase(), this.$localize(room.name).toLowerCase()))
 		}
 	},
 	async created() {
-		this.rooms = await api.call('room.config.list')
+		await this.ensureConnectedAndFetch()
+	},
+	beforeUnmount() {
+		if (this._unwatchConnected) this._unwatchConnected()
 	},
 	methods: {
+		async ensureConnectedAndFetch() {
+			if (this.$store.state.connected) return this.fetchRooms()
+			this._unwatchConnected = this.$store.watch(
+				state => state.connected,
+				(connected) => {
+					if (connected) {
+						if (this._unwatchConnected) this._unwatchConnected()
+						this._unwatchConnected = null
+						this.fetchRooms()
+					}
+				}
+			)
+		},
+		async fetchRooms() {
+			try {
+				this.error = null
+				this.errorCode = null
+				this.rooms = await api.call('room.config.list')
+			} catch (e) {
+				this.error = e
+				this.errorCode = e?.code || e?.message || String(e)
+				console.error(e)
+			}
+		},
 		async onListSort() {
-			this.rooms = await api.call('room.config.reorder', this.rooms.map(room => room.id))
-			// TODO error handling
+			const idList = this.rooms.map(room => String(room.id))
+			const previousOrder = [...this.rooms]
+			try {
+				this.rooms = await api.call('room.config.reorder', idList)
+			} catch (e) {
+				console.error(e)
+				// Rollback to previous order on error
+				this.rooms = previousOrder
+				await this.fetchRooms()
+			}
 		}
 	}
 }
@@ -64,6 +119,8 @@ export default {
 			align-items: center
 			.bunt-button:not(:last-child)
 				margin-right: 16px
+			h2
+				margin: 16px
 			.btn-create
 				themed-button-primary()
 	h2
@@ -76,6 +133,19 @@ export default {
 		background-color: $clr-white
 	.rooms-list
 		flex-table()
+		.header
+			margin-bottom: 0
+			padding-bottom: 8px
+			border-bottom: border-separator()
+		.slick-list
+			margin-top: 0
+		.table-row
+			width: 100%
+			box-sizing: border-box
+		.table-body
+			display: block
+			max-height: calc(100vh - 260px)
+			overflow: auto
 		.room
 			display: flex
 			align-items: center
@@ -85,4 +155,10 @@ export default {
 		.name
 			flex: auto
 			ellipsis()
+		.visibility
+			width: 80px
+			text-align: center
+		.actions
+			width: 160px
+			text-align: right
 </style>

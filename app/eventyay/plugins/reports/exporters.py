@@ -1,4 +1,5 @@
 import copy
+import logging
 import tempfile
 from collections import OrderedDict, defaultdict
 from datetime import date, datetime, time, timedelta
@@ -28,7 +29,10 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import OrderFee, OrderPayment
 from eventyay.base.services.stats import order_overview
+from eventyay.helpers.timezone import get_browser_timezone
 from eventyay.control.forms.filter import OverviewFilterForm
+
+logger = logging.getLogger(__name__)
 
 
 class ReportlabExportMixin:
@@ -74,10 +78,12 @@ class ReportlabExportMixin:
         from reportlab.platypus import PageTemplate
 
         with tempfile.NamedTemporaryFile(suffix='.pdf') as f:
+            # TODO: Support Arabic and RTL languages
             Report.register_fonts()
+            page_size = self.pagesize
             doc = self.get_doc_template()(
                 f.name,
-                pagesize=self.pagesize,
+                pagesize=page_size,
                 leftMargin=15 * mm,
                 rightMargin=15 * mm,
                 topMargin=20 * mm,
@@ -89,7 +95,7 @@ class ReportlabExportMixin:
                         id='All',
                         frames=self.get_frames(doc),
                         onPage=self.on_page,
-                        pagesize=self.pagesize,
+                        pagesize=page_size,
                     )
                 ]
             )
@@ -202,9 +208,9 @@ class OverviewReport(Report):
         return pagesizes.landscape(pagesizes.A4)
 
     def get_story(self, doc, form_data):
-        if form_data.get('date_from'):
+        if form_data.get('date_from') and isinstance(form_data['date_from'], str):
             form_data['date_from'] = parse(form_data['date_from'])
-        if form_data.get('date_until'):
+        if form_data.get('date_until') and isinstance(form_data['date_until'], str):
             form_data['date_until'] = parse(form_data['date_until'])
 
         story = self._table_story(doc, form_data)
@@ -690,13 +696,14 @@ class OrderTaxListReport(MultiSheetListExporter):
         date_from = form_data.get('date_from')
         date_until = form_data.get('date_until')
         date_filter = form_data.get('date_axis')
+        browser_tz = get_browser_timezone(form_data.get('browser_timezone'))
         if date_from:
             if isinstance(date_from, str):
                 date_from = parse(date_from).date()
             if isinstance(date_from, date):
                 date_from = make_aware(
                     datetime.combine(date_from, time(hour=0, minute=0, second=0, microsecond=0)),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_until:
@@ -708,7 +715,7 @@ class OrderTaxListReport(MultiSheetListExporter):
                         date_until + timedelta(days=1),
                         time(hour=0, minute=0, second=0, microsecond=0),
                     ),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_filter == 'order_date':

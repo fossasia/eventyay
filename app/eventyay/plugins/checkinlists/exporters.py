@@ -1,7 +1,9 @@
+import logging
 from collections import OrderedDict
 from datetime import datetime, time, timedelta
 
 import dateutil.parser
+import nh3
 from django import forms
 from django.conf import settings
 from django.db.models import (
@@ -15,6 +17,7 @@ from django.db.models import (
     When,
 )
 from django.db.models.functions import Coalesce, NullIf
+from django.template.defaultfilters import truncatechars, truncatechars_html
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.timezone import is_aware, make_aware
@@ -38,6 +41,14 @@ from eventyay.control.forms.widgets import Select2
 from eventyay.plugins.reports.exporters import ReportlabExportMixin
 
 from ...helpers.templatetags.jsonfield import JSONExtract
+
+logger = logging.getLogger(__name__)
+# Minimum content width for a column in the PDF export
+# before it is truncated. This is used to prevent columns from being too narrow.
+MIN_CONTENT_WIDTH = 5
+# When the content is too long for the column, we truncate it by this many characters.
+# This is used to prevent the content from being too long and overflowing the column.
+TRUNCATE_STEP_LENGTH = 50
 
 
 class CheckInListMixin(BaseExporter):
@@ -287,6 +298,10 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
     def export_form_fields(self):
         f = self._fields
         del f['secrets']
+        # We are exporting to PDF, which has limited space, so we tell user not to create too many columns.
+        f['questions'].help_text = _(
+            'Please do not pick too many questions, as they may not fit within the PDF page width.'
+        )
         return f
 
     @property
@@ -298,7 +313,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
     def get_story(self, doc, form_data):
         cl = self.event.checkin_lists.get(pk=form_data['list'])
 
-        questions = list(Question.objects.filter(event=self.event, id__in=form_data['questions']))
+        questions = tuple(Question.objects.filter(event=self.event, id__in=form_data['questions']))
 
         headlinestyle = self.get_style()
         headlinestyle.fontSize = 15
@@ -351,11 +366,19 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
         headrowstyle = self.get_style()
         headrowstyle.fontName = 'OpenSansBd'
         for q in questions:
-            txt = str(q.question)
-            p = Paragraph(txt, headrowstyle)
-            while p.wrap(colwidths[len(tdata[0])], 5000)[1] > 30 * mm:
-                txt = txt[: len(txt) - 50] + '...'
-                p = Paragraph(txt, headrowstyle)
+            text_or_html = str(q.question)
+            p = Paragraph(text_or_html, headrowstyle)
+            while (
+                p.wrap(colwidths[len(tdata[0])], 5000)[1] > 30 * mm
+                and get_visual_length(text_or_html) > MIN_CONTENT_WIDTH
+            ):
+                if nh3.is_html(text_or_html):
+                    new_visual_length = max(MIN_CONTENT_WIDTH, get_visual_length(text_or_html) - TRUNCATE_STEP_LENGTH)
+                    text_or_html = truncatechars_html(text_or_html, new_visual_length)
+                else:
+                    new_visual_length = max(MIN_CONTENT_WIDTH, get_visual_length(text_or_html) - TRUNCATE_STEP_LENGTH)
+                    text_or_html = truncatechars(text_or_html, new_visual_length)
+                p = Paragraph(text_or_html, headrowstyle)
             tdata[0].append(p)
 
         qs = self._get_queryset(cl, form_data)
@@ -364,7 +387,8 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             try:
                 ian = op.order.invoice_address.name
                 iac = op.order.invoice_address.company
-            except:
+            except AttributeError as e:
+                logger.error('Error accessing invoice address for order position %s: %s', op.pk, e)
                 ian = ''
                 iac = ''
 
@@ -373,7 +397,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 name += '<br/>' + iac
 
             item = '{} ({})'.format(
-                str(op.item) + (' – ' + str(op.variation.value) if op.variation else ''),
+                str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
                 money_filter(op.price, self.event.currency),
             )
             if self.event.has_subevents and not cl.subevent:
@@ -387,7 +411,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
             if op.seat:
                 item += '<br/>' + str(op.seat)
             row = [
-                '!!' if op.item.checkin_attention or op.order.checkin_attention else '',
+                '!!' if op.product.checkin_attention or op.order.checkin_attention else '',
                 CBFlowable(bool(op.last_checked_in)),
                 '✘' if op.order.status != Order.STATUS_PAID else '✔',
                 op.order.code,
@@ -411,11 +435,23 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 else:
                     acache[a.question_id] = str(a)
             for q in questions:
-                txt = acache.get(q.pk, '')
-                p = Paragraph(txt, self.get_style())
-                while p.wrap(colwidths[len(row)], 5000)[1] > 50 * mm:
-                    txt = txt[: len(txt) - 50] + '...'
-                    p = Paragraph(txt, self.get_style())
+                text_or_html = acache.get(q.pk, '')
+                p = Paragraph(text_or_html, self.get_style())
+                while (
+                    p.wrap(colwidths[len(row)], 5000)[1] > 50 * mm
+                    and get_visual_length(text_or_html) > MIN_CONTENT_WIDTH
+                ):
+                    if nh3.is_html(text_or_html):
+                        new_visual_length = max(
+                            MIN_CONTENT_WIDTH, get_visual_length(text_or_html) - TRUNCATE_STEP_LENGTH
+                        )
+                        text_or_html = truncatechars_html(text_or_html, new_visual_length)
+                    else:
+                        new_visual_length = max(
+                            MIN_CONTENT_WIDTH, get_visual_length(text_or_html) - TRUNCATE_STEP_LENGTH
+                        )
+                        text_or_html = truncatechars(text_or_html, new_visual_length)
+                    p = Paragraph(text_or_html, self.get_style())
                 row.append(p)
             if op.order.status != Order.STATUS_PAID:
                 tstyledata += [
@@ -425,6 +461,7 @@ class PDFCheckinList(ReportlabExportMixin, CheckInListMixin, BaseExporter):
                 ]
             tdata.append(row)
 
+        logger.debug('To create table with %s rows and %s columns', len(tdata), len(tdata[0]))
         table = Table(tdata, colWidths=colwidths, repeatRows=1)
         table.setStyle(TableStyle(tstyledata))
         story.append(table)
@@ -540,7 +577,7 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
                         ).get(k, '')
                     )
             row += [
-                str(op.item) + (' – ' + str(op.variation.value) if op.variation else ''),
+                str(op.product) + (' – ' + str(op.variation.value) if op.variation else ''),
                 op.price,
                 date_format(
                     last_checked_in.astimezone(self.event.timezone),
@@ -601,8 +638,8 @@ class CSVCheckinList(CheckInListMixin, ListExporter):
             row.append(op.company or ia.company)
             row.append(op.voucher.code if op.voucher else '')
             row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%Y-%m-%d'))
-            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S'))
-            row.append(_('Yes') if op.order.checkin_attention or op.item.checkin_attention else _('No'))
+            row.append(op.order.datetime.astimezone(self.event.timezone).strftime('%H:%M:%S %Z'))
+            row.append(_('Yes') if op.order.checkin_attention or op.product.checkin_attention else _('No'))
             row.append(op.order.comment or '')
 
             if op.seat:
@@ -712,10 +749,10 @@ class CheckinLogList(ListExporter):
                 (
                     'items',
                     forms.ModelMultipleChoiceField(
-                        queryset=self.event.items.all(),
+                        queryset=self.event.products.all(),
                         label=_('Limit to products'),
                         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
-                        initial=self.event.items.all(),
+                        initial=self.event.products.all(),
                     ),
                 ),
             ]
@@ -739,3 +776,9 @@ class CheckinLogList(ListExporter):
         d['list'].required = False
 
         return d
+
+
+def get_visual_length(text_or_html: str) -> int:
+    if not nh3.is_html(text_or_html):
+        return len(text_or_html)
+    return len(nh3.clean(text_or_html, tags=frozenset()))

@@ -39,7 +39,7 @@ class Tag(PretalxModel):
         ),
     )
 
-    log_prefix = 'pretalx.tag'
+    log_prefix = 'eventyay.tag'
 
     class Meta:
         rules_permissions = {
@@ -52,6 +52,7 @@ class Tag(PretalxModel):
         unique_together = (('event', 'tag'),)
 
     class urls(EventUrls):
+        """URL patterns for Tag model views."""
         base = edit = '{self.event.orga_urls.tags}{self.pk}/'
         delete = '{base}delete/'
 

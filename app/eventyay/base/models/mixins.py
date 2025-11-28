@@ -91,6 +91,9 @@ class LogMixin:
             data = json.dumps(data, cls=CustomJSONEncoder, sort_keys=True)
         elif data:
             raise TypeError(f'Logged data should always be a dictionary, not {type(data)}.')
+        else:
+            # If data is None, set it to empty JSON object to satisfy NOT NULL constraint
+            data = '{}'
 
         log_entry = LogEntry.objects.create(
             content_object=content_object or self,
@@ -208,7 +211,8 @@ class PretalxModel(
     metaclass=RulesModelBase,
 ):
     """
-    Base model for most pretalx models. Suitable for plugins.
+    Base model for most Eventyay models. Suitable for plugins.
+    Provides scoped object management, logging, timestamps, and file cleanup.
     """
 
     objects = ScopedManager(event='event')

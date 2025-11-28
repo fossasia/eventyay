@@ -1,7 +1,6 @@
 $(function () {
     const basePath = JSON.parse(document.getElementById('base_path').textContent);
     const isAdminMode = JSON.parse(document.getElementById('is_admin_mode').textContent);
-    const talkHostNamePath = JSON.parse(document.getElementById('talk_hostname_url').textContent);
     const currentPath = window.location.pathname;
     const queryString = window.location.search;
 
@@ -12,16 +11,17 @@ $(function () {
     // TODO: The URL hardcode here is ugly, but we will implement a new dropdown menu in the future.
 
     const ticketsPath = `/control/`;
-    const talksPath = `${talkHostNamePath}orga/event/`
+    const talksPath = `/orga/event/`
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
+    const sessionPath = `/common/sessions/`;
     const eventPath = `/common/events/`;
     const organizerPath = `/common/organizers/`;
 
     const accountPath = `/common/account/`;
-    const adminPath = `/control/admin/`;
+    const adminPath = `/admin/`;
 
-    const logoutPath = `/control/logout?${logoutParams}`;
+    const logoutPath = `/common/logout/?${logoutParams}`;
 
     const options = {
     html: true,
@@ -53,6 +53,11 @@ $(function () {
             <div class="profile-menu">
                 <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
                     <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
+                </a>
+            </div>
+            <div class="profile-menu">
+                <a href="${basePath}${sessionPath}" target="_self" class="btn btn-outline-success">
+                    <i class="fa fa-sticky-note-o"></i> ${window.gettext('My sessions')}
                 </a>
             </div>
             <div class="profile-menu">

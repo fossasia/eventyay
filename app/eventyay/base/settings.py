@@ -43,17 +43,16 @@ def i18n_uns(v):
         return LazyI18nString(str(v))
 
 
-settings_hierarkey.add_type(LazyI18nString, serialize=lambda s: json.dumps(s.data), unserialize=i18n_uns)
+def _serialize_i18n(s): return json.dumps(s.data)
+settings_hierarkey.add_type(LazyI18nString, serialize=_serialize_i18n, unserialize=i18n_uns)
 settings_hierarkey.add_type(
     LazyI18nStringList,
     serialize=operator.methodcaller('serialize'),
     unserialize=LazyI18nStringList.unserialize,
 )
-settings_hierarkey.add_type(
-    RelativeDateWrapper,
-    serialize=lambda rdw: rdw.to_string(),
-    unserialize=lambda s: RelativeDateWrapper.from_string(s),
-)
+def _serialize_rdw(rdw): return rdw.to_string()
+def _unserialize_rdw(s): return RelativeDateWrapper.from_string(s)
+settings_hierarkey.add_type(RelativeDateWrapper, serialize=_serialize_rdw, unserialize=_unserialize_rdw)
 
 
 @settings_hierarkey.set_global(cache_namespace='global')
@@ -114,8 +113,20 @@ def validate_event_settings(event, settings_dict):
 
     default_locale = settings_dict.get('locale')
     locales = settings_dict.get('locales', [])
+    if not isinstance(locales, list):
+        locales = list(locales)
     if default_locale and default_locale not in locales:
         raise ValidationError({'locale': _('Your default locale must also be enabled for your event (see box above).')})
+    content_locales = settings_dict.get('content_locales')
+    if content_locales is None:
+        content_locales = locales
+    elif not isinstance(content_locales, list):
+        content_locales = list(content_locales)
+    if content_locales:
+        if invalid_content_locales := set(content_locales) - set(locales):
+            raise ValidationError(
+                {'content_locales': _('Content languages must be a subset of the active languages.')}
+            )
     if settings_dict.get('attendee_names_required') and not settings_dict.get('attendee_names_asked'):
         raise ValidationError(
             {'attendee_names_required': _('You cannot require specifying attendee names if you do not ask for them.')}

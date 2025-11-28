@@ -1,24 +1,24 @@
-from logging import getLogger
 from collections import defaultdict
+from logging import getLogger
 
-from django.urls import reverse
-from django.shortcuts import redirect, get_object_or_404
-from django.http import HttpRequest, HttpResponse
-from django.views.generic import UpdateView, TemplateView, ListView
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
-from django.utils.translation import gettext_lazy as _
-from django.utils.functional import cached_property
+from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.contenttypes.models import ContentType
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
+from django.views.generic import ListView, TemplateView, UpdateView
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import User, Event, NotificationSetting, LogEntry
-from eventyay.base.notifications import get_all_notification_types
 from eventyay.base.forms.user import UserSettingsForm
+from eventyay.base.models import Event, LogEntry, NotificationSetting, User
+from eventyay.base.notifications import get_all_notification_types
+
 from ...navigation import get_account_navigation
 from .common import AccountMenuMixIn
-
 
 logger = getLogger(__name__)
 
@@ -68,7 +68,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
                 self.request.user.send_security_notice(msgs, email=self._old_email)
 
         sup = super().form_valid(form)
-        self.request.user.log_action('pretix.user.settings.changed', user=self.request.user, data=data)
+        self.request.user.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
 
         update_session_auth_hash(self.request, self.request.user)
         return sup
@@ -123,9 +123,9 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
 
             messages.success(request, _('Your notification settings have been saved.'))
             if request.user.notifications_send:
-                self.request.user.log_action('pretix.user.settings.notifications.disabled', user=self.request.user)
+                self.request.user.log_action('eventyay.user.settings.notifications.disabled', user=self.request.user)
             else:
-                self.request.user.log_action('pretix.user.settings.notifications.enabled', user=self.request.user)
+                self.request.user.log_action('eventyay.user.settings.notifications.enabled', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
                 dest += '?event={}'.format(self.event.pk)
@@ -165,7 +165,7 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
                         ).update(enabled=True)
 
             messages.success(request, _('Your notification settings have been saved.'))
-            self.request.user.log_action('pretix.user.settings.notifications.changed', user=self.request.user)
+            self.request.user.log_action('eventyay.user.settings.notifications.changed', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
                 dest += '?event={}'.format(self.event.pk)
@@ -203,7 +203,7 @@ class NotificationFlipOffView(TemplateView):
         dest = (
             reverse('eventyay_common:account.notifications')
             if request.user.is_authenticated
-            else reverse('control:auth.login')
+            else reverse('eventyay_common:auth.login')
         )
         return redirect(dest)
 

@@ -304,7 +304,7 @@ class EntryDelete(EventPermissionRequiredMixin, DeleteView):
     def form_valid(self, form):
         self.object = self.get_object()
         success_url = self.get_success_url()
-        self.object.log_action('pretix.event.orders.waitinglist.deleted', user=self.request.user)
+        self.object.log_action('eventyay.event.orders.waitinglist.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected entry has been deleted.'))
         if 'next' in self.request.GET and is_safe_url(self.request.GET.get('next'), allowed_hosts=None):

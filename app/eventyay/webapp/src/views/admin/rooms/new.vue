@@ -60,6 +60,7 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
+	height: 100%
 	.bunt-icon-button
 		icon-button-style(style: clear)
 	.ui-page-header
@@ -72,7 +73,7 @@ export default {
 	.choose-type
 		display: flex
 		flex-direction: column
-		height: auto
+		height: 89vh
 		> *
 			margin: 16px
 		h2

@@ -24,6 +24,8 @@ from django_scopes import scopes_disabled
 from eventyay.base.models import (
     CartPosition,
     InvoiceAddress,
+    Order,
+    OrderPosition,
     QuestionAnswer,
     SubEvent,
     Voucher,
@@ -113,12 +115,10 @@ class CartActionMixin:
             return InvoiceAddress()
 
     def _product_from_post_value(self, key, value, voucher=None):
-        print("\n\n\nproduct something\n\n\n")
         if value.strip() == '' or '_' not in key:
             return
 
         if not key.startswith('item_') and not key.startswith('variation_') and not key.startswith('seat_'):
-            print("\n\n\nnot product something\n\n\n")
             return
 
         parts = key.split('_')
@@ -185,8 +185,6 @@ class CartActionMixin:
 
         # Compatibility patch that makes the frontend code a lot easier
         req_products = list(self.request.POST.lists())
-        print("\n\n\nself.request.POST", self.request.POST, "\n\n\n")
-        print("\n\n\nreq_products", req_products, "\n\n\n")
         if '_voucher_product' in self.request.POST and '_voucher_code' in self.request.POST:
             req_products.append(('%s' % self.request.POST['_voucher_product'], ('1',)))
             pass
@@ -444,6 +442,8 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
     known_errortypes = ['CartError']
 
     def get_success_message(self, value):
+        if isinstance(value, dict) and value.get('warning'):
+            return value['warning']
         return _('The products have been successfully added to your cart.')
 
     def _ajax_response_data(self):
@@ -486,6 +486,34 @@ class CartAdd(EventViewMixin, CartActionMixin, AsyncAction, View):
 
         products = self._products_from_post_data()
         if products:
+            # Check one ticket per user per product restriction at add-to-cart time
+            email = self.cart_session.get('email')
+            if email:
+                # Determine products being added
+                product_ids = set()
+                for pr in products:
+                    if pr.get('product'):
+                        product_ids.add(pr['product'])
+                if product_ids:
+                    exists = OrderPosition.objects.filter(
+                        order__event=self.request.event,
+                        order__email=email,
+                        order__status__in=[Order.STATUS_PENDING, Order.STATUS_PAID],
+                        product_id__in=product_ids,
+                    ).exists()
+                    if exists:
+                        if 'ajax' in self.request.GET or 'ajax' in self.request.POST:
+                            return JsonResponse(
+                                {
+                                    'redirect': self.get_error_url(),
+                                    'success': False,
+                                    'message': _('Only one ticket per user is allowed for this product. You already have a ticket.'),
+                                }
+                            )
+                        else:
+                            messages.error(self.request, _('Only one ticket per user is allowed for this product. You already have a ticket.'))
+                            return redirect(self.get_error_url())
+            
             return self.do(
                 self.request.event.id,
                 products,

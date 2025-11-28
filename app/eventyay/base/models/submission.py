@@ -287,7 +287,7 @@ class Submission(GenerateCode, PretalxModel):
     deleted_objects = ScopedManager(event='event', _manager_class=DeletedSubmissionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllSubmissionManager)
 
-    log_prefix = 'pretalx.submission'
+    log_prefix = 'eventyay.submission'
 
     class Meta:
         rules_permissions = {
@@ -319,6 +319,7 @@ class Submission(GenerateCode, PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for public submission views."""
         user_base = '{self.event.urls.user_submissions}{self.code}/'
         withdraw = '{user_base}withdraw'
         discard = '{user_base}discard'
@@ -334,6 +335,7 @@ class Submission(GenerateCode, PretalxModel):
         review = '{self.event.urls.base}talk/review/{self.review_code}'
 
     class orga_urls(EventUrls):
+        """URL patterns for organizer panel views of this submission."""
         base = edit = '{self.event.orga_urls.submissions}{self.code}/'
         make_submitted = '{base}submit'
         accept = '{base}accept'

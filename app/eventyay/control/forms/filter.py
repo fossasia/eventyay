@@ -1,7 +1,6 @@
 from datetime import datetime, time, timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
-
 from django import forms
 from django.apps import apps
 from django.conf import settings
@@ -19,6 +18,7 @@ from django.db.models.functions import Coalesce, ExtractWeekDay
 from django.urls import reverse, reverse_lazy
 from django.utils.formats import date_format, localize
 from django.utils.functional import cached_property
+from django.utils import timezone
 from django.utils.timezone import get_current_timezone, make_aware, now
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +28,7 @@ from eventyay.base.forms.widgets import (
     DatePickerWidget,
     SplitDateTimePickerWidget,
 )
+from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.base.models import (
     Checkin,
     Event,
@@ -470,6 +471,12 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
         label=_('Order placed before'),
         required=False,
     )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+        label=_('Timezone'),
+    )
     email = forms.CharField(required=False, label=_('E-mail address'))
     comment = forms.CharField(required=False, label=_('Comment'))
     locale = forms.ChoiceField(required=False, label=_('Locale'), choices=settings.LANGUAGES)
@@ -589,10 +596,16 @@ class EventOrderExpertFilterForm(EventOrderFilterForm):
             ).distinct()
         if fdata.get('email'):
             qs = qs.filter(email__icontains=fdata.get('email'))
-        if fdata.get('created_from'):
-            qs = qs.filter(datetime__gte=fdata.get('created_from'))
-        if fdata.get('created_to'):
-            qs = qs.filter(datetime__lte=fdata.get('created_to'))
+        if fdata.get('created_from') or fdata.get('created_to'):
+            browser_tz = get_browser_timezone(fdata.get('browser_timezone'))
+
+            def attach_timezone(dt_value):
+                return attach_timezone_to_naive_clock_time(dt_value, browser_tz)
+
+            if fdata.get('created_from'):
+                qs = qs.filter(datetime__gte=attach_timezone(fdata['created_from']))
+            if fdata.get('created_to'):
+                qs = qs.filter(datetime__lt=attach_timezone(fdata['created_to']))
         if fdata.get('comment'):
             qs = qs.filter(comment__icontains=fdata.get('comment'))
         if fdata.get('sales_channel'):
@@ -891,6 +904,100 @@ class OrganizerFilterForm(FilterForm):
         return qs
 
 
+class AttendeeFilterForm(FilterForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._checkin_status = None
+
+    query = forms.CharField(
+        label=_('Name or email'),
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': _('Name or email')}),
+    )
+
+    event_query = forms.CharField(
+        label=_('Event name'),
+        required=False,
+        widget=forms.TextInput(attrs={'placeholder': _('Event name')}),
+    )
+
+    event_status = forms.ChoiceField(
+        label=_('Event filter'),
+        choices=(
+            ('', _('All events')),
+            ('ongoing', _('Ongoing events')),
+            ('recent', _('Recent events')),
+        ),
+        required=False,
+    )
+
+    checkin_status = forms.ChoiceField(
+        label=_('Check-in status'),
+        choices=(
+            ('', _('All attendees')),
+            ('present', _('Present')),
+            ('left', _('Checked in but left')),
+            ('checked_in', _('Checked in')),
+            ('not_checked_in', _('Not checked in')),
+        ),
+        required=False,
+    )
+
+    ordering = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    def filter_qs(self, qs):
+        fdata = self.cleaned_data
+
+        # Search by attendee name or email
+        if fdata.get('query'):
+            qs = qs.filter(
+                Q(attendee_name_cached__icontains=fdata['query'])
+                | Q(order__email__icontains=fdata['query'])
+                | Q(attendee_email__icontains=fdata['query'])
+            )
+
+        # Search by event name
+        if fdata.get('event_query'):
+            qs = qs.filter(
+                Q(order__event__name__icontains=fdata['event_query'])
+                | Q(order__event__slug__icontains=fdata['event_query'])
+            )
+
+        # Event status filter
+        if fdata.get('event_status'):
+            now_ = now()
+            if fdata['event_status'] == 'ongoing':
+                qs = qs.filter(
+                    Q(order__event__date_from__lte=now_)
+                    & (Q(order__event__date_to__gte=now_) | Q(order__event__date_to__isnull=True))
+                )
+            elif fdata['event_status'] == 'recent':
+                qs = qs.filter(
+                    Q(order__event__date_to__lt=now_)
+                    | (Q(order__event__date_to__isnull=True) & Q(order__event__date_from__lt=now_))
+                )
+
+        # Check-in status filter
+        checkin_status = fdata.get('checkin_status')
+        if checkin_status:
+            qs = qs.annotate(
+                entry_time=Max('checkins__datetime', filter=Q(checkins__type=Checkin.TYPE_ENTRY)),
+                exit_time=Max('checkins__datetime', filter=Q(checkins__type=Checkin.TYPE_EXIT)),
+            )
+            if checkin_status == 'present':
+                qs = qs.filter(entry_time__isnull=False).filter(
+                    Q(exit_time__isnull=True) | Q(exit_time__lt=F('entry_time'))
+                )
+            elif checkin_status == 'left':
+                qs = qs.filter(exit_time__isnull=False, exit_time__gt=F('entry_time'))
+            elif checkin_status == 'checked_in':
+                qs = qs.filter(entry_time__isnull=False)
+            elif checkin_status == 'not_checked_in':
+                qs = qs.filter(entry_time__isnull=True)
+
+        return qs
+
+
 class SubmissionFilterForm(forms.Form):
     query = forms.CharField(
         label=_('Title or speaker'),
@@ -1061,6 +1168,7 @@ class EventFilterForm(FilterForm):
         label=_('Status'),
         choices=(
             ('', _('All events')),
+            ('my_events', _('My Events')),
             ('live', _('Shop live')),
             ('running', _('Shop live and presale running')),
             ('notlive', _('Shop not live')),
@@ -1129,7 +1237,15 @@ class EventFilterForm(FilterForm):
     def filter_qs(self, qs):
         fdata = self.cleaned_data
 
-        if fdata.get('status') == 'live':
+        if fdata.get('status') == 'my_events':
+            # Filter for events where user is a team member
+            user = self.request.user
+            qs = qs.filter(
+                Q(organizer__teams__members=user) &
+                (Q(organizer__teams__all_events=True) |
+                 Q(organizer__teams__limit_events__in=qs.values_list('pk', flat=True)))
+            ).distinct()
+        elif fdata.get('status') == 'live':
             qs = qs.filter(live=True)
         elif fdata.get('status') == 'running':
             qs = (
@@ -1677,6 +1793,12 @@ class OverviewFilterForm(FilterForm):
         label=_('Date until'),
         required=False,
         widget=DatePickerWidget,
+    )
+    browser_timezone = forms.CharField(
+        widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
+        required=False,
+        initial='UTC',
+        label=_('Timezone'),
     )
 
     def __init__(self, *args, **kwargs):

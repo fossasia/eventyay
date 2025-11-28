@@ -50,7 +50,7 @@ class GateCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         form.instance.organizer = self.request.organizer
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.gate.created',
+            'eventyay.gate.created',
             user=self.request.user,
             data={k: getattr(self.object, k) for k in form.changed_data},
         )
@@ -87,7 +87,7 @@ class GateUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
     def form_valid(self, form):
         if form.has_changed():
             self.object.log_action(
-                'pretix.gate.changed',
+                'eventyay.gate.changed',
                 user=self.request.user,
                 data={k: getattr(self.object, k) for k in form.changed_data},
             )
@@ -120,7 +120,7 @@ class GateDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
     def form_valid(self, form):
         success_url = self.get_success_url()
         self.object = self.get_object()
-        self.object.log_action('pretix.gate.deleted', user=self.request.user)
+        self.object.log_action('eventyay.gate.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected gate has been deleted.'))
         return redirect(success_url)

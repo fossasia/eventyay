@@ -13,6 +13,9 @@
     <title>{% block thetitle %}{% endblock %}</title>
     {% if css_file %}
         <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/scss/custom.css" %}" />
+        {% endcompress %}
     {% else %}
         {% compress css %}
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
@@ -31,10 +34,10 @@
         <link rel="icon" type="image/png" sizes="194x194" href="{{ settings.favicon|thumb:'194x194^' }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ settings.favicon|thumb:'16x16^' }}">
     {% elif development_warning or debug_warning %}
-        <link rel="shortcut icon" href="{% static "pretixbase/img/favicon-debug.ico" %}">
+        <link rel="shortcut icon" href="{% static "common/img/icons/favicon_debug.ico" %}">
     {% else %}
-        <link rel="icon" href="{% static "pretixbase/img/favicon.ico" %}">
-        <link rel="shortcut icon" href="{% static "pretixbase/img/favicon.ico" %}">
+        <link rel="icon" href="{% static "common/img/icons/favicon.ico" %}">
+        <link rel="shortcut icon" href="{% static "common/img/icons/favicon.ico" %}">
         <link rel="icon" type="image/png" sizes="32x32" href="{% static "pretixbase/img/icons/favicon-32x32.png" %}">
         <link rel="icon" type="image/png" sizes="194x194" href="{% static "pretixbase/img/icons/favicon-194x194.png" %}">
         <link rel="icon" type="image/png" sizes="16x16" href="{% static "pretixbase/img/icons/favicon-16x16.png" %}">
@@ -59,7 +62,7 @@
             <img id="header-image" src="{{ MEDIA_PREFIX }}{{ event_logo }}" alt="{{ event.name }}" class="event-logo" />
         {% endif %}
 </div>
-<header {% if event_logo %} class="custom-header" {% endif %}>
+<header {% if event_logo %} class="custom-header" {% endif %} >
 {% block above %}
 {% endblock %}
 </header>

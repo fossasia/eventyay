@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import quote
 
 from django.contrib import messages
@@ -18,9 +19,10 @@ from eventyay.presale.views import (
     iframe_entry_view_wrapper,
 )
 
+logger = logging.getLogger(__name__)
 
-@method_decorator(allow_frame_if_namespaced, 'dispatch')
-@method_decorator(iframe_entry_view_wrapper, 'dispatch')
+
+@method_decorator((allow_frame_if_namespaced, iframe_entry_view_wrapper), 'dispatch')
 class CheckoutView(View):
     def get_index_url(self, request):
         kwargs = {}
@@ -37,7 +39,9 @@ class CheckoutView(View):
 
         if not request.event.presale_is_running:
             messages.error(request, _('The presale for this event is over or has not yet started.'))
-            return self.redirect(self.get_index_url(self.request))
+            new_url = self.get_index_url(self.request)
+            logger.info('Redirecting to %s as presale is not running.', new_url)
+            return self.redirect(new_url)
 
         cart_error = None
         try:
@@ -52,29 +56,35 @@ class CheckoutView(View):
                 continue
             if step.requires_valid_cart and cart_error:
                 messages.error(request, str(cart_error))
-                return self.redirect(
-                    previous_step.get_step_url(request) if previous_step else self.get_index_url(request)
-                )
+                new_url = previous_step.get_step_url(request) if previous_step else self.get_index_url(request)
+                logger.info('Redirecting to %s as cart is invalid.', new_url)
+                return self.redirect(new_url)
 
             if 'step' not in kwargs:
-                return self.redirect(step.get_step_url(request))
+                new_url = step.get_step_url(request)
+                logger.info('Redirecting to %s as no step is specified.', new_url)
+                return self.redirect(new_url)
             is_selected = step.identifier == kwargs.get('step', '')
             if (
                 'async_id' not in request.GET
                 and not is_selected
                 and not step.is_completed(request, warn=not is_selected)
             ):
-                return self.redirect(step.get_step_url(request))
+                new_url = step.get_step_url(request)
+                logger.info('Redirecting to %s as previous steps are not completed.', new_url)
+                return self.redirect(new_url)
             if is_selected:
                 if request.method.lower() in self.http_method_names:
                     handler = getattr(step, request.method.lower(), self.http_method_not_allowed)
                 else:
                     handler = self.http_method_not_allowed
+                logger.debug('Dispatching to step handler %s.', handler)
                 return handler(request)
             else:
                 previous_step = step
                 step.c_is_before = True
                 step.c_resolved_url = step.get_step_url(request)
+        logger.warning('No matching step found in checkout flow.')
         raise Http404()
 
     def redirect(self, url):

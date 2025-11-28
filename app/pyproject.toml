@@ -97,8 +97,8 @@ dependencies = [
     "elementpath>=4.7.0",
     "emoji>=2.14.1",
     "et-xmlfile>=2.0.0",
-    "eventyay-paypal @ git+https://github.com/fossasia/eventyay-tickets-paypal.git@4728e6733d971edb4db6df4ebfe12caefd371d55",
-    "eventyay-stripe @ git+https://github.com/fossasia/eventyay-tickets-stripe.git@1d461de9ac7ef743cb2e6ddbace3434ba5ec6fcc",
+    "eventyay-paypal @ git+https://github.com/fossasia/eventyay-tickets-paypal.git@1765e5b1aa31da570e16a09a076e96ab623436d1",
+    "eventyay-stripe @ git+https://github.com/fossasia/eventyay-tickets-stripe.git@a76e42f537666a19ac57072ffd32cd44353b8032",
     "execnet>=2.1.1",
     "faker>=37.3.0",
     "fakeredis>=2.26.2",
@@ -126,6 +126,7 @@ dependencies = [
     "libsass>=0.23.0",
     "lxml>=5.4.0",
     "markdown>=3.7",
+    "markdownify>=1.2.0",
     "matplotlib>=3.10.3",
     "maxminddb>=2.6.3",
     "mccabe>=0.7.0",
@@ -139,6 +140,7 @@ dependencies = [
     "openpyxl>=3.1.5",
     "orjson>=3.10.18",
     "packaging>=25.0",
+    "pandas>=2.3.3",
     "pdf2image>=1.17.0",
     "pdfrw>=0.4",
     "pep8-naming>=0.14.1",
@@ -228,6 +230,7 @@ dependencies = [
     "webencodings>=0.5.1",
     "websockets>=15.0.1",
     "whitenoise>=6.8.2",
+    "wlc>=1.16.1",
     "xmlschema>=3.4.3",
     "yarl>=1.18.3",
     "zipp>=3.21.0",
@@ -279,6 +282,7 @@ ignore = ["E722", "E741"]
 "**/__init__.py" = ["F401"]
 # These files have long lines.
 "**/migrations/*.py" = ["E501"]
+"eventyay/config/settings.py" = ["E402"]
 
 [tool.setuptools]
 packages = ["eventyay"]

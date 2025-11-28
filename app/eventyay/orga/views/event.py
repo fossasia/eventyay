@@ -106,8 +106,6 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
-            'localisation': _('Localisation'),
             'display': _('Display settings'),
             'texts': _('Texts'),
         }
@@ -651,7 +649,6 @@ class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         self.get_object().shred(person=self.request.user)
         return redirect(reverse('orga:event.list'))
-
 
 @method_decorator(csp_update({'SCRIPT_SRC': "'self' 'unsafe-eval'"}), name='dispatch')
 class WidgetSettings(EventSettingsPermission, FormView):

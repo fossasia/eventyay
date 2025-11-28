@@ -72,6 +72,7 @@
             </a>
         {% endif %}
         {% include "pretixpresale/event/fragment_order_status.html" with order=order event=request.event class="pull-right flip" %}
+        {% include "pretixpresale/event/fragment_nav.html" with with_margin=with_margin is_video_plugin_enabled=is_video_plugin_enabled %}
         <div class="clearfix"></div>
     </h2>
     {% if order.status == "n" and not order.require_approval %}
@@ -184,7 +185,7 @@
     {% include "pretixpresale/event/fragment_downloads.html" with position_page=False %}
     <div class="panel panel-primary cart">
         <div class="panel-heading">
-            {% if order.can_modify_answers %}
+            {% if can_modify_order %}
                 <div class="pull-right flip">
                     <a href="{% eventurl event "presale:event.order.modify" secret=order.secret order=order.code %}" aria-label="{% trans "Change ordered items" %}">
                         <span class="fa fa-edit" aria-hidden="true"></span>
@@ -278,7 +279,7 @@
             <div class="panel panel-primary">
                 <div class="panel-heading">
                     {% if invoice_address_asked or request.event.settings.invoice_name_required %}
-                        {% if order.can_modify_answers %}
+                        {% if can_modify_order %}
                             <div class="pull-right flip">
                                 <a href="{% eventurl event "presale:event.order.modify" secret=order.secret order=order.code %}" aria-label="{% trans "Change your information" %}">
                                     <span class="fa fa-edit" aria-hidden="true"></span>

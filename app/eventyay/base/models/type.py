@@ -46,7 +46,7 @@ class SubmissionType(PretalxModel):
         default=False,
     )
 
-    log_prefix = 'pretalx.submission_type'
+    log_prefix = 'eventyay.submission_type'
 
     class Meta:
         ordering = ['default_duration']
@@ -61,6 +61,7 @@ class SubmissionType(PretalxModel):
         }
 
     class urls(EventUrls):
+        """URL patterns for submission type views."""
         base = edit = '{self.event.cfp.urls.types}{self.pk}/'
         default = '{base}default'
         delete = '{base}delete/'

@@ -30,14 +30,21 @@
                             {% bootstrap_field filter_form.query layout='inline' %}
                         </div>
                         <div class="col-md-3 col-sm-6 col-xs-12">
+                            {% bootstrap_field filter_form.status layout='inline' %}
+                        </div>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
                             {% bootstrap_field filter_form.organizer layout='inline' %}
                         </div>
-                    </div>
-                    <div class="text-right">
-                        <button class="btn btn-primary" type="submit">
-                            <span class="fa fa-filter"></span>
-                            <span class="hidden-md">{% trans "Filter" %}</span>
-                        </button>
+                        <div class="col-md-3 col-sm-6 col-xs-12">
+                            <div class="form-group" style="gap: 20px; display: flex;">
+                                <button class="btn btn-primary" type="submit">
+                                    <span class="fa fa-filter"></span>
+                                </button>
+                                <a href="?" class="btn btn-default">
+                                    <span class="fa fa-eraser"></span>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -120,7 +127,7 @@
                             {% include "pretixcontrol/fragment_quota_box_paid.html" with quota=q %}
                         {% endfor %}
                         {% if e.first_quotas|length > 3 %}
-                            <a href="{% url 'control:event.items.quotas' organizer=e.organizer.slug event=e.slug %}"
+                            <a href="{% url 'control:event.products.quotas' organizer=e.organizer.slug event=e.slug %}"
                                class="quotabox-more" data-toggle="tooltip" title="{% trans 'More quotas' %}"
                                aria-label="{% trans 'More quotas' %}" data-placement="top">
                                 &middot;&middot;&middot;

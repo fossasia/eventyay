@@ -1,112 +1,45 @@
-from i18nfield.strings import LazyI18nString
+import logging
 
-from eventyay.base.email import get_email_context
-from eventyay.base.i18n import language
-from eventyay.base.models import Event, InvoiceAddress, Order, User
-from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.models import Event
 from eventyay.base.services.tasks import ProfiledEventTask
 from eventyay.celery_app import app
 
 
-@app.task(base=ProfiledEventTask, acks_late=True)
-def send_mails(
-    event: Event,
-    user: int,
-    subject: dict,
-    message: dict,
-    orders: list,
-    items: list,
-    recipients: str,
-    filter_checkins: bool,
-    not_checked_in: bool,
-    checkin_lists: list,
-    attachments: list = None,
-) -> None:
-    failures = []
-    user = User.objects.get(pk=user) if user else None
-    orders = Order.objects.filter(pk__in=orders, event=event)
-    subject = LazyI18nString(subject)
-    message = LazyI18nString(message)
+logger = logging.getLogger(__name__)
 
-    for o in orders:
-        send_to_order = recipients in ('both', 'orders')
 
+@app.task(base=ProfiledEventTask, bind=True, max_retries=3, default_retry_delay=60, acks_late=True)
+def send_queued_mail(self, event_id: int, queued_mail_id: int):
+    from eventyay.plugins.sendmail.models import EmailQueue
+    from celery.exceptions import MaxRetriesExceededError
+
+    if isinstance(event_id, Event):
+        original_event_id = event_id.pk
+        event = event_id
+    else:
+        original_event_id = event_id
+        event = Event.objects.get(id=original_event_id)
+
+    try:
+        qm = EmailQueue.objects.get(pk=queued_mail_id, event=event)
+        result = qm.send(async_send=True)
+
+        if not result:
+            logger.warning("[SendMail] EmailQueue ID %s: no recipients to send to.", queued_mail_id)
+        elif not qm.sent_at:
+            logger.warning("[SendMail] EmailQueue ID %s: partially sent, some recipients failed.", queued_mail_id)
+        else:
+            logger.info("[SendMail] EmailQueue ID %s: all emails sent successfully.", queued_mail_id)
+
+    except Event.DoesNotExist:
+        logger.error("[SendMail] Event ID %s not found.", original_event_id)
+
+    except EmailQueue.DoesNotExist:
+        logger.error("[SendMail] EmailQueue ID %s not found for event ID %s.", queued_mail_id, original_event_id)
+
+    except Exception as exc:
+        logger.exception("[SendMail] Unexpected error for EmailQueue ID %s", queued_mail_id)
         try:
-            ia = o.invoice_address
-        except InvoiceAddress.DoesNotExist:
-            ia = InvoiceAddress(order=o)
-
-        if recipients in ('both', 'attendees'):
-            for p in o.positions.prefetch_related('addons'):
-                if p.addon_to_id is not None:
-                    continue
-
-                if p.item_id not in items and not any(a.item_id in items for a in p.addons.all()):
-                    continue
-
-                if filter_checkins:
-                    checkins = list(p.checkins.all())
-                    allowed = (not_checked_in and not checkins) or (any(c.list_id in checkin_lists for c in checkins))
-                    if not allowed:
-                        continue
-
-                if not p.attendee_email:
-                    if recipients == 'attendees':
-                        send_to_order = True
-                    continue
-
-                if p.attendee_email == o.email and send_to_order:
-                    continue
-
-                try:
-                    with language(o.locale, event.settings.region):
-                        email_context = get_email_context(event=event, order=o, position_or_address=p, position=p)
-                        mail(
-                            p.attendee_email,
-                            subject,
-                            message,
-                            email_context,
-                            event,
-                            locale=o.locale,
-                            order=o,
-                            position=p,
-                            attach_cached_files=attachments,
-                        )
-                        o.log_action(
-                            'pretix.plugins.sendmail.order.email.sent.attendee',
-                            user=user,
-                            data={
-                                'position': p.positionid,
-                                'subject': subject.localize(o.locale).format_map(email_context),
-                                'message': message.localize(o.locale).format_map(email_context),
-                                'recipient': p.attendee_email,
-                            },
-                        )
-                except SendMailException:
-                    failures.append(p.attendee_email)
-
-        if send_to_order and o.email:
-            try:
-                with language(o.locale, event.settings.region):
-                    email_context = get_email_context(event=event, order=o, position_or_address=ia)
-                    mail(
-                        o.email,
-                        subject,
-                        message,
-                        email_context,
-                        event,
-                        locale=o.locale,
-                        order=o,
-                        attach_cached_files=attachments,
-                    )
-                    o.log_action(
-                        'pretix.plugins.sendmail.order.email.sent',
-                        user=user,
-                        data={
-                            'subject': subject.localize(o.locale).format_map(email_context),
-                            'message': message.localize(o.locale).format_map(email_context),
-                            'recipient': o.email,
-                        },
-                    )
-            except SendMailException:
-                failures.append(o.email)
+            self.retry(exc=exc, args=[original_event_id, queued_mail_id])
+        except MaxRetriesExceededError:
+            logger.error("[SendMail] Max retries exceeded for EmailQueue ID %s", queued_mail_id)

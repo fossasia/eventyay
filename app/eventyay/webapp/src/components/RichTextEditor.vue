@@ -140,6 +140,7 @@ onBeforeUnmount(() => {
 .c-rich-text-editor
 	padding-top: 0
 	position: relative
+	height: 30vh
 
 	.uploading
 		position: absolute

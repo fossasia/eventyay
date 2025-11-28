@@ -87,7 +87,7 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
         return ctx
 
     def get_success_url(self):
-        return reverse('control:admin.users.edit', kwargs=self.kwargs)
+        return reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs)
 
     def form_valid(self, form):
         messages.success(self.request, _('Your changes have been saved.'))
@@ -103,22 +103,22 @@ class UserEditView(AdministratorPermissionRequiredMixin, RecentAuthenticationReq
         sup = super().form_valid(form)
 
         if 'require_2fa' in form.changed_data and form.cleaned_data['require_2fa']:
-            self.object.log_action('pretix.user.settings.2fa.enabled', user=self.request.user)
+            self.object.log_action('eventyay.user.settings.2fa.enabled', user=self.request.user)
         elif 'require_2fa' in form.changed_data and not form.cleaned_data['require_2fa']:
-            self.object.log_action('pretix.user.settings.2fa.disabled', user=self.request.user)
-        self.object.log_action('pretix.user.settings.changed', user=self.request.user, data=data)
+            self.object.log_action('eventyay.user.settings.2fa.disabled', user=self.request.user)
+        self.object.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
 
         return sup
 
 
 class UserResetView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        return redirect(reverse('control:admin.users.edit', kwargs=self.kwargs))
+        return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         try:
-            self.object.send_password_reset()
+            self.object.send_password_reset(request)
         except SendMailException:
             messages.error(
                 request,
@@ -126,12 +126,12 @@ class UserResetView(AdministratorPermissionRequiredMixin, RecentAuthenticationRe
             )
             return redirect(self.get_success_url())
 
-        self.object.log_action('pretix.control.auth.user.forgot_password.mail_sent', user=request.user)
+        self.object.log_action('eventyay.control.auth.user.forgot_password.mail_sent', user=request.user)
         messages.success(request, _('We sent out an e-mail containing further instructions.'))
         return redirect(self.get_success_url())
 
     def get_success_url(self):
-        return reverse('control:admin.users.edit', kwargs=self.kwargs)
+        return reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs)
 
 
 class UserAnonymizeView(
@@ -148,13 +148,13 @@ class UserAnonymizeView(
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
-        self.object.log_action('pretix.user.anonymized', user=request.user)
+        self.object.log_action('eventyay.user.anonymized', user=request.user)
         self.object.email = '{}@disabled.eventyay.com'.format(self.object.pk)
         self.object.fullname = ''
         self.object.is_active = False
         self.object.notifications_send = False
         self.object.save()
-        for le in self.object.all_logentries.filter(action_type='pretix.user.settings.changed'):
+        for le in self.object.all_logentries.filter(action_type='eventyay.user.settings.changed'):
             d = le.parsed_data
             if 'email' in d:
                 d['email'] = '█'
@@ -164,17 +164,17 @@ class UserAnonymizeView(
             le.shredded = True
             le.save(update_fields=['data', 'shredded'])
 
-        return redirect(reverse('control:admin.users.edit', kwargs=self.kwargs))
+        return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
 
 
 class UserImpersonateView(AdministratorPermissionRequiredMixin, RecentAuthenticationRequiredMixin, View):
     def get(self, request, *args, **kwargs):
-        return redirect(reverse('control:admin.users.edit', kwargs=self.kwargs))
+        return redirect(reverse('eventyay_admin:admin.users.edit', kwargs=self.kwargs))
 
     def post(self, request, *args, **kwargs):
         self.object = get_object_or_404(User, pk=self.kwargs.get('id'))
         self.request.user.log_action(
-            'pretix.control.auth.user.impersonated',
+            'eventyay.control.auth.user.impersonated',
             user=request.user,
             data={'other': self.kwargs.get('id'), 'other_email': self.object.email},
         )
@@ -231,7 +231,7 @@ class UserImpersonateStopView(LoginRequiredMixin, View):
             ss.save()
 
         request.user.log_action(
-            'pretix.control.auth.user.impersonate_stopped',
+            'eventyay.control.auth.user.impersonate_stopped',
             user=request.user,
             data={'other': impersonated.pk, 'other_email': impersonated.email},
         )
@@ -255,7 +255,7 @@ class UserCreateView(AdministratorPermissionRequiredMixin, RecentAuthenticationR
         return i
 
     def get_success_url(self):
-        return reverse('control:admin.users')
+        return reverse('eventyay_admin:admin.users')
 
     def form_valid(self, form):
         messages.success(self.request, _('The new user has been created.'))

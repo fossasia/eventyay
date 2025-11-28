@@ -1,0 +1,46 @@
+{% load i18n %}
+{% load bootstrap3 %}
+{% load eventurl %}
+{% load event_tags %}
+
+<nav id='header-nav-bar'>
+    <div class="navigation">
+        <a href="#" class="header-tab underline">
+            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+        </a>
+
+        {% if schedule or request.event.current_schedule %}
+            <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
+                <i class="fa fa-calendar"></i> {% translate "Schedule" %}
+            </a>
+
+            <a href="{{ request.event.talk_session_url }}" class="header-tab">
+                <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
+            </a>
+
+            <a href="{{ request.event.talk_speaker_url }}" class="header-tab">
+                <i class="fa fa-group"></i> {% translate "Speakers" %}
+            </a>
+        {% endif %}
+
+        {% with cfp=request.event.cfp %}
+            {% if cfp.is_open or access_code.is_valid %}
+                <a class="header-tab"
+                    href="{% url 'cfp:event.start' event=request.event.slug organizer=request.event.organizer.slug %}">
+                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
+                </a>
+            {% else %}
+                <a class="header-tab disabled" tabindex="-1" aria-disabled="true" href="#">
+                    <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
+                </a>
+            {% endif %}
+        {% endwith %}
+
+        <div class="video-link">
+            <a id='join-event-link' class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+                href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
+                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+            </a>
+        </div>
+    </div>
+</nav>

@@ -30,8 +30,16 @@ from eventyay.plugins.badges.tasks import badges_create_pdf
 
 from .models import BadgeLayout
 
+class BadgePluginEnabledMixin:
 
-class LayoutListView(EventPermissionRequiredMixin, ListView):
+    def dispatch(self, request, *args, **kwargs):
+        if 'eventyay.plugins.badges' not in request.event.get_plugins():
+            return redirect('control:event.settings.plugins', 
+                          organizer=request.event.organizer.slug, 
+                          event=request.event.slug)
+        return super().dispatch(request, *args, **kwargs)
+
+class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, ListView):
     model = BadgeLayout
     permission = ('can_change_event_settings', 'can_view_orders')
     template_name = 'pretixplugins/badges/index.html'
@@ -41,7 +49,7 @@ class LayoutListView(EventPermissionRequiredMixin, ListView):
         return self.request.event.badge_layouts.prefetch_related('product_assignments')
 
 
-class LayoutCreate(EventPermissionRequiredMixin, CreateView):
+class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, CreateView):
     model = BadgeLayout
     form_class = BadgeLayoutForm
     template_name = 'pretixplugins/badges/edit.html'
@@ -101,7 +109,7 @@ class LayoutCreate(EventPermissionRequiredMixin, CreateView):
         return kwargs
 
 
-class LayoutSetDefault(EventPermissionRequiredMixin, DetailView):
+class LayoutSetDefault(BadgePluginEnabledMixin, EventPermissionRequiredMixin, DetailView):
     model = BadgeLayout
     permission = 'can_change_event_settings'
 
@@ -130,7 +138,7 @@ class LayoutSetDefault(EventPermissionRequiredMixin, DetailView):
         )
 
 
-class LayoutDelete(EventPermissionRequiredMixin, DeleteView):
+class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, DeleteView):
     model = BadgeLayout
     template_name = 'pretixplugins/badges/delete.html'
     permission = 'can_change_event_settings'
@@ -145,7 +153,7 @@ class LayoutDelete(EventPermissionRequiredMixin, DeleteView):
     @transaction.atomic
     def form_valid(self, form):
         self.object = self.get_object()
-        self.object.log_action(action='pretix.plugins.badges.layout.deleted', user=self.request.user)
+        self.object.log_action(action='eventyay.plugins.badges.layout.deleted', user=self.request.user)
         self.object.delete()
         if not self.request.event.badge_layouts.filter(default=True).exists():
             f = self.request.event.badge_layouts.first()
@@ -222,7 +230,7 @@ class LayoutEditorView(BaseEditorView):
         self.layout.background.save('background.pdf', f.file)
 
 
-class OrderPrintDo(EventPermissionRequiredMixin, AsyncAction, View):
+class OrderPrintDo(BadgePluginEnabledMixin, EventPermissionRequiredMixin, AsyncAction, View):
     task = badges_create_pdf
     permission = 'can_view_orders'
     known_errortypes = ['OrderError']

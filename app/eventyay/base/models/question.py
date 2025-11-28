@@ -247,7 +247,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllTalkQuestionManager)
 
-    log_prefix = 'pretalx.question'
+    log_prefix = 'eventyay.question'
 
     class Meta:
         ordering = ('position', 'id')
@@ -274,6 +274,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         return self.freeze_after and (self.freeze_after <= now())
 
     class urls(EventUrls):
+        """URL patterns for question views."""
         base = '{self.event.cfp.urls.questions}{self.pk}/'
         edit = '{base}edit/'
         delete = '{base}delete/'
