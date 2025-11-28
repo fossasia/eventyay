@@ -112,7 +112,7 @@ class CheckInListMixin(BaseExporter):
                                 )
                                 for k, label, w in name_scheme['fields']
                             ]
-                            if settings.JSON_FIELD_AVAILABLE and len(name_scheme['fields']) > 1
+                            if len(name_scheme['fields']) > 1
                             else []
                         ),
                         widget=forms.RadioSelect,
@@ -697,8 +697,8 @@ class CheckinLogList(ListExporter):
         )
         if form_data.get('list'):
             qs = qs.filter(list_id=form_data.get('list'))
-        if form_data.get('items'):
-            qs = qs.filter(position__item_id__in=form_data['items'])
+        if form_data.get('products'):
+            qs = qs.filter(position__item_id__in=form_data['products'])
 
         yield self.ProgressSetTotal(total=qs.count())
 
@@ -747,7 +747,7 @@ class CheckinLogList(ListExporter):
                     ),
                 ),
                 (
-                    'items',
+                    'products',
                     forms.ModelMultipleChoiceField(
                         queryset=self.event.products.all(),
                         label=_('Limit to products'),
