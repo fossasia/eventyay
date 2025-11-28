@@ -46,7 +46,7 @@ class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, List
     context_object_name = 'layouts'
 
     def get_queryset(self):
-        return self.request.event.badge_layouts.prefetch_related('item_assignments')
+        return self.request.event.badge_layouts.prefetch_related('product_assignments')
 
 
 class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, CreateView):

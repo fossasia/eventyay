@@ -811,7 +811,6 @@ redis_connection_kwargs = {
 
 REDIS_URL = config.get('redis', 'location')
 HAS_REDIS = bool(REDIS_URL)
-JSON_FIELD_AVAILABLE = True
 REDIS_HOSTS = [
     {
         'address': REDIS_URL,
