@@ -1664,14 +1664,19 @@ class OrderPayment(models.Model):
             generate_invoice,
             invoice_qualified,
         )
+        # Import here to avoid circular import (payment.py imports from models)
         from eventyay.base.payment import PaymentAlreadyConfirmedException
 
         with transaction.atomic():
             locked_instance = OrderPayment.objects.select_for_update().get(pk=self.pk)
             if locked_instance.state == self.PAYMENT_STATE_CONFIRMED:
-                # Payment is already confirmed, raise exception
+                # Payment is already confirmed; log and raise exception to preserve observability of race conditions
+                logger.info(
+                    "Concurrent confirm attempt for already confirmed payment %s",
+                    self.full_id,
+                )
                 raise PaymentAlreadyConfirmedException(
-                    'Payment {} has already been confirmed.'.format(self.full_id)
+                    f'Payment {self.full_id} has already been confirmed.'
                 )
 
             locked_instance.state = self.PAYMENT_STATE_CONFIRMED
