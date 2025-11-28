@@ -26,6 +26,7 @@ from eventyay.presale.urls import (
     locale_patterns,
     organizer_patterns,
 )
+from eventyay.cfp.views.event import EventStartpage
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
@@ -228,6 +229,7 @@ unified_event_patterns = [
                     name='video.assets.file',
                 ),
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
+                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
