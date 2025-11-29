@@ -5,16 +5,16 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-09-11 10:39+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
-"Language-Team: German <https://hosted.weblate.org/projects/open-event/"
-"eventyay-tickets/de/>\n"
+"PO-Revision-Date: 2025-11-30 06:55+0000\n"
+"Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
+"Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
+"de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.14-dev\n"
+"X-Generator: Weblate 5.15-dev\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: pretix/api/auth/devicesecurity.py:6
@@ -308,7 +308,7 @@ msgstr "Ticket eingecheckt"
 
 #: pretix/api/webhooks.py:231
 msgid "Ticket check-in reverted"
-msgstr "Check-in rückgängig gemacht"
+msgstr "Check-in widerrufen"
 
 #: pretix/api/webhooks.py:235
 msgid "Event created"
@@ -403,11 +403,11 @@ msgid "Require attendee names"
 msgstr "Namen des Teilnehmer erfordern"
 
 #: pretix/base/configurations/default_setting.py:94
-#, fuzzy
-#| msgid "Ask for a name for all tickets which include admission to the event."
 msgid ""
 "Require attendee names for all tickets which include admission to the event."
-msgstr "Frage für alle Eintritts-Tickets nach dem Namen des Teilnehmers."
+msgstr ""
+"Für alle Tickets, die den Eintritt zur Veranstaltung beinhalten, sind die "
+"Namen der Teilnehmer anzugeben."
 
 #: pretix/base/configurations/default_setting.py:106
 msgid "Require attendees to fill in their names for all admission tickets."
@@ -1393,7 +1393,7 @@ msgstr ""
 #: pretix/base/configurations/default_setting.py:1218
 #: pretix/control/forms/event.py:1506
 msgid "Only allow registered accounts to get a ticket"
-msgstr ""
+msgstr "Nur registrierte Konten dürfen ein Ticket erhalten"
 
 #: pretix/base/configurations/default_setting.py:1220
 #: pretix/control/forms/event.py:1508
@@ -1402,6 +1402,9 @@ msgid ""
 "purchase tickets. The 'Continue as a Guest' option will not be available for "
 "attendees."
 msgstr ""
+"Wenn diese Option aktiviert ist, können nur registrierte Konten Tickets "
+"kaufen. Die Option „Als Gast fortfahren“ steht den Teilnehmern nicht zur "
+"Verfügung."
 
 #: pretix/base/configurations/default_setting.py:1231
 msgid "Show availability in event overviews"
@@ -2294,7 +2297,7 @@ msgstr "Hintergrundfarbe der Seite"
 
 #: pretix/base/configurations/default_setting.py:2124
 msgid "Scroll-over color"
-msgstr ""
+msgstr "Farbverlauf beim Überfahren mit der Maus"
 
 #: pretix/base/configurations/default_setting.py:2142
 msgid "Use round edges"
@@ -2619,7 +2622,7 @@ msgstr ""
 
 #: pretix/base/configurations/default_setting.py:2519
 msgid "Privacy Policy URL"
-msgstr ""
+msgstr "URL zur Datenschutzerklärung"
 
 #: pretix/base/configurations/default_setting.py:2521
 #, fuzzy
@@ -3984,7 +3987,7 @@ msgstr "Gutscheincode"
 #: pretix/base/forms/__init__.py:162
 #, python-brace-format
 msgid "You can use {name} in this field."
-msgstr ""
+msgstr "{name} kann in diesem Feld verwendet werden."
 
 #: pretix/base/forms/auth.py:22 pretix/base/forms/auth.py:131
 msgid "Keep me logged in"
@@ -4737,7 +4740,7 @@ msgstr "Zum Warenkorb hinzufügen"
 
 #: pretix/base/models/event.py:532
 msgid "Create Video platform for Event."
-msgstr ""
+msgstr "Erstellen Sie eine Videoplattform für Veranstaltungen."
 
 #: pretix/base/models/event.py:538 pretix/base/models/items.py:256
 #: pretix/base/models/items.py:1362 pretix/base/models/orders.py:177
@@ -4776,6 +4779,8 @@ msgstr "Sie müssen mindestens ein Kontingent anlegen, um etwas zu verkaufen."
 #: pretix/base/models/event.py:1183
 msgid "You have unpaid invoices, please pay them before going live."
 msgstr ""
+"Sie haben unbezahlte Rechnungen. Bitte begleichen Sie diese, bevor Sie Live "
+"gehen."
 
 #: pretix/base/models/event.py:1191
 #, python-brace-format
@@ -6117,12 +6122,12 @@ msgstr "Einladung zu Team \"{team}\" für \"{email}\""
 #: pretix/base/models/organizer.py:419
 #: pretix/control/forms/organizer_forms/organizer_form.py:52
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "Name des Hauptansprechpartners"
 
 #: pretix/base/models/organizer.py:424
 #: pretix/control/forms/organizer_forms/organizer_form.py:62
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "E-Mail-Adresse des Hauptansprechpartners"
 
 #: pretix/base/models/organizer.py:429
 #: pretix/control/forms/organizer_forms/organizer_form.py:73
@@ -6180,7 +6185,7 @@ msgstr "Installationsdatum"
 #: pretix/base/models/page.py:10
 #: pretix/control/templates/pretixcontrol/admin/pages/index.html:29
 msgid "Page title"
-msgstr ""
+msgstr "Seitentitel"
 
 #: pretix/base/models/page.py:15 pretix/control/views/pages.py:64
 msgid "URL form"
@@ -6191,24 +6196,29 @@ msgid ""
 "This will be used to generate the URL of the page. Please only use latin "
 "letters, numbers, dots and dashes. You cannot change this afterwards."
 msgstr ""
+"Dies wird zur Generierung der URL der Seite verwendet. Bitte verwenden Sie "
+"nur lateinische Buchstaben, Zahlen, Punkte und Bindestriche. Sie können dies "
+"nachträglich nicht mehr ändern."
 
 #: pretix/base/models/page.py:23
 msgid "Show link on the website start page"
-msgstr ""
+msgstr "Link auf der Startseite der Website anzeigen"
 
 #: pretix/base/models/page.py:27
 msgid "Show in header menu on all pages"
-msgstr ""
+msgstr "Im Menü der Kopfzeile auf allen Seiten anzeigen"
 
 #: pretix/base/models/page.py:31
 msgid "Show in website footer menu on all pages"
-msgstr ""
+msgstr "Im Menü der Fußzeile der Website auf allen Seiten anzeigen"
 
 #: pretix/base/models/page.py:36
 msgid ""
 "Require the user to acknowledge this page before the sign up is created "
 "(e.g. for terms of service)."
 msgstr ""
+"Vom Benutzer verlangen, diese Seite vor der Erstellung des Kontos zu "
+"bestätigen (z. B. für die Nutzungsbedingungen)."
 
 #: pretix/base/models/page.py:40
 #: pretix/control/templates/pretixcontrol/admin/pages/form.html:48
@@ -8920,6 +8930,7 @@ msgstr "Veranstalter-Infotext"
 #: pretix/control/forms/admin/vouchers.py:25
 msgid "The voucher will be valid for all events under the selected organizers."
 msgstr ""
+"Der Gutschein gilt für alle Veranstaltungen der ausgewählten Veranstalter."
 
 #: pretix/control/forms/checkin.py:68 pretix/control/forms/filter.py:334
 #: pretix/control/forms/filter.py:361 pretix/control/forms/filter.py:1390
@@ -9327,7 +9338,7 @@ msgstr "Absenden"
 #: pretix/control/forms/event.py:1133
 #: pretix/control/forms/global_settings.py:48
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 #: pretix/control/forms/event.py:1136
 #, fuzzy
@@ -10018,7 +10029,7 @@ msgstr "Ticket-Seite"
 
 #: pretix/control/forms/global_settings.py:201
 msgid "A percentage fee will be charged for each ticket sold."
-msgstr ""
+msgstr "Für jedes verkaufte Ticket wird eine prozentuale Gebühr erhoben."
 
 #: pretix/control/forms/global_settings.py:212
 msgid "Perform update checks"
@@ -10686,6 +10697,8 @@ msgid ""
 "Please provide your name or the name of the person responsible for this "
 "account in your organization."
 msgstr ""
+"Bitte geben Sie Ihren Namen oder den Namen der Person an, die in Ihrer "
+"Organisation für dieses Konto verantwortlich ist."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:64
 msgid ""
@@ -10693,10 +10706,13 @@ msgid ""
 "contract and billing, as well as for important updates about your account "
 "and our services."
 msgstr ""
+"Wir verwenden diese E-Mail-Adresse für die gesamte Kommunikation im "
+"Zusammenhang mit Ihrem Vertrag und Ihrer Rechnungsstellung sowie für "
+"wichtige Aktualisierungen zu Ihrem Konto und unseren Dienstleistungen."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:74
 msgid "Enter your organization’s legal name."
-msgstr ""
+msgstr "Geben Sie den offiziellen Namen Ihrer Organisation ein."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:82
 #, fuzzy
@@ -10706,7 +10722,7 @@ msgstr "Straße"
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:90
 msgid "Apartment, suite, unit, etc. (optional)."
-msgstr ""
+msgstr "Wohnung, Haus, Einheit usw. (optional)."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:98
 #, fuzzy
@@ -10716,7 +10732,7 @@ msgstr "Kontoinhaber"
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:106
 msgid "Enter your city."
-msgstr ""
+msgstr "Geben Sie Ihre Stadt ein."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:114
 #, fuzzy
@@ -10732,11 +10748,11 @@ msgstr "Bevorzugte Sprache"
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:122
 msgid "Select your preferred language for all communication."
-msgstr ""
+msgstr "Wählen Sie Ihre bevorzugte Sprache für die gesamte Kommunikation aus."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:127
 msgid "Tax ID (e.g., VAT, GST)"
-msgstr ""
+msgstr "Steuer-ID (z. B. Mehrwertsteuer, Verbrauchssteuer)"
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:129
 msgid ""
@@ -10744,6 +10760,10 @@ msgid ""
 "will need to charge VAT on our services and will not be able to issue "
 "reverse charge invoices."
 msgstr ""
+"Wenn Sie in der EU ansässig sind, geben Sie bitte Ihre Umsatzsteuer-"
+"Identifikationsnummer an. Ohne diese Nummer müssen wir auf unsere "
+"Dienstleistungen Mehrwertsteuer erheben und können keine Rechnungen mit "
+"Umkehrung der Steuerschuldnerschaft ausstellen."
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:139
 #, fuzzy
@@ -10754,6 +10774,8 @@ msgstr "Der ausgewählte Gutschein existiert nicht."
 #: pretix/control/forms/organizer_forms/organizer_form.py:170
 msgid "VAT number validation is not supported for {}"
 msgstr ""
+"Die Überprüfung der Umsatzsteuer-Identifikationsnummer wird für {} nicht "
+"unterstützt"
 
 #: pretix/control/forms/organizer_forms/organizer_form.py:203
 #, fuzzy
@@ -12262,7 +12284,7 @@ msgstr "Alle Veranstalter"
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:7
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:10
 msgid "Task management"
-msgstr ""
+msgstr "Aufgabenverwaltung"
 
 #: pretix/control/navigation.py:514
 #, fuzzy
@@ -12308,7 +12330,7 @@ msgstr "Login-Einstellungen"
 
 #: pretix/control/navigation.py:570
 msgid "Billing Validation"
-msgstr ""
+msgstr "Rechnungsprüfung"
 
 #: pretix/control/permissions.py:37 pretix/control/permissions.py:74
 #: pretix/control/permissions.py:105 pretix/control/permissions.py:122
@@ -12673,12 +12695,12 @@ msgstr "Neue Station erstellen"
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:43
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:55
 msgid "Id"
-msgstr ""
+msgstr "Kennung"
 
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:45
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:59
 msgid "Run at"
-msgstr ""
+msgstr "Ausführen am"
 
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:46
 #: pretix/control/templates/pretixcontrol/admin/task_management/task_management.html:60
@@ -20533,6 +20555,8 @@ msgid ""
 "The feature cannot be disabled, but if you do not publish it, it will not "
 "show up publicly."
 msgstr ""
+"Die Funktion kann nicht deaktiviert werden, aber wenn Sie sie nicht "
+"veröffentlichen, wird sie nicht öffentlich angezeigt."
 
 #: pretix/eventyay_common/templates/eventyay_common/events/create_basics.html:18
 #, fuzzy
@@ -20562,15 +20586,17 @@ msgstr "Neue Veranstaltung erstellen"
 
 #: pretix/eventyay_common/templates/eventyay_common/events/create_foundation.html:25
 msgid "Talk system"
-msgstr ""
+msgstr "Sprachsystem"
 
 #: pretix/eventyay_common/templates/eventyay_common/events/create_foundation.html:27
 msgid "Create event for Talk system only not ready yet."
 msgstr ""
+"Erstellen Sie eine Veranstaltung für das Sprachsystem, das noch nicht bereit "
+"ist."
 
 #: pretix/eventyay_common/templates/eventyay_common/events/create_foundation.html:39
 msgid "Both tickets and talk system"
-msgstr ""
+msgstr "Sowohl Tickets als auch Sprachsystem"
 
 #: pretix/eventyay_common/templates/eventyay_common/events/index.html:5
 #, fuzzy
@@ -20592,19 +20618,23 @@ msgstr "Veranstaltername"
 
 #: pretix/eventyay_common/templates/eventyay_common/organizers/edit.html:16
 msgid "Setting for Tickets system"
-msgstr ""
+msgstr "Einstellungen für das Ticketsystem"
 
 #: pretix/eventyay_common/templates/eventyay_common/organizers/edit.html:25
 msgid "Setting for Talk system"
-msgstr ""
+msgstr "Einstellung für das Sprachsystem"
 
 #: pretix/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:36
 msgid "Invite team member and specific team settings for Ticket system"
 msgstr ""
+"Teammitglieder einladen und spezifische Teameinstellungen für das Ticket-"
+"System vornehmen"
 
 #: pretix/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:45
 msgid "Invite team member and specific team settings for Talk system"
 msgstr ""
+"Teammitglieder einladen und spezifische Teameinstellungen für das "
+"Sprachsystem vornehmen"
 
 #: pretix/eventyay_common/views/dashboards.py:282
 #, fuzzy
@@ -20616,6 +20646,8 @@ msgstr "Keine Termine"
 #: pretix/eventyay_common/views/event.py:479
 msgid "Event information is not available or the video plugin is turned off."
 msgstr ""
+"Die Veranstaltungsinformationen sind nicht verfügbar oder das Video-Plugin "
+"ist deaktiviert."
 
 #: pretix/eventyay_common/views/event.py:487
 #, fuzzy
@@ -21929,7 +21961,7 @@ msgstr ""
 
 #: pretix/plugins/socialauth/apps.py:9 pretix/plugins/socialauth/apps.py:12
 msgid "SocialAuth"
-msgstr ""
+msgstr "Mit sozialem Netzwerk authentifizieren"
 
 #: pretix/plugins/socialauth/apps.py:13
 #, fuzzy
@@ -21963,19 +21995,23 @@ msgstr "Neuen geheimen Schlüssel erstellen"
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
-msgstr ""
+msgstr "Einrichtung der sozialen Anmeldung"
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:4
 msgid ""
 "To enable social login for providers, you first need to create an OAuth "
 "application on the provider's website."
 msgstr ""
+"Um die Anmeldung über soziale Netzwerke für Anbieter zu aktivieren, müssen "
+"Sie zunächst eine OAuth-Anwendung auf der Website des Anbieters erstellen."
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:6
 msgid ""
 "Note: When running tests on the server, the tickets component URL is "
 "typically"
 msgstr ""
+"Hinweis: Bei der Ausführung von Tests auf dem Server lautet die URL der "
+"Ticketkomponente in der Regel"
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:9
 msgid "Therefore, the complete callback URL should be"
@@ -22091,7 +22127,7 @@ msgstr "Kontakt-E-Mail"
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
-msgstr ""
+msgstr "„Kunde ist vertraulich“ ankreuzen"
 
 #: pretix/plugins/socialauth/templates/socialauth/social_setup.html:82
 #, fuzzy
