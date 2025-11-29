@@ -33846,52 +33846,42 @@ msgstr ""
 #~ msgstr "Colocar orden de compra"
 
 #, fuzzy
-#~| msgid "Edit list"
 #~ msgid "Edit on GitHub"
 #~ msgstr "Editar lista"
 
 #, fuzzy
-#~| msgid "Admission ticket"
 #~ msgid "Edit on Bitbucket"
 #~ msgstr "ticket de entrada"
 
 #, fuzzy
-#~| msgid "Edit quota"
 #~ msgid "Edit on GitLab"
 #~ msgstr "Tratar cuota"
 
 #, fuzzy
-#~| msgid "Preview"
 #~ msgid "Previous"
 #~ msgstr "Previsualizar"
 
 #, fuzzy
-#~| msgid "Copy"
 #~ msgid "Copyright"
 #~ msgstr "Copiar"
 
 #, fuzzy
-#~| msgid "Toggle navigation"
 #~ msgid "Navigation"
 #~ msgstr "Alternar la navegación"
 
 #, fuzzy
-#~| msgid "Search"
 #~ msgid "Search Results"
 #~ msgstr "Buscar"
 
 #, fuzzy
-#~| msgid "Search voucher"
 #~ msgid "Search docs"
 #~ msgstr "Buscar recibo"
 
 #, fuzzy
-#~| msgid "Version %(v)s"
 #~ msgid "Versions"
 #~ msgstr "Versión %(v)s"
 
 #, fuzzy
-#~| msgid "Download date"
 #~ msgid "Downloads"
 #~ msgstr "Fecha de descarga"
 
@@ -33983,7 +33973,6 @@ msgstr ""
 #~ msgstr "Punto final"
 
 #, fuzzy
-#~| msgid "Reference code"
 #~ msgid "Reference prefix"
 #~ msgstr "Código de referencia"
 
@@ -34034,18 +34023,14 @@ msgstr ""
 #~ msgstr "Ha fallado el reintegro del importe a través de PayPal: {}"
 
 #, fuzzy
-#~| msgctxt "invoice"
-#~| msgid "The payment for this invoice has already been received."
 #~ msgid "The payment for this invoice has already been received."
 #~ msgstr "El pago de esta factura ya se ha recibido."
 
 #, fuzzy
-#~| msgid "Payment ID"
 #~ msgid "PayPal payment ID"
 #~ msgstr "ID de pago"
 
 #, fuzzy
-#~| msgid "PayPal Connect: Client ID"
 #~ msgid "PayPal sale ID"
 #~ msgstr "Conexiones a PayPal: ID de cliente"
 
@@ -34124,7 +34109,6 @@ msgstr ""
 #~ "aquí para revisar y confirmar su pedido."
 
 #, fuzzy
-#~| msgid "Sales"
 #~ msgid "Sale ID"
 #~ msgstr "Ventas"
 
@@ -34180,32 +34164,24 @@ msgstr ""
 #~ msgstr "Stripe"
 
 #, fuzzy
-#~| msgid "This plugin allows you to receive credit card payments via Stripe"
 #~ msgid "This plugin allows you to receive credit card payments via Stripe."
 #~ msgstr ""
 #~ "Este plugin le permite recibir pagos con tarjeta de crédito a través de "
 #~ "Stripe"
 
 #, fuzzy
-#~| msgid "Stripe Connect: Secret key (test)"
 #~ msgid "Stripe Connect: App fee (percent)"
 #~ msgstr "Conexiones a Stripe: Clave secreta (test)"
 
 #, fuzzy
-#~| msgid "Stripe Connect: Secret key"
 #~ msgid "Stripe Connect: App fee (max)"
 #~ msgstr "Conexiones a Stripe: Clave secreta"
 
 #, fuzzy
-#~| msgid "Stripe Connect: Secret key"
 #~ msgid "Stripe Connect: App fee (min)"
 #~ msgstr "Conexiones a Stripe: Clave secreta"
 
 #, fuzzy
-#~| msgid ""
-#~| "To accept payments via Stripe, you will need an account at Stripe. By "
-#~| "clicking on the following button, you can either create a new Stripe "
-#~| "account connect pretix to an existing one."
 #~ msgid ""
 #~ "To accept payments via Stripe, you will need an account at Stripe. By "
 #~ "clicking on the following button, you can either create a new Stripe "
@@ -34233,7 +34209,6 @@ msgstr ""
 #~ "externamente y para procesar métodos de pago asíncronos como SOFORT."
 
 #, fuzzy
-#~| msgid "Needs to be enabled in your Stripe account first."
 #~ msgid ""
 #~ "Gated feature (needs to be enabled for your account by Stripe support "
 #~ "first)"
@@ -34303,7 +34278,6 @@ msgstr ""
 #~ "favor, active este método de pago sólo si su plazo de pago lo permite."
 
 #, fuzzy
-#~| msgid "Description"
 #~ msgid "Destination"
 #~ msgstr "Descripción"
 
@@ -34353,7 +34327,6 @@ msgstr ""
 #~ "complete el pago."
 
 #, fuzzy
-#~| msgid "The password you entered was invalid, please try again."
 #~ msgid "Your payment failed. Please try again."
 #~ msgstr "La contraseña que introdujo no era válida, inténtelo de nuevo."
 
@@ -34362,9 +34335,6 @@ msgstr ""
 #~ msgstr "Stripe reportó un error: %s"
 
 #, fuzzy
-#~| msgid ""
-#~| "Your payment is pending completion. We will inform you as soon as the "
-#~| "payment completed."
 #~ msgid ""
 #~ "Your payment is pending completion. We will inform you as soon as the "
 #~ "payment is completed."
@@ -34379,37 +34349,30 @@ msgstr ""
 #~ msgstr "Tarjeta de crédito"
 
 #, fuzzy
-#~| msgid "iDEAL via Stripe"
 #~ msgid "SEPA Debit via Stripe"
 #~ msgstr "iDEAL a través de Stripe"
 
 #, fuzzy
-#~| msgid "Account holder"
 #~ msgid "Account Holder Name"
 #~ msgstr "Titular de la cuenta"
 
 #, fuzzy
-#~| msgid "Account holder"
 #~ msgid "Account Holder Street"
 #~ msgstr "Titular de la cuenta"
 
 #, fuzzy
-#~| msgid "Account holder"
 #~ msgid "Account Holder City"
 #~ msgstr "Titular de la cuenta"
 
 #, fuzzy
-#~| msgid "Account holder"
 #~ msgid "Account Holder Country"
 #~ msgstr "Titular de la cuenta"
 
 #, fuzzy
-#~| msgid "Alipay via Stripe"
 #~ msgid "Affirm via Stripe"
 #~ msgstr "Alipay vía Stripe"
 
 #, fuzzy
-#~| msgid "Alipay via Stripe"
 #~ msgid "Klarna via Stripe"
 #~ msgstr "Alipay vía Stripe"
 
@@ -34420,7 +34383,6 @@ msgstr ""
 #~ msgstr "nombre desconocido"
 
 #, fuzzy, python-brace-format
-#~| msgid "Bank account type"
 #~ msgid "Bank account at {bank}"
 #~ msgstr "Tipo de la cuenta bancaria"
 
@@ -34437,7 +34399,6 @@ msgstr ""
 #~ msgstr "SOFORT vía Stripe"
 
 #, fuzzy
-#~| msgid "Payment by bank transfer"
 #~ msgid "SOFORT (instant bank transfer)"
 #~ msgstr "Pago por transferencia bancaria"
 
@@ -34460,37 +34421,30 @@ msgstr ""
 #~ msgstr "España"
 
 #, fuzzy, python-brace-format
-#~| msgid "Bank account details"
 #~ msgid "Bank account {iban} at {bank}"
 #~ msgstr "Datos de la cuenta bancaria"
 
 #, fuzzy
-#~| msgid "iDEAL via Stripe"
 #~ msgid "EPS via Stripe"
 #~ msgstr "iDEAL a través de Stripe"
 
 #, fuzzy
-#~| msgid "Alipay via Stripe"
 #~ msgid "Multibanco via Stripe"
 #~ msgstr "Alipay vía Stripe"
 
 #, fuzzy
-#~| msgid "Alipay via Stripe"
 #~ msgid "Przelewy24 via Stripe"
 #~ msgstr "Alipay vía Stripe"
 
 #, fuzzy
-#~| msgid "Payment via Stripe"
 #~ msgid "WeChat Pay via Stripe"
 #~ msgstr "Pago a través de Stripe"
 
 #, fuzzy
-#~| msgid "Payment via Stripe"
 #~ msgid "PayPal via Stripe"
 #~ msgstr "Pago a través de Stripe"
 
 #, fuzzy
-#~| msgid "iDEAL via Stripe"
 #~ msgid "Swish via Stripe"
 #~ msgstr "iDEAL a través de Stripe"
 
@@ -34534,7 +34488,6 @@ msgstr ""
 #~ msgstr "Conexiones a Stripe: ID de cliente"
 
 #, fuzzy
-#~| msgid "Stripe Checkout"
 #~ msgid "Stripe Connect"
 #~ msgstr "Pago con Stripe"
 
@@ -34545,12 +34498,10 @@ msgstr ""
 #~ msgstr "Tipo de tarjeta"
 
 #, fuzzy
-#~| msgid "The total amount will be withdrawn from your credit card."
 #~ msgid "The total amount will be withdrawn from your bank account."
 #~ msgstr "El monto total será retirado de su tarjeta de crédito."
 
 #, fuzzy
-#~| msgid "Account holder"
 #~ msgid "Account number"
 #~ msgstr "Titular de la cuenta"
 
@@ -34588,14 +34539,10 @@ msgstr ""
 #~ "servidores."
 
 #, fuzzy
-#~| msgid "For a credit card payment, please turn on JavaScript."
 #~ msgid "For a SEPA Debit payment, please turn on JavaScript."
 #~ msgstr "Para pagar con tarjeta de crédito, active JavaScript."
 
 #, fuzzy
-#~| msgid ""
-#~| "You already entered a card number that we will use to charge the payment "
-#~| "amount."
 #~ msgid ""
 #~ "You already entered a bank account that we will use to charge the payment "
 #~ "amount."
@@ -34604,7 +34551,6 @@ msgstr ""
 #~ "importe del pago."
 
 #, fuzzy
-#~| msgid "Use a different card"
 #~ msgid "Use a different account"
 #~ msgstr "Usar una tarjeta diferente"
 
@@ -34618,12 +34564,10 @@ msgstr ""
 #~ msgstr "Mensaje de error"
 
 #, fuzzy
-#~| msgid "Do you really want to regenerate your emergency codes?"
 #~ msgid "Do you really want to disconnect your Stripe account?"
 #~ msgstr "¿Realmente quieres regenerar tus códigos de emergencia?"
 
 #, fuzzy
-#~| msgid "Connect"
 #~ msgid "Disconnect"
 #~ msgstr "Conectar"
 
@@ -34643,7 +34587,6 @@ msgstr ""
 #~ "para ello, o inicia un nuevo pago."
 
 #, fuzzy
-#~| msgid "Cancel payment"
 #~ msgid "Confirm payment"
 #~ msgstr "Cancelar el pago"
 
@@ -34655,7 +34598,6 @@ msgstr ""
 #~ msgstr "Razón desconocida"
 
 #, fuzzy, python-format
-#~| msgid "Change payment method: %(code)s"
 #~ msgid "Confirm payment: %(code)s"
 #~ msgstr "Cambiar método de pago: %(code)s"
 
@@ -34671,9 +34613,6 @@ msgstr ""
 #~ msgstr "Stripe ha devuelto un error: {}"
 
 #, fuzzy
-#~| msgid ""
-#~| "Your Stripe account is now connected to pretix. You can change the "
-#~| "settings in detail below."
 #~ msgid ""
 #~ "Your Stripe account is now connected to eventyay. You can change the "
 #~ "settings in detail below."
@@ -34700,9 +34639,6 @@ msgstr ""
 #~ "persiste."
 
 #, fuzzy
-#~| msgid ""
-#~| "Sorry, there was an error in the payment process. Please check the link "
-#~| "in your emails to continue."
 #~ msgid "Sorry, there was an error in the payment process."
 #~ msgstr ""
 #~ "Lo sentimos, hubo un error en el proceso de pago. Por favor, compruebe el "
@@ -34742,7 +34678,6 @@ msgstr ""
 #~ "(%(order)s) como reembolsado?"
 
 #, fuzzy
-#~| msgid "Optional. No products will be sold before this date."
 #~ msgid "Only include orders issued on or before this date."
 #~ msgstr "Opcional. Ningún producto será vendido antes de esta fecha."
 
@@ -34785,12 +34720,10 @@ msgstr ""
 #~ "facturas o dispositivos."
 
 #, fuzzy
-#~| msgid "Order status"
 #~ msgid "Order status:"
 #~ msgstr "Estado del pedido"
 
 #, fuzzy
-#~| msgid "{num} vouchers have been created and sent out via email."
 #~ msgid "The new vouchers have been created and will be sent out shortly."
 #~ msgstr "Se han creado vales {num} y se han enviado por correo electrónico."
 
@@ -34798,8 +34731,6 @@ msgstr ""
 #~ msgstr "Fecha de la orden:"
 
 #, fuzzy
-#~| msgid ""
-#~| "There was a problem processing your input. See below for error details."
 #~ msgid "There was a problem processing your input:"
 #~ msgstr ""
 #~ "Hubo un problema procesando su entrada. Vea a continuación los detalles "
@@ -34846,14 +34777,10 @@ msgstr ""
 #~ "debería estar disponible."
 
 #, fuzzy
-#~| msgid "Full name"
 #~ msgid "Full access"
 #~ msgstr "Nombre completo"
 
 #, fuzzy
-#~| msgid ""
-#~| "You cannot change the price of a position that has been used to issue a "
-#~| "gift card."
 #~ msgid ""
 #~ "You cannot cancel a position that has been used to issue a gift card."
 #~ msgstr ""
@@ -34940,7 +34867,6 @@ msgstr ""
 #~ msgstr "Disponible para Android, Windows y Linux."
 
 #, fuzzy
-#~| msgid "Create app configuration"
 #~ msgid "Scroll down to create a configuration"
 #~ msgstr "Crear configuración de aplicaciones"
 
@@ -35036,7 +34962,6 @@ msgstr ""
 #~ msgstr "Se ha borrado la configuración seleccionada."
 
 #, fuzzy
-#~| msgid "Sale Soon"
 #~ msgid "Sale soon"
 #~ msgstr "Proximo a la venta"
 
@@ -35085,7 +35010,6 @@ msgstr ""
 #~ "procedimiento."
 
 #, fuzzy
-#~| msgid "General"
 #~ msgid "General "
 #~ msgstr "General"
 
@@ -35170,9 +35094,6 @@ msgstr ""
 #~ "contraseña de usuario aquí:"
 
 #, fuzzy
-#~| msgid ""
-#~| "Modifying your invoice address will not automatically generate a new "
-#~| "invoice. Please contact us if you need a new invoice."
 #~ msgid ""
 #~ "Your invoice address has been updated. Please contact us if you need us "
 #~ "to regenerate your invoice."
@@ -35212,7 +35133,6 @@ msgstr ""
 #~ "{invoice_company}"
 
 #, fuzzy
-#~| msgid "Available placeholders: {event}, {url}"
 #~ msgid "Available placeholders: {event}, {url}, {attendee_name}"
 #~ msgstr "Marcadores de posición disponibles: {event}, {url}"
 
@@ -35255,7 +35175,6 @@ msgstr ""
 #~ "{date}, {url}, {invoice_name}, {invoice_company}, {invoice_company}"
 
 #, fuzzy
-#~| msgid "Available placeholders: {event}, {url}"
 #~ msgid "Available placeholders: {attendee_name}, {event}, {url}"
 #~ msgstr "Marcadores de posición disponibles: {event}, {url}"
 
@@ -35355,9 +35274,6 @@ msgstr ""
 #~ "correspondiente para ordenadores de sobremesa."
 
 #, fuzzy
-#~| msgid ""
-#~| "Sorry, there was an error in the payment process. Please check the link "
-#~| "in your emails to continue."
 #~ msgid ""
 #~ "Sorry, there was an error in the payment process.in your emails to "
 #~ "continue."
@@ -35440,10 +35356,6 @@ msgstr ""
 #~ msgstr "Aplicar a productos"
 
 #, fuzzy
-#~| msgid ""
-#~| "\n"
-#~| "                                    Waiting, product %(num)sx available\n"
-#~| "                                "
 #~ msgid ""
 #~ "\n"
 #~ "                                            "
@@ -35454,7 +35366,6 @@ msgstr ""
 #~ "                                "
 
 #, fuzzy
-#~| msgid "List of orders (CSV)"
 #~ msgid "List of orders"
 #~ msgstr "Lista de órdenes (CSV)"
 
