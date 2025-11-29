@@ -28,6 +28,8 @@ from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services import tickets
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
@@ -363,6 +365,17 @@ class EventUpdate(
         )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
+
+        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
+            regenerate_css.apply_async(args=(self.request.event.pk,))
+            messages.success(
+                self.request,
+                _(
+                    'Your changes have been saved. Please note that it can '
+                    'take a short period of time until your changes become '
+                    'active.'
+                ),
+            )
 
         return super().form_valid(form)
 

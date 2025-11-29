@@ -571,7 +571,7 @@ LANGUAGES_INFORMATION = {
         'natural_name': 'Deutsch',
         'official': True,
         'percentage': 100,
-        'path': 'de_DE',
+        'path': 'de',
     },
     'de-formal': {
         'name': _('German (formal)'),
@@ -618,7 +618,7 @@ LANGUAGES_INFORMATION = {
         'natural_name': 'Français',
         'official': False,
         'percentage': 98,
-        'path': 'fr_FR',
+        'path': 'fr',
     },
     'it': {
         'name': _('Italian'),
