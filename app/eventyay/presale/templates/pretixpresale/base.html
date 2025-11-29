@@ -66,24 +66,32 @@
 {% block above %}
 {% endblock %}
 </header>
-<div class="container main-box">
-    {% block page %}
-    {% endblock %}
+<div class="page-wrapper">
+    <div class="container main-box">
+        {% block page %}
+        {% endblock %}
+        <div class="footer-placeholder">
+            {% block footer %}
+            {% endblock %}
+        </div>
+    </div>
     <footer>
-        {% block footer %}
-        {% endblock %}
         <nav aria-label="{% trans "Footer Navigation" %}">
-        {% block footernav %}
-        {% endblock %}
-        {% if footer_text %}
-            {{ footer_text }}
-            &middot;
-        {% endif %}
-        {% for f in footer %}
-            <a href="{% safelink f.url %}" target="_blank" rel="noopener">{{ f.label }}</a>
-            &middot;
-        {% endfor %}
-        {% include "pretixpresale/base_footer.html" %}
+            {% block footernav %}
+            {% endblock %}
+            {% if footer_text %}
+                {{ footer_text }}
+                &middot;
+            {% endif %}
+            {% for f in footer %}
+                <a href="{% safelink f.url %}" target="_blank" rel="noopener">{{ f.label }}</a>
+                &middot;
+            {% endfor %}
+            {% include "pretixpresale/base_footer.html" %}
+            {% if request.event %}
+                &middot;
+                <a href="mailto:{{ request.event.email }}">{% translate "Contact us" %}</a>
+            {% endif %}
         </nav>
     </footer>
 </div>
