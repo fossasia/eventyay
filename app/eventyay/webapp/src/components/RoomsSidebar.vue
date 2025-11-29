@@ -50,7 +50,7 @@ transition(name="sidebar")
 				bunt-button#btn-browse-channels-trailing(v-if="worldHasTextChannels", @click="showChannelBrowser = true") {{ $t('RoomsSidebar:browse-channels-button:label') }}
 			.group-title#dm-title(v-if="hasPermission('world:chat.direct')")
 				span {{ $t('RoomsSidebar:direct-messages-headline:text') }}
-				bunt-icon-button(tooltip="open a direct message", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
+				bunt-icon-button(v-if="hasPermission('world:chat.direct')", tooltip="open a direct message", :tooltip-fixed="true", @click="showDMCreationPrompt = true") plus
 			.direct-messages(v-if="hasPermission('world:chat.direct') && directMessageChannels.length", role="group", aria-describedby="dm-title")
 				router-link.direct-message(v-for="channel of directMessageChannels", :to="{name: 'channel', params: {channelId: channel.id}}", :class="{unread: hasUnreadMessages(channel.id)}")
 					i.bunt-icon.mdi(v-if="call && call.channel === channel.id", aria-hidden="true").mdi-phone
@@ -79,7 +79,7 @@ transition(name="sidebar")
 			channel-browser(v-if="showChannelBrowser", @close="showChannelBrowser = false", @createChannel="showChannelBrowser = false, showChatCreationPrompt = true")
 			create-stage-prompt(v-else-if="showStageCreationPrompt", @close="showStageCreationPrompt = false")
 			create-chat-prompt(v-else-if="showChatCreationPrompt", @close="showChatCreationPrompt = false")
-			create-dm-prompt(v-else-if="showDMCreationPrompt", @close="showDMCreationPrompt = false")
+			create-dm-prompt(v-else-if="showDMCreationPrompt && hasPermission('world:chat.direct')", @close="showDMCreationPrompt = false")
 </template>
 <script>
 import { mapState, mapGetters } from 'vuex'
@@ -162,6 +162,10 @@ export default {
 			return rooms
 		},
 		directMessageChannels() {
+			// Only show direct message channels if user has explicit permission
+			if (!this.hasPermission('world:chat.direct')) {
+				return []
+			}
 			return this.joinedChannels
 				?.filter(channel => channel.members)
 				.map(channel => {

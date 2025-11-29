@@ -375,9 +375,11 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
     def _handle_team_members(self):
         team = self._get_team_from_post()
         self._forced_section = 'permissions'
+        invite_form_prefix = self._invite_form_prefix(team)
+        prefixed_user_field = f'{invite_form_prefix}-user'
         invite_form = InviteForm(
-            data=(self.request.POST if 'user' in self.request.POST else None),
-            prefix=self._invite_form_prefix(team),
+            data=(self.request.POST if prefixed_user_field in self.request.POST else None),
+            prefix=invite_form_prefix,
         )
 
         request = self.request
@@ -448,7 +450,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     messages.success(request, _('The invite has been resent.'))
                 return redirect(self._teams_tab_url(team.pk, section='permissions'))
 
-            elif 'user' in post and invite_form.is_valid() and invite_form.has_changed():
+            elif f'{invite_form_prefix}-user' in post and invite_form.is_valid() and invite_form.has_changed():
                 try:
                     user = User.objects.get(email__iexact=invite_form.cleaned_data['user'])
                 except User.DoesNotExist:

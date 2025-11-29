@@ -78,7 +78,6 @@ export default {
 				this.$router.push({name: 'room', params: {roomId: room}})
 				this.$emit('close')
 			} catch (error) {
-				console.log(error)
 				this.loading = false
 				this.error = error.message || error
 			}

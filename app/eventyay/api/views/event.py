@@ -62,20 +62,9 @@ from eventyay.base.models.event import Event
 # from pretix.presale.views.organizer import filter_qs_by_attr  # commented out
 from eventyay.api.task import configure_video_settings_for_talks
 from eventyay.api.utils import get_protocol
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 
 logger = logging.getLogger(__name__)
-
-VIDEO_TRAIT_ROLE_MAP = {
-    'video_stage_manager': 'video_stage_manager',
-    'video_channel_manager': 'video_channel_manager',
-    'video_direct_messaging': 'video_direct_messaging',
-    'video_announcement_manager': 'video_announcement_manager',
-    'video_user_viewer': 'video_user_viewer',
-    'video_user_moderator': 'video_user_moderator',
-    'video_room_manager': 'video_room_manager',
-    'video_kiosk_manager': 'video_kiosk_manager',
-    'video_config_manager': 'video_config_manager',
-}
 
 with scopes_disabled():
 

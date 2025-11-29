@@ -31,8 +31,8 @@ from eventyay.base.models.storage_model import StoredFile
 
 def default_roles():
     attendee = [
-        Permission.WORLD_VIEW,
-        Permission.WORLD_EXHIBITION_CONTACT,
+        Permission.EVENT_VIEW,
+        Permission.EVENT_EXHIBITION_CONTACT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -48,7 +48,7 @@ def default_roles():
         Permission.ROOM_JANUSCALL_JOIN,
         Permission.ROOM_ZOOM_JOIN,
     ]
-    room_creator = [Permission.WORLD_ROOMS_CREATE_CHAT]
+    room_creator = [Permission.EVENT_ROOMS_CREATE_CHAT]
     room_owner = participant + [
         Permission.ROOM_INVITE,
         Permission.ROOM_DELETE,
@@ -66,27 +66,27 @@ def default_roles():
         Permission.ROOM_QUESTION_MODERATE,
         Permission.ROOM_POLL_EARLY_RESULTS,
         Permission.ROOM_POLL_MANAGE,
-        Permission.WORLD_ANNOUNCE,
+        Permission.EVENT_ANNOUNCE,
     ]
     admin = (
         moderator
         + room_creator
         + [
-            Permission.WORLD_UPDATE,
+            Permission.EVENT_UPDATE,
             Permission.ROOM_DELETE,
             Permission.ROOM_UPDATE,
-            Permission.WORLD_ROOMS_CREATE_BBB,
-            Permission.WORLD_ROOMS_CREATE_STAGE,
-            Permission.WORLD_ROOMS_CREATE_EXHIBITION,
-            Permission.WORLD_ROOMS_CREATE_POSTER,
-            Permission.WORLD_USERS_LIST,
-            Permission.WORLD_USERS_MANAGE,
-            Permission.WORLD_GRAPHS,
-            Permission.WORLD_CONNECTIONS_UNLIMITED,
+            Permission.EVENT_ROOMS_CREATE_BBB,
+            Permission.EVENT_ROOMS_CREATE_STAGE,
+            Permission.EVENT_ROOMS_CREATE_EXHIBITION,
+            Permission.EVENT_ROOMS_CREATE_POSTER,
+            Permission.EVENT_USERS_LIST,
+            Permission.EVENT_USERS_MANAGE,
+            Permission.EVENT_GRAPHS,
+            Permission.EVENT_CONNECTIONS_UNLIMITED,
         ]
     )
-    apiuser = admin + [Permission.WORLD_API, Permission.WORLD_SECRETS]
-    scheduleuser = [Permission.WORLD_API]
+    apiuser = admin + [Permission.EVENT_API, Permission.EVENT_SECRETS]
+    scheduleuser = [Permission.EVENT_API]
     video_stage_manager = [Permission.EVENT_ROOMS_CREATE_STAGE]
     video_channel_manager = [Permission.EVENT_ROOMS_CREATE_CHAT, Permission.EVENT_ROOMS_CREATE_BBB]
     video_direct_messaging = [Permission.EVENT_CHAT_DIRECT]

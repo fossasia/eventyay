@@ -36,6 +36,11 @@ VIDEO_PERMISSION_TRAIT_NAMES: List[str] = [
     definition.trait_name for definition in VIDEO_PERMISSION_DEFINITIONS
 ]
 
+VIDEO_TRAIT_ROLE_MAP: Dict[str, str] = {
+    definition.trait_name: definition.trait_name
+    for definition in VIDEO_PERMISSION_DEFINITIONS
+}
+
 
 def iter_video_permission_definitions() -> Iterable[VideoPermissionDefinition]:
     return VIDEO_PERMISSION_DEFINITIONS

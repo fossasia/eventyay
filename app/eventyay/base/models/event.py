@@ -65,6 +65,7 @@ from eventyay.talk_rules.event import (
     has_any_permission,
     is_event_visible,
 )
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from .auth import User
 from ..settings import settings_hierarkey
 from .mixins import OrderedModel, PretalxModel
@@ -156,19 +157,6 @@ def default_grants():
         "admin": ["admin"],
         "scheduleuser": ["schedule-update"],
     }
-
-
-VIDEO_TRAIT_ROLE_MAP = {
-    "video_stage_manager": "video_stage_manager",
-    "video_channel_manager": "video_channel_manager",
-    "video_direct_messaging": "video_direct_messaging",
-    "video_announcement_manager": "video_announcement_manager",
-    "video_user_viewer": "video_user_viewer",
-    "video_user_moderator": "video_user_moderator",
-    "video_room_manager": "video_room_manager",
-    "video_kiosk_manager": "video_kiosk_manager",
-    "video_config_manager": "video_config_manager",
-}
 
 
 FEATURE_FLAGS = [
@@ -1553,9 +1541,18 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
-
-        # Removed user.world_grants loop (attribute not present on unified User model)
+                role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                
+                direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
+                if direct_messaging_def and role != 'video_direct_messaging':
+                    direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
+                    has_direct_messaging_trait = direct_messaging_trait in user.traits
+                    
+                    if not has_direct_messaging_trait:
+                        direct_message_value = Permission.EVENT_CHAT_DIRECT.value
+                        role_perms = [p for p in role_perms if (p if isinstance(p, str) else p.value) != direct_message_value]
+                
+                result[self].update(role_perms)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
