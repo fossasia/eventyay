@@ -818,52 +818,78 @@ h1 .label {
         margin-bottom: 5px;
     }
 }
-.popover{
-    padding: 0;
+.popover {
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1) !important;
+    padding: 0 !important;
+
+    &.bottom {
+        margin-top: -10px !important;
+    }
+
+    > .arrow {
+        display: none !important;
+    }
 }
 .popover-content {
     position: relative;
-    padding: 5px 0;
-    min-width: 200px;
+    padding: 0;
+    min-width: 192px;
     #submenu {
         position: absolute;
         top: 0;
-        right: 100%;  
+        right: 100%;
         font-size: 16px;
         font-weight: normal;
         cursor: pointer;
         display: none;
-        min-width: 200px;
-        padding: 5px 0;
-        border-radius: 4px;
-        z-index: 20;
+        min-width: 224px;
+        padding: 0;
+        margin: 0;
+        border-radius: 0;
+        z-index: 9999;
         background-clip: padding-box;
-        border: 1px solid rgba(0, 0, 0, 0.2);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-        transition: opacity 0.2s ease-in-out;
+        border: none;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
     }
     .profile-menu {
         color: darken($btn-primary-bg, 10%);
-        font-size: 16px;
+        font-size: 14px;
         font-weight: normal;
         cursor: pointer;
+        padding: 7px 16px;
+        line-height: 1.5;
         a {
             color: darken($btn-primary-bg, 10%) !important;
+            padding: 0 !important;
+            border: none !important;
+            background: none !important;
+            display: inline !important;
+            line-height: 1.5;
         }
         .dashboard-item {
             color: darken($btn-primary-bg, 10%);
         }
         i {
-            margin-right: 10px;
-            width: 16px;
+            margin-right: 8px;
+            width: 12px;
             text-align: center;
+            font-size: 12px;
+            vertical-align: middle;
         }
         &.separator {
-            height: 1px;
-            background-color: #e5e5e5;
-            margin: 5px 0;
+            height: 0;
+            background-color: transparent;
+            margin: 0;
             padding: 0;
+            display: none;
         }
+    }
+    .profile-menu:nth-child(6),
+    .profile-menu.admin,
+    .profile-menu:last-child {
+        border-top: 1px solid #d1d5db;
     }
     .profile-menu:hover {
         color: #fff;
@@ -874,26 +900,44 @@ h1 .label {
     }
     .dashboard-item {
         color: darken($btn-primary-bg, 10%);
-        font-size: 16px;
+        font-size: 12px;
         font-weight: normal;
         cursor: pointer;
+        line-height: 1.5;
         i {
-            margin-right: 10px;
-            width: 16px;
+            margin-right: 8px;
+            width: 12px;
             text-align: center;
+            font-size: 12px;
+            vertical-align: middle;
         }
         .dashboard-content {
-            min-height: 50px;
-            padding: 15px;
+            padding: 8px 16px;
+            line-height: 1.5;
         }
         #submenu {
             display: none;
 
             .submenu-item {
                 background-color: #fff;
+                padding: 7px 16px;
+                font-size: 12px;
+                line-height: 1.5;
 
                 a {
                     color: darken($btn-primary-bg, 10%) !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    background: none !important;
+                    display: inline !important;
+                    line-height: 1.5;
+                }
+
+                i {
+                    margin-right: 7px;
+                    width: 12px;
+                    font-size: 12px;
+                    vertical-align: middle;
                 }
 
                 &:hover {
@@ -911,9 +955,25 @@ h1 .label {
 
                 .submenu-item {
                     background-color: #fff;
+                    padding: 8px 16px;
+                    font-size: 12px;
+                    line-height: 1.5;
 
                     a {
                         color: darken($btn-primary-bg, 10%) !important;
+                        padding: 0 !important;
+                        border: none !important;
+                        background: none !important;
+                        display: inline !important;
+                        line-height: 1.5;
+                    }
+
+                    i {
+                        margin-right: 8px;
+                        width: 12px;
+                        font-size: 12px;
+                        display: inline-block;
+                        vertical-align: middle;
                     }
 
                     &:hover {
