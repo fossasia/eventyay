@@ -26,14 +26,14 @@ class UnifiedTeamManagementRedirectMixin:
     """Redirect legacy team URLs to the unified organizer management surface."""
 
     def dispatch(self, request, *args, **kwargs):
-        target = reverse(
-            'eventyay_common:organizer.update',
-            kwargs={'organizer': request.organizer.slug},
-        )
         team_id = kwargs.get('team')
         query = '?section=teams'
         if team_id:
             query = f'{query}&team={team_id}'
+        target = reverse(
+            'eventyay_common:organizer.update',
+            kwargs={'organizer': request.organizer.slug},
+        )
         messages.info(
             request,
             _('Team management has moved into the unified organizer page.'),

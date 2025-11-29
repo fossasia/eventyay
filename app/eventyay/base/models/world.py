@@ -33,6 +33,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [

@@ -83,6 +83,7 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
+        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -1532,6 +1533,13 @@ class Event(
         event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        # Track if user has any organizer/admin role
+        has_organizer_role = False
+        organizer_roles = {'admin', 'apiuser', 'scheduleuser', 'video_stage_manager', 
+                           'video_channel_manager', 'video_announcement_manager', 
+                           'video_user_viewer', 'video_user_moderator', 'video_room_manager',
+                           'video_kiosk_manager', 'video_config_manager'}
+        
         for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
@@ -1541,18 +1549,25 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
+                if role in organizer_roles:
+                    has_organizer_role = True
+                
                 role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                
-                direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
-                if direct_messaging_def and role != 'video_direct_messaging':
-                    direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
-                    has_direct_messaging_trait = direct_messaging_trait in user.traits
-                    
-                    if not has_direct_messaging_trait:
-                        direct_message_value = Permission.EVENT_CHAT_DIRECT.value
-                        role_perms = [p for p in role_perms if (p if isinstance(p, str) else p.value) != direct_message_value]
-                
                 result[self].update(role_perms)
+        
+        # If user has organizer/admin role but doesn't have direct messaging trait, remove EVENT_CHAT_DIRECT
+        # This ensures organizers only get direct messaging if explicitly granted via team permissions
+        # Attendees (without organizer roles) always keep EVENT_CHAT_DIRECT
+        if has_organizer_role:
+            direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
+            if direct_messaging_def:
+                direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
+                traits = user.traits or []
+                has_direct_messaging_trait = direct_messaging_trait in traits
+                
+                if not has_direct_messaging_trait:
+                    direct_message_value = Permission.EVENT_CHAT_DIRECT.value
+                    result[self] = {p for p in result[self] if (p if isinstance(p, str) else p.value) != direct_message_value}
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}

@@ -63,8 +63,7 @@ def collect_user_video_traits(event_slug: str, team_permission_set: Iterable[str
     """
     traits = []
     for perm_name in team_permission_set:
-        definition = VIDEO_PERMISSION_BY_FIELD.get(perm_name)
-        if definition:
+        if definition := VIDEO_PERMISSION_BY_FIELD.get(perm_name):
             traits.append(definition.trait_value(event_slug))
     return traits
 

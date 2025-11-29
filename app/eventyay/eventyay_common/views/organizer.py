@@ -128,8 +128,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        action = request.POST.get('team_action')
-        if action:
+        if action := request.POST.get('team_action'):
             if not self.can_manage_teams:
                 raise PermissionDenied()
             handlers = {
@@ -295,12 +294,27 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         return self.render_to_response(self.get_context_data(form=form))
 
     def _get_team_from_post(self):
-        team = get_object_or_404(
+        return get_object_or_404(
             Team,
             organizer=self.request.organizer,
             pk=self.request.POST.get('team_id'),
         )
-        return team
+
+    def _redirect_to_team_members_panel(self, team_id):
+        """Helper to redirect to team members panel with error state."""
+        self._set_panel_override(team_id, 'members')
+        return redirect(self._teams_tab_url(team_id, section='permissions', panel='members'))
+
+    def _redirect_to_team_permissions(self, team_id):
+        """Helper to redirect to team permissions section."""
+        return redirect(self._teams_tab_url(team_id, section='permissions'))
+
+    def _render_members_error(self, team_id, invite_form=None):
+        """Helper to render team members section with errors."""
+        self._set_panel_override(team_id, 'members')
+        if invite_form is not None:
+            self._set_team_override(team_id, invite_form=invite_form)
+        return self._render_with_team_errors('permissions')
 
     def _handle_team_create(self):
         with scopes_disabled():
@@ -326,7 +340,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _('The team has been created. You can now add members to the team.'),
             )
-            return redirect(self._teams_tab_url(team.pk))
+            return redirect(self._teams_tab_url(team.pk, anchor=None))
 
         messages.error(
             self.request,
@@ -362,7 +376,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _("Changes to the team '%(team_name)s' have been saved.") % {'team_name': team_name},
             )
-            return redirect(self._teams_tab_url(section='permissions'))
+            return redirect(self._teams_tab_url(team.pk, section='permissions'))
 
         messages.error(
             self.request,
@@ -382,127 +396,134 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             prefix=invite_form_prefix,
         )
 
-        request = self.request
-        post = request.POST
+        post = self.request.POST
 
         with transaction.atomic():
             if 'remove-member' in post:
-                try:
-                    user = User.objects.get(pk=post.get('remove-member'))
-                except (User.DoesNotExist, ValueError):
-                    pass
-                else:
-                    other_admin_teams = (
-                        request.organizer.teams.exclude(pk=team.pk)
-                        .filter(can_change_teams=True, members__isnull=False)
-                        .exists()
-                    )
-                    if not other_admin_teams and team.can_change_teams and team.members.count() == 1:
-                        messages.error(
-                            request,
-                            _(
-                                'You cannot remove the last member from this team as no one would '
-                                'be left with the permission to change teams.'
-                            ),
-                        )
-                        self._set_panel_override(team.pk, 'members')
-                        return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
-                    team.members.remove(user)
-                    team.log_action(
-                        'eventyay.team.member.removed',
-                        user=request.user,
-                        data={'email': user.email, 'user': user.pk},
-                    )
-                    messages.success(request, _('The member has been removed from the team.'))
-                    return redirect(self._teams_tab_url(team.pk, section='permissions'))
-
+                return self._handle_remove_member(team, post)
             elif 'remove-invite' in post:
-                try:
-                    invite = team.invites.get(pk=post.get('remove-invite'))
-                except (TeamInvite.DoesNotExist, ValueError):
-                    messages.error(request, _('Invalid invite selected.'))
-                    self._set_panel_override(team.pk, 'members')
-                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
-                else:
-                    invite.delete()
-                    team.log_action(
-                        'eventyay.team.invite.deleted',
-                        user=request.user,
-                        data={'email': invite.email},
-                    )
-                    messages.success(request, _('The invite has been revoked.'))
-                return redirect(self._teams_tab_url(team.pk, section='permissions'))
-
+                return self._handle_remove_invite(team, post)
             elif 'resend-invite' in post:
-                try:
-                    invite = team.invites.get(pk=post.get('resend-invite'))
-                except (TeamInvite.DoesNotExist, ValueError):
-                    messages.error(request, _('Invalid invite selected.'))
-                    self._set_panel_override(team.pk, 'members')
-                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
-                else:
-                    self._send_invite(invite)
-                    team.log_action(
-                        'eventyay.team.invite.resent',
-                        user=request.user,
-                        data={'email': invite.email},
-                    )
-                    messages.success(request, _('The invite has been resent.'))
-                return redirect(self._teams_tab_url(team.pk, section='permissions'))
-
+                return self._handle_resend_invite(team, post)
             elif f'{invite_form_prefix}-user' in post and invite_form.is_valid() and invite_form.has_changed():
-                try:
-                    user = User.objects.get(email__iexact=invite_form.cleaned_data['user'])
-                except User.DoesNotExist:
-                    if team.invites.filter(email__iexact=invite_form.cleaned_data['user']).exists():
-                        messages.error(
-                            request,
-                            _('This user already has been invited for this team.'),
-                        )
-                        self._set_panel_override(team.pk, 'members')
-                        self._set_team_override(team.pk, invite_form=invite_form)
-                        return self._render_with_team_errors('permissions')
-                    if 'native' not in get_auth_backends():
-                        messages.error(
-                            request,
-                            _('Users need to have a eventyay account before they can be invited.'),
-                        )
-                        self._set_panel_override(team.pk, 'members')
-                        self._set_team_override(team.pk, invite_form=invite_form)
-                        return self._render_with_team_errors('permissions')
+                return self._handle_add_member_or_invite(team, invite_form, post)
 
-                    invite = team.invites.create(email=invite_form.cleaned_data['user'])
-                    self._send_invite(invite)
-                    team.log_action(
-                        'eventyay.team.invite.created',
-                        user=request.user,
-                        data={'email': invite_form.cleaned_data['user']},
-                    )
-                    messages.success(request, _('The new member has been invited to the team.'))
-                    return redirect(self._teams_tab_url(team.pk, section='permissions'))
-                else:
-                    if team.members.filter(pk=user.pk).exists():
-                        messages.error(
-                            request,
-                            _('This user already has permissions for this team.'),
-                        )
-                        self._set_panel_override(team.pk, 'members')
-                        self._set_team_override(team.pk, invite_form=invite_form)
-                        return self._render_with_team_errors('permissions')
+        messages.error(self.request, _('Your changes could not be saved.'))
+        return self._render_members_error(team.pk, invite_form)
 
-                    team.members.add(user)
-                    team.log_action(
-                        'eventyay.team.member.added',
-                        user=request.user,
-                        data={'email': user.email, 'user': user.pk},
-                    )
-                    messages.success(request, _('The new member has been added to the team.'))
-                    return redirect(self._teams_tab_url(team.pk, section='permissions'))
+    def _handle_remove_member(self, team, post):
+        """Handle removing a member from the team."""
+        try:
+            user = User.objects.get(pk=post.get('remove-member'))
+        except (User.DoesNotExist, ValueError):
+            return self._redirect_to_team_permissions(team.pk)
 
-        messages.error(request, _('Your changes could not be saved.'))
-        self._set_panel_override(team.pk, 'members')
-        self._set_team_override(team.pk, invite_form=invite_form)
-        return self._render_with_team_errors('permissions')
+        other_admin_teams = (
+            self.request.organizer.teams.exclude(pk=team.pk)
+            .filter(can_change_teams=True, members__isnull=False)
+            .exists()
+        )
+        if not other_admin_teams and team.can_change_teams and team.members.count() == 1:
+            messages.error(
+                self.request,
+                _(
+                    'You cannot remove the last member from this team as no one would '
+                    'be left with the permission to change teams.'
+                ),
+            )
+            return self._redirect_to_team_members_panel(team.pk)
+
+        team.members.remove(user)
+        team.log_action(
+            'eventyay.team.member.removed',
+            user=self.request.user,
+            data={'email': user.email, 'user': user.pk},
+        )
+        messages.success(self.request, _('The member has been removed from the team.'))
+        return self._redirect_to_team_permissions(team.pk)
+
+    def _handle_remove_invite(self, team, post):
+        """Handle removing an invite."""
+        try:
+            invite = team.invites.get(pk=post.get('remove-invite'))
+        except (TeamInvite.DoesNotExist, ValueError):
+            messages.error(self.request, _('Invalid invite selected.'))
+            return self._redirect_to_team_members_panel(team.pk)
+
+        invite.delete()
+        team.log_action(
+            'eventyay.team.invite.deleted',
+            user=self.request.user,
+            data={'email': invite.email},
+        )
+        messages.success(self.request, _('The invite has been revoked.'))
+        return self._redirect_to_team_permissions(team.pk)
+
+    def _handle_resend_invite(self, team, post):
+        """Handle resending an invite."""
+        try:
+            invite = team.invites.get(pk=post.get('resend-invite'))
+        except (TeamInvite.DoesNotExist, ValueError):
+            messages.error(self.request, _('Invalid invite selected.'))
+            return self._redirect_to_team_members_panel(team.pk)
+
+        self._send_invite(invite)
+        team.log_action(
+            'eventyay.team.invite.resent',
+            user=self.request.user,
+            data={'email': invite.email},
+        )
+        messages.success(self.request, _('The invite has been resent.'))
+        return self._redirect_to_team_permissions(team.pk)
+
+    def _handle_add_member_or_invite(self, team, invite_form, post):
+        """Handle adding a member or creating an invite."""
+        try:
+            user = User.objects.get(email__iexact=invite_form.cleaned_data['user'])
+        except User.DoesNotExist:
+            return self._handle_create_invite(team, invite_form)
+
+        if team.members.filter(pk=user.pk).exists():
+            messages.error(
+                self.request,
+                _('This user already has permissions for this team.'),
+            )
+            return self._render_members_error(team.pk, invite_form)
+
+        team.members.add(user)
+        team.log_action(
+            'eventyay.team.member.added',
+            user=self.request.user,
+            data={'email': user.email, 'user': user.pk},
+        )
+        messages.success(self.request, _('The new member has been added to the team.'))
+        return self._redirect_to_team_permissions(team.pk)
+
+    def _handle_create_invite(self, team, invite_form):
+        """Handle creating an invite for a user that doesn't exist yet."""
+        if team.invites.filter(email__iexact=invite_form.cleaned_data['user']).exists():
+            messages.error(
+                self.request,
+                _('This user already has been invited for this team.'),
+            )
+            return self._render_members_error(team.pk, invite_form)
+
+        if 'native' not in get_auth_backends():
+            messages.error(
+                self.request,
+                _('Users need to have a eventyay account before they can be invited.'),
+            )
+            return self._render_members_error(team.pk, invite_form)
+
+        invite = team.invites.create(email=invite_form.cleaned_data['user'])
+        self._send_invite(invite)
+        team.log_action(
+            'eventyay.team.invite.created',
+            user=self.request.user,
+            data={'email': invite_form.cleaned_data['user']},
+        )
+        messages.success(self.request, _('The new member has been invited to the team.'))
+        return self._redirect_to_team_permissions(team.pk)
 
     def _handle_team_tokens(self):
         team = self._get_team_from_post()
@@ -516,44 +537,50 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
 
         with transaction.atomic():
             if 'remove-token' in post:
-                try:
-                    token = team.tokens.get(pk=post.get('remove-token'))
-                except (TeamAPIToken.DoesNotExist, ValueError):
-                    messages.error(self.request, _('Invalid token selected.'))
-                    self._set_panel_override(team.pk, 'members')
-                    return redirect(self._teams_tab_url(team.pk, section='permissions', panel='members'))
-                else:
-                    token.active = False
-                    token.save()
-                    team.log_action(
-                        'eventyay.team.token.deleted',
-                        user=self.request.user,
-                        data={'name': token.name},
-                    )
-                    messages.success(self.request, _('The token has been revoked.'))
-                return redirect(self._teams_tab_url(team.pk, section='permissions'))
-
+                return self._handle_remove_token(team, post)
             if 'name' in post and token_form.is_valid() and token_form.has_changed():
-                token = team.tokens.create(name=token_form.cleaned_data['name'])
-                team.log_action(
-                    'eventyay.team.token.created',
-                    user=self.request.user,
-                    data={'name': token_form.cleaned_data['name'], 'id': token.pk},
-                )
-                messages.success(
-                    self.request,
-                    _(
-                        'A new API token has been created with the following secret: {}\n'
-                        'Please copy this secret to a safe place. You will not be able to '
-                        'view it again here.'
-                    ).format(token.token),
-                )
-                return redirect(self._teams_tab_url(team.pk, section='permissions'))
+                return self._handle_create_token(team, token_form)
 
         messages.error(self.request, _('Your changes could not be saved.'))
         self._set_panel_override(team.pk, 'members')
         self._set_team_override(team.pk, token_form=token_form)
         return self._render_with_team_errors('permissions')
+
+    def _handle_remove_token(self, team, post):
+        """Handle removing a token."""
+        try:
+            token = team.tokens.get(pk=post.get('remove-token'))
+        except (TeamAPIToken.DoesNotExist, ValueError):
+            messages.error(self.request, _('Invalid token selected.'))
+            return self._redirect_to_team_members_panel(team.pk)
+
+        token.active = False
+        token.save()
+        team.log_action(
+            'eventyay.team.token.deleted',
+            user=self.request.user,
+            data={'name': token.name},
+        )
+        messages.success(self.request, _('The token has been revoked.'))
+        return self._redirect_to_team_permissions(team.pk)
+
+    def _handle_create_token(self, team, token_form):
+        """Handle creating a new token."""
+        token = team.tokens.create(name=token_form.cleaned_data['name'])
+        team.log_action(
+            'eventyay.team.token.created',
+            user=self.request.user,
+            data={'name': token_form.cleaned_data['name'], 'id': token.pk},
+        )
+        messages.success(
+            self.request,
+            _(
+                'A new API token has been created with the following secret: {}\n'
+                'Please copy this secret to a safe place. You will not be able to '
+                'view it again here.'
+            ).format(token.token),
+        )
+        return self._redirect_to_team_permissions(team.pk)
 
     def _handle_team_delete(self):
         team = self._get_team_from_post()
@@ -564,7 +591,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 self.request,
                 _("The team '%(team_name)s' cannot be deleted.") % {'team_name': team.name},
             )
-            return redirect(self._teams_tab_url())
+            return redirect(self._teams_tab_url(anchor=None))
 
         team_name = team.name
         team.log_action('eventyay.team.deleted', user=self.request.user)
@@ -573,7 +600,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             self.request,
             _("The team '%(team_name)s' has been deleted.") % {'team_name': team_name},
         )
-        return redirect(self._teams_tab_url())
+        return redirect(self._teams_tab_url(anchor=None))
 
     def _send_invite(self, instance):
         try:
@@ -590,8 +617,13 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 event=None,
                 locale=self.request.LANGUAGE_CODE,
             )
-        except SendMailException:
-            pass
+        except SendMailException as e:
+            logger.warning(
+                "Failed to send invitation email to %s for team '%s': %s",
+                instance.email,
+                instance.team.name,
+                str(e),
+            )
 
     def _can_delete_team(self, team: Team) -> bool:
         return (
