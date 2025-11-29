@@ -22,16 +22,18 @@ export default {
 			if (pretalx.url) {
 				return pretalx.url
 			}
-			if (!pretalx.domain || !pretalx.event) return ''
-			if (!pretalx.domain.endsWith('/')) {
-				pretalx.domain += '/'
-			}
-			const url = new URL(`${pretalx.event}/schedule/widgets/schedule.json`, pretalx.domain)
+			if (!pretalx.domain || !pretalx.event || !pretalx.organizer) return ''
+			const domain = pretalx.domain.endsWith('/') ? pretalx.domain : pretalx.domain + '/'
+			const path = `${pretalx.organizer}/${pretalx.event}/schedule/widgets/schedule.json`
+			const url = new URL(path, domain)
 			return url.toString()
 		},
 		pretalxApiBaseUrl(state, getters, rootState) {
 			if (!rootState.world.pretalx?.domain || !rootState.world.pretalx?.event) return
-			return rootState.world.pretalx.domain + 'api/events/' + rootState.world.pretalx.event
+			const domain = rootState.world.pretalx.domain.endsWith('/') 
+				? rootState.world.pretalx.domain 
+				: rootState.world.pretalx.domain + '/'
+			return domain + 'api/events/' + rootState.world.pretalx.event
 		},
 		rooms(state, getters, rootState) {
 			if (!state.schedule) return
