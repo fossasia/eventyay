@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% block form %}
-    <div class="form-group">
+    <!--<div class="form-group">
         <label class="col-md-3 control-label">{% trans "Create this event for" %}</label>
         <div class="col-md-9">
             <div class="radio">
@@ -41,7 +41,7 @@
             </div>
         </div>
     </div>
-    {% bootstrap_field form.is_video_creation layout="horizontal" %}
+    {% bootstrap_field form.is_video_creation layout="horizontal" %}-->
     {% bootstrap_field form.organizer layout="horizontal" %}
     <div class="form-group">
         <label class="col-md-3 control-label">{% trans "Event type" %}</label>
@@ -65,7 +65,7 @@
                         </div>
                     </label>
                 </div>
-                <div class="big-radio radio">
+                <!--<div class="big-radio radio">
                     <label>
                         <input type="radio" value="on" name="{{ form.has_subevents.html_name }}" {% if form.has_subevents.avalue %}checked{% endif %}>
                         <span class="fa fa-calendar"></span>
@@ -75,7 +75,7 @@
                                 A series of events that share the same configuration. They can still be different in
                                 their dates, locations, prices, and capacities.
                             {% endblocktrans %}
-                        </div>
+                        </div>-->
                         <div class="help-block">
                             {% blocktrans trimmed %}
                                 Examples: Multiple presentations of the same show, same concert in multiple locations,
