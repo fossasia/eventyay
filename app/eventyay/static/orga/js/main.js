@@ -24,7 +24,7 @@ const handleFeaturedChange = (element) => {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("eventyay_csrftoken"),
+            "X-CSRFToken": getCsrfToken(),
         },
         credentials: "include",
     }
@@ -69,6 +69,16 @@ const getCookie = (name) => {
         }
     }
     return cookieValue
+}
+
+/* Helper to get CSRF token from common cookie names with priority */
+const getCsrfToken = () => {
+    // Priority 1: eventyay_csrftoken (New standard)
+    // Priority 2: pretalx_csrftoken (Legacy support)
+    // Priority 3: csrftoken (Django default)
+    return getCookie("eventyay_csrftoken") || 
+           getCookie("pretalx_csrftoken") || 
+           getCookie("csrftoken");
 }
 
 onReady(() => {
