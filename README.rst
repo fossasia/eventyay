@@ -41,13 +41,13 @@ Getting Started
 
    .. code-block:: bash
 
-      git clone https://github.com/fossasia/eventyay-tickets.git
+      git clone https://github.com/fossasia/eventyay.git
 
 2. **Enter the project directory and app directory**:
 
    .. code-block:: bash
 
-      cd eventyay-tickets/app
+      cd eventyay/app
 
 3. **Switch to the `enext` branch**:
 
