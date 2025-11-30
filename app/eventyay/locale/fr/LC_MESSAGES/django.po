@@ -4,16 +4,16 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2020-09-15 17:00+0000\n"
-"Last-Translator: Martin Gross <martin@pc-coholic.de>\n"
-"Language-Team: French <https://translate.eventyay.com/projects/pretix/pretix/"
+"PO-Revision-Date: 2025-11-30 09:02+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 3.10.3\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -402,8 +402,8 @@ msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
-"Afficher les prix nets au lieu des prix bruts dans la liste de produits (pas "
-"recommandé!)"
+"Afficher les prix nets au lieu des prix bruts dans la liste de produits "
+"(pas recommandé!)"
 
 #: pretix/base/configurations/default_setting.py:77
 #, fuzzy
@@ -933,8 +933,7 @@ msgstr "Afficher la date de début"
 
 #: pretix/base/configurations/default_setting.py:673
 msgid "Show the presale start date before presale has started."
-msgstr ""
-"Indiquer la date de début de la prévente avant le début de la prévente."
+msgstr "Indiquer la date de début de la prévente avant le début de la prévente."
 
 #: pretix/base/configurations/default_setting.py:685
 #: pretix/base/configurations/default_setting.py:699
@@ -2202,8 +2201,8 @@ msgstr ""
 "\n"
 "nous avons reçu avec succès votre commande pour {event} avec une valeur "
 "totale.\n"
-"de {total_with_currency}. Veuillez compléter votre paiement avant le "
-"{date}.\n"
+"de {total_with_currency}. Veuillez compléter votre paiement avant le {date}."
+"\n"
 "\n"
 "{payment_info}\n"
 "\n"
@@ -2334,8 +2333,8 @@ msgstr ""
 "\n"
 "Vous avez acheté un billet pour {event}.\n"
 "\n"
-"Si vous ne l'avez pas encore fait, vous pouvez télécharger votre ticket "
-"ici:\n"
+"Si vous ne l'avez pas encore fait, vous pouvez télécharger votre ticket ici:"
+"\n"
 "{url}\n"
 "\n"
 "Sincères salutations,\n"
@@ -2358,8 +2357,8 @@ msgstr ""
 "\n"
 "Vous avez acheté un billet pour {event}.\n"
 "\n"
-"Si vous ne l'avez pas encore fait, vous pouvez télécharger votre ticket "
-"ici:\n"
+"Si vous ne l'avez pas encore fait, vous pouvez télécharger votre ticket ici:"
+"\n"
 "{url}\n"
 "\n"
 "Sincères salutations,\n"
@@ -2376,8 +2375,7 @@ msgstr ""
 #: pretix/base/configurations/default_setting.py:2118
 #: pretix/base/configurations/default_setting.py:2129
 msgid "Please enter the hexadecimal code of a color, e.g. #990000."
-msgstr ""
-"Veuillez entrer le code hexadécimal d'une couleur, par exemple #990000."
+msgstr "Veuillez entrer le code hexadécimal d'une couleur, par exemple #990000."
 
 #: pretix/base/configurations/default_setting.py:2010
 msgid "Primary color"
@@ -5058,8 +5056,7 @@ msgstr "Un ou plusieurs articles n'appartiennent pas à cet événement."
 
 #: pretix/base/models/event.py:1683 pretix/base/models/items.py:1523
 msgid "Can not contain spaces or special characters except underscores"
-msgstr ""
-"Ne peut pas contenir d'espaces ou de caractères spéciaux sauf soulignés"
+msgstr "Ne peut pas contenir d'espaces ou de caractères spéciaux sauf soulignés"
 
 #: pretix/base/models/event.py:1688 pretix/base/models/items.py:1528
 msgid "The property name may only contain letters, numbers and underscores."
@@ -5375,8 +5372,8 @@ msgid ""
 "voucher that unlocks this product."
 msgstr ""
 "Ce produit sera masqué de la page d'événement jusqu' à ce que l'utilisateur "
-"entre un code de bon d'achat qui est spécifiquement lié à ce produit (et non "
-"via un quota)."
+"entre un code de bon d'achat qui est spécifiquement lié à ce produit "
+"(et non via un quota)."
 
 #: pretix/base/models/items.py:376
 msgid "Only sell this product as part of a bundle"
@@ -6661,8 +6658,7 @@ msgstr "Valeur du bon"
 
 #: pretix/base/models/vouchers.py:155 pretix/control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Ce produit est ajouté au panier de l'utilisateur si le bon est utilisé."
+msgstr "Ce produit est ajouté au panier de l'utilisateur si le bon est utilisé."
 
 #: pretix/base/models/vouchers.py:165
 msgid "This variation of the product select above is being used."
@@ -8086,8 +8082,8 @@ msgstr "Vous ne pouvez pas sélectionner plus de %s articles par commande."
 #, python-format
 msgid "You cannot select more than %(max)s items of the product %(product)s."
 msgstr ""
-"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit "
-"%(product)s."
+"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit %"
+"(product)s."
 
 #: pretix/base/services/cart.py:67
 #, python-format
@@ -8424,8 +8420,8 @@ msgid ""
 "You can view your order details at the following URL:\n"
 "{orderurl}."
 msgstr ""
-"Vous pouvez consulter les détails de votre commande à l'adresse URL "
-"suivante:\n"
+"Vous pouvez consulter les détails de votre commande à l'adresse URL suivante:"
+"\n"
 "{orderurl}."
 
 #: pretix/base/services/mail.py:195
@@ -8485,8 +8481,8 @@ msgid ""
 "You cannot select more than %(max)s items of the product %(product)s. We "
 "removed the surplus items from your cart."
 msgstr ""
-"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit "
-"%(product)s. Nous avons retiré les articles excédentaires de votre panier."
+"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit %"
+"(product)s. Nous avons retiré les articles excédentaires de votre panier."
 
 #: pretix/base/services/orders.py:76
 msgid "The presale period has ended."
@@ -8667,8 +8663,7 @@ msgstr "Vous devez sélectionner une variante du produit."
 #, python-brace-format
 msgid ""
 "The quota {name} does not have enough capacity left to perform the operation."
-msgstr ""
-"Le quota {name} n' a plus assez de capacité pour effectuer l'opération."
+msgstr "Le quota {name} n' a plus assez de capacité pour effectuer l'opération."
 
 #: pretix/base/services/orders.py:1174
 msgid "There is no quota defined that allows this operation."
@@ -9120,8 +9115,7 @@ msgstr "généré par <a %(a_attr)s>pretix</a>"
 #: pretix/base/templates/pretixbase/email/notification.html:55
 #: pretix/base/templates/pretixbase/email/notification.txt:14
 msgid "You receive these emails based on your notification settings."
-msgstr ""
-"Vous recevez ces e-mails en fonction de vos paramètres de notification."
+msgstr "Vous recevez ces e-mails en fonction de vos paramètres de notification."
 
 #: pretix/base/templates/pretixbase/email/notification.html:57
 msgid "Click here to view and change your notification settings"
@@ -12555,8 +12549,7 @@ msgstr "Un utilisateur a été retiré de l'équipe d'événement."
 
 #: pretix/control/logdisplay.py:422
 msgid "A voucher has been sent to a person on the waiting list."
-msgstr ""
-"Un bon de réduction a été envoyé à une personne sur la liste d'attente."
+msgstr "Un bon de réduction a été envoyé à une personne sur la liste d'attente."
 
 #: pretix/control/logdisplay.py:423
 msgid "An entry has been removed from the waiting list."
@@ -13591,8 +13584,8 @@ msgid ""
 "Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
 "strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le coupon de réduction "
-"<strong>%(voucher)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer le coupon de réduction <strong>%(voucher)"
+"s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: pretix/control/templates/pretixcontrol/vouchers/detail.html:18
@@ -14120,8 +14113,8 @@ msgstr "Supprimer la liste d'enregistrement"
 msgid ""
 "Are you sure you want to delete the check-in list <strong>%(name)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement "
-"<strong>%(name)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement <strong>%(name)"
+"s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/checkin/list_delete.html:11
 #, python-format
@@ -15301,10 +15294,10 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"pretix supporte un <a href=\"https://eventyay.com/about/en/features/"
-"payment\" target=\"_blank\">1large gamme de fournisseurs de paiement </a>2 "
-"vous permettant de choisir les méthodes de paiement qui conviennent le mieux "
-"à votre flux de travail. En voici deux à titre d'exemple, vous pouvez en "
+"pretix supporte un <a href=\"https://eventyay.com/about/en/features/payment\""
+" target=\"_blank\">1large gamme de fournisseurs de paiement </a>2 vous "
+"permettant de choisir les méthodes de paiement qui conviennent le mieux à "
+"votre flux de travail. En voici deux à titre d'exemple, vous pouvez en "
 "ajouter dans la partie \"Paramètres\" de votre événement."
 
 #: pretix/control/templates/pretixcontrol/event/quick_setup.html:184
@@ -15476,9 +15469,9 @@ msgid ""
 "can later set for your items and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of items."
 msgstr ""
-"Vous pouvez définir ici un ensemble de propriétés de métadonnées (c.à.d des "
-"variables) que vous pourrez ensuite définir pour vos événements et "
-"réutiliser dans des endroits comme les mises en page de ticket. C'est un "
+"Vous pouvez définir ici un ensemble de propriétés de métadonnées "
+"(c.à.d des variables) que vous pourrez ensuite définir pour vos événements "
+"et réutiliser dans des endroits comme les mises en page de ticket. C'est un "
 "gain de temps utile si vous créez beaucoup d'événements."
 
 #: pretix/control/templates/pretixcontrol/event/settings.html:323
@@ -15518,8 +15511,8 @@ msgstr "Supprimer la règle fiscale"
 msgid ""
 "Are you sure you want to delete the tax rule <strong>%(taxrule)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la règle d'imposition "
-"<strong>%(taxrule)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la règle d'imposition <strong>%(taxrule)"
+"s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/event/tax_delete.html:12
 msgid ""
@@ -15543,11 +15536,11 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Ces réglages sont destinés aux utilisateurs avancés. Voir la <a "
-"href=\"%(docs)s\">documentation</a> pour plus d'informations. Notez que nous "
-"ne sommes pas responsables d'un traitement correct ou non des taxes dans "
-"votre billetterie. En cas de doute, veuillez communiquer avec un avocat ou "
-"un conseiller fiscal."
+"Ces réglages sont destinés aux utilisateurs avancés. Voir la <a href="
+"\"%(docs)s\">documentation</a> pour plus d'informations. Notez que nous ne "
+"sommes pas responsables d'un traitement correct ou non des taxes dans votre "
+"billetterie. En cas de doute, veuillez communiquer avec un avocat ou un "
+"conseiller fiscal."
 
 #: pretix/control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -15689,8 +15682,8 @@ msgid ""
 "JavaScript, please &lt;a %(a_attr)s&gt;click here&lt;/a&gt;."
 msgstr ""
 "JavaScript est désactivé dans votre navigateur. Pour accéder à notre "
-"billetterie sans JavaScript, veuillez &lt;a %(a_attr)s&gt;cliquer ic&lt;/"
-"a&gt;."
+"billetterie sans JavaScript, veuillez &lt;a %(a_attr)s&gt;cliquer "
+"ic&lt;/a&gt;."
 
 #: pretix/control/templates/pretixcontrol/event/widget.html:70
 #: pretix/plugins/returnurl/templates/returnurl/settings.html:22
@@ -18473,9 +18466,9 @@ msgid ""
 "can later set for your events and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of events."
 msgstr ""
-"Vous pouvez définir ici un ensemble de propriétés de métadonnées (c.à.d des "
-"variables) que vous pourrez ensuite définir pour vos événements et "
-"réutiliser dans des endroits comme les mises en page de ticket. C'est un "
+"Vous pouvez définir ici un ensemble de propriétés de métadonnées "
+"(c.à.d des variables) que vous pourrez ensuite définir pour vos événements "
+"et réutiliser dans des endroits comme les mises en page de ticket. C'est un "
 "gain de temps utile si vous créez beaucoup d'événements."
 
 #: pretix/control/templates/pretixcontrol/organizers/properties.html:15
@@ -19871,8 +19864,8 @@ msgstr ""
 msgid ""
 "Are you sure you want to delete the voucher <strong>%(voucher)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le coupon de réduction "
-"<strong>%(voucher)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer le coupon de réduction <strong>%(voucher)"
+"s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/vouchers/delete_bulk.html:4
 #: pretix/control/templates/pretixcontrol/vouchers/delete_bulk.html:6
@@ -19989,8 +19982,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer l'entrée de liste d'attente "
-"<strong>%(entry)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer l'entrée de liste d'attente <strong>%"
+"(entry)s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -20542,8 +20535,8 @@ msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
 msgstr ""
-"L'événement n'a pas pu être supprimé car certaines contraintes (par exemple "
-"les données créées par les plug-ins) ne le permettent pas."
+"L'événement n'a pas pu être supprimé car certaines contraintes "
+"(par exemple les données créées par les plug-ins) ne le permettent pas."
 
 #: pretix/control/views/event.py:923
 msgid "We've disabled test mode for you. Let's sell some real tickets!"
@@ -20562,8 +20555,8 @@ msgid ""
 "The event could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"L'événement n'a pas pu être supprimé car certaines contraintes (par exemple "
-"les données créées par les plug-ins) ne le permettent pas."
+"L'événement n'a pas pu être supprimé car certaines contraintes "
+"(par exemple les données créées par les plug-ins) ne le permettent pas."
 
 #: pretix/control/views/event.py:1056
 msgid "The issue has been marked as resolved!"
@@ -20842,8 +20835,7 @@ msgstr "Code de commande inconnu ou non autorisé à accéder à cette commande.
 #, fuzzy
 #| msgid "Ticket download is not enabled for add-on products."
 msgid "Ticket download is not enabled for this product."
-msgstr ""
-"Le téléchargement des tickets n'est pas activé pour les produits addon."
+msgstr "Le téléchargement des tickets n'est pas activé pour les produits addon."
 
 #: pretix/control/views/orders.py:495
 #, fuzzy
@@ -20860,8 +20852,8 @@ msgid ""
 "The order could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"L'événement n'a pas pu être supprimé car certaines contraintes (par exemple "
-"les données créées par les plug-ins) ne le permettent pas."
+"L'événement n'a pas pu être supprimé car certaines contraintes "
+"(par exemple les données créées par les plug-ins) ne le permettent pas."
 
 #: pretix/control/views/orders.py:509
 #, fuzzy
@@ -21244,8 +21236,7 @@ msgstr ""
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was not valid."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: pretix/control/views/organizer.py:34
 msgid "Token name"
@@ -21335,8 +21326,7 @@ msgstr "La question a été ajoutée."
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was invalid, please try again."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: pretix/control/views/organizer_views/gift_card_view.py:161
 #, fuzzy
@@ -21380,8 +21370,8 @@ msgid ""
 "The organizer could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"L'événement n'a pas pu être supprimé car certaines contraintes (par exemple "
-"les données créées par les plug-ins) ne le permettent pas."
+"L'événement n'a pas pu être supprimé car certaines contraintes "
+"(par exemple les données créées par les plug-ins) ne le permettent pas."
 
 #: pretix/control/views/organizer_views/organizer_view.py:383
 #: pretix/eventyay_common/views/event.py:451
@@ -21572,8 +21562,7 @@ msgstr "Bon de réduction"
 
 #: pretix/control/views/user.py:129
 msgid "The password you entered was invalid, please try again."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: pretix/control/views/user.py:302
 #, fuzzy
@@ -22490,8 +22479,7 @@ msgstr "(optionnel)"
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was invalid, please see below for details."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: pretix/plugins/banktransfer/refund_export.py:25
 #: pretix/plugins/banktransfer/templates/pretixplugins/banktransfer/control.html:5
@@ -24027,8 +24015,7 @@ msgstr "Veuillez choisir un mode de paiement."
 #: pretix/presale/checkoutflowstep/payment_step.py:105
 #: pretix/presale/views/order.py:392 pretix/presale/views/order.py:460
 msgid "The payment information you entered was incomplete."
-msgstr ""
-"Les informations de paiement que vous avez saisies étaient incomplètes."
+msgstr "Les informations de paiement que vous avez saisies étaient incomplètes."
 
 #: pretix/presale/checkoutflowstep/questions_step.py:29
 msgctxt "checkoutflow"
@@ -24160,8 +24147,7 @@ msgstr ""
 
 #: pretix/presale/templates/pretixpresale/event/base.html:31
 msgid "This shop is currently only visible to you and your team."
-msgstr ""
-"Cette boutique n'est actuellement visible que par vous et votre équipe."
+msgstr "Cette boutique n'est actuellement visible que par vous et votre équipe."
 
 #: pretix/presale/templates/pretixpresale/event/base.html:33
 msgid "Take it live now"
@@ -26191,8 +26177,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Pour voir notre agenda, merci d'activer Javascript ou cliquez <a "
-"href=\"%(href)s\">ici</a> pour voir l'agenda sans JavaScript (NoJS)."
+"Pour voir notre agenda, merci d'activer Javascript ou cliquez <a href="
+"\"%(href)s\">ici</a> pour voir l'agenda sans JavaScript (NoJS)."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -26263,8 +26249,8 @@ msgid ""
 "locally in your browser."
 msgstr ""
 "Vous n'êtes actuellement pas connecté, vos préférences de présentations "
-"n'ont donc pas pu être sauvegardés (mais ils sont stockés en local dans "
-"votre navigateur)."
+"n'ont donc pas pu être sauvegardés "
+"(mais ils sont stockés en local dans votre navigateur)."
 
 #: pretalx/agenda/views/schedule.py:190
 #, fuzzy
@@ -28123,8 +28109,7 @@ msgstr "Sera utilisée comme adresse de réponse (Reply-To) dans les courriels."
 
 #: pretalx/event/models/event.py:203
 msgid "Enter a custom domain, such as https://my.event.example.org"
-msgstr ""
-"Entrer un domaine personnalisé, comme https://mon.evenement.example.org"
+msgstr "Entrer un domaine personnalisé, comme https://mon.evenement.example.org"
 
 #: pretalx/event/models/event.py:218
 msgid "Main event colour"
@@ -28275,8 +28260,7 @@ msgstr ""
 
 #: pretalx/event/models/organiser.py:48
 msgid "Nobody on your teams has the permission to create new events."
-msgstr ""
-"Personne dans vos équipes n'a le droit de créer de nouveaux événements."
+msgstr "Personne dans vos équipes n'a le droit de créer de nouveaux événements."
 
 #: pretalx/event/models/organiser.py:56
 msgid ""
@@ -28316,8 +28300,8 @@ msgid ""
 "Apply permissions to all events by this organiser (including newly created "
 "ones)"
 msgstr ""
-"Appliquer les permissions à tous les évènements de cet organisateur (dont "
-"les nouvellement créés)"
+"Appliquer les permissions à tous les évènements de cet organisateur "
+"(dont les nouvellement créés)"
 
 #: pretalx/event/models/organiser.py:200
 msgid "Limit permissions to these events"
@@ -28872,8 +28856,8 @@ msgstr ""
 "\n"
 "{invitation_link}\n"
 "\n"
-"Vous pourrez ensuite éditer votre profil et voir l'état de votre "
-"proposition.\n"
+"Vous pourrez ensuite éditer votre profil et voir l'état de votre proposition."
+"\n"
 "\n"
 "L'organisation {event}"
 
@@ -28915,8 +28899,8 @@ msgstr ""
 "\n"
 "{invitation_link}\n"
 "\n"
-"Vous pourrez ensuite éditer votre profil et voir l'état de votre "
-"proposition.\n"
+"Vous pourrez ensuite éditer votre profil et voir l'état de votre proposition."
+"\n"
 "\n"
 "L'organisation {event}"
 
@@ -29646,8 +29630,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Comment voulez-vous séparer les données contenues dans une même cellule (par "
-"exemple, les noms des intervenants au sein d'une même session) ?"
+"Comment voulez-vous séparer les données contenues dans une même cellule "
+"(par exemple, les noms des intervenants au sein d'une même session) ?"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -29666,9 +29650,9 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"Modèle de courriel non valide ! Veuillez vérifier que vous n'avez pas de "
-"{ ou } parasites quelque part, et qu'il n'y a pas d'espaces à l'intérieur "
-"des blocs {}."
+"Modèle de courriel non valide ! Veuillez vérifier que vous n'avez pas de { "
+"ou } parasites quelque part, et qu'il n'y a pas d'espaces à l'intérieur des "
+"blocs {}."
 
 #: pretalx/orga/forms/mails.py:76 pretalx/orga/forms/mails.py:93
 msgid "Unknown placeholder!"
@@ -30026,9 +30010,8 @@ msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
-"Choisissez le style de la bannière de la page d'accueil. Source des "
-"patterns : <a href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC "
-"BY 4.0."
+"Choisissez le style de la bannière de la page d'accueil. Source des patterns "
+": <a href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 
 #: pretalx/orga/phrases.py:13
 msgid "Schedule display format"
@@ -30457,9 +30440,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Cette question a été répondue <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> réponses <a "
-"href=\"%(base_search_url)sunanswered=1\">sont toujours manquantes</a>."
+"Cette question a été répondue <strong>%(count)s</strong>, <strong>%(missing)"
+"s</strong> réponses <a href=\"%(base_search_url)sunanswered=1\">sont "
+"toujours manquantes</a>."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:60
 #, fuzzy, python-format
@@ -30583,8 +30566,8 @@ msgid ""
 "(talk vs workshop vs metal concert)."
 msgstr ""
 "Différents types de propositions peuvent aider les intervenants à choisir la "
-"longueur (court/long) ou le format (conférence/atelier/concert de métal/"
-"etc.) de leur intervention."
+"longueur (court/long) ou le format (conférence/atelier/concert de métal/etc.)"
+" de leur intervention."
 
 #: pretalx/orga/templates/orga/cfp/submissiontype/list.html:44
 msgid "Default duration"
@@ -30966,10 +30949,10 @@ msgid ""
 msgstr ""
 "Pour accepter l'invitation avec le compte actuellement actif, merci "
 "d'utiliser le bouton ci-dessous. Si vous voulez accepter l'invitation avec "
-"un autre compte, vous pouvez vous <a href=\"/orga/logout/?"
-"next=%(link)s\">déconnecter</a> et vos reconnecter avec un autre compte. </"
-"p><p> Si vous pensez avoir reçu cette invitation par erreur, merci de bien "
-"vouloir directement contacter l'organisateur."
+"un autre compte, vous pouvez vous <a href=\"/orga/logout/?next=%(link)s\""
+">déconnecter</a> et vos reconnecter avec un autre compte. </p><p> Si vous "
+"pensez avoir reçu cette invitation par erreur, merci de bien vouloir "
+"directement contacter l'organisateur."
 
 #: pretalx/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -31363,8 +31346,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Les examinateurs ne pourront voir et examiner <strong>que les propositions "
-"qui leur sont assignées</strong>. Vous pouvez modifier cela dans vos <a "
-"href=\"%(href)s\">paramètres d'évaluation</a>."
+"qui leur sont assignées</strong>. Vous pouvez modifier cela dans vos <a href="
+"\"%(href)s\">paramètres d'évaluation</a>."
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
 #, python-format
@@ -31567,8 +31550,7 @@ msgstr "Paramètres d'export"
 #: pretalx/orga/templates/orga/schedule/export.html:120
 #: pretalx/orga/templates/orga/speaker/export.html:94
 msgid "You can also use the API to export or use data."
-msgstr ""
-"Vous pouvez aussi utiliser l'API pour exporter ou utiliser les données."
+msgstr "Vous pouvez aussi utiliser l'API pour exporter ou utiliser les données."
 
 #: pretalx/orga/templates/orga/review/export.html:55
 #: pretalx/orga/templates/orga/schedule/export.html:123
@@ -31881,9 +31863,9 @@ msgid ""
 "recommend that you add email settings here explicitly."
 msgstr ""
 "Si vous ne configurez par les paramètres des courriels, la configuration "
-"globale du serveur sera utilisée (demandez plus de détails à votre "
-"administrateur).<br> Nous vous recommandons de configurer les courriels "
-"explicitement."
+"globale du serveur sera utilisée "
+"(demandez plus de détails à votre administrateur).<br> Nous vous "
+"recommandons de configurer les courriels explicitement."
 
 #: pretalx/orga/templates/orga/settings/review.html:41
 #, python-format
@@ -31893,9 +31875,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Si ni le score d'évaluation ni le texte d'évaluation ne sont obligatoires, "
-"les évaluateurs se verront proposer un bouton "
-"%(quotation_open)sAbstention%(quotation_close)s lors de l'évaluation des "
-"propositions."
+"les évaluateurs se verront proposer un bouton %(quotation_open)sAbstention%"
+"(quotation_close)s lors de l'évaluation des propositions."
 
 #: pretalx/orga/templates/orga/settings/review.html:57
 msgid ""
@@ -32070,10 +32051,11 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Ajoutez des messages importants (par ex. \"Veuillez amener un adaptateur "
-"HDMI avec vous si besoin.\") ou des fichiers importants (par ex. un guide de "
-"style). <br> Ils sont affichés aux intervenants sélectionnés juste au dessus "
-"de la liste de leurs propositions d'intervention."
+"Ajoutez des messages importants "
+"(par ex. \"Veuillez amener un adaptateur HDMI avec vous si besoin.\") ou des "
+"fichiers importants (par ex. un guide de style). <br> Ils sont affichés aux "
+"intervenants sélectionnés juste au dessus de la liste de leurs propositions "
+"d'intervention."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -32412,8 +32394,8 @@ msgid ""
 msgstr ""
 "Ce jeton peut être utilisé pour accéder à l'<a %(apiurl)s>API pretalx</a>. "
 "Vous pouvez générer un nouveau jeton, qui invalidera l'ancien. Pour en "
-"savoir plus, allez jeter un oeil à la <a %(docurl)s>documentation de l'API </"
-"a>."
+"savoir plus, allez jeter un oeil à la <a %(docurl)s>documentation de l'API "
+"</a>."
 
 #: pretalx/orga/templates/orga/user.html:43
 #, fuzzy
@@ -32995,8 +32977,7 @@ msgstr "Plus d'exports"
 
 #: pretalx/orga/views/schedule.py:117
 msgid "A new export is being generated and will be available soon."
-msgstr ""
-"Un nouvel export est en train d'être généré et sera bientôt disponible."
+msgstr "Un nouvel export est en train d'être généré et sera bientôt disponible."
 
 #: pretalx/orga/views/schedule.py:124
 msgid ""
@@ -33261,8 +33242,7 @@ msgstr ""
 
 #: pretalx/person/models/information.py:57
 msgid "Please try to keep your upload small, preferably below 16 MB."
-msgstr ""
-"N'envoyez pas de fichiers trop grands, de préférence de moins de 16 Mo."
+msgstr "N'envoyez pas de fichiers trop grands, de préférence de moins de 16 Mo."
 
 #: pretalx/person/models/profile.py:45
 msgid "The speaker has arrived"
@@ -33553,8 +33533,8 @@ msgstr ""
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
-"- Votre intervention \"%(title)s\" a été déplacée à %(start)s dans "
-"%(location)s"
+"- Votre intervention \"%(title)s\" a été déplacée à %(start)s dans %"
+"(location)s"
 
 #: pretalx/settings.py:357
 msgid "German (formal)"
@@ -33927,8 +33907,7 @@ msgstr ""
 
 #: pretalx/submission/models/review.py:34
 msgid "Leave empty to use this category for all tracks."
-msgstr ""
-"Laisser vide pour utiliser l'adresse par défaut pour chaque itinéraire."
+msgstr "Laisser vide pour utiliser l'adresse par défaut pour chaque itinéraire."
 
 #: pretalx/submission/models/review.py:38
 msgid "Independent score"
@@ -33944,8 +33923,7 @@ msgstr ""
 
 #: pretalx/submission/models/review.py:60
 msgid "You need to keep at least one non-independent score category!"
-msgstr ""
-"Vous devez conserver au moins une catégorie de score non indépendante !"
+msgstr "Vous devez conserver au moins une catégorie de score non indépendante !"
 
 #: pretalx/submission/models/review.py:141
 msgid "What do you think?"
@@ -33979,9 +33957,10 @@ msgid ""
 "workflow. "
 msgstr ""
 "Si vous sélectionnez “tous”, les évaluateurs peuvent examiner toutes les "
-"propositions auxquelles leur équipe a accès (soit toutes, soit des parcours "
-"spécifiques). Dans ce mode, les propositions attribuées sont mises en "
-"évidence et s'affichent en premier dans le flux du travail d'évaluation. "
+"propositions auxquelles leur équipe a accès "
+"(soit toutes, soit des parcours spécifiques). Dans ce mode, les propositions "
+"attribuées sont mises en évidence et s'affichent en premier dans le flux du "
+"travail d'évaluation. "
 
 #: pretalx/submission/models/review.py:251
 msgid "Reviewers can see other reviews"
