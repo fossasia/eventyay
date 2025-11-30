@@ -93,18 +93,18 @@ $body-bg: #f5f5f5 !default;
             font-size: 14px;
             font-weight: normal;
             cursor: pointer;
-            padding: 7px 16px;
+            padding: 8px 16px;
             line-height: 1.5;
             a {
-                color: darken($btn-primary-bg, 10%) !important;
-                padding: 0 !important;
-                border: none !important;
-                background: none !important;
-                display: inline !important;
+                color: darken($btn-primary-bg, 10%);
+                padding: 0;
+                border: none;
+                background: none;
+                display: inline;
                 line-height: 1.5;
             }
             i {
-                margin-right: 7px;
+                margin-right: 8px;
                 width: 12px;
                 text-align: center;
                 font-size: 12px;
@@ -112,23 +112,19 @@ $body-bg: #f5f5f5 !default;
                 vertical-align: middle;
             }
             &.separator {
-                height: 0;
-                background-color: transparent;
-                margin: 0;
-                padding: 0;
                 display: none;
             }
         }
-        .profile-menu:nth-child(4),
+        .profile-menu.border-top,
         .profile-menu.admin,
         .profile-menu:last-child {
             border-top: 1px solid #d1d5db;
         }
         .profile-menu:hover {
             color: #fff;
-            background-color: darken($btn-primary-bg, 10%) !important;
+            background-color: darken($btn-primary-bg, 10%);
             a {
-                color: #fff !important;
+                color: #fff;
             }
         }
     }

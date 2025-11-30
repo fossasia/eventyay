@@ -858,14 +858,14 @@ h1 .label {
         font-size: 14px;
         font-weight: normal;
         cursor: pointer;
-        padding: 7px 16px;
+        padding: 8px 16px;
         line-height: 1.5;
         a {
-            color: darken($btn-primary-bg, 10%) !important;
-            padding: 0 !important;
-            border: none !important;
-            background: none !important;
-            display: inline !important;
+            color: darken($btn-primary-bg, 10%);
+            padding: 0;
+            border: none;
+            background: none;
+            display: inline;
             line-height: 1.5;
         }
         .dashboard-item {
@@ -879,23 +879,19 @@ h1 .label {
             vertical-align: middle;
         }
         &.separator {
-            height: 0;
-            background-color: transparent;
-            margin: 0;
-            padding: 0;
             display: none;
         }
     }
-    .profile-menu:nth-child(6),
+    .profile-menu.border-top,
     .profile-menu.admin,
     .profile-menu:last-child {
         border-top: 1px solid #d1d5db;
     }
     .profile-menu:hover {
         color: #fff;
-        background-color: darken($btn-primary-bg, 10%) !important;
+        background-color: darken($btn-primary-bg, 10%);
         a {
-            color: #fff !important;
+            color: #fff;
         }
     }
     .dashboard-item {
@@ -920,31 +916,31 @@ h1 .label {
 
             .submenu-item {
                 background-color: #fff;
-                padding: 7px 16px;
+                padding: 8px 16px;
                 font-size: 12px;
                 line-height: 1.5;
 
                 a {
-                    color: darken($btn-primary-bg, 10%) !important;
-                    padding: 0 !important;
-                    border: none !important;
-                    background: none !important;
-                    display: inline !important;
+                    color: darken($btn-primary-bg, 10%);
+                    padding: 0;
+                    border: none;
+                    background: none;
+                    display: inline;
                     line-height: 1.5;
                 }
 
                 i {
-                    margin-right: 7px;
+                    margin-right: 8px;
                     width: 12px;
                     font-size: 12px;
                     vertical-align: middle;
                 }
 
                 &:hover {
-                    background-color: darken($btn-primary-bg, 10%) !important;
+                    background-color: darken($btn-primary-bg, 10%);
 
                     a {
-                        color: #fff !important;
+                        color: #fff;
                     }
                 }
             }
@@ -960,11 +956,11 @@ h1 .label {
                     line-height: 1.5;
 
                     a {
-                        color: darken($btn-primary-bg, 10%) !important;
-                        padding: 0 !important;
-                        border: none !important;
-                        background: none !important;
-                        display: inline !important;
+                        color: darken($btn-primary-bg, 10%);
+                        padding: 0;
+                        border: none;
+                        background: none;
+                        display: inline;
                         line-height: 1.5;
                     }
 
@@ -977,10 +973,10 @@ h1 .label {
                     }
 
                     &:hover {
-                        background-color: darken($btn-primary-bg, 10%) !important;
+                        background-color: darken($btn-primary-bg, 10%);
 
                         a {
-                            color: #fff !important;
+                            color: #fff;
                         }
                     }
                 }
@@ -988,12 +984,12 @@ h1 .label {
         }
     }
     .dashboard-item:hover {
-        color: #fff !important;
-        background-color: darken($btn-primary-bg, 10%) !important;
+        color: #fff;
+        background-color: darken($btn-primary-bg, 10%);
     }
     .dashboard-content:hover {
-        color: #fff !important;
-        background-color: darken($btn-primary-bg, 10%) !important;
+        color: #fff;
+        background-color: darken($btn-primary-bg, 10%);
     }
 }
 
