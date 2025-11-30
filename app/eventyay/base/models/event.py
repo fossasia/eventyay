@@ -71,7 +71,6 @@ from .mixins import OrderedModel, PretalxModel
 from .organizer import Organizer, OrganizerBillingModel, Team
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
-LANGUAGE_NAMES = {code: name for code, name in settings.LANGUAGES}
 
 def event_css_path(instance, filename):
     return path_with_hash(filename, base_path=f"{instance.slug}/css/")
@@ -187,6 +186,7 @@ def default_feature_flags():
         "present_multiple_times": False,
         "submission_public_review": True,
         "chat-moderation": True,
+        "polls": True,
     }
 
 def default_display_settings():
@@ -809,7 +809,7 @@ class Event(
     class urls(EventUrls):
         """URL patterns for public/frontend views of this event."""
         base_path = settings.BASE_PATH
-        base = '{base_path}/{self.slug}/'
+        base = '{base_path}/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
         logout = '{base}logout'
         auth = '{base}auth/'
@@ -824,8 +824,8 @@ class Event(
         schedule = '{base}schedule/'
         schedule_nojs = '{schedule}nojs'
         featured = '{base}featured/'
-        talks = '{base}talk/'
-        speakers = '{base}speaker/'
+        talks = '{base}sessions/'
+        speakers = '{base}speakers/'
         changelog = '{schedule}changelog/'
         feed = '{schedule}feed.xml'
         export = '{schedule}export/'
@@ -836,6 +836,7 @@ class Event(
         schedule_widget_data = '{schedule}widgets/schedule.json'
         schedule_widget_script = '{base}widgets/schedule.js'
         settings_css = '{base}static/event.css'
+        video_base = '{base}video/'
 
     class orga_urls(EventUrls):
         """URL patterns for organizer/admin panel views of this event."""
@@ -1054,6 +1055,23 @@ class Event(
         from eventyay.base.services import locking
 
         return locking.LockManager(self)
+
+    def __getstate__(self):
+        """
+        Custom pickle method to exclude unpicklable cached properties like 'cache'
+        which contains thread locks that cannot be serialized.
+        """
+        state = self.__dict__.copy()
+        # Remove the cache property if it has been accessed (it contains unpicklable thread locks)
+        state.pop('cache', None)
+        return state
+
+    def __setstate__(self, state):
+        """
+        Custom unpickle method to restore the Event instance.
+        The cache property will be recreated on first access thanks to @cached_property.
+        """
+        self.__dict__.update(state)
 
     def get_mail_backend(self, timeout=None, force_custom=False):
         """
@@ -1871,18 +1889,15 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/schedule')
-        return url
+        return self.urls.schedule.full
 
     @property
     def talk_session_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/talk')
-        return url
+        return self.urls.talks.full
 
     @property
     def talk_speaker_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/speaker')
-        return url
+        return self.urls.speakers.full
 
     @property
     def talk_dashboard_url(self):
@@ -2062,12 +2077,53 @@ class Event(
     @cached_property
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
-        return self.locale_array.split(',')
+        if hasattr(self, 'settings') and 'locales' in self.settings._cache():
+            if locales := self.settings.get('locales', as_type=list):
+                return locales
+        return [code for code in self.locale_array.split(',') if code]
 
     @cached_property
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
-        return self.content_locale_array.split(',')
+        if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
+            if locales := self.settings.get('content_locales', as_type=list):
+                return locales
+        fallback = [code for code in self.content_locale_array.split(',') if code]
+        return fallback or self.locales
+
+    def _clear_language_caches(self):
+        for attr in [
+            'locales',
+            'content_locales',
+            'is_multilingual',
+            'named_locales',
+            'available_content_locales',
+            'named_content_locales',
+            'named_plugin_locales',
+            'plugin_locales',
+        ]:
+            self.__dict__.pop(attr, None)
+
+    def update_language_configuration(
+        self,
+        *,
+        locales: list[str] | None = None,
+        content_locales: list[str] | None = None,
+        default_locale: str | None = None,
+    ) -> None:
+        locales_list = list(locales or [])
+        if content_locales is None:
+            content_locales_list = locales_list
+        else:
+            content_locales_list = list(content_locales)
+        if locales_list:
+            self.locale_array = ','.join(locales_list)
+        if content_locales_list:
+            self.content_locale_array = ','.join(content_locales_list)
+        if default_locale:
+            self.locale = default_locale
+        if locales_list or content_locales_list or default_locale:
+            self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
@@ -2089,7 +2145,7 @@ class Event(
         # Content locales can be anything eventyay knows as a language, merged with
         # this event's plugin locales.
 
-        locale_names = dict(default_django_settings.LANGUAGES)
+        locale_names = dict(settings.LANGUAGES)
         locale_names.update(self.named_plugin_locales)
         return sorted([(key, value) for key, value in locale_names.items()])
 
@@ -2097,7 +2153,8 @@ class Event(
     def named_content_locales(self) -> list:
         locale_names = dict(self.available_content_locales)
         # locale_names['en-us'] = locale_names['en']
-        return [(code, locale_names[code]) for code in self.content_locales]
+        locale_names |= LANGUAGE_NAMES
+        return [(code, locale_names.get(code, code)) for code in self.content_locales]
 
     @cached_property
     def named_plugin_locales(self) -> list:

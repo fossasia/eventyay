@@ -71,7 +71,7 @@ class AllTicketsPDF(BaseExporter):
                                 )
                                 for k, label, w in name_scheme['fields']
                             ]
-                            if settings.JSON_FIELD_AVAILABLE and name_scheme and len(name_scheme['fields']) > 1
+                            if name_scheme and len(name_scheme['fields']) > 1
                             else []
                         ),
                     ),
@@ -90,7 +90,7 @@ class AllTicketsPDF(BaseExporter):
         qs = (
             OrderPosition.objects.filter(order__event__in=self.events)
             .prefetch_related('answers', 'answers__question')
-            .select_related('order', 'item', 'variation', 'addon_to')
+            .select_related('order', 'product', 'variation', 'addon_to')
         )
 
         if form_data.get('include_pending'):
@@ -141,20 +141,24 @@ class AllTicketsPDF(BaseExporter):
             )
 
         o = PdfTicketOutput(Event.objects.none())
+        any_tickets = False
         for op in qs:
             if not op.generate_ticket:
                 continue
-
+            any_tickets = True
             if op.order.event != o.event:
                 o = PdfTicketOutput(op.event)
 
             with language(op.order.locale, o.event.settings.region):
                 layout = o.layout_map.get(
-                    (op.item_id, op.order.sales_channel),
-                    o.layout_map.get((op.item_id, 'web'), o.default_layout),
+                    (op.product_id, op.order.sales_channel),
+                    o.layout_map.get((op.product_id, 'web'), o.default_layout),
                 )
                 outbuffer = o._draw_page(layout, op, op.order)
                 merger.append(ContentFile(outbuffer.read()))
+
+        if not any_tickets:
+            return None
 
         outbuffer = BytesIO()
         merger.write(outbuffer)

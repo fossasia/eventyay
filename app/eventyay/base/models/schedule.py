@@ -102,7 +102,7 @@ class Schedule(PretalxModel):
         wip_schedule = Schedule.objects.create(event=self.event)
 
         self.save(update_fields=['published', 'version', 'comment'])
-        self.log_action('pretalx.schedule.release', person=user, orga=True)
+        self.log_action('eventyay.schedule.release', person=user, orga=True)
 
         # Set visibility
         self.talks.all().update(is_visible=False)
@@ -601,7 +601,7 @@ class Schedule(PretalxModel):
             'submission__submission_type',
         ).prefetch_related('submission__speakers')
         talks = talks.order_by('start')
-        rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        rooms = set(self.event.rooms.filter(deleted=False, hidden=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
         result = {
@@ -614,7 +614,7 @@ class Schedule(PretalxModel):
         show_do_not_record = self.event.cfp.request_do_not_record
         for talk in talks:
             # Only add room if it's not deleted
-            if talk.room and not talk.room.deleted:
+            if talk.room and not talk.room.deleted and not talk.room.hidden:
                 rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
@@ -625,6 +625,7 @@ class Schedule(PretalxModel):
                         'id': talk.id,
                         'title': (talk.submission.title if talk.submission else talk.description),
                         'abstract': (talk.submission.abstract if talk.submission else None),
+                        'description': (talk.submission.description if talk.submission else None),
                         'speakers': (
                             [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
                         ),
@@ -668,14 +669,15 @@ class Schedule(PretalxModel):
                 'name': room.name,
                 'description': room.description,
             }
-            for room in self.event.rooms.all()
+            for room in self.event.rooms.filter(hidden=False)
             if room in rooms
         ]
         include_avatar = self.event.cfp.request_avatar
         result['speakers'] = [
             {
                 'code': user.code,
-                'name': user.fullname,
+                'name': user.fullname or None,
+                'biography': getattr(user.event_profile(self.event), 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

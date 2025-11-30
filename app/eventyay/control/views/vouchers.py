@@ -189,7 +189,7 @@ class VoucherDelete(EventPermissionRequiredMixin, DeleteView):
                 _('A voucher can not be deleted if it already has been redeemed.'),
             )
         else:
-            self.object.log_action('pretix.voucher.deleted', user=self.request.user)
+            self.object.log_action('eventyay.voucher.deleted', user=self.request.user)
             CartPosition.objects.filter(addon_to__voucher=self.object).delete()
             self.object.cartposition_set.all().delete()
             self.object.delete()
@@ -231,7 +231,7 @@ class VoucherUpdate(EventPermissionRequiredMixin, UpdateView):
         messages.success(self.request, _('Your changes have been saved.'))
         if form.has_changed():
             self.object.log_action(
-                'pretix.voucher.changed',
+                'eventyay.voucher.changed',
                 user=self.request.user,
                 data={k: form.cleaned_data.get(k) for k in form.changed_data},
             )
@@ -294,7 +294,7 @@ class VoucherCreate(EventPermissionRequiredMixin, CreateView):
                 )
             ),
         )
-        form.instance.log_action('pretix.voucher.added', data=dict(form.cleaned_data), user=self.request.user)
+        form.instance.log_action('eventyay.voucher.added', data=dict(form.cleaned_data), user=self.request.user)
         return ret
 
     def post(self, request, *args, **kwargs):
@@ -402,7 +402,7 @@ class VoucherBulkCreate(EventPermissionRequiredMixin, AsyncFormView):
                 del data['codes']
                 log_entries.append(
                     v.log_action(
-                        'pretix.voucher.added',
+                        'eventyay.voucher.added',
                         data=data,
                         user=self.request.user,
                         save=False,
@@ -514,13 +514,13 @@ class VoucherBulkAction(EventPermissionRequiredMixin, View):
         elif request.POST.get('action') == 'delete_confirm':
             for obj in self.objects:
                 if obj.allow_delete():
-                    obj.log_action('pretix.voucher.deleted', user=self.request.user)
+                    obj.log_action('eventyay.voucher.deleted', user=self.request.user)
                     OrderPosition.objects.filter(addon_to__voucher=obj).delete()
                     obj.cartposition_set.all().delete()
                     obj.delete()
                 else:
                     obj.log_action(
-                        'pretix.voucher.changed',
+                        'eventyay.voucher.changed',
                         user=self.request.user,
                         data={
                             'max_usages': min(obj.redeemed, obj.max_usages),
