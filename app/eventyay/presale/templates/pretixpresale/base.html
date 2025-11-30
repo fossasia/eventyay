@@ -88,7 +88,7 @@
                 &middot;
             {% endfor %}
             {% include "pretixpresale/base_footer.html" %}
-            {% if request.event %}
+            {% if request.event and request.event.email %}
                 &middot;
                 <a href="mailto:{{ request.event.email }}">{% translate "Contact us" %}</a>
             {% endif %}
