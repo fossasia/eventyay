@@ -4,16 +4,16 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2020-11-13 07:45+0000\n"
-"Last-Translator: Mie Frydensbjerg <mif@aarhus.dk>\n"
-"Language-Team: Danish <https://translate.eventyay.com/projects/pretix/pretix/"
+"PO-Revision-Date: 2025-11-30 14:17+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Danish <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "da/>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 3.10.3\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -231,8 +231,7 @@ msgstr "Denne bruger har allerede adgang til denne gruppe."
 msgid ""
 "The application \"{application_name}\" has been authorized to access your "
 "account."
-msgstr ""
-"Tofaktorgodkendelsesenheden \"{name}\" er blevet fjernet fra din konto."
+msgstr "Tofaktorgodkendelsesenheden \"{name}\" er blevet fjernet fra din konto."
 
 #: pretix/api/views/order.py:464 pretix/control/views/orders.py:1195
 #: pretix/presale/views/order.py:663 pretix/presale/views/order.py:728
@@ -7146,9 +7145,9 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Vi anbefaler at du aktiverer dette hvis du vil lade din kunder betale "
-"betalingsudbyderens gebyr.  <a href=\"{docs_url}\" target=\"_blank\" "
-"rel=\"noopener\">Læs mere om hvad dette betyder</a>. Husk at sætte det "
-"korrekte gebyr ovenfor!"
+"betalingsudbyderens gebyr.  <a href=\"{docs_url}\" target=\"_blank\" rel="
+"\"noopener\">Læs mere om hvad dette betyder</a>. Husk at sætte det korrekte "
+"gebyr ovenfor!"
 
 #: pretix/base/payment.py:312
 msgid "Restrict to countries"
@@ -7882,8 +7881,8 @@ msgid ""
 "We removed %(product)s from your cart as you can not buy less than %(min)s "
 "items of it."
 msgstr ""
-"Vi har fjernet %(product)s fra din kurv idet du ikke kan købe færre end "
-"%(min)s af det."
+"Vi har fjernet %(product)s fra din kurv idet du ikke kan købe færre end %"
+"(min)s af det."
 
 #: pretix/base/services/cart.py:70 pretix/base/services/orders.py:75
 msgid "The presale period for this event has not yet started."
@@ -8006,8 +8005,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Du kan højst vælge %(max)s tilføjelser fra kategorien %(cat)s for produktet "
-"%(base)s."
+"Du kan højst vælge %(max)s tilføjelser fra kategorien %(cat)s for produktet %"
+"(base)s."
 
 #: pretix/base/services/cart.py:101
 #, python-format
@@ -8027,8 +8026,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Du kan højst vælge %(max)s tilføjelser fra kategorien %(cat)s for produktet "
-"%(base)s."
+"Du kan højst vælge %(max)s tilføjelser fra kategorien %(cat)s for produktet %"
+"(base)s."
 
 #: pretix/base/services/cart.py:104
 msgid ""
@@ -11859,8 +11858,7 @@ msgstr ""
 msgid ""
 "The two-factor authentication device \"{name}\" has been removed from your "
 "account."
-msgstr ""
-"Tofaktorgodkendelsesenheden \"{name}\" er blevet fjernet fra din konto."
+msgstr "Tofaktorgodkendelsesenheden \"{name}\" er blevet fjernet fra din konto."
 
 #: pretix/control/logdisplay.py:359
 msgid "Notifications have been enabled."
@@ -13228,9 +13226,9 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Hvis du allerede har en konto på dette site, så kan du <a "
-"%(login_href)s>logge ind</a> først og så igen klikke på dette link for at "
-"acceptere invitationen med din eksisterende konto."
+"Hvis du allerede har en konto på dette site, så kan du <a %(login_href)"
+"s>logge ind</a> først og så igen klikke på dette link for at acceptere "
+"invitationen med din eksisterende konto."
 
 #: pretix/control/templates/pretixcontrol/auth/invite.html:23
 #: pretix/control/templates/pretixcontrol/auth/register.html:29
@@ -13663,8 +13661,7 @@ msgstr ""
 msgid ""
 "This will delete the information of <strong>%(num)s</strong> check-ins as "
 "well."
-msgstr ""
-"Dette vil også slette oplysninger om <strong>%(num)s</strong> tjek-ind."
+msgstr "Dette vil også slette oplysninger om <strong>%(num)s</strong> tjek-ind."
 
 #: pretix/control/templates/pretixcontrol/checkin/list_edit.html:10
 #: pretix/control/templates/pretixcontrol/checkin/list_edit.html:20
@@ -18994,8 +18991,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Er du sikker på at du vil slette ventelistepladsen <strong>%(entry)s</"
-"strong>?"
+"Er du sikker på at du vil slette ventelistepladsen <strong>%(entry)"
+"s</strong>?"
 
 #: pretix/control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -19055,8 +19052,8 @@ msgid ""
 "<strong>%(amount)s</strong>."
 msgstr ""
 "Hvis du kan skabe kapacitet ved dit arrangement til alle personer på "
-"ventelisten, kan du potentielt sælge billetter for yderligere "
-"<strong>%(amount)s</strong>."
+"ventelisten, kan du potentielt sælge billetter for yderligere <strong>%"
+"(amount)s</strong>."
 
 #: pretix/control/templates/pretixcontrol/waitinglist/index.html:105
 msgid "Successfully redeemed"
@@ -19219,8 +19216,7 @@ msgstr ""
 
 #: pretix/control/views/auth.py:334
 msgid "We were unable to find the user you requested a new password for."
-msgstr ""
-"Vi kunne ikke finde brugeren som du efterspurgte en ny adgangskode til."
+msgstr "Vi kunne ikke finde brugeren som du efterspurgte en ny adgangskode til."
 
 #: pretix/control/views/auth.py:367
 msgid "You can now login using your new password."
