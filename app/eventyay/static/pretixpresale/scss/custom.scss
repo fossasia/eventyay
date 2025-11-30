@@ -110,4 +110,98 @@
             color: #FFFFFF !important;
         }
     }
+    
+    // Ensure proper alignment within container
+    &.container {
+        position: relative;
+        z-index: 10;
+    }
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.language-dropdown {
+    display: inline-block;
+    margin-right: 10px;
+    position: relative;
+    z-index: 10000;
+
+    .language-selector {
+        background-color: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #FFFFFF;
+        padding: 6px 12px;
+        font-size: 14px;
+        
+        &:hover, &:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: #FFFFFF;
+            color: #FFFFFF;
+        }
+        
+        .caret {
+            margin-left: 5px;
+        }
+    }
+    
+    .dropdown-menu {
+        min-width: 150px;
+        z-index: 10001 !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid rgba(0,0,0,.15);
+        box-shadow: 0 6px 12px rgba(0,0,0,.175);
+        
+        li.active > a {
+            background-color: #337ab7;
+            color: #FFFFFF;
+        }
+        
+        li > a {
+            padding: 8px 15px;
+            color: #333333 !important;
+            
+            &:hover {
+                background-color: #f5f5f5;
+                color: #262626 !important;
+            }
+        }
+    }
+}
+
+// When language dropdown appears in loginbox (white background scenario)
+.loginbox .language-dropdown .language-selector {
+    border-color: #ccc;
+    color: #333;
+    
+    &:hover, &:focus {
+        background-color: #e6e6e6;
+        border-color: #adadad;
+        color: #333;
+    }
+}
+
+// Responsive adjustments for mobile
+@media (max-width: 768px) {
+    .event-logo-img-placement {
+        text-align: center;
+    }
+    
+    .header-content {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .language-dropdown {
+        margin-right: 5px;
+        margin-bottom: 10px;
+    }
+    
+    .login-hdr {
+        margin-left: 0;
+        margin-bottom: 10px;
+    }
 }
