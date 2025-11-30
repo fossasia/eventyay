@@ -28,13 +28,13 @@
     margin-top: 10px;
     margin-bottom: 3rem;
     overflow: auto;
-    
+
     div {
         font-size: 1.65rem;
         display: flex;
         gap: 2rem;
     }
-    
+
     a {
         cursor: pointer;
         position: relative;
@@ -59,6 +59,7 @@
 
 #schedule-nav {
     margin: 16px 0px;
+
     .header-nav {
         border-color: darken($btn-primary-bg, 10%) !important;
         border: 1px solid;
@@ -66,22 +67,27 @@
         font-weight: normal;
         border-radius: 0;
     }
+
     .navigation {
         display: flex;
         flex-wrap: wrap;
+
         .navigation-button {
             margin-right: 8px;
             margin-bottom: 8px;
         }
+
         @media (min-width: 800px) {
             .video-link {
                 margin-left: auto;
             }
         }
+
         a:hover {
             color: #fff;
             background-color: $hover-button-color !important;
         }
+
         .popover-content {
             .options {
                 color: darken($btn-primary-bg, 10%);
@@ -91,23 +97,146 @@
                 font-weight: normal;
                 border-radius: 0;
             }
+
             .options:hover {
                 color: #fff;
                 color: darken($btn-primary-bg, 10%) !important;
             }
+
             div:first-child {
                 margin-bottom: 8px;
             }
         }
-        
+
     }
-    
+
 }
 
-.page-header-links{
-    .header-part{
+.page-header-links {
+    .header-part {
         a {
             color: #FFFFFF !important;
         }
+    }
+}
+
+// Inline language selector styles
+.locales-inline {
+    display: flex;
+    gap: 0;
+    align-items: center;
+
+    .locale-link {
+        padding: 6px 10px;
+        text-decoration: none;
+        color: inherit;
+        border-radius: 3px;
+        transition: background-color 0.2s;
+        border-right: 1px solid rgba(255, 255, 255, 0.3);
+
+        &:last-child {
+            border-right: none;
+        }
+
+        &.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        &:hover,
+        &:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+        }
+    }
+}
+
+// Language dropdown with high z-index for visibility
+.language-dropdown {
+    display: inline-block;
+    z-index: 10000;
+    position: relative;
+
+    .language-selector {
+        background-color: transparent;
+        border-color: rgba(255, 255, 255, 0.5);
+        color: #fff;
+
+        &:hover,
+        &:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: #fff;
+        }
+    }
+
+    .dropdown-menu {
+        z-index: 10001;
+        background-color: #fff;
+        color: #333;
+
+        a {
+            color: #333 !important;
+
+            &:hover,
+            &:focus {
+                background-color: #f5f5f5;
+            }
+        }
+
+        .active a {
+            font-weight: bold;
+            background-color: #e6e6e6;
+        }
+    }
+}
+
+// White background variant for loginbox
+.loginbox .language-dropdown {
+    .language-selector {
+        background-color: #fff;
+        border-color: #ccc;
+        color: #333;
+
+        &:hover,
+        &:focus {
+            background-color: #e6e6e6;
+            border-color: #adadad;
+            color: #333;
+        }
+    }
+}
+
+// Header content flexbox for proper alignment
+.header-content {
+    display: flex;
+    align-items: center;
+    /* Ensure vertical alignment */
+    gap: 15px;
+    justify-content: flex-end;
+    /* Align to the right */
+    width: 100%;
+    /* Ensure it takes full width to push content to right */
+}
+
+// Login header spacing
+.login-hdr {
+    margin-left: 0;
+}
+
+// Responsive adjustments for mobile
+@media (max-width: 768px) {
+    .header-content {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .language-dropdown {
+        margin-right: 5px;
+        margin-bottom: 10px;
+    }
+
+    .login-hdr {
+        margin-left: 0;
+        margin-bottom: 10px;
     }
 }

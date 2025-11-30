@@ -161,13 +161,16 @@ section.front-page {
     top: 0;
 }
 .event-logo-img-placement {
-    margin: 0 12%;
+    text-align: left;
+    // Removed padding-left to align with content container
 }
 .event-logo-image {
     max-height: 140px;
     max-width: 240px;
     width: auto;
-    border-radius: 10px;
+    height: auto;
+    display: block;
+    border-radius: 0 !important;
 }
 
 @media (max-width: 768px) {
@@ -175,7 +178,7 @@ section.front-page {
         max-height: 120px;
         max-width: 120px;
         width: auto;
-        border-radius: 10px;
+        border-radius: 0 !important;
         margin-bottom: 10px;
     }
 }
