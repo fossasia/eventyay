@@ -74,7 +74,7 @@ $(function () {
 
             <div class="profile-menu separator"></div>
 
-            <div class="profile-menu">
+            <div class="profile-menu border-top">
                 <a href="${basePath}${accountPath}" target="_self" class="btn btn-outline-success">
                     <i class="fa fa-user-circle"></i> ${window.gettext('Account')}
                 </a>
