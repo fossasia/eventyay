@@ -8,17 +8,18 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2020-11-27 04:00+0000\n"
-"Last-Translator: Svyatoslav <slava@digitalarthouse.eu>\n"
-"Language-Team: Latvian <https://translate.eventyay.com/projects/pretix/"
-"pretix/lv/>\n"
+"PO-Revision-Date: 2025-11-30 14:45+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Latvian <https://hosted.weblate.org/projects/eventyay/"
+"eventyay/lv/>\n"
 "Language: lv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n % 10 == 0 || n % 100 >= 11 && n % 100 <= "
-"19) ? 0 : ((n % 10 == 1 && n % 100 != 11) ? 1 : 2);\n"
-"X-Generator: Weblate 3.10.3\n"
+"Plural-Forms: nplurals=3; plural="
+"(n % 10 == 0 || n % 100 >= 11 && n % 100 <= 19) ? 0 : "
+"((n % 10 == 1 && n % 100 != 11) ? 1 : 2);\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -788,8 +789,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Re-try payment or choose another payment method"
 msgid "Automatically on payment or when required by payment method"
-msgstr ""
-"Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
+msgstr "Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
 
 #: pretix/base/configurations/default_setting.py:696
 msgid "Generate invoices"
@@ -3674,8 +3674,8 @@ msgid ""
 "Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
 "\"."
 msgstr ""
-"Nederīga viettura sintakse: jūs izmantojāt atšķirīgu numuru \"{\" than of \"}"
-"\"."
+"Nederīga viettura sintakse: jūs izmantojāt atšķirīgu numuru \"{\" than of "
+"\"}\"."
 
 #: pretix/base/forms/validators.py:39
 #, python-format
@@ -3893,8 +3893,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, this corresponds to:"
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, šis atbilst:"
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", šis atbilst:"
 
 #: pretix/base/invoice.py:675
 #, python-brace-format
@@ -3903,8 +3903,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, rēķina kopsumma atbilst {total}."
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", rēķina kopsumma atbilst {total}."
 
 #: pretix/base/invoice.py:688
 #, fuzzy
@@ -4575,8 +4575,7 @@ msgstr "Parādīt šīs biļetes gaidīšanas sarakstu"
 #, fuzzy
 #| msgid "This will only work of waiting lists are enabled for this event."
 msgid "This will only work if waiting lists are enabled for this event."
-msgstr ""
-"Šis darbosies tikai tad, ja pasākumam ir iespējoti gaidīšanas saraksti."
+msgstr "Šis darbosies tikai tad, ja pasākumam ir iespējoti gaidīšanas saraksti."
 
 #: pretix/base/models/items.py:324
 msgid "Publicly show how many tickets are still available."
@@ -7246,8 +7245,8 @@ msgid ""
 "We removed %(product)s from your cart as you can not buy less than %(min)s "
 "items of it."
 msgstr ""
-"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par "
-"%(min)s precēm."
+"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par %"
+"(min)s precēm."
 
 #: pretix/base/services/cart.py:70 pretix/base/services/orders.py:75
 msgid "The presale period for this event has not yet started."
@@ -7372,8 +7371,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas "
-"%(cat)s šim produktam %(base)s."
+"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas %"
+"(cat)s šim produktam %(base)s."
 
 #: pretix/base/services/cart.py:101
 #, python-format
@@ -7393,8 +7392,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas "
-"%(cat)s šim produktam %(base)s."
+"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas %"
+"(cat)s šim produktam %(base)s."
 
 #: pretix/base/services/cart.py:104
 msgid ""
@@ -21429,8 +21428,7 @@ msgstr ""
 #: pretix/presale/templates/pretixpresale/event/checkout_questions.html:9
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
+msgstr "Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
 
 #: pretix/presale/templates/pretixpresale/event/checkout_questions.html:68
 msgid "Copy answers from above"
@@ -21978,8 +21976,7 @@ msgstr "Lūdzu, pabeidziet maksājumu pirms %(date)s"
 
 #: pretix/presale/templates/pretixpresale/event/order.html:97
 msgid "Re-try payment or choose another payment method"
-msgstr ""
-"Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
+msgstr "Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
 
 #: pretix/presale/templates/pretixpresale/event/order.html:105
 #: pretix/presale/templates/pretixpresale/event/order_pay_confirm.html:45
@@ -22565,8 +22562,8 @@ msgid ""
 "If you're looking to configure this installation, please <a %(a_attr)s>head "
 "over here</a>."
 msgstr ""
-"Ja vēlaties konfigurēt šo instalāciju, lūdzu, <a %(a_attr)s>dodieties šeit</"
-"a>."
+"Ja vēlaties konfigurēt šo instalāciju, lūdzu, <a %(a_attr)s>dodieties "
+"šeit</a>."
 
 #: pretix/presale/templates/pretixpresale/index.html:24
 msgid "Enjoy!"
