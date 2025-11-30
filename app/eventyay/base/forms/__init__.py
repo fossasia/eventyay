@@ -173,7 +173,7 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
         default_attrs = {
             'class': 'form-control auto-expanding-textarea',
             'data-auto-expand': 'true',
-            'style': 'min-height: 200px; max-height: 300px; overflow-y: hidden; resize: vertical; transition: height 0.2s ease-in-out;'
+            'style': 'min-height: 40vh; max-height: 60vh; overflow-y: hidden; resize: vertical; transition: height 0.2s ease-in-out;'
         }
         if attrs:
             if 'class' in attrs:
