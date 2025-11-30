@@ -146,8 +146,7 @@ export default {
 					rooms.videoChat.push(room)
 				} else if (room.modules.some(module => ['livestream.native', 'livestream.youtube', 'livestream.iframe'].includes(module.type))) {
 					let session
-					// Only show session information if the schedule is published
-					if (this.$features.enabled('schedule-control') && this.hasPublishedSchedule) {
+					if (this.$features.enabled('schedule-control')) {
 						session = this.currentSessionPerRoom?.[room.id]?.session
 					}
 					const notifications = this.notificationCount(room.modules.find(m => m.type === 'chat.native')?.channel_id)
@@ -186,11 +185,6 @@ export default {
 		},
 		worldHasPosters() {
 			return this.visibleRooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
-		},
-		hasPublishedSchedule() {
-			// Only show schedule-related items if there's a published schedule
-			// The schedule is considered published if it has a version (not WIP)
-			return this.schedule && this.schedule.version
 		},
 	},
 	methods: {
