@@ -90,7 +90,7 @@
             {% include "pretixpresale/base_footer.html" %}
             {% if request.event and request.event.email %}
                 &middot;
-                <a href="mailto:{{ request.event.email }}">{% translate "Contact us" %}</a>
+                <a href="mailto:{{ request.event.email }}">{% trans "Contact us" %}</a>
             {% endif %}
         </nav>
     </footer>
