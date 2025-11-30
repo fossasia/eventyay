@@ -8,17 +8,18 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2020-09-23 17:00+0000\n"
-"Last-Translator: Svyatoslav <slava@digitalarthouse.eu>\n"
-"Language-Team: Russian <https://translate.eventyay.com/projects/pretix/"
-"pretix/ru/>\n"
+"PO-Revision-Date: 2025-11-30 17:30+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Russian <https://hosted.weblate.org/projects/eventyay/"
+"eventyay/ru/>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
-"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2;\n"
-"X-Generator: Weblate 3.10.3\n"
+"Plural-Forms: nplurals=3; plural="
+"(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? "
+"1 : 2);\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -4008,8 +4009,7 @@ msgstr "Включить незавершённые заказы"
 msgid ""
 "With this option, people will be able to check in even if the order has not "
 "been paid."
-msgstr ""
-"С этой опцией можно зарегистрироваться, даже если заказ не был оплачен."
+msgstr "С этой опцией можно зарегистрироваться, даже если заказ не был оплачен."
 
 #: eventyay/base/models/checkin.py:25 eventyay/control/navigation.py:443
 #: eventyay/control/templates/pretixcontrol/organizers/gates.html:5
@@ -6063,8 +6063,7 @@ msgstr "Вам необходимо выбрать конкретное мест
 #, fuzzy
 #| msgid "This gift card can only be used in test mode."
 msgid "Seat-specific vouchers can only be used once."
-msgstr ""
-"Этот подарочный сертификат можно использовать только в тестовом режиме."
+msgstr "Этот подарочный сертификат можно использовать только в тестовом режиме."
 
 #: eventyay/base/models/vouchers.py:382
 #, fuzzy, python-brace-format
@@ -6563,8 +6562,8 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Мы рекомендуем активировать эту опцию, если вы хотите, чтобы ваши "
-"пользователи оплачивали сборы вашего поставщика платёжных услуг. <a "
-"href=\"{docs_url}\" target=\"_blank\" rel=\"noopener\"> Нажмите здесь, чтобы "
+"пользователи оплачивали сборы вашего поставщика платёжных услуг. <a href="
+"\"{docs_url}\" target=\"_blank\" rel=\"noopener\"> Нажмите здесь, чтобы "
 "получить об этом подробную информацию. </a> Не забудьте установить выше "
 "правильные сборы!"
 
@@ -6741,8 +6740,7 @@ msgstr "Этот подарочный сертификат не поддержи
 #: eventyay/base/payment.py:1182 eventyay/base/payment.py:1244
 #: eventyay/base/services/orders.py:766
 msgid "This gift card can only be used in test mode."
-msgstr ""
-"Этот подарочный сертификат можно использовать только в тестовом режиме."
+msgstr "Этот подарочный сертификат можно использовать только в тестовом режиме."
 
 #: eventyay/base/payment.py:1185 eventyay/base/payment.py:1247
 #: eventyay/base/services/orders.py:768
@@ -7421,8 +7419,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Вы можете выбрать не более %(max)s дополнительных продуктов из категории "
-"%(cat)s для продукта %(base)s."
+"Вы можете выбрать не более %(max)s дополнительных продуктов из категории %"
+"(cat)s для продукта %(base)s."
 
 #: eventyay/base/services/cart.py:101
 #, python-format
@@ -7442,8 +7440,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Вы можете выбрать не более %(max)s дополнительных продуктов из категории "
-"%(cat)s для продукта %(base)s."
+"Вы можете выбрать не более %(max)s дополнительных продуктов из категории %"
+"(cat)s для продукта %(base)s."
 
 #: eventyay/base/services/cart.py:104
 msgid ""
@@ -19489,8 +19487,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: eventyay/plugins/banktransfer/apps.py:31
 msgid ""
@@ -20521,8 +20518,7 @@ msgstr "pretix по умолчанию"
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to login via social networks"
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:25
 msgid "Social login providers"
@@ -20990,8 +20986,7 @@ msgstr "Дизайн билета"
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to perform check-in actions in your browser."
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: eventyay/plugins/webcheckin/signals.py:15
 #, fuzzy
@@ -23179,8 +23174,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Чтобы увидеть наше расписание, включите JavaScript или перейдите <a "
-"href=\"%(href)s\">сюда</a> для просмотра нашего NoJS расписания ."
+"Чтобы увидеть наше расписание, включите JavaScript или перейдите <a href="
+"\"%(href)s\">сюда</a> для просмотра нашего NoJS расписания ."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -23706,12 +23701,14 @@ msgid "Speaker"
 msgid_plural "Speakers"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:49
 msgid "Submitter"
 msgid_plural "Submitters"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:80
 msgid "Save draft"
@@ -27133,6 +27130,7 @@ msgid "proposal"
 msgid_plural "proposals"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/includes/dashboard_block_event.html:19
 msgid "No proposals yet"
@@ -27370,6 +27368,7 @@ msgid "pending mail"
 msgid_plural "pending mails"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/mails/outbox_list.html:24
 msgid "Send all on this page"
@@ -27463,6 +27462,7 @@ msgid "speaker"
 msgid_plural "speakers"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/organiser/speaker_list.html:46
 #: pretalx/orga/templates/orga/speaker/list.html:39
@@ -27609,6 +27609,7 @@ msgid "Or review the missing proposal here."
 msgid_plural "Or review the missing %(count)s proposals one-by-one."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/review/bulk.html:35
 #: pretalx/orga/templates/orga/review/dashboard.html:40
@@ -27627,6 +27628,7 @@ msgid "%(count)s proposal is waiting for your review."
 msgid_plural "%(count)s proposals are waiting for your review."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/review/dashboard.html:36
 msgid "Click here to get started!"
@@ -28172,6 +28174,7 @@ msgid "Speaker Information Note"
 msgid_plural "Speaker Information Notes"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:35
 msgid ""
@@ -28191,6 +28194,7 @@ msgid "submitter"
 msgid_plural "submitters"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/speaker/list.html:66
 msgid "Arrived"
@@ -28343,6 +28347,7 @@ msgid "session"
 msgid_plural "sessions"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/templates/orga/submission/list.html:51
 msgid "Add new session or proposal"
@@ -28603,6 +28608,7 @@ msgid "unsubmitted proposal draft"
 msgid_plural "unsubmitted proposal drafts"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/dashboard.py:171
 msgid "Send reminder"
@@ -28617,18 +28623,21 @@ msgid "proposal is waiting for your review."
 msgid_plural "proposals are waiting for your review."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/dashboard.py:263
 msgid "day until event start"
 msgid_plural "days until event start"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/dashboard.py:274
 msgid "day since event end"
 msgid_plural "days since event end"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/dashboard.py:283
 #, python-brace-format
@@ -28665,6 +28674,7 @@ msgid "sent email"
 msgid_plural "sent emails"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/event.py:110
 msgid "Localisation"
@@ -28797,6 +28807,7 @@ msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/mails.py:228
 msgid ""
@@ -28810,6 +28821,7 @@ msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] ""
 msgstr[1] ""
+msgstr[2] ""
 
 #: pretalx/orga/views/mails.py:256
 #, python-brace-format

@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2021-01-10 18:00+0000\n"
-"Last-Translator: Li Thomas <lmy013@outlook.com>\n"
-"Language-Team: Chinese (Simplified) <https://translate.eventyay.com/projects/"
-"pretix/pretix/zh_Hans/>\n"
+"PO-Revision-Date: 2025-11-30 14:19+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
+"projects/eventyay/eventyay/zh_Hans/>\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 3.10.3\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -117,8 +117,7 @@ msgstr "未知的销售渠道。"
 msgid ""
 "Events cannot be created as 'live'. Quotas and payment must be added to the "
 "event before sales can go live."
-msgstr ""
-"事件不能创建为“实时”。在销售活动开始之前，必须将配额和付款添加到活动中。"
+msgstr "事件不能创建为“实时”。在销售活动开始之前，必须将配额和付款添加到活动中。"
 
 #: eventyay/api/serializers/event.py:179 eventyay/api/serializers/event.py:463
 #, python-brace-format
@@ -445,8 +444,7 @@ msgid ""
 "Require attendees to fill in individual e-mail addresses for all admission "
 "tickets. See the above option for more details. One email address for the "
 "order confirmation will always be required regardless of this setting."
-msgstr ""
-"要求客户填写所有入场券的个人电子邮件地址。有关详细信息，请参阅上面的选项。无"
+msgstr "要求客户填写所有入场券的个人电子邮件地址。有关详细信息，请参阅上面的选项。无"
 "论此设置如何，始终需要一个用于订单确认的电子邮件地址。"
 
 #: eventyay/base/configurations/default_setting.py:153
@@ -623,8 +621,7 @@ msgstr "发票号码前缀"
 msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
-msgstr ""
-"发票号码除前缀外，如果长度不足，会用数字0填充，比如INV-001或INV-00001。"
+msgstr "发票号码除前缀外，如果长度不足，会用数字0填充，比如INV-001或INV-00001。"
 
 #: eventyay/base/configurations/default_setting.py:417
 msgid "Generate invoices with consecutive numbers"
@@ -669,8 +666,7 @@ msgid ""
 "This will be prepended to invoice numbers of cancellations. If you leave "
 "this field empty, the same numbering scheme will be used that you configured "
 "for regular invoices."
-msgstr ""
-"这将预先写在取消订单的发票号码上。如果该字段为空，则将使用与常规发票配置相同"
+msgstr "这将预先写在取消订单的发票号码上。如果该字段为空，则将使用与常规发票配置相同"
 "的编号方案。"
 
 #: eventyay/base/configurations/default_setting.py:468
@@ -696,8 +692,7 @@ msgid ""
 "This text will be shown above the ticket shop once the designated sales "
 "timeframe for this event is over. You can use it to describe other options "
 "to get a ticket, such as a box office."
-msgstr ""
-"一旦指定的销售时间结束，该文字就会显示在售票处的上方。您可以使用它来描述获得"
+msgstr "一旦指定的销售时间结束，该文字就会显示在售票处的上方。您可以使用它来描述获得"
 "门票的其他方式，例如票房位置。"
 
 #: eventyay/base/configurations/default_setting.py:512
@@ -732,8 +727,7 @@ msgstr "延长付款期限"
 msgid ""
 "If using days, the order will expire at the end of the last day. Using "
 "minutes is more exact, but should only be used for real-time payment methods."
-msgstr ""
-"如果以天计量,订单过期时间即当天0点计算。使用分钟计量会更精确吗，但建议在使用"
+msgstr "如果以天计量,订单过期时间即当天0点计算。使用分钟计量会更精确吗，但建议在使用"
 "实时支付方式的场景下采用。"
 
 #: eventyay/base/configurations/default_setting.py:543
@@ -767,8 +761,7 @@ msgid ""
 "Sunday, it will be moved to the next Monday instead. This is required in "
 "some countries by civil law. This will not effect the last date of payments "
 "configured below."
-msgstr ""
-"如果激活此项，并且任何订单的付款期限在星期六或星期日结束，则将改为下星期一。"
+msgstr "如果激活此项，并且任何订单的付款期限在星期六或星期日结束，则将改为下星期一。"
 "一些国家的民法要求这样做。这不会影响上面配置的最后一次付款日期。"
 
 #: eventyay/base/configurations/default_setting.py:587
@@ -810,8 +803,7 @@ msgid ""
 "The last date any payments are accepted. This has precedence over the terms "
 "configured above. If you use the event series feature and an order contains "
 "tickets for multiple dates, the earliest date will be used."
-msgstr ""
-"接受任何付款的最后日期。这优先于上面配置的天数。如果您使用项目序列功能并且订"
+msgstr "接受任何付款的最后日期。这优先于上面配置的天数。如果您使用项目序列功能并且订"
 "单包含多个日期的票证，则将使用最早的日期。"
 
 #: eventyay/base/configurations/default_setting.py:625
@@ -823,8 +815,7 @@ msgid ""
 "If checked, all unpaid orders will automatically go from 'pending' to "
 "'expired' after the end of their payment deadline. This means that those "
 "tickets go back to the pool and can be ordered by other people."
-msgstr ""
-"如果选中，所有未付订单将在付款截止日期后自动从“待处理”变为“已过期”。这意味着"
+msgstr "如果选中，所有未付订单将在付款截止日期后自动从“待处理”变为“已过期”。这意味着"
 "这些票可以回到票池，由其他人订购。"
 
 #: eventyay/base/configurations/default_setting.py:639
@@ -847,8 +838,7 @@ msgid ""
 "Accept payments for orders even when they are in 'expired' state as long as "
 "enough capacity is available. No payments will ever be accepted after the "
 "'Last date of payments' configured above."
-msgstr ""
-"只要有足够的容量，即使订单处于“已过期”状态，也接受订单付款。在上面配置的“上次"
+msgstr "只要有足够的容量，即使订单处于“已过期”状态，也接受订单付款。在上面配置的“上次"
 "付款日期”之后，我们不会接受任何付款。"
 
 #: eventyay/base/configurations/default_setting.py:672
@@ -908,8 +898,7 @@ msgid ""
 "If attendees change their invoice address on an existing order, the invoice "
 "will automatically be canceled and a new invoice will be issued. This "
 "setting does not affect changes made through the backend."
-msgstr ""
-"如果顾客改变订单中的地址,发票会被取消和重新生成。如果订单在后台变更，将不受影"
+msgstr "如果顾客改变订单中的地址,发票会被取消和重新生成。如果订单在后台变更，将不受影"
 "响。"
 
 #: eventyay/base/configurations/default_setting.py:734
@@ -1095,8 +1084,7 @@ msgstr "要求搜索引擎不要为售票处编制索引"
 msgid ""
 "If disabled, no date or time will be shown on the ticket shop's front page. "
 "This settings does however not affect the display in other locations."
-msgstr ""
-"如果禁用选项，门票商店前台页面将不会显示日期或时间，但其他页面上的显示不受影"
+msgstr "如果禁用选项，门票商店前台页面将不会显示日期或时间，但其他页面上的显示不受影"
 "响。"
 
 #: eventyay/base/configurations/default_setting.py:951
@@ -1180,8 +1168,7 @@ msgid ""
 "If a ticket voucher is sent to a person on the waiting list, it has to be "
 "redeemed within this number of hours until it expires and can be re-assigned "
 "to the next person on the list."
-msgstr ""
-"如果将票证发送给等待名单上的人，则必须在该数小时内兑换，直至其到期并且可以重"
+msgstr "如果将票证发送给等待名单上的人，则必须在该数小时内兑换，直至其到期并且可以重"
 "新分配给列表中的下一个人。"
 
 #: eventyay/base/configurations/default_setting.py:1059
@@ -1261,8 +1248,7 @@ msgid ""
 "Ticket download will be offered after this date. If you use the event series "
 "feature and an order contains tickets for multiple event dates, download of "
 "all tickets will be available if at least one of the event dates allows it."
-msgstr ""
-"在此日期之后将提供门票下载。如果您使用活动序列功能并且订单包含多个活动日期的"
+msgstr "在此日期之后将提供门票下载。如果您使用活动序列功能并且订单包含多个活动日期的"
 "门票，则如果至少有一个活动日期允许，则可以下载所有门票。"
 
 #: eventyay/base/configurations/default_setting.py:1147
@@ -1336,8 +1322,7 @@ msgid ""
 "If checked, the list of events will show if events are sold out. This might "
 "make for longer page loading times if you have lots of events and the shown "
 "status might be out of date for up to two minutes."
-msgstr ""
-"如果选中，项目列表将显示项目是否已售罄。 如果您有大量项目并且显示的状态可能已"
+msgstr "如果选中，项目列表将显示项目是否已售罄。 如果您有大量项目并且显示的状态可能已"
 "过期最多两分钟，这可能会延长页面加载时间。"
 
 #: eventyay/base/configurations/default_setting.py:1247
@@ -1390,8 +1375,7 @@ msgid ""
 "names or answers to questions. If you use the event series feature and an "
 "order contains tickets for multiple event dates, the earliest date will be "
 "used."
-msgstr ""
-"用户可以修改订单详细信息的最后日期，例如观众姓名或问题答案。如果您使用活动系"
+msgstr "用户可以修改订单详细信息的最后日期，例如观众姓名或问题答案。如果您使用活动系"
 "列功能并且订单包含多个活动日期的票证，则将使用最早的日期。"
 
 #: eventyay/base/configurations/default_setting.py:1306
@@ -1453,9 +1437,8 @@ msgstr "客户可以取消他们的已付款订单"
 msgid ""
 "Paid money will be automatically paid back if the payment method allows it. "
 "Otherwise, a manual refund will be created for you to process manually."
-msgstr ""
-"如果支付方式允许，已支付的款项将自动退还。否则，将创建手动退款以供您手动处"
-"理。"
+msgstr "如果支付方式允许，已支付的款项将自动退还。否则，将创建手动退款以供您手动处理"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:1421
 #: eventyay/control/forms/orders.py:668
@@ -1596,8 +1579,7 @@ msgstr "主题前缀"
 msgid ""
 "This will be prepended to the subject of all outgoing emails, formatted as "
 "[prefix]. Choose, for example, a short form of your event name."
-msgstr ""
-"这将作为所有外发邮件的主题，格式为[前缀]。例如，选择您的活动名称的简短形式。"
+msgstr "这将作为所有外发邮件的主题，格式为[前缀]。例如，选择您的活动名称的简短形式。"
 
 #: eventyay/base/configurations/default_setting.py:1623
 msgid "Sender address"
@@ -2225,8 +2207,7 @@ msgid ""
 "1140x120 pixels. You can increase the size with the setting below. We "
 "recommend not using small details on the picture as it will be resized on "
 "smaller screens."
-msgstr ""
-"如果您提供标识图像，我们默认情况下不会在页眉中显示您的组织名称。 我们将以最大"
+msgstr "如果您提供标识图像，我们默认情况下不会在页眉中显示您的组织名称。 我们将以最大"
 "高度120像素显示您的标识。"
 
 #: eventyay/base/configurations/default_setting.py:2239
@@ -2265,9 +2246,8 @@ msgstr "信息文本"
 msgid ""
 "Not displayed anywhere by default, but if you want to, you can use this e.g. "
 "in ticket templates."
-msgstr ""
-"默认情况下不会显示在任何位置，但如果您愿意，可以使用此功能，例如在票证模板"
-"中。"
+msgstr "默认情况下不会显示在任何位置，但如果您愿意，可以使用此功能，例如在票证模板中"
+"。"
 
 #: eventyay/base/configurations/default_setting.py:2301
 msgid "Banner text (top)"
@@ -2339,8 +2319,7 @@ msgstr ""
 msgid ""
 "Make sure to enter a valid email address. We will send you an order "
 "confirmation including a link that you need to access your order later."
-msgstr ""
-"请务必输入有效的电子邮件地址。 我们将向您发送订单确认，其中包含您稍后访问订单"
+msgstr "请务必输入有效的电子邮件地址。 我们将向您发送订单确认，其中包含您稍后访问订单"
 "所需的链接。"
 
 #: eventyay/base/configurations/default_setting.py:2394
@@ -2746,8 +2725,7 @@ msgstr "开始日期"
 msgid ""
 "Only include invoices issued on or after this date. Note that the invoice "
 "date does not always correspond to the order or payment date."
-msgstr ""
-"只包括在此日期或之后开具的发票。请注意，发票日期并不总是与订单或付款日期相对"
+msgstr "只包括在此日期或之后开具的发票。请注意，发票日期并不总是与订单或付款日期相对"
 "应。"
 
 #: eventyay/base/exporters/dekodi.py:210 eventyay/base/exporters/invoices.py:44
@@ -2771,8 +2749,7 @@ msgstr "结束日期"
 msgid ""
 "Only include invoices issued on or before this date. Note that the invoice "
 "date does not always correspond to the order or payment date."
-msgstr ""
-"只包括在此日期或之前开具的发票。请注意，发票日期并不总是与订单或付款日期相对"
+msgstr "只包括在此日期或之前开具的发票。请注意，发票日期并不总是与订单或付款日期相对"
 "应。"
 
 #: eventyay/base/exporters/invoices.py:52 eventyay/base/models/orders.py:1395
@@ -2797,8 +2774,7 @@ msgid ""
 "Only include invoices for orders that have at least one payment attempt with "
 "this payment provider. Note that this might include some invoices of orders "
 "which in the end have been fully or partially paid with a different provider."
-msgstr ""
-"只包含与此付款提供者至少有一次付款尝试的订单的发票。注意，这可能包括一些订单"
+msgstr "只包含与此付款提供者至少有一次付款尝试的订单的发票。注意，这可能包括一些订单"
 "的发票，这些发票最终已全部或部分由另一家供应商支付。"
 
 #: eventyay/base/exporters/invoices.py:97
@@ -3965,8 +3941,7 @@ msgid ""
 "country is currently not available. We will therefore need to charge VAT on "
 "your invoice. You can get the tax amount back via the VAT reimbursement "
 "process."
-msgstr ""
-"您的增值税ID无法查询，因为您所在国家的增值税查询服务目前无法使用。因此，我们"
+msgstr "您的增值税ID无法查询，因为您所在国家的增值税查询服务目前无法使用。因此，我们"
 "需要在您的发票上收取增值税。您可以通过增值税退税程序取回税款。"
 
 #: eventyay/base/forms/questions.py:1134
@@ -3974,8 +3949,7 @@ msgid ""
 "Your VAT ID could not be checked, as the VAT checking service of your "
 "country returned an incorrect result. We will therefore need to charge VAT "
 "on your invoice. Please contact support to resolve this manually."
-msgstr ""
-"您的增值税ID无法查询，因为您所在国家的增值税查询服务返回了一个错误的结果。因"
+msgstr "您的增值税ID无法查询，因为您所在国家的增值税查询服务返回了一个错误的结果。因"
 "此，我们需要在您的发票上收取增值税。请联系支持手动解决此问题。"
 
 #: eventyay/base/forms/user.py:17 eventyay/control/forms/users.py:22
@@ -4451,8 +4425,7 @@ msgstr "内部标识符"
 msgid ""
 "You can enter any value here to make it easier to match the data with other "
 "sources. If you do not input one, we will generate one automatically."
-msgstr ""
-"您可以在此输入任何值，以便更轻松地将数据与其他来源匹配。如果您没有输入一个，"
+msgstr "您可以在此输入任何值，以便更轻松地将数据与其他来源匹配。如果您没有输入一个，"
 "我们将自动生成一个。"
 
 #: eventyay/base/models/devices.py:70 eventyay/base/models/items.py:1141
@@ -4545,8 +4518,7 @@ msgstr "预售结束"
 msgid ""
 "Optional. No products will be sold after this date. If you do not set this "
 "value, the presale will end after the end date of your event."
-msgstr ""
-"可选的。 在此日期之后不会出售任何产品。 如果未设置此值，则预售将在您的活动结"
+msgstr "可选的。 在此日期之后不会出售任何产品。 如果未设置此值，则预售将在您的活动结"
 "束日期之后结束。"
 
 #: eventyay/base/models/event.py:480 eventyay/base/models/event.py:1419
@@ -4818,8 +4790,7 @@ msgid ""
 "If selected, the products belonging to this category are not for sale on "
 "their own. They can only be bought in combination with a product that has "
 "this category configured as a possible source for add-ons."
-msgstr ""
-"如果选中，属于这一类别的产品不单独出售。只能将此类别配置作为附加组件的可能来"
+msgstr "如果选中，属于这一类别的产品不单独出售。只能将此类别配置作为附加组件的可能来"
 "源的产品组合购买。"
 
 #: eventyay/base/models/items.py:73 eventyay/base/pdf.py:99
@@ -4874,8 +4845,7 @@ msgid ""
 "If this product has multiple variations, you can set different prices for "
 "each of the variations. If a variation does not have a special price or if "
 "you do not have variations, this price will be used."
-msgstr ""
-"如果此产品有多种变量，您可以为每种变量设置不同的价格。 如果没有特殊价格或者您"
+msgstr "如果此产品有多种变量，您可以为每种变量设置不同的价格。 如果没有特殊价格或者您"
 "没有变量，则将使用此价格。"
 
 #: eventyay/base/models/items.py:293
@@ -4957,8 +4927,8 @@ msgid ""
 "all tickets in the referenced quota are reserved, but not yet sold."
 msgstr ""
 "如果您在此选择配额，此产品将仅在该配额不可用时显示。如果结合隐藏已售完产品的"
-"选项，这允许您在产品售完后将其换成更贵的产品。这两种产品可能会在短时间内可"
-"见，而引用配额中的所有票证都已保留，但尚未售出。"
+"选项，这允许您在产品售完后将其换成更贵的产品。这两种产品可能会在短时间内可见"
+"，而引用配额中的所有票证都已保留，但尚未售出。"
 
 #: eventyay/base/models/items.py:357
 msgid "This product can only be bought using a voucher."
@@ -4980,8 +4950,7 @@ msgid ""
 "\"approval\" state and will need to be confirmed by you before it can be "
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
-msgstr ""
-"如果此产品是订单的一部分，订单将被置于“批准”状态，并且需要在您付款和完成之前"
+msgstr "如果此产品是订单的一部分，订单将被置于“批准”状态，并且需要在您付款和完成之前"
 "由您确认。您可以使用仅适用于特定群组的折扣门票。"
 
 #: eventyay/base/models/items.py:370
@@ -5025,8 +4994,7 @@ msgid ""
 "If this is checked, the usual cancellation and order change settings of this "
 "event apply. If this is unchecked, orders containing this product can not be "
 "canceled by users but only by you."
-msgstr ""
-"如果选中此项，则取消适用此活动的常规设置。如果未选中此项，则包含此产品的订单"
+msgstr "如果选中此项，则取消适用此活动的常规设置。如果未选中此项，则包含此产品的订单"
 "不能由用户取消，只能由您取消。"
 
 #: eventyay/base/models/items.py:389
@@ -5038,9 +5006,8 @@ msgid ""
 "This product can only be bought if it is added to the cart at least this "
 "many times. If you keep the field empty or set it to 0, there is no special "
 "limit for this product."
-msgstr ""
-"只有将产品添加到购物车至少这么多次才能购买。如果将该字段保留为空或将其设置为"
-"0，则此产品没有特殊限制。"
+msgstr "只有将产品添加到购物车至少这么多次才能购买。如果将该字段保留为空或将其设置为0"
+"，则此产品没有特殊限制。"
 
 #: eventyay/base/models/items.py:395
 msgid "Maximum amount per order"
@@ -5052,8 +5019,7 @@ msgid ""
 "you keep the field empty or set it to 0, there is no special limit for this "
 "product. The limit for the maximum number of items in the whole order "
 "applies regardless."
-msgstr ""
-"此产品只能在一个订单中多次购买。如果将该字段保留为空或将其设置为0，则此产品没"
+msgstr "此产品只能在一个订单中多次购买。如果将该字段保留为空或将其设置为0，则此产品没"
 "有特殊限制。整个订单中最大商品数量的限制适用于任何情况。"
 
 #: eventyay/base/models/items.py:404
@@ -5075,8 +5041,7 @@ msgid ""
 "If set, this will be displayed next to the current price to show that the "
 "current price is a discounted one. This is just a cosmetic setting and will "
 "not actually impact pricing."
-msgstr ""
-"如果设置，这将显示在当前价格旁边，以显示当前价格是折扣价格。这只是一个装饰性"
+msgstr "如果设置，这将显示在当前价格旁边，以显示当前价格是折扣价格。这只是一个装饰性"
 "的设置，实际上不会影响定价。"
 
 #: eventyay/base/models/items.py:416 eventyay/control/forms/event.py:932
@@ -5160,8 +5125,7 @@ msgstr "附加组件包括在价格中"
 msgid ""
 "If selected, adding add-ons to this ticket is free, even if the add-ons "
 "would normally cost money individually."
-msgstr ""
-"如果选中，则向此票证添加附加组件是免费的，即使附加组件通常单独购买也是如此。"
+msgstr "如果选中，则向此票证添加附加组件是免费的，即使附加组件通常单独购买也是如此。"
 
 #: eventyay/base/models/items.py:848
 #, fuzzy
@@ -5211,8 +5175,7 @@ msgid ""
 "value of the total gross price. This might be important in cases of mixed "
 "taxation, but can be kept blank otherwise. This value will NOT be added to "
 "the base item's price."
-msgstr ""
-"如果设置，将显示此捆绑商品负责总价的给定值。这在混合税收的情况下可能很重要，"
+msgstr "如果设置，将显示此捆绑商品负责总价的给定值。这在混合税收的情况下可能很重要，"
 "但在其他情况下可以保留为空白。此值不会添加到基本商品的价格中。"
 
 #: eventyay/base/models/items.py:955
@@ -5446,8 +5409,7 @@ msgid ""
 "If you enable this, when the quota is sold out once, no more tickets will be "
 "sold, even if tickets become available again through cancellations or "
 "expiring orders. Of course, you can always re-open it manually."
-msgstr ""
-"如果启用此功能，则配额一旦售罄，就不会再售出任何门票，即使通过取消或过期订单"
+msgstr "如果启用此功能，则配额一旦售罄，就不会再售出任何门票，即使通过取消或过期订单"
 "再次获得门票也是如此。当然，您可以随时手动将其重新打开。"
 
 #: eventyay/base/models/items.py:1403
@@ -5560,8 +5522,7 @@ msgid ""
 "of this order require special attention. This will not show any details or "
 "custom message, so you need to brief your check-in staff how to handle these "
 "cases."
-msgstr ""
-"如果您设置此项，签入应用程序将显示一个可见的警告，表明此订单的票证需要特别注"
+msgstr "如果您设置此项，签入应用程序将显示一个可见的警告，表明此订单的票证需要特别注"
 "意。"
 
 #: eventyay/base/models/orders.py:227 eventyay/base/models/orders.py:1192
@@ -5582,8 +5543,7 @@ msgstr "由于付款设置中配置的最后付款日期已结束，因此无法
 msgid ""
 "The payment can not be accepted as the order is expired and you configured "
 "that no late payments should be accepted in the payment settings."
-msgstr ""
-"由于订单已过期且您的付款设置中已配置为不接受延迟付款，因此无法接受付款。"
+msgstr "由于订单已过期且您的付款设置中已配置为不接受延迟付款，因此无法接受付款。"
 
 #: eventyay/base/models/orders.py:808
 msgid "This order is not yet approved by the event organizer."
@@ -5805,8 +5765,7 @@ msgid ""
 "Should be short, only contain lowercase letters, numbers, dots, and dashes. "
 "Every slug can only be used once. This is being used in URLs to refer to "
 "your organizer accounts and your events."
-msgstr ""
-"应该简短，只包含小写字母，数字，点和短划线。每个slug只能使用一次。这在URL中用"
+msgstr "应该简短，只包含小写字母，数字，点和短划线。每个slug只能使用一次。这在URL中用"
 "于指代您的组织者帐户和您的活动。"
 
 #: eventyay/base/models/organizer.py:58 eventyay/control/forms/event.py:70
@@ -5860,8 +5819,7 @@ msgstr "可以更改组织者设置"
 msgid ""
 "Someone with this setting can get access to most data of all of your events, "
 "i.e. via privacy reports, so be careful who you add to this team!"
-msgstr ""
-"使用此设置的人可以访问您所有活动的大多数数据，即通过隐私报告，因此请谨慎添加"
+msgstr "使用此设置的人可以访问您所有活动的大多数数据，即通过隐私报告，因此请谨慎添加"
 "到此团队中！"
 
 #: eventyay/base/models/organizer.py:217
@@ -6108,8 +6066,7 @@ msgctxt "invoice"
 msgid ""
 "Reverse Charge: According to Article 194, 196 of Council Directive 2006/112/"
 "EEC, VAT liability rests with the service recipient."
-msgstr ""
-"反向收费：根据理事会指令2006/112 / EEC第194,196条，增值税应该由服务对象承担。"
+msgstr "反向收费：根据理事会指令2006/112 / EEC第194,196条，增值税应该由服务对象承担。"
 
 #: eventyay/base/models/tax.py:288
 msgctxt "invoice"
@@ -6157,8 +6114,7 @@ msgid ""
 "If activated, this voucher will be substracted from the affected product's "
 "quotas, such that it is guaranteed that anyone with this voucher code does "
 "receive a ticket."
-msgstr ""
-"如果激活，将从受影响的产品配额中减去此优惠券，以确保拥有此优惠券号的任何人都"
+msgstr "如果激活，将从受影响的产品配额中减去此优惠券，以确保拥有此优惠券号的任何人都"
 "能收到凭单。"
 
 #: eventyay/base/models/vouchers.py:134
@@ -6208,8 +6164,7 @@ msgid ""
 "You can use this field to group multiple vouchers together. If you enter the "
 "same value for multiple vouchers, you can get statistics on how many of them "
 "have been redeemed etc."
-msgstr ""
-"您可以使用此字段将多个优惠券组合在一起。如果您为多张优惠券输入相同的值，您可"
+msgstr "您可以使用此字段将多个优惠券组合在一起。如果您为多张优惠券输入相同的值，您可"
 "以获得有关已兑换多少优惠券的统计数据等。"
 
 #: eventyay/base/models/vouchers.py:197
@@ -6434,8 +6389,7 @@ msgid ""
 "Something happened in your event that our system cannot handle "
 "automatically, e.g. an external refund. You need to resolve it manually or "
 "choose to ignore it, depending on the issue at hand."
-msgstr ""
-"您的活动中发生了我们的系统无法自动处理的事情，例如：外部退款。您需要手动解决"
+msgstr "您的活动中发生了我们的系统无法自动处理的事情，例如：外部退款。您需要手动解决"
 "它或选择忽略它，具体取决于手头的问题。"
 
 #: eventyay/base/notifications.py:140
@@ -6768,8 +6722,7 @@ msgid ""
 "invoices. This will only be used if the invoice is generated before the "
 "order is paid. If the invoice is generated later, it will show a text "
 "stating that it has already been paid."
-msgstr ""
-"将打印在付款数字下方和发票上的结账文本上方。只有在支付订单之前生成发票才会使"
+msgstr "将打印在付款数字下方和发票上的结账文本上方。只有在支付订单之前生成发票才会使"
 "用此项。如果稍后生成发票，它将显示一条文本，说明已经付款。"
 
 #: eventyay/base/payment.py:265
@@ -6781,8 +6734,7 @@ msgid ""
 "This payment will be available only if the order total is equal to or "
 "exceeds the given value. The order total for this purpose may be computed "
 "without taking the fees imposed by this payment method into account."
-msgstr ""
-"仅当订单总额等于或超过给定值时，此付款才可用。在计算订单总额时，可以不考虑这"
+msgstr "仅当订单总额等于或超过给定值时，此付款才可用。在计算订单总额时，可以不考虑这"
 "种付款方式所产生的费用。"
 
 #: eventyay/base/payment.py:276
@@ -6794,8 +6746,7 @@ msgid ""
 "This payment will be available only if the order total is equal to or below "
 "the given value. The order total for this purpose may be computed without "
 "taking the fees imposed by this payment method into account."
-msgstr ""
-"仅当订单总额等于或低于给定值时，此付款才可用。在计算订单总额时，可以不考虑这"
+msgstr "仅当订单总额等于或低于给定值时，此付款才可用。在计算订单总额时，可以不考虑这"
 "种付款方式所产生的费用。"
 
 #: eventyay/base/payment.py:287 eventyay/base/payment.py:296
@@ -6822,9 +6773,9 @@ msgid ""
 "rel=\"noopener\">Click here for detailed information on what this does.</a> "
 "Don't forget to set the correct fees above!"
 msgstr ""
-"如果您希望用户向支付提供商支付费用，我们建议启用此功能。<a href=\"{docs_url}"
-"\" target=\"_blank\" rel=\"noopener\">单击此处获取有关此功能的详细信息。</a>"
-"不要忘记在上面设置正确的费用!"
+"如果您希望用户向支付提供商支付费用，我们建议启用此功能。<a href="
+"\"{docs_url}\" target=\"_blank\" rel=\"noopener\">单击此处获取有关此功能的详"
+"细信息。</a>不要忘记在上面设置正确的费用!"
 
 #: eventyay/base/payment.py:312
 msgid "Restrict to countries"
@@ -6835,8 +6786,7 @@ msgid ""
 "Only allow choosing this payment provider for invoice addresses in the "
 "selected countries. If you don't select any country, all countries are "
 "allowed. This is only enabled if the invoice address is required."
-msgstr ""
-"仅允许为选定国家的发票地址选择此支付提供商。如果您未选择任何国家/地区，则允许"
+msgstr "仅允许为选定国家的发票地址选择此支付提供商。如果您未选择任何国家/地区，则允许"
 "所有国家/地区。 仅在需要发票地址时才启用此选项。"
 
 #: eventyay/base/payment.py:333
@@ -6915,8 +6865,7 @@ msgstr "结账时的付款流程说明"
 msgid ""
 "This text will be shown during checkout when the user selects this payment "
 "method. It should give a short explanation on this payment method."
-msgstr ""
-"当用户选择此付款方式时，将在结帐时显示此文本。它应该简要说明这种付款方式。"
+msgstr "当用户选择此付款方式时，将在结帐时显示此文本。它应该简要说明这种付款方式。"
 
 #: eventyay/base/payment.py:983
 msgid "Payment process description in order confirmation emails"
@@ -7551,8 +7500,7 @@ msgstr "此活动的预售期尚未开始。受影响的位置已从您的购物
 msgid ""
 "The presale period for one of the events in your cart has ended. The "
 "affected positions have been removed from your cart."
-msgstr ""
-"您购物车中其中一个活动的预售期已结束。受影响的位置已从您的购物车中删除。"
+msgstr "您购物车中其中一个活动的预售期已结束。受影响的位置已从您的购物车中删除。"
 
 #: eventyay/base/services/cart.py:77
 msgid "The entered price is to high."
@@ -7688,8 +7636,7 @@ msgstr "您不能多次选择同一座位。"
 msgid ""
 "You entered a gift card instead of a voucher. Gift cards can be entered "
 "later on when you're asked for your payment details."
-msgstr ""
-"您输入了礼品卡而不是优惠券。稍后要求您提供付款详细信息时，可以输入礼品卡。"
+msgstr "您输入了礼品卡而不是优惠券。稍后要求您提供付款详细信息时，可以输入礼品卡。"
 
 #: eventyay/base/services/checkin.py:364
 msgid "This order position has been canceled."
@@ -7846,8 +7793,7 @@ msgstr "您的购物车是空的。"
 msgid ""
 "You cannot select more than %(max)s items of the product %(product)s. We "
 "removed the surplus items from your cart."
-msgstr ""
-"您不能选择超过产品%(product)s的%(max)s项。我们从您的购物车中删除了剩余物品。"
+msgstr "您不能选择超过产品%(product)s的%(max)s项。我们从您的购物车中删除了剩余物品。"
 
 #: eventyay/base/services/orders.py:76
 msgid "The presale period has ended."
@@ -7864,8 +7810,7 @@ msgid ""
 "The voucher code used for one of the items in your cart has already been "
 "used the maximum number of times allowed. We removed this item from your "
 "cart."
-msgstr ""
-"用于购物车中某件商品的优惠券号码已达到允许的最大次数。我们从您的购物车中删除"
+msgstr "用于购物车中某件商品的优惠券号码已达到允许的最大次数。我们从您的购物车中删除"
 "了该商品。"
 
 #: eventyay/base/services/orders.py:80
@@ -7877,39 +7822,34 @@ msgstr ""
 msgid ""
 "The voucher code used for one of the items in your cart has already been too "
 "often. We adjusted the price of the item in your cart."
-msgstr ""
-"用于购物车中某件商品的优惠券号码已达到允许的最大次数。我们从您的购物车中删除"
+msgstr "用于购物车中某件商品的优惠券号码已达到允许的最大次数。我们从您的购物车中删除"
 "了该商品。"
 
 #: eventyay/base/services/orders.py:82
 msgid ""
 "The voucher code used for one of the items in your cart is expired. We "
 "removed this item from your cart."
-msgstr ""
-"用于购物车中某件商品的优惠券号码已过期。我们从您的购物车中删除了该商品。"
+msgstr "用于购物车中某件商品的优惠券号码已过期。我们从您的购物车中删除了该商品。"
 
 #: eventyay/base/services/orders.py:84
 msgid ""
 "The voucher code used for one of the items in your cart is not valid for "
 "this item. We removed this item from your cart."
-msgstr ""
-"用于购物车中某件商品的优惠券号码对此商品无效。我们从您的购物车中删除了该商"
-"品。"
+msgstr "用于购物车中某件商品的优惠券号码对此商品无效。我们从您的购物车中删除了该商品"
+"。"
 
 #: eventyay/base/services/orders.py:86
 msgid ""
 "You need a valid voucher code to order one of the products in your cart. We "
 "removed this item from your cart."
-msgstr ""
-"您需要有效的优惠券号码才能订购购物车中的其中某个产品。我们从您的购物车中删除"
+msgstr "您需要有效的优惠券号码才能订购购物车中的其中某个产品。我们从您的购物车中删除"
 "了该商品。"
 
 #: eventyay/base/services/orders.py:88
 msgid ""
 "The presale period for one of the events in your cart has not yet started. "
 "The affected positions have been removed from your cart."
-msgstr ""
-"您购物车中其中某个活动的预售期尚未开始。受影响的位置已从您的购物车中移除。"
+msgstr "您购物车中其中某个活动的预售期尚未开始。受影响的位置已从您的购物车中移除。"
 
 #: eventyay/base/services/orders.py:92
 msgid ""
@@ -7921,8 +7861,7 @@ msgstr "您订单中的座位之一无效，我们从您的购物车中删除了
 msgid ""
 "One of the seats in your order has been taken in the meantime, we removed "
 "the position from your cart."
-msgstr ""
-"在此期间，您订单中的一个座位已被选走，我们已从您的购物车中删除了该位置。"
+msgstr "在此期间，您订单中的一个座位已被选走，我们已从您的购物车中删除了该位置。"
 
 #: eventyay/base/services/orders.py:159 eventyay/control/forms/orders.py:70
 msgid "The new expiry date needs to be in the future."
@@ -7974,8 +7913,7 @@ msgid ""
 "While trying to place your order, we noticed that the order total has "
 "changed. Either one of the prices changed just now, or a gift card you used "
 "has been used in the meantime. Please check the prices below and try again."
-msgstr ""
-"在尝试下订单时，我们注意到订单总价已更改。可能是某一个价格刚刚改变了，或者您"
+msgstr "在尝试下订单时，我们注意到订单总价已更改。可能是某一个价格刚刚改变了，或者您"
 "使用的礼品卡在此期间使用了。请检查以下价格，然后重试。"
 
 #: eventyay/base/services/orders.py:1046
@@ -8160,8 +8098,8 @@ msgid ""
 msgstr ""
 "您好！\n"
 "\n"
-"可以对pretix或安装在pretix中的某个插件进行更新。请单击以下链接以获取更多信"
-"息：\n"
+"可以对pretix或安装在pretix中的某个插件进行更新。请单击以下链接以获取更多信息"
+"：\n"
 "\n"
 "·{url}· \n"
 "\n"
@@ -8298,8 +8236,7 @@ msgid ""
 "This will remove all invoice PDFs, as well as any of their text content that "
 "might contain personal data from the database. Invoice numbers and totals "
 "will be conserved."
-msgstr ""
-"这将从数据库中删除所有发票PDF，以及可能包含个人数据的文本内容。发票号码和总额"
+msgstr "这将从数据库中删除所有发票PDF，以及可能包含个人数据的文本内容。发票号码和总额"
 "将予以保留。"
 
 #: eventyay/base/shredder.py:386
@@ -8315,8 +8252,7 @@ msgid ""
 "This will remove payment-related information. Depending on the payment "
 "method, all data will be removed or personal data only. No download will be "
 "offered."
-msgstr ""
-"这将删除与付款相关的信息。根据付款方式，将删除所有数据或仅删除个人数据。不提"
+msgstr "这将删除与付款相关的信息。根据付款方式，将删除所有数据或仅删除个人数据。不提"
 "供下载。"
 
 #: eventyay/base/templates/400.html:4 eventyay/base/templates/400.html:8
@@ -8387,8 +8323,7 @@ msgstr "验证失败"
 msgid ""
 "We could not verify that this request really was sent from you. For security "
 "reasons, we therefore cannot process it."
-msgstr ""
-"我们无法验证此请求是否真的是您发送的。出于安全原因，我们因此无法处理它。"
+msgstr "我们无法验证此请求是否真的是您发送的。出于安全原因，我们因此无法处理它。"
 
 #: eventyay/base/templates/csrffail.html:20
 msgid ""
@@ -8601,26 +8536,23 @@ msgid ""
 "If you have configured your browser to disable 'Referer' headers, please re-"
 "enable them, at least for this site, or for HTTPS connections, or for 'same-"
 "origin' requests."
-msgstr ""
-"如果您已将浏览器配置为禁用“referer”标题，请至少为此网站、HTTPS连接或“相同来"
-"源”请求重新启用它们。"
+msgstr "如果您已将浏览器配置为禁用“referer”标题，请至少为此网站、HTTPS连接或“相同来源"
+"”请求重新启用它们。"
 
 #: eventyay/base/views/errors.py:29
 msgid ""
 "You are seeing this message because this site requires a CSRF cookie when "
 "submitting forms. This cookie is required for security reasons, to ensure "
 "that your browser is not being hijacked by third parties."
-msgstr ""
-"您看到此消息是因为此站点在提交表单时需要CSRF cookie。出于安全原因，需要此"
-"cookie，以确保您的浏览器不会被第三方劫持。"
+msgstr "您看到此消息是因为此站点在提交表单时需要CSRF cookie。出于安全原因，需要此cook"
+"ie，以确保您的浏览器不会被第三方劫持。"
 
 #: eventyay/base/views/errors.py:34
 msgid ""
 "If you have configured your browser to disable cookies, please re-enable "
 "them, at least for this site, or for 'same-origin' requests."
-msgstr ""
-"如果您已将浏览器配置为禁用cookie，请至少为此网站或“相同来源”请求重新启用"
-"cookie。"
+msgstr "如果您已将浏览器配置为禁用cookie，请至少为此网站或“相同来源”请求重新启用cooki"
+"e。"
 
 #: eventyay/base/views/tasks.py:135
 msgid "An unexpected error has occurred, please try again later."
@@ -8718,8 +8650,7 @@ msgid ""
 "Do you need to pay sales tax on your tickets? In this case, please enter the "
 "applicable tax rate here in percent. If you have a more complicated tax "
 "situation, you can add more tax rates and detailed configuration later."
-msgstr ""
-"您需要为门票支付销售税吗？在这种情况下，请在此处输入适用的税率百分比。如果您"
+msgstr "您需要为门票支付销售税吗？在这种情况下，请在此处输入适用的税率百分比。如果您"
 "有更复杂的税务情况，您可以在以后添加更多税率和详细配置。"
 
 #: eventyay/control/forms/event.py:114
@@ -8795,8 +8726,7 @@ msgid ""
 "This defines how pretix will ask for human names. Changing this after you "
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
-msgstr ""
-"这定义了pretix如何要求人名。在收到订单后更改此项可能会导致在排序或更改名称时"
+msgstr "这定义了pretix如何要求人名。在收到订单后更改此项可能会导致在排序或更改名称时"
 "出现意外行为。"
 
 #: eventyay/control/forms/event.py:518
@@ -8807,8 +8737,7 @@ msgstr "允许的头衔"
 msgid ""
 "If the naming scheme you defined above allows users to input a title, you "
 "can use this to restrict the set of selectable titles."
-msgstr ""
-"如果上面定义的命名方案允许用户输入头衔，则可以使用它来限制可选头衔的集合。"
+msgstr "如果上面定义的命名方案允许用户输入头衔，则可以使用它来限制可选头衔的集合。"
 
 #: eventyay/control/forms/event.py:631
 #, python-brace-format
@@ -8849,8 +8778,7 @@ msgid ""
 "The tax rule that applies for additional fees you configured for single "
 "payment methods. This will set the tax rate and reverse charge rules, other "
 "settings of the tax rule are ignored."
-msgstr ""
-"适用于为单个付款方法配置的附加费用的税收规则。这将设置税率和反向收费规则，其"
+msgstr "适用于为单个付款方法配置的附加费用的税收规则。这将设置税率和反向收费规则，其"
 "他设置的税率规则将被忽略。"
 
 #: eventyay/control/forms/event.py:838
@@ -8861,8 +8789,7 @@ msgstr "生成销售渠道的发票"
 msgid ""
 "If you have enabled invoice generation in the previous setting, you can "
 "limit it here to specific sales channels."
-msgstr ""
-"如果您在上一个设置中启用了发票生成，则可以在此处将其限制为特定的销售渠道。"
+msgstr "如果您在上一个设置中启用了发票生成，则可以在此处将其限制为特定的销售渠道。"
 
 #: eventyay/control/forms/event.py:847
 msgid "Invoice style"
@@ -8939,8 +8866,7 @@ msgid ""
 "If the order contains attendees with email addresses different from the "
 "person who orders the tickets, the following email will be sent out to the "
 "attendees."
-msgstr ""
-"如果订单包含的参加者的电子邮件地址与订购门票的人的电子邮件地址不同，则会将以"
+msgstr "如果订单包含的参加者的电子邮件地址与订购门票的人的电子邮件地址不同，则会将以"
 "下电子邮件发送给参加者。"
 
 #: eventyay/control/forms/event.py:978 eventyay/control/forms/event.py:997
@@ -8978,8 +8904,7 @@ msgstr "此电子邮件将在订单到期的前这几天发出。如果值为0�
 msgid ""
 "This email will be sent out this many days before the order event starts. If "
 "the field is empty, the mail will never be sent."
-msgstr ""
-"此电子邮件将在订单项目开始的前几天发送。如果该字段为空，则永远不会发送邮件。"
+msgstr "此电子邮件将在订单项目开始的前几天发送。如果该字段为空，则永远不会发送邮件。"
 
 #: eventyay/control/forms/event.py:1093
 msgid "Received order"
@@ -9176,8 +9101,7 @@ msgid ""
 "and when a product is bought via the widget, this voucher will be used. This "
 "can for example be used to provide widgets that give discounts or unlock "
 "secret products."
-msgstr ""
-"如果设置，小部件将显示产品，就好像已输入此票证一样，当通过小部件购买产品时，"
+msgstr "如果设置，小部件将显示产品，就好像已输入此票证一样，当通过小部件购买产品时，"
 "将使用此票证。例如，这可以用于提供折扣或解锁密钥产品的小部件。"
 
 #: eventyay/control/forms/event.py:1382
@@ -9188,8 +9112,7 @@ msgstr "兼容模式"
 msgid ""
 "Our regular widget doesn't work in all website builders. If you run into "
 "trouble, try using this compatibility mode."
-msgstr ""
-"我们的常规窗口小部件不适用于所有网站构建器。如果遇到问题，请尝试使用此兼容模"
+msgstr "我们的常规窗口小部件不适用于所有网站构建器。如果遇到问题，请尝试使用此兼容模"
 "式。"
 
 #: eventyay/control/forms/event.py:1409
@@ -9243,8 +9166,7 @@ msgid ""
 "Your customers will be instructed to wire the money to your account. You can "
 "then import your bank statements to process the payments within pretix, or "
 "mark them as paid manually."
-msgstr ""
-"我们会指示您的客户将资金汇入您的帐户。然后，您可以导入银行对账单以在Pretix中"
+msgstr "我们会指示您的客户将资金汇入您的帐户。然后，您可以导入银行对账单以在Pretix中"
 "处理付款，或者将其标记为手动付款。"
 
 #: eventyay/control/forms/event.py:1555
@@ -9825,9 +9747,8 @@ msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to eventyay.com, the emails "
 "will be sent by this server locally."
-msgstr ""
-"如果我们检测到有新的更新，我们将通过此地址通知您。此地址不会传输到"
-"eventyay.com，电子邮件将由本地服务器发送。"
+msgstr "如果我们检测到有新的更新，我们将通过此地址通知您。此地址不会传输到eventyay.co"
+"m，电子邮件将由本地服务器发送。"
 
 #: eventyay/control/forms/global_settings.py:235
 #, fuzzy
@@ -9960,8 +9881,7 @@ msgid ""
 "e.g. This reduced price is available for full-time students, jobless and "
 "people over 65. This ticket includes access to all parts of the event, "
 "except the VIP area."
-msgstr ""
-"例如，这种降价适用于全日制学生，失业者和65岁以上的人。此门票包括访问活动的所"
+msgstr "例如，这种降价适用于全日制学生，失业者和65岁以上的人。此门票包括访问活动的所"
 "有部分，VIP区除外。"
 
 #: eventyay/control/forms/item.py:505
@@ -9974,8 +9894,7 @@ msgid ""
 "The variation \"%s\" cannot be deleted because it has already been ordered "
 "by a user or currently is in a user's cart. Please set the variation as "
 "\"inactive\" instead."
-msgstr ""
-"无法删除变量\"%s\"，因为它已由用户订购或当前位于用户的购物车中。请将变量设置"
+msgstr "无法删除变量\"%s\"，因为它已由用户订购或当前位于用户的购物车中。请将变量设置"
 "为“非活动”。"
 
 #: eventyay/control/forms/item.py:646
@@ -9992,9 +9911,8 @@ msgstr "您添加了两次相同的附加组件类别"
 msgid ""
 "Be aware that setting a minimal number makes it impossible to buy this "
 "product if all available add-ons are sold out."
-msgstr ""
-"请注意，如果所有可用的附加组件都已售完，那么设置最小数量将使您无法购买此产"
-"品。"
+msgstr "请注意，如果所有可用的附加组件都已售完，那么设置最小数量将使您无法购买此产品"
+"。"
 
 #: eventyay/control/forms/item.py:726
 msgid "Bundled products"
@@ -10060,8 +9978,7 @@ msgstr "超额预定的配额"
 msgid ""
 "If you check this box, this operation will be performed even if it leads to "
 "an overbooked quota and you having sold more tickets than you planned!"
-msgstr ""
-"如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
+msgstr "如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
 
 #: eventyay/control/forms/orders.py:80
 msgid "Overbook quota and ignore late payment"
@@ -10073,8 +9990,7 @@ msgid ""
 "an overbooked quota and you having sold more tickets than you planned! The "
 "operation will also be performed regardless of the settings for late "
 "payments."
-msgstr ""
-"如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
+msgstr "如果选中此框，即使导致超额预订配额并且您销售的票数超出计划，也会执行此操作！"
 "无论延迟付款的设置如何，也将执行该操作。"
 
 #: eventyay/control/forms/orders.py:115 eventyay/control/forms/orders.py:159
@@ -10220,8 +10136,7 @@ msgid ""
 "Regenerates the order and ticket secrets. You will need to re-send the link "
 "to the order page to the user and the user will need to download his tickets "
 "again. The old versions will be invalid."
-msgstr ""
-"重新生成订单和票证密码。 您需要将订单页面的链接重新发送给用户，用户需要再次下"
+msgstr "重新生成订单和票证密码。 您需要将订单页面的链接重新发送给用户，用户需要再次下"
 "载他的票证。 旧版本无效。"
 
 #: eventyay/control/forms/orders.py:510 eventyay/control/forms/orders.py:727
@@ -10544,9 +10459,8 @@ msgstr "网站图标"
 msgid ""
 "If you provide a favicon, we will show it instead of the default pretix "
 "icon. We recommend a size of at least 200x200px to accommodate most devices."
-msgstr ""
-"如果您提供favicon，我们将显示它而不是默认的pretix图标。 我们建议尺寸至少为"
-"200x200px，以适应大多数设备。"
+msgstr "如果您提供favicon，我们将显示它而不是默认的pretix图标。 我们建议尺寸至少为200"
+"x200px，以适应大多数设备。"
 
 #: eventyay/control/forms/organizer_forms/team_form.py:41
 msgid ""
@@ -10829,8 +10743,8 @@ msgstr "位置 #{posid}：{old_item}（{old_price}）更改为{new_item}{new_pri
 #| "\"{new_event}\" ({new_price})."
 msgid "Position #{posid}: Seat \"{old_seat}\" changed to \"{new_seat}\"."
 msgstr ""
-"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改"
-"为“{new_event}”（{new_price}）。"
+"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改为“{new_event}”（{new_"
+"price}）。"
 
 #: eventyay/control/logdisplay.py:55
 #, python-brace-format
@@ -10838,8 +10752,8 @@ msgid ""
 "Position #{posid}: Event date \"{old_event}\" ({old_price}) changed to "
 "\"{new_event}\" ({new_price})."
 msgstr ""
-"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改"
-"为“{new_event}”（{new_price}）。"
+"位置 #{posid}：活动日期“{old_event}”（{old_price}）更改为“{new_event}”（{new_"
+"price}）。"
 
 #: eventyay/control/logdisplay.py:63
 #, python-brace-format
@@ -10922,8 +10836,7 @@ msgstr "（未知）"
 msgid ""
 "Unknown scan of code \"{barcode}…\" at {datetime} for list \"{list}\", type "
 "\"{type}\"."
-msgstr ""
-"在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
+msgstr "在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
 "扫描。"
 
 #: eventyay/control/logdisplay.py:178
@@ -10942,8 +10855,7 @@ msgstr "列表\"{list}\"上的位置 #{posid}的签入已恢复。"
 msgid ""
 "Scan scan of revoked code \"{barcode}…\" at {datetime} for list \"{list}\", "
 "type \"{type}\", was uploaded."
-msgstr ""
-"在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
+msgstr "在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
 "扫描。"
 
 #: eventyay/control/logdisplay.py:199
@@ -10963,8 +10875,7 @@ msgstr "列表\"{list}\"上的位置 #{posid}的签入已恢复。"
 msgid ""
 "Denied scan of position #{posid} at {datetime} for list \"{list}\", type "
 "\"{type}\", error code \"{errorcode}\"."
-msgstr ""
-"在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
+msgstr "在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
 "扫描。"
 
 #: eventyay/control/logdisplay.py:221
@@ -11006,8 +10917,7 @@ msgstr "位置 #{posid}已签入列表“{list}”。"
 msgid ""
 "A scan for position #{posid} at {datetime} for list \"{list}\" has been "
 "uploaded even though it has been scanned already."
-msgstr ""
-"在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
+msgstr "在{datetime}中为列表\"{list}\"扫描位置 #{posid}，即使已经扫描过，也已经上传了"
 "扫描。"
 
 #: eventyay/control/logdisplay.py:264
@@ -12144,8 +12054,7 @@ msgstr "仪表板"
 msgid ""
 "The list below shows all events you have administrative access to. Click on "
 "the event name to access event details."
-msgstr ""
-"下面的列表显示您具有管理访问所有活动的权限。单击活动名称以访问活动详细信息。"
+msgstr "下面的列表显示您具有管理访问所有活动的权限。单击活动名称以访问活动详细信息。"
 
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:12
 #: eventyay/control/templates/pretixcontrol/events/index.html:12
@@ -12546,8 +12455,7 @@ msgid ""
 "To perform this action, you need to start an administrative session. "
 "Everything you do in that session will be logged and you will later be asked "
 "to fill in a comment on what you did in your session for later reference."
-msgstr ""
-"要执行此操作，需要启动管理会话。您在该会话中所做的所有操作都将被记录下来，稍"
+msgstr "要执行此操作，需要启动管理会话。您在该会话中所做的所有操作都将被记录下来，稍"
 "后会要求您填写一条关于您在会话中所做操作的注释，供以后参考。"
 
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:18
@@ -12701,8 +12609,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"如果您在此网站上已有一个具有不同电子邮件地址的帐户，您可以先<a "
-"%(login_href)s>登录</a>然后再次单击此链接以接受现有帐户的邀请。"
+"如果您在此网站上已有一个具有不同电子邮件地址的帐户，您可以先<a %(login_href)s"
+">登录</a>然后再次单击此链接以接受现有帐户的邀请。"
 
 #: eventyay/control/templates/pretixcontrol/auth/invite.html:23
 #: eventyay/control/templates/pretixcontrol/auth/register.html:29
@@ -12745,8 +12653,7 @@ msgstr "欢迎回来！"
 msgid ""
 "You configured your account to require authentication with a second medium, "
 "e.g. your phone. Please enter your verification code here:"
-msgstr ""
-"您将帐户配置为要求使用第二种媒体进行身份验证，例如您的手机。 请在此处输入您的"
+msgstr "您将帐户配置为要求使用第二种媒体进行身份验证，例如您的手机。 请在此处输入您的"
 "验证码："
 
 #: eventyay/control/templates/pretixcontrol/auth/login_2fa.html:14
@@ -12772,9 +12679,8 @@ msgstr "U2F失败。检查是否正确插入了正确的身份验证设备。"
 msgid ""
 "Alternatively, connect your WebAuthn device. If it has a button, touch it "
 "now. You might have to unplug the device and plug it back in again."
-msgstr ""
-"或者，链接U2F设备。如果有按钮，请立即触摸。您可能需要拔下设备的插头并重新插"
-"入。"
+msgstr "或者，链接U2F设备。如果有按钮，请立即触摸。您可能需要拔下设备的插头并重新插入"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/auth/login_2fa.html:27
 #: eventyay/control/templates/pretixcontrol/events/create_base.html:19
@@ -12807,8 +12713,7 @@ msgstr "授权申请"
 msgid ""
 "Do you really want to grant the application <strong>%(application)s</strong> "
 "access to your account?"
-msgstr ""
-"您的想授予应用<strong>%(application)s</strong>访问您pretix账户的权限吗？"
+msgstr "您的想授予应用<strong>%(application)s</strong>访问您pretix账户的权限吗？"
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:24
 #, fuzzy, python-format
@@ -12833,8 +12738,7 @@ msgstr "请选择此应用程序应该访问的组织者帐户："
 msgid ""
 "This application has been reviewed, but granting access to your account is "
 "at your <strong>own risk.</strong>"
-msgstr ""
-"此应用程序<strong>未</strong>经过pretix团队的审核。 授予访问您pretix帐户的风"
+msgstr "此应用程序<strong>未</strong>经过pretix团队的审核。 授予访问您pretix帐户的风"
 "险由您自行承担。"
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:53
@@ -12903,9 +12807,9 @@ msgid ""
 "to make sure they do not show up in your reports and statistics and block "
 "people from actually buying tickets."
 msgstr ""
-"您的活动包含<strong>测试模式订单</strong>即使<strong>测试模式已被禁用 </"
-"strong>。您用改删除这些订单，以确保它们不会显示在您的报告和统计信息中，并阻止"
-"人们实际购买门票。"
+"您的活动包含<strong>测试模式订单</strong>即使<strong>测试模式已被禁用 "
+"</strong>。您用改删除这些订单，以确保它们不会显示在您的报告和统计信息中，并阻"
+"止人们实际购买门票。"
 
 #: eventyay/control/templates/pretixcontrol/base.html:379
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:282
@@ -12926,8 +12830,7 @@ msgstr ""
 msgid ""
 "system is running in debug mode. For security reasons, please never run "
 "debug mode on a production instance."
-msgstr ""
-"pretix正在调试模式下运行。出于安全原因，请不要在生产实例上运行调试模式。"
+msgstr "pretix正在调试模式下运行。出于安全原因，请不要在生产实例上运行调试模式。"
 
 #: eventyay/control/templates/pretixcontrol/base.html:405
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:308
@@ -13459,8 +13362,7 @@ msgid ""
 "automatically, e.g. due to the selected payment method, you will need to "
 "take manual action. However, you have currently turned off notifications for "
 "this event."
-msgstr ""
-"如果用户请求取消付费订单并且该款项无法自动退款，例如由于选择了付款方式，您需"
+msgstr "如果用户请求取消付费订单并且该款项无法自动退款，例如由于选择了付款方式，您需"
 "要采取手动操作。 但是，您目前已关闭此活动的通知。"
 
 #: eventyay/control/templates/pretixcontrol/event/cancel.html:44
@@ -13600,16 +13502,14 @@ msgstr ""
 msgid ""
 "You can instead take your shop offline. This will hide it from everyone "
 "except from the organizer teams you configured to have access to the event."
-msgstr ""
-"您可以将商店下线。这将对所有人隐藏它，除了您配置为可以访问活动的组织者团队之"
+msgstr "您可以将商店下线。这将对所有人隐藏它，除了您配置为可以访问活动的组织者团队之"
 "外。"
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:65
 msgid ""
 "However, since your shop is offline, it is only visible to the organizing "
 "team according to the permissions you configured."
-msgstr ""
-"然而，由于您的商店处于离线状态，因此只有组织团队才能根据您配置的权限查看该商"
+msgstr "然而，由于您的商店处于离线状态，因此只有组织团队才能根据您配置的权限查看该商"
 "店。"
 
 #: eventyay/control/templates/pretixcontrol/event/fragment_geodata.html:14
@@ -13690,8 +13590,7 @@ msgid ""
 "This event contains <strong>overpaid orders</strong>, for example due to "
 "duplicate payment attempts. You should review the cases and consider "
 "refunding the overpaid amount to the user."
-msgstr ""
-"此活动包含<strong>超额支付的订单</strong>，例如由于重复付款尝试。您应该检查这"
+msgstr "此活动包含<strong>超额支付的订单</strong>，例如由于重复付款尝试。您应该检查这"
 "些案例，并考虑将超额支付的金额退还给用户。"
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:33
@@ -13855,8 +13754,7 @@ msgstr ""
 msgid ""
 "Your ticket shop is currently not live. It is thus only visible to you and "
 "your team, not to any visitors."
-msgstr ""
-"您的售票处目前尚未上线。 因此，只有您和您的团队才能看到它，而不是任何访客。"
+msgstr "您的售票处目前尚未上线。 因此，只有您和您的团队才能看到它，而不是任何访客。"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:48
 msgid ""
@@ -13895,17 +13793,15 @@ msgid ""
 "If you want to do some test orders, you can enable test mode for your shop. "
 "As long as the shop is in test mode, all orders that are created are marked "
 "as test orders and can be deleted again."
-msgstr ""
-"如果您想要执行一些测试订单，可以为您的商店启用测试模式。 只要商店处于测试模"
-"式，所有创建的订单都会标记为测试订单，并且可以再次删除。"
+msgstr "如果您想要执行一些测试订单，可以为您的商店启用测试模式。 只要商店处于测试模式"
+"，所有创建的订单都会标记为测试订单，并且可以再次删除。"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:111
 msgid ""
 "Please note that test orders still count into your quotas, actually use "
 "vouchers and might perform actual payments. The only difference is that you "
 "can delete test orders. Use at your own risk!"
-msgstr ""
-"请注意，测试订单仍会计入您的配额，实际使用优惠券并可能会执行实际付款。 唯一的"
+msgstr "请注意，测试订单仍会计入您的配额，实际使用优惠券并可能会执行实际付款。 唯一的"
 "区别是您可以删除测试订单。 使用风险自负！"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:115
@@ -13913,8 +13809,7 @@ msgid ""
 "Also, test mode only covers the main web shop. Orders created through other "
 "sales channels such as the box office or resellers module are still created "
 "as production orders."
-msgstr ""
-"此外，测试模式仅涵盖主要的网上商店。通过其他销售渠道（如票房或经销商模块）创"
+msgstr "此外，测试模式仅涵盖主要的网上商店。通过其他销售渠道（如票房或经销商模块）创"
 "建的订单仍然创建为生产订单。"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:119
@@ -13922,8 +13817,7 @@ msgid ""
 "It looks like you already have some real orders in your shop. We do not "
 "recommend enabling test mode if your customers already know your shop, as it "
 "will confuse them."
-msgstr ""
-"看来你的店里已经有了一些真正的订单了。如果您的客户已经知道您的商店，我们不建"
+msgstr "看来你的店里已经有了一些真正的订单了。如果您的客户已经知道您的商店，我们不建"
 "议启用测试模式，因为这样会混淆他们。"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:126
@@ -14069,16 +13963,14 @@ msgid ""
 "Please note that EU Directive 2015/2366 bans surcharging payment fees for "
 "most common payment methods within the European Union. If in doubt, consult "
 "a lawyer or refrain from charging payment fees."
-msgstr ""
-"请注意，欧盟指令2015/2366禁止对欧盟内最常见的支付方式收取附加费。如有疑问，请"
+msgstr "请注意，欧盟指令2015/2366禁止对欧盟内最常见的支付方式收取附加费。如有疑问，请"
 "咨询律师或避免收取支付费用。"
 
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:28
 msgid ""
 "In simple terms, this means you need to pay any fees imposed by the payment "
 "providers and cannot pass it on to your customers."
-msgstr ""
-"简单来说，这意味着您需要支付付款服务提供商收取的任何费用，而不能将其传递给您"
+msgstr "简单来说，这意味着您需要支付付款服务提供商收取的任何费用，而不能将其传递给您"
 "的客户。"
 
 #: eventyay/control/templates/pretixcontrol/event/plugins.html:9
@@ -14180,8 +14072,7 @@ msgid ""
 "You can scroll down and create your first ticket products quickly, or you "
 "can use the navigation on the left to modify the settings of your event in "
 "much more detail."
-msgstr ""
-"您可以向下滚动并快速创建您的第一个票证产品，也可以使用左侧的导航更详细地修改"
+msgstr "您可以向下滚动并快速创建您的第一个票证产品，也可以使用左侧的导航更详细地修改"
 "活动的设置。"
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:36
@@ -14217,9 +14108,9 @@ msgid ""
 "ticket types in more detail, you can later do so in the \"Products\" section "
 "in the navigation. Don't worry, you can change everything you input here."
 msgstr ""
-"如果您想使用更高级的功能，如不允许使用的产品、产品变化、自定义配额、附加产"
-"品，或者想更详细地修改您的票类型，您可以稍后在导航的“产品”部分中这样做。别担"
-"心，您可以更改这里输入的所有内容。"
+"如果您想使用更高级的功能，如不允许使用的产品、产品变化、自定义配额、附加产品"
+"，或者想更详细地修改您的票类型，您可以稍后在导航的“产品”部分中这样做。别担心"
+"，您可以更改这里输入的所有内容。"
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:132
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:79
@@ -14238,8 +14129,7 @@ msgid ""
 "We recommend that you take some time to go through the \"Settings\" part of "
 "your event, but if you're in a hurry and want to get started quickly, here's "
 "a short version:"
-msgstr ""
-"我们建议您花一些时间来完成活动的“设置”部分，但如果您赶时间并希望快速入门，这"
+msgstr "我们建议您花一些时间来完成活动的“设置”部分，但如果您赶时间并希望快速入门，这"
 "里有一个简短的版本："
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:162
@@ -14255,9 +14145,9 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"pretix 支持<a href=\"https://eventyay.com/about/en/features/payment\" "
-"target=\"_blank\">广泛的支付提供商</a>，允许您选择最适合您的工作流程的支付方"
-"法。以下仅举两个例子，您可以在活动的“设置”部分添加更多内容。"
+"pretix 支持<a href=\"https://eventyay.com/about/en/features/payment\" target="
+"\"_blank\">广泛的支付提供商</a>，允许您选择最适合您的工作流程的支付方法。以下"
+"仅举两个例子，您可以在活动的“设置”部分添加更多内容。"
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:184
 msgid ""
@@ -14442,8 +14332,7 @@ msgstr "复制活动"
 msgid ""
 "You can now scroll down and modify the settings in more detail, if you want, "
 "or you can create your first product to start selling tickets right away!"
-msgstr ""
-"如果您愿意，现在可以向下滚动并更详细地修改设置，或者您可以创建第一个产品立即"
+msgstr "如果您愿意，现在可以向下滚动并更详细地修改设置，或者您可以创建第一个产品立即"
 "开始销售门票！"
 
 #: eventyay/control/templates/pretixcontrol/event/settings_base.html:23
@@ -14545,8 +14434,7 @@ msgstr "全局设置"
 msgid ""
 "You activated ticket downloads but no output provider is enabled. Be sure to "
 "enable a plugin and activate an output provider."
-msgstr ""
-"您激活了票证下载但未启用输出提供程序。 确保启用插件并激活输出提供程序。"
+msgstr "您激活了票证下载但未启用输出提供程序。 确保启用插件并激活输出提供程序。"
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:35
 #, fuzzy
@@ -14587,16 +14475,14 @@ msgid ""
 "A widget allows you to embed your ticket shop directly into your event "
 "website. This enables your visitors to purchase tickets instantly without "
 "leaving your site."
-msgstr ""
-"pretix小部件是一种将票务商店嵌入您的活动网站的方法。 这样，您的访问者可以在不"
+msgstr "pretix小部件是一种将票务商店嵌入您的活动网站的方法。 这样，您的访问者可以在不"
 "离开您的网站的情况下立即买票。"
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:23
 msgid ""
 "To embed the widget onto your website, simply copy the following code to the "
 "<code>&lt;head&gt;</code> section of your website:"
-msgstr ""
-"要将小部件嵌入您的网站，只需将以下代码复制到您网站的<code>&lt;顶端&gt;</code>"
+msgstr "要将小部件嵌入您的网站，只需将以下代码复制到您网站的<code>&lt;顶端&gt;</code>"
 "部分："
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:31
@@ -14640,8 +14526,7 @@ msgstr "步骤%(step)s"
 msgid ""
 "Every event needs to be created as part of an organizer account. Currently, "
 "you do not have access to any organizer accounts."
-msgstr ""
-"每个活动都需要作为组织者帐户的一部分创建。目前，您无法访问任何组织者帐户。"
+msgstr "每个活动都需要作为组织者帐户的一部分创建。目前，您无法访问任何组织者帐户。"
 
 #: eventyay/control/templates/pretixcontrol/events/create_basics.html:14
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_basics.html:14
@@ -14664,8 +14549,7 @@ msgstr ""
 msgid ""
 "We will also use this in some places like order codes, invoice numbers or "
 "bank transfer references as an abbreviation to reference this event."
-msgstr ""
-"我们还会在某些地方使用此功能，例如订单代码，发票编号或银行转帐参考作为引用此"
+msgstr "我们还会在某些地方使用此功能，例如订单代码，发票编号或银行转帐参考作为引用此"
 "活动的缩写。"
 
 #: eventyay/control/templates/pretixcontrol/events/create_basics.html:32
@@ -14684,8 +14568,7 @@ msgid ""
 "Do you want to copy over your configuration from a different event? We will "
 "copy all products, categories, quotas, and questions as well as general "
 "event settings."
-msgstr ""
-"是否要从其他活动复制配置？我们将复制所有产品、类别、配额和问题以及常规活动设"
+msgstr "是否要从其他活动复制配置？我们将复制所有产品、类别、配额和问题以及常规活动设"
 "置。"
 
 #: eventyay/control/templates/pretixcontrol/events/create_copy.html:13
@@ -14693,8 +14576,7 @@ msgid ""
 "Please make sure to review all settings extensively. You will probably still "
 "need to change some settings manually, e.g. date and time settings and texts "
 "that contain the event name."
-msgstr ""
-"请确保广泛查看所有设置。 您可能仍需要手动更改某些设置，例如日期和时间设置以及"
+msgstr "请确保广泛查看所有设置。 您可能仍需要手动更改某些设置，例如日期和时间设置以及"
 "包含活动名称的文本。"
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:7
@@ -14815,8 +14697,7 @@ msgid ""
 "No update check has been performed yet since the last update of this "
 "installation. Update checks are performed on a daily basis if your cronjob "
 "is set up properly."
-msgstr ""
-"自上次更新此安装后，尚未执行任何更新检查。如果您的cronjob设置正确，则每天都会"
+msgstr "自上次更新此安装后，尚未执行任何更新检查。如果您的cronjob设置正确，则每天都会"
 "执行更新检查。"
 
 #: eventyay/control/templates/pretixcontrol/global_update.html:20
@@ -14886,9 +14767,8 @@ msgstr "您将能够在下一步中调整更多设置。"
 msgid ""
 "Please note that your product will <strong>not</strong> be available for "
 "sale until you have added your item to an existing or newly created quota."
-msgstr ""
-"请注意，在您将商品添加到现有或新创建的配额中之前，您的产品将<strong>不</"
-"strong>可供出售。"
+msgstr "请注意，在您将商品添加到现有或新创建的配额中之前，您的产品将<strong>不</stron"
+"g>可供出售。"
 
 #: eventyay/control/templates/pretixcontrol/item/base.html:29
 msgid ""
@@ -15029,8 +14909,7 @@ msgstr "显示受影响的订单"
 msgid ""
 "You cannot delete the product <strong>%(item)s</strong> because it already "
 "has been ordered, but you can deactivate it."
-msgstr ""
-"您无法删除产品<strong>%(item)s</strong>，因为它被订购了，但您可以停用它。"
+msgstr "您无法删除产品<strong>%(item)s</strong>，因为它被订购了，但您可以停用它。"
 
 #: eventyay/control/templates/pretixcontrol/item/delete.html:41
 msgid "Deactivate"
@@ -15089,8 +14968,7 @@ msgstr "添加一个新捆绑产品"
 msgid ""
 "Please note that your variation will <strong>not</strong> be available for "
 "sale until you have added it to an existing or newly created quota."
-msgstr ""
-"请注意，您的变量将<strong>不</strong>可供出售，直到您将其添加到现有或新创建的"
+msgstr "请注意，您的变量将<strong>不</strong>可供出售，直到您将其添加到现有或新创建的"
 "配额中。"
 
 #: eventyay/control/templates/pretixcontrol/item/include_variations.html:89
@@ -15228,8 +15106,7 @@ msgid ""
 "Below, you find a list of all available products. You can click on a product "
 "name to inspect and change product details. You can also use the buttons on "
 "the right to change the order of products within a give category."
-msgstr ""
-"您可以在下面的列表中找到所有可用产品。您可以单击产品名称来检查和更改产品详细"
+msgstr "您可以在下面的列表中找到所有可用产品。您可以单击产品名称来检查和更改产品详细"
 "信息。您还可以使用右侧的按钮更改给定类别中产品的顺序。"
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:23
@@ -15380,8 +15257,7 @@ msgid ""
 "Questions allow your attendees to fill in additional data about their "
 "ticket. If you provide food, one example might be to ask your users about "
 "dietary requirements."
-msgstr ""
-"问题允许您的观众填写有关其门票的其他数据。如果你提供食物，一个范例可能是询问"
+msgstr "问题允许您的观众填写有关其门票的其他数据。如果你提供食物，一个范例可能是询问"
 "你的用户关于饮食的要求。"
 
 #: eventyay/control/templates/pretixcontrol/items/questions.html:21
@@ -15469,8 +15345,7 @@ msgstr "此配额当前已被%(num)s票超额预订。"
 msgid ""
 "Your event contains vouchers that affect products covered by this quota and "
 "that allow a user to buy products even if this quota is sold out."
-msgstr ""
-"您的活动包含影响此配额所涵盖产品的凭证，允许用户购买产品，即使此配额已售完。"
+msgstr "您的活动包含影响此配额所涵盖产品的凭证，允许用户购买产品，即使此配额已售完。"
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:111
 msgid "Quota history"
@@ -15499,9 +15374,8 @@ msgid ""
 "Please select the products or product variations this quota should be "
 "applied to. If you apply two quotas to the same product, it will only be "
 "available if <strong>both</strong> quotas have capacity left."
-msgstr ""
-"请选择此配额应适用的产品或产品变量。如果对同一产品应用两个配额，则只有在"
-"<strong>两者</strong>配额还有剩余容量时才可用。"
+msgstr "请选择此配额应适用的产品或产品变量。如果对同一产品应用两个配额，则只有在<stro"
+"ng>两者</strong>配额还有剩余容量时才可用。"
 
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:48
 #, fuzzy
@@ -15751,8 +15625,7 @@ msgstr ""
 msgid ""
 "The user will receive a notification about the change but in the case of new "
 "required questions, the user will not be forced to answer them."
-msgstr ""
-"用户将收到有关更改的通知，但在出现新的必需问题时，不会强制用户回答这些问题。"
+msgstr "用户将收到有关更改的通知，但在出现新的必需问题时，不会强制用户回答这些问题。"
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:37
 msgid ""
@@ -15764,8 +15637,7 @@ msgstr "如果订单附有发票，则会与新发票一起取消创建。"
 msgid ""
 "If you chose \"split into new order\" for multiple positions, they will be "
 "all split in one second order together, not multiple orders."
-msgstr ""
-"如果您为多个位置选择了“拆分为新订单”，那么它们将被拆分为一个二级订单，而不是"
+msgstr "如果您为多个位置选择了“拆分为新订单”，那么它们将被拆分为一个二级订单，而不是"
 "多个订单。"
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:48
@@ -15874,8 +15746,7 @@ msgstr "删除订单"
 msgid ""
 "Do you really want to delete this order? <strong>You really cannot revert "
 "this action and we can't either.</strong>"
-msgstr ""
-"您真的要删除这个订单吗？<strong>你真的无法恢复这个动作，我们也不能。</strong>"
+msgstr "您真的要删除这个订单吗？<strong>你真的无法恢复这个动作，我们也不能。</strong>"
 
 #: eventyay/control/templates/pretixcontrol/order/delete.html:25
 msgid "Yes, delete order"
@@ -15953,8 +15824,7 @@ msgid ""
 "The payment for this order is overdue, but you have configured not to expire "
 "orders automatically. To free quota capacity, you can mark it as expired "
 "manually."
-msgstr ""
-"此订单的付款已过期，但您已配置为不自动过期订单。要释放配额容量，可以手动将其"
+msgstr "此订单的付款已过期，但您已配置为不自动过期订单。要释放配额容量，可以手动将其"
 "标记为过期。"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:104
@@ -16328,8 +16198,7 @@ msgid ""
 "If the money is already on the way back, this will not stop the money, it "
 "will just mark this transfer as aborted in pretix. This will also not "
 "reactivate the order, it will just allow you to choose a new refund method."
-msgstr ""
-"如果这笔钱已经在退回的过程中，这不会阻止这笔钱，它只会标志着这个转移在pretix"
+msgstr "如果这笔钱已经在退回的过程中，这不会阻止这笔钱，它只会标志着这个转移在pretix"
 "中止。这也不会重新激活订单，只允许您选择新的退款方式。"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_cancel.html:32
@@ -16457,8 +16326,8 @@ msgid ""
 "<strong>%(total)s</strong>."
 msgstr ""
 "我们收到<strong>%(amount)s</strong>已通过<strong>%(method)s</strong>退款的通"
-"知。如果处理此退款，订单金额将低于<strong>%(pending)s</strong>。订单总数为"
-"<strong>%(total)s</strong>。"
+"知。如果处理此退款，订单金额将低于<strong>%(pending)s</strong>。订单总数为<st"
+"rong>%(total)s</strong>。"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -16775,8 +16644,7 @@ msgctxt "subevent"
 msgid ""
 "If you select a single date, fees will not be listed here as it might not be "
 "clear which date they belong to."
-msgstr ""
-"如果您选择单个日期，付款方式费用将不会在此列出，因为可能不清楚它们属于哪个日"
+msgstr "如果您选择单个日期，付款方式费用将不会在此列出，因为可能不清楚它们属于哪个日"
 "期。"
 
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:72
@@ -16789,8 +16657,7 @@ msgid ""
 "If you click links in this column, you will only find orders that are "
 "canceled completely, while the numbers also include single canceled "
 "positions within valid orders."
-msgstr ""
-"如果单击此列中的链接，您将只能找到完全取消的订单，而这些数字还包括有效订单中"
+msgstr "如果单击此列中的链接，您将只能找到完全取消的订单，而这些数字还包括有效订单中"
 "的单个取消位置。"
 
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:38
@@ -16818,8 +16685,7 @@ msgstr "删除组织者"
 msgid ""
 "This operation will destroy this organizer including all events, "
 "configuration, products, quotas, questions, vouchers, lists, etc."
-msgstr ""
-"此操作将销毁此组织者，包括所有活动、配置、产品、配额、问题、凭证、列表等。"
+msgstr "此操作将销毁此组织者，包括所有活动、配置、产品、配额、问题、凭证、列表等。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/delete.html:25
 #, python-format
@@ -16836,8 +16702,7 @@ msgstr "要确认您真的想要这个，请在此输入组织者的简称（\"%
 msgid ""
 "eventyay does not allow deleting orders once they have been placed in order "
 "to be audit-proof and trustable by financial authorities."
-msgstr ""
-"pretix不允许在下达订单后删除订单，以便获得审计证明并且可由金融机构信任。"
+msgstr "pretix不允许在下达订单后删除订单，以便获得审计证明并且可由金融机构信任。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:6
 #, python-format
@@ -17003,8 +16868,7 @@ msgid ""
 "These settings will be used for the organizer page as well as for the "
 "default settings for all events in this account that do not have their own "
 "design settings."
-msgstr ""
-"这些设置将用于组织者页面以及此帐户中没有自己设计设置的所有活动的默认设置。"
+msgstr "这些设置将用于组织者页面以及此帐户中没有自己设计设置的所有活动的默认设置。"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:77
 msgid "Privacy"
@@ -17415,8 +17279,7 @@ msgstr "编辑"
 msgid ""
 "This feature is only intended for advanced users. We recommend to only use "
 "it to copy and share ticket designs, not to modify the design source code."
-msgstr ""
-"此功能仅适用于高级用户。我们建议只使用它来复制和共享票据设计，而不修改设计源"
+msgstr "此功能仅适用于高级用户。我们建议只使用它来复制和共享票据设计，而不修改设计源"
 "代码。"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:78
@@ -17436,8 +17299,7 @@ msgid ""
 "This editor allows you to create a design for the PDF tickets of your event. "
 "You can upload a background PDF and then use this tool to place texts and a "
 "QR code on the ticket."
-msgstr ""
-"此编辑器允许您为活动的PDF票据创建设计。您可以上传PDF背景，然后使用此工具在票"
+msgstr "此编辑器允许您为活动的PDF票据创建设计。您可以上传PDF背景，然后使用此工具在票"
 "据上放置文本和二维码。"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:107
@@ -17446,8 +17308,7 @@ msgid ""
 "for example in text rendering, might look slightly different in the final "
 "tickets. You can use the \"Preview\" button on the right for a more precise "
 "preview."
-msgstr ""
-"请注意，编辑器只能提供粗略预览。某些细节，例如在文本渲染中，可能在最终票证中"
+msgstr "请注意，编辑器只能提供粗略预览。某些细节，例如在文本渲染中，可能在最终票证中"
 "看起来略有不同。您可以使用右侧的“预览”按钮进行更精确的预览。"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:121
@@ -17651,9 +17512,8 @@ msgid ""
 "You are about to permanently delete data from the server, even though you "
 "might be required to keep some of this data on file. You can therefore "
 "download the following file and store it in a safe place:"
-msgstr ""
-"您将要永久删除服务器中的数据，即使可能需要将其中的一些数据保存在文件中。因"
-"此，您应该下载以下文件并将其存储在安全的地方："
+msgstr "您将要永久删除服务器中的数据，即使可能需要将其中的一些数据保存在文件中。因此"
+"，您应该下载以下文件并将其存储在安全的地方："
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:29
 msgid "Download data"
@@ -17677,8 +17537,8 @@ msgid ""
 "confirm you really want this, please type out the event's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
-"请重新检查您是否完全确定要从活动<strong>%(event)s</strong>中删除所选数据类"
-"别。在这种情况下，请在此处输入您的用户密码："
+"请重新检查您是否完全确定要从活动<strong>%(event)s</strong>中删除所选数据类别"
+"。在这种情况下，请在此处输入您的用户密码："
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:41
 #, fuzzy
@@ -17728,8 +17588,7 @@ msgid ""
 "It is within your own responsibility to check if you are allowed to delete "
 "the affected data in your legislation, e.g. for reasons of taxation. In many "
 "countries, you need to keep some data in the live system in case of an audit."
-msgstr ""
-"您有责任检查是否允许您删除法律中受影响的数据，例如出于税收原因。在许多国家/地"
+msgstr "您有责任检查是否允许您删除法律中受影响的数据，例如出于税收原因。在许多国家/地"
 "区，您需要在实时系统中保留一些数据以防审计。"
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:32
@@ -17737,8 +17596,7 @@ msgid ""
 "For most categories of data, you will be able to partially download the data "
 "to store it offline. Some kinds of data (such as some payment information) "
 "as well as historical log data cannot be downloaded at the moment."
-msgstr ""
-"对于大多数数据类别，您将能够部分下载数据以将其脱机存储。目前无法下载某些数据"
+msgstr "对于大多数数据类别，您将能够部分下载数据以将其脱机存储。目前无法下载某些数据"
 "（如某些支付信息）以及历史日志数据。"
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:46
@@ -18104,8 +17962,7 @@ msgstr "以后登录需要第二个因素"
 msgid ""
 "Please connect your WebAuthn device. If it has a button, touch it now. You "
 "might have to unplug the device and plug it back in again."
-msgstr ""
-"请连接您的U2F设备。 如果有按钮，请立即触摸。 您可能必须拔下设备并重新插入。"
+msgstr "请连接您的U2F设备。 如果有按钮，请立即触摸。 您可能必须拔下设备并重新插入。"
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_webauthn.html:26
 msgid "Device registration failed."
@@ -18184,8 +18041,8 @@ msgid ""
 "smartphone or a hardware token generator and that changes on a regular basis."
 msgstr ""
 "双因素身份验证是一种为帐户添加额外安全性的方法。 如果您启用它，不仅需要密码才"
-"能登录，还需要生成额外的令牌，例如： 通过智能手机或硬件令牌生成器上的应用程"
-"序，并定期更改。"
+"能登录，还需要生成额外的令牌，例如： 通过智能手机或硬件令牌生成器上的应用程序"
+"，并定期更改。"
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:17
 #, fuzzy
@@ -18432,8 +18289,7 @@ msgid ""
 "If you choose \"any product\" for a specific quota and choose to reserve "
 "quota for this voucher above, the product can still be unavailable to the "
 "voucher holder if another quota associated with the product is sold out!"
-msgstr ""
-"如果您为特定配额选择“任何产品”并选择为上面的此优惠券保留配额，则如果与该产品"
+msgstr "如果您为特定配额选择“任何产品”并选择为上面的此优惠券保留配额，则如果与该产品"
 "相关的另一个配额已售完，优惠券持有人仍然无法使用该产品！"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/delete.html:9
@@ -18474,8 +18330,7 @@ msgstr "优惠券历史纪录"
 msgid ""
 "Vouchers allow you to assign tickets to specific persons for a lower price. "
 "They also enable you to reserve some quota for your very special guests."
-msgstr ""
-"优惠券允许您以较低的价格为特定人员分配门票。 它们还可以为您的特殊客人预留一些"
+msgstr "优惠券允许您以较低的价格为特定人员分配门票。 它们还可以为您的特殊客人预留一些"
 "配额。"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/index.html:71
@@ -18513,9 +18368,8 @@ msgstr "优惠券标签"
 msgid ""
 "If you add a \"tag\" to a voucher, you can here see statistics on their "
 "usage."
-msgstr ""
-"如果您在优惠券中添加一个\"标签\"，您可以在这里查看有关它们使用情况的统计数"
-"据。"
+msgstr "如果您在优惠券中添加一个\"标签\"，您可以在这里查看有关它们使用情况的统计数据"
+"。"
 
 #: eventyay/control/templates/pretixcontrol/vouchers/tags.html:39
 msgid "You haven't added any tags to vouchers yet."
@@ -18545,8 +18399,7 @@ msgstr "您确定要删除以下等待列表条目<strong>%(entry)s</strong>？"
 msgid ""
 "The waiting list is disabled, so if the event is sold out, people cannot add "
 "themselves to this list. If you want to enable it, go to the event settings."
-msgstr ""
-"等待列表已禁用，因此如果活动已售完，则人们无法将自己添加到此列表中。如果要启"
+msgstr "等待列表已禁用，因此如果活动已售完，则人们无法将自己添加到此列表中。如果要启"
 "用它，请转到活动设置。"
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:28
@@ -18727,8 +18580,7 @@ msgid ""
 "You used an invalid link. Please copy the link from your email to the "
 "address bar and make sure it is correct and that the link has not been used "
 "before."
-msgstr ""
-"您使用了无效的链接。请将该链接从您的电子邮件复制到地址栏，确保其正确无误，并"
+msgstr "您使用了无效的链接。请将该链接从您的电子邮件复制到地址栏，确保其正确无误，并"
 "且该链接以前没有被使用过。"
 
 #: eventyay/control/views/auth.py:206
@@ -18750,16 +18602,14 @@ msgid ""
 "If the address is registered to valid account, then we have sent you an e-"
 "mail containing further instructions. Please note that we will send at most "
 "one email every 24 hours."
-msgstr ""
-"如果该地址已注册到有效帐户，那么我们已经向您发送了一封包含进一步说明的电子邮"
+msgstr "如果该地址已注册到有效帐户，那么我们已经向您发送了一封包含进一步说明的电子邮"
 "件。请注意，我们最多每24小时发送一封电子邮件。"
 
 #: eventyay/control/views/auth.py:311
 msgid ""
 "If the address is registered to valid account, then we have sent you an e-"
 "mail containing further instructions."
-msgstr ""
-"如果该地址已注册到有效帐户，那么我们已经向您发送了一封包含进一步说明的电子邮"
+msgstr "如果该地址已注册到有效帐户，那么我们已经向您发送了一封包含进一步说明的电子邮"
 "件。"
 
 #: eventyay/control/views/auth.py:331
@@ -18767,8 +18617,7 @@ msgid ""
 "You clicked on an invalid link. Please check that you copied the full web "
 "address into your address bar. Please note that the link is only valid for "
 "three days and that the link can only be used once."
-msgstr ""
-"您单击了一个无效链接。请检查是否已将完整的网址复制到地址栏中。请注意，该链接"
+msgstr "您单击了一个无效链接。请检查是否已将完整的网址复制到地址栏中。请注意，该链接"
 "有效期为三天，并且该链接只能使用一次。"
 
 #: eventyay/control/views/auth.py:334
@@ -18906,9 +18755,8 @@ msgstr "开始使用我们的设置工具"
 msgid ""
 "To start selling tickets, you need to create products or quotas. The fastest "
 "way to create this is to use our setup tool."
-msgstr ""
-"要开始销售门票，您需要创建产品或配额。创建这个的最快方法是使用我们的设置工"
-"具。"
+msgstr "要开始销售门票，您需要创建产品或配额。创建这个的最快方法是使用我们的设置工具"
+"。"
 
 #: eventyay/control/views/dashboards.py:295
 msgid "Set up event"
@@ -19001,8 +18849,7 @@ msgid ""
 "We've been able to contact the SMTP server you configured. Remember to check "
 "the \"use custom SMTP server\" checkbox, otherwise your SMTP server will not "
 "be used."
-msgstr ""
-"我们已经能够联系您配置的SMTP服务器。 请记住选中“使用自定义SMTP服务器”复选框，"
+msgstr "我们已经能够联系您配置的SMTP服务器。 请记住选中“使用自定义SMTP服务器”复选框，"
 "否则将不使用您的SMTP服务器。"
 
 #: eventyay/control/views/event.py:665 eventyay/plugins/sendmail/views.py:143
@@ -19098,8 +18945,7 @@ msgstr "您的活动不是空的，您需要手动设置。"
 msgid ""
 "Your changes have been saved. You can now go on with looking at the details "
 "or take your event live to start selling!"
-msgstr ""
-"您的更改已保存。现在，您可以继续查看详细信息，或将活动现场直播，开始销售！"
+msgstr "您的更改已保存。现在，您可以继续查看详细信息，或将活动现场直播，开始销售！"
 
 #: eventyay/control/views/event.py:1443
 msgid "Regular ticket"
@@ -19962,8 +19808,7 @@ msgid ""
 "Please note that you still need to enable two-factor authentication for your "
 "account using the buttons below to make a second factor required for logging "
 "into your account."
-msgstr ""
-"请注意，您仍然需要使用以下按钮为您的帐户启用双因素身份验证，以便为登录您的帐"
+msgstr "请注意，您仍然需要使用以下按钮为您的帐户启用双因素身份验证，以便为登录您的帐"
 "户创建第二个因素。"
 
 #: eventyay/control/views/user.py:451 eventyay/control/views/user.py:511
@@ -19978,8 +19823,7 @@ msgstr "无法完成注册。请再试一次。"
 msgid ""
 "The code you entered was not valid. If this problem persists, please check "
 "that the date and time of your phone are configured correctly."
-msgstr ""
-"您输入的代码无效。 如果此问题仍然存在，请检查手机的日期和时间是否正确配置。"
+msgstr "您输入的代码无效。 如果此问题仍然存在，请检查手机的日期和时间是否正确配置。"
 
 #: eventyay/control/views/user.py:526
 msgid ""
@@ -19999,8 +19843,7 @@ msgstr "现在为您的账户禁用了双因素身份验证。"
 msgid ""
 "Your emergency codes have been newly generated. Remember to store them in a "
 "safe place in case you lose access to your devices."
-msgstr ""
-"您的紧急代码是新生成的。 请记住将它们存放在安全的地方，以防您无法访问自己的设"
+msgstr "您的紧急代码是新生成的。 请记住将它们存放在安全的地方，以防您无法访问自己的设"
 "备。"
 
 #: eventyay/control/views/user.py:590
@@ -20599,9 +20442,9 @@ msgid ""
 "import a digital bank statement in order to give pretix the required "
 "information."
 msgstr ""
-"我知道人们会直接向我的银行账户支付门票价格，而且pretix无法自动之别支付的款"
-"项。因此，我会手动将付款标记为完成，或者定期导入银行账单数据，以便为pretix提"
-"供所需信息。"
+"我知道人们会直接向我的银行账户支付门票价格，而且pretix无法自动之别支付的款项"
+"。因此，我会手动将付款标记为完成，或者定期导入银行账单数据，以便为pretix提供"
+"所需信息。"
 
 #: eventyay/plugins/banktransfer/payment.py:38
 msgid "Bank account type"
@@ -20649,8 +20492,7 @@ msgid ""
 "Include everything else that your customers might need to send you a bank "
 "transfer payment. If you have lots of international customers, they might "
 "need your full address and your bank's full address."
-msgstr ""
-"包括客户可能需要向您发送银行转帐付款的所有其他内容。 如果您有很多国际客户，他"
+msgstr "包括客户可能需要向您发送银行转帐付款的所有其他内容。 如果您有很多国际客户，他"
 "们可能需要您的完整地址和银行的完整地址。"
 
 #: eventyay/plugins/banktransfer/payment.py:96
@@ -20658,8 +20500,7 @@ msgid ""
 "For SEPA accounts, you can leave this empty. Otherwise, please add "
 "everything that your customers need to transfer the money, e.g. account "
 "numbers, routing numbers, addresses, etc."
-msgstr ""
-"对于SEPA帐户，您可以将其留空。 否则，请添加客户转账所需的所有信息，例如： 帐"
+msgstr "对于SEPA帐户，您可以将其留空。 否则，请添加客户转账所需的所有信息，例如： 帐"
 "号，路由号码，地址等。"
 
 #: eventyay/plugins/banktransfer/payment.py:105
@@ -20851,8 +20692,7 @@ msgid ""
 "We've been unable to automatically determine how the columns in your file "
 "are aligned. Please help us by selecting which column contain what kind of "
 "data."
-msgstr ""
-"我们无法自动确定文件中列的对齐方式。 请帮助我们选择哪个列包含哪种数据。"
+msgstr "我们无法自动确定文件中列的对齐方式。 请帮助我们选择哪个列包含哪种数据。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:95
 msgid ""
@@ -20876,8 +20716,7 @@ msgstr "最后更新日期：%(date)s"
 msgid ""
 "In the payment settings of your event, you set the %(date)s as the last date "
 "of any payments. Therefore, you won't be able to mark any order as paid here."
-msgstr ""
-"在活动的付款设置中，您将%(date)s设置为任何付款的最后日期。因此，您将无法在此"
+msgstr "在活动的付款设置中，您将%(date)s设置为任何付款的最后日期。因此，您将无法在此"
 "处标记任何已付款的订单。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:19
@@ -20910,8 +20749,7 @@ msgstr "未解决的交易"
 msgid ""
 "On this page, you can import banking data on a per-event level. You also "
 "only see unmatched transactions imported directly for this event."
-msgstr ""
-"在此页面上，你可以按照活动级别带入银行数据。您也只能看到为此活动直接导入的不"
+msgstr "在此页面上，你可以按照活动级别带入银行数据。您也只能看到为此活动直接导入的不"
 "匹配交易。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:60
@@ -20992,9 +20830,8 @@ msgstr "数量："
 msgid ""
 "After you sent the bank transfer, you can close this window. We will send "
 "you an email as soon as we received your payment."
-msgstr ""
-"发送银行转帐后，您可以关闭此窗口。 我们会在收到您的付款后立即向您发送电子邮"
-"件。"
+msgstr "发送银行转帐后，您可以关闭此窗口。 我们会在收到您的付款后立即向您发送电子邮件"
+"。"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:63
 msgid "Open banking app"
@@ -21939,16 +21776,14 @@ msgctxt "subevent"
 msgid ""
 "If you select a single date, payment method fees will not be listed here as "
 "it might not be clear which date they belong to."
-msgstr ""
-"如果您选择单个日期，付款方式费用将不会在此列出，因为可能不清楚它们属于哪个日"
+msgstr "如果您选择单个日期，付款方式费用将不会在此列出，因为可能不清楚它们属于哪个日"
 "期。"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:55
 msgid ""
 "Only fully paid orders are counted. Orders paid in multiple payments are "
 "shown with the date of their last payment."
-msgstr ""
-"只计算全额支付的订单。以多次付款方式支付的订单显示其最后一次付款的日期。"
+msgstr "只计算全额支付的订单。以多次付款方式支付的订单显示其最后一次付款的日期。"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:74
 #, fuzzy
@@ -22378,8 +22213,7 @@ msgstr "显示的所有事件%(name)s"
 msgid ""
 "This ticket shop is currently in test mode. Please do not perform any real "
 "purchases as your order might be deleted without notice."
-msgstr ""
-"这家售票店目前处于测试模式。请不要进行任何真正的购买，因为您的订单可能会被删"
+msgstr "这家售票店目前处于测试模式。请不要进行任何真正的购买，因为您的订单可能会被删"
 "除而不通知。"
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:90
@@ -22627,8 +22461,7 @@ msgid ""
 "We will sent you an email as soon as the event organizer approved or "
 "rejected your order. If your order was approved, we will send you a link "
 "that you can use to pay."
-msgstr ""
-"我们会在活动组织者批准或拒绝您的订单后立即向您发送电子邮件。 如果您的订单获得"
+msgstr "我们会在活动组织者批准或拒绝您的订单后立即向您发送电子邮件。 如果您的订单获得"
 "批准，我们会向您发送一个可用于支付的链接。"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:198
@@ -22726,8 +22559,7 @@ msgid ""
 "Your browser does not accept cookies from us. However, we need to set a "
 "cookie to remember who you are and what is in your cart. Please change your "
 "browser settings accordingly."
-msgstr ""
-"您的浏览器不接受我们提供的cookies。 但是，我们需要设置一个cookie来记住你是谁"
+msgstr "您的浏览器不接受我们提供的cookies。 但是，我们需要设置一个cookie来记住你是谁"
 "以及购物车中的内容。 请相应更改您的浏览器设置。"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_availability.html:6
@@ -23188,16 +23020,14 @@ msgid ""
 "Please bookmark or save the link to this exact page if you want to access "
 "your order later. We also sent you an email containing the link to the "
 "address you specified."
-msgstr ""
-"如果您想稍后访问订单，请将该链接添加为书签或保存到此页面。 我们还向您发送了一"
+msgstr "如果您想稍后访问订单，请将该链接添加为书签或保存到此页面。 我们还向您发送了一"
 "封电子邮件，其中包含指定地址的链接。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:54
 msgid ""
 "Please save the following link if you want to access your order later. We "
 "also sent you an email containing the link to the address you specified."
-msgstr ""
-"如果您想稍后访问订单，请保存以下链接。 我们还向您发送了一封电子邮件，其中包含"
+msgstr "如果您想稍后访问订单，请保存以下链接。 我们还向您发送了一封电子邮件，其中包含"
 "指定地址的链接。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:71
@@ -23250,8 +23080,7 @@ msgstr "版本说明"
 msgid ""
 "We've issued your refund of %(amount)s as a gift card. On your next purchase "
 "with us, you can use the following gift card code during payment:"
-msgstr ""
-"我们已将您的退款%(amount)s转为礼物卡。在下次购买时，您可以在付款时使用以下礼"
+msgstr "我们已将您的退款%(amount)s转为礼物卡。在下次购买时，您可以在付款时使用以下礼"
 "品卡代码:"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:154
@@ -23269,8 +23098,7 @@ msgstr "礼品卡将在%(expiry)s. 失效。"
 msgid ""
 "A refund of %(amount)s has been sent to you. Depending on the payment "
 "method, please allow for up to 14 days until it shows up on your statement."
-msgstr ""
-"退款%(amount)s已经发送给您。根据付款方式，请允许需要大约14天处理时间才会显示"
+msgstr "退款%(amount)s已经发送给您。根据付款方式，请允许需要大约14天处理时间才会显示"
 "在您的帐上。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:189
@@ -23351,9 +23179,8 @@ msgid ""
 "You can request to cancel this order. If your request is approved, a "
 "cancellation fee of <strong>%(fee)s</strong> will be kept and you will "
 "receive a refund of the remainder."
-msgstr ""
-"您可以要求消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费"
-"用，您将收到剩余的退款到您的原始付款方式。"
+msgstr "您可以要求消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费用"
+"，您将收到剩余的退款到您的原始付款方式。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:387
 #, python-format
@@ -23361,8 +23188,7 @@ msgid ""
 "You can cancel this order. In this case, a cancellation fee of "
 "<strong>%(fee)s</strong> will be kept and you will receive a refund of the "
 "remainder."
-msgstr ""
-"您可以取消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费用，"
+msgstr "您可以取消此订单。 如果订单被许可，将扣除<strong>%(fee)s</strong>的取消费用，"
 "您将收到剩余的退款到您的原始付款方式。"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:393
@@ -23413,9 +23239,8 @@ msgid ""
 "You can request the cancellation of your order on this page. The event "
 "organizer will then decide on your request. If they approve, your order will "
 "be canceled and all tickets will be invalidated."
-msgstr ""
-"您可以要求取消您的订单。活动筹办者需确认您的请求。经许可后您的订单将会被取"
-"消，全部门票将失效。"
+msgstr "您可以要求取消您的订单。活动筹办者需确认您的请求。经许可后您的订单将会被取消"
+"，全部门票将失效。"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:33
 msgid ""
@@ -23466,8 +23291,7 @@ msgid ""
 "The refund amount will automatically be sent back to your original payment "
 "method. Depending on the payment method, please allow for up to two weeks "
 "before this appears on your statement."
-msgstr ""
-"退款金额%(amount)s将自动退回原始付款方式。 根据付款方式，在手续处理时间最多两"
+msgstr "退款金额%(amount)s将自动退回原始付款方式。 根据付款方式，在手续处理时间最多两"
 "周的时间。"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:130
@@ -23536,8 +23360,7 @@ msgstr "更改付款方式：%(code)s"
 msgid ""
 "Please note: If you change your payment method, your order total will change "
 "by the amount displayed to the right of each method."
-msgstr ""
-"请注意：如果您更改付款方式，您的订单总额将根据每个付款方式右侧显示的金额进行"
+msgstr "请注意：如果您更改付款方式，您的订单总额将根据每个付款方式右侧显示的金额进行"
 "更改。"
 
 #: eventyay/presale/templates/pretixpresale/event/order_pay_change.html:46
@@ -23589,8 +23412,7 @@ msgid ""
 "If you lost the link to your order or orders, please enter the email address "
 "you used for your order. We will send you an email with links to all orders "
 "you placed using this email address."
-msgstr ""
-"如果您丢失了订单或订单的链接，请输入您用于订单的电子邮件地址。 我们会向您发送"
+msgstr "如果您丢失了订单或订单的链接，请输入您用于订单的电子邮件地址。 我们会向您发送"
 "一封电子邮件，其中链接包含您使用此电子邮件地址所下的所有订单。"
 
 #: eventyay/presale/templates/pretixpresale/event/resend_link.html:30
@@ -23631,8 +23453,8 @@ msgid ""
 "waiting list. If we notify you, you'll have %(hours)s hours time to buy a "
 "ticket until we assign it to the next person on the list."
 msgstr ""
-"如果门票再次可用，我们将通知等候名单上的第一批人员。 如果我们通知您，您将"
-"有%(hours)s小时的时间来购买们票，直到我们将其分配给列表中的下一个人。"
+"如果门票再次可用，我们将通知等候名单上的第一批人员。 如果我们通知您，您将有%"
+"(hours)s小时的时间来购买们票，直到我们将其分配给列表中的下一个人。"
 
 #: eventyay/presale/templates/pretixpresale/event/waitinglist.html:34
 msgid "Add me to the list"
@@ -23762,8 +23584,7 @@ msgstr "您好！"
 msgid ""
 "This is a self-hosted installation of <a %(a_attr)s>eventyay, your open "
 "source event solution.</a>."
-msgstr ""
-"这是一个自托管的安装<a %(a_attr)s>pretix，您的免费和开源门票销售软件</a>。"
+msgstr "这是一个自托管的安装<a %(a_attr)s>pretix，您的免费和开源门票销售软件</a>。"
 
 #: eventyay/presale/templates/pretixpresale/index.html:14
 msgid ""
@@ -24231,8 +24052,7 @@ msgstr "我们很遗憾不得不取消一个会话："
 msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
-msgstr ""
-"我们不得不调整一些会议时间和地点。如果你原本计划参加这些会议，请检查它们的新"
+msgstr "我们不得不调整一些会议时间和地点。如果你原本计划参加这些会议，请检查它们的新"
 "日期或地点："
 
 #: pretalx/agenda/templates/agenda/changelog_block.html:69
@@ -24248,16 +24068,14 @@ msgid ""
 "We prepared a list of exciting sessions, so you can get a feel for our "
 "conference. Please keep in mind that this is not our full schedule. We will "
 "follow up with the full schedule in time, stay tuned!"
-msgstr ""
-"我们准备了一份令人兴奋的会议议程，让您能够感受到我们的会议。请记住，这不是我"
+msgstr "我们准备了一份令人兴奋的会议议程，让您能够感受到我们的会议。请记住，这不是我"
 "们的完整日程安排。我们会及时跟进发布完整的日程安排，请保持关注！"
 
 #: pretalx/agenda/templates/agenda/featured.html:23
 msgid ""
 "In the near future you will see a curated list of sessions we’d like to show "
 "off here. Right now we are busy reviewing proposals.<br> Check back later!"
-msgstr ""
-"在不久的将来，您将看到我们在此展示的一系列策划好的会话。目前我们正忙于审查建"
+msgstr "在不久的将来，您将看到我们在此展示的一系列策划好的会话。目前我们正忙于审查建"
 "议书。请稍后再来查看！"
 
 #: pretalx/agenda/templates/agenda/feed/description.html:5
@@ -24289,8 +24107,7 @@ msgid ""
 "Reviews are a valuable tool for speakers to improve their content and "
 "presentation. Even a short review can prove valuable to a speaker! Please "
 "take the time and communicate your feedback in a constructive way."
-msgstr ""
-"评论是演讲者改善他们的内容和演讲的有用工具。即使是一个简短的评论也可能对演讲"
+msgstr "评论是演讲者改善他们的内容和演讲的有用工具。即使是一个简短的评论也可能对演讲"
 "者有所帮助！请花时间以建设性的方式传达您的反馈。"
 
 #: pretalx/agenda/templates/agenda/feedback_form.html:24
@@ -24308,8 +24125,7 @@ msgstr "公共变更日志"
 msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
-msgstr ""
-"要查看我们的日程安排，请启用JavaScript或者前往<a href=\"%(href)s\">这里</a>查"
+msgstr "要查看我们的日程安排，请启用JavaScript或者前往<a href=\"%(href)s\">这里</a>查"
 "看我们的无JS日程安排。"
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
@@ -24346,7 +24162,6 @@ msgstr "演讲者的个人资料照片"
 msgid "Session"
 msgid_plural "Sessions"
 msgstr[0] "会议"
-msgstr[1] "会议"
 
 #: pretalx/agenda/templates/agenda/talk.html:48
 #, fuzzy
@@ -24407,8 +24222,7 @@ msgid ""
 "Congratulations, you’ve submitted your proposal! You can continue to make "
 "changes to it up to the submission deadline, and you will be notified of any "
 "changes or questions."
-msgstr ""
-"祝贺您，您已经提交了您的提案！您可以在提交截止日期之前继续对其进行更改，并将"
+msgstr "祝贺您，您已经提交了您的提案！您可以在提交截止日期之前继续对其进行更改，并将"
 "收到任何更改或问题的通知。"
 
 #: pretalx/cfp/flow.py:392
@@ -24444,8 +24258,7 @@ msgid ""
 "To create your proposal, you need an account on this page. This not only "
 "gives us a way to contact you, it also gives you the possibility to edit "
 "your proposal or to view its current state."
-msgstr ""
-"要创建您的建议，您需要在该页面上拥有一个帐户。这不仅为我们提供了一种与您联系"
+msgstr "要创建您的建议，您需要在该页面上拥有一个帐户。这不仅为我们提供了一种与您联系"
 "的方式，还为您提供了编辑您的建议或查看其当前状态的可能性。"
 
 #: pretalx/cfp/flow.py:559
@@ -24460,8 +24273,7 @@ msgstr "告诉我们一些关于你自己的事情！"
 msgid ""
 "This information will be publicly displayed next to your session - you can "
 "always edit for as long as proposals are still open."
-msgstr ""
-"这些信息将会公开显示在你的会话旁边 - 只要建议还未关闭，你随时可以进行编辑。"
+msgstr "这些信息将会公开显示在你的会话旁边 - 只要建议还未关闭，你随时可以进行编辑。"
 
 #: pretalx/cfp/phrases.py:7
 msgid "Go to CfP"
@@ -24482,9 +24294,8 @@ msgstr ""
 msgid ""
 "This link was not valid. Make sure you copied the complete URL from the "
 "email and that the email is no more than 24 hours old."
-msgstr ""
-"这个链接无效。请确保您从电子邮件中复制了完整的URL，并且该电子邮件不超过24小"
-"时。"
+msgstr "这个链接无效。请确保您从电子邮件中复制了完整的URL，并且该电子邮件不超过24小时"
+"。"
 
 #: pretalx/cfp/phrases.py:17
 msgid "Awesome! You can now log in using your new password."
@@ -24577,8 +24388,7 @@ msgstr "我们在发送邮件时遇到了困难，但您的会话已成功提交
 msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
-msgstr ""
-"你可以在%(deadline)s (%(timezone)s)之前提交提案，距离现在还%(until_string)s。"
+msgstr "你可以在%(deadline)s (%(timezone)s)之前提交提案，距离现在还%(until_string)s。"
 
 #: pretalx/cfp/templates/cfp/event/cfp.html:28
 #, python-format
@@ -24636,8 +24446,7 @@ msgstr ""
 msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
-msgstr ""
-"%(name)s 您好，您已被邀请成为“%(talk)s”议程的演讲者。请问您是否接受邀请？"
+msgstr "%(name)s 您好，您已被邀请成为“%(talk)s”议程的演讲者。请问您是否接受邀请？"
 
 #: pretalx/cfp/templates/cfp/event/invitation.html:34
 msgid "Abstract:"
@@ -24654,16 +24463,14 @@ msgid ""
 "You do not need an account to view the event, or submit feedback, or receive "
 "schedule updates. You’ll only need an account if you participate in the "
 "event as speaker or as an organiser."
-msgstr ""
-"您无需帐户即可查看活动、提交反馈或接收日程更新。只有当您作为演讲者或组织者参"
+msgstr "您无需帐户即可查看活动、提交反馈或接收日程更新。只有当您作为演讲者或组织者参"
 "与活动时，才需要账户。"
 
 #: pretalx/cfp/templates/cfp/event/login.html:17
 msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
-msgstr ""
-"如果您已经在此服务器上为另一个活动创建了建议书，则可以重复使用您的帐户登录此"
+msgstr "如果您已经在此服务器上为另一个活动创建了建议书，则可以重复使用您的帐户登录此"
 "活动。"
 
 #: pretalx/cfp/templates/cfp/event/recover.html:25
@@ -24696,8 +24503,7 @@ msgid ""
 "You can save your proposal as a draft and submit it later. Organisers will "
 "not be able to see your proposal, though they will be able to send you "
 "reminder emails about the upcoming deadline."
-msgstr ""
-"您可以将您的提案保存为草稿并稍后提交。组织者无法查看您的提案，但他们可以向您"
+msgstr "您可以将您的提案保存为草稿并稍后提交。组织者无法查看您的提案，但他们可以向您"
 "发送关于即将到期的提醒电子邮件。"
 
 #: pretalx/cfp/templates/cfp/event/submission_questions.html:13
@@ -24717,8 +24523,7 @@ msgid ""
 "Organisers will not be able to see your draft or your email address. They "
 "will be able to send you reminders about your pending proposal draft closer "
 "to the deadline."
-msgstr ""
-"组织者将无法看到您的草稿或电子邮件地址。他们将能够在截止日期更接近时向您发送"
+msgstr "组织者将无法看到您的草稿或电子邮件地址。他们将能够在截止日期更接近时向您发送"
 "有关待处理提案草稿的提醒。"
 
 #: pretalx/cfp/templates/cfp/event/user_mails.html:4
@@ -24767,16 +24572,14 @@ msgid ""
 "You can delete your account here – all names, emails, and other personal "
 "information will be overwritten. <strong>This action is irreversible.</"
 "strong>"
-msgstr ""
-"您可以在此删除您的帐户 - 所有的姓名、电子邮件和其他个人信息都将被覆盖。此操作"
+msgstr "您可以在此删除您的帐户 - 所有的姓名、电子邮件和其他个人信息都将被覆盖。此操作"
 "是不可逆的。"
 
 #: pretalx/cfp/templates/cfp/event/user_profile.html:99
 msgid ""
 "I really do want to delete my account, losing access to my proposals and "
 "sessions, and overriding my public and private data."
-msgstr ""
-"我真的想删除我的账户，失去我的建议和会话的访问权限，以及覆盖我的公共和私人数"
+msgstr "我真的想删除我的账户，失去我的建议和会话的访问权限，以及覆盖我的公共和私人数"
 "据。"
 
 #: pretalx/cfp/templates/cfp/event/user_profile.html:106
@@ -24824,8 +24627,7 @@ msgid ""
 "The proposal you’re trying to confirm either does not exist or does not "
 "belong to the account you’re currently logged in with. Try logging in with a "
 "different account, or contact the event organisers for further information."
-msgstr ""
-"您正在尝试确认的提案可能不存在或不属于您当前登录的帐户。请尝试使用其他帐户登"
+msgstr "您正在尝试确认的提案可能不存在或不属于您当前登录的帐户。请尝试使用其他帐户登"
 "录，或联系活动组织者获取更多信息。"
 
 #: pretalx/cfp/templates/cfp/event/user_submission_discard.html:15
@@ -24886,8 +24688,7 @@ msgid ""
 "You can withdraw your proposal from the selection process here. You cannot "
 "undo this - if you are just uncertain if you can or should hold your "
 "session, please contact the organiser instead."
-msgstr ""
-"您可以在此处撤回您的申请，但此操作不可撤销。如果您只是不确定是否可以或应该举"
+msgstr "您可以在此处撤回您的申请，但此操作不可撤销。如果您只是不确定是否可以或应该举"
 "行会议，请联系组织者。"
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:125
@@ -24906,8 +24707,7 @@ msgid ""
 "You can discard your draft proposal here. You cannot undo this - if you are "
 "just uncertain if you can or should submit your proposal, please contact the "
 "organiser instead."
-msgstr ""
-"您可以在此处撤回您的申请，但此操作不可撤销。如果您只是不确定是否可以或应该举"
+msgstr "您可以在此处撤回您的申请，但此操作不可撤销。如果您只是不确定是否可以或应该举"
 "行会议，请联系组织者。"
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:141
@@ -24926,8 +24726,7 @@ msgid ""
 "Invite another speaker to your proposal here. Instead of letting us send an "
 "email, (which might get caught by spam filters) you can also give them this "
 "link:"
-msgstr ""
-"请在此处邀请另一个发言人参加您的提案。您可以给他们这个链接，而不是让我们发送"
+msgstr "请在此处邀请另一个发言人参加您的提案。您可以给他们这个链接，而不是让我们发送"
 "电子邮件（可能会被归类为垃圾邮件）。"
 
 #: pretalx/cfp/templates/cfp/event/user_submission_withdraw.html:15
@@ -25574,8 +25373,7 @@ msgstr "演讲者资料"
 msgid ""
 "Please give a fair review on why you’d like to see this proposal at the "
 "conference, or why you think it would not be a good fit."
-msgstr ""
-"请公正地评价为什么您想在这个会议上看到这个提案，或者为什么您认为它不适合。"
+msgstr "请公正地评价为什么您想在这个会议上看到这个提案，或者为什么您认为它不适合。"
 
 #: pretalx/common/models/settings.py:72
 #, python-brace-format
@@ -25651,8 +25449,8 @@ msgid ""
 msgstr ""
 "您好，\n"
 "\n"
-"祝贺您，活动已经结束了！希望一切顺利。以下是一些可能会让您感到有趣的统计数"
-"据：\n"
+"祝贺您，活动已经结束了！希望一切顺利。以下是一些可能会让您感到有趣的统计数据"
+"：\n"
 "\n"
 "- 您有 {submission_count} 份议题提案，\n"
 "- 其中您选择了 {talk_count} 场演讲。\n"
@@ -25726,8 +25524,7 @@ msgid ""
 "We could not verify that this request really was sent by you. For security "
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
-msgstr ""
-"我们无法验证这个请求真的是由您发送的。出于安全原因，我们无法处理它。<br> 请返"
+msgstr "我们无法验证这个请求真的是由您发送的。出于安全原因，我们无法处理它。<br> 请返"
 "回上一页，刷新页面，然后再次尝试。"
 
 #: pretalx/common/templates/500.html:7
@@ -25743,8 +25540,7 @@ msgstr "我们遇到了一个错误。"
 msgid ""
 "Please help us to fix this by submitting <a href=\"%(link)s\" rel=noopener>a "
 "bug report</a>!"
-msgstr ""
-"请通过提交<a href=\"%(link)s\" rel=noopener>错误报告</a>来帮助我们修复这个问"
+msgstr "请通过提交<a href=\"%(link)s\" rel=noopener>错误报告</a>来帮助我们修复这个问"
 "题！"
 
 #: pretalx/common/templates/common/auth.html:29
@@ -26083,8 +25879,7 @@ msgid ""
 "contain lowercase letters and numbers, and must be unique. We recommend some "
 "kind of abbreviation with less than 30 characters that can be easily "
 "remembered."
-msgstr ""
-"这是您的活动可供访问的地址。应该是短的、只包含小写字母和数字，并且必须是唯一"
+msgstr "这是您的活动可供访问的地址。应该是短的、只包含小写字母和数字，并且必须是唯一"
 "的。我们建议使用不到10个字符的缩写，可以轻松记忆。"
 
 #: pretalx/event/forms.py:214
@@ -26095,8 +25890,7 @@ msgstr "你不能稍后更改这个Slug！"
 msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
-msgstr ""
-"这个短名称已经被使用，请选择另一个（或者请该活动的所有者将您添加到他们的团队"
+msgstr "这个短名称已经被使用，请选择另一个（或者请该活动的所有者将您添加到他们的团队"
 "中）。"
 
 #: pretalx/event/forms.py:244
@@ -26104,8 +25898,7 @@ msgid ""
 "The default deadline for your Call for Papers. You can assign additional "
 "deadlines to individual session types, which will take precedence over this "
 "deadline."
-msgstr ""
-"您的征文默认截稿日期。您可以分配给各个会议类型额外的截稿日期，这些日期将优先"
+msgstr "您的征文默认截稿日期。您可以分配给各个会议类型额外的截稿日期，这些日期将优先"
 "于默认截稿日期。"
 
 #: pretalx/event/forms.py:315
@@ -26114,8 +25907,7 @@ msgid ""
 "You can copy settings from previous events here, such as mail settings, "
 "session types, and email templates. Please check those settings once the "
 "event has been created!"
-msgstr ""
-"你可以在这里从先前的活动中复制设置，例如邮件设置、会话类型和电子邮件模板。请"
+msgstr "你可以在这里从先前的活动中复制设置，例如邮件设置、会话类型和电子邮件模板。请"
 "在创建活动后检查这些设置！"
 
 #: pretalx/event/models/event.py:67
@@ -26152,8 +25944,7 @@ msgstr "主要活动颜色"
 msgid ""
 "Provide a hex value like #00ff00 if you want to style pretalx in your "
 "event’s colour scheme."
-msgstr ""
-"如果您想要使用活动颜色方案样式化Pretalx，请提供类似#00ff00的十六进制值。"
+msgstr "如果您想要使用活动颜色方案样式化Pretalx，请提供类似#00ff00的十六进制值。"
 
 #: pretalx/event/models/event.py:227
 msgid "Custom Event CSS"
@@ -26173,8 +25964,7 @@ msgstr "标志"
 msgid ""
 "If you provide a logo image, your event’s name will not be shown in the "
 "event header. The logo will be scaled down to a height of 140px."
-msgstr ""
-"如果您提供了一个标志图像，您的活动名称将不会显示在活动页眉中。该标志将缩小到"
+msgstr "如果您提供了一个标志图像，您的活动名称将不会显示在活动页眉中。该标志将缩小到"
 "高度为150px。"
 
 #: pretalx/event/models/event.py:248
@@ -26344,8 +26134,7 @@ msgid ""
 "Normally, anonymisation is configured in the event review settings. This "
 "setting will <strong>override the event settings</strong> and always hide "
 "speaker names for this team."
-msgstr ""
-"通常，匿名化是在事件回顾设置中配置的。此设置将<strong>覆盖事件设置</strong>，"
+msgstr "通常，匿名化是在事件回顾设置中配置的。此设置将<strong>覆盖事件设置</strong>，"
 "并始终隐藏此团队的发言者姓名。"
 
 #: pretalx/event/models/organiser.py:237
@@ -26696,9 +26485,8 @@ msgid ""
 msgstr ""
 "你好！\n"
 "\n"
-"很抱歉地告诉你，我们不能接受你的提案 “{submission_title}”，参加 "
-"{event_name}。因为有太多优秀的提案，我们希望你能以参会者的身份来参加 "
-"{event_name}！\n"
+"很抱歉地告诉你，我们不能接受你的提案 “{submission_title}”，参加 {event_name}"
+"。因为有太多优秀的提案，我们希望你能以参会者的身份来参加 {event_name}！\n"
 "\n"
 "{event_name}的组织者"
 
@@ -26944,8 +26732,7 @@ msgstr "BCC"
 msgid ""
 "Enter comma separated addresses. Will receive a blind copy of every mail "
 "sent from this template. This may be a LOT!"
-msgstr ""
-"输入逗号分隔的地址。将会收到此模板发送的每一封邮件的密送副本。这可能会很多！"
+msgstr "输入逗号分隔的地址。将会收到此模板发送的每一封邮件的密送副本。这可能会很多！"
 
 #: pretalx/mail/models.py:240
 msgid ""
@@ -27012,8 +26799,7 @@ msgid ""
 "We will notify you at this address if we detect that a new update is "
 "available. This address will not be transmitted to pretalx.com, the emails "
 "will be sent by your server locally."
-msgstr ""
-"如果我们检测到新的更新可用，我们将在此地址通知您。这个地址不会被传输到 "
+msgstr "如果我们检测到新的更新可用，我们将在此地址通知您。这个地址不会被传输到 "
 "pretalx.com，电子邮件将由您的服务器本地发送。"
 
 #: pretalx/orga/forms/cfp.py:39
@@ -27260,8 +27046,7 @@ msgstr "总是"
 msgid ""
 "Marking sessions as “featured” is a good way to show them before the first "
 "schedule release, or to highlight them once the schedule is visible."
-msgstr ""
-"将某些会话标记为“特色”是在首次发布日程之前展示它们或在日程可见后突出显示它们"
+msgstr "将某些会话标记为“特色”是在首次发布日程之前展示它们或在日程可见后突出显示它们"
 "的好方法。"
 
 #: pretalx/orga/forms/event.py:114
@@ -27291,8 +27076,7 @@ msgid ""
 "If you publish your schedule via the HTML export, you will want the correct "
 "absolute URL to be set in various places. Please only set this value once "
 "you have published your schedule. Should end with a slash."
-msgstr ""
-"如果您通过HTML导出发布您的计划表，您需要在各个位置设置正确的绝对URL。请在发布"
+msgstr "如果您通过HTML导出发布您的计划表，您需要在各个位置设置正确的绝对URL。请在发布"
 "计划表后仅设置此值一次。应以斜杠结尾。"
 
 #: pretalx/orga/forms/event.py:143
@@ -27320,8 +27104,7 @@ msgid ""
 "Any sessions you have scheduled already will be moved if you change the "
 "event dates. You will have to release a new schedule version to notify all "
 "speakers."
-msgstr ""
-"如果您更改活动日期，已安排的任何会议时间都将被移动。您需要发布新的日程版本以"
+msgstr "如果您更改活动日期，已安排的任何会议时间都将被移动。您需要发布新的日程版本以"
 "通知所有演讲者。"
 
 #: pretalx/orga/forms/event.py:191
@@ -27333,8 +27116,7 @@ msgstr "请不要选择默认域名作为自定义事件域名。"
 msgid ""
 "The domain “{domain}” does not have a name server entry at this time. Please "
 "make sure the domain is working before configuring it here."
-msgstr ""
-"该域名 “{domain}” 目前没有名称服务器条目。在此进行配置之前，请确保该域名正在"
+msgstr "该域名 “{domain}” 目前没有名称服务器条目。在此进行配置之前，请确保该域名正在"
 "工作。"
 
 #: pretalx/orga/forms/event.py:239
@@ -27345,8 +27127,7 @@ msgstr "你的默认语言必须是你的活跃语言之一。"
 msgid ""
 "Reply-To address. If this setting is empty and you have no custom sender, "
 "your event email address will be used as Reply-To address."
-msgstr ""
-"回复地址。如果此设置为空且您没有自定义发件人，则您的活动电子邮件地址将用作回"
+msgstr "回复地址。如果此设置为空且您没有自定义发件人，则您的活动电子邮件地址将用作回"
 "复地址。"
 
 #: pretalx/orga/forms/event.py:382
@@ -27487,8 +27268,7 @@ msgstr "限制为轨道"
 #| "apply to all tracks."
 msgid ""
 "You can limit the days shown in the widget. Leave empty to show all days."
-msgstr ""
-"你可以将这个问题限制在某些曲目上。如果要适用于所有曲目，请将此字段留空。"
+msgstr "你可以将这个问题限制在某些曲目上。如果要适用于所有曲目，请将此字段留空。"
 
 #: pretalx/orga/forms/event.py:610
 msgid "Widget language"
@@ -27540,8 +27320,7 @@ msgstr "请为您的 CSV 导出文件选择分隔符。"
 msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
-msgstr ""
-"无效的邮件模板！请检查您是否在某处使用了杂散的 { 或 }，并且在 {} 块内是否没有"
+msgstr "无效的邮件模板！请检查您是否在某处使用了杂散的 { 或 }，并且在 {} 块内是否没有"
 "空格。"
 
 #: pretalx/orga/forms/mails.py:76 pretalx/orga/forms/mails.py:93
@@ -27620,8 +27399,7 @@ msgid ""
 "If you provide only one language, that language will be used for all emails. "
 "If you provide multiple languages, the best fit for each speaker will be "
 "used."
-msgstr ""
-"如果您只提供一种语言，那么所有的邮件都将使用该语言。如果您提供多种语言，将会"
+msgstr "如果您只提供一种语言，那么所有的邮件都将使用该语言。如果您提供多种语言，将会"
 "根据每位收件人的最佳语言进行使用。"
 
 #: pretalx/orga/forms/mails.py:456 pretalx/orga/templates/orga/base.html:264
@@ -27687,8 +27465,7 @@ msgstr "更换当前的任务"
 msgid ""
 "Select to remove all current assignments and replace them with the import. "
 "Otherwise, the import will be an addition to the current assignments."
-msgstr ""
-"选择移除所有当前的任务，并用导入的任务取而代之。否则，导入的任务将会添加到当"
+msgstr "选择移除所有当前的任务，并用导入的任务取而代之。否则，导入的任务将会添加到当"
 "前的任务中。"
 
 #: pretalx/orga/forms/review.py:437
@@ -27831,8 +27608,7 @@ msgid ""
 "If you mark state changes as pending, they won’t be visible to speakers "
 "right away. You can always apply pending changes for some or all proposals "
 "in one go once you’re ready to make your decisions public."
-msgstr ""
-"如果您将状态更改标记为待处理，即使完成了更改，演讲者也无法立即看到。一旦您准"
+msgstr "如果您将状态更改标记为待处理，即使完成了更改，演讲者也无法立即看到。一旦您准"
 "备好公开您的决定，您可以一次性为某些或所有提案应用挂起的更改。"
 
 #: pretalx/orga/forms/submission.py:281
@@ -27900,8 +27676,8 @@ msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
-"选择前页面头部横幅的样式。图案来源：<a href=\"http://www.heropatterns.com/"
-"\">heropatterns.com</a>，采用CC BY 4.0许可。"
+"选择前页面头部横幅的样式。图案来源：<a href=\"http://www.heropatterns.com/\""
+">heropatterns.com</a>，采用CC BY 4.0许可。"
 
 #: pretalx/orga/phrases.py:13
 msgid "Schedule display format"
@@ -27925,8 +27701,7 @@ msgstr "密码重置邮件无法发送，因此密码未被重置。"
 msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
-msgstr ""
-"“{count}封电子邮件已保存到发件箱 - 您可以在发件箱中进行个别更改或全部发送。”"
+msgstr "“{count}封电子邮件已保存到发件箱 - 您可以在发件箱中进行个别更改或全部发送。”"
 
 #: pretalx/orga/templates/orga/admin/admin.html:14
 #: pretalx/orga/templates/orga/admin/admin.html:18
@@ -27939,8 +27714,8 @@ msgid ""
 "and set the DEBUG variable to False if this page is in any way reachable "
 "from the internet."
 msgstr ""
-"你正在开发模式下运行 pretalx。如果这个页面可以通过互联网访问，请<strong>停止"
-"</strong>并将 DEBUG 变量设置为 False。"
+"你正在开发模式下运行 pretalx。如果这个页面可以通过互联网访问，请<strong>停止<"
+"/strong>并将 DEBUG 变量设置为 False。"
 
 #: pretalx/orga/templates/orga/admin/admin.html:33
 msgid "Your pretalx version is:"
@@ -28250,8 +28025,7 @@ msgid ""
 "If you mark a Yes/No field as required, it means that the user has to select "
 "Yes and No is not accepted. If you want to allow both options, do not make "
 "this field required."
-msgstr ""
-"如果您将一个是/否问题标记为必填，这意味着用户必须选择“是”，不接受“否”。如果您"
+msgstr "如果您将一个是/否问题标记为必填，这意味着用户必须选择“是”，不接受“否”。如果您"
 "希望允许两个选项，则不要将此字段设为必填。"
 
 #: pretalx/orga/templates/orga/cfp/question/_form.html:45
@@ -28377,8 +28151,7 @@ msgid ""
 "as clothing sizes, special requirements such as dietary needs, or "
 "accommodation. Custom fields can be configured either on a per-proposal "
 "level, or per speaker, as you see fit."
-msgstr ""
-"问题可以帮助您与演讲者澄清其他细节，比如服装尺码、特殊要求（如饮食需求）或住"
+msgstr "问题可以帮助您与演讲者澄清其他细节，比如服装尺码、特殊要求（如饮食需求）或住"
 "宿。问题可以根据您的需要在每个提案或每个演讲者级别上提出。"
 
 #: pretalx/orga/templates/orga/cfp/question/list.html:53
@@ -28420,8 +28193,7 @@ msgstr "发送提醒"
 msgid ""
 "Here you can limit who will receive reminder emails. You will be able to "
 "review emails before they are sent out."
-msgstr ""
-"在这里，您可以限制谁可以收到提醒邮件。在邮件发送出去之前，您将有机会审核这些"
+msgstr "在这里，您可以限制谁可以收到提醒邮件。在邮件发送出去之前，您将有机会审核这些"
 "邮件。"
 
 #: pretalx/orga/templates/orga/cfp/question/update.html:8
@@ -28434,8 +28206,7 @@ msgid ""
 "This custom field already has responses from some speakers – please consider "
 "carefully if modifying it would render those answers obsolete. You could "
 "also deactivate this field and create a new one instead."
-msgstr ""
-"这个问题已经被部分演讲者回答了 - 请仔细考虑，如果修改它是否会使这些答案过时。"
+msgstr "这个问题已经被部分演讲者回答了 - 请仔细考虑，如果修改它是否会使这些答案过时。"
 "您也可以停用这个问题，改为开始一个新的问题。"
 
 #: pretalx/orga/templates/orga/cfp/submissiontype/list.html:7
@@ -28447,8 +28218,7 @@ msgid ""
 "Different session types may help to guide speakers into different slot "
 "lengths (short sessions vs long sessions) or different presentation formats "
 "(talk vs workshop vs metal concert)."
-msgstr ""
-"不同的会议类型可以帮助引导演讲者选择不同的时间长度（短时间 vs 长时间）或不同"
+msgstr "不同的会议类型可以帮助引导演讲者选择不同的时间长度（短时间 vs 长时间）或不同"
 "的演示形式（讲座 vs 研讨会 vs 金属音乐会）。"
 
 #: pretalx/orga/templates/orga/cfp/submissiontype/list.html:44
@@ -28476,8 +28246,7 @@ msgid ""
 "Access codes can be used to allow proposals even when the CfP is over. You "
 "can also use them for hidden tracks or hidden session types, which can only "
 "be seen with a matching access code."
-msgstr ""
-"访问代码可用于允许提案，即使CfP已经结束。您还可以使用它们进行隐藏的论坛或隐藏"
+msgstr "访问代码可用于允许提案，即使CfP已经结束。您还可以使用它们进行隐藏的论坛或隐藏"
 "的会话类型，这些类型只能通过匹配的访问代码才能看到。"
 
 #: pretalx/orga/templates/orga/cfp/submitteraccesscode/list.html:50
@@ -28598,8 +28367,7 @@ msgid ""
 "settings to determine if speakers can select the track for their session "
 "themselves. Track colors are helpful to help attendees navigate your "
 "schedule."
-msgstr ""
-"Track是用来将您的会话分成不同类别的。您可以使用CfP设置来确定演讲者是否可以自"
+msgstr "Track是用来将您的会话分成不同类别的。您可以使用CfP设置来确定演讲者是否可以自"
 "己选择会话的跟踪。跟踪颜色有助于帮助参会者浏览您的时间表。"
 
 #: pretalx/orga/templates/orga/cfp/track/list.html:45
@@ -28618,9 +28386,8 @@ msgid ""
 "Your event has been created and you’re ready to go! Check out the event "
 "settings, set up your Call for Papers with session types and custom fields, "
 "and you’re ready to go!"
-msgstr ""
-"您的活动已创建完成！在发布前，请检查活动设置，设置演讲征集和议程类型以及问"
-"题。"
+msgstr "您的活动已创建完成！在发布前，请检查活动设置，设置演讲征集和议程类型以及问题"
+"。"
 
 #: pretalx/orga/templates/orga/event/dashboard.html:63
 msgid "Your event is currently"
@@ -28653,8 +28420,7 @@ msgstr "取消事件"
 msgid ""
 "Your event is currently live and publicly visible. If you take it down, it "
 "will only be visible to you and your team."
-msgstr ""
-"你的活动目前正在进行中并且是公共可见的。如果你把它取下，它将只对你和你的团队"
+msgstr "你的活动目前正在进行中并且是公共可见的。如果你把它取下，它将只对你和你的团队"
 "可见。"
 
 #: pretalx/orga/templates/orga/event/live.html:22
@@ -28698,8 +28464,7 @@ msgstr "上一步"
 msgid ""
 "Choose your inital customisations here – you can always change them later, "
 "or enhance them with custom CSS."
-msgstr ""
-"在这里选择您的初始自定义 - 您始终可以稍后更改它们，或使用自定义CSS进行增强。"
+msgstr "在这里选择您的初始自定义 - 您始终可以稍后更改它们，或使用自定义CSS进行增强。"
 
 #: pretalx/orga/templates/orga/event_list.html:48
 msgid ""
@@ -28713,7 +28478,6 @@ msgstr ""
 msgid "proposal"
 msgid_plural "proposals"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/includes/dashboard_block_event.html:19
 msgid "No proposals yet"
@@ -28805,9 +28569,9 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organiser directly."
 msgstr ""
-"若要使用当前活跃帐户接受邀请，请使用下面的按钮。如果您想使用其他帐户接受邀"
-"请，则可以<a href=\"/orga/logout/?next=%(link)s\">注销</a>并使用其他帐户登"
-"录。如果您认为收到此邀请是错误的，请直接联系组织者。"
+"若要使用当前活跃帐户接受邀请，请使用下面的按钮。如果您想使用其他帐户接受邀请"
+"，则可以<a href=\"/orga/logout/?next=%(link)s\">注销</a>并使用其他帐户登录。"
+"如果您认为收到此邀请是错误的，请直接联系组织者。"
 
 #: pretalx/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -28939,8 +28703,7 @@ msgstr ""
 msgid ""
 "There are different placeholders available depending on the template type. "
 "They are explained in detail once you start editing a template."
-msgstr ""
-"根据模板类型，有不同的占位符可用。一旦您开始编辑模板，它们将被详细解释。"
+msgstr "根据模板类型，有不同的占位符可用。一旦您开始编辑模板，它们将被详细解释。"
 
 #: pretalx/orga/templates/orga/mails/mailtemplate/list.html:49
 #, fuzzy
@@ -28982,7 +28745,6 @@ msgstr "复制到草稿"
 msgid "pending mail"
 msgid_plural "pending mails"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/mails/outbox_list.html:24
 msgid "Send all on this page"
@@ -29039,8 +28801,7 @@ msgstr "发送提醒未提交的提案草稿"
 msgid ""
 "These emails will be sent out immediately! They will not be saved to the "
 "outbox or logged first, to protect the privacy of the draft authors."
-msgstr ""
-"这些邮件将立即发送！它们不会被保存到发件箱或先进行日志记录，以保护草稿作者的"
+msgstr "这些邮件将立即发送！它们不会被保存到发件箱或先进行日志记录，以保护草稿作者的"
 "隐私。"
 
 #: pretalx/orga/templates/orga/mails/sent_list.html:8
@@ -29074,7 +28835,6 @@ msgctxt "number of teams"
 msgid "Team"
 msgid_plural "Teams"
 msgstr[0] "团队"
-msgstr[1] "团队"
 
 #: pretalx/orga/templates/orga/organiser/list.html:51
 msgid "There are no organisers you can edit."
@@ -29086,7 +28846,6 @@ msgstr "没有你可以编辑的组织者。"
 msgid "speaker"
 msgid_plural "speakers"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/organiser/speaker_list.html:46
 #: pretalx/orga/templates/orga/speaker/list.html:39
@@ -29166,10 +28925,10 @@ msgid ""
 "be either the reviewer’s email address or their user code (e.g. “34KJN”). "
 "You can find an example file <a href=\"%(href)s\">here</a>."
 msgstr ""
-"您可以在此处从JSON文件上传您的审稿人任务分配。你可以将建议书代码（例"
-"如“UX3N1”）作为键，并将用户识别作为值，或者反之亦然。用户识别可以是审稿人的电"
-"子邮件地址或用户代码（例如“34KJN”）。您可以在<a href=\"%(href)s\">这里</a>找"
-"到一个示例文件。"
+"您可以在此处从JSON文件上传您的审稿人任务分配。你可以将建议书代码（例如“UX3N1”"
+"）作为键，并将用户识别作为值，或者反之亦然。用户识别可以是审稿人的电子邮件地"
+"址或用户代码（例如“34KJN”）。您可以在<a href=\"%(href)s\">这里</a>找到一个示"
+"例文件。"
 
 #: pretalx/orga/templates/orga/review/assignment.html:31
 msgid ""
@@ -29197,8 +28956,8 @@ msgid ""
 "strong> proposals. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"审稿人只能看到和审查<strong>分配给他们的</strong>提案。您可以在您的<a "
-"href=\"%(href)s\">审查设置</a>中更改此设置。"
+"审稿人只能看到和审查<strong>分配给他们的</strong>提案。您可以在您的<a href="
+"\"%(href)s\">审查设置</a>中更改此设置。"
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
 #, python-format
@@ -29216,8 +28975,7 @@ msgid ""
 "This is where you can assign reviewers to specific proposals! Please use "
 "this drop-down to switch between the two assignment modes (assigning "
 "reviewers to proposals or proposals to reviewers)."
-msgstr ""
-"这是您可以指派评审人员到特定提案的地方！请使用此下拉菜单在两个指派模式（将评"
+msgstr "这是您可以指派评审人员到特定提案的地方！请使用此下拉菜单在两个指派模式（将评"
 "审人员分配给提案或提案分配给评审人员）之间切换。"
 
 #: pretalx/orga/templates/orga/review/assignment.html:126
@@ -29247,7 +29005,6 @@ msgstr "评论"
 msgid "Or review the missing proposal here."
 msgid_plural "Or review the missing %(count)s proposals one-by-one."
 msgstr[0] "审阅提案后"
-msgstr[1] "审阅提案后"
 
 #: pretalx/orga/templates/orga/review/bulk.html:35
 #: pretalx/orga/templates/orga/review/dashboard.html:40
@@ -29265,7 +29022,6 @@ msgstr "你似乎还没有任何建议。"
 msgid "%(count)s proposal is waiting for your review."
 msgid_plural "%(count)s proposals are waiting for your review."
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/review/dashboard.html:36
 msgid "Click here to get started!"
@@ -29435,8 +29191,7 @@ msgid ""
 "pretalx provides a range of exports. If none of these match what you are "
 "looking for, you can also provide a custom plugin to export the data – "
 "please ask your administrator to install the plugin."
-msgstr ""
-"pretalx提供了各种导出选项。如果没有符合您需要的选项，您也可以提供一个自定义插"
+msgstr "pretalx提供了各种导出选项。如果没有符合您需要的选项，您也可以提供一个自定义插"
 "件来导出数据 - 请向您的管理员请求安装该插件。"
 
 #: pretalx/orga/templates/orga/schedule/export.html:52
@@ -29574,9 +29329,6 @@ msgid_plural ""
 msgstr[0] ""
 "发布这个新日程时，将生成 <strong>%(notifications)s 封通知邮件</strong> 并放置"
 "在发件箱中，告知演讲者他们的会话时间。"
-msgstr[1] ""
-"发布这个新日程时，将生成 <strong>%(notifications)s 封通知邮件</strong> 并放置"
-"在发件箱中，告知演讲者他们的会话时间。"
 
 #: pretalx/orga/templates/orga/schedule/release.html:51
 msgid "New schedule version"
@@ -29600,7 +29352,6 @@ msgid_plural ""
 "%(count)s sessions are still <strong>unconfirmed</strong> and will not show "
 "up on the public schedule."
 msgstr[0] "%(unconfirmed)s个会话仍未确认，将不会在公开日程表中显示。"
-msgstr[1] "%(unconfirmed)s个会话仍未确认，将不会在公开日程表中显示。"
 
 #: pretalx/orga/templates/orga/schedule/release.html:66
 msgid "See all unconfirmed sessions."
@@ -29613,7 +29364,6 @@ msgstr "查看所有未确认的会话。"
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] "%(unscheduled)s个会议尚未安排时间。"
-msgstr[1] "%(unscheduled)s个会议尚未安排时间。"
 
 #: pretalx/orga/templates/orga/schedule/release.html:76
 #, fuzzy, python-format
@@ -29623,7 +29373,6 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] "%(no_track)s 会话尚未被分配到分支。"
-msgstr[1] "%(no_track)s 会话尚未被分配到分支。"
 
 #: pretalx/orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -29696,8 +29445,7 @@ msgid ""
 "If you don’t configure custom email settings, the global configuration for "
 "this server will be used (ask your administrator for details).<br> We "
 "recommend that you add email settings here explicitly."
-msgstr ""
-"如果您没有配置自定义的电子邮件设置，则将使用此服务器的全局配置（请向管理员询"
+msgstr "如果您没有配置自定义的电子邮件设置，则将使用此服务器的全局配置（请向管理员询"
 "问详细信息）。我们建议您在此明确添加电子邮件设置。"
 
 #: pretalx/orga/templates/orga/settings/review.html:41
@@ -29707,8 +29455,8 @@ msgid ""
 "offered an additional %(quotation_open)sAbstain%(quotation_close)s button "
 "when reviewing proposals."
 msgstr ""
-"如果您不需要评审分数或评审文本，评审人在评审提案时将可选择添加额外"
-"的%(quotation_open)s放弃%(quotation_close)s按键。"
+"如果您不需要评审分数或评审文本，评审人在评审提案时将可选择添加额外的%"
+"(quotation_open)s放弃%(quotation_close)s按键。"
 
 #: pretalx/orga/templates/orga/settings/review.html:57
 msgid ""
@@ -29716,8 +29464,7 @@ msgid ""
 "multiple scores, they will be added up to a final total score. If you want, "
 "this total score can be weighted. Currently, the total score is calculated "
 "as:"
-msgstr ""
-"你可以要求评审人提供一个或多个分数。如果您要求多个分数，则它们将加起来形成最"
+msgstr "你可以要求评审人提供一个或多个分数。如果您要求多个分数，则它们将加起来形成最"
 "终总分。如果您愿意，可以对总分进行加权。当前，总分的计算方式如下："
 
 #: pretalx/orga/templates/orga/settings/review.html:76
@@ -29780,9 +29527,8 @@ msgid ""
 "You can configure a pretalx schedule widget to show your event schedule on "
 "your homepage, instead of using this page. If you want to disable the "
 "schedule on here entirely, please activate the setting below."
-msgstr ""
-"您可以配置一个 Pretalx 日程小部件，在您的主页上展示活动日程，而不是使用此页"
-"面。如果您想完全禁用此页面上的日程，请激活下面的设置。"
+msgstr "您可以配置一个 Pretalx 日程小部件，在您的主页上展示活动日程，而不是使用此页面"
+"。如果您想完全禁用此页面上的日程，请激活下面的设置。"
 
 #: pretalx/orga/templates/orga/settings/widget.html:44
 msgid ""
@@ -29808,8 +29554,7 @@ msgstr "生成小部件"
 msgid ""
 "To embed the widget into your website, copy the following code to the "
 "<code>&lt;head></code> section of your website:"
-msgstr ""
-"将小部件嵌入您的网站，将以下代码复制到您网站的<code>&lt;head></code>部分："
+msgstr "将小部件嵌入您的网站，将以下代码复制到您网站的<code>&lt;head></code>部分："
 
 #: pretalx/orga/templates/orga/settings/widget.html:90
 #, python-format
@@ -29859,15 +29604,13 @@ msgstr "此发言人尚未收到任何邮件。"
 msgid "Speaker Information Note"
 msgid_plural "Speaker Information Notes"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:35
 msgid ""
 "Add important messages (e.g. “Please bring an HDMI adapter if required.”) or "
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
-msgstr ""
-"添加重要信息（例如：“如有需要请携带HDMI转接器”）或文件（例如会议风格指南）。"
+msgstr "添加重要信息（例如：“如有需要请携带HDMI转接器”）或文件（例如会议风格指南）。"
 "它们会显示在已选演讲者的已提交议程列表之上。"
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
@@ -29880,7 +29623,6 @@ msgstr "添加一条新的注释"
 msgid "submitter"
 msgid_plural "submitters"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/speaker/list.html:66
 msgid "Arrived"
@@ -29946,8 +29688,7 @@ msgid ""
 "If a review phase with anonymisation is currently active, all reviewers who "
 "have no permissions to change this proposal will be shown the anonymised "
 "proposal content."
-msgstr ""
-"如果当前处于带有匿名处理的审查阶段，所有没有更改此提案权限的审阅者将看到已匿"
+msgstr "如果当前处于带有匿名处理的审查阶段，所有没有更改此提案权限的审阅者将看到已匿"
 "名处理的提案内容。"
 
 #: pretalx/orga/templates/orga/submission/anonymise.html:65
@@ -30050,7 +29791,6 @@ msgstr "建议供稿"
 msgid "session"
 msgid_plural "sessions"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/templates/orga/submission/list.html:51
 #, fuzzy
@@ -30322,8 +30062,7 @@ msgstr "访问代码"
 msgid ""
 "This access code has been used for a proposal and cannot be deleted. To "
 "disable it, you can set its validity date to the past."
-msgstr ""
-"此访问代码已用于提案，无法删除。要禁用它，您可以将其有效日期设置为过去。"
+msgstr "此访问代码已用于提案，无法删除。要禁用它，您可以将其有效日期设置为过去。"
 
 #: pretalx/orga/views/cfp.py:538
 msgid "The access code has been sent."
@@ -30337,7 +30076,6 @@ msgstr "直到CfP结束"
 msgid "unsubmitted proposal draft"
 msgid_plural "unsubmitted proposal drafts"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/dashboard.py:171
 msgid "Send reminder"
@@ -30351,19 +30089,16 @@ msgstr "活跃的审查者"
 msgid "proposal is waiting for your review."
 msgid_plural "proposals are waiting for your review."
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/dashboard.py:263
 msgid "day until event start"
 msgid_plural "days until event start"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/dashboard.py:274
 msgid "day since event end"
 msgid_plural "days since event end"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/dashboard.py:283
 #, python-brace-format
@@ -30389,7 +30124,6 @@ msgstr "未确认"
 msgid "submission with pending changes"
 msgid_plural "submissions with pending changes"
 msgstr[0] "应用待定更改"
-msgstr[1] "应用待定更改"
 
 #: pretalx/orga/views/dashboard.py:380
 #: pretalx/submission/models/submission.py:77
@@ -30400,7 +30134,6 @@ msgstr "拒绝"
 msgid "sent email"
 msgid_plural "sent emails"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/event.py:110
 #, fuzzy
@@ -30420,8 +30153,7 @@ msgstr "这个活动还没有着陆页面的文本。"
 msgid ""
 "You want submitters to choose the tracks for their proposals, but you do not "
 "offer tracks for selection. Add at least one track!"
-msgstr ""
-"你希望提交者为他们的提案选择分支，但你并没有提供可供选择的分支。请至少添加一"
+msgstr "你希望提交者为他们的提案选择分支，但你并没有提供可供选择的分支。请至少添加一"
 "个分支！"
 
 #: pretalx/orga/views/event.py:183
@@ -30480,9 +30212,8 @@ msgid ""
 "We’ve been able to contact the SMTP server you configured. Remember to check "
 "the “use custom SMTP server” checkbox, otherwise your SMTP server will not "
 "be used."
-msgstr ""
-"我们已经成功联系上您配置的SMTP服务器。请记得勾选“使用自定义SMTP服务器”复选"
-"框，否则您的SMTP服务器将不会被使用。"
+msgstr "我们已经成功联系上您配置的SMTP服务器。请记得勾选“使用自定义SMTP服务器”复选框"
+"，否则您的SMTP服务器将不会被使用。"
 
 #: pretalx/orga/views/event.py:511
 msgid ""
@@ -30544,7 +30275,6 @@ msgstr "{count} 封邮件已发送。"
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/mails.py:228
 msgid ""
@@ -30557,7 +30287,6 @@ msgstr "此邮件可能不存在，或者无法丢弃，因为它已经被发送
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/mails.py:256
 #, python-brace-format
@@ -30659,17 +30388,15 @@ msgstr "该成员被从团队中移除。"
 msgid ""
 "Do your really want to reset this user’s password? They won’t be able to log "
 "in until they set a new password."
-msgstr ""
-"你真的想要重置这个用户的密码吗？在他们设置新密码之前，他们将无法登录。该电子"
+msgstr "你真的想要重置这个用户的密码吗？在他们设置新密码之前，他们将无法登录。该电子"
 "邮件将发送至：."
 
 #: pretalx/orga/views/organiser.py:327
 msgid ""
 "ALL related data for ALL events, such as proposals, and speaker profiles, "
 "and uploads, will also be deleted and cannot be restored."
-msgstr ""
-"所有与所有活动相关的数据，如提案、演讲者简介和文件上传，也将被删除，无法恢"
-"复。"
+msgstr "所有与所有活动相关的数据，如提案、演讲者简介和文件上传，也将被删除，无法恢复"
+"。"
 
 #: pretalx/orga/views/organiser.py:351
 #, fuzzy
@@ -30733,8 +30460,7 @@ msgstr "标签已被删除。"
 msgid ""
 "Do you really want to regenerate %(count)s acceptance and rejection emails? "
 "They will be placed in the outbox and not sent out directly."
-msgstr ""
-"你真的想要重新产生%(count)s份接受和拒绝的电子邮件吗？它们会被放置在发件箱而不"
+msgstr "你真的想要重新产生%(count)s份接受和拒绝的电子邮件吗？它们会被放置在发件箱而不"
 "是直接发送出去。"
 
 #: pretalx/orga/views/review.py:740
@@ -30992,8 +30718,7 @@ msgstr "抱歉，您的帐户目前已被停用。"
 msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
-msgstr ""
-"我们已经有一个使用该电子邮件地址的用户了。您之前已经注册过了，只需要登录吗？"
+msgstr "我们已经有一个使用该电子邮件地址的用户了。您之前已经注册过了，只需要登录吗？"
 
 #: pretalx/person/models/auth_token.py:75
 #, fuzzy
@@ -31029,8 +30754,7 @@ msgstr ""
 msgid ""
 "Please enter the name you wish to be displayed publicly. This name will be "
 "used for all events you are participating in on this server."
-msgstr ""
-"请键入您希望公开展示的姓名。此姓名将用于您在此服务器上参加的所有活动中。"
+msgstr "请键入您希望公开展示的姓名。此姓名将用于您在此服务器上参加的所有活动中。"
 
 #: pretalx/person/models/user.py:133
 msgid ""
@@ -31052,8 +30776,7 @@ msgstr "通过 gravatar 检索个人头像"
 msgid ""
 "If you have registered with an email address that has a gravatar account, we "
 "can retrieve your profile picture from there."
-msgstr ""
-"如果您使用一个已经注册了 gravatar 账户的电子邮件地址，我们可以从那里获取您的"
+msgstr "如果您使用一个已经注册了 gravatar 账户的电子邮件地址，我们可以从那里获取您的"
 "个人资料图片。"
 
 #: pretalx/person/models/user.py:195
@@ -31124,8 +30847,7 @@ msgid ""
 "Please click and drag to mark your availability during the conference with "
 "green blocks. We will try to schedule your slot during these times. You can "
 "click a block twice to remove it."
-msgstr ""
-"请点击并拖动绿色方块标记您在会议期间的可用时间。我们将尽力安排您的时间段在这"
+msgstr "请点击并拖动绿色方块标记您在会议期间的可用时间。我们将尽力安排您的时间段在这"
 "些时间内。您可以双击一个方块以删除它。"
 
 #: pretalx/schedule/forms.py:77
@@ -31359,8 +31081,7 @@ msgid ""
 "If you have a co-speaker, please add their email address here, and we will "
 "invite them to create an account. If you have more than one co-speaker, you "
 "can add more speakers after finishing the proposal process."
-msgstr ""
-"如果您有共同演讲者，请在此处添加他们的电子邮件地址，我们将邀请他们创建账户。"
+msgstr "如果您有共同演讲者，请在此处添加他们的电子邮件地址，我们将邀请他们创建账户。"
 "如果您有多个共同演讲者，在提交提案后，您可以添加更多演讲者。"
 
 #: pretalx/submission/forms/submission.py:40
@@ -31512,8 +31233,7 @@ msgstr "需要的。"
 #| "apply to all tracks."
 msgid ""
 "You can limit this field to some tracks. Leave empty to apply to all tracks."
-msgstr ""
-"你可以将这个问题限制在某些曲目上。如果要适用于所有曲目，请将此字段留空。"
+msgstr "你可以将这个问题限制在某些曲目上。如果要适用于所有曲目，请将此字段留空。"
 
 #: pretalx/submission/models/question.py:179
 #, fuzzy
@@ -31523,8 +31243,7 @@ msgstr ""
 msgid ""
 "You can limit this field to some session types. Leave empty to apply to all "
 "session types."
-msgstr ""
-"您可以将此问题限制为某些会话类型。如果要应用于所有会话类型，请将此字段留空。"
+msgstr "您可以将此问题限制为某些会话类型。如果要应用于所有会话类型，请将此字段留空。"
 
 #: pretalx/submission/models/question.py:181
 msgid "Session Types"
@@ -31602,8 +31321,7 @@ msgid ""
 "Responses will be shown on session or speaker pages as appropriate. Please "
 "note that you cannot make a field public after the first answers have been "
 "given, to allow speakers explicit consent before publishing information."
-msgstr ""
-"答案将适当地显示在会议或演讲者页面上。请注意，在第一个答案被给出后，您不能公"
+msgstr "答案将适当地显示在会议或演讲者页面上。请注意，在第一个答案被给出后，您不能公"
 "开提问，以允许演讲者在发布信息前进行明确同意。"
 
 #: pretalx/submission/models/question.py:267
@@ -31618,8 +31336,7 @@ msgstr "展示答复给审稿人。"
 msgid ""
 "Should responses to this field be shown to reviewers? This is helpful if you "
 "want to collect personal information, but use anonymous reviews."
-msgstr ""
-"这个问题的答案应该展示给审核者吗？如果你想收集个人信息，那么这很有帮助，但如"
+msgstr "这个问题的答案应该展示给审核者吗？如果你想收集个人信息，那么这很有帮助，但如"
 "果使用匿名评论则不需要。"
 
 #: pretalx/submission/models/review.py:34
@@ -31715,8 +31432,7 @@ msgstr "演讲者可以在接受之前修改他们的建议。"
 msgid ""
 "By default, modification of proposals is locked after the CfP ends, and is "
 "re-enabled once the proposal was accepted."
-msgstr ""
-"默认情况下，在征集提案截止日期之后，修改提案是被锁定的，一旦提案被接受，就会"
+msgstr "默认情况下，在征集提案截止日期之后，修改提案是被锁定的，一旦提案被接受，就会"
 "重新启用。"
 
 #: pretalx/submission/models/submission.py:74 pretalx/submission/phrases.py:13

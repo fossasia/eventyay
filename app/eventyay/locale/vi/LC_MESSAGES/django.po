@@ -8,14 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"PO-Revision-Date: 2025-11-30 11:25+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Vietnamese <https://hosted.weblate.org/projects/eventyay/"
+"eventyay/vi/>\n"
 "Language: vi\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -13257,7 +13259,6 @@ msgstr ""
 msgid "That will cause %(count)s voucher to be unusable."
 msgid_plural "That will cause %(count)s voucher to be unusable."
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/control/templates/pretixcontrol/item/delete.html:29
 #: eventyay/control/templates/pretixcontrol/items/quota_delete.html:31
@@ -14830,7 +14831,6 @@ msgstr ""
 msgid "1 order"
 msgid_plural "%(s)s orders"
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:5
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:12
@@ -16774,7 +16774,6 @@ msgstr ""
 msgid "{num} order"
 msgid_plural "{num} orders"
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/control/views/event.py:185
 #: eventyay/control/views/organizer_views/organizer_view.py:127
@@ -18692,7 +18691,6 @@ msgid_plural ""
 "You are trying to download a refund export from %(date)s with %(cnt)s order "
 "and a total of %(sum)s."
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -19831,7 +19829,6 @@ msgstr ""
 msgid "You need to choose exactly one option from this category."
 msgid_plural "You need to choose %(min_count)s options from this category."
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_addons.html:53
 #, python-format
@@ -20191,7 +20188,6 @@ msgstr ""
 msgid "One product"
 msgid_plural "%(num)s products"
 msgstr[0] ""
-msgstr[1] ""
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:298
 #, python-format
@@ -21544,9 +21540,9 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Để xem chương trình hội thảo, vui lòng bật JavaScript hoặc truy cập <a "
-"href=\"%(href)s\">vào đây</a> để xem chương trình không có hiệu ứng "
-"JavaScript (NoJS)."
+"Để xem chương trình hội thảo, vui lòng bật JavaScript hoặc truy cập <a href="
+"\"%(href)s\">vào đây</a> để xem chương trình không có hiệu ứng JavaScript "
+"(NoJS)."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -21556,8 +21552,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Để xem chương trình của chúng tôi với đầy đủ chức năng, như chuyển đổi múi "
-"giờ và lập lịch trình cá nhân, vui lòng bật JavaScript và truy cập <a "
-"href=\"%(href)s\">tại đây</a>."
+"giờ và lập lịch trình cá nhân, vui lòng bật JavaScript và truy cập <a href="
+"\"%(href)s\">tại đây</a>."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -21716,10 +21712,10 @@ msgid ""
 "instructions. If you don’t see the email within the next minutes, check your "
 "spam inbox!"
 msgstr ""
-"Nếu địa chỉ email này có trong danh sách người dùng (và họ không gửi yêu cầu "
-"đặt lại mật khẩu trong vòng 24 giờ qua), chúng tôi sẽ gửi cho quý vị một "
-"email có hướng dẫn thêm. Nếu quý vị không thấy email trong vòng vài phút "
-"tới, hãy kiểm tra hộp thư rác!"
+"Nếu địa chỉ email này có trong danh sách người dùng "
+"(và họ không gửi yêu cầu đặt lại mật khẩu trong vòng 24 giờ qua), chúng tôi "
+"sẽ gửi cho quý vị một email có hướng dẫn thêm. Nếu quý vị không thấy email "
+"trong vòng vài phút tới, hãy kiểm tra hộp thư rác!"
 
 #: pretalx/cfp/phrases.py:14
 msgid ""
@@ -21835,8 +21831,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Quý vị có gửi đề xuất từ bây giờ cho đến %(deadline)s (%(timezone)s), "
-"%(until_string)s ."
+"Quý vị có gửi đề xuất từ bây giờ cho đến %(deadline)s (%(timezone)s), %"
+"(until_string)s ."
 
 #: pretalx/cfp/templates/cfp/event/cfp.html:28
 #, python-format
@@ -23204,8 +23200,7 @@ msgstr "Mật khẩu mới (nhập lại)"
 
 #: pretalx/common/text/phrases.py:94
 msgid "You entered two different passwords. Please enter the same one twice!"
-msgstr ""
-"Bạn đã nhập hai mật khẩu khác nhau. Vui lòng nhập cùng một cái hai lần!"
+msgstr "Bạn đã nhập hai mật khẩu khác nhau. Vui lòng nhập cùng một cái hai lần!"
 
 #: pretalx/common/text/phrases.py:96
 msgctxt "noun / heading"
@@ -23374,8 +23369,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"Tên ngắn này đã có người dùng, vui lòng chọn tên khác (hoặc yêu cầu Ban Tổ "
-"chức hội thảo đó thêm quý vị vào nhóm của họ)."
+"Tên ngắn này đã có người dùng, vui lòng chọn tên khác "
+"(hoặc yêu cầu Ban Tổ chức hội thảo đó thêm quý vị vào nhóm của họ)."
 
 #: pretalx/event/forms.py:244
 msgid ""
@@ -23446,8 +23441,7 @@ msgstr "CSS tuỳ chỉnh cho hội thảo"
 msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
-msgstr ""
-"Tải lên tệp CSS tùy chỉnh nếu việc thay đổi màu chính không đủ với bạn."
+msgstr "Tải lên tệp CSS tùy chỉnh nếu việc thay đổi màu chính không đủ với bạn."
 
 #: pretalx/event/models/event.py:236
 msgid "Logo"
@@ -23606,8 +23600,8 @@ msgid ""
 "Apply permissions to all events by this organiser (including newly created "
 "ones)"
 msgstr ""
-"Áp dụng quyền cho tất cả các hội thảo của Ban tổ chức này (bao gồm cả những "
-"hội thảo mới tạo)"
+"Áp dụng quyền cho tất cả các hội thảo của Ban tổ chức này "
+"(bao gồm cả những hội thảo mới tạo)"
 
 #: pretalx/event/models/organiser.py:200
 msgid "Limit permissions to these events"
@@ -24845,8 +24839,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Quý vị muốn phân tách dữ liệu trong một ô như thế nào (ví dụ: nhiều người "
-"nói trong một phiên)?"
+"Quý vị muốn phân tách dữ liệu trong một ô như thế nào "
+"(ví dụ: nhiều người nói trong một phiên)?"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -25082,8 +25076,7 @@ msgstr "Điểm đánh giá trung bình (average), nếu đã có đánh giá"
 
 #: pretalx/orga/forms/schedule.py:162
 msgid "Resources provided by the speaker, either as links or as uploaded files"
-msgstr ""
-"Tài nguyên do diễn giả cung cấp, dưới dạng liên kết hoặc tệp đã tải lên"
+msgstr "Tài nguyên do diễn giả cung cấp, dưới dạng liên kết hoặc tệp đã tải lên"
 
 #: pretalx/orga/forms/speaker.py:17
 #, fuzzy
@@ -25188,8 +25181,8 @@ msgid ""
 msgstr ""
 "Các bản dịch này không được nhóm pretalx duy trì. Chúng tôi không thể đảm "
 "bảo tính chính xác của chúng và các tính năng mới hoặc mới thay đổi gần đây "
-"có thể không được dịch và sẽ hiển thị bằng tiếng Anh. Bạn có thể <a "
-"href=\"{url}\" target=\"_blank\">đóng góp vào các bản dịch</a>."
+"có thể không được dịch và sẽ hiển thị bằng tiếng Anh. Bạn có thể <a href="
+"\"{url}\" target=\"_blank\">đóng góp vào các bản dịch</a>."
 
 #: pretalx/orga/phrases.py:7
 msgid "The event end cannot be before the start."
@@ -25204,8 +25197,8 @@ msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
-"Chọn cách tạo kiểu cho biểu ngữ tiêu đề trang chủ. Nguồn mẫu: <a "
-"href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
+"Chọn cách tạo kiểu cho biểu ngữ tiêu đề trang chủ. Nguồn mẫu: <a href="
+"\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 
 #: pretalx/orga/phrases.py:13
 msgid "Schedule display format"
@@ -26462,8 +26455,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Người bình duyệt sẽ có thể xem và đánh giá <strong>chỉ những đề xuất được "
-"giao</strong>. Quý vị có thể thay đổi điều này trong <a "
-"href=\"%(href)s\">cài đặt bình duyệt</a> của mình."
+"giao</strong>. Quý vị có thể thay đổi điều này trong <a href=\"%(href)s\""
+">cài đặt bình duyệt</a> của mình."
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
 #, python-format
@@ -26485,9 +26478,8 @@ msgid ""
 "reviewers to proposals or proposals to reviewers)."
 msgstr ""
 "Đây là nơi quý vị có thể chỉ định người bình duyệt cho các đề xuất cụ thể! "
-"Vui lòng sử dụng menu thả xuống này để chuyển đổi giữa hai chế độ chỉ định "
-"(chỉ định người bình duyệt cho các đề xuất hoặc đề xuất cho người bình "
-"duyệt)."
+"Vui lòng sử dụng menu thả xuống này để chuyển đổi giữa hai chế độ chỉ định ("
+"chỉ định người bình duyệt cho các đề xuất hoặc đề xuất cho người bình duyệt)."
 
 #: pretalx/orga/templates/orga/review/assignment.html:126
 msgid ""
@@ -26824,8 +26816,7 @@ msgstr ""
 #: pretalx/orga/templates/orga/schedule/release.html:32
 #, python-format
 msgid "The previous schedule (%(prev)s) was released %(since)s ago."
-msgstr ""
-"Lịch hội thảo trước đó (%(prev)s) đã được phát hành cách đây %(since)s."
+msgstr "Lịch hội thảo trước đó (%(prev)s) đã được phát hành cách đây %(since)s."
 
 #: pretalx/orga/templates/orga/schedule/release.html:36
 msgid "This will be the very first schedule release."
@@ -26880,8 +26871,7 @@ msgstr[0] "%(count)s phiên <strong>vẫn chưa được xác nhận</strong>."
 msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
-msgstr[0] ""
-"%(count)s phiên hội thảo <strong>chưa được xếp vào một kênh</strong>."
+msgstr[0] "%(count)s phiên hội thảo <strong>chưa được xếp vào một kênh</strong>."
 
 #: pretalx/orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -26961,8 +26951,9 @@ msgid ""
 "recommend that you add email settings here explicitly."
 msgstr ""
 "Nếu quý vị không cấu hình cài đặt email tùy chỉnh, cấu hình chung cho máy "
-"chủ này sẽ được sử dụng (hãy hỏi quản trị viên của quý vị để biết chi tiết)."
-"<br> Chúng tôi khuyên quý vị nên thêm cài đặt email tại đây một cách rõ ràng."
+"chủ này sẽ được sử dụng (hãy hỏi quản trị viên của quý vị để biết chi tiết)"
+".<br> Chúng tôi khuyên quý vị nên thêm cài đặt email tại đây một cách rõ "
+"ràng."
 
 #: pretalx/orga/templates/orga/settings/review.html:41
 #, python-format
@@ -26972,8 +26963,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Nếu quý vị không yêu cầu điểm bình duyệt cũng như văn bản bình duyệt, người "
-"bình duyệt sẽ được cung cấp thêm nút %(quotation_open)sBỏ "
-"qua%(quotation_close)s khi đánh giá đề xuất."
+"bình duyệt sẽ được cung cấp thêm nút %(quotation_open)sBỏ qua%"
+"(quotation_close)s khi đánh giá đề xuất."
 
 #: pretalx/orga/templates/orga/settings/review.html:57
 msgid ""
@@ -27144,10 +27135,11 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Thêm các thông điệp quan trọng (ví dụ: \"Vui lòng mang theo bộ chuyển đổi "
-"HDMI nếu cần.\") hoặc các tệp (ví dụ: hướng dẫn về phong cách hội thảo). "
-"<br> Chúng được hiển thị cho những diễn giả đã được mời thuyết trình ở phía "
-"trên danh sách các phiên hội thảo mà họ đã nộp."
+"Thêm các thông điệp quan trọng "
+"(ví dụ: \"Vui lòng mang theo bộ chuyển đổi HDMI nếu cần.\") hoặc các tệp "
+"(ví dụ: hướng dẫn về phong cách hội thảo). <br> Chúng được hiển thị cho "
+"những diễn giả đã được mời thuyết trình ở phía trên danh sách các phiên hội "
+"thảo mà họ đã nộp."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -27633,7 +27625,6 @@ msgstr[0] "ngày trước khi bắt đầu"
 msgid "day since event end"
 msgid_plural "days since event end"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/dashboard.py:283
 #, python-brace-format
@@ -27669,7 +27660,6 @@ msgstr ""
 msgid "sent email"
 msgid_plural "sent emails"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/event.py:110
 msgid "Localisation"
@@ -27801,7 +27791,6 @@ msgstr ""
 msgid "Do you really want to delete this mail?"
 msgid_plural "Do you really want to purge {count} mails?"
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/mails.py:228
 msgid ""
@@ -27814,7 +27803,6 @@ msgstr ""
 msgid "The mail has been discarded."
 msgid_plural "{count} mails have been discarded."
 msgstr[0] ""
-msgstr[1] ""
 
 #: pretalx/orga/views/mails.py:256
 #, python-brace-format

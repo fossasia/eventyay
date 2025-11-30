@@ -7,16 +7,16 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2021-03-14 17:33+0000\n"
-"Last-Translator: Raphael Michel <michel@rami.io>\n"
-"Language-Team: Dutch <https://translate.eventyay.com/projects/pretix/pretix/"
+"PO-Revision-Date: 2025-11-30 12:59+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Dutch <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "nl/>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 4.4.2\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -231,8 +231,7 @@ msgstr "Deze gebruiker heeft al rechten voor dit team."
 msgid ""
 "The application \"{application_name}\" has been authorized to access your "
 "account."
-msgstr ""
-"De applicatie \"{application_name}\" is toegang gegeven tot uw account."
+msgstr "De applicatie \"{application_name}\" is toegang gegeven tot uw account."
 
 #: eventyay/api/views/order.py:464 eventyay/control/views/orders.py:1195
 #: eventyay/presale/views/order.py:663 eventyay/presale/views/order.py:728
@@ -389,8 +388,8 @@ msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
-"Toon nettoprijzen in plaats van brutoprijzen in de productlijst (niet "
-"aanbevolen!)"
+"Toon nettoprijzen in plaats van brutoprijzen in de productlijst "
+"(niet aanbevolen!)"
 
 #: eventyay/base/configurations/default_setting.py:77
 #, fuzzy
@@ -875,8 +874,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Hide \"payment pending\" state on customer-facing pages"
 msgid "Hide \"payment pending\" state on attendee-facing pages"
-msgstr ""
-"Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
+msgstr "Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
 
 #: eventyay/base/configurations/default_setting.py:641
 #, fuzzy
@@ -905,8 +903,8 @@ msgid ""
 msgstr ""
 "Accepteer betalingen voor bestellingen zelfs wanneer ze in de 'verlopen'-"
 "staat zijn, zolang er genoeg capaciteit beschikbaar is. Er zullen nooit "
-"betalingen worden geaccepteerd na de 'Laatste datum van betalingen' (zie "
-"boven)."
+"betalingen worden geaccepteerd na de 'Laatste datum van betalingen' "
+"(zie boven)."
 
 #: eventyay/base/configurations/default_setting.py:672
 msgid "Show start date"
@@ -1405,10 +1403,11 @@ msgid ""
 msgstr ""
 "Als dit is ingeschakeld zullen tickets niet direct na een bestelling te "
 "downloaden zijn. De tickets zullen als bijlage bij de "
-"betalingsbevestigingsmail worden gevoegd (als de bestanden niet te groot "
-"zijn) en de klant zal de tickets kunnen downloaden van de bestellingspagina "
-"zodra de klant op een link in de e-mail klikt. Dit heeft geen invloed op "
-"bestellingen via andere verkoopkanalen dan de online ticketwinkel."
+"betalingsbevestigingsmail worden gevoegd "
+"(als de bestanden niet te groot zijn) en de klant zal de tickets kunnen "
+"downloaden van de bestellingspagina zodra de klant op een link in de e-mail "
+"klikt. Dit heeft geen invloed op bestellingen via andere verkoopkanalen dan "
+"de online ticketwinkel."
 
 #: eventyay/base/configurations/default_setting.py:1218
 #: eventyay/control/forms/event.py:1506
@@ -1713,8 +1712,8 @@ msgid ""
 "Tickets will never be attached if they're larger than {size} to avoid email "
 "delivery problems."
 msgstr ""
-"Tickets worden nooit bijgevoegd bij een e-mail als ze groter zijn dan "
-"{size}, om problemen met het versturen van de e-mail te voorkomen."
+"Tickets worden nooit bijgevoegd bij een e-mail als ze groter zijn dan {size}"
+", om problemen met het versturen van de e-mail te voorkomen."
 
 #: eventyay/base/configurations/default_setting.py:1597
 msgid "Attach calendar files"
@@ -4136,8 +4135,8 @@ msgid ""
 "There already is an account associated with this e-mail address. Please "
 "choose a different one."
 msgstr ""
-"Er is al een account gekoppeld aan dit e-mailadres. Kies een ander e-"
-"mailadres."
+"Er is al een account gekoppeld aan dit e-mailadres. Kies een ander "
+"e-mailadres."
 
 #: eventyay/base/forms/user.py:19
 msgid ""
@@ -5664,9 +5663,10 @@ msgstr ""
 "gebeuren wanneer de klanten zowel bij de ingang als de uitgang van uw "
 "evenement worden gescand en de scan bij de uitgang later is dan de scan bij "
 "de ingang. Het maakt niet uit welke inchecklijst wordt gebruikt voor de "
-"scans, tenzij voor de inchecklijst de optie \"Sta opnieuw binnenkomen na een "
-"uitgangsscan toe\" is ingeschakeld. Als dit het geval is zal het quotum niet "
-"worden aangepast om te voorkomen dat uw evenement onbedoeld overvol raakt."
+"scans, tenzij voor de inchecklijst de optie "
+"\"Sta opnieuw binnenkomen na een uitgangsscan toe\" is ingeschakeld. Als dit "
+"het geval is zal het quotum niet worden aangepast om te voorkomen dat uw "
+"evenement onbedoeld overvol raakt."
 
 #: eventyay/base/models/items.py:1415 eventyay/base/models/vouchers.py:172
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:8
@@ -6552,8 +6552,8 @@ msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
 msgstr ""
-"De stoel \"{id}\" is momenteel niet beschikbaar (geblokkeerd, al verkocht of "
-"toegewezen aan een andere voucher)."
+"De stoel \"{id}\" is momenteel niet beschikbaar "
+"(geblokkeerd, al verkocht of toegewezen aan een andere voucher)."
 
 #: eventyay/base/models/vouchers.py:376
 msgid "You need to choose a specific product if you select a seat."
@@ -8453,8 +8453,8 @@ msgstr "De voucher is verstuurd naar {recipient}."
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
-"Uw standaardtaal moet ook zijn ingeschakeld voor uw evenement (zie "
-"hierboven)."
+"Uw standaardtaal moet ook zijn ingeschakeld voor uw evenement (zie hierboven)"
+"."
 
 #: eventyay/base/settings.py:116
 msgid ""
@@ -9954,8 +9954,7 @@ msgstr "Extra footertekst"
 
 #: eventyay/control/forms/global_settings.py:55
 msgid "Will be included as additional text in the footer, site-wide."
-msgstr ""
-"Zal over de hele website als extra tekst in de footer worden opgenomen."
+msgstr "Zal over de hele website als extra tekst in de footer worden opgenomen."
 
 #: eventyay/control/forms/global_settings.py:60
 msgid "Additional footer link"
@@ -11117,8 +11116,8 @@ msgstr "Een nieuw geheim is gegenereerd voor plaats #{posid}."
 msgid ""
 "Position #{posid} ({old_item}, {old_price}) split into new order: {order}"
 msgstr ""
-"Plaats #{posid} ({old_item}, {old_price}) afgesplitst naar nieuwe "
-"bestelling: {order}"
+"Plaats #{posid} ({old_item}, {old_price}) afgesplitst naar nieuwe bestelling:"
+" {order}"
 
 #: eventyay/control/logdisplay.py:142
 #, python-brace-format
@@ -11146,8 +11145,8 @@ msgstr ""
 msgid ""
 "Unknown scan of code \"{barcode}…\" for list \"{list}\", type \"{type}\"."
 msgstr ""
-"Onbekende scan van code \"{barcode}…\" voor lijst \"{list}\", type \"{type}"
-"\"."
+"Onbekende scan van code \"{barcode}…\" voor lijst \"{list}\", type \"{type}\""
+"."
 
 #: eventyay/control/logdisplay.py:189
 #, python-brace-format
@@ -11164,8 +11163,8 @@ msgid ""
 "Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
 "uploaded."
 msgstr ""
-"Scan van ingetrokken code \"{barcode}\" voor lijst \"{list}\", type \"{type}"
-"\" is geüpload."
+"Scan van ingetrokken code \"{barcode}\" voor lijst \"{list}\", type "
+"\"{type}\" is geüpload."
 
 #: eventyay/control/logdisplay.py:210
 #, python-brace-format
@@ -11173,8 +11172,8 @@ msgid ""
 "Denied scan of position #{posid} at {datetime} for list \"{list}\", type "
 "\"{type}\", error code \"{errorcode}\"."
 msgstr ""
-"Een scan voor plaats #{posid} is geweigerd om {datetime} voor lijst \"{list}"
-"\", type \"{type}\". Foutcode: \"{errorcode}\"."
+"Een scan voor plaats #{posid} is geweigerd om {datetime} voor lijst "
+"\"{list}\", type \"{type}\". Foutcode: \"{errorcode}\"."
 
 #: eventyay/control/logdisplay.py:221
 #, python-brace-format
@@ -12894,8 +12893,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Als u al een account op deze site heeft met een ander e-mailadres kunt u <a "
-"%(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
+"Als u al een account op deze site heeft met een ander e-mailadres kunt u <a %"
+"(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
 "uitnodiging met uw bestaande account te accepteren."
 
 #: eventyay/control/templates/pretixcontrol/auth/invite.html:23
@@ -14243,9 +14242,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Er zijn geen betalingsproviders beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere betalingsplug-ins."
+"Er zijn geen betalingsproviders beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"betalingsplug-ins."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:67
 msgid "Deadlines"
@@ -14461,11 +14460,12 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"pretix ondersteunt een <a href=\"https://eventyay.com/about/en/features/"
-"payment\" target=\"_blank\">breed scala aan betalingsproviders</a> die u "
-"toestaan om de betalingsmethoden te kiezen die het beste bij uw workflow "
-"passen. Hier zijn twee ervan als voorbeelden, u kunt er meer toevoegen in "
-"het \"Instellingen\"-gedeelte van uw evenement."
+"pretix ondersteunt een <a href="
+"\"https://eventyay.com/about/en/features/payment\" target=\"_blank\">breed "
+"scala aan betalingsproviders</a> die u toestaan om de betalingsmethoden te "
+"kiezen die het beste bij uw workflow passen. Hier zijn twee ervan als "
+"voorbeelden, u kunt er meer toevoegen in het \"Instellingen\"-gedeelte van "
+"uw evenement."
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:184
 msgid ""
@@ -14664,11 +14664,11 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a "
-"href=\"%(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee "
-"dat wij niet verantwoordelijk zijn voor de juiste behandeling van belasting "
-"bij de ticketverkoop. Neem in geval van twijfel contact op met een advocaat "
-"of belastingadviseur."
+"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a href="
+"\"%(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee dat "
+"wij niet verantwoordelijk zijn voor de juiste behandeling van belasting bij "
+"de ticketverkoop. Neem in geval van twijfel contact op met een advocaat of "
+"belastingadviseur."
 
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -14747,9 +14747,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Er zijn geen uitvoerformaten voor tickets beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere uitvoerplug-ins."
+"Er zijn geen uitvoerformaten voor tickets beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"uitvoerplug-ins."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:71
 msgid "Download time"
@@ -14795,8 +14795,8 @@ msgid ""
 "JavaScript is disabled in your browser. To access our ticket shop without "
 "JavaScript, please &lt;a %(a_attr)s&gt;click here&lt;/a&gt;."
 msgstr ""
-"JavaScript is uitgeschakeld in uw browser. &lt;a %(a_attr)s&gt;Klik hier&lt;/"
-"a&gt; om onze ticketwinkel zonder JavaScript te openen."
+"JavaScript is uitgeschakeld in uw browser. &lt;a %(a_attr)s&gt;Klik "
+"hier&lt;/a&gt; om onze ticketwinkel zonder JavaScript te openen."
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:70
 #: eventyay/plugins/returnurl/templates/returnurl/settings.html:22
@@ -15846,8 +15846,8 @@ msgid ""
 "Are you sure you want to generate a new client secret for the application "
 "<strong>%(application)s</strong>?"
 msgstr ""
-"Weet u zeker dat u een nieuw cliëntgeheim voor de applicatie "
-"<strong>%(application)s</strong> wilt genereren?"
+"Weet u zeker dat u een nieuw cliëntgeheim voor de applicatie <strong>%"
+"(application)s</strong> wilt genereren?"
 
 #: eventyay/control/templates/pretixcontrol/oauth/app_rollkeys.html:15
 msgid "Roll secret"
@@ -15871,8 +15871,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "<strong>%(application)s</strong>?"
 msgstr ""
-"Weet u zeker dat u de toegang tot uw account voor de applicatie "
-"<strong>%(application)s</strong> wilt intrekken?"
+"Weet u zeker dat u de toegang tot uw account voor de applicatie <strong>%"
+"(application)s</strong> wilt intrekken?"
 
 #: eventyay/control/templates/pretixcontrol/oauth/auth_revoke.html:15
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:24
@@ -16804,9 +16804,9 @@ msgid ""
 "After starting this operation, depending on the size of your event, it might "
 "take a few minutes or longer until all orders are processed."
 msgstr ""
-"Na het uitvoeren van deze handeling kan het (afhankelijk van het aantal "
-"bestellingen) een aantal minuten of langer duren tot alle bestellingen zijn "
-"verwerkt."
+"Na het uitvoeren van deze handeling kan het "
+"(afhankelijk van het aantal bestellingen) een aantal minuten of langer duren "
+"tot alle bestellingen zijn verwerkt."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:21
 msgid ""
@@ -17934,8 +17934,8 @@ msgid ""
 msgstr ""
 "Controleer opnieuw of u zeker weet dat u de gekozen soorten gegevens wilt "
 "verwijderen uit het evenement <strong>%(event)s</strong>. Voer om te "
-"bevestigen dat u dit echt wilt de korte naam van het evenement "
-"(\"%(slug)s\") hier in:"
+"bevestigen dat u dit echt wilt de korte naam van het evenement (\"%(slug)s\")"
+" hier in:"
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -18001,9 +18001,9 @@ msgid ""
 "as well as historical log data cannot be downloaded at the moment."
 msgstr ""
 "U kunt voor de meeste categorieën van gegevens eerst de gegevens downloaden "
-"om ze offline op te slaan. Sommige soorten gegevens (bijvoorbeeld sommige "
-"betalingsinformatie) en historische loggegevens kunnen momenteel niet worden "
-"gedownload."
+"om ze offline op te slaan. Sommige soorten gegevens "
+"(bijvoorbeeld sommige betalingsinformatie) en historische loggegevens kunnen "
+"momenteel niet worden gedownload."
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:46
 msgid "Data selection"
@@ -18601,8 +18601,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"We willen zeker zijn dat u het bent. Meld u opnieuw aan met "
-"'%(login_provider)s'."
+"We willen zeker zijn dat u het bent. Meld u opnieuw aan met '%"
+"(login_provider)s'."
 
 #: eventyay/control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -18790,8 +18790,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Weet u zeker dat u het volgende wachtlijstitem wilt verwijderen: "
-"<strong>%(entry)s</strong>?"
+"Weet u zeker dat u het volgende wachtlijstitem wilt verwijderen: <strong>%"
+"(entry)s</strong>?"
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -18838,10 +18838,10 @@ msgid ""
 msgstr ""
 "U heeft ingesteld dat vouchers <strong>niet</strong> automatisch worden "
 "verstuurd. U kunt de vouchers één voor één versturen in een door u te kiezen "
-"volgorde door te klikken op de knoppen naast een rij in deze tabel (als er "
-"voldoende quotum beschikbaar is), of u kunt op de grote knop onder deze "
-"tekst klikken om zo veel vouchers als mogelijk is te versturen naar diegenen "
-"die het langst hebben gewacht."
+"volgorde door te klikken op de knoppen naast een rij in deze tabel "
+"(als er voldoende quotum beschikbaar is), of u kunt op de grote knop onder "
+"deze tekst klikken om zo veel vouchers als mogelijk is te versturen naar "
+"diegenen die het langst hebben gewacht."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:69
 msgid "Send as many vouchers as possible"
@@ -19303,8 +19303,8 @@ msgid ""
 "An order could not be deleted as some constraints (e.g. data created by plug-"
 "ins) do not allow it."
 msgstr ""
-"Een bestelling kon niet worden verwijderd omdat sommige beperkingen (bijv. "
-"data aangemaakt door plug-ins) het niet toestaan."
+"Een bestelling kon niet worden verwijderd omdat sommige beperkingen "
+"(bijv. data aangemaakt door plug-ins) het niet toestaan."
 
 #: eventyay/control/views/event.py:923
 msgid "We've disabled test mode for you. Let's sell some real tickets!"
@@ -19325,8 +19325,8 @@ msgid ""
 "The event could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"Het evenement kon niet worden verwijderd omdat sommige beperkingen (bijv. "
-"data aangemaakt door plug-ins) het niet toestaan."
+"Het evenement kon niet worden verwijderd omdat sommige beperkingen "
+"(bijv. data aangemaakt door plug-ins) het niet toestaan."
 
 #: eventyay/control/views/event.py:1056
 msgid "The issue has been marked as resolved!"
@@ -19560,8 +19560,7 @@ msgstr "We konden het geüploade bestand niet openen als een CSV-bestand."
 #: eventyay/presale/views/order.py:932 eventyay/presale/views/order.py:1057
 #: eventyay/presale/views/order.py:1100
 msgid "Unknown order code or not authorized to access this order."
-msgstr ""
-"Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
+msgstr "Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
 
 #: eventyay/control/views/orders.py:387 eventyay/presale/views/order.py:936
 msgid "Ticket download is not enabled for this product."
@@ -19576,8 +19575,8 @@ msgid ""
 "The order could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"De bestelling kon niet worden verwijderd omdat sommige beperkingen (bijv. "
-"data aangemaakt door plug-ins) het niet toestaan."
+"De bestelling kon niet worden verwijderd omdat sommige beperkingen "
+"(bijv. data aangemaakt door plug-ins) het niet toestaan."
 
 #: eventyay/control/views/orders.py:509
 msgid "Only orders created in test mode can be deleted."
@@ -19825,8 +19824,7 @@ msgstr "De betalingstermijn is veranderd."
 msgid ""
 "We were not able to process the request completely as the server was too "
 "busy."
-msgstr ""
-"We konden uw verzoek niet verwerken, omdat de server het te druk heeft."
+msgstr "We konden uw verzoek niet verwerken, omdat de server het te druk heeft."
 
 #: eventyay/control/views/orders.py:1402
 msgid "This action is only allowed for pending orders."
@@ -20019,8 +20017,8 @@ msgid ""
 "The organizer could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"De organisator kon niet worden verwijderd omdat sommige beperkingen (bijv. "
-"data aangemaakt door plug-ins) het niet toestaan."
+"De organisator kon niet worden verwijderd omdat sommige beperkingen "
+"(bijv. data aangemaakt door plug-ins) het niet toestaan."
 
 #: eventyay/control/views/organizer_views/organizer_view.py:383
 #: eventyay/eventyay_common/views/event.py:451
@@ -21381,8 +21379,8 @@ msgstr[0] ""
 "aangemaakt op %(date)s, met één bestelling en een totaalbedrag van %(sum)s."
 msgstr[1] ""
 "U probeert een exportbestand met terugbetalingen te downloaden dat is "
-"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van "
-"%(sum)s."
+"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van %"
+"(sum)s."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -21832,8 +21830,8 @@ msgid ""
 "Every attendee (falling back to the order contact when no attendee email "
 "address is given)"
 msgstr ""
-"Iedere gast (of aan de besteller als er geen e-mailadres van de gast bekend "
-"is)"
+"Iedere gast "
+"(of aan de besteller als er geen e-mailadres van de gast bekend is)"
 
 #: eventyay/plugins/sendmail/forms.py:114
 msgid "Both (all order contact addresses and all attendee email addresses)"
@@ -23414,8 +23412,8 @@ msgid ""
 "also sent you an email containing the link to the address you specified."
 msgstr ""
 "Sla de volgende link op als u later uw bestelling wilt kunnen openen. We "
-"hebben u ook een e-mail met deze link gestuurd op het door u opgegeven e-"
-"mailadres."
+"hebben u ook een e-mail met deze link gestuurd op het door u opgegeven "
+"e-mailadres."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:71
 #: eventyay/presale/templates/pretixpresale/event/position.html:18
@@ -24153,8 +24151,7 @@ msgstr "Uw winkelwagen is leeg"
 
 #: eventyay/presale/views/checkout.py:38
 msgid "The presale for this event is over or has not yet started."
-msgstr ""
-"De voorverkoop voor dit evenement is afgelopen of is nog niet begonnen."
+msgstr "De voorverkoop voor dit evenement is afgelopen of is nog niet begonnen."
 
 #: eventyay/presale/views/event.py:475
 msgid ""
@@ -24557,8 +24554,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Om het programma te zien, dient Javascript aan te staan, of klik <a "
-"href=\"%(href)s\">hier</a> voor ons NoJS programma."
+"Om het programma te zien, dient Javascript aan te staan, of klik <a href="
+"\"%(href)s\">hier</a> voor ons NoJS programma."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -24568,8 +24565,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Om ons programma te bekijken met volledige functionaliteit, zoals tijdzone "
-"conversies en persoonlijk programma, zet JavaScript aan en klik <a "
-"href=\"%(href)s\">hier</a>."
+"conversies en persoonlijk programma, zet JavaScript aan en klik <a href="
+"\"%(href)s\">hier</a>."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -24729,10 +24726,10 @@ msgid ""
 "instructions. If you don’t see the email within the next minutes, check your "
 "spam inbox!"
 msgstr ""
-"Als we een gebruiker kennen met dit email adres (die niet om een nieuw "
-"wachtwoord heeft gevraagd in de afgelopen 24 uur), dan sturen we je een "
-"email met verdere instructies. Als je die email niet ontvangen hebt over een "
-"paar minuten, kijken dan ook even in je spam map!"
+"Als we een gebruiker kennen met dit email adres "
+"(die niet om een nieuw wachtwoord heeft gevraagd in de afgelopen 24 uur), "
+"dan sturen we je een email met verdere instructies. Als je die email niet "
+"ontvangen hebt over een paar minuten, kijken dan ook even in je spam map!"
 
 #: pretalx/cfp/phrases.py:14
 msgid ""
@@ -24844,8 +24841,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Je kan voorstellen insturen tot %(deadline)s (%(timezone)s), "
-"%(until_string)s vanaf nu."
+"Je kan voorstellen insturen tot %(deadline)s (%(timezone)s), %(until_string)"
+"s vanaf nu."
 
 #: pretalx/cfp/templates/cfp/event/cfp.html:28
 #, python-format
@@ -25045,8 +25042,8 @@ msgid ""
 "strong>"
 msgstr ""
 "Je kan je account hier opzeggen - Alle namen, email en andere persoonlijke "
-"gegevens zullen worden verwijderd. <strong>Dit kan niet worden teruggedraaid."
-"</strong>"
+"gegevens zullen worden verwijderd. <strong>Dit kan niet worden "
+"teruggedraaid.</strong>"
 
 #: pretalx/cfp/templates/cfp/event/user_profile.html:99
 msgid ""
@@ -25190,8 +25187,8 @@ msgid ""
 "just uncertain if you can or should submit your proposal, please contact the "
 "organiser instead."
 msgstr ""
-"Je kan je concept voorstel hier verwijderen. Ja kan dit niet ongedaan maken "
-"- als je twijfelt om je voorstel in te dienen, neem contact op met de "
+"Je kan je concept voorstel hier verwijderen. Ja kan dit niet ongedaan maken -"
+" als je twijfelt om je voorstel in te dienen, neem contact op met de "
 "organisatie."
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:141
@@ -26001,8 +25998,8 @@ msgid ""
 "It looks as if the communication between you and pretalx went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Het lijkt er op dat de communicatie tussen jou en pretalx fout is gelopen."
-"<br>Ga terug naar de vorige pagina en probeer het opnieuw!"
+"Het lijkt er op dat de communicatie tussen jou en pretalx fout is "
+"gelopen.<br>Ga terug naar de vorige pagina en probeer het opnieuw!"
 
 #: pretalx/common/templates/403_csrf.html:7
 #: pretalx/common/templates/403_csrf.html:11
@@ -26399,8 +26396,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"Deze korte naam is al bezet, kies alsjeblieft een andere (of vraag de "
-"eigenaar van dat evenement om je toe te voegen aan hun team)."
+"Deze korte naam is al bezet, kies alsjeblieft een andere "
+"(of vraag de eigenaar van dat evenement om je toe te voegen aan hun team)."
 
 #: pretalx/event/forms.py:244
 msgid ""
@@ -26640,8 +26637,8 @@ msgid ""
 "Apply permissions to all events by this organiser (including newly created "
 "ones)"
 msgstr ""
-"Machtigingen toepassen op alle evenementen van deze organisator (inclusief "
-"nieuw aangemaakte)"
+"Machtigingen toepassen op alle evenementen van deze organisator "
+"(inclusief nieuw aangemaakte)"
 
 #: pretalx/event/models/organiser.py:200
 msgid "Limit permissions to these events"
@@ -27351,8 +27348,7 @@ msgstr "Een email adres of meerdere door komma's gescheiden adressen."
 
 #: pretalx/mail/models.py:325
 msgid "By default, the organiser address is used as Reply-To."
-msgstr ""
-"Standaard wordt het adres van de organsatie gebruikt als respons adres."
+msgstr "Standaard wordt het adres van de organsatie gebruikt als respons adres."
 
 #: pretalx/mail/models.py:331
 msgid "CC"
@@ -27946,8 +27942,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Hoe wil je gegevens scheiden binnen een enkele waarde (voor bijvoorbeeld "
-"meerdere sprekers in één sessie)?"
+"Hoe wil je gegevens scheiden binnen een enkele waarde "
+"(voor bijvoorbeeld meerdere sprekers in één sessie)?"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -28736,9 +28732,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Deze vraag is <strong>%(count)s</strong> beantwoord. Er missen nog "
-"<strong>%(missing)s</strong> <a "
-"href=\"%(base_search_url)sunanswered=1\">antwoorden</a>."
+"Deze vraag is <strong>%(count)s</strong> beantwoord. Er missen nog <strong>%"
+"(missing)s</strong> <a href=\"%(base_search_url)sunanswered=1\""
+">antwoorden</a>."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:60
 #, fuzzy, python-format
@@ -28921,8 +28917,7 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/cfp/text.html:35
 msgid "The formats (sessions, workshops, panels) and their durations"
-msgstr ""
-"De soorten sessies (presentaties, workshops, panels) en de duur daarvan"
+msgstr "De soorten sessies (presentaties, workshops, panels) en de duur daarvan"
 
 #: pretalx/orga/templates/orga/cfp/text.html:36
 msgid "Topics you are looking for"
@@ -29214,8 +29209,7 @@ msgstr "Uitnodiging voor het %(organiser)s team “%(name)s”"
 #: pretalx/orga/templates/orga/invitation.html:34
 #, python-format
 msgid "You have been invited to join the organiser team %(name)s."
-msgstr ""
-"Je bent uitgenodigd om deel te nemen aan het organisatie team %(name)s."
+msgstr "Je bent uitgenodigd om deel te nemen aan het organisatie team %(name)s."
 
 #: pretalx/orga/templates/orga/invitation.html:20
 #, python-format
@@ -29224,9 +29218,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Als je al een account hebt als spreker of als organisator op <a "
-"href=\"%(domain)s\">%(domain)s</a>, log dan nu in. Maak anders een nieuw "
-"account aan om bij het team te komen!"
+"Als je al een account hebt als spreker of als organisator op <a href="
+"\"%(domain)s\">%(domain)s</a>, log dan nu in. Maak anders een nieuw account "
+"aan om bij het team te komen!"
 
 #: pretalx/orga/templates/orga/invitation.html:37
 #, python-format
@@ -29594,8 +29588,9 @@ msgstr ""
 "Je kunt hier je beoordelingsopdrachten uploaden vanuit een JSON-bestand. U "
 "kunt de voorstelcodes (bijv. “UX3N1”) als sleutels hebben en de "
 "gebruikersidentificatie als waarden, of andersom. Gebruikersidentificatie "
-"kan het e-mailadres van de beoordelaar zijn of hun gebruikerscode (bijv. "
-"“34KJN”). Je kunt een voorbeeldbestand <a href=\"%(href)s\">hier</a> vinden."
+"kan het e-mailadres van de beoordelaar zijn of hun gebruikerscode "
+"(bijv. “34KJN”). Je kunt een voorbeeldbestand <a href=\"%(href)s\">hier</a> "
+"vinden."
 
 #: pretalx/orga/templates/orga/review/assignment.html:31
 msgid ""
@@ -29627,8 +29622,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Beoordelaars kunnen <strong>alleen de aan hen toegewezen</strong> "
-"voorstellen zien en beoordelen. U kunt dit wijzigen in uw <a "
-"href=\"%(href)s\">beoordelingsinstellingen</a>."
+"voorstellen zien en beoordelen. U kunt dit wijzigen in uw <a href="
+"\"%(href)s\">beoordelingsinstellingen</a>."
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
 #, python-format
@@ -30057,8 +30052,7 @@ msgstr[1] "%(count)s sessies zijn <strong>nog niet geprogrammeerd</strong>."
 msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
-msgstr[0] ""
-"Eén sessie heeft <strong>nog geen slot toegewezen gekregen</strong>."
+msgstr[0] "Eén sessie heeft <strong>nog geen slot toegewezen gekregen</strong>."
 msgstr[1] ""
 "%(count)s sessies hebben <strong>nog geen slot toegewezen gekregen</strong>."
 
@@ -30317,9 +30311,10 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Voeg belangrijke berichten (bijv. \"Breng indien nodig een HDMI adapter mee."
-"\") of bestanden (bijv. een stijlgids) toe.<br> Deze worden aan de "
-"geselecteerde sprekers getoond boven de lijst van hun voorstellen."
+"Voeg belangrijke berichten "
+"(bijv. \"Breng indien nodig een HDMI adapter mee.\") of bestanden "
+"(bijv. een stijlgids) toe.<br> Deze worden aan de geselecteerde sprekers "
+"getoond boven de lijst van hun voorstellen."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -30420,8 +30415,7 @@ msgstr "%(count)s wijzigingen toepassen?"
 msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
-msgstr ""
-"Bevestig dat je de status van deze %(count)s voorstellen wilt wijzigen."
+msgstr "Bevestig dat je de status van deze %(count)s voorstellen wilt wijzigen."
 
 #: pretalx/orga/templates/orga/submission/apply_pending.html:33
 #: pretalx/orga/templates/orga/submission/state_change.html:34
@@ -30528,8 +30522,7 @@ msgstr "Laat dit voorstel zien in de lijst van aanbevolen sessies."
 
 #: pretalx/orga/templates/orga/submission/review.html:25
 msgid "You’re not allowed to review or see reviews for your own proposals."
-msgstr ""
-"Je hebt geen toestemming om je eigen voorstellen te zien of recenceren."
+msgstr "Je hebt geen toestemming om je eigen voorstellen te zien of recenceren."
 
 #: pretalx/orga/templates/orga/submission/review.html:41
 msgid "You will be able to see other reviews once you have given yours."
@@ -30935,8 +30928,9 @@ msgid ""
 "be used."
 msgstr ""
 "We hebben contact kunnen maken met de SMTP-server die je hebt "
-"geconfigureerd. Vergeet niet het selectievakje \"aangepaste SMTP-server "
-"gebruiken\" in te schakelen, anders wordt je SMTP-server niet gebruikt."
+"geconfigureerd. Vergeet niet het selectievakje "
+"\"aangepaste SMTP-server gebruiken\" in te schakelen, anders wordt je SMTP-"
+"server niet gebruikt."
 
 #: pretalx/orga/views/event.py:511
 msgid ""
@@ -31225,8 +31219,7 @@ msgstr "Meer exports"
 
 #: pretalx/orga/views/schedule.py:117
 msgid "A new export is being generated and will be available soon."
-msgstr ""
-"Er wordt een nieuwe export gemaakt die binnenkort beschikbaar zal zijn."
+msgstr "Er wordt een nieuwe export gemaakt die binnenkort beschikbaar zal zijn."
 
 #: pretalx/orga/views/schedule.py:124
 msgid ""
@@ -32046,8 +32039,7 @@ msgstr "helptekst"
 #, fuzzy
 #| msgid "Will appear just like this text below the question input field."
 msgid "Will appear just like this text below the custom input field."
-msgstr ""
-"Wordt net als deze tekst onder het invoerveld van de vraag weergegeven."
+msgstr "Wordt net als deze tekst onder het invoerveld van de vraag weergegeven."
 
 #: pretalx/submission/models/question.py:195
 msgid "default answer"
@@ -32084,8 +32076,8 @@ msgstr "Minimale tekstlengte"
 #: pretalx/submission/models/question.py:215
 msgid "Minimum allowed text in characters or words (set in CfP settings)."
 msgstr ""
-"Minimaal toegestane tekst in tekens of woorden (ingesteld in de CfP-"
-"instellingen)."
+"Minimaal toegestane tekst in tekens of woorden "
+"(ingesteld in de CfP-instellingen)."
 
 #: pretalx/submission/models/question.py:221
 msgid "Maximum text length"
@@ -32095,8 +32087,8 @@ msgstr "Maximale tekst lengte"
 msgid ""
 "Maximum allowed text length in characters or words (set in CfP settings)."
 msgstr ""
-"Maximaal toegestane tekstlengte in tekens of woorden (ingesteld in de CfP-"
-"instellingen)."
+"Maximaal toegestane tekstlengte in tekens of woorden "
+"(ingesteld in de CfP-instellingen)."
 
 #: pretalx/submission/models/question.py:260
 msgid "Publish answers"
@@ -32226,8 +32218,7 @@ msgstr "Tags toevoegen, verwijderen en aanmaken"
 
 #: pretalx/submission/models/review.py:283
 msgid "Speakers can modify their proposals before acceptance"
-msgstr ""
-"Sprekers kunnen hun voorstellen wijzigen voordat ze worden geaccepteerd"
+msgstr "Sprekers kunnen hun voorstellen wijzigen voordat ze worden geaccepteerd"
 
 #: pretalx/submission/models/review.py:285
 msgid ""
