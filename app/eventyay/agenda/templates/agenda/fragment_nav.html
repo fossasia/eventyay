@@ -5,22 +5,19 @@
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
 </a>
-{% if schedule or request.event.current_schedule %}
+{% if request.event.current_schedule or request.user.is_authenticated %}
     <a href="{{ request.event.urls.schedule }}" class="header-tab {% if '/schedule/' in request.path_info %}active{% endif %}">
         <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
     </a>
 {% endif %}
-{% if schedule or request.event.current_schedule %}
+{% if request.event.current_schedule or request.user.is_authenticated %}
     {% if request.event.display_settings.schedule_display != "list" %}
-    <a href="{{ request.event.urls.talks }}" class="header-tab {% if "/talk/" in request.path_info %} active{% endif %}">
-{% if request.event.display_settings.schedule_display != "list" %}
-    <a href="{{ request.event.urls.talks }}" class="header-tab {% if '/sessions/' in request.path_info %} active{% endif %}">
-        <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
-    </a>
+        <a href="{{ request.event.urls.talks }}" class="header-tab {% if '/sessions/' in request.path_info %} active{% endif %}">
+            <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
+        </a>
     {% endif %}
-    </a>
 {% endif %}
-{% if request.event.speakers.exists %}
+{% if request.event.current_schedule or request.user.is_authenticated %}
     <a href="{{ request.event.urls.speakers }}" class="header-tab {% if '/speakers/' in request.path_info %} active{% endif %}">
         <i class="fa fa-group"></i> {{ phrases.schedule.speakers }}
     </a>
