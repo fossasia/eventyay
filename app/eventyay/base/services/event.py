@@ -113,6 +113,7 @@ def get_rooms(event, user):
                 .values("c")
             )
         )
+        .order_by("sorting_priority", "name")
     )
     if user:
         qs = qs.with_permission(event=event, user=user)
@@ -174,6 +175,9 @@ def get_room_config(room, permissions):
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
+        "setup_complete": room.setup_complete,
+        "hidden": room.hidden,
+        "sidebar_hidden": room.sidebar_hidden,
     }
 
     if hasattr(room, "current_roomviews"):
@@ -251,6 +255,12 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         }
     else:
         data["trait_grants"] = {}
+    has_modules = bool(data.get("module_config"))
+    data.setdefault("setup_complete", has_modules)
+    # Hidden rooms disappear from the schedule editor, this keeps them visible by default
+    data.setdefault("hidden", False)
+    # Sidebar should not display a room until a room is configured
+    data.setdefault("sidebar_hidden", data["hidden"] or not data["setup_complete"])
 
     if (
         data.get("event")

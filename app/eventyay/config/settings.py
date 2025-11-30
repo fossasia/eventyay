@@ -455,6 +455,8 @@ ALL_LANGUAGES = [
     ('fi', _('Finnish')),
     ('el', _('Greek')),
     ('it', _('Italian')),
+    ('id', _('Indonesian')),
+    ('ko', _('Korean')),
     ('lv', _('Latvian')),
     ('pl', _('Polish')),
     ('pt-pt', _('Portuguese (Portugal)')),
@@ -569,7 +571,7 @@ LANGUAGES_INFORMATION = {
         'natural_name': 'Deutsch',
         'official': True,
         'percentage': 100,
-        'path': 'de_DE',
+        'path': 'de',
     },
     'de-formal': {
         'name': _('German (formal)'),
@@ -616,7 +618,7 @@ LANGUAGES_INFORMATION = {
         'natural_name': 'Français',
         'official': False,
         'percentage': 98,
-        'path': 'fr_FR',
+        'path': 'fr',
     },
     'it': {
         'name': _('Italian'),
@@ -624,12 +626,24 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 95,
     },
+    'id': {
+        'name': _('Indonesian'),
+        'natural_name': 'Bahasa Indonesia',
+        'official': False,
+        'percentage': 90,
+    },
     'ja-jp': {
         'name': _('Japanese'),
         'natural_name': '日本語',
         'official': False,
         'percentage': 69,
         'public_code': 'jp',
+    },
+    'ko': {
+        'name': _('Korean'),
+        'natural_name': '한국어',
+        'official': False,
+        'percentage': 88,
     },
     'nl': {
         'name': _('Dutch'),
@@ -797,7 +811,6 @@ redis_connection_kwargs = {
 
 REDIS_URL = config.get('redis', 'location')
 HAS_REDIS = bool(REDIS_URL)
-JSON_FIELD_AVAILABLE = True
 REDIS_HOSTS = [
     {
         'address': REDIS_URL,
