@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2019-10-31 14:39+0000\n"
-"Last-Translator: Raphael Michel <michel@rami.io>\n"
-"Language-Team: Greek <https://translate.eventyay.com/projects/pretix/pretix/"
+"PO-Revision-Date: 2025-11-30 11:20+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Greek <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "el/>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 3.5.1\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -5440,8 +5440,7 @@ msgstr ""
 
 #: pretix/base/models/items.py:607
 msgid "The item's availability cannot end before it starts."
-msgstr ""
-"Η διαθεσιμότητα του στοιχείου δεν μπορεί να τερματιστεί πριν ξεκινήσει."
+msgstr "Η διαθεσιμότητα του στοιχείου δεν μπορεί να τερματιστεί πριν ξεκινήσει."
 
 #: pretix/base/models/items.py:653
 msgid "This is shown below the variation name in lists."
@@ -5507,8 +5506,7 @@ msgstr "Ο μέγιστος αριθμός πρέπει να είναι ίσος
 
 #: pretix/base/models/items.py:887
 msgid "The maximum count needs to be greater than the minimum count."
-msgstr ""
-"Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
+msgstr "Ο μέγιστος αριθμός πρέπει να είναι μεγαλύτερος από τον ελάχιστο αριθμό."
 
 #: pretix/base/models/items.py:914
 msgid "Bundled item"
@@ -6541,8 +6539,7 @@ msgstr "Τιμή κουπονιού"
 
 #: pretix/base/models/vouchers.py:155 pretix/control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
+msgstr "Αυτό το προϊόν προστίθεται στο καλάθι χρήστη αν το κουπόνι εξαργυρωθεί."
 
 #: pretix/base/models/vouchers.py:165
 msgid "This variation of the product select above is being used."
@@ -6689,8 +6686,8 @@ msgstr "Πρέπει να επιλέξετε μια ημερομηνία."
 #| msgid "The selected date does not exist in this event series."
 msgid "The specified seat ID \"{id}\" does not exist for this event."
 msgstr ""
-"Η επιλεγμένη ημερομηνία δεν υπάρχει σε αυτή τη σειρά εκδηλώσεων (event "
-"series)."
+"Η επιλεγμένη ημερομηνία δεν υπάρχει σε αυτή τη σειρά εκδηλώσεων "
+"(event series)."
 
 #: pretix/base/models/vouchers.py:371
 #, python-brace-format
@@ -6787,8 +6784,7 @@ msgstr "Ένα κουπόνι έχει ήδη σταλεί σε αυτό το ά
 
 #: pretix/base/models/waitinglist.py:133
 msgid "This entry is anonymized and can no longer be used."
-msgstr ""
-"Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
+msgstr "Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
 
 #: pretix/base/models/waitinglist.py:143
 #, python-brace-format
@@ -7219,8 +7215,8 @@ msgstr ""
 #: pretix/base/payment.py:303
 msgid "Calculate the fee from the total value including the fee."
 msgstr ""
-"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του "
-"τέλους(fee)."
+"Υπολογίστε το τέλος(fee) από τη συνολική αξία συμπεριλαμβανομένου του τέλους"
+"(fee)."
 
 #: pretix/base/payment.py:304
 #, python-brace-format
@@ -7231,10 +7227,10 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Συνιστούμε να το ενεργοποιήσετε εάν θέλετε οι χρήστες σας να πληρώσουν τις "
-"χρεώσεις πληρωμής του παρόχου πληρωμών σας <a href=\"{docs_url}\" "
-"target=\"_blank\" rel=\"noopener\">Κάντε κλικ εδώ για λεπτομερείς "
-"πληροφορίες σχετικά με το τι κάνει αυτό.</a> Μην ξεχάσετε να ορίσετε τις "
-"σωστές χρεώσεις(fees) παραπάνω!"
+"χρεώσεις πληρωμής του παρόχου πληρωμών σας <a href=\"{docs_url}\" target="
+"\"_blank\" rel=\"noopener\">Κάντε κλικ εδώ για λεπτομερείς πληροφορίες "
+"σχετικά με το τι κάνει αυτό.</a> Μην ξεχάσετε να ορίσετε τις σωστές χρεώσεις"
+"(fees) παραπάνω!"
 
 #: pretix/base/payment.py:312
 msgid "Restrict to countries"
@@ -7973,8 +7969,8 @@ msgstr "Δεν μπορείτε να επιλέξετε περισσότερα �
 #, python-format
 msgid "You cannot select more than %(max)s items of the product %(product)s."
 msgstr ""
-"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος "
-"%(product)s."
+"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος %"
+"(product)s."
 
 #: pretix/base/services/cart.py:67
 #, python-format
@@ -8111,8 +8107,7 @@ msgstr "Δεν μπορείτε να επιλέξετε ένα πρόσθετο 
 
 #: pretix/base/services/cart.py:99
 msgid "You can not select two variations of the same add-on product."
-msgstr ""
-"Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
+msgstr "Δεν μπορείτε να επιλέξετε δύο παραλλαγές του ίδιου προϊόντος πρόσθετου."
 
 #: pretix/base/services/cart.py:100
 #, python-format
@@ -8120,8 +8115,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
-"%(cat)s για το προϊόν %(base)s."
+"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία %"
+"(cat)s για το προϊόν %(base)s."
 
 #: pretix/base/services/cart.py:101
 #, python-format
@@ -8141,8 +8136,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία "
-"%(cat)s για το προϊόν %(base)s."
+"Μπορείτε να επιλέξετε τα περισσότερα %(max)s πρόσθετα από την κατηγορία %"
+"(cat)s για το προϊόν %(base)s."
 
 #: pretix/base/services/cart.py:104
 msgid ""
@@ -8210,8 +8205,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This entry is anonymized and can no longer be used."
 msgid "This entry is not permitted due to custom rules."
-msgstr ""
-"Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
+msgstr "Αυτή η καταχώρηση είναι ανώνυμη και δεν μπορεί πλέον να χρησιμοποιηθεί."
 
 #: pretix/base/services/checkin.py:456
 msgid "This ticket has already been redeemed."
@@ -8358,8 +8352,8 @@ msgid ""
 "You cannot select more than %(max)s items of the product %(product)s. We "
 "removed the surplus items from your cart."
 msgstr ""
-"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος "
-"%(product)s. Καταργήσαμε τα πλεονάσματα από το καλάθι σας."
+"Δεν μπορείτε να επιλέξετε περισσότερα από %(max)s στοιχεία του προϊόντος %"
+"(product)s. Καταργήσαμε τα πλεονάσματα από το καλάθι σας."
 
 #: pretix/base/services/orders.py:76
 msgid "The presale period has ended."
@@ -9015,8 +9009,7 @@ msgstr "Κάντε κλικ εδώ απενεργοποιήστε όλες τι�
 
 #: pretix/base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr ""
-"Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
+msgstr "Κάντε κλικ εδώ για να δείτε και να αλλάξετε τις ρυθμίσεις ειδοποιήσεων:"
 
 #: pretix/base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
@@ -9184,10 +9177,11 @@ msgid ""
 "required for security reasons, to ensure that your browser is not being "
 "hijacked by third parties."
 msgstr ""
-"Βλέπετε αυτό το μήνυμα επειδή αυτός ο ιστότοπος HTTPS απαιτεί μια \"κεφαλίδα "
-"Referer\" που θα αποσταλεί από το πρόγραμμα περιήγησης στο Web, αλλά καμία "
-"δεν έχει σταλεί. Αυτή η κεφαλίδα απαιτείται για λόγους ασφαλείας, για να "
-"διασφαλιστεί ότι το πρόγραμμα περιήγησής σας δεν καταπατηθεί από τρίτους."
+"Βλέπετε αυτό το μήνυμα επειδή αυτός ο ιστότοπος HTTPS απαιτεί μια "
+"\"κεφαλίδα Referer\" που θα αποσταλεί από το πρόγραμμα περιήγησης στο Web, "
+"αλλά καμία δεν έχει σταλεί. Αυτή η κεφαλίδα απαιτείται για λόγους ασφαλείας, "
+"για να διασφαλιστεί ότι το πρόγραμμα περιήγησής σας δεν καταπατηθεί από "
+"τρίτους."
 
 #: pretix/base/views/errors.py:24
 msgid ""
@@ -10762,9 +10756,9 @@ msgid ""
 "automatically."
 msgstr ""
 "Εάν διατηρήσετε μια αμοιβή(fee), όλες οι θέσεις αυτής της παραγγελίας θα "
-"ακυρωθούν και η παραγγελία θα μειωθεί σε μια καταβληθείσα αμοιβή ακύρωσης (a "
-"paid cancellation fee). Τα τέλη πληρωμής και αποστολής θα ακυρωθούν επίσης, "
-"οπότε συμπεριλάβετε τα τέλη ακύρωσης αν θέλετε να τα διατηρήσετε. "
+"ακυρωθούν και η παραγγελία θα μειωθεί σε μια καταβληθείσα αμοιβή ακύρωσης "
+"(a paid cancellation fee). Τα τέλη πληρωμής και αποστολής θα ακυρωθούν "
+"επίσης, οπότε συμπεριλάβετε τα τέλη ακύρωσης αν θέλετε να τα διατηρήσετε. "
 "Παρακαλούμε πάντα να εισαγάγετε μια ακαθάριστη αξία(gross value), ο φόρος θα "
 "υπολογιστεί αυτόματα."
 
@@ -11509,8 +11503,8 @@ msgid ""
 "Position #{posid}: {old_item} ({old_price}) changed to {new_item} "
 "({new_price})."
 msgstr ""
-"Η θέση # {posid}: {old_item} ({old_price}) άλλαξε σε {new_item} "
-"({new_price})."
+"Η θέση # {posid}: {old_item} ({old_price}) άλλαξε σε {new_item} ({new_price})"
+"."
 
 #: pretix/control/logdisplay.py:47
 #, fuzzy, python-brace-format
@@ -12519,8 +12513,8 @@ msgid ""
 "Position #{posid} has been checked in manually at {datetime} on list \"{list}"
 "\"."
 msgstr ""
-"Η θέση # {posid} έχει ελεγχθεί χειροκίνητα στις {datetime} στη λίστα \"{list}"
-"\"."
+"Η θέση # {posid} έχει ελεγχθεί χειροκίνητα στις {datetime} στη λίστα "
+"\"{list}\"."
 
 #: pretix/control/logdisplay.py:503
 #, python-brace-format
@@ -13017,8 +13011,8 @@ msgstr "Διαγραφή ημερομηνίας"
 #| "Are you sure you want to delete the category <strong>%(name)s</strong>?"
 msgid "Are you sure you want to delete the page <strong>%(name)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την κατηγορία <strong>%(name)s</"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την κατηγορία <strong>%(name)"
+"s</strong>;"
 
 #: pretix/control/templates/pretixcontrol/admin/pages/delete.html:14
 #: pretix/control/templates/pretixcontrol/admin/vouchers/delete.html:12
@@ -13381,8 +13375,8 @@ msgid ""
 "Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
 "strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε το κουπόνι <strong>%(voucher)s</"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε το κουπόνι <strong>%(voucher)"
+"s</strong>;"
 
 #: pretix/control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: pretix/control/templates/pretixcontrol/vouchers/detail.html:18
@@ -13896,8 +13890,8 @@ msgstr "Διαγραφή της λίστας check-in"
 msgid ""
 "Are you sure you want to delete the check-in list <strong>%(name)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη λίστα ελέγχου <strong> %(name)s </"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε τη λίστα ελέγχου <strong> %(name)s "
+"</strong>;"
 
 #: pretix/control/templates/pretixcontrol/checkin/list_delete.html:11
 #, python-format
@@ -13905,8 +13899,8 @@ msgid ""
 "This will delete the information of <strong>%(num)s</strong> check-ins as "
 "well."
 msgstr ""
-"Αυτό θα διαγράψει επίσης τις πληροφορίες των επισημάνσεων <strong>%(num)s</"
-"strong>."
+"Αυτό θα διαγράψει επίσης τις πληροφορίες των επισημάνσεων <strong>%(num)"
+"s</strong>."
 
 #: pretix/control/templates/pretixcontrol/checkin/list_edit.html:10
 #: pretix/control/templates/pretixcontrol/checkin/list_edit.html:20
@@ -14867,8 +14861,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a "
-"%(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
+"Δεν υπάρχουν διαθέσιμοι πάροχοι πληρωμών. Μεταβείτε στις <a %"
+"(plugin_settings_href)s> ρυθμίσεις plugin </a> και ενεργοποιήστε ένα ή "
 "περισσότερα πρόσθετα πληρωμής."
 
 #: pretix/control/templates/pretixcontrol/event/payment.html:67
@@ -15087,11 +15081,12 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"το pretix υποστηρίζει ένα <a href=\"https://eventyay.com/about/en/features/"
-"payment\" target=\"_blank\"> ευρύ φάσμα παρόχων πληρωμής </a> που σας "
-"επιτρέπει να επιλέξετε τις μεθόδους πληρωμής που ταιριάζουν στη ροή "
-"εργασίας(workflow) σας καλύτερος. Εδώ είναι μόνο δύο παραδείγματα, μπορείτε "
-"να προσθέσετε περισσότερα στο τμήμα \"Ρυθμίσεις\" της εκδήλωσής σας."
+"το pretix υποστηρίζει ένα <a href="
+"\"https://eventyay.com/about/en/features/payment\" target=\"_blank\"> ευρύ "
+"φάσμα παρόχων πληρωμής </a> που σας επιτρέπει να επιλέξετε τις μεθόδους "
+"πληρωμής που ταιριάζουν στη ροή εργασίας(workflow) σας καλύτερος. Εδώ είναι "
+"μόνο δύο παραδείγματα, μπορείτε να προσθέσετε περισσότερα στο τμήμα "
+"\"Ρυθμίσεις\" της εκδήλωσής σας."
 
 #: pretix/control/templates/pretixcontrol/event/quick_setup.html:184
 msgid ""
@@ -16054,8 +16049,8 @@ msgstr "Διαγραφή κατηγορίας προϊόντων"
 #, python-format
 msgid "Are you sure you want to delete the category <strong>%(name)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την κατηγορία <strong>%(name)s</"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την κατηγορία <strong>%(name)"
+"s</strong>;"
 
 #: pretix/control/templates/pretixcontrol/items/description_delete.html:4
 #: pretix/control/templates/pretixcontrol/items/description_delete.html:6
@@ -16073,8 +16068,8 @@ msgid ""
 "Are you sure you want to delete the description <strong>%(question)s</"
 "strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ερώτηση <strong>%(question)s </"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ερώτηση <strong>%(question)s "
+"</strong>;"
 
 #: pretix/control/templates/pretixcontrol/items/description_delete.html:11
 #, fuzzy
@@ -16243,8 +16238,8 @@ msgstr "Διαγραφή ερώτησης"
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ερώτηση <strong>%(question)s </"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ερώτηση <strong>%(question)s "
+"</strong>;"
 
 #: pretix/control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
@@ -16402,8 +16397,8 @@ msgstr "Διαγραφή quota"
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> "
-"%(quota)s </strong> ;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε την ποσόστωση(quota) <strong> %(quota)"
+"s </strong> ;"
 
 #: pretix/control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
@@ -16487,8 +16482,8 @@ msgid ""
 "Are you sure you want to disable the application <strong>%(application)s</"
 "strong> permanently?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να απενεργοποιήσετε οριστικά την εφαρμογή "
-"<strong>%(application)s</strong>;"
+"Είστε βέβαιοι ότι θέλετε να απενεργοποιήσετε οριστικά την εφαρμογή <strong>%"
+"(application)s</strong>;"
 
 #: pretix/control/templates/pretixcontrol/oauth/app_list.html:4
 #: pretix/control/templates/pretixcontrol/oauth/app_list.html:6
@@ -17438,9 +17433,8 @@ msgid ""
 msgstr ""
 "Λάβαμε ειδοποίηση οτι <strong> %(amount)s </strong> έχει γίνει επιστροφή "
 "χρημάτων μέσω <strong> %(method)s </strong> . Εάν αυτή η επιστροφή χρημάτων "
-"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> "
-"%(pending)s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </"
-"strong> ."
+"υποβληθεί σε επεξεργασία, η παραγγελία θα υποπληρωθεί από <strong> %(pending)"
+"s </strong>. Η συνολική παραγγελία είναι <strong> %(total)s </strong> ."
 
 #: pretix/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -17936,9 +17930,9 @@ msgid ""
 "If data (e.g. POS transactions or check-ins) has been created on this device "
 "and has not been uploaded, you will no longer be able to upload it."
 msgstr ""
-"Εάν στη συγκεκριμένη συσκευή έχουν δημιουργηθεί δεδομένα (π.χ. συναλλαγές "
-"POS ή επιταγές) και δεν έχουν μεταφορτωθεί, δεν θα μπορείτε πλέον να τα "
-"ανεβάσετε."
+"Εάν στη συγκεκριμένη συσκευή έχουν δημιουργηθεί δεδομένα "
+"(π.χ. συναλλαγές POS ή επιταγές) και δεν έχουν μεταφορτωθεί, δεν θα μπορείτε "
+"πλέον να τα ανεβάσετε."
 
 #: pretix/control/templates/pretixcontrol/organizers/device_revoke.html:16
 msgid ""
@@ -18787,9 +18781,9 @@ msgid ""
 "as well as historical log data cannot be downloaded at the moment."
 msgstr ""
 "Για τις περισσότερες κατηγορίες δεδομένων, θα μπορείτε να κάνετε μερική λήψη "
-"των δεδομένων για αποθήκευση εκτός σύνδεσης. Ορισμένα είδη δεδομένων (όπως "
-"ορισμένες πληροφορίες πληρωμής) καθώς και ιστορικά δεδομένα μητρώου δεν "
-"μπορούν να μεταφορτωθούν προς το παρόν."
+"των δεδομένων για αποθήκευση εκτός σύνδεσης. Ορισμένα είδη δεδομένων "
+"(όπως ορισμένες πληροφορίες πληρωμής) καθώς και ιστορικά δεδομένα μητρώου "
+"δεν μπορούν να μεταφορτωθούν προς το παρόν."
 
 #: pretix/control/templates/pretixcontrol/shredder/index.html:46
 msgid "Data selection"
@@ -19006,8 +19000,8 @@ msgstr "Ιστορικό ημερομηνίας"
 #: pretix/control/templates/pretixcontrol/subevents/index.html:11
 msgid "You haven't created any dates for this event series yet."
 msgstr ""
-"Δεν έχετε δημιουργήσει ακόμη ημερομηνίες για αυτή τη σειρά εκδηλώσεων(event "
-"series)."
+"Δεν έχετε δημιουργήσει ακόμη ημερομηνίες για αυτή τη σειρά εκδηλώσεων"
+"(event series)."
 
 #: pretix/control/templates/pretixcontrol/subevents/index.html:18
 #: pretix/control/templates/pretixcontrol/subevents/index.html:53
@@ -19129,8 +19123,8 @@ msgstr "Δεν είναι δυνατή η σάρωση του γραμμωτού
 #: pretix/control/templates/pretixcontrol/user/2fa_confirm_totp.html:49
 msgid "Use the \"provide a key\" option of your authenticator app."
 msgstr ""
-"Χρησιμοποιήστε την επιλογή \"Παρέχετε ένα κλειδί\" της εφαρμογής "
-"\"Ειδοποίηση."
+"Χρησιμοποιήστε την επιλογή \"Παρέχετε ένα κλειδί\" της εφαρμογής \"Ειδοποίηση"
+"."
 
 #: pretix/control/templates/pretixcontrol/user/2fa_confirm_totp.html:52
 msgid "In \"Account name\", type your login name for pretix."
@@ -19539,8 +19533,8 @@ msgstr ""
 msgid ""
 "Are you sure you want to delete the voucher <strong>%(voucher)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε το κουπόνι <strong>%(voucher)s</"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε το κουπόνι <strong>%(voucher)"
+"s</strong>;"
 
 #: pretix/control/templates/pretixcontrol/vouchers/delete_bulk.html:4
 #: pretix/control/templates/pretixcontrol/vouchers/delete_bulk.html:6
@@ -19690,10 +19684,10 @@ msgid ""
 msgstr ""
 "Διαμορφώσατε ότι τα κουπόνια <strong> δεν </strong> αποστέλλονται αυτόματα. "
 "Μπορείτε είτε να τα στείλετε ένα προς ένα με μια σειρά της επιλογής σας "
-"κάνοντας κλικ στα κουμπιά δίπλα σε μια γραμμή σε αυτόν τον πίνακα (εάν "
-"υπάρχει επαρκής ποσόστωση) ή μπορείτε να πατήσετε το μεγάλο κουμπί κάτω από "
-"αυτό το κείμενο για να στείλετε πολλά δελτία όπως είναι σήμερα δυνατό για τα "
-"άτομα που περίμεναν μακρύτερα."
+"κάνοντας κλικ στα κουμπιά δίπλα σε μια γραμμή σε αυτόν τον πίνακα "
+"(εάν υπάρχει επαρκής ποσόστωση) ή μπορείτε να πατήσετε το μεγάλο κουμπί κάτω "
+"από αυτό το κείμενο για να στείλετε πολλά δελτία όπως είναι σήμερα δυνατό "
+"για τα άτομα που περίμεναν μακρύτερα."
 
 #: pretix/control/templates/pretixcontrol/waitinglist/index.html:69
 msgid "Send as many vouchers as possible"
@@ -20142,8 +20136,8 @@ msgid ""
 "be used."
 msgstr ""
 "Μπορέσαμε να επικοινωνήσουμε με τον διακομιστή SMTP που ρυθμίσατε. Θυμηθείτε "
-"να ενεργοποιήσετε το πλαίσιο ελέγχου \"Χρήση προσαρμοσμένου διακομιστή "
-"SMTP\", διαφορετικά ο διακομιστής SMTP δεν θα χρησιμοποιηθεί."
+"να ενεργοποιήσετε το πλαίσιο ελέγχου \"Χρήση προσαρμοσμένου διακομιστή SMTP\""
+", διαφορετικά ο διακομιστής SMTP δεν θα χρησιμοποιηθεί."
 
 #: pretix/control/views/event.py:665 pretix/plugins/sendmail/views.py:143
 msgid "This value will be replaced based on dynamic parameters."
@@ -20202,8 +20196,8 @@ msgid ""
 "The event could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"Η εκδήλωση δεν ήταν δυνατό να διαγραφεί, καθώς ορισμένοι περιορισμοί (π.χ. "
-"δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
+"Η εκδήλωση δεν ήταν δυνατό να διαγραφεί, καθώς ορισμένοι περιορισμοί "
+"(π.χ. δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
 
 #: pretix/control/views/event.py:1056
 msgid "The issue has been marked as resolved!"
@@ -20469,8 +20463,8 @@ msgid ""
 "The order could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"Η παραγγελία δεν μπόρεσε να διαγραφεί, καθώς ορισμένοι περιορισμοί (π.χ. "
-"δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
+"Η παραγγελία δεν μπόρεσε να διαγραφεί, καθώς ορισμένοι περιορισμοί "
+"(π.χ. δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
 
 #: pretix/control/views/orders.py:509
 msgid "Only orders created in test mode can be deleted."
@@ -20959,8 +20953,8 @@ msgid ""
 "The organizer could not be deleted as some constraints (e.g. data created by "
 "plug-ins) do not allow it."
 msgstr ""
-"Ο διοργανωτής δεν μπόρεσε να διαγραφεί, καθώς ορισμένοι περιορισμοί (π.χ. "
-"δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
+"Ο διοργανωτής δεν μπόρεσε να διαγραφεί, καθώς ορισμένοι περιορισμοί "
+"(π.χ. δεδομένα που δημιουργήθηκαν από plug-ins) δεν το επιτρέπουν."
 
 #: pretix/control/views/organizer_views/organizer_view.py:383
 #: pretix/eventyay_common/views/event.py:451
@@ -20971,8 +20965,7 @@ msgstr "Δεν έχετε δημιουργήσει ακόμα καμιά κατ�
 
 #: pretix/control/views/organizer_views/team_view.py:45
 msgid "The team has been created. You can now add members to the team."
-msgstr ""
-"Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
+msgstr "Η ομάδα έχει δημιουργηθεί. Τώρα μπορείτε να προσθέσετε μέλη στην ομάδα."
 
 #: pretix/control/views/organizer_views/team_view.py:91
 msgid "The selected team has been deleted."
@@ -21758,8 +21751,8 @@ msgstr "Εκτύπωση badges"
 msgid ""
 "Are you sure you want to delete the badge layout <strong>%(layout)s</strong>?"
 msgstr ""
-"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge "
-"<strong>%(layout)s</strong>;"
+"Είστε σίγουροι ότι θέλετε να διαγράψετε τη διάταξη του badge <strong>%"
+"(layout)s</strong>;"
 
 #: pretix/plugins/badges/templates/pretixplugins/badges/edit.html:6
 #: pretix/plugins/badges/templates/pretixplugins/badges/edit.html:16
@@ -23373,8 +23366,8 @@ msgstr "Το layout του εισιτηρίου"
 #, python-format
 msgid "Are you sure you want to delete the layout <strong>%(layout)s</strong>?"
 msgstr ""
-"Είστε βέβαιοι ότι θέλετε να διαγράψετε το layout <strong> %(layout)s </"
-"strong>;"
+"Είστε βέβαιοι ότι θέλετε να διαγράψετε το layout <strong> %(layout)s "
+"</strong>;"
 
 #: pretix/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/edit.html:6
 #: pretix/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/edit.html:16
@@ -23570,8 +23563,7 @@ msgstr "Παρακαλώ εισάγετε το όνομά σας."
 #: pretix/presale/checkoutflowstep/questions_step.py:269
 #: pretix/presale/checkoutflowstep/questions_step.py:274
 msgid "Please fill in answers to all required questions."
-msgstr ""
-"Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
+msgstr "Παρακαλώ συμπληρώστε τις απαντήσεις σε όλες τις απαιτούμενες ερωτήσεις."
 
 #: pretix/presale/forms/checkout.py:36
 msgid "E-mail address (repeated)"
@@ -24563,8 +24555,7 @@ msgstr "Προβολή στο backend"
 #: pretix/presale/templates/pretixpresale/event/order.html:85
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
-"Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
+msgstr "Μία πληρωμή %(total)s εξακολουθεί να εκκρεμεί για αυτήν την παραγγελία."
 
 #: pretix/presale/templates/pretixpresale/event/order.html:88
 #, python-format
@@ -24899,11 +24890,11 @@ msgid ""
 "to initiate the transfer manually. Please be patient as this might take a "
 "bit longer."
 msgstr ""
-"Με τη μέθοδο πληρωμής που χρησιμοποιήσατε, το ποσό επιστροφής %"
-"(amount)s<strong> δεν μπορεί να σας αποσταλεί αυτόματα </strong>. Αντ "
-"'αυτού, ο διοργανωτής εκδηλώσεων θα χρειαστεί να ξεκινήσει τη μεταφορά "
-"χειροκίνητα. Παρακαλούμε να είστε υπομονετικοί, καθώς αυτό μπορεί να "
-"διαρκέσει λίγο περισσότερο."
+"Με τη μέθοδο πληρωμής που χρησιμοποιήσατε, το ποσό επιστροφής %(amount)"
+"s<strong> δεν μπορεί να σας αποσταλεί αυτόματα </strong>. Αντ 'αυτού, ο "
+"διοργανωτής εκδηλώσεων θα χρειαστεί να ξεκινήσει τη μεταφορά χειροκίνητα. "
+"Παρακαλούμε να είστε υπομονετικοί, καθώς αυτό μπορεί να διαρκέσει λίγο "
+"περισσότερο."
 
 #: pretix/presale/templates/pretixpresale/event/order_cancel.html:194
 #, fuzzy
@@ -25205,8 +25196,8 @@ msgid ""
 "If you're looking to configure this installation, please <a %(a_attr)s>head "
 "over here</a>."
 msgstr ""
-"Αν θέλετε να διαμορφώσετε αυτήν την εγκατάσταση, παρακαλούμε να "
-"%(a_attr)sκατευθυνθείτε εδώ</a>."
+"Αν θέλετε να διαμορφώσετε αυτήν την εγκατάσταση, παρακαλούμε να %(a_attr)"
+"sκατευθυνθείτε εδώ</a>."
 
 #: pretix/presale/templates/pretixpresale/index.html:24
 msgid "Enjoy!"
@@ -25520,8 +25511,8 @@ msgstr "Αυτό το κατάστημα εισιτηρίων είναι απε�
 #: pretix/presale/views/widget.py:294
 msgid "The selected date does not exist in this event series."
 msgstr ""
-"Η επιλεγμένη ημερομηνία δεν υπάρχει σε αυτή τη σειρά εκδηλώσεων (event "
-"series)."
+"Η επιλεγμένη ημερομηνία δεν υπάρχει σε αυτή τη σειρά εκδηλώσεων "
+"(event series)."
 
 #: pretix/presale/views/widget.py:301
 msgid "This is not an event series."
@@ -25754,8 +25745,7 @@ msgstr ""
 
 #: pretalx/agenda/templates/agenda/feedback_form.html:24
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
-"Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
+msgstr "Δεν μπορείτε να υποβάλετε σχόλια για αυτήν τη συνεδρία αυτήν τη στιγμή."
 
 #: pretalx/agenda/templates/agenda/schedule.html:23
 #, fuzzy
@@ -26069,8 +26059,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), "
-"%(until_string)s από τώρα."
+"Μπορείτε να εισάγετε προτάσεις μέχρι %(deadline)s (%(timezone)s), %"
+"(until_string)s από τώρα."
 
 #: pretalx/cfp/templates/cfp/event/cfp.html:28
 #, python-format
@@ -26413,8 +26403,8 @@ msgid ""
 msgstr ""
 "Μπορείτε να αποσύρετε την πρότασή σας από τη διαδικασία επιλογής εδώ. Δεν "
 "μπορείτε να το αναιρέσετε - εάν δεν είστε βέβαιοι/ες εάν μπορείτε ή πρέπει "
-"να πραγματοποιήσετε τη συνεδρία σας, επικοινωνήστε με τον/την διοργανωτή/"
-"διοργανώτρια."
+"να πραγματοποιήσετε τη συνεδρία σας, επικοινωνήστε με τον/την "
+"διοργανωτή/διοργανώτρια."
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:125
 msgid "Discard draft proposal"
@@ -26451,9 +26441,9 @@ msgid ""
 "link:"
 msgstr ""
 "Προσκαλέστε έναν άλλο ομιλητή στην πρότασή σας εδώ. Αντί να μας επιτρέψετε "
-"να στείλουμε ένα μήνυμα ηλεκτρονικού ταχυδρομείου (το οποίο μπορεί να "
-"παγιδευτεί από φίλτρα ανεπιθύμητης αλληλογραφίας), μπορείτε επίσης να τους "
-"δώσετε αυτόν τον σύνδεσμο:"
+"να στείλουμε ένα μήνυμα ηλεκτρονικού ταχυδρομείου "
+"(το οποίο μπορεί να παγιδευτεί από φίλτρα ανεπιθύμητης αλληλογραφίας), "
+"μπορείτε επίσης να τους δώσετε αυτόν τον σύνδεσμο:"
 
 #: pretalx/cfp/templates/cfp/event/user_submission_withdraw.html:15
 msgid "Do you really want to withdraw your proposal?"
@@ -26567,8 +26557,7 @@ msgstr "Αυτή η πρόταση δεν έχει ακόμη μεταφορτώ
 
 #: pretalx/cfp/templates/cfp/includes/submission_resources_form.html:94
 msgid "You can either provide a URL or upload a file."
-msgstr ""
-"Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
+msgstr "Μπορείτε είτε να δώσετε μια διεύθυνση URL είτε να ανεβάσετε ένα αρχείο."
 
 #: pretalx/cfp/templates/cfp/includes/submission_resources_form.html:104
 msgid "Add another resource"
@@ -27368,8 +27357,7 @@ msgstr "Επικοινωνήστε μαζί μας"
 #, fuzzy
 #| msgid "This change was performed by a member of the event orga."
 msgid "This change was performed by an event organiser."
-msgstr ""
-"Αυτή η αλλαγή πραγματοποιήθηκε από ένα μέλος της οργανωτικής επιτροπής."
+msgstr "Αυτή η αλλαγή πραγματοποιήθηκε από ένα μέλος της οργανωτικής επιτροπής."
 
 #: pretalx/common/templates/common/powered_by.html:36
 #, python-format
@@ -27526,8 +27514,8 @@ msgstr "Ας δημιουργήσω ένα νέο!"
 #: pretalx/common/text/phrases.py:100
 msgid "Now you just need to choose your new password and you are ready to go."
 msgstr ""
-"Τώρα χρειάζεστε απλά να διαλέξετε τον νέο κωδικό πρόσβασης και είστε έτοιμος/"
-"η."
+"Τώρα χρειάζεστε απλά να διαλέξετε τον νέο κωδικό πρόσβασης και είστε "
+"έτοιμος/η."
 
 #: pretalx/common/text/phrases.py:102
 msgid "The password was reset."
@@ -27690,8 +27678,8 @@ msgid ""
 "owner of that event to add you to their team)."
 msgstr ""
 "Αυτή η συντομογραφία έχει ήδη ανατεθεί σε άλλο συνέδριο, παρακαλώ διαλέξτε "
-"κάποια άλλη (ή ζητήστε από τον διοργανωτή αυτού να σας εντάξει στην ομάδα "
-"του)."
+"κάποια άλλη "
+"(ή ζητήστε από τον διοργανωτή αυτού να σας εντάξει στην ομάδα του)."
 
 #: pretalx/event/forms.py:244
 msgid ""
@@ -28982,8 +28970,7 @@ msgstr ""
 
 #: pretalx/orga/forms/event.py:191
 msgid "Please do not choose the default domain as custom event domain."
-msgstr ""
-"Μην επιλέξετε τον προεπιλεγμένο τομέα ως προσαρμοσμένο τομέα συμβάντος."
+msgstr "Μην επιλέξετε τον προεπιλεγμένο τομέα ως προσαρμοσμένο τομέα συμβάντος."
 
 #: pretalx/orga/forms/event.py:202
 #, python-brace-format
@@ -29200,8 +29187,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Πώς θέλετε να διαχωρίσετε δεδομένα σε ένα μόνο κελί (για παράδειγμα, πολλά "
-"ηχεία σε μία περίοδο λειτουργίας);"
+"Πώς θέλετε να διαχωρίσετε δεδομένα σε ένα μόνο κελί "
+"(για παράδειγμα, πολλά ηχεία σε μία περίοδο λειτουργίας);"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -29596,8 +29583,8 @@ msgid ""
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
 "Επιλέξτε τον τρόπο με τον οποίο θα μορφοποιηθεί το banner της αρχικής "
-"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/"
-"\">heropatterns.com</a>, CC BY 4.0."
+"σελίδας. Πηγή μοτίβου:<a href=\"http://www.heropatterns.com/\""
+">heropatterns.com</a>, CC BY 4.0."
 
 #: pretalx/orga/phrases.py:13
 msgid "Schedule display format"
@@ -29626,8 +29613,8 @@ msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
 msgstr ""
-"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα εξερχόμενα "
-"- μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα στείλετε όλα."
+"{count} μηνύματα ηλεκτρονικού ταχυδρομείου έχουν αποθηκευτεί στα εξερχόμενα -"
+" μπορείτε να κάνετε μεμονωμένες αλλαγές εκεί ή απλώς να τα στείλετε όλα."
 
 #: pretalx/orga/templates/orga/admin/admin.html:14
 #: pretalx/orga/templates/orga/admin/admin.html:18
@@ -29839,8 +29826,7 @@ msgstr "Συνδεθείτε"
 
 #: pretalx/orga/templates/orga/base.html:136
 msgid "You’re using pretalx as a superuser. This is not recommended."
-msgstr ""
-"Χρησιμοποιείτε το pretalx ως διαχειριστής. Κάτι τέτοιο δεν προτείνεται."
+msgstr "Χρησιμοποιείτε το pretalx ως διαχειριστής. Κάτι τέτοιο δεν προτείνεται."
 
 #: pretalx/orga/templates/orga/base.html:140
 msgid "Please click here to switch to an administrator account."
@@ -30049,9 +30035,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Αυτή η ερώτηση έχει απαντηθεί <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> απαντήσεις <a "
-"href=\"%(base_search_url)sunanswered=1\">λείπουν ακόμα</a>."
+"Αυτή η ερώτηση έχει απαντηθεί <strong>%(count)s</strong>, <strong>%(missing)"
+"s</strong> απαντήσεις <a href=\"%(base_search_url)sunanswered=1\">λείπουν "
+"ακόμα</a>."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:60
 #, fuzzy, python-format
@@ -30176,9 +30162,9 @@ msgid ""
 "(talk vs workshop vs metal concert)."
 msgstr ""
 "Διαφορετικοί τύποι συνεδρίας μπορεί να βοηθήσουν στην καθοδήγηση των "
-"ομιλητών σε διαφορετικά μήκη υποδοχής (μικρές συνεδρίες έναντι μακρών "
-"συνεδριών) ή σε διαφορετικές μορφές παρουσίασης (ομιλία εναντίον εργαστηρίου "
-"έναντι συναυλίας μέταλ)."
+"ομιλητών σε διαφορετικά μήκη υποδοχής "
+"(μικρές συνεδρίες έναντι μακρών συνεδριών) ή σε διαφορετικές μορφές "
+"παρουσίασης (ομιλία εναντίον εργαστηρίου έναντι συναυλίας μέταλ)."
 
 #: pretalx/orga/templates/orga/cfp/submissiontype/list.html:44
 msgid "Default duration"
@@ -30539,9 +30525,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Εάν έχετε ήδη λογαριασμό –είτε ως ομιλητής είτε ως διοργανωτής– στο <a "
-"href=\"%(domain)s\">%(domain)s</a>, συνδεθείτε τώρα. Διαφορετικά, "
-"δημιουργήστε νέο λογαριασμό για να γίνετε μέλος της ομάδας!"
+"Εάν έχετε ήδη λογαριασμό –είτε ως ομιλητής είτε ως διοργανωτής– στο <a href="
+"\"%(domain)s\">%(domain)s</a>, συνδεθείτε τώρα. Διαφορετικά, δημιουργήστε "
+"νέο λογαριασμό για να γίνετε μέλος της ομάδας!"
 
 #: pretalx/orga/templates/orga/invitation.html:37
 #, python-format
@@ -30554,10 +30540,10 @@ msgid ""
 msgstr ""
 "Για να αποδεχτείτε την πρόσκληση με τον λογαριασμό που είστε ενεργός αυτήν "
 "τη στιγμή, χρησιμοποιήστε το παρακάτω κουμπί. Εάν θέλετε να αποδεχτείτε την "
-"πρόσκληση με διαφορετικό λογαριασμό, μπορείτε να <a href=\"/orga/logout/?"
-"next=%(link)s\">αποσυνδεθείτε</a> και να συνδεθείτε με τον άλλο λογαριασμό. "
-"</p><p> Εάν πιστεύετε ότι λάβατε αυτήν την πρόσκληση κατά λάθος, "
-"επικοινωνήστε απευθείας με τον διοργανωτή."
+"πρόσκληση με διαφορετικό λογαριασμό, μπορείτε να <a href="
+"\"/orga/logout/?next=%(link)s\">αποσυνδεθείτε</a> και να συνδεθείτε με τον "
+"άλλο λογαριασμό. </p><p> Εάν πιστεύετε ότι λάβατε αυτήν την πρόσκληση κατά "
+"λάθος, επικοινωνήστε απευθείας με τον διοργανωτή."
 
 #: pretalx/orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -30989,8 +30975,8 @@ msgid ""
 msgstr ""
 "Εδώ μπορείτε να αναθέσετε κριτικούς σε συγκεκριμένες προτάσεις! "
 "Χρησιμοποιήστε αυτό το αναπτυσσόμενο μενού για εναλλαγή μεταξύ των δύο "
-"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε "
-"αναθεωρητές)."
+"τρόπων ανάθεσης (ανάθεση αναθεωρητών σε προτάσεις ή προτάσεων σε αναθεωρητές)"
+"."
 
 #: pretalx/orga/templates/orga/review/assignment.html:126
 msgid ""
@@ -31429,11 +31415,11 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] ""
-"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</"
-"strong>."
+"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα "
+"κομμάτι</strong>."
 msgstr[1] ""
-"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα κομμάτι</"
-"strong>."
+"%(no_track)s συνεδρίες <strong>δεν έχουν ακόμη εκχωρηθεί ένα "
+"κομμάτι</strong>."
 
 #: pretalx/orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -31512,8 +31498,8 @@ msgid ""
 "recommend that you add email settings here explicitly."
 msgstr ""
 "Αν δε δημιουργήσετε κατά παραγγελία ρυθμίσεις, θα χρησιμοποιηθεί η συνολική "
-"διαμόρφωση γι' αυτό τον server (ρωτήστε τον διαχειριστή σας για "
-"λεπτομέρειες). <br> Σας συνιστούμε να προσθέσετε ρυθμίσεις email εδώ."
+"διαμόρφωση γι' αυτό τον server (ρωτήστε τον διαχειριστή σας για λεπτομέρειες)"
+". <br> Σας συνιστούμε να προσθέσετε ρυθμίσεις email εδώ."
 
 #: pretalx/orga/templates/orga/settings/review.html:41
 #, python-format
@@ -31523,8 +31509,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Εάν δεν χρειάζεστε ούτε βαθμολογία αξιολόγησης ούτε κείμενο κριτικής, θα "
-"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί "
-"%(quotation_open)sAbstain%(quotation_close)s κατά τον έλεγχο των προτάσεων."
+"προσφερθεί στους αξιολογητές ένα επιπλέον κουμπί %(quotation_open)sAbstain%"
+"(quotation_close)s κατά τον έλεγχο των προτάσεων."
 
 #: pretalx/orga/templates/orga/settings/review.html:57
 msgid ""
@@ -31703,10 +31689,10 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Προσθέστε σημαντικά μηνύματα (π.χ. \"Παρακαλώ φέρτε έναν προσαρμογέα HDMI "
-"εάν απαιτείται.\") ή αρχεία (π.χ. έναν οδηγό στυλ συνδιάσκεψης).<br> "
-"Εμφανίζονται στους επιλεγμένους ομιλητές πάνω από τη λίστα των συνεδριών που "
-"υποβλήθηκαν."
+"Προσθέστε σημαντικά μηνύματα "
+"(π.χ. \"Παρακαλώ φέρτε έναν προσαρμογέα HDMI εάν απαιτείται.\") ή αρχεία "
+"(π.χ. έναν οδηγό στυλ συνδιάσκεψης).<br> Εμφανίζονται στους επιλεγμένους "
+"ομιλητές πάνω από τη λίστα των συνεδριών που υποβλήθηκαν."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -31808,8 +31794,8 @@ msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
 msgstr ""
-"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των "
-"%(count)s προτάσεων."
+"Επιβεβαιώστε ότι θέλετε πραγματικά να αλλάξετε την κατάσταση αυτών των %"
+"(count)s προτάσεων."
 
 #: pretalx/orga/templates/orga/submission/apply_pending.html:33
 #: pretalx/orga/templates/orga/submission/state_change.html:34
@@ -32049,10 +32035,10 @@ msgid ""
 "API tokens can be used to access the <a %(apiurl)s>pretalx API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"Αυτό το token μπορεί να χρησιμοποιηθεί για πρόσβαση στο <a "
-"%(apiurl)s>pretalx API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα "
-"ακυρώσει το παλιό. Για να δείτε περισσότερα, παρακαλώ ρίξτε μια ματιά στο <a "
-"%(docurl)s> API documentation</a>."
+"Αυτό το token μπορεί να χρησιμοποιηθεί για πρόσβαση στο <a %(apiurl)"
+"s>pretalx API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα ακυρώσει "
+"το παλιό. Για να δείτε περισσότερα, παρακαλώ ρίξτε μια ματιά στο <a %(docurl)"
+"s> API documentation</a>."
 
 #: pretalx/orga/templates/orga/user.html:43
 #, fuzzy
@@ -32903,8 +32889,7 @@ msgstr "έκδοση"
 
 #: pretalx/person/models/information.py:41
 msgid "Leave empty to show this information to all tracks."
-msgstr ""
-"Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
+msgstr "Αφήστε κενό για να εμφανιστούν αυτές οι πληροφορίες σε όλα τα κομμάτια."
 
 #: pretalx/person/models/information.py:45
 msgid "Limit to proposal types"
@@ -33056,8 +33041,7 @@ msgstr ""
 
 #: pretalx/schedule/forms.py:115
 msgid "The submitted availability does not comply with the required format."
-msgstr ""
-"Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
+msgstr "Η υποβληθείσα διαθεσιμότητα δεν συμμορφώνεται με την απαιτούμενη μορφή."
 
 #: pretalx/schedule/forms.py:131
 msgid "The submitted availability contains an invalid date."
@@ -33142,8 +33126,7 @@ msgstr "Ο/Η {speaker} δεν είναι διαθέσιμος/η την προ�
 #: pretalx/schedule/models/schedule.py:472
 #, python-brace-format
 msgid "{speaker} is scheduled for another session at the same time."
-msgstr ""
-"Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
+msgstr "Ο/Η {speaker} πραγματοποιεί μια άλλη συνεδρία την προγραμματισμένη ώρα."
 
 #: pretalx/schedule/models/slot.py:48
 msgid "The room this talk is scheduled in, if any"
@@ -33206,8 +33189,8 @@ msgstr "Δεν υπάρχουν σχόλια για αυτήν τη συνεδρ
 #, python-format
 msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
 msgstr ""
-"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε "
-"%(location)s"
+"- Η συνεδρία σας \"%(title)s\" θα πραγματοποιηθεί στο %(start)s σε %"
+"(location)s"
 
 #: pretalx/schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
@@ -33532,8 +33515,8 @@ msgstr "Ελάχιστο μήκος κειμένου"
 #: pretalx/submission/models/question.py:215
 msgid "Minimum allowed text in characters or words (set in CfP settings)."
 msgstr ""
-"Ελάχιστο επιτρεπόμενο κείμενο σε χαρακτήρες ή λέξεις (ορίζεται στις "
-"ρυθμίσεις CfP)."
+"Ελάχιστο επιτρεπόμενο κείμενο σε χαρακτήρες ή λέξεις "
+"(ορίζεται στις ρυθμίσεις CfP)."
 
 #: pretalx/submission/models/question.py:221
 msgid "Maximum text length"
@@ -33543,8 +33526,8 @@ msgstr "Μέγιστο μήκος κειμένου"
 msgid ""
 "Maximum allowed text length in characters or words (set in CfP settings)."
 msgstr ""
-"Μέγιστο επιτρεπόμενο μήκος κειμένου σε χαρακτήρες ή λέξεις (ορίζεται στις "
-"ρυθμίσεις CfP)."
+"Μέγιστο επιτρεπόμενο μήκος κειμένου σε χαρακτήρες ή λέξεις "
+"(ορίζεται στις ρυθμίσεις CfP)."
 
 #: pretalx/submission/models/question.py:260
 msgid "Publish answers"
@@ -33638,9 +33621,10 @@ msgid ""
 "workflow. "
 msgstr ""
 "Εάν επιλέξετε \"όλα\", οι αναθεωρητές μπορούν να ελέγξουν όλες τις προτάσεις "
-"στις οποίες έχουν πρόσβαση οι ομάδες τους (άρα είτε όλες είτε συγκεκριμένα "
-"κομμάτια). Σε αυτήν τη λειτουργία, οι προτάσεις που έχουν εκχωρηθεί θα "
-"επισημαίνονται και θα εμφανίζονται πρώτα στη ροή εργασιών αναθεώρησης. "
+"στις οποίες έχουν πρόσβαση οι ομάδες τους "
+"(άρα είτε όλες είτε συγκεκριμένα κομμάτια). Σε αυτήν τη λειτουργία, οι "
+"προτάσεις που έχουν εκχωρηθεί θα επισημαίνονται και θα εμφανίζονται πρώτα "
+"στη ροή εργασιών αναθεώρησης. "
 
 #: pretalx/submission/models/review.py:251
 msgid "Reviewers can see other reviews"
