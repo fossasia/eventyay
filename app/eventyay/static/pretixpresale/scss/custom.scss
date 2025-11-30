@@ -124,6 +124,46 @@
     justify-content: flex-end;
 }
 
+// Inline locale links (for ≤3 languages)
+.locales-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-right: 10px;
+    
+    .locale-link {
+        color: #FFFFFF;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 3px;
+        transition: background-color 0.2s;
+        
+        &:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+        }
+        
+        &.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+        }
+    }
+}
+
+// For white background scenario
+.loginbox .locales-inline .locale-link {
+    color: #333;
+    
+    &:hover {
+        background-color: #e6e6e6;
+        color: #333;
+    }
+    
+    &.active {
+        background-color: #d4d4d4;
+    }
+}
+
 .language-dropdown {
     display: inline-block;
     margin-right: 10px;
