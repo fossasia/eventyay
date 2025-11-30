@@ -165,7 +165,7 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         )
         rendered_widgets.append(f'<div class="i18n-field-markdown-note">{markdown_note}</div>')
         return super().format_output(rendered_widgets, id_)
-        
+
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
 
@@ -173,7 +173,7 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
         default_attrs = {
             'class': 'form-control auto-expanding-textarea',
             'data-auto-expand': 'true',
-            'style': 'min-height: 80px; max-height: 300px; overflow-y: auto; resize: vertical; transition: height 0.2s ease-in-out;'
+            'style': 'min-height: 200px; max-height: 300px; overflow-y: hidden; resize: vertical; transition: height 0.2s ease-in-out;'
         }
         if attrs:
             if 'class' in attrs:
@@ -188,30 +188,37 @@ class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
 
     class Media:
         js = ('eventyay-common/js/auto-expanding-textarea.js',)
-        
+
 
 class I18nURLFormField(i18nfield.forms.I18nFormField):
     """
     Custom form field to handle internationalized URL inputs. It extends the I18nFormField
     and ensures that all provided URLs are valid.
+
     Methods:
         clean(value: LazyI18nString) -> LazyI18nString:
             Validates the URL(s) in the provided internationalized input.
     """
+
     def clean(self, value) -> LazyI18nString:
         """
         Cleans and validates the internationalized URL input.
+
         Args:
             value (LazyI18nString): The input value to clean and validate.
+
         Returns:
             LazyI18nString: The cleaned and validated input value.
+
         Raises:
             ValidationError: If any of the URLs are invalid.
         """
         value = super().clean(value)
         if not value:
             return value
+
         url_validator = URLValidator()
+
         if isinstance(value.data, dict):
             for val in value.data.values():
                 if val:
