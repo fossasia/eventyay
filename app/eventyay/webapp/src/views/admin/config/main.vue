@@ -47,14 +47,14 @@ import { required, integer, isJson, url } from 'lib/validators'
 
 // Static list: don't use moment.locales() as locales are lazy-loaded
 const momentLocaleSet = [
-	'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bn', 'bo', 'br', 'bs',
+	'af', 'ar', 'ar-dz', 'ar-kw', 'ar-ly', 'ar-ma', 'ar-sa', 'ar-tn', 'az', 'be', 'bg', 'bm', 'bo', 'br', 'bs',
 	'ca', 'cs', 'cv', 'cy', 'da', 'de', 'de-at', 'de-ch', 'dv', 'el', 'en-au', 'en-ca', 'en-gb', 'en-ie', 'en-il',
 	'en-in', 'en-nz', 'en-sg', 'eo', 'es', 'es-do', 'es-us', 'et', 'eu', 'fa', 'fi', 'fil', 'fo', 'fr', 'fr-ca', 'fr-ch',
-	'fy', 'ga', 'gd', 'gl', 'gom-deva', 'gom-latn', 'gu', 'he', 'hi', 'hr', 'hu', 'hy-am', 'id', 'is', 'it', 'it-ch',
+	'fy', 'ga', 'gd', 'gl', 'gom-deva', 'gu', 'he', 'hi', 'hr', 'hu', 'hy-am', 'id', 'is', 'it', 'it-ch',
 	'ja', 'jv', 'ka', 'kk', 'km', 'kn', 'ko', 'ku', 'ky', 'lb', 'lo', 'lt', 'lv', 'me', 'mi', 'mk', 'ml',
-	'mn', 'mr', 'ms', 'ms-my', 'mt', 'my', 'nb', 'ne', 'nl', 'nl-be', 'nn', 'oc-lnc', 'pa-in', 'pl', 'pt', 'pt-br',
-	'ro', 'ru', 'sd', 'se', 'si', 'sk', 'sl', 'sq', 'sr', 'sr-cyrl', 'ss', 'sv', 'sw', 'ta', 'te', 'tet',
-	'tg', 'th', 'tk', 'tl-ph', 'tlh', 'tr', 'tzl', 'tzm', 'tzm-latn', 'ug-cn', 'uk', 'ur', 'uz', 'uz-latn', 'vi',
+	'mn', 'mr', 'ms', 'ms-my', 'mt', 'my', 'nb', 'ne', 'nl', 'nn', 'pa-in', 'pl', 'pt-br',
+	'ro', 'ru', 'sd', 'se', 'si', 'sl', 'sq', 'sr', 'sr-cyrl', 'ss', 'sv', 'sw', 'ta', 'te', 'tet',
+	'tg', 'th', 'tk', 'tl-ph', 'tlh', 'tr', 'tzl', 'tzm', 'ug-cn', 'uk', 'ur', 'uz', 'vi',
 	'x-pseudo', 'yo', 'zh-cn', 'zh-hk', 'zh-mo', 'zh-tw',
 ]
 
