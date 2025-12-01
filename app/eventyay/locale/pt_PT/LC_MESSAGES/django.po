@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-11-28 17:00+0000\n"
-"Last-Translator: ssantos <ssantos@web.de>\n"
+"PO-Revision-Date: 2025-11-30 12:48+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Portuguese (Portugal) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_PT/>\n"
 "Language: pt_PT\n"
@@ -397,8 +397,8 @@ msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
-"Mostrar preços líquidos em vez de preços brutos na lista de produtos (não "
-"recomendado!)"
+"Mostrar preços líquidos em vez de preços brutos na lista de produtos "
+"(não recomendado!)"
 
 #: eventyay/base/configurations/default_setting.py:77
 #, fuzzy
@@ -2376,8 +2376,7 @@ msgstr "Imagem do logotipo"
 
 #: eventyay/base/configurations/default_setting.py:2265
 msgid "We will show your logo with a maximal height and width of 2.5 cm."
-msgstr ""
-"Vamos mostrar o seu logotipo com uma altura e largura maxima de 2,5 cm."
+msgstr "Vamos mostrar o seu logotipo com uma altura e largura maxima de 2,5 cm."
 
 #: eventyay/base/configurations/default_setting.py:2279
 #: eventyay/base/models/event.py:1447
@@ -2497,8 +2496,8 @@ msgstr ""
 "Os utilizadores que não têm acesso a todos os eventos neste organizador, "
 "deve selecionar uma das suas equipas para ter acesso ao evento criado. Esta "
 "configuração permite aos utilizadores criar uma equipa especifica para o "
-"evento on-the-fly, mesmo quando eles não têm a permissão \"Pode mudar as "
-"equipas e permissões\"."
+"evento on-the-fly, mesmo quando eles não têm a permissão "
+"\"Pode mudar as equipas e permissões\"."
 
 #: eventyay/base/configurations/default_setting.py:2447
 #: eventyay/base/configurations/default_setting.py:2457
@@ -4905,8 +4904,7 @@ msgstr ""
 #, fuzzy
 #| msgid "You cannot select a quota that belongs to a different event."
 msgid "You cannot set a default value that is not a valid value."
-msgstr ""
-"Não é possível selecionar uma quota que pertence a um evento diferente."
+msgstr "Não é possível selecionar uma quota que pertence a um evento diferente."
 
 #: eventyay/base/models/fields.py:12
 msgid "No value can contain the delimiter character."
@@ -5478,8 +5476,7 @@ msgstr "Esta questão será solicitado aos compradores dos produtos selecionados
 
 #: eventyay/base/models/items.py:1081
 msgid "Ask during check-in instead of in the ticket buying process"
-msgstr ""
-"Pergunte durante o check-in em vez de no processo de compra de bilhetes"
+msgstr "Pergunte durante o check-in em vez de no processo de compra de bilhetes"
 
 #: eventyay/base/models/items.py:1082
 msgid "Not supported by all check-in apps for all question types."
@@ -6436,8 +6433,7 @@ msgstr "Vouchers"
 
 #: eventyay/base/models/vouchers.py:231
 msgid "You cannot select a quota that belongs to a different event."
-msgstr ""
-"Não é possível selecionar uma quota que pertence a um evento diferente."
+msgstr "Não é possível selecionar uma quota que pertence a um evento diferente."
 
 #: eventyay/base/models/vouchers.py:233
 msgid "You cannot select a quota and a specific product at the same time."
@@ -6529,8 +6525,8 @@ msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
 msgstr ""
-"O lugar \"{id}\" não está disponível no momento (bloqueado, já vendido ou um "
-"voucher diferente)."
+"O lugar \"{id}\" não está disponível no momento "
+"(bloqueado, já vendido ou um voucher diferente)."
 
 #: eventyay/base/models/vouchers.py:376
 msgid "You need to choose a specific product if you select a seat."
@@ -7135,8 +7131,8 @@ msgid ""
 msgstr ""
 "Este texto será incluído no placeholder {payment_info} no e-mails de "
 "confirmação de encomendas. Deverá instruir o utilizador sobre como proceder "
-"com o pagamento. Pode usar os espaços reservados {order}, {total}, "
-"{currency} e {total_with_currency}."
+"com o pagamento. Pode usar os espaços reservados {order}, {total}, {currency}"
+" e {total_with_currency}."
 
 #: eventyay/base/payment.py:991
 msgid "Payment process description for pending orders"
@@ -7790,8 +7786,7 @@ msgstr "Este código do voucher não é conhecido na nossa base de de dados."
 #: eventyay/base/services/cart.py:79
 msgid ""
 "This voucher code has already been used the maximum number of times allowed."
-msgstr ""
-"Este código do voucher já foi usado o número máximo de vezes permitido."
+msgstr "Este código do voucher já foi usado o número máximo de vezes permitido."
 
 #: eventyay/base/services/cart.py:80
 #, python-format
@@ -7891,8 +7886,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Pode selecionar todos os add-ons da categoria %(cat)s para o produto "
-"%(base)s no máximo uma vez."
+"Pode selecionar todos os add-ons da categoria %(cat)s para o produto %(base)"
+"s no máximo uma vez."
 
 #: eventyay/base/services/cart.py:104
 msgid ""
@@ -7904,8 +7899,7 @@ msgstr ""
 
 #: eventyay/base/services/cart.py:105
 msgid "One of the products you selected can only be bought part of a bundle."
-msgstr ""
-"Um dos produtos que selecionou só pode ser comprado parte de um pacote."
+msgstr "Um dos produtos que selecionou só pode ser comprado parte de um pacote."
 
 #: eventyay/base/services/cart.py:107
 msgid "Please select a valid seat."
@@ -11382,8 +11376,7 @@ msgstr "A encomenda foi criada."
 
 #: eventyay/control/logdisplay.py:297
 msgid "The order requires approval before it can continue to be processed."
-msgstr ""
-"A encomenda exige aprovação antes que possa continuar a ser processada."
+msgstr "A encomenda exige aprovação antes que possa continuar a ser processada."
 
 #: eventyay/control/logdisplay.py:298 eventyay/control/views/orders.py:478
 msgid "The order has been approved."
@@ -12123,8 +12116,8 @@ msgid ""
 "The selected event was not found or you have no permission to administrate "
 "it."
 msgstr ""
-"O evento selecionado não foi encontrado ou não tem permissão para administrá-"
-"lo."
+"O evento selecionado não foi encontrado ou não tem permissão para "
+"administrá-lo."
 
 #: eventyay/control/middleware.py:159
 msgid ""
@@ -12955,9 +12948,9 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Se já tem uma conta no site com um endereço de e-mail diferente, pode <a "
-"%(login_href)s>fazer log in</a> em primeiro lugar e, em seguida, clique "
-"neste link novamente para aceitar o convite com sua conta existente."
+"Se já tem uma conta no site com um endereço de e-mail diferente, pode <a %"
+"(login_href)s>fazer log in</a> em primeiro lugar e, em seguida, clique neste "
+"link novamente para aceitar o convite com sua conta existente."
 
 #: eventyay/control/templates/pretixcontrol/auth/invite.html:23
 #: eventyay/control/templates/pretixcontrol/auth/register.html:29
@@ -14304,8 +14297,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Não há provedores de pagamento disponíveis. Por favor, vá ao <a "
-"%(plugin_settings_href)s>configurações de plug-in</a> e ative um ou mais "
+"Não há provedores de pagamento disponíveis. Por favor, vá ao <a %"
+"(plugin_settings_href)s>configurações de plug-in</a> e ative um ou mais "
 "plugins de pagamento."
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:67
@@ -14521,11 +14514,11 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"pretix suporta uma <a href=\"https://eventyay.com/about/en/features/"
-"payment\" target=\"_blank\">ampla gama de provedores de pagamento</a> que "
-"lhe permite escolher os métodos de pagamento que cabem no seu fluxo de "
-"trabalho melhor. Aqui estão apenas dois deles como exemplos, pode adicionar "
-"mais na parte \"Configurações\" do seu evento."
+"pretix suporta uma <a href=\"https://eventyay.com/about/en/features/payment\""
+" target=\"_blank\">ampla gama de provedores de pagamento</a> que lhe permite "
+"escolher os métodos de pagamento que cabem no seu fluxo de trabalho melhor. "
+"Aqui estão apenas dois deles como exemplos, pode adicionar mais na parte "
+"\"Configurações\" do seu evento."
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:184
 msgid ""
@@ -14822,8 +14815,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Não há saídas de bilhetes disponíveis. Por favor, vá ao <a "
-"%(plugin_settings_href)s>configurações de plugins</a> e ative um ou mais "
+"Não há saídas de bilhetes disponíveis. Por favor, vá ao <a %"
+"(plugin_settings_href)s>configurações de plugins</a> e ative um ou mais "
 "plugins de saída de bilhetes."
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:71
@@ -15657,8 +15650,7 @@ msgstr "Opções de resposta"
 
 #: eventyay/control/templates/pretixcontrol/items/question_edit.html:57
 msgid "Only applicable if you choose 'Choose one/multiple from a list' above."
-msgstr ""
-"Aplicável apenas se escolher 'Escolha um/múltiplos de uma lista' acima."
+msgstr "Aplicável apenas se escolher 'Escolha um/múltiplos de uma lista' acima."
 
 #: eventyay/control/templates/pretixcontrol/items/question_edit.html:73
 #, python-format
@@ -16789,8 +16781,8 @@ msgid ""
 msgstr ""
 "Recebemos aviso de que <strong>%(amount)s</strong> foi reembolsado via "
 "<strong>%(method)s </strong>. Se o reembolso é processado, o pedido ficará "
-"em debito por <strong>%(pending)s</strong>. O Pedido total é "
-"<strong>%(total)s</strong>."
+"em debito por <strong>%(pending)s</strong>. O Pedido total é <strong>%(total)"
+"s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -17464,8 +17456,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:119
 msgid "You are currently not accepting gift cards from other organizers."
-msgstr ""
-"No momento não está a aceitar cartões-presente de outros organizadores."
+msgstr "No momento não está a aceitar cartões-presente de outros organizadores."
 
 #: eventyay/control/templates/pretixcontrol/organizers/logs.html:4
 #: eventyay/control/templates/pretixcontrol/organizers/logs.html:6
@@ -17484,10 +17475,10 @@ msgid ""
 "can later set for your events and re-use in places like ticket layouts. This "
 "is an useful timesaver if you create lots and lots of events."
 msgstr ""
-"Pode definir aqui um conjunto de propriedades de metadados (ou seja, "
-"variáveis) que mais tarde pode definir para seus eventos e re-usar em "
-"lugares como layouts de bilhetes. Este é um poupador de tempo útil se criar "
-"muitos e muitos eventos."
+"Pode definir aqui um conjunto de propriedades de metadados "
+"(ou seja, variáveis) que mais tarde pode definir para seus eventos e re-usar "
+"em lugares como layouts de bilhetes. Este é um poupador de tempo útil se "
+"criar muitos e muitos eventos."
 
 #: eventyay/control/templates/pretixcontrol/organizers/properties.html:15
 #: eventyay/control/templates/pretixcontrol/organizers/property_edit.html:8
@@ -18971,8 +18962,8 @@ msgid ""
 "<strong>%(amount)s</strong>."
 msgstr ""
 "Se pode criar espaço suficiente em seu evento para caber todas as pessoas na "
-"lista de espera, podera vender bilhetes no valor adicional de "
-"<strong>%(amount)s</strong>."
+"lista de espera, podera vender bilhetes no valor adicional de <strong>%"
+"(amount)s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:105
 msgid "Successfully redeemed"
@@ -21498,8 +21489,8 @@ msgstr[0] ""
 "Está a tentar fazer download de um reembolso exportado em %(date)s com uma "
 "encomenda e um total de %(sum)s."
 msgstr[1] ""
-"Está a tentar fazer download de um reembolso exportado em %(date)s com "
-"%(cnt)s encomendas e um total de %(sum)s."
+"Está a tentar fazer download de um reembolso exportado em %(date)s com %(cnt)"
+"s encomendas e um total de %(sum)s."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -21881,8 +21872,7 @@ msgstr "URL de redirecionamento base"
 
 #: eventyay/plugins/returnurl/views.py:15
 msgid "Redirection will only be allowed to URLs that start with this prefix."
-msgstr ""
-"A reorientação só será permitida aos URLs que comecem com este prefixo."
+msgstr "A reorientação só será permitida aos URLs que comecem com este prefixo."
 
 #: eventyay/plugins/sendmail/apps.py:16
 msgid "This plugin allows you to send out emails to all your customers."
@@ -23009,8 +22999,7 @@ msgstr "Este canal de vendas não fornece apoio para o modo de teste."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:43
 msgid "If you continue, you might pay an actual order with non-existing money!"
-msgstr ""
-"Se continuar, pode pagar a encomenda actual com dinheiro não-existente!"
+msgstr "Se continuar, pode pagar a encomenda actual com dinheiro não-existente!"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:49
 msgid "This payment provider does not provide support for test mode."
@@ -24024,8 +24013,8 @@ msgid ""
 "                                                    "
 msgstr ""
 "\n"
-"                                                        a partir de "
-"%(start_date)s\n"
+"                                                        a partir de %"
+"(start_date)s\n"
 "                                                    "
 
 #: eventyay/presale/templates/pretixpresale/fragment_login_status.html:11
@@ -24158,8 +24147,8 @@ msgid ""
 "If you're looking to configure this installation, please <a %(a_attr)s>head "
 "over here</a>."
 msgstr ""
-"Se estiver procurando para configurar esta instalação, por favor <a "
-"%(a_attr)s>comece aqui</a>."
+"Se estiver procurando para configurar esta instalação, por favor <a %(a_attr)"
+"s>comece aqui</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:24
 msgid "Enjoy!"
@@ -24700,8 +24689,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Para ver nossa agenda com funcionalidade completa, como conversão de fuso "
-"horário e agendamento pessoal, ative JavaScript e vá <a "
-"href=\"%(href)s\">aqui</a>."
+"horário e agendamento pessoal, ative JavaScript e vá <a href=\"%(href)s\""
+">aqui</a>."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -24861,10 +24850,10 @@ msgid ""
 "instructions. If you don’t see the email within the next minutes, check your "
 "spam inbox!"
 msgstr ""
-"Se conhecermos um utilizador por este endereço de e-mail (que não solicitou "
-"uma redefinição da senha nas últimas 24 horas), enviaremos um e-mail "
-"contendo mais instruções. Se não receber o e-mail nos próximos minutos, "
-"verifique a caixa de entrada de spam!"
+"Se conhecermos um utilizador por este endereço de e-mail "
+"(que não solicitou uma redefinição da senha nas últimas 24 horas), "
+"enviaremos um e-mail contendo mais instruções. Se não receber o e-mail nos "
+"próximos minutos, verifique a caixa de entrada de spam!"
 
 #: pretalx/cfp/phrases.py:14
 msgid ""
@@ -25412,8 +25401,8 @@ msgstr "Parece que ainda não submeteu nada para este evento."
 #: pretalx/cfp/templates/cfp/event/user_submissions.html:154
 msgid "If you did, maybe you used a different account? Check your emails!"
 msgstr ""
-"Se o fez, talvez tenha utilizado uma conta diferente. Verifique os seus e-"
-"mails!"
+"Se o fez, talvez tenha utilizado uma conta diferente. Verifique os seus "
+"e-mails!"
 
 #: pretalx/cfp/templates/cfp/event/user_submissions.html:157
 msgid ""
@@ -26538,8 +26527,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"Esta forma curta já está a ser utilizada, escolha outra (ou requisite ao "
-"proprietário desse evento para adicioná-lo à equipa dele)."
+"Esta forma curta já está a ser utilizada, escolha outra "
+"(ou requisite ao proprietário desse evento para adicioná-lo à equipa dele)."
 
 #: pretalx/event/forms.py:244
 msgid ""
@@ -26769,8 +26758,8 @@ msgid ""
 "Apply permissions to all events by this organiser (including newly created "
 "ones)"
 msgstr ""
-"Aplicar permissões a todos os eventos por este organizador (incluindo os "
-"recém-criados)"
+"Aplicar permissões a todos os eventos por este organizador "
+"(incluindo os recém-criados)"
 
 #: pretalx/event/models/organiser.py:200
 msgid "Limit permissions to these events"
@@ -26831,8 +26820,8 @@ msgid ""
 "The {organiser} team"
 msgstr ""
 "Olá! \n"
-"Foi convidado para a equipa do organizador {name} - clique aqui para "
-"aceitar:\n"
+"Foi convidado para a equipa do organizador {name} - clique aqui para aceitar:"
+"\n"
 "\n"
 "{invitation_link}\n"
 "\n"
@@ -27172,8 +27161,8 @@ msgstr ""
 "Olá!\n"
 "\n"
 "Lamentamos informar que não podemos aceitar a sua proposta\n"
-"“{submission_title}” para {event_name}. Havia muitas propostas "
-"excepcionais!\n"
+"“{submission_title}” para {event_name}. Havia muitas propostas excepcionais!"
+"\n"
 "Esperamos vê-lo em {event_name} como um participante\n"
 "em vez de orador!\n"
 "\n"
@@ -27312,8 +27301,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Foi definido como orador de uma proposta para a CFP (Call For "
-"Participation)\n"
+"Foi definido como orador de uma proposta para a CFP (Call For Participation)"
+"\n"
 "do {event}, intitulada \"{title}\". Uma conta foi criada para si - siga o "
 "link abaixo\n"
 "para definir a senha da sua conta:\n"
@@ -27356,8 +27345,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Foi definido como orador de uma proposta para a CFP (Call For "
-"Participation)\n"
+"Foi definido como orador de uma proposta para a CFP (Call For Participation)"
+"\n"
 "do {event}, intitulada \"{title}\". Uma conta foi criada para si - siga o "
 "link abaixo\n"
 "para definir a senha da sua conta:\n"
@@ -28061,8 +28050,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Como deseja separar dados numa única célula (por ex., vários oradores em uma "
-"sessão)?"
+"Como deseja separar dados numa única célula "
+"(por ex., vários oradores em uma sessão)?"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -28165,8 +28154,8 @@ msgid ""
 "If you provide multiple languages, the best fit for each speaker will be "
 "used."
 msgstr ""
-"Se fornecer apenas uma língua, esta língua será utilizada para todos os e "
-"-mails. Se fornecer várias línguas, a língua mais adequada para cada orador "
+"Se fornecer apenas uma língua, esta língua será utilizada para todos os e -"
+"mails. Se fornecer várias línguas, a língua mais adequada para cada orador "
 "será utilizada."
 
 #: pretalx/orga/forms/mails.py:456 pretalx/orga/templates/orga/base.html:264
@@ -28696,8 +28685,7 @@ msgstr "Entrar"
 
 #: pretalx/orga/templates/orga/base.html:136
 msgid "You’re using pretalx as a superuser. This is not recommended."
-msgstr ""
-"Está a utilizar o pretalx como superutilizador. Isto não é recomendado."
+msgstr "Está a utilizar o pretalx como superutilizador. Isto não é recomendado."
 
 #: pretalx/orga/templates/orga/base.html:140
 msgid "Please click here to switch to an administrator account."
@@ -28857,8 +28845,7 @@ msgstr "Remover o filtro"
 #| msgid ""
 #| "This question is currently active, it will be asked during submission."
 msgid "This field is currently active, it will be asked during submission."
-msgstr ""
-"Atualmente, esta pergunta está ativa, e será feita durante a submissão."
+msgstr "Atualmente, esta pergunta está ativa, e será feita durante a submissão."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:44
 #: pretalx/orga/templates/orga/cfp/question/update.html:20
@@ -28901,9 +28888,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Esta pergunta foi respondida <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> respostas <a "
-"href=\"%(base_search_url)sunanswered=1\"> ainda estão ausentes</a>."
+"Esta pergunta foi respondida <strong>%(count)s</strong>, <strong>%(missing)"
+"s</strong> respostas <a href=\"%(base_search_url)sunanswered=1\"> ainda "
+"estão ausentes</a>."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:60
 #, fuzzy, python-format
@@ -29112,8 +29099,8 @@ msgid ""
 "Do you offer financial or other support, e.g. support for first time "
 "speakers?"
 msgstr ""
-"Oferece suporte financeiro ou outro, por exemplo \"Apoio aos oradores pela "
-"primeira vez\"?"
+"Oferece suporte financeiro ou outro, por exemplo "
+"\"Apoio aos oradores pela primeira vez\"?"
 
 #: pretalx/orga/templates/orga/cfp/text.html:41
 msgid "Dates and location"
@@ -29390,9 +29377,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Se já possui uma conta - como orador ou organizador - em <a "
-"href=\"%(domain)s\">%(domain)s</a>, faça o login agora. Caso contrário, crie "
-"uma nova conta para aceder à equipa!"
+"Se já possui uma conta - como orador ou organizador - em <a href="
+"\"%(domain)s\">%(domain)s</a>, faça o login agora. Caso contrário, crie uma "
+"nova conta para aceder à equipa!"
 
 #: pretalx/orga/templates/orga/invitation.html:37
 #, python-format
@@ -29831,8 +29818,8 @@ msgid ""
 "reviewers to proposals or proposals to reviewers)."
 msgstr ""
 "É aqui que pode atribuir revisores a propostas específicas! Use este menu "
-"para alternar entre os dois modos de atribuição (atribuir revisores a "
-"propostas ou propostas aos revisores)."
+"para alternar entre os dois modos de atribuição "
+"(atribuir revisores a propostas ou propostas aos revisores)."
 
 #: pretalx/orga/templates/orga/review/assignment.html:126
 msgid ""
@@ -30254,10 +30241,8 @@ msgstr "Veja todas as sessões por confirmar."
 #| "%(unscheduled)s sessions have <strong>not yet been scheduled</strong>."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
-msgstr[0] ""
-"As sessões %(unscheduled)s ainda <strong>não foram agendadas</strong>."
-msgstr[1] ""
-"As sessões %(unscheduled)s ainda <strong>não foram agendadas</strong>."
+msgstr[0] "As sessões %(unscheduled)s ainda <strong>não foram agendadas</strong>."
+msgstr[1] "As sessões %(unscheduled)s ainda <strong>não foram agendadas</strong>."
 
 #: pretalx/orga/templates/orga/schedule/release.html:76
 #, fuzzy, python-format
@@ -30347,9 +30332,9 @@ msgid ""
 "recommend that you add email settings here explicitly."
 msgstr ""
 "Se não definir configurações de email personalizadas, a configuração global "
-"para este servidor será utilizada (pergunte aos administradores por mais "
-"detalhes). <br> Recomendamos que adicione as configurações de email aqui "
-"explicitamente."
+"para este servidor será utilizada "
+"(pergunte aos administradores por mais detalhes). <br> Recomendamos que "
+"adicione as configurações de email aqui explicitamente."
 
 #: pretalx/orga/templates/orga/settings/review.html:41
 #, python-format
@@ -30359,8 +30344,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Se não necessitar de uma pontuação de revisão nem um texto de revisão, os "
-"revisores terão acesso a um botão adicional "
-"%(quotation_open)sAbstrair%(quotation_close)s ao rever as propostas."
+"revisores terão acesso a um botão adicional %(quotation_open)sAbstrair%"
+"(quotation_close)s ao rever as propostas."
 
 #: pretalx/orga/templates/orga/settings/review.html:57
 msgid ""
@@ -30535,10 +30520,11 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Adicione mensagens importantes (por ex., \"Por favor, traga um adaptador "
-"HDMI, se necessário.\") ou arquivos (por exemplo, um guia de estilo de "
-"conferência). <br> Estas mensagens serão mostradas aos oradores selecionados "
-"acima da lista das suas sessões submetidas."
+"Adicione mensagens importantes "
+"(por ex., \"Por favor, traga um adaptador HDMI, se necessário.\") ou "
+"arquivos (por exemplo, um guia de estilo de conferência). <br> Estas "
+"mensagens serão mostradas aos oradores selecionados acima da lista das suas "
+"sessões submetidas."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -32016,8 +32002,7 @@ msgstr ""
 #: pretalx/schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
-msgstr ""
-"- A sua sessão \" %(title)s\" foi movida para %(start)s em %(location)s"
+msgstr "- A sua sessão \" %(title)s\" foi movida para %(start)s em %(location)s"
 
 #: pretalx/settings.py:357
 msgid "German (formal)"
@@ -32332,8 +32317,8 @@ msgstr "Comprimento mínimo do texto"
 #: pretalx/submission/models/question.py:215
 msgid "Minimum allowed text in characters or words (set in CfP settings)."
 msgstr ""
-"Texto mínimo permitido em caracteres ou palavras (definido nas configurações "
-"do CFP)."
+"Texto mínimo permitido em caracteres ou palavras "
+"(definido nas configurações do CFP)."
 
 #: pretalx/submission/models/question.py:221
 msgid "Maximum text length"
@@ -32343,8 +32328,8 @@ msgstr "Comprimento máximo do texto"
 msgid ""
 "Maximum allowed text length in characters or words (set in CfP settings)."
 msgstr ""
-"Comprimento máximo de texto permitido em caracteres ou palavras (definido "
-"nas configurações do CFP)."
+"Comprimento máximo de texto permitido em caracteres ou palavras "
+"(definido nas configurações do CFP)."
 
 #: pretalx/submission/models/question.py:260
 msgid "Publish answers"

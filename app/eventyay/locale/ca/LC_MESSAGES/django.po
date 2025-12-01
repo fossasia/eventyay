@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2020-12-29 04:00+0000\n"
-"Last-Translator: albert <albert.serra.monner@gmail.com>\n"
-"Language-Team: Catalan <https://translate.eventyay.com/projects/pretix/"
-"pretix/ca/>\n"
+"PO-Revision-Date: 2025-11-30 14:49+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Catalan <https://hosted.weblate.org/projects/eventyay/"
+"eventyay/ca/>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 3.10.3\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -384,8 +384,8 @@ msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
-"Mostra els preus nets enlloc de bruts a la llista dels productes (no es "
-"recomana!)"
+"Mostra els preus nets enlloc de bruts a la llista dels productes "
+"(no es recomana!)"
 
 #: eventyay/base/configurations/default_setting.py:77
 #, fuzzy
@@ -2323,8 +2323,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This question will be asked to buyers of the selected products"
 msgid "The title will only be shown on the event front page."
-msgstr ""
-"Aquesta pregunta es demanarà als compradors dels productes seleccionats"
+msgstr "Aquesta pregunta es demanarà als compradors dels productes seleccionats"
 
 #: eventyay/base/configurations/default_setting.py:2212
 #: eventyay/control/forms/organizer_forms/organizer_settings_form.py:37
@@ -4391,8 +4390,7 @@ msgstr "Zona horària"
 
 #: eventyay/base/models/auth.py:107
 msgid "Two-factor authentication is required to log in"
-msgstr ""
-"Es necessita un factor d'autenticació de dues passes per iniciar sessió"
+msgstr "Es necessita un factor d'autenticació de dues passes per iniciar sessió"
 
 #: eventyay/base/models/auth.py:111
 msgid "Receive notifications according to my settings below"
@@ -4567,8 +4565,7 @@ msgstr "Data d'inicialització"
 
 #: eventyay/base/models/event.py:56
 msgid "The end of the presale period has to be later than its start."
-msgstr ""
-"La data del període de prevenda ha de ser posterior al seu començament."
+msgstr "La data del període de prevenda ha de ser posterior al seu començament."
 
 #: eventyay/base/models/event.py:62
 msgid "The end of the event has to be later than its start."
@@ -5427,8 +5424,7 @@ msgstr "Pregunta obligatòria"
 
 #: eventyay/base/models/items.py:1074
 msgid "This question will be asked to buyers of the selected products"
-msgstr ""
-"Aquesta pregunta es demanarà als compradors dels productes seleccionats"
+msgstr "Aquesta pregunta es demanarà als compradors dels productes seleccionats"
 
 #: eventyay/base/models/items.py:1081
 msgid "Ask during check-in instead of in the ticket buying process"
@@ -6369,13 +6365,11 @@ msgstr "No podeu seleccionar una quota que pertany a un esdeveniment diferent."
 
 #: eventyay/base/models/vouchers.py:233
 msgid "You cannot select a quota and a specific product at the same time."
-msgstr ""
-"No podeu seleccionar una quota i un producte específic al mateix temps."
+msgstr "No podeu seleccionar una quota i un producte específic al mateix temps."
 
 #: eventyay/base/models/vouchers.py:236
 msgid "You cannot select an item that belongs to a different event."
-msgstr ""
-"No podeu seleccionar un element que pertany a un esdeveniment diferent."
+msgstr "No podeu seleccionar un element que pertany a un esdeveniment diferent."
 
 #: eventyay/base/models/vouchers.py:238 eventyay/base/models/vouchers.py:251
 msgid ""
@@ -6936,10 +6930,9 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Recomanem activar això si voleu que els vostres usuaris paguin les tarifes "
-"de pagament del vostre proveïdor de pagament. <a href=\"{docs_url}\" "
-"target=\"_blank\" rel=\"noopener\">Feu clic aquí per una informació "
-"detallada sobre el que fa això.</a> No oblideu especificar correctament les "
-"tarifes!"
+"de pagament del vostre proveïdor de pagament. <a href=\"{docs_url}\" target="
+"\"_blank\" rel=\"noopener\">Feu clic aquí per una informació detallada sobre "
+"el que fa això.</a> No oblideu especificar correctament les tarifes!"
 
 #: eventyay/base/payment.py:312
 msgid "Restrict to countries"
@@ -13377,8 +13370,8 @@ msgid ""
 msgstr ""
 "Hola,\n"
 "\n"
-"us hem convidat a formar part d'un equip de gestió d'esdeveniments a "
-"pretix,\n"
+"us hem convidat a formar part d'un equip de gestió d'esdeveniments a pretix,"
+"\n"
 "una plataforma de venda de tickets.\n"
 "\n"
 "Organitzador: %(organizer)s\n"
@@ -17867,8 +17860,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Two-factor authentication is required to log in"
 msgid "Please activate two-factor authentication using the button below."
-msgstr ""
-"Es necessita un factor d'autenticació de dues passes per iniciar sessió"
+msgstr "Es necessita un factor d'autenticació de dues passes per iniciar sessió"
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:35
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:51
@@ -18964,8 +18956,8 @@ msgid ""
 msgstr ""
 "Hola,\n"
 "\n"
-"malauradament no hem pogut atendre la vostra petició i cancel·lar la "
-"comanda.\n"
+"malauradament no hem pogut atendre la vostra petició i cancel·lar la comanda."
+"\n"
 "\n"
 "Atentament,\n"
 "el vostre equip de l'esdeveniment {event}"
@@ -20148,8 +20140,7 @@ msgstr "Transferència bancària"
 
 #: eventyay/plugins/banktransfer/apps.py:17
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Aquest complement us permet rebre pagaments via transferència bancària."
+msgstr "Aquest complement us permet rebre pagaments via transferència bancària."
 
 #: eventyay/plugins/banktransfer/apps.py:31
 msgid ""
@@ -21174,8 +21165,7 @@ msgstr "l'equip de pretix"
 #, fuzzy
 #| msgid "This plugin allows you to receive payments via bank transfer."
 msgid "This plugin allows you to login via social networks"
-msgstr ""
-"Aquest complement us permet rebre pagaments via transferència bancària."
+msgstr "Aquest complement us permet rebre pagaments via transferència bancària."
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:25
 #, fuzzy
@@ -22126,8 +22116,7 @@ msgstr "Abans de continuar, necessitem que ens proporcioneu més informació."
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:9
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
+msgstr "Heu d'omplir tots els camps marcats amb <span>*</span> per a continuar."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:68
 msgid "Copy answers from above"
@@ -23184,8 +23173,8 @@ msgid ""
 "If you're looking to configure this installation, please <a %(a_attr)s>head "
 "over here</a>."
 msgstr ""
-"Si esteu mirant de configurar aquesta instal·lació, si us plau <a "
-"%(a_attr)s>aneu cap aquí</a>."
+"Si esteu mirant de configurar aquesta instal·lació, si us plau <a %(a_attr)"
+"s>aneu cap aquí</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:24
 msgid "Enjoy!"

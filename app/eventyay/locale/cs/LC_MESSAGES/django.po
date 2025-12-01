@@ -8,16 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2021-02-16 06:00+0000\n"
-"Last-Translator: Ondřej Sokol <osokol@treesoft.cz>\n"
-"Language-Team: Czech <https://translate.eventyay.com/projects/pretix/pretix/"
+"PO-Revision-Date: 2025-11-30 06:56+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"Language-Team: Czech <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "cs/>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Weblate 4.4.2\n"
+"Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
+"X-Generator: Weblate 5.15-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -21785,8 +21785,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"K zobrazení programu si buď povolte JavaScript, nebo navštivte <a "
-"href=\"%(href)s\">tuto</a> stránku s NoJS programem."
+"K zobrazení programu si buď povolte JavaScript, nebo navštivte <a href="
+"\"%(href)s\">tuto</a> stránku s NoJS programem."
 
 #: pretalx/agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -21874,8 +21874,7 @@ msgstr "Logo pretalxu"
 #: pretalx/cfp/flow.py:354
 msgid ""
 "Your draft was saved. You can continue to edit it as long as the CfP is open."
-msgstr ""
-"Váš koncept byl uložen. Můžete ho upravovat, dokud nebude CfP uzavřeno."
+msgstr "Váš koncept byl uložen. Můžete ho upravovat, dokud nebude CfP uzavřeno."
 
 #: pretalx/cfp/flow.py:362
 msgid ""
@@ -21953,10 +21952,10 @@ msgid ""
 "instructions. If you don’t see the email within the next minutes, check your "
 "spam inbox!"
 msgstr ""
-"Pokud máme v databázi uživatele s touto e-mailovou adresou (který nežádal o "
-"obnovení hesla v posledních 24 hodinách), pošleme vám e-mail s dalšími "
-"instrukcemi. Pokud vám e-mail nedorazí během několika minut, zkontrolujte "
-"složky s nevyžádanou poštou a spamem."
+"Pokud máme v databázi uživatele s touto e-mailovou adresou "
+"(který nežádal o obnovení hesla v posledních 24 hodinách), pošleme vám e-"
+"mail s dalšími instrukcemi. Pokud vám e-mail nedorazí během několika minut, "
+"zkontrolujte složky s nevyžádanou poštou a spamem."
 
 #: pretalx/cfp/phrases.py:14
 msgid ""
@@ -22506,8 +22505,8 @@ msgstr "Zdá se, že jste zatím pro tuto událost nic nepřihlásili."
 #: pretalx/cfp/templates/cfp/event/user_submissions.html:154
 msgid "If you did, maybe you used a different account? Check your emails!"
 msgstr ""
-"Pokud tomu tak není, možná jste použili jiný účet? Zkontrolujte svoje e-"
-"maily!"
+"Pokud tomu tak není, možná jste použili jiný účet? Zkontrolujte svoje "
+"e-maily!"
 
 #: pretalx/cfp/templates/cfp/event/user_submissions.html:157
 msgid ""
@@ -22674,8 +22673,8 @@ msgstr "Napsali jste {count} slov."
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
 msgstr ""
-"Rozlousknutí tohoto hesla by trvalo <em class=\"password_strength_time\"></"
-"em>."
+"Rozlousknutí tohoto hesla by trvalo <em class=\"password_strength_time\""
+"></em>."
 
 #: pretalx/common/forms/widgets.py:73
 msgid "Warning"
@@ -23619,8 +23618,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"Tento krátký název už je obsazený, vyberte prosím jiný (nebo požádejte "
-"vlastníka původní události, aby vás přidal do svého týmu)."
+"Tento krátký název už je obsazený, vyberte prosím jiný "
+"(nebo požádejte vlastníka původní události, aby vás přidal do svého týmu)."
 
 #: pretalx/event/forms.py:244
 msgid ""
@@ -23818,8 +23817,7 @@ msgstr "Nikdo ve Vašem týmu nemá oprávnění vytvářet nové události."
 #: pretalx/event/models/organiser.py:56
 msgid ""
 "Nobody on your teams has the permission to change organiser-level settings."
-msgstr ""
-"Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
+msgstr "Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
 
 #: pretalx/event/models/organiser.py:69
 #, python-brace-format
@@ -24219,8 +24217,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"S radostí vám oznamujeme, že jsme přijali vaši přihlášku "
-"„{submission_title}“\n"
+"S radostí vám oznamujeme, že jsme přijali vaši přihlášku „{submission_title}“"
+"\n"
 "na událost {event_name}. Pro potvrzení své účasti klepněte na tento odkaz:\n"
 "\n"
 "    {confirmation_link}\n"
@@ -24247,8 +24245,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"Je nám líto, ale vaši přihlášku „{submission_title}“ na událost "
-"{event_name}\n"
+"Je nám líto, ale vaši přihlášku „{submission_title}“ na událost {event_name}"
+"\n"
 "jsme nemohli přijmout. Přednášek bylo prostě přihlášených příliš mnoho.\n"
 "Doufáme, že na {event_name} přijdete alespoň jako návštěvník.\n"
 "\n"
@@ -25101,8 +25099,8 @@ msgid ""
 "How do you want to separate data within a single cell (for example, multiple "
 "speakers in one session/multiple sessions for one speaker)?"
 msgstr ""
-"Jak chcete oddělit data v rámci jedné buňky (např. více přednášejících jedné "
-"přednášky)?"
+"Jak chcete oddělit data v rámci jedné buňky "
+"(např. více přednášejících jedné přednášky)?"
 
 #: pretalx/orga/forms/export.py:34
 msgid "Newline"
@@ -25860,8 +25858,7 @@ msgstr "Skrýt program"
 #| "submission."
 msgid ""
 "This field is currently inactive, and will not be asked during submission."
-msgstr ""
-"Tato otázka teď není aktivní a nebude pokládána jako součást přihlášky."
+msgstr "Tato otázka teď není aktivní a nebude pokládána jako součást přihlášky."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:47
 #: pretalx/orga/templates/orga/cfp/question/update.html:23
@@ -25886,9 +25883,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Tato otázka byla zatím odpovězena <strong>%(count)skrát</strong>, "
-"<strong>%(missing)s</strong> odpovědí <a "
-"href=\"%(base_search_url)sunanswered=1\">stále chybí</a>."
+"Tato otázka byla zatím odpovězena <strong>%(count)skrát</strong>, <strong>%"
+"(missing)s</strong> odpovědí <a href=\"%(base_search_url)sunanswered=1\""
+">stále chybí</a>."
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:60
 #, fuzzy, python-format
@@ -26370,9 +26367,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Pokud už máte účet, ať už jako přednášející nebo organizátor na <a "
-"href=\"%(domain)s\">%(domain)s</a>, přihlaste se prosím. V opačném případě "
-"si prosím účet vytvořte."
+"Pokud už máte účet, ať už jako přednášející nebo organizátor na <a href="
+"\"%(domain)s\">%(domain)s</a>, přihlaste se prosím. V opačném případě si "
+"prosím účet vytvořte."
 
 #: pretalx/orga/templates/orga/invitation.html:37
 #, python-format
@@ -26510,8 +26507,8 @@ msgid ""
 "tab."
 msgstr ""
 "Tady můžete upravit výchozí šablony e-mailů nebo přidat vlastní. Pokud "
-"chcete poslat e-mail všem nebo jen některým přednášejícím, otevřete panel "
-"„Poslat e-maily“. E-maily budou zařazeny do panelu „K odeslání“."
+"chcete poslat e-mail všem nebo jen některým přednášejícím, otevřete panel „"
+"Poslat e-maily“. E-maily budou zařazeny do panelu „K odeslání“."
 
 #: pretalx/orga/templates/orga/mails/mailtemplate/list.html:35
 msgid ""
@@ -26780,8 +26777,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Kontrolující uvidí a budou moci kontrolovat <strong>jenom jim konkrétně "
-"přiřazené</strong> přihlášky. Toto můžete změnit v <a "
-"href=\"%(href)s\">nastavení kontroly</a>."
+"přiřazené</strong> přihlášky. Toto můžete změnit v <a href=\"%(href)s\""
+">nastavení kontroly</a>."
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
 #, python-format
@@ -26802,8 +26799,8 @@ msgid ""
 "reviewers to proposals or proposals to reviewers)."
 msgstr ""
 "Tady můžete přiřadit přihlášky ke kontrole konkrétním lidem. Použijte prosím "
-"tuto nabídku pro přepnutí mezi dvěma režimy (přiřazování lidí k přihláškám, "
-"nebo přihlášky lidem)."
+"tuto nabídku pro přepnutí mezi dvěma režimy "
+"(přiřazování lidí k přihláškám, nebo přihlášky lidem)."
 
 #: pretalx/orga/templates/orga/review/assignment.html:126
 msgid ""
@@ -27482,10 +27479,10 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Přidejte důležité informace (např. „Pokud ho potřebujete, přineste si prosím "
-"vlastní HDMI adaptér“) nebo soubory (např. se stylistickou příručkou "
-"konference).<br> Zobrazí se vybraným přednášejícím nad seznamem jejich "
-"přihlášených přednášek."
+"Přidejte důležité informace "
+"(např. „Pokud ho potřebujete, přineste si prosím vlastní HDMI adaptér“) nebo "
+"soubory (např. se stylistickou příručkou konference).<br> Zobrazí se "
+"vybraným přednášejícím nad seznamem jejich přihlášených přednášek."
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:45
 msgid "Add a new note"
@@ -28427,8 +28424,7 @@ msgstr "Váš program byl zveřejněn!"
 #: pretalx/orga/views/schedule.py:204
 msgid ""
 "Reset successful – start editing the schedule from your selected version!"
-msgstr ""
-"Obnovení bylo úspěšné – program začněte upravovat o vámi zvolené verze!"
+msgstr "Obnovení bylo úspěšné – program začněte upravovat o vámi zvolené verze!"
 
 #: pretalx/orga/views/schedule.py:209
 msgid "Error retrieving the schedule version to reset to."
@@ -28931,8 +28927,7 @@ msgstr "- Vaše přednáška „%(title)s“ se bude konat od %(start)s v %(loca
 #: pretalx/schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
-msgstr ""
-"- Vaše přednáška „%(title)s“ byla přesunuta na %(start)s v %(location)s"
+msgstr "- Vaše přednáška „%(title)s“ byla přesunuta na %(start)s v %(location)s"
 
 #: pretalx/settings.py:357
 msgid "German (formal)"
@@ -29243,8 +29238,7 @@ msgstr "Minimální délka textu"
 
 #: pretalx/submission/models/question.py:215
 msgid "Minimum allowed text in characters or words (set in CfP settings)."
-msgstr ""
-"Minimální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
+msgstr "Minimální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
 
 #: pretalx/submission/models/question.py:221
 msgid "Maximum text length"
@@ -29253,8 +29247,7 @@ msgstr "Maximální délka textu"
 #: pretalx/submission/models/question.py:223
 msgid ""
 "Maximum allowed text length in characters or words (set in CfP settings)."
-msgstr ""
-"Maximální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
+msgstr "Maximální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
 
 #: pretalx/submission/models/question.py:260
 msgid "Publish answers"
