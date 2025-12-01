@@ -274,6 +274,7 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     channel = None
     if with_channel:
         channel = Channel.objects.create(event_id=room.event_id, room=room)
+        room.channel = channel
 
     AuditLog.objects.create(
         event_id=room.event_id,
