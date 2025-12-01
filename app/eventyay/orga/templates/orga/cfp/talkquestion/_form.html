@@ -76,12 +76,19 @@
         <fieldset id="answer-options" class="d-none">
             <legend id="options">{% translate "Response options" %}</legend>
             {% if formset %}
+            <details class="col-md-9 offset-md-3 mb-3 hide-label" {% if form.errors.options or form.errors.options_replace %}open{% endif %}>
+                <summary>{% translate "Upload options" %}</summary>
+                <div class="pt-3"></div>
+                {{ form.options.as_field_group }}
+                {{ form.options_replace.as_field_group }}
+                <hr>
+            </details>
             <div class="formset" data-formset data-formset-prefix="{{ formset.prefix }}">
                 {{ formset.management_form }}
                 {{ formset.non_form_errors }}
-                <div data-formset-body dragsort-url="{{ form.instance.urls.base }}">
+                <div data-formset-body>
                     {% for form in formset %}
-                        <div data-formset-form dragsort-id="{{ form.instance.id }}">
+                        <div data-formset-form>
                             <div class="sr-only">
                                 {{ form.id }}
                                 {{ form.DELETE }}
@@ -92,11 +99,7 @@
                                     {{ form.answer.as_field_group }}
                                 </div>
                                 {% if action != "view" %}
-                                    <div class="question-option-delete d-flex align-items-start">
-                                        <button draggable="true" type="button" class="btn btn-primary ml-1 mr-1 dragsort-button" title="{% translate "Move item" %}">
-                                            <i class="fa fa-arrows"></i>
-                                        </button>
-
+                                    <div class="question-option-delete ml-2">
                                         <button type="button" class="btn btn-danger" data-formset-delete-button>
                                             <i class="fa fa-trash"></i>
                                         </button>
@@ -109,19 +112,20 @@
                 <script type="form-template" data-formset-empty-form>
                     {% escapescript %}
                         <div data-formset-form>
-                        <div class="sr-only">
-                        {{ formset.empty_form.id }}
-                        {{ formset.empty_form.DELETE }}
-                        </div>
-                        <div class="question-option-row flip ml-auto col-md-9 mb-2 d-flex hide-label">
-                        <div class="question-option-input w-100">
-                        {{ formset.empty_form.answer.as_field_group }}
-                        </div>
-                        <div class="question-option-delete ml-2">
-                        <button type="button" class="btn btn-danger" data-formset-delete-button>
-                        <i class="fa fa-trash"></i></button>
-                        </div>
-                        </div>
+                            <div class="sr-only">
+                                {{ formset.empty_form.id }}
+                                {{ formset.empty_form.DELETE }}
+                            </div>
+                            <div class="question-option-row flip ml-auto col-md-9 mb-2 d-flex hide-label">
+                                <div class="question-option-input w-100">
+                                    {{ formset.empty_form.answer.as_field_group }}
+                                </div>
+                                <div class="question-option-delete ml-2">
+                                    <button type="button" class="btn btn-danger" data-formset-delete-button>
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     {% endescapescript %}
                 </script>
