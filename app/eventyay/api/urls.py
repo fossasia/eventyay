@@ -3,10 +3,10 @@ import importlib
 from django.apps import apps
 from django.http import HttpResponsePermanentRedirect
 from django.urls import include, path
-from django.urls import re_path as url
 from rest_framework import routers
 
 from eventyay.api.views import cart
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 from ..eventyay_common.views.billing import BillingInvoicePreview
 from .views import (
@@ -42,13 +42,14 @@ def talks_to_submissions_redirect(request, event, subpath):
     Redirects requests from /events/.../talks/... to /events/.../submissions/...
     preserving the subpath and query parameters.
     """
-    new_path = request.path.replace("/talks/", "/submissions/", 1)
+    new_path = request.path.replace('/talks/', '/submissions/', 1)
 
     query_string = request.META.get('QUERY_STRING', '')
     if query_string:
         new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)
+
 
 router = routers.DefaultRouter()
 router.register(r'organizers', organizer.OrganizerViewSet)
@@ -99,7 +100,11 @@ event_router.register('rooms', room.RoomViewSet, basename='room')
 event_router.register('talkquestions', question.QuestionViewSet, basename='talkquestion')
 event_router.register('answers', question.AnswerViewSet, basename='answer')
 event_router.register('question-options', question.AnswerOptionViewSet, basename='question_option')
-event_router.register('speaker-information', speaker_information.SpeakerInformationViewSet, basename='speaker_information',)
+event_router.register(
+    'speaker-information',
+    speaker_information.SpeakerInformationViewSet,
+    basename='speaker_information',
+)
 
 checkinlist_router = routers.DefaultRouter()
 checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, basename='checkinlistpos')
@@ -126,87 +131,86 @@ for app in apps.get_app_configs():
             importlib.import_module(app.name + '.urls')
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^organizers/(?P<organizer>[^/]+)/', include(orga_router.urls)),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/settings/$',
+    path('', include(router.urls)),
+    path('organizers/<orgslug:organizer>/', include(orga_router.urls)),
+    path(
+        'organizers/<orgslug:organizer>/settings/',
         organizer.OrganizerSettingsView.as_view(),
         name='organizer.settings',
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/giftcards/(?P<giftcard>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/giftcards/<giftcard>/',
         include(giftcard_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/settings/$',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/settings/',
         event.EventSettingsView.as_view(),
         name='event.settings',
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/',
         include(event_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/teams/(?P<team>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/teams/<slug:team>/',
         include(team_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/products/(?P<product>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/products/<slug:product>/',
         include(product_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/questions/(?P<question>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/questions/<slug:question>/',
         include(question_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/checkinlists/(?P<list>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/checkinlists/<slug:list>/',
         include(checkinlist_router.urls),
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/checkin/redeem/$',
+    path(
+        'organizers/<orgslug:organizer>/checkin/redeem/',
         checkin.CheckinRedeemView.as_view(),
         name='checkin.redeem',
     ),
-    url(
-        r'^organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/orders/(?P<order>[^/]+)/',
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/orders/<int:order>/',
         include(order_router.urls),
     ),
-    url(r'^oauth/authorize$', oauth.AuthorizationView.as_view(), name='authorize'),
-    url(r'^oauth/token$', oauth.TokenView.as_view(), name='token'),
-    url(r'^oauth/revoke_token$', oauth.RevokeTokenView.as_view(), name='revoke-token'),
-    url(
-        r'^device/initialize$',
+    path('oauth/authorize', oauth.AuthorizationView.as_view(), name='authorize'),
+    path('oauth/token', oauth.TokenView.as_view(), name='token'),
+    path('oauth/revoke_token', oauth.RevokeTokenView.as_view(), name='revoke-token'),
+    path(
+        'device/initialize',
         device.InitializeView.as_view(),
         name='device.initialize',
     ),
-    url(r'^device/update$', device.UpdateView.as_view(), name='device.update'),
-    url(r'^device/roll$', device.RollKeyView.as_view(), name='device.roll'),
-    url(r'^device/revoke$', device.RevokeKeyView.as_view(), name='device.revoke'),
-    url(
-        r'^device/eventselection$',
+    path('device/update', device.UpdateView.as_view(), name='device.update'),
+    path('device/roll', device.RollKeyView.as_view(), name='device.roll'),
+    path('device/revoke', device.RevokeKeyView.as_view(), name='device.revoke'),
+    path(
+        'device/eventselection',
         device.EventSelectionView.as_view(),
         name='device.eventselection',
     ),
-    url(r'^upload$', upload.UploadView.as_view(), name='upload'),
-    url(r'^me$', user.MeView.as_view(), name='user.me'),
-    url(r'^version$', version.VersionView.as_view(), name='version'),
-    url(
-        r'^billing-testing/(?P<task>[^/]+)',
+    path('upload', upload.UploadView.as_view(), name='upload'),
+    path('me', user.MeView.as_view(), name='user.me'),
+    path('version', version.VersionView.as_view(), name='version'),
+    path(
+        'billing-testing/<task>',
         BillingInvoicePreview.as_view(),
         name='billing-testing',
     ),
-    url(r'^webhook/stripe$', stripe_webhook_view, name='stripe-webhook'),
-    url(
-        r'(?P<organizer>[^/]+)/(?P<event>[^/]+)/schedule-public',
+    path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
+    path(
+        '<orgslug:organizer>/<slug:event>/schedule-public',
         event.talk_schedule_public,
         name='event.schedule-public',
     ),
-    url(
-        r'(?P<organizer>[^/]+)/(?P<event>[^/]+)/ticket-check',
+    path(
+        '<orgslug:organizer>/<slug:event>/ticket-check',
         event.CustomerOrderCheckView.as_view(),
         name='event.ticket-check',
     ),
-    
     # We redirect the old pre-filtered /talks/ endpoint to  /submissions/
     path(
         'events/<slug:event>/talks/<path:subpath>',

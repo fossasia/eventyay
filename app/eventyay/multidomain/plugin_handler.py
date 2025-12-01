@@ -1,7 +1,11 @@
+from collections.abc import Iterable
+
+from django.urls import URLResolver
+
 from eventyay.presale.utils import _event_view
 
 
-def plugin_event_urls(urllist, plugin):
+def plugin_event_urls(urllist: Iterable[URLResolver], plugin: str) -> list[URLResolver]:
     for entry in urllist:
         if hasattr(entry, 'url_patterns'):
             plugin_event_urls(entry.url_patterns, plugin)
@@ -11,4 +15,4 @@ def plugin_event_urls(urllist, plugin):
                 require_plugin=plugin,
                 require_live=getattr(entry.pattern, '_require_live', True),
             )
-    return urllist
+    return list(urllist)
