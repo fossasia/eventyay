@@ -478,7 +478,7 @@ ALL_LANGUAGES = [
     ('sw', _('Swahili')),
     ('th', _('Thai')),
     ('tr', _('Turkish')),
-    ('ua', _('Ukrainian')),
+    ('uk', _('Ukrainian')),
     ('vi', _('Vietnamese')),
     ('zh-hans', _('Chinese (Simplified)')),
     ('zh-hant', _('Chinese (Traditional)')),
@@ -797,11 +797,13 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 0,
     },
-    'ua': {
+    'uk': {
         'name': _('Ukrainian'),
         'natural_name': 'Українська',
         'official': True,
         'percentage': 0,
+        'public_code': 'uk',
+        'path': 'ua',
     },
     'vi': {
         'name': _('Vietnamese'),
