@@ -1249,8 +1249,13 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['POST'])
     @transaction.atomic
     def refund(self, request, **kwargs):
-        # Acquire row-level lock on payment to prevent concurrent refund race conditions
-        payment = OrderPayment.objects.select_for_update().get(pk=self.get_object().pk)
+        # Acquire row-level lock on payment to prevent concurrent refund race conditions.
+        # We reuse DRF's filtering & permission logic while issuing a single SELECT ... FOR UPDATE.
+        queryset = self.filter_queryset(self.get_queryset().select_for_update())
+        
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+        payment = get_object_or_404(queryset, **{self.lookup_field: lookup_value})
         
         amount = serializers.DecimalField(max_digits=10, decimal_places=2).to_internal_value(
             request.data.get('amount', str(payment.amount))
