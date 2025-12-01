@@ -35,14 +35,16 @@
             </div>
         </div>
     {% endif %}
-    {% if event.settings.event_logo_image %}
-        <div class="container {% if event.settings.theme_color_background|upper != "#FFFFFF" or event.settings.logo_image_large %}page-header-links-outside{% endif %}">
-            <div class="event-logo-img-placement">
-                <img src="{{ event.settings.event_logo_image.url }}" alt="{% translate 'Event logo' %}" class="img-fluid event-logo-image">
-            </div>
-        </div>
-    {% endif %}
     <div class="container page-header-links {% if event.settings.theme_color_background|upper != "#FFFFFF" or event.settings.logo_image_large %}page-header-links-outside{% endif %}">
+        {% if event.settings.event_logo_image %}
+            {% if event.settings.theme_color_background|upper != "#FFFFFF" or event.settings.logo_image_large %}
+                <div class="pull-left header-part flip hidden-print">
+                    <div class="event-logo-img-placement">
+                        <img src="{{ event.settings.event_logo_image.url }}" alt="{% translate 'Event logo' %}" class="img-fluid event-logo-image">
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
         {% if event.settings.theme_color_background|upper != "#FFFFFF" or event.settings.logo_image_large %}
             <div class="pull-right header-part flip hidden-print header-content">
                 {% if event.settings.locales|length > 1 %}
@@ -97,9 +99,18 @@
 {% endblock %}
 {% block page %}
     <div class=" {% if event_logo and event.settings.logo_image_large %}logo-large{% endif %}">
+        {% if event.settings.event_logo_image %}
+            {% if event.settings.theme_color_background|upper == "#FFFFFF" and not event.settings.logo_image_large %}
+                <div class="pull-left flip hidden-print">
+                    <div class="event-logo-img-placement">
+                        <img src="{{ event.settings.event_logo_image.url }}" alt="{% translate 'Event logo' %}" class="img-fluid event-logo-image">
+                    </div>
+                </div>
+            {% endif %}
+        {% endif %}
         {% if event.settings.locales|length > 1 %}
             {% if event.settings.theme_color_background|upper == "#FFFFFF" and not event.settings.logo_image_large %}
-                <div class="{% if not event_logo or not event.settings.logo_image_large %}pull-right flip{% endif %} loginbox hidden-print">
+                <div class="pull-right flip loginbox hidden-print header-content">
                     {% if event.settings.locales|length > 3 %}
                         <nav class="locales" aria-label="{% trans "select language" %}">
                             <div class="dropdown language-dropdown">
@@ -133,6 +144,7 @@
                             {% endfor %}
                         </nav>
                     {% endif %}
+                    {% include "pretixpresale/fragment_login_status.html" %}
                 </div>
             {% endif %}
         {% endif %}
