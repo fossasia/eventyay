@@ -1,7 +1,7 @@
 eventyay-tickets (ENext)
 ========================
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/fossasia/eventyay/branch/enext/graph/badge.svg
    :target: https://codecov.io/gh/pretix/pretix
 
 Project status & release cycle
@@ -41,13 +41,13 @@ Getting Started
 
    .. code-block:: bash
 
-      git clone https://github.com/fossasia/eventyay-tickets.git
+      git clone https://github.com/fossasia/eventyay.git
 
 2. **Enter the project directory and app directory**:
 
    .. code-block:: bash
 
-      cd eventyay-tickets/app
+      cd eventyay/app
 
 3. **Switch to the `enext` branch**:
 
