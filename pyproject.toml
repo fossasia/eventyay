@@ -41,7 +41,7 @@ dependencies = [
         'django-otp==1.6.*',
         'webauthn==2.2.*',
         'django-formtools==2.5.1',
-        "celery==5.4.*",
+        "celery==5.6.*",
         'kombu==5.6.*',
         'django-statici18n==2.5.*',
         'css-inline==0.18.*',
