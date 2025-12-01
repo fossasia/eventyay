@@ -52,10 +52,12 @@
 </style>
 <div id="{{ container_id }}-wrap" class="multi-language-select-wrapper {{ widget.attrs.class }}">
   <div class="selected-languages mb-2" data-role="selected-list">
+    <span data-role="i18n-empty" style="display:none;">{% translate "No languages selected" %}</span>
+    <span data-role="i18n-remove" style="display:none;">{% translate "Remove language" %}</span>
     {% for group, options, index in widget.optgroups %}
       {% for option in options %}
         {% if option.selected %}
-          <span class="language-badge" data-lang="{{ option.value }}" data-role="selected-badge">
+          <span class="language-badge" role="button" tabindex="0" data-lang="{{ option.value }}" data-role="selected-badge">
             <span class="language-label">{{ option.label }}</span>
             <button type="button" class="remove-language-btn btn btn-link btn-sm p-0 ml-1 align-baseline" aria-label="{% translate 'Remove language' %}" data-role="remove-language" data-value="{{ option.value }}">&times;</button>
           </span>
@@ -106,8 +108,8 @@
   const hiddenSelect = container.querySelector('[data-role="hidden-select"]');
   const selectedList = container.querySelector('[data-role="selected-list"]');
   const defaultLocaleSelect = document.querySelector('select[name$="locale"]');
-  const emptyText = "{{ _('No languages selected')|escapejs }}";
-  const removeLabel = "{{ _('Remove language')|escapejs }}";
+  const emptyText = selectedList.querySelector('[data-role="i18n-empty"]').textContent;
+  const removeLabel = selectedList.querySelector('[data-role="i18n-remove"]').textContent;
 
   const escapeCss = (value) => {
     if (window.CSS && window.CSS.escape) {
@@ -157,7 +159,7 @@
     }
   };
 
-  const selectedValues = () =>
+  const getSelectedValues = () =>
     Array.from(hiddenSelect.querySelectorAll('option')).filter((opt) => opt.selected).map((opt) => opt.value);
 
   const addBadge = (value) => {
@@ -170,6 +172,8 @@
 
     const badge = document.createElement('span');
     badge.className = 'language-badge';
+    badge.setAttribute('role', 'button');
+    badge.setAttribute('tabindex', '0');
     badge.dataset.lang = value;
     badge.dataset.role = 'selected-badge';
 
@@ -192,10 +196,16 @@
     });
     badge.appendChild(removeBtn);
 
-    // Also allow clicking the badge itself to remove.
+    // Also allow clicking or pressing Enter/Space on the badge to remove.
     badge.addEventListener('click', (ev) => {
       if (ev.target.closest('[data-role=\"remove-language\"]')) return;
       removeLanguage(value);
+    });
+    badge.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        removeLanguage(value);
+      }
     });
 
     selectedList.appendChild(badge);
@@ -227,7 +237,7 @@
     }
     // If the default locale was removed, switch to another selected locale when possible.
     if (defaultLocaleSelect && defaultLocaleSelect.value === value) {
-      const remaining = selectedValues();
+      const remaining = getSelectedValues();
       defaultLocaleSelect.value = remaining.length ? remaining[0] : '';
     }
     togglePickerOption(value, true);
@@ -254,11 +264,11 @@
 
   // Keep default locale in sync when the page loads with a default not present in the selected list.
   if (defaultLocaleSelect) {
-    const selectedValues = new Set(
+    const selectedValueSet = new Set(
       Array.from(hiddenSelect.querySelectorAll('option')).filter((opt) => opt.selected).map((opt) => opt.value)
     );
-    if (!selectedValues.has(defaultLocaleSelect.value)) {
-      const firstSelected = Array.from(selectedValues)[0];
+    if (!selectedValueSet.has(defaultLocaleSelect.value)) {
+      const firstSelected = Array.from(selectedValueSet)[0];
       if (firstSelected) {
         defaultLocaleSelect.value = firstSelected;
       }
