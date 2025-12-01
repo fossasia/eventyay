@@ -1,5 +1,269 @@
-{% with id=widget.attrs.id %}<div{% if id %} id="{{ id }}"{% endif %} class="{{ widget.attrs.class }} checkbox">{% for group, options, index in widget.optgroups %}{% if group %}
-  <div class="checkbox-group"><div class="checkbox-group-legend"><span>{% if group.2 %}<i class="{{ group.2 }} mr-1" aria-hidden="true"></i> {% endif %}{{ group.0 }}</span></div><div class="text-muted mb-2">{{ group.1|safe }}</div>{% endif %}{% for option in options %}<div class="checkbox">
-    {% include option.template_name with widget=option %}</div>{% endfor %}{% if group %}
-      </div>{% endif %}{% endfor %}
-</div>{% endwith %}
+{% load i18n %}
+{% with container_id=widget.attrs.id|default:widget.name %}
+<style>
+  .multi-language-select-wrapper {
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+  .multi-language-select-wrapper .selected-languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 28px;
+    margin-bottom: 6px;
+  }
+  .multi-language-select-wrapper .language-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #2185d0;
+    color: #fff;
+    cursor: pointer;
+  }
+  .multi-language-select-wrapper .remove-language-btn {
+    color: #fff;
+    opacity: 0.85;
+    font-weight: 700;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .multi-language-select-wrapper .remove-language-btn:hover {
+    opacity: 1;
+    text-decoration: none;
+  }
+  .multi-language-select-wrapper .picker-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    margin: 0 0 4px;
+  }
+  .multi-language-select-wrapper select[data-role="picker"] {
+    flex: 1;
+    min-width: 220px;
+    background: transparent;
+  }
+  .multi-language-select-wrapper [data-role="hidden-select"] {
+    display: none !important;
+  }
+</style>
+<div id="{{ container_id }}-wrap" class="multi-language-select-wrapper {{ widget.attrs.class }}">
+  <div class="selected-languages mb-2" data-role="selected-list">
+    {% for group, options, index in widget.optgroups %}
+      {% for option in options %}
+        {% if option.selected %}
+          <span class="language-badge" data-lang="{{ option.value }}" data-role="selected-badge">
+            <span class="language-label">{{ option.label }}</span>
+            <button type="button" class="remove-language-btn btn btn-link btn-sm p-0 ml-1 align-baseline" aria-label="{% translate 'Remove language' %}" data-role="remove-language" data-value="{{ option.value }}">&times;</button>
+          </span>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {% if not widget.value %}
+      <span class="text-muted" data-role="empty">{% translate "No languages selected" %}</span>
+    {% endif %}
+  </div>
+
+  <div class="picker-row">
+    <select class="form-control" data-role="picker">
+      <option value="" selected>{% translate "Select language" %}</option>
+      {% for group, options, index in widget.optgroups %}
+        {% if group %}<optgroup label="{{ group.0 }}">{% endif %}
+        {% for option in options %}
+          {% if not option.selected %}
+            <option value="{{ option.value }}" data-label="{{ option.label }}" data-official="{{ option.official|yesno:'true,false' }}" data-percentage="{{ option.percentage|default_if_none:'' }}">
+              {{ option.label }}
+            </option>
+          {% endif %}
+        {% endfor %}
+        {% if group %}</optgroup>{% endif %}
+      {% endfor %}
+    </select>
+  </div>
+
+  <select multiple name="{{ widget.name }}" id="{{ widget.attrs.id|default:widget.name }}" data-role="hidden-select">
+    {% for group, options, index in widget.optgroups %}
+      {% if group %}<optgroup label="{{ group.0 }}">{% endif %}
+      {% for option in options %}
+        <option value="{{ option.value }}" {% if option.selected %}selected{% endif %} data-official="{{ option.official|yesno:'true,false' }}" data-percentage="{{ option.percentage|default_if_none:'' }}">{{ option.label }}</option>
+      {% endfor %}
+      {% if group %}</optgroup>{% endif %}
+    {% endfor %}
+  </select>
+</div>
+
+<script>
+(function() {
+  const container = document.getElementById('{{ container_id }}-wrap');
+  if (!container) {
+    return;
+  }
+
+  const picker = container.querySelector('[data-role="picker"]');
+  const hiddenSelect = container.querySelector('[data-role="hidden-select"]');
+  const selectedList = container.querySelector('[data-role="selected-list"]');
+  const defaultLocaleSelect = document.querySelector('select[name$="locale"]');
+  const emptyText = "{{ _('No languages selected')|escapejs }}";
+  const removeLabel = "{{ _('Remove language')|escapejs }}";
+
+  const escapeCss = (value) => {
+    if (window.CSS && window.CSS.escape) {
+      return window.CSS.escape(value);
+    }
+    return value.replace(/([.#:[\\],])/g, '\\\\$1');
+  };
+
+  const removeEmptyPlaceholder = () => {
+    const empty = selectedList.querySelector('[data-role="empty"]');
+    if (empty) {
+      empty.remove();
+    }
+  };
+
+  const ensureEmptyPlaceholder = () => {
+    if (!selectedList.querySelector('[data-role="selected-badge"]')) {
+      const placeholder = document.createElement('span');
+      placeholder.className = 'text-muted';
+      placeholder.dataset.role = 'empty';
+      placeholder.textContent = emptyText;
+      selectedList.appendChild(placeholder);
+    }
+  };
+
+  const hiddenOptionText = (value) => {
+    const hiddenOption = hiddenSelect.querySelector('option[value="' + escapeCss(value) + '"]');
+    return hiddenOption ? hiddenOption.textContent : value;
+  };
+
+  const togglePickerOption = (value, available) => {
+    const option = picker.querySelector('option[value="' + escapeCss(value) + '"]');
+    if (option) {
+      option.hidden = !available;
+      option.disabled = !available;
+      if (!available && picker.value === value) {
+        picker.value = '';
+      }
+      if (available && !option.label) {
+        option.textContent = hiddenOptionText(value);
+      }
+    } else if (available) {
+      const hiddenOption = hiddenSelect.querySelector('option[value="' + escapeCss(value) + '"]');
+      if (hiddenOption) {
+        picker.appendChild(new Option(hiddenOption.textContent, hiddenOption.value));
+      }
+    }
+  };
+
+  const selectedValues = () =>
+    Array.from(hiddenSelect.querySelectorAll('option')).filter((opt) => opt.selected).map((opt) => opt.value);
+
+  const addBadge = (value) => {
+    removeEmptyPlaceholder();
+    if (selectedList.querySelector('[data-lang="' + escapeCss(value) + '"]')) {
+      return;
+    }
+    const hiddenOption = hiddenSelect.querySelector('option[value="' + escapeCss(value) + '"]');
+    const label = hiddenOption ? hiddenOption.textContent : value;
+
+    const badge = document.createElement('span');
+    badge.className = 'language-badge';
+    badge.dataset.lang = value;
+    badge.dataset.role = 'selected-badge';
+
+    const textSpan = document.createElement('span');
+    textSpan.className = 'language-label';
+    textSpan.textContent = label;
+    badge.appendChild(textSpan);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-language-btn btn btn-link btn-sm p-0 ml-1 align-baseline text-white';
+    removeBtn.setAttribute('aria-label', removeLabel);
+    removeBtn.innerHTML = '&times;';
+    removeBtn.dataset.role = 'remove-language';
+    removeBtn.dataset.value = value;
+    removeBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeLanguage(value);
+    });
+    badge.appendChild(removeBtn);
+
+    // Also allow clicking the badge itself to remove.
+    badge.addEventListener('click', (ev) => {
+      if (ev.target.closest('[data-role=\"remove-language\"]')) return;
+      removeLanguage(value);
+    });
+
+    selectedList.appendChild(badge);
+  };
+
+  const addLanguage = (value) => {
+    if (!value) {
+      return;
+    }
+    const hiddenOption = hiddenSelect.querySelector('option[value="' + escapeCss(value) + '"]');
+    if (hiddenOption) {
+      hiddenOption.selected = true;
+      addBadge(value);
+      togglePickerOption(value, false);
+    }
+    picker.value = '';
+  };
+
+  const removeLanguage = (value) => {
+    const hiddenOption = hiddenSelect.querySelector('option[value="' + escapeCss(value) + '"]');
+    if (!hiddenOption || !hiddenOption.selected) {
+      return;
+    }
+
+    hiddenOption.selected = false;
+    const badge = selectedList.querySelector('[data-lang="' + escapeCss(value) + '"]');
+    if (badge) {
+      badge.remove();
+    }
+    // If the default locale was removed, switch to another selected locale when possible.
+    if (defaultLocaleSelect && defaultLocaleSelect.value === value) {
+      const remaining = selectedValues();
+      defaultLocaleSelect.value = remaining.length ? remaining[0] : '';
+    }
+    togglePickerOption(value, true);
+    ensureEmptyPlaceholder();
+  };
+
+  picker.addEventListener('change', () => addLanguage(picker.value));
+  selectedList.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('[data-role="remove-language"]');
+    if (btn) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeLanguage(btn.dataset.value);
+    }
+  });
+
+  hiddenSelect.querySelectorAll('option').forEach((option) => {
+    if (option.selected) {
+      addBadge(option.value);
+      togglePickerOption(option.value, false);
+    }
+  });
+  ensureEmptyPlaceholder();
+
+  // Keep default locale in sync when the page loads with a default not present in the selected list.
+  if (defaultLocaleSelect) {
+    const selectedValues = new Set(
+      Array.from(hiddenSelect.querySelectorAll('option')).filter((opt) => opt.selected).map((opt) => opt.value)
+    );
+    if (!selectedValues.has(defaultLocaleSelect.value)) {
+      const firstSelected = Array.from(selectedValues)[0];
+      if (firstSelected) {
+        defaultLocaleSelect.value = firstSelected;
+      }
+    }
+  }
+})();
+</script>
+{% endwith %}
