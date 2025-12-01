@@ -13,7 +13,7 @@ class MultipleLanguagesWidget(CheckboxSelectMultiple):
 
     def __init__(self, *args, **kwargs):
         kwargs['attrs'] = kwargs.get('attrs', {})
-        kwargs['attrs']['class'] = kwargs['attrs'].get('class', '') + ' form-check form-check-languages'
+        kwargs['attrs']['class'] = kwargs['attrs'].get('class', '') + ' multi-language-select'
         super().__init__(*args, **kwargs)
 
     def sort(self):
