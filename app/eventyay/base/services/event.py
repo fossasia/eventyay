@@ -274,6 +274,8 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     channel = None
     if with_channel:
         channel = Channel.objects.create(event_id=room.event_id, room=room)
+        # Pre-warm the channel relationship to avoid lazy-loading issues during serialization
+        room.channel = channel
 
     AuditLog.objects.create(
         event_id=room.event_id,
@@ -360,6 +362,8 @@ async def create_room(event, data, creator):
 
 async def get_room_config_for_user(room: str, event_id: str, user):
     room = await get_room(id=room, event_id=event_id)
+    if room is None:
+        return None
     permissions = await database_sync_to_async(room.event.get_all_permissions)(user)
     return get_room_config(room, permissions[room] | permissions[room.event])
 
