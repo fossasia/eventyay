@@ -329,6 +329,9 @@ class RoomModule(BaseModule):
         conf = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
+        if conf is None:
+            # Room not found or not yet available, skip broadcasting
+            return
         if "room:view" not in conf["permissions"]:
             return
         await self.consumer.send_json(
@@ -434,6 +437,9 @@ class RoomModule(BaseModule):
         config = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
+        if config is None:
+            # Room not found or not yet available, skip broadcasting
+            return
         if "room:view" not in config["permissions"]:
             return
         await self.consumer.send_json(
