@@ -243,6 +243,9 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
+    import logging
+    logger = logging.getLogger(__name__)
+    
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
             Room.objects.filter(event=data["event"], deleted=False).aggregate(
@@ -258,6 +261,10 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     else:
         data["trait_grants"] = {}
     has_modules = bool(data.get("module_config"))
+    
+    # CRITICAL: Log the hidden field before any processing
+    logger.info(f"[ROOM_CREATE] BEFORE defaults - hidden={data.get('hidden')}, type={type(data.get('hidden'))}")
+    
     # Ensure ALL boolean fields are never None (all have NOT NULL constraints)
     if data.get("deleted") is None:
         data["deleted"] = False
@@ -268,7 +275,9 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     if data.get("hidden") is None:
         data["hidden"] = False
     if data.get("sidebar_hidden") is None:
-        data["sidebar_hidden"] = data.get("hidden", False) or not data.get("setup_complete", has_modules)
+        data["sidebar_hidden"] = data["hidden"] or not data["setup_complete"]
+    
+    logger.info(f"[ROOM_CREATE] AFTER if-checks - hidden={data.get('hidden')}, type={type(data.get('hidden'))}")
 
     if (
         data.get("event")
@@ -276,7 +285,18 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         .exists()
     ):
         raise ValidationError("This room name is already taken.", code="name_taken")
+    
+    data.setdefault("deleted", False)
+    data.setdefault("force_join", False)
+    data.setdefault("setup_complete", has_modules)
+    data.setdefault("hidden", False)
+    data.setdefault("sidebar_hidden", True)
+    
+    logger.info(f"[ROOM_CREATE] BEFORE ORM - hidden={data['hidden']}, all_bools={data.get('deleted')},{data.get('force_join')},{data.get('setup_complete')},{data.get('hidden')},{data.get('sidebar_hidden')}")
+    
     room = Room.objects.create(**data)
+    
+    logger.info(f"[ROOM_CREATE] AFTER ORM - room.id={room.id}, room.hidden={room.hidden}")
     if creator:
         room.role_grants.create(event=room.event, user=creator, role="room_owner")
     channel = None
@@ -298,7 +318,13 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 
 async def create_room(event, data, creator):
+    import logging
+    logger = logging.getLogger(__name__)
+    
+    logger.info(f"[ROOM_CREATE] Event={event.id}, name={data.get('name')}, modules={data.get('modules', [])}")
+    
     types = {m["type"] for m in data.get("modules", [])}
+    
     if "chat.native" in types:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_CHAT
@@ -345,23 +371,27 @@ async def create_room(event, data, creator):
         )
 
     # TODO input validation
+    room_data = {
+        "event": event,
+        "name": data["name"],
+        "description": data["description"],
+        "module_config": data.get("modules", []),
+    }
+    
     room, channel = await _create_room(
-        {
-            "event": event,
-            "name": data["name"],
-            "description": data["description"],
-            "module_config": data.get("modules", []),
-        },
+        room_data,
         permission_preset=data.get("permission_preset", "public"),
         creator=creator,
         with_channel=any(
             d.get("type") == "chat.native" for d in data.get("modules", [])
         ),
     )
+    
     await get_channel_layer().group_send(
         f"event.{event.id}", {"type": "room.create", "room": str(room.id)}
     )
 
+    logger.info(f"[ROOM_CREATE] Success: room_id={room.id}")
     return {
         "room": str(room.id),
         "channel": str(channel.id) if channel else None,
