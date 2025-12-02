@@ -1,4 +1,5 @@
 {% load i18n %}
+{% with widget_classes=field.field.widget.attrs.class|default:"" help_left=field.field.widget.attrs.help_left|default:False %}
 <div class="form-group {{ form_group_class }}{% with classes=field.css_classes %}{% if classes %} {{ classes }}{% endif %}{% endwith %}">
     {% block field_label_left %}
         {% if field.field.widget.input_type != "checkbox" or field.field.widget.allow_multiple_selected %}
@@ -6,6 +7,9 @@
                 {{ field.label }}
                 {% if not field.field.required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
             </label>
+            {% if field.help_text and (help_left or 'multi-language-select' in widget_classes) %}
+                <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+            {% endif %}
         {% endif %}
     {% endblock %}
 
@@ -21,6 +25,9 @@
         {% for text in field.errors %}
             <div class="invalid-feedback">{{ text }}</div>
         {% endfor %}
-        {% if field.help_text %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
+        {% if field.help_text and not (help_left or 'multi-language-select' in widget_classes) %}
+            <small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>
+        {% endif %}
     {% endblock %}
 </div>
+{% endwith %}
