@@ -858,13 +858,13 @@ h1 .label {
         font-size: 14px;
         font-weight: normal;
         cursor: pointer;
-        padding: 8px 16px;
+        padding: 7px 16px;
         line-height: 1.5;
         a {
-            color: darken($btn-primary-bg, 10%);
+            color: darken($btn-primary-bg, 10%) !important;
             padding: 0;
             border: none;
-            background: none;
+            background: none !important;
             display: inline;
             line-height: 1.5;
         }
@@ -873,6 +873,7 @@ h1 .label {
         }
         i {
             margin-right: 8px;
+            color: darken($btn-primary-bg, 10%) !important;
             width: 12px;
             text-align: center;
             font-size: 12px;
@@ -888,10 +889,13 @@ h1 .label {
         border-top: 1px solid #d1d5db;
     }
     .profile-menu:hover {
-        color: #fff;
+        color: #fff !important;
         background-color: darken($btn-primary-bg, 10%);
         a {
-            color: #fff;
+            color: #fff !important;
+        }
+        i {
+            color: #fff !important;
         }
     }
     .dashboard-item {
@@ -908,7 +912,7 @@ h1 .label {
             vertical-align: middle;
         }
         .dashboard-content {
-            padding: 8px 16px;
+            padding: 7px 16px;
             line-height: 1.5;
         }
         #submenu {
@@ -916,7 +920,7 @@ h1 .label {
 
             .submenu-item {
                 background-color: #fff;
-                padding: 8px 16px;
+                padding: 7px 16px;
                 font-size: 12px;
                 line-height: 1.5;
 
@@ -931,6 +935,7 @@ h1 .label {
 
                 i {
                     margin-right: 8px;
+                    color: darken($btn-primary-bg, 10%) !important;
                     width: 12px;
                     font-size: 12px;
                     vertical-align: middle;
@@ -940,7 +945,10 @@ h1 .label {
                     background-color: darken($btn-primary-bg, 10%);
 
                     a {
-                        color: #fff;
+                        color: #fff !important;
+                    }
+                    i {
+                        color: #fff !important;
                     }
                 }
             }
@@ -951,7 +959,7 @@ h1 .label {
 
                 .submenu-item {
                     background-color: #fff;
-                    padding: 8px 16px;
+                    padding: 7px 16px;
                     font-size: 12px;
                     line-height: 1.5;
 
@@ -976,7 +984,10 @@ h1 .label {
                         background-color: darken($btn-primary-bg, 10%);
 
                         a {
-                            color: #fff;
+                            color: #fff !important;
+                        }
+                        i {
+                            color: #fff !important;
                         }
                     }
                 }
