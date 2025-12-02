@@ -12,14 +12,8 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.utils.text import format_lazy
-from django.utils.translation import (
-    gettext_lazy as _,
-)
-from django.utils.translation import (
-    gettext_noop,
-    pgettext,
-    pgettext_lazy,
-)
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
@@ -859,6 +853,11 @@ DEFAULT_SETTINGS = {
             widget=MultipleLanguagesWidget,
             required=True,
             label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
+            ),
         ),
     },
     'content_locales': {
@@ -875,7 +874,7 @@ DEFAULT_SETTINGS = {
             widget=MultipleLanguagesWidget,
             required=True,
             label=_('Content languages'),
-            help_text=_('Languages that speakers can select for their submissions. Content languages should be a subset of active languages.'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
