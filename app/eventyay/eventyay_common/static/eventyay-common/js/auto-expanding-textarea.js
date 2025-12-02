@@ -14,27 +14,49 @@
             textarea.style.height = 'auto';
             requestAnimationFrame(function () {
                 var computedStyle = window.getComputedStyle(textarea);
-                var minHeight = parseInt(computedStyle.minHeight, 10) || 80;
-                var maxHeight = parseInt(computedStyle.maxHeight, 10) || 300;
-                var newHeight = Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight));
+                var minHeight = parseInt(computedStyle.minHeight, 10) || 320;
+                var viewportHeight = window.innerHeight;
+                var computedMaxHeight = parseInt(computedStyle.maxHeight, 10);
+
+                // Calculate offset based on viewport to prevent page scrollbar
+                var offset = 500;
+                if (viewportHeight < 600) {
+                    offset = 300;
+                } else if (viewportHeight < 800) {
+                    offset = 400;
+                } else if (viewportHeight < 1000) {
+                    offset = 450;
+                } else {
+                    offset = 550;
+                }
+
+                var viewportBasedMax = Math.max(200, viewportHeight - offset);
+                var maxHeight = Math.min(computedMaxHeight || 400, viewportBasedMax);
+                var contentHeight = textarea.scrollHeight;
+                var newHeight = Math.max(minHeight, Math.min(contentHeight, maxHeight));
+
                 textarea.style.height = newHeight + 'px';
-                textarea.style.overflowY = (textarea.scrollHeight > maxHeight) ? 'auto' : 'hidden';
+                textarea.style.overflowY = (contentHeight > maxHeight) ? 'auto' : 'hidden';
             });
         }
 
         textarea.addEventListener('input', adjustHeight);
         textarea.addEventListener('paste', function () { setTimeout(adjustHeight, 10); });
+
         adjustHeight();
     }
 
     function initializeAutoExpandTextareas() {
         var textareas = document.querySelectorAll('textarea[data-auto-expand="true"]');
-        textareas.forEach(function (textarea) {
-            if (!textarea.hasAttribute('data-auto-expand-init')) {
-                autoExpandTextarea(textarea);
-            }
-        });
+        textareas.forEach(autoExpandTextarea);
     }
+
+    // Single global resize listener to recalculate heights on viewport change
+    var globalResizeTimeout;
+    window.addEventListener('resize', function () {
+        clearTimeout(globalResizeTimeout);
+        globalResizeTimeout = setTimeout(initializeAutoExpandTextareas, 150);
+    });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeAutoExpandTextareas);
@@ -42,6 +64,7 @@
         initializeAutoExpandTextareas();
     }
 
+    // Watch for dynamically added textareas (e.g., form fields added via AJAX)
     var formContainer = document.querySelector('form') || document.body;
     var observer = new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
