@@ -251,6 +251,23 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     def __str__(self) -> str:
         return str(self.name)
 
+    def save(self, *args, **kwargs):
+        """Override save to ensure boolean fields are never None."""
+        # Absolute failsafe: ensure ALL boolean fields never have None values
+        # All these fields have NOT NULL constraints in the database
+        if self.deleted is None:
+            self.deleted = False
+        if self.force_join is None:
+            self.force_join = False
+        if self.setup_complete is None:
+            self.setup_complete = False
+        if self.hidden is None:
+            self.hidden = False
+        if self.sidebar_hidden is None:
+            # Compute from existing state to match invariant used in _create_room and import_config
+            self.sidebar_hidden = self.hidden or not self.setup_complete
+        super().save(*args, **kwargs)
+
     @property
     def log_parent(self):
         return self.event
@@ -302,11 +319,38 @@ class RoomView(models.Model):
         ]
 
 
+class NullSafeBooleanField(serializers.BooleanField):
+    """BooleanField that converts None to the default value instead of raising an error.
+    
+    Supports callable defaults (DRF-style) and ensures None values are converted to
+    the default value rather than raising validation errors.
+    """
+    def __init__(self, *args, **kwargs):
+        # Allow None values so they can be processed by to_internal_value()
+        kwargs.setdefault('allow_null', True)
+        super().__init__(*args, **kwargs)
+    
+    def to_internal_value(self, data):
+        if data is None:
+            if self.default is not serializers.empty:
+                # Support callable defaults (DRF-style)
+                return self.default() if callable(self.default) else self.default
+            return False
+        return super().to_internal_value(data)
+
+
 class RoomConfigSerializer(I18nAwareModelSerializer):
+    deleted = NullSafeBooleanField(required=False, default=False)
+    force_join = NullSafeBooleanField(required=False, default=False)
+    hidden = NullSafeBooleanField(required=False, default=False)
+    sidebar_hidden = NullSafeBooleanField(required=False, default=True)
+    setup_complete = NullSafeBooleanField(required=False, default=False)
+
     class Meta:
         model = Room
         fields = (
             "id",
+            "deleted",
             "trait_grants",
             "module_config",
             "picture",
