@@ -218,6 +218,8 @@ def get_event_config_for_user(event, user):
     for p in event_perm_values:
         if p == "event.view":
             world_aliases.append("world:view")
+        elif p == "event.update":
+            world_aliases.append("world:update")
         elif p.startswith("event:"):
             world_aliases.append("world:" + p[len("event:"):])
     merged_permissions = sorted(set(event_perm_values) | set(world_aliases))
@@ -256,11 +258,17 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     else:
         data["trait_grants"] = {}
     has_modules = bool(data.get("module_config"))
-    data.setdefault("setup_complete", has_modules)
-    # Hidden rooms disappear from the schedule editor, this keeps them visible by default
-    data.setdefault("hidden", False)
-    # Sidebar should not display a room until a room is configured
-    data.setdefault("sidebar_hidden", data["hidden"] or not data["setup_complete"])
+    # Ensure ALL boolean fields are never None (all have NOT NULL constraints)
+    if data.get("deleted") is None:
+        data["deleted"] = False
+    if data.get("force_join") is None:
+        data["force_join"] = False
+    if data.get("setup_complete") is None:
+        data["setup_complete"] = has_modules
+    if data.get("hidden") is None:
+        data["hidden"] = False
+    if data.get("sidebar_hidden") is None:
+        data["sidebar_hidden"] = data.get("hidden", False) or not data.get("setup_complete", has_modules)
 
     if (
         data.get("event")
