@@ -522,7 +522,7 @@ def base_placeholders(sender: Event, **kwargs):
         SimpleFunctionalMailTextPlaceholder(
             'expire_date',
             ['event', 'order'],
-            lambda event, order: LazyExpiresDate(order.expires.astimezone(ZoneInfo(event.timezone))),
+            lambda event, order: LazyExpiresDate(order.expires.astimezone(ZoneInfo(event.settings.timezone))),
             lambda event: LazyDate(djnow() + timedelta(days=15)),
         ),
         SimpleFunctionalMailTextPlaceholder(
@@ -824,4 +824,3 @@ def base_placeholders(sender: Event, **kwargs):
         )
 
     return ph
-
