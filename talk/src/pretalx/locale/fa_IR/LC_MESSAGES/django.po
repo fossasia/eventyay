@@ -6399,11 +6399,11 @@ msgid "File upload"
 msgstr "بارگذاری پرونده"
 
 #: pretalx/submission/models/question.py:56
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "انتخاب یکی از فهرست"
 
 #: pretalx/submission/models/question.py:57
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "انتخاب چند گزینه از فهرست"
 
 #: pretalx/submission/models/question.py:67

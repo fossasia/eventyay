@@ -911,8 +911,8 @@ paths:
           * `datetime` - Date and time
           * `boolean` - Yes/No
           * `file` - File upload
-          * `choices` - Choose one from a list
-          * `multiple_choice` - Choose multiple from a list
+          * `choices` - Radio button (Choose one option)
+          * `multiple_choice` - Checkbox (Choose one or several options)
       tags:
       - questions
       responses:
@@ -6410,8 +6410,8 @@ components:
         * `datetime` - Date and time
         * `boolean` - Yes/No
         * `file` - File upload
-        * `choices` - Choose one from a list
-        * `multiple_choice` - Choose multiple from a list
+        * `choices` - Radio button (Choose one option)
+        * `multiple_choice` - Checkbox (Choose one or several options)
     RoleEnum:
       enum:
       - submission.new

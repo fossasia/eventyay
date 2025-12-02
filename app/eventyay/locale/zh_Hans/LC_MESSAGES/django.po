@@ -5210,11 +5210,11 @@ msgid "Confirm Checkbox"
 msgstr "确认"
 
 #: eventyay/base/models/items.py:1022
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "从列表中选择一个"
 
 #: eventyay/base/models/items.py:1023
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "从列表中选择多个"
 
 #: eventyay/base/models/items.py:1024

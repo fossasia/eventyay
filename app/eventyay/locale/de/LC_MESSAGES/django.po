@@ -6773,11 +6773,11 @@ msgid "Confirm Checkbox"
 msgstr "bestätigt"
 
 #: pretix/base/models/items.py:1022 eventyay/base/models/items.py:1022
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "Auswahl aus einer Liste"
 
 #: pretix/base/models/items.py:1023 eventyay/base/models/items.py:1023
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "Mehrfachauswahl aus einer Liste"
 
 #: pretix/base/models/items.py:1024 eventyay/base/models/items.py:1024

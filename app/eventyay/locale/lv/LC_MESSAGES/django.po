@@ -4930,11 +4930,11 @@ msgid "Confirm Checkbox"
 msgstr "apstiprināts"
 
 #: eventyay/base/models/items.py:1022
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "Izvēlieties vienu no saraksta"
 
 #: eventyay/base/models/items.py:1023
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "Izvēlieties vairākus no saraksta"
 
 #: eventyay/base/models/items.py:1024

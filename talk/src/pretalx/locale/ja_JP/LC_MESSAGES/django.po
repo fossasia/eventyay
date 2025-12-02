@@ -8399,11 +8399,11 @@ msgid "File upload"
 msgstr "ファイルアップロード"
 
 #: pretalx/submission/models/question.py:60
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "一覧からひとつのみ選択"
 
 #: pretalx/submission/models/question.py:61
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "一覧から複数選択"
 
 #: pretalx/submission/models/question.py:71

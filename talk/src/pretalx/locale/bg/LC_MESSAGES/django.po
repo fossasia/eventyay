@@ -8205,11 +8205,11 @@ msgid "File upload"
 msgstr "Качване на файл"
 
 #: pretalx/submission/models/question.py:60
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "Изберете едно от списъка"
 
 #: pretalx/submission/models/question.py:61
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "Изберете няколко от списъка"
 
 #: pretalx/submission/models/question.py:71

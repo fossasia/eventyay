@@ -8720,11 +8720,11 @@ msgid "File upload"
 msgstr "Carga de archivo"
 
 #: pretalx/submission/models/question.py:60
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "Seleccionar uno en la lista"
 
 #: pretalx/submission/models/question.py:61
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "Seleccionar varios en la lista"
 
 #: pretalx/submission/models/question.py:71

@@ -5415,11 +5415,11 @@ msgid "Confirm Checkbox"
 msgstr "Confirmado"
 
 #: eventyay/base/models/items.py:1022
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "Escolha um de uma lista"
 
 #: eventyay/base/models/items.py:1023
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "Escolha múltipla a partir de uma lista"
 
 #: eventyay/base/models/items.py:1024

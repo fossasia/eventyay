@@ -482,7 +482,7 @@ Release Notes
 - orga:email,432: Organisers can now send emails to all speakers who have not uploaded slides/files for their talk yet.
 - admin: eventyay now has pretty error pages for CSRF fails and 400 errors. Test error pages are located at ``/400``, ``/403``, ``/404``, ``/500``, and ``/403/csrf``.
 - orga:submission,792: There is now a CSV export for answered questions.
-- cfp,814: Questions of the type "choose one from a list" are now shown as a list of radio input options instead of a single drop-down, if there are three or less options to choose from.
+- cfp,814: Questions of the type "Radio button (Choose one option)" are now shown as a list of radio input options instead of a single drop-down, if there are three or less options to choose from.
 - dev: Plugins can now implement the ``uninstalled`` method to perform actions when a user deactivates them for an event.
 - admin: We documented the implicit requirement that the filesystem eventyay accesses should work with non-ASCII file names. Please check the installation documentation if you want to make sure this is the case for you.
 - orga:submission: The submission type list and the track list now list the numbers of submissions per entry.

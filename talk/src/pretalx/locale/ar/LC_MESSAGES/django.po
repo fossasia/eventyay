@@ -8585,11 +8585,11 @@ msgid "File upload"
 msgstr "تم رفع الملف"
 
 #: pretalx/submission/models/question.py:60
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "اختيار واحد من القائمة"
 
 #: pretalx/submission/models/question.py:61
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "اختيار متعدد من القائمة"
 
 #: pretalx/submission/models/question.py:71

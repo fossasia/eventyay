@@ -8013,11 +8013,11 @@ msgid "File upload"
 msgstr "文件上传"
 
 #: pretalx/submission/models/question.py:60
-msgid "Choose one from a list"
+msgid "Radio button (Choose one option)"
 msgstr "从列表中选择一个"
 
 #: pretalx/submission/models/question.py:61
-msgid "Choose multiple from a list"
+msgid "Checkbox (Choose one or several options)"
 msgstr "从列表中选择多个。"
 
 #: pretalx/submission/models/question.py:71
