@@ -14,7 +14,6 @@ from django.core.validators import (
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
-from django.utils.safestring import mark_safe
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
@@ -849,17 +848,16 @@ DEFAULT_SETTINGS = {
             required=True,
         ),
         'form_class': forms.MultipleChoiceField,
-        'form_kwargs': lambda: dict(
+        'form_kwargs': dict(
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=mark_safe(
-                _('<div class="d-inline-block">Active languages</div>'
-                  '<div class="text-muted small mt-1">Users will be able to use eventyay in these languages, and you '
-                  "will be able to provide all texts in these languages. If you don't provide a text in the language a "
-                  "user selects, it will be shown in your event's default language instead.</div>")
+            label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
             ),
-            help_text=None,
         ),
     },
     'content_locales': {
@@ -871,15 +869,12 @@ DEFAULT_SETTINGS = {
             required=True,
         ),
         'form_class': forms.MultipleChoiceField,
-        'form_kwargs': lambda: dict(
+        'form_kwargs': dict(
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=mark_safe(
-                _('<div class="d-inline-block">Content languages</div>'
-                  '<div class="text-muted small mt-1">Users will be able to submit proposals in these languages.</div>')
-            ),
-            help_text=None,
+            label=_('Content languages'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
