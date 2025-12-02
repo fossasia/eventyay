@@ -1,5 +1,6 @@
 import copy
 import datetime
+import logging
 import uuid
 from contextlib import suppress
 
@@ -20,6 +21,8 @@ from eventyay.core.permissions import Permission
 # Add missing imports for models referenced in this module
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+
+logger = logging.getLogger(__name__)
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -243,9 +246,6 @@ def get_event_config_for_user(event, user):
 @database_sync_to_async
 @transaction.atomic()
 def _create_room(data, with_channel=False, permission_preset="public", creator=None):
-    import logging
-    logger = logging.getLogger(__name__)
-    
     if "sorting_priority" not in data:
         data["sorting_priority"] = (
             Room.objects.filter(event=data["event"], deleted=False).aggregate(
@@ -262,22 +262,14 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         data["trait_grants"] = {}
     has_modules = bool(data.get("module_config"))
     
-    # CRITICAL: Log the hidden field before any processing
-    logger.info(f"[ROOM_CREATE] BEFORE defaults - hidden={data.get('hidden')}, type={type(data.get('hidden'))}")
+    # Set boolean field defaults at Django level
+    data.setdefault("deleted", False)
+    data.setdefault("force_join", False)
+    data.setdefault("setup_complete", has_modules)
+    data.setdefault("hidden", False)
+    data.setdefault("sidebar_hidden", not has_modules)  # hidden if no modules yet
     
-    # Ensure ALL boolean fields are never None (all have NOT NULL constraints)
-    if data.get("deleted") is None:
-        data["deleted"] = False
-    if data.get("force_join") is None:
-        data["force_join"] = False
-    if data.get("setup_complete") is None:
-        data["setup_complete"] = has_modules
-    if data.get("hidden") is None:
-        data["hidden"] = False
-    if data.get("sidebar_hidden") is None:
-        data["sidebar_hidden"] = data["hidden"] or not data["setup_complete"]
-    
-    logger.info(f"[ROOM_CREATE] AFTER if-checks - hidden={data.get('hidden')}, type={type(data.get('hidden'))}")
+    logger.info(f"[ROOM_CREATE] Creating room with booleans: deleted={data['deleted']}, hidden={data['hidden']}, setup_complete={data['setup_complete']}")
 
     if (
         data.get("event")
@@ -286,17 +278,9 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     ):
         raise ValidationError("This room name is already taken.", code="name_taken")
     
-    data.setdefault("deleted", False)
-    data.setdefault("force_join", False)
-    data.setdefault("setup_complete", has_modules)
-    data.setdefault("hidden", False)
-    data.setdefault("sidebar_hidden", True)
-    
-    logger.info(f"[ROOM_CREATE] BEFORE ORM - hidden={data['hidden']}, all_bools={data.get('deleted')},{data.get('force_join')},{data.get('setup_complete')},{data.get('hidden')},{data.get('sidebar_hidden')}")
-    
     room = Room.objects.create(**data)
     
-    logger.info(f"[ROOM_CREATE] AFTER ORM - room.id={room.id}, room.hidden={room.hidden}")
+    logger.info(f"[ROOM_CREATE] Room created: id={room.id}, hidden={room.hidden}")
     if creator:
         room.role_grants.create(event=room.event, user=creator, role="room_owner")
     channel = None
@@ -318,10 +302,7 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 
 async def create_room(event, data, creator):
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    logger.info(f"[ROOM_CREATE] Event={event.id}, name={data.get('name')}, modules={data.get('modules', [])}")
+    logger.info(f"[ROOM_CREATE] Starting: event={event.id}, name={data.get('name')}")
     
     types = {m["type"] for m in data.get("modules", [])}
     
