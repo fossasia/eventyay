@@ -200,9 +200,17 @@ export default {
 				}
 				const module_config = Array.isArray(this.config.module_config) ? this.config.module_config : []
 				const setup_complete = module_config.length > 0
-				const sidebar_hidden = (!this.config.setup_complete && setup_complete)
-					? false
-					: (setup_complete ? this.config.sidebar_hidden : !setup_complete)
+				let sidebar_hidden
+				if (setup_complete && !this.config.setup_complete) {
+					// Setup just completed, show in sidebar
+					sidebar_hidden = false
+				} else if (setup_complete) {
+					// Setup was already complete, preserve user preference
+					sidebar_hidden = this.config.sidebar_hidden
+				} else {
+					// Setup incomplete, hide from sidebar
+					sidebar_hidden = true
+				}
 				const roomData = {
 					room: roomId,
 					name: this.config.name,

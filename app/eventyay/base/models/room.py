@@ -253,8 +253,6 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def save(self, *args, **kwargs):
         """Override save to ensure boolean fields are never None."""
-        # Absolute failsafe: ensure ALL boolean fields never have None values
-        # All these fields have NOT NULL constraints in the database
         fixed_fields = []
         if self.deleted is None:
             self.deleted = False
@@ -276,8 +274,8 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
             if update_fields is not None:
                 if isinstance(update_fields, (list, tuple, set)):
                     kwargs["update_fields"] = list(set(update_fields) | set(fixed_fields))
-                else:
-                    kwargs["update_fields"] = fixed_fields
+                # If update_fields is an unexpected type, leave it as is to avoid breaking intended behavior
+            # If update_fields is None, leave it as None to preserve "save all fields" behavior
         
         super().save(*args, **kwargs)
 

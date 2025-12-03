@@ -74,10 +74,12 @@ async def get_viewers(event: Event, room: Room):
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
+    if not isinstance(update_fields, list):
+        update_fields = list(update_fields) if update_fields else []
     extra_fields = []
     has_modules = bool(room.module_config) and len(room.module_config) > 0
     if has_modules and "module_config" not in update_fields:
-        update_fields.append("module_config")
+        extra_fields.append("module_config")
     if has_modules and not room.setup_complete:
         room.setup_complete = True
         extra_fields.append("setup_complete")
