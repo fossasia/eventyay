@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2020-01-24 08:00+0000\n"
 "Last-Translator: Prokaj Miklós <mixolid0@gmail.com>\n"
-"Language-Team: Hungarian <https://translate.eventyay.com/projects/pretix/pretix-"
+"Language-Team: Hungarian <https://translate.eventyay.com/projects/eventyay/eventyay-"
 "js/hu/>\n"
 "Language: hu\n"
 "MIME-Version: 1.0\n"
@@ -403,8 +403,8 @@ msgid "Image area"
 msgstr "Vonalkód terület"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "pretix által működtetett"
+msgid "Powered by eventyay"
+msgstr "eventyay által működtetett"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

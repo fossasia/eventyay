@@ -9,7 +9,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2020-09-15 17:00+0000\n"
 "Last-Translator: Martin Gross <martin@pc-coholic.de>\n"
-"Language-Team: French <https://translate.eventyay.com/projects/pretix/pretix-js/"
+"Language-Team: French <https://translate.eventyay.com/projects/eventyay/eventyay-js/"
 "fr/>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -405,8 +405,8 @@ msgid "Image area"
 msgstr "Zone de code-barres"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Généré par pretix"
+msgid "Powered by eventyay"
+msgstr "Généré par eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

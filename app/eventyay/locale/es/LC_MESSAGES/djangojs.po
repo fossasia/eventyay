@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2020-04-27 20:00+0000\n"
 "Last-Translator: Gonzalo Gabriel Perez <zalitoar@gmail.com>\n"
-"Language-Team: Spanish <https://translate.eventyay.com/projects/pretix/pretix-"
+"Language-Team: Spanish <https://translate.eventyay.com/projects/eventyay/eventyay-"
 "js/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
@@ -407,8 +407,8 @@ msgid "Image area"
 msgstr "Área para código de barras"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Proveído por pretix"
+msgid "Powered by eventyay"
+msgstr "Proveído por eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

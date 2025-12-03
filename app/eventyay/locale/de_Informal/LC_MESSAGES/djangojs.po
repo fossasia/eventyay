@@ -11,7 +11,7 @@ msgstr ""
 "PO-Revision-Date: 2021-03-30 19:44+0000\n"
 "Last-Translator: Raphael Michel <michel@rami.io>\n"
 "Language-Team: German (informal) <https://translate.eventyay.com/projects/"
-"pretix/pretix-js/de_Informal/>\n"
+"eventyay/eventyay-js/de_Informal/>\n"
 "Language: de_Informal\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -378,8 +378,8 @@ msgid "Image area"
 msgstr "Bildbereich"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Event-Ticketshop von pretix"
+msgid "Powered by eventyay"
+msgstr "Event-Ticketshop von eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"
