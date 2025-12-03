@@ -2,6 +2,7 @@ import logging
 import os
 
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
@@ -43,6 +44,11 @@ def generate_orderposition(order_position: int, provider: str):
                     type=ttype,
                     file=None,
                 )
+                # Ensure the directory exists before saving
+                file_path = ct.file.storage.generate_filename(ct.file.field.upload_to(ct, filename))
+                directory = os.path.dirname(file_path)
+                if directory and not default_storage.exists(directory):
+                    os.makedirs(default_storage.path(directory), exist_ok=True)
                 ct.file.save(filename, ContentFile(data))
                 return ct.pk
 
@@ -65,6 +71,11 @@ def generate_order(order: int, provider: str):
                 ct = CachedCombinedTicket.objects.create(
                     order=order, provider=provider, extension=ext, type=ttype, file=None
                 )
+                # Ensure the directory exists before saving
+                file_path = ct.file.storage.generate_filename(ct.file.field.upload_to(ct, filename))
+                directory = os.path.dirname(file_path)
+                if directory and not default_storage.exists(directory):
+                    os.makedirs(default_storage.path(directory), exist_ok=True)
                 ct.file.save(filename, ContentFile(data))
                 return ct.pk
 
