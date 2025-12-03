@@ -138,7 +138,7 @@
       .avatar-wrapper {
         width: 100px;
         overflow: hidden;
-        border-radius: 6px;
+        border-radius: 0;
         svg {
           margin: 8px;
         }
