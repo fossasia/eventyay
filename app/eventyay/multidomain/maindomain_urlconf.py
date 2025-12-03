@@ -184,9 +184,9 @@ raw_plugin_patterns = []
 # Auto-register local plugins from eventyay.plugins.*
 for app in apps.get_app_configs():
     if hasattr(app, 'EventyayPluginMeta') and app.name.startswith('eventyay.plugins.'):
-        if importlib.util.find_spec(app.name + '.urls'):
+        if importlib.util.find_spec(f'{app.name}.urls'):
             try:
-                urlmod = importlib.import_module(app.name + '.urls')
+                urlmod = importlib.import_module(f'{app.name}.urls')
                 single_plugin_patterns = []
                 if hasattr(urlmod, 'urlpatterns'):
                     single_plugin_patterns += urlmod.urlpatterns
@@ -271,11 +271,13 @@ unified_event_patterns = [
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
-                path('video/assets/<path:path>', VideoAssetView.as_view(), name='video.assets'),
+                re_path(
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
+                ),
                 path(
                     'video/<path:path>',
                     VideoAssetView.as_view(),
-                    name='video.assets.file',
+                    name='video.assets',
                 ),
                 # The frontend Video SPA app is not served by Nginx so the Django view needs to
                 # serve all paths under /video/ to allow client-side routing.
