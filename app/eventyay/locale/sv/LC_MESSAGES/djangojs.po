@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2020-09-18 14:26+0000\n"
 "Last-Translator: Tobias Sundgren <syrgas@gmail.com>\n"
-"Language-Team: Swedish <https://translate.eventyay.com/projects/pretix/pretix-"
+"Language-Team: Swedish <https://translate.eventyay.com/projects/eventyay/eventyay-"
 "js/sv/>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
@@ -389,8 +389,8 @@ msgid "Image area"
 msgstr "QR-kod-område"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Drivs av pretix"
+msgid "Powered by eventyay"
+msgstr "Drivs av eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

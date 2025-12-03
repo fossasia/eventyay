@@ -11,7 +11,7 @@ msgstr ""
 "PO-Revision-Date: 2019-03-19 09:00+0000\n"
 "Last-Translator: Vitor Reis <vitor.reis7@gmail.com>\n"
 "Language-Team: Portuguese (Brazil) <https://translate.eventyay.com/projects/"
-"pretix/pretix-js/pt_BR/>\n"
+"eventyay/eventyay-js/pt_BR/>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -413,8 +413,8 @@ msgid "Image area"
 msgstr "Área de código de barras"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Distribuído por pretix"
+msgid "Powered by eventyay"
+msgstr "Distribuído por eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"
