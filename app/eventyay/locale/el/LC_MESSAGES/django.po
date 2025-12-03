@@ -28,17 +28,17 @@ msgstr ""
 #: eventyay/api/auth/devicesecurity.py:22
 #, fuzzy
 #| msgid "1. Download pretixdesk"
-msgid "pretixSCAN"
-msgstr "1. Κατεβάστε το pretixdesk"
+msgid "eventyay"
+msgstr "1. Κατεβάστε το eventyaydesk"
 
 #: eventyay/api/auth/devicesecurity.py:52
-msgid "pretixSCAN (kiosk mode, online only)"
+msgid "eventyay (kiosk mode, online only)"
 msgstr ""
 
 #: eventyay/api/auth/devicesecurity.py:80
 #, fuzzy
 #| msgid "pretix default"
-msgid "pretixPOS"
+msgid "eventyay"
 msgstr "προεπιλογή προεπιλογή"
 
 #: eventyay/api/models.py:18
@@ -228,7 +228,7 @@ msgstr ""
 #, fuzzy
 #| msgid "pretix account invitation"
 msgid "eventyay account invitation"
-msgstr "πρόσκληση λογαριασμού pretix"
+msgstr "πρόσκληση λογαριασμού eventyay"
 
 #: eventyay/api/serializers/organizer.py:164
 #: eventyay/control/views/organizer_views/team_view.py:242
@@ -476,13 +476,13 @@ msgid ""
 "primary email address, not to the per-attendee addresses. You can however "
 "enable this in the E-mail settings."
 msgstr ""
-"Κανονικά, το pretix ζητά μία διεύθυνση ηλεκτρονικού ταχυδρομείου ανά "
+"Κανονικά, το eventyay ζητά μία διεύθυνση ηλεκτρονικού ταχυδρομείου ανά "
 "παραγγελία και η επιβεβαίωση της παραγγελίας θα σταλεί μόνο σε εκείνη τη "
 "διεύθυνση ηλεκτρονικού ταχυδρομείου. Εάν ενεργοποιήσετε αυτήν την επιλογή, "
 "το σύστημα θα ζητήσει επιπρόσθετα και μεμονωμένες διευθύνσεις ηλεκτρονικού "
 "ταχυδρομείου για κάθε εισιτήριο εισόδου. Αυτό μπορεί να είναι χρήσιμο αν "
 "θέλετε να αποκτήσετε μεμονωμένες διευθύνσεις για κάθε συμμετέχοντα ακόμη και "
-"σε περίπτωση ομαδικών παραγγελιών. Ωστόσο, το pretix θα στείλει την "
+"σε περίπτωση ομαδικών παραγγελιών. Ωστόσο, το eventyay θα στείλει την "
 "επιβεβαίωση της παραγγελίας μόνο στην κύρια διεύθυνση ηλεκτρονικού "
 "ταχυδρομείου και όχι στις διευθύνσεις ανά συμμετέχοντα."
 
@@ -4301,8 +4301,8 @@ msgstr "Σελίδα %d από %d"
 
 #: eventyay/base/invoice.py:225
 msgctxt "invoice"
-msgid "Classic renderer (pretix 1.0)"
-msgstr "Classic renderer (pretix 1.0)"
+msgid "Classic renderer (eventyay 1.0)"
+msgstr "Classic renderer (eventyay 1.0)"
 
 #: eventyay/base/invoice.py:269
 msgctxt "invoice"
@@ -4516,7 +4516,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Modern Invoice Renderer (pretix 2.7)"
 msgid "Modern Invoice Renderer"
-msgstr "Μοντέρνο τιμολόγιο (pretix 2.7)"
+msgstr "Μοντέρνο τιμολόγιο (eventyay 2.7)"
 
 #: eventyay/base/models/auth.py:93
 msgid "Is active"
@@ -4614,8 +4614,8 @@ msgid ""
 "been paid."
 msgstr ""
 "Με αυτήν την επιλογή, οι χρήστες θα μπορούν να κάνουν check in ακόμα και αν "
-"η παραγγελία δεν έχει πληρωθεί. Αυτό λειτουργεί μόνο με pretixdesk 0.3.0 ή "
-"νεότερη ή pretixdroid 1.9 ή νεότερη."
+"η παραγγελία δεν έχει πληρωθεί. Αυτό λειτουργεί μόνο με eventyaydesk 0.3.0 ή "
+"νεότερη ή eventyaydroid 1.9 ή νεότερη."
 
 #: eventyay/base/models/checkin.py:25 eventyay/control/navigation.py:443
 #: eventyay/control/templates/pretixcontrol/organizers/gates.html:5
@@ -7907,7 +7907,7 @@ msgstr ""
 
 #: eventyay/base/secrets.py:114
 msgid ""
-"signature scheme 1 (for very large events, does not work with pretixSCAN on "
+"signature scheme 1 (for very large events, does not work with eventyay on "
 "iOS and changes semantics of offline scanning – please refer to "
 "documentation or support for details)"
 msgstr ""
@@ -8674,16 +8674,16 @@ msgid "Sample workshop"
 msgstr "Δείγμα workshop"
 
 #: eventyay/base/services/update_check.py:92
-msgid "pretix update available"
-msgstr "διαθέσιμη ενημέρωση pretix"
+msgid "eventyay update available"
+msgstr "διαθέσιμη ενημέρωση eventyay"
 
 #: eventyay/base/services/update_check.py:95
 #, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for pretix or for one of the plugins you installed in "
-"your pretix installation. Please click on the following link for more "
+"An update is available for eventyay or for one of the plugins you installed in "
+"your eventyay installation. Please click on the following link for more "
 "information:\n"
 "\n"
 " {url} \n"
@@ -8695,12 +8695,12 @@ msgid ""
 "\n"
 "Best,\n"
 "\n"
-"your pretix developers"
+"your eventyay developers"
 msgstr ""
 "Γεια!\n"
 "\n"
-"Μια ενημερωμένη έκδοση είναι διαθέσιμη για το pretix ή για ένα από τα "
-"plugins που εγκαταστήσατε κατά την εγκατάσταση του pretix. Κάντε κλικ στον "
+"Μια ενημερωμένη έκδοση είναι διαθέσιμη για το eventyay ή για ένα από τα "
+"plugins που εγκαταστήσατε κατά την εγκατάσταση του eventyay. Κάντε κλικ στον "
 "παρακάτω σύνδεσμο για περισσότερες πληροφορίες:\n"
 "\n"
 "{url}\n"
@@ -8712,7 +8712,7 @@ msgstr ""
 "\n"
 "Με φιλικούς χαιρετισμούς,\n"
 "\n"
-"οι pretix προγραμματιστές σας"
+"οι eventyay προγραμματιστές σας"
 
 #: eventyay/base/services/update_check.py:124
 #: eventyay/base/services/update_check.py:126
@@ -9390,11 +9390,11 @@ msgstr "Μορφή ονόματος"
 
 #: eventyay/control/forms/event.py:512
 msgid ""
-"This defines how pretix will ask for human names. Changing this after you "
+"This defines how eventyay will ask for human names. Changing this after you "
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
 msgstr ""
-"Αυτό καθορίζει τον τρόπο με τον οποίο το pretix θα ζητήσει ανθρώπινα "
+"Αυτό καθορίζει τον τρόπο με τον οποίο το eventyay θα ζητήσει ανθρώπινα "
 "ονόματα. Η αλλαγή αυτού μετά την παραλαβή παραγγελιών μπορεί να οδηγήσει σε "
 "απροσδόκητη συμπεριφορά κατά την ταξινόμηση ή την αλλαγή ονομάτων."
 
@@ -9881,7 +9881,7 @@ msgstr "Πληρωμή με τραπεζικό έμβασμα"
 #: eventyay/control/forms/event.py:1500
 msgid ""
 "Your customers will be instructed to wire the money to your account. You can "
-"then import your bank statements to process the payments within pretix, or "
+"then import your bank statements to process the payments within eventyay, or "
 "mark them as paid manually."
 msgstr ""
 "Οι πελάτες σας θα έχουν την εντολή να μεταφέρουν τα χρήματα στο λογαριασμό "
@@ -10448,8 +10448,8 @@ msgid ""
 "data, never any IP addresses and we will not know who you are or where to "
 "find your instance. You can disable this behavior here at any time."
 msgstr ""
-"Κατά τη διάρκεια του ελέγχου ενημέρωσης, το pretix θα αναφέρει ένα ανώνυμο, "
-"μοναδικό αναγνωριστικό εγκατάστασης, την τρέχουσα έκδοση του pretix και τα "
+"Κατά τη διάρκεια του ελέγχου ενημέρωσης, το eventyay θα αναφέρει ένα ανώνυμο, "
+"μοναδικό αναγνωριστικό εγκατάστασης, την τρέχουσα έκδοση του eventyay και τα "
 "εγκατεστημένα plugins και τον αριθμό των ενεργών και ανενεργών συμβάντων "
 "στην εγκατάσταση σας σε διακομιστές που λειτουργούν από τους προπτυχιακούς "
 "προγραμματιστές. Θα αποθηκεύουμε μόνο ανώνυμα δεδομένα, ποτέ δεν υπάρχουν "
@@ -10474,7 +10474,7 @@ msgid ""
 msgstr ""
 "Θα σας ειδοποιήσουμε σε αυτή τη διεύθυνση εάν εντοπίσουμε ότι είναι "
 "διαθέσιμη μια νέα ενημέρωση. Αυτή η διεύθυνση δεν θα μεταδοθεί στο "
-"pretix.eu, τα μηνύματα ηλεκτρονικού ταχυδρομείου θα αποστέλλονται από αυτόν "
+"eventyay.eu, τα μηνύματα ηλεκτρονικού ταχυδρομείου θα αποστέλλονται από αυτόν "
 "τον εξυπηρετητή τοπικά."
 
 #: eventyay/control/forms/global_settings.py:235
@@ -11215,11 +11215,11 @@ msgstr "Favicon"
 
 #: eventyay/control/forms/organizer_forms/organizer_settings_form.py:47
 msgid ""
-"If you provide a favicon, we will show it instead of the default pretix "
+"If you provide a favicon, we will show it instead of the default eventyay "
 "icon. We recommend a size of at least 200x200px to accommodate most devices."
 msgstr ""
 "Εάν παρέχετε ένα favicon, θα το δείξουμε αντί για το προεπιλεγμένο εικονίδιο "
-"pretix. Συνιστούμε ένα μέγεθος τουλάχιστον 200x200px για να φιλοξενήσει τις "
+"eventyay. Συνιστούμε ένα μέγεθος τουλάχιστον 200x200px για να φιλοξενήσει τις "
 "περισσότερες συσκευές."
 
 #: eventyay/control/forms/organizer_forms/team_form.py:41
@@ -13587,7 +13587,7 @@ msgid ""
 "This application has been reviewed, but granting access to your account is "
 "at your <strong>own risk.</strong>"
 msgstr ""
-"Αυτή η εφαρμογή <strong>ΔΕΝ</strong> έχει ελεγχθεί από την ομάδα του pretix. "
+"Αυτή η εφαρμογή <strong>ΔΕΝ</strong> έχει ελεγχθεί από την ομάδα του eventyay. "
 "Η παροχή πρόσβασης στον προωθητικό λογαριασμό σας γίνεται με δική σας ευθύνη."
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:53
@@ -13684,7 +13684,7 @@ msgid ""
 "system is running in debug mode. For security reasons, please never run "
 "debug mode on a production instance."
 msgstr ""
-"το pretix εκτελείται στη λειτουργία εντοπισμού σφαλμάτων. Για λόγους "
+"το eventyay εκτελείται στη λειτουργία εντοπισμού σφαλμάτων. Για λόγους "
 "ασφαλείας, μην τρέχετε ποτέ τη λειτουργία εντοπισμού σφαλμάτων σε μια "
 "παράσταση παραγωγής."
 
@@ -13830,7 +13830,7 @@ msgstr "Check-in Λίστα:%(name)s"
 #, fuzzy
 #| msgid "pretixdesk configuration"
 msgid "Edit list configuration"
-msgstr "διαμόρφωση pretixdesk"
+msgstr "διαμόρφωση eventyaydesk"
 
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:25
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:16
@@ -14133,7 +14133,7 @@ msgid ""
 msgstr ""
 "Γεια σας,\n"
 "\n"
-"έχετε προσκληθεί σε μια ομάδα σχετικά με το pretix, μια πλατφόρμα για την "
+"έχετε προσκληθεί σε μια ομάδα σχετικά με το eventyay, μια πλατφόρμα για την "
 "εκδήλωση\n"
 "πωλήσεις εισιτηρίων.\n"
 "\n"
@@ -14579,7 +14579,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This change was performed by a pretix administrator."
 msgid "This change was performed by a system administrator."
-msgstr "Αυτή η αλλαγή εκτελέστηκε από έναν διαχειριστή του pretix."
+msgstr "Αυτή η αλλαγή εκτελέστηκε από έναν διαχειριστή του eventyay."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:226
 #: eventyay/control/templates/pretixcontrol/event/logs.html:86
@@ -14760,7 +14760,7 @@ msgstr "Ενέργειες πελατών"
 #, fuzzy
 #| msgid "This change was performed by a pretix administrator."
 msgid "This change was performed by the system administrator."
-msgstr "Αυτή η αλλαγή εκτελέστηκε από έναν διαχειριστή του pretix."
+msgstr "Αυτή η αλλαγή εκτελέστηκε από έναν διαχειριστή του eventyay."
 
 #: eventyay/control/templates/pretixcontrol/event/logs.html:94
 #: eventyay/control/templates/pretixcontrol/organizers/device_logs.html:50
@@ -15081,7 +15081,7 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"το pretix υποστηρίζει ένα <a href="
+"το eventyay υποστηρίζει ένα <a href="
 "\"https://eventyay.com/about/en/features/payment\" target=\"_blank\"> ευρύ "
 "φάσμα παρόχων πληρωμής </a> που σας επιτρέπει να επιλέξετε τις μεθόδους "
 "πληρωμής που ταιριάζουν στη ροή εργασίας(workflow) σας καλύτερος. Εδώ είναι "
@@ -15440,7 +15440,7 @@ msgid ""
 "website. This enables your visitors to purchase tickets instantly without "
 "leaving your site."
 msgstr ""
-"Το widget pretix είναι ένας τρόπος να ενσωματώσετε το κατάστημα εισιτηρίων "
+"Το widget eventyay είναι ένας τρόπος να ενσωματώσετε το κατάστημα εισιτηρίων "
 "σας στην ιστοσελίδα της εκδήλωσής σας. Με αυτόν τον τρόπο, οι επισκέπτες σας "
 "μπορούν να αγοράσουν το εισιτήριό τους αμέσως χωρίς να εγκαταλείψουν τον "
 "ιστότοπό σας."
@@ -15989,13 +15989,13 @@ msgstr "Προσθέστε μια νέα παραλλαγή"
 #: eventyay/control/templates/pretixcontrol/item/index.html:29
 msgid ""
 "Every purchase of this product represents one person who is allowed to enter "
-"your event. By default, pretix will only ask for attendee information and "
+"your event. By default, eventyay will only ask for attendee information and "
 "offer ticket downloads for these products."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:48
 msgid ""
-"A product that does not represent a person. By default, pretix will not ask "
+"A product that does not represent a person. By default, eventyay will not ask "
 "for attendee information or offer ticket downloads."
 msgstr ""
 
@@ -16446,7 +16446,7 @@ msgid ""
 "number of specific ticket types simultaneously."
 msgstr ""
 "Για να είναι πραγματικά διαθέσιμα τα προϊόντα σας, χρειάζεστε επίσης quotas. "
-"Τα quotas καθορίζουν πόσες περιπτώσεις του pretix προϊόντος σας θα πωληθούν. "
+"Τα quotas καθορίζουν πόσες περιπτώσεις του eventyay προϊόντος σας θα πωληθούν. "
 "Με αυτό τον τρόπο, μπορείτε να ρυθμίσετε εάν η εκδήλωση σας μπορεί να λάβει "
 "απεριόριστο αριθμό συμμετεχόντων ή ο αριθμός των συμμετεχόντων είναι "
 "περιορισμένος. Μπορείτε να ορίσετε ένα προϊόν σε πολλαπλά quotas για να "
@@ -16568,7 +16568,7 @@ msgstr "Δικαιώματα"
 #| msgid "No applications have access to your pretix account."
 msgid "No applications have access to your eventyay account."
 msgstr ""
-"Δεν υπάρχουν εφαρμογές που να έχουν πρόσβαση στον λογαριασμό pretix σας."
+"Δεν υπάρχουν εφαρμογές που να έχουν πρόσβαση στον λογαριασμό eventyay σας."
 
 #: eventyay/control/templates/pretixcontrol/order/approve.html:4
 #: eventyay/control/templates/pretixcontrol/order/approve.html:8
@@ -17137,10 +17137,10 @@ msgstr "Ημερομηνία επιβεβαίωσης"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:628
 msgid ""
-"This payment was created with an older version of pretix, therefore accurate "
+"This payment was created with an older version of eventyay, therefore accurate "
 "data might not be available."
 msgstr ""
-"Αυτή η πληρωμή δημιουργήθηκε με μια παλαιότερη έκδοση του pretix, επομένως "
+"Αυτή η πληρωμή δημιουργήθηκε με μια παλαιότερη έκδοση του eventyay, επομένως "
 "τα ακριβή δεδομένα ενδέχεται να μην είναι διαθέσιμα."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:629
@@ -17217,11 +17217,11 @@ msgstr "Ιστορικό ηλεκτρονικού ταχυδρομείου"
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:33
 msgid ""
-"This email has been sent with an older version of pretix. We are therefore "
+"This email has been sent with an older version of eventyay. We are therefore "
 "not able to display it here accurately."
 msgstr ""
 "Αυτό το μήνυμα ηλεκτρονικού ταχυδρομείου έχει αποσταλεί με παλαιότερη έκδοση "
-"του pretix. Επομένως, δεν μπορούμε να το εμφανίσουμε εδώ με ακρίβεια."
+"του eventyay. Επομένως, δεν μπορούμε να το εμφανίσουμε εδώ με ακρίβεια."
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:39
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:50
@@ -17293,11 +17293,11 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/order/refund_cancel.html:14
 msgid ""
 "If the money is already on the way back, this will not stop the money, it "
-"will just mark this transfer as aborted in pretix. This will also not "
+"will just mark this transfer as aborted in eventyay. This will also not "
 "reactivate the order, it will just allow you to choose a new refund method."
 msgstr ""
 "Εάν τα χρήματα είναι ήδη στο δρόμο της επιστροφής, αυτό δεν θα σταματήσει τα "
-"χρήματα, θα σηματοδοτήσει ακριβώς αυτή τη μεταφορά ως αμβλύνεται στο pretix. "
+"χρήματα, θα σηματοδοτήσει ακριβώς αυτή τη μεταφορά ως αμβλύνεται στο eventyay. "
 "Αυτό επίσης δεν θα ενεργοποιήσει εκ νέου την παραγγελία, θα σας επιτρέψει "
 "μόνο να επιλέξετε μια νέα μέθοδο επιστροφής χρημάτων."
 
@@ -17820,7 +17820,7 @@ msgid ""
 "eventyay does not allow deleting orders once they have been placed in order "
 "to be audit-proof and trustable by financial authorities."
 msgstr ""
-"το pretix δεν επιτρέπει τη διαγραφή παραγγελιών από τη στιγμή που έχουν "
+"το eventyay δεν επιτρέπει τη διαγραφή παραγγελιών από τη στιγμή που έχουν "
 "τοποθετηθεί προκειμένου να είναι αποδεδειγμένα από τους οικονομικούς φορείς "
 "και να είναι αξιόπιστα από τον έλεγχο."
 
@@ -17835,15 +17835,15 @@ msgstr "Σύνδεση στη συσκευή:"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:11
 msgid ""
-"Download an app that is compatible with pretix. For example, our check-in "
-"app <strong>pretixSCAN</strong> is available on all major platforms."
+"Download an app that is compatible with eventyay. For example, our check-in "
+"app <strong>eventyay</strong> is available on all major platforms."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:14
 #, fuzzy
 #| msgid "1. Download pretixdesk"
-msgid "Download pretixSCAN"
-msgstr "1. Κατεβάστε το pretixdesk"
+msgid "Download eventyay"
+msgstr "1. Κατεβάστε το eventyaydesk"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:18
 msgid ""
@@ -18276,7 +18276,7 @@ msgid ""
 "Otherwise, they will be sent an email with an invitation."
 msgstr ""
 "Για να προσθέσετε ένα νέο χρήστη, μπορείτε να εισάγετε εδώ τη διεύθυνση "
-"ηλεκτρονικού ταχυδρομείου. Αν έχουν ήδη λογαριασμό pretix, θα προστεθούν "
+"ηλεκτρονικού ταχυδρομείου. Αν έχουν ήδη λογαριασμό eventyay, θα προστεθούν "
 "αμέσως στην εκδήλωση. Διαφορετικά, θα σταλεί ένα μήνυμα ηλεκτρονικού "
 "ταχυδρομείου με μία πρόσκληση."
 
@@ -18365,7 +18365,7 @@ msgid ""
 "services."
 msgstr ""
 "Αυτό το μενού σας επιτρέπει να δημιουργήσετε webhooks για να συνδέσετε το "
-"pretix με άλλες online υπηρεσίες."
+"eventyay με άλλες online υπηρεσίες."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:13
 msgid "Read documentation"
@@ -19127,10 +19127,10 @@ msgstr ""
 "."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:52
-msgid "In \"Account name\", type your login name for pretix."
+msgid "In \"Account name\", type your login name for eventyay."
 msgstr ""
 "Στο \"Όνομα λογαριασμού\", πληκτρολογήστε το όνομα σύνδεσης σας για το "
-"pretix."
+"eventyay."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:55
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
@@ -19187,10 +19187,10 @@ msgstr ""
 "\"%(device)s\";"
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:12
-msgid "You will no longer be able to use this device to log in to pretix."
+msgid "You will no longer be able to use this device to log in to eventyay."
 msgstr ""
 "Δεν θα μπορείτε πλέον να χρησιμοποιείτε αυτήν τη συσκευή για να συνδεθείτε "
-"στο pretix."
+"στο eventyay."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:14
 msgid ""
@@ -19234,7 +19234,7 @@ msgstr ""
 msgid ""
 "You will no longer be able to log in without one of your configured devices."
 msgstr ""
-"Δεν θα μπορείτε πλέον να συνδεθείτε στο pretix χωρίς μια από τις "
+"Δεν θα μπορείτε πλέον να συνδεθείτε στο eventyay χωρίς μια από τις "
 "διαμορφωμένες συσκευές σας."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_enable.html:14
@@ -19858,8 +19858,8 @@ msgid "You are now part of the team \"{}\"."
 msgstr "Είστε τώρα μέλος της ομάδας \"{}\"."
 
 #: eventyay/control/views/auth.py:250
-msgid "Welcome to pretix! You are now part of the team \"{}\"."
-msgstr "Καλώς ήρθατε στο pretix! Είστε τώρα μέλος της ομάδας \"{}\"."
+msgid "Welcome to eventyay! You are now part of the team \"{}\"."
+msgstr "Καλώς ήρθατε στο eventyay! Είστε τώρα μέλος της ομάδας \"{}\"."
 
 #: eventyay/control/views/auth.py:308
 msgid ""
@@ -21010,7 +21010,7 @@ msgid "The token has been revoked."
 msgstr "Το token έχει ανακληθεί."
 
 #: eventyay/control/views/organizer_views/team_view.py:245
-msgid "Users need to have a pretix account before they can be invited."
+msgid "Users need to have a eventyay account before they can be invited."
 msgstr ""
 
 #: eventyay/control/views/organizer_views/team_view.py:255
@@ -21132,7 +21132,7 @@ msgstr "Ο κωδικός που εισαγάγατε δεν ήταν έγκυρ
 #: eventyay/control/views/user.py:302
 #, fuzzy
 #| msgid "U2F devices are only available if pretix is served via HTTPS."
-msgid "Security devices are only available if pretix is served via HTTPS."
+msgid "Security devices are only available if eventyay is served via HTTPS."
 msgstr ""
 "Οι συσκευές U2F είναι διαθέσιμες μόνο αν η υπηρεσία παρέχεται μέσω HTTPS."
 
@@ -21824,16 +21824,16 @@ msgstr ""
 #: eventyay/plugins/banktransfer/payment.py:31
 msgid ""
 "I have understood that people will pay the ticket price directly to my bank "
-"account and pretix cannot automatically know what payments arrived. "
+"account and eventyay cannot automatically know what payments arrived. "
 "Therefore, I will either mark payments as complete manually, or regularly "
-"import a digital bank statement in order to give pretix the required "
+"import a digital bank statement in order to give eventyay the required "
 "information."
 msgstr ""
 "Έχω καταλάβει ότι οι άνθρωποι θα πληρώσουν την τιμή του εισιτηρίου απευθείας "
-"στον τραπεζικό λογαριασμό μου και το pretix δεν μπορεί να ξέρει αυτόματα τι "
+"στον τραπεζικό λογαριασμό μου και το eventyay δεν μπορεί να ξέρει αυτόματα τι "
 "πληρωμές έφτασε. Ως εκ τούτου, είτε θα επισημάνω τις πληρωμές ως "
 "ολοκληρωμένες με μη αυτόματο τρόπο, είτε θα εισαγάγω τακτικά μια δήλωση "
-"ψηφιακής τράπεζας για να δώσω στο pretix τις απαιτούμενες πληροφορίες."
+"ψηφιακής τράπεζας για να δώσω στο eventyay τις απαιτούμενες πληροφορίες."
 
 #: eventyay/plugins/banktransfer/payment.py:38
 msgid "Bank account type"
@@ -22646,11 +22646,11 @@ msgstr "API συσκευής check-in"
 
 #: eventyay/plugins/pretixdroid/apps.py:17
 msgid ""
-"This plugin allows you to use the pretixdroid and pretixdesk apps for your "
+"This plugin allows you to use the eventyaydroid and eventyaydesk apps for your "
 "event."
 msgstr ""
-"Αυτό το plugin σας επιτρέπει να χρησιμοποιείτε τις εφαρμογές pretixdroid και "
-"pretixdesk για την εκδήλωσή σας."
+"Αυτό το plugin σας επιτρέπει να χρησιμοποιείτε τις εφαρμογές eventyaydroid και "
+"eventyaydesk για την εκδήλωσή σας."
 
 #: eventyay/plugins/reports/apps.py:10 eventyay/plugins/reports/apps.py:13
 msgid "Report exporter"
@@ -22967,8 +22967,8 @@ msgstr ""
 #: eventyay/plugins/socialauth/apps.py:13
 #, fuzzy
 #| msgid "the development team"
-msgid "the pretix team"
-msgstr "η ομάδα του pretix"
+msgid "the eventyay team"
+msgstr "η ομάδα του eventyay"
 
 #: eventyay/plugins/socialauth/apps.py:16
 #, fuzzy
@@ -23651,7 +23651,7 @@ msgstr "Εναλλαγή πλοήγησης"
 #, fuzzy, python-format
 #| msgid "<a %(a_attr)s>event ticketing powered by pretix</a>"
 msgid "<a %(a_attr)s>event ticketing powered by eventyay</a>"
-msgstr "<a %(a_attr)s>εισιτήρια εκδηλώσεων powered by pretix</a>"
+msgstr "<a %(a_attr)s>εισιτήρια εκδηλώσεων powered by eventyay</a>"
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:31
 msgid "This shop is currently only visible to you and your team."
@@ -25179,7 +25179,7 @@ msgid ""
 "This is a self-hosted installation of <a %(a_attr)s>eventyay, your open "
 "source event solution.</a>."
 msgstr ""
-"Πρόκειται για μια self-hosted εγκατάσταση του <a %(a_attr)s> pretix, του "
+"Πρόκειται για μια self-hosted εγκατάσταση του <a %(a_attr)s> eventyay, του "
 "λογισμικού πώλησης εισιτηρίων σας δωρεάν και ανοικτού κώδικα </a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:14
@@ -25502,7 +25502,7 @@ msgstr ""
 #| msgid "<a %(a_attr)s>event ticketing powered by pretix</a>"
 msgctxt "widget"
 msgid "event ticketing powered by eventyay"
-msgstr "<a %(a_attr)s>εισιτήρια εκδηλώσεων powered by pretix</a>"
+msgstr "<a %(a_attr)s>εισιτήρια εκδηλώσεων powered by eventyay</a>"
 
 #: eventyay/presale/views/widget.py:280
 msgid "This ticket shop is currently disabled."
@@ -25845,8 +25845,8 @@ msgstr "Η συνεδρία \"{title}\" στο {event}"
 #: pretalx/api/templates/rest_framework/api.html:18
 #: pretalx/orga/templates/orga/auth/base.html:29
 #: pretalx/orga/templates/orga/base.html:75
-msgid "The pretalx logo"
-msgstr "Το λογότυπο του pretalx"
+msgid "The eventyay logo"
+msgstr "Το λογότυπο του eventyay"
 
 #: pretalx/cfp/flow.py:354
 msgid ""
@@ -27123,7 +27123,7 @@ msgstr ""
 msgid ""
 "Hi,\n"
 "\n"
-"we hope you’re happy with pretalx as your event’s CfP system.\n"
+"we hope you’re happy with eventyay as your event’s CfP system.\n"
 "These links may be helpful in the coming days and weeks:\n"
 "\n"
 "- Your event’s dashboard: {event_dashboard}\n"
@@ -27131,12 +27131,12 @@ msgid ""
 "- Your schedule editor: {event_schedule}\n"
 "\n"
 "If there is anything you’re missing, come tell us about it\n"
-"at https://github.com/pretalx/pretalx/issues/new or via an\n"
-"email to support@pretalx.com!\n"
+"at https://github.com/eventyay/eventyay/issues/new or via an\n"
+"email to support@eventyay.com!\n"
 msgstr ""
 "Γεια,\n"
 "\n"
-"Ελπίζουμε να είστε ευχαριστημένοι με το pretalx ως σύστημα CfP της εκδήλωσής "
+"Ελπίζουμε να είστε ευχαριστημένοι με το eventyay ως σύστημα CfP της εκδήλωσής "
 "σας.\n"
 "Αυτοί οι σύνδεσμοι μπορεί να είναι χρήσιμοι τις επόμενες ημέρες και "
 "εβδομάδες:\n"
@@ -27146,8 +27146,8 @@ msgstr ""
 "- Ο επεξεργαστής του προγράμματός σας: {event_schedule}\n"
 "\n"
 "Αν σας λείπει κάτι, ελάτε να μας το πείτε\n"
-"στη διεύθυνση https://github.com/pretalx/pretalx/issues/new ή μέσω ενός\n"
-"email στη διεύθυνση support@pretalx.com!\n"
+"στη διεύθυνση https://github.com/eventyay/eventyay/issues/new ή μέσω ενός\n"
+"email στη διεύθυνση support@eventyay.com!\n"
 
 #: pretalx/common/models/settings.py:93
 #, python-brace-format
@@ -27197,8 +27197,8 @@ msgid ""
 "- Over the course of the event, you sent {mail_count} mails.\n"
 "\n"
 "If there is anything you’re missing, come tell us about it\n"
-"at https://github.com/pretalx/pretalx/issues/new or via an\n"
-"email to support@pretalx.com!\n"
+"at https://github.com/eventyay/eventyay/issues/new or via an\n"
+"email to support@eventyay.com!\n"
 msgstr ""
 "Γεια,\n"
 "\n"
@@ -27213,8 +27213,8 @@ msgstr ""
 "- Κατά τη διάρκεια της εκδήλωσης, στείλατε {mail_count} μηνύματα.\n"
 "\n"
 "Αν σας λείπει κάτι, ελάτε να μας το πείτε\n"
-"στη διεύθυνση https://github.com/pretalx/pretalx/issues/new ή μέσω ενός\n"
-"email στη διεύθυνση support@pretalx.com!\n"
+"στη διεύθυνση https://github.com/eventyay/eventyay/issues/new ή μέσω ενός\n"
+"email στη διεύθυνση support@eventyay.com!\n"
 
 #: pretalx/common/plugins.py:9
 #, fuzzy
@@ -27259,10 +27259,10 @@ msgstr "Λοιπά"
 
 #: pretalx/common/templates/400.html:18
 msgid ""
-"It looks as if the communication between you and pretalx went wrong in some "
+"It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Φαίνεται ότι η επικοινωνία ανάμεσα σε εσάς και την pretalx πήγε στραβά κατά "
+"Φαίνεται ότι η επικοινωνία ανάμεσα σε εσάς και την eventyay πήγε στραβά κατά "
 "κάποιο τρόπο.<br>Παρακαλώ επιστρέψτε στην τελευταία σελίδα και δοκιμάστε "
 "ξανά!"
 
@@ -27361,8 +27361,8 @@ msgstr "Αυτή η αλλαγή πραγματοποιήθηκε από ένα 
 
 #: pretalx/common/templates/common/powered_by.html:36
 #, python-format
-msgid "powered by <a %(a_attr)s>pretalx</a>"
-msgstr "τροφοδοτείται από <a %(a_attr)s>pretalx</a>"
+msgid "powered by <a %(a_attr)s>eventyay</a>"
+msgstr "τροφοδοτείται από <a %(a_attr)s>eventyay</a>"
 
 #: pretalx/common/templates/common/question_answer.html:9
 msgid "No file provided"
@@ -27547,36 +27547,36 @@ msgid "Subject"
 msgstr "Θέμα"
 
 #: pretalx/common/update_check.py:100
-msgid "pretalx update available"
-msgstr "διαθέσιμη ενημέρωση pretalx"
+msgid "eventyay update available"
+msgstr "διαθέσιμη ενημέρωση eventyay"
 
 #: pretalx/common/update_check.py:104
 #, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for pretalx or for one of the plugins you installed "
-"in your pretalx installation at {base_url}.\n"
+"An update is available for eventyay or for one of the plugins you installed "
+"in your eventyay installation at {base_url}.\n"
 "Please follow this link for more information:\n"
 "\n"
 " {url} \n"
 "\n"
 "You can always find information on the latest updates in the changelog:\n"
 "\n"
-"  https://docs.pretalx.org/changelog.html\n"
+"  https://docs.eventyay.org/changelog.html\n"
 "\n"
-"Larger updates are also announced with upgrade notes on the pretalx.com "
+"Larger updates are also announced with upgrade notes on the eventyay.com "
 "blog:\n"
 "\n"
-"  https://pretalx.com/p/news\n"
+"  https://eventyay.com/p/news\n"
 "\n"
 "Best regards,\n"
-"your pretalx developers"
+"your eventyay developers"
 msgstr ""
 "Γεια!\n"
 "\n"
-"Μια ενημέρωση είναι διαθέσιμη για το pretalx ή για μια από τις προσθήκες που "
-"εγκαταστήσατε στην εγκατάσταση pretalx στη διεύθυνση {base_url}.\n"
+"Μια ενημέρωση είναι διαθέσιμη για το eventyay ή για μια από τις προσθήκες που "
+"εγκαταστήσατε στην εγκατάσταση eventyay στη διεύθυνση {base_url}.\n"
 "Ακολουθήστε αυτόν τον σύνδεσμο για περισσότερες πληροφορίες:\n"
 "\n"
 " {url}\n"
@@ -27584,15 +27584,15 @@ msgstr ""
 "Μπορείτε πάντα να βρείτε πληροφορίες για τις πιο πρόσφατες ενημερώσεις στο "
 "αρχείο καταγραφής αλλαγών:\n"
 "\n"
-"  https://docs.pretalx.org/changelog.html\n"
+"  https://docs.eventyay.org/changelog.html\n"
 "\n"
 "Ανακοινώνονται επίσης μεγαλύτερες ενημερώσεις με σημειώσεις αναβάθμισης στο "
-"ιστολόγιο pretalx.com:\n"
+"ιστολόγιο eventyay.com:\n"
 "\n"
-"  https://pretalx.com/p/news\n"
+"  https://eventyay.com/p/news\n"
 "\n"
 "Τις καλύτερες ευχές,\n"
-"οι προγραμματιστές του pretalx"
+"οι προγραμματιστές του eventyay"
 
 #: pretalx/common/update_check.py:145 pretalx/common/update_check.py:152
 #, fuzzy
@@ -27737,10 +27737,10 @@ msgstr "Κύριο χρώμα εκδήλωσης"
 
 #: pretalx/event/models/event.py:220
 msgid ""
-"Provide a hex value like #00ff00 if you want to style pretalx in your "
+"Provide a hex value like #00ff00 if you want to style eventyay in your "
 "event’s colour scheme."
 msgstr ""
-"Δώστε μια τιμή hex όπως #00ff00, εάν θέλετε να κάνετε στυλ pretalx στον "
+"Δώστε μια τιμή hex όπως #00ff00, εάν θέλετε να κάνετε στυλ eventyay στον "
 "χρωματικό συνδυασμό της εκδήλωσής σας."
 
 #: pretalx/event/models/event.py:227
@@ -28618,18 +28618,18 @@ msgstr "Αυτό το μέιλ έχει ήδη αποσταλεί. Δεν μπο
 
 #: pretalx/orga/forms/admin.py:19
 msgid ""
-"During the update check, pretalx will report an anonymous, unique "
-"installation ID, the current version of pretalx and your installed plugins "
+"During the update check, eventyay will report an anonymous, unique "
+"installation ID, the current version of eventyay and your installed plugins "
 "and the number of active and inactive events in your installation to servers "
-"operated by the pretalx developers. We will only store anonymous data, never "
+"operated by the eventyay developers. We will only store anonymous data, never "
 "any IP addresses and we will not know who you are or where to find your "
 "instance. You can disable this behavior here at any time."
 msgstr ""
-"Κατά τον έλεγχο ενημέρωσης, το pretalx θα αναφέρει ένα ανώνυμο, μοναδικό "
-"αναγνωριστικό εγκατάστασης, την τρέχουσα έκδοση του pretalx και τα "
+"Κατά τον έλεγχο ενημέρωσης, το eventyay θα αναφέρει ένα ανώνυμο, μοναδικό "
+"αναγνωριστικό εγκατάστασης, την τρέχουσα έκδοση του eventyay και τα "
 "εγκατεστημένα πρόσθετα και τον αριθμό των ενεργών και ανενεργών συμβάντων "
 "στην εγκατάστασή σας σε διακομιστές που λειτουργούν από τους προγραμματιστές "
-"του pretalx. Θα αποθηκεύσουμε μόνο ανώνυμα δεδομένα, ποτέ διευθύνσεις IP και "
+"του eventyay. Θα αποθηκεύσουμε μόνο ανώνυμα δεδομένα, ποτέ διευθύνσεις IP και "
 "δεν θα γνωρίζουμε ποιος είστε ή πού να βρούμε την παρουσία σας. Μπορείτε να "
 "απενεργοποιήσετε αυτήν τη συμπεριφορά εδώ ανά πάσα στιγμή."
 
@@ -28640,12 +28640,12 @@ msgstr "Ειδοποιήσεις ηλεκτρονικού ταχυδρομείο
 #: pretalx/orga/forms/admin.py:30
 msgid ""
 "We will notify you at this address if we detect that a new update is "
-"available. This address will not be transmitted to pretalx.com, the emails "
+"available. This address will not be transmitted to eventyay.com, the emails "
 "will be sent by your server locally."
 msgstr ""
 "Θα σας ειδοποιήσουμε σε αυτήν τη διεύθυνση εάν διαπιστώσουμε ότι είναι "
 "διαθέσιμη μια νέα ενημέρωση. Αυτή η διεύθυνση δεν θα μεταδοθεί στο "
-"pretalx.com, τα email θα σταλούν τοπικά από τον διακομιστή σας."
+"eventyay.com, τα email θα σταλούν τοπικά από τον διακομιστή σας."
 
 #: pretalx/orga/forms/cfp.py:39
 msgid "Use tracks"
@@ -28845,12 +28845,12 @@ msgstr "Ενεργές γλώσσες"
 
 #: pretalx/orga/forms/event.py:65
 msgid ""
-"Users will be able to use pretalx in these languages, and you will be able "
+"Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don’t provide a text in the "
 "language a user selects, it will be shown in your event’s default language "
 "instead."
 msgstr ""
-"Οι χρήστες θα μπορούν να χρησιμοποιούν το pretalx σε αυτές τις γλώσσες και "
+"Οι χρήστες θα μπορούν να χρησιμοποιούν το eventyay σε αυτές τις γλώσσες και "
 "θα μπορείτε να παρέχετε όλα τα κείμενα σε αυτές τις γλώσσες. Εάν δεν "
 "παρέχετε ένα κείμενο στη γλώσσα που επιλέγει ο χρήστης, θα εμφανίζεται στην "
 "προεπιλεγμένη γλώσσα της εκδήλωσής σας."
@@ -29129,11 +29129,11 @@ msgstr ""
 #: pretalx/orga/forms/event.py:583
 msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
-"schedule is not shown here using pretalx."
+"schedule is not shown here using eventyay."
 msgstr ""
 "Ρυθμίστε ώστε να επιτρέπεται στις εξωτερικές σελίδες να εμφανίζουν το "
 "γραφικό στοιχείο χρονοδιαγράμματος, ακόμα κι αν το πρόγραμμα δεν εμφανίζεται "
-"εδώ χρησιμοποιώντας το pretalx."
+"εδώ χρησιμοποιώντας το eventyay."
 
 #: pretalx/orga/forms/event.py:599
 #, fuzzy
@@ -29558,16 +29558,16 @@ msgstr "Ανεπίσημη μετάφραση"
 #| "translated and will show in English instead. You can help translating at "
 #| "github.com/pretalx/pretalx."
 msgid ""
-"These translations are not maintained by the pretalx team. We cannot vouch "
+"These translations are not maintained by the eventyay team. We cannot vouch "
 "for their correctness, and new or recently changed features might not be "
 "translated and will show in English instead. You can <a href=\"{url}\" "
 "target=\"_blank\">contribute to the translations</a>."
 msgstr ""
-"Αυτή η μετάφραση δεν διατηρείται από την ομάδα pretalx. Δεν μπορούμε να "
+"Αυτή η μετάφραση δεν διατηρείται από την ομάδα eventyay. Δεν μπορούμε να "
 "εγγυηθούμε για την ορθότητά του και τα νέα ή πρόσφατα τροποποιημένα "
 "χαρακτηριστικά ενδέχεται να μην μεταφραστούν και να εμφανίζονται στα "
 "Αγγλικά. Μπορείτε να βοηθήσετε στη μετάφραση στη διεύθυνση github.com/"
-"pretalx/pretalx."
+"eventyay/eventyay."
 
 #: pretalx/orga/phrases.py:7
 msgid "The event end cannot be before the start."
@@ -29623,17 +29623,17 @@ msgstr "Πληροφορίες διαχειριστή"
 
 #: pretalx/orga/templates/orga/admin/admin.html:23
 msgid ""
-"You are running pretalx in development mode. Please <strong>STOP</strong> "
+"You are running eventyay in development mode. Please <strong>STOP</strong> "
 "and set the DEBUG variable to False if this page is in any way reachable "
 "from the internet."
 msgstr ""
-"Εκτελείτε το pretalx σε λειτουργία ανάπτυξης. Παρακαλούμε <strong>STOP</"
+"Εκτελείτε το eventyay σε λειτουργία ανάπτυξης. Παρακαλούμε <strong>STOP</"
 "strong> και ορίστε τη μεταβλητή DEBUG σε False, εάν αυτή η σελίδα είναι με "
 "οποιονδήποτε τρόπο προσβάσιμη από το Διαδίκτυο."
 
 #: pretalx/orga/templates/orga/admin/admin.html:33
-msgid "Your pretalx version is:"
-msgstr "Έκδοση pretalx:"
+msgid "Your eventyay version is:"
+msgstr "Έκδοση eventyay:"
 
 #: pretalx/orga/templates/orga/admin/admin.html:34
 #, python-format
@@ -29742,12 +29742,12 @@ msgid "Links"
 msgstr "Συνδέσεις"
 
 #: pretalx/orga/templates/orga/admin/admin.html:155
-msgid "pretalx website"
-msgstr "ιστοσελίδα pretalx"
+msgid "eventyay website"
+msgstr "ιστοσελίδα eventyay"
 
 #: pretalx/orga/templates/orga/admin/admin.html:158
-msgid "pretalx documentation"
-msgstr "τεκμηρίωση pretalx"
+msgid "eventyay documentation"
+msgstr "τεκμηρίωση eventyay"
 
 #: pretalx/orga/templates/orga/admin/admin.html:160
 msgid "Configuration reference"
@@ -29766,16 +29766,16 @@ msgid "Release notes"
 msgstr "Σημειώσεις έκδοσης"
 
 #: pretalx/orga/templates/orga/admin/admin.html:167
-msgid "pretalx blog (release announcements, features)"
-msgstr "Το blog του pretalx (ανακοινώσεις κυκλοφορίας, χαρακτηριστικά)"
+msgid "eventyay blog (release announcements, features)"
+msgstr "Το blog του eventyay (ανακοινώσεις κυκλοφορίας, χαρακτηριστικά)"
 
 #: pretalx/orga/templates/orga/admin/update.html:30
-msgid "The pretalx.com server returned an error code."
-msgstr "Ο διακομιστής pretalx.com επέστρεψε έναν κωδικό σφάλματος."
+msgid "The eventyay.com server returned an error code."
+msgstr "Ο διακομιστής eventyay.com επέστρεψε έναν κωδικό σφάλματος."
 
 #: pretalx/orga/templates/orga/admin/update.html:32
-msgid "The pretalx.com server could not be reached."
-msgstr "Δεν ήταν δυνατή η πρόσβαση στον διακομιστή pretalx.com."
+msgid "The eventyay.com server could not be reached."
+msgstr "Δεν ήταν δυνατή η πρόσβαση στον διακομιστή eventyay.com."
 
 #: pretalx/orga/templates/orga/admin/user_detail.html:34
 #, fuzzy
@@ -29825,8 +29825,8 @@ msgid "Sign in"
 msgstr "Συνδεθείτε"
 
 #: pretalx/orga/templates/orga/base.html:136
-msgid "You’re using pretalx as a superuser. This is not recommended."
-msgstr "Χρησιμοποιείτε το pretalx ως διαχειριστής. Κάτι τέτοιο δεν προτείνεται."
+msgid "You’re using eventyay as a superuser. This is not recommended."
+msgstr "Χρησιμοποιείτε το eventyay ως διαχειριστής. Κάτι τέτοιο δεν προτείνεται."
 
 #: pretalx/orga/templates/orga/base.html:140
 msgid "Please click here to switch to an administrator account."
@@ -29834,16 +29834,16 @@ msgstr "Παρακαλώ πατήστε εδώ για να αλλάξετε σε
 
 #: pretalx/orga/templates/orga/base.html:147
 msgid ""
-"Starting with version 1.1.0, pretalx automatically checks for updates in the "
+"Starting with version 1.1.0, eventyay automatically checks for updates in the "
 "background. During this check, anonymous data is transmitted to servers "
-"operated by the pretalx developers. Click on this message to find out more, "
+"operated by the eventyay developers. Click on this message to find out more, "
 "disable this feature or enter your email address to get notified via email "
 "if a new update arrives. This message will disappear once you clicked it."
 msgstr ""
-"Ξεκινώντας με την έκδοση 1.1.0, το pretalx ελέγχει αυτόματα για ενημερώσεις "
+"Ξεκινώντας με την έκδοση 1.1.0, το eventyay ελέγχει αυτόματα για ενημερώσεις "
 "στο παρασκήνιο. Κατά τη διάρκεια αυτού του ελέγχου, ανώνυμα δεδομένα "
 "μεταδίδονται σε διακομιστές που λειτουργούν από τους προγραμματιστές "
-"pretalx. Κάντε κλικ σε αυτό το μήνυμα για να μάθετε περισσότερα, "
+"eventyay. Κάντε κλικ σε αυτό το μήνυμα για να μάθετε περισσότερα, "
 "απενεργοποιήστε αυτήν τη λειτουργία ή εισαγάγετε τη διεύθυνση email σας για "
 "να λαμβάνετε ειδοποίηση μέσω email εάν φτάσει μια νέα ενημέρωση. Αυτό το "
 "μήνυμα θα εξαφανιστεί μόλις κάνετε κλικ σε αυτό."
@@ -29929,12 +29929,12 @@ msgstr "CfP Editor"
 
 #: pretalx/orga/templates/orga/cfp/flow.html:33
 msgid ""
-"This is the pretalx CfP editor. This page allows you to change the headline "
+"This is the eventyay CfP editor. This page allows you to change the headline "
 "and information text on all of the individual CfP steps. You can also add a "
 "custom help text to individual fields. Just click on the item you want to "
 "change!"
 msgstr ""
-"Αυτός είναι ο επεξεργαστής pretalx CfP. Αυτή η σελίδα σάς επιτρέπει να "
+"Αυτός είναι ο επεξεργαστής eventyay CfP. Αυτή η σελίδα σάς επιτρέπει να "
 "αλλάξετε την επικεφαλίδα και το κείμενο πληροφοριών σε όλα τα επιμέρους "
 "βήματα της CfP. Μπορείτε επίσης να προσθέσετε ένα προσαρμοσμένο κείμενο "
 "βοήθειας σε μεμονωμένα πεδία. Απλώς κάντε κλικ στο στοιχείο που θέλετε να "
@@ -30435,7 +30435,7 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/event_list.html:48
 msgid ""
-"You are currently in the organiser area of pretalx. To view your submitted "
+"You are currently in the organiser area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
 
@@ -30600,7 +30600,7 @@ msgstr "Αποστολή στα εξερχόμενα"
 #, fuzzy
 #| msgid "pretalx update available"
 msgid "Unavailable"
-msgstr "διαθέσιμη ενημέρωση pretalx"
+msgstr "διαθέσιμη ενημέρωση eventyay"
 
 #: pretalx/orga/templates/orga/mails/_placeholder_group.html:41
 msgid "e.g."
@@ -31200,11 +31200,11 @@ msgstr "Εξαγωγή δεδομένων χρονοδιαγράμματος"
 #: pretalx/orga/templates/orga/schedule/export.html:47
 #: pretalx/orga/templates/orga/speaker/export.html:55
 msgid ""
-"pretalx provides a range of exports. If none of these match what you are "
+"eventyay provides a range of exports. If none of these match what you are "
 "looking for, you can also provide a custom plugin to export the data – "
 "please ask your administrator to install the plugin."
 msgstr ""
-"Η pretalx παρέχει μια σειρά εξαγωγών. Εάν κανένα από αυτά δεν ταιριάζει με "
+"Η eventyay παρέχει μια σειρά εξαγωγών. Εάν κανένα από αυτά δεν ταιριάζει με "
 "αυτό που αναζητάτε, μπορείτε επίσης να παρέχετε μια προσαρμοσμένη προσθήκη "
 "για την εξαγωγή των δεδομένων – ζητήστε από τον διαχειριστή σας να "
 "εγκαταστήσει την προσθήκη."
@@ -31583,22 +31583,22 @@ msgstr "Ρυθμίσεις widget"
 
 #: pretalx/orga/templates/orga/settings/widget.html:32
 msgid ""
-"You can configure a pretalx schedule widget to show your event schedule on "
+"You can configure a eventyay schedule widget to show your event schedule on "
 "your homepage, instead of using this page. If you want to disable the "
 "schedule on here entirely, please activate the setting below."
 msgstr ""
-"Μπορείτε να διαμορφώσετε ένα γραφικό στοιχείο χρονοδιαγράμματος pretalx ώστε "
+"Μπορείτε να διαμορφώσετε ένα γραφικό στοιχείο χρονοδιαγράμματος eventyay ώστε "
 "να εμφανίζεται το πρόγραμμα εκδηλώσεών σας στην αρχική σας σελίδα, αντί να "
 "χρησιμοποιείτε αυτήν τη σελίδα. Εάν θέλετε να απενεργοποιήσετε εντελώς το "
 "χρονοδιάγραμμα εδώ, ενεργοποιήστε την παρακάτω ρύθμιση."
 
 #: pretalx/orga/templates/orga/settings/widget.html:44
 msgid ""
-"The pretalx schedule widget is a way to embed your schedule into your event "
+"The eventyay schedule widget is a way to embed your schedule into your event "
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"Το widget χρονοδιαγράμματος pretalx είναι ένας τρόπος για να ενσωματώσετε το "
+"Το widget χρονοδιαγράμματος eventyay είναι ένας τρόπος για να ενσωματώσετε το "
 "πρόγραμμά σας στον ιστότοπο της εκδήλωσης σας. Με αυτόν τον τρόπο, οι "
 "συμμετέχοντες μπορούν να δουν το πρόγραμμά σας χωρίς να εγκαταλείψουν τον "
 "ιστότοπό σας και μπορείτε να διαμορφώσετε το χρονοδιάγραμμα ώστε να "
@@ -32032,11 +32032,11 @@ msgstr "Πρόσβαση API"
 #| "can generate a new token, which will invalidate the old one. To find out "
 #| "more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgid ""
-"API tokens can be used to access the <a %(apiurl)s>pretalx API</a>. To find "
+"API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
 "Αυτό το token μπορεί να χρησιμοποιηθεί για πρόσβαση στο <a %(apiurl)"
-"s>pretalx API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα ακυρώσει "
+"s>eventyay API</a>. Μπορείτε να δημιουργήσετε ένα νέο token, που θα ακυρώσει "
 "το παλιό. Για να δείτε περισσότερα, παρακαλώ ρίξτε μια ματιά στο <a %(docurl)"
 "s> API documentation</a>."
 
@@ -32959,7 +32959,7 @@ msgstr "Ανώνυμος χρήστης"
 msgid ""
 "Hi {name},\n"
 "\n"
-"you have requested a new password for your pretalx account.\n"
+"you have requested a new password for your eventyay account.\n"
 "To reset your password, click on the following link:\n"
 "\n"
 "  {url}\n"
@@ -32967,11 +32967,11 @@ msgid ""
 "If this wasn’t you, you can just ignore this email.\n"
 "\n"
 "All the best,\n"
-"the pretalx robot"
+"the eventyay robot"
 msgstr ""
 "Γεια {name},\n"
 "\n"
-"έχετε ζητήσει νέο κωδικό πρόσβασης για τον λογαριασμό σας pretalx.\n"
+"έχετε ζητήσει νέο κωδικό πρόσβασης για τον λογαριασμό σας eventyay.\n"
 "Για να επαναφέρετε τον κωδικό πρόσβασής σας, κάντε κλικ στον παρακάτω "
 "σύνδεσμο:\n"
 "\n"
@@ -32981,24 +32981,24 @@ msgstr ""
 "ηλεκτρονικού ταχυδρομείου.\n"
 "\n"
 "Τα καλύτερα,\n"
-"το ρομπότ pretalx"
+"το ρομπότ eventyay"
 
 #: pretalx/person/models/user.py:536
 #, python-brace-format
 msgid ""
 "Hi {name},\n"
 "\n"
-"Your pretalx account password was just changed.\n"
+"Your eventyay account password was just changed.\n"
 "\n"
 "If you did not change your password, please contact the site administration "
 "immediately.\n"
 "\n"
 "All the best,\n"
-"the pretalx team"
+"the eventyay team"
 msgstr ""
 
 #: pretalx/person/models/user.py:548
-msgid "[pretalx] Password changed"
+msgid "[eventyay] Password changed"
 msgstr ""
 
 #: pretalx/schedule/ascii.py:24
@@ -33770,10 +33770,10 @@ msgstr "Εμφάνιση ετικέτας δημόσια"
 #: pretalx/submission/models/tag.py:38
 msgid ""
 "Tags are currently only in use for organisers and reviewers. They will be "
-"visible publicly in a future release of pretalx."
+"visible publicly in a future release of eventyay."
 msgstr ""
 "Προς το παρόν, οι ετικέτες χρησιμοποιούνται μόνο για διοργανωτές και "
-"αναθεωρητές. Θα είναι ορατά δημόσια σε μελλοντική κυκλοφορία του pretalx."
+"αναθεωρητές. Θα είναι ορατά δημόσια σε μελλοντική κυκλοφορία του eventyay."
 
 #: pretalx/submission/models/track.py:52
 msgid ""

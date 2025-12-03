@@ -28,18 +28,18 @@ msgstr ""
 #: eventyay/api/auth/devicesecurity.py:22
 #, fuzzy
 #| msgid "1. Download pretixdesk"
-msgid "pretixSCAN"
-msgstr "1. Descargar pretixdesk"
+msgid "eventyay"
+msgstr "1. Descargar eventyaydesk"
 
 #: eventyay/api/auth/devicesecurity.py:52
-msgid "pretixSCAN (kiosk mode, online only)"
+msgid "eventyay (kiosk mode, online only)"
 msgstr ""
 
 #: eventyay/api/auth/devicesecurity.py:80
 #, fuzzy
 #| msgid "pretix User"
-msgid "pretixPOS"
-msgstr "usuario pretix"
+msgid "eventyay"
+msgstr "usuario eventyay"
 
 #: eventyay/api/models.py:18
 msgid "Application name"
@@ -221,7 +221,7 @@ msgstr ""
 #, fuzzy
 #| msgid "pretix account invitation"
 msgid "eventyay account invitation"
-msgstr "invitación a la cuenta pretix"
+msgstr "invitación a la cuenta eventyay"
 
 #: eventyay/api/serializers/organizer.py:164
 #: eventyay/control/views/organizer_views/team_view.py:242
@@ -465,12 +465,12 @@ msgid ""
 "primary email address, not to the per-attendee addresses. You can however "
 "enable this in the E-mail settings."
 msgstr ""
-"Normalmente, pretix pide una dirección de correo electrónico por pedido y la "
+"Normalmente, eventyay pide una dirección de correo electrónico por pedido y la "
 "confirmación del pedido se enviará sólo a esa dirección de correo "
 "electrónico. Si activa esta opción, el sistema le pedirá además direcciones "
 "de correo electrónico individuales para cada solicitud de admisión. Esto "
 "puede ser útil si desea obtener direcciones individuales para cada "
-"participante, incluso en el caso de pedidos de grupo. Sin embargo, pretix "
+"participante, incluso en el caso de pedidos de grupo. Sin embargo, eventyay "
 "enviará la confirmación del pedido sólo a la dirección de correo electrónico "
 "principal, no a las direcciones de cada destinatario."
 
@@ -4277,8 +4277,8 @@ msgstr "Página %d de %d"
 
 #: eventyay/base/invoice.py:225
 msgctxt "invoice"
-msgid "Classic renderer (pretix 1.0)"
-msgstr "Versión clásica (pretix 1.0)"
+msgid "Classic renderer (eventyay 1.0)"
+msgstr "Versión clásica (eventyay 1.0)"
 
 #: eventyay/base/invoice.py:269
 msgctxt "invoice"
@@ -4486,7 +4486,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Modern Invoice Renderer (pretix 2.7)"
 msgid "Modern Invoice Renderer"
-msgstr "Creador Moderno de Recibos (pretix 2.7)"
+msgstr "Creador Moderno de Recibos (eventyay 2.7)"
 
 #: eventyay/base/models/auth.py:93
 msgid "Is active"
@@ -7853,7 +7853,7 @@ msgstr ""
 
 #: eventyay/base/secrets.py:114
 msgid ""
-"signature scheme 1 (for very large events, does not work with pretixSCAN on "
+"signature scheme 1 (for very large events, does not work with eventyay on "
 "iOS and changes semantics of offline scanning – please refer to "
 "documentation or support for details)"
 msgstr ""
@@ -8649,16 +8649,16 @@ msgid "Sample workshop"
 msgstr "Ejemplo de taller"
 
 #: eventyay/base/services/update_check.py:92
-msgid "pretix update available"
-msgstr "actualización de pretix disponible"
+msgid "eventyay update available"
+msgstr "actualización de eventyay disponible"
 
 #: eventyay/base/services/update_check.py:95
 #, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for pretix or for one of the plugins you installed in "
-"your pretix installation. Please click on the following link for more "
+"An update is available for eventyay or for one of the plugins you installed in "
+"your eventyay installation. Please click on the following link for more "
 "information:\n"
 "\n"
 " {url} \n"
@@ -8670,12 +8670,12 @@ msgid ""
 "\n"
 "Best,\n"
 "\n"
-"your pretix developers"
+"your eventyay developers"
 msgstr ""
 "Hola!\n"
 "\n"
-"Una actualización está disponible para pretix o para uno de los plugins que "
-"instaló en su instalación de pretix. Por favor, haga clic en el siguiente "
+"Una actualización está disponible para eventyay o para uno de los plugins que "
+"instaló en su instalación de eventyay. Por favor, haga clic en el siguiente "
 "enlace para obtener más información: \n"
 "\n"
 "{url} \n"
@@ -8687,7 +8687,7 @@ msgstr ""
 "\n"
 "Saludos, \n"
 "\n"
-"sus desarrolladores pretix"
+"sus desarrolladores eventyay"
 
 #: eventyay/base/services/update_check.py:124
 #: eventyay/base/services/update_check.py:126
@@ -8962,7 +8962,7 @@ msgstr ""
 #, fuzzy, python-format
 #| msgid "powered by <a %(a_attr)s>pretix</a>"
 msgid "powered by <a %(a_attr)s>eventyay</a>"
-msgstr "creado por <a %(a_attr)s>pretix</a>"
+msgstr "creado por <a %(a_attr)s>eventyay</a>"
 
 #: eventyay/base/templates/pretixbase/email/notification.html:55
 #: eventyay/base/templates/pretixbase/email/notification.txt:14
@@ -9378,11 +9378,11 @@ msgstr "Nombre del formato"
 
 #: eventyay/control/forms/event.py:512
 msgid ""
-"This defines how pretix will ask for human names. Changing this after you "
+"This defines how eventyay will ask for human names. Changing this after you "
 "already received orders might lead to unexpected behavior when sorting or "
 "changing names."
 msgstr ""
-"Esto define como pretix preguntará por nombres humanos. Cambiar esto luego "
+"Esto define como eventyay preguntará por nombres humanos. Cambiar esto luego "
 "de haber recibido ordenes puede causar comportamientos inesperados al "
 "reordenar o cambiar nombres."
 
@@ -9869,7 +9869,7 @@ msgstr "Pago por transferencia bancaria"
 #: eventyay/control/forms/event.py:1500
 msgid ""
 "Your customers will be instructed to wire the money to your account. You can "
-"then import your bank statements to process the payments within pretix, or "
+"then import your bank statements to process the payments within eventyay, or "
 "mark them as paid manually."
 msgstr ""
 "Sus clientes recibirán instrucciones para transferir el dinero a su cuenta. "
@@ -10437,10 +10437,10 @@ msgid ""
 "data, never any IP addresses and we will not know who you are or where to "
 "find your instance. You can disable this behavior here at any time."
 msgstr ""
-"Durante el chequeo de actualización, pretix reportará un ID de instalación "
-"único y anónimo, la versión actual de pretix y sus plugins instalados y el "
+"Durante el chequeo de actualización, eventyay reportará un ID de instalación "
+"único y anónimo, la versión actual de eventyay y sus plugins instalados y el "
 "número de eventos activos e inactivos en su instalación a los servidores "
-"operados por los desarrolladores de pretix. Sólo almacenaremos datos "
+"operados por los desarrolladores de eventyay. Sólo almacenaremos datos "
 "anónimos, nunca direcciones IP y no sabremos quién es usted ni dónde "
 "encontrar su instancia. Puede desactivar este comportamiento en cualquier "
 "momento."
@@ -11208,11 +11208,11 @@ msgstr "Favicon"
 
 #: eventyay/control/forms/organizer_forms/organizer_settings_form.py:47
 msgid ""
-"If you provide a favicon, we will show it instead of the default pretix "
+"If you provide a favicon, we will show it instead of the default eventyay "
 "icon. We recommend a size of at least 200x200px to accommodate most devices."
 msgstr ""
 "Si provees un favicon, nosotros lo mostraremos en vez del icono default de "
-"pretix. Recomendamos un tamaño de al menos 200x200px para acomodarlo a todos "
+"eventyay. Recomendamos un tamaño de al menos 200x200px para acomodarlo a todos "
 "los dispositivos."
 
 #: eventyay/control/forms/organizer_forms/team_form.py:41
@@ -13566,7 +13566,7 @@ msgid ""
 "access to your account?"
 msgstr ""
 "¿Realmente desea conceder a la aplicación <strong>%(application)s</strong> "
-"acceso a su cuenta pretix?"
+"acceso a su cuenta eventyay?"
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:24
 #, fuzzy, python-format
@@ -13594,8 +13594,8 @@ msgid ""
 "This application has been reviewed, but granting access to your account is "
 "at your <strong>own risk.</strong>"
 msgstr ""
-"Esta aplicación<strong>no</strong> ha sido revisada por el equipo de pretix. "
-"La concesión del acceso a su cuenta pretix se realiza bajo su propio riesgo."
+"Esta aplicación<strong>no</strong> ha sido revisada por el equipo de eventyay. "
+"La concesión del acceso a su cuenta eventyay se realiza bajo su propio riesgo."
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:53
 msgid "Error:"
@@ -13690,7 +13690,7 @@ msgid ""
 "system is running in debug mode. For security reasons, please never run "
 "debug mode on a production instance."
 msgstr ""
-"pretix se está ejecutando en modo debug. Por razones de seguridad, no "
+"eventyay se está ejecutando en modo debug. Por razones de seguridad, no "
 "ejecute nunca el modo de depuración en una instancia de producción."
 
 #: eventyay/control/templates/pretixcontrol/base.html:405
@@ -13835,7 +13835,7 @@ msgstr "Lista de registro: %(name)s"
 #, fuzzy
 #| msgid "pretixdesk configuration"
 msgid "Edit list configuration"
-msgstr "configuración pretixdesk"
+msgstr "configuración eventyaydesk"
 
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:25
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:16
@@ -14097,7 +14097,7 @@ msgstr ""
 "%(url)s \n"
 "\n"
 "Saludos, \n"
-"El equipo de pretix\n"
+"El equipo de eventyay\n"
 
 #: eventyay/control/templates/pretixcontrol/email/invitation.txt:1
 #, fuzzy, python-format
@@ -14137,7 +14137,7 @@ msgid ""
 msgstr ""
 "Hola, \n"
 "\n"
-"usted ha sido invitado a un equipo en pretix, una plataforma para realizar \n"
+"usted ha sido invitado a un equipo en eventyay, una plataforma para realizar \n"
 "ventas de entradas de eventos. \n"
 "\n"
 "Organizador: %(organizer)s\n"
@@ -14150,7 +14150,7 @@ msgstr ""
 "\n"
 "Saludos cordiales, \n"
 "\n"
-"Su equipo Pretix\n"
+"Su equipo Eventyay\n"
 
 #: eventyay/control/templates/pretixcontrol/email/security_notice.txt:1
 #, fuzzy, python-format
@@ -14191,7 +14191,7 @@ msgid ""
 msgstr ""
 "Hola, \n"
 "\n"
-"esto es para informarle que la información de su cuenta pretix ha sido "
+"esto es para informarle que la información de su cuenta eventyay ha sido "
 "cambiada . \n"
 "En particular, se han realizado las siguientes modificaciones: \n"
 "\n"
@@ -14205,7 +14205,7 @@ msgstr ""
 "%(url)s \n"
 "\n"
 "Saludos cordiales , \n"
-"su equipo de Pretix\n"
+"su equipo de Eventyay\n"
 
 #: eventyay/control/templates/pretixcontrol/event/actions.html:3
 #: eventyay/control/templates/pretixcontrol/event/actions.html:5
@@ -14577,7 +14577,7 @@ msgstr "Los datos personales fueron borrados de esta entrada del registro."
 #, fuzzy
 #| msgid "This change was performed by a pretix administrator."
 msgid "This change was performed by a system administrator."
-msgstr "Este cambio fue realizado por un administrador de pretix."
+msgstr "Este cambio fue realizado por un administrador de eventyay."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:226
 #: eventyay/control/templates/pretixcontrol/event/logs.html:86
@@ -14754,7 +14754,7 @@ msgstr "Acciones de los clientes"
 #, fuzzy
 #| msgid "This change was performed by a pretix administrator."
 msgid "This change was performed by the system administrator."
-msgstr "Este cambio fue realizado por un administrador de pretix."
+msgstr "Este cambio fue realizado por un administrador de eventyay."
 
 #: eventyay/control/templates/pretixcontrol/event/logs.html:94
 #: eventyay/control/templates/pretixcontrol/organizers/device_logs.html:50
@@ -15074,7 +15074,7 @@ msgid ""
 "the payment methods that fit your workflow best. Here are just two of them "
 "as examples, you can add more in the \"Settings\" part of your event."
 msgstr ""
-"pretix soporta un <a href=\"https://eventyay.com/about/en/features/payment\" "
+"eventyay soporta un <a href=\"https://eventyay.com/about/en/features/payment\" "
 "target=\"_blank\">amplio rango de proveedores de pago </a> permitiéndole "
 "elegir los métodos de pago que mejor se adapten a su flujo de trabajo. Aquí "
 "hay sólo dos de ellos a modo de ejemplo, puede añadir más en la parte "
@@ -15433,7 +15433,7 @@ msgid ""
 "website. This enables your visitors to purchase tickets instantly without "
 "leaving your site."
 msgstr ""
-"El widget pretix es una forma de incrustar su tienda de entradas en el sitio "
+"El widget eventyay es una forma de incrustar su tienda de entradas en el sitio "
 "web de su evento. De esta manera, sus visitantes pueden comprar sus entradas "
 "de inmediato sin salir de su sitio web."
 
@@ -15983,13 +15983,13 @@ msgstr "Añadir una nueva variación"
 #: eventyay/control/templates/pretixcontrol/item/index.html:29
 msgid ""
 "Every purchase of this product represents one person who is allowed to enter "
-"your event. By default, pretix will only ask for attendee information and "
+"your event. By default, eventyay will only ask for attendee information and "
 "offer ticket downloads for these products."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:48
 msgid ""
-"A product that does not represent a person. By default, pretix will not ask "
+"A product that does not represent a person. By default, eventyay will not ask "
 "for attendee information or offer ticket downloads."
 msgstr ""
 
@@ -16441,7 +16441,7 @@ msgid ""
 "number of specific ticket types simultaneously."
 msgstr ""
 "Para que sus productos estén realmente disponibles, también necesita cuotas. "
-"Las cuotas definen, cuántas instancias de su producto pretix venderá. De "
+"Las cuotas definen, cuántas instancias de su producto eventyay venderá. De "
 "esta manera, puede configurar si su evento puede acoger un número ilimitado "
 "de participantes o si el número de participantes es limitado. Puede asignar "
 "un producto a varias cuotas para cumplir requisitos más complejos, por "
@@ -16561,7 +16561,7 @@ msgstr "Permisos"
 #, fuzzy
 #| msgid "No applications have access to your pretix account."
 msgid "No applications have access to your eventyay account."
-msgstr "Ninguna aplicación tiene acceso a su cuenta pretix."
+msgstr "Ninguna aplicación tiene acceso a su cuenta eventyay."
 
 #: eventyay/control/templates/pretixcontrol/order/approve.html:4
 #: eventyay/control/templates/pretixcontrol/order/approve.html:8
@@ -17132,10 +17132,10 @@ msgstr "Fecha de confirmación"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:628
 msgid ""
-"This payment was created with an older version of pretix, therefore accurate "
+"This payment was created with an older version of eventyay, therefore accurate "
 "data might not be available."
 msgstr ""
-"Este pago fue creado con una versión anterior de pretix, por lo que es "
+"Este pago fue creado con una versión anterior de eventyay, por lo que es "
 "posible que no se disponga de datos precisos."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:629
@@ -17212,10 +17212,10 @@ msgstr "Historial de correos electrónicos"
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:33
 msgid ""
-"This email has been sent with an older version of pretix. We are therefore "
+"This email has been sent with an older version of eventyay. We are therefore "
 "not able to display it here accurately."
 msgstr ""
-"Este email ha sido enviado con una versión anterior de pretix. Por lo tanto, "
+"Este email ha sido enviado con una versión anterior de eventyay. Por lo tanto, "
 "no podemos mostrarlo aquí con precisión."
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:39
@@ -17284,7 +17284,7 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/order/refund_cancel.html:14
 msgid ""
 "If the money is already on the way back, this will not stop the money, it "
-"will just mark this transfer as aborted in pretix. This will also not "
+"will just mark this transfer as aborted in eventyay. This will also not "
 "reactivate the order, it will just allow you to choose a new refund method."
 msgstr ""
 "Si el dinero ya está en el camino de regreso, esto no detendrá el dinero, "
@@ -17802,7 +17802,7 @@ msgid ""
 "eventyay does not allow deleting orders once they have been placed in order "
 "to be audit-proof and trustable by financial authorities."
 msgstr ""
-"pretix no permite borrar órdenes una vez que han sido colocadas para que "
+"eventyay no permite borrar órdenes una vez que han sido colocadas para que "
 "sean seguras y confiables para las autoridades financieras."
 
 #: eventyay/control/templates/pretixcontrol/organizers/detail.html:6
@@ -17817,18 +17817,18 @@ msgstr "Conectar al dispositivo:"
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:11
 #, fuzzy
 msgid ""
-"Download an app that is compatible with pretix. For example, our check-in "
-"app <strong>pretixSCAN</strong> is available on all major platforms."
+"Download an app that is compatible with eventyay. For example, our check-in "
+"app <strong>eventyay</strong> is available on all major platforms."
 msgstr ""
-"Descarga una aplicación compatible con pretix. Por ejemplo, nuestra "
-"aplicación de registro <strong>pretixSCAN</strong> está disponible en las "
+"Descarga una aplicación compatible con eventyay. Por ejemplo, nuestra "
+"aplicación de registro <strong>eventyay</strong> está disponible en las "
 "plataformas mayoritariamente usadas."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:14
 #, fuzzy
 #| msgid "1. Download pretixdesk"
-msgid "Download pretixSCAN"
-msgstr "1. Descargar pretixdesk"
+msgid "Download eventyay"
+msgstr "1. Descargar eventyaydesk"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:18
 msgid ""
@@ -18269,7 +18269,7 @@ msgid ""
 "Otherwise, they will be sent an email with an invitation."
 msgstr ""
 "Para añadir un nuevo usuario, puede introducir su dirección de correo "
-"electrónico aquí. Si ya tienen una cuenta pretix, se añadirán inmediatamente "
+"electrónico aquí. Si ya tienen una cuenta eventyay, se añadirán inmediatamente "
 "al evento. De lo contrario, se les enviará un correo electrónico con una "
 "invitación."
 
@@ -18356,7 +18356,7 @@ msgid ""
 "This menu allows you to create webhooks to connect eventyay to other online "
 "services."
 msgstr ""
-"Este menú le permite crear webhooks para conectar pretix a otros servicios "
+"Este menú le permite crear webhooks para conectar eventyay a otros servicios "
 "online."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:13
@@ -19109,8 +19109,8 @@ msgstr ""
 "autenticación."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:52
-msgid "In \"Account name\", type your login name for pretix."
-msgstr "En \"Nombre de cuenta\", escriba su nombre de usuario para pretix."
+msgid "In \"Account name\", type your login name for eventyay."
+msgstr "En \"Nombre de cuenta\", escriba su nombre de usuario para eventyay."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:55
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
@@ -19166,8 +19166,8 @@ msgstr ""
 "\"%(device)s\"?"
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:12
-msgid "You will no longer be able to use this device to log in to pretix."
-msgstr "Ya no podrá utilizar este dispositivo para iniciar sesión en pretix."
+msgid "You will no longer be able to use this device to log in to eventyay."
+msgstr "Ya no podrá utilizar este dispositivo para iniciar sesión en eventyay."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:14
 msgid ""
@@ -19208,7 +19208,7 @@ msgstr "¿Realmente desea habilitar la autenticación de dos factores?"
 msgid ""
 "You will no longer be able to log in without one of your configured devices."
 msgstr ""
-"Ya no podrá iniciar sesión en pretix sin uno de sus dispositivos "
+"Ya no podrá iniciar sesión en eventyay sin uno de sus dispositivos "
 "configurados."
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_enable.html:14
@@ -19829,8 +19829,8 @@ msgid "You are now part of the team \"{}\"."
 msgstr "Ahora eres parte del equipo \"{}\"."
 
 #: eventyay/control/views/auth.py:250
-msgid "Welcome to pretix! You are now part of the team \"{}\"."
-msgstr "Bienvenido a pretix! Ahora eres parte del equipo \"{}\"."
+msgid "Welcome to eventyay! You are now part of the team \"{}\"."
+msgstr "Bienvenido a eventyay! Ahora eres parte del equipo \"{}\"."
 
 #: eventyay/control/views/auth.py:308
 msgid ""
@@ -20973,9 +20973,9 @@ msgid "The token has been revoked."
 msgstr "La ficha ha sido revocada."
 
 #: eventyay/control/views/organizer_views/team_view.py:245
-msgid "Users need to have a pretix account before they can be invited."
+msgid "Users need to have a eventyay account before they can be invited."
 msgstr ""
-"Los usuarios han de tener una cuenta pretix antes de poder ser invitados."
+"Los usuarios han de tener una cuenta eventyay antes de poder ser invitados."
 
 #: eventyay/control/views/organizer_views/team_view.py:255
 msgid "The new member has been invited to the team."
@@ -21094,9 +21094,9 @@ msgstr "La contraseña que introdujo no era válida, inténtelo de nuevo."
 #: eventyay/control/views/user.py:302
 #, fuzzy
 #| msgid "U2F devices are only available if pretix is served via HTTPS."
-msgid "Security devices are only available if pretix is served via HTTPS."
+msgid "Security devices are only available if eventyay is served via HTTPS."
 msgstr ""
-"Los dispositivos U2F sólo están disponibles si pretix se sirve a través de "
+"Los dispositivos U2F sólo están disponibles si eventyay se sirve a través de "
 "HTTPS."
 
 #: eventyay/control/views/user.py:339
@@ -21774,16 +21774,16 @@ msgstr ""
 #: eventyay/plugins/banktransfer/payment.py:31
 msgid ""
 "I have understood that people will pay the ticket price directly to my bank "
-"account and pretix cannot automatically know what payments arrived. "
+"account and eventyay cannot automatically know what payments arrived. "
 "Therefore, I will either mark payments as complete manually, or regularly "
-"import a digital bank statement in order to give pretix the required "
+"import a digital bank statement in order to give eventyay the required "
 "information."
 msgstr ""
 "He entendido que las personas que van a pagar por el precio del ticket "
-"directamente a mi cuenta de bando y pretix automáticamente sabe que los "
+"directamente a mi cuenta de bando y eventyay automáticamente sabe que los "
 "pagos han llegado. Por lo tanto, Yo no crearé pagos como completados "
 "manualmente, o regularmente importar un archivo digital del estado de cuenta "
-"bancario en orden para darle a pretix la información requerida."
+"bancario en orden para darle a eventyay la información requerida."
 
 #: eventyay/plugins/banktransfer/payment.py:38
 msgid "Bank account type"
@@ -22591,10 +22591,10 @@ msgstr "API de dispositivos de registro"
 
 #: eventyay/plugins/pretixdroid/apps.py:17
 msgid ""
-"This plugin allows you to use the pretixdroid and pretixdesk apps for your "
+"This plugin allows you to use the eventyaydroid and eventyaydesk apps for your "
 "event."
 msgstr ""
-"Este plugin le permite usar las aplicaciones pretixdroid y pretixdesk para "
+"Este plugin le permite usar las aplicaciones eventyaydroid y eventyaydesk para "
 "su evento."
 
 #: eventyay/plugins/reports/apps.py:10 eventyay/plugins/reports/apps.py:13
@@ -22728,7 +22728,7 @@ msgid ""
 "This feature is useful if you use only the payment component of eventyay but "
 "build your own checkout interface for other steps."
 msgstr ""
-"Esta característica es útil si sólo se usa el componente de pago de pretix "
+"Esta característica es útil si sólo se usa el componente de pago de eventyay "
 "pero se usa una interfaz de pago propia para otros pasos."
 
 #: eventyay/plugins/returnurl/views.py:14
@@ -22926,8 +22926,8 @@ msgstr ""
 #: eventyay/plugins/socialauth/apps.py:13
 #, fuzzy
 #| msgid "the development team"
-msgid "the pretix team"
-msgstr "el equipo de pretix"
+msgid "the eventyay team"
+msgstr "el equipo de eventyay"
 
 #: eventyay/plugins/socialauth/apps.py:16
 #, fuzzy
@@ -23607,7 +23607,7 @@ msgstr "Alternar la navegación"
 #, fuzzy, python-format
 #| msgid "<a %(a_attr)s>event ticketing powered by pretix</a>"
 msgid "<a %(a_attr)s>event ticketing powered by eventyay</a>"
-msgstr "<a %(a_attr)s>ticketing de eventos impulsado por pretix </a>"
+msgstr "<a %(a_attr)s>ticketing de eventos impulsado por eventyay </a>"
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:31
 msgid "This shop is currently only visible to you and your team."
@@ -25122,7 +25122,7 @@ msgid ""
 "This is a self-hosted installation of <a %(a_attr)s>eventyay, your open "
 "source event solution.</a>."
 msgstr ""
-"Esta es una instalación auto alojada de <a %(a_attr)s>pretix, su software de "
+"Esta es una instalación auto alojada de <a %(a_attr)s>eventyay, su software de "
 "venta de entradas gratuito y de código abierto </a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:14
@@ -25440,7 +25440,7 @@ msgstr ""
 #| msgid "<a %(a_attr)s>event ticketing powered by pretix</a>"
 msgctxt "widget"
 msgid "event ticketing powered by eventyay"
-msgstr "<a %(a_attr)s>ticketing de eventos impulsado por pretix </a>"
+msgstr "<a %(a_attr)s>ticketing de eventos impulsado por eventyay </a>"
 
 #: eventyay/presale/views/widget.py:280
 #, fuzzy
@@ -25784,8 +25784,8 @@ msgstr "La sesión \"{title}\" en {event}"
 #: pretalx/api/templates/rest_framework/api.html:18
 #: pretalx/orga/templates/orga/auth/base.html:29
 #: pretalx/orga/templates/orga/base.html:75
-msgid "The pretalx logo"
-msgstr "El logo pretalx"
+msgid "The eventyay logo"
+msgstr "El logo eventyay"
 
 #: pretalx/cfp/flow.py:354
 msgid ""
@@ -27059,7 +27059,7 @@ msgstr ""
 msgid ""
 "Hi,\n"
 "\n"
-"we hope you’re happy with pretalx as your event’s CfP system.\n"
+"we hope you’re happy with eventyay as your event’s CfP system.\n"
 "These links may be helpful in the coming days and weeks:\n"
 "\n"
 "- Your event’s dashboard: {event_dashboard}\n"
@@ -27067,12 +27067,12 @@ msgid ""
 "- Your schedule editor: {event_schedule}\n"
 "\n"
 "If there is anything you’re missing, come tell us about it\n"
-"at https://github.com/pretalx/pretalx/issues/new or via an\n"
-"email to support@pretalx.com!\n"
+"at https://github.com/eventyay/eventyay/issues/new or via an\n"
+"email to support@eventyay.com!\n"
 msgstr ""
 "Hola\n"
 "\n"
-"Esperamos que esté satisfecho con pretalx como sistema CfP de su evento.\n"
+"Esperamos que esté satisfecho con eventyay como sistema CfP de su evento.\n"
 "Estos enlaces pueden ser útiles en los próximos días y semanas.\n"
 "\n"
 "- Panel de control de su evento:{event_dashboard}\n"
@@ -27080,8 +27080,8 @@ msgstr ""
 "- Su editor de horarios:{event_schedule}\n"
 "\n"
 "Si hay algo que te falta, ven y cuéntanoslo.\n"
-"en https://github.com/pretalx/pretalx/issues/new o mediante un\n"
-"correo electrónico a support@pretalx.com\n"
+"en https://github.com/eventyay/eventyay/issues/new o mediante un\n"
+"correo electrónico a support@eventyay.com\n"
 
 #: pretalx/common/models/settings.py:93
 #, fuzzy, python-brace-format
@@ -27140,8 +27140,8 @@ msgid ""
 "- Over the course of the event, you sent {mail_count} mails.\n"
 "\n"
 "If there is anything you’re missing, come tell us about it\n"
-"at https://github.com/pretalx/pretalx/issues/new or via an\n"
-"email to support@pretalx.com!\n"
+"at https://github.com/eventyay/eventyay/issues/new or via an\n"
+"email to support@eventyay.com!\n"
 msgstr ""
 "Hola,\n"
 "\n"
@@ -27156,8 +27156,8 @@ msgstr ""
 "- Durante el transcurso del evento, enviaste {mail_count} correos.\n"
 "\n"
 "Si hay algo que te falta, ven y cuéntanoslo\n"
-"en https://github.com/pretalx/pretalx/issues/new o mediante un\n"
-"correo electrónico a support@pretalx.com\n"
+"en https://github.com/eventyay/eventyay/issues/new o mediante un\n"
+"correo electrónico a support@eventyay.com\n"
 
 #: pretalx/common/plugins.py:9
 #, fuzzy
@@ -27208,10 +27208,10 @@ msgstr "Reúne a tu equipo"
 
 #: pretalx/common/templates/400.html:18
 msgid ""
-"It looks as if the communication between you and pretalx went wrong in some "
+"It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Parece que la comunicación entre usted y pretalx salió mal de alguna "
+"Parece que la comunicación entre usted y eventyay salió mal de alguna "
 "manera.<br> ¡Regrese a la última página y vuelva a intentarlo!"
 
 #: pretalx/common/templates/403_csrf.html:7
@@ -27308,8 +27308,8 @@ msgstr "Este cambio fue realizado por un miembro de la organización del evento.
 
 #: pretalx/common/templates/common/powered_by.html:36
 #, python-format
-msgid "powered by <a %(a_attr)s>pretalx</a>"
-msgstr "impulsado por <a %(a_attr)s>pretalx</a>"
+msgid "powered by <a %(a_attr)s>eventyay</a>"
+msgstr "impulsado por <a %(a_attr)s>eventyay</a>"
 
 #: pretalx/common/templates/common/question_answer.html:9
 msgid "No file provided"
@@ -27491,36 +27491,36 @@ msgid "Subject"
 msgstr "Materia"
 
 #: pretalx/common/update_check.py:100
-msgid "pretalx update available"
-msgstr "actualización pretalx disponible"
+msgid "eventyay update available"
+msgstr "actualización eventyay disponible"
 
 #: pretalx/common/update_check.py:104
 #, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for pretalx or for one of the plugins you installed "
-"in your pretalx installation at {base_url}.\n"
+"An update is available for eventyay or for one of the plugins you installed "
+"in your eventyay installation at {base_url}.\n"
 "Please follow this link for more information:\n"
 "\n"
 " {url} \n"
 "\n"
 "You can always find information on the latest updates in the changelog:\n"
 "\n"
-"  https://docs.pretalx.org/changelog.html\n"
+"  https://docs.eventyay.org/changelog.html\n"
 "\n"
-"Larger updates are also announced with upgrade notes on the pretalx.com "
+"Larger updates are also announced with upgrade notes on the eventyay.com "
 "blog:\n"
 "\n"
-"  https://pretalx.com/p/news\n"
+"  https://eventyay.com/p/news\n"
 "\n"
 "Best regards,\n"
-"your pretalx developers"
+"your eventyay developers"
 msgstr ""
 "¡Hola!\n"
 "\n"
-"Hay una actualización disponible para pretalx o para uno de los complementos "
-"que instaló en su instalación de pretalx en {base_url}.\n"
+"Hay una actualización disponible para eventyay o para uno de los complementos "
+"que instaló en su instalación de eventyay en {base_url}.\n"
 "Por favor siga este enlace para más información:\n"
 "\n"
 " {url} \n"
@@ -27528,15 +27528,15 @@ msgstr ""
 "Siempre puede encontrar información sobre las últimas actualizaciones en el "
 "registro de cambios:\n"
 "\n"
-"  https://docs.pretalx.org/changelog.html\n"
+"  https://docs.eventyay.org/changelog.html\n"
 "\n"
 "También se anuncian actualizaciones más grandes con notas de actualización "
-"en el blog pretalx.com:\n"
+"en el blog eventyay.com:\n"
 "\n"
-"  https://pretalx.com/p/news\n"
+"  https://eventyay.com/p/news\n"
 "\n"
 "Atentamente,\n"
-"tus desarrolladores pretalx"
+"tus desarrolladores eventyay"
 
 #: pretalx/common/update_check.py:145 pretalx/common/update_check.py:152
 #, fuzzy
@@ -27682,11 +27682,11 @@ msgstr "Color del evento principal"
 
 #: pretalx/event/models/event.py:220
 msgid ""
-"Provide a hex value like #00ff00 if you want to style pretalx in your "
+"Provide a hex value like #00ff00 if you want to style eventyay in your "
 "event’s colour scheme."
 msgstr ""
 "Proporcione un valor hexadecimal como # 00ff00 si desea aplicar estilo a "
-"pretalx en la combinación de colores de su evento."
+"eventyay en la combinación de colores de su evento."
 
 #: pretalx/event/models/event.py:227
 msgid "Custom Event CSS"
@@ -28564,17 +28564,17 @@ msgstr "Este correo ya ha sido enviado. No se puede enviar de nuevo."
 
 #: pretalx/orga/forms/admin.py:19
 msgid ""
-"During the update check, pretalx will report an anonymous, unique "
-"installation ID, the current version of pretalx and your installed plugins "
+"During the update check, eventyay will report an anonymous, unique "
+"installation ID, the current version of eventyay and your installed plugins "
 "and the number of active and inactive events in your installation to servers "
-"operated by the pretalx developers. We will only store anonymous data, never "
+"operated by the eventyay developers. We will only store anonymous data, never "
 "any IP addresses and we will not know who you are or where to find your "
 "instance. You can disable this behavior here at any time."
 msgstr ""
-"Durante la verificación de actualización, pretalx informará de una ID de "
-"instalación único y anónimo, la versión actual de pretalx y sus complementos "
+"Durante la verificación de actualización, eventyay informará de una ID de "
+"instalación único y anónimo, la versión actual de eventyay y sus complementos "
 "instalados y el número de eventos activos e inactivos en su instalación a "
-"los servidores operados por los desarrolladores de pretalx. Solo "
+"los servidores operados por los desarrolladores de eventyay. Solo "
 "almacenaremos datos anónimos, nunca direcciones IP y no sabremos quién es "
 "usted ni dónde encontrar su instancia. Puede desactivar este comportamiento "
 "aquí en cualquier momento."
@@ -28586,11 +28586,11 @@ msgstr "Notificaciones de Correo Electrónico"
 #: pretalx/orga/forms/admin.py:30
 msgid ""
 "We will notify you at this address if we detect that a new update is "
-"available. This address will not be transmitted to pretalx.com, the emails "
+"available. This address will not be transmitted to eventyay.com, the emails "
 "will be sent by your server locally."
 msgstr ""
 "Le notificaremos en esta dirección si detectamos que hay una nueva "
-"actualización disponible. Esta dirección no se transmitirá a pretalx.com, "
+"actualización disponible. Esta dirección no se transmitirá a eventyay.com, "
 "los correos electrónicos serán enviados por su servidor localmente."
 
 #: pretalx/orga/forms/cfp.py:39
@@ -28793,12 +28793,12 @@ msgstr "Idiomas activos"
 
 #: pretalx/orga/forms/event.py:65
 msgid ""
-"Users will be able to use pretalx in these languages, and you will be able "
+"Users will be able to use eventyay in these languages, and you will be able "
 "to provide all texts in these languages. If you don’t provide a text in the "
 "language a user selects, it will be shown in your event’s default language "
 "instead."
 msgstr ""
-"Los usuarios podrán utilizar pretalx en estos idiomas y usted podrá "
+"Los usuarios podrán utilizar eventyay en estos idiomas y usted podrá "
 "proporcionar todos los textos en estos idiomas. Si no proporciona un texto "
 "en el idioma que selecciona un usuario, se mostrará en el idioma "
 "predeterminado de su evento."
@@ -29082,10 +29082,10 @@ msgstr "Muestre el widget incluso si el horario no es público"
 #: pretalx/orga/forms/event.py:583
 msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
-"schedule is not shown here using pretalx."
+"schedule is not shown here using eventyay."
 msgstr ""
 "Configúrelo para permitir que las páginas externas muestren el widget de "
-"programación, incluso si la programación no se muestra aquí usando pretalx."
+"programación, incluso si la programación no se muestra aquí usando eventyay."
 
 #: pretalx/orga/forms/event.py:599
 #, fuzzy
@@ -29524,15 +29524,15 @@ msgstr "Traducción no oficial"
 #| "translated and will show in English instead. You can help translating at "
 #| "github.com/pretalx/pretalx."
 msgid ""
-"These translations are not maintained by the pretalx team. We cannot vouch "
+"These translations are not maintained by the eventyay team. We cannot vouch "
 "for their correctness, and new or recently changed features might not be "
 "translated and will show in English instead. You can <a href=\"{url}\" "
 "target=\"_blank\">contribute to the translations</a>."
 msgstr ""
-"Esta traducción no es mantenida por el equipo de pretalx. No podemos "
+"Esta traducción no es mantenida por el equipo de eventyay. No podemos "
 "garantizar su exactitud y es posible que las características nuevas o "
 "recientemente modificadas no se traduzcan y se muestren en inglés. Puede "
-"ayudar a traducir en github.com/pretalx/pretalx."
+"ayudar a traducir en github.com/eventyay/eventyay."
 
 #: pretalx/orga/phrases.py:7
 #, fuzzy
@@ -29590,16 +29590,16 @@ msgstr "Información sobre el administrador"
 
 #: pretalx/orga/templates/orga/admin/admin.html:23
 msgid ""
-"You are running pretalx in development mode. Please <strong>STOP</strong> "
+"You are running eventyay in development mode. Please <strong>STOP</strong> "
 "and set the DEBUG variable to False if this page is in any way reachable "
 "from the internet."
 msgstr ""
-"Está utilizando una versión de desarollo de pretalx. Favor de <strong>PARAR</"
+"Está utilizando una versión de desarollo de eventyay. Favor de <strong>PARAR</"
 "strong> y de atribuir el valor \"Falso\" a la variable DEBUG si esta página "
 "se puede alcanzar de cualquier manera en el internet."
 
 #: pretalx/orga/templates/orga/admin/admin.html:33
-msgid "Your pretalx version is:"
+msgid "Your eventyay version is:"
 msgstr ""
 
 #: pretalx/orga/templates/orga/admin/admin.html:34
@@ -29709,12 +29709,12 @@ msgid "Links"
 msgstr "Enlaces"
 
 #: pretalx/orga/templates/orga/admin/admin.html:155
-msgid "pretalx website"
-msgstr "página web pretalx"
+msgid "eventyay website"
+msgstr "página web eventyay"
 
 #: pretalx/orga/templates/orga/admin/admin.html:158
-msgid "pretalx documentation"
-msgstr "documentación pretalx"
+msgid "eventyay documentation"
+msgstr "documentación eventyay"
 
 #: pretalx/orga/templates/orga/admin/admin.html:160
 msgid "Configuration reference"
@@ -29733,16 +29733,16 @@ msgid "Release notes"
 msgstr "Notas de publicación"
 
 #: pretalx/orga/templates/orga/admin/admin.html:167
-msgid "pretalx blog (release announcements, features)"
-msgstr "blog pretalx (anúncios de publicación, características)"
+msgid "eventyay blog (release announcements, features)"
+msgstr "blog eventyay (anúncios de publicación, características)"
 
 #: pretalx/orga/templates/orga/admin/update.html:30
-msgid "The pretalx.com server returned an error code."
-msgstr "El servidor pretalx.com envió un código de error."
+msgid "The eventyay.com server returned an error code."
+msgstr "El servidor eventyay.com envió un código de error."
 
 #: pretalx/orga/templates/orga/admin/update.html:32
-msgid "The pretalx.com server could not be reached."
-msgstr "No se pudó alcanzar el servidor pretalx.com."
+msgid "The eventyay.com server could not be reached."
+msgstr "No se pudó alcanzar el servidor eventyay.com."
 
 #: pretalx/orga/templates/orga/admin/user_detail.html:34
 #, fuzzy
@@ -29791,8 +29791,8 @@ msgid "Sign in"
 msgstr "Conectarse"
 
 #: pretalx/orga/templates/orga/base.html:136
-msgid "You’re using pretalx as a superuser. This is not recommended."
-msgstr "Está usando pretalx como superusuario. Esto no es recomendable."
+msgid "You’re using eventyay as a superuser. This is not recommended."
+msgstr "Está usando eventyay como superusuario. Esto no es recomendable."
 
 #: pretalx/orga/templates/orga/base.html:140
 msgid "Please click here to switch to an administrator account."
@@ -29800,15 +29800,15 @@ msgstr "Por favor, haga clic aquí para cambiar a una cuenta de administrador."
 
 #: pretalx/orga/templates/orga/base.html:147
 msgid ""
-"Starting with version 1.1.0, pretalx automatically checks for updates in the "
+"Starting with version 1.1.0, eventyay automatically checks for updates in the "
 "background. During this check, anonymous data is transmitted to servers "
-"operated by the pretalx developers. Click on this message to find out more, "
+"operated by the eventyay developers. Click on this message to find out more, "
 "disable this feature or enter your email address to get notified via email "
 "if a new update arrives. This message will disappear once you clicked it."
 msgstr ""
-"A partir de la versión 1.1.0, pretalx comprueba automáticamente las "
+"A partir de la versión 1.1.0, eventyay comprueba automáticamente las "
 "actualizaciones en segundo plano. Durante esta comprobación, se transmiten "
-"datos anónimos a servidores operados por los desarrolladores de pretalx. "
+"datos anónimos a servidores operados por los desarrolladores de eventyay. "
 "Haga clic en este mensaje para obtener más información, desactivar esta "
 "función o introducir su dirección de correo electrónico para recibir una "
 "notificación por correo electrónico si llega una nueva actualización. Este "
@@ -29899,12 +29899,12 @@ msgstr "Editor de CfP"
 
 #: pretalx/orga/templates/orga/cfp/flow.html:33
 msgid ""
-"This is the pretalx CfP editor. This page allows you to change the headline "
+"This is the eventyay CfP editor. This page allows you to change the headline "
 "and information text on all of the individual CfP steps. You can also add a "
 "custom help text to individual fields. Just click on the item you want to "
 "change!"
 msgstr ""
-"Este es el editor de CfP de pretalx. Esta página le permite cambiar el "
+"Este es el editor de CfP de eventyay. Esta página le permite cambiar el "
 "título y el texto de información en todos los pasos individuales de CfP. "
 "También puede agregar un texto de ayuda personalizado a campos individuales. "
 "¡Simplemente haga clic en el elemento que desea cambiar!"
@@ -30399,7 +30399,7 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/event_list.html:48
 msgid ""
-"You are currently in the organiser area of pretalx. To view your submitted "
+"You are currently in the organiser area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
 
@@ -30572,7 +30572,7 @@ msgstr ""
 #, fuzzy
 #| msgid "pretalx update available"
 msgid "Unavailable"
-msgstr "actualización pretalx disponible"
+msgstr "actualización eventyay disponible"
 
 #: pretalx/orga/templates/orga/mails/_placeholder_group.html:41
 msgid "e.g."
@@ -31170,11 +31170,11 @@ msgstr "Exportar datos de programación"
 #: pretalx/orga/templates/orga/schedule/export.html:47
 #: pretalx/orga/templates/orga/speaker/export.html:55
 msgid ""
-"pretalx provides a range of exports. If none of these match what you are "
+"eventyay provides a range of exports. If none of these match what you are "
 "looking for, you can also provide a custom plugin to export the data – "
 "please ask your administrator to install the plugin."
 msgstr ""
-"pretalx ofrece una gama de exportaciones. Si ninguno de estos coincide con "
+"eventyay ofrece una gama de exportaciones. Si ninguno de estos coincide con "
 "lo que está buscando, también puede proporcionar un complemento "
 "personalizado para exportar los datos; solicite a su administrador que "
 "instale el complemento."
@@ -31553,22 +31553,22 @@ msgstr "Configuración de widgets"
 
 #: pretalx/orga/templates/orga/settings/widget.html:32
 msgid ""
-"You can configure a pretalx schedule widget to show your event schedule on "
+"You can configure a eventyay schedule widget to show your event schedule on "
 "your homepage, instead of using this page. If you want to disable the "
 "schedule on here entirely, please activate the setting below."
 msgstr ""
-"Puede configurar un widget de programación pretalx para mostrar su "
+"Puede configurar un widget de programación eventyay para mostrar su "
 "programación de eventos en su página de inicio, en lugar de usar esta "
 "página. Si desea deshabilitar el horario aquí por completo, active la "
 "configuración a continuación."
 
 #: pretalx/orga/templates/orga/settings/widget.html:44
 msgid ""
-"The pretalx schedule widget is a way to embed your schedule into your event "
+"The eventyay schedule widget is a way to embed your schedule into your event "
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"El widget de programación pretalx es una forma de integrar su programación "
+"El widget de programación eventyay es una forma de integrar su programación "
 "en el sitio web de su evento. De esta manera, sus asistentes pueden ver su "
 "horario sin salir de su sitio web, y puede diseñar el horario para que se "
 "adapte perfectamente a su sitio web."
@@ -31996,10 +31996,10 @@ msgstr "Acceso API"
 #| "can generate a new token, which will invalidate the old one. To find out "
 #| "more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgid ""
-"API tokens can be used to access the <a %(apiurl)s>pretalx API</a>. To find "
+"API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"Este token se puede utilizar para acceder a la <a %(apiurl)s>API pretalx</"
+"Este token se puede utilizar para acceder a la <a %(apiurl)s>API eventyay</"
 "a>. Puede generar un nuevo token, que invalidará el anterior. Para obtener "
 "más información, consulte la <a %(docurl)s> documentación de la API</a>."
 
@@ -32925,7 +32925,7 @@ msgstr "Usuario sin nombre"
 msgid ""
 "Hi {name},\n"
 "\n"
-"you have requested a new password for your pretalx account.\n"
+"you have requested a new password for your eventyay account.\n"
 "To reset your password, click on the following link:\n"
 "\n"
 "  {url}\n"
@@ -32933,11 +32933,11 @@ msgid ""
 "If this wasn’t you, you can just ignore this email.\n"
 "\n"
 "All the best,\n"
-"the pretalx robot"
+"the eventyay robot"
 msgstr ""
 "Hola {name},\n"
 "\n"
-"ha requerido una nueva contraseña para su cuenta pretalx.\n"
+"ha requerido una nueva contraseña para su cuenta eventyay.\n"
 "Para reiniciar su contraseña, haga clic en el enlace siguiente:\n"
 "\n"
 "  {url}\n"
@@ -32945,24 +32945,24 @@ msgstr ""
 "Si este correo le fue enviado por error, puede ignorarlo.\n"
 "\n"
 "Salutaciones,\n"
-"el robot pretalx"
+"el robot eventyay"
 
 #: pretalx/person/models/user.py:536
 #, python-brace-format
 msgid ""
 "Hi {name},\n"
 "\n"
-"Your pretalx account password was just changed.\n"
+"Your eventyay account password was just changed.\n"
 "\n"
 "If you did not change your password, please contact the site administration "
 "immediately.\n"
 "\n"
 "All the best,\n"
-"the pretalx team"
+"the eventyay team"
 msgstr ""
 
 #: pretalx/person/models/user.py:548
-msgid "[pretalx] Password changed"
+msgid "[eventyay] Password changed"
 msgstr ""
 
 #: pretalx/schedule/ascii.py:24
@@ -33735,10 +33735,10 @@ msgstr "Mostrar etiqueta públicamente"
 #: pretalx/submission/models/tag.py:38
 msgid ""
 "Tags are currently only in use for organisers and reviewers. They will be "
-"visible publicly in a future release of pretalx."
+"visible publicly in a future release of eventyay."
 msgstr ""
 "Actualmente, las etiquetas solo se utilizan para organizadores y revisores. "
-"Serán visibles públicamente en un futuro comunicado de pretalx."
+"Serán visibles públicamente en un futuro comunicado de eventyay."
 
 #: pretalx/submission/models/track.py:52
 msgid ""

@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2018-09-03 06:36+0000\n"
 "Last-Translator: Yunus Fırat Pişkin <firat.piskin@idvlabs.com>\n"
-"Language-Team: Turkish <https://translate.eventyay.com/projects/pretix/pretix-"
+"Language-Team: Turkish <https://translate.eventyay.com/projects/eventyay/eventyay-"
 "js/tr/>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -412,8 +412,8 @@ msgid "Image area"
 msgstr "Barkod alanı"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Pretix tarafından desteklenmektedir"
+msgid "Powered by eventyay"
+msgstr "Eventyay tarafından desteklenmektedir"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"
