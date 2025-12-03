@@ -51,8 +51,8 @@ class TalkQuestionVariant(Choices):
         (DATETIME, _('Date and time')),
         (BOOLEAN, _('Yes/No')),
         (FILE, _('File upload')),
-        (CHOICES, _('Choose one from a list')),
-        (MULTIPLE, _('Choose multiple from a list')),
+        (CHOICES, _('Radio button (Choose one option)')),
+        (MULTIPLE, _('Checkbox (Choose one or several options)')),
     ]
 
 
