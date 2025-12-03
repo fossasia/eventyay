@@ -316,7 +316,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     class Meta:
         model = AnswerOption
-        fields = ['answer']
+        fields = ['answer', 'position']
+        widgets = {
+            'position': forms.HiddenInput,
+        }
 
 
 class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
