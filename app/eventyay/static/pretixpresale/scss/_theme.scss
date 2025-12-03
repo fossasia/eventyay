@@ -33,6 +33,19 @@
   a.active, .locales a.active {
     border-bottom-color: choose-contrast-color($body-bg, white, $link-color) !important;
   }
+  
+  // White text for locales and user controls on colored background
+  color: white;
+  
+  .locales,
+  .login-hdr {
+    color: white;
+    
+    summary,
+    a {
+      color: white;
+    }
+  }
 }
 
 .page-header-links-outside > div.header-part {

@@ -46,40 +46,26 @@
             {% endif %}
         {% endif %}
         {% if event.settings.theme_color_background|upper != "#FFFFFF" or event.settings.logo_image_large %}
-            <div class="pull-right header-part flip hidden-print header-content">
+            <div class="pull-right header-part flip hidden-print header-content header-user-controls">
                 {% if event.settings.locales|length > 1 %}
                     {% if event.settings.locales|length > 3 %}
-                        <nav class="locales" aria-label="{% trans "select language" %}">
-                            <div class="dropdown language-dropdown">
-                                <button class="btn btn-default dropdown-toggle language-selector" type="button" id="languageDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    {% for l in languages %}
-                                        {% if l.code == request.LANGUAGE_CODE %}
-                                            {{ l.name_local }}
-                                        {% endif %}
-                                    {% endfor %}
-                                    <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-right" aria-labelledby="languageDropdown">
-                                    {% for l in languages %}
-                                        <li {% if l.code == request.LANGUAGE_CODE %}class="active"{% endif %}>
-                                            <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}" rel="nofollow" lang="{{ l.code }}" hreflang="{{ l.code }}">
-                                                {{ l.name_local }}
-                                            </a>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
+                        <details class="dropdown locales" aria-haspopup="menu" role="menu">
+                            <summary>
+                                {% for l in languages %}{% if l.code == request.LANGUAGE_CODE %}{{ l.name_local }}{% endif %}{% endfor %}
+                                <i class="fa fa-caret-down ml-1"></i>
+                            </summary>
+                            <div class="dropdown-content dropdown-content-sw">
+                                {% for l in languages %}
+                                    <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}" class="dropdown-item {% if l.code == request.LANGUAGE_CODE %}active{% endif %}" role="menuitem" tabindex="-1" rel="nofollow" lang="{{ l.code }}" hreflang="{{ l.code }}">{{ l.name_local }}</a>
+                                {% endfor %}
                             </div>
-                        </nav>
+                        </details>
                     {% else %}
-                        <nav class="locales locales-inline" aria-label="{% trans "select language" %}">
+                        <div class="locales-inline">
                             {% for l in languages %}
-                                <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}" 
-                                   class="locale-link {% if l.code == request.LANGUAGE_CODE %}active{% endif %}" 
-                                   rel="nofollow" lang="{{ l.code }}" hreflang="{{ l.code }}">
-                                    {{ l.name_local }}
-                                </a>
+                                <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}" class="locale-link {% if l.code == request.LANGUAGE_CODE %}active{% endif %}" rel="nofollow" lang="{{ l.code }}" hreflang="{{ l.code }}">{{ l.name_local }}</a>
                             {% endfor %}
-                        </nav>
+                        </div>
                     {% endif %}
                 {% endif %}
                 {% include "pretixpresale/fragment_login_status.html" %}

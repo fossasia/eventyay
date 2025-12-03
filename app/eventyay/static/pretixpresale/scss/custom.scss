@@ -129,7 +129,7 @@
     .locale-link {
         padding: 6px 10px;
         text-decoration: none;
-        color: inherit;
+        color: white;
         border-radius: 3px;
         transition: background-color 0.2s;
 
@@ -142,6 +142,97 @@
         &:focus {
             background-color: rgba(255, 255, 255, 0.1);
             text-decoration: none;
+            color: white;
+        }
+    }
+}
+
+// Details/summary dropdown styles for locales (matching CfP)
+.locales {
+    display: inline-block;
+    position: relative;
+    margin-right: 20px;
+    color: white;
+    
+    summary {
+        cursor: pointer;
+        color: white;
+        list-style: none;
+        user-select: none;
+        
+        &::-webkit-details-marker {
+            display: none;
+        }
+        
+        i {
+            margin-left: 4px;
+        }
+    }
+    
+    .dropdown-content {
+        position: absolute;
+        background: white;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 4px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+        right: 0;
+        left: auto;
+        min-width: 150px;
+        z-index: 10001;
+        margin-top: 8px;
+        padding: 4px 0;
+        
+        .dropdown-item {
+            display: block !important;
+            padding: 8px 16px;
+            color: #333 !important;
+            text-decoration: none;
+            white-space: nowrap;
+            
+            &:hover {
+                background-color: #f5f5f5;
+                text-decoration: none;
+                color: #333 !important;
+            }
+            
+            &.active {
+                background-color: #337ab7;
+                color: white !important;
+                
+                &:hover {
+                    background-color: #286090;
+                    color: white !important;
+                }
+            }
+        }
+    }
+}
+
+// Header user controls wrapper
+.header-user-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: white;
+    
+    a {
+        color: white;
+        
+        &:hover {
+            opacity: 0.9;
+        }
+    }
+}
+
+// Login header
+.login-hdr {
+    color: white;
+    
+    a {
+        color: white !important;
+        
+        &:hover {
+            opacity: 0.9;
         }
     }
 }

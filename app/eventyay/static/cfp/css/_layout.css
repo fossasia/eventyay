@@ -37,7 +37,7 @@ header {
 
   #event-logo {
     max-height: 140px;
-    border-radius: 10px;
+    border-radius: 0;
   }
 
   .header-wrapper {
@@ -263,7 +263,7 @@ footer {
       padding: 0;
       #event-logo {
         max-height: 120px;
-        border-radius: 10px;
+        border-radius: 0;
       }
     }
 
