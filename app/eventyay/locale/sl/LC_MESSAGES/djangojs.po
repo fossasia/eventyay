@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2019-08-27 08:00+0000\n"
 "Last-Translator: Bostjan Marusic <bostjan@brokenbones.si>\n"
-"Language-Team: Slovenian <https://translate.eventyay.com/projects/pretix/pretix-"
+"Language-Team: Slovenian <https://translate.eventyay.com/projects/eventyay/eventyay-"
 "js/sl/>\n"
 "Language: sl\n"
 "MIME-Version: 1.0\n"
@@ -405,8 +405,8 @@ msgid "Image area"
 msgstr "Področje za črtno kodo"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Powered by pretix"
+msgid "Powered by eventyay"
+msgstr "Powered by eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

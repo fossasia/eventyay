@@ -77,9 +77,7 @@ These links may be helpful in the coming days and weeks:
 - A list of proposals: {event_submissions}
 - Your schedule editor: {event_schedule}
 
-If there is anything you’re missing, come tell us about it
-at https://github.com/fossasia/eventyay-talk/issues/new or via an
-email to support@eventyay.com!
+If there is anything you’re missing, please contact us via our website on eventyay.com.
 """
         )
     ),
@@ -122,9 +120,7 @@ statistics you might find interesting:
 - You released {schedule_count} schedules in total.
 - Over the course of the event, you sent {mail_count} mails.
 
-If there is anything you’re missing, come tell us about it
-at https://github.com/fossasia/eventyay-talk/issues/new or via an
-email to support@eventyay.com!
+If there is anything you’re missing, please contact us via our website on eventyay.com.
 """
         )
     ),

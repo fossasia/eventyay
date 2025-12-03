@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2019-09-24 19:00+0000\n"
 "Last-Translator: Serge Bazanski <q3k@hackerspace.pl>\n"
-"Language-Team: Polish <https://translate.eventyay.com/projects/pretix/pretix-js/"
+"Language-Team: Polish <https://translate.eventyay.com/projects/eventyay/eventyay-js/"
 "pl/>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
@@ -408,8 +408,8 @@ msgid "Image area"
 msgstr "Miejsce na kod kreskowy"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Wygenerowane przez pretix"
+msgid "Powered by eventyay"
+msgstr "Wygenerowane przez eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

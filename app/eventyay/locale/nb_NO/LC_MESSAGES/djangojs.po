@@ -363,7 +363,7 @@ msgid "Image area"
 msgstr ""
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
+msgid "Powered by eventyay"
 msgstr ""
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531

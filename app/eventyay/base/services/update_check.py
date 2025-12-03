@@ -79,14 +79,12 @@ def send_update_notification_email():
 
     mail(
         gs.settings.update_check_email,
-        _('pretix update available'),
+        _('eventyay update available'),
         LazyI18nString.from_gettext(
             gettext_noop(
-                'Hi!\n\nAn update is available for pretix or for one of the plugins you installed in your '
-                'pretix installation. Please click on the following link for more information:\n\n {url} \n\n'
-                'You can always find information on the latest updates on the eventyay.com blog:\n\n'
-                'https://eventyay.com/about/en/blog/'
-                '\n\nBest,\n\nyour pretix developers'
+                'Hi!\n\nAn update is available for your eventyay installation.\n'
+                'Please check out eventyay.com for more information.\n'
+                'Best regards,\nYour eventyay team'
             )
         ),
         {'url': build_absolute_uri('eventyay_admin:admin.global.update')},
@@ -103,7 +101,7 @@ def check_result_table():
         return res
 
     table = []
-    table.append(('pretix', __version__, res['version']['latest'], res['version']['updatable']))
+    table.append(('eventyay', __version__, res['version']['latest'], res['version']['updatable']))
     for p in get_all_plugins():
         if p.module in res['plugins']:
             pdata = res['plugins'][p.module]
