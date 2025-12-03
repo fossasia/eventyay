@@ -44,8 +44,8 @@ def talks_to_submissions_redirect(request, event, subpath):
     """
     new_path = request.path.replace('/talks/', '/submissions/', 1)
 
-    query_string = request.META.get('QUERY_STRING', '')
-    if query_string:
+    if query_string := request.META.get('QUERY_STRING', ''):
+        new_path += f'?{query_string}'
         new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)

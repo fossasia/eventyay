@@ -255,7 +255,7 @@ try:
             patterns = urlmod.organizer_patterns
             single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
         raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
-except TypeError:
+except (ImportError, AttributeError, TypeError):
     logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
