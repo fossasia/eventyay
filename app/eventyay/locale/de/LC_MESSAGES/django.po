@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-11-30 07:50+0000\n"
+"PO-Revision-Date: 2025-12-02 13:00+0000\n"
 "Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
@@ -15445,7 +15445,7 @@ msgstr "Alle Testbestellungen anzeigen"
 #: eventyay/control/templates/pretixcontrol/base.html:387
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:290
 msgid "The system automatically checks for updates in the background."
-msgstr ""
+msgstr "Das System sucht automatisch im Hintergrund nach Aktualisierungen."
 
 #: pretix/control/templates/pretixcontrol/base.html:396
 #: pretix/eventyay_common/templates/eventyay_common/base.html:299
@@ -16100,7 +16100,7 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:18
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
 msgid "Access videos related to this event"
-msgstr ""
+msgstr "Videos zu dieser Veranstaltung abrufen"
 
 #: pretix/control/templates/pretixcontrol/event/component_link.html:19
 #: pretix/eventyay_common/templates/eventyay_common/event/component_link.html:19
@@ -16108,8 +16108,9 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:19
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:19
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
+#, fuzzy
 msgid "Videos"
-msgstr ""
+msgstr "Videos"
 
 #: pretix/control/templates/pretixcontrol/event/dangerzone.html:5
 #: pretix/control/templates/pretixcontrol/event/live.html:138
@@ -16243,6 +16244,9 @@ msgid ""
 "To ensure audit compliance and maintain trust with financial authorities, "
 "deleting orders once they have been placed is not permitted."
 msgstr ""
+"Um die Einhaltung der Prüfungsvorschriften zu gewährleisten und das "
+"Vertrauen der Finanzbehörden zu wahren, ist das Löschen von Bestellungen "
+"nach deren Eingang nicht zulässig."
 
 #: pretix/control/templates/pretixcontrol/event/delete.html:45
 #: eventyay/control/templates/pretixcontrol/event/delete.html:45
@@ -17103,6 +17107,8 @@ msgid ""
 "After the setup, please go to the Payment area and set up the Stripe "
 "connection."
 msgstr ""
+"Nach der Einrichtung wechseln Sie bitte zum Bereich „Zahlung“ und richten "
+"Sie die Stripe-Verbindung ein."
 
 #: pretix/control/templates/pretixcontrol/event/quick_setup.html:198
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:198
@@ -17767,7 +17773,7 @@ msgstr "Systemnachricht"
 #: pretix/control/templates/pretixcontrol/global_sso.html:18
 #: eventyay/control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Senden"
 
 #: pretix/control/templates/pretixcontrol/global_update.html:7
 #: eventyay/control/templates/pretixcontrol/global_update.html:7
@@ -18455,6 +18461,9 @@ msgid ""
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
 msgstr ""
+"Wenn ein Bestätigungsfeld als erforderlich markiert ist, muss der Benutzer "
+"es aktivieren, um fortfahren zu können. Damit der Benutzer es deaktiviert "
+"lassen kann, legen Sie das Feld als „nicht erforderlich“ fest."
 
 #: pretix/control/templates/pretixcontrol/items/question_edit.html:55
 #: eventyay/control/templates/pretixcontrol/items/question_edit.html:55
@@ -20610,7 +20619,7 @@ msgstr ""
 #: pretix/control/templates/pretixcontrol/organizers/edit.html:77
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:77
 msgid "Privacy"
-msgstr ""
+msgstr "Datenschutz"
 
 #: pretix/control/templates/pretixcontrol/organizers/gate_delete.html:5
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
@@ -21804,7 +21813,7 @@ msgstr "Ausgewählte deaktivieren"
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:11
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:25
 msgid "Enable or disable billing validation"
-msgstr ""
+msgstr "Rechnungsprüfung aktivieren oder deaktivieren"
 
 #: pretix/control/templates/pretixcontrol/toggle_billing_validation.html:30
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:30
@@ -23166,7 +23175,7 @@ msgstr "Die Änderungen konnten nicht gespeichert werden."
 #: pretix/control/views/global_settings.py:187
 #: eventyay/control/views/global_settings.py:187
 msgid "Invalid value for billing validation!"
-msgstr ""
+msgstr "Ungültiger Wert für die Rechnungsprüfung!"
 
 #: pretix/control/views/item.py:87 pretix/control/views/item.py:1381
 #: eventyay/control/views/item.py:87 eventyay/control/views/item.py:1381
@@ -24288,7 +24297,7 @@ msgstr "Sie müssen einen Sitzplatz auswählen."
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:190
 msgid "Ok"
-msgstr ""
+msgstr "OK"
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
@@ -24305,6 +24314,12 @@ msgid ""
 "creating schedules, and Video for hosting engaging and interactive virtual "
 "events with live interpretation."
 msgstr ""
+"Ihre Veranstaltungsübersicht bietet einen Überblick über drei nahtlos "
+"integrierte Komponenten, die jeweils an Ihre Bedürfnisse angepasst werden "
+"können: Tickets für den Verkauf und die Registrierung, Vorträge und "
+"Referenten für die Organisation von Inhalten und die Erstellung von "
+"Zeitplänen sowie Videos für die Ausrichtung ansprechender und interaktiver "
+"virtueller Veranstaltungen mit Echtzeitübersetzung."
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:24
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:24
@@ -24313,6 +24328,11 @@ msgid ""
 "premium access or Swag. Manage attendees and exhibitors, design custom "
 "badges, and streamline your event marketing by sending targeted emails."
 msgstr ""
+"Richten Sie den Kartenverkauf für Ihre Veranstaltung ein und konfigurieren "
+"Sie ihn. Verkaufen Sie Zusatzleistungen wie Premium-Zugang oder "
+"Werbegeschenke. Verwalten Sie Teilnehmer und Aussteller, gestalten Sie "
+"individuelle Namensschilder und optimieren Sie Ihr Veranstaltungsmarketing "
+"durch den Versand gezielter E-Mails."
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:27
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:43

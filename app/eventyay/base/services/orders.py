@@ -1175,15 +1175,9 @@ def _perform_order(
         meta_info=meta_info,
     )
 
-    lockfn = NoLockManager
-    locked = False
-    if positions.filter(
-        Q(voucher__isnull=False) | Q(expires__lt=now() + timedelta(minutes=2)) | Q(seat__isnull=False)
-    ).exists():
-        # Performance optimization: If no voucher is used and no cart position is dangerously close to its expiry date,
-        # creating this order shouldn't be prone to any race conditions and we don't need to lock the event.
-        locked = True
-        lockfn = event.lock
+    # Always lock the event during checkout to prevent race conditions (overselling).
+    # We deliberately skip the previous performance optimization here to ensure data integrity.
+    lockfn = event.lock
 
     with lockfn() as now_dt:
         positions = list(
@@ -1217,7 +1211,7 @@ def _perform_order(
         )
         if free_order_flow:
             try:
-                payment.confirm(send_mail=False, lock=not locked)
+                payment.confirm(send_mail=False, lock=False)
             except Quota.QuotaExceededException:
                 pass
 

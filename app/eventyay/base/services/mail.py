@@ -172,7 +172,7 @@ def mail(
         bcc = []
 
         if event:
-            timezone = event.timezone
+            timezone = event.settings.timezone
             renderer = event.get_html_mail_renderer()
             if not auto_email:
                 if event_bcc:  # Use custom BCC if specified
