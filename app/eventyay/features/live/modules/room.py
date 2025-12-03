@@ -286,12 +286,17 @@ class RoomModule(BaseModule):
         ]
     )
     async def create_room(self, body):
+        logger.info(f"[ROOM_CREATE] WS received: {body}")
         try:
             room = await create_room(self.consumer.event, body, self.consumer.user)
         except ValidationError as e:
+            logger.error(f"[ROOM_CREATE] ValidationError: {e} (code: {e.code})")
             await self.consumer.send_error(
                 code=f"room.invalid.{e.code}", message=str(e)
             )
+        except Exception as e:
+            logger.error(f"[ROOM_CREATE] Exception: {e}", exc_info=True)
+            raise
         else:
             await self.consumer.send_success(room)
 
