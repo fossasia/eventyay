@@ -200,6 +200,10 @@ export default {
 						modules: []
 					}))
 				}
+				// If the room has at least one module configured, mark setup as complete.
+				// This flag is used both in the admin UI ("Complete setup" vs "Configure")
+				// and in the attendee UI (`visibleRooms` getter) to decide if a room is usable.
+				const setup_complete = Array.isArray(this.config.module_config) && this.config.module_config.length > 0
 				const updatedConfig = await api.call('room.config.patch', {
 					room: roomId,
 					name: this.config.name,
@@ -210,6 +214,7 @@ export default {
 					force_join: this.config.force_join,
 					hidden: !!this.config.hidden,
 					sidebar_hidden: !!this.config.sidebar_hidden,
+					setup_complete,
 					module_config: this.config.module_config,
 				})
 				Object.assign(this.config, updatedConfig)
