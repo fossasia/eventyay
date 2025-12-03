@@ -2,7 +2,6 @@ import logging
 import os
 
 from django.core.files.base import ContentFile
-from django.core.files.storage import default_storage
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 from django_scopes import scopes_disabled
@@ -25,6 +24,25 @@ from eventyay.helpers.database import rolledback_transaction
 logger = logging.getLogger(__name__)
 
 
+def _ensure_storage_dir(file_field, instance, filename):
+    """
+    Ensure the directory exists for the file field.
+    Only creates directories for FileSystemStorage backends that support the path() method.
+    Remote storage backends (like S3, NanoCDN) handle directory creation automatically.
+    """
+    storage = file_field.storage
+    # Only create directories if using FileSystemStorage (has path() method)
+    if hasattr(storage, 'path'):
+        try:
+            file_path = storage.generate_filename(file_field.field.upload_to(instance, filename))
+            directory = os.path.dirname(file_path)
+            if directory and not storage.exists(directory):
+                os.makedirs(storage.path(directory), exist_ok=True)
+        except (AttributeError, NotImplementedError):
+            # Storage backend doesn't support local paths, skip directory creation
+            pass
+
+
 def generate_orderposition(order_position: int, provider: str):
     order_position = OrderPosition.objects.select_related('order', 'order__event').get(id=order_position)
 
@@ -44,11 +62,7 @@ def generate_orderposition(order_position: int, provider: str):
                     type=ttype,
                     file=None,
                 )
-                # Ensure the directory exists before saving
-                file_path = ct.file.storage.generate_filename(ct.file.field.upload_to(ct, filename))
-                directory = os.path.dirname(file_path)
-                if directory and not default_storage.exists(directory):
-                    os.makedirs(default_storage.path(directory), exist_ok=True)
+                _ensure_storage_dir(ct.file, ct, filename)
                 ct.file.save(filename, ContentFile(data))
                 return ct.pk
 
@@ -71,11 +85,7 @@ def generate_order(order: int, provider: str):
                 ct = CachedCombinedTicket.objects.create(
                     order=order, provider=provider, extension=ext, type=ttype, file=None
                 )
-                # Ensure the directory exists before saving
-                file_path = ct.file.storage.generate_filename(ct.file.field.upload_to(ct, filename))
-                directory = os.path.dirname(file_path)
-                if directory and not default_storage.exists(directory):
-                    os.makedirs(default_storage.path(directory), exist_ok=True)
+                _ensure_storage_dir(ct.file, ct, filename)
                 ct.file.save(filename, ContentFile(data))
                 return ct.pk
 
