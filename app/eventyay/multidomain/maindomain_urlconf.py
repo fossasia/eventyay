@@ -7,7 +7,7 @@ from mimetypes import guess_type
 from django.apps import apps
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404, HttpResponse
-from django.urls import include, path
+from django.urls import include, path, re_path
 from django.utils.encoding import force_str
 from django.utils.functional import Promise
 from django.views.generic import TemplateView, View
@@ -277,7 +277,9 @@ unified_event_patterns = [
                     VideoAssetView.as_view(),
                     name='video.assets.file',
                 ),
-                path('video/', VideoSPAView.as_view(), name='video.spa'),
+                # The frontend Video SPA app is not served by Nginx so the Django view needs to
+                # serve all paths under /video/ to allow client-side routing.
+                re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
                 path('talk/', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
