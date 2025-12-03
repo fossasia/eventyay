@@ -41,6 +41,8 @@ def _ensure_storage_dir(file_field, instance, filename):
         except (AttributeError, NotImplementedError):
             # Storage backend doesn't support local paths, skip directory creation
             pass
+        except OSError as e:
+            logger.error("Failed to create directory for ticket storage: %s", e, exc_info=True)
 
 
 def generate_orderposition(order_position: int, provider: str):
