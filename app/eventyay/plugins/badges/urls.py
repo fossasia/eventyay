@@ -11,6 +11,7 @@ from eventyay.plugins.badges.api import (
 from .views import (
     LayoutCreate,
     LayoutDelete,
+    LayoutEdit,
     LayoutEditorView,
     LayoutListView,
     LayoutSetDefault,
@@ -44,7 +45,12 @@ urlpatterns = [
         name='delete',
     ),
     url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/editor',
+        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/edit_metadata$',
+        LayoutEdit.as_view(),
+        name='edit_metadata',
+    ),
+    url(
+        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/editor$',
         LayoutEditorView.as_view(),
         name='edit',
     ),

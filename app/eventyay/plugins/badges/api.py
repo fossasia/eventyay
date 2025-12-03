@@ -41,6 +41,7 @@ class BadgeLayoutSerializer(I18nAwareModelSerializer):
             'size',
             'background',
             'product_assignments',
+            'category',
         )
 
 

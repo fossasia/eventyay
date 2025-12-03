@@ -1,15 +1,32 @@
 from django import forms
+from django.db.models import Exists, OuterRef
 from django.forms import Field
 from django.forms.models import ModelChoiceIterator
 from django.utils.translation import gettext_lazy as _
 
+from eventyay.base.models import Product, ProductCategory
 from eventyay.plugins.badges.models import BadgeProduct, BadgeLayout
 
 
 class BadgeLayoutForm(forms.ModelForm):
     class Meta:
         model = BadgeLayout
-        fields = ('name',)
+        fields = ('name', 'category')
+
+    def __init__(self, *args, **kwargs):
+        event = kwargs.pop('event', None)
+        super().__init__(*args, **kwargs)
+        if event:
+            categories_with_products = Product.objects.filter(
+                category=OuterRef('pk'),
+                event=event
+            )
+            self.fields['category'].queryset = event.categories.annotate(
+                has_products=Exists(categories_with_products)
+            ).filter(has_products=True)
+        else:
+            self.fields['category'].queryset = ProductCategory.objects.none()
+        self.fields['category'].required = False
 
 
 NoLayoutSingleton = BadgeLayout(pk='-')

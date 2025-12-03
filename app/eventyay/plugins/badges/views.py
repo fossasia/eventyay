@@ -15,7 +15,7 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
-from django.views.generic import CreateView, DeleteView, DetailView, ListView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from reportlab.lib import pagesizes
 from reportlab.pdfgen import canvas
 
@@ -99,6 +99,7 @@ class LayoutCreate(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Create
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
 
         if self.copy_from:
             i = modelcopy(self.copy_from)
@@ -162,6 +163,45 @@ class LayoutDelete(BadgePluginEnabledMixin, EventPermissionRequiredMixin, Delete
                 f.save(update_fields=['default'])
         messages.success(self.request, _('The selected badge layout been deleted.'))
         return redirect(self.get_success_url())
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'plugins:badges:index',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
+
+
+class LayoutEdit(BadgePluginEnabledMixin, EventPermissionRequiredMixin, UpdateView):
+    model = BadgeLayout
+    form_class = BadgeLayoutForm
+    template_name = 'pretixplugins/badges/edit.html'
+    permission = 'can_change_event_settings'
+    context_object_name = 'layout'
+
+    def get_object(self, queryset=None) -> BadgeLayout:
+        try:
+            return self.request.event.badge_layouts.get(id=self.kwargs['layout'])
+        except BadgeLayout.DoesNotExist:
+            raise Http404(_('The requested badge layout does not exist.'))
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    @transaction.atomic
+    def form_valid(self, form):
+        messages.success(self.request, _('Your changes have been saved.'))
+        if form.has_changed():
+            self.object.log_action(
+                action='eventyay.plugins.badges.layout.changed',
+                user=self.request.user,
+                data={k: form.cleaned_data.get(k) for k in form.changed_data},
+            )
+        return super().form_valid(form)
 
     def get_success_url(self) -> str:
         return reverse(

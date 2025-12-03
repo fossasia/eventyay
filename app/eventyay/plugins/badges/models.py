@@ -1,4 +1,5 @@
 import json
+import logging
 import string
 from io import BytesIO
 
@@ -6,8 +7,11 @@ from django.db import models
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from pypdf import PdfReader
+from pypdf.errors import PdfReadError
 
 from eventyay.base.models import LoggedModel
+
+logger = logging.getLogger(__name__)
 
 
 def bg_name(instance, filename: str) -> str:
@@ -27,6 +31,15 @@ class BadgeLayout(LoggedModel):
         default=False,
     )
     name = models.CharField(max_length=190, verbose_name=_('Name'))
+    category = models.ForeignKey(
+        'base.ProductCategory',
+        on_delete=models.SET_NULL,
+        related_name='badge_layouts',
+        null=True,
+        blank=True,
+        verbose_name=_('Category'),
+        help_text=_('If set, this badge layout will be automatically applied to items in this category.'),
+    )
     layout = models.TextField(
         default='[{"type":"textarea","left":"0","bottom":"85","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":true,"italic":false,"width":"80","content":"attendee_name","text":"John Doe","align":"center"},{"type":"barcodearea","left":"24.87","bottom":"34","size":"30.00","content":"secret"},{"type":"textarea","left":"0","bottom":"83","fontsize":"10.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80.00","downward":true,"content":"attendee_job_title","text":"Developer","align":"center"},{"type":"textarea","left":"0","bottom":"76","fontsize":"12.0","color":[0,0,0,1],"fontfamily":"Open Sans","bold":false,"italic":false,"width":"80","downward":true,"content":"attendee_company","text":"FOSSASIA","align":"center"}]'
     )
@@ -41,18 +54,45 @@ class BadgeLayout(LoggedModel):
     def __str__(self):
         return self.name
 
+    def clean(self):
+        """Validate that category belongs to the same event as the badge layout."""
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if self.category and self.event:
+            if self.category.event_id != self.event_id:
+                raise ValidationError({
+                    'category': _('The badge layout\'s category must belong to the same event as the badge layout.')
+                })
+
     def save(self, *args, **kwargs):
-        if self.background:
-            buffer = BytesIO()
-            for chunk in self.background.chunks():
-                buffer.write(chunk)
-            buffer.seek(0)
-            reader = PdfReader(buffer)
-            page = reader.pages[0]
-            width = round(float(page.mediabox.width) * 0.352777778, 2)
-            height = round(float(page.mediabox.height) * 0.352777778, 2)
-            orientation = 'portrait' if height > width else 'landscape'
-            self.size = json.dumps([{'width': width, 'height': height, 'orientation': orientation}])
+        if self.background and hasattr(self.background, 'chunks'):
+            try:
+                buffer = BytesIO()
+                for chunk in self.background.chunks():
+                    buffer.write(chunk)
+                buffer.seek(0)
+                reader = PdfReader(buffer)
+                page = reader.pages[0]
+                width = round(float(page.mediabox.width) * 0.352777778, 2)
+                height = round(float(page.mediabox.height) * 0.352777778, 2)
+                orientation = 'portrait' if height > width else 'landscape'
+                self.size = json.dumps([{'width': width, 'height': height, 'orientation': orientation}])
+            except (PdfReadError, KeyError, IndexError, ValueError) as e:
+                logger.warning(
+                    'Failed to extract dimensions from badge background PDF for layout %s (event: %s): %s',
+                    self.pk or 'new',
+                    self.event.slug if self.event else 'unknown',
+                    str(e)
+                )
+            except Exception as e:
+                logger.error(
+                    'Unexpected error processing badge background PDF for layout %s (event: %s): %s',
+                    self.pk or 'new',
+                    self.event.slug if self.event else 'unknown',
+                    str(e),
+                    exc_info=True
+                )
         super().save(*args, **kwargs)
 
 
