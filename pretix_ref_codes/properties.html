@@ -1,0 +1,69 @@
+{% extends "pretixcontrol/organizers/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block inner %}
+    <h1>{% trans "Event metadata" %}</h1>
+    <p>
+        {% blocktrans trimmed %}
+            You can here define a set of metadata properties (i.e. variables) that you can later set for your
+            events and re-use in places like ticket layouts. This is an useful timesaver if you create lots and
+            lots of events.
+        {% endblocktrans %}
+    </p>
+    <a href="{% url "control:organizer.property.add" organizer=request.organizer.slug %}" class="btn btn-default">
+        <span class="fa fa-plus"></span>
+        {% trans "Create a new property" %}
+    </a>
+    <form method="post">
+        {% csrf_token %}
+        <table class="table table-condensed table-hover">
+            <thead>
+            <tr>
+                <th>{% trans "Property" %}</th>
+                <th class="iconcol"></th>
+                <th class="iconcol"></th>
+                <th class="iconcol"></th>
+                <th class="action-col-2"></th>
+                <th class="action-col-2"></th>
+            </tr>
+            </thead>
+            <tbody data-dnd-url="{% url "control:organizer.properties.reorder" organizer=request.organizer.slug %}">
+            {% for p in properties %}
+                <tr data-dnd-id="{{ p.pk }}">
+                    <td><strong>
+                        <a href="{% url "control:organizer.property.edit" organizer=request.organizer.slug property=p.id %}">
+                            {{ p.name }}
+                        </a>
+                    </strong></td>
+                    <td>
+                        {% if p.filter_allowed %}
+                            <span class="fa fa-filter text-muted" data-toggle="tooltip" title="{% trans "Can be used for filtering" %}"></span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.filter_public %}
+                            <span class="fa fa-eye text-muted" data-toggle="tooltip" title="{% trans "Show filter option to customers" %}"></span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if p.protected %}
+                            <span class="fa fa-lock text-muted" data-toggle="tooltip" title="{% trans "Can only be changed by organizer-level administrators" %}"></span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <button title="{% trans "Move up" %}" formaction="{% url "control:organizer.property.up" organizer=request.organizer.slug property=p.id %}" class="btn btn-default btn-sm sortable-up"{% if forloop.counter0 == 0 and not page_obj.has_previous %} disabled{% endif %}><i class="fa fa-arrow-up"></i></button>
+                        <button title="{% trans "Move down" %}" formaction="{% url "control:organizer.property.down" organizer=request.organizer.slug property=p.id %}" class="btn btn-default btn-sm sortable-down"{% if forloop.revcounter0 == 0 and not page_obj.has_next %} disabled{% endif %}><i class="fa fa-arrow-down"></i></button>
+                        <span class="dnd-container" title="{% trans "Click and drag this button to reorder. Double click to show buttons for reordering." %}"></span>
+                    </td>
+                    <td class="text-right flip">
+                        <a href="{% url "control:organizer.property.edit" organizer=request.organizer.slug property=p.id %}"
+                                class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
+                        <a href="{% url "control:organizer.property.delete" organizer=request.organizer.slug property=p.id %}"
+                                class="btn btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </form>
+{% endblock %}

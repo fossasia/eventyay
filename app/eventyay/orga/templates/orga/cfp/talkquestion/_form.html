@@ -116,7 +116,7 @@
                         {% if action != "view" %}
                         <div class="question-option-delete d-flex align-items-start">
                             <button draggable="true" type="button" class="btn btn-primary ml-1 mr-1 dragsort-button"
-                                title="Move item">
+                                title="{% translate "Move item" %}">
                                 <i class="fa fa-arrows"></i>
                             </button>
 
@@ -142,7 +142,7 @@
                         {{ formset.empty_form.position.as_hidden }}
                         </div>
                         <div class="question-option-delete d-flex align-items-start">
-                        <button draggable="true" type="button" class="btn btn-primary ml-1 mr-1 dragsort-button" title="Move item">
+                        <button draggable="true" type="button" class="btn btn-primary ml-1 mr-1 dragsort-button" title="{% translate 'Move item' %}">
                         <i class="fa fa-arrows"></i>
                         </button>
                         <button type="button" class="btn btn-danger" data-formset-delete-button>

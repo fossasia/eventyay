@@ -155,6 +155,7 @@ onReady(() => {
         setTimeout(() => document.querySelector("body").classList.add("dragging"), 0);
 
         const stop = dragStart(el);
+        if (!stop) return;  // Exit early if dragStart couldn't find a valid parent
 
         const dropHandler = (evt) => evt.preventDefault();
         el.parentElement.addEventListener("drop", dropHandler, { once: true });
