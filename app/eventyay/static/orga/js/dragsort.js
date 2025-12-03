@@ -15,7 +15,7 @@ const computeCentroid = (element) => {
 };
 
 const getSortableElements = (parentElement) => {
-    return Array.from(parentElement.querySelectorAll("[dragsort-id]")).map(
+    return Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
         (el) => {
             return { element: el, centroid: computeCentroid(el) };
         },
@@ -111,11 +111,11 @@ const dragStart = (el) => {
 
 const pushOrder = (parentElement) => {
     const url = parentElement.getAttribute("dragsort-url");
-    const ids = Array.from(parentElement.querySelectorAll("[dragsort-id]")).map(
+    const ids = Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
         (el) => el.getAttribute("dragsort-id"),
-    );
+    ).filter((id) => id);
     // Update position fields for form submission
-    parentElement.querySelectorAll("[dragsort-id]").forEach((el, index) => {
+    parentElement.querySelectorAll("[dragsort-id], [data-formset-form]").forEach((el, index) => {
         const positionInput = el.querySelector('input[name$="-position"]');
         if (positionInput) {
             positionInput.value = index + 1;
@@ -153,9 +153,9 @@ onReady(() => {
         // outside the event.
         setTimeout(() => el.classList.add("dragging"), 0);
         setTimeout(() => document.querySelector("body").classList.add("dragging"), 0);
-        
+
         const stop = dragStart(el);
-        
+
         const dropHandler = (evt) => evt.preventDefault();
         el.parentElement.addEventListener("drop", dropHandler, { once: true });
 
@@ -163,7 +163,7 @@ onReady(() => {
             evt.preventDefault();
             el.classList.remove("dragging");
             document.querySelector("body").classList.remove("dragging");
-            
+
             const { closest, intent } = stop();
             if (intent === INTENT_AFTER) {
                 closest.insertAdjacentElement("afterend", el);
