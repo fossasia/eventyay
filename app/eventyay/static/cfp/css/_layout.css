@@ -144,7 +144,7 @@ header {
 .public-event-header {
   display: flex;
   margin-bottom: 14px;
-  margin-top: calc((240px - 180px - 140px) / 2);
+  margin-top: calc((240px - 140px) / 2);
   
   .event-logo {
     margin-right: auto;
