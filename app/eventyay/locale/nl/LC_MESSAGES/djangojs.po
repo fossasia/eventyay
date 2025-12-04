@@ -9,7 +9,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2020-08-05 06:00+0000\n"
 "Last-Translator: Maarten van den Berg <maartenberg1@gmail.com>\n"
-"Language-Team: Dutch <https://translate.eventyay.com/projects/pretix/pretix-js/"
+"Language-Team: Dutch <https://translate.eventyay.com/projects/eventyay/eventyay-js/"
 "nl/>\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -389,8 +389,8 @@ msgid "Image area"
 msgstr "Barcode gebied"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Mogelijk gemaakt door pretix"
+msgid "Powered by eventyay"
+msgstr "Mogelijk gemaakt door eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"

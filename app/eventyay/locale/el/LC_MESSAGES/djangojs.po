@@ -10,7 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2019-10-03 19:00+0000\n"
 "Last-Translator: Chris Spy <chrispiropoulou@hotmail.com>\n"
-"Language-Team: Greek <https://translate.eventyay.com/projects/pretix/pretix-js/"
+"Language-Team: Greek <https://translate.eventyay.com/projects/eventyay/eventyay-js/"
 "el/>\n"
 "Language: el\n"
 "MIME-Version: 1.0\n"
@@ -411,8 +411,8 @@ msgid "Image area"
 msgstr "Περιοχή Barcode"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:529
-msgid "Powered by pretix"
-msgstr "Υποστηρίζεται από το Pretix"
+msgid "Powered by eventyay"
+msgstr "Υποστηρίζεται από το Eventyay"
 
 #: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"
