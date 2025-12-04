@@ -56,7 +56,7 @@ def import_config(data):
         room.hidden = False if hidden_val is None else hidden_val
         sidebar_hidden_val = room_config.pop("sidebar_hidden", None)
         if sidebar_hidden_val is None:
-            room.sidebar_hidden = room.hidden or not room.setup_complete
+            room.sidebar_hidden = not room.setup_complete
         else:
             room.sidebar_hidden = sidebar_hidden_val
         room.save()

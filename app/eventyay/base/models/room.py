@@ -253,19 +253,30 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def save(self, *args, **kwargs):
         """Override save to ensure boolean fields are never None."""
-        # Absolute failsafe: ensure ALL boolean fields never have None values
-        # All these fields have NOT NULL constraints in the database
+        fixed_fields = []
         if self.deleted is None:
             self.deleted = False
+            fixed_fields.append("deleted")
         if self.force_join is None:
             self.force_join = False
+            fixed_fields.append("force_join")
         if self.setup_complete is None:
             self.setup_complete = False
+            fixed_fields.append("setup_complete")
         if self.hidden is None:
             self.hidden = False
+            fixed_fields.append("hidden")
         if self.sidebar_hidden is None:
-            # Compute from existing state to match invariant used in _create_room and import_config
-            self.sidebar_hidden = self.hidden or not self.setup_complete
+            self.sidebar_hidden = not self.setup_complete
+            fixed_fields.append("sidebar_hidden")
+        if fixed_fields and "update_fields" in kwargs:
+            update_fields = kwargs["update_fields"]
+            if update_fields is not None:
+                if isinstance(update_fields, (list, tuple, set)):
+                    kwargs["update_fields"] = list(set(update_fields) | set(fixed_fields))
+                # If update_fields is an unexpected type, leave it as is to avoid breaking intended behavior
+            # If update_fields is None, leave it as None to preserve "save all fields" behavior
+        
         super().save(*args, **kwargs)
 
     @property
