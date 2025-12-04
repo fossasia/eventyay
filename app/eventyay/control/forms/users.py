@@ -62,7 +62,13 @@ class UserEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['email'].required = True
+        # Handle None email values - show empty field instead of "None" text
+        if self.instance and self.instance.pk and self.instance.email is None:
+            self.initial['email'] = ''
+            # Make email not required for existing users without email
+            self.fields['email'].required = False
+        else:
+            self.fields['email'].required = True
         self.fields['last_login'].disabled = True
         if self.instance and self.instance.auth_backend != 'native':
             del self.fields['new_pw']
@@ -70,7 +76,11 @@ class UserEditForm(forms.ModelForm):
             self.fields['email'].disabled = True
 
     def clean_email(self):
-        email = self.cleaned_data['email']
+        email = self.cleaned_data.get('email', '').strip()
+        # Convert empty string to None for users without email
+        if not email:
+            return None
+        # Check for duplicate emails only if email is provided
         if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk)).exists():
             raise forms.ValidationError(
                 self.error_messages['duplicate_identifier'],
