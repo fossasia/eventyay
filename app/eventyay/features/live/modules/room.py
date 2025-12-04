@@ -361,6 +361,7 @@ class RoomModule(BaseModule):
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
         old = RoomConfigSerializer(self.room).data
+        logger.info(f"[ROOM_UPDATE] room_id={self.room.id}, submitted: setup_complete={body.get('setup_complete')}, sidebar_hidden={body.get('sidebar_hidden')}, module_config_length={len(body.get('module_config', []))}")
         s = RoomConfigSerializer(self.room, data=body, partial=True)
         if s.is_valid():
             update_fields = set()
