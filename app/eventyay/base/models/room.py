@@ -41,8 +41,29 @@ class RoomQuerySet(models.QuerySet):
     ):
         from .auth import RoomGrant, EventGrant
 
-        traits = traits or user.traits
+        # Normalize traits input
+        # - If traits is explicitly provided, use it; otherwise, read from user when available
+        # - Always coerce to a simple list[str] for proper DB array parameterization
+        if traits is None:
+            if user is not None:
+                traits = user.traits
+            else:
+                traits = []
+
         allow_empty_traits = not user or user.type == User.UserType.PERSON
+
+        # Ensure traits is always a proper list of strings for SQL parameterization
+        if isinstance(traits, str):
+            # Accept legacy "(a,b,c)" string format by parsing it into a list
+            traits = [t.strip() for t in traits.strip("()").split(",") if t.strip()]
+        else:
+            try:
+                # Convert any iterable (set/tuple/queryset) to a list of strings
+                traits = [str(t) for t in list(traits or [])]
+            except TypeError:
+                # Non-iterables (shouldn't happen) fallback to empty list
+                traits = []
+
         if event.has_permission_implicit(
             traits=traits,
             permissions=[permission],
@@ -92,7 +113,7 @@ class RoomQuerySet(models.QuerySet):
         # When our user has traits, this is automatically ensured by the ALL() statement, but when traits=[] we
         # need to do a special case check since "IN ()" is not valid SQL
         for i, role in enumerate(roles):
-            if traits:
+            if traits and len(traits) > 0:
                 ext = ""
                 ext_args = []
                 if not allow_empty_traits:
@@ -108,8 +129,8 @@ class RoomQuerySet(models.QuerySet):
                             TRUE = ALL(
                                 SELECT (
                                     CASE jsonb_typeof(d{i}.elem)
-                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{"{}"}' IN %s )
-                                        ELSE d{i}.elem#>>'{"{}"}' IN %s
+                                        WHEN 'array' THEN EXISTS(SELECT 1 FROM jsonb_array_elements(d{i}.elem) e{i}(elem) WHERE e{i}.elem#>>'{{}}' = ANY(%s::text[]) )
+                                        ELSE d{i}.elem#>>'{{}}' = ANY(%s::text[])
                                     END
                                 ) FROM jsonb_array_elements( trait_grants->%s ) AS d{i}(elem)
                             ) {ext}
@@ -117,8 +138,8 @@ class RoomQuerySet(models.QuerySet):
                             (
                                 role,  # ? check
                                 role,  # IS NOT NULL check
-                                tuple(traits),  # IN check
-                                tuple(traits),  # IN check
+                                traits,  # = ANY check (array for first case)
+                                traits,  # = ANY check (array for second case)
                                 role,  # jsonb_array_elements
                                 *ext_args,
                             ),
@@ -155,8 +176,8 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     The Room object stores some meta information. Most, like capacity,
     are not in use right now.
     """
-    
-    log_prefix = "pretalx.room"
+
+    log_prefix = "eventyay.room"
 
     deleted = models.BooleanField(default=False)
     description = I18nCharField(
@@ -201,6 +222,11 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     pretalx_id = models.IntegerField(default=0)
     schedule_data = JSONField(null=True, blank=True)
     force_join = models.BooleanField(default=False)
+    setup_complete = models.BooleanField(default=False)
+    hidden = models.BooleanField(default=False)
+    # Default is True (hidden) for safety - rooms should be hidden until configured.
+    # The _create_room function and migration explicitly set this based on module_config.
+    sidebar_hidden = models.BooleanField(default=True)
 
     objects = RoomQuerySet.as_manager()
 
@@ -224,6 +250,23 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def __str__(self) -> str:
         return str(self.name)
+
+    def save(self, *args, **kwargs):
+        """Override save to ensure boolean fields are never None."""
+        # Absolute failsafe: ensure ALL boolean fields never have None values
+        # All these fields have NOT NULL constraints in the database
+        if self.deleted is None:
+            self.deleted = False
+        if self.force_join is None:
+            self.force_join = False
+        if self.setup_complete is None:
+            self.setup_complete = False
+        if self.hidden is None:
+            self.hidden = False
+        if self.sidebar_hidden is None:
+            # Compute from existing state to match invariant used in _create_room and import_config
+            self.sidebar_hidden = self.hidden or not self.setup_complete
+        super().save(*args, **kwargs)
 
     @property
     def log_parent(self):
@@ -276,11 +319,38 @@ class RoomView(models.Model):
         ]
 
 
+class NullSafeBooleanField(serializers.BooleanField):
+    """BooleanField that converts None to the default value instead of raising an error.
+    
+    Supports callable defaults (DRF-style) and ensures None values are converted to
+    the default value rather than raising validation errors.
+    """
+    def __init__(self, *args, **kwargs):
+        # Allow None values so they can be processed by to_internal_value()
+        kwargs.setdefault('allow_null', True)
+        super().__init__(*args, **kwargs)
+    
+    def to_internal_value(self, data):
+        if data is None:
+            if self.default is not serializers.empty:
+                # Support callable defaults (DRF-style)
+                return self.default() if callable(self.default) else self.default
+            return False
+        return super().to_internal_value(data)
+
+
 class RoomConfigSerializer(I18nAwareModelSerializer):
+    deleted = NullSafeBooleanField(required=False, default=False)
+    force_join = NullSafeBooleanField(required=False, default=False)
+    hidden = NullSafeBooleanField(required=False, default=False)
+    sidebar_hidden = NullSafeBooleanField(required=False, default=True)
+    setup_complete = NullSafeBooleanField(required=False, default=False)
+
     class Meta:
         model = Room
         fields = (
             "id",
+            "deleted",
             "trait_grants",
             "module_config",
             "picture",
@@ -290,6 +360,9 @@ class RoomConfigSerializer(I18nAwareModelSerializer):
             "pretalx_id",
             "force_join",
             "schedule_data",
+            "setup_complete",
+            "hidden",
+            "sidebar_hidden",
         )
 
 

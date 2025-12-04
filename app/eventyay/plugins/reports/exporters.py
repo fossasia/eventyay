@@ -29,6 +29,7 @@ from eventyay.base.models import Order, OrderPosition
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.orders import OrderFee, OrderPayment
 from eventyay.base.services.stats import order_overview
+from eventyay.helpers.timezone import get_browser_timezone
 from eventyay.control.forms.filter import OverviewFilterForm
 
 logger = logging.getLogger(__name__)
@@ -207,9 +208,9 @@ class OverviewReport(Report):
         return pagesizes.landscape(pagesizes.A4)
 
     def get_story(self, doc, form_data):
-        if form_data.get('date_from'):
+        if form_data.get('date_from') and isinstance(form_data['date_from'], str):
             form_data['date_from'] = parse(form_data['date_from'])
-        if form_data.get('date_until'):
+        if form_data.get('date_until') and isinstance(form_data['date_until'], str):
             form_data['date_until'] = parse(form_data['date_until'])
 
         story = self._table_story(doc, form_data)
@@ -374,19 +375,22 @@ class OverviewReport(Report):
             if tup[0]:
                 tdata.append([Paragraph(str(tup[0].name), tstyle_bold)])
                 for l, s in states:
-                    tdata[-1].append(str(tup[0].num[l][0]))
-                    tdata[-1].append(floatformat(tup[0].num[l][2 if net else 1], places))
+                    num_data = tup[0].num.get(l, (0, 0, 0)) if hasattr(tup[0], 'num') and tup[0].num else (0, 0, 0)
+                    tdata[-1].append(str(num_data[0]))
+                    tdata[-1].append(floatformat(num_data[2 if net else 1], places))
             for item in tup[1]:
                 tdata.append([str(item)])
                 for l, s in states:
-                    tdata[-1].append(str(item.num[l][0]))
-                    tdata[-1].append(floatformat(item.num[l][2 if net else 1], places))
+                    num_data = item.num.get(l, (0, 0, 0)) if hasattr(item, 'num') and item.num else (0, 0, 0)
+                    tdata[-1].append(str(num_data[0]))
+                    tdata[-1].append(floatformat(num_data[2 if net else 1], places))
                 if item.has_variations:
                     for var in item.all_variations:
                         tdata.append([Paragraph('          ' + str(var), tstyle)])
                         for l, s in states:
-                            tdata[-1].append(str(var.num[l][0]))
-                            tdata[-1].append(floatformat(var.num[l][2 if net else 1], places))
+                            num_data = var.num.get(l, (0, 0, 0)) if hasattr(var, 'num') and var.num else (0, 0, 0)
+                            tdata[-1].append(str(num_data[0]))
+                            tdata[-1].append(floatformat(num_data[2 if net else 1], places))
 
         tdata.append(
             [
@@ -394,8 +398,10 @@ class OverviewReport(Report):
             ]
         )
         for l, s in states:
-            tdata[-1].append(str(total['num'][l][0]))
-            tdata[-1].append(floatformat(total['num'][l][2 if net else 1], places))
+            # Safeguard for empty data
+            num_data = total.get('num', {}).get(l, (0, 0, 0))
+            tdata[-1].append(str(num_data[0]))
+            tdata[-1].append(floatformat(num_data[2 if net else 1], places))
 
         table = Table(tdata, colWidths=colwidths, repeatRows=3)
         table.setStyle(TableStyle(tstyledata))
@@ -695,13 +701,14 @@ class OrderTaxListReport(MultiSheetListExporter):
         date_from = form_data.get('date_from')
         date_until = form_data.get('date_until')
         date_filter = form_data.get('date_axis')
+        browser_tz = get_browser_timezone(form_data.get('browser_timezone'))
         if date_from:
             if isinstance(date_from, str):
                 date_from = parse(date_from).date()
             if isinstance(date_from, date):
                 date_from = make_aware(
                     datetime.combine(date_from, time(hour=0, minute=0, second=0, microsecond=0)),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_until:
@@ -713,7 +720,7 @@ class OrderTaxListReport(MultiSheetListExporter):
                         date_until + timedelta(days=1),
                         time(hour=0, minute=0, second=0, microsecond=0),
                     ),
-                    self.event.timezone,
+                    browser_tz,
                 )
 
         if date_filter == 'order_date':

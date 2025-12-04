@@ -296,10 +296,9 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return resp
             else:
                 resp = FileResponse(ct.file.file, content_type=ct.type)
-                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+                resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
                     self.request.event.slug.upper(),
                     order.code,
-                    provider.identifier,
                     ct.extension,
                 )
                 return resp
@@ -1094,11 +1093,10 @@ class OrderPositionViewSet(mixins.DestroyModelMixin, mixins.UpdateModelMixin, vi
                 return resp
             else:
                 resp = FileResponse(ct.file.file, content_type=ct.type)
-                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
+                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
                     self.request.event.slug.upper(),
                     pos.order.code,
                     pos.positionid,
-                    provider.identifier,
                     ct.extension,
                 )
                 return resp

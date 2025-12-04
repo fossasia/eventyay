@@ -275,17 +275,17 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         model = TalkQuestion
         fields = [
             'target',
+            'variant',
             'question',
             'help_text',
-            'question_required',
-            'deadline',
-            'freeze_after',
-            'variant',
             'is_public',
+            'contains_personal_data',
             'is_visible_to_reviewers',
             'tracks',
             'submission_types',
-            'contains_personal_data',
+            'question_required',
+            'deadline',
+            'freeze_after',
             'min_length',
             'max_length',
             'min_number',
@@ -316,7 +316,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 class AnswerOptionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     class Meta:
         model = AnswerOption
-        fields = ['answer']
+        fields = ['answer', 'position']
+        widgets = {
+            'position': forms.HiddenInput,
+        }
 
 
 class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):

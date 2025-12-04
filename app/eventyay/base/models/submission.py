@@ -287,7 +287,7 @@ class Submission(GenerateCode, PretalxModel):
     deleted_objects = ScopedManager(event='event', _manager_class=DeletedSubmissionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllSubmissionManager)
 
-    log_prefix = 'pretalx.submission'
+    log_prefix = 'eventyay.submission'
 
     class Meta:
         rules_permissions = {

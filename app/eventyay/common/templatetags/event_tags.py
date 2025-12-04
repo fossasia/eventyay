@@ -34,3 +34,5 @@ def cfp_locale_switch_url(context, locale_code):
     query['locale'] = locale_code
     query['next'] = request.get_full_path()
     return f"{base}?{query.urlencode()}"
+
+

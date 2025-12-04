@@ -61,10 +61,10 @@ from eventyay.base.models import (
     Checkin,
     Invoice,
     InvoiceAddress,
-    Product,
-    ProductVariation,
     LogEntry,
     Order,
+    Product,
+    ProductVariation,
     QuestionAnswer,
     Quota,
     generate_secret,
@@ -510,20 +510,18 @@ class OrderDownload(AsyncAction, OrderView):
                 return resp
             else:
                 resp = FileResponse(value.file.file, content_type=value.type)
-                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
+                resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
                     self.request.event.slug.upper(),
                     self.order.code,
                     self.order_position.positionid,
-                    self.output.identifier,
                     value.extension,
                 )
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
                 self.request.event.slug.upper(),
                 self.order.code,
-                self.output.identifier,
                 value.extension,
             )
             return resp
@@ -555,7 +553,7 @@ class OrderComment(OrderView):
             if form.cleaned_data.get('comment') != self.order.comment:
                 self.order.comment = form.cleaned_data.get('comment')
                 self.order.log_action(
-                    'pretix.event.order.comment',
+                    'eventyay.event.order.comment',
                     user=self.request.user,
                     data={'new_comment': form.cleaned_data.get('comment')},
                 )
@@ -563,7 +561,7 @@ class OrderComment(OrderView):
             if form.cleaned_data.get('checkin_attention') != self.order.checkin_attention:
                 self.order.checkin_attention = form.cleaned_data.get('checkin_attention')
                 self.order.log_action(
-                    'pretix.event.order.checkin_attention',
+                    'eventyay.event.order.checkin_attention',
                     user=self.request.user,
                     data={'new_value': form.cleaned_data.get('checkin_attention')},
                 )
@@ -690,7 +688,7 @@ class OrderPaymentCancel(OrderView):
                 with transaction.atomic():
                     self.payment.payment_provider.cancel_payment(self.payment)
                     self.order.log_action(
-                        'pretix.event.order.payment.canceled',
+                        'eventyay.event.order.payment.canceled',
                         {
                             'local_id': self.payment.local_id,
                             'provider': self.payment.provider,
@@ -699,7 +697,7 @@ class OrderPaymentCancel(OrderView):
                     )
             except PaymentException as e:
                 self.order.log_action(
-                    'pretix.event.order.payment.canceled.failed',
+                    'eventyay.event.order.payment.canceled.failed',
                     {
                         'local_id': self.payment.local_id,
                         'provider': self.payment.provider,
@@ -741,7 +739,7 @@ class OrderRefundCancel(OrderView):
                 self.refund.state = OrderRefund.REFUND_STATE_CANCELED
                 self.refund.save()
                 self.order.log_action(
-                    'pretix.event.order.refund.canceled',
+                    'eventyay.event.order.refund.canceled',
                     {
                         'local_id': self.refund.local_id,
                         'provider': self.refund.provider,
@@ -850,7 +848,7 @@ class OrderCancellationRequestDelete(OrderView):
         with transaction.atomic():
             self.req.delete()
             self.order.log_action(
-                'pretix.event.order.cancellationrequest.deleted',
+                'eventyay.event.order.cancellationrequest.deleted',
                 {},
                 user=self.request.user,
             )
@@ -1034,7 +1032,7 @@ class OrderRefundView(OrderView):
                         currency=self.request.event.currency,
                         testmode=self.order.testmode,
                     )
-                    giftcard.log_action('pretix.giftcards.created', user=self.request.user, data={})
+                    giftcard.log_action('eventyay.giftcards.created', user=self.request.user, data={})
                     refunds.append(
                         OrderRefund(
                             order=self.order,
@@ -1152,7 +1150,7 @@ class OrderRefundView(OrderView):
                 for r in refunds:
                     r.save()
                     self.order.log_action(
-                        'pretix.event.order.refund.created',
+                        'eventyay.event.order.refund.created',
                         {
                             'local_id': r.local_id,
                             'provider': r.provider,
@@ -1348,7 +1346,7 @@ class OrderTransition(OrderView):
                         with transaction.atomic():
                             p.payment_provider.cancel_payment(p)
                             self.order.log_action(
-                                'pretix.event.order.payment.canceled',
+                                'eventyay.event.order.payment.canceled',
                                 {
                                     'local_id': p.local_id,
                                     'provider': p.provider,
@@ -1357,7 +1355,7 @@ class OrderTransition(OrderView):
                             )
                     except PaymentException as e:
                         self.order.log_action(
-                            'pretix.event.order.payment.canceled.failed',
+                            'eventyay.event.order.payment.canceled.failed',
                             {
                                 'local_id': p.local_id,
                                 'provider': p.provider,
@@ -1394,7 +1392,7 @@ class OrderTransition(OrderView):
                 p.state = OrderPayment.PAYMENT_STATE_FAILED
                 p.save()
                 self.order.log_action(
-                    'pretix.event.order.payment.failed',
+                    'eventyay.event.order.payment.failed',
                     {'local_id': p.local_id, 'provider': p.provider, 'message': str(e)},
                 )
                 messages.error(self.request, str(e))
@@ -1402,7 +1400,7 @@ class OrderTransition(OrderView):
                 p.state = OrderPayment.PAYMENT_STATE_FAILED
                 p.save()
                 self.order.log_action(
-                    'pretix.event.order.payment.failed',
+                    'eventyay.event.order.payment.failed',
                     {'local_id': p.local_id, 'provider': p.provider, 'message': str(e)},
                 )
                 messages.error(self.request, str(e))
@@ -1502,7 +1500,7 @@ class OrderInvoiceCreate(OrderView):
         else:
             inv = generate_invoice(self.order)
             self.order.log_action(
-                'pretix.event.order.invoice.generated',
+                'eventyay.event.order.invoice.generated',
                 user=self.request.user,
                 data={'invoice': inv.pk},
             )
@@ -1584,7 +1582,7 @@ class OrderInvoiceRegenerate(OrderView):
             else:
                 inv = regenerate_invoice(inv)
                 self.order.log_action(
-                    'pretix.event.order.invoice.regenerated',
+                    'eventyay.event.order.invoice.regenerated',
                     user=self.request.user,
                     data={'invoice': inv.pk},
                 )
@@ -1615,7 +1613,7 @@ class OrderInvoiceReissue(OrderView):
                 else:
                     inv = c
                 self.order.log_action(
-                    'pretix.event.order.invoice.reissued',
+                    'eventyay.event.order.invoice.reissued',
                     user=self.request.user,
                     data={'invoice': inv.pk},
                 )
@@ -2085,7 +2083,7 @@ class OrderModifyInformation(OrderQuestionsViewMixin, OrderView):
         if hasattr(self.invoice_form, 'save'):
             self.invoice_form.save()
         self.order.log_action(
-            'pretix.event.order.modified',
+            'eventyay.event.order.modified',
             {
                 'invoice_data': self.invoice_form.cleaned_data,
                 'data': [
@@ -2143,7 +2141,7 @@ class OrderContactChange(OrderView):
             if new_email != old_email:
                 changed = True
                 self.order.log_action(
-                    'pretix.event.order.contact.changed',
+                    'eventyay.event.order.contact.changed',
                     data={
                         'old_email': old_email,
                         'new_email': self.form.cleaned_data['email'],
@@ -2155,7 +2153,7 @@ class OrderContactChange(OrderView):
             if new_phone != old_phone:
                 changed = True
                 self.order.log_action(
-                    'pretix.event.order.phone.changed',
+                    'eventyay.event.order.phone.changed',
                     data={
                         'old_phone': old_phone,
                         'new_phone': self.form.cleaned_data['phone'],
@@ -2173,7 +2171,7 @@ class OrderContactChange(OrderView):
                         save=True,
                     )
                 tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
-                self.order.log_action('pretix.event.order.secret.changed', user=self.request.user)
+                self.order.log_action('eventyay.event.order.secret.changed', user=self.request.user)
 
             self.form.save()
             if changed:
@@ -2204,7 +2202,7 @@ class OrderLocaleChange(OrderView):
         old_locale = self.order.locale
         if self.form.is_valid():
             self.order.log_action(
-                'pretix.event.order.locale.changed',
+                'eventyay.event.order.locale.changed',
                 data={
                     'old_locale': old_locale,
                     'new_locale': self.form.cleaned_data['locale'],
@@ -2275,7 +2273,7 @@ class OrderSendMail(EventPermissionRequiredMixin, OrderViewMixin, FormView):
                     form.cleaned_data['subject'],
                     email_template,
                     email_context,
-                    'pretix.event.order.email.custom_sent',
+                    'eventyay.event.order.email.custom_sent',
                     self.request.user,
                     auto_email=False,
                 )
@@ -2346,7 +2344,7 @@ class OrderPositionSendMail(OrderSendMail):
                     form.cleaned_data['subject'],
                     email_template,
                     email_context,
-                    'pretix.event.order.position.email.custom_sent',
+                    'eventyay.event.order.position.email.custom_sent',
                     self.request.user,
                 )
                 messages.success(
@@ -2418,6 +2416,7 @@ class OverView(EventPermissionRequiredMixin, TemplateView):
                 date_from=self.filter_form.cleaned_data['date_from'],
                 date_until=self.filter_form.cleaned_data['date_until'],
                 fees=True,
+                browser_timezone=self.filter_form.cleaned_data.get('browser_timezone'),
             )
         else:
             ctx['products_by_category'], ctx['total'] = order_overview(self.request.event, fees=True)
@@ -2496,11 +2495,13 @@ class ExportMixin:
             if self.request.GET.get('identifier') and ex.identifier != self.request.GET.get('identifier'):
                 continue
 
-            # Use form parse cycle to generate useful defaults
+            # Try to extract initial values from GET parameters
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            test_form.is_valid()
-            initial = {k: v for k, v in test_form.cleaned_data.items() if ex.identifier + '-' + k in self.request.GET}
+            if test_form.is_valid():
+                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+            else:
+                initial = {}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),
