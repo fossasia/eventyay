@@ -31,10 +31,8 @@
 						bunt-checkbox(
 							name="sidebar_hidden",
 							v-model="config.sidebar_hidden",
-							:disabled="config.hidden",
 							class="visibility-option"
 						) Hide from Sidebar
-						small(v-if="config.hidden") Hidden rooms are always removed from the sidebar.
 					template(v-else)
 						small Hidden from the sidebar until setup is complete.
 			template(v-if="inferredType && typeComponents[inferredType.id]")
@@ -113,7 +111,8 @@ export default {
 	},
 	computed: {
 		modules() {
-			return this.config?.module_config.reduce((acc, module) => {
+			const module_config = Array.isArray(this.config?.module_config) ? this.config.module_config : []
+			return module_config.reduce((acc, module) => {
 				acc[module.type] = module
 				return acc
 			}, {})
@@ -171,8 +170,7 @@ export default {
 		},
 		syncSidebarHidden() {
 			if (!this.config) return
-			// Enforce business rule: sidebar_hidden must be true if hidden is true or setup is incomplete
-			if ((this.config.hidden || !this.config.setup_complete) && !this.config.sidebar_hidden) {
+			if (!this.config.setup_complete && !this.config.sidebar_hidden) {
 				this.config.sidebar_hidden = true
 			}
 		},
@@ -200,11 +198,20 @@ export default {
 						modules: []
 					}))
 				}
-				// If the room has at least one module configured, mark setup as complete.
-				// This flag is used both in the admin UI ("Complete setup" vs "Configure")
-				// and in the attendee UI (`visibleRooms` getter) to decide if a room is usable.
-				const setup_complete = Array.isArray(this.config.module_config) && this.config.module_config.length > 0
-				const updatedConfig = await api.call('room.config.patch', {
+				const module_config = Array.isArray(this.config.module_config) ? this.config.module_config : []
+				const setup_complete = module_config.length > 0
+				let sidebar_hidden
+				if (setup_complete && !this.config.setup_complete) {
+					// Setup just completed, show in sidebar
+					sidebar_hidden = false
+				} else if (setup_complete) {
+					// Setup was already complete, preserve user preference
+					sidebar_hidden = this.config.sidebar_hidden
+				} else {
+					// Setup incomplete, hide from sidebar
+					sidebar_hidden = true
+				}
+				const roomData = {
 					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
@@ -213,10 +220,11 @@ export default {
 					picture: this.config.picture,
 					force_join: this.config.force_join,
 					hidden: !!this.config.hidden,
-					sidebar_hidden: !!this.config.sidebar_hidden,
+					sidebar_hidden,
 					setup_complete,
-					module_config: this.config.module_config,
-				})
+					module_config,
+				}
+				const updatedConfig = await api.call('room.config.patch', roomData)
 				Object.assign(this.config, updatedConfig)
 				this.saving = false
 				if (this.creating) {
