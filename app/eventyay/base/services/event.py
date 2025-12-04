@@ -263,11 +263,16 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
     has_modules = bool(data.get("module_config"))
     
     # Set boolean field defaults at Django level
-    data.setdefault("deleted", False)
-    data.setdefault("force_join", False)
-    data.setdefault("setup_complete", has_modules)
-    data.setdefault("hidden", False)
-    data.setdefault("sidebar_hidden", not has_modules)  # hidden if no modules yet
+    if data.get("deleted") is None:
+        data["deleted"] = False
+    if data.get("force_join") is None:
+        data["force_join"] = False
+    if data.get("setup_complete") is None:
+        data["setup_complete"] = has_modules
+    if data.get("hidden") is None:
+        data["hidden"] = False
+    if data.get("sidebar_hidden") is None:
+        data["sidebar_hidden"] = not data["setup_complete"]
     
     logger.info(f"[ROOM_CREATE] Creating room with booleans: deleted={data['deleted']}, hidden={data['hidden']}, setup_complete={data['setup_complete']}")
 
