@@ -565,10 +565,76 @@ class Event(PretalxModel):
             )
             return template
 
+    # def build_initial_data(self):
+    #     from pretalx.mail.models import MailTemplateRoles
+    #     from pretalx.schedule.models import Schedule
+    #     from pretalx.submission.models import CfP
+
+    #     if not hasattr(self, "cfp"):
+    #         CfP.objects.create(
+    #             event=self, default_type=self._get_default_submission_type()
+    #         )
+
+    #     if not self.schedules.filter(version__isnull=True).exists():
+    #         Schedule.objects.create(event=self)
+
+    #     for role, __ in MailTemplateRoles.choices:
+    #         self.get_mail_template(role)
+
+    #     if not self.review_phases.all().exists():
+    #         from pretalx.submission.models import ReviewPhase
+
+    #         cfp_deadline = self.cfp.deadline
+    #         rp = ReviewPhase.objects.create(
+    #             event=self,
+    #             name=_("Review"),
+    #             start=cfp_deadline,
+    #             end=self.datetime_from - relativedelta(months=-3),
+    #             is_active=bool(not cfp_deadline or cfp_deadline < now()),
+    #             position=0,
+    #         )
+    #         ReviewPhase.objects.create(
+    #             event=self,
+    #             name=_("Selection"),
+    #             start=rp.end,
+    #             is_active=False,
+    #             position=1,
+    #             can_review=False,
+    #             can_see_other_reviews="always",
+    #             can_change_submission_state=True,
+    #         )
+    #     if not self.score_categories.all().exists():
+    #         from pretalx.submission.models import ReviewScore, ReviewScoreCategory
+
+    #         category = ReviewScoreCategory.objects.create(
+    #             event=self,
+    #             name=str(_("Score")),
+    #         )
+    #         ReviewScore.objects.create(
+    #             category=category,
+    #             value=0,
+    #             label=str(_("No")),
+    #         )
+    #         ReviewScore.objects.create(
+    #             category=category,
+    #             value=1,
+    #             label=str(_("Maybe")),
+    #         )
+    #         ReviewScore.objects.create(
+    #             category=category,
+    #             value=2,
+    #             label=str(_("Yes")),
+    #         )
+    #     self.save()
+
+    # build_initial_data.alters_data = True
+    
     def build_initial_data(self):
         from pretalx.mail.models import MailTemplateRoles
         from pretalx.schedule.models import Schedule
         from pretalx.submission.models import CfP
+
+        # TODO: Reintroduce component selection when unified initialization is stable.
 
         if not hasattr(self, "cfp"):
             CfP.objects.create(
@@ -577,6 +643,18 @@ class Event(PretalxModel):
 
         if not self.schedules.filter(version__isnull=True).exists():
             Schedule.objects.create(event=self)
+
+        # --- New Section: Initialize Tickets system automatically ---
+        from pretix.presale.models import Item, ItemCategory  # adjust import if needed
+        if not self.items.exists():
+            category = ItemCategory.objects.create(event=self, name=_("Tickets"))
+            Item.objects.create(
+                event=self,
+                name=_("General Admission"),
+                default_price=0,
+                category=category,
+            )
+        # ------------------------------------------------------------
 
         for role, __ in MailTemplateRoles.choices:
             self.get_mail_template(role)
@@ -603,6 +681,7 @@ class Event(PretalxModel):
                 can_see_other_reviews="always",
                 can_change_submission_state=True,
             )
+
         if not self.score_categories.all().exists():
             from pretalx.submission.models import ReviewScore, ReviewScoreCategory
 
@@ -610,24 +689,14 @@ class Event(PretalxModel):
                 event=self,
                 name=str(_("Score")),
             )
-            ReviewScore.objects.create(
-                category=category,
-                value=0,
-                label=str(_("No")),
-            )
-            ReviewScore.objects.create(
-                category=category,
-                value=1,
-                label=str(_("Maybe")),
-            )
-            ReviewScore.objects.create(
-                category=category,
-                value=2,
-                label=str(_("Yes")),
-            )
+            ReviewScore.objects.create(category=category, value=0, label=str(_("No")))
+            ReviewScore.objects.create(category=category, value=1, label=str(_("Maybe")))
+            ReviewScore.objects.create(category=category, value=2, label=str(_("Yes")))
+
         self.save()
 
     build_initial_data.alters_data = True
+
 
     @scopes_disabled()
     def copy_data_from(self, other_event, skip_attributes=None):
