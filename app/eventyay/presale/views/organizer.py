@@ -570,7 +570,7 @@ class CalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
         except calendar.IllegalMonthError:
             raise Http404()
         before = datetime(self.year, self.month, 1, 0, 0, 0, tzinfo=UTC) - timedelta(days=1)
-        after = datetime(self.year, self.month, ndays, 0, 0, 0, tzinfo=UTC) + timedelta(days=1)
+        after = datetime(self.year, self.month, ndays, 23, 59, 59, tzinfo=UTC) + timedelta(days=1)
 
         ctx['date'] = date(self.year, self.month, 1)
         ctx['before'] = before

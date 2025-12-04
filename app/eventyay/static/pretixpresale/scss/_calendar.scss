@@ -1,11 +1,16 @@
-.table-calendar, .week-calendar {
-  td, th {
+.table-calendar,
+.week-calendar {
+
+  td,
+  th {
     width: 14.29%;
   }
+
   h3 {
     margin: 0;
     font-size: 16px;
   }
+
   a.event {
     display: block;
     background: $brand-primary;
@@ -18,6 +23,7 @@
     &.continued {
       background: #888;
       opacity: 0.8;
+
       &:hover {
         background: darken(#888, 15%);
         opacity: 1;
@@ -26,6 +32,7 @@
 
     &.soon {
       opacity: 0.8;
+
       &:hover {
         opacity: 1;
       }
@@ -34,67 +41,82 @@
     &.over {
       opacity: 0.8;
       background: #888;
+
       &:hover {
         opacity: 1;
         background: darken(#888, 15%);
       }
     }
 
-    &.available, {
-      background: $brand-success;
-
-      &:hover {
-        background: darken($brand-success, 15%);
-      }
-    }
-
-    &.reserved, &.soldout, {
-      background: $brand-danger;
-
-      &:hover {
-        background: darken($brand-danger, 15%);
-      }
-    }
-
-    .event-name {
-      font-weight: bold;
-      display: block;
-    }
-    .event-time, .event-status {
-      display: block;
-    }
+    &.available,
+    {
+    background: $brand-success;
 
     &:hover {
-      text-decoration: none;
-      background: darken($brand-primary, 15%);
+      background: darken($brand-success, 15%);
     }
   }
-  .selected-day {
-    display: none;
+
+  &.reserved,
+  &.soldout,
+  {
+  background: $brand-danger;
+
+  &:hover {
+    background: darken($brand-danger, 15%);
   }
 }
+
+.event-name {
+  font-weight: bold;
+  display: block;
+}
+
+.event-time,
+.event-status {
+  display: block;
+}
+
+&:hover {
+  text-decoration: none;
+  background: darken($brand-primary, 15%);
+}
+}
+
+.selected-day {
+  display: none;
+}
+}
+
 .week-calendar {
   .weekday {
     margin-bottom: 15px;
   }
+
   h3 {
     margin-bottom: 5px;
     font-weight: bold;
     cursor: pointer;
   }
+
   h3 .fa::before {
     content: $fa-var-caret-right;
   }
+
   details[open] h3 .fa::before {
     content: $fa-var-caret-down;
   }
+
   .events {
-    overflow: hidden;  /* required for smooth toggle animation */
+    overflow: hidden;
+    /* required for smooth toggle animation */
   }
+
   .no-events {
     display: none;
   }
 }
+
 @media (min-width: $screen-md-min) {
   .week-calendar {
     display: flex;
@@ -103,6 +125,7 @@
     details[open] summary {
       cursor: default;
       pointer-events: none;
+
       h3 .fa {
         display: none;
       }
@@ -112,38 +135,55 @@
       flex: 1;
       margin: 0 5px;
     }
+
     .weekday:first-child {
       margin-left: 0;
     }
+
     .weekday:last-child {
       margin-right: 0;
     }
+
     .no-events {
       display: block;
     }
   }
 }
+
 @media (max-width: $screen-xs-max) {
   .table-calendar .day .events {
     display: none;
   }
+
   .table-calendar td.day.has-events {
     background: $brand-primary;
     cursor: pointer;
     color: white;
   }
+
   .table-calendar td.day.has-events:hover {
     background: darken($brand-primary, 15%);
   }
 }
+
 #monthselform .row {
   margin: 0 -15px;
 }
-#monthselform .row > div {
+
+#monthselform .row>div {
   margin-bottom: 15px;
 }
+
 @media(min-width: $screen-sm-min) {
-   .select-calendar-week-short {
-     max-width: 50%;
-   }
+  .select-calendar-week-short {
+    max-width: 50%;
+  }
+}
+
+.bootstrap-datetimepicker-widget {
+
+  .datepicker table tbody tr td.old,
+  .datepicker table tbody tr td.new {
+    display: none !important;
+  }
 }
