@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-02 13:00+0000\n"
+"PO-Revision-Date: 2025-12-04 14:43+0000\n"
 "Last-Translator: Andreas Kleinert <Andy.Kleinert@gmail.com>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
@@ -7632,7 +7632,7 @@ msgstr "Seitentitel"
 #: pretix/base/models/page.py:15 pretix/control/views/pages.py:64
 #: eventyay/base/models/page.py:15 eventyay/control/views/pages.py:64
 msgid "URL form"
-msgstr ""
+msgstr "URL von"
 
 #: pretix/base/models/page.py:17
 msgid ""
@@ -24367,6 +24367,10 @@ msgid ""
 "speakers and build a schedule. Manage the submission and review process, and "
 "select speakers."
 msgstr ""
+"Richten Sie Inhalte für Ihre Veranstaltung ein und konfigurieren Sie diese, "
+"erstellen Sie Ausschreibungen für Beiträge und Referenten und erstellen Sie "
+"einen Zeitplan. Verwalten Sie den Einreichungs- und Überprüfungsprozess und "
+"wählen Sie Referenten aus."
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:43
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
@@ -24379,7 +24383,7 @@ msgstr "Übersicht"
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:55
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:55
 msgid "Video"
-msgstr ""
+msgstr "Video"
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:60
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:60
@@ -24388,6 +24392,9 @@ msgid ""
 "interpretation and chats. Offer virtual exhibitor booths with rich content "
 "and social media integration."
 msgstr ""
+"Richten Sie Live-Videostreams, Online-Workshops mit Live-Audio-Dolmetschen "
+"und Chats ein und konfigurieren Sie diese. Bieten Sie virtuelle "
+"Ausstellerstände mit reichhaltigen Inhalten und Social-Media-Integration an."
 
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:64
 #: pretix/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:68
