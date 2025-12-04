@@ -24,10 +24,17 @@ def import_config(data):
     event.save()
 
     for i, room_config in enumerate(data.pop("rooms")):
-        room, _ = Room.objects.get_or_create(
+        room, created = Room.objects.get_or_create(
             import_id=room_config.pop("id"),
             event=event,
-            defaults={"name": room_config["name"]},
+            defaults={
+                "name": room_config["name"],
+                "deleted": False,
+                "force_join": False,
+                "hidden": False,
+                "sidebar_hidden": True,
+                "setup_complete": False,
+            },
         )
         room.name = room_config.pop("name")
         room.description = room_config.pop("description")
@@ -36,6 +43,22 @@ def import_config(data):
         room.module_config = room_config.pop("modules")
         room.pretalx_id = room_config.pop("pretalx_id", 0)
         room.sorting_priority = i
+        # Set ALL boolean fields with proper defaults (all have NOT NULL constraints)
+        has_modules = bool(room.module_config)
+        # Handle None values explicitly - pop() returns None if key exists with None value
+        deleted_val = room_config.pop("deleted", False)
+        room.deleted = False if deleted_val is None else deleted_val
+        force_join_val = room_config.pop("force_join", False)
+        room.force_join = False if force_join_val is None else force_join_val
+        setup_complete_val = room_config.pop("setup_complete", has_modules)
+        room.setup_complete = has_modules if setup_complete_val is None else setup_complete_val
+        hidden_val = room_config.pop("hidden", False)
+        room.hidden = False if hidden_val is None else hidden_val
+        sidebar_hidden_val = room_config.pop("sidebar_hidden", None)
+        if sidebar_hidden_val is None:
+            room.sidebar_hidden = not room.setup_complete
+        else:
+            room.sidebar_hidden = sidebar_hidden_val
         room.save()
         assert not room_config, f"Unused config data: {room_config}"
 

@@ -286,12 +286,17 @@ class RoomModule(BaseModule):
         ]
     )
     async def create_room(self, body):
+        logger.info(f"[ROOM_CREATE] WS received: {body}")
         try:
             room = await create_room(self.consumer.event, body, self.consumer.user)
         except ValidationError as e:
+            logger.error(f"[ROOM_CREATE] ValidationError: {e} (code: {e.code})")
             await self.consumer.send_error(
                 code=f"room.invalid.{e.code}", message=str(e)
             )
+        except Exception as e:
+            logger.error(f"[ROOM_CREATE] Exception: {e}", exc_info=True)
+            raise
         else:
             await self.consumer.send_success(room)
 
@@ -329,6 +334,9 @@ class RoomModule(BaseModule):
         conf = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
+        if conf is None:
+            # Room not found or not yet available, skip broadcasting
+            return
         if "room:view" not in conf["permissions"]:
             return
         await self.consumer.send_json(
@@ -353,6 +361,7 @@ class RoomModule(BaseModule):
     @room_action(permission_required=Permission.ROOM_UPDATE)
     async def config_patch(self, body):
         old = RoomConfigSerializer(self.room).data
+        logger.info(f"[ROOM_UPDATE] room_id={self.room.id}, submitted: setup_complete={body.get('setup_complete')}, sidebar_hidden={body.get('sidebar_hidden')}, module_config_length={len(body.get('module_config', []))}")
         s = RoomConfigSerializer(self.room, data=body, partial=True)
         if s.is_valid():
             update_fields = set()
@@ -434,6 +443,9 @@ class RoomModule(BaseModule):
         config = await get_room_config_for_user(
             body["room"], self.consumer.event.id, self.consumer.user
         )
+        if config is None:
+            # Room not found or not yet available, skip broadcasting
+            return
         if "room:view" not in config["permissions"]:
             return
         await self.consumer.send_json(

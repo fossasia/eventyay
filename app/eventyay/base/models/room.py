@@ -222,6 +222,11 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     pretalx_id = models.IntegerField(default=0)
     schedule_data = JSONField(null=True, blank=True)
     force_join = models.BooleanField(default=False)
+    setup_complete = models.BooleanField(default=False)
+    hidden = models.BooleanField(default=False)
+    # Default is True (hidden) for safety - rooms should be hidden until configured.
+    # The _create_room function and migration explicitly set this based on module_config.
+    sidebar_hidden = models.BooleanField(default=True)
 
     objects = RoomQuerySet.as_manager()
 
@@ -245,6 +250,34 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
 
     def __str__(self) -> str:
         return str(self.name)
+
+    def save(self, *args, **kwargs):
+        """Override save to ensure boolean fields are never None."""
+        fixed_fields = []
+        if self.deleted is None:
+            self.deleted = False
+            fixed_fields.append("deleted")
+        if self.force_join is None:
+            self.force_join = False
+            fixed_fields.append("force_join")
+        if self.setup_complete is None:
+            self.setup_complete = False
+            fixed_fields.append("setup_complete")
+        if self.hidden is None:
+            self.hidden = False
+            fixed_fields.append("hidden")
+        if self.sidebar_hidden is None:
+            self.sidebar_hidden = not self.setup_complete
+            fixed_fields.append("sidebar_hidden")
+        if fixed_fields and "update_fields" in kwargs:
+            update_fields = kwargs["update_fields"]
+            if update_fields is not None:
+                if isinstance(update_fields, (list, tuple, set)):
+                    kwargs["update_fields"] = list(set(update_fields) | set(fixed_fields))
+                # If update_fields is an unexpected type, leave it as is to avoid breaking intended behavior
+            # If update_fields is None, leave it as None to preserve "save all fields" behavior
+        
+        super().save(*args, **kwargs)
 
     @property
     def log_parent(self):
@@ -297,11 +330,38 @@ class RoomView(models.Model):
         ]
 
 
+class NullSafeBooleanField(serializers.BooleanField):
+    """BooleanField that converts None to the default value instead of raising an error.
+    
+    Supports callable defaults (DRF-style) and ensures None values are converted to
+    the default value rather than raising validation errors.
+    """
+    def __init__(self, *args, **kwargs):
+        # Allow None values so they can be processed by to_internal_value()
+        kwargs.setdefault('allow_null', True)
+        super().__init__(*args, **kwargs)
+    
+    def to_internal_value(self, data):
+        if data is None:
+            if self.default is not serializers.empty:
+                # Support callable defaults (DRF-style)
+                return self.default() if callable(self.default) else self.default
+            return False
+        return super().to_internal_value(data)
+
+
 class RoomConfigSerializer(I18nAwareModelSerializer):
+    deleted = NullSafeBooleanField(required=False, default=False)
+    force_join = NullSafeBooleanField(required=False, default=False)
+    hidden = NullSafeBooleanField(required=False, default=False)
+    sidebar_hidden = NullSafeBooleanField(required=False, default=True)
+    setup_complete = NullSafeBooleanField(required=False, default=False)
+
     class Meta:
         model = Room
         fields = (
             "id",
+            "deleted",
             "trait_grants",
             "module_config",
             "picture",
@@ -311,6 +371,9 @@ class RoomConfigSerializer(I18nAwareModelSerializer):
             "pretalx_id",
             "force_join",
             "schedule_data",
+            "setup_complete",
+            "hidden",
+            "sidebar_hidden",
         )
 
 

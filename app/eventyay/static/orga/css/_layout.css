@@ -56,18 +56,22 @@ body {
   }
 }
 
-.submission_featured {
+td.submission_featured {
   position: relative;
+  vertical-align: middle !important;
   text-align: center;
+
+  .form-check {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+  }
 
   i {
     position: absolute;
     right: 30%;
-    top: 12px;
-  }
-
-  input[type="checkbox"] {
-    margin-right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   .done {
@@ -438,8 +442,38 @@ aside.sidebar {
 }
 
 /* top navbar, /orga only */
+
+.navbar #global-nav-menu {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 4px;
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.navbar #global-nav-menu button {
+  padding: 0;
+  line-height: 1;
+}
+
+.navbar #global-nav-menu button > div {
+  width: 0.70rem;
+  height: 0.70rem;
+  margin-left: 6px;
+}
+
+.navbar .nav-link .fa-user {
+  margin-right: 5px;
+}
+
+.navbar .navbar-nav .nav-item.d-none.d-md-block {
+  margin-bottom: 0;
+}
+
 nav.navbar,
 .navbar {
+  font-weight: 500;
   display: flex;
   align-items: center;
   flex-flow: row nowrap;
@@ -455,15 +489,14 @@ nav.navbar,
   background-color: var(--color-primary);
   border: 1px solid transparent;
   border-color: var(--color-border-navbar);
-  padding: 0.25rem;
-  z-index: 200;
+  padding: .375rem;
+  padding-right: 1.1rem;
 
   .navbar-brand {
     padding-top: 0.3125rem;
-    font-weight: 600;
     padding-bottom: 0.3125rem;
     margin-right: 1rem;
-    font-size: 1.25rem;
+    font-size: 20px;
     line-height: inherit;
     white-space: nowrap;
     font-family: var(--font-family-title);
@@ -473,7 +506,6 @@ nav.navbar,
       vertical-align: middle;
       height: 30px;
       width: auto;
-      margin: auto;
     }
   }
 
@@ -485,6 +517,14 @@ nav.navbar,
     margin-top: 0;
     list-style: none;
     align-items: center;
+
+    &.d-block {
+      margin-right: 0.5rem;
+    }
+
+    .nav-item.d-none.d-md-block {
+      margin-right: 16px;
+    }
   }
 
   .nav-link {
@@ -501,6 +541,7 @@ nav.navbar,
   a,
   button {
     color: var(--color-offwhite);
+    font-size: 14px;
 
     &:hover {
       text-decoration: none;
@@ -517,30 +558,8 @@ nav.navbar,
     font-weight: normal;
   }
 }
-
-/* Navigation button styling - sharp corners to match Tickets component */
-.header-nav.btn-outline-success,
-.header-nav .btn-outline-success,
-.header-nav.btn-success,
-.header-nav .btn-success {
-  border-radius: 0 !important;
-}
-
-/* Navigation button hover, focus, and active states */
-.header-nav.btn-outline-success:hover,
-.header-nav.btn-outline-success:focus,
-.header-nav.btn-outline-success:active,
-.header-nav.btn-outline-success.active {
-  background-color: var(--color-white);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-/* Active button inset shadow */
-.header-nav.btn-outline-success.active,
-.header-nav.btn-success,
-.header-nav.btn-success.active {
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+.navbar .nav-item form button.nav-link.active {
+  margin: 0 4px;
 }
 
 .speaker-info {
@@ -1683,12 +1702,6 @@ h2 .user-name-display img {
 
     ul {
       flex-direction: row;
-
-      .fa.fa-sign-out {
-        padding-left: 12px;
-        padding-right: 12px;
-        margin-top: 0;
-      }
     }
   }
 

@@ -1,5 +1,6 @@
 import copy
 import datetime
+import logging
 import uuid
 from contextlib import suppress
 
@@ -20,6 +21,8 @@ from eventyay.core.permissions import Permission
 # Add missing imports for models referenced in this module
 from eventyay.base.models.chat import Channel
 from eventyay.base.models.audit import AuditLog
+
+logger = logging.getLogger(__name__)
 
 
 class EventConfigSerializer(serializers.Serializer):
@@ -113,6 +116,7 @@ def get_rooms(event, user):
                 .values("c")
             )
         )
+        .order_by("sorting_priority", "name")
     )
     if user:
         qs = qs.with_permission(event=event, user=user)
@@ -174,6 +178,9 @@ def get_room_config(room, permissions):
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
+        "setup_complete": room.setup_complete,
+        "hidden": room.hidden,
+        "sidebar_hidden": room.sidebar_hidden,
     }
 
     if hasattr(room, "current_roomviews"):
@@ -214,6 +221,8 @@ def get_event_config_for_user(event, user):
     for p in event_perm_values:
         if p == "event.view":
             world_aliases.append("world:view")
+        elif p == "event.update":
+            world_aliases.append("world:update")
         elif p.startswith("event:"):
             world_aliases.append("world:" + p[len("event:"):])
     merged_permissions = sorted(set(event_perm_values) | set(world_aliases))
@@ -251,6 +260,21 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         }
     else:
         data["trait_grants"] = {}
+    has_modules = bool(data.get("module_config"))
+    
+    # Set boolean field defaults at Django level
+    if data.get("deleted") is None:
+        data["deleted"] = False
+    if data.get("force_join") is None:
+        data["force_join"] = False
+    if data.get("setup_complete") is None:
+        data["setup_complete"] = has_modules
+    if data.get("hidden") is None:
+        data["hidden"] = False
+    if data.get("sidebar_hidden") is None:
+        data["sidebar_hidden"] = not data["setup_complete"]
+    
+    logger.info(f"[ROOM_CREATE] Creating room with booleans: deleted={data['deleted']}, hidden={data['hidden']}, setup_complete={data['setup_complete']}")
 
     if (
         data.get("event")
@@ -258,12 +282,17 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
         .exists()
     ):
         raise ValidationError("This room name is already taken.", code="name_taken")
+    
     room = Room.objects.create(**data)
+    
+    logger.info(f"[ROOM_CREATE] Room created: id={room.id}, hidden={room.hidden}")
     if creator:
         room.role_grants.create(event=room.event, user=creator, role="room_owner")
     channel = None
     if with_channel:
         channel = Channel.objects.create(event_id=room.event_id, room=room)
+        # Pre-warm the channel relationship to avoid lazy-loading issues during serialization
+        room.channel = channel
 
     AuditLog.objects.create(
         event_id=room.event_id,
@@ -278,7 +307,10 @@ def _create_room(data, with_channel=False, permission_preset="public", creator=N
 
 
 async def create_room(event, data, creator):
+    logger.info(f"[ROOM_CREATE] Starting: event={event.id}, name={data.get('name')}")
+    
     types = {m["type"] for m in data.get("modules", [])}
+    
     if "chat.native" in types:
         if not await event.has_permission_async(
             user=creator, permission=Permission.EVENT_ROOMS_CREATE_CHAT
@@ -325,23 +357,27 @@ async def create_room(event, data, creator):
         )
 
     # TODO input validation
+    room_data = {
+        "event": event,
+        "name": data["name"],
+        "description": data["description"],
+        "module_config": data.get("modules", []),
+    }
+    
     room, channel = await _create_room(
-        {
-            "event": event,
-            "name": data["name"],
-            "description": data["description"],
-            "module_config": data.get("modules", []),
-        },
+        room_data,
         permission_preset=data.get("permission_preset", "public"),
         creator=creator,
         with_channel=any(
             d.get("type") == "chat.native" for d in data.get("modules", [])
         ),
     )
+    
     await get_channel_layer().group_send(
         f"event.{event.id}", {"type": "room.create", "room": str(room.id)}
     )
 
+    logger.info(f"[ROOM_CREATE] Success: room_id={room.id}")
     return {
         "room": str(room.id),
         "channel": str(channel.id) if channel else None,
@@ -350,6 +386,8 @@ async def create_room(event, data, creator):
 
 async def get_room_config_for_user(room: str, event_id: str, user):
     room = await get_room(id=room, event_id=event_id)
+    if room is None:
+        return None
     permissions = await database_sync_to_async(room.event.get_all_permissions)(user)
     return get_room_config(room, permissions[room] | permissions[room.event])
 
