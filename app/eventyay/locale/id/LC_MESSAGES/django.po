@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-11-30 11:28+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2025-12-04 14:43+0000\n"
+"Last-Translator: Rachmat <rachmatwahidi.site@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -21409,7 +21409,7 @@ msgstr ""
 
 #: pretalx/agenda/phrases.py:8
 msgid "Thank you for your feedback!"
-msgstr ""
+msgstr "Terima kasih atas umpan balik Anda!"
 
 #: pretalx/agenda/phrases.py:9
 msgid "Thanks, we (and our speakers) appreciate your feedback!"
