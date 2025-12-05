@@ -13,7 +13,6 @@
 <script>
     (function () {
         // Prevent auto-scroll on schedule pages (both grid and list views)
-        console.log("Schedule page scroll blocker loaded");
 
         const originalScrollIntoView = Element.prototype.scrollIntoView;
         const originalScrollTo = window.scrollTo;
@@ -24,14 +23,12 @@
         let scrollDisabled = true;
         setTimeout(() => {
             scrollDisabled = false;
-            console.log("Scroll blocker disabled");
         }, 2000);
 
         const shouldBlock = () => scrollDisabled;
 
         Element.prototype.scrollIntoView = function (...args) {
             if (shouldBlock()) {
-                console.log("Blocked scrollIntoView on", this);
                 return;
             }
             return originalScrollIntoView.apply(this, args);
@@ -39,7 +36,6 @@
 
         window.scrollTo = function (...args) {
             if (shouldBlock()) {
-                console.log("Blocked window.scrollTo", args);
                 return;
             }
             return originalScrollTo.apply(this, args);
@@ -47,7 +43,6 @@
 
         window.scroll = function (...args) {
             if (shouldBlock()) {
-                console.log("Blocked window.scroll", args);
                 return;
             }
             return originalScroll.apply(this, args);
@@ -55,7 +50,6 @@
 
         window.scrollBy = function (...args) {
             if (shouldBlock()) {
-                console.log("Blocked window.scrollBy", args);
                 return;
             }
             return originalScrollBy.apply(this, args);
