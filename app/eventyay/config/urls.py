@@ -3,7 +3,6 @@ import importlib.util
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
-from django.urls import re_path as url
 
 import eventyay.control.urls
 import eventyay.eventyay_common.urls
@@ -12,32 +11,32 @@ from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers
 from eventyay.control.views import pages
 
 base_patterns = [
-    url(
-        r'^download/(?P<id>[^/]+)/$',
+    path(
+        'download/<id>/',
         cachedfiles.DownloadView.as_view(),
         name='cachedfile.download',
     ),
-    url(r'^healthcheck/$', health.healthcheck, name='healthcheck'),
-    url(r'^redirect/$', redirect.redir_view, name='redirect'),
-    url(
-        r'^jsi18n/(?P<lang>[a-zA-Z-_]+)/$',
+    path('healthcheck/', health.healthcheck, name='healthcheck'),
+    path('redirect/', redirect.redir_view, name='redirect'),
+    path(
+        'jsi18n/<slug:lang>/',
         js_catalog.js_catalog,
         name='javascript-catalog',
     ),
-    url(r'^metrics$', metrics.serve_metrics, name='metrics'),
-    url(r'^csp_report/$', csp.csp_report, name='csp.report'),
-    url(r'^js_helpers/states/$', js_helpers.states, name='js_helpers.states'),
-    # url(r'^api/v1/', include(('eventyay.api.urls', 'eventyayapi'), namespace='api-v1')),
-    # url(r'^api/$', RedirectView.as_view(url='/api/v1/'), name='redirect-api-version'),
-    url(r'^accounts/', include('allauth.urls')),
+    path('metrics/', metrics.serve_metrics, name='metrics'),
+    path('csp_report/', csp.csp_report, name='csp.report'),
+    path('js_helpers/states/', js_helpers.states, name='js_helpers.states'),
+    # path('api/v1/', include(('eventyay.api.urls', 'eventyayapi'), namespace='api-v1')),
+    # path('api/', RedirectView.as_view(url='/api/v1/'), name='redirect-api-version'),
+    path('accounts/', include('allauth.urls')),
 ]
 
 control_patterns = [
-    url(r'^control/', include((eventyay.control.urls, 'control'))),
+    path('control/', include((eventyay.control.urls, 'control'))),
 ]
 
 eventyay_common_patterns = [
-    url(r'^common/', include((eventyay.eventyay_common.urls, 'common'), namespace='common')),
+    path('common/', include((eventyay.eventyay_common.urls, 'common'), namespace='common')),
 ]
 
 
