@@ -444,7 +444,7 @@ LANGUAGES_INFORMATION = {
         "percentage": 95,
     },
     "pt-br": {
-        "name": _("Brasilian Portuguese"),
+        "name": _("Portuguese (Brazil)"),
         "natural_name": "Português brasileiro",
         "official": False,
         "percentage": 99,
