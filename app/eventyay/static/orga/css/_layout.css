@@ -312,9 +312,11 @@ aside.sidebar {
     background-color: var(--color-grey-pale);
   }
 
+  #nav-search-wrapper.nav-link:hover {
+    background-color: transparent;
+  }
+
   #nav-search {
-    display: flex;
-    flex-direction: column;
     padding: 8px 0 8px 4px;
     display: flex;
     flex-direction: row;
@@ -322,6 +324,11 @@ aside.sidebar {
     cursor: pointer;
     color: var(--color-primary);
     height: 56px;
+
+    &:hover #search-context-icon,
+    &:hover #search-context-text .context-name {
+      color: var(--color-primary-hover);
+    }
 
     &:after {
       /* dropdown indicator */
@@ -346,18 +353,22 @@ aside.sidebar {
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        line-height: 17px;
       }
 
       .context-name {
         font-family: "Open Sans";
         font-weight: 600;
         font-size: 15px;
+        padding-bottom: 2px;
+        margin-bottom: 2px;
       }
 
       .context-meta {
         font-size: 11px;
         color: var(--color-text-lighter);
         font-weight: normal;
+        margin-top: 1px;
       }
     }
   }

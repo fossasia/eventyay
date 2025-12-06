@@ -182,13 +182,12 @@ body {
             opacity: 1;
         }
     }
-    border-bottom: 2px solid darken($gray-lightest, 6.5%);
+    border-bottom: 1px solid darken($gray-lightest, 6.5%);
 
     .context-indicator {
         display: inline-block;
         padding-left: 5px;
         padding-right: 2px;
-        line-height: 15px;
         vertical-align: middle;
         span {
             display: block;
@@ -196,15 +195,19 @@ body {
             text-overflow: ellipsis;
             white-space: nowrap;
             overflow: hidden;
+            line-height: 17px;
         }
         span.context-name {
-            font-weight: bold;
+            font-weight: 600;
             vertical-align: middle;
             font-size: 15px;
+            padding-bottom: 2px;
+            margin-bottom: 2px;
         }
         span.context-meta {
-            opacity: 0.7;
             font-size: 11px;
+            color: $body-color-light;
+            font-weight: normal;
         }
     }
 }
