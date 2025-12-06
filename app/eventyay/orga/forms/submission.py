@@ -280,6 +280,7 @@ class AddSpeakerForm(forms.Form):
         super().__init__(*args, **kwargs)
         if require_name:
             self.fields['name'].required = True
+            self.fields['email'].required = True
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:

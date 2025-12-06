@@ -532,14 +532,10 @@ class Schedule(PretalxModel):
         speakers = {}
         for new_talk in self.changes['new_talks']:
             for speaker in new_talk.submission.speakers.all():
-                if speaker not in speakers:
-                    speakers[speaker] = {'create': [], 'update': []}
-                speakers[speaker]['create'].append(new_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['create'].append(new_talk)
         for moved_talk in self.changes['moved_talks']:
             for speaker in moved_talk['submission'].speakers.all():
-                if speaker not in speakers:
-                    speakers[speaker] = {'create': [], 'update': []}
-                speakers[speaker]['update'].append(moved_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['update'].append(moved_talk)
         return speakers
 
     def generate_notifications(self, save=False):

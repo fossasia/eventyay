@@ -999,8 +999,9 @@ class Submission(GenerateCode, PretalxModel):
             speaker = User.objects.get(email__iexact=email)
             if not speaker.profiles.filter(event=self.event).exists():
                 SpeakerProfile.objects.create(user=speaker, event=self.event)
-            if name and name.strip() and speaker.fullname != name.strip():
-                speaker.fullname = name.strip()
+            normalized_name = name.strip() if name else ""
+            if normalized_name and speaker.fullname != normalized_name:
+                speaker.fullname = normalized_name
                 speaker.save(update_fields=['fullname'])
         except User.DoesNotExist:
             speaker = create_user(email=email, name=name, event=self.event)
