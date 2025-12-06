@@ -512,6 +512,10 @@ def default_feature_flags():
         'use_submission_comments': True,
         'present_multiple_times': False,
         'submission_public_review': True,
+        # Video/webapp feature flags
+        'chat-moderation': True,
+        'polls': True,
+        'schedule-control': True,
     }
 
 
