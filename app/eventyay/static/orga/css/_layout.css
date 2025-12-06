@@ -313,8 +313,6 @@ aside.sidebar {
   }
 
   #nav-search {
-    display: flex;
-    flex-direction: column;
     padding: 8px 0 8px 4px;
     display: flex;
     flex-direction: row;
@@ -322,6 +320,7 @@ aside.sidebar {
     cursor: pointer;
     color: var(--color-primary);
     height: 56px;
+    margin-top: 1px;
 
     &:after {
       /* dropdown indicator */
@@ -352,6 +351,11 @@ aside.sidebar {
         font-family: "Open Sans";
         font-weight: 600;
         font-size: 15px;
+<<<<<<< Updated upstream
+=======
+        padding-bottom: 2px;
+        margin-bottom: 3px;
+>>>>>>> Stashed changes
       }
 
       .context-meta {

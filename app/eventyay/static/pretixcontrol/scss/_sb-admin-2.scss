@@ -156,7 +156,7 @@ body {
 
 .sidebar .context-selector {
     .dropdown-toggle {
-        padding: 10px 20px 9px 7px;
+        padding: 8px 0 8px 4px;
         display: block;
         text-decoration: none;
         position: relative;
@@ -182,7 +182,7 @@ body {
             opacity: 1;
         }
     }
-    border-bottom: 2px solid darken($gray-lightest, 6.5%);
+    border-bottom: 1px solid darken($gray-lightest, 6.5%);
 
     .context-indicator {
         display: inline-block;

@@ -107,6 +107,7 @@ body:not(.sidebar-minimized) .sidebar {
       display: flex;
       flex-direction: row;
       align-items: center;
+      height: 56px;
 
       .context-icon {
         min-width: 38px;
@@ -119,7 +120,11 @@ body:not(.sidebar-minimized) .sidebar {
       flex-direction: column;
       flex-grow: 1;
       overflow: hidden;
+<<<<<<< Updated upstream
       margin-left: 6px;
+=======
+      margin-left: 1px;
+>>>>>>> Stashed changes
 
       span {
         text-overflow: ellipsis;
