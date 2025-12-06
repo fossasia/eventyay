@@ -325,12 +325,13 @@ unified_event_patterns = [
     ),
 ]
 
-# Anonymous room invite short token pattern (6 alphanumeric characters)
+# Anonymous room invite short token pattern (6 characters)
 # Must be placed before presale_patterns_main to avoid conflict with organizer slugs
 # The token uses characters: abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789
+# (excludes visually confusing characters: l, o, I, O, 0)
 anonymous_invite_patterns = [
     re_path(
-        r'^(?P<token>[a-zA-Z0-9]{6})/?$',
+        r'^(?P<token>[a-km-np-zA-HJ-NP-Z1-9]{6})/?$',
         AnonymousInviteRedirectView.as_view(),
         name='anonymous.invite.redirect',
     ),
