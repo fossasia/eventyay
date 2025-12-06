@@ -308,18 +308,16 @@ unified_event_patterns = [
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
+                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
                 re_path(
-                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
-                ),
-                path(
-                    'video/<path:path>',
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
                     VideoAssetView.as_view(),
-                    name='video.assets',
+                    name='video.assets.file',
                 ),
                 # The frontend Video SPA app is not served by Nginx so the Django view needs to
                 # serve all paths under /video/ to allow client-side routing.
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                path('talk/', EventStartpage.as_view(), name='event.talk'),
+                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
