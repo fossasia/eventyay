@@ -529,12 +529,16 @@ class Schedule(PretalxModel):
         if self.changes['count'] == len(self.changes['canceled_talks']):
             return result
 
-        speakers = defaultdict(lambda: {'create': [], 'update': []})
+        speakers = {}
         for new_talk in self.changes['new_talks']:
             for speaker in new_talk.submission.speakers.all():
+                if speaker not in speakers:
+                    speakers[speaker] = {'create': [], 'update': []}
                 speakers[speaker]['create'].append(new_talk)
         for moved_talk in self.changes['moved_talks']:
             for speaker in moved_talk['submission'].speakers.all():
+                if speaker not in speakers:
+                    speakers[speaker] = {'create': [], 'update': []}
                 speakers[speaker]['update'].append(moved_talk)
         return speakers
 
