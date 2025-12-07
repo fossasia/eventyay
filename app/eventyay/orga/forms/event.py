@@ -111,9 +111,11 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             + ' '
             + str(_('You can find the page <a {href}>here</a>.')).format(href=f'href="{self.instance.urls.featured}"')
         )
+
     def clean_locale(self):
         locale = self.cleaned_data.get('locale')
-        if locale and locale not in dict(settings.LANGUAGES):
+        valid_locales = {l[0] for l in settings.LANGUAGES}
+        if locale and locale not in valid_locales:
             raise forms.ValidationError(_("This language is not supported."))
         return locale
 
