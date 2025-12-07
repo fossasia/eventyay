@@ -2,7 +2,7 @@
 .c-color-picker
 	.color(:style="{'--color': modelValue}")
 	bunt-input(v-bind="$attrs", :modelValue="modelValue", @update:modelValue="$emit('update:modelValue', $event)")
-	input.color-picker(type="color", :value="modelValue", @change="$emit('update:modelValue', $event.target.value)")
+	input.color-picker(type="color", :value="modelValue", @input="$emit('update:modelValue', $event.target.value)")
 </template>
 <script>
 export default {
