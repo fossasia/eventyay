@@ -132,8 +132,8 @@ body:not(.sidebar-minimized) .sidebar {
       span.context-name {
         font-weight: 600;
         font-size: 15px;
-        margin-top: 2px;
-        margin-bottom: 4px;
+        padding-bottom: 2px;
+        margin-bottom: 2px;
       }
 
       span.context-meta {
@@ -378,8 +378,8 @@ body:not(.sidebar-minimized) #page-wrapper {
         span.context-name {
           font-weight: 600;
           font-size: 15px;
-          margin-top: 2px;
-          margin-bottom: 4px;
+          padding-bottom: 2px;
+          margin-bottom: 2px;
         }
 
         span.context-meta {
