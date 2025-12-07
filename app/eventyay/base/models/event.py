@@ -174,57 +174,6 @@ FEATURE_FLAGS = [
 ]
 
 
-def default_feature_flags():
-    return {
-        "show_schedule": True,
-        "show_featured": "pre_schedule",
-        "show_widget_if_not_public": False,
-        "export_html_on_release": False,
-        "use_tracks": True,
-        "use_feedback": True,
-        "use_submission_comments": True,
-        "present_multiple_times": False,
-        "submission_public_review": True,
-        "chat-moderation": True,
-        "polls": True,
-    }
-
-def default_display_settings():
-    return {
-        "schedule": "grid",
-        "imprint_url": None,
-        "header_pattern": "",
-        "html_export_url": "",
-        "meta_noindex": False,
-        "texts": {"agenda_session_above": "", "agenda_session_below": ""},
-    }
-
-
-def default_review_settings():
-    return {
-        "score_mandatory": False,
-        "text_mandatory": False,
-        "aggregate_method": "median",
-        "score_format": "words_numbers",
-    }
-
-
-def default_mail_settings():
-    return {
-        "mail_from": "",
-        "reply_to": "",
-        "signature": "",
-        "subject_prefix": "",
-        "smtp_use_custom": "",
-        "smtp_host": "",
-        "smtp_port": 587,
-        "smtp_username": "",
-        "smtp_password": "",
-        "smtp_use_tls": "",
-        "smtp_use_ssl": "",
-        "mail_on_new_submission": False,
-    }
-
 class EventMixin:
     def clean(self):
         if self.presale_start and self.presale_end and self.presale_start > self.presale_end:
