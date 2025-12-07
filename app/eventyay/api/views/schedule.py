@@ -213,6 +213,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
         description="This endpoint always returns a filtered list. If you don’t provide any filters of your own, it will be filtered to show only talk slots in the latest published schedule.",
         parameters=[
             build_search_docs("submission.title", "submission.speakers.name"),
+            build_search_docs("submission.title", "submission.speakers.fullname"),
             build_expand_docs(
                 "room",
                 "schedule",
@@ -263,6 +264,7 @@ class TalkSlotViewSet(
     queryset = TalkSlot.objects.none()
     endpoint = "slots"
     search_fields = ("submission__title", "submission__speakers__name")
+    search_fields = ("submission__title", "submission__speakers__fullname")
     filterset_class = TalkSlotFilter
     permission_map = {"ical": "schedule.view_talkslot"}
 

@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 5.14-dev\n"
 
 #: pretix/api/auth/devicesecurity.py:6
 msgid ""
@@ -176,6 +177,7 @@ msgstr ""
 #: pretix/api/serializers/item.py:327 pretix/control/forms/item.py:97
 msgid "This type of question cannot be asked during check-in."
 msgstr ""
+msgstr "此類問題在驗票時不得提出。"
 
 #: pretix/api/serializers/order.py:1109 pretix/api/serializers/order.py:1116
 msgid "The product \"{}\" is not available on this date."
@@ -288,6 +290,11 @@ msgstr ""
 #: pretix/api/webhooks.py:231
 msgid "Ticket check-in reverted"
 msgstr ""
+msgstr "已驗票"
+
+#: pretix/api/webhooks.py:231
+msgid "Ticket check-in reverted"
+msgstr "驗票訊息已撤銷"
 
 #: pretix/api/webhooks.py:235
 msgid "Event created"
@@ -931,6 +938,7 @@ msgstr ""
 #: pretix/control/forms/event.py:101
 msgid "Default language"
 msgstr ""
+msgstr "預設語言"
 
 #: pretix/base/configurations/default_setting.py:923
 msgid "Region"
@@ -2263,6 +2271,7 @@ msgstr ""
 #: pretix/control/templates/pretixcontrol/items/questions.html:8
 msgid "Questions"
 msgstr ""
+msgstr "問題"
 
 #: pretix/base/exporters/dekodi.py:82
 #, python-brace-format
@@ -3485,6 +3494,7 @@ msgstr ""
 #: pretix/base/forms/user.py:32 pretix/control/forms/users.py:29
 msgid "New password"
 msgstr ""
+msgstr "新密碼"
 
 #: pretix/base/forms/user.py:36 pretix/control/forms/users.py:33
 msgid "Repeat new password"
@@ -7815,6 +7825,7 @@ msgstr ""
 #: pretix/control/forms/organizer_forms/organizer_update_form.py:31
 msgid "Custom domain"
 msgstr ""
+msgstr "自定網域"
 
 #: pretix/control/forms/event.py:396
 #: pretix/control/forms/organizer_forms/organizer_update_form.py:33
@@ -19455,6 +19466,7 @@ msgstr ""
 #: pretix/plugins/statistics/templates/pretixplugins/statistics/index.html:118
 msgid "Available"
 msgstr ""
+msgstr "可使用"
 
 #: pretix/plugins/statistics/templates/pretixplugins/statistics/index.html:123
 msgid "On Sale"
@@ -20377,6 +20389,7 @@ msgstr ""
 #: pretix/presale/templates/pretixpresale/event/index.html:38
 msgid "Schedule"
 msgstr ""
+msgstr "議程時間"
 
 #: pretix/presale/templates/pretixpresale/event/index.html:43
 msgid "Sessions"

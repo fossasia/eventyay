@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from eventyay.base.forms import SettingsForm
 from eventyay.base.settings import validate_event_settings
 from eventyay.base.models import Event
+from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.control.forms import (
      SplitDateTimeField,
      SplitDateTimePickerWidget,
@@ -58,6 +59,15 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+        
+        # Ensure the language selectors use the custom dropdown widget even if defaults are not picked up elsewhere,
+        # while preserving any existing widget attributes (ids, data-*, classes).
+        for fname in ('locales', 'content_locales'):
+            if fname in self.fields:
+                old_widget = self.fields[fname].widget
+                self.fields[fname].widget = MultipleLanguagesWidget(
+                    choices=self.fields[fname].choices, attrs=getattr(old_widget, 'attrs', None)
+                )
         if self.event and 'content_locales' in self.fields:
             self.fields['content_locales'].initial = self.event.content_locales
 
@@ -147,4 +157,3 @@ class EventUpdateForm(I18nModelForm):
             'date_to': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_date_from_0'}),
             'date_admission': SplitDateTimePickerWidget(attrs={'data-date-default': '#id_date_from_0'}),
         }
-

@@ -16,6 +16,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.cfp.views.event import EventStartpage
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -43,10 +44,7 @@ class VideoSPAView(View):
         event = None
         if organizer_slug and event_slug:
             try:
-                event = Event.objects.select_related('organizer').get(
-                    slug=event_slug,
-                    organizer__slug=organizer_slug
-                )
+                event = Event.objects.select_related('organizer').get(slug=event_slug, organizer__slug=organizer_slug)
             except Event.DoesNotExist:
                 return HttpResponse('Event not found', status=404)
 
@@ -62,14 +60,17 @@ class VideoSPAView(View):
             # Inject window.venueless config (frontend still expects this name)
             # Mirror structure used in legacy live AppView but adjusted basePath
             from django.urls import reverse
+
             # Quick fix: avoid reverse('api:root') which is currently not included -> NoReverseMatch
-            api_base = f"/api/v1/events/{event.pk}/"  # TODO replace with reverse once API namespace wired
+            api_base = f'/api/v1/events/{event.pk}/'  # TODO replace with reverse once API namespace wired
+
             # Best effort reverse for optional endpoints
             def safe_reverse(name, **kw):
                 try:
                     return reverse(name, kwargs=kw) if kw else reverse(name)
                 except Exception:
                     return None
+
             cfg = event.config or {}
 
             with scope(event=event):
@@ -104,13 +105,14 @@ class VideoSPAView(View):
                 'locales': ['en', 'de', 'pt_BR', 'ar', 'fr', 'es', 'uk', 'ru'],
                 'noThemeEndpoint': True,  # Prevent frontend from requesting missing /theme endpoint
             }
+
             class EventyayJSONEncoder(DjangoJSONEncoder):
                 def default(self, obj):
                     if isinstance(obj, (Promise, LazyI18nString)):
                         return force_str(obj)
                     return super().default(obj)
 
-            content = f"<script>window.eventyay={json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}"
+            content = f'<script>window.eventyay={json.dumps(injected, cls=EventyayJSONEncoder)}</script>{content}'
         elif event_identifier:
             # Event identifier provided but not found -> 404
             return HttpResponse('Event not found', status=404)
@@ -123,13 +125,18 @@ class VideoSPAView(View):
         resp._csp_ignore = True  # Disable CSP for SPA (relies on dynamic inline scripts)
         return resp
 
+
 class VideoAssetView(View):
     def get(self, request, path='', *args, **kwargs):
         # Accept empty path -> index handling done by SPA view
-        candidate_paths = [
-            os.path.join(WEBAPP_DIST_DIR, path),
-            os.path.join(WEBAPP_DIST_DIR, 'assets', path),
-        ] if path else []
+        candidate_paths = (
+            [
+                os.path.join(WEBAPP_DIST_DIR, path),
+                os.path.join(WEBAPP_DIST_DIR, 'assets', path),
+            ]
+            if path
+            else []
+        )
         for fp in candidate_paths:
             if os.path.isfile(fp):
                 rel = os.path.relpath(fp, WEBAPP_DIST_DIR)
@@ -142,6 +149,7 @@ class VideoAssetView(View):
                 return resp
         raise Http404()
 
+
 presale_patterns_main = [
     path(
         '',
@@ -152,6 +160,9 @@ presale_patterns_main = [
                     re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(organizer_patterns)),
                     re_path(
                         r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
+                    path('<orgslug:organizer>/', include(organizer_patterns)),
+                    path(
+                        '<orgslug:organizer>/<slug:event>/',
                         include(event_patterns),
                     ),
                     path(
@@ -166,7 +177,14 @@ presale_patterns_main = [
     )
 ]
 
+# Plugin URL registration strategy:
+# - Local plugins (in eventyay.plugins.*): Dynamic discovery is safe because they're greppable
+#   in the local codebase (eventyay/plugins/ directory).
+# - External plugins (installed packages): Explicit registration for easier debugging and tracing.
+
 raw_plugin_patterns = []
+
+# Auto-register local plugins from eventyay.plugins.*
 for app in apps.get_app_configs():
     if hasattr(app, 'EventyayPluginMeta'):
         if importlib.util.find_spec(app.name + '.urls'):
@@ -186,8 +204,65 @@ for app in apps.get_app_configs():
                 )
             raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
             logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
+    if hasattr(app, 'EventyayPluginMeta') and app.name.startswith('eventyay.plugins.'):
+        if importlib.util.find_spec(f'{app.name}.urls'):
+            try:
+                urlmod = importlib.import_module(f'{app.name}.urls')
+                single_plugin_patterns = []
+                if hasattr(urlmod, 'urlpatterns'):
+                    single_plugin_patterns += urlmod.urlpatterns
+                if hasattr(urlmod, 'event_patterns'):
+                    patterns = plugin_event_urls(urlmod.event_patterns, plugin=app.name)
+                    single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
+                if hasattr(urlmod, 'organizer_patterns'):
+                    patterns = urlmod.organizer_patterns
+                    single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
+                raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
+                logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
+            except (ImportError, AttributeError, TypeError):
+                logger.exception('Error loading plugin URLs for %s', app.name)
+
+# Explicit registration for external plugins (installed packages)
+# Add external plugins here as they are installed and tested
+
+# eventyay-paypal (always installed via pyproject.toml)
+try:
+    if importlib.util.find_spec('eventyay_paypal.urls'):
+        urlmod = importlib.import_module('eventyay_paypal.urls')
+        single_plugin_patterns = []
+        if hasattr(urlmod, 'urlpatterns'):
+            single_plugin_patterns += urlmod.urlpatterns
+        if hasattr(urlmod, 'event_patterns'):
+            patterns = plugin_event_urls(urlmod.event_patterns, plugin='eventyay_paypal')
+            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
+        if hasattr(urlmod, 'organizer_patterns'):
+            patterns = urlmod.organizer_patterns
+            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
+        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'eventyay_paypal'))))
+        logger.debug('Registered URLs under "eventyay_paypal" namespace:\n%s', single_plugin_patterns)
+except (ImportError, AttributeError, TypeError):
+    logger.exception('Error loading plugin URLs for eventyay_paypal')
+
+# eventyay-stripe (always installed via pyproject.toml)
+try:
+    if importlib.util.find_spec('eventyay_stripe.urls'):
+        urlmod = importlib.import_module('eventyay_stripe.urls')
+        single_plugin_patterns = []
+        if hasattr(urlmod, 'urlpatterns'):
+            single_plugin_patterns += urlmod.urlpatterns
+        if hasattr(urlmod, 'event_patterns'):
+            patterns = plugin_event_urls(urlmod.event_patterns, plugin='eventyay_stripe')
+            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
+        if hasattr(urlmod, 'organizer_patterns'):
+            patterns = urlmod.organizer_patterns
+            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
+        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'eventyay_stripe'))))
+        logger.debug('Registered URLs under "eventyay_stripe" namespace:\n%s', single_plugin_patterns)
+except (ImportError, AttributeError, TypeError):
+    logger.exception('Error loading plugin URLs for eventyay_stripe')
 
 # Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
+# TODO: Do we really want this fallback?
 try:
     if importlib.util.find_spec('pretix_venueless.urls'):
         urlmod = importlib.import_module('pretix_venueless.urls')
@@ -206,6 +281,12 @@ try:
             )
         raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
 except TypeError:
+            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
+        if hasattr(urlmod, 'organizer_patterns'):
+            patterns = urlmod.organizer_patterns
+            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
+        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
+except (ImportError, AttributeError, TypeError):
     logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
@@ -218,16 +299,23 @@ storage_patterns = [
 unified_event_patterns = [
     re_path(
         r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
+    path(
+        '<orgslug:organizer>/<slug:event>/',
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
-                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
                 re_path(
-                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
-                    VideoAssetView.as_view(),
-                    name='video.assets.file',
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
                 ),
+                path(
+                    'video/<path:path>',
+                    VideoAssetView.as_view(),
+                    name='video.assets',
+                ),
+                # The frontend Video SPA app is not served by Nginx so the Django view needs to
+                # serve all paths under /video/ to allow client-side routing.
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
+                path('talk/', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
