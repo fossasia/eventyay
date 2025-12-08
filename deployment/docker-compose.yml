@@ -43,6 +43,7 @@ services:
     container_name: eventyay-next-worker
     entrypoint: celery -A eventyay worker -l info
     volumes:
+      - ./data/static:/home/app/web/eventyay/static.dist
       - ./eventyay.cfg:/etc/eventyay.cfg:ro
     env_file:
       - ./.env
