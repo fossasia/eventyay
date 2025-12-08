@@ -281,6 +281,8 @@ _LIBRARY_APPS = (
     'oauth2_provider',
     'statici18n',
     'rest_framework',
+    # Provide styling for forms used by DRF API docs.
+    'crispy_forms',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -779,6 +781,8 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
     'compressor.finders.CompressorFinder',
 )
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 NANOCDN_URL = conf.nanocdn_url
 default_storage_backend = (
