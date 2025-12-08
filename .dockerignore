@@ -12,3 +12,4 @@ app/.venv
 app/eventyay/static/CACHE
 *.egg-info
 **/__pycache__
+**/node_modules

@@ -43,6 +43,8 @@ COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
 RUN npm ci --prefix=eventyay/frontend/schedule-editor
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
 # rollup needed by Django-Compressor
+RUN npm --version
+COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
 RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
 # webapp
 COPY eventyay/webapp eventyay/webapp
