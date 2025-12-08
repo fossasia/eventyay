@@ -37,17 +37,17 @@ COPY Makefile Makefile
 # global-nav-menu
 COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
 RUN npm ci --prefix=eventyay/frontend/global-nav-menu
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/frontend/global-nav-menu
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/global-nav-menu
 # schedule editor
 COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
 RUN npm ci --prefix=eventyay/frontend/schedule-editor
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/frontend/schedule-editor
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
 # rollup needed by Django-Compressor
 RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
 # webapp
 COPY eventyay/webapp eventyay/webapp
 RUN npm install --prefix=eventyay/webapp
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/webapp
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp
 
 
 #########
@@ -90,9 +90,9 @@ RUN chown -R app:app $APP_HOME
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
 COPY --from=builder --chown=app:app $APP_HOME/.venv $APP_HOME/.venv
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/global-nav-menu $APP_HOME/eventyay/static/global-nav-menu
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/schedule-editor $APP_HOME/eventyay/static/schedule-editor
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/webapp $APP_HOME/eventyay/static/webapp
+COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/global-nav-menu $APP_HOME/eventyay/data/compiled-frontend/global-nav-menu
+COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/schedule-editor $APP_HOME/eventyay/data/compiled-frontend/schedule-editor
+COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/webapp $APP_HOME/eventyay/data/compiled-frontend/webapp
 
 # change to the app user
 USER app
