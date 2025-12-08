@@ -1,4 +1,3 @@
-import logging
 import sys
 
 from channels.db import database_sync_to_async
@@ -10,8 +9,6 @@ from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import RoomConfigSerializer, RoomView
 from eventyay.base.services.user import get_public_users
-
-logger = logging.getLogger(__name__)
 
 
 @database_sync_to_async
@@ -74,23 +71,8 @@ async def get_viewers(event: Event, room: Room):
 @database_sync_to_async
 @atomic
 def save_room(event, room, update_fields, old_data, by_user):
-    if not isinstance(update_fields, list):
-        update_fields = list(update_fields) if update_fields else []
-    extra_fields = []
-    has_modules = bool(room.module_config) and len(room.module_config) > 0
-    if has_modules and "module_config" not in update_fields:
-        extra_fields.append("module_config")
-    if has_modules and not room.setup_complete:
-        room.setup_complete = True
-        extra_fields.append("setup_complete")
-        if "sidebar_hidden" not in update_fields and room.sidebar_hidden:
-            room.sidebar_hidden = False
-            extra_fields.append("sidebar_hidden")
-    if extra_fields:
-        update_fields = list(set(update_fields) | set(extra_fields))
     room.save(update_fields=update_fields)
     new = RoomConfigSerializer(room).data
-    logger.info(f"[ROOM_UPDATE] room_id={room.id}, setup_complete={new.get('setup_complete')}, sidebar_hidden={new.get('sidebar_hidden')}, module_config_length={len(new.get('module_config', []))}")
 
     AuditLog.objects.create(
         event_id=event.id,
@@ -131,14 +113,12 @@ def delete_room(event, room, by_user):
 def reorder_rooms(event, id_list, by_user):
     def key(r):
         try:
-            return id_list.index(str(r.id)), r.sorting_priority, r.name, r.id
+            return id_list.index(str(r.id)), r.sorting_priority, r.name
         except Exception:
-            return sys.maxsize, r.sorting_priority, r.name, r.id
+            return sys.maxsize, r.sorting_priority, r.name
 
     all_rooms = list(
-        event.rooms.filter(deleted=False)
-        .only("id", "name", "sorting_priority")
-        .order_by("sorting_priority", "name", "id")
+        event.rooms.filter(deleted=False).only("id", "name", "sorting_priority")
     )
     all_rooms.sort(key=key)
     to_update = []

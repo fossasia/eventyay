@@ -1,4 +1,6 @@
 import logging
+from configparser import RawConfigParser
+from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -28,7 +30,8 @@ def orga_events(request):
     # Extract site specific values from settings.CONFIG.items('site') and add them to the context
     # This is a bit of a hack, but it's the only way to get the site specific values into the context
     # rather than using the settings object directly in the template
-    site_config = {'name': settings.INSTANCE_NAME}
+    config = cast(RawConfigParser, settings.TALK_CONFIG)
+    site_config = dict(config.items('site'))
     context['site_config'] = site_config
     context['base_path'] = settings.BASE_PATH
     context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
