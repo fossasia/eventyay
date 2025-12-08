@@ -42,6 +42,8 @@ RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/fronte
 COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
 RUN npm ci --prefix=eventyay/frontend/schedule-editor
 RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/frontend/schedule-editor
+# rollup needed by Django-Compressor
+RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
 # webapp
 COPY eventyay/webapp eventyay/webapp
 RUN npm install --prefix=eventyay/webapp

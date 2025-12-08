@@ -19,8 +19,6 @@ mv /home/app/web/eventyay/static.dist.backup/* /home/app/web/eventyay/static.dis
 #echo "============== running collectstatic ================"
 #python manage.py collectstatic --noinput
 echo "============== running compress ====================="
-# collectstatic drops exe bit, but compress needs it
-#chmod ugo+x /home/app/web/eventyay/static.dist/node_prefix/node_modules/rollup/dist/bin/rollup
 python manage.py compress
 echo "============== running migrate ======================"
 python manage.py migrate

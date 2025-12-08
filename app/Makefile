@@ -6,8 +6,8 @@ localecompile:
 	./manage.py compilemessages
 
 localegen:
-	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" --ignore "eventyay/static/npm_dir/*" $(LNGS)
-	./manage.py makemessages --keep-pot -d djangojs --ignore "eventyay/static/npm_dir/*" --ignore "eventyay/helpers/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static.dist/*" --ignore "data/*" --ignore "eventyay/static/rrule/*" --ignore "build/*" $(LNGS)
+	./manage.py makemessages --keep-pot --ignore "eventyay/helpers/*" $(LNGS)
+	./manage.py makemessages --keep-pot -d djangojs --ignore "eventyay/helpers/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static/jsi18n/*" --ignore "eventyay/static.dist/*" --ignore "data/*" --ignore "eventyay/static/rrule/*" --ignore "build/*" $(LNGS)
 
 staticfiles: jsi18n
 	./manage.py collectstatic --noinput
@@ -30,6 +30,7 @@ npminstall:
 	npm ci --prefix=eventyay/frontend/schedule-editor
 	OUT_DIR=$(shell pwd)/eventyay/static npm run build --prefix=eventyay/frontend/global-nav-menu
 	OUT_DIR=$(shell pwd)/eventyay/static npm run build --prefix=eventyay/frontend/schedule-editor
+	npm ci --prefix=eventyay/frontend/webcheckin-bundler
 
 webappbuild:
 	npm ci --prefix=eventyay/webapp
