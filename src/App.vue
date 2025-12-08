@@ -31,6 +31,7 @@
 			:scrollParent="scrollParent",
 			:favs="favs",
 			:onHomeServer="onHomeServer",
+			:disableAutoScroll="disableAutoScroll",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -45,6 +46,7 @@
 			:scrollParent="scrollParent",
 			:favs="favs",
 			:onHomeServer="onHomeServer",
+			:disableAutoScroll="disableAutoScroll",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -111,6 +113,11 @@ export default {
 		dateFilter: {
 			type: String,
 			default: ''
+		},
+		// Disable auto-scroll to current time on page load
+		disableAutoScroll: {
+			type: Boolean,
+			default: false
 		}
 	},
 	provide () {

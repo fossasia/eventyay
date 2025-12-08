@@ -67,7 +67,8 @@ export default {
 		locale: String,
 		hasAmPm: Boolean,
 		scrollParent: Element,
-		onHomeServer: Boolean
+		onHomeServer: Boolean,
+		disableAutoScroll: Boolean
 	},
 	data () {
 		return {
@@ -266,6 +267,8 @@ export default {
 			}
 		}
 		if (fragmentIsDate || !this.$refs.now) return
+		// Skip auto-scroll if disabled via prop
+		if (this.disableAutoScroll) return
 		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop()
 		if (this.scrollParent) {
 			this.scrollParent.scrollTop = scrollTop

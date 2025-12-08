@@ -13,6 +13,7 @@
 		:scrollParent="scrollParent",
 		:favs="favs",
 		:onHomeServer="onHomeServer",
+		:disableAutoScroll="disableAutoScroll",
 		@changeDay="$emit('changeDay', $event)",
 		@fav="$emit('fav', $event)",
 		@unfav="$emit('unfav', $event)"
@@ -40,7 +41,8 @@ export default {
 		locale: String,
 		hasAmPm: Boolean,
 		scrollParent: Element,
-		onHomeServer: Boolean
+		onHomeServer: Boolean,
+		disableAutoScroll: Boolean
 	},
 	computed: {
 		gridGroups () {

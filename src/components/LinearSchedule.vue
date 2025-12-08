@@ -42,7 +42,8 @@ export default {
 		currentDay: String,
 		now: Object,
 		scrollParent: Element,
-		onHomeServer: Boolean
+		onHomeServer: Boolean,
+		disableAutoScroll: Boolean
 	},
 	data () {
 		return {
@@ -103,6 +104,8 @@ export default {
 			}
 		}
 		if (fragmentIsDate) return
+		// Skip auto-scroll if disabled via prop
+		if (this.disableAutoScroll) return
 		const nowIndex = this.sessionBuckets.findIndex(bucket => this.now < bucket.date)
 		// do not scroll if the event has not started yet
 		if (nowIndex < 0) return
