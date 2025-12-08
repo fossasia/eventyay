@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 class AddSpeakerSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
-    name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    name = serializers.CharField(required=True, allow_blank=False)
     locale = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
 
