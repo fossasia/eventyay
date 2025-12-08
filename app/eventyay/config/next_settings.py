@@ -231,10 +231,13 @@ DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
 MEDIA_ROOT = DATA_DIR / 'media'
 PROFILE_DIR = DATA_DIR / 'profiles'
+# The compiled frontend files (from Vue3 apps) will be put here.
+COMPILED_FRONTEND_DIR = DATA_DIR / 'compiled-frontend'
 
 DATA_DIR.mkdir(exist_ok=True)
 LOG_DIR.mkdir(exist_ok=True)
 MEDIA_ROOT.mkdir(exist_ok=True)
+COMPILED_FRONTEND_DIR.mkdir(exist_ok=True)
 
 
 # Database configuration
@@ -770,11 +773,13 @@ CELERY_TASK_ROUTES = {
     'eventyay.api.webhooks.*': {'queue': 'notifications'},
 }
 
+# The folder where static files are collected to. It is shared with Nginx.
 STATIC_ROOT = BASE_DIR / 'static.dist'
+# These are the sources of `collectstatic` command.
 STATICFILES_DIRS = (
-    (BASE_DIR / 'static' / 'webapp'),
     # Added to make sure root package static assets (e.g. pretixcontrol/scss/) are found
     (BASE_DIR / 'static'),
+    COMPILED_FRONTEND_DIR,
 )
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -785,16 +790,14 @@ STATICFILES_FINDERS = (
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 NANOCDN_URL = conf.nanocdn_url
-default_storage_backend = (
-    'eventyay.base.integrations.platforms.storage.nanocdn.NanoCDNStorage'
-    if NANOCDN_URL
-    else 'django.core.files.storage.FileSystemStorage'
-)
+# To make our app stable first, we won't use NanoCDN for now.
+default_storage_backend = 'django.core.files.storage.FileSystemStorage'
 
 STORAGES = {
     'default': {'BACKEND': default_storage_backend},
+    # To make our app stable first, we won't use ManifestStaticFilesStorage for now.
     'staticfiles': {
-        'BACKEND': 'eventyay.base.storage.NoMapManifestStaticFilesStorage',
+        'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
     },
 }
 
