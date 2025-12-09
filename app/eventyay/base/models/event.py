@@ -264,6 +264,8 @@ class EventMixin:
         to the current locale and to the ``show_times`` setting.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         return _date(
             self.date_from.astimezone(tz),
             ('SHORT_' if short else '')
@@ -276,6 +278,8 @@ class EventMixin:
         the ``show_times`` setting.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         return _date(self.date_from.astimezone(tz), 'TIME_FORMAT')
 
     def get_date_to_display(self, tz=None, show_times=True, short=False) -> str:
@@ -285,6 +289,8 @@ class EventMixin:
         if ``show_date_to`` is ``False``.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if not self.settings.show_date_to or not self.date_to:
             return ''
         return _date(
