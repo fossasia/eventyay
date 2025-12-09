@@ -2,7 +2,7 @@ name: Docker PR Build (enext)
 
 on:
   pull_request:
-    branches: [enext]
+    branches: [ enext, main ]
 
 jobs:
   build_docker_image:
