@@ -3989,66 +3989,70 @@ def test_refund_create_invalid_payment(token_client, organizer, event, order):
     )
     assert resp.status_code == 400
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_refund_concurrent_race_condition_prevented(token_client, organizer, event, order):
 
     import threading
     from decimal import Decimal
-    
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+    from django.db import connection
+    from django.test import Client
+    import json
+
     with scopes_disabled():
         payment = order.payments.first()
         payment.amount = Decimal('100.00')
         payment.state = OrderPayment.PAYMENT_STATE_CONFIRMED
         payment.save()
-    
-    results = {'thread1': None, 'thread2': None, 'errors': []}
-    
-    def refund_request(thread_name, amount):
-        """Make a refund request in a separate thread"""
+
+    results = []
+    errors = []
+
+    def make_refund_request(amount):
         try:
-            res = {
-                'amount': str(amount),
-            }
-            resp = token_client.post(
-                '/api/v1/organizers/{}/events/{}/orders/{}/payments/{}/refund/'.format(
-                    organizer.slug, event.slug, order.code, payment.local_id
-                ),
-                format='json',
-                data=res,
+            client = Client()
+            client.defaults['HTTP_AUTHORIZATION'] = token_client.defaults.get('HTTP_AUTHORIZATION')
+            response = client.post(
+                f'/api/v1/organizers/{organizer.slug}/events/{event.slug}/orders/{order.code}/payments/{payment.local_id}/refund/',
+                data=json.dumps({'amount': str(amount)}),
+                content_type='application/json',
             )
-            results[thread_name] = {
-                'status': resp.status_code,
-                'data': resp.data if hasattr(resp, 'data') else None
-            }
+            results.append({'status': response.status_code, 'amount': amount})
         except Exception as e:
-            results['errors'].append(str(e))
-    
-    thread1 = threading.Thread(target=refund_request, args=('thread1', Decimal('80.00')))
-    thread2 = threading.Thread(target=refund_request, args=('thread2', Decimal('80.00')))
-    
+            errors.append(str(e))
+        finally:
+            connection.close()
+
+    thread1 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'),))
+    thread2 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'),))
+
     thread1.start()
     thread2.start()
-    
-    thread1.join()
-    thread2.join()
-    
-    assert len(results['errors']) == 0, f"Unexpected errors: {results['errors']}"
-    
-    status_codes = [results['thread1']['status'], results['thread2']['status']]
-    
-    assert 200 in status_codes, "At least one refund should succeed"
-    assert 400 in status_codes, "One refund should be rejected due to insufficient available amount"
-    
+
+    thread1.join(timeout=5)
+    thread2.join(timeout=5)
+
+    assert len(errors) == 0, f"Unexpected errors: {errors}"
+    assert len(results) == 2, f"Expected 2 results, got {len(results)}"
+
+    status_codes = sorted([r['status'] for r in results])
+
+    assert status_codes == [200, 400], \
+        f"Expected one success (200) and one failure (400), got {status_codes}"
+
     with scopes_disabled():
         payment.refresh_from_db()
-        total_refunded = sum(r.amount for r in payment.refunds.all())
-        
-        assert total_refunded == Decimal('80.00'), f"Expected $80 refunded, got ${total_refunded}"
-        assert payment.refunds.count() == 1, f"Expected 1 refund, got {payment.refunds.count()}"
-        
-        available = payment.amount - total_refunded
-        assert available == Decimal('20.00'), f"Expected $20 available, got ${available}"
+        refunds = list(payment.refunds.all())
+        total_refunded = sum(r.amount for r in refunds)
 
+    assert len(refunds) == 1, f"Expected exactly 1 refund object, found {len(refunds)}"
+    assert total_refunded == Decimal('80.00'), \
+        f"Expected total refunded = $80.00, got {total_refunded}"
+
+    available = payment.amount - total_refunded
+    assert available == Decimal('20.00'), \
+        f"Expected available = $20.00, got {available}"
 
 
 @pytest.mark.django_db
