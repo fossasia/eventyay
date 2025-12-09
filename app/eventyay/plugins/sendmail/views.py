@@ -7,13 +7,11 @@ from django.db.models import Exists, Subquery, OuterRef, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils import timezone as dj_timezone
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from urllib.parse import urlencode
-
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.i18n import language
 from eventyay.base.models.base import CachedFile

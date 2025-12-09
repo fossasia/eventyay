@@ -11,6 +11,10 @@
 {% endcomment %}
 {% with 'target="_blank" rel="noopener" href="'|add:eventyayurl|add:'"'|safe as a_attr %}
     {% blocktrans trimmed %}
+<<<<<<< HEAD
         powered by <a {{ a_attr }}>eventyay</a>
+=======
+        <a {{ a_attr }}>powered by eventyay</a>
+>>>>>>> 26960c819 (WIP: before rebase)
     {% endblocktrans %}
 {% endwith %}
