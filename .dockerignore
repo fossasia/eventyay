@@ -10,6 +10,7 @@ src/dist/
 .venv
 app/.venv
 app/eventyay/static/CACHE
+app/eventyay/static.dist
 *.egg-info
 **/__pycache__
 **/node_modules
