@@ -37,6 +37,7 @@ VIDEO_PERMISSION_TRAIT_NAMES: List[str] = [
 ]
 
 VIDEO_TRAIT_ROLE_MAP: Dict[str, str] = {
+    # Map traits to roles; currently 1:1 but kept as a lookup for future divergence
     definition.trait_name: definition.trait_name
     for definition in VIDEO_PERMISSION_DEFINITIONS
 }

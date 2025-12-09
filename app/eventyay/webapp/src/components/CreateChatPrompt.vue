@@ -74,19 +74,16 @@ export default {
 			// Check if any types are available
 			if (this.types.length === 0) {
 				this.error = this.$t('CreateChatPrompt:error:no-permission') || 'You do not have permission to create channels.'
-				this.$emit('close')
 				return
 			}
 
 			// Verify permission for selected type
 			if (this.type === 'text' && !this.hasPermission('world:rooms.create.chat')) {
 				this.error = this.$t('CreateChatPrompt:error:no-text-permission') || 'You do not have permission to create text channels.'
-				this.$emit('close')
 				return
 			}
 			if (this.type === 'video' && !this.hasPermission('world:rooms.create.bbb')) {
 				this.error = this.$t('CreateChatPrompt:error:no-video-permission') || 'You do not have permission to create video channels.'
-				this.$emit('close')
 				return
 			}
 
