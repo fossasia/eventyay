@@ -18,6 +18,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event  # Added for /video event context
+from eventyay.base.models.event import default_feature_flags
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
@@ -85,7 +86,6 @@ class VideoSPAView(View):
 
             # Merge default feature flags with event-specific flags to ensure
             # newer features like 'polls' are available even for older events
-            from eventyay.base.models.event import default_feature_flags
             features = {**default_feature_flags(), **(getattr(event, 'feature_flags', {}) or {})}
 
             injected = {
