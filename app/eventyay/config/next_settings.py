@@ -62,10 +62,10 @@ class RunningEnvironment(StrEnum):
 
 
 active_environment = RunningEnvironment(os.getenv(_ENV_KEY_ACTIVE_ENVIRONMENT, 'development'))
-# Some shortcuts
-is_development = active_environment == RunningEnvironment.DEVELOPMENT
-is_testing = active_environment == RunningEnvironment.TESTING
-is_production = active_environment == RunningEnvironment.PRODUCTION
+# Some shortcuts. They are uppercase to allow usage outside this module (via django.conf.settings).
+IS_DEVELOPMENT = active_environment == RunningEnvironment.DEVELOPMENT
+IS_TESTING = active_environment == RunningEnvironment.TESTING
+IS_PRODUCTION = active_environment == RunningEnvironment.PRODUCTION
 
 DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
 DEFAULT_PLUGINS = (
@@ -116,6 +116,9 @@ class BaseSettings(_BaseSettings):
     allowed_hosts: list[str] = []
     # Used by "Talk" (pretalx). Not sure why it is named like this.
     core_modules: Annotated[tuple[str, ...], Field(default_factory=tuple)]
+    # The MultiDomainMiddleware is depending on SITE_URL.
+    # Override it to match the domain the website is running on,
+    # or you will get "DisallowedHost" error.
     site_url: HttpUrl = 'http://localhost:8000'
     short_url: HttpUrl = 'http://localhost:8000'
     talk_hostname: str = 'http://localhost:8000'
@@ -441,7 +444,7 @@ _CORE_TEMPLATE_LOADERS = (
 )
 
 template_loaders = (
-    (('django.template.loaders.cached.Loader', _CORE_TEMPLATE_LOADERS),) if is_production else _CORE_TEMPLATE_LOADERS
+    (('django.template.loaders.cached.Loader', _CORE_TEMPLATE_LOADERS),) if IS_PRODUCTION else _CORE_TEMPLATE_LOADERS
 )
 
 TEMPLATES = (
@@ -503,7 +506,7 @@ AUTHENTICATION_BACKENDS = (
 AUTH_PASSWORD_VALIDATORS = (
     # In development, we don't need strong password validation.
     ()
-    if is_development
+    if IS_DEVELOPMENT
     else (
         {
             'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -557,7 +560,7 @@ LANGUAGES_INCUBATING = {'pl', 'fi', 'pt-br'}
 LANGUAGES_RTL = {'ar', 'he', 'fa-ir'}
 # TODO: Convert to tuple (some code still assumes LANGUAGES to be a list)
 LANGUAGES = (
-    [(k, v) for k, v in ALL_LANGUAGES if k not in LANGUAGES_INCUBATING] if is_production else list(ALL_LANGUAGES)
+    [(k, v) for k, v in ALL_LANGUAGES if k not in LANGUAGES_INCUBATING] if IS_PRODUCTION else list(ALL_LANGUAGES)
 )
 
 EXTRA_LANG_INFO = {
@@ -755,7 +758,7 @@ REDIS_USE_PUBSUB = True
 
 CELERY_BROKER_URL = increase_redis_db(REDIS_URL, 1)
 CELERY_RESULT_BACKEND = increase_redis_db(REDIS_URL, 2)
-CELERY_TASK_ALWAYS_EAGER = is_testing
+CELERY_TASK_ALWAYS_EAGER = IS_TESTING
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_DEFAULT_QUEUE = 'default'
@@ -811,7 +814,7 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
     ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
 )
-COMPRESS_ENABLED = COMPRESS_OFFLINE = is_production
+COMPRESS_ENABLED = COMPRESS_OFFLINE = IS_PRODUCTION
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass
@@ -832,7 +835,7 @@ CORS_ORIGIN_REGEX_WHITELIST = (
         r'^https?://app-test\.eventyay\.com(:\d+)?$',  # Allow video-dev.eventyay.com with any port
         r'^https?://app\.eventyay\.com(:\d+)?$',  # Allow wikimania-live.eventyay.com with any port
     )
-    if is_production
+    if IS_PRODUCTION
     else (
         r'^http://localhost$',
         r'^http://localhost:\d+$',
@@ -962,7 +965,7 @@ OAUTH2_PROVIDER = {
         'write': _('Write access'),
     },
     'OAUTH2_VALIDATOR_CLASS': 'eventyay.api.oauth.Validator',
-    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'] if is_production else ['http', 'https'],
+    'ALLOWED_REDIRECT_URI_SCHEMES': ['https'] if IS_PRODUCTION else ['http', 'https'],
     'ACCESS_TOKEN_EXPIRE_SECONDS': 3600 * 24,
     'ROTATE_REFRESH_TOKEN': False,
     'PKCE_REQUIRED': False,
@@ -1145,7 +1148,7 @@ CSP_ADDITIONAL_HEADER = conf.csp_additional_header
 SHORT_URL = str(conf.short_url)
 # TODO: Remove. Our views should calculate it from the current connected HTTP/HTTPS protocol,
 # instead of relying on a setting.
-WEBSOCKET_PROTOCOL = 'wss' if is_production else 'ws'
+WEBSOCKET_PROTOCOL = 'wss' if IS_PRODUCTION else 'ws'
 
 ZOOM_KEY = conf.zoom_key
 ZOOM_SECRET = conf.zoom_secret

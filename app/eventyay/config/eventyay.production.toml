@@ -16,6 +16,8 @@ allowed_hosts = [
     'app-test.eventyay.com',
 ]
 
+site_url = 'https://next.eventyay.com'
+
 talk_hostname = 'https://next.eventyay.com/'
 
 redis_url = 'redis://eventyay-next-redis/0'
