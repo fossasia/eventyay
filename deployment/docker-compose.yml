@@ -2,7 +2,7 @@ name: eventyay-next
 
 services:
   web:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-web
     command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
     volumes:
@@ -20,7 +20,7 @@ services:
       - redis
 
   websocket:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-websocket
     entrypoint: daphne -b 0.0.0.0 -p 8001 eventyay.config.asgi:application
     volumes:
@@ -39,7 +39,7 @@ services:
       - redis
 
   worker:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-worker
     entrypoint: celery -A eventyay worker -l info
     volumes:
