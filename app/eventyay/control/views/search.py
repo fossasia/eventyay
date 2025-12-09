@@ -56,13 +56,13 @@ class OrderSearch(PaginationMixin, ListView):
         for o in ctx['orders']:
             if o.pk not in annotated:
                 continue
-            o.pcnt = annotated.get(o.pk)['pcnt']
-            o.is_overpaid = annotated.get(o.pk)['is_overpaid']
-            o.is_underpaid = annotated.get(o.pk)['is_underpaid']
-            o.is_pending_with_full_payment = annotated.get(o.pk)['is_pending_with_full_payment']
-            o.has_external_refund = annotated.get(o.pk)['has_external_refund']
-            o.has_pending_refund = annotated.get(o.pk)['has_pending_refund']
-            o.has_cancellation_request = annotated.get(o.pk)['has_cancellation_request']
+            o.pcnt = annotated[o.pk]['pcnt']
+            o.is_overpaid = annotated[o.pk]['is_overpaid']
+            o.is_underpaid = annotated[o.pk]['is_underpaid']
+            o.is_pending_with_full_payment = annotated[o.pk]['is_pending_with_full_payment']
+            o.has_external_refund = annotated[o.pk]['has_external_refund']
+            o.has_pending_refund = annotated[o.pk]['has_pending_refund']
+            o.has_cancellation_request = annotated[o.pk]['has_cancellation_request']
 
         return ctx
 
