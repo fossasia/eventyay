@@ -2,7 +2,7 @@ name: Docker
 on:
   workflow_dispatch:
   push:
-    branches: [ enext ]
+    branches: [ enext, main ]
 
 jobs:
   push_to_registry:
