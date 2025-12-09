@@ -26,9 +26,9 @@ coverage:
 
 npminstall:
 	# keep this in sync with setup.py!
-	mkdir -p eventyay/static.dist/node_prefix/
-	cp -r eventyay/static/npm_dir/* eventyay/static.dist/node_prefix/
-	npm install --prefix=eventyay/static.dist/node_prefix
+	mkdir -p eventyay/static/node_prefix/
+	cp -r eventyay/static/npm_dir/* eventyay/static/node_prefix/
+	npm install --prefix=eventyay/static/node_prefix
 	npm ci --prefix=eventyay/frontend/global-nav-menu
 	npm ci --prefix=eventyay/frontend/schedule-editor
 	OUT_DIR=$(shell pwd)/eventyay/static npm run build --prefix=eventyay/frontend/global-nav-menu
