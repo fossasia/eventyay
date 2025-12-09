@@ -79,7 +79,7 @@ services:
     restart: always
     environment:
       WATCHTOWER_NOTIFICATIONS: 'shoutrrr'
-      WATCHTOWER_NOTIFICATIONS_HOSTNAME: eventyay-next
+      WATCHTOWER_NOTIFICATIONS_HOSTNAME: ${WATCHTOWER_NOTIFICATIONS_HOSTNAME}
       WATCHTOWER_POLL_INTERVAL: 600
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL}
     command: watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup
