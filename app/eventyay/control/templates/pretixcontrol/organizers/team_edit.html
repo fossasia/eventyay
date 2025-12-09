@@ -1,6 +1,8 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{# DEPRECATED: Team management has moved to /common area. This template is kept for backward compatibility only. #}
+{# For the active implementation with conditional field visibility, see: eventyay_common/organizers/teams/team_edit.html #}
 {% block inner %}
     {% if team %}
         <h1>{% trans "Team:" %} {{ team.name }}</h1>
