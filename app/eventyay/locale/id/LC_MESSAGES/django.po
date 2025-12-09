@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-07 07:00+0000\n"
+"PO-Revision-Date: 2025-12-09 07:00+0000\n"
 "Last-Translator: Rachmat <rachmatwahidi.site@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
@@ -443,85 +443,89 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:153
 msgid "Ask for company per ticket"
-msgstr ""
+msgstr "Minta nama perusahaan untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:162
 msgid "Require company per ticket"
-msgstr ""
+msgstr "Nama perusahaan wajib untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:176
 msgid "Ask for postal addresses per ticket"
-msgstr ""
+msgstr "Minta alamat pos untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:185
 msgid "Require postal addresses per ticket"
-msgstr ""
+msgstr "Alamat pos wajib untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:187
 msgid ""
 "Require attendees to fill in postal addresses for all admission tickets."
-msgstr ""
+msgstr "Alamat pos wajib diisi oleh peserta pada setiap tiket masuk."
 
 #: eventyay/base/configurations/default_setting.py:202
 msgid "Ask for the order email address twice"
-msgstr ""
+msgstr "Minta alamat surel pesanan dua kali"
 
 #: eventyay/base/configurations/default_setting.py:204
 msgid ""
 "Require attendees to enter their primary email address twice to help prevent "
 "errors."
 msgstr ""
+"Peserta wajib memasukkan alamat surel utama dua kali untuk membantu mencegah "
+"kesalahan."
 
 #: eventyay/base/configurations/default_setting.py:214
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "Minta nomor telepon untuk setiap pesanan"
 
 #: eventyay/base/configurations/default_setting.py:223
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "Nomor telepon wajib untuk setiap pesanan"
 
 #: eventyay/base/configurations/default_setting.py:235
 msgid "Ask for invoice address"
-msgstr ""
+msgstr "Minta alamat penagihan"
 
 #: eventyay/base/configurations/default_setting.py:244
 msgid "Do not ask for invoice address if an order is free of charge."
-msgstr ""
+msgstr "Jangan minta alamat penagihan jika pesanan gratis."
 
 #: eventyay/base/configurations/default_setting.py:253
 msgid "Require attendee name"
-msgstr ""
+msgstr "Nama peserta wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:262
 msgid "Show attendee names on invoices"
-msgstr ""
+msgstr "Tampilkan nama peserta pada faktur"
 
 #: eventyay/base/configurations/default_setting.py:272
 msgid ""
 "On invoices from one EU country to another EU country with a different "
 "currency, display the tax amounts in both currencies."
 msgstr ""
+"Pada faktur dari satu negara Uni Eropa ke negara Uni Eropa lain dengan mata "
+"uang berbeda, tampilkan jumlah pajak dalam kedua mata uang."
 
 #: eventyay/base/configurations/default_setting.py:283
 msgid "Require invoice address"
-msgstr ""
+msgstr "Alamat penagihan wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:295
 msgid "Require a business addresses"
-msgstr ""
+msgstr "Alamat bisnis wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:296
 msgid "This will require attendees to enter a company name."
-msgstr ""
+msgstr "Hal ini akan mengharuskan peserta untuk memasukkan nama perusahaan."
 
 #: eventyay/base/configurations/default_setting.py:308
 msgid "Ask for beneficiary"
-msgstr ""
+msgstr "Minta nama penerima manfaat"
 
 #: eventyay/base/configurations/default_setting.py:320
 #: eventyay/base/exporters/orderlist.py:243
 msgid "Custom address field"
-msgstr ""
+msgstr "Kolom alamat khusus"
 
 #: eventyay/base/configurations/default_setting.py:323
 msgid ""
@@ -531,76 +535,92 @@ msgid ""
 "details and for displaying the value on the invoice. The field will be "
 "optional."
 msgstr ""
+"Jika Anda ingin menambahkan kolom teks khusus, seperti nomor registrasi "
+"khusus negara, ke formulir alamat penagihan, silakan masukkan label di sini. "
+"Label ini akan digunakan baik untuk meminta pengguna mengisi detail mereka "
+"maupun untuk menampilkan nilainya pada faktur. Kolom ini bersifat opsional."
 
 #: eventyay/base/configurations/default_setting.py:336
 msgid "Ask for VAT ID"
-msgstr ""
+msgstr "Minta NPWP"
 
 #: eventyay/base/configurations/default_setting.py:338
 msgid ""
 "This option is only applicable if an invoice address is requested. The VAT "
 "ID field will not be required."
 msgstr ""
+"Pilihan ini hanya dapat digunakan apabila alamat penagihan diminta. Kolom "
+"NPWP tidak bersifat wajib."
 
 #: eventyay/base/configurations/default_setting.py:352
 msgid "Invoice address explanation"
-msgstr ""
+msgstr "Penjelasan alamat penagihan"
 
 #: eventyay/base/configurations/default_setting.py:356
 msgid "This text will be shown above the invoice address form during checkout."
 msgstr ""
+"Teks ini akan ditampilkan di atas formulir alamat penagihan saat akan "
+"membayar."
 
 #: eventyay/base/configurations/default_setting.py:366
 msgid "Show paid amount on partially paid invoices"
-msgstr ""
+msgstr "Tampilkan jumlah yang sudah dibayar pada faktur yang dibayar sebagian"
 
 #: eventyay/base/configurations/default_setting.py:368
 msgid ""
 "If an invoice has already been paid partially, this option will add the paid "
 "and pending amount to the invoice."
 msgstr ""
+"Jika sebuah faktur telah dibayar sebagian, opsi ini akan menambahkan jumlah "
+"yang sudah dibayar dan yang masih tertunda ke dalam faktur."
 
 #: eventyay/base/configurations/default_setting.py:379
 msgid "Show free products on invoices"
-msgstr ""
+msgstr "Tampilkan produk gratis pada faktur"
 
 #: eventyay/base/configurations/default_setting.py:381
 msgid ""
 "Note that invoices will never be generated for orders that contain only free "
 "products."
 msgstr ""
+"Perlu dicatat bahwa faktur tidak akan pernah dibuat untuk pesanan yang hanya "
+"berisi produk gratis."
 
 #: eventyay/base/configurations/default_setting.py:392
 msgid "Show expiration date of order"
-msgstr ""
+msgstr "Tampilkan tanggal kedaluwarsa pesanan"
 
 #: eventyay/base/configurations/default_setting.py:394
 msgid ""
 "The expiration date will not be shown if the invoice is generated after the "
 "order is paid."
 msgstr ""
+"Tanggal kedaluwarsa tidak akan ditampilkan jika faktur dibuat setelah "
+"pesanan dibayar."
 
 #: eventyay/base/configurations/default_setting.py:404
 msgid "Minimum length of invoice number after prefix"
-msgstr ""
+msgstr "Panjang minimum nomor faktur setelah awalan"
 
 #: eventyay/base/configurations/default_setting.py:406
 msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
+"Bagian nomor faktur setelah awalan akan diisi dengan nol di depan hingga "
+"mencapai panjang ini, misalnya INV-001 atau INV-00001."
 
 #: eventyay/base/configurations/default_setting.py:417
 msgid "Generate invoices with consecutive numbers"
-msgstr ""
+msgstr "Buat faktur dengan nomor berurutan"
 
 #: eventyay/base/configurations/default_setting.py:419
 msgid "If deactivated, the order code will be used in the invoice number."
-msgstr ""
+msgstr "Jika dinonaktifkan, kode pesanan akan digunakan sebagai nomor faktur."
 
 #: eventyay/base/configurations/default_setting.py:429
 msgid "Invoice number prefix"
-msgstr ""
+msgstr "Awalan nomor faktur"
 
 #: eventyay/base/configurations/default_setting.py:431
 msgid ""
@@ -612,10 +632,18 @@ msgid ""
 "can use %Y (with century) %y (without century) to insert the year of the "
 "invoice, or %m and %d for the day of month."
 msgstr ""
+"Awalan ini akan ditambahkan di depan nomor faktur. Jika kolom ini dibiarkan "
+"kosong, sistem akan menggunakan slug acara diikuti dengan tanda hubung. "
+"Perhatian: Jika beberapa acara dalam organisasi yang sama menggunakan nilai "
+"yang sama pada kolom ini, mereka akan berbagi rentang nomor, artinya setiap "
+"nomor lengkap hanya akan digunakan sekali di seluruh acara Anda. Pengaturan "
+"ini hanya memengaruhi faktur yang dibuat di kemudian hari. Anda dapat "
+"menggunakan %Y (dengan abad), %y (tanpa abad) untuk menyisipkan tahun "
+"faktur, atau %m dan %d untuk menyisipkan bulan dan hari."
 
 #: eventyay/base/configurations/default_setting.py:446
 msgid "Invoice number prefix for cancellations"
-msgstr ""
+msgstr "Awalan nomor faktur untuk pembatalan"
 
 #: eventyay/base/configurations/default_setting.py:448
 msgid ""
@@ -623,24 +651,31 @@ msgid ""
 "this field empty, the same numbering scheme will be used that you configured "
 "for regular invoices."
 msgstr ""
+"Awalan ini akan ditambahkan di depan nomor faktur pembatalan. Jika kolom ini "
+"dibiarkan kosong, skema penomoran yang sama seperti faktur reguler akan "
+"digunakan."
 
 #: eventyay/base/configurations/default_setting.py:468
 msgid "Reservation period"
-msgstr ""
+msgstr "Periode reservasi"
 
 #: eventyay/base/configurations/default_setting.py:470
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr ""
+"Lama waktu (dalam menit) barang di keranjang pengguna disimpan sebagai "
+"reservasi untuk pengguna."
 
 #: eventyay/base/configurations/default_setting.py:481
 msgid ""
 "Directly redirect to check-out after a product has been added to the cart."
 msgstr ""
+"Langsung alihkan ke halaman pembayaran setelah produk ditambahkan ke "
+"keranjang."
 
 #: eventyay/base/configurations/default_setting.py:491
 msgid "End of presale text"
-msgstr ""
+msgstr "Teks akhir prapenjualan"
 
 #: eventyay/base/configurations/default_setting.py:495
 msgid ""
@@ -648,16 +683,21 @@ msgid ""
 "timeframe for this event is over. You can use it to describe other options "
 "to get a ticket, such as a box office."
 msgstr ""
+"Teks ini akan ditampilkan di atas toko tiket setelah periode penjualan yang "
+"ditentukan untuk acara ini berakhir. Anda dapat menggunakannya untuk "
+"menjelaskan opsi lain mendapatkan tiket, misalnya melalui loket."
 
 #: eventyay/base/configurations/default_setting.py:512
 msgid "Guidance text"
-msgstr ""
+msgstr "Teks petunjuk"
 
 #: eventyay/base/configurations/default_setting.py:514
 msgid ""
 "This text will be shown above the payment options. You can explain the "
 "choices to the user here, if you want."
 msgstr ""
+"Teks ini akan ditampilkan di atas opsi pembayaran. Anda dapat menggunakannya "
+"untuk menjelaskan pilihan kepada pengguna jika diinginkan."
 
 #: eventyay/base/configurations/default_setting.py:525
 #: eventyay/base/configurations/default_setting.py:530
