@@ -1256,7 +1256,6 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
         payment = get_object_or_404(queryset, **{self.lookup_field: lookup_value})
-        
         amount = serializers.DecimalField(max_digits=10, decimal_places=2).to_internal_value(
             request.data.get('amount', str(payment.amount))
         )
