@@ -65,24 +65,8 @@
         </div>
     </form>
 
-    <script>
-        $(document).ready(function() {
-            // Function to toggle review settings visibility
-            function toggleReviewSettings() {
-                if ($('#id_is_reviewer').is(':checked')) {
-                    $('#review-settings').show();
-                } else {
-                    $('#review-settings').hide();
-                }
-            }
-
-            // Toggle on page load
-            toggleReviewSettings();
-
-            // Toggle when checkbox changes
-            $('#id_is_reviewer').change(function() {
-                toggleReviewSettings();
-            });
-        });
-    </script>
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
+{% endblock %}
 {% endblock %}
