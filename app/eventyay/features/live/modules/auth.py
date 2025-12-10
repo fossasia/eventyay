@@ -554,7 +554,7 @@ class AuthModule(BaseModule):
         )
 
     @command("kiosk.create")
-    @require_event_permission(Permission.EVENT_UPDATE)  # TODO: stricter permission?
+    @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_create(self, body):
         uid = str(uuid.uuid4())
 
@@ -578,9 +578,7 @@ class AuthModule(BaseModule):
         await self.consumer.send_success({"user": str(user.pk)})
 
     @command("kiosk.fetch")
-    @require_event_permission(
-        Permission.EVENT_USERS_MANAGE
-    )  # TODO: stricter permission?
+    @require_event_permission(Permission.EVENT_KIOSKS_MANAGE)
     async def kiosk_fetch(self, body):
         @database_sync_to_async
         def get_user(uid):

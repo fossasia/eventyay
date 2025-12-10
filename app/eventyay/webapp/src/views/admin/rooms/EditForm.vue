@@ -17,11 +17,12 @@
 <script>
 import { markRaw } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
+import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import { required, integer } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType } from 'lib/room-types'
 import Stage from './types-edit/stage'
 import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
@@ -48,6 +49,7 @@ export default {
 	setup:() => ({v$:useVuelidate()}),
 	data() {
 		return {
+			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
 				'page-static': PageStatic,
@@ -64,6 +66,38 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
+		roomTypes() {
+			// Filter room types based on permissions
+			return this.allRoomTypes.filter(type => {
+				// Stage requires world:rooms.create.stage permission
+				if (type.id === 'stage') {
+					return this.hasPermission('world:rooms.create.stage')
+				}
+				// Channel types (BBB, Janus, Zoom) require world:rooms.create.bbb permission
+				if (type.id === 'channel-bbb' || type.id === 'channel-janus' || type.id === 'channel-zoom') {
+					return this.hasPermission('world:rooms.create.bbb')
+				}
+				// Text channel requires world:rooms.create.chat permission
+				if (type.id === 'channel-text') {
+					return this.hasPermission('world:rooms.create.chat')
+				}
+				// Exhibition requires world:rooms.create.exhibition permission
+				if (type.id === 'exhibition') {
+					return this.hasPermission('world:rooms.create.exhibition')
+				}
+				// Poster requires world:rooms.create.poster permission
+				if (type.id === 'posters') {
+					return this.hasPermission('world:rooms.create.poster')
+				}
+				// Roulette and page types require room:update permission (general room management)
+				if (type.id === 'channel-roulette' || type.id === 'page-static' || type.id === 'page-iframe' || type.id === 'page-landing' || type.id === 'page-userlist') {
+					return this.hasPermission('room:update')
+				}
+				// Other types are always available
+				return true
+			})
+		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {
 				acc[module.type] = module

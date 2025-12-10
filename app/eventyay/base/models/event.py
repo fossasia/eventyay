@@ -52,7 +52,7 @@ from eventyay.common.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
-from eventyay.core.permissions import Permission, SYSTEM_ROLES
+from eventyay.core.permissions import MAX_PERMISSIONS_IF_SILENCED, Permission, SYSTEM_ROLES
 from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.consts import TIMEZONE_CHOICES
 from eventyay.helpers.database import GroupConcat
@@ -65,6 +65,7 @@ from eventyay.talk_rules.event import (
     has_any_permission,
     is_event_visible,
 )
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from .auth import User
 from ..settings import settings_hierarkey
 from .mixins import OrderedModel, PretalxModel
@@ -1394,6 +1395,16 @@ class Event(
         if exc and allow_raise:
             raise exc
 
+    def _get_trait_grants_with_defaults(self):
+        base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        slug = getattr(self, "slug", None) or getattr(self, "id", None)
+        if not slug:
+            return base_trait_grants
+        augmented = dict(base_trait_grants)
+        for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
+            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
+        return augmented
+
     def has_permission_implicit(
         self,
         *,
@@ -1403,7 +1414,7 @@ class Event(
         allow_empty_traits=True,
     ):
         # Ensure trait_grants and roles are not None - use defaults if missing
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
@@ -1519,9 +1530,16 @@ class Event(
         allow_empty_traits = user.type == User.UserType.PERSON
 
         # Ensure trait_grants and roles are not None
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        # Track if user has any organizer/admin role
+        has_organizer_role = False
+        organizer_roles = {'admin', 'apiuser', 'scheduleuser', 'video_stage_manager', 
+                           'video_channel_manager', 'video_announcement_manager', 
+                           'video_user_viewer', 'video_user_moderator', 'video_room_manager',
+                           'video_kiosk_manager', 'video_config_manager'}
+        
         for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
@@ -1531,9 +1549,25 @@ class Event(
                 )
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
-
-        # Removed user.world_grants loop (attribute not present on unified User model)
+                if role in organizer_roles:
+                    has_organizer_role = True
+                
+                role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                result[self].update(role_perms)
+        
+        # If user has organizer/admin role but doesn't have direct messaging trait, remove EVENT_CHAT_DIRECT
+        # This ensures organizers only get direct messaging if explicitly granted via team permissions
+        # Attendees (without organizer roles) always keep EVENT_CHAT_DIRECT
+        if has_organizer_role:
+            direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
+            if direct_messaging_def:
+                direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
+                traits = user.traits or []
+                has_direct_messaging_trait = direct_messaging_trait in traits
+                
+                if not has_direct_messaging_trait:
+                    direct_message_value = Permission.EVENT_CHAT_DIRECT.value
+                    result[self] = {p for p in result[self] if (p if isinstance(p, str) else p.value) != direct_message_value}
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}

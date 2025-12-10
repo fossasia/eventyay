@@ -31,6 +31,7 @@ from ..helpers.jwt_generate import generate_sso_token
 from .base_tasks import CreateWorldTask, SendEventTask
 from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
+from .video.permissions import build_video_traits_for_event
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         return None
 
     event_slug = event_data.get('id', '')
+    video_traits = build_video_traits_for_event(event_slug)
     payload = {
         'id': event_slug,
         'title': event_data.get('title', ''),
@@ -127,6 +129,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         'locale': event_data.get('locale', ''),
         'traits': {
             'attendee': 'eventyay-video-event-{}'.format(event_slug),
+            **video_traits,
         },
     }
 

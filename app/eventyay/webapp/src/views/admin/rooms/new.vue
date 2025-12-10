@@ -15,6 +15,7 @@
 	edit-form(v-else, :config="config", :creating="true")
 </template>
 <script>
+import { mapGetters } from 'vuex'
 import ROOM_TYPES from 'lib/room-types'
 import EditForm from './EditForm'
 
@@ -22,14 +23,46 @@ export default {
 	components: { EditForm },
 	data() {
 		return {
-			ROOM_TYPES,
+			allRoomTypes: ROOM_TYPES,
 			type: null,
 			config: null
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
+		ROOM_TYPES() {
+			// Filter room types based on permissions
+			return this.allRoomTypes.filter(type => {
+				// Stage requires world:rooms.create.stage permission
+				if (type.id === 'stage') {
+					return this.hasPermission('world:rooms.create.stage')
+				}
+				// Channel types (BBB, Janus, Zoom) require world:rooms.create.bbb permission
+				if (type.id === 'channel-bbb' || type.id === 'channel-janus' || type.id === 'channel-zoom') {
+					return this.hasPermission('world:rooms.create.bbb')
+				}
+				// Text channel requires world:rooms.create.chat permission
+				if (type.id === 'channel-text') {
+					return this.hasPermission('world:rooms.create.chat')
+				}
+				// Exhibition requires world:rooms.create.exhibition permission
+				if (type.id === 'exhibition') {
+					return this.hasPermission('world:rooms.create.exhibition')
+				}
+				// Poster requires world:rooms.create.poster permission
+				if (type.id === 'posters') {
+					return this.hasPermission('world:rooms.create.poster')
+				}
+				// Roulette and page types require room:update permission (general room management)
+				if (type.id === 'channel-roulette' || type.id === 'page-static' || type.id === 'page-iframe' || type.id === 'page-landing' || type.id === 'page-userlist') {
+					return this.hasPermission('room:update')
+				}
+				// Other types are always available
+				return true
+			})
+		},
 		chosenType() {
-			return ROOM_TYPES.find(t => t.id === this.type)
+			return this.ROOM_TYPES.find(t => t.id === this.type)
 		},
 	},
 	watch: {

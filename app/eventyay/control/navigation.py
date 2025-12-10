@@ -475,10 +475,11 @@ def get_organizer_navigation(request):
             {
                 'label': _('Teams'),
                 'url': reverse(
-                    'control:organizer.teams',
+                    'eventyay_common:organizer.update',
                     kwargs={'organizer': request.organizer.slug},
-                ),
-                'active': 'organizer.team' in url.url_name and url.namespace == 'control',
+                )
+                + '?section=permissions',
+                'active': False,
                 'icon': 'group',
             }
         )

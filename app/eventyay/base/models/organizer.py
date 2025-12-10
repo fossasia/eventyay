@@ -433,6 +433,52 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
         default=False,
     )
 
+    can_video_create_stages = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create stages'),
+        help_text=_('Allows creating livestream stages inside Eventyay Video.'),
+    )
+    can_video_create_channels = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create channels'),
+        help_text=_('Allows creating chat/video channels inside Eventyay Video.'),
+    )
+    can_video_direct_message = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can send direct messages'),
+        help_text=_('Grants permission to open new direct message conversations.'),
+    )
+    can_video_manage_announcements = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create announcements'),
+        help_text=_('Allows posting announcements in the Eventyay Video interface.'),
+    )
+    can_video_view_users = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can view users'),
+        help_text=_('Allows access to the user directory in Eventyay Video.'),
+    )
+    can_video_manage_users = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can message, ban, and silence users'),
+        help_text=_('Allows moderating users (ban, silence, reactivate) in Eventyay Video.'),
+    )
+    can_video_manage_rooms = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create and edit rooms'),
+        help_text=_('Allows editing and deleting rooms inside Eventyay Video.'),
+    )
+    can_video_manage_kiosks = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can create and edit kiosks'),
+        help_text=_('Allows managing kiosk displays inside Eventyay Video.'),
+    )
+    can_video_manage_configuration = models.BooleanField(
+        default=False,
+        verbose_name=_('Video: Can edit event configuration'),
+        help_text=_('Allows editing the global Eventyay Video configuration.'),
+    )
+
     @cached_property
     def permission_set_display(self) -> set:
         """The same as :meth:`permission_set`, but with human-readable names."""
