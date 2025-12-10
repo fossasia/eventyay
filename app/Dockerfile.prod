@@ -34,22 +34,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project --no-editable
 
 COPY Makefile Makefile
-# global-nav-menu
-COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
-RUN npm ci --prefix=eventyay/frontend/global-nav-menu
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/global-nav-menu
-# schedule editor
-COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
-RUN npm ci --prefix=eventyay/frontend/schedule-editor
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
-# rollup needed by Django-Compressor
-RUN npm --version
-COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
-RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
-# webapp
-COPY eventyay/webapp eventyay/webapp
-RUN npm install --prefix=eventyay/webapp
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp
 
 
 #########
@@ -73,7 +57,7 @@ RUN mkdir $APP_HOME/static
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apt-get update && apt-get install -y wget gnupg
+RUN apt-get update && apt-get install -y wget gnupg rsync
 RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext
@@ -89,12 +73,22 @@ COPY . $APP_HOME
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
+# global-nav-menu
+COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
+RUN npm ci --prefix=eventyay/frontend/global-nav-menu
+# schedule editor
+COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
+RUN npm ci --prefix=eventyay/frontend/schedule-editor
+# rollup needed by Django-Compressor
+RUN npm --version
+COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
+# webapp
+COPY eventyay/webapp eventyay/webapp
+RUN npm install --prefix=eventyay/webapp
+
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
 COPY --from=builder --chown=app:app $APP_HOME/.venv $APP_HOME/.venv
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/global-nav-menu $APP_HOME/eventyay/data/compiled-frontend/global-nav-menu
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/schedule-editor $APP_HOME/eventyay/data/compiled-frontend/schedule-editor
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/data/compiled-frontend/webapp $APP_HOME/eventyay/data/compiled-frontend/webapp
 
 # change to the app user
 USER app
