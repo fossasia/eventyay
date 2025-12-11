@@ -149,6 +149,35 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   }
 }
 
+.colorpicker-preview-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.colorpicker-preview {
+  display: inline-block;
+  width: $input-height-base;
+  height: $input-height-base;
+  border: 1px solid #d4d4d5;
+  border-right: 0;
+  border-radius: $input-border-radius 0 0 $input-border-radius;
+  background-color: #ffffff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.colorpicker-preview.is-empty {
+  background-image: repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 8px, #ffffff 8px, #ffffff 16px);
+}
+
+.colorpicker-preview-group .form-control.colorpickerfield {
+  flex: 1 1 auto;
+  width: auto;
+  border-radius: 0 $input-border-radius $input-border-radius 0;
+  border-left: 0;
+}
+
 @media (min-width: $screen-sm-min) {
   .variation-matrix > tbody > tr > td {
     line-height: 34px;

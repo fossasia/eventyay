@@ -196,7 +196,7 @@ class FrabJsonExporter(ScheduleData):
                 'daysCount': self.event.duration,
                 'timeslot_duration': '00:05',
                 'time_zone_name': self.event.timezone,
-                'colors': {'primary': self.event.primary_color or '#2185d0'},
+                'colors': {'primary': self.event.visible_primary_color or '#2185d0'},
                 'rooms': [
                     {
                         'name': str(room.name),

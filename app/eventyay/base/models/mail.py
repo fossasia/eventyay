@@ -369,7 +369,7 @@ class QueuedMail(PretalxModel):
         html_context = {
             'body': body_md,
             'event': event,
-            'color': (event.primary_color if event else '') or settings.DEFAULT_EVENT_PRIMARY_COLOR,
+            'color': (event.visible_primary_color if event else '') or settings.DEFAULT_EVENT_PRIMARY_COLOR,
             'locale': self.locale,
             'rtl': self.locale in settings.LANGUAGES_BIDI,
             'subject': self.subject,

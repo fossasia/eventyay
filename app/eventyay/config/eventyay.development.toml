@@ -5,6 +5,6 @@ email_backend = 'eventyay.base.email.FileSavedEmailBackend'
 
 allowed_hosts = ['*']
 
-site_url = 'https://test.eventyay.com'
+site_url = 'http://localhost:8000'
 
 redis_url = 'redis://localhost/0'
