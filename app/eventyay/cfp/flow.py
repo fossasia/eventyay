@@ -11,7 +11,7 @@ from django.contrib.auth import login
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
-from django.forms import MultipleChoiceField, ModelMultipleChoiceField, ValidationError
+from django.forms import FileField, MultipleChoiceField, ModelMultipleChoiceField, ValidationError
 from django.http import HttpResponseNotAllowed
 from django.shortcuts import redirect
 from django.urls import reverse
@@ -60,7 +60,20 @@ def i18n_string(data, locales):
 
 
 class SavedFileWrapper:
-    """Wrapper for saved files to display filename in form widgets."""
+    """Wrapper for saved files to display filename in form widgets.
+    
+    This class is used to represent files that have been saved to session storage
+    during multi-step form navigation. It mimics FieldFile behavior for display
+    purposes while preventing these objects from being passed as form data (which
+    would cause validation errors).
+    
+    Attributes:
+        is_saved_file: Always True, used to identify SavedFileWrapper instances
+        name: The filename to display in the widget
+    
+    The __bool__ method ensures the wrapper evaluates as truthy when it has a name,
+    allowing template conditionals to work correctly.
+    """
     is_saved_file = True
 
     def __init__(self, name):
@@ -227,10 +240,13 @@ class TemplateFlowStep(TemplateResponseMixin, BaseCfPStep):
     def identifier(self):
         raise NotImplementedError()
 
-
 class FormFlowStep(TemplateFlowStep):
     form_class = None
     file_storage = FileSystemStorage(str(Path(settings.MEDIA_ROOT) / 'cfp_uploads'))
+
+    def _mark_session_modified(self):
+        """Mark the session as modified to ensure changes are persisted."""
+        self.request.session.modified = True
 
     def get_form_initial(self):
         session_data = self.cfp_session
@@ -243,7 +259,7 @@ class FormFlowStep(TemplateFlowStep):
     def get_saved_file_objects(self):
         saved_files = self.cfp_session['files'].get(self.identifier, {})
         return {
-            field: SavedFileWrapper(name=info.get('name', 'Previously uploaded file'))
+            field: SavedFileWrapper(name=info.get('name', _('Previously uploaded file')))
             for field, info in saved_files.items()
         }
 
@@ -251,8 +267,9 @@ class FormFlowStep(TemplateFlowStep):
         if self.request.method == 'GET' or from_storage:
             initial_data = self.get_form_initial()
             if from_storage:
+                form_data = {k: v for k, v in initial_data.items() if not isinstance(v, SavedFileWrapper)}
                 return self.form_class(
-                    data=initial_data, initial=initial_data, files=self.get_files(), **self.get_form_kwargs()
+                    data=form_data, initial=initial_data, files=self.get_files(), **self.get_form_kwargs()
                 )
             return self.form_class(initial=initial_data, **self.get_form_kwargs())
         return self.form_class(data=self.request.POST, files=self.request.FILES, **self.get_form_kwargs())
@@ -271,18 +288,20 @@ class FormFlowStep(TemplateFlowStep):
     def post(self, request):
         self.request = request
         action = request.POST.get('action', 'submit')
-        
-        # Handle file clearing - clear and re-render the page
         clear_file = request.POST.get('clear_file')
         if clear_file:
-            self._clear_file(clear_file)
+            form = self.get_form()
+            if clear_file in form.fields and isinstance(form.fields[clear_file], FileField):
+                self._clear_file(clear_file)
+                return self.get(request)
+            messages.error(request, _('Invalid field for file clearing.'))
             return self.get(request)
 
         form = self.get_form()
 
         if action == 'back':
             self._save_partial_data(form)
-            self.set_files(form.files)
+            self.set_files(request.FILES)
             prev_url = self.get_prev_url(request)
             return redirect(prev_url) if prev_url else self.get(request)
 
@@ -307,24 +326,26 @@ class FormFlowStep(TemplateFlowStep):
             if 'tmp_name' in file_info:
                 try:
                     self.file_storage.delete(file_info['tmp_name'])
-                except Exception:
-                    pass
-            del saved_files[field_name]
+                    del saved_files[field_name]
+                except OSError as e:
+                    logger.warning("Failed to delete file '%s': %s", file_info['tmp_name'], e)
+                    # Keep reference in session if deletion failed to prevent orphaned files
+            else:
+                del saved_files[field_name]
             session_data['files'][self.identifier] = saved_files
-        # Mark existing file for clearing (for files from DB, not session)
         clear_flags = session_data.setdefault('clear_files', {}).setdefault(self.identifier, [])
         if field_name not in clear_flags:
             clear_flags.append(field_name)
-        self.request.session['cfp'] = self.request.session.get('cfp', {})
-        self.request.session.modified = True
+        self._mark_session_modified()
 
     def _save_partial_data(self, form):
         """Save form data for back navigation (even if incomplete)."""
-        form.is_valid()
+        is_valid = form.is_valid()
+        cleaned_data = getattr(form, 'cleaned_data', {}) if is_valid else {}
         data_to_save = {}
         for field_name, field in form.fields.items():
-            if field_name in getattr(form, 'cleaned_data', {}):
-                data_to_save[field_name] = form.cleaned_data[field_name]
+            if field_name in cleaned_data:
+                data_to_save[field_name] = cleaned_data[field_name]
             elif field_name in self.request.POST:
                 if isinstance(field, (MultipleChoiceField, ModelMultipleChoiceField)):
                     data_to_save[field_name] = self.request.POST.getlist(field_name)
@@ -333,25 +354,33 @@ class FormFlowStep(TemplateFlowStep):
         data_to_save = {k: v for k, v in data_to_save.items() if not getattr(v, 'file', None)}
         session_data = self.cfp_session
         session_data['data'][self.identifier] = json.loads(json.dumps(data_to_save, default=serialize_value))
-        self.request.session['cfp'] = self.request.session.get('cfp', {})
-        self.request.session.modified = True
+        self._mark_session_modified()
 
     def set_data(self, data):
         session_data = self.cfp_session
         session_data['data'][self.identifier] = json.loads(
             json.dumps({k: v for k, v in data.items() if not getattr(v, 'file', None)}, default=serialize_value)
         )
-        self.request.session['cfp'] = self.request.session.get('cfp', {})
-        self.request.session.modified = True
+        self._mark_session_modified()
 
     def get_files(self):
+        """Retrieve saved files from session storage.
+        
+        If a file cannot be opened (e.g., deleted from storage), it is skipped
+        with a warning. This allows the form to render gracefully even if some
+        files are missing, rather than failing completely. The user can re-upload
+        the missing file if needed.
+        """
         saved_files = self.cfp_session['files'].get(self.identifier, {})
         files = {}
         for field, field_dict in saved_files.items():
             field_dict = field_dict.copy()
             tmp_name = field_dict.pop('tmp_name')
-            uploaded_file = UploadedFile(file=self.file_storage.open(tmp_name), **field_dict)
-            files[field] = uploaded_file
+            try:
+                uploaded_file = UploadedFile(file=self.file_storage.open(tmp_name), **field_dict)
+                files[field] = uploaded_file
+            except OSError as e:
+                logger.warning("Could not open file '%s' for field '%s': %s", tmp_name, field, e)
         return files or None
 
     def set_files(self, files):
@@ -370,12 +399,10 @@ class FormFlowStep(TemplateFlowStep):
             data = session_data['files'].get(self.identifier, {})
             data[field] = file_dict
             session_data['files'][self.identifier] = data
-            # Remove clear flag if new file is uploaded
-            clear_flags = session_data.get('clear_files', {}).get(self.identifier, [])
-            if field in clear_flags:
-                clear_flags.remove(field)
-        self.request.session['cfp'] = self.request.session.get('cfp', {})
-        self.request.session.modified = True
+            clear_files = session_data.get('clear_files', {})
+            if self.identifier in clear_files and field in clear_files[self.identifier]:
+                clear_files[self.identifier].remove(field)
+        self._mark_session_modified()
 
 
 class GenericFlowStep:
@@ -627,7 +654,10 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         saved_files = self.cfp_session.get('files', {}).get(self.identifier, {})
         clear_flags = self.cfp_session.get('clear_files', {}).get(self.identifier, [])
         if 'avatar' in saved_files:
-            result['saved_avatar_name'] = saved_files['avatar'].get('name', 'Previously uploaded')
+            result['saved_avatar_name'] = saved_files['avatar'].get('name', _('Previously uploaded'))
+        if self.request.user.is_authenticated and self.request.user.avatar:
+            avatar_name = self.request.user.avatar.name
+            result['avatar_basename'] = Path(avatar_name).name
         # Hide existing avatar if marked for clearing
         if 'avatar' in clear_flags:
             result['avatar_cleared'] = True
@@ -635,7 +665,8 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
 
     def done(self, request, draft=False):
         form = self.get_form(from_storage=True)
-        form.is_valid()
+        if not form.is_valid():
+            raise ValidationError(_("Profile form is invalid."))
         form.user = request.user
         form.save()
         # Clear avatar if marked for clearing
