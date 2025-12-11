@@ -47,6 +47,7 @@ from eventyay.base.models import (
 from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import (
     ProductBundle,
+    ProductMetaValue,
     SubEventProduct,
     SubEventProductVariation,
 )
@@ -250,6 +251,15 @@ def get_grouped_products(
         qa.compute()
         quota_cache.update({q.pk: r for q, r in qa.results.items()})
 
+    product_ids = [p.pk for p in products]
+    limit_one_per_user_product_ids = set(
+        ProductMetaValue.objects.filter(
+            product_id__in=product_ids,
+            property__event=event,
+            property__name='limit_one_per_user',
+        ).values_list('product_id', flat=True)
+    )
+
     for product in products:
         if voucher and voucher.product_id and voucher.variation_id:
             # Restrict variations if the voucher only allows one
@@ -291,10 +301,17 @@ def get_grouped_products(
                 product._remove = True
                 continue
 
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
             product.order_max = min(
                 product.cached_availability[1] if product.cached_availability[1] is not None else sys.maxsize,
                 max_per_order,
             )
+
+            if product.limit_one_per_user:
+                product.order_max = min(product.order_max, 1)
+                if product.min_per_order and product.min_per_order > 1:
+                    product.min_per_order = 1
 
             original_price = product_price_override.get(product.pk, product.default_price)
             if voucher:
@@ -320,6 +337,11 @@ def get_grouped_products(
 
             display_add_to_cart = display_add_to_cart or product.order_max > 0
         else:
+            product.limit_one_per_user = product.pk in limit_one_per_user_product_ids
+
+            if product.limit_one_per_user and product.min_per_order and product.min_per_order > 1:
+                product.min_per_order = 1
+
             for var in product.available_variations:
                 var.description = str(var.description)
                 for recv, resp in product_description.send(sender=event, product=product, variation=var):
@@ -340,6 +362,9 @@ def get_grouped_products(
                     var.cached_availability[1] if var.cached_availability[1] is not None else sys.maxsize,
                     max_per_order,
                 )
+
+                if product.pk in limit_one_per_user_product_ids:
+                    var.order_max = min(var.order_max, 1)
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
