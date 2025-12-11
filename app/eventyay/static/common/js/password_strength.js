@@ -42,6 +42,41 @@ const matchPasswords = (passwordField, confirmationFields) => {
     }
 }
 
+const validatePasswordComplexity = (password) => {
+    const errors = []
+
+    if (password.length < 8) {
+        errors.push("Password must be at least 8 characters long")
+    }
+
+    if (!/[a-zA-Z]/.test(password)) {
+        errors.push("Password must contain at least one letter")
+    }
+
+    if (!/[0-9]/.test(password)) {
+        errors.push("Password must contain at least one number")
+    }
+
+    if (!/[!@#$%^&*()_\-+=\[\\\]{}|;':",.<>/?`~]/.test(password)) {
+        errors.push("Password must contain at least one special character")
+    }
+
+    const commonPasswords = [
+        "123456", "password", "123456789", "12345678", "12345", "111111", "1234567", "sunshine", "qwerty", "iloveyou",
+        "princess", "admin", "welcome", "666666", "abc123", "football", "123123", "monkey", "654321", "!@#$%^&*",
+        "charlie", "aa123456", "donald", "password1", "qwerty123", "letmein", "1234", "123321", "superman", "hello",
+        "whatever", "michael", "dragon", "baseball", "master", "trustno1", "jordan", "jennifer", "hunter", "cookie",
+        "secret", "mustang", "shadow", "summer", "ashley", "bailey", "passw0rd", "batman", "zaq1zaq1", "qazwsx",
+        "password123", "1q2w3e4r", "qwertyuiop", "123qwe", "123456a", "696969", "qwe123", "1qaz2wsx", "qwerty1",
+        "1234567890", "qwerty12", "123456789a", "password!", "password1234", "password12345", "password123456"
+    ]
+    if (commonPasswords.includes(password.toLowerCase())) {
+        errors.push("This password is too common")
+    }
+
+    return errors
+}
+
 const updatePasswordStrength = (passwordField) => {
     const passwordStrengthBar = passwordField.parentNode.querySelector(
         ".password_strength_bar",
@@ -56,29 +91,70 @@ const updatePasswordStrength = (passwordField) => {
         passwordStrengthBar.style.width = "0%"
         passwordStrengthBar.setAttribute("aria-valuenow", 0)
         passwordStrengthInfo.classList.add("d-none")
-    } else {
-        const result = zxcvbn(passwordField.value)
-        const crackTime =
-            result.crack_times_display.online_no_throttling_10_per_second
+        return
+    }
 
+    const validationErrors = validatePasswordComplexity(passwordField.value);
+    passwordStrengthInfo.textContent = "";
+
+    if (validationErrors.length > 0) {
+        passwordStrengthBar.classList.remove("bg-success", "bg-warning");
+        passwordStrengthBar.classList.add("bg-danger");
+        passwordStrengthBar.style.width = "20%";
+        passwordStrengthBar.setAttribute("aria-valuenow", 1);
+
+        const container = document.createElement("div");
+        container.className = "password-validation-errors";
+
+        validationErrors.forEach((err) => {
+            const span = document.createElement("span");
+            span.className = "d-block text-danger";
+
+            const icon = document.createElement("i");
+            icon.className = "fa fa-times-circle";
+            icon.setAttribute("aria-hidden", "true");
+
+            span.appendChild(icon);
+            span.append(` ${err}`);
+            container.appendChild(span);
+        });
+        passwordStrengthInfo.appendChild(container);
+        passwordStrengthInfo.classList.remove("d-none");
+    } else {
+        const result = zxcvbn(passwordField.value);
+        const crackTime = result.crack_times_display.online_no_throttling_10_per_second;
+
+        passwordStrengthBar.classList.remove("bg-danger", "bg-warning", "bg-success");
         if (result.score < 1) {
-            passwordStrengthBar.classList.remove("bg-success")
-            passwordStrengthBar.classList.add("bg-danger")
+            passwordStrengthBar.classList.add("bg-danger");
         } else if (result.score < 3) {
-            passwordStrengthBar.classList.remove("bg-danger")
-            passwordStrengthBar.classList.add("bg-warning")
+            passwordStrengthBar.classList.add("bg-warning");
         } else {
-            passwordStrengthBar.classList.remove("bg-warning")
-            passwordStrengthBar.classList.add("bg-success")
+            passwordStrengthBar.classList.add("bg-success");
         }
 
-        passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`
-        passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1)
-        passwordStrengthInfo.querySelector(
-            ".password_strength_time",
-        ).innerHTML = crackTime
-        passwordStrengthInfo.classList.remove("d-none")
+        passwordStrengthBar.style.width = `${((result.score + 1) / 5) * 100}%`;
+        passwordStrengthBar.setAttribute("aria-valuenow", result.score + 1);
+        const p = document.createElement("p");
+        p.className = "text-muted mb-0";
+
+        const span = document.createElement("span");
+        if (result.score >= 3) {
+            span.className = "text-success";
+            const icon = document.createElement("i");
+            icon.className = "fa fa-check-circle";
+            icon.setAttribute("aria-hidden", "true");
+            span.appendChild(icon);
+            span.append(` This password would take ${crackTime} to crack.`);
+        } else {
+            span.textContent = `This password would take ${crackTime} to crack.`;
+        }
+
+        p.appendChild(span);
+        passwordStrengthInfo.appendChild(p);
+        passwordStrengthInfo.classList.remove("d-none");
     }
+
     matchPasswords(passwordField)
 }
 

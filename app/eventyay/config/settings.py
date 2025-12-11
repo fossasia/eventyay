@@ -713,6 +713,12 @@ LANGUAGES_INFORMATION = {
         'public_code': 'nb',
         'path': 'nb_NO',
     },
+    'ko': {
+        'name': _('Korean'),
+        'natural_name': '한국어',
+        'official': False,
+        'percentage': 88,
+    },
     'nl': {
         'name': _('Dutch'),
         'natural_name': 'Nederlands',

@@ -37,13 +37,20 @@ class PasswordStrengthInput(PasswordInput):
                      aria-valuemax="4">
                 </div>
             </div>
-            <p class="text-muted password_strength_info d-none">
-                <span style="margin-left:5px;">
-                    {message}
-                </span>
-            </p>
+            <div class="password_strength_info d-none">
+                <p class="text-muted mb-0">
+                    <span style="margin-left:5px;">
+                        {message}
+                    </span>
+                </p>
+            </div>
+            <div class="password-requirements text-muted small mt-1">
+                <small>
+                    Password must be at least 8 characters long and contain letters, numbers, and special characters.
+                </small>
+            </div>
         </div>
-        """.format(message=_('This password would take <em class="password_strength_time"></em> to crack.'))
+        """.format(message=_('This password would take some time to crack.'))
 
         self.attrs = add_class(self.attrs, 'password_strength')
         self.attrs['autocomplete'] = 'new-password'

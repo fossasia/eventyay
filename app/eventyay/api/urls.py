@@ -42,14 +42,12 @@ def talks_to_submissions_redirect(request, event, subpath):
     Redirects requests from /events/.../talks/... to /events/.../submissions/...
     preserving the subpath and query parameters.
     """
-    new_path = request.path.replace('/talks/', '/submissions/', 1)
+    new_path = request.path.replace("/talks/", "/submissions/", 1)
 
     if query_string := request.META.get('QUERY_STRING', ''):
         new_path += f'?{query_string}'
-        new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)
-
 
 router = routers.DefaultRouter()
 router.register(r'organizers', organizer.OrganizerViewSet)
@@ -211,6 +209,7 @@ urlpatterns = [
         event.CustomerOrderCheckView.as_view(),
         name='event.ticket-check',
     ),
+    
     # We redirect the old pre-filtered /talks/ endpoint to  /submissions/
     path(
         'events/<slug:event>/talks/<path:subpath>',
