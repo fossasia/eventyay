@@ -361,6 +361,15 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
         return self.get_object()
 
     def post(self, request, *args, **kwargs):
+        clear_field = request.POST.get('clear_file')
+        if clear_field == 'image':
+            submission = self.object
+            if submission and getattr(submission, 'image', None):
+                submission.image.delete(save=False)
+                submission.image = None
+                submission.save(update_fields=['image'])
+            return redirect(request.path)
+
         form = self.get_form()
         if form.is_valid() and self.qform.is_valid():
             return self.form_valid(form)

@@ -9,18 +9,36 @@
         <div class="d-flex align-items-start hide-label">
             <div>
                 <div class="avatar-upload hide-label">
+                    {% if saved_avatar_name %}
+                    <div class="form-saved-file mb-2" id="avatar-saved-info">
+                        <span class="text-muted">{% translate "Currently selected" %}: </span>
+                        <strong>{{ saved_avatar_name }}</strong>
+                        <button type="submit" name="clear_file" value="avatar" class="btn btn-sm btn-outline-danger ml-2">{% translate "Clear" %}</button>
+                    </div>
+                    {% elif user.avatar and not avatar_cleared %}
+                    <div class="form-saved-file mb-2" id="avatar-saved-info">
+                        <span class="text-muted">{% translate "Currently selected" %}: </span>
+                        <strong>{{ user.avatar.name|cut:"avatars/" }}</strong>
+                        <button type="submit" name="clear_file" value="avatar" class="btn btn-sm btn-outline-danger ml-2">{% translate "Clear" %}</button>
+                    </div>
+                    {% endif %}
+                    <div class="form-file-selected mb-2" id="avatar-selected-info" style="display: none;">
+                        <span class="text-muted">{% translate "Selected" %}: </span>
+                        <strong id="avatar-selected-name"></strong>
+                        <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="clearFileInput('avatar')">{% translate "Clear" %}</button>
+                    </div>
                     {{ form.avatar.as_field_group }}
                 </div>
                 {{ form.get_gravatar.as_field_group }}
             </div>
-            <div class="form-image-preview {% if not user.avatar and not user.get_gravatar %}d-none{% endif %}">
-                <a href="{% if user.avatar %}{{ user.avatar|thumbnail:"default" }}{% endif %}" data-lightbox="{% if user.avatar %}{{ user.avatar.url }}{% endif %}">
+            <div class="form-image-preview {% if not user.avatar or avatar_cleared %}{% if not user.get_gravatar %}d-none{% endif %}{% endif %}">
+                <a href="{% if user.avatar and not avatar_cleared %}{{ user.avatar|thumbnail:"default" }}{% endif %}" data-lightbox="{% if user.avatar and not avatar_cleared %}{{ user.avatar.url }}{% endif %}">
                     <img loading="lazy"
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
-                         data-avatar="{% if user.avatar %}{{ user.avatar.url }}{% endif %}"
+                         data-avatar="{% if user.avatar and not avatar_cleared %}{{ user.avatar.url }}{% endif %}"
                          alt="{% translate "Your avatar" %}"
-                         {% if user.avatar %}src="{{ user.avatar.url }}"{% endif %} />
+                         {% if user.avatar and not avatar_cleared %}src="{{ user.avatar.url }}"{% endif %} />
                 </a>
             </div>
         </div>
@@ -33,3 +51,4 @@
 {% compress js %}
     <script defer src="{% static "cfp/js/profile.js" %}"></script>
 {% endcompress %}
+<script src="{% static 'common/js/fileInput.js' %}"></script>

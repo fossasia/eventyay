@@ -81,7 +81,7 @@ class ClearableBasenameFileInput(ClearableFileInput):
             return self.file.name
 
         def __str__(self):
-            return Path(self.name).stem
+            return Path(self.name).name
 
         @property
         def url(self):
@@ -89,12 +89,22 @@ class ClearableBasenameFileInput(ClearableFileInput):
 
     def get_context(self, name, value, attrs):
         ctx = super().get_context(name, value, attrs)
-        ctx['widget']['value'] = self.FakeFile(value)
+        if value and not getattr(value, 'is_saved_file', False):
+            ctx['widget']['value'] = self.FakeFile(value)
         return ctx
 
 
 class ImageInput(ClearableBasenameFileInput):
     template_name = 'common/widgets/image_input.html'
+
+    def get_context(self, name, value, attrs):
+        ctx = super().get_context(name, value, attrs)
+        if value and getattr(value, 'is_saved_file', False):
+            ctx['widget']['is_saved_file'] = True
+            ctx['widget']['saved_filename'] = Path(value.name).name if getattr(value, 'name', None) else ''
+        elif value and getattr(value, 'name', None):
+            ctx['widget']['saved_filename'] = Path(value.name).name
+        return ctx
 
 
 class MarkdownWidget(Textarea):

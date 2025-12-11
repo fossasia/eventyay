@@ -22,7 +22,6 @@ from eventyay.common.forms.mixins import (
 )
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
-    ClearableBasenameFileInput,
     EnhancedSelect,
     EnhancedSelectMultiple,
     MarkdownWidget,
@@ -76,7 +75,11 @@ class SpeakerProfileForm(
         initial['name'] = name
 
         if self.user:
-            initial.update({field: getattr(self.user, field) for field in self.user_fields})
+            # Only use user's current values for fields not already in initial
+            # This allows session data to take priority (for back navigation)
+            for field in self.user_fields:
+                if field not in initial or initial.get(field) in (None, ''):
+                    initial[field] = getattr(self.user, field)
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
             self.fields[field] = field_class(
@@ -171,7 +174,7 @@ class SpeakerProfileForm(
         public_fields = ['fullname', 'biography', 'avatar']
         widgets = {
             'biography': MarkdownWidget,
-            'avatar': ClearableBasenameFileInput,
+            'avatar': forms.FileInput,
             'avatar_source': MarkdownWidget,
             'avatar_license': MarkdownWidget,
         }
