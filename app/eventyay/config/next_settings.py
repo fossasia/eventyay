@@ -543,29 +543,47 @@ USE_TZ = True
 LOCALE_PATHS = (BASE_DIR / 'locale',)
 
 # TODO: Move to consts.py
-ALL_LANGUAGES = (
+ALL_LANGUAGES = [
     ('en', _('English')),
     ('de', _('German')),
-    ('de-formal', _('German (informal)')),
+    ('de-formal', _('German (formal)')),
     ('ar', _('Arabic')),
-    ('zh-hans', _('Chinese (simplified)')),
+    ('bg', _('Bulgarian')),
+    ('ca', _('Catalan')),
+    ('cs', _('Czech')),
     ('da', _('Danish')),
+    ('el', _('Greek')),
+    ('es', _('Spanish')),
+    ('fa-ir', _('Persian')),
+    ('fi', _('Finnish')),
+    ('fr', _('French')),
+    ('hu', _('Hungarian')),
+    ('id', _('Indonesian')),
+    ('it', _('Italian')),
+    ('ja-jp', _('Japanese')),
+    ('ko', _('Korean')),
+    ('lv', _('Latvian')),
+    ('ms', _('Malay')),
+    ('nb-no', _('Norwegian Bokmål')),
     ('nl', _('Dutch')),
     ('nl-informal', _('Dutch (informal)')),
-    ('fr', _('French')),
-    ('fi', _('Finnish')),
-    ('el', _('Greek')),
-    ('it', _('Italian')),
-    ('lv', _('Latvian')),
     ('pl', _('Polish')),
+    ('pl-informal', _('Polish (informal)')),
+    ('pt-br', _('Brazilian Portuguese')),
     ('pt-pt', _('Portuguese (Portugal)')),
-    ('pt-br', _('Portuguese (Brazil)')),
+    ('ro', _('Romanian')),
     ('ru', _('Russian')),
-    ('es', _('Spanish')),
+    ('si', _('Sinhala')),
+    ('sl', _('Slovenian')),
+    ('sv', _('Swedish')),
     ('sw', _('Swahili')),
+    ('th', _('Thai')),
     ('tr', _('Turkish')),
     ('uk', _('Ukrainian')),
-)
+    ('vi', _('Vietnamese')),
+    ('zh-hans', _('Chinese (Simplified)')),
+    ('zh-hant', _('Chinese (Traditional)')),
+]
 LANGUAGES_OFFICIAL = {'en', 'de', 'de-formal'}
 LANGUAGES_INCUBATING = {'pl', 'fi', 'pt-br'}
 LANGUAGES_RTL = {'ar', 'he', 'fa-ir'}
