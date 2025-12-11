@@ -21,6 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
+from eventyay.common.settings.config import build_config
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -227,6 +228,9 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
+
+talk_config, TALK_CONFIG_FILES = build_config()
+TALK_CONFIG = talk_config
 
 # --- Now, provide values to Django's settings. ---
 
