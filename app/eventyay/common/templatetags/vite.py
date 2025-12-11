@@ -4,17 +4,17 @@ from urllib.parse import urljoin
 
 from django import template
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.safestring import mark_safe
 
 register = template.Library()
-LOGGER = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 _MANIFEST = {}
 
-# Try to load manifests from both global-nav-menu and schedule-editor directories
+# The vite_asset tag is only used for schedule-editor app, we only need find manifest.json file
+# for this app.
 MANIFEST_PATHS = [
-    settings.BASE_DIR / 'static' / 'schedule-editor' / 'pretalx-manifest.json',
-    settings.BASE_DIR / 'static' / 'global-nav-menu' / 'pretalx-manifest.json',
-    settings.STATIC_ROOT / 'pretalx-manifest.json'
+    settings.COMPILED_FRONTEND_DIR / 'schedule-editor' / 'schedule-editor-manifest.json',
 ]
 
 # We're building the manifest if we don't have a dev server running AND if we're
@@ -23,13 +23,10 @@ if not settings.VITE_DEV_MODE and not settings.VITE_IGNORE:
     for manifest_path in MANIFEST_PATHS:
         try:
             with open(manifest_path) as fp:
-                _MANIFEST = json.load(fp)
-                LOGGER.info(f'Loaded vite manifest from {manifest_path}')
-                break
-        except Exception as e:
-            LOGGER.warning(f'Error reading vite manifest at {manifest_path}: {str(e)}')
-            continue
-
+                _MANIFEST |= json.load(fp)
+                logger.info(f'Loaded vite manifest from {manifest_path}')
+        except FileNotFoundError:
+            logger.debug(f'Vite manifest not found at {manifest_path}, skipping.')
 
 def _get_manifest_subdir():
     """Determine which subdirectory the current manifest belongs to."""
@@ -37,8 +34,6 @@ def _get_manifest_subdir():
         if manifest_path.exists():
             if 'schedule-editor' in str(manifest_path):
                 return 'schedule-editor'
-            elif 'global-nav-menu' in str(manifest_path):
-                return 'global-nav-menu'
     return ''
 
 def generate_script_tag(path, attrs):
@@ -98,7 +93,8 @@ def vite_asset(path):
 
     manifest_entry = _MANIFEST.get(path)
     if not manifest_entry:
-        raise RuntimeError(f'Cannot find {path} in Vite manifest at {MANIFEST_PATH}')
+        msg = f'Cannot find {path} in Vite manifest at {MANIFEST_PATHS}'
+        raise ImproperlyConfigured(msg)
 
     tags = generate_css_tags(path)
     tags.append(generate_script_tag(manifest_entry['file'], {'type': 'module', 'crossorigin': ''}))
