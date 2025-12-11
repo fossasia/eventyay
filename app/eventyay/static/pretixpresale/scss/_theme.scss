@@ -107,3 +107,14 @@ h2.content-header {
 .header-content {
   display: flex;
 }
+.page-header-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.header-part.header-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}

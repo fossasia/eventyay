@@ -25,7 +25,7 @@ $body-bg: #f5f5f5 !default;
 }
 
 .main-box {
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+   // box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
     margin-bottom: 10px;
 }
 
@@ -51,6 +51,10 @@ $body-bg: #f5f5f5 !default;
 .locales{
     align-content: center;
 }
+.locales summary {
+  color: white !important;
+}
+
 
 
 .login-hdr {
@@ -160,7 +164,7 @@ body.loading .container {
         max-width: 600px;
         background: white;
         border-radius: $border-radius-large;
-        box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1),0 3px 6px 0 rgba(0,0,0,.07);
+       
         padding: 20px;
         min-height: 160px;
 
@@ -282,6 +286,7 @@ body.loading .container {
         margin: 0;
     }
 }
+
 
 .dl-horizontal dt  {
     white-space: normal;

@@ -105,10 +105,22 @@
     
 }
 
-.page-header-links{
-    .header-part{
-        a {
-            color: #FFFFFF !important;
-        }
-    }
+.page-header-links {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.header-part.header-left {
+  margin-right: auto;
+}
+
+.header-part.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }

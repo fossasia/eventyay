@@ -37,7 +37,7 @@ header {
 
   #event-logo {
     max-height: 140px;
-    border-radius: 10px;
+    border-radius: 0 !important;  
   }
 
   .header-wrapper {
@@ -74,10 +74,14 @@ header {
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
-    align-items: flex-end;
+    align-items: center;
+    gap: 1rem;
     font-size: 1rem;
 
-    /* Inline locale links */
+
+    /* FIXED: Change inline locale links to dropdown */
+    /* Remove or comment out these styles: */
+    /*
     .locales-inline {
       display: inline-block;
       margin-right: 0.8rem;
@@ -101,31 +105,72 @@ header {
       font-weight: bold;
       opacity: 1;
     }
+    */
 
+    
     .locales {
       margin-right: 20px;
+      position: relative;
       
       summary {
         cursor: pointer;
+        color: white;
+        list-style: none;
+        padding: 6px 12px;
+        
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+        
+        
+        
+        &::after {
+          content: '▼';
+          font-size: 0.7em;
+          margin-left: 4px;
+        }
+      }
+      
+      summary::-webkit-details-marker {
+        display: none;
       }
       
       .dropdown-content {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: white;
         border: 1px solid var(--color-grey-lighter);
         border-radius: 4px;
-        right: 0;
-        left: auto;
-        min-width: 100px;
+        min-width: 150px;
+        margin-top: 4px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
         
         .dropdown-item {
+          display: block;
+          padding: 8px 16px;
+          color: var(--color-grey-dark, #333);
+          text-decoration: none;
+          transition: background 0.2s;
+          
           &:hover {
-            background-color: var(--color-primary-lighter);
-            color: var(--color-grey-dark);
+            background-color: var(--color-primary-lighter, #e3f2fd);
+            color: var(--color-grey-dark, #333);
             text-decoration: none;
           }
           
           &.active {
             background-color: var(--color-primary);
             color: white;
+            font-weight: bold;
+            
+            &::before {
+              content: '✓ ';
+              margin-right: 6px;
+            }
             
             &:hover {
               background-color: var(--color-primary-dark, var(--color-primary));
@@ -147,14 +192,29 @@ header {
 }
 
 #main-card {
-  min-height: 300px;
-  box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
-  padding: 0;
+  min-height: 470.4px;
+  margin-bottom: 10px;
+  padding-left:15px;
+  padding-right: 15px;
+  margin-left: 0px;
+  margin-right: 0px;
+  line-height: 20px;
+  text-size-adjust: 100%;
+
+
+
   border: none;
+  box-shadow: none !important;  
 
   main {
     padding: var(--size-spacer);
   }
+}
+.header-row-right details.locales {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
 }
 
 #event-nonpublic {
@@ -182,13 +242,14 @@ footer {
   }
 }
 
+
 #main-container {
   width: 100%;
   padding-right: 15px;
   padding-left: 15px;
   margin-right: auto;
   margin-left: auto;
-  max-width: 1140px;
+  max-width: 1200px !important;  
   margin-top: 3.8rem !important;
 }
 
@@ -263,7 +324,7 @@ footer {
       padding: 0;
       #event-logo {
         max-height: 120px;
-        border-radius: 10px;
+        border-radius: 0 !important;  
       }
     }
 
