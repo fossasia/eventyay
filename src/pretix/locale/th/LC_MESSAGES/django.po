@@ -176,7 +176,6 @@ msgstr ""
 
 #: pretix/api/serializers/item.py:327 pretix/control/forms/item.py:97
 msgid "This type of question cannot be asked during check-in."
-msgstr ""
 msgstr "此類問題在驗票時不得提出。"
 
 #: pretix/api/serializers/order.py:1109 pretix/api/serializers/order.py:1116
@@ -289,7 +288,6 @@ msgstr ""
 
 #: pretix/api/webhooks.py:231
 msgid "Ticket check-in reverted"
-msgstr ""
 msgstr "已驗票"
 
 #: pretix/api/webhooks.py:231
@@ -937,7 +935,6 @@ msgstr ""
 #: pretix/base/configurations/default_setting.py:913
 #: pretix/control/forms/event.py:101
 msgid "Default language"
-msgstr ""
 msgstr "預設語言"
 
 #: pretix/base/configurations/default_setting.py:923
@@ -2270,7 +2267,6 @@ msgstr ""
 #: pretix/control/templates/pretixcontrol/items/questions.html:3
 #: pretix/control/templates/pretixcontrol/items/questions.html:8
 msgid "Questions"
-msgstr ""
 msgstr "問題"
 
 #: pretix/base/exporters/dekodi.py:82
@@ -3493,7 +3489,6 @@ msgstr ""
 
 #: pretix/base/forms/user.py:32 pretix/control/forms/users.py:29
 msgid "New password"
-msgstr ""
 msgstr "新密碼"
 
 #: pretix/base/forms/user.py:36 pretix/control/forms/users.py:33
@@ -7824,7 +7819,6 @@ msgstr ""
 #: pretix/control/forms/event.py:393
 #: pretix/control/forms/organizer_forms/organizer_update_form.py:31
 msgid "Custom domain"
-msgstr ""
 msgstr "自定網域"
 
 #: pretix/control/forms/event.py:396
@@ -19465,7 +19459,6 @@ msgstr ""
 #: pretix/plugins/statistics/templates/pretixplugins/statistics/index.html:116
 #: pretix/plugins/statistics/templates/pretixplugins/statistics/index.html:118
 msgid "Available"
-msgstr ""
 msgstr "可使用"
 
 #: pretix/plugins/statistics/templates/pretixplugins/statistics/index.html:123
@@ -20388,7 +20381,6 @@ msgstr ""
 
 #: pretix/presale/templates/pretixpresale/event/index.html:38
 msgid "Schedule"
-msgstr ""
 msgstr "議程時間"
 
 #: pretix/presale/templates/pretixpresale/event/index.html:43

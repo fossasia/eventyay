@@ -4,19 +4,16 @@ transition(name="sidebar")
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
 				router-link.room(v-if="homeRoom && roomsByType.page.includes(homeRoom)", :to="{name: 'home'}", v-html="$emojify(homeRoom.name)")
-				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)")
 				router-link.room(:to="{name: 'schedule'}") {{ $t('RoomsSidebar:schedule:label') }}
 				router-link.room(:to="{name: 'schedule:sessions'}") {{ $t('RoomsSidebar:session:label') }}
 				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
 					router-link.room(v-if="page !== homeRoom", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
-					router-link.room(v-if="page !== rooms[0]", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
 				span {{ $t('RoomsSidebar:stages-headline:text') }}
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
 				router-link.stage(v-for="stage of roomsByType.stage", :to="stage.room === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
-				router-link.stage(v-for="stage of roomsByType.stage", :to="stage.room === rooms[0] ? {name: 'home'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
 					template(v-if="stage.session")
 						img.preview(v-if="stage.image", :src="stage.image")
 						.info

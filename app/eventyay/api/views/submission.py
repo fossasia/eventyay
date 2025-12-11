@@ -69,7 +69,6 @@ logger = logging.getLogger(__name__)
 
 class AddSpeakerSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
-    name = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     name = serializers.CharField(required=True, allow_blank=False)
     locale = serializers.CharField(required=False, allow_null=True, allow_blank=True)
 
@@ -93,7 +92,6 @@ with scopes_disabled():
         summary="List Submissions",
         parameters=[
             build_search_docs("title", "speaker.name"),
-            build_search_docs("title", "speaker.fullname"),
             build_expand_docs(
                 "speakers",
                 "speakers.answers",
@@ -163,7 +161,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = SubmissionSerializer
     queryset = Submission.objects.none()
     lookup_field = "code__iexact"
-    search_fields = ("title", "speakers__name")
     search_fields = ("title", "speakers__fullname")
     filterset_class = SubmissionFilter
     permission_map = {

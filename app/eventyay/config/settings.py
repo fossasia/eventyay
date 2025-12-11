@@ -459,7 +459,6 @@ ALL_LANGUAGES = [
     ('hu', _('Hungarian')),
     ('id', _('Indonesian')),
     ('it', _('Italian')),
-    ('id', _('Indonesian')),
     ('ja-jp', _('Japanese')),
     ('ko', _('Korean')),
     ('lv', _('Latvian')),

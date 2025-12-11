@@ -157,9 +157,6 @@ presale_patterns_main = [
             (
                 locale_patterns
                 + [
-                    re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(organizer_patterns)),
-                    re_path(
-                        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
                     path('<orgslug:organizer>/', include(organizer_patterns)),
                     path(
                         '<orgslug:organizer>/<slug:event>/',
@@ -186,24 +183,6 @@ raw_plugin_patterns = []
 
 # Auto-register local plugins from eventyay.plugins.*
 for app in apps.get_app_configs():
-    if hasattr(app, 'EventyayPluginMeta'):
-        if importlib.util.find_spec(app.name + '.urls'):
-            urlmod = importlib.import_module(app.name + '.urls')
-            single_plugin_patterns = []
-            if hasattr(urlmod, 'urlpatterns'):
-                single_plugin_patterns += urlmod.urlpatterns
-            if hasattr(urlmod, 'event_patterns'):
-                patterns = plugin_event_urls(urlmod.event_patterns, plugin=app.name)
-                single_plugin_patterns.append(
-                    path('<orgslug:organizer>/<slug:event>/', include(patterns))
-                )
-            if hasattr(urlmod, 'organizer_patterns'):
-                patterns = urlmod.organizer_patterns
-                single_plugin_patterns.append(
-                    path('<orgslug:organizer>/', include(patterns))
-                )
-            raw_plugin_patterns.append(path('', include((single_plugin_patterns, app.label))))
-            logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
     if hasattr(app, 'EventyayPluginMeta') and app.name.startswith('eventyay.plugins.'):
         if importlib.util.find_spec(f'{app.name}.urls'):
             try:
@@ -272,14 +251,26 @@ try:
         if hasattr(urlmod, 'event_patterns'):
             patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/', include(patterns))
+                re_path(
+                    r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
+                    include(patterns)
+                )
             )
         if hasattr(urlmod, 'organizer_patterns'):
             patterns = urlmod.organizer_patterns
             single_plugin_patterns.append(
-                re_path(r'^(?P<organizer>[a-zA-Z0-9_.-]+)/', include(patterns))
+                re_path(
+                    r'^(?P<organizer>[a-zA-Z0-9_.-]+)/',
+                    include(patterns)
+                )
             )
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
+
+        raw_plugin_patterns.append(
+            path('', include((single_plugin_patterns, 'pretix_venueless')))
+        )
+
+except (ImportError, AttributeError, TypeError):
+    logger.exception('Error including pretix_venueless plugin URLs')
 except TypeError:
             single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
         if hasattr(urlmod, 'organizer_patterns'):
@@ -297,8 +288,6 @@ storage_patterns = [
 ]
 
 unified_event_patterns = [
-    re_path(
-        r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
     path(
         '<orgslug:organizer>/<slug:event>/',
         include(

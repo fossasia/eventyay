@@ -3,7 +3,6 @@ import importlib
 from django.apps import apps
 from django.http import HttpResponsePermanentRedirect
 from django.urls import include, path
-from django.urls import re_path as url
 from rest_framework import routers
 
 from eventyay.api.views import cart
@@ -45,13 +44,8 @@ def talks_to_submissions_redirect(request, event, subpath):
     """
     new_path = request.path.replace("/talks/", "/submissions/", 1)
 
-    query_string = request.META.get('QUERY_STRING', '')
-    if query_string:
-    new_path = request.path.replace('/talks/', '/submissions/', 1)
-
     if query_string := request.META.get('QUERY_STRING', ''):
         new_path += f'?{query_string}'
-        new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)
 
@@ -104,7 +98,6 @@ event_router.register('rooms', room.RoomViewSet, basename='room')
 event_router.register('talkquestions', question.QuestionViewSet, basename='talkquestion')
 event_router.register('answers', question.AnswerViewSet, basename='answer')
 event_router.register('question-options', question.AnswerOptionViewSet, basename='question_option')
-event_router.register('speaker-information', speaker_information.SpeakerInformationViewSet, basename='speaker_information',)
 event_router.register(
     'speaker-information',
     speaker_information.SpeakerInformationViewSet,
