@@ -17,12 +17,15 @@
         {% if organizer.settings.theme_color_background|upper != "#FFFFFF" or organizer.settings.organizer_logo_image_large %}
             <div class="container page-header-links">
                 <div class="pull-right header-part flip header-content">
-                    <div class="locales">
-                        {% for l in languages %}
-                            <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}" class="{% if l.code == request.LANGUAGE_CODE %}active{% endif %}" rel="nofollow">
-                                {{ l.name_local }}</a>
-                        {% endfor %}
-                    </div>
+                    <form action="{% url 'presale:locale.set' %}" method="get" class="locales" aria-label="{% trans "select language" %}">
+                        <label for="locale-select-org" class="sr-only">{% trans "Language" %}</label>
+                        <select id="locale-select-org" name="locale" onchange="this.form.submit()" class="form-control input-sm">
+                            {% for l in languages %}
+                                <option value="{{ l.code }}" {% if l.code == request.LANGUAGE_CODE %}selected{% endif %}>{{ l.name_local }}</option>
+                            {% endfor %}
+                        </select>
+                        <input type="hidden" name="next" value="{{ request.path }}{% if request.META.QUERY_STRING %}?{{ request.META.QUERY_STRING|urlencode }}{% endif %}">
+                    </form>
                 </div>
             </div>
         {% endif %}
@@ -47,12 +50,17 @@
         </div>
         {% if organizer.settings.locales|length > 1 %}
             {% if organizer.settings.theme_color_background|upper == "#FFFFFF" and not organizer.settings.organizer_logo_image_large %}
-                <div class="{% if not organizer_logo or not organizer.settings.organizer_logo_image_large %}pull-right flip{% endif %} loginbox">
-                    <div class="locales">
-                        {% for l in languages %}
-                            <a href="{% url "presale:locale.set" %}?locale={{ l.code }}&next={{ request.path }}%3F{{ request.META.QUERY_STRING|urlencode }}" class="{% if l.code == request.LANGUAGE_CODE %}active{% endif %}" rel="nofollow">
-                                {{ l.name_local }}</a>
-                        {% endfor %}
+                <div class="container">
+                    <div class="{% if not organizer_logo or not organizer.settings.organizer_logo_image_large %}pull-right flip{% endif %} loginbox">
+                        <form action="{% url 'presale:locale.set' %}" method="get" class="locales" aria-label="{% trans "select language" %}">
+                            <label for="locale-select-org-inline" class="sr-only">{% trans "Language" %}</label>
+                            <select id="locale-select-org-inline" name="locale" onchange="this.form.submit()" class="form-control input-sm">
+                                {% for l in languages %}
+                                    <option value="{{ l.code }}" {% if l.code == request.LANGUAGE_CODE %}selected{% endif %}>{{ l.name_local }}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="hidden" name="next" value="{{ request.path }}{% if request.META.QUERY_STRING %}?{{ request.META.QUERY_STRING|urlencode }}{% endif %}">
+                        </form>
                     </div>
                 </div>
             {% endif %}
