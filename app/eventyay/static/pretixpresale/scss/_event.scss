@@ -7,8 +7,7 @@
         border-bottom: 2px solid $table-border-color;
     }
 
-    &:last-child {
-    }
+    /* removed empty ruleset */
     p  {
         margin-bottom: 0;
     }
@@ -161,13 +160,13 @@ section.front-page {
     top: 0;
 }
 .event-logo-img-placement {
-    margin: 0 12%;
+    margin: 0; /* align with .container gutters */
 }
 .event-logo-image {
     max-height: 140px;
     max-width: 240px;
     width: auto;
-    border-radius: 10px;
+    border-radius: 0; /* keep original image shape */
 }
 
 @media (max-width: 768px) {
@@ -175,7 +174,7 @@ section.front-page {
         max-height: 120px;
         max-width: 120px;
         width: auto;
-        border-radius: 10px;
+        border-radius: 0;
         margin-bottom: 10px;
     }
 }
@@ -230,6 +229,11 @@ section.front-page {
     .row-voucher > div:first-child {
         margin-bottom: 15px;
     }
+}
+
+/* Ensure login fragment aligns with container gutters; use modifier class added to fragment */
+.login-hdr--aligned {
+    margin-right: 0 !important;
 }
 
 .subevent-list {
