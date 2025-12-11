@@ -7,16 +7,19 @@ from mimetypes import guess_type
 from django.apps import apps
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404, HttpResponse
+from django.shortcuts import redirect
 from django.urls import include, path, re_path
 from django.utils.encoding import force_str
 from django.utils.functional import Promise
+from django.utils.timezone import now
 from django.views.generic import TemplateView, View
 from django.views.static import serve as static_serve
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event  # Added for /video event context
-from eventyay.cfp.views.event import EventStartpage
+from eventyay.base.models.event import default_feature_flags
+from eventyay.base.models.room import AnonymousInvite
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -27,6 +30,7 @@ from eventyay.presale.urls import (
     locale_patterns,
     organizer_patterns,
 )
+from eventyay.cfp.views.event import EventStartpage
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 WEBAPP_DIST_DIR = os.path.normpath(os.path.join(BASE_DIR, 'static', 'webapp'))
@@ -79,6 +83,11 @@ class VideoSPAView(View):
 
             base_path = event.urls.video_base.rstrip('/')
             base_href = event.urls.video_base
+
+            # Merge default feature flags with event-specific flags to ensure
+            # newer features like 'polls' are available even for older events
+            features = {**default_feature_flags(), **(getattr(event, 'feature_flags', {}) or {})}
+
             injected = {
                 'api': {
                     'base': api_base,
@@ -91,7 +100,7 @@ class VideoSPAView(View):
                     'scheduleImport': safe_reverse('storage:schedule_import', event_id=event.pk) or '',
                     'systemlog': safe_reverse('live:systemlog') or '',
                 },
-                'features': getattr(event, 'feature_flags', {}) or {},
+                'features': features,
                 'externalAuthUrl': getattr(event, 'external_auth_url', None),
                 'locale': event.locale,
                 'date_locale': cfg.get('date_locale', 'en-ie'),
@@ -148,6 +157,34 @@ class VideoAssetView(View):
                     resp['Content-Type'] = ctype
                 return resp
         raise Http404()
+
+
+class AnonymousInviteRedirectView(View):
+    """
+    Handle anonymous room invite short tokens (e.g., /eGHhXr/).
+    Redirects to the video SPA standalone anonymous room view:
+    /{organizer}/{event}/video/standalone/{room_id}/anonymous#invite={token}
+    """
+    def get(self, request, token, *args, **kwargs):
+        try:
+            invite = AnonymousInvite.objects.select_related(
+                'event', 'event__organizer', 'room'
+            ).get(
+                short_token=token,
+                expires__gte=now(),
+            )
+        except AnonymousInvite.DoesNotExist:
+            raise Http404("Invalid or expired anonymous room link")
+
+        # Build redirect URL to the video SPA standalone anonymous view
+        event = invite.event
+        organizer_slug = event.organizer.slug
+        event_slug = event.slug
+        room_id = invite.room_id
+
+        # Redirect to /{organizer}/{event}/video/standalone/{room_id}/anonymous#invite={token}
+        redirect_url = f"/{organizer_slug}/{event_slug}/video/standalone/{room_id}/anonymous#invite={token}"
+        return redirect(redirect_url)
 
 
 presale_patterns_main = [
@@ -271,22 +308,32 @@ unified_event_patterns = [
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
+                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
                 re_path(
-                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
-                ),
-                path(
-                    'video/<path:path>',
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
                     VideoAssetView.as_view(),
-                    name='video.assets',
+                    name='video.assets.file',
                 ),
                 # The frontend Video SPA app is not served by Nginx so the Django view needs to
                 # serve all paths under /video/ to allow client-side routing.
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                path('talk/', EventStartpage.as_view(), name='event.talk'),
+                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
         ),
+    ),
+]
+
+# Anonymous room invite short token pattern (6 characters)
+# Must be placed before presale_patterns_main to avoid conflict with organizer slugs
+# The token uses characters: abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789
+# (excludes visually confusing characters: l, o, I, O, 0)
+anonymous_invite_patterns = [
+    re_path(
+        r'^(?P<token>[a-km-np-zA-HJ-NP-Z1-9]{6})/?$',
+        AnonymousInviteRedirectView.as_view(),
+        name='anonymous.invite.redirect',
     ),
 ]
 
@@ -296,6 +343,8 @@ urlpatterns = (
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
     + plugin_patterns
+    # Anonymous invite short token redirects (before presale to avoid slug conflict)
+    + anonymous_invite_patterns
     + presale_patterns_main
     + unified_event_patterns
 )

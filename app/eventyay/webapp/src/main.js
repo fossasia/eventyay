@@ -56,7 +56,8 @@ async function init({ token, inviteToken }) {
   // resolved when components (RouterLink) are rendered.
   await router.replace(relativePath).catch(() => {})
 
-  const route = router.resolve(relativePath).route
+  // In Vue Router 4, resolve() returns the route object directly (no .route property)
+  const route = router.resolve(relativePath)
   const anonymousRoomId = route?.name === 'standalone:anonymous' ? route?.params?.roomId : null
 
   window.vapp = app.mount('#app')
