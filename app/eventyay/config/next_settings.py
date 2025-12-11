@@ -83,6 +83,13 @@ class BaseSettings(_BaseSettings):
     After that, the settings will be manipulated to serve Django.
     This class is named "BaseSettings" because the settings it holds are not finalized yet.
     Doc: https://docs.pydantic.dev/latest/concepts/pydantic_settings/
+
+    Priority of settings sources (from highest to lowest):
+    1. Secret files in ".secrets/" directory or Docker Secrets.
+    2. Environment variables (with "EVY_" prefix).
+    3. ".env" file in the current working directory.
+    4. Local TOML configuration file (eventyay.local.toml).
+    5. Environment-specific TOML configuration file (eventyay.{active_environment}.toml).
     """
 
     # Tell Pydantic how to load our configurations.
@@ -170,14 +177,13 @@ class BaseSettings(_BaseSettings):
             secrets_for_display = [str(p.relative_to(Path.cwd())) for p in files]
             print(f'Loading secrets from: [blue]{secrets_for_display}[/]', file=sys.stderr)
         return (
-            init_settings,
-            toml_settings,
+            file_secret_settings,
             # The following files will override values from TOML files.
             env_settings,
             # Though having TOML files, we still support .env file
             # because we need to share some settings with other tools.
             dotenv_settings,
-            file_secret_settings,
+            toml_settings,
         )
 
 
