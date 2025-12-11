@@ -3,14 +3,14 @@
 <div class="form-saved-file mb-2" id="{{ widget.name }}-saved-info">
     <span class="text-muted">{% translate "Currently selected" %}: </span>
     <strong>{{ widget.saved_filename }}</strong>
-    <button type="submit" name="clear_file" value="{{ widget.name }}" class="btn btn-sm btn-outline-danger ml-2">{% translate "Clear" %}</button>
+    <button type="submit" name="clear_file" value="{{ widget.name }}" class="btn btn-sm btn-outline-danger ml-2" formnovalidate>{% translate "Clear" %}</button>
 </div>
 {% elif widget.value and widget.value.url %}
     <div class="form-existing-file mb-2" id="{{ widget.name }}-existing-info">
         <span class="text-muted">{% translate "Currently selected" %}: </span>
         <strong>{{ widget.saved_filename }}</strong>
-        <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="clearExistingFile('{{ widget.name }}')">{% translate "Clear" %}</button>
-        <input type="checkbox" name="{{ widget.name }}-clear" id="{{ widget.name }}-clear-checkbox" style="display:none;">
+        <button type="button" class="btn btn-sm btn-outline-danger ml-2" data-clear-existing="{{ widget.name }}">{% translate "Clear" %}</button>
+        <input type="checkbox" name="{{ widget.name }}-clear" id="{{ widget.name }}-clear-checkbox" class="sr-only" aria-hidden="true">
     </div>
     <div class="form-image-preview" id="{{ widget.name }}-preview">
         <a href="{{ widget.value.url }}" data-lightbox>
@@ -22,7 +22,6 @@
 <div class="form-file-selected mb-2" id="{{ widget.name }}-selected-info" style="display: none;">
     <span class="text-muted">{% translate "Selected" %}: </span>
     <strong id="{{ widget.name }}-selected-name"></strong>
-    <button type="button" class="btn btn-sm btn-outline-danger ml-2" onclick="clearFileInput('{{ widget.name }}')">{% translate "Clear" %}</button>
+    <button type="button" class="btn btn-sm btn-outline-danger ml-2" data-clear-file="{{ widget.name }}">{% translate "Clear" %}</button>
 </div>
-<input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %} onchange="handleFileSelect(this)">
-<script src="{% static 'common/js/fileInput.js' %}"></script>
+<input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %} data-file-input>

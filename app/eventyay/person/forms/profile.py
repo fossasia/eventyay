@@ -78,7 +78,7 @@ class SpeakerProfileForm(
             # Only use user's current values for fields not already in initial
             # This allows session data to take priority (for back navigation)
             for field in self.user_fields:
-                if field not in initial or initial.get(field) in (None, ''):
+                if field not in initial or initial.get(field) is None:
                     initial[field] = getattr(self.user, field)
         for field in self.user_fields:
             field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)

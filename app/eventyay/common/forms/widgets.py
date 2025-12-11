@@ -89,8 +89,11 @@ class ClearableBasenameFileInput(ClearableFileInput):
 
     def get_context(self, name, value, attrs):
         ctx = super().get_context(name, value, attrs)
-        if value and not getattr(value, 'is_saved_file', False):
-            ctx['widget']['value'] = self.FakeFile(value)
+        if value:
+            if getattr(value, 'is_saved_file', False):
+                ctx['widget']['value'] = None
+            else:
+                ctx['widget']['value'] = self.FakeFile(value)
         return ctx
 
 
@@ -102,8 +105,13 @@ class ImageInput(ClearableBasenameFileInput):
         if value and getattr(value, 'is_saved_file', False):
             ctx['widget']['is_saved_file'] = True
             ctx['widget']['saved_filename'] = Path(value.name).name if getattr(value, 'name', None) else ''
-        elif value and getattr(value, 'name', None):
-            ctx['widget']['saved_filename'] = Path(value.name).name
+        elif value:
+            if getattr(value, 'name', None):
+                ctx['widget']['saved_filename'] = Path(value.name).name
+            elif getattr(value, 'url', None):
+                ctx['widget']['saved_filename'] = Path(value.url).name
+            else:
+                ctx['widget']['saved_filename'] = str(value)
         return ctx
 
 
