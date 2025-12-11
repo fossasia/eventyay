@@ -12,7 +12,7 @@ echo "============== postgresql is ready =================="
 # the files from static.dist.backup to static.dist
 echo "============== moving files from static.dist.backup to static.dist ==="
 # mind the final dash after backup/ so that only the content is transfered!!!
-rync -avz --delete /home/app/web/eventyay/static.dist.backup/ /home/app/web/eventyay/static.dist
+rsync -avz --delete /home/app/web/eventyay/static.dist.backup/ /home/app/web/eventyay/static.dist
 #echo "============== compiling translation messages ================"
 #python manage.py compilemessages
 #echo "============== compiling JS translation messages ================"
