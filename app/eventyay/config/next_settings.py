@@ -239,6 +239,7 @@ TALK_CONFIG = talk_config
 # but please use with caution (it can reveal sensitive data like passwords, API keys).
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
+DATABASE_REPLICA = 'default'
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'
