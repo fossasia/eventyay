@@ -767,6 +767,7 @@ HAS_REDIS = bool(REDIS_URL)
 # TODO: Remove. Always use Redis Pub/Sub for Channels.
 REDIS_USE_PUBSUB = True
 
+HAS_CELERY = True
 CELERY_BROKER_URL = increase_redis_db(REDIS_URL, 1)
 CELERY_RESULT_BACKEND = increase_redis_db(REDIS_URL, 2)
 CELERY_TASK_ALWAYS_EAGER = IS_TESTING
