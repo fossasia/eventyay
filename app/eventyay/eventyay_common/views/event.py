@@ -367,7 +367,7 @@ class EventUpdate(
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
 
         if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
-            regenerate_css.apply_async(args=(self.request.event.pk,))
+            transaction.on_commit(lambda: regenerate_css.apply(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
                 _(

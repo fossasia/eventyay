@@ -41,6 +41,22 @@ legend {
   margin-bottom: 0.5rem;
 }
 
+.public-event-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 80px;
+}
+.public-event-header .event-logo a {
+  display: inline-flex;
+}
+.public-event-header #event-logo {
+  max-height: 70px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
 button,
 [role="button"],
 a.btn,

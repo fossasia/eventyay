@@ -34,7 +34,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
     validate_event_settings,
 )
-from eventyay.common.forms.fields import ColorField, ImageField
+from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
@@ -320,11 +320,6 @@ class EventWizardCopyForm(forms.Form):
 
 
 class EventWizardDisplayForm(forms.Form):
-    primary_color = ColorField(
-        label=Event._meta.get_field('primary_color').verbose_name,
-        help_text=Event._meta.get_field('primary_color').help_text,
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
