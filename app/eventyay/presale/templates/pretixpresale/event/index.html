@@ -21,10 +21,6 @@
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
-	{# Needed by popover.js #}
-    {{ base_path|json_script:"base_path" }}
-    {{ ev.organizer.slug|json_script:"organizer_name" }}
-    {{ ev.slug|json_script:"event_slug" }}
 {% endblock %}
 {% block content %}
 
@@ -34,7 +30,6 @@
         </script>
     {% endautoescape %}
     <main aria-label="{% if show_cart %}{% trans "Your cart, general information, add products to your cart" %}{% else %}{% trans "General information, add products to your cart" %}{% endif %}">
-    {% include "pretixpresale/event/fragment_nav.html" with with_margin=with_margin is_video_plugin_enabled=is_video_plugin_enabled %}
     {% if show_cart %}
         <details class="panel panel-primary cart" open>
             <summary class="panel-heading">

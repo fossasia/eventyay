@@ -37,7 +37,12 @@ header {
 
   #event-logo {
     max-height: 140px;
-    border-radius: 10px;
+    width: auto;
+  }
+
+  .public-event-header #event-logo {
+    max-height: 140px;
+    width: auto;
   }
 
   .header-wrapper {
@@ -137,13 +142,9 @@ header {
   }
 }
 
-#join-event-link {
-  margin-left: auto;
-}
-
 .public-event-header {
   display: flex;
-  margin-bottom: 14px;
+  margin: 0 0 14px;
 }
 
 #main-card {
@@ -263,7 +264,12 @@ footer {
       padding: 0;
       #event-logo {
         max-height: 120px;
-        border-radius: 10px;
+        width: auto;
+      }
+
+      .public-event-header #event-logo {
+        max-height: 120px;
+        width: auto;
       }
     }
 
