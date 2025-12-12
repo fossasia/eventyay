@@ -1,0 +1,20 @@
+postgres_db = 'eventyay_dev'
+postgres_host = 'eventyay-dev-db'
+postgres_port = 5432
+postgres_user = 'eventyay-dev-user'
+# Please provide postgres_password via secret file or Docker secret.
+
+email_backend = 'django.core.mail.backends.smtp.EmailBackend'
+email_host = 'mail.your-server.de'
+# Please provide email_host_password via secret file or Docker secret.
+
+allowed_hosts = [
+    'dev.eventyay.com',
+    'eventyay.com',
+]
+
+site_url = 'https://dev.eventyay.com'
+
+talk_hostname = 'https://dev.eventyay.com/'
+
+redis_url = 'redis://eventyay-dev-redis/0'

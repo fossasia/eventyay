@@ -1,0 +1,40 @@
+[eventyay]
+instance_name=eventyay
+#url=https://app.eventyay.com/tickets
+url=https://dev.eventyay.com
+currency=USD
+; DO NOT change the following value, it has to be set to the location of the
+; directory *inside* the docker container
+trust_x_forwarded_for=on
+trust_x_forwarded_proto=on
+registration=on
+talk_hostname=https://dev.eventyay.com
+video_server_hostname=https://dev.eventyay.com:8443
+
+[urls]
+static=/static/
+media=/media/
+
+[locale]
+default=en
+timezone=UTC
+
+[mail]
+from = info@eventyay.com
+host = mail.your-server.de
+port = 587
+user = info@eventyay.com
+password = CHANGEME
+tls = True
+ssl = False
+
+[redis]
+location=redis://eventyay-dev-redis/0
+sessions=true
+
+[celery]
+backend=redis://eventyay-dev-redis/1
+broker=redis://eventyay-dev-redis/2
+
+[django]
+secret=CHANGEME
