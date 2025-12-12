@@ -1,6 +1,8 @@
 {% extends "pretixcontrol/organizers/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{# DEPRECATED: Team management has moved to /common area. This template is kept for backward compatibility only. #}
+{# For the active implementation with conditional field visibility, see: eventyay_common/organizers/teams/team_edit.html #}
 {% block inner %}
     {% if team %}
         <h1>{% trans "Team:" %} {{ team.name }}</h1>
@@ -39,6 +41,14 @@
             {% bootstrap_field form.can_view_vouchers layout="control" %}
             {% bootstrap_field form.can_change_vouchers layout="control" %}
         </fieldset>
+        <fieldset>
+            <legend>{% trans "Talk permissions" %}</legend>
+            {% bootstrap_field form.can_change_submissions layout="control" %}
+            {% bootstrap_field form.is_reviewer layout="control" %}
+            {% bootstrap_field form.force_hide_speaker_names layout="control" %}
+            {% bootstrap_field form.limit_tracks layout="control" %}
+        </fieldset>
+
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}

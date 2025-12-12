@@ -4,7 +4,7 @@ dynamic = ["version"]
 description = "Integrates pretix with venueless.org"
 readme = "README.rst"
 requires-python = ">=3.9"
-license = {file = "LICENSE"}
+license = "Apache-2.0"
 keywords = ["pretix"]
 authors = [
     {name = "pretix team", email = "support@pretix.eu"},
