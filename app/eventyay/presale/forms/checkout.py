@@ -55,7 +55,6 @@ class ContactForm(forms.Form):
                 validators=[EmailBanlistValidator()],
                 widget=forms.EmailInput(attrs={'autocomplete': 'section-contact email'}),
             )
-            
             if not request.session.get('iframe_session', False):
                 # There is a browser quirk in Chrome that leads to incorrect initial scrolling in iframes if there
                 # is an autofocus field. Who would have thought… See e.g. here:
