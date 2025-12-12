@@ -101,7 +101,7 @@
                                     {% endfor %}
                                    
                                 </summary>
-                                <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">  
+                                <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                                     {% for l, name in request.event.named_locales %}
                                         {% if l|lower != request.LANGUAGE_CODE|lower %}
                                             {% cfp_locale_switch_url l as locale_switch_url %}
