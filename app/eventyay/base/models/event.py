@@ -2060,7 +2060,7 @@ class Event(
         event."""
         return [
             (code, language['natural_name'])
-            for code, language in settings.LANGUAGES_INFORMATION
+            for code, language in settings.LANGUAGES_INFORMATION.items()
             if code in self.locales
         ]
 
