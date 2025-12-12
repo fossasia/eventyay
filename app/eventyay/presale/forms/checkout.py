@@ -61,7 +61,7 @@ class ContactForm(forms.Form):
                 # https://floatboxjs.com/forum/topic.php?post=8440&usebb_sid=2e116486a9ec6b7070e045aea8cded5b#post8440
                 self.fields['email'].widget.attrs['autofocus'] = 'autofocus'
             self.fields['email'].help_text = event.settings.checkout_email_helptext
-            self.fields['email'].widget.attrs['placeholder'] = 'Valid Email address'
+            self.fields['email'].widget.attrs['placeholder'] = 'Valid email address'
 
         if event.settings.order_email_asked and event.settings.order_email_asked_twice:
             self.fields['email_repeat'] = forms.EmailField(
