@@ -37,7 +37,7 @@ header {
 
   #event-logo {
     max-height: 140px;
-    border-radius: 0 !important;
+    border-radius: 0;
   }
 
   .header-wrapper {
