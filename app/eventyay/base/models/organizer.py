@@ -421,8 +421,22 @@ class Team(LoggedModel, TimestampedModel, RulesModelMixin, models.Model, metacla
 
     # From Talk
     limit_tracks = models.ManyToManyField(to='Track', verbose_name=_('Limit to tracks'), blank=True)
-    can_change_submissions = models.BooleanField(default=False, verbose_name=_('Can work with and change proposals'))
-    is_reviewer = models.BooleanField(default=False, verbose_name=_('Is a reviewer'))
+    can_change_submissions = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer Manager — can edit and manage submissions'),
+        help_text=_(
+            'Can edit submission details, change proposal states (accept/reject/waitlist), '
+            'manage submission metadata, and oversee the review workflow. '
+            'This provides full management permissions beyond standard reviewing.'
+        )
+    )
+    is_reviewer = models.BooleanField(
+        default=False,
+        verbose_name=_('Reviewer — can only review submissions'),
+        help_text=_(
+            'Can review and provide feedback on submissions but cannot edit details or change submission states.'
+        )
+    )
     force_hide_speaker_names = models.BooleanField(
         verbose_name=_('Always hide speaker names'),
         help_text=_(
