@@ -74,7 +74,7 @@ def vite_asset(path: str) -> str:
         return generate_script_tag(path, {'type': 'module'})
 
     manifest_entry = STATIC_FILES_MAPPING.get(path)
-    if not manifest_entry and MANIFEST_PATH.exists():
+    if not manifest_entry:
         msg = (
             f'Cannot find {path} in Vite manifest at {MANIFEST_PATH}.'
             if MANIFEST_PATH.exists()
