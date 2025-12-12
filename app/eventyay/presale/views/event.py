@@ -363,8 +363,10 @@ def get_grouped_products(
                     max_per_order,
                 )
 
-                if product.pk in limit_one_per_user_product_ids:
+                if product.limit_one_per_user:
                     var.order_max = min(var.order_max, 1)
+                    if hasattr(var, 'min_per_order') and var.min_per_order and var.min_per_order > 1:
+                        var.min_per_order = 1
 
                 original_price = var_price_override.get(var.pk, var.price)
                 if voucher:
