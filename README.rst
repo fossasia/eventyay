@@ -49,11 +49,11 @@ Getting Started
 
   cd eventyay/app
 
-3. **Switch to the `enext` branch**:
+3. **Switch to the `dev` branch (was "next")**:
 
 .. code-block:: bash
 
-  git switch enext
+  git switch dev
 
 
 4. **Install Python packages**
@@ -197,7 +197,7 @@ The directory `app/eventyay` is mounted into the docker, thus live editing is su
 Configuration
 -------------
 
-Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
+Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* (or *dev_settings.py* for the dev branch) for possible keys and original values.
 Other than that, the configuration is divided to three running environments:
 
 * ``development``: With default values in *eventyay.development.toml*.
@@ -251,18 +251,18 @@ Due to this reason, overriding configuration via environment variables are not e
 Deployment
 ----------
 
-* copy all of the `deployment` directory onto the server (eg. as `/home/fossasia/enext`)
+* copy all of the `deployment` directory onto the server (eg. as `/home/fossasia/dev`)
 * prepare the used volumes in docker-compose: one for static files and one for
   the postgres database. Create on the server:
         /home/fossasia/enext/data/static
         /home/fossasia/enext/data/postgres
   and
         chown 100:101 /home/fossasia/enext/data/static
-* copy `env.prod-sample` to `.env` in `/home/fossasia/enext`, and edit it to your
+* copy `env.prod-sample` to `.env` in `/home/fossasia/dev`, and edit it to your
   liking
-* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available`
-  The file needs to be adjusted if the `enext` dir is NOT in `/home/fossasia`!
-* Link the `enext-direct` file into `/etc/nginx/sites-enabled`
+* copy `nginx/enext-direct` (or the `edev-direct` variant for dev) to your system `/etc/nginx/sites-available`
+  The file needs to be adjusted if the `dev` dir is NOT in `/home/fossasia`!
+* Link the `enext-direct` (production/next) or `edev-direct` (dev) file into `/etc/nginx/sites-enabled`
 * Restart nginx
 * Run
         docker compose up -d
