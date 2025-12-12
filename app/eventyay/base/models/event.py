@@ -2,21 +2,19 @@ import copy
 import datetime as dt
 import string
 import uuid
-import zoneinfo
-import jwt
-from typing import List
-import icalendar
-import datetime as dt
 from collections import OrderedDict, defaultdict
 from datetime import datetime, time, timedelta
 from operator import attrgetter
+from typing import List
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+import icalendar
+import jwt
 from dateutil.relativedelta import relativedelta
-from django.conf import global_settings as default_django_settings
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.mail import get_connection
 from django.core.validators import (
@@ -29,7 +27,6 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
@@ -52,9 +49,9 @@ from eventyay.common.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
-from eventyay.core.permissions import Permission, SYSTEM_ROLES
-from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.consts import TIMEZONE_CHOICES
+from eventyay.core.permissions import MAX_PERMISSIONS_IF_SILENCED, SYSTEM_ROLES, Permission
+from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.json import safe_string
@@ -65,18 +62,24 @@ from eventyay.talk_rules.event import (
     has_any_permission,
     is_event_visible,
 )
-from .auth import User
+
 from ..settings import settings_hierarkey
+from .auth import User
 from .mixins import OrderedModel, PretalxModel
 from .organizer import Organizer, OrganizerBillingModel, Team
+from .roomquestion import RoomQuestion
+from .systemlog import SystemLog
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 
+
 def event_css_path(instance, filename):
-    return path_with_hash(filename, base_path=f"{instance.slug}/css/")
+    return path_with_hash(filename, base_path=f'{instance.slug}/css/')
+
 
 def event_logo_path(instance, filename):
-    return path_with_hash(filename, base_path=f"{instance.slug}/img/")
+    return path_with_hash(filename, base_path=f'{instance.slug}/img/')
+
 
 def default_roles():
     attendee = [
@@ -138,92 +141,94 @@ def default_roles():
     apiuser = admin + [Permission.EVENT_API, Permission.EVENT_SECRETS]
     scheduleuser = [Permission.EVENT_API]
     return {
-        "attendee": attendee,
-        "viewer": viewer,
-        "participant": participant,
-        "room_creator": room_creator,
-        "room_owner": room_owner,
-        "speaker": speaker,
-        "moderator": moderator,
-        "admin": admin,
-        "apiuser": apiuser,
-        "scheduleuser": scheduleuser,
+        'attendee': attendee,
+        'viewer': viewer,
+        'participant': participant,
+        'room_creator': room_creator,
+        'room_owner': room_owner,
+        'speaker': speaker,
+        'moderator': moderator,
+        'admin': admin,
+        'apiuser': apiuser,
+        'scheduleuser': scheduleuser,
     }
 
 
 def default_grants():
     return {
-        "attendee": ["attendee"],
-        "admin": ["admin"],
-        "scheduleuser": ["schedule-update"],
+        'attendee': ['attendee'],
+        'admin': ['admin'],
+        'scheduleuser': ['schedule-update'],
     }
 
 
 FEATURE_FLAGS = [
-    "schedule-control",
-    "iframe-player",
-    "roulette",
-    "muxdata",
-    "page.landing",
-    "zoom",
-    "janus",
-    "polls",
-    "poster",
-    "conftool",
-    "cross-origin-isolation",
+    'schedule-control',
+    'iframe-player',
+    'roulette',
+    'muxdata',
+    'page.landing',
+    'zoom',
+    'janus',
+    'polls',
+    'poster',
+    'conftool',
+    'cross-origin-isolation',
 ]
 
 
 def default_feature_flags():
     return {
-        "show_schedule": True,
-        "show_featured": "pre_schedule",
-        "show_widget_if_not_public": False,
-        "export_html_on_release": False,
-        "use_tracks": True,
-        "use_feedback": True,
-        "use_submission_comments": True,
-        "present_multiple_times": False,
-        "submission_public_review": True,
-        "chat-moderation": True,
-        "polls": True,
+        'show_schedule': True,
+        'show_featured': 'pre_schedule',
+        'show_widget_if_not_public': False,
+        'export_html_on_release': False,
+        'use_tracks': True,
+        'use_feedback': True,
+        'use_submission_comments': True,
+        'present_multiple_times': False,
+        'submission_public_review': True,
+        'chat-moderation': True,
+        'polls': True,
     }
+
 
 def default_display_settings():
     return {
-        "schedule": "grid",
-        "imprint_url": None,
-        "header_pattern": "",
-        "html_export_url": "",
-        "meta_noindex": False,
-        "texts": {"agenda_session_above": "", "agenda_session_below": ""},
+        'schedule': 'grid',
+        'imprint_url': None,
+        'header_pattern': '',
+        'html_export_url': '',
+        'meta_noindex': False,
+        'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
     }
 
 
 def default_review_settings():
     return {
-        "score_mandatory": False,
-        "text_mandatory": False,
-        "aggregate_method": "median",
-        "score_format": "words_numbers",
+        'score_mandatory': False,
+        'text_mandatory': False,
+        'aggregate_method': 'median',
+        'score_format': 'words_numbers',
     }
 
 
 def default_mail_settings():
     return {
-        "mail_from": "",
-        "reply_to": "",
-        "signature": "",
-        "subject_prefix": "",
-        "smtp_use_custom": "",
-        "smtp_host": "",
-        "smtp_port": 587,
-        "smtp_username": "",
-        "smtp_password": "",
-        "smtp_use_tls": "",
-        "smtp_use_ssl": "",
-        "mail_on_new_submission": False,
+        'mail_from': '',
+        'reply_to': '',
+        'signature': '',
+        'subject_prefix': '',
+        'smtp_use_custom': '',
+        'smtp_host': '',
+        'smtp_port': 587,
+        'smtp_username': '',
+        'smtp_password': '',
+        'smtp_use_tls': '',
+        'smtp_use_ssl': '',
+        'mail_on_new_submission': False,
     }
+
 
 class EventMixin:
     def clean(self):
@@ -499,65 +504,6 @@ class EventMixin:
         return qs.filter(q)
 
 
-def event_css_path(instance, filename):
-    return path_with_hash(filename, base_path=f'{instance.slug}/css/')
-
-
-def event_logo_path(instance, filename):
-    return path_with_hash(filename, base_path=f'{instance.slug}/img/')
-
-
-def default_feature_flags():
-    return {
-        'show_schedule': True,
-        'show_featured': 'pre_schedule',  # or always, or never
-        'show_widget_if_not_public': False,
-        'export_html_on_release': False,
-        'use_tracks': True,
-        'use_feedback': True,
-        'use_submission_comments': True,
-        'present_multiple_times': False,
-        'submission_public_review': True,
-    }
-
-
-def default_display_settings():
-    return {
-        'schedule': 'grid',  # or list
-        'imprint_url': None,
-        'header_pattern': '',
-        'html_export_url': '',
-        'meta_noindex': False,
-        'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
-    }
-
-
-def default_review_settings():
-    return {
-        'score_mandatory': False,
-        'text_mandatory': False,
-        'aggregate_method': 'median',  # or mean
-        'score_format': 'words_numbers',
-    }
-
-
-def default_mail_settings():
-    return {
-        'mail_from': '',
-        'reply_to': '',
-        'signature': '',
-        'subject_prefix': '',
-        'smtp_use_custom': '',
-        'smtp_host': '',
-        'smtp_port': 587,
-        'smtp_username': '',
-        'smtp_password': '',
-        'smtp_use_tls': '',
-        'smtp_use_ssl': '',
-        'mail_on_new_submission': False,
-    }
-
-
 # We don't subclass PretalxModel because:
 # - We want to avoid the `objects = ScopedManager()` (we may use it later, after the making "enext" stable enough).
 # - We don't want to inherit the LogMixin (already have LoggedModel).
@@ -795,11 +741,17 @@ class Event(
         null=True,
         blank=True,
     )
-        # Virtual platform fields
+    # Virtual platform fields
     config = models.JSONField(null=True, blank=True)
     roles = models.JSONField(null=True, blank=True, default=default_roles, encoder=CustomJSONEncoder)
     trait_grants = models.JSONField(null=True, blank=True, default=default_grants)
-    domain = models.CharField(max_length=250, unique=True, null=True, blank=True, validators=[RegexValidator(regex=r"^[a-z0-9-.:]+(/[a-zA-Z0-9-_./]*)?$")])
+    domain = models.CharField(
+        max_length=250,
+        unique=True,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(regex=r'^[a-z0-9-.:]+(/[a-zA-Z0-9-_./]*)?$')],
+    )
     feature_flags = models.JSONField(default=default_feature_flags)
     external_auth_url = models.URLField(null=True, blank=True)
 
@@ -814,6 +766,7 @@ class Event(
 
     class urls(EventUrls):
         """URL patterns for public/frontend views of this event."""
+
         base_path = settings.BASE_PATH
         base = '{base_path}/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
@@ -846,6 +799,7 @@ class Event(
 
     class orga_urls(EventUrls):
         """URL patterns for organizer/admin panel views of this event."""
+
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/event/{self.slug}/'
         login = '{base}login/'
@@ -900,6 +854,7 @@ class Event(
 
     class api_urls(EventUrls):
         """URL patterns for API endpoints related to this event."""
+
         base_path = settings.TALK_BASE_PATH
         base = '{base_path}/api/events/{self.slug}/'
         submissions = '{base}submissions/'
@@ -921,6 +876,7 @@ class Event(
 
     class tickets_urls(EventUrls):
         """URL patterns for ticket/control panel views of this event."""
+
         _full_base_path = settings.BASE_PATH
         base_path = urlparse(_full_base_path).path.rstrip('/')
         base = '{base_path}/control/'
@@ -1351,19 +1307,20 @@ class Event(
             question_map=question_map,
             checkin_list_map=checkin_list_map,
         )
+
     def decode_token(self, token, allow_raise=False):
         exc = None
         tried_any = False
-        for jwt_config in self.config.get("JWT_secrets", []):
+        for jwt_config in self.config.get('JWT_secrets', []):
             tried_any = True
-            secret = jwt_config["secret"]
-            audience = jwt_config["audience"]
-            issuer = jwt_config["issuer"]
+            secret = jwt_config['secret']
+            audience = jwt_config['audience']
+            issuer = jwt_config['issuer']
             try:
                 return jwt.decode(
                     token,
                     secret,
-                    algorithms=["HS256"],
+                    algorithms=['HS256'],
                     audience=audience,
                     issuer=issuer,
                 )
@@ -1382,7 +1339,7 @@ class Event(
                     return jwt.decode(
                         token,
                         secret,
-                        algorithms=["HS256"],
+                        algorithms=['HS256'],
                         audience=audience,
                         issuer=issuer,
                     )
@@ -1409,17 +1366,11 @@ class Event(
         for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
-                and all(
-                    any(x in traits for x in (r if isinstance(r, list) else [r]))
-                    for r in required_traits
-                )
+                and all(any(x in traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
                 and (required_traits or allow_empty_traits)
             ):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(
-                    p in role_permissions or p.value in role_permissions
-                    for p in permissions
-                ):
+                if any(p in role_permissions or p.value in role_permissions for p in permissions):
                     return True
 
         if room:
@@ -1427,17 +1378,11 @@ class Event(
             for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
-                    and all(
-                        any(x in traits for x in (r if isinstance(r, list) else [r]))
-                        for r in required_traits
-                    )
+                    and all(any(x in traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(
-                        p in role_permissions or p.value in role_permissions
-                        for p in permissions
-                    ):
+                    if any(p in role_permissions or p.value in role_permissions for p in permissions):
                         return True
 
         # Return False if no permission was granted
@@ -1455,9 +1400,7 @@ class Event(
         if not isinstance(permission, list):
             permission = [permission]
 
-        if user.is_silenced and not any(
-            p in MAX_PERMISSIONS_IF_SILENCED for p in permission
-        ):
+        if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
             return False
 
         if self.has_permission_implicit(
@@ -1471,10 +1414,7 @@ class Event(
         roles = user.get_role_grants(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(
-                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
-                for p in permission
-            ):
+            if any(p.value in event_roles.get(r, SYSTEM_ROLES.get(r, [])) for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1489,9 +1429,7 @@ class Event(
         if not isinstance(permission, list):
             permission = [permission]
 
-        if user.is_silenced and not any(
-            p in MAX_PERMISSIONS_IF_SILENCED for p in permission
-        ):
+        if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
             return False
 
         if self.has_permission_implicit(
@@ -1505,10 +1443,7 @@ class Event(
         roles = await user.get_role_grants_async(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(
-                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
-                for p in permission
-            ):
+            if any(p.value in event_roles.get(r, SYSTEM_ROLES.get(r, [])) for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1525,10 +1460,7 @@ class Event(
         for role, required_traits in event_trait_grants.items():
             if (
                 isinstance(required_traits, list)
-                and all(
-                    any(x in user.traits for x in (r if isinstance(r, list) else [r]))
-                    for r in required_traits
-                )
+                and all(any(x in user.traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
                 and (required_traits or allow_empty_traits)
             ):
                 result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
@@ -1540,23 +1472,13 @@ class Event(
             for role, required_traits in room_trait_grants.items():
                 if (
                     isinstance(required_traits, list)
-                    and all(
-                        any(
-                            x in user.traits
-                            for x in (r if isinstance(r, list) else [r])
-                        )
-                        for r in required_traits
-                    )
+                    and all(any(x in user.traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
-                    result[room].update(
-                        event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    )
+                    result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
-        for grant in user.room_grants.select_related("room"):
-            result[grant.room].update(
-                event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
-            )
+        for grant in user.room_grants.select_related('room'):
+            result[grant.room].update(event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, [])))
         if user.is_silenced:
             for key in result.keys():
                 result[key] &= MAX_PERMISSIONS_IF_SILENCED
@@ -1574,11 +1496,9 @@ class Event(
             ContactRequest,
             ExhibitorStaff,
             ExhibitorView,
-            Feedback,
             Membership,
             Poll,
             PosterPresenter,
-            Question,
             Reaction,
             RoomView,
         )
@@ -1610,8 +1530,10 @@ class Event(
     def clone_from(self, old, new_secrets):
         from eventyay.base.models import Channel
         from eventyay.base.models.storage_model import StoredFile
+
         if self.pk == old.pk:
-            raise ValueError("Illegal attempt to clone into same event")
+            raise ValueError('Illegal attempt to clone into same event')
+
         def clone_stored_files(*, inst=None, attrs=None, struct=None, url=None):
             if inst and attrs:
                 for a in attrs:
@@ -1654,11 +1576,11 @@ class Event(
         self.config = old.config or {}
         if new_secrets:
             secret = get_random_string(length=64)
-            self.config["JWT_secrets"] = [
+            self.config['JWT_secrets'] = [
                 {
-                    "issuer": "any",
-                    "audience": "eventyay",
-                    "secret": secret,
+                    'issuer': 'any',
+                    'audience': 'eventyay',
+                    'secret': secret,
                 }
             ]
         self.roles = old.roles
@@ -1684,9 +1606,7 @@ class Event(
             room_map[old_id] = r
             if has_channel:
                 Channel.objects.create(room=r, event=self)
-        for r in old.rooms.prefetch_related(
-            "exhibitors", "exhibitors__links", "exhibitors__social_media_links"
-        ):
+        for r in old.rooms.prefetch_related('exhibitors', 'exhibitors__links', 'exhibitors__social_media_links'):
             for ex in r.exhibitors.all():
                 old_links = list(ex.links.all())
                 old_smlinks = list(ex.social_media_links.all())
@@ -1696,9 +1616,7 @@ class Event(
                 ex.room = room_map[ex.room_id]
                 if ex.highlighted_room_id:
                     ex.highlighted_room = room_map[ex.highlighted_room_id]
-                clone_stored_files(
-                    inst=ex, attrs=["logo", "banner_list", "banner_detail"]
-                )
+                clone_stored_files(inst=ex, attrs=['logo', 'banner_list', 'banner_detail'])
                 ex.text_content = clone_stored_files(struct=ex.text_content)
                 ex.save()
 
@@ -1709,7 +1627,7 @@ class Event(
 
                 for link in old_links:
                     link.pk = None
-                    clone_stored_files(inst=link, attrs=["url"])
+                    clone_stored_files(inst=link, attrs=['url'])
                     link.exhibitor = ex
                     link.save()
 
@@ -2141,9 +2059,9 @@ class Event(
         """Is a list of tuples of locale codes and natural names for this
         event."""
         return [
-            (language['code'], language['natural_name'])
-            for language in settings.LANGUAGES_INFORMATION.values()
-            if language['code'] in self.locales
+            (code, language['natural_name'])
+            for code, language in settings.LANGUAGES_INFORMATION
+            if code in self.locales
         ]
 
     @cached_property
@@ -2916,32 +2834,33 @@ class SubEventMetaValue(LoggedModel):
         if self.subevent:
             self.subevent.event.cache.clear()
 
+
 class EventPlannedUsage(models.Model):
-    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name="planned_usages")
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='planned_usages')
     start = models.DateField()
     end = models.DateField()
     attendees = models.PositiveIntegerField()
     notes = models.TextField(blank=True)
 
     class Meta:
-        ordering = ("start",)
+        ordering = ('start',)
 
     def as_ical(self):
-        import icalendar
         event = icalendar.Event()
-        event["uid"] = f"{self.event.id}-{self.id}"
-        event["dtstart"] = self.start
-        event["dtend"] = self.start
-        event["summary"] = str(self.event.name)
-        event["description"] = self.notes
-        event["url"] = self.event.domain
+        event['uid'] = f'{self.event.id}-{self.id}'
+        event['dtstart'] = self.start
+        event['dtend'] = self.start
+        event['summary'] = str(self.event.name)
+        event['description'] = self.notes
+        event['url'] = self.event.domain
         return event
 
+
 class EventView(models.Model):
-    event = models.ForeignKey('Event', related_name="views", on_delete=models.CASCADE)
+    event = models.ForeignKey('Event', related_name='views', on_delete=models.CASCADE)
     start = models.DateTimeField(auto_now_add=True)
     end = models.DateTimeField(null=True, db_index=True)
-    user = models.ForeignKey('User', related_name="event_views", on_delete=models.CASCADE)
+    user = models.ForeignKey('User', related_name='event_views', on_delete=models.CASCADE)
 
     class Meta:
-        indexes = [models.Index(fields=["start"])]
+        indexes = [models.Index(fields=['start'])]
