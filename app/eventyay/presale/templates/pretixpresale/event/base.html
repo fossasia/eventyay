@@ -91,7 +91,7 @@
             {% if event.settings.theme_color_background|upper == "#FFFFFF" and not event.settings.logo_image_large %}
                 <div class="{% if not event_logo or not event.settings.logo_image_large %}header-right{% endif %} loginbox hidden-print">
                     <nav class="locales" aria-label="{% trans "select language" %}">
-                        <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
+                        <details class="dropdown locales locale-dropdown-label" aria-haspopup="menu" role="menu">
                             <summary>
                                 {% for l in languages %}
                                     {% if l.code == request.LANGUAGE_CODE %}{{ l.name_local }}{% endif %}
