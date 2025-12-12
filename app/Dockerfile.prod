@@ -70,9 +70,6 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 # copy project
 COPY . $APP_HOME
 
-# chown all the files to the app user
-RUN chown -R app:app $APP_HOME
-
 # global-nav-menu
 COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
 RUN npm ci --prefix=eventyay/frontend/global-nav-menu
@@ -87,6 +84,9 @@ RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
 # webapp
 COPY eventyay/webapp eventyay/webapp
 RUN npm install --prefix=eventyay/webapp
+
+# chown all the files to the app user
+RUN chown -R app:app $APP_HOME
 
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
@@ -103,7 +103,6 @@ ENV EVY_RUNNING_ENVIRONMENT=production
 
 # Temporarily disable because the PO files are wrong.
 # RUN python manage.py compilemessages
-RUN ls -la /home/app/web/eventyay/data
 RUN python manage.py compilejsi18n
 RUN python manage.py collectstatic --noinput
 #RUN python manage.py compress
