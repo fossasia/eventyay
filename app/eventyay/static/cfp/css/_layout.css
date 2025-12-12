@@ -123,9 +123,6 @@ header {
         align-items: center;
         gap: 8px;
         transition: background 0.2s;
-        
-        
-        
         &::after {
           content: '▼';
           font-size: 0.7em;
