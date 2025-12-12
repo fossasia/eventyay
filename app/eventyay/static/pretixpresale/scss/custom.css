@@ -117,10 +117,3 @@
 .header-part.header-left {
   margin-right: auto;
 }
-
-.header-part.header-right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
