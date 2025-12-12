@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
@@ -38,6 +39,12 @@ class OAuthLoginView(View):
         query_params = {'next': build_absolute_uri('plugins:socialauth:social.oauth.return')}
         parsed_url = urlparse(base_url)
         updated_url = parsed_url._replace(query=urlencode(query_params))
+
+        if 'next' in request.GET:
+            next_url = request.GET.get('next')
+            if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                request.session['social_auth_next'] = next_url
+
         return redirect(urlunparse(updated_url))
 
     @staticmethod
@@ -80,6 +87,14 @@ class OAuthReturnView(View):
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
+
+            # Check for stored redirect from social_auth namespace
+            social_auth_next = request.session.pop('social_auth_next', None)
+            if social_auth_next and url_has_allowed_host_and_scheme(social_auth_next, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+                # We can safely update the location of the response because process_login_and_set_cookie
+                # returns a redirect response, and we want to preserve the cookies it set.
+                if response.status_code in (301, 302) and not getattr(user, 'require_2fa', False):
+                    response['Location'] = social_auth_next
 
             return response
         except AttributeError as e:
