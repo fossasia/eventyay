@@ -1,0 +1,3 @@
+# In testing, we use the in-memory email backend,
+# because we do assertions on sent emails and we want to throw away emails after tests.
+email_backend = 'django.core.mail.backends.locmem.EmailBackend'

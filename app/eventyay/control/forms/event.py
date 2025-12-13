@@ -1075,7 +1075,7 @@ class MailSettingsForm(SettingsForm):
     )
     send_grid_api_key = forms.CharField(
         label=_('Sendgrid Token'),
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
     )
 
@@ -1172,6 +1172,13 @@ class MailSettingsForm(SettingsForm):
             data['smtp_password'] = self.initial.get('smtp_password')
         if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
             raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                raise ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+        return data
 
 
 class TicketSettingsForm(SettingsForm):

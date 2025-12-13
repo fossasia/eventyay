@@ -12,13 +12,15 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 
 import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
+os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'production')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.next_settings')
 
 # Initialize Django ASGI application early to ensure apps are loaded
-import django
 from django.core.asgi import get_asgi_application
 
 django_asgi_app = get_asgi_application()
+
+# TODO: We shouldn't need to push down these imports after get_asgi_application.
 
 # Now import modules that depend on Django apps
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -37,9 +39,10 @@ application = ProtocolTypeRouter(
 )
 
 
+# TODO: The Sentry issue seems to be fixed already.
 class PatchedSentryAsgiMiddleware(SentryAsgiMiddleware):
     """
-    Workaround for https://github.com/getsentry/sentry-python/issues/700
+    Workaround for https://github.com/getsentry/sentry-python/issues/700.
     """
 
     def event_processor(self, event, hint, asgi_scope):

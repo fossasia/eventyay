@@ -5,7 +5,7 @@ import UnoCSS from 'unocss/vite'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  
+
   return {
     plugins: [
       vue(),
@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => {
     ],
   build: {
     outDir: env.OUT_DIR ? `${env.OUT_DIR}/global-nav-menu` : 'dist',
-    emptyOutDir: false,
-    manifest: 'pretalx-manifest.json',
+    emptyOutDir: true,
+    // Don't generate manifest.json file because we won't hash the produced files.
     rollupOptions: {
       output: {
         // The compiled output should have predictable names, so that we can use them in the Django template.
