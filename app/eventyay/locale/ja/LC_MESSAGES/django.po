@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-04 13:21+0000\n"
+"PO-Revision-Date: 2025-12-12 12:00+0000\n"
 "Last-Translator: \"Masaki Murakami (VZP)\" <vzp10224@wikiusers.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
@@ -2233,9 +2233,8 @@ msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
 msgstr ""
 
 #: eventyay/base/exporter.py:117 eventyay/base/exporter.py:244
-#, fuzzy
 msgid "Export format"
-msgstr "短いフォーム"
+msgstr "フォーマットのエクスポート"
 
 #: eventyay/base/exporter.py:119
 msgid "Excel (.xlsx)"
@@ -3793,9 +3792,8 @@ msgstr "User"
 #: eventyay/base/models/auth.py:126 eventyay/control/navigation.py:520
 #: eventyay/control/templates/pretixcontrol/admin/users/index.html:5
 #: eventyay/control/templates/pretixcontrol/admin/users/index.html:7
-#, fuzzy
 msgid "Users"
-msgstr "User"
+msgstr "利用者"
 
 #: eventyay/base/models/auth.py:186
 msgid "Account information changed"
@@ -16825,7 +16823,7 @@ msgstr ""
 
 #: eventyay/control/views/event.py:302 eventyay/control/views/event.py:303
 msgid "Other"
-msgstr ""
+msgstr "その他"
 
 #: eventyay/control/views/event.py:397
 msgid ""
@@ -18222,7 +18220,7 @@ msgstr ""
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:70
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/index.html:67
 msgid "Make default"
-msgstr ""
+msgstr "デフォルト"
 
 #: eventyay/plugins/badges/views.py:57
 msgid "The new badge layout has been created."
@@ -20313,7 +20311,7 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/fragment_order_status.html:17
 msgctxt "order state"
 msgid "Confirmed"
-msgstr ""
+msgstr "送信済"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_product_list.html:16
 msgid "Uncategorized products"
