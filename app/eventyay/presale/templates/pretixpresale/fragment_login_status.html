@@ -7,7 +7,7 @@
 {{ show_organizer_area|json_script:"show_organizer_area" }}
 {{ 'popover-profile'|json_script:"popover_toggle" }}
 {{ base_path|json_script:"base_path" }}
-<nav class="login-hdr" aria-label="{% translate 'account' %}" style="{% if request.event and request.event.settings.event_logo_image %}margin-right: 18rem{% else %}margin-right: 0{% endif %}">
+<nav class="login-hdr login-hdr--aligned" aria-label="{% translate 'account' %}">
 
     {% if request.user.is_authenticated %}
         <div class="navigation-button">
