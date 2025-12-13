@@ -14,6 +14,7 @@
     {% include "cfp/includes/forms_header.html" %}
     {% compress js %}
         <script defer src="{% static "cfp/js/proposalTabTitles.js" %}"></script>
+        <script defer src="{% static "common/js/fileInput.js" %}"></script>
     {% endcompress %}
     {% block cfp_submission_header %}{% endblock cfp_submission_header %}
 {% endblock cfp_header %}
@@ -76,9 +77,9 @@
                     </div>
                     <div class="col-md-3">
                         {% if prev_url %}
-                            <a href="{{ prev_url }}" class="btn btn-block btn-info btn-lg">
+                            <button type="submit" class="btn btn-block btn-info btn-lg" name="action" value="back">
                                 « {{ phrases.base.back_button }}
-                            </a>
+                            </button>
                         {% endif %}
                     </div>
                 </div>
