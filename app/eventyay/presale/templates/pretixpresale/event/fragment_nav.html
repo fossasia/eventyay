@@ -5,7 +5,11 @@
 
 <nav id='header-nav-bar'>
     <div class="navigation">
+<<<<<<< HEAD
         <a href="{% eventurl request.event 'presale:event.index' %}" class="header-tab underline">
+=======
+        <a href="#" class="header-tab underline">
+>>>>>>> 26960c819 (WIP: before rebase)
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
 
@@ -14,6 +18,7 @@
                 <i class="fa fa-calendar"></i> {% translate "Schedule" %}
             </a>
 
+<<<<<<< HEAD
             <a href="{{ request.event.talk_session_url }}" class="header-tab {% if '/sessions/' in request.path_info %}active{% endif %}">
                 <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
             </a>
@@ -23,6 +28,15 @@
                     <i class="fa fa-group"></i> {% translate "Speakers" %}
                 </a>
             {% endif %}
+=======
+            <a href="{{ request.event.talk_session_url }}" class="header-tab">
+                <i class="fa fa-comments-o"></i> {% translate "Sessions" %}
+            </a>
+
+            <a href="{{ request.event.talk_speaker_url }}" class="header-tab">
+                <i class="fa fa-group"></i> {% translate "Speakers" %}
+            </a>
+>>>>>>> 26960c819 (WIP: before rebase)
         {% endif %}
 
         {% with cfp=request.event.cfp %}
@@ -39,8 +53,13 @@
         {% endwith %}
 
         <div class="video-link">
+<<<<<<< HEAD
             <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                 href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
+=======
+            <a id='join-event-link' class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+                href='{% eventurl request.event "presale:event.onlinevideo.join" %}'>
+>>>>>>> 26960c819 (WIP: before rebase)
                 <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
             </a>
         </div>

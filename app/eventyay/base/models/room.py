@@ -177,6 +177,7 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
     are not in use right now.
     """
 
+
     log_prefix = "eventyay.room"
 
     deleted = models.BooleanField(default=False)
