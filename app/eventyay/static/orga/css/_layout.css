@@ -300,15 +300,8 @@ aside.sidebar {
     background-color: var(--color-grey-pale);
   }
 
-  .nav-link.active:hover,
-  .nav-link.nav-link-second-level.active:hover {
-    background-color: var(--color-grey-pale);
-    color: var(--color-primary-text-dark);
-  }
-
   .nav-link:hover,
   .nav-link.nav-link-second-level:hover {
-    color: var(--color-primary-text-dark);
     background-color: var(--color-grey-pale);
   }
 
@@ -322,6 +315,11 @@ aside.sidebar {
     cursor: pointer;
     color: var(--color-primary);
     height: 56px;
+
+    &:hover {
+      color: var(--color-primary-text-dark);
+      background-color: var(--color-grey-pale);
+    }
 
     &:after {
       /* dropdown indicator */
