@@ -168,6 +168,7 @@ class EventCreateView(SafeSessionWizardView):
         if step == 'foundation':
             initial_form['is_video_creation'] = True
             initial_form['locales'] = ['en']
+            initial_form['content_locales'] = ['en']
             initial_form['create_for'] = EventCreatedFor.BOTH
             if 'organizer' in request_get:
                 try:
@@ -265,7 +266,8 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
-            event.settings.set('content_locales', foundation_data['locales'])
+            content_locales = foundation_data.get('content_locales') or foundation_data['locales']
+            event.settings.set('content_locales', content_locales)
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -283,7 +285,7 @@ class EventCreateView(SafeSessionWizardView):
                     'timezone': str(basics_data.get('timezone')),
                     'locale': event.settings.locale,
                     'locales': event.settings.locales,
-                    'content_locales': event.settings.get('content_locales', as_type=list),
+                    'content_locales': content_locales,
                     'is_video_creation': final_is_video_creation,
                 }
 
