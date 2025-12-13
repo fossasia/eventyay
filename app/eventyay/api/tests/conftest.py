@@ -110,6 +110,7 @@ def user_client(client, team, user):
 def token_client(client, team):
     """Return an API client authenticated with a team token."""
     team.can_view_orders = True
+    team.can_change_orders = True
     team.can_view_vouchers = True
     team.all_events = True
     team.save()

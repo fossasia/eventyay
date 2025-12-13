@@ -1,17 +1,10 @@
 """
 Test for concurrent refund race condition prevention.
 
-This test validates that the double refund race condition fix is working correctly.
-The fix uses select_for_update() with @transaction.atomic to prevent multiple 
-concurrent refunds from succeeding when they would exceed the available refund amount.
+Validates that the select_for_update() fix in OrderPaymentViewSet.refund()
+prevents multiple concurrent refunds from exceeding the payment amount.
 
-Related: Fix for double refund race condition in OrderPaymentViewSet.refund()
-Location: app/eventyay/api/views/order.py lines 1251-1276
-
-The fix prevents a TOCTOU (Time-of-check to time-of-use) race condition where:
-1. Two threads check available refund amount simultaneously
-2. Both see enough funds available
-3. Both create refunds, exceeding the payment amount
+Related: app/eventyay/api/views/order.py lines 1251-1276
 """
 import json
 import threading
@@ -33,25 +26,10 @@ class TestConcurrentRefunds:
         self, token_client, organizer, event, order
     ):
         """
-        Test that concurrent refund requests are properly serialized with select_for_update().
+        Test that concurrent refund requests are properly serialized.
         
-        Scenario:
-        - A payment of $100.00 exists in confirmed state
-        - Two concurrent refund requests of $80.00 each are made
-        - Without select_for_update(): both would succeed ($160 refunded - BUG!)
-        - With select_for_update(): only one succeeds, the other fails with 400
-        
-        The fix in OrderPaymentViewSet.refund() works as follows:
-        1. @transaction.atomic ensures atomicity
-        2. queryset.select_for_update() acquires row-level lock on payment
-        3. available_amount calculation happens under the lock (prevents TOCTOU)
-        4. Second thread waits for the lock, then sees insufficient funds
-        
-        Expected behavior:
-        - One request returns 200 (success)
-        - One request returns 400 (insufficient funds)
-        - Only $80 is refunded total (not $160)
-        - Only 1 refund object exists in database
+        Two threads attempt to refund $80 each from a $100 payment.
+        With select_for_update(): only one succeeds, preventing double refund.
         """
         # Set up a payment with confirmed state
         with scopes_disabled():
@@ -63,10 +41,13 @@ class TestConcurrentRefunds:
         results = []
         errors = []
         auth_header = token_client.defaults.get('HTTP_AUTHORIZATION')
+        start_barrier = threading.Barrier(2)
 
-        def make_refund_request(amount):
+        def make_refund_request(amount, barrier):
             """Make a refund request in a separate thread."""
             try:
+                barrier.wait()
+                
                 client = Client()
                 client.defaults['HTTP_AUTHORIZATION'] = auth_header
                 response = client.post(
@@ -83,51 +64,41 @@ class TestConcurrentRefunds:
             except Exception as e:
                 errors.append(str(e))
             finally:
-                # Important: close the connection in each thread
                 connection.close()
 
-        # Create two concurrent refund requests
-        # Each requests $80 of the $100 payment - total would be $160
-        # Only one should succeed
-        thread1 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'),))
-        thread2 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'),))
+        thread1 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'), start_barrier))
+        thread2 = threading.Thread(target=make_refund_request, args=(Decimal('80.00'), start_barrier))
 
-        # Start both threads to create race condition
         thread1.start()
         thread2.start()
 
-        # Wait for both threads to complete
         thread1.join(timeout=10)
         thread2.join(timeout=10)
 
-        # Verify no exceptions occurred
-        assert len(errors) == 0, f"Thread errors occurred: {errors}"
+        if thread1.is_alive() or thread2.is_alive():
+            pytest.fail(
+                f"Test threads did not finish within timeout. "
+                f"{{thread1 alive: {{thread1.is_alive()}}}}, thread2 alive: {{thread2.is_alive()}}}}"
+            )
 
-        # Both requests should complete
+        assert len(errors) == 0, f"Thread errors occurred: {errors}"
         assert len(results) == 2, f"Expected 2 results, got {len(results)}"
 
-        # Verify one succeeded (200) and one failed (400)
         status_codes = sorted([r['status'] for r in results])
         assert status_codes == [200, 400], (
-            f"Expected [200, 400], got {status_codes}. "
-            f"Results: {results}"
+            f"Expected [200, 400], got {status_codes}. Results: {results}"
         )
 
-        # Verify only one refund was created
         with scopes_disabled():
             payment.refresh_from_db()
             refunds = list(payment.refunds.all())
             total_refunded = sum(r.amount for r in refunds)
 
-        # Should have exactly 1 refund (not 2!)
         assert len(refunds) == 1, (
             f"Expected 1 refund, got {len(refunds)}. "
-            "Race condition may not be properly prevented! "
-            "The select_for_update() lock may not be working."
+            "Race condition not prevented - select_for_update() may not be working."
         )
 
-        # Total refunded should be $80, not $160 (which would be the double refund bug)
         assert total_refunded == Decimal('80.00'), (
-            f"Expected $80.00 refunded, got ${total_refunded}. "
-            "Double refund occurred! This is a critical bug."
+            f"Expected $80.00 refunded, got ${total_refunded}. Double refund occurred!"
         )
