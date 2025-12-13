@@ -266,7 +266,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
 
         if self.event:
             htmlctx['event'] = self.event
-            htmlctx['color'] = self.event.settings.primary_color
+            htmlctx['color'] = self.event.visible_primary_color
 
         if plain_signature:
             signature_md = plain_signature.replace('\n', '<br>\n')

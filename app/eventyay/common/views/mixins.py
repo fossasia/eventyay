@@ -331,10 +331,10 @@ class SocialMediaCardMixin:
                 return FileResponse(image)
         except Exception:
             pass
-        if self.request.event.logo:
-            return FileResponse(self.request.event.logo)
-        if self.request.event.header_image:
-            return FileResponse(self.request.event.header_image)
+        if self.request.event.visible_logo_file:
+            return FileResponse(self.request.event.visible_logo_file)
+        if self.request.event.visible_header_image_file:
+            return FileResponse(self.request.event.visible_header_image_file)
         raise Http404()
 
 

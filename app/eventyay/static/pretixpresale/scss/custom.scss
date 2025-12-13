@@ -107,7 +107,9 @@
 
 .page-header-links{
     .header-part{
-        a {
+        // Keep top-level header links white without affecting dropdown items
+        > a,
+        > .locales > a {
             color: #FFFFFF !important;
         }
     }

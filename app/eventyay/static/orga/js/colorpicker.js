@@ -87,7 +87,7 @@ const luminanace = (r, g, b) => {
 const contrast = (rgb1, rgb2) => {
     const l1 = luminanace(rgb1[0], rgb1[1], rgb1[2]) + 0.05
     const l2 = luminanace(rgb2[0], rgb2[1], rgb2[2]) + 0.05
-    const ratio = l1 / l2
+    let ratio = l1 / l2
     if (l2 > l1) {
         ratio = 1 / ratio
     }
