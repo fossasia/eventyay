@@ -35,7 +35,7 @@ def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     return f'<script {all_attrs} src="{src}"></script>'
 
 
-def generate_css_tags(asset: str, already_processed: list[str] = []) -> list[str]:
+def generate_css_tags(asset: str, already_processed: list[str]) -> list[str]:
     """Recursively builds all CSS tags used in a given asset.
 
     Ignore the side effects."""
@@ -82,7 +82,7 @@ def vite_asset(path: str) -> str:
         )
         raise ImproperlyConfigured(msg)
 
-    tags = generate_css_tags(path)
+    tags = generate_css_tags(path, [])
     tags.append(generate_script_tag(manifest_entry['file'], {'type': 'module', 'crossorigin': ''}))
     return ''.join(tags)
 
