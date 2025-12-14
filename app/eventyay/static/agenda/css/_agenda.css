@@ -87,9 +87,10 @@
 }
 
 /* Fix schedule grid overflow - allow horizontal scroll when grid is wider than container */
-#fahrplan.grid {
+#main-container #fahrplan {
   overflow-x: auto;
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #fahrplan noscript,
