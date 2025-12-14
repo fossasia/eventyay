@@ -86,6 +86,12 @@
   }
 }
 
+/* Fix schedule grid overflow - allow horizontal scroll when grid is wider than container */
+#fahrplan.grid {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
 #fahrplan noscript,
 .pretalx-tabbed {
   max-width: 80vw;
