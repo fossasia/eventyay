@@ -35,6 +35,8 @@
 							class="visibility-option"
 						) Hide from Sidebar
 						small(v-if="config.hidden") Hidden rooms are always removed from the sidebar.
+							class="visibility-option"
+						) Hide from Sidebar
 					template(v-else)
 						small Hidden from the sidebar until setup is complete.
 			template(v-if="inferredType && typeComponents[inferredType.id]")
@@ -113,7 +115,8 @@ export default {
 	},
 	computed: {
 		modules() {
-			return this.config?.module_config.reduce((acc, module) => {
+			const module_config = Array.isArray(this.config?.module_config) ? this.config.module_config : []
+			return module_config.reduce((acc, module) => {
 				acc[module.type] = module
 				return acc
 			}, {})
@@ -173,6 +176,7 @@ export default {
 			if (!this.config) return
 			// Enforce business rule: sidebar_hidden must be true if hidden is true or setup is incomplete
 			if ((this.config.hidden || !this.config.setup_complete) && !this.config.sidebar_hidden) {
+			if (!this.config.setup_complete && !this.config.sidebar_hidden) {
 				this.config.sidebar_hidden = true
 			}
 		},
@@ -201,6 +205,20 @@ export default {
 					}))
 				}
 				const updatedConfig = await api.call('room.config.patch', {
+				const module_config = Array.isArray(this.config.module_config) ? this.config.module_config : []
+				const setup_complete = module_config.length > 0
+				let sidebar_hidden
+				if (setup_complete && !this.config.setup_complete) {
+					// Setup just completed, show in sidebar
+					sidebar_hidden = false
+				} else if (setup_complete) {
+					// Setup was already complete, preserve user preference
+					sidebar_hidden = this.config.sidebar_hidden
+				} else {
+					// Setup incomplete, hide from sidebar
+					sidebar_hidden = true
+				}
+				const roomData = {
 					room: roomId,
 					name: this.config.name,
 					description: this.config.description,
@@ -212,6 +230,11 @@ export default {
 					sidebar_hidden: !!this.config.sidebar_hidden,
 					module_config: this.config.module_config,
 				})
+					sidebar_hidden,
+					setup_complete,
+					module_config,
+				}
+				const updatedConfig = await api.call('room.config.patch', roomData)
 				Object.assign(this.config, updatedConfig)
 				this.saving = false
 				if (this.creating) {

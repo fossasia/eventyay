@@ -38,10 +38,10 @@ export default {
 	},
 	build: {
 		outDir: process.env.OUT_DIR ? `${process.env.OUT_DIR}/schedule-editor` : 'dist',
-		emptyOutDir: false,
-		manifest: 'pretalx-manifest.json',
+		emptyOutDir: true,
+		manifest: 'schedule-editor-manifest.json',
 		assetsDir: '',
-		rollupOptions: { 
+		rollupOptions: {
 			input: 'src/main.ts',
 			output: {
 				manualChunks: {

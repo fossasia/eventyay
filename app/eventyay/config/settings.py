@@ -12,14 +12,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import configparser
 import importlib
-import importlib_metadata
 import importlib.util
 import os
 import sys
 from collections import OrderedDict
-from importlib.metadata import entry_points
 from pathlib import Path
 from urllib.parse import urlparse
+
+import importlib_metadata
 
 # Ensure local ticket-video plugin is importable (now inside app/eventyay/plugins)
 # Location: app/eventyay/plugins/eventyay-ticket-video/pretix_venueless
@@ -379,6 +379,10 @@ DATABASES = {
         'CONN_MAX_AGE': 120,
     }
 }
+
+# JSON field support is available in PostgreSQL
+db_backend = DATABASES['default']['ENGINE'].split('.')[-1]
+JSON_FIELD_AVAILABLE = db_backend == 'postgresql'
 
 
 AUTHENTICATION_BACKENDS = (

@@ -178,7 +178,12 @@ def get_room_config(room, permissions):
         "setup_complete": room.setup_complete,
         "hidden": room.hidden,
         "sidebar_hidden": room.sidebar_hidden,
+        # Frontend expects these fields for visibleRooms filtering
+        "setup_complete": True,  # All rooms with config are complete
+        "hidden": False,
+        "sidebar_hidden": False,
     }
+
 
     if hasattr(room, "current_roomviews"):
         # set actual viewer count instead of approximate text

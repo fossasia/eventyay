@@ -2,7 +2,7 @@
   <a class="list-group-item searchresult" href="#" @click.prevent="$emit('selected', position)" ref="a">
     <div class="details">
       <h4>{{ position.order }}-{{ position.positionid }} {{ position.attendee_name }}</h4>
-      <span>{{ itemvar }}<br></span>
+      <span>{{ productvar }}<br></span>
       <span v-if="subevent">{{ subevent }}<br></span>
       <div class="secret">{{ position.secret }}</div>
     </div>
@@ -23,11 +23,11 @@ export default {
       if (this.position.checkins.length) return 'redeemed';
       return this.position.order__status
     },
-    itemvar() {
+    productvar() {
       if (this.position.variation) {
-        return `${i18nstring_localize(this.position.item.name)} – ${i18nstring_localize(this.position.variation.value)}`
+        return `${i18nstring_localize(this.position.product.name)} – ${i18nstring_localize(this.position.variation.value)}`
       }
-      return i18nstring_localize(this.position.item.name)
+      return i18nstring_localize(this.position.product.name)
     },
     subevent() {
       if (!this.position.subevent) return ''
