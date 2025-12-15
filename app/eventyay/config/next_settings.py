@@ -686,6 +686,7 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 69,
+        'path': 'ja',
         'public_code': 'jp',
         'incubating': False,
     },
