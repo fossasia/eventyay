@@ -652,7 +652,7 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 98,
-        'path': 'fr_FR',
+        'path': 'fr',
         'incubating': False,
     },
     'hu': {
