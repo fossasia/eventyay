@@ -8,7 +8,6 @@ services:
     volumes:
       - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     ports:
       - 8000:8000
     expose:
@@ -25,7 +24,6 @@ services:
     entrypoint: daphne -b 0.0.0.0 -p 8001 eventyay.config.asgi:application
     volumes:
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     ports:
       - 8001:8001
     expose:
@@ -45,7 +43,6 @@ services:
     volumes:
       - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     env_file:
       - ./.env
     environment:
