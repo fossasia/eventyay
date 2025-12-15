@@ -559,7 +559,6 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': True,
         'percentage': 100,
-        'path': 'de',
         'incubating': False,
     },
     'de-formal': {
@@ -569,7 +568,6 @@ _LANGUAGES_CONFIG = {
         'official': True,
         'percentage': 100,
         'public_code': 'de',
-        'path': 'de_Formal',
         'incubating': False,
     },
     'ar': {
@@ -634,7 +632,6 @@ _LANGUAGES_CONFIG = {
         'bidi': True,
         'official': False,
         'percentage': 99,
-        'path': 'fa_IR',
         'public_code': 'fa_IR',
         'incubating': False,
     },
@@ -652,7 +649,6 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 98,
-        'path': 'fr',
         'incubating': False,
     },
     'hu': {
@@ -685,7 +681,6 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 69,
-        'path': 'ja',
         'public_code': 'jp',
         'incubating': False,
     },
