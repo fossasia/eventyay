@@ -120,11 +120,11 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
-        if not self.has_permission() and request.user.is_authenticated and self.request.user.has_perm(
-            'base.list_featured_submission', self.request.event
+        if not self.has_permission() and request.user.is_authenticated and request.user.has_perm(
+            'base.list_featured_submission', request.event
         ):
             messages.success(request, _('Our schedule is not live yet.'))
-            return HttpResponseRedirect(self.request.event.urls.featured)
+            return HttpResponseRedirect(request.event.urls.featured)
         return super().dispatch(request, **kwargs)
 
     def get(self, request, **kwargs):
