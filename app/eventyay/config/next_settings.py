@@ -559,7 +559,7 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': True,
         'percentage': 100,
-        'path': 'de_DE',
+        'path': 'de',
         'incubating': False,
     },
     'de-formal': {
