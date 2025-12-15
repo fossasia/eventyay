@@ -544,7 +544,7 @@ LOCALE_PATHS = (BASE_DIR / 'locale',)
 
 # TODO: Move to consts.py
 # Unified language configuration - single source of truth for all language information
-LANGUAGES_CONFIG = {
+_LANGUAGES_CONFIG = {
     'en': {
         'name': _('English'),
         'natural_name': 'English',
@@ -630,7 +630,7 @@ LANGUAGES_CONFIG = {
     },
     'fa-ir': {
         'name': _('Persian'),
-        'natural_name': 'قارسی',
+        'natural_name': 'فارسی',
         'bidi': True,
         'official': False,
         'percentage': 99,
@@ -668,7 +668,7 @@ LANGUAGES_CONFIG = {
         'natural_name': 'Bahasa Indonesia',
         'bidi': False,
         'official': False,
-        'percentage': 0,
+        'percentage': 90,
         'incubating': False,
     },
     'it': {
@@ -677,6 +677,7 @@ LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 95,
+        'path': 'ja',
         'incubating': False,
     },
     'ja-jp': {
@@ -693,7 +694,7 @@ LANGUAGES_CONFIG = {
         'natural_name': '한국어',
         'bidi': False,
         'official': False,
-        'percentage': 0,
+        'percentage': 88,
         'incubating': False,
     },
     'lv': {
@@ -747,7 +748,7 @@ LANGUAGES_CONFIG = {
     },
     'pl-informal': {
         'name': _('Polish (informal)'),
-        'natural_name': 'Polski',
+        'natural_name': 'Polski (nieformalny)',
         'bidi': False,
         'official': False,
         'percentage': 0,
@@ -836,7 +837,7 @@ LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
-    'uk': {
+    'ua': {
         'name': _('Ukrainian'),
         'natural_name': 'Українська',
         'bidi': False,
@@ -863,7 +864,7 @@ LANGUAGES_CONFIG = {
     },
     'zh-hant': {
         'name': _('Traditional Chinese (Taiwan)'),
-        'natural_name': '漢語',
+        'natural_name': '繁體中文',
         'bidi': False,
         'official': False,
         'percentage': 66,
@@ -872,12 +873,12 @@ LANGUAGES_CONFIG = {
     },
 }
 
-# Derive legacy variables from LANGUAGES_CONFIG for backward compatibility
-ALL_LANGUAGES = [(code, info['name']) for code, info in LANGUAGES_CONFIG.items()]
+# Derive legacy variables from _LANGUAGES_CONFIG for backward compatibility
+ALL_LANGUAGES = [(code, info['name']) for code, info in _LANGUAGES_CONFIG.items()]
 
-LANGUAGES_OFFICIAL = {code for code, info in LANGUAGES_CONFIG.items() if info.get('official', False)}
-LANGUAGES_INCUBATING = {code for code, info in LANGUAGES_CONFIG.items() if info.get('incubating', False)}
-LANGUAGES_RTL = {code for code, info in LANGUAGES_CONFIG.items() if info.get('bidi', False)}
+LANGUAGES_OFFICIAL = {code for code, info in _LANGUAGES_CONFIG.items() if info.get('official', False)}
+LANGUAGES_INCUBATING = {code for code, info in _LANGUAGES_CONFIG.items() if info.get('incubating', False)}
+LANGUAGES_RTL = {code for code, info in _LANGUAGES_CONFIG.items() if info.get('bidi', False)}
 
 # TODO: Convert to tuple (some code still assumes LANGUAGES to be a list)
 LANGUAGES = (
@@ -887,22 +888,21 @@ LANGUAGES = (
 # Build EXTRA_LANG_INFO for Django's locale system (only for languages that need special handling)
 EXTRA_LANG_INFO = {
     code: {
-        'bidi': info['bidi'],
+        'bidi': info.get('bidi', False),
         'code': code,
         'name': info['name'],
-        'name_local': info['natural_name'],
+        'name_local': info.get('natural_name', info['name']),
         'public_code': info.get('public_code', code),
     }
-    for code, info in LANGUAGES_CONFIG.items()
-    # originally we only did this for the selection before, but I don't see a real reason for it (NP)
-    # if info.get('public_code') or code in ['de-formal', 'nl-informal', 'fr', 'lv', 'pt-pt', 'sw']
+    for code, info in _LANGUAGES_CONFIG.items()
+    if info.get('public_code') or code in ['de-formal', 'nl-informal', 'fr', 'lv', 'pt-pt', 'sw']
 }
 
 django.conf.locale.LANG_INFO.update(EXTRA_LANG_INFO)
 
-# LANGUAGES_INFORMATION is an alias for LANGUAGES_CONFIG
+# LANGUAGES_INFORMATION is an alias for _LANGUAGES_CONFIG
 # This maintains backward compatibility with existing code
-LANGUAGES_INFORMATION = LANGUAGES_CONFIG
+LANGUAGES_INFORMATION = _LANGUAGES_CONFIG
 
 # Use Redis for caching
 REDIS_URL = conf.redis_url
