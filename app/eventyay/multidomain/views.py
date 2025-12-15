@@ -104,10 +104,12 @@ class VideoSPAView(View):
                     return super().default(obj)
 
             extra_script = f'<script>window.eventyay={json.dumps(injected, cls=EventyayJSONEncoder)}</script>'
-            # Inject extra_script before the first occurrence of <script> to ensure it runs early
-            split_content = html_content.split('<script>', 1)
-            if len(split_content) == 2:
-                html_content = f'{split_content[0]}{extra_script}<script>{split_content[1]}'
+            # Inject extra_script before the first <script ...> occurrence (handles attributes like type/src)
+            lower_html = html_content.lower()
+            before, sep, _ = lower_html.partition('<script ')
+            if sep:
+                idx = len(before)
+                html_content = f'{html_content[:idx]}{extra_script}{html_content[idx:]}'
             else:
                 html_content = f'{extra_script}{html_content}'
 
