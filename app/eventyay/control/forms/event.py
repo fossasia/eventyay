@@ -55,11 +55,7 @@ class EventWizardFoundationForm(forms.Form):
         choices=settings.LANGUAGES,
         label=_('Active languages'),
         widget=MultipleLanguagesWidget,
-        help_text=_(
-            "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
-            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
-            "event's default language instead."
-        ),
+        help_text=_('Choose all languages that your event should be available in.'),
     )
     content_locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
@@ -115,18 +111,17 @@ class EventWizardFoundationForm(forms.Form):
         locales = cleaned_data.get('locales', [])
         content_locales = cleaned_data.get('content_locales')
         
-        if not isinstance(locales, list):
-            locales = list(locales)
+        assert isinstance(locales, list)
         
-        if content_locales is not None:
-            if not isinstance(content_locales, list):
-                content_locales = list(content_locales)
-            
-            if content_locales:
-                if invalid_content_locales := set(content_locales) - set(locales):
-                    raise ValidationError({
-                        'content_locales': _('Content languages must be a subset of the active languages.')
-                    })
+        if content_locales is None or not content_locales:
+            return cleaned_data
+        
+        assert isinstance(content_locales, list)
+        
+        if invalid_content_locales := set(content_locales) - set(locales):
+            raise ValidationError({
+                'content_locales': _('Content languages must be a subset of the active languages.')
+            })
         
         return cleaned_data
 
