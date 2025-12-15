@@ -630,7 +630,7 @@ _LANGUAGES_CONFIG = {
     },
     'fa-ir': {
         'name': _('Persian'),
-        'natural_name': 'فارسی',
+        'natural_name': 'قارسی',
         'bidi': True,
         'official': False,
         'percentage': 99,
