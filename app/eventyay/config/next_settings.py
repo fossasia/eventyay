@@ -677,7 +677,6 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': False,
         'percentage': 95,
-        'path': 'ja',
         'incubating': False,
     },
     'ja-jp': {
@@ -838,7 +837,7 @@ _LANGUAGES_CONFIG = {
         'percentage': 0,
         'incubating': False,
     },
-    'ua': {
+    'uk': {
         'name': _('Ukrainian'),
         'natural_name': 'Українська',
         'bidi': False,
