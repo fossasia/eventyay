@@ -23,7 +23,7 @@ class DekodiNREIExporter(BaseExporter):
 
     def _encode_invoice(self, invoice: Invoice):
         p_last = invoice.order.payments.filter(
-            state=[
+            state__in=[
                 OrderPayment.PAYMENT_STATE_CONFIRMED,
                 OrderPayment.PAYMENT_STATE_REFUNDED,
             ]

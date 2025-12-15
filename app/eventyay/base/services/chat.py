@@ -542,7 +542,7 @@ class ChatService:
             "chat.channels",
             {
                 "channels": await database_sync_to_async(self.get_channels_for_user)(
-                    user, is_volatile=False
+                    user.id, is_volatile=False
                 )
             },
             user_id=user.id,

@@ -45,7 +45,7 @@ def vouchers_send(
                 v.comment = gettext('The voucher has been sent to {recipient}.').format(recipient=r['email'])
                 logs.append(
                     v.log_action(
-                        'pretix.voucher.sent',
+                        'eventyay.voucher.sent',
                         user=user,
                         data={
                             'recipient': r['email'],

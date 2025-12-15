@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load money %}
+{% load static %}
 {% block title %}{% trans "My Orders" %}{% endblock %}
 {% block content %}
     <h1>{% trans "My Orders" %}</h1>
@@ -26,7 +27,7 @@
                     <th>{% trans "Order code" %}</th>
                     <th>{% trans "Organizer" %}</th>
                     <th>{% trans "Event" %}</th>
-                    <th>{% trans "Order date" %}</th>
+                    <th>{% trans "Order date" %} <span class="text-muted" id="tz-indicator"></span></th>
                     <th class="text-right">{% trans "Order total" %}</th>
                     <th class="text-right">{% trans "Status" %}</th>
                     <th></th>
@@ -48,7 +49,7 @@
                             <td>
                                 {{ order.event }}
                             </td>
-                            <td>
+                            <td class="order-datetime" data-datetime="{{ order.datetime.isoformat }}">
                                 {{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}
                             </td>
                             <td class="text-right flip">
@@ -74,4 +75,7 @@
             </table>
         </div>
     {% include "pretixcontrol/pagination.html" %}
+{% endblock %}
+{% block custom_header %}
+    <script type="module" src="{% static 'common/js/timezone.js' %}" defer></script>
 {% endblock %}

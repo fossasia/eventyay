@@ -223,6 +223,8 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
 
     def get_context_data(self, **kwargs):
         result = super().get_context_data(**kwargs)
+        if 'form' in result:
+            result['formset'] = self.formset
         if not self.object or not self.filter_form.is_valid():
             return result
         result.update(self.filter_form.get_question_information(self.object))
@@ -230,8 +232,6 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         if self.action == 'detail':
             result['base_search_url'] = self.base_search_url
             result['filter_form'] = self.filter_form
-        if 'form' in result:
-            result['formset'] = self.formset
         return result
 
     def form_valid(self, form):

@@ -12,6 +12,7 @@
   background: $brand-warning;
   color: black;
   font-weight: bold;
+  white-space: nowrap;
   &:hover, &:active, &:focus {
     background: $btn-warning-border;
   }

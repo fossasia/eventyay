@@ -61,7 +61,7 @@ class SubmitterAccessCode(GenerateCode, PretalxModel):
 
     _code_length = 32
 
-    log_prefix = 'pretalx.access_code'
+    log_prefix = 'eventyay.access_code'
 
     class Meta:
         unique_together = (('event', 'code'),)

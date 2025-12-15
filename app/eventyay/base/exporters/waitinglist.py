@@ -71,7 +71,7 @@ class WaitingListExporter(ListExporter):
             WaitingListEntry.objects.filter(
                 event__in=self.events,
             )
-            .select_related('item', 'variation', 'voucher', 'subevent')
+            .select_related('product', 'variation', 'voucher', 'subevent')
             .order_by('created')
         )
 
@@ -115,14 +115,14 @@ class WaitingListExporter(ListExporter):
             # which event should be used to output dates in columns "Start date" and "End date"
             event_for_date_columns = entry.subevent if entry.subevent else entry.event
             tz = pytz.timezone(entry.event.settings.timezone)
-            datetime_format = '%Y-%m-%d %H:%M:%S'
+            datetime_format = '%Y-%m-%d %H:%M:%S %Z'
 
             row = [
                 entry.created.astimezone(tz).strftime(datetime_format),  # alternative: .isoformat(),
                 entry.name,
                 entry.email,
                 entry.phone,
-                str(entry.item) if entry.item else '',
+                str(entry.product) if entry.product else '',
                 str(entry.variation) if entry.variation else '',
                 entry.event.slug,
                 entry.event.name,

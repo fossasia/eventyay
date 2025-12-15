@@ -66,10 +66,12 @@ dependencies = [
     "django-appconf>=1.1.0",
     "django-bootstrap3>=24.3",
     "django-celery-beat>=2.7.0",
-    "django-compressor>=4.5.1",
+    "django-compressor>=4.6.0",
     "django-context-decorator>=1.6.1",
     "django-cors-headers>=4.6.0",
     "django-countries>=7.6.1",
+    # Needed by DRF extensions
+    "django-crispy-forms>=2.5",
     "django-csp>=3.8",
     "django-filter>=24.3",
     "django-formset-js-improved>=0.5.0.3",
@@ -94,6 +96,8 @@ dependencies = [
     "djangorestframework>=3.15.2",
     "docopt>=0.6.2",
     "docutils>=0.21.2",
+    "drf-flex-fields>=1.0.0",
+    "drf-spectacular>=0.28.0",
     "elementpath>=4.7.0",
     "emoji>=2.14.1",
     "et-xmlfile>=2.0.0",
@@ -165,8 +169,9 @@ dependencies = [
     "pycountry>=24.6.1",
     "pycparser>=2.22",
     "pycryptodome>=3.20.0",
-    "pydantic>=2.10.4",
-    "pydantic-core>=2.27.2",
+    "pydantic>=2.12.4",
+    "pydantic-core>=2.41.5",
+    "pydantic-settings>=2.12.0",
     "pyenchant>=3.2.2",
     "pyflakes>=3.2.0",
     "pygments>=2.19.1",
@@ -230,6 +235,7 @@ dependencies = [
     "webencodings>=0.5.1",
     "websockets>=15.0.1",
     "whitenoise>=6.8.2",
+    "wlc>=1.16.1",
     "xmlschema>=3.4.3",
     "yarl>=1.18.3",
     "zipp>=3.21.0",
@@ -259,11 +265,18 @@ test = [
     "pytest-cache>=1.0",
     "pytest-cov>=6.0.0",
     "pytest-django>=4.9.0",
+    "pytest-env>=1.1.5",
     "pytest-mock>=3.14.0",
     "pytest-rerunfailures>=14.0",
     "pytest-sugar>=1.0.0",
     "pytest-xdist>=3.6.1",
 ]
+
+[tool.uv.sources]
+# It is `editable` because this package is also in development.
+# TODO: We better organize `eventyay-ticket-video` as workspace member,
+# so that we can install it as `non-editable` in production.
+pretix_venueless = { path = './eventyay/plugins/eventyay-ticket-video', editable = true }
 
 [tool.ruff]
 line-length = 120
@@ -286,3 +299,6 @@ ignore = ["E722", "E741"]
 [tool.setuptools]
 packages = ["eventyay"]
 
+
+[tool.pytest_env]
+EVY_RUNNING_ENVIRONMENT = "testing"

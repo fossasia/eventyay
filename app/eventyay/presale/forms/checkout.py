@@ -1,7 +1,9 @@
+import logging
 from itertools import chain
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from django.utils.encoding import force_str
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.formfields import PhoneNumberField
@@ -16,8 +18,11 @@ from eventyay.base.forms.questions import (
     guess_country,
 )
 from eventyay.base.i18n import get_babel_locale, language
+from eventyay.base.models import Event
 from eventyay.base.validators import EmailBanlistValidator
 from eventyay.presale.signals import contact_form_fields
+
+logger = logging.getLogger(__name__)
 
 
 class ContactForm(forms.Form):
@@ -27,51 +32,78 @@ class ContactForm(forms.Form):
         validators=[EmailBanlistValidator()],
         widget=forms.EmailInput(attrs={'autocomplete': 'section-contact email'}),
     )
+    # This field will be dropped depending on `include_wikimedia_username` event setting.
+    wikimedia_username = forms.CharField(
+        label=_('Wikimedia Username'),
+        required=False,
+        disabled=True,
+        widget=forms.TextInput(attrs={'readonly': 'readonly'}),
+    )
+    phone = PhoneNumberField(
+        label=_('Phone number'),
+        required=False,
+        help_text='',
+        widget=WrappedPhoneNumberPrefixWidget(),
+    )
 
-    def __init__(self, *args, **kwargs):
-        self.event = kwargs.pop('event')
-        self.request = kwargs.pop('request')
-        self.all_optional = kwargs.pop('all_optional', False)
+    def __init__(self, *args, event: Event, request: HttpRequest, all_optional=False, **kwargs):
+        self.event = event
+        self.request = request
+        self.all_optional = all_optional
         super().__init__(*args, **kwargs)
 
-        if self.event.settings.order_email_asked_twice:
+        if event.settings.order_email_asked_twice:
             self.fields['email_repeat'] = forms.EmailField(
                 label=_('E-mail address (repeated)'),
                 help_text=_('Please enter the same email address again to make sure you typed it correctly.'),
             )
 
-        if self.event.settings.order_phone_asked:
+        if event.settings.order_phone_asked:
+            self.fields['phone'].required = True
+            self.fields['phone'].help_text = event.settings.checkout_phone_helptext
             with language(get_babel_locale()):
-                default_country = guess_country(self.event)
+                default_country = guess_country(event)
                 default_prefix = None
+                phone_initial = ''
                 for prefix, values in _COUNTRY_CODE_TO_REGION_CODE.items():
                     if str(default_country) in values:
                         default_prefix = prefix
-                try:
-                    initial = self.initial.pop('phone', None)
-                    initial = PhoneNumber().from_string(initial) if initial else '+{}.'.format(default_prefix)
-                except NumberParseException:
-                    initial = None
-                self.fields['phone'] = PhoneNumberField(
-                    label=_('Phone number'),
-                    required=self.event.settings.order_phone_required,
-                    help_text=self.event.settings.checkout_phone_helptext,
-                    # We now exploit an implementation detail in PhoneNumberPrefixWidget to allow us to pass just
-                    # a country code but no number as an initial value. It's a bit hacky, but should be stable for
-                    # the future.
-                    initial=initial,
-                    widget=WrappedPhoneNumberPrefixWidget(),
-                )
+                        break
+                if passed_initial := self.initial.get('phone'):
+                    try:
+                        phone_number = PhoneNumber().from_string(passed_initial)
+                        phone_initial = str(phone_number)
+                    except NumberParseException:
+                        pass
+                elif default_prefix:
+                    phone_initial = f'+{default_prefix}.'
+            self.fields['phone'].initial = phone_initial
+        else:
+            del self.fields['phone']
 
-        if not self.request.session.get('iframe_session', False):
+        # Wikimedia username field visibility based on event setting
+        if not event.settings.include_wikimedia_username:
+            logger.debug('Dropping wikimedia_username field because `include_wikimedia_username` setting is False.')
+            self.fields.pop('wikimedia_username', None)
+        else:
+            # Configure read-only Wikimedia username initial without redefining the field
+            wm_initial = (
+                self.initial.get('wikimedia_username')
+                or getattr(getattr(request, 'user', None), 'wikimedia_username', None)
+                or request.session.get('wikimedia_username')
+            )
+            if wm_initial:
+                self.fields['wikimedia_username'].initial = wm_initial
+
+        if not request.session.get('iframe_session', False):
             # There is a browser quirk in Chrome that leads to incorrect initial scrolling in iframes if there
             # is an autofocus field. Who would have thought… See e.g. here:
             # https://floatboxjs.com/forum/topic.php?post=8440&usebb_sid=2e116486a9ec6b7070e045aea8cded5b#post8440
             self.fields['email'].widget.attrs['autofocus'] = 'autofocus'
-        self.fields['email'].help_text = self.event.settings.checkout_email_helptext
+        self.fields['email'].help_text = event.settings.checkout_email_helptext
         self.fields['email'].widget.attrs['placeholder'] = 'Valid Email address'
 
-        responses = contact_form_fields.send(self.event, request=self.request)
+        responses = contact_form_fields.send(event, request=request)
         for r, response in responses:
             for key, value in response.items():
                 # We need to be this explicit, since OrderedDict.update does not retain ordering

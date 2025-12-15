@@ -22,10 +22,10 @@ ACCEPT_TEXT = LazyI18nString.from_gettext(
     _(
         """Hi!
 
-We are happy to tell you that we accept your proposal “{submission_title}”
+We are happy to tell you that we accept your proposal "{submission_title}"
 to {event_name}. Please click this link to confirm your attendance:
 
-    {confirmation_link}
+{confirmation_link}
 
 We look forward to seeing you at {event_name} - Please contact us if you have any
 questions! We will reach out again before the conference to tell you details
@@ -89,10 +89,27 @@ NEW_SUBMISSION_TEXT = LazyI18nString.from_gettext(
         """Hi,
 
 you have received a new proposal for your event {event_name}:
-“{submission_title}” by {speakers}.
+"{submission_title}" by {speakers}.
 You can see details at
 
-  {orga_url}
+{orga_url}
+
+All the best,
+your {event_name} CfP system.
+"""
+    )
+)
+UPDATE_SUBJECT = LazyI18nString.from_gettext(
+    _("[{event_name}] A talk has been modified: {submission_title}")
+)
+UPDATE_TEXT = LazyI18nString.from_gettext(
+    _(
+        """Hi,
+
+the proposal "{submission_title}" for your event {event_name} has been modified.
+You can see details at
+
+{orga_url}
 
 All the best,
 your {event_name} CfP system.

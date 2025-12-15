@@ -191,6 +191,11 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
         self.save_meta()
         self.save_product_meta_property_formset(self.object)
         self.save_confirm_texts_formset(self.object)

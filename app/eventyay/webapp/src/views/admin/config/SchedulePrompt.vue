@@ -2,13 +2,13 @@
 prompt.c-schedule-prompt(@close="$emit('close')")
 	.content
 		bunt-tabs(:active-tab="activeTab")
-			bunt-tab(id="pretalx", header="From pretalx")
-				p If you use pretalx for your event, enter the domain of the pretalx server you use and the short form name of your event. We'll then pull in the schedule automatically and keep it updated. You must be using pretalx version 2 or later.
-				bunt-input(name="domain", label="pretalx domain", v-model="domain", placeholder="e.g. https://pretalx.com", :validation="v$.domain")
-				bunt-input(name="event", label="pretalx event slug", v-model="event", placeholder="e.g. democon")
+			bunt-tab(id="pretalx", header="From eventyay")
+				p If you use eventyay for your event, enter the domain of the eventyay server you use and the short form name of your event. We'll then pull in the schedule automatically and keep it updated.
+				bunt-input(name="domain", label="eventyay domain", v-model="domain", placeholder="e.g. https://eventyay.com", :validation="v$.domain")
+				bunt-input(name="event", label="eventyay event slug", v-model="event", placeholder="e.g. democon")
 				bunt-button.btn-load(:error-message="error", :loading="loading", @click="savePretalx") Load schedule
 			bunt-tab(id="file", header="Upload file")
-				p If you don't use pretalx, you can upload your schedule as a Microsoft Excel file (XLSX) with a specific setup.
+				p If you don't use eventyay, you can upload your schedule as a Microsoft Excel file (XLSX) with a specific setup.
 				p
 					a(href="/schedule_ex_en.xlsx", target="_blank") Download English sample file
 					| {{ " / " }}
@@ -16,7 +16,7 @@ prompt.c-schedule-prompt(@close="$emit('close')")
 				input(type="file", ref="fileInput")
 				bunt-button.btn-load(:error-message="error", :loading="loading", @click="importFile") Load schedule
 			bunt-tab(id="url", header="From URL")
-				p If you want to automatically load the schedule from an external system, you can enter an URL here. Note that the URL must be a JSON file compliant with the pretalx schedule widget API version 2.
+				p If you want to automatically load the schedule from an external system, you can enter an URL here. Note that the URL must be a JSON file compliant with the eventyay schedule widget API version 2.
 				bunt-input(name="url", label="JSON URL", v-model="url", placeholder="e.g. https://website.com/event.json", :validation="v$.url")
 				bunt-button.btn-load(:error-message="error", :loading="loading", @click="saveURL") Load schedule
 			bunt-tab(id="conftool", v-if="$features.enabled('conftool')", header="From Conftool")

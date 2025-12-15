@@ -25,7 +25,7 @@
         {% csrf_token %}
         {% include "common/forms/errors.html" with form=profile_form %}
 
-        {{ profile_form.name.as_field_group }}
+        {{ profile_form.fullname.as_field_group }}
         {% if profile_form.biography %}
             {{ profile_form.biography.as_field_group }}
         {% endif %}

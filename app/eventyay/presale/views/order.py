@@ -164,7 +164,7 @@ class OrderOpen(EventViewMixin, OrderDetailMixin, View):
             raise Http404(_('Unknown order code or not authorized to access this order.'))
         if kwargs.get('hash') == self.order.email_confirm_hash():
             if not self.order.email_known_to_work:
-                self.order.log_action('pretix.event.order.contact.confirmed')
+                self.order.log_action('eventyay.event.order.contact.confirmed')
                 self.order.email_known_to_work = True
                 self.order.save(update_fields=['email_known_to_work'])
         return redirect(self.get_order_url())
@@ -487,7 +487,7 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
                     and self.payment.payment_provider.requires_invoice_immediately
                 ):
                     i = generate_invoice(self.order)
-                    self.order.log_action('pretix.event.order.invoice.generated', data={'invoice': i.pk})
+                    self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
                     messages.success(self.request, _('An invoice has been generated.'))
             resp = self.payment.payment_provider.execute_payment(request, self.payment)
         except PaymentException as e:
@@ -770,7 +770,7 @@ class OrderInvoiceCreate(EventViewMixin, OrderDetailMixin, View):
             messages.error(self.request, _('An invoice for this order already exists.'))
         else:
             i = generate_invoice(self.order)
-            self.order.log_action('pretix.event.order.invoice.generated', data={'invoice': i.pk})
+            self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
             messages.success(self.request, _('The invoice has been generated.'))
         return redirect(self.get_order_url())
 
@@ -820,7 +820,7 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
         if hasattr(self.invoice_form, 'save'):
             self.invoice_form.save()
         self.order.log_action(
-            'pretix.event.order.modified',
+            'eventyay.event.order.modified',
             {
                 'invoice_data': self.invoice_form.cleaned_data,
                 'data': [
@@ -844,7 +844,7 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
                 messages.error(self.request, _('An invoice for this order already exists.'))
             else:
                 i = generate_invoice(self.order)
-                self.order.log_action('pretix.event.order.invoice.generated', data={'invoice': i.pk})
+                self.order.log_action('eventyay.event.order.invoice.generated', data={'invoice': i.pk})
                 messages.success(self.request, _('The invoice has been generated.'))
         elif self.request.event.settings.invoice_reissue_after_modify:
             if self.invoice_form.changed_data:
@@ -855,7 +855,7 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
                         inv = generate_invoice(self.order)
                     else:
                         inv = c
-                    self.order.log_action('pretix.event.order.invoice.reissued', data={'invoice': inv.pk})
+                    self.order.log_action('eventyay.event.order.invoice.reissued', data={'invoice': inv.pk})
                     messages.success(self.request, _('The invoice has been reissued.'))
 
         invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'order': self.order.pk})
@@ -972,7 +972,7 @@ class OrderCancelDo(EventViewMixin, OrderDetailMixin, AsyncAction, View):
                 cancellation_fee=fee or Decimal('0.00'),
                 refund_as_giftcard=giftcard,
             )
-            self.order.log_action('pretix.event.order.refund.requested')
+            self.order.log_action('eventyay.event.order.refund.requested')
             return self.success(None)
         else:
             comment = gettext('Canceled by customer')
@@ -1087,29 +1087,26 @@ class OrderDownloadMixin:
                 resp = FileResponse(value.file.file, content_type=value.type)
                 if self.order_position.subevent:
                     # Subevent date in filename improves accessibility e.g. for screen reader users
-                    resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}-{}{}"'.format(
-                        self.request.event.slug.upper(),
-                        self.order.code,
-                        self.order_position.positionid,
-                        self.order_position.subevent.date_from.strftime('%Y_%m_%d'),
-                        self.output.identifier,
-                        value.extension,
-                    )
-                else:
                     resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}-{}{}"'.format(
                         self.request.event.slug.upper(),
                         self.order.code,
                         self.order_position.positionid,
-                        self.output.identifier,
+                        self.order_position.subevent.date_from.strftime('%Y_%m_%d'),
+                        value.extension,
+                    )
+                else:
+                    resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+                        self.request.event.slug.upper(),
+                        self.order.code,
+                        self.order_position.positionid,
                         value.extension,
                     )
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
+            resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
                 self.request.event.slug.upper(),
                 self.order.code,
-                self.output.identifier,
                 value.extension,
             )
             return resp

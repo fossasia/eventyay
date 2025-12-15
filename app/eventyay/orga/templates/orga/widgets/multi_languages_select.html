@@ -1,5 +1,101 @@
-{% with id=widget.attrs.id %}<div{% if id %} id="{{ id }}"{% endif %} class="{{ widget.attrs.class }} checkbox">{% for group, options, index in widget.optgroups %}{% if group %}
-  <div class="checkbox-group"><div class="checkbox-group-legend"><span>{% if group.2 %}<i class="{{ group.2 }} mr-1" aria-hidden="true"></i> {% endif %}{{ group.0 }}</span></div><div class="text-muted mb-2">{{ group.1|safe }}</div>{% endif %}{% for option in options %}<div class="checkbox">
-    {% include option.template_name with widget=option %}</div>{% endfor %}{% if group %}
-      </div>{% endif %}{% endfor %}
-</div>{% endwith %}
+{% load i18n %}
+{% load static %}
+{% with container_id=widget.attrs.id|default:widget.name %}
+<style>
+  .multi-language-select-wrapper {
+    padding: 0;
+    background: transparent;
+    border: none;
+  }
+  .multi-language-select-wrapper .selected-languages {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 28px;
+    margin-bottom: 6px;
+  }
+  .multi-language-select-wrapper .language-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background: #2185d0;
+    color: #fff;
+    cursor: pointer;
+  }
+  .multi-language-select-wrapper .remove-language-btn {
+    color: #fff;
+    opacity: 0.85;
+    font-weight: 700;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .multi-language-select-wrapper .remove-language-btn:hover {
+    opacity: 1;
+    text-decoration: none;
+  }
+  .multi-language-select-wrapper .picker-row {
+    display: flex;
+    gap: 0;
+    align-items: center;
+    margin: 0 0 4px;
+  }
+  .multi-language-select-wrapper select[data-role="picker"] {
+    flex: 1;
+    min-width: 220px;
+    background: transparent;
+  }
+  .multi-language-select-wrapper [data-role="hidden-select"] {
+    display: none !important;
+  }
+</style>
+<div id="{{ container_id }}-wrap" class="multi-language-select-wrapper {{ widget.attrs.class }}">
+  <div class="selected-languages mb-2" data-role="selected-list">
+    <span data-role="i18n-empty" style="display:none;">{% translate "No languages selected" %}</span>
+    <span data-role="i18n-remove" style="display:none;">{% translate "Remove language" %}</span>
+    {% for group, options, index in widget.optgroups %}
+      {% for option in options %}
+        {% if option.selected %}
+          <span class="language-badge" role="button" tabindex="0" data-lang="{{ option.value }}" data-role="selected-badge">
+            <span class="language-label">{{ option.label }}</span>
+            <button type="button" class="remove-language-btn btn btn-link btn-sm p-0 ml-1 align-baseline" aria-label="{% translate 'Remove language' %}" data-role="remove-language" data-value="{{ option.value }}">&times;</button>
+          </span>
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+    {% if not widget.value %}
+      <span class="text-muted" data-role="empty">{% translate "No languages selected" %}</span>
+    {% endif %}
+  </div>
+
+  <div class="picker-row">
+    <select class="form-control" data-role="picker">
+      <option value="" selected>{% translate "Select language" %}</option>
+      {% for group, options, index in widget.optgroups %}
+        {% if group %}<optgroup label="{{ group.0 }}">{% endif %}
+        {% for option in options %}
+          {% if not option.selected %}
+            <option value="{{ option.value }}" data-label="{{ option.label }}" data-official="{{ option.official|yesno:'true,false' }}" data-percentage="{{ option.percentage|default_if_none:'' }}">
+              {{ option.label }}
+            </option>
+          {% endif %}
+        {% endfor %}
+        {% if group %}</optgroup>{% endif %}
+      {% endfor %}
+    </select>
+  </div>
+
+  <select multiple name="{{ widget.name }}" id="{{ widget.attrs.id|default:widget.name }}" data-role="hidden-select">
+    {% for group, options, index in widget.optgroups %}
+      {% if group %}<optgroup label="{{ group.0 }}">{% endif %}
+      {% for option in options %}
+        <option value="{{ option.value }}" {% if option.selected %}selected{% endif %} data-official="{{ option.official|yesno:'true,false' }}" data-percentage="{{ option.percentage|default_if_none:'' }}">{{ option.label }}</option>
+      {% endfor %}
+      {% if group %}</optgroup>{% endif %}
+    {% endfor %}
+  </select>
+</div>
+<script src="{% static 'orga/js/multi_languages_select.js' %}" defer></script>
+{% endwith %}

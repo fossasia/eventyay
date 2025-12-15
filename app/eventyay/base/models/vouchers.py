@@ -446,7 +446,7 @@ class Voucher(LoggedModel):
             return self.product_id == product.pk
         if self.product_id:
             return (self.product_id == product.pk) and (variation and self.variation_id == variation.pk)
-        return true
+        return True
 
     def is_active(self):
         """

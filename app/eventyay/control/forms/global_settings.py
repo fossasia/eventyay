@@ -323,6 +323,16 @@ class GlobalSettingsForm(SettingsForm):
             ]),
         ]
 
+    def clean(self):
+        data = super().clean()
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                raise forms.ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+        return data
+
 
 class UpdateSettingsForm(SettingsForm):
     update_check_perform = forms.BooleanField(

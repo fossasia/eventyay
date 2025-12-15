@@ -167,6 +167,29 @@ class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
         return super().format_output(rendered_widgets, id_)
 
 
+class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
+
+    def __init__(self, attrs=None, **kwargs):
+        default_attrs = {
+            'class': 'form-control auto-expanding-textarea',
+            'data-auto-expand': 'true',
+            'style': 'min-height: 320px; max-height: 400px; overflow-y: auto; resize: vertical; transition: height 0.2s ease-in-out; box-sizing: border-box;'
+        }
+        if attrs:
+            if 'class' in attrs:
+                default_attrs['class'] = default_attrs['class'] + ' ' + attrs['class']
+            if 'style' in attrs:
+                default_attrs['style'] = default_attrs['style'] + '; ' + attrs['style']
+            attrs_copy = attrs.copy()
+            attrs_copy.pop('class', None)
+            attrs_copy.pop('style', None)
+            default_attrs.update(attrs_copy)
+        super().__init__(attrs=default_attrs, **kwargs)
+
+    class Media:
+        js = ('eventyay-common/js/auto-expanding-textarea.js',)
+
+
 class I18nURLFormField(i18nfield.forms.I18nFormField):
     """
     Custom form field to handle internationalized URL inputs. It extends the I18nFormField
@@ -202,5 +225,4 @@ class I18nURLFormField(i18nfield.forms.I18nFormField):
                     url_validator(val)
         else:
             url_validator(value.data)
-
         return value

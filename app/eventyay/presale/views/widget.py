@@ -306,7 +306,7 @@ class WidgetAPIProductList(EventListMixin, View):
 
     def post_process(self, data):
         data['poweredby'] = '<a href="https://eventyay.com" target="_blank" rel="noopener">{}</a>'.format(
-            pgettext('widget', 'event ticketing powered by eventyay')
+            pgettext('widget', 'powered by eventyay')
         )
 
     def response(self, data):

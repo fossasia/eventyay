@@ -6,6 +6,11 @@
 {% load orga_edit_link %}
 {% load rich_text %}
 {% load rules %}
+{% load safelink %}
+
+{% block header_tabs %}
+    {% include 'agenda/fragment_nav.html' %}
+{% endblock header_tabs %}
 
 {% block content %}
     {% with cfp=request.event.cfp %}

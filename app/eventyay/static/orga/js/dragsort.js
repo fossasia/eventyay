@@ -15,7 +15,7 @@ const computeCentroid = (element) => {
 };
 
 const getSortableElements = (parentElement) => {
-    return Array.from(parentElement.querySelectorAll("[dragsort-id]")).map(
+    return Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
         (el) => {
             return { element: el, centroid: computeCentroid(el) };
         },
@@ -111,61 +111,69 @@ const dragStart = (el) => {
 
 const pushOrder = (parentElement) => {
     const url = parentElement.getAttribute("dragsort-url");
-    const data = new URLSearchParams();
-    const ids = Array.from(parentElement.querySelectorAll("[dragsort-id]")).map(
+    const ids = Array.from(parentElement.querySelectorAll("[dragsort-id], [data-formset-form]")).map(
         (el) => el.getAttribute("dragsort-id"),
-    );
-    data.append("order", ids.join(","));
-    fetch(url, {
-        method: "POST",
-        headers: {
-            "X-CSRFToken": document.cookie
-                .split("pretalx_csrftoken=")
-                .pop()
-                .split(";")
-                .shift(),
-        },
-        body: data,
+    ).filter((id) => id);
+    // Update position fields for form submission
+    parentElement.querySelectorAll("[dragsort-id], [data-formset-form]").forEach((el, index) => {
+        const positionInput = el.querySelector('input[name$="-position"]');
+        if (positionInput) {
+            positionInput.value = index + 1;
+        }
     });
+
+    if (url) {
+        const data = new URLSearchParams();
+        data.append("order", ids.join(","));
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": document.cookie
+                    .split("pretalx_csrftoken=")
+                    .pop()
+                    .split(";")
+                    .shift(),
+            },
+            body: data,
+        });
+    }
 };
 
-onReady(() =>
-    document.querySelectorAll("[dragsort-id]").forEach((el) => {
-        el.querySelector(".dragsort-button").addEventListener(
-            "dragstart",
-            (evt) => {
-                // Changing the element’s class in the dragstart handler will immediately
-                // fire the dragend handler in Chrome, for cursed reasons, so we do it
-                // outside the event.
-                setTimeout(() => el.classList.add("dragging"), 0);
-                setTimeout(() => document.querySelector("body").classList.add("dragging"), 0);
-                const stop = dragStart(evt.target);
-                el.parentElement.addEventListener(
-                    "drop",
-                    (evt) => evt.preventDefault(),
-                    {
-                        once: true,
-                    },
-                );
-                document.addEventListener(
-                    "dragend",
-                    (evt) => {
-                        evt.preventDefault();
-                        el.classList.remove("dragging");
-                        document
-                            .querySelector("body")
-                            .classList.remove("dragging");
-                        const { closest, intent } = stop();
-                        if (intent === INTENT_AFTER) {
-                            closest.insertAdjacentElement("afterend", el);
-                        } else {
-                            closest.insertAdjacentElement("beforebegin", el);
-                        }
-                        pushOrder(el.parentElement);
-                    },
-                    { once: true },
-                );
-            },
-        );
-    }),
-);
+onReady(() => {
+    document.addEventListener("dragstart", (evt) => {
+        const handle = evt.target.closest(".dragsort-button");
+        if (!handle) return;
+
+        const el = handle.closest("[dragsort-id]") || handle.closest("[data-formset-form]");
+        if (!el) return;
+
+        evt.dataTransfer.effectAllowed = "move";
+        // Changing the element’s class in the dragstart handler will immediately
+        // fire the dragend handler in Chrome, for cursed reasons, so we do it
+        // outside the event.
+        setTimeout(() => el.classList.add("dragging"), 0);
+        setTimeout(() => document.querySelector("body").classList.add("dragging"), 0);
+
+        const stop = dragStart(el);
+        if (!stop) return;  // Exit early if dragStart couldn't find a valid parent
+
+        const dropHandler = (evt) => evt.preventDefault();
+        el.parentElement.addEventListener("drop", dropHandler, { once: true });
+
+        const dragEndHandler = (evt) => {
+            evt.preventDefault();
+            el.classList.remove("dragging");
+            document.querySelector("body").classList.remove("dragging");
+
+            const { closest, intent } = stop();
+            if (intent === INTENT_AFTER) {
+                closest.insertAdjacentElement("afterend", el);
+            } else {
+                closest.insertAdjacentElement("beforebegin", el);
+            }
+            pushOrder(el.parentElement);
+        };
+
+        document.addEventListener("dragend", dragEndHandler, { once: true });
+    });
+});
