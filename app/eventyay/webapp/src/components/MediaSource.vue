@@ -1,5 +1,7 @@
+
 <template lang="pug">
-.c-media-source(:class="{'in-background': background, 'in-room-manager': inRoomManager}")
+error-boundary
+	.c-media-source(:class="{'in-background': background, 'in-room-manager': inRoomManager}")
 	transition(name="background-room")
 		router-link.background-room(v-if="background", :to="room ? {name: 'room', params: {roomId: room.id}}: {name: 'channel', params: {channelId: call.channel}}")
 			.description
@@ -24,10 +26,11 @@ import api from 'lib/api'
 import JanusCall from 'components/JanusCall'
 import JanusChannelCall from 'components/JanusChannelCall'
 import Livestream from 'components/Livestream'
+import ErrorBoundary from 'components/ErrorBoundary'
 
 // Props & Emits
 defineOptions({
-	components: { Livestream, JanusCall, JanusChannelCall }
+	components: { Livestream, JanusCall, JanusChannelCall, ErrorBoundary }
 })
 const props = defineProps({
 	room: Object,

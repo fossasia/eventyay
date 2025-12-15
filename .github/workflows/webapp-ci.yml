@@ -1,0 +1,28 @@
+name: webapp CI
+
+on:
+  push:
+    paths:
+      - 'app/eventyay/webapp/**'
+  pull_request:
+    paths:
+      - 'app/eventyay/webapp/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        working-directory: app/eventyay/webapp
+        run: npm ci --no-audit --no-fund
+      - name: Lint
+        working-directory: app/eventyay/webapp
+        run: npm run lint
+      - name: Build
+        working-directory: app/eventyay/webapp
+        run: npm run build

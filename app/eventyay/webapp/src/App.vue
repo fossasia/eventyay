@@ -18,24 +18,34 @@
 			h1 {{ $t('App:fatal-connection-error:else:headline') }}
 		p.code error code: {{ fatalConnectionError.code }}
 	template(v-else-if="world")
-		// AppBar stays fixed; only main content shifts
-		app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
-		transition(name="backdrop")
-			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
-		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
-			// router-view no longer carries role=main; main landmark is the scroll container
-			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
-			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
-			media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
-			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
-			media-source(v-else-if="backgroundRoom && !hasFatalError(backgroundRoom)", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
-			#media-source-iframes
-			notifications(:hasBackgroundMedia="!!backgroundRoom")
-			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
-			transition(name="prompt")
-				greeting-prompt(v-if="!user.profile.greeted")
-			.native-permission-blocker(v-if="askingPermission")
-		rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
+		// Wrap the main app UI in an ErrorBoundary so component errors render a fallback UI and are reported
+		error-boundary
+			// AppBar stays fixed; only main content shifts
+			// Isolate AppBar so errors there don't break the rest of the UI
+			error-boundary
+				app-bar(:show-actions="true", :show-user="true", @toggle-sidebar="toggleSidebar")
+			transition(name="backdrop")
+				.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
+			.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
+				// router-view no longer carries role=main; main landmark is the scroll container
+				router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
+				//- defining keys like this keeps the playing dom element alive for uninterupted transitions
+				media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
+				media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
+				media-source(v-else-if="backgroundRoom && !hasFatalError(backgroundRoom)", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
+				#media-source-iframes
+				// Isolate notifications UI
+				error-boundary
+					notifications(:hasBackgroundMedia="!!backgroundRoom")
+				.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
+				transition(name="prompt")
+					// isolate greeting prompt
+					error-boundary
+						greeting-prompt(v-if="!user.profile.greeted")
+				.native-permission-blocker(v-if="askingPermission")
+			// isolate sidebar
+			error-boundary
+				rooms-sidebar(:show="showSidebar", @close="showSidebar = false")
 	.connecting(v-else-if="!currentFatalError")
 		bunt-progress-circular(size="huge")
 		.details(v-if="socketCloseCode == 1006") {{ $t('App:error-code:1006') }}
@@ -49,13 +59,14 @@ import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
 import Notifications from 'components/notifications'
 import GreetingPrompt from 'components/profile/GreetingPrompt'
+import ErrorBoundary from 'components/ErrorBoundary'
 
 const mediaModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom']
 const stageToolModules = ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.janus']
 const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {
-	components: { AppBar, RoomsSidebar, MediaSource, GreetingPrompt, Notifications },
+	components: { AppBar, RoomsSidebar, MediaSource, GreetingPrompt, Notifications, ErrorBoundary },
 	data() {
 		return {
 			backgroundRoom: null,

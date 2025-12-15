@@ -1,6 +1,7 @@
 /* global WebSocket */
 import EventEmitter from 'events'
 import ApiError from './ApiError'
+import reportError from 'lib/errorReporter'
 
 const defer = function() {
 	const deferred = {}
@@ -92,6 +93,12 @@ class WebSocketClient extends EventEmitter {
 			}
 		})
 		this._socket.addEventListener('message', this._processMessage.bind(this))
+		this._socket.addEventListener('error', (ev) => {
+			try {
+				reportError(new Error('WebSocket error'), { source: 'WebSocketClient', event: ev })
+			} catch (e) { /* noop */ }
+			this.emit('error', ev)
+		})
 		this._openRequests = {} // save deferred promises from requests waiting for reponse
 		this._nextRequestIndex = 1 // autoincremented message id
 		this._joinTimeout = null
@@ -142,7 +149,14 @@ class WebSocketClient extends EventEmitter {
 	}
 
 	_processMessage(rawMessage) {
-		const message = JSON.parse(rawMessage.data)
+		let message
+		try {
+			message = JSON.parse(rawMessage.data)
+		} catch (e) {
+			try { reportError(e, { source: 'WebSocketClient', raw: rawMessage.data }) } catch (r) {}
+			this.emit('error', e)
+			return
+		}
 
 		// If backend uses event.* translate to world.* for frontend store expecting legacy keys
 		if (typeof message[0] === 'string' && message[0].startsWith('event.')) {
@@ -160,10 +174,15 @@ class WebSocketClient extends EventEmitter {
 			'connection.reload': this._handleReload.bind(this),
 			authenticated: this._handleJoined.bind(this)
 		}
-		if (actionHandlers[message[0]] === undefined) {
-			this.emit('message', message)
-		} else {
-			actionHandlers[message[0]](message)
+		try {
+			if (actionHandlers[message[0]] === undefined) {
+				this.emit('message', message)
+			} else {
+				actionHandlers[message[0]](message)
+			}
+		} catch (e) {
+			try { reportError(e, { source: 'WebSocketClient', message }) } catch (r) {}
+			this.emit('error', e)
 		}
 		this.emit('log', {
 			direction: 'receive',

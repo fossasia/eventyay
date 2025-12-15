@@ -1,6 +1,7 @@
 /* global ENV_DEVELOPMENT */
 import config from 'config'
 import WebSocketClient from './WebSocketClient'
+import reportError from 'lib/errorReporter'
 
 let api = null
 export { api as default }
@@ -15,10 +16,12 @@ export function initApi({ store, token, clientId, inviteToken }) {
 
 	api.on('closed', () => {
 		console.warn('socket closed')
+		try { reportError(new Error('WebSocket closed'), { source: 'api', info: 'closed' }) } catch (e) {}
 	})
 
 	api.on('error', (error) => {
 		console.error('socket', error)
+		try { reportError(error instanceof Error ? error : new Error(String(error)), { source: 'api', info: 'socket.error' }) } catch (e) {}
 	})
 
 	api.on('warning', (warning) => {
@@ -26,13 +29,18 @@ export function initApi({ store, token, clientId, inviteToken }) {
 	})
 
 	api.on('message', (message) => {
-		let [name, ...data] = message
-		if (data.length === 1) data = data[0]
-		const module = name.split('.')[0]
-		if (store._actions[`${module}/api::${name}`]) {
-			store.dispatch(`${module}/api::${name}`, data)
-		} else if (store._actions[`api::${name}`]) {
-			store.dispatch(`api::${name}`, data)
+		try {
+			let [name, ...data] = message
+			if (data.length === 1) data = data[0]
+			const module = name.split('.')[0]
+			if (store._actions[`${module}/api::${name}`]) {
+				store.dispatch(`${module}/api::${name}`, data)
+			} else if (store._actions[`api::${name}`]) {
+				store.dispatch(`api::${name}`, data)
+			}
+		} catch (e) {
+			console.error('dispatch error', e)
+			try { reportError(e, { source: 'api', message }) } catch (r) {}
 		}
 	})
 

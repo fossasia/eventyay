@@ -23,6 +23,7 @@ import i18n, { init as i18nInit } from 'i18n'
 import { emojiPlugin } from 'lib/emoji'
 import features from 'features'
 import config from 'config'
+import reportError from 'lib/errorReporter'
 import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
 
@@ -62,8 +63,39 @@ async function init({ token, inviteToken }) {
   window.vapp = app.mount('#app')
 
   app.config.errorHandler = (error, vm, info) => {
+    // Always log locally for debugging
+    // eslint-disable-next-line no-console
     console.error('[VUE] ', info, vm, error)
+    try {
+      reportError(error, { framework: 'vue', info, route: router.currentRoute?.value?.fullPath })
+    } catch (e) {
+      // swallow
+    }
   }
+
+  // Also add global handlers for errors that don't go through the Vue lifecycle
+  const windowErrorHandler = (event) => {
+    try {
+      // event might be string or ErrorEvent
+      const err = event?.error || (event instanceof Error ? event : new Error(String(event?.message || event)))
+      reportError(err, { framework: 'window', info: 'window.error', source: 'window.onerror' })
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  const unhandledRejectionHandler = (event) => {
+    try {
+      const reason = event?.reason || event
+      const err = reason instanceof Error ? reason : new Error(typeof reason === 'string' ? reason : JSON.stringify(reason))
+      reportError(err, { framework: 'window', info: 'unhandledrejection', source: 'window.onunhandledrejection' })
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  window.addEventListener('error', windowErrorHandler)
+  window.addEventListener('unhandledrejection', unhandledRejectionHandler)
 
   store.commit('setUserLocale', i18n.resolvedLanguage)
   store.dispatch('updateUserTimezone', localStorage.userTimezone || moment.tz.guess())
@@ -134,13 +166,23 @@ if (config.externalAuthUrl && !token) {
 if ('serviceWorker' in navigator) {
 	// Do not aggressively unregister all, just skip if none (avoid InvalidStateError)
 	try {
-		navigator.serviceWorker.getRegistrations().then((registrations) => {
-			for (const registration of registrations) {
-				// only unregister legacy registrations whose scope does not match current basePath
-				if (registration.scope && !registration.scope.includes(config.basePath)) {
-					registration.unregister()
-				}
-			}
-		}).catch(() => {})
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        // only unregister legacy registrations whose scope does not match current basePath
+        if (registration.scope && !registration.scope.includes(config.basePath)) {
+          registration.unregister()
+        }
+      }
+    }).catch(() => {})
+
+    // Add service worker level error / message handlers so SW errors are reported
+    try {
+      navigator.serviceWorker.addEventListener('error', (ev) => {
+        try { reportError(new Error('ServiceWorker error'), { source: 'serviceWorker', event: ev }) } catch (e) {}
+      })
+      navigator.serviceWorker.addEventListener('messageerror', (ev) => {
+        try { reportError(new Error('ServiceWorker messageerror'), { source: 'serviceWorker', event: ev }) } catch (e) {}
+      })
+    } catch (e) { /* ignore */ }
 	} catch (e) { /* ignore */ }
 }
