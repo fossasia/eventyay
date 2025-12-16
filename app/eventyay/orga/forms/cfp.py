@@ -142,6 +142,11 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         help_text=_('Show the time and date the CfP ends to potential speakers.'),
     )
+    hide_after_deadline = forms.BooleanField(
+        label=_('Do not show Call for Speakers on the menu after the deadline'),
+        required=False,
+        help_text=_('If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'),
+    )
     count_length_in = forms.ChoiceField(
         label=_('Count text length in'),
         choices=(('chars', _('Characters')), ('words', _('Words'))),
@@ -155,6 +160,7 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         # These are JSON fields on cfp.settings
         json_fields = {
             'show_deadline': 'settings',
+            'hide_after_deadline': 'settings',
             'count_length_in': 'settings',
         }
 
