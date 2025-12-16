@@ -67,9 +67,9 @@
 
 <!-- Checkout Login Popup Modal -->
 <div id="checkout-login-modal" class="checkout-login-overlay" style="display: none;">
-    <div class="checkout-login-popup">
+    <div class="checkout-login-popup" role="dialog" aria-modal="true" aria-labelledby="checkout-login-modal-title">
         <div class="checkout-login-header">
-            <h3>{% trans "Login" %}</h3>
+            <h3 id="checkout-login-modal-title">{% trans "Login to Checkout" %}</h3>
             <button type="button" class="checkout-login-close" aria-label="{% trans 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
