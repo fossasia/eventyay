@@ -2424,6 +2424,7 @@ Your {event} team"""
             ),
             min_value=1,
         ),
+        'serializer_kwargs': dict(validators=[MinValueValidator(1)]),
     },
     'giftcard_expiry_years': {
         'default': None,
@@ -2438,6 +2439,7 @@ Your {event} team"""
             ),
             min_value=0,
         ),
+        'serializer_kwargs': dict(validators=[MinValueValidator(0)]),
     },
     'privacy_policy': {
         'default': None,
