@@ -69,7 +69,7 @@
 <div id="checkout-login-modal" class="checkout-login-overlay" style="display: none;">
     <div class="checkout-login-popup" role="dialog" aria-modal="true" aria-labelledby="checkout-login-modal-title">
         <div class="checkout-login-header">
-            <h3 id="checkout-login-modal-title">{% trans "Login to Checkout" %}</h3>
+            <h3 id="checkout-login-modal-title">{% trans "Login" %}</h3>
             <button type="button" class="checkout-login-close" aria-label="{% trans 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
@@ -110,7 +110,7 @@
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
                 <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="mediawiki">
-                    {% trans "Login with Mediawiki" %}
+                    {% trans "Login with MediaWiki" %}
                 </a>
                 <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="google">
                     {% trans "Login with Google" %}
@@ -253,7 +253,14 @@
             // Update register link
             var registerLink = modal.querySelector('.checkout-login-footer a');
             if (registerLink) {
-                registerLink.href = registerLink.href.split('?')[0] + '?next=' + encodeURIComponent(checkoutUrl);
+                try {
+                    var url = new URL(registerLink.href, window.location.origin);
+                    url.searchParams.set('next', checkoutUrl);
+                    registerLink.href = url.toString();
+                } catch (e) {
+                    // Fallback for browsers that do not support URL
+                    registerLink.href = registerLink.href.split('?')[0] + '?next=' + encodeURIComponent(checkoutUrl);
+                }
             }
 
             modal.style.display = 'flex';
@@ -299,19 +306,11 @@
                 }
             })
             .then(function(response) {
-                if (response.redirected) {
-                    // Login successful, redirect to checkout
-                    window.location.href = checkoutUrl || response.url;
-                    return;
+                if (!response.ok) {
+                    throw new Error('{% trans "Invalid email or password. Please try again." %}');
                 }
-                return response.text().then(function(html) {
-                    // Check if there's an error in the response
-                    if (html.includes('alert-danger') || html.includes('Invalid') || html.includes('error')) {
-                        throw new Error('{% trans "Invalid email or password. Please try again." %}');
-                    }
-                    // If we got redirected HTML, go to checkout
-                    window.location.href = checkoutUrl;
-                });
+                // If we get here, login was successful, redirect to checkout
+                window.location.href = checkoutUrl;
             })
             .catch(function(error) {
                 submitBtn.disabled = false;
@@ -326,6 +325,7 @@
 
     // Handle SSO popup login
     var ssoLinks = modal ? modal.querySelectorAll('.checkout-sso-btn') : [];
+    var activeCheckLogin = null;
     ssoLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -335,17 +335,36 @@
             var top = (window.innerHeight - height) / 2;
             var popup = window.open(this.href, 'sso_login', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top);
 
+            if (!popup) {
+                alert('{% trans "Please allow popups for this site to use SSO login." %}');
+                return;
+            }
+
             // Check if login was successful
-            var checkLogin = setInterval(function() {
+            if (activeCheckLogin) clearInterval(activeCheckLogin);
+            activeCheckLogin = setInterval(function() {
                 try {
                     if (popup.closed) {
-                        clearInterval(checkLogin);
+                        clearInterval(activeCheckLogin);
+                        activeCheckLogin = null;
                         // Reload to check if user is now logged in
                         window.location.reload();
                     }
-                } catch(e) {}
+                } catch(e) {
+                    // Ignore expected cross-origin access errors
+                }
             }, 500);
         });
     });
+
+    // Clean up interval when modal closes
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            if (activeCheckLogin) {
+                clearInterval(activeCheckLogin);
+                activeCheckLogin = null;
+            }
+        });
+    }
 })();
 </script>
