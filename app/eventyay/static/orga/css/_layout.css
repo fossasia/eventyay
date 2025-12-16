@@ -541,11 +541,7 @@ nav.navbar,
   a,
   button {
     color: var(--color-offwhite);
-<<<<<<< HEAD
     font-size: 14px;
-=======
->>>>>>> 26960c819 (WIP: before rebase)
-
     &:hover {
       text-decoration: none;
       color: var(--color-white);
