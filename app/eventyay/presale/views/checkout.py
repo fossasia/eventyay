@@ -43,6 +43,15 @@ class CheckoutView(View):
             logger.info('Redirecting to %s as presale is not running.', new_url)
             return self.redirect(new_url)
 
+        # Check if login is required for checkout
+        if request.event.settings.require_registered_account_for_tickets:
+            if not request.user.is_authenticated:
+                from django.contrib.auth.views import redirect_to_login
+                from django.urls import reverse
+                messages.info(request, _('Please log in to proceed with checkout.'))
+                login_url = reverse('eventyay_common:auth.login')
+                return redirect_to_login(request.get_full_path(), login_url=login_url)
+
         cart_error = None
         try:
             validate_cart.send(sender=self.request.event, positions=get_cart(request))

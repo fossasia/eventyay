@@ -6,154 +6,157 @@
 {% load formset_tags %}
 {% block title %}{% trans "General settings" %}{% endblock %}
 {% block custom_header %}
-    {{ block.super }}
-    <link type="text/css" rel="stylesheet" href="{% url "control:pdf.css" %}">
+{{ block.super }}
+<link type="text/css" rel="stylesheet" href="{% url 'control:pdf.css' %}">
 {% endblock %}
 {% block inside %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h1>{% trans "General settings" %}</h1>
-            </div>
-            {% include "pretixcontrol/event/component_link.html" %}
+<nav id="event-nav" class="header-nav">
+    <div class="navigation">
+        <div class="navigation-title">
+            <h1>{% trans "General settings" %}</h1>
         </div>
-    </nav>
-    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
-        {% csrf_token %}
-        {% bootstrap_form_errors form %}
-		{% bootstrap_form_errors sform %}
-        <div class="tabbed-form">
-            <fieldset>
-                <legend>{% trans "Basics" %}</legend>
-                {% bootstrap_field form.currency layout="control" %}
-                {% bootstrap_field form.sales_channels layout="control" %}
+        {% include "pretixcontrol/event/component_link.html" %}
+    </div>
+</nav>
+<form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    {% bootstrap_form_errors sform %}
+    <div class="tabbed-form">
+        <fieldset>
+            <legend>{% trans "Basics" %}</legend>
+            {% bootstrap_field form.currency layout="control" %}
+            {% bootstrap_field form.sales_channels layout="control" %}
 
-                {% if meta_forms %}
-                    <div class="form-group metadata-group">
-                        <label class="col-md-3 control-label">{% trans "Meta data" %}</label>
-                        <div class="col-md-9">
-                            {% for form in meta_forms %}
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label for="{{ form.value.id_for_label }}">
-                                            {{ form.property.name }}
-                                        </label>
-                                    </div>
-                                    <div class="col-md-8">
-                                        {% bootstrap_form form layout="inline" error_types="all" %}
-                                    </div>
+            {% if meta_forms %}
+            <div class="form-group metadata-group">
+                <label class="col-md-3 control-label">{% trans "Meta data" %}</label>
+                <div class="col-md-9">
+                    {% for form in meta_forms %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="{{ form.value.id_for_label }}">
+                                {{ form.property.name }}
+                            </label>
+                        </div>
+                        <div class="col-md-8">
+                            {% bootstrap_form form layout="inline" error_types="all" %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Customer and attendee data" %}</legend>
+            <h4>{% trans "Customer data (once per order)" %}</h4>
+            <div class="form-group">
+                <label class="control-label col-md-3">
+                    {% trans "E-mail" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="checkbox">
+                        <label><input type="checkbox" checked="checked" disabled="disabled"> Ask and require input</label>
+                    </div>
+                </div>
+            </div>
+            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
+            {% bootstrap_field sform.order_email_asked_twice layout="control" %}
+            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
+            {% bootstrap_field sform.order_phone_asked_required layout="control" %}
+            <div class="form-group">
+                <label class="control-label col-md-3">
+                    {% trans "Name and address" %}
+                </label>
+                <div class="col-md-9 static-form-row">
+                    <p>
+                        <a href="{% url 'control:event.settings.invoice' event=request.event.slug
+                            organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
+                            {% trans "See invoice settings" %}
+                        </a>
+                    </p>
+                </div>
+            </div>
+
+            <h4>{% trans "Attendee data (once per admission ticket)" %}</h4>
+
+            {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
+
+            <div class="form-group">
+                <label class="control-label col-md-3">
+                    {% trans "Custom fields" %}
+                </label>
+                <div class="col-md-9 static-form-row">
+                    <p>
+                        <a href="{% url 'control:event.products.questions' event=request.event.slug
+                            organizer=request.organizer.slug %}" target="_blank">
+                            {% trans "Manage questions" %}
+                        </a>
+                    </p>
+                </div>
+            </div>
+            {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
+
+            <h4>{% trans "Other settings" %}</h4>
+            {% bootstrap_field sform.name_scheme layout="control" %}
+            {% bootstrap_field sform.name_scheme_titles layout="control" %}
+            {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
+
+            <h4>{% translate "Changes to existing orders" %}</h4>
+            {% bootstrap_field sform.allow_modifications layout="control" %}
+            <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
+                {% bootstrap_field sform.last_order_modification_date layout="control" %}
+                {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Texts" %}</legend>
+            {% bootstrap_field sform.presale_has_ended_text layout="control" %}
+            {% bootstrap_field sform.voucher_explanation_text layout="control" %}
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {% trans "Confirmation text" %}<br>
+                    <span class="optional">{% trans "Optional" %}</span>
+                </label>
+                <div class="col-md-9">
+                    <div class="help-block">
+                        {% blocktrans trimmed %}
+                        These texts need to be confirmed by the user before a purchase is possible. You could
+                        for example link your terms of service here. If you use the Pages feature to publish
+                        your terms of service, you don't need this setting since you can configure it there.
+                        {% endblocktrans %}
+                    </div>
+                    <div class="formset" data-formset data-formset-prefix="{{ confirm_texts_formset.prefix }}">
+                        {{ confirm_texts_formset.management_form }}
+                        {% bootstrap_formset_errors confirm_texts_formset %}
+                        <div data-formset-body>
+                            {% for form in confirm_texts_formset %}
+                            <div class="row formset-row" data-formset-form>
+                                <div class="sr-only">
+                                    {{ form.id }}
+                                    {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
+                                    {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
                                 </div>
+                                <div class="col-md-10">
+                                    {% bootstrap_form_errors form %}
+                                    {% bootstrap_field form.text layout='inline' form_group_class="" %}
+                                </div>
+                                <div class="col-md-2 text-right flip">
+                                    <button type="button" class="btn" data-formset-move-up-button>
+                                        <i class="fa fa-arrow-up"></i></button>
+                                    <button type="button" class="btn" data-formset-move-down-button>
+                                        <i class="fa fa-arrow-down"></i></button>
+                                    <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
+                                        <i class="fa fa-trash"></i></button>
+                                </div>
+                            </div>
                             {% endfor %}
                         </div>
-                    </div>
-                {% endif %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Customer and attendee data" %}</legend>
-                <h4>{% trans "Customer data (once per order)" %}</h4>
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "E-mail" %}
-                    </label>
-                    <div class="col-md-9">
-                        <div class="checkbox">
-                            <label><input type="checkbox" checked="checked" disabled="disabled"> {% trans "Ask and require input" %}</label>
-                        </div>
-                    </div>
-                </div>
-                {% bootstrap_field sform.order_email_asked_twice layout="control" %}
-                {% bootstrap_field sform.include_wikimedia_username layout="control" %}
-                {% bootstrap_field sform.order_phone_asked_required layout="control" %}
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "Name and address" %}
-                    </label>
-                    <div class="col-md-9 static-form-row">
-                        <p>
-                            <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
-                                {% trans "See invoice settings" %}
-                            </a>
-                        </p>
-                    </div>
-                </div>
-
-                <h4>{% trans "Attendee data (once per admission ticket)" %}</h4>
-
-                {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
-
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "Custom fields" %}
-                    </label>
-                    <div class="col-md-9 static-form-row">
-                        <p>
-                            <a href="{% url "control:event.products.questions" event=request.event.slug organizer=request.organizer.slug %}" target="_blank">
-                                {% trans "Manage questions" %}
-                            </a>
-                        </p>
-                    </div>
-                </div>
-                {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
-
-                <h4>{% trans "Other settings" %}</h4>
-                {% bootstrap_field sform.name_scheme layout="control" %}
-                {% bootstrap_field sform.name_scheme_titles layout="control" %}
-                {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
-
-                <h4>{% translate "Changes to existing orders" %}</h4>
-                {% bootstrap_field sform.allow_modifications layout="control" %}
-                <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
-                    {% bootstrap_field sform.last_order_modification_date layout="control" %}
-                    {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
-                </div>
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Texts" %}</legend>
-                {% bootstrap_field sform.presale_has_ended_text layout="control" %}
-                {% bootstrap_field sform.voucher_explanation_text layout="control" %}
-                <div class="form-group">
-                    <label class="col-md-3 control-label">
-                        {% trans "Confirmation text" %}<br>
-                        <span class="optional">{% trans "Optional" %}</span>
-                    </label>
-                    <div class="col-md-9">
-                        <div class="help-block">
-                            {% blocktrans trimmed %}
-                                These texts need to be confirmed by the user before a purchase is possible. You could
-                                for example link your terms of service here. If you use the Pages feature to publish
-                                your terms of service, you don't need this setting since you can configure it there.
-                            {% endblocktrans %}
-                        </div>
-                        <div class="formset" data-formset data-formset-prefix="{{ confirm_texts_formset.prefix }}">
-                            {{ confirm_texts_formset.management_form }}
-                            {% bootstrap_formset_errors confirm_texts_formset %}
-                            <div data-formset-body>
-                                {% for form in confirm_texts_formset %}
-                                    <div class="row formset-row" data-formset-form>
-                                        <div class="sr-only">
-                                            {{ form.id }}
-                                            {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
-                                            {% bootstrap_field form.ORDER form_group_class="" layout="inline" %}
-                                        </div>
-                                        <div class="col-md-10">
-                                            {% bootstrap_form_errors form %}
-                                            {% bootstrap_field form.text layout='inline' form_group_class="" %}
-                                        </div>
-                                        <div class="col-md-2 text-right flip">
-                                            <button type="button" class="btn" data-formset-move-up-button>
-                                                <i class="fa fa-arrow-up"></i></button>
-                                            <button type="button" class="btn" data-formset-move-down-button>
-                                                <i class="fa fa-arrow-down"></i></button>
-                                            <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                                <i class="fa fa-trash"></i></button>
-                                        </div>
-                                    </div>
-                                {% endfor %}
-                            </div>
-                            <script type="form-template" data-formset-empty-form>
+                        <script type="form-template" data-formset-empty-form>
                                 {% escapescript %}
                                     <div class="row formset-row" data-formset-form>
                                         <div class="sr-only">
@@ -176,100 +179,99 @@
                                     </div>
                                 {% endescapescript %}
                             </script>
-                            <p>
-                                <button type="button" class="btn btn-default" data-formset-add>
-                                    <i class="fa fa-plus"></i> {% trans "Add confirmation text" %}</button>
-                            </p>
-                        </div>
+                        <p>
+                            <button type="button" class="btn btn-default" data-formset-add>
+                                <i class="fa fa-plus"></i> {% trans "Add confirmation text" %}</button>
+                        </p>
                     </div>
                 </div>
+            </div>
 
-                {% bootstrap_field sform.checkout_success_text layout="control" %}
-                {% bootstrap_field sform.checkout_email_helptext layout="control" %}
-                {% bootstrap_field sform.checkout_phone_helptext layout="control" %}
-                {% bootstrap_field sform.banner_text layout="control" %}
-                {% bootstrap_field sform.banner_text_bottom layout="control" %}
-                {% bootstrap_field sform.event_info_text layout="control" %}
-            </fieldset>
+            {% bootstrap_field sform.checkout_success_text layout="control" %}
+            {% bootstrap_field sform.checkout_email_helptext layout="control" %}
+            {% bootstrap_field sform.checkout_phone_helptext layout="control" %}
+            {% bootstrap_field sform.banner_text layout="control" %}
+            {% bootstrap_field sform.banner_text_bottom layout="control" %}
+            {% bootstrap_field sform.event_info_text layout="control" %}
+        </fieldset>
 
 
-            <fieldset>
-                <legend>{% trans "Timeline" %}</legend>
-                {% bootstrap_field form.presale_start layout="control" %}
-                {% bootstrap_field sform.presale_start_show_date layout="control" %}
-                {% bootstrap_field form.presale_end layout="control" %}
-                {% bootstrap_field sform.show_products_outside_presale_period layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Display" %}</legend>
-                {% bootstrap_field sform.show_dates_on_frontpage layout="control" %}
-                {% bootstrap_field sform.show_date_to layout="control" %}
-                {% bootstrap_field sform.show_times layout="control" %}
-                {% bootstrap_field sform.show_quota_left layout="control" %}
-                {% bootstrap_field sform.display_net_prices layout="control" %}
-                {% bootstrap_field sform.show_variations_expanded layout="control" %}
-                {% bootstrap_field sform.hide_sold_out layout="control" %}
-                {% bootstrap_field sform.meta_noindex layout="control" %}
-                {% if sform.frontpage_subevent_ordering %}
-                    {% bootstrap_field sform.frontpage_subevent_ordering layout="control" %}
-                {% endif %}
-                {% if sform.event_list_type %}
-                    {% bootstrap_field sform.event_list_type layout="control" %}
-                {% endif %}
-                {% if sform.event_list_available_only %}
-                    {% bootstrap_field sform.event_list_available_only layout="control" %}
-                {% endif %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Cart" %}</legend>
-                {% bootstrap_field sform.reservation_time layout="control" %}
-                {% bootstrap_field sform.max_products_per_order layout="control" %}
-                {% bootstrap_field sform.redirect_to_checkout_directly layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Waiting list" %}</legend>
-                {% bootstrap_field sform.waiting_list_enabled layout="control" %}
-                {% bootstrap_field sform.waiting_list_auto layout="control" %}
-                {% bootstrap_field sform.waiting_list_hours layout="control" %}
-                {% bootstrap_field sform.waiting_list_names_asked_required layout="control" %}
-                {% bootstrap_field sform.waiting_list_phones_asked_required layout="control" %}
-                {% bootstrap_field sform.waiting_list_phones_explanation_text layout="control" %}
-            </fieldset>
-            <fieldset>
-                <legend>{% trans "Item metadata" %}</legend>
-                <p>
-                    {% blocktrans trimmed %}
-                        You can here define a set of metadata properties (i.e. variables) that you can later set for
-                        your products and re-use in places like ticket layouts. This is an useful timesaver if you create
-                        lots and lots of products.
-                    {% endblocktrans %}
-                </p>
-                <div class="formset" data-formset
-                     data-formset-prefix="{{ product_meta_property_formset.prefix }}">
-                    {{ product_meta_property_formset.management_form }}
-                    {% bootstrap_formset_errors product_meta_property_formset %}
-                    <div data-formset-body>
-                        {% for form in product_meta_property_formset %}
-                            <div class="row formset-row" data-formset-form>
-                                <div class="sr-only">
-                                    {{ form.id }}
-                                    {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
-                                </div>
-                                <div class="col-md-5">
-                                    {% bootstrap_form_errors form %}
-                                    {% bootstrap_field form.name layout='inline' form_group_class="" %}
-                                </div>
-                                <div class="col-md-5 col-lg-6">
-                                    {% bootstrap_field form.default layout='inline' form_group_class="" %}
-                                </div>
-                                <div class="col-md-2 col-lg-1 text-right flip">
-                                    <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
-                                        <i class="fa fa-trash"></i></button>
-                                </div>
-                            </div>
-                        {% endfor %}
+        <fieldset>
+            <legend>{% trans "Timeline" %}</legend>
+            {% bootstrap_field form.presale_start layout="control" %}
+            {% bootstrap_field sform.presale_start_show_date layout="control" %}
+            {% bootstrap_field form.presale_end layout="control" %}
+            {% bootstrap_field sform.show_products_outside_presale_period layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Display" %}</legend>
+            {% bootstrap_field sform.show_dates_on_frontpage layout="control" %}
+            {% bootstrap_field sform.show_date_to layout="control" %}
+            {% bootstrap_field sform.show_times layout="control" %}
+            {% bootstrap_field sform.show_quota_left layout="control" %}
+            {% bootstrap_field sform.display_net_prices layout="control" %}
+            {% bootstrap_field sform.show_variations_expanded layout="control" %}
+            {% bootstrap_field sform.hide_sold_out layout="control" %}
+            {% bootstrap_field sform.meta_noindex layout="control" %}
+            {% if sform.frontpage_subevent_ordering %}
+            {% bootstrap_field sform.frontpage_subevent_ordering layout="control" %}
+            {% endif %}
+            {% if sform.event_list_type %}
+            {% bootstrap_field sform.event_list_type layout="control" %}
+            {% endif %}
+            {% if sform.event_list_available_only %}
+            {% bootstrap_field sform.event_list_available_only layout="control" %}
+            {% endif %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Cart" %}</legend>
+            {% bootstrap_field sform.reservation_time layout="control" %}
+            {% bootstrap_field sform.max_products_per_order layout="control" %}
+            {% bootstrap_field sform.redirect_to_checkout_directly layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Waiting list" %}</legend>
+            {% bootstrap_field sform.waiting_list_enabled layout="control" %}
+            {% bootstrap_field sform.waiting_list_auto layout="control" %}
+            {% bootstrap_field sform.waiting_list_hours layout="control" %}
+            {% bootstrap_field sform.waiting_list_names_asked_required layout="control" %}
+            {% bootstrap_field sform.waiting_list_phones_asked_required layout="control" %}
+            {% bootstrap_field sform.waiting_list_phones_explanation_text layout="control" %}
+        </fieldset>
+        <fieldset>
+            <legend>{% trans "Item metadata" %}</legend>
+            <p>
+                {% blocktrans trimmed %}
+                You can here define a set of metadata properties (i.e. variables) that you can later set for
+                your products and re-use in places like ticket layouts. This is an useful timesaver if you create
+                lots and lots of products.
+                {% endblocktrans %}
+            </p>
+            <div class="formset" data-formset data-formset-prefix="{{ product_meta_property_formset.prefix }}">
+                {{ product_meta_property_formset.management_form }}
+                {% bootstrap_formset_errors product_meta_property_formset %}
+                <div data-formset-body>
+                    {% for form in product_meta_property_formset %}
+                    <div class="row formset-row" data-formset-form>
+                        <div class="sr-only">
+                            {{ form.id }}
+                            {% bootstrap_field form.DELETE form_group_class="" layout="inline" %}
+                        </div>
+                        <div class="col-md-5">
+                            {% bootstrap_form_errors form %}
+                            {% bootstrap_field form.name layout='inline' form_group_class="" %}
+                        </div>
+                        <div class="col-md-5 col-lg-6">
+                            {% bootstrap_field form.default layout='inline' form_group_class="" %}
+                        </div>
+                        <div class="col-md-2 col-lg-1 text-right flip">
+                            <button type="button" class="btn btn-delete btn-danger" data-formset-delete-button>
+                                <i class="fa fa-trash"></i></button>
+                        </div>
                     </div>
-                    <script type="form-template" data-formset-empty-form>
+                    {% endfor %}
+                </div>
+                <script type="form-template" data-formset-empty-form>
                         {% escapescript %}
                             <div class="row formset-row" data-formset-form>
                                 <div class="sr-only">
@@ -289,29 +291,28 @@
                             </div>
                         {% endescapescript %}
                     </script>
-                    <p>
-                        <button type="button" class="btn btn-default" data-formset-add>
-                            <i class="fa fa-plus"></i> {% trans "Add property" %}</button>
-                    </p>
-                </div>
-            </fieldset>
-        </div>
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Save" %}
-            </button>
-            <div class="pull-left">
-                <a href="{% url "control:event.dangerzone" organizer=request.organizer.slug event=request.event.slug %}"
-                   class="btn btn-danger btn-lg">
-                    <span class="fa fa-trash"></span>
-                    {% trans "Cancel or delete event" %}
-                </a>
-                <a href="{% url "control:events.add" %}?clone={{ request.event.pk }}"
-                   class="btn btn-default btn-lg">
-                    <span class="fa fa-copy"></span>
-                    {% trans "Clone event" %}
-                </a>
+                <p>
+                    <button type="button" class="btn btn-default" data-formset-add>
+                        <i class="fa fa-plus"></i> {% trans "Add property" %}</button>
+                </p>
             </div>
+        </fieldset>
+    </div>
+    <div class="form-group submit-group">
+        <button type="submit" class="btn btn-primary btn-save">
+            {% trans "Save" %}
+        </button>
+        <div class="pull-left">
+            <a href="{% url 'control:event.dangerzone' organizer=request.organizer.slug event=request.event.slug %}"
+                class="btn btn-danger btn-lg">
+                <span class="fa fa-trash"></span>
+                {% trans "Cancel or delete event" %}
+            </a>
+            <a href="{% url 'control:events.add' %}?clone={{ request.event.pk }}" class="btn btn-default btn-lg">
+                <span class="fa fa-copy"></span>
+                {% trans "Clone event" %}
+            </a>
         </div>
-    </form>
+    </div>
+</form>
 {% endblock %}

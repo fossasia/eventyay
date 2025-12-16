@@ -585,12 +585,6 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
 
-        if not context['guest_checkout_allowed'] and not self.request.user.is_authenticated:
-            messages.error(
-                self.request,
-                _('This event only available for registered users. Please login to continue.'),
-            )
-
         return context
 
     def _subevent_list_context(self):
