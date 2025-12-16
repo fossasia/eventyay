@@ -18,6 +18,7 @@ def default_settings():
         'flow': {},
         'count_length_in': 'chars',
         'show_deadline': True,
+        'hide_after_deadline': False,
     }
 
 
