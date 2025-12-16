@@ -64,3 +64,288 @@
         </div>
     </div>
 </div>
+
+<!-- Checkout Login Popup Modal -->
+<div id="checkout-login-modal" class="checkout-login-overlay" style="display: none;">
+    <div class="checkout-login-popup">
+        <div class="checkout-login-header">
+            <h3>{% trans "Login to Checkout" %}</h3>
+            <button type="button" class="checkout-login-close" aria-label="{% trans 'Close' %}">&times;</button>
+        </div>
+        <div class="checkout-login-body">
+            <p class="checkout-login-message">{% trans "Please log in to complete your order." %}</p>
+
+            <!-- Login Form -->
+            <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" id="checkout-next-url" value="">
+
+                <div class="form-group">
+                    <label for="checkout-email">{% trans "Email" %}</label>
+                    <input type="email" id="checkout-email" name="email" class="form-control" required placeholder="{% trans 'Enter your email' %}">
+                </div>
+
+                <div class="form-group">
+                    <label for="checkout-password">{% trans "Password" %}</label>
+                    <input type="password" id="checkout-password" name="password" class="form-control" required placeholder="{% trans 'Enter your password' %}">
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="keep_logged_in" value="1"> {% trans "Keep me logged in" %}
+                    </label>
+                </div>
+
+                <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
+                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Log in" %}
+                </button>
+            </form>
+
+            <div class="checkout-login-divider">
+                <span>{% trans "or" %}</span>
+            </div>
+
+            <!-- SSO Provider Buttons -->
+            <div class="checkout-login-sso">
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" target="_blank" data-provider="mediawiki">
+                    {% trans "Login with Mediawiki" %}
+                </a>
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" target="_blank" data-provider="google">
+                    {% trans "Login with Google" %}
+                </a>
+            </div>
+
+            <div class="checkout-login-footer">
+                <p>{% trans "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% trans "Create one" %}</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.checkout-login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkout-login-popup {
+    background: white;
+    border-radius: 8px;
+    max-width: 420px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.checkout-login-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.checkout-login-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.checkout-login-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.checkout-login-close:hover {
+    color: #333;
+}
+
+.checkout-login-body {
+    padding: 20px;
+}
+
+.checkout-login-message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.checkout-login-divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.checkout-login-divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #ddd;
+}
+
+.checkout-login-divider span {
+    background: white;
+    padding: 0 15px;
+    position: relative;
+    color: #999;
+}
+
+.checkout-login-sso .btn {
+    margin-bottom: 10px;
+}
+
+.checkout-login-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    color: #666;
+}
+
+.checkout-login-footer a {
+    color: #337ab7;
+}
+</style>
+
+<script>
+(function() {
+    var modal = document.getElementById('checkout-login-modal');
+    var loginBtn = document.getElementById('checkout-login-btn');
+    var closeBtn = modal ? modal.querySelector('.checkout-login-close') : null;
+    var loginForm = document.getElementById('checkout-login-form');
+    var errorDiv = document.getElementById('checkout-login-error');
+    var nextUrlInput = document.getElementById('checkout-next-url');
+    var checkoutUrl = '';
+
+    // Open modal
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            checkoutUrl = this.getAttribute('data-checkout-url') || '';
+            if (nextUrlInput) nextUrlInput.value = checkoutUrl;
+
+            // Update SSO links with next URL
+            var ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
+            ssoLinks.forEach(function(link) {
+                var baseUrl = link.href.split('?')[0];
+                var backend = link.getAttribute('data-provider');
+                link.href = baseUrl + '?backend=' + backend + '&next=' + encodeURIComponent(checkoutUrl);
+            });
+
+            // Update register link
+            var registerLink = modal.querySelector('.checkout-login-footer a');
+            if (registerLink) {
+                registerLink.href = registerLink.href.split('?')[0] + '?next=' + encodeURIComponent(checkoutUrl);
+            }
+
+            modal.style.display = 'flex';
+        });
+    }
+
+    // Close modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            modal.style.display = 'none';
+        });
+    }
+
+    // Close on overlay click
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+
+    // AJAX form submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            var submitBtn = document.getElementById('checkout-login-submit');
+            var originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {% trans "Logging in..." %}';
+
+            if (errorDiv) errorDiv.style.display = 'none';
+
+            var formData = new FormData(loginForm);
+
+            fetch(loginForm.action, {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(function(response) {
+                if (response.redirected) {
+                    // Login successful, redirect to checkout
+                    window.location.href = checkoutUrl || response.url;
+                    return;
+                }
+                return response.text().then(function(html) {
+                    // Check if there's an error in the response
+                    if (html.includes('alert-danger') || html.includes('Invalid') || html.includes('error')) {
+                        throw new Error('{% trans "Invalid email or password. Please try again." %}');
+                    }
+                    // If we got redirected HTML, go to checkout
+                    window.location.href = checkoutUrl;
+                });
+            })
+            .catch(function(error) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                if (errorDiv) {
+                    errorDiv.textContent = error.message || '{% trans "Login failed. Please try again." %}';
+                    errorDiv.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    // Handle SSO popup login
+    var ssoLinks = modal ? modal.querySelectorAll('.checkout-sso-btn') : [];
+    ssoLinks.forEach(function(link) {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            var width = 600;
+            var height = 700;
+            var left = (window.innerWidth - width) / 2;
+            var top = (window.innerHeight - height) / 2;
+            var popup = window.open(this.href, 'sso_login', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top);
+
+            // Check if login was successful
+            var checkLogin = setInterval(function() {
+                try {
+                    if (popup.closed) {
+                        clearInterval(checkLogin);
+                        // Reload to check if user is now logged in
+                        window.location.reload();
+                    }
+                } catch(e) {}
+            }, 500);
+        });
+    });
+})();
+</script>
