@@ -1196,15 +1196,16 @@ DEFAULT_SETTINGS = {
         ),
     },
     'require_registered_account_for_tickets': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
         'form_kwargs': dict(
-            label=_('Only allow registered accounts to get a ticket'),
+            label=_('Require user to be logged in to place an order'),
             help_text=_(
-                'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-                "'Continue as a Guest' option will not be available for attendees."
+                'If this option is turned on, users must be logged in before completing an order. '
+                'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+                "The 'Continue as a Guest' option will not be available for attendees."
             ),
         ),
     },
