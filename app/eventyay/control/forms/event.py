@@ -534,6 +534,7 @@ class EventSettingsForm(SettingsForm):
         'event_list_available_only',
         'frontpage_text',
         'event_info_text',
+        'require_registered_account_for_tickets',
         'attendee_names_asked',
         'attendee_names_required',
         'attendee_emails_asked',
