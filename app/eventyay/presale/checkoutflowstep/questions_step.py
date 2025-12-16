@@ -78,7 +78,7 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
             initial=initial,
             all_optional=self.all_optional,
         )
-        if wd.get('email', '') and wd.get('fix', '') == 'true':
+        if 'email' in f.fields and wd.get('email', '') and wd.get('fix', '') == 'true':
             f.fields['email'].disabled = True
 
         for overrides in override_sets:
@@ -176,7 +176,10 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
                 _('We had difficulties processing your input. Please review the errors below.'),
             )
             return self.render()
-        self.cart_session['email'] = self.contact_form.cleaned_data['email']
+        if 'email' in self.contact_form.cleaned_data:
+            self.cart_session['email'] = self.contact_form.cleaned_data['email']
+        else:
+            self.cart_session.pop('email', None)
         d = dict(self.contact_form.cleaned_data)
         if d.get('phone'):
             d['phone'] = str(d['phone'])
@@ -215,18 +218,19 @@ class QuestionsStep(QuestionsViewMixin, CartMixin, TemplateFlowStep):
 
     def is_completed(self, request, warn=False):
         self.request = request
-        try:
-            emailval = EmailValidator()
-            if not self.cart_session.get('email') and not self.all_optional:
+        if request.event.settings.order_email_asked:
+            try:
+                emailval = EmailValidator()
+                if request.event.settings.order_email_required and not self.cart_session.get('email') and not self.all_optional:
+                    if warn:
+                        messages.warning(request, _('Please enter a valid email address.'))
+                    return False
+                if self.cart_session.get('email'):
+                    emailval(self.cart_session.get('email'))
+            except ValidationError:
                 if warn:
                     messages.warning(request, _('Please enter a valid email address.'))
                 return False
-            if self.cart_session.get('email'):
-                emailval(self.cart_session.get('email'))
-        except ValidationError:
-            if warn:
-                messages.warning(request, _('Please enter a valid email address.'))
-            return False
 
         if not self.all_optional:
             if self.address_asked:

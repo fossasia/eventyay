@@ -548,6 +548,8 @@ class EventSettingsForm(SettingsForm):
         'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
         'include_wikimedia_username',
         'allow_modifications',
