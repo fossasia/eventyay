@@ -169,7 +169,7 @@ def get_user(
         )
 
     if user:
-        if with_token and (user.traits != with_token.get("traits")):
+        if with_token and ((user.traits or []) != (with_token.get("traits") or [])):
             traits = with_token["traits"]
             update_user(event.id, id=user.id, traits=traits)
             user = get_user_by_id(event.id, user.id)
@@ -251,15 +251,15 @@ def update_user(
     )
 
     if traits is not None:
-        if user.traits != traits:
+        if (user.traits or []) != (traits or []):
             AuditLog.objects.create(
                 event_id=event_id,
                 user=user,
                 type="auth.user.traits.changed",
                 data={
                     "object": str(user.pk),
-                    "old": user.traits,
-                    "new": traits,
+                    "old": user.traits or [],
+                    "new": traits or [],
                 },
             )
             user.traits = traits

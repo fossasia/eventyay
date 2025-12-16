@@ -1544,7 +1544,7 @@ class Event(
             if (
                 isinstance(required_traits, list)
                 and all(
-                    any(x in user.traits for x in (r if isinstance(r, list) else [r]))
+                    any(x in (user.traits or []) for x in (r if isinstance(r, list) else [r]))
                     for r in required_traits
                 )
                 and (required_traits or allow_empty_traits)
@@ -1579,7 +1579,7 @@ class Event(
                     isinstance(required_traits, list)
                     and all(
                         any(
-                            x in user.traits
+                            x in (user.traits or [])
                             for x in (r if isinstance(r, list) else [r])
                         )
                         for r in required_traits

@@ -620,7 +620,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                 _('eventyay account invitation'),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': self.request.user,
                     'organizer': self.request.organizer.name,
                     'team': instance.team.name,
                     'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),

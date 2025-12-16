@@ -286,3 +286,130 @@ def test_team_token_create(token_client, organizer, event, second_team):
     assert t.name == 'New token'
     assert t.active
     assert resp.data['token'] == t.token
+
+
+# Video Permissions Tests
+@pytest.mark.django_db
+def test_team_video_permissions_in_api_response(token_client, organizer, event, team):
+    """Test that video permission fields are included in API responses."""
+    resp = token_client.get('/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, team.pk))
+    assert resp.status_code == 200
+    
+    # Check that all video permission fields are present in the response
+    video_permission_fields = [
+        'can_video_create_stages',
+        'can_video_create_channels',
+        'can_video_direct_message',
+        'can_video_manage_announcements',
+        'can_video_view_users',
+        'can_video_manage_users',
+        'can_video_manage_rooms',
+        'can_video_manage_kiosks',
+        'can_video_manage_configuration',
+    ]
+    
+    for field in video_permission_fields:
+        assert field in resp.data, f"Field {field} not found in API response"
+
+
+@pytest.mark.django_db
+def test_team_create_with_video_permissions(token_client, organizer, event):
+    """Test creating a team with video permissions via API."""
+    payload = {
+        'name': 'Video Team',
+        'limit_events': ['dummy'],
+        'can_video_create_stages': True,
+        'can_video_create_channels': True,
+        'can_video_direct_message': True,
+    }
+    
+    resp = token_client.post(
+        '/api/v1/organizers/{}/teams/'.format(organizer.slug),
+        payload,
+        format='json',
+    )
+    assert resp.status_code == 201
+    
+    with scopes_disabled():
+        team = Team.objects.get(pk=resp.data['id'])
+        assert team.can_video_create_stages is True
+        assert team.can_video_create_channels is True
+        assert team.can_video_direct_message is True
+        # Fields not specified should default to False
+        assert team.can_video_manage_announcements is False
+
+
+@pytest.mark.django_db
+def test_team_update_video_permissions(token_client, organizer, event, second_team):
+    """Test updating video permissions via API."""
+    assert not second_team.can_video_create_stages
+    assert not second_team.can_video_manage_rooms
+    
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, second_team.pk),
+        {
+            'can_video_create_stages': True,
+            'can_video_manage_rooms': True,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    
+    second_team.refresh_from_db()
+    assert second_team.can_video_create_stages is True
+    assert second_team.can_video_manage_rooms is True
+
+
+@pytest.mark.django_db
+def test_team_video_permissions_default_false(token_client, organizer, event):
+    """Test that video permissions default to False when creating a team."""
+    payload = {
+        'name': 'Basic Team',
+        'limit_events': ['dummy'],
+    }
+    
+    resp = token_client.post(
+        '/api/v1/organizers/{}/teams/'.format(organizer.slug),
+        payload,
+        format='json',
+    )
+    assert resp.status_code == 201
+    
+    # All video permissions should be False by default
+    assert resp.data['can_video_create_stages'] is False
+    assert resp.data['can_video_create_channels'] is False
+    assert resp.data['can_video_direct_message'] is False
+    assert resp.data['can_video_manage_announcements'] is False
+    assert resp.data['can_video_view_users'] is False
+    assert resp.data['can_video_manage_users'] is False
+    assert resp.data['can_video_manage_rooms'] is False
+    assert resp.data['can_video_manage_kiosks'] is False
+    assert resp.data['can_video_manage_configuration'] is False
+
+
+@pytest.mark.django_db
+def test_team_partial_video_permissions_update(token_client, organizer, event, second_team):
+    """Test updating only some video permissions leaves others unchanged."""
+    # Set initial state
+    second_team.can_video_create_stages = True
+    second_team.can_video_manage_rooms = True
+    second_team.save()
+    
+    # Update only one permission
+    resp = token_client.patch(
+        '/api/v1/organizers/{}/teams/{}/'.format(organizer.slug, second_team.pk),
+        {
+            'can_video_create_channels': True,
+        },
+        format='json',
+    )
+    assert resp.status_code == 200
+    
+    second_team.refresh_from_db()
+    # New permission should be set
+    assert second_team.can_video_create_channels is True
+    # Existing permissions should be unchanged
+    assert second_team.can_video_create_stages is True
+    assert second_team.can_video_manage_rooms is True
+    # Other permissions should still be False
+    assert second_team.can_video_direct_message is False

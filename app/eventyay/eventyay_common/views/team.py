@@ -27,7 +27,7 @@ class UnifiedTeamManagementRedirectMixin:
 
     def dispatch(self, request, *args, **kwargs):
         team_id = kwargs.get('team')
-        query = '?section=teams'
+        query = '?section=permissions'
         if team_id:
             query = f'{query}&team={team_id}'
         target = reverse(
@@ -94,7 +94,7 @@ class TeamMemberView(
                 _('eventyay account invitation'),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': self.request.user,
                     'organizer': self.request.organizer.name,
                     'team': instance.team.name,
                     'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),

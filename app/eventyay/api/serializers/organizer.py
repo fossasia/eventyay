@@ -188,7 +188,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                 _('eventyay account invitation'),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': self.context['request'].user,
                     'organizer': self.context['organizer'].name,
                     'team': instance.team.name,
                     'url': build_absolute_uri('control:auth.invite', kwargs={'token': instance.token}),
