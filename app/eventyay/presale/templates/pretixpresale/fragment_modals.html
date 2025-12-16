@@ -109,10 +109,10 @@
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" target="_blank" data-provider="mediawiki">
-                    {% trans "Login with MediaWiki" %}
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="mediawiki">
+                    {% trans "Login with Mediawiki" %}
                 </a>
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" target="_blank" data-provider="google">
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="google">
                     {% trans "Login with Google" %}
                 </a>
             </div>
