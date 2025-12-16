@@ -230,6 +230,7 @@ async function showUserCard(event, user, placement = 'left-start') {
 		font-weight: 500
 		border-radius: 4px
 		padding: 0 2px
+		margin: 0 2px
 		cursor: pointer
 		&::before
 			content: '@'

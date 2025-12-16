@@ -27,10 +27,10 @@ from eventyay.base.forms.widgets import (
 )
 from eventyay.base.models import (
     InvoiceAddress,
-    ProductAddOn,
     Order,
     OrderFee,
     OrderPosition,
+    ProductAddOn,
     TaxRule,
 )
 from eventyay.base.models.event import SubEvent

@@ -39,7 +39,7 @@ class DeviceCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
         form.instance.organizer = self.request.organizer
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.device.created',
+            'eventyay.device.created',
             user=self.request.user,
             data={
                 k: getattr(self.object, k) if k != 'limit_events' else [e.id for e in getattr(self.object, k).all()]
@@ -120,7 +120,7 @@ class DeviceUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
     def form_valid(self, form):
         if form.has_changed():
             self.object.log_action(
-                'pretix.device.changed',
+                'eventyay.device.changed',
                 user=self.request.user,
                 data={
                     k: getattr(self.object, k) if k != 'limit_events' else [e.id for e in getattr(self.object, k).all()]
@@ -199,7 +199,7 @@ class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
         self.object = self.get_object()
         self.object.revoked = True
         self.object.save()
-        self.object.log_action('pretix.device.revoked', user=self.request.user)
+        self.object.log_action('eventyay.device.revoked', user=self.request.user)
         messages.success(request, _('Access for this device has been revoked.'))
         return redirect(
             reverse(

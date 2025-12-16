@@ -1,4 +1,6 @@
+import logging
 from django import forms
+from django.db.models import Prefetch
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
@@ -12,6 +14,9 @@ from eventyay.orga.forms.export import ExportForm
 from eventyay.base.models import Schedule, TalkSlot
 from eventyay.schedule.utils import guess_schedule_version
 from eventyay.base.models.submission import Submission, SubmissionStates
+
+
+logger = logging.getLogger(__name__)
 
 
 class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
@@ -177,9 +182,13 @@ class ScheduleExportForm(ExportForm):
         queryset = self.event.submissions
         if 'all' not in target:
             queryset = queryset.filter(state__in=target)
+        queryset = queryset.prefetch_related(
+            Prefetch('slots', queryset=TalkSlot.objects.select_related('room', 'schedule'))
+        )
+        
         return (
-            queryset.prefetch_related('tags')
-            .select_related('submission_type', 'track')
+            queryset.prefetch_related('tags', 'speakers')
+            .select_related('submission_type', 'track', 'event')
             .prefetch_related('resources')
             .order_by('code')
         )
@@ -188,10 +197,19 @@ class ScheduleExportForm(ExportForm):
         return question.answers.filter(submission=obj).first()
 
     def _get_speaker_ids_value(self, obj):
-        return list(obj.speakers.all().values_list('code', flat=True))
+        codes = []
+        for code in obj.speakers.all().values_list('code', flat=True):
+            if not code:
+                logger.warning(
+                    "Speaker for submission %s is missing a code.",
+                    getattr(obj, 'id', obj),
+                )
+            else:
+                codes.append(code)
+        return codes
 
     def _get_speaker_names_value(self, obj):
-        return list(obj.speakers.all().values_list('fullname', flat=True))
+        return [name for name in obj.speakers.all().values_list('fullname', flat=True) if name]
 
     def _get_room_value(self, obj):
         slot = obj.slot

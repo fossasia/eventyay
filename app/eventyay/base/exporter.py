@@ -345,10 +345,11 @@ class MultiSheetListExporter(ListExporter):
                 )
 
     def render(self, form_data: dict, output_file=None) -> Tuple[str, str, bytes]:
-        if form_data.get('_format') == 'xlsx':
+        format_value = form_data.get('_format')
+        if format_value == 'xlsx':
             return self._render_xlsx(form_data, output_file=output_file)
-        elif ':' in form_data.get('_format'):
-            sheet, f = form_data.get('_format').split(':')
+        elif format_value and ':' in format_value:
+            sheet, f = format_value.split(':')
             if f == 'default':
                 return self._render_sheet_csv(
                     form_data,

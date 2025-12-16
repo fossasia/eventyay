@@ -54,11 +54,13 @@ class ExportMixin:
             if id and ex.identifier != id:
                 continue
 
-            # Use form parse cycle to generate useful defaults
+            # Try to extract initial values from GET parameters
             test_form = ExporterForm(data=self.request.GET, prefix=ex.identifier)
             test_form.fields = ex.export_form_fields
-            test_form.is_valid()
-            initial = {k: v for k, v in test_form.cleaned_data.items() if ex.identifier + '-' + k in self.request.GET}
+            if test_form.is_valid():
+                initial = {k: v for k, v in test_form.cleaned_data.items() if f'{ex.identifier}-{k}' in self.request.GET}
+            else:
+                initial = {}
 
             ex.form = ExporterForm(
                 data=(self.request.POST if self.request.method == 'POST' else None),
@@ -187,7 +189,7 @@ class EventMetaPropertyCreateView(OrganizerDetailViewMixin, OrganizerPermissionR
         form.instance.organizer = self.request.organizer
         ret = super().form_valid(form)
         form.instance.log_action(
-            'pretix.property.created',
+            'eventyay.property.created',
             user=self.request.user,
             data={k: getattr(self.object, k) for k in form.changed_data},
         )
@@ -223,7 +225,7 @@ class EventMetaPropertyUpdateView(OrganizerDetailViewMixin, OrganizerPermissionR
     def form_valid(self, form):
         if form.has_changed():
             self.object.log_action(
-                'pretix.property.changed',
+                'eventyay.property.changed',
                 user=self.request.user,
                 data={k: getattr(self.object, k) for k in form.changed_data},
             )
@@ -260,7 +262,7 @@ class EventMetaPropertyDeleteView(OrganizerDetailViewMixin, OrganizerPermissionR
     def form_valid(self, form):
         success_url = self.get_success_url()
         self.object = self.get_object()
-        self.object.log_action('pretix.property.deleted', user=self.request.user)
+        self.object.log_action('eventyay.property.deleted', user=self.request.user)
         self.object.delete()
         messages.success(self.request, _('The selected property has been deleted.'))
         return redirect(success_url)

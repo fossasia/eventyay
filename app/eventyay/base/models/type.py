@@ -46,7 +46,7 @@ class SubmissionType(PretalxModel):
         default=False,
     )
 
-    log_prefix = 'pretalx.submission_type'
+    log_prefix = 'eventyay.submission_type'
 
     class Meta:
         ordering = ['default_duration']

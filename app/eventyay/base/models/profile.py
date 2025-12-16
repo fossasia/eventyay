@@ -60,7 +60,7 @@ class SpeakerProfile(PretalxModel):
 
     class urls(EventUrls):
         """URL patterns for public speaker profile views."""
-        public = '{self.event.urls.base}speaker/{self.user.code}/'
+        public = '{self.event.urls.base}speakers/{self.user.code}/'
         social_image = '{public}og-image'
         talks_ical = '{self.urls.public}talks.ics'
 

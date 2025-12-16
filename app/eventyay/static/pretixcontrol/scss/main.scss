@@ -11,6 +11,7 @@
 @import "_orders.scss";
 @import "_dashboard.scss";
 @import "_sidebar.scss";
+@import "mails.scss";
 @import "../../pretixbase/scss/webfont.scss";
 @import "../../fileupload/jquery.fileupload.scss";
 @import "../../leaflet/leaflet.scss";
@@ -38,16 +39,85 @@ nav.navbar {
     left: 0;
     right: 0;
     z-index: 1100;
+    font-weight: 500;
+    
+    &.navbar-inverse {
+        .navbar-top-links a,
+        .btn-link {
+            color: $navbar-link-color;
+            font-weight: 500;
+    
+            i {
+                color: $navbar-link-color;
+            }
+    
+            &:hover,
+            &:focus {
+                color: $navbar-link-hover-color;
+    
+                i {
+                    color: $navbar-link-hover-color;
+                }
+            }
+        }
+    }    
 }
 
 #wrapper {
     padding-top: var(--navbar-height, 50px);
 }
 
-.navbar-brand img {
-    height: 100%;
-    width: auto;
-    display: inline;
+.navbar-header {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+nav.navbar.navbar-inverse #sidebar-toggle,
+.navbar-inverse #sidebar-toggle {
+    color: $navbar-link-color;
+    
+    i.fa-bars {
+        margin-top: 3px;
+        color: $navbar-link-color;
+    }
+    
+    &:hover,
+    &:focus {
+        color: $navbar-link-hover-color;
+        
+        i.fa-bars {
+            color: $navbar-link-hover-color;
+        }
+    }
+}
+
+nav.navbar.navbar-inverse .navbar-brand,
+.navbar-inverse .navbar-brand {
+    padding-top: 0.3125rem;
+    padding-bottom: 0.3125rem;
+    margin-right: 1rem;
+    margin-top: 0;
+    font-size: 20px;
+    line-height: inherit;
+    white-space: nowrap;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    color: $navbar-link-color;
+    
+    img {
+        display: inline-block;
+        vertical-align: middle;
+        height: 30px;
+        width: auto;
+        margin-top: 2px;
+        margin-right: 0.5rem;
+    }
+    
+    &:hover,
+    &:focus {
+        color: $navbar-link-hover-color;
+    }
 }
 
 #side-menu img.fa-img {
@@ -57,6 +127,31 @@ nav.navbar {
 
 nav.navbar .danger, nav.navbar .danger:hover, nav.navbar .danger:active {
     background: $brand-danger !important;
+    font-size: 14px;
+}
+
+nav.navbar.navbar-inverse .header-nav,
+.navbar-inverse .header-nav {
+    font-size: 14px;
+    color: $navbar-link-color;
+    
+    .fa-caret-down {
+        margin-left: 14px;
+        margin-right: 10px;
+    }
+    
+    i {
+        color: $navbar-link-color;
+    }
+    
+    &:hover,
+    &:focus {
+        color: $navbar-link-hover-color;
+        
+        i {
+            color: $navbar-link-hover-color;
+        }
+    }
 }
 
 .navbar-header .navbar-events {
@@ -68,12 +163,29 @@ nav.navbar .danger, nav.navbar .danger:hover, nav.navbar .danger:active {
     margin-bottom: 10px;
 }
 
-#button-shop, #button-sudo {
+nav.navbar.navbar-inverse #button-shop,
+nav.navbar.navbar-inverse #button-sudo,
+.navbar-inverse #button-shop,
+.navbar-inverse #button-sudo {
     padding: 15px;
     min-height: 50px;
     border: none;
-    &:hover, &:active {
+    font-size: 14px;
+    color: $navbar-link-color;
+    
+    i {
+        color: $navbar-link-color;
+    }
+    
+    &:hover,
+    &:focus,
+    &:active {
         text-decoration: none;
+        color: $navbar-link-hover-color;
+        
+        i {
+            color: $navbar-link-hover-color;
+        }
     }
 }
 
@@ -422,11 +534,13 @@ body.loading #wrapper {
         background-image: none;
         border: 1px solid transparent;
         border-radius: 4px;
+        font-weight: normal;
     }
 }
 .mobile-navbar-view-link {
     padding: 6px 10px;
     color: white !important;
+    font-weight: normal;
 }
 
 @media (min-width: $screen-md-min) {
@@ -1000,3 +1114,4 @@ h1 .label {
         box-sizing: border-box;
     }
 }
+

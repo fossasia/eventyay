@@ -39,7 +39,7 @@ class Tag(PretalxModel):
         ),
     )
 
-    log_prefix = 'pretalx.tag'
+    log_prefix = 'eventyay.tag'
 
     class Meta:
         rules_permissions = {

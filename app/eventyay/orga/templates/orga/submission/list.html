@@ -94,7 +94,7 @@
                         <a href="{% querystring sort="-state" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
                     {% if can_change_submission %}
-                        <th>
+                        <th class="text-center">
                             {% translate "Featured" %} <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this session on the list of featured sessions, once it was accepted" %}"></i>
                             <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
                             <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
@@ -149,12 +149,13 @@
 
                         </td>
                         {% if can_change_submission %}
-                            <td class="submission_featured">
-                                <div class="mt-1 form-check" title="{% translate "Show this proposal in the list of featured sessions." %}">
+                            <td class="submission_featured text-center">
+                                <div class="form-check d-inline-block" title="{% translate "Show this proposal in the list of featured sessions." %}">
                                     <input
                                         type="checkbox"
                                         id="featured_{{ submission.code }}"
                                         data-id="{{ submission.code }}"
+                                        data-url="{{ submission.orga_urls.toggle_featured }}"
                                         class="submission_featured"
                                         {% if submission.is_featured %}checked{% endif %}
                                     >

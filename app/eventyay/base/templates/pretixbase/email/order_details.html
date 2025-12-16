@@ -1,5 +1,6 @@
 {% load eventurl %}
 {% load i18n %}
+{% load tz %}
 
 {% if position %}
     <div class="order-info">
@@ -16,7 +17,9 @@
                 {% if event.has_subevents and ev.name|upper != event.name|upper %}{{ ev.name }}<br>{% endif %}
                 {{ ev.get_date_range_display }}
                 {% if event.settings.show_times %}
-                    {{ ev.date_from|date:"TIME_FORMAT" }}
+                    {% with tz=event.settings.timezone %}
+                        {{ ev.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                    {% endwith %}
                 {% endif %}
             </td>
         </tr>
@@ -66,7 +69,9 @@
                     <br>
                     {{ event.get_date_range_display }}
                     {% if event.settings.show_times %}
-                        {{ event.date_from|date:"TIME_FORMAT" }}
+                        {% with tz=event.settings.timezone %}
+                            {{ event.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                        {% endwith %}
                     {% endif %}
                 {% endif %}
             </td>
@@ -105,7 +110,9 @@
                                         {% endif %}
                                         {{ groupkey.2.get_date_range_display }}
                                         {% if event.settings.show_times %}
-                                            {{ groupkey.2.date_from|date:"TIME_FORMAT" }}
+                                            {% with tz=event.settings.timezone %}
+                                                {{ groupkey.2.date_from|timezone:tz|date:"TIME_FORMAT" }} ({{ tz }})
+                                            {% endwith %}
                                         {% endif %}
                                     {% endif %}
                                     {% if groupkey.3 %} {# attendee name #}

@@ -88,6 +88,17 @@ class SpeakerProfileForm(
                 self.fields[field].widget = self.Meta.widgets.get(field)()
             self._update_cfp_texts(field)
 
+        field_names = list(self.fields)
+        if 'fullname' in field_names:
+            field_names.remove('fullname')
+            self.order_fields(['fullname'] + field_names)
+
+        for field_name in ('fullname', 'email'):
+            if field_name in self.fields:
+                self.fields[field_name].required = True
+                if hasattr(self.fields[field_name].widget, 'is_required'):
+                    self.fields[field_name].widget.is_required = True
+
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
             self.fields.pop('avatar_source', None)

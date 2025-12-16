@@ -62,6 +62,7 @@
                     </div>
                 </div>
                 {% bootstrap_field sform.order_email_asked_twice layout="control" %}
+                {% bootstrap_field sform.include_wikimedia_username layout="control" %}
                 {% bootstrap_field sform.order_phone_asked_required layout="control" %}
                 <div class="form-group">
                     <label class="control-label col-md-3">
@@ -101,7 +102,7 @@
                 {% bootstrap_field sform.name_scheme layout="control" %}
                 {% bootstrap_field sform.name_scheme_titles layout="control" %}
                 {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
-                
+
                 <h4>{% translate "Changes to existing orders" %}</h4>
                 {% bootstrap_field sform.allow_modifications layout="control" %}
                 <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
@@ -190,7 +191,7 @@
                 {% bootstrap_field sform.banner_text_bottom layout="control" %}
                 {% bootstrap_field sform.event_info_text layout="control" %}
             </fieldset>
-            
+
 
             <fieldset>
                 <legend>{% trans "Timeline" %}</legend>

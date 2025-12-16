@@ -1,10 +1,12 @@
-from django.urls import re_path as url
+from django.urls import path
+
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 from . import views
 
 urlpatterns = [
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/statistics/',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/statistics/',
         views.IndexView.as_view(),
         name='index',
     ),

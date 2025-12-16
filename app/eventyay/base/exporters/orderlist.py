@@ -34,6 +34,7 @@ from eventyay.base.models import (
     Order,
     OrderPosition,
     Question,
+    User,
 )
 from eventyay.base.models.orders import OrderFee, OrderPayment, OrderRefund
 from eventyay.base.services.quotas import QuotaAvailability
@@ -277,6 +278,12 @@ class OrderListExporter(MultiSheetListExporter):
             .annotate(k=Count('id'))
             .values('k')
         )
+
+        # Always load wikimedia_username (lightweight data)
+        wikimedia_query = User.objects.filter(
+            email=OuterRef('email')
+        ).values('wikimedia_username')[:1]
+
         qs = (
             Order.objects.filter(event__in=self.events)
             .annotate(
@@ -284,15 +291,22 @@ class OrderListExporter(MultiSheetListExporter):
                 payment_providers=Subquery(p_providers, output_field=CharField()),
                 invoice_numbers=Subquery(i_numbers, output_field=CharField()),
                 pcnt=Subquery(s, output_field=IntegerField()),
+                wikimedia_username=Subquery(wikimedia_query, output_field=CharField()),
             )
             .select_related('invoice_address')
         )
 
         qs = self._date_filter(qs, form_data, rel='')
 
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(status=Order.STATUS_PAID)
         tax_rates = self._get_all_tax_rates(qs)
+
+        # Check if we need to include wikimedia_username in the export
+        should_include_wikimedia = any(
+            self.event_object_cache[event_id].settings.get('include_wikimedia_username', False)
+            for event_id in self.event_object_cache.keys()
+        )
 
         headers = [
             _('Event slug'),
@@ -300,12 +314,20 @@ class OrderListExporter(MultiSheetListExporter):
             _('Order total'),
             _('Status'),
             _('Email'),
+        ]
+
+        # Add wikimedia_username header if setting is enabled
+        if should_include_wikimedia:
+            headers.append(_('Wikimedia username'))
+
+        headers += [
             _('Phone number'),
             _('Order date'),
             _('Order time'),
             _('Company'),
             _('Name'),
         ]
+
         name_scheme = PERSON_NAME_SCHEMES[self.event.settings.name_scheme] if not self.is_multievent else None
         if name_scheme and len(name_scheme['fields']) > 1:
             for k, label, w in name_scheme['fields']:
@@ -388,17 +410,25 @@ class OrderListExporter(MultiSheetListExporter):
         yield self.ProgressSetTotal(total=qs.count())
         for order in qs.order_by('datetime').iterator():
             tz = pytz.timezone(self.event_object_cache[order.event_id].settings.timezone)
-
             row = [
                 self.event_object_cache[order.event_id].slug,
                 order.code,
                 order.total,
                 order.get_status_display(),
                 order.email,
+            ]
+
+            # Add wikimedia_username if setting is enabled (insert before phone number)
+            if should_include_wikimedia:
+                wikimedia_username = getattr(order, 'wikimedia_username', '') or ''
+                row.append(wikimedia_username)
+
+            row += [
                 str(order.phone) if order.phone else '',
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
             ]
+
             try:
                 row += [
                     order.invoice_address.company,
@@ -424,7 +454,7 @@ class OrderListExporter(MultiSheetListExporter):
                 )
 
             row += [
-                order.payment_date.astimezone(tz).strftime('%Y-%m-%d') if order.payment_date else '',
+                order.payment_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z') if order.payment_date else '',
                 full_fee_sum_cache.get(order.id) or Decimal('0.00'),
                 order.locale,
             ]
@@ -499,7 +529,7 @@ class OrderListExporter(MultiSheetListExporter):
             )
             .select_related('order', 'order__invoice_address', 'tax_rule')
         )
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(order__status=Order.STATUS_PAID)
 
         qs = self._date_filter(qs, form_data, rel='order__')
@@ -548,7 +578,7 @@ class OrderListExporter(MultiSheetListExporter):
                 order.email,
                 str(order.phone) if order.phone else '',
                 order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
                 op.get_fee_type_display(),
                 op.description,
                 op.value,
@@ -615,14 +645,14 @@ class OrderListExporter(MultiSheetListExporter):
             .select_related(
                 'order',
                 'order__invoice_address',
-                'item',
+                'product',
                 'variation',
                 'voucher',
                 'tax_rule',
             )
             .prefetch_related('answers', 'answers__question', 'answers__options')
         )
-        if form_data['paid_only']:
+        if form_data.get('paid_only', True):
             qs = qs.filter(order__status=Order.STATUS_PAID)
 
         qs = self._date_filter(qs, form_data, rel='order__')
@@ -679,7 +709,7 @@ class OrderListExporter(MultiSheetListExporter):
         for q in questions:
             if q.type == Question.TYPE_CHOICE_MULTIPLE:
                 options[q.pk] = []
-                if form_data['group_multiple_choice']:
+                if form_data.get('group_multiple_choice', False):
                     for o in q.options.all():
                         options[q.pk].append(o)
                     headers.append(str(q.question))
@@ -728,21 +758,21 @@ class OrderListExporter(MultiSheetListExporter):
                     order.email,
                     str(order.phone) if order.phone else '',
                     order.datetime.astimezone(tz).strftime('%Y-%m-%d'),
-                    order.datetime.astimezone(tz).strftime('%H:%M:%S'),
+                    order.datetime.astimezone(tz).strftime('%H:%M:%S %Z'),
                 ]
                 if has_subevents:
                     if op.subevent:
                         row.append(op.subevent.name)
                         row.append(
                             op.subevent.date_from.astimezone(self.event_object_cache[order.event_id].timezone).strftime(
-                                '%Y-%m-%d %H:%M:%S'
+                                '%Y-%m-%d %H:%M:%S %Z'
                             )
                         )
                         if op.subevent.date_to:
                             row.append(
                                 op.subevent.date_to.astimezone(
                                     self.event_object_cache[order.event_id].timezone
-                                ).strftime('%Y-%m-%d %H:%M:%S')
+                                ).strftime('%Y-%m-%d %H:%M:%S %Z')
                             )
                         else:
                             row.append('')
@@ -751,7 +781,7 @@ class OrderListExporter(MultiSheetListExporter):
                         row.append('')
                         row.append('')
                 row += [
-                    str(op.item),
+                    str(op.product),
                     str(op.variation) if op.variation else '',
                     op.price,
                     op.tax_rate,
@@ -798,7 +828,7 @@ class OrderListExporter(MultiSheetListExporter):
                         acache[a.question_id] = str(a)
                 for q in questions:
                     if q.type == Question.TYPE_CHOICE_MULTIPLE:
-                        if form_data['group_multiple_choice']:
+                        if form_data.get('group_multiple_choice', False):
                             row.append(
                                 ', '.join(str(o.answer) for o in options[q.pk] if o.pk in acache.get(q.pk, set()))
                             )
@@ -920,16 +950,16 @@ class PaymentListExporter(ListExporter):
         for obj in objs:
             tz = pytz.timezone(obj.order.event.settings.timezone)
             if isinstance(obj, OrderPayment) and obj.payment_date:
-                d2 = obj.payment_date.astimezone(tz).date().strftime('%Y-%m-%d')
+                d2 = obj.payment_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
             elif isinstance(obj, OrderRefund) and obj.execution_date:
-                d2 = obj.execution_date.astimezone(tz).date().strftime('%Y-%m-%d')
+                d2 = obj.execution_date.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
             else:
                 d2 = ''
             row = [
                 obj.order.event.slug,
                 obj.order.code,
                 obj.full_id,
-                obj.created.astimezone(tz).date().strftime('%Y-%m-%d'),
+                obj.created.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
                 d2,
                 obj.get_state_display(),
                 obj.state,
@@ -990,9 +1020,9 @@ class QuotaListExporter(ListExporter):
             if has_subevents:
                 if quota.subevent:
                     row.append(quota.subevent.name)
-                    row.append(quota.subevent.date_from.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S'))
+                    row.append(quota.subevent.date_from.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S %Z'))
                     if quota.subevent.date_to:
-                        row.append(quota.subevent.date_to.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S'))
+                        row.append(quota.subevent.date_to.astimezone(self.event.timezone).strftime('%Y-%m-%d %H:%M:%S %Z'))
                     else:
                         row.append('')
                 else:
@@ -1044,7 +1074,7 @@ class GiftcardRedemptionListExporter(ListExporter):
                 obj.order.event.slug,
                 obj.order.code,
                 obj.full_id,
-                obj.created.astimezone(tz).date().strftime('%Y-%m-%d'),
+                obj.created.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
                 gc.secret,
                 obj.amount * (-1 if isinstance(obj, OrderRefund) else 1),
                 gc.issuer,
@@ -1169,8 +1199,8 @@ def generate_GiftCardListExporter(organizer):  # hackhack
                 row = [
                     obj.secret,
                     _('Yes') if obj.testmode else _('No'),
-                    obj.issuance.astimezone(tz).date().strftime('%Y-%m-%d'),
-                    obj.expires.astimezone(tz).date().strftime('%Y-%m-%d') if obj.expires else '',
+                    obj.issuance.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z'),
+                    obj.expires.astimezone(tz).strftime('%Y-%m-%d %H:%M:%S %Z') if obj.expires else '',
                     obj.conditions or '',
                     obj.currency,
                     obj.cached_value,

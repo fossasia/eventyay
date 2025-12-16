@@ -12,15 +12,10 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.utils.text import format_lazy
-from django.utils.translation import (
-    gettext_lazy as _,
-)
-from django.utils.translation import (
-    gettext_noop,
-    pgettext,
-    pgettext_lazy,
-)
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -195,6 +190,15 @@ DEFAULT_SETTINGS = {
         'form_kwargs': dict(
             label=_('Ask for the order email address twice'),
             help_text=_('Require attendees to enter their primary email address twice to help prevent errors.'),
+        ),
+    },
+    'include_wikimedia_username': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Add the Wikimedia ID for users authenticated via Wikimedia'),
         ),
     },
     'order_phone_asked': {
@@ -849,7 +853,29 @@ DEFAULT_SETTINGS = {
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=_('Available languages'),
+            label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
+            ),
+        ),
+    },
+    'content_locales': {
+        'default': json.dumps([settings.LANGUAGE_CODE]),
+        'type': list,
+        'serializer_class': ListMultipleChoiceField,
+        'serializer_kwargs': dict(
+            choices=settings.LANGUAGES,
+            required=True,
+        ),
+        'form_class': forms.MultipleChoiceField,
+        'form_kwargs': dict(
+            choices=settings.LANGUAGES,
+            widget=MultipleLanguagesWidget,
+            required=True,
+            label=_('Content languages'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
@@ -2204,7 +2230,7 @@ Your {event} team"""
         'type': LazyI18nString,
         'serializer_class': I18nField,
         'form_class': I18nFormField,
-        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nTextarea),
+        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
     },
     'event_info_text': {
         'default': '',

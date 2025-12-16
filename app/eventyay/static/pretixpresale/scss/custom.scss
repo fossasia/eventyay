@@ -17,6 +17,45 @@
     height: 220px;
     align-items: flex-end;
     display: flex;
+    margin-top: -3.8rem;
+}
+
+.video-link {
+    margin-left: auto;
+}
+
+#header-nav-bar {
+    margin-top: 10px;
+    margin-bottom: 3rem;
+    overflow: auto;
+    
+    div {
+        font-size: 1.65rem;
+        display: flex;
+        gap: 2rem;
+    }
+    
+    a {
+        cursor: pointer;
+        position: relative;
+        text-decoration: none;
+        padding-bottom: 4px;
+        border-bottom: 2px solid transparent;
+    }
+
+    a.underline::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: -10px;
+        width: calc(100% + 20px);
+        height: 2px;
+        background-color: currentColor;
+    }
+
+    a:not(.underline):hover {
+        border-bottom: 2px dotted currentColor;
+    }
 }
 
 #schedule-nav {

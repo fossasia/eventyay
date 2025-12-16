@@ -37,14 +37,12 @@ header {
 
   #event-logo {
     max-height: 140px;
+    border-radius: 10px;
   }
 
   .header-wrapper {
     width: 100%;
     max-width: calc(100vw - 8px);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
     word-break: keep-all;
     flex-wrap: nowrap;
   }
@@ -76,6 +74,8 @@ header {
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
+    align-items: flex-end;
+    font-size: 1rem;
 
     /* Inline locale links */
     .locales-inline {
@@ -137,6 +137,15 @@ header {
   }
 }
 
+#join-event-link {
+  margin-left: auto;
+}
+
+.public-event-header {
+  display: flex;
+  margin-bottom: 14px;
+}
+
 #main-card {
   min-height: 300px;
   box-shadow: 0 5px 10px rgb(0 0 0 / 0.2);
@@ -180,6 +189,7 @@ footer {
   margin-right: auto;
   margin-left: auto;
   max-width: 1140px;
+  margin-top: 3.8rem !important;
 }
 
 .url-links {
@@ -222,12 +232,14 @@ footer {
 @media (max-width: 992px) {
   #main-container {
     max-width: 960px;
+    margin-top: 3.8rem !important;
   }
 }
 
 @media (max-width: 768px) {
   #main-container {
     max-width: 720px;
+    margin-top: 3.8rem !important;
     header .header-wrapper {
       flex-direction: column-reverse;
       align-items: flex-start;
@@ -240,6 +252,7 @@ footer {
     padding: 0;
     padding-top: 20px;
     width: 100%;
+    margin-top: 3.8rem !important;
 
     main {
       width: 100%;
@@ -250,7 +263,14 @@ footer {
       padding: 0;
       #event-logo {
         max-height: 120px;
+        border-radius: 10px;
       }
+    }
+
+    .header-wrapper {
+      overflow: auto;
+      background: var(--color-bg);
+      padding-bottom: 6rem;
     }
 
     .user-row {

@@ -107,7 +107,7 @@ class TwoFactorAuthEnableView(TwoFactorAuthPageMixin, TemplateView):
     def post(self, request: HttpRequest, *args, **kwargs):
         request.user.require_2fa = True
         request.user.save()
-        request.user.log_action('pretix.user.settings.2fa.enabled', user=request.user)
+        request.user.log_action('eventyay.user.settings.2fa.enabled', user=request.user)
         messages.success(request, _('Two-factor authentication is now enabled for your account.'))
         request.user.send_security_notice([_('Two-factor authentication has been enabled.')])
         request.user.update_session_token()
@@ -121,7 +121,7 @@ class TwoFactorAuthDisableView(TwoFactorAuthPageMixin, TemplateView):
     def post(self, request: HttpRequest, *args, **kwargs):
         request.user.require_2fa = False
         request.user.save()
-        request.user.log_action('pretix.user.settings.2fa.disabled', user=request.user)
+        request.user.log_action('eventyay.user.settings.2fa.disabled', user=request.user)
         messages.success(request, _('Two-factor authentication is now disabled for your account.'))
         request.user.send_security_notice([_('Two-factor authentication has been disabled.')])
         request.user.update_session_token()
@@ -179,7 +179,7 @@ class TwoFactorAuthDeviceConfirmTOTPView(TwoFactorAuthPageMixin, TemplateView):
             self.device.confirmed = True
             self.device.save()
             user.log_action(
-                'pretix.user.settings.2fa.device.added',
+                'eventyay.user.settings.2fa.device.added',
                 user=user,
                 data={'id': self.device.pk, 'name': self.device.name, 'devicetype': 'totp'},
             )
@@ -187,7 +187,7 @@ class TwoFactorAuthDeviceConfirmTOTPView(TwoFactorAuthPageMixin, TemplateView):
             if activate == 'on' and not user.require_2fa:
                 user.require_2fa = True
                 user.save()
-                user.log_action('pretix.user.settings.2fa.enabled', user=user)
+                user.log_action('eventyay.user.settings.2fa.enabled', user=user)
                 notices.append(_('Two-factor authentication has been enabled.'))
             user.send_security_notice(notices)
             user.update_session_token()
@@ -287,7 +287,7 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
             device.confirmed = True
             device.save()
             request.user.log_action(
-                'pretix.user.settings.2fa.device.added',
+                'eventyay.user.settings.2fa.device.added',
                 user=self.request.user,
                 data={
                     'id': device.pk,
@@ -300,7 +300,7 @@ class TwoFactorAuthDeviceConfirmWebAuthnView(TwoFactorAuthPageMixin, TemplateVie
             if activate == 'on' and not request.user.require_2fa:
                 request.user.require_2fa = True
                 request.user.save()
-                request.user.log_action('pretix.user.settings.2fa.enabled', user=request.user)
+                request.user.log_action('eventyay.user.settings.2fa.enabled', user=request.user)
                 notices.append(_('Two-factor authentication has been enabled.'))
             request.user.send_security_notice(notices)
             request.user.update_session_token()
@@ -345,7 +345,7 @@ class TwoFactorAuthDeviceDeleteView(TwoFactorAuthPageMixin, TemplateView):
 
     def post(self, request: HttpRequest, *args, **kwargs):
         request.user.log_action(
-            'pretix.user.settings.2fa.device.deleted',
+            'eventyay.user.settings.2fa.device.deleted',
             user=request.user,
             data={'id': self.device.pk, 'name': self.device.name, 'devicetype': self.kwargs['devicetype']},
         )
@@ -355,7 +355,7 @@ class TwoFactorAuthDeviceDeleteView(TwoFactorAuthPageMixin, TemplateView):
         if not any(dt.objects.filter(user=request.user, confirmed=True) for dt in REAL_DEVICE_TYPES):
             request.user.require_2fa = False
             request.user.save()
-            request.user.log_action('pretix.user.settings.2fa.disabled', user=request.user)
+            request.user.log_action('eventyay.user.settings.2fa.disabled', user=request.user)
             msgs.append(_('Two-factor authentication has been disabled.'))
 
         request.user.send_security_notice(msgs)

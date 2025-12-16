@@ -54,16 +54,13 @@ class UserSettingsForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['fullname', 'wikimedia_username', 'locale', 'timezone', 'email']
-        labels = {
-            'wikimedia_username': 'Nick name',
-        }
         widgets = {'locale': SingleLanguageWidget}
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
         super().__init__(*args, **kwargs)
         self.fields['email'].required = True
-        self.fields['wikimedia_username'].widget.attrs['readonly'] = True
+        self.fields['wikimedia_username'].disabled = True
         if self.user.auth_backend != 'native':
             del self.fields['old_pw']
             del self.fields['new_pw']

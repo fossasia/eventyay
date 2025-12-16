@@ -18,12 +18,13 @@ const handleFeaturedChange = (element) => {
     const statusWrapper = element.parentElement.parentElement
     setStatus("working")
 
-    const url = window.location.pathname + id + "/toggle_featured"
+    // Use the URL from the data-url attribute if available, otherwise construct it
+    const url = element.dataset.url || (window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + id + "/toggle_featured")
     const options = {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("pretalx_csrftoken"),
+            "X-CSRFToken": getCookie("eventyay_csrftoken"),
         },
         credentials: "include",
     }
