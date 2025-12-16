@@ -182,6 +182,27 @@ DEFAULT_SETTINGS = {
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_addresses_asked'}),
         ),
     },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('E-mail'),
+            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+        ),
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require email address per order'),
+            help_text=_('Require attendees to fill in an email address for the order.'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
+        ),
+    },
     'order_email_asked_twice': {
         'default': 'False',
         'type': bool,
