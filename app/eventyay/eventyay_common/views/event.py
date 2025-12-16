@@ -490,11 +490,7 @@ class VideoAccessAuthenticator(View):
 
     def _has_staff_video_access(self) -> bool:
         request = self.request
-        return (
-            request.user.has_active_staff_session(request.session.session_key)
-            or request.user.is_superuser
-            or request.user.is_staff
-        )
+        return request.user.has_active_staff_session(request.session.session_key)
 
     def _collect_user_video_traits(self):
         permission_set = self.request.user.get_event_permission_set(self.request.organizer, self.request.event)

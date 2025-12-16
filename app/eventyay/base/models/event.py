@@ -1555,10 +1555,13 @@ class Event(
                 role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 result[self].update(role_perms)
         
-        # If user has organizer/admin role but doesn't have direct messaging trait, remove EVENT_CHAT_DIRECT
-        # This ensures organizers only get direct messaging if explicitly granted via team permissions
-        # Attendees (without organizer roles) always keep EVENT_CHAT_DIRECT
-        if has_organizer_role:
+        # If user has organizer/admin role but doesn't have direct messaging trait, remove EVENT_CHAT_DIRECT.
+        # This ensures organizers only get direct messaging if explicitly granted via team permissions.
+        # Attendees (without organizer roles) always keep EVENT_CHAT_DIRECT.
+        # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
+        # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
+        admin_mode_active = "admin" in (user.traits or [])
+        if has_organizer_role and not admin_mode_active:
             direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
             if direct_messaging_def:
                 direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
