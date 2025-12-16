@@ -1,5 +1,3 @@
-# Generated manually on 2025-12-16
-
 from django.db import migrations
 
 
@@ -10,8 +8,8 @@ def set_existing_events_login_not_required(apps, schema_editor):
     """
     Event = apps.get_model('base', 'Event')
     
-    # Update all existing events to have login NOT required (to preserve current behavior)
-    for event in Event.objects.all():
+    # Use iterator() to stream results for better performance with large datasets
+    for event in Event.objects.iterator():
         event.settings.set('require_registered_account_for_tickets', False)
 
 

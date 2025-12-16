@@ -82,12 +82,12 @@
 
                 <div class="form-group">
                     <label for="checkout-email">{% trans "Email" %}</label>
-                    <input type="email" id="checkout-email" name="email" class="form-control" required placeholder="{% trans 'Enter your email' %}">
+                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% trans 'Enter your email' %}">
                 </div>
 
                 <div class="form-group">
                     <label for="checkout-password">{% trans "Password" %}</label>
-                    <input type="password" id="checkout-password" name="password" class="form-control" required placeholder="{% trans 'Enter your password' %}">
+                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% trans 'Enter your password' %}">
                 </div>
 
                 <div class="form-group">
@@ -228,8 +228,10 @@
 <script>
 (function() {
     var modal = document.getElementById('checkout-login-modal');
+    if (!modal) return; // Guard against missing modal
+    
     var loginBtn = document.getElementById('checkout-login-btn');
-    var closeBtn = modal ? modal.querySelector('.checkout-login-close') : null;
+    var closeBtn = modal.querySelector('.checkout-login-close');
     var loginForm = document.getElementById('checkout-login-form');
     var errorDiv = document.getElementById('checkout-login-error');
     var nextUrlInput = document.getElementById('checkout-next-url');
@@ -283,6 +285,17 @@
         });
     }
 
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            modal.style.display = 'none';
+            if (activeCheckLogin) {
+                clearInterval(activeCheckLogin);
+                activeCheckLogin = null;
+            }
+        }
+    });
+
     // AJAX form submission
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
@@ -324,16 +337,18 @@
     }
 
     // Handle SSO popup login
-    var ssoLinks = modal ? modal.querySelectorAll('.checkout-sso-btn') : [];
+    var ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
     var activeCheckLogin = null;
+    var POPUP_WIDTH = 600;
+    var POPUP_HEIGHT = 700;
+    var POPUP_CHECK_INTERVAL = 500;
+    
     ssoLinks.forEach(function(link) {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            var width = 600;
-            var height = 700;
-            var left = (window.innerWidth - width) / 2;
-            var top = (window.innerHeight - height) / 2;
-            var popup = window.open(this.href, 'sso_login', 'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top);
+            var left = (window.innerWidth - POPUP_WIDTH) / 2;
+            var top = (window.innerHeight - POPUP_HEIGHT) / 2;
+            var popup = window.open(this.href, 'sso_login', 'width=' + POPUP_WIDTH + ',height=' + POPUP_HEIGHT + ',left=' + left + ',top=' + top);
 
             if (!popup) {
                 alert('{% trans "Please allow popups for this site to use SSO login." %}');
@@ -353,7 +368,7 @@
                 } catch(e) {
                     // Ignore expected cross-origin access errors
                 }
-            }, 500);
+            }, POPUP_CHECK_INTERVAL);
         });
     });
 
