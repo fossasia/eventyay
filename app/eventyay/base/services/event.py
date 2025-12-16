@@ -174,7 +174,12 @@ def get_room_config(room, permissions):
         "force_join": room.force_join,
         "modules": [],
         "schedule_data": room.schedule_data or None,
+        # Frontend expects these fields for visibleRooms filtering
+        "setup_complete": True,  # All rooms with config are complete
+        "hidden": False,
+        "sidebar_hidden": False,
     }
+
 
     if hasattr(room, "current_roomviews"):
         # set actual viewer count instead of approximate text
