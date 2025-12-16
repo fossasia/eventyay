@@ -82,7 +82,7 @@
                                 </a>
                             {% else %}
                                 <button class="btn btn-block btn-primary btn-lg" type="button" id="checkout-login-btn" data-checkout-url="{% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}">
-                                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Login to Checkout" %}
+                                    {% trans "Checkout" %}
                                 </button>
                             {% endif %}
                         </div>
