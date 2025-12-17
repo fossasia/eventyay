@@ -225,43 +225,47 @@
 }
 </style>
 
-<script>
-(function() {
-    var modal = document.getElementById('checkout-login-modal');
-    if (!modal) return; // Guard against missing modal
-    
-    var loginBtn = document.getElementById('checkout-login-btn');
-    var closeBtn = modal.querySelector('.checkout-login-close');
-    var loginForm = document.getElementById('checkout-login-form');
-    var errorDiv = document.getElementById('checkout-login-error');
-    var nextUrlInput = document.getElementById('checkout-next-url');
-    var checkoutUrl = '';
+<script type="module">
+const modal = document.getElementById('checkout-login-modal');
+if (modal) {
+    const loginBtn = document.getElementById('checkout-login-btn');
+    const closeBtn = modal.querySelector('.checkout-login-close');
+    const loginForm = document.getElementById('checkout-login-form');
+    const errorDiv = document.getElementById('checkout-login-error');
+    const nextUrlInput = document.getElementById('checkout-next-url');
+    let checkoutUrl = '';
+
+    // Constants for SSO popup
+    const POPUP_WIDTH = 600;
+    const POPUP_HEIGHT = 700;
+    const POPUP_CHECK_INTERVAL = 500;
+    let activeCheckLogin = null;
 
     // Open modal
     if (loginBtn) {
-        loginBtn.addEventListener('click', function(e) {
+        loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            checkoutUrl = this.getAttribute('data-checkout-url') || '';
+            checkoutUrl = loginBtn.getAttribute('data-checkout-url') || '';
             if (nextUrlInput) nextUrlInput.value = checkoutUrl;
 
             // Update SSO links with next URL
-            var ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
-            ssoLinks.forEach(function(link) {
-                var baseUrl = link.href.split('?')[0];
-                var backend = link.getAttribute('data-provider');
-                link.href = baseUrl + '?backend=' + backend + '&next=' + encodeURIComponent(checkoutUrl);
+            const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
+            ssoLinks.forEach((link) => {
+                const baseUrl = link.href.split('?')[0];
+                const backend = link.getAttribute('data-provider');
+                link.href = `${baseUrl}?backend=${backend}&next=${encodeURIComponent(checkoutUrl)}`;
             });
 
             // Update register link
-            var registerLink = modal.querySelector('.checkout-login-footer a');
+            const registerLink = modal.querySelector('.checkout-login-footer a');
             if (registerLink) {
                 try {
-                    var url = new URL(registerLink.href, window.location.origin);
+                    const url = new URL(registerLink.href, window.location.origin);
                     url.searchParams.set('next', checkoutUrl);
                     registerLink.href = url.toString();
                 } catch (e) {
                     // Fallback for browsers that do not support URL
-                    registerLink.href = registerLink.href.split('?')[0] + '?next=' + encodeURIComponent(checkoutUrl);
+                    registerLink.href = `${registerLink.href.split('?')[0]}?next=${encodeURIComponent(checkoutUrl)}`;
                 }
             }
 
@@ -271,22 +275,20 @@
 
     // Close modal
     if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
+        closeBtn.addEventListener('click', () => {
             modal.style.display = 'none';
         });
     }
 
     // Close on overlay click
-    if (modal) {
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 
     // Close on Escape key
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.style.display === 'flex') {
             modal.style.display = 'none';
             if (activeCheckLogin) {
@@ -298,57 +300,52 @@
 
     // AJAX form submission
     if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            var submitBtn = document.getElementById('checkout-login-submit');
-            var originalText = submitBtn.innerHTML;
+            const submitBtn = document.getElementById('checkout-login-submit');
+            const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {% trans "Logging in..." %}';
 
             if (errorDiv) errorDiv.style.display = 'none';
 
-            var formData = new FormData(loginForm);
+            const formData = new FormData(loginForm);
 
-            fetch(loginForm.action, {
-                method: 'POST',
-                body: formData,
-                credentials: 'same-origin',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(function(response) {
+            try {
+                const response = await fetch(loginForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
                 if (!response.ok) {
                     throw new Error('{% trans "Invalid email or password. Please try again." %}');
                 }
                 // If we get here, login was successful, redirect to checkout
                 window.location.href = checkoutUrl;
-            })
-            .catch(function(error) {
+            } catch (error) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 if (errorDiv) {
                     errorDiv.textContent = error.message || '{% trans "Login failed. Please try again." %}';
                     errorDiv.style.display = 'block';
                 }
-            });
+            }
         });
     }
 
     // Handle SSO popup login
-    var ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
-    var activeCheckLogin = null;
-    var POPUP_WIDTH = 600;
-    var POPUP_HEIGHT = 700;
-    var POPUP_CHECK_INTERVAL = 500;
-    
-    ssoLinks.forEach(function(link) {
-        link.addEventListener('click', function(e) {
+    const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
+    ssoLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
             e.preventDefault();
-            var left = (window.innerWidth - POPUP_WIDTH) / 2;
-            var top = (window.innerHeight - POPUP_HEIGHT) / 2;
-            var popup = window.open(this.href, 'sso_login', 'width=' + POPUP_WIDTH + ',height=' + POPUP_HEIGHT + ',left=' + left + ',top=' + top);
+            const left = (window.innerWidth - POPUP_WIDTH) / 2;
+            const top = (window.innerHeight - POPUP_HEIGHT) / 2;
+            const popup = window.open(link.href, 'sso_login', `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`);
 
             if (!popup) {
                 alert('{% trans "Please allow popups for this site to use SSO login." %}');
@@ -357,7 +354,7 @@
 
             // Check if login was successful
             if (activeCheckLogin) clearInterval(activeCheckLogin);
-            activeCheckLogin = setInterval(function() {
+            activeCheckLogin = setInterval(() => {
                 try {
                     if (popup.closed) {
                         clearInterval(activeCheckLogin);
@@ -374,12 +371,12 @@
 
     // Clean up interval when modal closes
     if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
+        closeBtn.addEventListener('click', () => {
             if (activeCheckLogin) {
                 clearInterval(activeCheckLogin);
                 activeCheckLogin = null;
             }
         });
     }
-})();
+}
 </script>
