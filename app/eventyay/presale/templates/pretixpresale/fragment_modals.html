@@ -109,10 +109,10 @@
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="mediawiki">
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
                     {% trans "Login with MediaWiki" %}
                 </a>
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" target="_blank" rel="noopener noreferrer" data-provider="google">
+                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
                     {% trans "Login with Google" %}
                 </a>
             </div>
@@ -131,6 +131,7 @@
     left: 0;
     width: 100%;
     height: 100%;
+    /* Use semi-transparent black for overlay, respects system themes */
     background: rgba(0, 0, 0, 0.6);
     z-index: 10000;
     display: flex;
@@ -240,7 +241,8 @@ if (modal) {
     const POPUP_HEIGHT = 700;
     const POPUP_CHECK_INTERVAL = 500;
     let activeCheckLogin = null;
-    
+
+    // URL parameter name for redirect after login/register
     const REDIRECT_PARAM = 'next';
 
     // Open modal
@@ -274,28 +276,32 @@ if (modal) {
         });
     }
 
-    // Close modal
+    // Centralized function to close modal and cleanup
+    const closeModal = () => {
+        modal.style.display = 'none';
+        // Clean up SSO popup interval if active
+        if (activeCheckLogin) {
+            clearInterval(activeCheckLogin);
+            activeCheckLogin = null;
+        }
+    };
+
+    // Close modal on close button click
     if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modal.style.display = 'none';
-        });
+        closeBtn.addEventListener('click', closeModal);
     }
 
     // Close on overlay click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) {
-            modal.style.display = 'none';
+            closeModal();
         }
     });
 
-    // Close on Escape key
+    // Close on Escape key - check if modal is visible using modal.style.display
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && modal.style.display === 'flex') {
-            modal.style.display = 'none';
-            if (activeCheckLogin) {
-                clearInterval(activeCheckLogin);
-                activeCheckLogin = null;
-            }
+            closeModal();
         }
     });
 
@@ -323,11 +329,14 @@ if (modal) {
                     }
                 });
 
-                if (!response.ok) {
+                // Check for successful response (200-299) or redirect (302)
+                // Login endpoint returns 302 on success, not 200
+                if (response.ok || response.status === 302) {
+                    // Login successful, redirect to checkout
+                    window.location.href = checkoutUrl;
+                } else {
                     throw new Error('{% trans "Invalid email or password. Please try again." %}');
                 }
-                // If we get here, login was successful, redirect to checkout
-                window.location.href = checkoutUrl;
             } catch (error) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
@@ -349,7 +358,11 @@ if (modal) {
             const popup = window.open(link.href, 'sso_login', `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`);
 
             if (!popup) {
-                alert('{% trans "Please allow popups for this site to use SSO login." %}');
+                // Show user-friendly error in the modal instead of alert
+                if (errorDiv) {
+                    errorDiv.textContent = '{% trans "Please allow popups for this site to use SSO login." %}';
+                    errorDiv.style.display = 'block';
+                }
                 return;
             }
 
