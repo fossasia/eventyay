@@ -294,6 +294,7 @@ class EventCreateView(SafeSessionWizardView):
         # The user automatically creates a world when selecting the add video option in the create ticket form.
         event_data = dict(
             id=basics_data.get('slug'),
+            organizer_slug=event.organizer.slug,
             title=basics_data.get('name').data,
             timezone=basics_data.get('timezone'),
             locale=basics_data.get('locale'),
@@ -427,6 +428,7 @@ class EventUpdate(
             is_video_creation=True,
             event_data={
                 'id': self.request.event.slug,
+                'organizer_slug': self.request.event.organizer.slug,
                 'title': self.request.event.name.data,
                 'timezone': self.request.event.settings.timezone,
                 'locale': self.request.event.settings.locale,

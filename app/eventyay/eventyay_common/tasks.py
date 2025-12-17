@@ -80,6 +80,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
     :param is_video_creation: A boolean indicating whether the user has chosen to add a video.
     :param event_data: A dictionary containing the following event details:
         - id (str): The unique identifier for the event.
+        - organizer_slug (str): The slug of the event organizer.
         - title (str): The title of the event.
         - timezone (str): The timezone in which the event takes place.
         - locale (str): The locale for the event.
@@ -91,10 +92,11 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
     - The user must choose to create a video.
     """
 
-    def _create_world(payload: dict, headers: dict) -> Optional[dict]:
+    def _create_world(payload: dict, headers: dict, organizer_slug: str, event_slug: str) -> Optional[dict]:
         try:
+            video_url = f"{settings.SITE_URL}/{organizer_slug}/{event_slug}/video/api/v1/create-world/"
             response = requests.post(
-                urljoin(settings.VIDEO_SERVER_HOSTNAME, 'api/v1/create-world/'),
+                video_url,
                 json=payload,
                 headers=headers,
             )
@@ -120,6 +122,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         return None
 
     event_slug = event_data.get('id', '')
+    organizer_slug = event_data.get('organizer_slug', '')
     payload = {
         'id': event_slug,
         'title': event_data.get('title', ''),
@@ -134,6 +137,8 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         return _create_world(
             payload=payload,
             headers={'Authorization': 'Bearer ' + event_data.get('token', '')},
+            organizer_slug=organizer_slug,
+            event_slug=event_slug,
         )
     except requests.RequestException as e:
         try:
