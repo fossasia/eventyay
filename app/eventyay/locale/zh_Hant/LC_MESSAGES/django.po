@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-15 07:00+0000\n"
+"PO-Revision-Date: 2025-12-17 10:00+0000\n"
 "Last-Translator: Supaplex <bejokeup@gmail.com>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.15.1-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -234,54 +234,54 @@ msgstr ""
 
 #: eventyay/api/webhooks.py:179 eventyay/base/notifications.py:224
 msgid "New order placed"
-msgstr ""
+msgstr "下訂新訂單"
 
 #: eventyay/api/webhooks.py:183 eventyay/base/notifications.py:230
 msgid "New order requires approval"
-msgstr ""
+msgstr "需要批准新訂單"
 
 #: eventyay/api/webhooks.py:187 eventyay/base/notifications.py:236
 msgid "Order marked as paid"
-msgstr ""
+msgstr "訂單已經標示為已付款"
 
 #: eventyay/api/webhooks.py:191 eventyay/base/notifications.py:242
 #: eventyay/control/templates/pretixcontrol/event/mail.html:76
 #: eventyay/control/views/orders.py:1161
 msgid "Order canceled"
-msgstr ""
+msgstr "訂單已取消"
 
 #: eventyay/api/webhooks.py:195 eventyay/base/notifications.py:248
 msgid "Order reactivated"
-msgstr ""
+msgstr "重新恢復訂單"
 
 #: eventyay/api/webhooks.py:199 eventyay/base/notifications.py:254
 msgid "Order expired"
-msgstr ""
+msgstr "訂單已經過期了"
 
 #: eventyay/api/webhooks.py:203 eventyay/base/notifications.py:260
 msgid "Order information changed"
-msgstr ""
+msgstr "訂單資訊已經變動了"
 
 #: eventyay/api/webhooks.py:207 eventyay/base/notifications.py:266
 msgid "Order contact address changed"
-msgstr ""
+msgstr "訂單聯絡地址已經變動了"
 
 #: eventyay/api/webhooks.py:211 eventyay/base/notifications.py:272
 #: eventyay/control/templates/pretixcontrol/event/mail.html:67
 msgid "Order changed"
-msgstr ""
+msgstr "訂單已變更"
 
 #: eventyay/api/webhooks.py:215 eventyay/base/notifications.py:284
 msgid "External refund of payment"
-msgstr ""
+msgstr "外部退款"
 
 #: eventyay/api/webhooks.py:219
 msgid "Order approved"
-msgstr ""
+msgstr "訂單已批准"
 
 #: eventyay/api/webhooks.py:223
 msgid "Order denied"
-msgstr ""
+msgstr "訂單已拒絕"
 
 #: eventyay/api/webhooks.py:227
 msgid "Ticket checked in"
@@ -317,7 +317,7 @@ msgstr ""
 #: eventyay/base/auth.py:104
 #, python-brace-format
 msgid "{system} User"
-msgstr ""
+msgstr "{system} 使用者"
 
 #: eventyay/base/auth.py:113 eventyay/base/forms/auth.py:207
 #: eventyay/base/models/auth.py:87 eventyay/base/models/notifications.py:25
@@ -328,7 +328,7 @@ msgstr ""
 #: eventyay/presale/forms/checkout.py:23 eventyay/presale/forms/user.py:6
 #: eventyay/presale/templates/pretixpresale/event/order.html:297
 msgid "E-mail"
-msgstr ""
+msgstr "電子郵件"
 
 #: eventyay/base/auth.py:115 eventyay/base/forms/auth.py:118
 #: eventyay/base/forms/auth.py:170 eventyay/control/forms/event.py:1154
@@ -338,12 +338,12 @@ msgstr "密碼"
 
 #: eventyay/base/channels.py:84
 msgid "Online shop"
-msgstr ""
+msgstr "線上商店"
 
 #: eventyay/base/configurations/default_setting.py:41
 #: eventyay/base/models/orders.py:1204 eventyay/base/models/orders.py:2307
 msgid "Select country"
-msgstr ""
+msgstr "選擇國家"
 
 #: eventyay/base/configurations/default_setting.py:63
 msgid "Maximum number of items per order"
@@ -22805,7 +22805,7 @@ msgstr ""
 "\n"
 "如果您覺得缺了什麼，請到這裡告訴我們：\n"
 "https://github.com/eventyay/eventyay/issues/new\n"
-"或是發電子郵件到 support@eventyay.com \n"
+"或是發電子郵件到 support@eventyay.com\n"
 
 #: pretalx/common/plugins.py:9
 msgctxt "Type of plugin"
@@ -23024,7 +23024,7 @@ msgstr "錯誤的要求。"
 
 #: pretalx/common/text/phrases.py:72
 msgid "We had trouble saving your input – Please see below for details."
-msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。 🠯"
+msgstr "嗯，那個... 儲存您輸入的資料時發生了一點點問題—詳情請見下方。"
 
 #: pretalx/common/text/phrases.py:76
 msgid "Permission denied."
@@ -23802,7 +23802,8 @@ msgstr ""
 "\n"
 "{confirmation_link}\n"
 "\n"
-"如果有任何問題，請與我們聯繫。在活動開始前我們會再通知您，\n"
+"我們很期待在 {event_name} 與您相見。如果有任何問題，請與我們聯繫。在活動開始"
+"前我們會再通知您，\n"
 "關於您的議程的時程、會議室與其他演講時的細節。\n"
 "\n"
 "謝謝您的投稿。\n"
@@ -23827,7 +23828,7 @@ msgstr ""
 "\n"
 "{submission_title}\n"
 "\n"
-"未被接受。不過我們還是希望您能前來參加我們的活動！\n"
+"未被接受。不過我們還是希望您能前來參加 {event_name} ！\n"
 "\n"
 "{event_name} 主辦團隊 敬上"
 
@@ -23945,7 +23946,6 @@ msgstr ""
 "Hi!\n"
 "\n"
 "您已被加入到 {event_name} 的一個投稿中，標題為「{proposal_title}」。\n"
-"\n"
 "我們已為您建立了帳戶 – 請點選以下連結設定您的帳戶密碼。\n"
 "\n"
 "{invitation_link}\n"
@@ -23971,7 +23971,6 @@ msgstr ""
 "Hi!\n"
 "\n"
 "您已被加入到 {event_name} 的一個投稿中，標題為「{proposal_title}」。\n"
-"\n"
 "請點選以下連結編輯使用者個人資料並檢視您的投稿狀態：\n"
 "\n"
 "{proposal_url}\n"
@@ -24579,7 +24578,7 @@ msgstr "導出JSON"
 
 #: pretalx/orga/forms/export.py:29
 msgid "Data delimiter"
-msgstr "數據分隔符號"
+msgstr "資料分隔符號"
 
 #: pretalx/orga/forms/export.py:31
 msgid ""
@@ -24909,8 +24908,8 @@ msgid ""
 "target=\"_blank\">contribute to the translations</a>."
 msgstr ""
 "這些翻譯不是由 eventyay 團隊維護，因此無法保證它的正確性：新的功能與變更可能"
-"尚未翻譯，會以英文顯示。您可以<a href=\\\"{url}\\\" target=\\\"_blank\\\">協"
-"助翻譯</a>。"
+"尚未翻譯，會以英文顯示。您可以<a href=\"{url}\" target=\"_blank\">協助翻譯</"
+"a>。"
 
 #: pretalx/orga/phrases.py:7
 msgid "The event end cannot be before the start."
