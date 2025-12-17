@@ -11,9 +11,9 @@
             <div class="alert alert-info">
                 <p>{% blocktrans %}The following products might be no longer available for sale:{% endblocktrans %}</p>
                 <ul>
-                    {% for item in dependent %}
+                    {% for product in dependent %}
                         <li>
-                            <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=item.pk %}">{{ item.name }}</a>
+                            <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.pk %}">{{ product.name }}</a>
                         </li>
                     {% endfor %}
                 </ul>
