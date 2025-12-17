@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load safelink %}
 {% load event_tags %}
+{% load eventurl %}
 
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
@@ -42,8 +43,6 @@
     {% endif %}
 {% endwith %}
 
-
-<a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=request.event.organizer.slug event=request.event.slug %}" class="header-tab">
-
+<a id="join-event-link" class="header-tab" href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
     <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
 </a>
