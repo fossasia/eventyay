@@ -14,14 +14,14 @@
                 {% if request.event %}
                     <p class="text">
                         {% translate "Can't find your ticket?" %}
-                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}"">
+                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.resend_link' %}">
                             {% translate 'Resend the email' %}
                         </a>
                         {% translate 'to receive it.' %}
                     </p>
                     <p class="text">
                         {% translate 'Want to order a ticket?' %}
-                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}"">
+                        <a class="btn btn-link" href="{% eventurl request.event 'presale:event.index' %}">
                             {% translate 'Get a ticket here' %}
                         </a>
                     </p>
