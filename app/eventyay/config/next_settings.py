@@ -141,6 +141,7 @@ class BaseSettings(_BaseSettings):
     metrics_passphrase: str = ''
     log_csp: bool = True
     csp_additional_header: str = ''
+    celery_always_eager: bool = False
     nanocdn_url: HttpUrl | None = None
     zoom_key: str = ''
     zoom_secret: str = ''
@@ -933,7 +934,7 @@ REDIS_USE_PUBSUB = True
 HAS_CELERY = True
 CELERY_BROKER_URL = increase_redis_db(REDIS_URL, 1)
 CELERY_RESULT_BACKEND = increase_redis_db(REDIS_URL, 2)
-CELERY_TASK_ALWAYS_EAGER = IS_TESTING
+CELERY_TASK_ALWAYS_EAGER = conf.celery_always_eager
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TASK_DEFAULT_QUEUE = 'default'
