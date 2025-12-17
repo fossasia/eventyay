@@ -104,6 +104,10 @@ export default {
 		}
 		this.initializeLanguages()
 	},
+	beforeUnmount() {
+		// Reset previousRoomId to avoid leaking stale room IDs if component is reused
+		this.previousRoomId = null
+	},
 	methods: {
 		changedTabContent(tab) {
 			if (tab === this.activeSidebarTab) return
