@@ -69,11 +69,11 @@
 <div id="checkout-login-modal" class="checkout-login-overlay" style="display: none;">
     <div class="checkout-login-popup" role="dialog" aria-modal="true" aria-labelledby="checkout-login-modal-title">
         <div class="checkout-login-header">
-            <h3 id="checkout-login-modal-title">{% trans "Login" %}</h3>
-            <button type="button" class="checkout-login-close" aria-label="{% trans 'Close' %}">&times;</button>
+            <h3 id="checkout-login-modal-title">{% translate "Login" %}</h3>
+            <button type="button" class="checkout-login-close" aria-label="{% translate 'Close' %}">&times;</button>
         </div>
         <div class="checkout-login-body">
-            <p class="checkout-login-message">{% trans "Please log in to continue." %}</p>
+            <p class="checkout-login-message">{% translate "Please log in to continue." %}</p>
 
             <!-- Login Form -->
             <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
@@ -81,44 +81,44 @@
                 <input type="hidden" name="next" id="checkout-next-url" value="">
 
                 <div class="form-group">
-                    <label for="checkout-email">{% trans "Email" %}</label>
-                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% trans 'Enter your email' %}">
+                    <label for="checkout-email">{% translate "Email" %}</label>
+                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% translate 'Enter your email' %}">
                 </div>
 
                 <div class="form-group">
-                    <label for="checkout-password">{% trans "Password" %}</label>
-                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% trans 'Enter your password' %}">
+                    <label for="checkout-password">{% translate "Password" %}</label>
+                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% translate 'Enter your password' %}">
                 </div>
 
                 <div class="form-group">
                     <label class="checkbox-inline">
-                        <input type="checkbox" name="keep_logged_in" value="1"> {% trans "Keep me logged in" %}
+                        <input type="checkbox" name="keep_logged_in" value="1"> {% translate "Keep me logged in" %}
                     </label>
                 </div>
 
                 <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
 
                 <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
-                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Log in" %}
+                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate "Log in" %}
                 </button>
             </form>
 
             <div class="checkout-login-divider">
-                <span>{% trans "or" %}</span>
+                <span>{% translate "or" %}</span>
             </div>
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
                 <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
-                    {% trans "Login with MediaWiki" %}
+                    {% translate "Login with MediaWiki" %}
                 </a>
                 <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
-                    {% trans "Login with Google" %}
+                    {% translate "Login with Google" %}
                 </a>
             </div>
 
             <div class="checkout-login-footer">
-                <p>{% trans "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% trans "Create one" %}</a></p>
+                <p>{% translate "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% translate "Create one" %}</a></p>
             </div>
         </div>
     </div>
