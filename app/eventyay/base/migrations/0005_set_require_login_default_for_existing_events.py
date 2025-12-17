@@ -19,7 +19,8 @@ def reverse_migration(apps, schema_editor):
     """
     Event = apps.get_model('base', 'Event')
     
-    for event in Event.objects.all():
+    # Use iterator() for consistency with forward migration
+    for event in Event.objects.iterator():
         event.settings.set('require_registered_account_for_tickets', True)
 
 
