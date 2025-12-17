@@ -12,11 +12,10 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
-import { ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { isEqual } from 'lodash'
@@ -44,10 +43,7 @@ const route = useRoute()
 
 const iframeError = ref(null)
 const iframeEl = ref(null)
-const languageAudioUrl = ref(null)
-const languageIframeUrl = ref(null)
 const isUnmounted = ref(false)
-const eventBusRef = ref(null)
 
 // Template refs
 const livestream = ref(null)
@@ -79,7 +75,7 @@ watch(() => props.background, (value) => {
 watch(module, (value, oldValue) => {
 	if (isEqual(value, oldValue)) return
 	destroyIframe()
-	initializeIframe(false)
+	initializeIframe()
 })
 
 watch(youtubeTransUrl, (ytUrl) => {
@@ -88,18 +84,12 @@ watch(youtubeTransUrl, (ytUrl) => {
 	if (module.value?.type !== 'livestream.youtube') return
 	// Rebuild iframe with the new translation video id without mutating module config
 	destroyIframe()
-	initializeIframe(false)
+	initializeIframe()
 })
 
 onMounted(async () => {
 	if (!props.room) return
-	await initializeIframe(false)
-	const instance = getCurrentInstance && getCurrentInstance()
-	const eventBus = instance?.appContext?.config?.globalProperties?.$eventBus || instance?.proxy?.$root?.$eventBus
-	if (eventBus) {
-		eventBus.on('languageChanged', handleLanguageChange)
-		eventBusRef.value = eventBus
-	}
+	await initializeIframe()
 })
 
 onBeforeUnmount(() => {
@@ -108,13 +98,9 @@ onBeforeUnmount(() => {
 	if (api.socketState !== 'open') return
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id })
-	// Clean up event listener
-	if (eventBusRef.value) {
-		eventBusRef.value.off('languageChanged', handleLanguageChange)
-	}
 })
 
-async function initializeIframe(mute) {
+async function initializeIframe() {
 	try {
 		if (!module.value) return
 		let iframeUrl
@@ -138,10 +124,9 @@ async function initializeIframe(mute) {
 			const ytid = youtubeTransUrl.value || module.value.config.ytid
 			const config = module.value.config
 			// Smart muting logic to balance autoplay and user control:
-			// - Always mute if already muted (e.g., for language translation)
 			// - Mute for autoplay ONLY if controls are visible (so user can unmute)
 			// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
-			const shouldMute = mute || (autoplay.value && !config.hideControls)
+			const shouldMute = autoplay.value && !config.hideControls
 			iframeUrl = getYoutubeUrl(
 				ytid,
 				autoplay.value,
@@ -214,15 +199,6 @@ function isPlaying() {
 	return true
 }
 
-function handleLanguageChange(languageUrl) {
-	languageAudioUrl.value = languageUrl // Set the audio source to the selected language URL
-	const mute = !!languageUrl // Mute if language URL is present, otherwise unmute
-	destroyIframe()
-	initializeIframe(mute) // Initialize iframe with the appropriate mute state
-	// Set the language iframe URL when language changes
-	languageIframeUrl.value = getLanguageIframeUrl(languageUrl)
-}
-
 function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
 	const params = new URLSearchParams()
 	
@@ -259,29 +235,6 @@ function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinf
 
 	const domain = enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
 	return `https://${domain}/embed/${ytid}?${params}`
-}
-
-// Added method to get the language iframe URL
-function getLanguageIframeUrl(languageUrl) {
-	// Checks if the languageUrl is not provided then return null
-	if (!languageUrl) return null
-	const config = module.value?.config || {}
-	const origin = window.location.origin
-	const params = new URLSearchParams({
-		enablejsapi: '1',
-		autoplay: '1',
-		modestbranding: '1',
-		loop: '1',
-		controls: '0',
-		disablekb: '1',
-		rel: '0',
-		showinfo: '0',
-		playlist: languageUrl,
-		origin, // Required when using enablejsapi=1 (fixes Error 153)
-	})
-
-	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
-	return `https://${domain}/embed/${languageUrl}?${params}`
 }
 
 // Expose instance methods (used by parents via template refs)
