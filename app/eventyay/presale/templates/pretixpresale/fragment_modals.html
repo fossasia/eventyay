@@ -381,7 +381,9 @@ if (modal) {
                         window.location.reload();
                     }
                 } catch(e) {
-                    // Ignore expected cross-origin access errors
+                    // Cross-origin access errors are expected when checking popup.closed
+                    // from a different origin (OAuth provider domain vs our domain)
+                    console.debug('SSO popup check error (expected for cross-origin):', e.message);
                 }
             }, POPUP_CHECK_INTERVAL);
         });
