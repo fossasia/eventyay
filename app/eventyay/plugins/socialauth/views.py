@@ -161,12 +161,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
+        preferred_provider = request.POST.get('preferred_login_provider', '')
 
         for provider in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
                 self.update_credentials(request, provider, login_providers)
             else:
                 self.update_provider_state(request, provider, login_providers)
+            
+            # Update preferred status
+            login_providers[provider]['preferred'] = (provider == preferred_provider)
 
         self.gs.settings.set('login_providers', login_providers)
         return redirect(self.get_success_url())

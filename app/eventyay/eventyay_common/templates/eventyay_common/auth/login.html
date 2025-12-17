@@ -49,12 +49,47 @@
             </div>
         </div>
         <div class="form-group buttons">
-            <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
-                {% translate "Login with Email" %}
-            </button>
             {% if login_providers %}
+                {% comment %} First, show the preferred login provider {% endcomment %}
                 {% for provider, settings in login_providers.items %}
-                    {% if settings.state %}
+                    {% if settings.state and settings.preferred %}
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                           data-method="post" class="btn btn-primary btn-block btn-lg" style="font-weight: bold;">
+                            {% with provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+                
+                {% comment %} Check if there are any other enabled providers {% endcomment %}
+                {% with has_other_providers=False %}
+                    {% for provider, settings in login_providers.items %}
+                        {% if settings.state and not settings.preferred %}
+                            {% with has_other_providers=True %}{% endwith %}
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+                
+                {% comment %} Show "or use the following:" text if there are other providers or email login {% endcomment %}
+                {% if login_providers %}
+                    {% for provider, settings in login_providers.items %}
+                        {% if settings.state and settings.preferred %}
+                            <p class="text-center" style="margin: 15px 0 10px 0; color: #666;">
+                                {% translate "or use the following:" %}
+                            </p>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+                
+                {% comment %} Show email login button {% endcomment %}
+                <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
+                    {% translate "Login with Email" %}
+                </button>
+                
+                {% comment %} Then, show other enabled providers {% endcomment %}
+                {% for provider, settings in login_providers.items %}
+                    {% if settings.state and not settings.preferred %}
                         <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
                            data-method="post" class="btn btn-primary btn-block">
                             {% with provider|capfirst as provider_capitalized %}
@@ -63,6 +98,11 @@
                         </a>
                     {% endif %}
                 {% endfor %}
+            {% else %}
+                {% comment %} No social login providers, just show email login {% endcomment %}
+                <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
+                    {% translate "Login with Email" %}
+                </button>
             {% endif %}
         </div>
     </form>

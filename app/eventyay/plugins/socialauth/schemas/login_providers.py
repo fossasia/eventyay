@@ -5,6 +5,7 @@ class ProviderConfig(BaseModel):
     state: bool = Field(description='State of this providers', default=False)
     client_id: str = Field(description='Client ID of this provider', default='')
     secret: str = Field(description='Secret of this provider', default='')
+    preferred: bool = Field(description='Is this the preferred login method', default=False)
 
 
 class LoginProviders(BaseModel):

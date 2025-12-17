@@ -2,6 +2,9 @@ name: eventyay-next
 
 services:
   web:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
     image: eventyay/eventyay-next:enext
     container_name: eventyay-next-web
     command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
@@ -9,6 +12,7 @@ services:
       - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/data
       - ./eventyay.cfg:/etc/eventyay.cfg:ro
+      - ../app/eventyay:/usr/src/app/eventyay
     ports:
       - 8000:8000
     expose:
@@ -20,12 +24,16 @@ services:
       - redis
 
   websocket:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
     image: eventyay/eventyay-next:enext
     container_name: eventyay-next-websocket
     entrypoint: daphne -b 0.0.0.0 -p 8001 eventyay.config.asgi:application
     volumes:
       - ./data/data:/data
       - ./eventyay.cfg:/etc/eventyay.cfg:ro
+      - ../app/eventyay:/usr/src/app/eventyay
     ports:
       - 8001:8001
     expose:
@@ -39,11 +47,15 @@ services:
       - redis
 
   worker:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
     image: eventyay/eventyay-next:enext
     container_name: eventyay-next-worker
     entrypoint: celery -A eventyay worker -l info
     volumes:
       - ./eventyay.cfg:/etc/eventyay.cfg:ro
+      - ../app/eventyay:/usr/src/app/eventyay
     env_file:
       - ./.env
     environment:

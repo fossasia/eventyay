@@ -140,7 +140,23 @@ def login(request):
                 request, form.user_cache, form.cleaned_data.get('keep_logged_in', False)
             )
     else:
-        form = LoginForm(backend=backend, request=request)
+        gs = GlobalSettingsObject()
+        login_providers = gs.settings.get('login_providers', as_type=dict)
+        
+        # Check if there's a preferred provider - if so, pre-select "Keep me logged in"
+        has_preferred_provider = any(
+            settings.get('preferred', False) 
+            for settings in login_providers.values() 
+            if settings.get('state', False)
+        ) if login_providers else False
+        
+        # Initialize form with keep_logged_in pre-selected if there's a preferred provider
+        initial_data = {}
+        if has_preferred_provider and 'keep_logged_in' in LoginForm(backend=backend, request=request).fields:
+            initial_data['keep_logged_in'] = True
+        
+        form = LoginForm(backend=backend, request=request, initial=initial_data)
+    
     ctx['form'] = form
     ctx['can_register'] = settings.EVENTYAY_REGISTRATION
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
