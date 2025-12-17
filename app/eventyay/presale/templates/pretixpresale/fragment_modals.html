@@ -382,15 +382,5 @@ if (modal) {
             }, POPUP_CHECK_INTERVAL);
         });
     });
-
-    // Clean up interval when modal closes
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            if (activeCheckLogin) {
-                clearInterval(activeCheckLogin);
-                activeCheckLogin = null;
-            }
-        });
-    }
 }
 </script>
