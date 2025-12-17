@@ -81,8 +81,8 @@
                                     Checkout
                                 </a>
                             {% else %}
-                                <a class="btn btn-block btn-primary btn-lg disabled" href="#">
-                                    Checkout
+                                <a class="btn btn-block btn-primary btn-lg" href="{% url 'eventyay_common:auth.login' %}?next={% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}" id="checkout-login-required">
+                                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Login to Checkout" %}
                                 </a>
                             {% endif %}
                         </div>

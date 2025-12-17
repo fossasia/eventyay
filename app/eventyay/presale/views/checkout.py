@@ -1,9 +1,10 @@
 import logging
-from urllib.parse import quote
+from urllib.parse import quote, urlencode
 
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import View
@@ -42,6 +43,17 @@ class CheckoutView(View):
             new_url = self.get_index_url(self.request)
             logger.info('Redirecting to %s as presale is not running.', new_url)
             return self.redirect(new_url)
+
+        # Check if login is required for checkout
+        if request.event.settings.require_registered_account_for_tickets and not request.user.is_authenticated:
+            messages.info(request, _('Please log in to complete your order.'))
+            # Build the current checkout URL to return to after login
+            # Use request.path instead of get_full_path() to prevent open redirect attacks
+            next_url = request.path
+            login_url = reverse('eventyay_common:auth.login')
+            redirect_url = f'{login_url}?{urlencode({"next": next_url})}'
+            logger.info('Redirecting to login as require_registered_account_for_tickets is enabled.')
+            return redirect(redirect_url)
 
         cart_error = None
         try:

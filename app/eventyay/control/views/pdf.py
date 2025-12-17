@@ -69,7 +69,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
         )
         product2 = self.request.event.products.create(name=_('Sample workshop'), default_price=23.40)
 
-        from pretix.base.models import Order
+        from eventyay.base.models import Order
 
         order = self.request.event.orders.create(
             status=Order.STATUS_PENDING,
