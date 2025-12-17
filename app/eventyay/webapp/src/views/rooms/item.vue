@@ -79,8 +79,7 @@ export default {
 				polls: false
 			},
 			activeStageTool: null, // reaction, qa
-			languages: [], // Languages for the dropdown menu
-			previousRoomId: null // Track previous room to detect actual room changes
+			languages: [] // Languages for the dropdown menu
 		}
 	},
 	computed: {
@@ -104,17 +103,13 @@ export default {
 		}
 		this.initializeLanguages()
 	},
-	beforeUnmount() {
-		// Reset previousRoomId to avoid leaking stale room IDs if component is reused
-		this.previousRoomId = null
-	},
 	methods: {
 		changedTabContent(tab) {
 			if (tab === this.activeSidebarTab) return
 			this.unreadTabs[tab] = true
 		},
 		handleLanguageChange(languageUrl) {
-			this.$store.commit('updateYoutubeTransAudio', languageUrl)
+			this.$root.$emit('languageChanged', languageUrl)
 		},
 		initializeLanguages() {
 			this.languages = []
@@ -122,14 +117,8 @@ export default {
 				this.languages = this.modules['livestream.youtube'].config.languageUrls
 			}
 			if (!this.languages.find(lang => lang.language === 'Original')) {
-				this.languages.unshift({language: 'Original', youtube_id: null})
+				this.languages.unshift({language: 'Original', url: ''})
 			}
-			// Reset translation only when actually changing rooms, not on component remount
-			const currentRoomId = this.room?.id
-			if (this.previousRoomId !== null && this.previousRoomId !== currentRoomId) {
-				this.$store.commit('updateYoutubeTransAudio', null)
-			}
-			this.previousRoomId = currentRoomId
 		}
 	}
 }
