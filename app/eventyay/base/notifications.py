@@ -184,7 +184,7 @@ class ParametrizedOrderNotificationType(NotificationType):
         else:
             n.add_attribute(_('Event date'), order.event.get_date_range_display())
 
-        positions = list(order.positions.select_related('item', 'variation', 'subevent'))
+        positions = list(order.positions.select_related('product', 'variation', 'subevent'))
         fees = list(order.fees.all())
 
         n.add_attribute(_('Order code'), order.code)
@@ -214,7 +214,7 @@ class ParametrizedOrderNotificationType(NotificationType):
             return op.item_id, op.variation_id, op.subevent_id
 
         def groupkey(op):
-            return op.item, op.variation, op.subevent
+            return op.product, op.variation, op.subevent
 
         cart = [(k, list(v)) for k, v in groupby(sorted(positions, key=sortkey), key=groupkey)]
         items = []
