@@ -16,8 +16,15 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # install system dependencies
+# Repo for newer NodeJS
+RUN apt-get update && apt-get install -y wget gnupg
+RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends git build-essential gettext make npm
+    apt-get install -y --no-install-recommends git build-essential gettext make nodejs
+
+# We need to install pretix-venueless from this local directory
+COPY eventyay/plugins/eventyay-ticket-video eventyay/plugins/eventyay-ticket-video
 
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
@@ -27,18 +34,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-install-project --no-editable
 
 COPY Makefile Makefile
-# global-nav-menu
-COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
-RUN npm ci --prefix=eventyay/frontend/global-nav-menu
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/frontend/global-nav-menu
-# schedule editor
-COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
-RUN npm ci --prefix=eventyay/frontend/schedule-editor
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/frontend/schedule-editor
-# webapp
-COPY eventyay/webapp eventyay/webapp
-RUN npm install --prefix=eventyay/webapp
-RUN OUT_DIR=/home/app/web/eventyay/static npm run build --prefix=eventyay/webapp
 
 
 #########
@@ -62,7 +57,10 @@ RUN mkdir $APP_HOME/static
 WORKDIR $APP_HOME
 
 # install dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext
+RUN apt-get update && apt-get install -y wget gnupg rsync
+RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext less
 
 # copy entrypoint.prod.sh
 COPY ./entrypoint.prod.sh .
@@ -72,15 +70,28 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 # copy project
 COPY . $APP_HOME
 
+# global-nav-menu
+COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
+RUN npm ci --prefix=eventyay/frontend/global-nav-menu
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/global-nav-menu
+# schedule editor
+COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
+RUN npm ci --prefix=eventyay/frontend/schedule-editor
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/schedule-editor
+# Video SPA app
+COPY eventyay/webapp eventyay/webapp
+RUN npm ci --prefix=eventyay/webapp
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
+# rollup needed by Django-Compressor
+COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
+RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
+
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
 
 # Copy the Python environment from the builder
 # Note: The venv path in the builder must match the one in runner.
 COPY --from=builder --chown=app:app $APP_HOME/.venv $APP_HOME/.venv
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/global-nav-menu $APP_HOME/eventyay/static/global-nav-menu
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/schedule-editor $APP_HOME/eventyay/static/schedule-editor
-COPY --from=builder --chown=app:app $APP_HOME/eventyay/static/webapp $APP_HOME/eventyay/static/webapp
 
 # change to the app user
 USER app
@@ -88,6 +99,20 @@ USER app
 # Expose virtual env
 ENV VIRTUAL_ENV="$APP_HOME/.venv"
 ENV PATH="$APP_HOME/.venv/bin:$PATH"
+ENV EVY_RUNNING_ENVIRONMENT=production
+
+
+# Temporarily disable because the PO files are wrong.
+# RUN python manage.py compilemessages
+RUN python manage.py compilejsi18n
+RUN python manage.py collectstatic --noinput
+#RUN python manage.py compress
+
+# Now all the files are in $APP_HOME/eventyay/static.dist
+# but this will be overloaded with a shared volume
+RUN mkdir $APP_HOME/eventyay/static.dist.backup && \
+    mv $APP_HOME/eventyay/static.dist/* $APP_HOME/eventyay/static.dist.backup
+
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
