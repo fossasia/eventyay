@@ -211,7 +211,7 @@ class ParametrizedOrderNotificationType(NotificationType):
         n.add_attribute(_('Order positions'), str(order.positions.count()))
 
         def sortkey(op):
-            return op.item_id, op.variation_id, op.subevent_id
+            return op.product_id, op.variation_id, op.subevent_id
 
         def groupkey(op):
             return op.product, op.variation, op.subevent
