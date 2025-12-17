@@ -241,31 +241,39 @@ if (modal) {
     const POPUP_CHECK_INTERVAL = 500;
     let activeCheckLogin = null;
 
+    // URL parameter name for redirect after login/register
+    // Used consistently across login form, SSO providers, and register link
+    // This allows us to redirect users back to checkout after authentication
+    const REDIRECT_PARAM = 'next';
+
     // Open modal
     if (loginBtn) {
         loginBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            checkoutUrl = loginBtn.getAttribute('data-checkout-url') || '';
+            // Use dataset API for cleaner data attribute access
+            checkoutUrl = loginBtn.dataset.checkoutUrl || '';
             if (nextUrlInput) nextUrlInput.value = checkoutUrl;
 
             // Update SSO links with next URL
             const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
             ssoLinks.forEach((link) => {
                 const baseUrl = link.href.split('?')[0];
-                const backend = link.getAttribute('data-provider');
-                link.href = `${baseUrl}?backend=${backend}&next=${encodeURIComponent(checkoutUrl)}`;
+                // Use dataset API for data-provider attribute
+                const backend = link.dataset.provider;
+                link.href = `${baseUrl}?backend=${backend}&${REDIRECT_PARAM}=${encodeURIComponent(checkoutUrl)}`;
             });
 
-            // Update register link
+            // Update register link with redirect parameter
             const registerLink = modal.querySelector('.checkout-login-footer a');
             if (registerLink) {
                 try {
                     const url = new URL(registerLink.href, window.location.origin);
-                    url.searchParams.set('next', checkoutUrl);
+                    // Use constant to ensure consistency with login flow
+                    url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
                     registerLink.href = url.toString();
                 } catch (e) {
-                    // Fallback for browsers that do not support URL
-                    registerLink.href = `${registerLink.href.split('?')[0]}?next=${encodeURIComponent(checkoutUrl)}`;
+                    // Fallback for older browsers that don't support URL constructor
+                    registerLink.href = `${registerLink.href.split('?')[0]}?${REDIRECT_PARAM}=${encodeURIComponent(checkoutUrl)}`;
                 }
             }
 
