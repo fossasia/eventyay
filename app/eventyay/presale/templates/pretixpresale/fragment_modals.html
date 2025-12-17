@@ -255,9 +255,12 @@ if (modal) {
             // Update SSO links with next URL
             const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
             ssoLinks.forEach((link) => {
-                const baseUrl = link.href.split('?')[0];
-                const backend = link.dataset.provider;
-                link.href = `${baseUrl}?backend=${backend}&${REDIRECT_PARAM}=${encodeURIComponent(checkoutUrl)}`;
+                const url = new URL(link.href, window.location.origin);
+                url.searchParams.set('backend', link.dataset.provider);
+                if (checkoutUrl) {
+                    url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                }
+                link.href = url.toString();
             });
 
             const registerLink = modal.querySelector('.checkout-login-footer a');
