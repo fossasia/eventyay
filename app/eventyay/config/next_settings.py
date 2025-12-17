@@ -1113,9 +1113,8 @@ LOGGING = {
 # --- Django allauth settings for social login ---
 
 # NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
-# NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
 ACCOUNT_LOGIN_METHODS = {'email'}
-ACCOUNT_SIGNUP_FIELDS = ['email', 'password1', 'password2']
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
