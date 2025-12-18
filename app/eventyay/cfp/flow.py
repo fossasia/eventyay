@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
 from django.forms import ValidationError
 from django.http import HttpResponseNotAllowed
+from django.utils.datastructures import MultiValueDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import Promise, cached_property
@@ -219,29 +220,39 @@ class FormFlowStep(TemplateFlowStep):
         return copy.deepcopy({**initial_data, **previous_data})
 
     def get_form(self, from_storage=False):
+        # Cache form initial data to avoid repeated work
+        form_initial = self.get_form_initial()
+
         if self.request.method == 'GET':
             # For GET requests, use unbound forms with initial data
             # This correctly displays saved values from the session
             return self.form_class(
                 data=None,
-                initial=self.get_form_initial(),
+                initial=form_initial,
                 files=None,
                 **self.get_form_kwargs(),
             )
         if from_storage:
             # For validation checks, create a bound form with session data
             return self.form_class(
-                data=self.get_form_initial(),
-                initial=self.get_form_initial(),
+                data=form_initial,
+                initial=form_initial,
                 files=self.get_files(),
                 **self.get_form_kwargs(),
             )
         # For POST requests, merge new uploads with existing session files
         # This allows users to navigate back without losing previously uploaded files
         session_files = self.get_files() or {}
-        new_files = dict(self.request.FILES.items())
+
+        # Preserve MultiValueDict semantics for proper multi-file field support
+        files = MultiValueDict()
+        # Add session files first
+        for field, file_obj in session_files.items():
+            files[field] = file_obj
         # New uploads take precedence over session files
-        files = {**session_files, **new_files}
+        for field, file_list in self.request.FILES.lists():
+            files.setlist(field, file_list)
+
         return self.form_class(data=self.request.POST, files=files, **self.get_form_kwargs())
 
     def is_completed(self, request):
