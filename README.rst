@@ -1,7 +1,7 @@
 eventyay-tickets (ENext)
 ========================
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/enext/graph/badge.svg
+.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/dev/graph/badge.svg
   :target: https://codecov.io/gh/pretix/pretix
 
 Project status & release cycle
@@ -49,11 +49,11 @@ Getting Started
 
   cd eventyay/app
 
-3. **Switch to the `enext` branch**:
+3. **Switch to the `dev` branch**:
 
 .. code-block:: bash
 
-  git switch enext
+  git switch dev
 
 
 4. **Install Python packages**
