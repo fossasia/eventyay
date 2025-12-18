@@ -54,7 +54,7 @@
                         <i class="fa fa-info-circle"></i> {% translate "Previously uploaded files:" %}
                         <ul class="mb-0 mt-1">
                             {% for field_name, filename in uploaded_files.items %}
-                                <li><strong>{{ filename }}</strong> {% translate "(will be preserved if you don't upload a new file)" %}</li>
+                                <li><strong>{{ form[field_name].label|default:field_name }}</strong>: {{ filename }} {% translate "(will be preserved if you don't upload a new file)" %}</li>
                             {% endfor %}
                         </ul>
                     </div>
