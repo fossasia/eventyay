@@ -333,20 +333,45 @@ if (modal) {
                     }
                 });
 
-                // Check for successful response (200-299) or redirect (302)
-                // Login endpoint returns 302 on success, not 200
-                if (response.ok || response.status === 302) {
-                    // Login successful, redirect to checkout
+                // Login endpoint returns 302 on success
+                if (response.status === 302) {
                     window.location.href = checkoutUrl;
-                } else {
-                    // Let the original HTTPError propagate with full details for debugging
-                    throw new HTTPError(response);
+                    return;
                 }
+
+                // 200 response from Django form means validation failed (invalid credentials)
+                if (response.ok) {
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Invalid email or password. Please try again." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                } 
+                // Server errors (5xx)
+                else if (response.status >= 500) {
+                    console.error('Server error during login:', response.status, response.statusText);
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Server error. Please try again later." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                } 
+                // Other errors (4xx except handled cases, network issues, etc.)
+                else {
+                    console.error('Login failed with status:', response.status, response.statusText);
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Login failed. Please try again." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                }
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
             } catch (error) {
+                // Network errors, timeouts, CORS issues, etc.
+                console.error('Network error during login:', error);
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = originalText;
                 if (errorDiv) {
-                    errorDiv.textContent = error.message || '{% trans "Login failed. Please try again." %}';
+                    errorDiv.textContent = '{% translate "Connection failed. Please check your network and try again." %}';
                     errorDiv.style.display = 'block';
                 }
             }
