@@ -12,7 +12,7 @@
                 class="event-dropdown dropdown-menu">
         </ul>
     </div>
-    <h2>{% trans "Your upcoming events" %}</h2>
+    <!-- <h2>{% trans "Your upcoming events" %}</h2>
     <div class="dashboard">
         {% if can_create_event %}
             <div class="widget-small widget-container">
@@ -32,7 +32,41 @@
                 </div>
             </div>
         {% endfor %}
-    </div>
+    </div> -->
+
+    <!-- this is the updated code  -->
+    <h2>{% trans "Your upcoming events" %}</h2>
+<div class="dashboard">
+    {% if can_create_event %}
+        <div class="widget-small widget-container">
+            <a href="{% url "eventyay_common:events.add" %}" class="widget">
+                <div class="newevent">
+                    <span class="fa fa-plus-circle"></span>
+                    {% trans "Create a new event" %}
+                </div>
+            </a>
+        </div>
+    {% endif %}
+
+    {% if upcoming %}
+        {% for w in upcoming %}
+            <div class="widget-{{ w.display_size|default:"small" }} {{ w.container_class|default:"widget-container" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">
+                <div class="widget">
+                    {% if w.lazy %}
+                        <span class="fa fa-cog fa-4x"></span>
+                    {% else %}
+                        {{ w.content|safe }}
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            {% trans "You don’t have any upcoming events yet." %}
+        </div>
+    {% endif %}
+</div>
+<!-- updated code ends here -->
     {% if upcoming %}
         <p class="">
             <a href="{% url "control:events" %}?ordering=date_from&status=date_future" class="">
