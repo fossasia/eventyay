@@ -56,7 +56,7 @@ async function init({ token, inviteToken }) {
   // resolved when components (RouterLink) are rendered.
   await router.replace(relativePath).catch(() => {})
 
-  const route = router.resolve(relativePath).route
+  const route = router.resolve(relativePath)
   const anonymousRoomId = route?.name === 'standalone:anonymous' ? route?.params?.roomId : null
 
   window.vapp = app.mount('#app')
