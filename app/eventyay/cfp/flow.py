@@ -265,10 +265,10 @@ class FormFlowStep(TemplateFlowStep):
         previous_data = self.cfp_session.get('data')
         result['submission_title'] = previous_data.get('info', {}).get('title')
         # Add information about uploaded files for display in templates
-        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {})
+        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
         result['uploaded_files'] = {
             field: file_dict.get('name') for field, file_dict in saved_files.items()
-        } if saved_files else {}
+        }
         return result
 
     def post(self, request):
