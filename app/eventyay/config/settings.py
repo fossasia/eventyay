@@ -570,6 +570,9 @@ TALK_HOSTNAME = (
     if not DEBUG
     else 'http://localhost:8000/'
 )
+VIDEO_SERVER_HOSTNAME = config.get(
+    'eventyay', 'video_server_hostname', fallback='https://app.eventyay.com/video'
+)
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
