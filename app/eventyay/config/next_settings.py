@@ -128,7 +128,7 @@ class BaseSettings(_BaseSettings):
     # Override it to match the domain the website is running on,
     # or you will get "DisallowedHost" error.
     site_url: HttpUrl = 'http://localhost:8000'
-    short_url: HttpUrl | None = None
+    short_url: HttpUrl = 'http://localhost:8000'
     talk_hostname: str = 'http://localhost:8000'
     sentry_dsn: str = ''
     instance_name: str = 'eventyay'
@@ -147,11 +147,7 @@ class BaseSettings(_BaseSettings):
     zoom_secret: str = ''
     control_secret: str = ''
 
-    @model_validator(mode='after')
-    def default_short_url(self) -> 'BaseSettings':
-        if self.short_url is None:
-            self.short_url = self.site_url
-        return self
+
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'

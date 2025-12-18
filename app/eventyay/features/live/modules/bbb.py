@@ -1,4 +1,3 @@
-from django.db.utils import IntegrityError
 from eventyay.core.permissions import Permission
 from eventyay.base.services.bbb import BBBService
 from eventyay.features.live.decorators import command, room_action
@@ -21,19 +20,15 @@ class BBBModule(BaseModule):
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
-        try:
-            url = await service.get_join_url_for_room(
-                self.room,
-                self.consumer.user,
-                moderator=await self.consumer.event.has_permission_async(
-                    user=self.consumer.user,
-                    permission=Permission.ROOM_BBB_MODERATE,
-                    room=self.room,
-                ),
-            )
-        except IntegrityError:
-            # This happens in dev environment when no BBB server is configured
-            raise ConsumerException("bbb.failed")
+        url = await service.get_join_url_for_room(
+            self.room,
+            self.consumer.user,
+            moderator=await self.consumer.event.has_permission_async(
+                user=self.consumer.user,
+                permission=Permission.ROOM_BBB_MODERATE,
+                room=self.room,
+            ),
+        )
 
         if not url:
             raise ConsumerException("bbb.failed")
@@ -44,13 +39,10 @@ class BBBModule(BaseModule):
         service = BBBService(self.consumer.event)
         if not self.consumer.user.profile.get("display_name"):
             raise ConsumerException("bbb.join.missing_profile")
-        try:
-            url = await service.get_join_url_for_call_id(
-                body.get("call"),
-                self.consumer.user,
-            )
-        except IntegrityError:
-            raise ConsumerException("bbb.failed")
+        url = await service.get_join_url_for_call_id(
+            body.get("call"),
+            self.consumer.user,
+        )
 
         if not url:
             raise ConsumerException("bbb.failed")
@@ -63,10 +55,7 @@ class BBBModule(BaseModule):
     )
     async def recordings(self, body):
         service = BBBService(self.consumer.event)
-        try:
-            recordings = await service.get_recordings_for_room(
-                self.room,
-            )
-        except IntegrityError:
-             recordings = []
+        recordings = await service.get_recordings_for_room(
+            self.room,
+        )
         await self.consumer.send_success({"results": recordings})
