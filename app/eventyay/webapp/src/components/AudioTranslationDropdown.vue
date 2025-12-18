@@ -8,6 +8,8 @@ div.c-audio-translation
 )
 </template>
 <script>
+import { normalizeYoutubeVideoId } from 'lib/validators'
+
 export default {
 	name: 'AudioTranslationDropdown',
 	emits: ['languageChanged'],
@@ -40,7 +42,8 @@ export default {
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.selectedLanguage)
 			const youtubeId = selected?.youtube_id || null
-			this.$emit('languageChanged', youtubeId)
+			// Accept either raw ID or URL in the language list entries.
+			this.$emit('languageChanged', normalizeYoutubeVideoId(youtubeId) || youtubeId)
 		}
 	}
 }
