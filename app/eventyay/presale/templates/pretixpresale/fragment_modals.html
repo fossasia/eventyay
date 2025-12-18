@@ -339,7 +339,8 @@ if (modal) {
                     // Login successful, redirect to checkout
                     window.location.href = checkoutUrl;
                 } else {
-                    throw new Error('{% trans "Invalid email or password. Please try again." %}');
+                    // Let the original HTTPError propagate with full details for debugging
+                    throw new HTTPError(response);
                 }
             } catch (error) {
                 submitBtn.disabled = false;
