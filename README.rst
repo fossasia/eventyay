@@ -141,11 +141,12 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      cp deployment/env.dev-sample .env.dev
+      cp deployment/env.sample .env.dev
 
 2. **Edit .env.dev**
 
-   Only if necessary
+   Change <SERVER_NAME> and the value of `EVY_RUNNING_ENVIRONMENT=production`
+   to `EVY_RUNNING_ENVIRONMENT=development`
 
 3. **Make sure you don't have some old volumes hanging around**
 
@@ -251,21 +252,26 @@ Due to this reason, overriding configuration via environment variables are not e
 Deployment
 ----------
 
-* copy all of the `deployment` directory onto the server (eg. as `/home/fossasia/enext`)
-* prepare the used volumes in docker-compose: one for static files and one for
-  the postgres database. Create on the server:
-        /home/fossasia/enext/data/static
-        /home/fossasia/enext/data/postgres
+* copy all of the `deployment` directory onto the server into <TARGET_DIR> (eg. as `/home/fossasia/enext`)
+* prepare the used volumes in docker-compose: 
+        <TARGET_DIR>/data/static
+        <TARGET_DIR>/data/postgres
+        <TARGET_DIR>/data/data
   and
-        chown 100:101 /home/fossasia/enext/data/static
-* copy `env.prod-sample` to `.env` in `/home/fossasia/enext`, and edit it to your
-  liking
-* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available`
+        chown 100:101 <TARGET_DIR>/data/data
+        chmod a+x <TARGET_DIR>/data/static
+* copy `env.sample` to `.env` in `/home/fossasia/enext`, and edit it:
+  - replace <SERVER_NAME> with your server, like next.eventyay.com
+  - all the CHANGEME entries
+* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available` and edit it:
+  - replace <SERVER_NAME> with your server, like `next.eventyay.com`
+  - replace <PATH_TO> with the <TARGET_DIR> you choose, like `/home/fossasia/enext`
   The file needs to be adjusted if the `enext` dir is NOT in `/home/fossasia`!
 * Link the `enext-direct` file into `/etc/nginx/sites-enabled`
 * Restart nginx
 * Run
         docker compose up -d
+
 
 Support
 -------
