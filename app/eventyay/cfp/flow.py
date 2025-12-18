@@ -249,7 +249,7 @@ class FormFlowStep(TemplateFlowStep):
         # Add session files first
         for field, file_obj in session_files.items():
             files[field] = file_obj
-        # New uploads take precedence over session files
+        # For each field, new uploads completely replace any existing session files
         for field, file_list in self.request.FILES.lists():
             files.setlist(field, file_list)
 
