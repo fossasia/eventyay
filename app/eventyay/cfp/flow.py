@@ -224,8 +224,8 @@ class FormFlowStep(TemplateFlowStep):
         form_initial = self.get_form_initial()
 
         if self.request.method == 'GET':
-            # For GET requests, use unbound forms with initial data
-            # This correctly displays saved values from the session
+            # For initial GET requests, use an unbound form populated from session data
+            # This shows saved values but intentionally does not display validation errors
             return self.form_class(
                 data=None,
                 initial=form_initial,
