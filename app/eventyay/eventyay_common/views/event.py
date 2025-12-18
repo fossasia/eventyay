@@ -38,7 +38,6 @@ from eventyay.control.views import PaginationMixin, UpdateView
 from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin
 from eventyay.control.views.product import MetaDataEditorMixin
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
-from eventyay.eventyay_common.tasks import create_world
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
@@ -293,16 +292,6 @@ class EventCreateView(SafeSessionWizardView):
                     action='eventyay.event.added',
                     user=self.request.user,
                 )
-        # The user automatically creates a world when selecting the add video option in the create ticket form.
-        event_data = dict(
-            id=basics_data.get('slug'),
-            title=basics_data.get('name').data,
-            timezone=basics_data.get('timezone'),
-            locale=basics_data.get('locale'),
-            has_permission=has_permission,
-            token=generate_token(self.request),
-        )
-        create_world.delay(is_video_creation=final_is_video_creation, event_data=event_data)
 
         return redirect(
             reverse(
@@ -425,17 +414,6 @@ class EventUpdate(
             messages.error(self.request, _('You do not have permission to perform this action.'))
             return False
 
-        create_world.delay(
-            is_video_creation=True,
-            event_data={
-                'id': self.request.event.slug,
-                'title': self.request.event.name.data,
-                'timezone': self.request.event.settings.timezone,
-                'locale': self.request.event.settings.locale,
-                'has_permission': True,
-                'token': generate_token(self.request),
-            },
-        )
         return True
 
     def post(self, request, *args, **kwargs):
