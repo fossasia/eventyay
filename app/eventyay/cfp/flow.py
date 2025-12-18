@@ -276,20 +276,10 @@ class FormFlowStep(TemplateFlowStep):
         form = self.get_form()
         action = request.POST.get('action', 'submit')
 
-        # For "back" action, save data even if form is invalid
+        # For "back" action, only save data if form is valid
         if action == 'back':
             if form.is_valid():
                 self.set_data(form.cleaned_data)
-            else:
-                # Save raw POST data for invalid forms (user might be going back to fix something)
-                # Filter out non-field data and serialize appropriately
-                partial_data = {
-                    field_name: request.POST.get(field_name)
-                    for field_name in form.fields.keys()
-                    if field_name in request.POST
-                }
-                if partial_data:
-                    self.set_data(partial_data)
             # Always save files if present
             if form.files:
                 self.set_files(form.files)
