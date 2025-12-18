@@ -155,7 +155,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['login_providers'] = self.gs.settings.get('login_providers', as_type=dict)
-        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH)
+        # tickets_domain is only used to append /github/..., so make sure we don't have
+        # a trailing /
+        context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
         return context
 
     def post(self, request, *args, **kwargs):
