@@ -190,6 +190,7 @@ def default_feature_flags():
         'submission_public_review': True,
         'chat-moderation': True,
         'polls': True,
+        'schedule-control': True,
     }
 
 
