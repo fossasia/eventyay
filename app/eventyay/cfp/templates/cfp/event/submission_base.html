@@ -49,6 +49,16 @@
             </div>
             {% block submission_step_text %}<p>{{ text|rich_text }}</p>{% endblock %}
             {% block inner %}
+                {% if uploaded_files %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fa fa-info-circle"></i> {% translate "Previously uploaded files:" %}
+                        <ul class="mb-0 mt-1">
+                            {% for field_name, filename in uploaded_files.items %}
+                                <li><strong>{{ filename }}</strong> {% translate "(will be preserved if you don't upload a new file)" %}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
                 {{ form }}
             {% endblock inner %}
             {% block buttons %}

@@ -219,14 +219,30 @@ class FormFlowStep(TemplateFlowStep):
         return copy.deepcopy({**initial_data, **previous_data})
 
     def get_form(self, from_storage=False):
-        if self.request.method == 'GET' or from_storage:
+        if self.request.method == 'GET':
+            # For GET requests, use unbound forms with initial data
+            # This correctly displays saved values from the session
             return self.form_class(
-                data=self.get_form_initial() if from_storage else None,
+                data=None,
+                initial=self.get_form_initial(),
+                files=None,
+                **self.get_form_kwargs(),
+            )
+        if from_storage:
+            # For validation checks, create a bound form with session data
+            return self.form_class(
+                data=self.get_form_initial(),
                 initial=self.get_form_initial(),
                 files=self.get_files(),
                 **self.get_form_kwargs(),
             )
-        return self.form_class(data=self.request.POST, files=self.request.FILES, **self.get_form_kwargs())
+        # For POST requests, merge new uploads with existing session files
+        # This allows users to navigate back without losing previously uploaded files
+        session_files = self.get_files() or {}
+        new_files = dict(self.request.FILES.items())
+        # New uploads take precedence over session files
+        files = {**session_files, **new_files}
+        return self.form_class(data=self.request.POST, files=files, **self.get_form_kwargs())
 
     def is_completed(self, request):
         self.request = request
@@ -237,6 +253,11 @@ class FormFlowStep(TemplateFlowStep):
         result['form'] = self.get_form()
         previous_data = self.cfp_session.get('data')
         result['submission_title'] = previous_data.get('info', {}).get('title')
+        # Add information about uploaded files for display in templates
+        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {})
+        result['uploaded_files'] = {
+            field: file_dict.get('name') for field, file_dict in saved_files.items()
+        } if saved_files else {}
         return result
 
     def post(self, request):
