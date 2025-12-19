@@ -121,6 +121,18 @@ class TeamSerializer(serializers.ModelSerializer):
             'can_view_vouchers',
             'can_change_vouchers',
             'can_checkin_orders',
+            'can_change_submissions',
+            'is_reviewer',
+            'force_hide_speaker_names',
+            'can_video_create_stages',
+            'can_video_create_channels',
+            'can_video_direct_message',
+            'can_video_manage_announcements',
+            'can_video_view_users',
+            'can_video_manage_users',
+            'can_video_manage_rooms',
+            'can_video_manage_kiosks',
+            'can_video_manage_configuration',
         )
 
     def validate(self, data):
