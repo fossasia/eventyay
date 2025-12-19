@@ -67,7 +67,7 @@ def process_login(request, user, keep_logged_in):
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
     
     # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
-    next_url = getattr(request, 'socialauth_next_url', None)
+    next_url = request.session.pop('socialauth_next_url', None)
     if not next_url:
         next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
     

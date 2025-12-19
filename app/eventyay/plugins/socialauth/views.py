@@ -85,17 +85,19 @@ class OAuthReturnView(View):
                     query_string = urlencode(oauth2_params.model_dump())
                     auth_url = reverse('eventyay_common:oauth2_provider.authorize')
                     # OAuth2 flow takes precedence - redirect to authorization endpoint
+                    # Clean up socialauth_next_url to prevent it from being used later
+                    request.session.pop('socialauth_next_url', None)
                     response = process_login_and_set_cookie(request, user, False)
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
             
-            # Retrieve the stored 'next' URL from session and expose it on the request
-            # so that process_login_and_set_cookie can use it for redirection
+            # Retrieve and re-validate the stored 'next' URL from session
+            # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
-            if next_url:
-                # Attach next_url to request instead of mutating request.GET
-                setattr(request, 'socialauth_next_url', next_url)
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+                # Store in session with a clear key for process_login to use
+                request.session['socialauth_next_url'] = next_url
             
             response = process_login_and_set_cookie(request, user, False)
             return response
