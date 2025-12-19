@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load eventurl %}
+{% load oauth_tags %}
 
 <div id="ajaxerr">
 </div>
@@ -110,10 +111,10 @@
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=mediawiki" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
+                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
                     {% translate "Login with MediaWiki" %}
                 </a>
-                <a href="{% url 'eventyay_common:auth.login' %}?backend=google" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
+                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
                     {% translate "Login with Google" %}
                 </a>
             </div>
@@ -257,7 +258,7 @@ if (modal) {
             const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
             ssoLinks.forEach((link) => {
                 const url = new URL(link.href, window.location.origin);
-                url.searchParams.set('backend', link.dataset.provider);
+                // Don't overwrite backend - it's already in the href from the template
                 if (checkoutUrl) {
                     url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
                 }
@@ -334,11 +335,12 @@ if (modal) {
                     credentials: 'same-origin',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
-                    }
+                    },
+                    redirect: 'manual'
                 });
 
-                // Login endpoint returns 302 on success
-                if (response.status === 302) {
+                // Login endpoint returns 302 on success (redirect: 'manual' prevents auto-follow)
+                if (response.status === 302 || response.type === 'opaqueredirect') {
                     window.location.href = checkoutUrl;
                     return;
                 }
@@ -419,8 +421,10 @@ if (modal) {
                     if (popup.closed) {
                         clearInterval(activeCheckLogin);
                         activeCheckLogin = null;
-                        // Reload to check if user is now logged in
-                        window.location.reload();
+                        // Small delay to ensure session cookie is set before reload
+                        setTimeout(() => {
+                            window.location.href = checkoutUrl;
+                        }, 300);
                     }
                 } catch(e) {
                     // Silently ignore errors while checking popup status to avoid
