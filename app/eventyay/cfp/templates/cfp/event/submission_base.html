@@ -14,6 +14,7 @@
     {% include "cfp/includes/forms_header.html" %}
     {% compress js %}
         <script defer src="{% static "cfp/js/proposalTabTitles.js" %}"></script>
+        <script defer src="{% static "cfp/js/formAutoSave.js" %}"></script>
     {% endcompress %}
     {% block cfp_submission_header %}{% endblock cfp_submission_header %}
 {% endblock cfp_header %}
@@ -39,7 +40,7 @@
     </div>
     {% block cfp_form %}
         {% if request.user.is_authenticated %}
-        <form method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+        <form id="cfp-submission-form" method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
             {% csrf_token %}
             {{ wizard.management_form }}
             <div class="d-flex align-items-start">
