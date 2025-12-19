@@ -12,11 +12,11 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 50%; height: 100%; z-index: -1", frameborder="0", gesture="media", allow="autoplay; encrypted-media", allowfullscreen="true", referrerpolicy="strict-origin-when-cross-origin")
+	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
 // TODO functional component?
-import { ref, computed, watch, onMounted, onBeforeUnmount, getCurrentInstance } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { isEqual } from 'lodash'
@@ -44,10 +44,8 @@ const route = useRoute()
 
 const iframeError = ref(null)
 const iframeEl = ref(null)
-const languageAudioUrl = ref(null)
 const languageIframeUrl = ref(null)
 const isUnmounted = ref(false)
-const eventBusRef = ref(null)
 
 // Template refs
 const livestream = ref(null)
@@ -86,20 +84,28 @@ watch(youtubeTransUrl, (ytUrl) => {
 	if (!props.room) return
 	// Only react for YouTube livestream modules
 	if (module.value?.type !== 'livestream.youtube') return
-	// Rebuild iframe with the new translation video id without mutating module config
-	destroyIframe()
-	initializeIframe(false)
+
+	// Handle translation: mute main player and create translation audio iframe
+	if (ytUrl) {
+		// Create hidden translation audio iframe first
+		languageIframeUrl.value = getLanguageIframeUrl(ytUrl)
+		// Mute the main player using postMessage after a short delay
+		setTimeout(() => {
+			muteYouTubePlayer()
+		}, 500)
+	} else {
+		// Remove translation audio iframe
+		languageIframeUrl.value = null
+		// Unmute the main player using postMessage after a short delay
+		setTimeout(() => {
+			unmuteYouTubePlayer()
+		}, 100)
+	}
 })
 
 onMounted(async () => {
 	if (!props.room) return
 	await initializeIframe(false)
-	const instance = getCurrentInstance && getCurrentInstance()
-	const eventBus = instance?.appContext?.config?.globalProperties?.$eventBus || instance?.proxy?.$root?.$eventBus
-	if (eventBus) {
-		eventBus.on('languageChanged', handleLanguageChange)
-		eventBusRef.value = eventBus
-	}
 })
 
 onBeforeUnmount(() => {
@@ -108,17 +114,32 @@ onBeforeUnmount(() => {
 	if (api.socketState !== 'open') return
 	// TODO move to store?
 	if (props.room) api.call('room.leave', { room: props.room.id })
-	// Clean up event listener
-	if (eventBusRef.value) {
-		eventBusRef.value.off('languageChanged', handleLanguageChange)
-	}
 })
+
+function muteYouTubePlayer() {
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return
+	try {
+		iframeEl.value.contentWindow.postMessage('{"event":"command","func":"mute","args":""}', '*')
+	} catch (error) {
+		console.error('Failed to mute YouTube player:', error)
+	}
+}
+
+function unmuteYouTubePlayer() {
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return
+	try {
+		iframeEl.value.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*')
+	} catch (error) {
+		console.error('Failed to unmute YouTube player:', error)
+	}
+}
 
 async function initializeIframe(mute) {
 	try {
 		if (!module.value) return
 		let iframeUrl
 		let hideIfBackground = false
+		let isYouTube = false
 		switch (module.value.type) {
 			case 'call.bigbluebutton': {
 				({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }))
@@ -135,7 +156,8 @@ async function initializeIframe(mute) {
 				break
 			}
 		case 'livestream.youtube': {
-			const ytid = youtubeTransUrl.value || module.value.config.ytid
+			isYouTube = true
+			const ytid = module.value.config.ytid
 			const config = module.value.config
 			// Smart muting logic to balance autoplay and user control:
 			// - Always mute if already muted (e.g., for language translation)
@@ -176,13 +198,24 @@ async function initializeIframe(mute) {
 	iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
 	// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
 	// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-	if (module.value?.type === 'livestream.youtube') {
+	if (isYouTube) {
 		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+		iframe.id = `youtube-player-${Date.now()}`
 	}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
 		iframeEl.value = iframe
+
+		// Wait for iframe to load before sending postMessage commands
+		if (isYouTube) {
+			iframe.onload = () => {
+				// If translation is already selected, mute the main player
+				if (youtubeTransUrl.value) {
+					setTimeout(() => muteYouTubePlayer(), 1000)
+				}
+			}
+		}
 	} catch (error) {
 		// TODO handle bbb/zoom.join.missing_profile
 		iframeError.value = error
@@ -214,45 +247,41 @@ function isPlaying() {
 	return true
 }
 
-function handleLanguageChange(languageUrl) {
-	languageAudioUrl.value = languageUrl // Set the audio source to the selected language URL
-	const mute = !!languageUrl // Mute if language URL is present, otherwise unmute
-	destroyIframe()
-	initializeIframe(mute) // Initialize iframe with the appropriate mute state
-	// Set the language iframe URL when language changes
-	languageIframeUrl.value = getLanguageIframeUrl(languageUrl)
-}
 
 function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
 	const params = new URLSearchParams()
-	
+
 	// Always add autoplay and mute as they control core functionality
 	params.append('autoplay', autoplayVal ? '1' : '0')
 	params.append('mute', mute ? '1' : '0')
-	
+
+	// Enable IFrame API for programmatic control
+	params.append('enablejsapi', '1')
+	params.append('origin', window.location.origin)
+
 	// Only add optional parameters when explicitly enabled
 	if (hideControls) {
 		params.append('controls', '0')
 	}
-	
+
 	if (noRelated) {
 		params.append('rel', '0')
 	}
-	
+
 	if (showinfo) {
 		params.append('showinfo', '0')
 	}
-	
+
 	if (disableKb) {
 		params.append('disablekb', '1')
 	}
-	
+
 	if (loop) {
 		params.append('loop', '1')
 		// Loop requires playlist parameter to work properly
 		params.append('playlist', ytid)
 	}
-	
+
 	if (modestBranding) {
 		params.append('modestbranding', '1')
 	}
@@ -270,6 +299,7 @@ function getLanguageIframeUrl(languageUrl) {
 	const params = new URLSearchParams({
 		enablejsapi: '1',
 		autoplay: '1',
+		mute: '0', // Ensure translation audio is not muted
 		modestbranding: '1',
 		loop: '1',
 		controls: '0',

@@ -29,6 +29,9 @@ LOCAL_HOST_NAMES = ('testserver', 'localhost')
 
 class MultiDomainMiddleware(MiddlewareMixin):
     def process_request(self, request):
+        # TODO: Don't know why this code is complicated, why just not use request.get_host()?
+        # May improve later.
+
         # We try three options, in order of decreasing preference.
         if settings.USE_X_FORWARDED_HOST and ('X-Forwarded-Host' in request.headers):
             host = request.headers['X-Forwarded-Host']
@@ -80,12 +83,14 @@ class MultiDomainMiddleware(MiddlewareMixin):
                 request.organizer_domain = True
                 request.organizer = orga if isinstance(orga, Organizer) else Organizer.objects.get(pk=orga)
                 request.urlconf = 'eventyay.multidomain.maindomain_urlconf'
-            elif settings.DEBUG or domain in LOCAL_HOST_NAMES:
+            elif settings.IS_DEVELOPMENT or domain in LOCAL_HOST_NAMES:
                 request.urlconf = 'eventyay.multidomain.maindomain_urlconf'
             else:
-                raise DisallowedHost('Unknown host: %r' % host)
+                msg = f'Unknown host: {domain}'
+                raise DisallowedHost(msg)
         else:
-            raise DisallowedHost('Invalid HTTP_HOST header: %r.' % host)
+            msg = 'Empty HOST header'
+            raise DisallowedHost(msg)
 
         # We need to manually set the urlconf for the whole thread. Normally, Django's basic request handling
         # would do this for us, but we already need it in place for the other middlewares.

@@ -7,7 +7,7 @@ from django.utils.translation import activate, get_language
 LANGUAGE_CODES_MAPPING = {language.lower(): language for language in settings.LANGUAGES_INFORMATION}
 LANGUAGE_NAMES = dict(global_settings.LANGUAGES)
 LANGUAGE_NAMES.update(
-    (language['code'], language['natural_name']) for language in settings.LANGUAGES_INFORMATION.values()
+    (code, language['natural_name']) for code, language in settings.LANGUAGES_INFORMATION.items()
 )
 
 
