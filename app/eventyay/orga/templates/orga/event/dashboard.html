@@ -27,10 +27,8 @@
     {% endif %}
     <div id="main-title" class="d-md-flex justify-content-between">
         <h2>
-            <span style="font-size: 1.85rem;">
-                {{ request.event.name }}
-                <span class="text-muted" style="font-size: 1.25rem;">{{ request.event.get_date_range_display }}</span>
-            </span>
+            {{ request.event.name }}
+            <small class="text-muted small">{{ request.event.get_date_range_display }}</small>
         </h2>
         {% include "orga/event/component_link.html" %}
     </div>
