@@ -270,8 +270,9 @@ if (modal) {
                     url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
                     registerLink.href = url.toString();
                 } catch (e) {
-                    // Fallback if URL constructor fails with invalid URL
-                    // Build URL manually as last resort
+                    // Log the error to help diagnose why URL constructor failed
+                    console.error('Failed to construct URL for register link:', e, 'href:', registerLink.href);
+                    // Fallback: Build URL manually as last resort
                     registerLink.href = `${registerLink.href.split('?')[0]}?${REDIRECT_PARAM}=${encodeURIComponent(checkoutUrl)}`;
                 }
             }
