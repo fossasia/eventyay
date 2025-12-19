@@ -1042,6 +1042,12 @@ STATICFILES_DIRS = [
 ]
 
 STATIC_ROOT = BASE_DIR / 'static.dist'
+
+# Video Vue app: Allow Nginx to serve static assets (opt-in, default: False)
+VIDEO_STATIC_NGINX_SERVE = config.getboolean(
+    'video', 'nginx_serve_static', fallback=False
+)
+
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',

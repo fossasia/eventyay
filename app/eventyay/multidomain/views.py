@@ -23,6 +23,9 @@ from eventyay.base.models import Event  # Added for /video event context
 WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
 logger = logging.getLogger(__name__)
 
+# File extensions expected to be served by Nginx when VIDEO_STATIC_NGINX_SERVE is enabled
+VIDEO_STATIC_NGINX_EXTENSIONS = {'.js', '.css', '.map'}
+
 
 def safe_reverse(name: str, **kw) -> str:
     try:
@@ -129,6 +132,11 @@ class VideoSPAView(View):
 
 class VideoAssetView(View):
     def get(self, request, path='', *args, **kwargs):
+        # When VIDEO_STATIC_NGINX_SERVE is enabled, skip serving static assets
+        if settings.VIDEO_STATIC_NGINX_SERVE and path:
+            _, ext = os.path.splitext(path.lower())
+            if ext in VIDEO_STATIC_NGINX_EXTENSIONS:
+                raise Http404()
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
             [
