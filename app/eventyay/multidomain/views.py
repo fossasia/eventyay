@@ -19,7 +19,7 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
-from django.http import Http404
+
 
 
 WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
