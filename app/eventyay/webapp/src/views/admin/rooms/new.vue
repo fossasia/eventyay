@@ -15,21 +15,27 @@
 	edit-form(v-else, :config="config", :creating="true")
 </template>
 <script>
+import { mapGetters } from 'vuex'
 import ROOM_TYPES from 'lib/room-types'
+import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import EditForm from './EditForm'
 
 export default {
 	components: { EditForm },
 	data() {
 		return {
-			ROOM_TYPES,
+			allRoomTypes: ROOM_TYPES,
 			type: null,
 			config: null
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
+		ROOM_TYPES() {
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+		},
 		chosenType() {
-			return ROOM_TYPES.find(t => t.id === this.type)
+			return this.ROOM_TYPES.find(t => t.id === this.type)
 		},
 	},
 	watch: {

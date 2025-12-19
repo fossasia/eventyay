@@ -41,6 +41,15 @@ class TeamForm(forms.ModelForm):
             'is_reviewer',
             'force_hide_speaker_names',
             'limit_tracks',
+            'can_video_create_stages',
+            'can_video_create_channels',
+            'can_video_direct_message',
+            'can_video_manage_announcements',
+            'can_video_view_users',
+            'can_video_manage_users',
+            'can_video_manage_rooms',
+            'can_video_manage_kiosks',
+            'can_video_manage_configuration',
         ]
         widgets = {
             'limit_events': forms.CheckboxSelectMultiple(
@@ -91,6 +100,15 @@ class TeamForm(forms.ModelForm):
             'can_change_vouchers',
             'can_change_submissions',
             'is_reviewer',
+            'can_video_create_stages',
+            'can_video_create_channels',
+            'can_video_direct_message',
+            'can_video_manage_announcements',
+            'can_video_view_users',
+            'can_video_manage_users',
+            'can_video_manage_rooms',
+            'can_video_manage_kiosks',
+            'can_video_manage_configuration',
         )
         if not any(data.get(permission) for permission in permissions):
             error = forms.ValidationError(

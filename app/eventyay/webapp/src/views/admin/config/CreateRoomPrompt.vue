@@ -44,7 +44,7 @@ export default {
 					modules: []
 				}))
 				this.loading = false
-				this.$router.push({name: 'admin:room', params: {editRoomId: room}})
+				this.$router.push({name: 'admin:rooms:item', params: {roomId: room}})
 				this.$emit('close')
 			} catch (error) {
 				console.log(error)

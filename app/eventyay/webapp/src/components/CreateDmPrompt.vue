@@ -24,6 +24,11 @@ export default {
 	},
 	methods: {
 		async create(users) {
+			// Check permission before creating direct message
+			if (!this.hasPermission('world:chat.direct')) {
+				this.$emit('close')
+				return
+			}
 			// TODO error handling, progress
 			await this.$store.dispatch('chat/openDirectMessage', {users: users})
 			this.$emit('close')
