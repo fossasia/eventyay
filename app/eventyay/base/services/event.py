@@ -184,7 +184,6 @@ def get_room_config(room, permissions):
         "sidebar_hidden": False,
     }
 
-
     if hasattr(room, "current_roomviews"):
         # set actual viewer count instead of approximate text
         room_config["users"] = room.current_roomviews

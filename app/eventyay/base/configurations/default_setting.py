@@ -182,6 +182,27 @@ DEFAULT_SETTINGS = {
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_addresses_asked'}),
         ),
     },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('E-mail'),
+            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+        ),
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require email address per order'),
+            help_text=_('Require attendees to fill in an email address for the order.'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
+        ),
+    },
     'order_email_asked_twice': {
         'default': 'False',
         'type': bool,
@@ -1175,15 +1196,16 @@ DEFAULT_SETTINGS = {
         ),
     },
     'require_registered_account_for_tickets': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
         'form_kwargs': dict(
-            label=_('Only allow registered accounts to get a ticket'),
+            label=_('Require user to be logged in to place an order'),
             help_text=_(
-                'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-                "'Continue as a Guest' option will not be available for attendees."
+                'If this option is turned on, users must be logged in before completing an order. '
+                'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+                "The 'Continue as a Guest' option will not be available for attendees."
             ),
         ),
     },
