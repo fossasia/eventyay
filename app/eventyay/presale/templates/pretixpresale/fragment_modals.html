@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load eventurl %}
 
 <div id="ajaxerr">
 </div>
@@ -272,12 +273,27 @@ if (modal) {
                 } catch (e) {
                     // Log the error to help diagnose why URL constructor failed
                     console.error('Failed to construct URL for register link:', e, 'href:', registerLink.href);
-                    // Fallback: Build URL manually as last resort
-                    registerLink.href = `${registerLink.href.split('?')[0]}?${REDIRECT_PARAM}=${encodeURIComponent(checkoutUrl)}`;
+                    // Fallback: Use URLSearchParams to safely preserve existing query params
+                    const parts = registerLink.href.split('?');
+                    const basePath = parts[0];
+                    const existingQuery = parts.length > 1 ? parts[1] : '';
+                    const params = new URLSearchParams(existingQuery);
+                    if (checkoutUrl) {
+                        params.set(REDIRECT_PARAM, checkoutUrl);
+                    }
+                    const newQuery = params.toString();
+                    registerLink.href = newQuery ? `${basePath}?${newQuery}` : basePath;
                 }
             }
 
             modal.style.display = 'flex';
+            
+            // Focus management for accessibility
+            const firstInput = modal.querySelector('#checkout-email');
+            if (firstInput) {
+                // Use setTimeout to ensure modal is fully rendered
+                setTimeout(() => firstInput.focus?.(), 100);
+            }
         });
     }
 
@@ -289,6 +305,8 @@ if (modal) {
             clearInterval(activeCheckLogin);
             activeCheckLogin = null;
         }
+        // Return focus to the button that opened the modal
+        loginBtn?.focus();
     };
 
     // Close modal on close button click
@@ -389,10 +407,22 @@ if (modal) {
             const popup = window.open(link.href, 'sso_login', `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`);
 
             if (!popup) {
-                // Show user-friendly error in the modal instead of alert
+                const popupErrorMessage = '{% trans "Please allow popups for this site to use SSO login." %}';
+                // Show error in the modal's error div
                 if (errorDiv) {
-                    errorDiv.textContent = '{% trans "Please allow popups for this site to use SSO login." %}';
+                    errorDiv.textContent = popupErrorMessage;
                     errorDiv.style.display = 'block';
+                }
+                // Also show in a more prominent global error container
+                const globalErrorDiv = document.getElementById('ajaxerr');
+                if (globalErrorDiv) {
+                    globalErrorDiv.textContent = popupErrorMessage;
+                    globalErrorDiv.style.display = 'block';
+                    globalErrorDiv.setAttribute('role', 'alert');
+                    globalErrorDiv.setAttribute('aria-live', 'assertive');
+                    // Set tabindex to allow focus for screen reader announcement
+                    globalErrorDiv.setAttribute('tabindex', '-1');
+                    globalErrorDiv.focus?.();
                 }
                 return;
             }
@@ -408,9 +438,9 @@ if (modal) {
                         window.location.reload();
                     }
                 } catch(e) {
-                    // Cross-origin access errors are expected when checking popup.closed
-                    // from a different origin (OAuth provider domain vs our domain)
-                    console.debug('SSO popup check error (expected for cross-origin):', e.message);
+                    // Silently ignore errors while checking popup status to avoid
+                    // breaking the interval in environments where accessing window properties may throw
+                    // unexpectedly (e.g., cross-origin restrictions, browser security policies).
                 }
             }, POPUP_CHECK_INTERVAL);
         });
