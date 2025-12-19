@@ -29,6 +29,14 @@ adapter = get_adapter()
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
+        
+        # Store the 'next' URL in session for redirecting user back after login
+        next_url = request.GET.get('next', '')
+        if next_url:
+            parsed = urlparse(next_url)
+            # Only allow relative URLs for security
+            if not parsed.netloc and not parsed.scheme:
+                request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
         client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
@@ -70,6 +78,15 @@ class OAuthReturnView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
             user = self.get_or_create_user(request)
+            
+            # Retrieve the stored 'next' URL from session and inject it into the request
+            # so that process_login_and_set_cookie can use it for redirection
+            next_url = request.session.pop('socialauth_next_url', None)
+            if next_url:
+                # Inject it into request.GET so the auth backend can find it
+                request.GET = request.GET.copy()
+                request.GET['next'] = next_url
+            
             response = process_login_and_set_cookie(request, user, False)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
