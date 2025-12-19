@@ -17,6 +17,7 @@ from eventyay.talk_rules.submission import get_reviewable_submissions
         summary="List Reviews",
         parameters=[
             build_search_docs("submission.title", "user.name"),
+            build_search_docs("submission.title", "user.fullname"),
             build_expand_docs(
                 "user",
                 "scores.category",

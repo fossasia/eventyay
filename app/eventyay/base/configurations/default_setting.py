@@ -12,15 +12,10 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.utils.text import format_lazy
-from django.utils.translation import (
-    gettext_lazy as _,
-)
-from django.utils.translation import (
-    gettext_noop,
-    pgettext,
-    pgettext_lazy,
-)
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -185,6 +180,27 @@ DEFAULT_SETTINGS = {
             label=_('Require postal addresses per ticket'),
             help_text=_('Require attendees to fill in postal addresses for all admission tickets.'),
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_addresses_asked'}),
+        ),
+    },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('E-mail'),
+            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+        ),
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require email address per order'),
+            help_text=_('Require attendees to fill in an email address for the order.'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
         ),
     },
     'order_email_asked_twice': {
@@ -859,6 +875,11 @@ DEFAULT_SETTINGS = {
             widget=MultipleLanguagesWidget,
             required=True,
             label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
+            ),
         ),
     },
     'content_locales': {
@@ -876,6 +897,7 @@ DEFAULT_SETTINGS = {
             required=True,
             label=_('Content languages'),
             help_text=_('Languages that speakers can select for their submissions. Content languages should be a subset of active languages.'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
@@ -1175,15 +1197,16 @@ DEFAULT_SETTINGS = {
         ),
     },
     'require_registered_account_for_tickets': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
         'form_kwargs': dict(
-            label=_('Only allow registered accounts to get a ticket'),
+            label=_('Require user to be logged in to place an order'),
             help_text=_(
-                'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-                "'Continue as a Guest' option will not be available for attendees."
+                'If this option is turned on, users must be logged in before completing an order. '
+                'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+                "The 'Continue as a Guest' option will not be available for attendees."
             ),
         ),
     },
@@ -2230,7 +2253,7 @@ Your {event} team"""
         'type': LazyI18nString,
         'serializer_class': I18nField,
         'form_class': I18nFormField,
-        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nTextarea),
+        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
     },
     'event_info_text': {
         'default': '',

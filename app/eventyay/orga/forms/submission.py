@@ -276,8 +276,11 @@ class AddSpeakerForm(forms.Form):
         widget=EnhancedSelect,
     )
 
-    def __init__(self, *args, event=None, form_renderer=None, **kwargs):
+    def __init__(self, *args, event=None, form_renderer=None, require_name=False, **kwargs):
         super().__init__(*args, **kwargs)
+        if require_name:
+            self.fields['name'].required = True
+            self.fields['email'].required = True
         if not event.named_locales or len(event.named_locales) < 2:
             self.fields.pop('locale')
         else:
