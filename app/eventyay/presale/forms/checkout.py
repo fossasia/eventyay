@@ -27,11 +27,6 @@ logger = logging.getLogger(__name__)
 
 class ContactForm(forms.Form):
     required_css_class = 'required'
-    email = forms.EmailField(
-        label=_('E-mail'),
-        validators=[EmailBanlistValidator()],
-        widget=forms.EmailInput(attrs={'autocomplete': 'section-contact email'}),
-    )
     # This field will be dropped depending on `include_wikimedia_username` event setting.
     wikimedia_username = forms.CharField(
         label=_('Wikimedia Username'),
@@ -52,7 +47,23 @@ class ContactForm(forms.Form):
         self.all_optional = all_optional
         super().__init__(*args, **kwargs)
 
-        if event.settings.order_email_asked_twice:
+        if event.settings.order_email_asked:
+            email_required = event.settings.order_email_required and not self.all_optional
+            self.fields['email'] = forms.EmailField(
+                label=_('E-mail'),
+                required=email_required,
+                validators=[EmailBanlistValidator()],
+                widget=forms.EmailInput(attrs={'autocomplete': 'section-contact email'}),
+            )
+            if not request.session.get('iframe_session', False):
+                # There is a browser quirk in Chrome that leads to incorrect initial scrolling in iframes if there
+                # is an autofocus field. Who would have thought… See e.g. here:
+                # https://floatboxjs.com/forum/topic.php?post=8440&usebb_sid=2e116486a9ec6b7070e045aea8cded5b#post8440
+                self.fields['email'].widget.attrs['autofocus'] = 'autofocus'
+            self.fields['email'].help_text = event.settings.checkout_email_helptext
+            self.fields['email'].widget.attrs['placeholder'] = 'Valid email address'
+
+        if event.settings.order_email_asked and event.settings.order_email_asked_twice:
             self.fields['email_repeat'] = forms.EmailField(
                 label=_('E-mail address (repeated)'),
                 help_text=_('Please enter the same email address again to make sure you typed it correctly.'),
@@ -95,14 +106,6 @@ class ContactForm(forms.Form):
             if wm_initial:
                 self.fields['wikimedia_username'].initial = wm_initial
 
-        if not request.session.get('iframe_session', False):
-            # There is a browser quirk in Chrome that leads to incorrect initial scrolling in iframes if there
-            # is an autofocus field. Who would have thought… See e.g. here:
-            # https://floatboxjs.com/forum/topic.php?post=8440&usebb_sid=2e116486a9ec6b7070e045aea8cded5b#post8440
-            self.fields['email'].widget.attrs['autofocus'] = 'autofocus'
-        self.fields['email'].help_text = event.settings.checkout_email_helptext
-        self.fields['email'].widget.attrs['placeholder'] = 'Valid Email address'
-
         responses = contact_form_fields.send(event, request=request)
         for r, response in responses:
             for key, value in response.items():
@@ -115,7 +118,8 @@ class ContactForm(forms.Form):
 
     def clean(self):
         if (
-            self.event.settings.order_email_asked_twice
+            self.event.settings.order_email_asked
+            and self.event.settings.order_email_asked_twice
             and self.cleaned_data.get('email')
             and self.cleaned_data.get('email_repeat')
         ):

@@ -43,30 +43,6 @@ migrations. It may be useful debug output to include in bug reports about databa
 World management
 ----------------
 
-``create_world``
-""""""""""""""""
-
-The interactive ``create_world`` command allows you to create an empty eventyay world from scratch::
-
-    > create_world
-    Enter the internal ID for the new world (alphanumeric): myevent2020
-    Enter the title for the new world: My Event 2020
-    Enter the domain of the new world (e.g. myevent.example.org): eventyay.mydomain.com
-    World created.
-    Default API keys: [{'issuer': 'any', 'audience': 'Eventyay', 'secret': 'zvB7hI28vbrI7KtsRnJ1TZBSN3DvYdoy9VoJGLI1ouHQP5VtRG3U6AgKJ9YOqKNU'}]
-
-``clone_world``
-"""""""""""""""
-
-The interactive ``clone_world`` command allows you to create a eventyay world while copying all settings and rooms
-(but not users and user-generated content) from an existing one::
-
-    > clone_world myevent2019
-    Enter the internal ID for the new world (alphanumeric): myevent2020
-    Enter the title for the new world: My Event 2020
-    Enter the domain of the new world (e.g. myevent.example.org): eventyay.mydomain.com
-    World cloned.
-
 ``generate_token``
 """"""""""""""""""
 
@@ -74,16 +50,6 @@ The ``generate_token`` command allows you to create a valid access token to a ev
 
     > generate_token myevent2019 --trait moderator --trait speaker --days 90
     https://eventyay.mydomain.com/#token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9…
-
-``list_worlds``
-"""""""""""""""
-
-The ``list_worlds`` command allows you to list all worlds in the database::
-
-    > list_worlds
-    ID                  Title                             URL
-    myevent2019         My Event 2019                     https://2019.myevent.com
-    myevent2020         My Event 2020                     https://2020.myevent.com
 
 ``import_config``
 """""""""""""""""

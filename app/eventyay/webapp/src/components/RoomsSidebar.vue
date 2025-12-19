@@ -3,17 +3,17 @@ transition(name="sidebar")
 	.c-rooms-sidebar(v-show="show && !snapBack", :style="style", role="navigation", @pointerdown="onPointerdown", @pointermove="onPointermove", @pointerup="onPointerup", @pointercancel="onPointercancel")
 		scrollbars(y)
 			.global-links(role="group", aria-label="pages")
-				router-link.room(v-if="homeRoom && roomsByType.page.includes(homeRoom)", :to="{name: 'home'}", v-html="$emojify(homeRoom.name)")
+				router-link.room(v-if="roomsByType.page.includes(rooms[0])", :to="{name: 'home'}", v-html="$emojify(rooms[0].name)")
 				router-link.room(:to="{name: 'schedule'}") {{ $t('RoomsSidebar:schedule:label') }}
 				router-link.room(:to="{name: 'schedule:sessions'}") {{ $t('RoomsSidebar:session:label') }}
 				router-link.room(:to="{name: 'schedule:speakers'}") {{ $t('RoomsSidebar:speaker:label') }}
 				template(v-for="page of roomsByType.page", :key="page.id")
-					router-link.room(v-if="page !== homeRoom", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
+					router-link.room(v-if="page !== rooms[0]", :to="{name: 'room', params: {roomId: page.id}}", v-html="$emojify(page.name)")
 			.group-title#stages-title(v-if="roomsByType.stage.length || hasPermission('world:rooms.create.stage')")
 				span {{ $t('RoomsSidebar:stages-headline:text') }}
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.stage')", @click="showStageCreationPrompt = true") plus
 			.stages(role="group", aria-describedby="stages-title")
-				router-link.stage(v-for="stage of roomsByType.stage", :to="stage.room === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
+				router-link.stage(v-for="stage of roomsByType.stage", :to="stage.room === rooms[0] ? {name: 'home'} : {name: 'room', params: {roomId: stage.room.id}}", :class="{active: stage.room.id === $route.params.roomId, session: stage.session, live: stage.session && stage.room.schedule_data, 'has-image': stage.image, 'starts-with-emoji': startsWithEmoji(stage.room.name)}")
 					template(v-if="stage.session")
 						img.preview(v-if="stage.image", :src="stage.image")
 						.info
@@ -38,11 +38,11 @@ transition(name="sidebar")
 				bunt-icon-button(v-if="hasPermission('world:rooms.create.chat') || hasPermission('world:rooms.create.bbb')", tooltip="Create Channel", :tooltip-fixed="true", @click="showChatCreationPrompt = true") plus
 				bunt-icon-button(v-if="worldHasTextChannels", tooltip="Browse all channels", :tooltip-fixed="true", @click="showChannelBrowser = true") compass-outline
 			.chats(role="group", aria-describedby="chats-title")
-				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="chat === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
+				router-link.video-chat(v-for="chat of roomsByType.videoChat", :to="chat === rooms[0] ? {name: 'home'} : {name: 'room', params: {roomId: chat.id}}", :class="{active: chat.id === $route.params.roomId, 'starts-with-emoji': startsWithEmoji(chat.name)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.name)")
 					i.bunt-icon.activity-icon.mdi(v-if="chat.users === 'many' || chat.users === 'few'", :class="{'mdi-account-group': (chat.users === 'many'), 'mdi-account-multiple': (chat.users === 'few')}", v-tooltip.bottom.fixed="{text: $t('RoomsSidebar:users-tooltip:' + chat.users)}", :aria-label="$t('RoomsSidebar:users-tooltip:' + chat.users)")
-				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="chat.room === homeRoom ? {name: 'home'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id), 'starts-with-emoji': startsWithEmoji(chat.room.name)}")
+				router-link.text-chat(v-for="chat of roomsByType.textChat", :to="chat.room === rooms[0] ? {name: 'home'} : {name: 'room', params: {roomId: chat.room.id}}", :class="{unread: hasUnreadMessages(chat.room.modules[0].channel_id), 'starts-with-emoji': startsWithEmoji(chat.room.name)}")
 					.room-icon(aria-hidden="true")
 					.name(v-html="$emojify(chat.room.name)")
 					.notifications(v-if="chat.notifications") {{ chat.notifications }}
@@ -114,7 +114,7 @@ export default {
 		...mapState('schedule', ['schedule']),
 		...mapState('chat', ['joinedChannels', 'call']),
 		...mapState('exhibition', ['staffedExhibitions']),
-		...mapGetters(['hasPermission', 'visibleRooms']),
+		...mapGetters(['hasPermission']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
@@ -124,9 +124,6 @@ export default {
 				transform: `translateX(${this.pointerMovementX}px)`
 			}
 		},
-		homeRoom() {
-			return this.visibleRooms[0] || null
-		},
 		roomsByType() {
 			const rooms = {
 				page: [],
@@ -134,7 +131,7 @@ export default {
 				textChat: [],
 				videoChat: []
 			}
-			for (const room of this.visibleRooms) {
+			for (const room of this.rooms) {
 				if (room.modules.length === 1 && room.modules[0].type === 'chat.native') {
 					if (!this.joinedChannels.some(channel => channel.id === room.modules[0].channel_id)) continue
 					const notifications = this.notificationCount(room.modules[0].channel_id)
@@ -178,13 +175,13 @@ export default {
 				.sort((a, b) => (this.hasUnreadMessages(b.id) - this.hasUnreadMessages(a.id)) || this.getDMChannelName(a).localeCompare(this.getDMChannelName(b)))
 		},
 		worldHasTextChannels() {
-			return this.visibleRooms.some(room => room.modules.length === 1 && room.modules[0].type === 'chat.native')
+			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'chat.native')
 		},
 		worldHasExhibition() {
-			return this.visibleRooms.some(room => room.modules.length === 1 && room.modules[0].type === 'exhibition.native')
+			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'exhibition.native')
 		},
 		worldHasPosters() {
-			return this.visibleRooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
+			return this.rooms.some(room => room.modules.length === 1 && room.modules[0].type === 'poster.native')
 		},
 	},
 	methods: {

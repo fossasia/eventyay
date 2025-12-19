@@ -60,7 +60,7 @@ class ConfirmStep(CartMixin, AsyncAction, TemplateFlowStep):
         self.cart_session['shown_total'] = str(ctx['cart']['total'])
 
         email = self.cart_session.get('contact_form_data', {}).get('email')
-        if email != settings.EVENTYAY_EMAIL_NONE_VALUE:
+        if email and email != settings.EVENTYAY_EMAIL_NONE_VALUE:
             ctx['contact_info'] = [
                 (_('E-mail'), email),
             ]

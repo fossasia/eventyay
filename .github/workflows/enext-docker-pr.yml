@@ -1,12 +1,12 @@
-name: Docker PR Build (enext)
+name: Docker PR Build (dev/main)
 
 on:
   pull_request:
-    branches: [ enext, main ]
+    branches: [ dev, main ]
 
 jobs:
   build_docker_image:
-    name: Build Docker image for enext PR
+    name: Build Docker image for dev PR
     runs-on: ubuntu-latest
 
     steps:

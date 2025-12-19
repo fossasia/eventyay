@@ -55,10 +55,6 @@ export default new Vuex.Store({
 				lookup[room.id] = room
 				return lookup
 			}, {})
-		},
-		visibleRooms(state) {
-			if (!state.rooms) return []
-			return state.rooms.filter(room => !room.hidden && !room.sidebar_hidden && room.setup_complete)
 		}
 	},
 	mutations: {

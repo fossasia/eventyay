@@ -1,0 +1,11 @@
+# The .dockerignore at the parent folder doesn't work with the Dockerfile in this folder,
+# so we need a second file.
+.venv
+*.local.toml
+.secrets
+.env
+eventyay/static.dist
+eventyay/data
+*.egg-info
+**/__pycache__
+**/node_modules

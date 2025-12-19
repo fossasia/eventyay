@@ -51,16 +51,12 @@
             <fieldset>
                 <legend>{% trans "Customer and attendee data" %}</legend>
                 <h4>{% trans "Customer data (once per order)" %}</h4>
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "E-mail" %}
-                    </label>
-                    <div class="col-md-9">
-                        <div class="checkbox">
-                            <label><input type="checkbox" checked="checked" disabled="disabled"> {% trans "Ask and require input" %}</label>
-                        </div>
-                    </div>
-                </div>
+                {% if sform.order_email_asked_required %}
+                    {% bootstrap_field sform.order_email_asked_required layout="control" %}
+                {% else %}
+                    {% bootstrap_field sform.order_email_asked layout="control" %}
+                    {% bootstrap_field sform.order_email_required layout="control" %}
+                {% endif %}
                 {% bootstrap_field sform.order_email_asked_twice layout="control" %}
                 {% bootstrap_field sform.include_wikimedia_username layout="control" %}
                 {% bootstrap_field sform.order_phone_asked_required layout="control" %}

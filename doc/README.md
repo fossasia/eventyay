@@ -146,7 +146,7 @@ All suppressions are for **expected** warnings that don't affect documentation q
 
 ## Automated Deployment
 
-Documentation auto-deploys to **docs.eventyay.com** via GitHub Actions when you push to `enext` or `main` branches.
+Documentation auto-deploys to **docs.eventyay.com** via GitHub Actions when you push to `dev` or `main` branches.
 
 **Workflow**: `.github/workflows/deploy-docs.yml`
 
@@ -179,7 +179,7 @@ TTL: 3600
 ```bash
 git add .
 git commit -m "Deploy unified documentation"
-git push origin enext
+git push origin dev
 ```
 
 ### 5. Verify
@@ -250,7 +250,7 @@ grep html_theme conf.py          # Check setting
 ## Support
 
 - **Issues**: https://github.com/fossasia/eventyay/issues
-- **Docs Source**: https://github.com/fossasia/eventyay/tree/enext/doc
+- **Docs Source**: https://github.com/fossasia/eventyay/tree/dev/doc
 
 ## License
 
