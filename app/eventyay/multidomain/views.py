@@ -19,6 +19,8 @@ from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
+from django.http import Http404
+
 
 WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
 logger = logging.getLogger(__name__)
@@ -129,6 +131,10 @@ class VideoSPAView(View):
 
 class VideoAssetView(View):
     def get(self, request, path='', *args, **kwargs):
+        # Let Nginx serve static assets
+        if path.startswith(('js/', 'css/')) or path == 'favicon.ico':
+            raise Http404
+
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
             [
@@ -150,6 +156,7 @@ class VideoAssetView(View):
                 return resp
         logger.warning('Video asset not found: %s', path)
         raise Http404()
+
 
 class AnonymousInviteRedirectView(View):
     """
