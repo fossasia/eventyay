@@ -132,8 +132,9 @@ class VideoSPAView(View):
 class VideoAssetView(View):
     def get(self, request, path='', *args, **kwargs):
         # Let Nginx serve static assets
-        if path.startswith(('js/', 'css/')) or path == 'favicon.ico':
-            raise Http404
+        NGINX_ASSETS = ('js/', 'css/', 'favicon.ico')
+        if path.startswith(NGINX_ASSETS) or path in NGINX_ASSETS:
+            raise Http404()
 
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
