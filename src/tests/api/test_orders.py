@@ -4918,3 +4918,132 @@ def test_position_update_question_handling(token_client, organizer, event, order
         answ = op.answers.get()
     assert answ.file
     assert answ.answer.startswith('file://')
+
+
+@pytest.mark.django_db
+def test_order_create_onsite(token_client, organizer, event, item, quota, question):
+    res = {
+        'email': 'onsite@dummy.test',
+        'locale': 'en',
+        'positions': [
+            {
+                'item': item.pk,
+                'variation': None,
+                'price': '23.00',
+                'attendee_name_parts': {'full_name': 'John Doe'},
+                'attendee_email': 'john@example.com',
+                'answers': [{'question': question.pk, 'answer': 'M', 'options': []}],
+                'subevent': None,
+            }
+        ],
+    }
+    resp = token_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/create_onsite/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 201
+    assert resp.data['status'] == 'p'
+    assert resp.data['code']
+    assert resp.data['order_id']
+    assert resp.data['total'] == '23.00'
+    
+    with scopes_disabled():
+        o = Order.objects.get(pk=resp.data['order_id'])
+        assert o.status == Order.STATUS_PAID
+        assert o.email == 'onsite@dummy.test'
+        assert o.total == Decimal('23.00')
+        assert o.positions.count() == 1
+        assert o.sales_channel == 'box_office'
+        
+        payment = o.payments.filter(provider='manual', state=OrderPayment.PAYMENT_STATE_CONFIRMED).first()
+        assert payment is not None
+        assert payment.amount == o.total
+
+
+@pytest.mark.django_db
+def test_order_create_onsite_without_permission(client, organizer, event, item, quota, question):
+    res = {
+        'email': 'onsite@dummy.test',
+        'locale': 'en',
+        'positions': [
+            {
+                'item': item.pk,
+                'variation': None,
+                'price': '23.00',
+                'attendee_name_parts': {'full_name': 'John Doe'},
+                'subevent': None,
+            }
+        ],
+    }
+    resp = client.post(
+        '/api/v1/organizers/{}/events/{}/orders/create_onsite/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+def test_order_create_onsite_authenticated_without_can_change_orders(user_client, organizer, event, item, quota, question, team):
+    team.can_change_orders = False
+    team.save()
+    
+    res = {
+        'email': 'onsite@dummy.test',
+        'locale': 'en',
+        'positions': [
+            {
+                'item': item.pk,
+                'variation': None,
+                'price': '23.00',
+                'attendee_name_parts': {'full_name': 'John Doe'},
+                'subevent': None,
+            }
+        ],
+    }
+    resp = user_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/create_onsite/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 403
+
+
+@pytest.mark.django_db
+def test_order_create_onsite_authenticated_with_can_change_orders(user_client, organizer, event, item, quota, question, team):
+    team.can_change_orders = True
+    team.save()
+    
+    res = {
+        'email': 'onsite@dummy.test',
+        'locale': 'en',
+        'positions': [
+            {
+                'item': item.pk,
+                'variation': None,
+                'price': '23.00',
+                'attendee_name_parts': {'full_name': 'John Doe'},
+                'attendee_email': 'john@example.com',
+                'answers': [{'question': question.pk, 'answer': 'M', 'options': []}],
+                'subevent': None,
+            }
+        ],
+    }
+    resp = user_client.post(
+        '/api/v1/organizers/{}/events/{}/orders/create_onsite/'.format(organizer.slug, event.slug),
+        format='json',
+        data=res,
+    )
+    assert resp.status_code == 201
+    assert resp.data['status'] == 'p'
+    assert resp.data['code']
+    assert resp.data['order_id']
+    
+    with scopes_disabled():
+        o = Order.objects.get(pk=resp.data['order_id'])
+        assert o.status == Order.STATUS_PAID
+        assert o.sales_channel == 'box_office'
+        
+        payment = o.payments.filter(provider='manual', state=OrderPayment.PAYMENT_STATE_CONFIRMED).first()
+        assert payment is not None

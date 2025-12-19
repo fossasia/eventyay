@@ -407,6 +407,65 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return self.retrieve(request, [], **kwargs)
 
+    @action(detail=False, methods=['POST'], url_path='create_onsite')
+    def create_onsite(self, request, **kwargs):
+        """
+        Create a new order for on-site sales (box office).
+        
+        This endpoint is restricted to staff with can_change_orders permission
+        (enforced via OrderViewSet.write_permission).
+        
+        Orders are created as paid with manual payment provider, assuming payment
+        (cash/card) has been completed at the counter. This matches the behavior
+        of existing order import and box-office workflows.
+        """
+        data = request.data.copy()
+        
+        # Force box-office semantics - do not allow client overrides
+        # Payment is assumed to be completed at the counter (cash/manual)
+        data['payment_provider'] = 'manual'
+        data['status'] = 'p'  # Paid
+        data['sales_channel'] = 'box_office'  # Always box office
+        data['send_email'] = False  # Never send email for on-site orders
+        
+        serializer = OrderCreateSerializer(data=data, context=self.get_serializer_context())
+        serializer.is_valid(raise_exception=True)
+        
+        with transaction.atomic():
+            try:
+                self.perform_create(serializer)
+            except TaxRule.SaleNotAllowed:
+                raise ValidationError(_('One of the selected products is not available in the selected country.'))
+            
+            order = serializer.instance
+            if not order.pk:
+                raise ValidationError(_('Order creation failed.'))
+            
+            serializer_output = OrderSerializer(order, context=serializer.context)
+            
+            order.log_action(
+                'eventyay.event.order.placed',
+                user=request.user if request.user.is_authenticated else None,
+                auth=request.auth,
+                data={'source': 'onsite_api'},
+            )
+        
+        with language(order.locale, self.request.event.settings.region):
+            order_placed.send(self.request.event, order=order)
+            if order.status == Order.STATUS_PAID:
+                order_paid.send(self.request.event, order=order)
+        
+        return Response(
+            {
+                'order_id': order.pk,
+                'code': order.code,
+                'status': order.status,
+                'total': str(order.total),
+                'order': serializer_output.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
     @action(detail=True, methods=['POST'])
     def reactivate(self, request, **kwargs):
         order = self.get_object()
