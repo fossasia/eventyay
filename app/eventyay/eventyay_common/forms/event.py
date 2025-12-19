@@ -59,7 +59,6 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
-        
         # Ensure the language selectors use the custom dropdown widget even if defaults are not picked up elsewhere,
         # while preserving any existing widget attributes (ids, data-*, classes).
         for fname in ('locales', 'content_locales'):
