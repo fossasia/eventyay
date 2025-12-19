@@ -266,24 +266,9 @@ if (modal) {
 
             const registerLink = modal.querySelector('.checkout-login-footer a');
             if (registerLink) {
-                try {
-                    const url = new URL(registerLink.href, window.location.origin);
-                    url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
-                    registerLink.href = url.toString();
-                } catch (e) {
-                    // Log the error to help diagnose why URL constructor failed
-                    console.error('Failed to construct URL for register link:', e, 'href:', registerLink.href);
-                    // Fallback: Use URLSearchParams to safely preserve existing query params
-                    const parts = registerLink.href.split('?');
-                    const basePath = parts[0];
-                    const existingQuery = parts.length > 1 ? parts[1] : '';
-                    const params = new URLSearchParams(existingQuery);
-                    if (checkoutUrl) {
-                        params.set(REDIRECT_PARAM, checkoutUrl);
-                    }
-                    const newQuery = params.toString();
-                    registerLink.href = newQuery ? `${basePath}?${newQuery}` : basePath;
-                }
+                const url = new URL(registerLink.href, window.location.origin);
+                url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                registerLink.href = url.toString();
             }
 
             modal.style.display = 'flex';
