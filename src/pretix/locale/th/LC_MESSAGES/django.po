@@ -284,10 +284,6 @@ msgstr ""
 
 #: pretix/api/webhooks.py:227
 msgid "Ticket checked in"
-msgstr ""
-
-#: pretix/api/webhooks.py:231
-msgid "Ticket check-in reverted"
 msgstr "已驗票"
 
 #: pretix/api/webhooks.py:231

@@ -24,7 +24,6 @@
 						modules: []
 					}))
 				}
-				const updatedConfig = await api.call('room.config.patch', {
 				const module_config = Array.isArray(this.config.module_config) ? this.config.module_config : []
 				const setup_complete = module_config.length > 0
 				let sidebar_hidden

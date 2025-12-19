@@ -20,7 +20,6 @@
 				v-if="!search",
 				v-model:list="rooms",
 				lockAxis="y",
-				:valueKey='"id"',
 				:valueKey="'id'",
 				:useDragHandle="true",
 				v-scrollbar.y="",

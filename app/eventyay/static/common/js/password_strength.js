@@ -115,11 +115,12 @@ const updatePasswordStrength = (passwordField) => {
             icon.setAttribute("aria-hidden", "true");
 
             span.appendChild(icon);
-            span.append(` ${err}`);
+            span.appendChild(document.createTextNode(` ${err}`));
             container.appendChild(span);
         });
         passwordStrengthInfo.appendChild(container);
         passwordStrengthInfo.classList.remove("d-none");
+        return;
     } else {
         const result = zxcvbn(passwordField.value);
         const crackTime = result.crack_times_display.online_no_throttling_10_per_second;
@@ -145,7 +146,7 @@ const updatePasswordStrength = (passwordField) => {
             icon.className = "fa fa-check-circle";
             icon.setAttribute("aria-hidden", "true");
             span.appendChild(icon);
-            span.append(` This password would take ${crackTime} to crack.`);
+            span.appendChild(document.createTextNode(` This password would take ${crackTime} to crack.`));
         } else {
             span.textContent = `This password would take ${crackTime} to crack.`;
         }
@@ -154,7 +155,6 @@ const updatePasswordStrength = (passwordField) => {
         passwordStrengthInfo.appendChild(p);
         passwordStrengthInfo.classList.remove("d-none");
     }
-
     matchPasswords(passwordField)
 }
 
