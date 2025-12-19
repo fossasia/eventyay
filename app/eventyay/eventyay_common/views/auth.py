@@ -65,7 +65,12 @@ def process_login(request, user, keep_logged_in):
     :return: This method returns a ``HttpResponse``.
     """
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
-    next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
+    
+    # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
+    next_url = getattr(request, 'socialauth_next_url', None)
+    if not next_url:
+        next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
+    
     if user.require_2fa:
         request.session['eventyay_auth_2fa_user'] = user.pk
         request.session['eventyay_auth_2fa_time'] = str(int(time.time()))

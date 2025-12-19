@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView, View
 from pydantic import ValidationError
@@ -32,11 +33,8 @@ class OAuthLoginView(View):
         
         # Store the 'next' URL in session for redirecting user back after login
         next_url = request.GET.get('next', '')
-        if next_url:
-            parsed = urlparse(next_url)
-            # Only allow relative URLs for security
-            if not parsed.netloc and not parsed.scheme:
-                request.session['socialauth_next_url'] = next_url
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+            request.session['socialauth_next_url'] = next_url
 
         gs = GlobalSettingsObject()
         client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
@@ -79,25 +77,27 @@ class OAuthReturnView(View):
         try:
             user = self.get_or_create_user(request)
             
-            # Retrieve the stored 'next' URL from session and inject it into the request
-            # so that process_login_and_set_cookie can use it for redirection
-            next_url = request.session.pop('socialauth_next_url', None)
-            if next_url:
-                # Inject it into request.GET so the auth backend can find it
-                request.GET = request.GET.copy()
-                request.GET['next'] = next_url
-            
-            response = process_login_and_set_cookie(request, user, False)
+            # Check for OAuth2 params first (Talk module integration)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
                 try:
                     oauth2_params = OAuth2Params.model_validate(oauth2_params)
                     query_string = urlencode(oauth2_params.model_dump())
                     auth_url = reverse('eventyay_common:oauth2_provider.authorize')
+                    # OAuth2 flow takes precedence - redirect to authorization endpoint
+                    response = process_login_and_set_cookie(request, user, False)
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-
+            
+            # Retrieve the stored 'next' URL from session and expose it on the request
+            # so that process_login_and_set_cookie can use it for redirection
+            next_url = request.session.pop('socialauth_next_url', None)
+            if next_url:
+                # Attach next_url to request instead of mutating request.GET
+                setattr(request, 'socialauth_next_url', next_url)
+            
+            response = process_login_and_set_cookie(request, user, False)
             return response
         except AttributeError as e:
             messages.error(request, _('Error while authorizing: no email address available.'))
