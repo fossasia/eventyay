@@ -111,10 +111,10 @@
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
-                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
+                <a href="{% url 'socialauth:social.oauth.login' provider='mediawiki' %}" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
                     {% translate "Login with MediaWiki" %}
                 </a>
-                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
+                <a href="{% url 'socialauth:social.oauth.login' provider='google' %}" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
                     {% translate "Login with Google" %}
                 </a>
             </div>
@@ -322,7 +322,7 @@ if (modal) {
             const submitBtn = document.getElementById('checkout-login-submit');
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {% trans "Logging in..." %}';
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {% translate "Logging in..." %}';
 
             if (errorDiv) errorDiv.style.display = 'none';
 
@@ -409,7 +409,7 @@ if (modal) {
                     globalErrorDiv.setAttribute('aria-live', 'assertive');
                     // Set tabindex to allow focus for screen reader announcement
                     globalErrorDiv.setAttribute('tabindex', '-1');
-                    globalErrorDiv.focus?.();
+                    globalErrorDiv.focus();
                 }
                 return;
             }
@@ -427,9 +427,9 @@ if (modal) {
                         }, 300);
                     }
                 } catch(e) {
-                    // Silently ignore errors while checking popup status to avoid
-                    // breaking the interval in environments where accessing window properties may throw
-                    // unexpectedly (e.g., cross-origin restrictions, browser security policies).
+                    // Cross-origin errors when checking popup.closed are expected
+                    // Log for debugging but don't break the interval
+                    console.debug('SSO popup check error (expected for cross-origin):', e.message);
                 }
             }, POPUP_CHECK_INTERVAL);
         });
