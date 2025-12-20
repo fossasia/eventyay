@@ -9,16 +9,16 @@
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
             <div class="navigation-title">
-                <h1>
+                <h2>
                     {{ request.event.name }}
-                    <small>
+                    <small class="text-muted small">
                         {% if request.event.has_subevents %}
                             {% trans "Event series" %}
                         {% else %}
                             {{ request.event.get_date_range_display }}
                         {% endif %}
                     </small>
-                </h1>
+                </h2>
             </div>
             {% include "eventyay_common/event/component_link.html" %}
         </div>
