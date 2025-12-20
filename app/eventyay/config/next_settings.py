@@ -155,6 +155,8 @@ class BaseSettings(_BaseSettings):
     linkedin_client_secret: str = ''
     # Ask to provide comments when making changes in the admin interface.
     admin_audit_comments_asked: bool = False
+    # Video Vue app: Allow Nginx to serve static assets (opt-in, default: False)
+    nginx_serve_static: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -241,6 +243,9 @@ TALK_CONFIG = talk_config
 DEBUG = conf.debug
 SECRET_KEY = conf.secret_key
 DATABASE_REPLICA = 'default'
+
+# Video Vue app: Allow Nginx to serve static assets (opt-in, default: False)
+VIDEO_STATIC_NGINX_SERVE = conf.nginx_serve_static
 
 DATA_DIR = BASE_DIR / 'data'
 LOG_DIR = DATA_DIR / 'logs'

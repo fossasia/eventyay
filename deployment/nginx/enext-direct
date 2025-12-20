@@ -37,6 +37,27 @@ server {
 		access_log off;
 		expires 30d;
 	}
+
+	# Video Vue app static assets (optional Nginx serving)
+	# Uncomment this block to serve Video Vue static assets directly from Nginx.
+	# This requires setting nginx_serve_static = true in the [video] section of eventyay.cfg
+	# or nginx_serve_static: true in eventyay.*.toml configuration files.
+	# When enabled, Django will return 404 for these assets, allowing Nginx to serve them.
+	#
+	# location ~ ^/[^/]+/[^/]+/video/assets/ {
+	#     alias <PATH_TO>/data/compiled-frontend/;
+	#     access_log off;
+	#     expires 30d;
+	#     add_header Cache-Control "public, immutable";
+	# }
+	#
+	# location ~ ^/[^/]+/[^/]+/video/.*\.(js|css|map)$ {
+	#     alias <PATH_TO>/data/compiled-frontend/;
+	#     access_log off;
+	#     expires 30d;
+	#     add_header Cache-Control "public, immutable";
+	# }
+
         listen 80;
 }
 
