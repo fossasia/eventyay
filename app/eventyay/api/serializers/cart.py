@@ -185,3 +185,86 @@ class CartPositionCreateSerializer(I18nAwareModelSerializer):
                 {'attendee_name': ['Do not specify attendee_name if you specified attendee_name_parts.']}
             )
         return data
+
+
+class CartPositionUpdateSerializer(I18nAwareModelSerializer):
+    answers = AnswerCreateSerializer(many=True, required=False)
+    attendee_name = serializers.CharField(required=False, allow_null=True)
+    seat = serializers.CharField(required=False, allow_null=True)
+
+    class Meta:
+        model = CartPosition
+        fields = (
+            'attendee_name',
+            'attendee_name_parts',
+            'attendee_email',
+            'answers',
+            'seat',
+        )
+
+    def update(self, instance, validated_data):
+        answers_data = validated_data.pop('answers', None)
+        seat_data = validated_data.pop('seat', None)
+
+        attendee_name = validated_data.pop('attendee_name', None)
+        if attendee_name is not None and not validated_data.get('attendee_name_parts'):
+            validated_data['attendee_name_parts'] = {'_legacy': attendee_name}
+
+        if seat_data is not None:
+            event = self.context['event']
+            if seat_data == '' or seat_data is None:
+                validated_data['seat'] = None
+            else:
+                seated = (
+                    instance.product
+                    .seat_category_mappings.filter(subevent=instance.subevent)
+                    .exists()
+                )
+                if not seated:
+                    raise ValidationError('The specified product does not allow to choose a seat.')
+                try:
+                    seat = event.seats.get(
+                        seat_guid=seat_data,
+                        subevent=instance.subevent,
+                    )
+                except Seat.DoesNotExist:
+                    raise ValidationError('The specified seat does not exist.')
+                except Seat.MultipleObjectsReturned:
+                    raise ValidationError('The specified seat ID is not unique.')
+                else:
+                    if not seat.is_available(
+                        sales_channel='web',
+                        distance_ignore_cart_id=instance.cart_id,
+                    ):
+                        raise ValidationError(
+                            gettext_lazy('The selected seat "{seat}" is not available.').format(seat=seat.name)
+                        )
+                    validated_data['seat'] = seat
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if answers_data is not None:
+            instance.answers.all().delete()
+            for answ_data in answers_data:
+                options = answ_data.pop('options', [])
+                if isinstance(answ_data.get('answer'), File):
+                    an = answ_data.pop('answer')
+                    answ = instance.answers.create(**answ_data, answer='')
+                    answ.file.save(an.name, an, save=False)
+                    answ.answer = 'file://' + answ.file.name
+                    answ.save()
+                else:
+                    answ = instance.answers.create(**answ_data)
+                if options:
+                    answ.options.add(*options)
+
+        return instance
+
+    def validate(self, data):
+        if data.get('attendee_name') and data.get('attendee_name_parts'):
+            raise ValidationError(
+                {'attendee_name': ['Do not specify attendee_name if you specified attendee_name_parts.']}
+            )
+        return data

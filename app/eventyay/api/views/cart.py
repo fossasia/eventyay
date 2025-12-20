@@ -1,17 +1,18 @@
 from django.db import transaction
 from rest_framework import status, viewsets
 from rest_framework.filters import OrderingFilter
-from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
+from rest_framework.mixins import CreateModelMixin, DestroyModelMixin, UpdateModelMixin
 from rest_framework.response import Response
 
 from eventyay.api.serializers.cart import (
     CartPositionCreateSerializer,
     CartPositionSerializer,
+    CartPositionUpdateSerializer,
 )
 from eventyay.base.models import CartPosition
 
 
-class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnlyModelViewSet):
+class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, UpdateModelMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = CartPositionSerializer
     queryset = CartPosition.objects.none()
     filter_backends = (OrderingFilter,)
@@ -45,4 +46,26 @@ class CartPositionViewSet(CreateModelMixin, DestroyModelMixin, viewsets.ReadOnly
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_create(self, serializer):
+        serializer.save()
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CartPositionCreateSerializer
+        elif self.action in ('update', 'partial_update'):
+            return CartPositionUpdateSerializer
+        return CartPositionSerializer
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            self.perform_update(serializer)
+            cp = serializer.instance
+            serializer = CartPositionSerializer(cp, context=serializer.context)
+
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
         serializer.save()
