@@ -19,7 +19,7 @@ body {
   background: var(--color-bg);
   flex-grow: 1;
   max-width: 100%;
-  padding: 20px 40px;
+  padding: 18px 44px;
   margin: 0;
   margin-top: 50px;
   height: calc(100vh - 50px);
@@ -567,6 +567,9 @@ nav.navbar,
 .header-nav.btn-success,
 .header-nav .btn-success {
   border-radius: 0 !important;
+  font-size: 16px;
+  font-weight: normal;
+  padding: 6px 10px;
 }
 
 /* Navigation button hover, focus, and active states */
@@ -590,7 +593,6 @@ nav.navbar,
   display: flex;
   flex-wrap: wrap;
   font-weight: 200;
-  align-items: center;
   margin-bottom: 20px; 
 }
 
@@ -603,7 +605,7 @@ nav.navbar,
 }
 
 #main-title .navigation-title h2 {
-  font-size: 2.25rem;
+  font-size: 30px;
   font-weight: 500;
   line-height: 1.2;
 }

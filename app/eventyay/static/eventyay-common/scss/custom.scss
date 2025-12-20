@@ -7,6 +7,7 @@
         font-size: 16px;
         font-weight: normal;
         border-radius: 0;
+        padding: 7px 7px;
     }
     .header-nav.active {
         background-color: $hover-button-color !important;
@@ -157,6 +158,18 @@
 @media (min-width: $screen-md-min){
     .panel-body {
         min-height: 90%;
+    }
+}
+
+@media (min-width: $screen-lg-min) {
+    #event-nav .navigation .navigation-button {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: $screen-sm-max) {
+    #event-nav .navigation {
+        margin-top: 18px;
     }
 }
 

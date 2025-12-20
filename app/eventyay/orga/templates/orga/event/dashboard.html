@@ -29,7 +29,9 @@
         <div class="navigation-title">
             <h2>
                 {{ request.event.name }}
-                <small class="text-muted small">{{ request.event.get_date_range_display }}</small>
+                <small class="event-date text-muted">
+                    {{ request.event.get_date_range_display }}
+                </small>
             </h2>
         </div>
         {% include "orga/event/component_link.html" %}
