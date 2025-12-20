@@ -12,14 +12,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import configparser
 import importlib
-import importlib_metadata
 import importlib.util
 import os
 import sys
 from collections import OrderedDict
-from importlib.metadata import entry_points
 from pathlib import Path
 from urllib.parse import urlparse
+
+import importlib_metadata
 
 # Ensure local ticket-video plugin is importable (now inside app/eventyay/plugins)
 # Location: app/eventyay/plugins/eventyay-ticket-video/pretix_venueless
@@ -380,6 +380,10 @@ DATABASES = {
     }
 }
 
+# JSON field support is available in PostgreSQL
+db_backend = DATABASES['default']['ENGINE'].split('.')[-1]
+JSON_FIELD_AVAILABLE = db_backend == 'postgresql'
+
 
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
@@ -554,7 +558,8 @@ SESSION_COOKIE_NAME = 'eventyay_session'
 LANGUAGE_COOKIE_NAME = 'eventyay_language'
 CSRF_COOKIE_NAME = 'eventyay_csrftoken'
 # TODO that probably needs adjustment for the actual deployment
-CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', f"http://{SITE_NETLOC}:1337", f"https://{SITE_NETLOC}"]
+# CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = config.get('eventyay', 'cookie_domain', fallback=None)
 

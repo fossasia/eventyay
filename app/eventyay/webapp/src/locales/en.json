@@ -343,6 +343,7 @@
   "RoomsSidebar:admin-announcements:label": "Announcements",
   "RoomsSidebar:browse-channels-button:label": "Browse all channels",
   "RoomsSidebar:channels-headline:text": "Channels",
+  "RoomsSidebar:create-stage:tooltip": "Create Stage",
   "RoomsSidebar:direct-messages-headline:text": "Direct messages",
   "RoomsSidebar:exhibitions-headline:text": "Exhibitions",
   "RoomsSidebar:exhibitions-manage:label": "Manage",

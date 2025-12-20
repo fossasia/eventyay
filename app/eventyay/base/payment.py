@@ -1245,7 +1245,7 @@ class GiftCardPayment(BasePaymentProvider):
 
     def checkout_prepare(self, request: HttpRequest, cart: Dict[str, Any]) -> Union[bool, str, None]:
         for p in get_cart(request):
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 messages.error(
                     request,
                     _('You cannot pay with gift cards when buying a gift card.'),
@@ -1333,7 +1333,7 @@ class GiftCardPayment(BasePaymentProvider):
 
     def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None]:
         for p in payment.order.positions.all():
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 messages.error(
                     request,
                     _('You cannot pay with gift cards when buying a gift card.'),
@@ -1391,7 +1391,7 @@ class GiftCardPayment(BasePaymentProvider):
         # This method will only be called when retrying payments, e.g. after a payment_prepare call. It is not called
         # during the order creation phase because this payment provider is a special case.
         for p in payment.order.positions.all():  # noqa - just a safeguard
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 raise PaymentException(_('You cannot pay with gift cards when buying a gift card.'))
 
         gcpk = payment.info_data.get('gift_card')

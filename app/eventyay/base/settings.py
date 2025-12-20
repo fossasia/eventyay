@@ -135,6 +135,10 @@ def validate_event_settings(event, settings_dict):
         raise ValidationError(
             {'attendee_emails_required': _('You have to ask for attendee emails if you want to make them required.')}
         )
+    if settings_dict.get('order_email_required') and not settings_dict.get('order_email_asked'):
+        raise ValidationError(
+            {'order_email_required': _('You have to ask for order email if you want to make it required.')}
+        )
     if settings_dict.get('invoice_address_required') and not settings_dict.get('invoice_address_asked'):
         raise ValidationError(
             {'invoice_address_required': _('You have to ask for invoice addresses if you want to make them required.')}

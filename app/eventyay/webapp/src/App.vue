@@ -26,11 +26,11 @@
 			// router-view no longer carries role=main; main landmark is the scroll container
 			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
-			media-source(v-if="roomHasMedia && user.profile.greeted", ref="primaryMediaSource", :room="room", :key="room.id", role="main")
+			//- Single MediaSource for room streaming (persists across navigation to prevent stream restart)
+			media-source(v-if="streamingRoom && user.profile.greeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="backgroundRoom = null")
 			media-source(v-if="call", ref="channelCallSource", :call="call", :background="call.channel !== $route.params.channelId", :key="call.id", @close="$store.dispatch('chat/leaveCall')")
-			media-source(v-else-if="backgroundRoom && !hasFatalError(backgroundRoom)", ref="backgroundMediaSource", :room="backgroundRoom", :background="true", :key="backgroundRoom.id", @close="backgroundRoom = null")
 			#media-source-iframes
-			notifications(:hasBackgroundMedia="!!backgroundRoom")
+			notifications(:hasBackgroundMedia="isStreamInBackground")
 			.disconnected-warning(v-if="!connected") {{ $t('App:disconnected-warning:text') }}
 			transition(name="prompt")
 				greeting-prompt(v-if="!user.profile.greeted")
@@ -95,9 +95,21 @@ export default {
 			if (this.hasFatalError(this.room)) return false
 			return this.room?.modules.some(module => mediaModules.includes(module.type))
 		},
+		// Single source of truth for which room should be streaming
+		// Returns the current room if it has media, otherwise the background room
+		streamingRoom() {
+			if (this.roomHasMedia) return this.room
+			if (this.backgroundRoom && !this.hasFatalError(this.backgroundRoom)) return this.backgroundRoom
+			return null
+		},
+		// Determines if the streaming room should be shown in background (mini-window) mode
+		// True when we have a background room that's different from the current room
+		isStreamInBackground() {
+			return this.backgroundRoom && this.room !== this.backgroundRoom
+		},
 		stageStreamCollapsed() {
 			if (this.$mq.above.m) return false
-			return this.mediaSourceRefs.primary?.$refs.livestream ? !this.mediaSourceRefs.primary.$refs.livestream.playing : false
+			return this.mediaSourceRefs.media?.$refs.livestream ? !this.mediaSourceRefs.media.$refs.livestream.playing : false
 		},
 		// force open sidebar on medium screens on home page (with no media) so certain people can find the menu
 		overrideSidebarCollapse() {
@@ -136,8 +148,7 @@ export default {
 		// other computed properties can safely reference them.
 		mediaSourceRefs() {
 			return {
-				primary: this.$refs.primaryMediaSource,
-				background: this.$refs.backgroundMediaSource,
+				media: this.$refs.mediaSource,
 				channel: this.$refs.channelCallSource
 			}
 		}
@@ -241,9 +252,9 @@ export default {
 			const newRoomHasMedia = newRoom && newRoom.modules && newRoom.modules.some(module => mediaModules.includes(module.type))
 			// We treat "undefined / not callable" as true to avoid race conditions.
 			let primaryWasPlaying = true
-			const primaryRef = this.mediaSourceRefs.primary
-			if (typeof primaryRef?.isPlaying === 'function') {
-				const result = primaryRef.isPlaying()
+			const mediaRef = this.mediaSourceRefs.media
+			if (typeof mediaRef?.isPlaying === 'function') {
+				const result = mediaRef.isPlaying()
 				if (result === false) primaryWasPlaying = false
 			}
 			if (oldRoom &&
@@ -254,7 +265,7 @@ export default {
 				primaryWasPlaying &&
 				// don't background bbb room when switching to new bbb room
 				!(newRoom?.modules.some(isExclusive) && oldRoom?.modules.some(isExclusive)) &&
-				!newRoomHasMedia 
+				!newRoomHasMedia
 			) {
 				this.backgroundRoom = oldRoom
 			} else if (newRoomHasMedia) {

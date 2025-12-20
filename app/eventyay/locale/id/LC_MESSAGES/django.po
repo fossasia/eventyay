@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-04 14:43+0000\n"
-"Last-Translator: Rachmat <rachmatwahidi.site@gmail.com>\n"
+"PO-Revision-Date: 2025-12-15 07:00+0000\n"
+"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -24,6 +24,8 @@ msgid ""
 "Full device access (reading and changing orders and gift cards, reading of "
 "products and settings)"
 msgstr ""
+"Akses penuh perangkat (membaca/mengubah pesanan dan kartu hadiah, serta "
+"membaca produk dan pengaturan)"
 
 #: eventyay/api/auth/devicesecurity.py:22
 msgid "eventyay"
@@ -31,157 +33,170 @@ msgstr ""
 
 #: eventyay/api/auth/devicesecurity.py:52
 msgid "eventyay (kiosk mode, online only)"
-msgstr ""
+msgstr "eventyay (mode kios, hanya daring)"
 
 #: eventyay/api/auth/devicesecurity.py:80
+#, fuzzy
 msgid "eventyay"
-msgstr ""
+msgstr "eventyay"
 
 #: eventyay/api/models.py:18
 msgid "Application name"
-msgstr ""
+msgstr "Nama aplikasi"
 
 #: eventyay/api/models.py:21
 msgid "Redirection URIs"
-msgstr ""
+msgstr "URI pengalihan"
 
 #: eventyay/api/models.py:22
 msgid "Allowed URIs list, space separated"
-msgstr ""
+msgstr "Daftar URI yang diizinkan, dipisahkan dengan spasi"
 
 #: eventyay/api/models.py:26
 msgid "Allowed list with space separated"
-msgstr ""
+msgstr "Daftar yang diizinkan, dipisahkan dengan spasi"
 
 #: eventyay/api/models.py:30
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:56
 msgid "Client ID"
-msgstr ""
+msgstr "ID Klien"
 
 #: eventyay/api/models.py:34
 msgid "Client secret"
-msgstr ""
+msgstr "Rahasia Klien"
 
 #: eventyay/api/models.py:95
 msgid "Enable webhook"
-msgstr ""
+msgstr "Aktifkan webhook"
 
 #: eventyay/api/models.py:96
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:36
 msgid "Target URL"
-msgstr ""
+msgstr "URL target"
 
 #: eventyay/api/models.py:97 eventyay/base/models/devices.py:100
 #: eventyay/base/models/organizer.py:198
 msgid "All events (including newly created ones)"
-msgstr ""
+msgstr "Semua acara (termasuk yang baru dibuat)"
 
 #: eventyay/api/models.py:98 eventyay/base/models/devices.py:101
 #: eventyay/base/models/organizer.py:199 eventyay/base/models/vouchers.py:544
 msgid "Limit to events"
-msgstr ""
+msgstr "Batasi pada acara"
 
 #: eventyay/api/serializers/cart.py:60 eventyay/api/serializers/order.py:1124
 msgid "The product \"{}\" is not assigned to a quota."
-msgstr ""
+msgstr "Produk \"{}\" tidak ditetapkan pada kuota."
 
 #: eventyay/api/serializers/cart.py:68 eventyay/api/serializers/order.py:1136
 msgid ""
 "There is not enough quota available on quota \"{}\" to perform the operation."
-msgstr ""
+msgstr "Kuota \"{}\" tidak memiliki cukup kapasitas untuk melakukan operasi."
 
 #: eventyay/api/serializers/cart.py:95 eventyay/api/serializers/order.py:1096
 #: eventyay/base/services/orders.py:1183
 #, python-brace-format
 msgid "The selected seat \"{seat}\" is not available."
-msgstr ""
+msgstr "Kursi \"{seat}\" yang dipilih tidak tersedia."
 
 #: eventyay/api/serializers/checkin.py:47 eventyay/base/models/event.py:1582
 #: eventyay/base/models/items.py:1260 eventyay/base/models/items.py:1490
 msgid "One or more items do not belong to this event."
-msgstr ""
+msgstr "Satu item atau lebih tidak termasuk dalam acara ini."
 
 #: eventyay/api/serializers/checkin.py:51 eventyay/api/serializers/checkin.py:54
 #: eventyay/base/models/items.py:1501 eventyay/base/models/items.py:1504
 #: eventyay/base/models/waitinglist.py:187 eventyay/base/models/waitinglist.py:190
 msgid "The subevent does not belong to this event."
-msgstr ""
+msgstr "Subacara ini tidak termasuk dalam acara tersebut."
 
 #: eventyay/api/serializers/checkin.py:58
 msgid "Unknown sales channel."
-msgstr ""
+msgstr "Saluran penjualan tidak dikenal."
 
 #: eventyay/api/serializers/event.py:164
 msgid ""
 "Events cannot be created as 'live'. Quotas and payment must be added to the "
 "event before sales can go live."
 msgstr ""
+"Acara tidak dapat dibuat sebagai 'langsung'. Kuota dan pembayaran harus "
+"ditambahkan ke acara sebelum penjualan dapat dimulai."
 
 #: eventyay/api/serializers/event.py:179 eventyay/api/serializers/event.py:463
 #, python-brace-format
 msgid "Meta data property '{name}' does not exist."
-msgstr ""
+msgstr "Atribut metadata '{name}' tidak ada."
 
 #: eventyay/api/serializers/event.py:182 eventyay/api/serializers/event.py:466
 #, python-brace-format
 msgid "Meta data property '{name}' does not allow value '{value}'."
-msgstr ""
+msgstr "Atribut metadata '{name}' tidak mengizinkan nilai '{value}'."
 
 #: eventyay/api/serializers/event.py:225
 #, python-brace-format
 msgid "Unknown plugin: '{name}'."
-msgstr ""
+msgstr "Pengaya tidak dikenal: '{name}'."
 
 #: eventyay/api/serializers/item.py:69 eventyay/control/forms/item.py:831
 msgid "The bundled item must not be the same item as the bundling one."
-msgstr ""
+msgstr "Item yang dibundel tidak boleh sama dengan item yang membundelnya."
 
 #: eventyay/api/serializers/item.py:72 eventyay/control/forms/item.py:833
 msgid "The bundled item must not have bundles on its own."
-msgstr ""
+msgstr "Item yang dibundel tidak boleh memiliki bundel tambahan secara mandiri."
 
 #: eventyay/api/serializers/item.py:135
 msgid ""
 "Updating add-ons, bundles, or variations via PATCH/PUT is not supported. "
 "Please use the dedicated nested endpoint."
 msgstr ""
+"Pembaruan pasang tambah, bundel, atau variasi melalui PATCH/PUT tidak "
+"didukung. Silakan gunakan titik akhir bersarang khusus."
 
 #: eventyay/api/serializers/item.py:144 eventyay/control/forms/item.py:530
 msgid ""
 "Gift card products should not be associated with non-zero tax rates since "
 "sales tax will be applied when the gift card is redeemed."
 msgstr ""
+"Produk kartu hadiah tidak boleh dikaitkan dengan tarif pajak selain nol "
+"karena pajak penjualan akan diterapkan saat kartu hadiah digunakan."
 
 #: eventyay/api/serializers/item.py:149 eventyay/control/forms/item.py:536
 msgid "Gift card products should not be admission products at the same time."
 msgstr ""
+"Produk kartu hadiah tidak boleh berfungsi sebagai produk tiket masuk pada "
+"saat yang sama."
 
 #: eventyay/api/serializers/item.py:186
 #, python-brace-format
 msgid "Item meta data property '{name}' does not exist."
-msgstr ""
+msgstr "Atribut metadata untuk item '{name}' tidak tersedia."
 
 #: eventyay/api/serializers/item.py:303
 msgid ""
 "Updating options via PATCH/PUT is not supported. Please use the dedicated "
 "nested endpoint."
 msgstr ""
+"Pembaruan opsi melalui PATCH/PUT tidak didukung. Silakan gunakan titik akhir "
+"bersarang khusus."
 
 #: eventyay/api/serializers/item.py:317 eventyay/control/forms/item.py:83
 msgid "Question cannot depend on a question asked during check-in."
 msgstr ""
+"Pertanyaan tidak boleh bergantung pada pertanyaan yang diajukan saat lapor "
+"masuk."
 
 #: eventyay/api/serializers/item.py:322 eventyay/control/forms/item.py:88
 msgid "Circular dependency between questions detected."
-msgstr ""
+msgstr "Terdeteksi ketergantungan melingkar antarpertanyaan."
 
 #: eventyay/api/serializers/item.py:327 eventyay/control/forms/item.py:97
 msgid "This type of question cannot be asked during check-in."
-msgstr ""
+msgstr "Jenis pertanyaan ini tidak dapat diajukan saat lapor masuk."
 
 #: eventyay/api/serializers/order.py:1109 eventyay/api/serializers/order.py:1116
 msgid "The product \"{}\" is not available on this date."
-msgstr ""
+msgstr "Produk \"{}\" tidak tersedia pada tanggal ini."
 
 #: eventyay/api/serializers/organizer.py:60
 #: eventyay/control/forms/organizer_forms/gift_card_create_form.py:36
@@ -189,21 +204,23 @@ msgid ""
 "A gift card with the same secret already exists in your or an affiliated "
 "organizer account."
 msgstr ""
+"Kartu hadiah dengan kode rahasia yang sama sudah ada di akun Anda atau akun "
+"penyelenggara terkait."
 
 #: eventyay/api/serializers/organizer.py:142
 #: eventyay/control/views/organizer_views/team_view.py:143
 msgid "eventyay account invitation"
-msgstr ""
+msgstr "Undangan akun eventyay"
 
 #: eventyay/api/serializers/organizer.py:164
 #: eventyay/control/views/organizer_views/team_view.py:242
 msgid "This user already has been invited for this team."
-msgstr ""
+msgstr "Pengguna ini sebelumnya sudah diundang ke tim ini."
 
 #: eventyay/api/serializers/organizer.py:180
 #: eventyay/control/views/organizer_views/team_view.py:259
 msgid "This user already has permissions for this team."
-msgstr ""
+msgstr "Pengguna ini sebelumnya sudah diberi izin untuk tim ini."
 
 #: eventyay/api/views/oauth.py:85 eventyay/control/logdisplay.py:363
 #, python-brace-format
@@ -211,108 +228,109 @@ msgid ""
 "The application \"{application_name}\" has been authorized to access your "
 "account."
 msgstr ""
+"Aplikasi \"{application_name}\" telah diotorisasi untuk mengakses akun Anda."
 
 #: eventyay/api/views/order.py:464 eventyay/control/views/orders.py:1195
 #: eventyay/presale/views/order.py:663 eventyay/presale/views/order.py:728
 msgid "You cannot generate an invoice for this order."
-msgstr ""
+msgstr "Anda tidak dapat membuat faktur untuk pesanan ini."
 
 #: eventyay/api/views/order.py:469 eventyay/control/views/orders.py:1197
 #: eventyay/presale/views/order.py:665 eventyay/presale/views/order.py:730
 msgid "An invoice for this order already exists."
-msgstr ""
+msgstr "Faktur untuk pesanan ini sudah ada."
 
 #: eventyay/api/views/order.py:495 eventyay/control/views/orders.py:1323
 #: eventyay/control/views/users.py:121
 msgid "There was an error sending the mail. Please try again later."
-msgstr ""
+msgstr "Terjadi galat saat mengirim surel. Silakan coba lagi nanti."
 
 #: eventyay/api/views/order.py:573 eventyay/base/services/cart.py:112
 #: eventyay/base/services/orders.py:94 eventyay/presale/views/order.py:712
 msgid "One of the selected products is not available in the selected country."
-msgstr ""
+msgstr "Salah satu produk yang dipilih tidak tersedia di negara yang dipilih."
 
 #: eventyay/api/webhooks.py:179 eventyay/base/notifications.py:224
 msgid "New order placed"
-msgstr ""
+msgstr "Pesanan baru telah dibuat"
 
 #: eventyay/api/webhooks.py:183 eventyay/base/notifications.py:230
 msgid "New order requires approval"
-msgstr ""
+msgstr "Pesanan baru memerlukan persetujuan"
 
 #: eventyay/api/webhooks.py:187 eventyay/base/notifications.py:236
 msgid "Order marked as paid"
-msgstr ""
+msgstr "Pesanan ditandai sebagai sudah dibayar"
 
 #: eventyay/api/webhooks.py:191 eventyay/base/notifications.py:242
 #: eventyay/control/templates/pretixcontrol/event/mail.html:76
 #: eventyay/control/views/orders.py:1161
 msgid "Order canceled"
-msgstr ""
+msgstr "Pesanan dibatalkan"
 
 #: eventyay/api/webhooks.py:195 eventyay/base/notifications.py:248
 msgid "Order reactivated"
-msgstr ""
+msgstr "Pesanan diaktifkan kembali"
 
 #: eventyay/api/webhooks.py:199 eventyay/base/notifications.py:254
 msgid "Order expired"
-msgstr ""
+msgstr "Pesanan kedaluwarsa"
 
 #: eventyay/api/webhooks.py:203 eventyay/base/notifications.py:260
 msgid "Order information changed"
-msgstr ""
+msgstr "Informasi pesanan diubah"
 
 #: eventyay/api/webhooks.py:207 eventyay/base/notifications.py:266
 msgid "Order contact address changed"
-msgstr ""
+msgstr "Alamat kontak pesanan diubah"
 
 #: eventyay/api/webhooks.py:211 eventyay/base/notifications.py:272
 #: eventyay/control/templates/pretixcontrol/event/mail.html:67
 msgid "Order changed"
-msgstr ""
+msgstr "Pesanan diubah"
 
 #: eventyay/api/webhooks.py:215 eventyay/base/notifications.py:284
 msgid "External refund of payment"
-msgstr ""
+msgstr "Pengembalian dana eksternal"
 
 #: eventyay/api/webhooks.py:219
 msgid "Order approved"
-msgstr ""
+msgstr "Pesanan disetujui"
 
 #: eventyay/api/webhooks.py:223
 msgid "Order denied"
-msgstr ""
+msgstr "Pesanan ditolak"
 
 #: eventyay/api/webhooks.py:227
 msgid "Ticket checked in"
-msgstr ""
+msgstr "Tiket telah lapor masuk"
 
 #: eventyay/api/webhooks.py:231
 msgid "Ticket check-in reverted"
-msgstr ""
+msgstr "Lapor masuk tiket dibatalkan"
 
 #: eventyay/api/webhooks.py:235
 msgid "Event created"
-msgstr ""
+msgstr "Acara dibuat"
 
 #: eventyay/api/webhooks.py:239 eventyay/api/webhooks.py:243
 msgid "Event details changed"
-msgstr ""
+msgstr "Detail acara diubah"
 
 #: eventyay/api/webhooks.py:247
 msgctxt "subevent"
 msgid "Event series date added"
-msgstr ""
+msgstr "Tanggal seri acara ditambahkan"
 
 #: eventyay/api/webhooks.py:251
 msgctxt "subevent"
 msgid "Event series date changed"
-msgstr ""
+msgstr "Tanggal seri acara diubah"
 
 #: eventyay/api/webhooks.py:255
 msgctxt "subevent"
 msgid "Event series date deleted"
-msgstr ""
+msgstr "Tanggal seri acara dihapus"
 
 #: eventyay/base/auth.py:104
 #, python-brace-format
@@ -328,60 +346,66 @@ msgstr ""
 #: eventyay/presale/forms/checkout.py:23 eventyay/presale/forms/user.py:6
 #: eventyay/presale/templates/pretixpresale/event/order.html:297
 msgid "E-mail"
-msgstr ""
+msgstr "Surel"
 
 #: eventyay/base/auth.py:115 eventyay/base/forms/auth.py:118
 #: eventyay/base/forms/auth.py:170 eventyay/control/forms/event.py:1154
 #: eventyay/control/forms/global_settings.py:119
 msgid "Password"
-msgstr ""
+msgstr "Kata sandi"
 
 #: eventyay/base/channels.py:84
 msgid "Online shop"
-msgstr ""
+msgstr "Toko daring"
 
 #: eventyay/base/configurations/default_setting.py:41
 #: eventyay/base/models/orders.py:1204 eventyay/base/models/orders.py:2307
 msgid "Select country"
-msgstr ""
+msgstr "Pilih negara"
 
 #: eventyay/base/configurations/default_setting.py:63
 msgid "Maximum number of items per order"
-msgstr ""
+msgstr "Jumlah maksimum item per pesanan"
 
 #: eventyay/base/configurations/default_setting.py:64
 msgid "Add-on products will be excluded from the count."
-msgstr ""
+msgstr "Produk tambahan tidak akan dihitung."
 
 #: eventyay/base/configurations/default_setting.py:74
 msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
+"Tampilkan harga bersih dalam daftar produk, bukan harga kotor (tidak "
+"disarankan)"
 
 #: eventyay/base/configurations/default_setting.py:77
 msgid ""
 "Regardless of your selection, the cart will display gross prices as this is "
 "the final amount to be paid."
 msgstr ""
+"Terlepas dari pilihan Anda, keranjang akan menampilkan harga kotor karena "
+"itu adalah jumlah akhir yang harus dibayar."
 
 #: eventyay/base/configurations/default_setting.py:92
 #: eventyay/base/configurations/default_setting.py:104
 msgid "Require attendee names"
-msgstr ""
+msgstr "Nama peserta wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:94
 msgid ""
 "Require attendee names for all tickets which include admission to the event."
 msgstr ""
+"Nama peserta wajib dicantumkan untuk semua tiket yang termasuk akses masuk "
+"acara."
 
 #: eventyay/base/configurations/default_setting.py:106
 msgid "Require attendees to fill in their names for all admission tickets."
-msgstr ""
+msgstr "Peserta wajib mengisi nama untuk semua tiket masuk."
 
 #: eventyay/base/configurations/default_setting.py:119
 msgid "Ask for email addresses per ticket"
-msgstr ""
+msgstr "Minta alamat surel untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:121
 msgid ""
@@ -394,10 +418,18 @@ msgid ""
 "primary email address, not to the per-attendee addresses. You can however "
 "enable this in the E-mail settings."
 msgstr ""
+"Biasanya, eventyay hanya meminta satu alamat surel per pesanan dan "
+"konfirmasi pesanan akan dikirimkan hanya ke alamat surel tersebut. Jika Anda "
+"mengaktifkan opsi ini, sistem akan meminta alamat surel individu untuk "
+"setiap tiket masuk. Hal ini berguna jika Anda ingin memperoleh alamat surel "
+"setiap peserta, bahkan dalam pesanan kelompok. Namun, secara bawaan, "
+"eventyay hanya akan mengirimkan konfirmasi pesanan ke alamat surel utama, "
+"bukan ke alamat surel per peserta. Anda dapat mengaktifkan pengaturan ini di "
+"bagian Surel."
 
 #: eventyay/base/configurations/default_setting.py:136
 msgid "Require email addresses per ticket"
-msgstr ""
+msgstr "Alamat surel wajib untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:138
 msgid ""
@@ -405,88 +437,95 @@ msgid ""
 "tickets. See the above option for more details. One email address for the "
 "order confirmation will always be required regardless of this setting."
 msgstr ""
+"Peserta wajib mengisi alamat surel masing-masing untuk semua tiket masuk. "
+"Lihat opsi di atas untuk detail lebih lanjut. Satu alamat surel untuk "
+"konfirmasi pesanan akan selalu diperlukan, terlepas dari pengaturan ini."
 
 #: eventyay/base/configurations/default_setting.py:153
 msgid "Ask for company per ticket"
-msgstr ""
+msgstr "Minta nama perusahaan untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:162
 msgid "Require company per ticket"
-msgstr ""
+msgstr "Nama perusahaan wajib untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:176
 msgid "Ask for postal addresses per ticket"
-msgstr ""
+msgstr "Minta alamat pos untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:185
 msgid "Require postal addresses per ticket"
-msgstr ""
+msgstr "Alamat pos wajib untuk setiap tiket"
 
 #: eventyay/base/configurations/default_setting.py:187
 msgid ""
 "Require attendees to fill in postal addresses for all admission tickets."
-msgstr ""
+msgstr "Alamat pos wajib diisi oleh peserta pada setiap tiket masuk."
 
 #: eventyay/base/configurations/default_setting.py:202
 msgid "Ask for the order email address twice"
-msgstr ""
+msgstr "Minta alamat surel pesanan dua kali"
 
 #: eventyay/base/configurations/default_setting.py:204
 msgid ""
 "Require attendees to enter their primary email address twice to help prevent "
 "errors."
 msgstr ""
+"Peserta wajib memasukkan alamat surel utama dua kali untuk membantu mencegah "
+"kesalahan."
 
 #: eventyay/base/configurations/default_setting.py:214
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "Minta nomor telepon untuk setiap pesanan"
 
 #: eventyay/base/configurations/default_setting.py:223
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "Nomor telepon wajib untuk setiap pesanan"
 
 #: eventyay/base/configurations/default_setting.py:235
 msgid "Ask for invoice address"
-msgstr ""
+msgstr "Minta alamat penagihan"
 
 #: eventyay/base/configurations/default_setting.py:244
 msgid "Do not ask for invoice address if an order is free of charge."
-msgstr ""
+msgstr "Jangan minta alamat penagihan jika pesanan gratis."
 
 #: eventyay/base/configurations/default_setting.py:253
 msgid "Require attendee name"
-msgstr ""
+msgstr "Nama peserta wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:262
 msgid "Show attendee names on invoices"
-msgstr ""
+msgstr "Tampilkan nama peserta pada faktur"
 
 #: eventyay/base/configurations/default_setting.py:272
 msgid ""
 "On invoices from one EU country to another EU country with a different "
 "currency, display the tax amounts in both currencies."
 msgstr ""
+"Pada faktur dari satu negara Uni Eropa ke negara Uni Eropa lain dengan mata "
+"uang berbeda, tampilkan jumlah pajak dalam kedua mata uang."
 
 #: eventyay/base/configurations/default_setting.py:283
 msgid "Require invoice address"
-msgstr ""
+msgstr "Alamat penagihan wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:295
 msgid "Require a business addresses"
-msgstr ""
+msgstr "Alamat bisnis wajib diisi"
 
 #: eventyay/base/configurations/default_setting.py:296
 msgid "This will require attendees to enter a company name."
-msgstr ""
+msgstr "Hal ini akan mengharuskan peserta untuk memasukkan nama perusahaan."
 
 #: eventyay/base/configurations/default_setting.py:308
 msgid "Ask for beneficiary"
-msgstr ""
+msgstr "Minta nama penerima manfaat"
 
 #: eventyay/base/configurations/default_setting.py:320
 #: eventyay/base/exporters/orderlist.py:243
 msgid "Custom address field"
-msgstr ""
+msgstr "Kolom alamat khusus"
 
 #: eventyay/base/configurations/default_setting.py:323
 msgid ""
@@ -496,76 +535,92 @@ msgid ""
 "details and for displaying the value on the invoice. The field will be "
 "optional."
 msgstr ""
+"Jika Anda ingin menambahkan kolom teks khusus, seperti nomor registrasi "
+"khusus negara, ke formulir alamat penagihan, silakan masukkan label di sini. "
+"Label ini akan digunakan baik untuk meminta pengguna mengisi detail mereka "
+"maupun untuk menampilkan nilainya pada faktur. Kolom ini bersifat opsional."
 
 #: eventyay/base/configurations/default_setting.py:336
 msgid "Ask for VAT ID"
-msgstr ""
+msgstr "Minta NPWP"
 
 #: eventyay/base/configurations/default_setting.py:338
 msgid ""
 "This option is only applicable if an invoice address is requested. The VAT "
 "ID field will not be required."
 msgstr ""
+"Pilihan ini hanya dapat digunakan apabila alamat penagihan diminta. Kolom "
+"NPWP tidak bersifat wajib."
 
 #: eventyay/base/configurations/default_setting.py:352
 msgid "Invoice address explanation"
-msgstr ""
+msgstr "Penjelasan alamat penagihan"
 
 #: eventyay/base/configurations/default_setting.py:356
 msgid "This text will be shown above the invoice address form during checkout."
 msgstr ""
+"Teks ini akan ditampilkan di atas formulir alamat penagihan saat akan "
+"membayar."
 
 #: eventyay/base/configurations/default_setting.py:366
 msgid "Show paid amount on partially paid invoices"
-msgstr ""
+msgstr "Tampilkan jumlah yang sudah dibayar pada faktur yang dibayar sebagian"
 
 #: eventyay/base/configurations/default_setting.py:368
 msgid ""
 "If an invoice has already been paid partially, this option will add the paid "
 "and pending amount to the invoice."
 msgstr ""
+"Jika sebuah faktur telah dibayar sebagian, opsi ini akan menambahkan jumlah "
+"yang sudah dibayar dan yang masih tertunda ke dalam faktur."
 
 #: eventyay/base/configurations/default_setting.py:379
 msgid "Show free products on invoices"
-msgstr ""
+msgstr "Tampilkan produk gratis pada faktur"
 
 #: eventyay/base/configurations/default_setting.py:381
 msgid ""
 "Note that invoices will never be generated for orders that contain only free "
 "products."
 msgstr ""
+"Perlu dicatat bahwa faktur tidak akan pernah dibuat untuk pesanan yang hanya "
+"berisi produk gratis."
 
 #: eventyay/base/configurations/default_setting.py:392
 msgid "Show expiration date of order"
-msgstr ""
+msgstr "Tampilkan tanggal kedaluwarsa pesanan"
 
 #: eventyay/base/configurations/default_setting.py:394
 msgid ""
 "The expiration date will not be shown if the invoice is generated after the "
 "order is paid."
 msgstr ""
+"Tanggal kedaluwarsa tidak akan ditampilkan jika faktur dibuat setelah "
+"pesanan dibayar."
 
 #: eventyay/base/configurations/default_setting.py:404
 msgid "Minimum length of invoice number after prefix"
-msgstr ""
+msgstr "Panjang minimum nomor faktur setelah awalan"
 
 #: eventyay/base/configurations/default_setting.py:406
 msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
+"Bagian nomor faktur setelah awalan akan diisi dengan nol di depan hingga "
+"mencapai panjang ini, misalnya INV-001 atau INV-00001."
 
 #: eventyay/base/configurations/default_setting.py:417
 msgid "Generate invoices with consecutive numbers"
-msgstr ""
+msgstr "Buat faktur dengan nomor berurutan"
 
 #: eventyay/base/configurations/default_setting.py:419
 msgid "If deactivated, the order code will be used in the invoice number."
-msgstr ""
+msgstr "Jika dinonaktifkan, kode pesanan akan digunakan sebagai nomor faktur."
 
 #: eventyay/base/configurations/default_setting.py:429
 msgid "Invoice number prefix"
-msgstr ""
+msgstr "Awalan nomor faktur"
 
 #: eventyay/base/configurations/default_setting.py:431
 msgid ""
@@ -577,10 +632,18 @@ msgid ""
 "can use %Y (with century) %y (without century) to insert the year of the "
 "invoice, or %m and %d for the day of month."
 msgstr ""
+"Awalan ini akan ditambahkan di depan nomor faktur. Jika kolom ini dibiarkan "
+"kosong, sistem akan menggunakan slug acara diikuti dengan tanda hubung. "
+"Perhatian: Jika beberapa acara dalam organisasi yang sama menggunakan nilai "
+"yang sama pada kolom ini, mereka akan berbagi rentang nomor, artinya setiap "
+"nomor lengkap hanya akan digunakan sekali di seluruh acara Anda. Pengaturan "
+"ini hanya memengaruhi faktur yang dibuat di kemudian hari. Anda dapat "
+"menggunakan %Y (dengan abad), %y (tanpa abad) untuk menyisipkan tahun "
+"faktur, atau %m dan %d untuk menyisipkan bulan dan hari."
 
 #: eventyay/base/configurations/default_setting.py:446
 msgid "Invoice number prefix for cancellations"
-msgstr ""
+msgstr "Awalan nomor faktur untuk pembatalan"
 
 #: eventyay/base/configurations/default_setting.py:448
 msgid ""
@@ -588,24 +651,31 @@ msgid ""
 "this field empty, the same numbering scheme will be used that you configured "
 "for regular invoices."
 msgstr ""
+"Awalan ini akan ditambahkan di depan nomor faktur pembatalan. Jika kolom ini "
+"dibiarkan kosong, skema penomoran yang sama seperti faktur reguler akan "
+"digunakan."
 
 #: eventyay/base/configurations/default_setting.py:468
 msgid "Reservation period"
-msgstr ""
+msgstr "Periode reservasi"
 
 #: eventyay/base/configurations/default_setting.py:470
 msgid ""
 "The number of minutes the items in a user's cart are reserved for this user."
 msgstr ""
+"Lama waktu (dalam menit) barang di keranjang pengguna disimpan sebagai "
+"reservasi untuk pengguna."
 
 #: eventyay/base/configurations/default_setting.py:481
 msgid ""
 "Directly redirect to check-out after a product has been added to the cart."
 msgstr ""
+"Langsung alihkan ke halaman pembayaran setelah produk ditambahkan ke "
+"keranjang."
 
 #: eventyay/base/configurations/default_setting.py:491
 msgid "End of presale text"
-msgstr ""
+msgstr "Teks akhir prapenjualan"
 
 #: eventyay/base/configurations/default_setting.py:495
 msgid ""
@@ -613,16 +683,21 @@ msgid ""
 "timeframe for this event is over. You can use it to describe other options "
 "to get a ticket, such as a box office."
 msgstr ""
+"Teks ini akan ditampilkan di atas toko tiket setelah periode penjualan yang "
+"ditentukan untuk acara ini berakhir. Anda dapat menggunakannya untuk "
+"menjelaskan opsi lain mendapatkan tiket, misalnya melalui loket."
 
 #: eventyay/base/configurations/default_setting.py:512
 msgid "Guidance text"
-msgstr ""
+msgstr "Teks petunjuk"
 
 #: eventyay/base/configurations/default_setting.py:514
 msgid ""
 "This text will be shown above the payment options. You can explain the "
 "choices to the user here, if you want."
 msgstr ""
+"Teks ini akan ditampilkan di atas opsi pembayaran. Anda dapat menggunakannya "
+"untuk menjelaskan pilihan kepada pengguna jika diinginkan."
 
 #: eventyay/base/configurations/default_setting.py:525
 #: eventyay/base/configurations/default_setting.py:530
@@ -21413,27 +21488,28 @@ msgstr "Terima kasih atas umpan balik Anda!"
 
 #: pretalx/agenda/phrases.py:9
 msgid "Thanks, we (and our speakers) appreciate your feedback!"
-msgstr ""
+msgstr "Terima kasih, kami (dan para pembicara) menghargai umpan balik Anda!"
 
 #: pretalx/agenda/phrases.py:11
 msgid "This session will not be recorded."
-msgstr ""
+msgstr "Sesi ini tidak akan direkam."
 
 #: pretalx/agenda/phrases.py:13
 msgid "View conference schedule"
-msgstr ""
+msgstr "Lihat jadwal konferensi"
 
 #: pretalx/agenda/phrases.py:14
 msgid "View schedule preview"
-msgstr ""
+msgstr "Lihat pratinjau jadwal"
 
 #: pretalx/agenda/phrases.py:15
 msgid "Edit or view your proposals"
-msgstr ""
+msgstr "Sunting atau lihat proposal Anda"
 
 #: pretalx/agenda/templates/agenda/base.html:52
 msgid "This schedule-related page is non-public. Only organisers can see it."
 msgstr ""
+"Halaman jadwal ini tidak publik, hanya penyelenggara yang bisa melihatnya."
 
 #: pretalx/agenda/templates/agenda/changelog_block.html:14
 msgid "We have new sessions!"
@@ -21456,6 +21532,8 @@ msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
 msgstr ""
+"Kami harus memindahkan beberapa sesi, jadi jika anda berencana untuk "
+"melihatnya, silakan periksa kembali tanggal dan lokasi:"
 
 #: pretalx/agenda/templates/agenda/changelog_block.html:69
 msgid "We have moved a session around: "
@@ -21463,7 +21541,7 @@ msgstr ""
 
 #: pretalx/agenda/templates/agenda/featured.html:14
 msgid "Welcome to our list of featured sessions!"
-msgstr ""
+msgstr "Selamat datang di daftar sesi unggulan kami!"
 
 #: pretalx/agenda/templates/agenda/featured.html:17
 msgid ""
@@ -21471,22 +21549,28 @@ msgid ""
 "conference. Please keep in mind that this is not our full schedule. We will "
 "follow up with the full schedule in time, stay tuned!"
 msgstr ""
+"Kami telah menyiapkan daftar sesi menarik, sehingga Anda dapat merasakan "
+"suasana konferensi kami. Harap diingat bahwa ini bukan jadwal lengkap kami. "
+"Kami akan segera memberikan jadwal lengkapnya, pantau terus!"
 
 #: pretalx/agenda/templates/agenda/featured.html:23
 msgid ""
 "In the near future you will see a curated list of sessions we’d like to show "
 "off here. Right now we are busy reviewing proposals.<br> Check back later!"
 msgstr ""
+"Dalam waktu dekat, Anda akan melihat daftar sesi pilihan yang ingin kami "
+"tampilkan di sini. Saat ini kami sedang sibuk meninjau proposal.<br> Silakan "
+"periksa kembali nanti!"
 
 #: pretalx/agenda/templates/agenda/feed/description.html:5
 #, python-format
 msgid "A new %(event_name)s schedule has been released!"
-msgstr ""
+msgstr "Jadwal baru %(nama_acara) telah dirilis!"
 
 #: pretalx/agenda/templates/agenda/feed/description.html:9
 #, python-format
 msgid "The first %(event_name)s schedule has been released!"
-msgstr ""
+msgstr "Jadwal baru %(event_name)s telah dirilis!"
 
 #: pretalx/agenda/templates/agenda/feedback.html:9
 #: pretalx/cfp/templates/cfp/event/user_submissions.html:137
@@ -21495,12 +21579,14 @@ msgstr ""
 #: pretalx/orga/templates/orga/submission/feedbacks_list.html:16
 #: pretalx/submission/models/feedback.py:36
 msgid "Feedback"
-msgstr ""
+msgstr "Umpan balik"
 
 #: pretalx/agenda/templates/agenda/feedback.html:20
 msgid ""
 "This review is for you personally, not for all speakers in this session."
 msgstr ""
+"Ulasan ini ditujukan untuk Anda secara pribadi, bukan untuk semua pembicara "
+"dalam sesi ini."
 
 #: pretalx/agenda/templates/agenda/feedback_form.html:17
 msgid ""
@@ -21508,14 +21594,18 @@ msgid ""
 "presentation. Even a short review can prove valuable to a speaker! Please "
 "take the time and communicate your feedback in a constructive way."
 msgstr ""
+"Ulasan adalah alat yang berharga bagi pembicara untuk meningkatkan konten "
+"dan presentasi mereka. Bahkan ulasan singkat pun dapat terbukti bermanfaat "
+"bagi seorang pembicara! Luangkan waktu dan sampaikan umpan balik Anda dengan "
+"cara yang konstruktif."
 
 #: pretalx/agenda/templates/agenda/feedback_form.html:24
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
+msgstr "Anda tidak dapat memberikan umpan balik untuk sesi ini sekarang."
 
 #: pretalx/agenda/templates/agenda/schedule.html:23
 msgid "Changelog"
-msgstr ""
+msgstr "Catatan perubahan"
 
 #: pretalx/agenda/templates/agenda/schedule.html:77
 #, python-format

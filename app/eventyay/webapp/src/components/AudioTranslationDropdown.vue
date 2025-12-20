@@ -4,8 +4,7 @@ div.c-audio-translation
 		name="audio-translation",
 		v-model="selectedLanguage",
 		:options="languageOptions",
-		label="Audio Translation",
-		@input="sendLanguageChange"
+		label="Audio Translation"
 )
 </template>
 <script>
@@ -30,12 +29,18 @@ export default {
 			handler(newLanguages) {
 				this.languageOptions = newLanguages.map(entry => entry.language) // Directly assigning the list of languages
 			}
+		},
+		selectedLanguage(newLanguage) {
+			if (newLanguage) {
+				this.sendLanguageChange()
+			}
 		}
 	},
 	methods: {
 		sendLanguageChange() {
 			const selected = this.languages.find(item => item.language === this.selectedLanguage)
-			this.$emit('languageChanged', selected.youtube_id || null)
+			const youtubeId = selected?.youtube_id || null
+			this.$emit('languageChanged', youtubeId)
 		}
 	}
 }

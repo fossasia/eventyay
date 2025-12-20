@@ -53,9 +53,20 @@ from eventyay.plugins.banktransfer.payment import BankTransfer
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
-        label=_('Use languages'),
+        label=_('Active languages'),
         widget=MultipleLanguagesWidget,
-        help_text=_('Choose all languages that your event should be available in.'),
+        help_text=_(
+            "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+            "event's default language instead."
+        ),
+    )
+    content_locales = forms.MultipleChoiceField(
+        choices=settings.LANGUAGES,
+        label=_('Content languages'),
+        widget=MultipleLanguagesWidget,
+        required=False,
+        help_text=_('Users will be able to submit proposals in these languages.'),
     )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
@@ -98,6 +109,21 @@ class EventWizardFoundationForm(forms.Form):
         if organizer_count == 1:
             self.fields['organizer'].initial = qs.first()
             self.fields['organizer'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        locales = cleaned_data.get('locales', [])
+        content_locales = cleaned_data.get('content_locales')
+        
+        if not content_locales:
+            return cleaned_data
+        
+        if invalid_content_locales := set(content_locales) - set(locales):
+            raise ValidationError({
+                'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+        
+        return cleaned_data
 
 
 class EventWizardBasicsForm(I18nModelForm):
@@ -169,6 +195,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.is_video_creation = kwargs.pop('is_video_creation')
         self.user = kwargs.pop('user')
         kwargs.pop('session')
+        kwargs.pop('content_locales', None)
         super().__init__(*args, **kwargs)
         if 'timezone' not in self.initial:
             self.initial['timezone'] = get_current_timezone_name()
@@ -548,6 +575,8 @@ class EventSettingsForm(SettingsForm):
         'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
         'include_wikimedia_username',
         'allow_modifications',
@@ -1075,7 +1104,7 @@ class MailSettingsForm(SettingsForm):
     )
     send_grid_api_key = forms.CharField(
         label=_('Sendgrid Token'),
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
     )
 
@@ -1172,6 +1201,13 @@ class MailSettingsForm(SettingsForm):
             data['smtp_password'] = self.initial.get('smtp_password')
         if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
             raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                raise ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+        return data
 
 
 class TicketSettingsForm(SettingsForm):

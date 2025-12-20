@@ -698,6 +698,8 @@ class EventSettingsSerializer(SettingsSerializer):
         'attendee_company_required',
         'attendee_data_explanation_text',
         'confirm_texts',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
         'order_phone_asked',
         'order_phone_required',

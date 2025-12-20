@@ -10,6 +10,8 @@ register = template.Library()
 
 @register.simple_tag()
 def has_event_perm(perm, user, request, obj=None):
+    if not user.is_authenticated:
+        return False
     return is_admin_mode_active(request) or User.has_perm(user, perm, obj)
 
 
