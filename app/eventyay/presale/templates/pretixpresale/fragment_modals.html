@@ -111,10 +111,10 @@
 
             <!-- SSO Provider Buttons -->
             <div class="checkout-login-sso">
-                <a href="{% url 'socialauth:social.oauth.login' provider='mediawiki' %}" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
+                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
                     {% translate "Login with MediaWiki" %}
                 </a>
-                <a href="{% url 'socialauth:social.oauth.login' provider='google' %}" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
+                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
                     {% translate "Login with Google" %}
                 </a>
             </div>
