@@ -67,7 +67,7 @@ class OrganizerCreate(CreateView):
         ret = super().form_valid(form)
         t = Team.objects.create(
             organizer=form.instance,
-            name=_('Administrators'),
+            name=_('Core Organising Team'),
             all_events=True,
             can_create_events=True,
             can_change_teams=True,

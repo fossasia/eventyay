@@ -36,7 +36,7 @@ def process_organiser_webhook(organiser_data):
             team = TeamForm(
                 organiser=organiser,
                 data={
-                    "name": "Administrators",
+                    "name": "Core Organising Team",
                     "all_events": True,
                     "can_create_events": True,
                     "can_change_teams": True,
