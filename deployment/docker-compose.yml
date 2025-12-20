@@ -2,13 +2,12 @@ name: eventyay-next
 
 services:
   web:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-web
     command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     ports:
       - 8000:8000
     expose:
@@ -20,12 +19,11 @@ services:
       - redis
 
   websocket:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-websocket
     entrypoint: daphne -b 0.0.0.0 -p 8001 eventyay.config.asgi:application
     volumes:
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     ports:
       - 8001:8001
     expose:
@@ -39,13 +37,12 @@ services:
       - redis
 
   worker:
-    image: eventyay/eventyay-next:enext
+    image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-worker
     entrypoint: celery -A eventyay worker -l info
     volumes:
       - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/home/app/web/eventyay/data
-      - ./eventyay.cfg:/etc/eventyay.cfg:ro
     env_file:
       - ./.env
     environment:
@@ -79,7 +76,7 @@ services:
     restart: always
     environment:
       WATCHTOWER_NOTIFICATIONS: 'shoutrrr'
-      WATCHTOWER_NOTIFICATIONS_HOSTNAME: eventyay-next
+      WATCHTOWER_NOTIFICATIONS_HOSTNAME: ${WATCHTOWER_NOTIFICATIONS_HOSTNAME}
       WATCHTOWER_POLL_INTERVAL: 600
       WATCHTOWER_NOTIFICATION_URL: ${WATCHTOWER_NOTIFICATION_URL}
     command: watchtower eventyay-next-web eventyay-next-websocket eventyay-next-worker --cleanup

@@ -560,6 +560,30 @@ nav.navbar,
   margin: 0 4px;
 }
 
+.header-nav.btn-outline-success,
+.header-nav .btn-outline-success,
+.header-nav.btn-success,
+.header-nav .btn-success {
+  border-radius: 0 !important;
+}
+
+/* Navigation button hover, focus, and active states */
+.header-nav.btn-outline-success:hover,
+.header-nav.btn-outline-success:focus,
+.header-nav.btn-outline-success:active,
+.header-nav.btn-outline-success.active {
+  background-color: var(--color-white);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+/* Active button inset shadow */
+.header-nav.btn-outline-success.active,
+.header-nav.btn-success,
+.header-nav.btn-success.active {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+
 .speaker-info {
   display: flex;
   flex-direction: row;
