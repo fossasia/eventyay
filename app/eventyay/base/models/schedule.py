@@ -102,7 +102,7 @@ class Schedule(PretalxModel):
         wip_schedule = Schedule.objects.create(event=self.event)
 
         self.save(update_fields=['published', 'version', 'comment'])
-        self.log_action('pretalx.schedule.release', person=user, orga=True)
+        self.log_action('eventyay.schedule.release', person=user, orga=True)
 
         # Set visibility
         self.talks.all().update(is_visible=False)
@@ -529,13 +529,13 @@ class Schedule(PretalxModel):
         if self.changes['count'] == len(self.changes['canceled_talks']):
             return result
 
-        speakers = defaultdict(lambda: {'create': [], 'update': []})
+        speakers = {}
         for new_talk in self.changes['new_talks']:
             for speaker in new_talk.submission.speakers.all():
-                speakers[speaker]['create'].append(new_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['create'].append(new_talk)
         for moved_talk in self.changes['moved_talks']:
             for speaker in moved_talk['submission'].speakers.all():
-                speakers[speaker]['update'].append(moved_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['update'].append(moved_talk)
         return speakers
 
     def generate_notifications(self, save=False):
@@ -601,7 +601,7 @@ class Schedule(PretalxModel):
             'submission__submission_type',
         ).prefetch_related('submission__speakers')
         talks = talks.order_by('start')
-        rooms = set() if not all_rooms else set(self.event.rooms.all())
+        rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
         speakers = set()
         result = {
@@ -613,7 +613,9 @@ class Schedule(PretalxModel):
         }
         show_do_not_record = self.event.cfp.request_do_not_record
         for talk in talks:
-            rooms.add(talk.room)
+            # Only add room if it's not deleted
+            if talk.room and not talk.room.deleted:
+                rooms.add(talk.room)
             if talk.submission:
                 tracks.add(talk.submission.track)
                 speakers |= set(talk.submission.speakers.all())
@@ -623,6 +625,7 @@ class Schedule(PretalxModel):
                         'id': talk.id,
                         'title': (talk.submission.title if talk.submission else talk.description),
                         'abstract': (talk.submission.abstract if talk.submission else None),
+                        'description': (talk.submission.description if talk.submission else None),
                         'speakers': (
                             [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
                         ),
@@ -673,7 +676,8 @@ class Schedule(PretalxModel):
         result['speakers'] = [
             {
                 'code': user.code,
-                'name': user.fullname,
+                'name': user.fullname or None,
+                'biography': getattr(user.event_profile(self.event), 'biography', ''),
                 'avatar': (user.get_avatar_url(event=self.event) if include_avatar else None),
                 'avatar_thumbnail_default': (
                     user.get_avatar_url(event=self.event, thumbnail='default') if include_avatar else None

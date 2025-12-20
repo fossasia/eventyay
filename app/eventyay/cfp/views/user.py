@@ -107,7 +107,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             return super().get(request, *args, **kwargs)
 
         messages.success(self.request, phrases.base.saved)
-        return redirect('cfp:event.user.view', event=self.request.event.slug)
+        return redirect('cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
 
 
 class SubmissionViewMixin:
@@ -206,7 +206,7 @@ class SubmissionsWithdrawView(LoggedInEventPageMixin, SubmissionViewMixin, Detai
             messages.success(self.request, phrases.cfp.submission_withdrawn)
         else:
             messages.error(self.request, phrases.cfp.submission_not_withdrawn)
-        return redirect('cfp:event.user.submissions', event=self.request.event.slug)
+        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
 
 
 class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormView):
@@ -219,6 +219,7 @@ class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormVie
     def dispatch(self, request, *args, **kwargs):
         if request.user.is_anonymous:
             return get_login_redirect(request)
+        
         if not request.user.has_perm('base.is_speaker_submission', self.submission):
             self.template_name = 'cfp/event/user_submission_confirm_error.html'
         return super().dispatch(request, *args, **kwargs)
@@ -252,7 +253,7 @@ class SubmissionConfirmView(LoggedInEventPageMixin, SubmissionViewMixin, FormVie
             messages.success(self.request, phrases.cfp.submission_was_confirmed)
         else:
             messages.error(self.request, phrases.cfp.submission_not_confirmed)
-        return redirect('cfp:event.user.submissions', event=self.request.event.slug)
+        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
 
 
 class SubmissionDraftDiscardView(LoggedInEventPageMixin, SubmissionViewMixin, TemplateView):
@@ -268,7 +269,7 @@ class SubmissionDraftDiscardView(LoggedInEventPageMixin, SubmissionViewMixin, Te
     def post(self, request, *args, **kwargs):
         self.submission.delete()
         messages.success(self.request, _('Your draft was discarded.'))
-        return redirect('cfp:event.user.submissions', event=self.request.event.slug)
+        return redirect('cfp:event.user.submissions', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
 
 
 class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateView):
@@ -490,7 +491,7 @@ class SubmissionInviteAcceptView(LoggedInEventPageMixin, DetailView):
         submission.log_action('eventyay.submission.speakers.add', person=self.request.user)
         submission.save()
         messages.success(self.request, phrases.cfp.invite_accepted)
-        return redirect('cfp:event.user.view', event=self.request.event.slug)
+        return redirect('cfp:event.user.view', organizer=self.request.event.organizer.slug, event=self.request.event.slug)
 
 
 class MailListView(LoggedInEventPageMixin, TemplateView):

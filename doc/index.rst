@@ -35,7 +35,7 @@ Talk Component
    talk/api/index
    talk/developer/index
    talk/changelog
-   talk/funding
+   talk/support
    talk/maintainer/release
 
 Video Component

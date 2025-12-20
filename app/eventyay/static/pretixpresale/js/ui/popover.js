@@ -99,7 +99,7 @@ $(function () {
 
   // Constructing logout path using URLSearchParams
   const logoutParams = new URLSearchParams({ back: backUrl });
-  const logoutPath = `/control/logout?${logoutParams}`;
+  const logoutPath = `/common/logout/?${logoutParams}`;
 
   const profilePath = '/common/account/';
   const orderPath = '/common/orders/';
@@ -108,21 +108,36 @@ $(function () {
     `<div data-name="popover-profile-menu">
       <div class="profile-menu">
           <a href="${basePath}${orderPath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-shopping-cart"></i> ${window.gettext('My Orders')}
+              <i class="fa fa-shopping-cart"></i> ${window.gettext('My orders')}
           </a>
       </div>
       <div class="profile-menu">
-          <a href="${basePath}${profilePath}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-user"></i> ${window.gettext('My Account')}
+          <a href="${basePath}/${organizerName}/${eventSlug}/me/submissions/" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-sticky-note-o"></i> ${window.gettext('My proposals')}
           </a>
+      </div>
+      <div class="profile-menu">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-address-card-o"></i> ${window.gettext('Speaker profile')}
+          </a>
+      </div>
+      <div class="profile-menu">
+          <a href="${basePath}/${organizerName}/${eventSlug}/me/mails/" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-envelope"></i> ${window.gettext('Event emails')}
+          </a>
+      </div>
+      <div class="profile-menu">
+        <a href="${basePath}${profilePath}" target="_self" class="btn btn-outline-success">
+        <i class="fa fa-user"></i> ${window.gettext('Account')}
+        </a>
       </div>`,
   ];
 
   if (showOrganizerArea) {
     blocks.push(
       `<div class="profile-menu organizer-area">
-          <a href="${basePath}/control/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
-              <i class="fa fa-users"></i> ${window.gettext('Organizer Area')}
+          <a href="${basePath}/common/event/${organizerName}/${eventSlug}" target="_self" class="btn btn-outline-success">
+              <i class="fa fa-gears"></i> ${window.gettext('Organizer area')}
           </a>
       </div>`
     );

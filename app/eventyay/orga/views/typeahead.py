@@ -136,7 +136,7 @@ def nav_typeahead(request):
     if query and request.user.is_administrator:
         qs_users = (
             User.objects.filter(
-                Q(name__icontains=query) | Q(email__icontains=query) | Q(code__istartswith=query)
+                Q(fullname__icontains=query) | Q(email__icontains=query) | Q(code__istartswith=query)
             ).order_by('email')
             if query
             else User.objects.none()

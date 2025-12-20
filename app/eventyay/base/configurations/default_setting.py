@@ -12,15 +12,10 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.utils.text import format_lazy
-from django.utils.translation import (
-    gettext_lazy as _,
-)
-from django.utils.translation import (
-    gettext_noop,
-    pgettext,
-    pgettext_lazy,
-)
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -187,6 +182,27 @@ DEFAULT_SETTINGS = {
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_addresses_asked'}),
         ),
     },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('E-mail'),
+            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+        ),
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require email address per order'),
+            help_text=_('Require attendees to fill in an email address for the order.'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
+        ),
+    },
     'order_email_asked_twice': {
         'default': 'False',
         'type': bool,
@@ -195,6 +211,15 @@ DEFAULT_SETTINGS = {
         'form_kwargs': dict(
             label=_('Ask for the order email address twice'),
             help_text=_('Require attendees to enter their primary email address twice to help prevent errors.'),
+        ),
+    },
+    'include_wikimedia_username': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Add the Wikimedia ID for users authenticated via Wikimedia'),
         ),
     },
     'order_phone_asked': {
@@ -849,7 +874,29 @@ DEFAULT_SETTINGS = {
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=_('Available languages'),
+            label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
+            ),
+        ),
+    },
+    'content_locales': {
+        'default': json.dumps([settings.LANGUAGE_CODE]),
+        'type': list,
+        'serializer_class': ListMultipleChoiceField,
+        'serializer_kwargs': dict(
+            choices=settings.LANGUAGES,
+            required=True,
+        ),
+        'form_class': forms.MultipleChoiceField,
+        'form_kwargs': dict(
+            choices=settings.LANGUAGES,
+            widget=MultipleLanguagesWidget,
+            required=True,
+            label=_('Content languages'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
@@ -1149,15 +1196,16 @@ DEFAULT_SETTINGS = {
         ),
     },
     'require_registered_account_for_tickets': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
         'form_kwargs': dict(
-            label=_('Only allow registered accounts to get a ticket'),
+            label=_('Require user to be logged in to place an order'),
             help_text=_(
-                'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-                "'Continue as a Guest' option will not be available for attendees."
+                'If this option is turned on, users must be logged in before completing an order. '
+                'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+                "The 'Continue as a Guest' option will not be available for attendees."
             ),
         ),
     },
@@ -2080,11 +2128,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a header image, it will be displayed instead of your event’s color '
-                'and/or header pattern at the top of all event pages. It will be center-aligned, '
-                'so when the window shrinks, the center parts will continue to be displayed, you '
-                'can increase the size with the setting below. The image will not be stretched. ' 
-                'Please do not upload files larger than 10.0MB!'
+                'This image appears at the top of all event pages, replacing the default color or pattern. '
+                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+                'We recommend an image at least 1170 px wide and 120 px in height for best results.'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2102,10 +2148,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a logo image, we will by default not show your event name and date '
-                'in the page header. By default, the logo will be scaled down to a height of 140px. '
-                'We recommend not using small details on the picture '
-                'as it will be resized on smaller screens.'
+                'When you upload a logo, the event name and date will not appear in the header. '
+                'The logo scales to 140 px in height while maintaining aspect ratio. '
+                'We recommend not using small details as it will be resized on smaller screens.'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2143,10 +2188,9 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'If you provide a logo image, we will by default not show your organization name '
-                'in the page header. By default, we show your logo with a size of up to 1140x120 pixels. You '
-                'can increase the size with the setting below. We recommend not using small details on the picture '
-                'as it will be resized on smaller screens.'
+                'This image appears at the top of all organizer pages, replacing the default color or pattern. '
+                'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
+                'We recommend an image 1140 px wide and 120 px in height (can be increased with the setting below).'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2174,10 +2218,10 @@ Your {event} team"""
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
-                'This picture will be used as a preview if you post links to your ticket shop on social media. '
-                'Facebook advises to use a picture size of 1200 x 630 pixels, however some platforms like '
-                'WhatsApp and Reddit only show a square preview, so we recommend to make sure it still looks good '
-                'only the center square is shown. If you do not fill this, we will use the logo given above.'
+                'This image is used as a preview when sharing your event link on social media. '
+                'Facebook recommends a size of 1200 × 630 px, but some platforms such as WhatsApp and Reddit '
+                'display a square preview. Ensure the center area of your image looks good in both formats. '
+                'If no image is uploaded, the event logo will be used instead.'
             ),
         ),
         'serializer_class': UploadedFileField,
@@ -2208,7 +2252,7 @@ Your {event} team"""
         'type': LazyI18nString,
         'serializer_class': I18nField,
         'form_class': I18nFormField,
-        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nTextarea),
+        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
     },
     'event_info_text': {
         'default': '',

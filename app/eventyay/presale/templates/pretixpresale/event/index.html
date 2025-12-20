@@ -81,8 +81,8 @@
                                     Checkout
                                 </a>
                             {% else %}
-                                <a class="btn btn-block btn-primary btn-lg disabled" href="#">
-                                    Checkout
+                                <a class="btn btn-block btn-primary btn-lg" href="{% url 'eventyay_common:auth.login' %}?next={% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}" id="checkout-login-required">
+                                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Login to Checkout" %}
                                 </a>
                             {% endif %}
                         </div>
@@ -272,7 +272,7 @@
             {% eventsignal event "eventyay.presale.signals.front_page_top" request=request subevent=subevent %}
         {% endif %}
 
-        {% if ev.presale_is_running or event.settings.show_items_outside_presale_period %}
+        {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
             <form method="post" data-asynctask
                     data-asynctask-headline="{% trans "We're now trying to reserve this for you!" %}"
                     data-asynctask-text="{% blocktrans with time=event.settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"

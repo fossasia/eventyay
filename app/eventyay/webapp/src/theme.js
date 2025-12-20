@@ -52,8 +52,17 @@ const DEFAULT_COLORS = {
 	bbb_background: '#ffffff',
 }
 
+const resolveAssetPath = (relativePath) => {
+	const basePath = config.basePath || ''
+	if (!basePath || basePath === '/') {
+		return `/${relativePath}`
+	}
+	const normalized = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath
+	return `${normalized}/${relativePath}`
+}
+
 const DEFAULT_LOGO = {
-	url: '/video/eventyay-video-logo.png',
+	url: resolveAssetPath('eventyay-video-logo.png'),
 	fitToWidth: false
 }
 
@@ -70,7 +79,29 @@ const themeConfig = {
 	identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
 }
 
-const colors = Object.keys(DEFAULT_COLORS).reduce((acc, key) => (acc[key] = Color((configColors ?? DEFAULT_COLORS)[key]), acc), {})
+const colors = {}
+const themeVariables = {}
+const appliedCssVariables = new Set()
+
+function mergeColorConfig(colorValues = {}) {
+	return {...DEFAULT_COLORS, ...colorValues}
+}
+
+function updateThemeVariables() {
+	for (const key of Object.keys(themeVariables)) {
+		delete themeVariables[key]
+	}
+	for (const [key, value] of Object.entries(colors)) {
+		themeVariables[`--clr-${kebabCase(key)}`] = value.string()
+	}
+}
+
+function populateColorObjects(colorValues = {}) {
+	const merged = mergeColorConfig(colorValues)
+
+	for (const key of Object.keys(DEFAULT_COLORS)) {
+		colors[key] = Color(merged[key])
+	}
 
 // modded colors
 colors.primaryDarken15 = colors.primary.darken(0.15)
@@ -103,12 +134,30 @@ colors.sidebarActiveFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT
 colors.sidebarHoverBg = firstReadable(['rgba(0, 0, 0, 0.12)', 'rgba(255, 255, 255, 0.3)'], colors.sidebar)
 colors.sidebarHoverFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], colors.sidebar)
 
-// TODO warn if contrast if failing
+	// TODO warn if contrast is failing
 
-const themeVariables = {}
-for (const [key, value] of Object.entries(colors)) {
-	themeVariables[`--clr-${kebabCase(key)}`] = value.string()
+	updateThemeVariables()
 }
+
+function injectThemeVariables() {
+	if (typeof window === 'undefined') return
+	if (typeof document === 'undefined' || !document.documentElement) return
+
+	for (const key of Array.from(appliedCssVariables)) {
+		if (!Object.prototype.hasOwnProperty.call(themeVariables, key)) {
+			document.documentElement.style.removeProperty(key)
+			appliedCssVariables.delete(key)
+		}
+	}
+
+	for (const [key, value] of Object.entries(themeVariables)) {
+		document.documentElement.style.setProperty(key, value)
+		appliedCssVariables.add(key)
+	}
+}
+
+populateColorObjects(themeConfig.colors)
+injectThemeVariables()
 
 export default themeConfig
 export { themeVariables, colors, DEFAULT_COLORS, DEFAULT_LOGO, DEFAULT_IDENTICONS }
@@ -117,37 +166,10 @@ export function computeForegroundColor(bgColor) {
 	return firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], bgColor)
 }
 
-export function computeForegroundSidebarColor(colors) {
-	const configColors = {
-		primary: colors.primary,
-		sidebar: colors.sidebar,
-		bbb_background: colors.bbb_background,
-	}
-	const sbColors = Object.keys(DEFAULT_COLORS).reduce((acc, key) => {
-		acc[key] = Color((configColors ?? DEFAULT_COLORS)[key])
-		return acc
-	}, {})
-	sbColors.primaryDarken15 = sbColors.primary.darken(0.15)
-	sbColors.primaryDarken20 = sbColors.primary.darken(0.20)
-	sbColors.primaryAlpha60 = sbColors.primary.alpha(0.6)
-	sbColors.primaryAlpha50 = sbColors.primary.alpha(0.5)
-	sbColors.primaryAlpha18 = sbColors.primary.alpha(0.18)
-	sbColors.inputPrimaryBg = sbColors.primary
-	sbColors.inputPrimaryFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], sbColors.primary)
-	sbColors.inputPrimaryBgDarken = sbColors.primary.darken(0.15)
-	sbColors.inputSecondaryFg = sbColors.primary
-	sbColors.inputSecondaryFgAlpha = sbColors.primary.alpha(0.08)
-	sbColors.sidebarTextPrimary = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], sbColors.sidebar)
-	sbColors.sidebarTextSecondary = firstReadable([CLR_SECONDARY_TEXT.LIGHT, CLR_SECONDARY_TEXT_FALLBACK.LIGHT, CLR_SECONDARY_TEXT.DARK, CLR_SECONDARY_TEXT_FALLBACK.DARK], sbColors.sidebar)
-	sbColors.sidebarTextDisabled = firstReadable([CLR_DISABLED_TEXT.LIGHT, CLR_DISABLED_TEXT.DARK], sbColors.sidebar)
-	sbColors.sidebarActiveBg = firstReadable(['rgba(0, 0, 0, 0.08)', 'rgba(255, 255, 255, 0.4)'], sbColors.sidebar)
-	sbColors.sidebarActiveFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], sbColors.sidebar)
-	sbColors.sidebarHoverBg = firstReadable(['rgba(0, 0, 0, 0.12)', 'rgba(255, 255, 255, 0.3)'], sbColors.sidebar)
-	sbColors.sidebarHoverFg = firstReadable([CLR_PRIMARY_TEXT.LIGHT, CLR_PRIMARY_TEXT.DARK], sbColors.sidebar)
-
-	for (const [key, value] of Object.entries(sbColors)) {
-		themeVariables[`--clr-${kebabCase(key)}`] = value.string()
-	}
+export function computeForegroundSidebarColor(newColors) {
+	if (!newColors) return
+	populateColorObjects({...themeConfig.colors, ...newColors})
+	injectThemeVariables()
 }
 
 export async function getThemeConfig() {
@@ -203,4 +225,30 @@ export async function getThemeConfig() {
 		streamOfflineImage: config.theme?.streamOfflineImage,
 		identicons: Object.assign({}, DEFAULT_IDENTICONS, config.theme?.identicons),
 	}
+}
+
+export function applyThemeConfig(themeData = {}) {
+	const mergedColors = mergeColorConfig(themeData.colors ?? themeConfig.colors)
+	themeConfig.colors = mergedColors
+
+	const logoSource = themeData.logo ?? themeConfig.logo ?? {}
+	themeConfig.logo = {...DEFAULT_LOGO, ...logoSource}
+
+	if (Object.prototype.hasOwnProperty.call(themeData, 'streamOfflineImage')) {
+		themeConfig.streamOfflineImage = themeData.streamOfflineImage
+	} else if (themeConfig.streamOfflineImage === undefined) {
+		themeConfig.streamOfflineImage = null
+	}
+
+	const identiconSource = themeData.identicons ?? themeConfig.identicons ?? {}
+	themeConfig.identicons = {...DEFAULT_IDENTICONS, ...identiconSource}
+
+	populateColorObjects(themeConfig.colors)
+	injectThemeVariables()
+}
+
+export async function loadThemeConfig() {
+	const themeData = await getThemeConfig()
+	applyThemeConfig(themeData)
+	return themeData
 }

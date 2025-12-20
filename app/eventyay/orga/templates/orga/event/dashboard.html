@@ -2,6 +2,7 @@
 
 {% load compress %}
 {% load i18n %}
+{% load staff_session %}
 {% load rules %}
 {% load static %}
 
@@ -12,8 +13,8 @@
 {% endblock stylesheets %}
 
 {% block content %}
-    {% has_perm "base.orga_list_speakerprofile" request.user request.event as can_view_speakers %}
-    {% has_perm "base.update_event" request.user request.event as can_change_settings %}
+    {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
+    {% has_event_perm "base.update_event" request.user request request.event as can_change_settings %}
     {% if "congratulations" in request.GET %}
         <div class="alert alert-success congratulations">
             <span></span>
@@ -26,10 +27,8 @@
     {% endif %}
     <div id="main-title" class="d-md-flex justify-content-between">
         <h2>
-            <span>
-                {{ request.event.name }}
-                <small class="text-muted small">{{ request.event.get_date_range_display }}</small>
-            </span>
+            {{ request.event.name }}
+            <small class="text-muted small">{{ request.event.get_date_range_display }}</small>
         </h2>
         {% include "orga/event/component_link.html" %}
     </div>

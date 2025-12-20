@@ -6,20 +6,20 @@ $(function () {
     }
     $(".form-order-change").each(function () {
         var url = $(this).attr("data-pricecalc-endpoint");
-        var $itemvar = $(this).find("[name*=itemvar]");
+        var $productvar = $(this).find("[name*=productvar]");
         var $subevent = $(this).find("[name*=subevent]");
         var $tax_rule = $(this).find("[name*=tax_rule]");
         var $price = $(this).find("[name*=price]");
         var update_price = function () {
             console.log(url);
-            var itemvar = $itemvar.val();
-            var item = null;
+            var productvar = $productvar.val();
+            var product = null;
             var variation = null;
-            if (itemvar.indexOf("-")) {
-                item = parseInt(itemvar.split("-")[0]);
-                variation = parseInt(itemvar.split("-")[1]);
+            if (productvar.indexOf("-")) {
+                product = parseInt(productvar.split("-")[0]);
+                variation = parseInt(productvar.split("-")[1]);
             } else {
-                item = parseInt(itemvar);
+                product = parseInt(productvar);
             }
             $price.closest(".field-container").append("<small class=\"loading-indicator\"><span class=\"fa fa-cog fa-spin\"></span> " +
                 gettext("Calculating default price…") + "</small>");
@@ -29,7 +29,7 @@ $(function () {
                     'url': url,
                     'headers': {'X-CSRFToken': $("input[name=csrfmiddlewaretoken]").val()},
                     'data': JSON.stringify({
-                        'item': item,
+                        'product': product,
                         'variation': variation,
                         'subevent': $subevent.val(),
                         'tax_rule': $tax_rule.val(),
@@ -48,7 +48,7 @@ $(function () {
                 }
             );
         };
-        $itemvar.on("change", function () { $tax_rule.val(null); update_price() });
+        $productvar.on("change", function () { $tax_rule.val(null); update_price() });
         $tax_rule.on("change", update_price);
         $subevent.on("change", update_price).on("change", function () {
             var seat = $(this).closest(".form-order-change").find("[id$=seat]");

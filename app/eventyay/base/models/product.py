@@ -170,7 +170,7 @@ class SubEventProductVariation(models.Model):
 
 def filter_available(qs, channel='web', voucher=None, allow_addons=False):
     q = (
-        # IMPORTANT: If this is updated, also update the ItemVariation query
+        # IMPORTANT: If this is updated, also update the ProductVariation query
         # in models/event.py: EventMixin.annotated()
         Q(active=True)
         & Q(Q(available_from__isnull=True) | Q(available_from__lte=now()))
@@ -1134,8 +1134,8 @@ class Question(LoggedModel):
         (TYPE_STRING, _('Text (one line)')),
         (TYPE_TEXT, _('Multiline text')),
         (TYPE_BOOLEAN, _('Confirm Checkbox')),
-        (TYPE_CHOICE, _('Choose one from a list')),
-        (TYPE_CHOICE_MULTIPLE, _('Choose multiple from a list')),
+        (TYPE_CHOICE, _('Radio button (Choose one option)')),
+        (TYPE_CHOICE_MULTIPLE, _('Checkbox (Choose one or several options)')),
         (TYPE_FILE, _('File upload')),
         (TYPE_DATE, _('Date')),
         (TYPE_TIME, _('Time')),

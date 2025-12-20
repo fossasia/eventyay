@@ -22,16 +22,18 @@ export default {
 			if (pretalx.url) {
 				return pretalx.url
 			}
-			if (!pretalx.domain || !pretalx.event) return ''
-			if (!pretalx.domain.endsWith('/')) {
-				pretalx.domain += '/'
-			}
-			const url = new URL(`${pretalx.event}/schedule/widgets/schedule.json`, pretalx.domain)
+			if (!pretalx.domain || !pretalx.event || !pretalx.organizer) return ''
+			const domain = pretalx.domain.endsWith('/') ? pretalx.domain : pretalx.domain + '/'
+			const path = `${pretalx.organizer}/${pretalx.event}/schedule/widgets/schedule.json`
+			const url = new URL(path, domain)
 			return url.toString()
 		},
 		pretalxApiBaseUrl(state, getters, rootState) {
 			if (!rootState.world.pretalx?.domain || !rootState.world.pretalx?.event) return
-			return rootState.world.pretalx.domain + 'api/events/' + rootState.world.pretalx.event
+			const domain = rootState.world.pretalx.domain.endsWith('/') 
+				? rootState.world.pretalx.domain 
+				: rootState.world.pretalx.domain + '/'
+			return domain + 'api/events/' + rootState.world.pretalx.event
 		},
 		rooms(state, getters, rootState) {
 			if (!state.schedule) return
@@ -222,21 +224,33 @@ export default {
 		}
 	},
 	actions: {
-		async fetch({state, getters}) {
-			// TODO error handling
-			if (!getters.pretalxScheduleUrl) return
-			// const version = await (await fetch(`${getters.pretalxApiBaseUrl}/schedules/`)).json()
-			// console.log(version.results[0].version)
+		async fetch({state, getters, rootState}) {
 			try {
 				state.errorLoading = null
-				state.schedule = await (await fetch(getters.pretalxScheduleUrl)).json()
-				state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
-					const isDuplicate = acc.some(item => item.session_type === current.session_type)
-					if (!isDuplicate) {
-						acc.push(current)
-					}
-					return acc
-				}, [])
+				
+				if (window.eventyay?.schedule) {
+					state.schedule = window.eventyay.schedule
+				} else if (rootState.world?.schedule) {
+					state.schedule = rootState.world.schedule
+				} else if (getters.pretalxScheduleUrl) {
+					state.schedule = await (await fetch(getters.pretalxScheduleUrl)).json()
+				} else {
+					return
+				}
+				
+				if (state.schedule?.talks) {
+					state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
+						const sessionType = current.session_type
+						if (!sessionType) {
+							return acc
+						}
+						const isDuplicate = acc.some(item => item.session_type && item.session_type === sessionType)
+						if (!isDuplicate) {
+							acc.push(current)
+						}
+						return acc
+					}, [])
+				}
 			} catch (error) {
 				state.errorLoading = error
 			}

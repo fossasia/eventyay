@@ -16,7 +16,8 @@ markdownIt.renderer.rules.link_open = (tokens, idx, options, env, self) => {
 }
 markdownIt.use(markdownEmoji)
 
-const mentionRegex = /(@[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})/g
+const uuidPattern = '[0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12}'
+const mentionRegex = new RegExp(`(@(?:${uuidPattern}|[0-9]+))`, 'g')
 
 export async function contentToPlainText(content) {
 	const parts = content.split(mentionRegex)

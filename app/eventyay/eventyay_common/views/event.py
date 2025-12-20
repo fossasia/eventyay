@@ -1,4 +1,5 @@
 import datetime as dt
+import logging
 from datetime import datetime, timedelta
 from datetime import timezone as tz
 from enum import StrEnum
@@ -27,6 +28,8 @@ from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services import tickets
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
@@ -35,7 +38,6 @@ from eventyay.control.views import PaginationMixin, UpdateView
 from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin
 from eventyay.control.views.product import MetaDataEditorMixin
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
-from eventyay.eventyay_common.tasks import create_world
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
@@ -44,6 +46,8 @@ from eventyay.eventyay_common.utils import (
 )
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
+
+logger = logging.getLogger(__name__)
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -163,6 +167,7 @@ class EventCreateView(SafeSessionWizardView):
         if step == 'foundation':
             initial_form['is_video_creation'] = True
             initial_form['locales'] = ['en']
+            initial_form['content_locales'] = ['en']
             initial_form['create_for'] = EventCreatedFor.BOTH
             if 'organizer' in request_get:
                 try:
@@ -260,6 +265,8 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            content_locales = foundation_data.get('content_locales') or foundation_data['locales']
+            event.settings.set('content_locales', content_locales)
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -277,6 +284,7 @@ class EventCreateView(SafeSessionWizardView):
                     'timezone': str(basics_data.get('timezone')),
                     'locale': event.settings.locale,
                     'locales': event.settings.locales,
+                    'content_locales': content_locales,
                     'is_video_creation': final_is_video_creation,
                 }
 
@@ -284,16 +292,6 @@ class EventCreateView(SafeSessionWizardView):
                     action='eventyay.event.added',
                     user=self.request.user,
                 )
-        # The user automatically creates a world when selecting the add video option in the create ticket form.
-        event_data = dict(
-            id=basics_data.get('slug'),
-            title=basics_data.get('name').data,
-            timezone=basics_data.get('timezone'),
-            locale=basics_data.get('locale'),
-            has_permission=has_permission,
-            token=generate_token(self.request),
-        )
-        create_world.delay(is_video_creation=final_is_video_creation, event_data=event_data)
 
         return redirect(
             reverse(
@@ -351,8 +349,24 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
+
+        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
+            regenerate_css.apply_async(args=(self.request.event.pk,))
+            messages.success(
+                self.request,
+                _(
+                    'Your changes have been saved. Please note that it can '
+                    'take a short period of time until your changes become '
+                    'active.'
+                ),
+            )
 
         return super().form_valid(form)
 
@@ -400,17 +414,6 @@ class EventUpdate(
             messages.error(self.request, _('You do not have permission to perform this action.'))
             return False
 
-        create_world.delay(
-            is_video_creation=True,
-            event_data={
-                'id': self.request.event.slug,
-                'title': self.request.event.name.data,
-                'timezone': self.request.event.settings.timezone,
-                'locale': self.request.event.settings.locale,
-                'has_permission': True,
-                'token': generate_token(self.request),
-            },
-        )
         return True
 
     def post(self, request, *args, **kwargs):
@@ -503,11 +506,18 @@ class VideoAccessAuthenticator(View):
             event.settings.venueless_issuer = issuer
         if not event.settings.venueless_audience:
             event.settings.venueless_audience = audience
-        if not event.settings.venueless_url:
-            # Choose base site dynamically: prefer current request host (useful for local dev)
+        def build_video_url(host=None):
             scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            base_host = host or request.get_host()
+            return f"{scheme}://{base_host}{event.urls.video_base}"
+
+        if not event.settings.venueless_url:
+            event.settings.venueless_url = build_video_url()
+            logger.info(
+                "Initialized video_url for event %s to %s",
+                event.slug,
+                event.settings.venueless_url,
+            )
 
         # If the saved URL points to a different host than the current request (e.g., prod domain),
         # adjust it to the current host so local development goes to localhost.
@@ -515,14 +525,18 @@ class VideoAccessAuthenticator(View):
             saved = urlparse(str(event.settings.venueless_url))
             current_host = request.get_host()
             if saved.netloc and saved.netloc != current_host:
-                scheme = 'https' if request.is_secure() else 'http'
-                base_site = f"{scheme}://{current_host}"
-                event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+                event.settings.venueless_url = build_video_url(current_host)
+                logger.info(
+                    "Adjusted video_url for event %s to %s",
+                    event.slug,
+                    event.settings.venueless_url,
+                )
         except Exception:
-            # If parsing fails for any reason, fall back to the current request host
-            scheme = 'https' if request.is_secure() else 'http'
-            base_site = f"{scheme}://{request.get_host()}"
-            event.settings.venueless_url = f"{base_site}/video/{event.slug}"
+            logger.exception(
+                "Failed to parse video_url for event %s; falling back to current host.",
+                event.slug,
+            )
+            event.settings.venueless_url = build_video_url()
 
         # Ensure the pretix_venueless plugin is enabled
         current_plugins = set(event.get_plugins())

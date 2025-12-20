@@ -12,14 +12,14 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import configparser
 import importlib
-import importlib_metadata
 import importlib.util
 import os
 import sys
 from collections import OrderedDict
-from importlib.metadata import entry_points
 from pathlib import Path
 from urllib.parse import urlparse
+
+import importlib_metadata
 
 # Ensure local ticket-video plugin is importable (now inside app/eventyay/plugins)
 # Location: app/eventyay/plugins/eventyay-ticket-video/pretix_venueless
@@ -380,6 +380,10 @@ DATABASES = {
     }
 }
 
+# JSON field support is available in PostgreSQL
+db_backend = DATABASES['default']['ENGINE'].split('.')[-1]
+JSON_FIELD_AVAILABLE = db_backend == 'postgresql'
+
 
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
@@ -445,25 +449,43 @@ EMAIL_FILE_PATH = BASE_DIR / 'dev-sent-emails'
 ALL_LANGUAGES = [
     ('en', _('English')),
     ('de', _('German')),
-    ('de-formal', _('German (informal)')),
+    ('de-formal', _('German (formal)')),
     ('ar', _('Arabic')),
-    ('zh-hans', _('Chinese (simplified)')),
+    ('bg', _('Bulgarian')),
+    ('ca', _('Catalan')),
+    ('cs', _('Czech')),
     ('da', _('Danish')),
+    ('el', _('Greek')),
+    ('es', _('Spanish')),
+    ('fa-ir', _('Persian')),
+    ('fi', _('Finnish')),
+    ('fr', _('French')),
+    ('hu', _('Hungarian')),
+    ('id', _('Indonesian')),
+    ('it', _('Italian')),
+    ('ja-jp', _('Japanese')),
+    ('ko', _('Korean')),
+    ('lv', _('Latvian')),
+    ('ms', _('Malay')),
+    ('nb-no', _('Norwegian Bokmål')),
     ('nl', _('Dutch')),
     ('nl-informal', _('Dutch (informal)')),
-    ('fr', _('French')),
-    ('fi', _('Finnish')),
-    ('el', _('Greek')),
-    ('it', _('Italian')),
-    ('lv', _('Latvian')),
     ('pl', _('Polish')),
+    ('pl-informal', _('Polish (informal)')),
+    ('pt-br', _('Brazilian Portuguese')),
     ('pt-pt', _('Portuguese (Portugal)')),
-    ('pt-br', _('Portuguese (Brazil)')),
+    ('ro', _('Romanian')),
     ('ru', _('Russian')),
-    ('es', _('Spanish')),
+    ('si', _('Sinhala')),
+    ('sl', _('Slovenian')),
+    ('sv', _('Swedish')),
     ('sw', _('Swahili')),
+    ('th', _('Thai')),
     ('tr', _('Turkish')),
     ('uk', _('Ukrainian')),
+    ('vi', _('Vietnamese')),
+    ('zh-hans', _('Chinese (Simplified)')),
+    ('zh-hant', _('Chinese (Traditional)')),
 ]
 LANGUAGES_OFFICIAL = {'en', 'de', 'de-formal'}
 LANGUAGES_INCUBATING = {'pl', 'fi', 'pt-br'} - set(config.get('languages', 'allow_incubating', fallback='').split(','))
@@ -487,7 +509,7 @@ EXTRA_LANG_INFO = {
     'de-formal': {
         'bidi': False,
         'code': 'de-formal',
-        'name': 'German (informal)',
+        'name': 'German (formal)',
         'name_local': 'Deutsch',
         'public_code': 'de',
     },
@@ -536,7 +558,8 @@ SESSION_COOKIE_NAME = 'eventyay_session'
 LANGUAGE_COOKIE_NAME = 'eventyay_language'
 CSRF_COOKIE_NAME = 'eventyay_csrftoken'
 # TODO that probably needs adjustment for the actual deployment
-CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', f"http://{SITE_NETLOC}:1337", f"https://{SITE_NETLOC}"]
+# CSRF_TRUSTED_ORIGINS = ['http://localhost:1337', 'http://next.eventyay.com:1337', 'https://next.eventyay.com']
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_DOMAIN = config.get('eventyay', 'cookie_domain', fallback=None)
 
@@ -569,7 +592,7 @@ LANGUAGES_INFORMATION = {
         'natural_name': 'Deutsch',
         'official': True,
         'percentage': 100,
-        'path': 'de_DE',
+        'path': 'de',
     },
     'de-formal': {
         'name': _('German (formal)'),
@@ -585,11 +608,29 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 72,
     },
+    'bg': {
+        'name': _('Bulgarian'),
+        'natural_name': 'Български',
+        'official': False,
+        'percentage': 0,
+    },
+    'ca': {
+        'name': _('Catalan'),
+        'natural_name': 'Català',
+        'official': False,
+        'percentage': 0,
+    },
     'cs': {
         'name': _('Czech'),
         'natural_name': 'Čeština',
         'official': False,
         'percentage': 97,
+    },
+    'da': {
+        'name': _('Danish'),
+        'natural_name': 'Dansk',
+        'official': False,
+        'percentage': 0,
     },
     'el': {
         'name': _('Greek'),
@@ -605,18 +646,30 @@ LANGUAGES_INFORMATION = {
     },
     'fa-ir': {
         'name': _('Persian'),
-        'natural_name': 'قارسی',
+        'natural_name': 'فارسی',
         'official': False,
         'percentage': 99,
         'path': 'fa_IR',
         'public_code': 'fa_IR',
+    },
+    'fi': {
+        'name': _('Finnish'),
+        'natural_name': 'Suomi',
+        'official': False,
+        'percentage': 0,
     },
     'fr': {
         'name': _('French'),
         'natural_name': 'Français',
         'official': False,
         'percentage': 98,
-        'path': 'fr_FR',
+        'path': 'fr',
+    },
+    'hu': {
+        'name': _('Hungarian'),
+        'natural_name': 'Magyar',
+        'official': False,
+        'percentage': 0,
     },
     'it': {
         'name': _('Italian'),
@@ -624,12 +677,45 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 95,
     },
+    'id': {
+        'name': _('Indonesian'),
+        'natural_name': 'Bahasa Indonesia',
+        'official': False,
+        'percentage': 90,
+    },
     'ja-jp': {
         'name': _('Japanese'),
         'natural_name': '日本語',
         'official': False,
         'percentage': 69,
         'public_code': 'jp',
+        'path': 'ja',
+    },
+    'ko': {
+        'name': _('Korean'),
+        'natural_name': '한국어',
+        'official': False,
+        'percentage': 88,
+    },
+    'lv': {
+        'name': _('Latvian'),
+        'natural_name': 'Latviešu',
+        'official': False,
+        'percentage': 0,
+    },
+    'ms': {
+        'name': _('Malay'),
+        'natural_name': 'Bahasa Melayu',
+        'official': False,
+        'percentage': 0,
+    },
+    'nb-no': {
+        'name': _('Norwegian Bokmål'),
+        'natural_name': 'Norsk bokmål',
+        'official': False,
+        'percentage': 0,
+        'public_code': 'nb',
+        'path': 'nb_NO',
     },
     'nl': {
         'name': _('Dutch'),
@@ -637,12 +723,28 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 88,
     },
+    'pl': {
+        'name': _('Polish'),
+        'natural_name': 'Polski',
+        'official': False,
+        'percentage': 0,
+        'path': 'pl',
+    },
+    'pl-informal': {
+        'name': _('Polish (informal)'),
+        'natural_name': 'Polski (nieformalny)',
+        'official': False,
+        'percentage': 0,
+        'public_code': 'pl',
+        'path': 'pl_Informal',
+    },
     'pt-br': {
-        'name': _('Brasilian Portuguese'),
+        'name': _('Brazilian Portuguese'),
         'natural_name': 'Português brasileiro',
         'official': False,
         'percentage': 89,
         'public_code': 'pt',
+        'path': 'pt_BR',
     },
     'pt-pt': {
         'name': _('Portuguese'),
@@ -650,11 +752,36 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 89,
         'public_code': 'pt',
+        'path': 'pt_PT',
+    },
+    'ro': {
+        'name': _('Romanian'),
+        'natural_name': 'Română',
+        'official': False,
+        'percentage': 0,
     },
     'ru': {
         'name': _('Russian'),
         'natural_name': 'Русский',
         'official': True,
+        'percentage': 0,
+    },
+    'si': {
+        'name': _('Sinhala'),
+        'natural_name': 'සිංහල',
+        'official': False,
+        'percentage': 0,
+    },
+    'sl': {
+        'name': _('Slovenian'),
+        'natural_name': 'Slovenščina',
+        'official': False,
+        'percentage': 0,
+    },
+    'sv': {
+        'name': _('Swedish'),
+        'natural_name': 'Svenska',
+        'official': False,
         'percentage': 0,
     },
     'sw': {
@@ -663,25 +790,47 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 0,
     },
-    'ua': {
+    'th': {
+        'name': _('Thai'),
+        'natural_name': 'ไทย',
+        'official': False,
+        'percentage': 0,
+    },
+    'tr': {
+        'name': _('Turkish'),
+        'natural_name': 'Türkçe',
+        'official': False,
+        'percentage': 0,
+    },
+    'uk': {
         'name': _('Ukrainian'),
         'natural_name': 'Українська',
         'official': True,
         'percentage': 0,
+        'public_code': 'uk',
+        'path': 'ua',
+    },
+    'vi': {
+        'name': _('Vietnamese'),
+        'natural_name': 'Tiếng Việt',
+        'official': False,
+        'percentage': 0,
     },
     'zh-hant': {
-        'name': _('Traditional Chinese (Taiwan)'),
-        'natural_name': '漢語',
+        'name': _('Chinese (Traditional)'),
+        'natural_name': '繁體中文',
         'official': False,
         'percentage': 66,
         'public_code': 'zh',
+        'path': 'zh_Hant',
     },
     'zh-hans': {
-        'name': _('Simplified Chinese'),
+        'name': _('Chinese (Simplified)'),
         'natural_name': '简体中文',
         'official': False,
         'percentage': 86,
         'public_code': 'zh',
+        'path': 'zh_Hans',
     },
 }
 LANGUAGES_RTL = {
@@ -899,6 +1048,17 @@ STATICFILES_FINDERS = (
     'compressor.finders.CompressorFinder',
 )
 STATICI18N_ROOT = os.path.join(BASE_DIR, 'static')
+STATICI18N_OUTPUT_DIR = 'jsi18n'
+STATICI18N_PACKAGES = (
+    'eventyay.common',
+    'eventyay.presale',
+    'eventyay.control',
+    'eventyay.base',
+    'eventyay.eventyay_common',
+    'eventyay.agenda',
+    'eventyay.orga',
+    'eventyay.submission',
+)
 FRONTEND_DIR = BASE_DIR / 'frontend'
 
 VITE_DEV_SERVER_PORT = 8080

@@ -1,11 +1,12 @@
-from django.urls import re_path as url
+from django.urls import path
 
 from eventyay.api.urls import event_router
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 from eventyay.plugins.badges.api import (
     BadgeDownloadView,
-    BadgeProductViewSet,
     BadgeLayoutViewSet,
     BadgePreviewView,
+    BadgeProductViewSet,
 )
 
 from .views import (
@@ -18,43 +19,43 @@ from .views import (
 )
 
 urlpatterns = [
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/',
         LayoutListView.as_view(),
         name='index',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/print$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/print',
         OrderPrintDo.as_view(),
         name='print',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/add$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/add',
         LayoutCreate.as_view(),
         name='add',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/default$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/<int:layout>/default',
         LayoutSetDefault.as_view(),
         name='default',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/delete$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/<int:layout>/delete',
         LayoutDelete.as_view(),
         name='delete',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/badges/(?P<layout>\d+)/editor',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/badges/<int:layout>/editor',
         LayoutEditorView.as_view(),
         name='edit',
     ),
-    url(
-        r'^api/v1/organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/orderpositions/(?P<position>\d+)/download/badge/$',
+    path(
+        'api/v1/organizers/<orgslug:organizer>/events/<slug:event>/orderpositions/<int:position>/download/badge/',
         BadgeDownloadView.as_view(),
         name='api-badge-download',
     ),
-    url(
-        r'^api/v1/organizers/(?P<organizer>[^/]+)/events/(?P<event>[^/]+)/orderpositions/(?P<position>\d+)/preview/badge/$',
+    path(
+        'api/v1/organizers/<orgslug:organizer>/events/<slug:event>/orderpositions/<int:position>/preview/badge/',
         BadgePreviewView.as_view(),
         name='badge-preview',
     ),

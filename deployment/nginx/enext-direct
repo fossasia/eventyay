@@ -1,8 +1,8 @@
 server {
-	server_name next.eventyay.com;
+	server_name <SERVER_NAME>;
 
-	access_log /var/log/nginx/enext-access.log;
-        error_log /var/log/nginx/enext-error.log;
+	access_log /var/log/nginx/<SERVER_NAME>-access.log;
+        error_log /var/log/nginx/<SERVER_NAME>-error.log;
 
 	# WebSocket connections - route to daphne
 	location /ws/ {
@@ -29,27 +29,14 @@ server {
   	}
 
 	location /static/ {
-		alias /home/fossasia/enext/data/static/;
+		alias <PATH_TO>/data/static/;
 	}
 
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/next.eventyay.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/next.eventyay.com/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-}
-
-server {
-    if ($host = next.eventyay.com) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
+	location /media/ {
+		alias <PATH_TO>/data/data/media/;
+		access_log off;
+		expires 30d;
+	}
         listen 80;
-        server_name next.eventyay.com;
-    return 404; # managed by Certbot
-
-
 }
 

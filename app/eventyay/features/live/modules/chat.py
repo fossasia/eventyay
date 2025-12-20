@@ -463,10 +463,11 @@ class ChatModule(BaseModule):
 
             async def _publish_new_pointers(users):
                 for user in users:
-                    if user == str(self.consumer.user.id):
+                    user_id = user.decode() if isinstance(user, bytes) else str(user)
+                    if user_id == str(self.consumer.user.id):
                         continue
                     await self.consumer.channel_layer.group_send(
-                        GROUP_USER.format(id=user.decode()),
+                        GROUP_USER.format(id=user_id),
                         {
                             "type": "chat.unread_pointers",
                             "data": {self.channel_id: event["event_id"]},

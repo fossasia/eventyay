@@ -4,9 +4,9 @@
 	scrollbars(v-else, y="")
 		.profile
 			img.avatar(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
-			identicon(v-else, :user="{id: speaker.name, profile: {display_name: speaker.name}}")
+			identicon(v-else, :user="{id: speaker.code, profile: {display_name: speaker.name || 'Speaker'}}")
 			.content
-				h1 {{ speaker.name }}
+				h1(:class="{'no-name': !speaker.name}") {{ speaker.name || 'Speaker name not provided' }}
 				markdown-content.biography(:markdown="speaker.biography")
 		.sessions
 			h2 {{ $t('schedule/speakers/item:sessions:header') }}
@@ -46,24 +46,16 @@ export default {
 		...mapState('schedule', ['schedule']),
 		...mapGetters('schedule', ['sessionsLookup', 'favs']),
 		sessions() {
-			if (this.speaker.submissions) {
-				return this.speaker.submissions
-					.map(submission => this.sessionsLookup[submission])
-					.filter(session => session !== undefined)
-			}
-			return this.$store.getters['schedule/sessions'].filter(session => session.speakers.includes(this.speaker))
+			return this.$store.getters['schedule/sessions'].filter(session => 
+				session.speakers && session.speakers.some(s => s && s.code === this.speaker.code)
+			)
 		}
 	},
 	async created() {
-		// TODO error handling
-		if (this.$store.getters['schedule/pretalxApiBaseUrl']) {
-			this.speaker = await (await fetch(`${this.$store.getters['schedule/pretalxApiBaseUrl']}/speakers/${this.speakerId}/`)).json()
-		} else {
-			this.$watch('schedule', (schedule) => {
-				if (!schedule) return
-				this.speaker = schedule.speakers.find(speaker => speaker.id === this.speakerId || speaker.code === this.speakerId)
-			}, { immediate: true })
-		}
+		this.$watch('schedule', (schedule) => {
+			if (!schedule) return
+			this.speaker = schedule.speakers.find(speaker => speaker.id === this.speakerId || speaker.code === this.speakerId)
+		}, { immediate: true })
 	},
 	mounted() {},
 	methods: {
@@ -101,6 +93,9 @@ export default {
 			padding: 16px
 		h1
 			margin: 24px 0 16px
+			&.no-name
+				color: $clr-secondary-text-light
+				font-style: italic
 		.content
 			flex: auto
 			margin-right: 16px

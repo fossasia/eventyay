@@ -2,6 +2,7 @@
 
 {% load compress %}
 {% load event_tags %}
+{% load staff_session %}
 {% load i18n %}
 {% load rules %}
 {% load static %}
@@ -21,10 +22,10 @@
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}session{% plural %}sessions{% endblocktranslate %} :: {% endblock extra_title %}
 
 {% block content %}
-    {% has_perm "base.create_submission" request.user request.event as can_create_submission %}
-    {% has_perm "base.state_change_submission" request.user request.event as can_change_submission %}
-    {% has_perm "base.orga_list_speakerprofile" request.user request.event as can_view_speakers %}
-    {% has_perm "base.send_queuedmail" request.user request.event as can_send_mails %}
+    {% has_event_perm "base.create_submission" request.user request request.event as can_create_submission %}
+    {% has_event_perm "base.state_change_submission" request.user request request.event as can_change_submission %}
+    {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
+    {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
     <h2 class="d-flex align-items-center">
         <span>
             {{ page_obj.paginator.count }}
@@ -93,7 +94,7 @@
                         <a href="{% querystring sort="-state" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
                     {% if can_change_submission %}
-                        <th>
+                        <th class="text-center">
                             {% translate "Featured" %} <i class="fa fa-question-circle" data-toggle="tooltip" title="{% translate "Show this session on the list of featured sessions, once it was accepted" %}"></i>
                             <a href="{% querystring sort="-is_featured" %}"><i class="fa fa-caret-down"></i></a>
                             <a href="{% querystring sort="is_featured" %}"><i class="fa fa-caret-up"></i></a>
@@ -148,12 +149,13 @@
 
                         </td>
                         {% if can_change_submission %}
-                            <td class="submission_featured">
-                                <div class="mt-1 form-check" title="{% translate "Show this proposal in the list of featured sessions." %}">
+                            <td class="submission_featured text-center">
+                                <div class="form-check d-inline-block" title="{% translate "Show this proposal in the list of featured sessions." %}">
                                     <input
                                         type="checkbox"
                                         id="featured_{{ submission.code }}"
                                         data-id="{{ submission.code }}"
+                                        data-url="{{ submission.orga_urls.toggle_featured }}"
                                         class="submission_featured"
                                         {% if submission.is_featured %}checked{% endif %}
                                     >

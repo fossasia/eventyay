@@ -3,7 +3,8 @@
 	.inputs
 		bunt-button.btn-randomize(@click="changeIdenticon") {{ $t('profile/ChangeAvatar:button-randomize:label') }}
 		span {{ $t('profile/ChangeAvatar:or') }}
-		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
+		upload-button.btn-upload(@change="fileSelected", accept="image/png, image/jpg, image/jpeg, .png, .jpg, .jpeg") {{ $t('profile/ChangeAvatar:button-upload:label') }}
+	.upload-info Maximum file size: 10 MB. Supported formats: PNG, JPG, JPEG. Minimum dimensions: 128x128 pixels.
 	.image-wrapper
 		.file-error(v-if="fileError")
 			.mdi.mdi-alert-octagon
@@ -20,7 +21,11 @@ import api from 'lib/api'
 import Identicon from 'components/Identicon'
 import UploadButton from 'components/UploadButton'
 
-const MAX_AVATAR_SIZE = 128
+const MIN_AVATAR_SIZE = 128
+const UPLOAD_AVATAR_SIZE = 256
+const MAX_FILE_SIZE_MB = 10
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
+const ALLOWED_FORMATS = ['image/png', 'image/jpg', 'image/jpeg']
 
 // Props & Emits
 const props = defineProps({
@@ -38,6 +43,7 @@ const avatarImage = ref(null)
 const fileError = ref(null)
 const changedImage = ref(false)
 const cropperRef = ref(null)
+const selectedFileSize = ref(null)
 
 // Derived
 const identiconUser = computed(() => ({
@@ -51,6 +57,7 @@ const identiconUser = computed(() => ({
 function changeIdenticon() {
 	fileError.value = null
 	avatarImage.value = null
+	selectedFileSize.value = null
 	identiconValue.value = uuid()
 	emit('blockSave', false)
 }
@@ -58,9 +65,28 @@ function changeIdenticon() {
 function fileSelected(event) {
 	fileError.value = null
 	avatarImage.value = null
+	selectedFileSize.value = null
 	emit('blockSave', false)
 	if (event.target.files.length !== 1) return
 	const avatarFile = event.target.files[0]
+	selectedFileSize.value = avatarFile.size
+	
+	// Validate file size (10MB max)
+	if (avatarFile.size > MAX_FILE_SIZE_BYTES) {
+		fileError.value = `File size exceeds ${MAX_FILE_SIZE_MB} MB. Please choose a smaller image.`
+		emit('blockSave', true)
+		event.target.value = ''
+		return
+	}
+	
+	// Validate file format
+	if (!ALLOWED_FORMATS.includes(avatarFile.type)) {
+		fileError.value = 'Invalid file format. Only PNG, JPG, and JPEG images are allowed.'
+		emit('blockSave', true)
+		event.target.value = ''
+		return
+	}
+	
 	const reader = new FileReader()
 	reader.readAsDataURL(avatarFile)
 	event.target.value = ''
@@ -68,7 +94,7 @@ function fileSelected(event) {
 		if (readerEvent.target.readyState !== FileReader.DONE) return
 		const img = new Image()
 		img.onload = () => {
-			if (img.width < 128 || img.height < 128) {
+			if (img.width < MIN_AVATAR_SIZE || img.height < MIN_AVATAR_SIZE) {
 				fileError.value = proxy.$t('profile/ChangeAvatar:error:image-too-small')
 				emit('blockSave', true)
 			} else {
@@ -84,29 +110,91 @@ function fileSelected(event) {
 
 function pixelsRestrictions({ minWidth, minHeight, maxWidth, maxHeight }) {
 	return {
-		minWidth: Math.max(128, minWidth),
-		minHeight: Math.max(128, minHeight),
+		minWidth: Math.max(MIN_AVATAR_SIZE, minWidth),
+		minHeight: Math.max(MIN_AVATAR_SIZE, minHeight),
 		maxWidth,
 		maxHeight,
 	}
 }
 
-function update() {
-		return new Promise((resolve) => {
-			const { canvas } = cropperRef.value?.getResult() || {}
-		if (!canvas) {
-			emit('update:modelValue', { identicon: identiconValue.value })
-			return resolve()
-		}
-		if (!changedImage.value) return resolve()
+async function update() {
+	const { canvas } = cropperRef.value?.getResult() || {}
+	if (!canvas) {
+		emit('update:modelValue', { identicon: identiconValue.value })
+		return
+	}
+	if (!changedImage.value) return
 
-		canvas.toBlob((blob) => {
-			const request = api.uploadFile(blob, 'avatar.png', null, MAX_AVATAR_SIZE, MAX_AVATAR_SIZE)
-			request.addEventListener('load', () => {
-				const response = JSON.parse(request.responseText)
+	const processed = await createAvatarBlob(canvas)
+	if (!processed) {
+		fileError.value = proxy.$t('profile/ChangeAvatar:error:process-failed')
+		emit('blockSave', true)
+		return
+	}
+	const { blob: resizedBlob, dimension } = processed
+	if (ENV_DEVELOPMENT) {
+		console.info('[avatar-upload] original size:', selectedFileSize.value || 0, 'bytes; upload size:', resizedBlob.size, 'bytes; dimension:', dimension + 'px')
+	}
+
+	await new Promise((resolve) => {
+		const request = api.uploadFile(resizedBlob, 'avatar.png', null, dimension, dimension)
+		const handleFailure = (status, responseText) => {
+			let message = proxy.$t('profile/ChangeAvatar:error:upload-failed')
+			if (status === 413) {
+				message = proxy.$t('profile/ChangeAvatar:error:file-too-large')
+			}
+			console.error('[avatar-upload]', status, responseText)
+			fileError.value = message
+			emit('blockSave', true)
+			resolve()
+		}
+		request.addEventListener('load', () => {
+			const status = request.status
+			const responseText = request.responseText || ''
+			const contentType = request.getResponseHeader('content-type') || ''
+			if (status < 200 || status >= 300 || !contentType.includes('application/json')) {
+				return handleFailure(status, responseText)
+			}
+			try {
+				const response = JSON.parse(responseText)
 				emit('update:modelValue', { url: response.url })
+				emit('blockSave', false)
 				resolve()
-			})
+			} catch (error) {
+				return handleFailure(status, responseText)
+			}
+		})
+		request.addEventListener('error', () => {
+			handleFailure(request.status, request.responseText)
+		})
+	})
+}
+
+function createAvatarBlob(sourceCanvas) {
+	return new Promise((resolve) => {
+		const sourceSize = Math.min(sourceCanvas.width, sourceCanvas.height)
+		const targetSize = Math.min(UPLOAD_AVATAR_SIZE, Math.max(MIN_AVATAR_SIZE, sourceSize))
+		const canvas = document.createElement('canvas')
+		canvas.width = targetSize
+		canvas.height = targetSize
+		const ctx = canvas.getContext('2d')
+		if (!ctx) return resolve(null)
+		ctx.imageSmoothingEnabled = true
+		ctx.imageSmoothingQuality = 'high'
+		ctx.drawImage(
+			sourceCanvas,
+			0,
+			0,
+			sourceCanvas.width,
+			sourceCanvas.height,
+			0,
+			0,
+			targetSize,
+			targetSize
+		)
+		canvas.toBlob(blob => {
+			if (!blob) return resolve(null)
+			resolve({ blob, dimension: targetSize })
 		}, 'image/png')
 	})
 }
@@ -129,6 +217,15 @@ defineExpose({ update })
 .c-change-avatar
 	display: flex
 	flex-direction: column
+	.upload-info
+		font-size: 12px
+		color: rgba(0, 0, 0, 0.6)
+		margin: 8px 0
+		padding: 8px 12px
+		background: rgba(33, 133, 208, 0.08)
+		border-left: 3px solid var(--clr-primary, #2185d0)
+		border-radius: 2px
+		line-height: 1.5
 	align-items: center
 	.c-identicon
 		cursor: pointer
