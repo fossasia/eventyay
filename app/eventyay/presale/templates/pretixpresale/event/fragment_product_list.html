@@ -43,15 +43,22 @@
                                         {{ product.description|localize|rich_text }}
                                     </div>
                                 {% endif %}
-                                {% if product.min_per_order and product.min_per_order > 1 %}
-                                    <p>
-                                        <small>
-                                            {% blocktrans trimmed with num=product.min_per_order %}
-                                                minimum amount to order: {{ num }}
-                                            {% endblocktrans %}
-                                        </small>
-                                    </p>
-                                {% endif %}
+                            {% if product.min_per_order and product.min_per_order > 1 %}
+                                <p>
+                                    <small>
+                                        {% blocktrans trimmed with num=product.min_per_order %}
+                                            minimum amount to order: {{ num }}
+                                        {% endblocktrans %}
+                                    </small>
+                                </p>
+                            {% endif %}
+                            {% if product.limit_one_per_user %}
+                                <p>
+                                    <small class="text-info">
+                                        {% trans "Limit: 1 per user" %}
+                                    </small>
+                                </p>
+                            {% endif %}
                             </div>
                         </div>
                         <div class="col-md-2 col-xs-6 price">
@@ -209,6 +216,13 @@
                                         {% blocktrans trimmed with num=product.min_per_order %}
                                             minimum amount to order: {{ num }}
                                         {% endblocktrans %}
+                                    </small>
+                                </p>
+                            {% endif %}
+                            {% if product.limit_one_per_user %}
+                                <p>
+                                    <small class="text-info">
+                                        {% trans "Limit: 1 per user" %}
                                     </small>
                                 </p>
                             {% endif %}

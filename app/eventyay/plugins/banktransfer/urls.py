@@ -1,68 +1,69 @@
-from django.urls import re_path as url
+from django.urls import path
 
 from eventyay.api.urls import orga_router
+from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 from eventyay.plugins.banktransfer.api import BankImportJobViewSet
 
 from . import views
 
 urlpatterns = [
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/import/',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/import/',
         views.OrganizerImportView.as_view(),
         name='import',
     ),
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/job/(?P<job>\d+)/',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/job/<int:job>/',
         views.OrganizerJobDetailView.as_view(),
         name='import.job',
     ),
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/action/',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/action/',
         views.OrganizerActionView.as_view(),
         name='import.action',
     ),
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/refunds/',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/refunds/',
         views.OrganizerRefundExportListView.as_view(),
         name='refunds.list',
     ),
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/export/(?P<id>\d+)/$',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/export/<int:id>/',
         views.OrganizerDownloadRefundExportView.as_view(),
         name='refunds.download',
     ),
-    url(
-        r'^control/organizer/(?P<organizer>[^/]+)/banktransfer/sepa-export/(?P<id>\d+)/$',
+    path(
+        'control/organizer/<orgslug:organizer>/banktransfer/sepa-export/<int:id>/',
         views.OrganizerSepaXMLExportView.as_view(),
         name='refunds.sepa',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/import/',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/import/',
         views.EventImportView.as_view(),
         name='import',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/job/(?P<job>\d+)/',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/job/<int:job>/',
         views.EventJobDetailView.as_view(),
         name='import.job',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/action/',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/action/',
         views.EventActionView.as_view(),
         name='import.action',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/refunds/',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/refunds/',
         views.EventRefundExportListView.as_view(),
         name='refunds.list',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/export/(?P<id>\d+)/$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/export/<int:id>/',
         views.EventDownloadRefundExportView.as_view(),
         name='refunds.download',
     ),
-    url(
-        r'^control/event/(?P<organizer>[^/]+)/(?P<event>[^/]+)/banktransfer/sepa-export/(?P<id>\d+)/$',
+    path(
+        'control/event/<orgslug:organizer>/<slug:event>/banktransfer/sepa-export/<int:id>/',
         views.EventSepaXMLExportView.as_view(),
         name='refunds.sepa',
     ),

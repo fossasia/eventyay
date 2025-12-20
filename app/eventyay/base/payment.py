@@ -337,7 +337,7 @@ class BasePaymentProvider:
                             'payment provider. <a href="{docs_url}" target="_blank" rel="noopener">Click here '
                             "for detailed information on what this does.</a> Don't forget to set the correct fees "
                             'above!'
-                        ).format(docs_url='https://docs.eventyay.com/en/latest/user/payments/fees.html'),
+                        ).format(docs_url='https://docs.eventyay.com/'),
                         required=False,
                     ),
                 ),
@@ -1245,7 +1245,7 @@ class GiftCardPayment(BasePaymentProvider):
 
     def checkout_prepare(self, request: HttpRequest, cart: Dict[str, Any]) -> Union[bool, str, None]:
         for p in get_cart(request):
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 messages.error(
                     request,
                     _('You cannot pay with gift cards when buying a gift card.'),
@@ -1253,8 +1253,14 @@ class GiftCardPayment(BasePaymentProvider):
                 return
 
         cs = cart_session(request)
+        
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+        
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1306,7 +1312,7 @@ class GiftCardPayment(BasePaymentProvider):
                 kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
             return eventreverse(self.event, 'presale:event.checkout', kwargs=kwargs)
         except GiftCard.DoesNotExist:
-            if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
                 messages.warning(
                     request,
                     _(
@@ -1327,15 +1333,20 @@ class GiftCardPayment(BasePaymentProvider):
 
     def payment_prepare(self, request: HttpRequest, payment: OrderPayment) -> Union[bool, str, None]:
         for p in payment.order.positions.all():
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 messages.error(
                     request,
                     _('You cannot pay with gift cards when buying a gift card.'),
                 )
                 return
 
+        gift_card_code = request.POST.get('giftcard', '').strip()
+        if not gift_card_code:
+            messages.error(request, _('Please enter a gift card code.'))
+            return
+
         try:
-            gc = self.event.organizer.accepted_gift_cards.get(secret=request.POST.get('giftcard'))
+            gc = self.event.organizer.accepted_gift_cards.get(secret=gift_card_code)
             if gc.currency != self.event.currency:
                 messages.error(request, _('This gift card does not support this currency.'))
                 return
@@ -1357,7 +1368,7 @@ class GiftCardPayment(BasePaymentProvider):
 
             return True
         except GiftCard.DoesNotExist:
-            if self.event.vouchers.filter(code__iexact=request.POST.get('giftcard')).exists():
+            if self.event.vouchers.filter(code__iexact=gift_card_code).exists():
                 messages.warning(
                     request,
                     _(
@@ -1380,7 +1391,7 @@ class GiftCardPayment(BasePaymentProvider):
         # This method will only be called when retrying payments, e.g. after a payment_prepare call. It is not called
         # during the order creation phase because this payment provider is a special case.
         for p in payment.order.positions.all():  # noqa - just a safeguard
-            if p.item.issue_giftcard:
+            if p.product.issue_giftcard:
                 raise PaymentException(_('You cannot pay with gift cards when buying a gift card.'))
 
         gcpk = payment.info_data.get('gift_card')

@@ -101,19 +101,19 @@ class EventModule(BaseModule):
                 "iframe_blockers",
                 "social_logins",
             )
-            model_fields = (
-                "title",
-                "locale",
-                "timezone",
-                "roles",
-                "trait_grants",
-            )
+            model_fields = {
+                "title": "name",
+                "locale": "locale",
+                "timezone": "timezone",
+                "roles": "roles",
+                "trait_grants": "trait_grants",
+            }
             update_fields = set()
 
-            for f in model_fields:
-                if f in body:
-                    setattr(self.consumer.event, f, s.validated_data[f])
-                    update_fields.add(f)
+            for incoming, target in model_fields.items():
+                if incoming in body:
+                    setattr(self.consumer.event, target, s.validated_data[incoming])
+                    update_fields.add(target)
 
             for f in config_fields:
                 if f in body:
