@@ -394,7 +394,7 @@ if (modal) {
             const popup = window.open(link.href, 'sso_login', `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`);
 
             if (!popup) {
-                const popupErrorMessage = '{% trans "Please allow popups for this site to use SSO login." %}';
+                const popupErrorMessage = '{% translate "Please allow popups for this site to use SSO login." %}';
                 // Show error in the modal's error div
                 if (errorDiv) {
                     errorDiv.textContent = popupErrorMessage;
