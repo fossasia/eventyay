@@ -6,7 +6,11 @@ export default defineConfig({
     presetWind3({
       preflight: 'on-demand',
     }),
-    presetIcons(),
+    presetIcons({
+      collections: {
+        fa: () => import('@iconify-json/fa/icons.json').then(i => i.default),
+      },
+    }),
     presetWebFonts({
       provider: 'google',
       fonts: {
