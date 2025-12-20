@@ -14,7 +14,7 @@
     {% include "cfp/includes/forms_header.html" %}
     {% compress js %}
         <script defer src="{% static "cfp/js/proposalTabTitles.js" %}"></script>
-        <script defer src="{% static "cfp/js/formAutoSave.js" %}"></script>
+        <script type="module" src="{% static "cfp/js/formAutoSave.js" %}" defer></script>
     {% endcompress %}
     {% block cfp_submission_header %}{% endblock cfp_submission_header %}
 {% endblock cfp_header %}
