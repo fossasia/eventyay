@@ -1,13 +1,11 @@
 from django.dispatch import receiver
 from django.template.loader import get_template
-from django.urls import resolve, reverse
 from django.utils.timezone import now
 from i18nfield.strings import LazyI18nString
 from eventyay.base.models import Event, Order
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import settings_hierarkey
 from eventyay.base.signals import event_copy_data, product_copy_data
-from eventyay.control.signals import nav_event_settings
 from eventyay.presale.signals import order_info_top, position_info_top
 
 
@@ -72,20 +70,20 @@ def w_pos_info(sender: Event, request, order: Order, position, **kwargs):
     return template.render(ctx, request=request)
 
 
-@receiver(nav_event_settings, dispatch_uid='venueless_nav')
-def navbar_info(sender, request, **kwargs):
-    url = resolve(request.path_info)
-    if not request.user.has_event_permission(request.organizer, request.event, 'can_change_event_settings',
-                                             request=request):
-        return []
-    return [{
-        'label': 'Eventyay video',
-        'url': reverse('plugins:pretix_venueless:settings', kwargs={
-            'event': request.event.slug,
-            'organizer': request.organizer.slug,
-        }),
-        'active': url.namespace == 'plugins:pretix_venueless',
-    }]
+# @receiver(nav_event_settings, dispatch_uid='venueless_nav')
+# def navbar_info(sender, request, **kwargs):
+#     url = resolve(request.path_info)
+#     if not request.user.has_event_permission(request.organizer, request.event, 'can_change_event_settings',
+#                                              request=request):
+#         return []
+#     return [{
+#         'label': 'Eventyay video',
+#         'url': reverse('plugins:pretix_venueless:settings', kwargs={
+#             'event': request.event.slug,
+#             'organizer': request.organizer.slug,
+#         }),
+#         'active': url.namespace == 'plugins:pretix_venueless',
+#     }]
 
 
 @receiver(signal=event_copy_data, dispatch_uid="venueless_event_copy_data")
