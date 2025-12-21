@@ -81,7 +81,7 @@ class EventPluginSignal(django.dispatch.Signal):
         
         # For core modules that are NOT plugins, allow them through
         # This handles core modules where app resolution succeeded
-        if core_module and app:
+        if core_module and app and sender:
             # Only allow if NOT in the event's plugin list (not a plugin)
             if app.name not in sender.plugin_list:
                 if app.name not in excluded:
