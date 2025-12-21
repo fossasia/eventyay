@@ -278,7 +278,7 @@ export default {
 			const roomIndex = this.rooms.indexOf(session.room)
 			return {
 				'grid-row': `${getSliceName(session.start)} / ${getSliceName(session.end)}`,
-				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
+				'grid-column': roomIndex > -1 ? roomIndex + 2 : this.rooms.length + 2
 			}
 		},
 		getOffsetTop() {

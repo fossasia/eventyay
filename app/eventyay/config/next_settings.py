@@ -146,6 +146,8 @@ class BaseSettings(_BaseSettings):
     zoom_key: str = ''
     zoom_secret: str = ''
     control_secret: str = ''
+
+
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'

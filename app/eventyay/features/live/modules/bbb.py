@@ -29,6 +29,7 @@ class BBBModule(BaseModule):
                 room=self.room,
             ),
         )
+
         if not url:
             raise ConsumerException("bbb.failed")
         await self.consumer.send_success({"url": url})
@@ -42,6 +43,7 @@ class BBBModule(BaseModule):
             body.get("call"),
             self.consumer.user,
         )
+
         if not url:
             raise ConsumerException("bbb.failed")
         await self.consumer.send_success({"url": url})
