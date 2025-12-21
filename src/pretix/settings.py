@@ -306,7 +306,6 @@ INSTALLED_APPS = [
     'pretix.plugins.pretixdroid',
     'pretix.plugins.badges',
     'pretix.plugins.manualpayment',
-    'pretix.plugins.returnurl',
     'pretix.plugins.webcheckin',
     'pretix.plugins.scheduledtasks',
     'django_markup',
