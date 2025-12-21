@@ -4,19 +4,20 @@ import os
 from mimetypes import guess_type
 from pathlib import Path
 from typing import cast
-
+from django.shortcuts import redirect
 from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import Http404, HttpResponse
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from django.utils.encoding import force_str
+from django.utils.timezone import now
 from django.utils.functional import Promise
 from django.views.generic import View
 from django.views.static import serve as static_serve
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
-
+from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 
 WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
@@ -149,3 +150,31 @@ class VideoAssetView(View):
                 return resp
         logger.warning('Video asset not found: %s', path)
         raise Http404()
+
+class AnonymousInviteRedirectView(View):
+    """
+    Handle anonymous room invite short tokens (e.g., /eGHhXr/).
+    Redirects to the video SPA standalone anonymous room view:
+    /{organizer}/{event}/video/standalone/{room_id}/anonymous#invite={token}
+    """
+    def get(self, request, token, *args, **kwargs):
+        try:
+            invite = AnonymousInvite.objects.select_related(
+                'event', 'event__organizer', 'room'
+            ).get(
+                short_token=token,
+                expires__gte=now(),
+            )
+        except AnonymousInvite.DoesNotExist:
+            raise Http404("Invalid or expired anonymous room link")
+
+        # Build redirect URL to the video SPA standalone anonymous view
+        event = invite.event
+        organizer_slug = event.organizer.slug
+        event_slug = event.slug
+        room_id = invite.room_id
+
+        # Redirect to /{organizer}/{event}/video/standalone/{room_id}/anonymous#invite={token}
+        redirect_url = f"/{organizer_slug}/{event_slug}/video/standalone/{room_id}/anonymous#invite={token}"
+        return redirect(redirect_url)
+

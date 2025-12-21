@@ -17,7 +17,7 @@ from eventyay.presale.urls import (
     organizer_patterns,
 )
 
-from .views import VideoAssetView, VideoSPAView
+from .views import VideoAssetView, VideoSPAView, AnonymousInviteRedirectView
 
 logger = logging.getLogger(__name__)
 
@@ -143,22 +143,33 @@ unified_event_patterns = [
         include(
             [
                 # Video patterns under {organizer}/{event}/video/
+                # Match static assets with file extensions (js, css, png, etc.)
+                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
                 re_path(
-                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
-                ),
-                path(
-                    'video/<path:path>',
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
                     VideoAssetView.as_view(),
-                    name='video.assets',
+                    name='video.assets.file',
                 ),
                 # The frontend Video SPA app is not served by Nginx so the Django view needs to
                 # serve all paths under /video/ to allow client-side routing.
+                # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                path('talk/', EventStartpage.as_view(), name='event.talk'),
+                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
         ),
+    ),
+]
+
+# Anonymous room invite short token pattern (6 characters)
+# The token uses characters: abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789
+# (excludes visually confusing characters: l, o, I, O, 0)
+anonymous_invite_patterns = [
+    re_path(
+        r'^(?P<token>[a-km-np-zA-HJ-NP-Z1-9]{6})/?$',
+        AnonymousInviteRedirectView.as_view(),
+        name='anonymous.invite.redirect',
     ),
 ]
 
@@ -167,6 +178,8 @@ urlpatterns = (
     + storage_patterns
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
+    # Anonymous invite short token redirects (before presale to avoid slug conflict)
+    + anonymous_invite_patterns
     + plugin_patterns
     + presale_patterns_main
     + unified_event_patterns

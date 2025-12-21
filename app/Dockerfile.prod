@@ -60,7 +60,7 @@ WORKDIR $APP_HOME
 RUN apt-get update && apt-get install -y wget gnupg rsync
 RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
-RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext
+RUN apt-get update && apt-get install -y --no-install-recommends netcat-traditional nodejs gettext less
 
 # copy entrypoint.prod.sh
 COPY ./entrypoint.prod.sh .
@@ -79,15 +79,12 @@ COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
 RUN npm ci --prefix=eventyay/frontend/schedule-editor
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/schedule-editor
 # Video SPA app
-COPY eventyay/webapp eventyay/frontend/webapp
-RUN npm ci --prefix=eventyay/frontend/webapp
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/webapp
+COPY eventyay/webapp eventyay/webapp
+RUN npm ci --prefix=eventyay/webapp
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
 # rollup needed by Django-Compressor
 COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
 RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
-# webapp
-COPY eventyay/webapp eventyay/webapp
-RUN npm install --prefix=eventyay/webapp
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME
