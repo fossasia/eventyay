@@ -1,4 +1,3 @@
-import functools
 import logging
 import uuid
 from functools import wraps
@@ -47,38 +46,8 @@ class EventPluginSignal(django.dispatch.Signal):
         # Get excluded plugins list (preserve original list type from settings)
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
-        # For common/signals, we need to adapt the helper to use sender.plugin_list
-        # instead of sender.get_plugins(). We'll inline a modified version here.
-        
-        # Check if this receiver's app is a plugin (listed in event's enabled plugins)
-        # Plugins must be explicitly enabled to be active, even if in CORE_MODULES
-        if sender and app:
-            if app.name in sender.plugin_list:
-                # Plugin is enabled - check exclusions and compatibility
-                if app.name not in excluded:
-                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                        return True
-                # Plugin is enabled but excluded or has compatibility errors
-                return False
-            # App exists but not in plugin list - might still be a core module
-        
-        # For core modules that are NOT plugins, allow them through
-        # This handles core modules where app resolution succeeded
-        if core_module and app and sender:
-            # Only allow if NOT in the event's plugin list (not a plugin)
-            if app.name not in sender.plugin_list:
-                if app.name not in excluded:
-                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                        return True
-            # Core module that IS in plugin list was already handled above
-            return False
-        
-        # Handle core modules where app resolution failed (app is None)
-        # These should still be active as they match CORE_MODULES by path
-        if core_module and not app:
-            return True
-        
-        return False
+        # Use shared helper with sender.plugin_list accessor
+        return _check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """Send signal from sender to all connected receivers that belong to

@@ -41,7 +41,7 @@ def _resolve_app_for_module(module_path: str):
         searchpath, _ = searchpath.rsplit('.', 1)
 
 
-def _check_plugin_active(sender, app, core_module, excluded_plugins):
+def _check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_list_callable):
     """
     Shared helper to determine if a plugin/core module should be active.
     
@@ -55,6 +55,8 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins):
         app: Django AppConfig or None
         core_module: Boolean indicating if this is a core module by path
         excluded_plugins: List of excluded plugin names
+        get_plugin_list_callable: Callable that accepts sender and returns plugin list
+                                  (e.g., lambda s: s.get_plugins() or lambda s: s.plugin_list)
     
     Returns:
         Boolean indicating if the receiver should be active
@@ -62,7 +64,8 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins):
     # Check if this receiver's app is a plugin (listed in event's enabled plugins)
     # Plugins must be explicitly enabled to be active, even if in CORE_MODULES
     if sender and app:
-        if app.name in sender.get_plugins():
+        plugin_list = get_plugin_list_callable(sender)
+        if app.name in plugin_list:
             # Plugin is enabled - check exclusions and compatibility
             if app.name not in excluded_plugins:
                 if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
@@ -75,7 +78,8 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins):
     # This handles core modules where app resolution succeeded
     if core_module and app and sender:
         # Only allow if NOT in the event's plugin list (not a plugin)
-        if app.name not in sender.get_plugins():
+        plugin_list = get_plugin_list_callable(sender)
+        if app.name not in plugin_list:
             if app.name not in excluded_plugins:
                 if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
                     return True
@@ -110,7 +114,7 @@ class EventPluginSignal(django.dispatch.Signal):
 
         # Find the Django application this belongs to
         module_path = receiver.__module__
-        core_module = any([module_path.startswith(cm) for cm in settings.CORE_MODULES])
+        core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
         # Resolve the app using thread-safe cached function
         app = _resolve_app_for_module(module_path)
@@ -119,7 +123,7 @@ class EventPluginSignal(django.dispatch.Signal):
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
         # Use shared helper to check if receiver should be active
-        return _check_plugin_active(sender, app, core_module, excluded)
+        return _check_plugin_active(sender, app, core_module, excluded, lambda s: s.get_plugins())
 
     def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
         """
