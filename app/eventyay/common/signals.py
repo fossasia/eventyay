@@ -39,20 +39,38 @@ class EventPluginSignal(django.dispatch.Signal):
         # Find the Django application this belongs to
         searchpath = receiver.__module__
         core_module = any(searchpath.startswith(cm) for cm in settings.CORE_MODULES)
-        # Only fire receivers from active plugins and core modules
+        
+        # Always resolve the app to check plugin status
+        original_searchpath = searchpath
+        app = None
+        while True:
+            app = app_cache.get(searchpath)
+            if '.' not in searchpath or app:  # pragma: no cover
+                break
+            searchpath, _ = searchpath.rsplit('.', 1)
+        
+        # Check if this is a plugin that should respect enable/disable state
+        # Plugins typically have names like 'eventyay.plugins.*', 'pretix.plugins.*', 
+        # 'pretix_*', or other third-party plugin patterns
+        is_plugin = (
+            '.plugins.' in original_searchpath or 
+            original_searchpath.startswith('pretix_') or
+            original_searchpath.startswith('eventyay_') or
+            (app and hasattr(app, 'EventyayPluginMeta'))
+        )
+        
+        # If it's a plugin, always check if it's enabled for the event
+        # Even if it's in CORE_MODULES
+        if is_plugin:
+            # Short out on events without plugins
+            if sender and not sender.plugin_list:
+                return False
+            return sender and app and app.name in sender.plugin_list
+        
+        # For non-plugin core modules, allow them through
         if core_module:
             return True
-        # Short out on events without plugins
-        if sender and not sender.plugin_list:
-            return False
-        if sender:
-            app = None
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:  # pragma: no cover
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
-            return app and app.name in sender.plugin_list
+        
         return False
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:

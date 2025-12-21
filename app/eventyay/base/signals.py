@@ -40,18 +40,41 @@ class EventPluginSignal(django.dispatch.Signal):
         searchpath = receiver.__module__
         core_module = any([searchpath.startswith(cm) for cm in settings.CORE_MODULES])
         app = None
-        if not core_module:
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
+        
+        # Always resolve the app, even for core modules, to check plugin status
+        original_searchpath = searchpath
+        while True:
+            app = app_cache.get(searchpath)
+            if '.' not in searchpath or app:
+                break
+            searchpath, _ = searchpath.rsplit('.', 1)
+
+        # Check if this is a plugin that should respect enable/disable state
+        # Plugins typically have names like 'eventyay.plugins.*', 'pretix.plugins.*', 
+        # 'pretix_*', or other third-party plugin patterns
+        is_plugin = (
+            '.plugins.' in original_searchpath or 
+            original_searchpath.startswith('pretix_') or
+            original_searchpath.startswith('eventyay_') or
+            (app and hasattr(app, 'EventyayPluginMeta'))
+        )
 
         # Only fire receivers from active plugins and core modules
         excluded = settings.PRETIX_PLUGINS_EXCLUDE
-        if core_module or (sender and app and app.name in sender.get_plugins() and app.name not in excluded):
+        
+        # If it's a plugin, always check if it's enabled for the event
+        # Even if it's in CORE_MODULES
+        if is_plugin:
+            if sender and app and app.name in sender.get_plugins() and app.name not in excluded:
+                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                    return True
+            return False
+        
+        # For non-plugin core modules, allow them through
+        if core_module:
             if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
                 return True
+        
         return False
 
     def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
