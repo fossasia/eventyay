@@ -28,48 +28,54 @@ class EventPluginSignal(django.dispatch.Signal):
     that are enabled for the given Event.
     """
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._app_cache = {}
+
     def get_live_receivers(self, sender):
         receivers = self._live_receivers(sender)
         if not receivers:
             return []
         return receivers[0]
 
-    @staticmethod
-    def _is_active(sender, receiver):
+    def _is_active(self, sender, receiver):
         # Find the Django application this belongs to
         searchpath = receiver.__module__
         core_module = any(searchpath.startswith(cm) for cm in settings.CORE_MODULES)
         
-        # Always resolve the app to check plugin status
+        # Resolve the app with caching to improve performance
         original_searchpath = searchpath
-        app = None
-        while True:
-            app = app_cache.get(searchpath)
-            if '.' not in searchpath or app:  # pragma: no cover
-                break
-            searchpath, _ = searchpath.rsplit('.', 1)
+        if original_searchpath in self._app_cache:
+            app = self._app_cache[original_searchpath]
+        else:
+            app = None
+            while True:
+                app = app_cache.get(searchpath)
+                if '.' not in searchpath or app:  # pragma: no cover
+                    break
+                searchpath, _ = searchpath.rsplit('.', 1)
+            # Cache the resolution result (including None) for this module path
+            self._app_cache[original_searchpath] = app
         
-        # Check if this is a plugin that should respect enable/disable state
-        # Plugins typically have names like 'eventyay.plugins.*', 'pretix.plugins.*', 
-        # 'pretix_*', or other third-party plugin patterns
-        is_plugin = (
-            '.plugins.' in original_searchpath or 
-            original_searchpath.startswith('pretix_') or
-            original_searchpath.startswith('eventyay_') or
-            (app and hasattr(app, 'EventyayPluginMeta'))
-        )
+        # Only fire receivers from active plugins and core modules
+        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', set())
         
-        # If it's a plugin, always check if it's enabled for the event
-        # Even if it's in CORE_MODULES
-        if is_plugin:
-            # Short out on events without plugins
-            if sender and not sender.plugin_list:
+        # Improved plugin detection: check if app is in the event's plugin list
+        # This approach handles third-party plugins and custom integrations properly
+        if sender and app:
+            # If this app is in the event's plugin list, it's a plugin that needs checking
+            if app.name in sender.plugin_list:
+                # Plugin is in the enabled list, check exclusions and compatibility
+                if app.name not in excluded:
+                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                        return True
                 return False
-            return sender and app and app.name in sender.plugin_list
         
-        # For non-plugin core modules, allow them through
-        if core_module:
-            return True
+        # For core modules (that aren't plugins), allow them through
+        if core_module and app:
+            if app.name not in excluded:
+                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                    return True
         
         return False
 
