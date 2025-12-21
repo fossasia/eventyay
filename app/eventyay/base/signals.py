@@ -46,8 +46,8 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_
     Shared helper to determine if a plugin/core module should be active.
     
     This centralizes the enable/disable logic:
-    - Plugins (in sender's plugin list) must be explicitly enabled
-    - Core modules NOT in the plugin list are allowed through
+    - If app.name is in sender.available_plugins → it's a plugin, must be enabled
+    - If app.name is NOT in sender.available_plugins → it's a pure core module, always active
     - All are subject to exclusion list and compatibility checks
     
     Args:
@@ -61,30 +61,34 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_
     Returns:
         Boolean indicating if the receiver should be active
     """
-    # Check if this receiver's app is a plugin (listed in event's enabled plugins)
-    # Plugins must be explicitly enabled to be active, even if in CORE_MODULES
+    # Track plugin metadata when we have a sender and resolved app
     if sender and app:
-        plugin_list = get_plugin_list_callable(sender)
-        if app.name in plugin_list:
-            # Plugin is enabled - check exclusions and compatibility
+        # Get the list of all available plugins (enabled + disabled)
+        available_plugins = getattr(sender, 'available_plugins', {})
+        
+        # Check if this receiver's app is actually a plugin
+        is_plugin = app.name in available_plugins
+        
+        if is_plugin:
+            # This is a plugin - check if it's enabled in the event's plugin list
+            enabled_plugins = get_plugin_list_callable(sender)
+            if app.name in enabled_plugins:
+                # Plugin is enabled - check exclusions and compatibility
+                if app.name not in excluded_plugins:
+                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                        return True
+                # Plugin is enabled but excluded or has compatibility errors
+                return False
+            else:
+                # Plugin exists but is NOT enabled - must not be activated
+                return False
+        else:
+            # NOT a plugin at all - it's a pure core module
+            # Core modules that are not plugins should always be active
             if app.name not in excluded_plugins:
                 if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
                     return True
-            # Plugin is enabled but excluded or has compatibility errors
             return False
-        # App exists but not in plugin list - might still be a core module
-    
-    # For core modules that are NOT plugins, allow them through
-    # This handles core modules where app resolution succeeded
-    if core_module and app and sender:
-        # Only allow if NOT in the event's plugin list (not a plugin)
-        plugin_list = get_plugin_list_callable(sender)
-        if app.name not in plugin_list:
-            if app.name not in excluded_plugins:
-                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                    return True
-        # Core module that IS in plugin list was already handled above
-        return False
     
     # Handle core modules where app resolution failed (app is None)
     # These should still be active as they match CORE_MODULES by path
