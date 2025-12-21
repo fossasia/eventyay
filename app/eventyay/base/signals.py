@@ -63,7 +63,7 @@ class EventPluginSignal(django.dispatch.Signal):
             self._app_cache[original_searchpath] = app
 
         # Only fire receivers from active plugins and core modules
-        excluded = settings.PRETIX_PLUGINS_EXCLUDE
+        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', set())
         
         # Check if this receiver's app is a plugin (listed in event's enabled plugins)
         # Plugins must be explicitly enabled in sender.get_plugins() to be active,
