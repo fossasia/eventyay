@@ -70,22 +70,6 @@ def w_pos_info(sender: Event, request, order: Order, position, **kwargs):
     return template.render(ctx, request=request)
 
 
-# @receiver(nav_event_settings, dispatch_uid='venueless_nav')
-# def navbar_info(sender, request, **kwargs):
-#     url = resolve(request.path_info)
-#     if not request.user.has_event_permission(request.organizer, request.event, 'can_change_event_settings',
-#                                              request=request):
-#         return []
-#     return [{
-#         'label': 'Eventyay video',
-#         'url': reverse('plugins:pretix_venueless:settings', kwargs={
-#             'event': request.event.slug,
-#             'organizer': request.organizer.slug,
-#         }),
-#         'active': url.namespace == 'plugins:pretix_venueless',
-#     }]
-
-
 @receiver(signal=event_copy_data, dispatch_uid="venueless_event_copy_data")
 def event_copy_data_r(sender, other, product_map, question_map, **kwargs):
     sender.settings['venueless_products'] = [
