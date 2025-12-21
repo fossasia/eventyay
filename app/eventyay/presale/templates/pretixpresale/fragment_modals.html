@@ -205,7 +205,7 @@
 }
 
 .checkout-login-divider span {
-    background: white;
+    background: inherit;
     padding: 0 15px;
     position: relative;
     color: #999;
@@ -265,7 +265,7 @@ if (modal) {
                 link.href = url.toString();
             });
 
-            const registerLink = modal.querySelector('.checkout-login-footer a');
+            const registerLink = modal.querySelector('.checkout-login-footer a[href*="register"]');
             if (registerLink) {
                 const url = new URL(registerLink.href, window.location.origin);
                 url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
