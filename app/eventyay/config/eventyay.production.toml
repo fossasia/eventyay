@@ -23,3 +23,5 @@ talk_hostname = 'https://next.eventyay.com/'
 redis_url = 'redis://eventyay-next-redis/0'
 
 celery_always_eager = false
+
+short_url = 'https://next.eventyay.com'
