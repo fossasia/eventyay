@@ -1,3 +1,4 @@
+import functools
 import warnings
 from typing import Any, Callable, List, Tuple
 
@@ -18,17 +19,83 @@ def _populate_app_cache():
         app_cache[ac.name] = ac
 
 
+@functools.lru_cache(maxsize=1000)
+def _resolve_app_for_module(module_path: str):
+    """
+    Thread-safe cached resolution of Django app for a given module path.
+    
+    Args:
+        module_path: The module path to resolve (e.g., 'eventyay.plugins.badges')
+    
+    Returns:
+        The Django AppConfig or None if not found
+    """
+    if not app_cache:
+        _populate_app_cache()
+    
+    searchpath = module_path
+    while True:
+        app = app_cache.get(searchpath)
+        if '.' not in searchpath or app:
+            return app
+        searchpath, _ = searchpath.rsplit('.', 1)
+
+
+def _check_plugin_active(sender, app, core_module, excluded_plugins):
+    """
+    Shared helper to determine if a plugin/core module should be active.
+    
+    This centralizes the enable/disable logic:
+    - Plugins (in sender's plugin list) must be explicitly enabled
+    - Core modules NOT in the plugin list are allowed through
+    - All are subject to exclusion list and compatibility checks
+    
+    Args:
+        sender: Event instance or None
+        app: Django AppConfig or None
+        core_module: Boolean indicating if this is a core module by path
+        excluded_plugins: List of excluded plugin names
+    
+    Returns:
+        Boolean indicating if the receiver should be active
+    """
+    # Check if this receiver's app is a plugin (listed in event's enabled plugins)
+    # Plugins must be explicitly enabled to be active, even if in CORE_MODULES
+    if sender and app:
+        if app.name in sender.get_plugins():
+            # Plugin is enabled - check exclusions and compatibility
+            if app.name not in excluded_plugins:
+                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                    return True
+            # Plugin is enabled but excluded or has compatibility errors
+            return False
+        # App exists but not in plugin list - might still be a core module
+    
+    # For core modules that are NOT plugins, allow them through
+    # This handles core modules where app resolution succeeded
+    if core_module and app and sender:
+        # Only allow if NOT in the event's plugin list (not a plugin)
+        if app.name not in sender.get_plugins():
+            if app.name not in excluded_plugins:
+                if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
+                    return True
+        # Core module that IS in plugin list was already handled above
+        return False
+    
+    # Handle core modules where app resolution failed (app is None)
+    # These should still be active as they match CORE_MODULES by path
+    if core_module and not app:
+        return True
+    
+    return False
+
+
 class EventPluginSignal(django.dispatch.Signal):
     """
     This is an extension to Django's built-in signals which differs in a way that it sends
     out its events only to receivers which belong to plugins that are enabled for the given
     Event.
     """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._app_cache = {}
-        self._cache_max_size = 1000  # Prevent unbounded cache growth
 
     def get_live_receivers(self, sender):
         receivers = self._live_receivers(sender)
@@ -42,61 +109,17 @@ class EventPluginSignal(django.dispatch.Signal):
             return True
 
         # Find the Django application this belongs to
-        searchpath = receiver.__module__
-        core_module = any([searchpath.startswith(cm) for cm in settings.CORE_MODULES])
+        module_path = receiver.__module__
+        core_module = any([module_path.startswith(cm) for cm in settings.CORE_MODULES])
         
-        # Resolve the app with caching to improve performance
-        original_searchpath = searchpath
-        if original_searchpath in self._app_cache:
-            app = self._app_cache[original_searchpath]
-        else:
-            app = None
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
-            # Cache the resolution result (including None) for this module path
-            # Clear cache if it grows too large to prevent memory leaks
-            if len(self._app_cache) >= self._cache_max_size:
-                self._app_cache.clear()
-            self._app_cache[original_searchpath] = app
+        # Resolve the app using thread-safe cached function
+        app = _resolve_app_for_module(module_path)
 
-        # Only fire receivers from active plugins and core modules
-        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', set())
+        # Get excluded plugins list (preserve original list type from settings)
+        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
-        # Check if this receiver's app is a plugin (listed in event's enabled plugins)
-        # Plugins must be explicitly enabled in sender.get_plugins() to be active,
-        # even if they're also listed in CORE_MODULES
-        if sender and app:
-            if app.name in sender.get_plugins():
-                # Plugin is enabled - check exclusions and compatibility
-                if app.name not in excluded:
-                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                        return True
-                # Plugin is enabled but excluded or has compatibility errors
-                return False
-            # If app exists and has a name, check if it's in the plugin list
-            # If it's not in the plugin list, it might still be a core module
-            # Don't return False yet - let it fall through to core module check
-        
-        # For core modules that are NOT plugins, allow them through
-        # This handles core modules where app resolution succeeded
-        if core_module and app:
-            # Only allow if NOT in the event's plugin list (not a plugin)
-            if app.name not in sender.get_plugins():
-                if app.name not in excluded:
-                    if not hasattr(app, 'compatibility_errors') or not app.compatibility_errors:
-                        return True
-            # Core module that IS in plugin list was already handled above
-            return False
-        
-        # Handle core modules where app resolution failed (app is None)
-        # These should still be active as they match CORE_MODULES by path
-        if core_module and not app:
-            return True
-        
-        return False
+        # Use shared helper to check if receiver should be active
+        return _check_plugin_active(sender, app, core_module, excluded)
 
     def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
         """

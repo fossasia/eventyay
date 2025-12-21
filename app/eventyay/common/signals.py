@@ -1,3 +1,4 @@
+import functools
 import logging
 import uuid
 from functools import wraps
@@ -10,6 +11,7 @@ from django.core.cache import cache
 from django.dispatch.dispatcher import NO_RECEIVERS
 
 from eventyay.base.models import Event
+from eventyay.base.signals import _resolve_app_for_module, _check_plugin_active
 
 app_cache = {}
 logger = logging.getLogger(__name__)
@@ -28,11 +30,6 @@ class EventPluginSignal(django.dispatch.Signal):
     that are enabled for the given Event.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._app_cache = {}
-        self._cache_max_size = 1000  # Prevent unbounded cache growth
-
     def get_live_receivers(self, sender):
         receivers = self._live_receivers(sender)
         if not receivers:
@@ -41,32 +38,20 @@ class EventPluginSignal(django.dispatch.Signal):
 
     def _is_active(self, sender, receiver):
         # Find the Django application this belongs to
-        searchpath = receiver.__module__
-        core_module = any(searchpath.startswith(cm) for cm in settings.CORE_MODULES)
+        module_path = receiver.__module__
+        core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
-        # Resolve the app with caching to improve performance
-        original_searchpath = searchpath
-        if original_searchpath in self._app_cache:
-            app = self._app_cache[original_searchpath]
-        else:
-            app = None
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:  # pragma: no cover
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
-            # Cache the resolution result (including None) for this module path
-            # Clear cache if it grows too large to prevent memory leaks
-            if len(self._app_cache) >= self._cache_max_size:
-                self._app_cache.clear()
-            self._app_cache[original_searchpath] = app
+        # Resolve the app using thread-safe cached function
+        app = _resolve_app_for_module(module_path)
         
-        # Only fire receivers from active plugins and core modules
-        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', set())
+        # Get excluded plugins list (preserve original list type from settings)
+        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
+        
+        # For common/signals, we need to adapt the helper to use sender.plugin_list
+        # instead of sender.get_plugins(). We'll inline a modified version here.
         
         # Check if this receiver's app is a plugin (listed in event's enabled plugins)
-        # Plugins must be explicitly enabled in sender.plugin_list to be active,
-        # even if they're also listed in CORE_MODULES
+        # Plugins must be explicitly enabled to be active, even if in CORE_MODULES
         if sender and app:
             if app.name in sender.plugin_list:
                 # Plugin is enabled - check exclusions and compatibility
@@ -75,9 +60,7 @@ class EventPluginSignal(django.dispatch.Signal):
                         return True
                 # Plugin is enabled but excluded or has compatibility errors
                 return False
-            # If app exists and has a name, check if it's in the plugin list
-            # If it's not in the plugin list, it might still be a core module
-            # Don't return False yet - let it fall through to core module check
+            # App exists but not in plugin list - might still be a core module
         
         # For core modules that are NOT plugins, allow them through
         # This handles core modules where app resolution succeeded
