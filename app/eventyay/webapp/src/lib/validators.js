@@ -70,7 +70,7 @@ export function normalizeYoutubeVideoId(input) {
 		if (v && /^[0-9A-Za-z_-]{11}$/.test(v)) return v
 
 		// youtube.com/embed/<id>, /shorts/<id>, /live/<id>, /v/<id>
-		const pathMatch = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([0-9A-Za-z_-]{11})(?:\/|$)/)
+		const pathMatch = url.pathname.match(/^\/(?:embed|shorts|live|v)\/([0-9A-Za-z_-]{11})(?:[?/]|$)/)
 		if (pathMatch) return pathMatch[1]
 	} catch (e) {
 		// Fall back to regex extraction below.
