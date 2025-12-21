@@ -212,34 +212,31 @@ class CartPositionUpdateSerializer(I18nAwareModelSerializer):
 
         if seat_data is not None:
             event = self.context['event']
-            if seat_data == '' or seat_data is None:
-                validated_data['seat'] = None
-            else:
-                seated = (
-                    instance.product
-                    .seat_category_mappings.filter(subevent=instance.subevent)
-                    .exists()
+            seated = (
+                instance.product
+                .seat_category_mappings.filter(subevent=instance.subevent)
+                .exists()
+            )
+            if not seated:
+                raise ValidationError('The specified product does not allow to choose a seat.')
+            try:
+                seat = event.seats.get(
+                    seat_guid=seat_data,
+                    subevent=instance.subevent,
                 )
-                if not seated:
-                    raise ValidationError('The specified product does not allow to choose a seat.')
-                try:
-                    seat = event.seats.get(
-                        seat_guid=seat_data,
-                        subevent=instance.subevent,
+            except Seat.DoesNotExist:
+                raise ValidationError('The specified seat does not exist.')
+            except Seat.MultipleObjectsReturned:
+                raise ValidationError('The specified seat ID is not unique.')
+            else:
+                if not seat.is_available(
+                    sales_channel='web',
+                    distance_ignore_cart_id=instance.cart_id,
+                ):
+                    raise ValidationError(
+                        gettext_lazy('The selected seat "{seat}" is not available.').format(seat=seat.name)
                     )
-                except Seat.DoesNotExist:
-                    raise ValidationError('The specified seat does not exist.')
-                except Seat.MultipleObjectsReturned:
-                    raise ValidationError('The specified seat ID is not unique.')
-                else:
-                    if not seat.is_available(
-                        sales_channel='web',
-                        distance_ignore_cart_id=instance.cart_id,
-                    ):
-                        raise ValidationError(
-                            gettext_lazy('The selected seat "{seat}" is not available.').format(seat=seat.name)
-                        )
-                    validated_data['seat'] = seat
+                validated_data['seat'] = seat
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
