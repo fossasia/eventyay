@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-17 10:00+0000\n"
+"PO-Revision-Date: 2025-12-21 19:00+0000\n"
 "Last-Translator: Supaplex <bejokeup@gmail.com>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -26820,7 +26820,7 @@ msgstr "套用 %(count)s 項待處理的變更？"
 msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
-msgstr "您確定要改變這 %(count)s 個議程投稿的狀態嗎？"
+msgstr "確定是否改變這 %(count)s 個議程投稿的狀態。"
 
 #: pretalx/orga/templates/orga/submission/apply_pending.html:33
 #: pretalx/orga/templates/orga/submission/state_change.html:34
@@ -27694,7 +27694,7 @@ msgstr "選擇了無效的權限：{perms}"
 
 #: pretalx/person/forms/profile.py:39
 msgid "There already exists an account for this email address."
-msgstr "此電子郵件地址已有帳號存在。"
+msgstr "此電子郵件地址已經有對應的帳號存在。"
 
 #: pretalx/person/forms/profile.py:132
 msgid ""
