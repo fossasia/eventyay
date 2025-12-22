@@ -40,6 +40,8 @@ def load_mapping() -> ManifestMapping:
         return msgspec.json.decode(MANIFEST_PATH.read_text(), type=ManifestMapping)
     except FileNotFoundError as e:
         raise ImproperlyConfigured(f'Vite manifest not found at {MANIFEST_PATH}.') from e
+    except OSError as e:
+        raise ImproperlyConfigured(f'Error reading Vite manifest at {MANIFEST_PATH}: {e}') from e
     except (msgspec.DecodeError, msgspec.ValidationError) as e:
         raise ImproperlyConfigured(f'Vite manifest at {MANIFEST_PATH} has an unexpected format.') from e
 
