@@ -57,7 +57,7 @@ def timeline_for_event(event, subevent=None):
                 event=event,
                 subevent=subevent,
                 datetime=ev.date_admission,
-                description=pgettext_lazy('timeline', 'Admissions for event start'),
+                description=pgettext_lazy('timeline', 'Admissions for the event start'),
                 edit_url=ev_edit_url,
             )
         )

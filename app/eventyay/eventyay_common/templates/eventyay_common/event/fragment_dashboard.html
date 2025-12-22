@@ -21,7 +21,7 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Set up and configure ticketing for event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
+                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
                 {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
@@ -36,7 +36,7 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Setup and configure content for event, create calls for proposals and speakers and build a schedule. Manage the submission and review process, and select speakers." %}
+                {% trans "Setup and configure content for the event, create calls for proposals and speakers and build a schedule. Manage the submission and review process, and select speakers." %}
             </p>
             {% if is_talk_event_created %}
                 <p>
