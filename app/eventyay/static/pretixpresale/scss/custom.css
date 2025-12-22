@@ -16,7 +16,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 240px;
+    height: 270px;
     z-index: -1;
     display: flex;
 }
@@ -75,7 +75,7 @@ header .header-wrapper {
 
 header .header-row-right {
     padding-bottom: 4px;
-    color: white;
+	color: var(--color-primary);
     margin-left: auto;
     display: flex;
     flex-wrap: nowrap;

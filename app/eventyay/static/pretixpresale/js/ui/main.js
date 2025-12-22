@@ -432,13 +432,13 @@ $(function () {
 
     var local_tz = moment.tz.guess()
     $("span[data-timezone], small[data-timezone]").each(function() {
-        var t = moment.tz($(this).attr("data-time"), $(this).attr("data-timezone"))
-        var tz = moment.tz.zone($(this).attr("data-timezone"))
+        var tzName = $(this).attr("data-timezone")
+        var t = moment.tz($(this).attr("data-time"), tzName)
 
         $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tz.abbr(t)
+            'title': gettext("Time zone:") + " " + tzName
         });
-        if (t.tz(tz.name).format() !== t.tz(local_tz).format()) {
+        if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
             $add.append($("<span>").addClass("fa fa-globe"))
             if ($(this).is("[data-time-short]")) {
@@ -446,7 +446,7 @@ $(function () {
             } else {
                 $add.addClass("text-muted")
                 $add.append(" " + gettext("Your local time:") + " ")
-                if (t.tz(tz.name).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
+                if (t.tz(tzName).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
                     $add.append(t.tz(local_tz).format($("body").attr("data-datetimeformat")))
                 } else {
                     $add.append(t.tz(local_tz).format($("body").attr("data-timeformat")))
@@ -454,7 +454,7 @@ $(function () {
             }
             $add.insertAfter($(this));
             $add.tooltip({
-                'title': gettext("Time zone:") + " " + moment.tz.zone(local_tz).abbr(t),
+                'title': gettext("Time zone:") + " " + local_tz,
             });
         }
     });

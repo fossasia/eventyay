@@ -171,6 +171,7 @@ button, a.btn{
 	background-color: var(--color-primary);
 	border-color: var(--color-primary);
 }
+
 button,
 input {
   overflow: visible;

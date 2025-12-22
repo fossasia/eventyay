@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load rules %}
 {% load event_tags %}
+{% load tz %}
 {% load static %}
 
 {% with current_event=request.event|default:event %}
@@ -80,6 +81,7 @@
                 {# not lazy-loading to avoid flash #}
                 <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name }}">
             {% endif %}
+            <div class="header-image-overlay"></div>
             {% block header_background %}{% endblock header_background %}
         </div>
         {% block site_notice %}
@@ -94,25 +96,48 @@
         {% endblock site_notice %}
         <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
             <header>
-                <h1 class="public-event-header">
-                    <div class="event-logo">
-                        <a href="{% block nav_link %}{% endblock nav_link %}">
-                            {% block event_logo %}
-                                {% if current_event and current_event.visible_logo_url %}
-                                    <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
-                                {% endif %}
-                            {% endblock event_logo %}
-                        </a>
+                <div class="event-hero">
+                    <div class="event-hero-overlay">
+                        <div class="event-brand">
+                            <div class="event-logo">
+                                <a href="{% block nav_link %}{% endblock nav_link %}">
+                                    {% block event_logo %}
+                                        {% if current_event and current_event.visible_logo_url %}
+                                            <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
+                                        {% endif %}
+                                    {% endblock event_logo %}
+                                </a>
+                            </div>
+                            {% if current_event %}
+                                <div class="event-hero-text">
+                                    {% if current_event.date_from %}
+                                        {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
+                                            {% timezone tz_name %}
+                                                <div class="event-date-line">
+                                                    {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                </div>
+                                                {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                                                    <div class="event-date-line">
+                                                        {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                    </div>
+                                                {% endif %}
+                                            {% endtimezone %}
+                                        {% endwith %}
+                                    {% endif %}
+                                    <div class="event-title">{{ current_event.name }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="header-row-right">
-                        {% block header_right %}
-                            {% include "common/fragment_header_user.html" with current_event=current_event %}
-                        {% endblock header_right %}
-                    </div>
-                </h1>
+                </div>
                 <div class="header-wrapper">
                     <div id="header-tabs">
                         {% block header_tabs %}{% endblock header_tabs %}
+                    	<div class="header-row-right">
+                    	    {% block header_right %}
+                    	    	{% include "common/fragment_header_user.html" with current_event=current_event %}
+                    	    {% endblock header_right %}
+						</div>
                     </div>
                 </div>
             </header>
