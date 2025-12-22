@@ -208,6 +208,9 @@ def register(request):
         form = RegistrationForm()
     ctx['form'] = form
     ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
+    # Hide help if the exact requirement message is already present as a password error
+    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
+    ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
     ctx['confirmation_required'] = Page.objects.filter(confirmation_required=True)
     return render(request, 'eventyay_common/auth/register.html', ctx)
 
@@ -298,6 +301,9 @@ def invite(request, token):
     else:
         form = RegistrationForm(initial={'email': inv.email})
     ctx['form'] = form
+    ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
+    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
+    ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
     return render(request, 'eventyay_common/auth/invite.html', ctx)
 
 

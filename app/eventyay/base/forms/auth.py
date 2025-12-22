@@ -1,6 +1,5 @@
 import hashlib
 import ipaddress
-import re
 
 from django import forms
 from django.conf import settings
@@ -20,18 +19,19 @@ PASSWORD_COMPLEXITY_ERROR = _('Password must be at least 8 characters and includ
 
 def validate_password_complexity(password):
     """
-    Validates that password meets complexity requirements:
+    Validate password complexity with explicit checks
+    Requirements:
     - At least 8 characters
-    - At least one letter
-    - At least one number
-    - At least one special character
+    - Contains at least one letter, one digit, and one special character
     """
-    pattern = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$'
-    if not re.match(pattern, password):
-        raise forms.ValidationError(
-            PASSWORD_COMPLEXITY_ERROR,
-            code='password_complexity',
-        )
+    if not isinstance(password, str) or not password:
+        raise forms.ValidationError(PASSWORD_COMPLEXITY_ERROR, code='password_complexity')
+
+    has_letter = any(ch.isalpha() for ch in password)
+    has_digit = any(ch.isdigit() for ch in password)
+    has_special = any(not ch.isalnum() for ch in password)
+    if len(password) < 8 or not (has_letter and has_digit and has_special):
+        raise forms.ValidationError(PASSWORD_COMPLEXITY_ERROR, code='password_complexity')
 
 
 class LoginForm(forms.Form):

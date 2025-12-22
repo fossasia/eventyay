@@ -9,10 +9,8 @@
         {% csrf_token %}
         {% bootstrap_field form.email %}
         {% bootstrap_field form.password %}
-        {% if not form.password.errors %}
-        <p class="help-block">
-            {{ password_requirement }}
-        </p>
+        {% if show_password_requirement_help %}
+        <p class="help-block">{{ password_requirement }}</p>
         {% endif %}
         {% bootstrap_field form.password_repeat %}
         {% if confirmation_required %}
