@@ -202,6 +202,8 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
 
         # Generate a unique slug if none provided
