@@ -21,14 +21,9 @@ class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
     """Typed Vite manifest entry (mirrors Vite's manifest.json shape)."""
 
     file: str
-    src: str | None = None
-    name: str | None = None
-    is_entry: bool = msgspec.field(default=False, name='isEntry')
     css: list[str] = msgspec.field(default_factory=list)
-    assets: list[str] = msgspec.field(default_factory=list)
     imports: list[str] = msgspec.field(default_factory=list)
-    dynamic_imports: list[str] = msgspec.field(default_factory=list, name='dynamicImports')
-    integrity: str | None = None
+    # There are other fields, but we don't need them.
 
 
 ManifestMapping = dict[str, ViteManifestEntry]
@@ -89,7 +84,6 @@ def vite_asset(path: str) -> str:
 
     if not path:
         return ''
-
 
     if settings.VITE_DEV_MODE:
         return generate_script_tag(path, {'type': 'module'})
