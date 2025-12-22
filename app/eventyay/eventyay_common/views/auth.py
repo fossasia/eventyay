@@ -39,6 +39,7 @@ from eventyay.base.forms.auth import (
     PasswordForgotForm,
     PasswordRecoverForm,
     RegistrationForm,
+    PASSWORD_COMPLEXITY_ERROR,
 )
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.models.page import Page
@@ -206,6 +207,7 @@ def register(request):
     else:
         form = RegistrationForm()
     ctx['form'] = form
+    ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
     ctx['confirmation_required'] = Page.objects.filter(confirmation_required=True)
     return render(request, 'eventyay_common/auth/register.html', ctx)
 

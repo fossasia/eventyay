@@ -1,5 +1,6 @@
 import hashlib
 import ipaddress
+import re
 
 from django import forms
 from django.conf import settings
@@ -13,6 +14,24 @@ from django.utils.translation import gettext_lazy as _
 from eventyay.base.models import User
 from eventyay.helpers.dicts import move_to_end
 from eventyay.helpers.http import get_client_ip
+
+PASSWORD_COMPLEXITY_ERROR = _('Password must be at least 8 characters and include a letter, a number, and a special character.')
+
+
+def validate_password_complexity(password):
+    """
+    Validates that password meets complexity requirements:
+    - At least 8 characters
+    - At least one letter
+    - At least one number
+    - At least one special character
+    """
+    pattern = r'^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$'
+    if not re.match(pattern, password):
+        raise forms.ValidationError(
+            PASSWORD_COMPLEXITY_ERROR,
+            code='password_complexity',
+        )
 
 
 class LoginForm(forms.Form):
@@ -152,6 +171,7 @@ class RegistrationForm(forms.Form):
     def clean_password(self):
         password1 = self.cleaned_data.get('password', '')
         user = User(email=self.cleaned_data.get('email'))
+        validate_password_complexity(password1)
         if validate_password(password1, user=user) is not None:
             raise forms.ValidationError(_(password_validators_help_texts()), code='pw_invalid')
         return password1
@@ -194,6 +214,7 @@ class PasswordRecoverForm(forms.Form):
             user = User.objects.get(id=self.user_id)
         except User.DoesNotExist:
             user = None
+        validate_password_complexity(password1)
         if validate_password(password1, user=user) is not None:
             raise forms.ValidationError(_(password_validators_help_texts()), code='pw_invalid')
         return password1
