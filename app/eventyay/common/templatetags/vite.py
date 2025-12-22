@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from pathlib import Path
 from typing import cast
 from urllib.parse import urljoin
@@ -29,6 +30,7 @@ class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
 ManifestMapping = dict[str, ViteManifestEntry]
 
 
+@lru_cache(maxsize=1)
 def load_mapping() -> ManifestMapping:
     """Loads the Vite manifest file mapping using msgspec for fast decoding."""
     try:
