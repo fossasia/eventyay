@@ -468,7 +468,7 @@ FORMAT_MODULE_PATH = [
 ALL_LANGUAGES = [
     ('en', _('English')),
     ('de', _('German')),
-    ('de-formal', _('German (informal)')),
+    ('de-formal', _('German (formal)')),
     ('ar', _('Arabic')),
     ('zh-hans', _('Chinese (simplified)')),
     ('da', _('Danish')),
@@ -502,7 +502,7 @@ EXTRA_LANG_INFO = {
     'de-formal': {
         'bidi': False,
         'code': 'de-formal',
-        'name': 'German (informal)',
+        'name': 'German (formal)',
         'name_local': 'Deutsch',
         'public_code': 'de',
     },
