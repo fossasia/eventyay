@@ -35,7 +35,7 @@ def timeline_for_event(event, subevent=None):
             event=event,
             subevent=subevent,
             datetime=ev.date_from,
-            description=pgettext_lazy('timeline', 'Your event starts'),
+            description=pgettext_lazy('timeline', 'Event starts'),
             edit_url=ev_edit_url,
         )
     )
@@ -46,7 +46,7 @@ def timeline_for_event(event, subevent=None):
                 event=event,
                 subevent=subevent,
                 datetime=ev.date_to,
-                description=pgettext_lazy('timeline', 'Your event ends'),
+                description=pgettext_lazy('timeline', 'Event ends'),
                 edit_url=ev_edit_url,
             )
         )
@@ -57,7 +57,7 @@ def timeline_for_event(event, subevent=None):
                 event=event,
                 subevent=subevent,
                 datetime=ev.date_admission,
-                description=pgettext_lazy('timeline', 'Admissions for your event start'),
+                description=pgettext_lazy('timeline', 'Admissions for event start'),
                 edit_url=ev_edit_url,
             )
         )
