@@ -40,7 +40,7 @@ def load_mapping() -> ManifestMapping:
         return msgspec.json.decode(MANIFEST_PATH.read_text(), type=ManifestMapping)
     except FileNotFoundError as e:
         raise ImproperlyConfigured(f'Vite manifest not found at {MANIFEST_PATH}.') from e
-    except msgspec.ValidationError as e:
+    except (msgspec.DecodeError, msgspec.ValidationError) as e:
         raise ImproperlyConfigured(f'Vite manifest at {MANIFEST_PATH} has an unexpected format.') from e
 
 
@@ -88,11 +88,11 @@ def vite_asset(path: str) -> str:
     if not path:
         return ''
 
-    static_files_mapping = load_mapping()
 
     if settings.VITE_DEV_MODE:
         return generate_script_tag(path, {'type': 'module'})
 
+    static_files_mapping = load_mapping()
     manifest_entry = static_files_mapping.get(path)
     if manifest_entry is None:
         msg = (
