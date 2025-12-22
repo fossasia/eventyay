@@ -3,6 +3,13 @@
 {% load bootstrap3 %}
 {% load static %}
 {% block form %}
+    <style>
+        .optional-text {
+            display: block;
+            font-weight: normal;
+            margin-top: 5px;
+        }
+    </style>
     <fieldset>
         <legend>{% trans "General information" %}</legend>
         {% bootstrap_field form.name layout="control" %}
@@ -43,9 +50,9 @@
         {% bootstrap_field form.location layout="control" label=_("Address") %}
         
         <div class="form-group">
-            <label class="col-md-3 control-label" for="id_basics-geo_lat">
+            <label class="col-md-3 control-label" for="{{ form.geo_lat.id_for_label }}">
                 {% trans "Geo coordinates" %}
-                <span class="text-muted" style="display: block; font-weight: normal; margin-top: 5px;">{% trans "Optional" %}</span>
+                <span class="text-muted optional-text">{% trans "Optional" %}</span>
             </label>
             <div class="col-md-9">
                 <div class="row" style="margin-left: 0;">
