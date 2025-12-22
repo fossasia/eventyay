@@ -38,5 +38,8 @@ RUN make npminstall
 # Build webapp
 RUN make webappbuild
 
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
+
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
