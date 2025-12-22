@@ -19,7 +19,10 @@ MANIFEST_PATH = cast(Path, settings.STATIC_ROOT) / 'schedule-editor' / 'schedule
 
 
 class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
-    """Typed Vite manifest entry (mirrors Vite's manifest.json shape)."""
+    """Typed Vite manifest entry (following Vite's manifest.json).
+
+    Defining an expected structure will help decoding JSON faster and safer.
+    """
 
     file: str
     css: list[str] = msgspec.field(default_factory=list)
