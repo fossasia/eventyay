@@ -104,11 +104,21 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
 
 7. **Activate virtual environment**
 
-After running ``uv sync```, activate a virtual environment
+   All python commands must be run within the project's virtual environment. You have two options:
 
-.. code-block:: sh
+   **Option A: Activate the environment (Recommended)**
 
-  . .venv/bin/activate
+   .. code-block:: sh
+
+     . .venv/bin/activate
+
+   **Option B: Use `uv run`**
+
+   Prepend ``uv run`` to any python command to run it in the environment without explicit activation.
+
+   .. code-block:: sh
+
+     uv run python manage.py migrate
 
 8. **Initialize the database**:
 
