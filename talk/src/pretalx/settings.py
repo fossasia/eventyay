@@ -391,13 +391,13 @@ LANGUAGES_INFORMATION = {
         "official": False,
         "percentage": 71,
     },
-    "fa-ir": {
+    "fa": {
         "name": _("Persian"),
         "natural_name": "قارسی",
         "official": False,
         "percentage": 99,
         "path": "fa_IR",
-        "public_code": "fa_IR",
+        "public_code": "fa",
     },
     "fr": {
         "name": _("French"),
@@ -418,12 +418,12 @@ LANGUAGES_INFORMATION = {
         "official": False,
         "percentage": 90,
     },
-    "ja-jp": {
+    "ja": {
         "name": _("Japanese"),
         "natural_name": "日本語",
         "official": False,
         "percentage": 62,
-        "public_code": "jp",
+        "public_code": "ja",
     },
     "ko": {
         "name": _("Korean"),
@@ -469,7 +469,7 @@ LANGUAGES_INFORMATION = {
         "official": False,
         "percentage": 0,
     },
-    "ua": {
+    "uk": {
         "name": _("Ukrainian"),
         "natural_name": "Українська",
         "official": True,
@@ -498,7 +498,7 @@ LANGUAGES_INFORMATION = {
 }
 LANGUAGES_RTL = {
     "ar",
-    "fa-ir",
+    "fa",
 }
 
 for section in config.sections():

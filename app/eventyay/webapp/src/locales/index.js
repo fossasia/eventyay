@@ -7,7 +7,7 @@ export const locales = [{
 	nativeLabel: 'Deutsch',
 	englishLabel: 'German'
 }, {
-	code: 'pt_BR',
+	code: 'pt-BR',
 	nativeLabel: 'Português brasileiro',
 	englishLabel: 'Portuguese (Brazil)'
 }, {
