@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 MANIFEST_PATH = cast(Path, settings.STATIC_ROOT) / 'schedule-editor' / 'schedule-editor-manifest.json'
 
 
-class ViteManifestEntry(msgspec.Struct):
+class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
     """Typed Vite manifest entry (mirrors Vite's manifest.json shape)."""
 
     file: str
