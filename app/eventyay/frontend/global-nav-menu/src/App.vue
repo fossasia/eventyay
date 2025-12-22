@@ -63,62 +63,91 @@ onBeforeUnmount(() => {
 
 <template>
   <div class='relative font-sans text-sm' ref='container'>
-    <button class='text-xl cursor-pointer' @click='showMenu'><div class='i-fa-caret-down h-4 w-4' /></button>
+    <button class='text-xl cursor-pointer' @click='showMenu'><i class='fa fa-caret-down'></i></button>
     <div v-if='open' ref='main-menu' class='absolute z-1 end-1 grid grid-cols-1 shadow shadow-lg min-w-48 bg-white'>
       <div class='relative cursor-pointer' @mouseover='subOpen = true' @mouseleave='subOpen = false'>
         <div class='flex flex-row items-center space-x-2' :class='ENTRY_CLASSES' >
-          <div class='i-fa-tachometer h-3 w-3'></div>
+          <i class='fa fa-tachometer fa-fw'></i>
           <div class=''>Dashboard</div>
         </div>
         <ul v-if='subOpen' class='absolute z-2 top-0 -translate-x-full list-none m-0 p-s-0 bg-white shadow-lg min-w-56'>
           <li>
             <a href='/common/' :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' class='block'>
-              <div class='i-fa-tachometer h-3 w-3'></div>
+              <i class='fa fa-tachometer fa-fw'></i>
               <div>Main dashboard</div>
             </a>
           </li>
           <li>
             <a href='/control/' :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' class='block'>
-              <div class='i-fa-ticket h-3 w-3'></div>
+              <i class='fa fa-ticket fa-fw'></i>
               <div>Tickets</div>
             </a>
           </li>
           <li>
             <a href='/orga/event/' :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' class='block'>
-              <div class='i-fa-microphone h-3 w-3'></div>
+              <i class='fa fa-microphone fa-fw'></i>
               <div>Talks</div>
             </a>
           </li>
         </ul>
       </div>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/orders/'>
-        <div class='i-fa-shopping-cart h-3 w-3'></div>
+        <i class='fa fa-shopping-cart fa-fw'></i>
         <div>My orders</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/sessions/'>
-        <div class='i-fa-sticky-note-o h-3 w-3'></div>
+        <i class='fa fa-sticky-note-o fa-fw'></i>
         <div>My sessions</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/events/'>
-        <div class='i-fa-calendar h-3 w-3'></div>
+        <i class='fa fa-calendar fa-fw'></i>
         <div>My events</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES]' href='/common/organizers/'>
-        <div class='i-fa-users h-3 w-3'></div>
+        <i class='fa fa-users fa-fw'></i>
         <div>Organizers</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/common/account/'>
-        <div class='i-fa-user h-3 w-3'></div>
-        <div>Accounts</div>
+        <i class='fa fa-user-circle fa-fw'></i>
+        <div>Account</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/admin/'>
-        <div class='i-fa-cog h-3 w-3'></div>
+        <i class='fa fa-cog fa-fw'></i>
         <div>Admin</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES, "w-full text-left"]' @click='handleLogout' href="#">
-        <div class='i-fa-sign-out h-3 w-3'></div>
+        <i class='fa fa-sign-out fa-fw'></i>
         <div>Logout</div>
       </a>
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Menu item icons are visible by default */
+.grid .fa:not(.fa-caret-down) {
+  color: #1a69a4 !important;
+  opacity: 1;
+  transition: color 0.2s ease-in-out;
+  font-size: 1rem;
+  width: 1.25em;
+  text-align: center;
+}
+
+/* Caret icon should always be visible and inherit color */
+.fa-caret-down {
+  opacity: 1 !important;
+  color: inherit !important;
+}
+
+/* Icons turn white when the parent link or div is hovered */
+:deep(.hover\:bg-\[\#1a69a4\]:hover) .fa,
+.relative:hover .fa {
+  color: white !important;
+}
+
+/* Ensure icons are white when text turns white on hover */
+.fa.fa-fw {
+  margin-right: 8px;
+}
+</style>
