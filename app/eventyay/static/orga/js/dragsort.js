@@ -129,7 +129,7 @@ const pushOrder = (parentElement) => {
             method: "POST",
             headers: {
                 "X-CSRFToken": document.cookie
-                    .split("pretalx_csrftoken=")
+                    .split("eventyay_csrftoken=")
                     .pop()
                     .split(";")
                     .shift(),

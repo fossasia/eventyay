@@ -43,7 +43,7 @@ const loadLocalFavs = () => {
 const apiFetch = async (path, method) => {
     const headers = {'Content-Type': 'application/json'}
     if (method === 'POST' || method === 'DELETE') {
-        headers['X-CSRFToken'] = document.cookie.split('pretalx_csrftoken=').pop().split(';').shift()
+        headers['X-CSRFToken'] = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
     }
     const response = await fetch(apiBaseUrl + path, {
         method,
