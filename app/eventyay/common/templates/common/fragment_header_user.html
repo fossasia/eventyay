@@ -54,7 +54,7 @@
         <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
             {% has_event_perm "base.orga_access_event" request.user request current_event as can_see_orga_area %}
             <summary>
-                {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
+                {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
             </summary>
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
@@ -97,9 +97,9 @@
         </details>
     {% elif not subheader_login_link_disabled and not is_html_export %}
         {% if current_event %}
-            <a href="{{ current_event.urls.login }}?next={{ request.path|urlencode }}">login</a>
+            <a href="{{ current_event.urls.login }}?next={{ request.path|urlencode }}">{% translate "Login" %</a>
         {% else %}
-            <a href="{% url "orga:login" %}">login</a>
+			<a href="{% url "orga:login" %}">{% translate "Login" %}</a>
         {% endif %}
     {% endif %}
 {% endwith %}

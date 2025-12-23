@@ -147,7 +147,7 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
             )
 
         if change_css:
-            transaction.on_commit(lambda: regenerate_organizer_css.apply(args=(self.request.organizer.pk,)))
+            transaction.on_commit(lambda: regenerate_organizer_css.apply_async(args=(self.request.organizer.pk,)))
             messages.success(
                 self.request,
                 _(

@@ -13,7 +13,7 @@
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block pagetitle %}{% endblock %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name }}
+    {% block pagetitle %}{{ event.name }}{% endblock %}
 {% endblock %}
 
 {% block custom_header %}

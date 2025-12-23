@@ -224,7 +224,7 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
         if change_css:
-            transaction.on_commit(lambda: regenerate_css.apply(args=(self.request.event.pk,)))
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
                 _(

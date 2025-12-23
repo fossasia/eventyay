@@ -2137,7 +2137,7 @@ class Event(
 
         self.plugins = ','.join(modules)
 
-    @cached_property
+    @property
     def visible_primary_color(self):
         """
         Prefer the common (event settings) primary color, then fall back to the legacy
@@ -2284,7 +2284,6 @@ class Event(
             if str(self._visible_logo_path).startswith(('http://', 'https://')):
                 return None
             return default_storage.open(self._visible_logo_path)
-        return None
 
     @cached_property
     def visible_header_image_url(self):
@@ -2296,7 +2295,6 @@ class Event(
             if str(self._visible_header_image_path).startswith(('http://', 'https://')):
                 return self._visible_header_image_path
             return default_storage.url(self._visible_header_image_path)
-        return None
 
     @cached_property
     def visible_header_image_file(self):
@@ -2308,7 +2306,6 @@ class Event(
             if str(self._visible_header_image_path).startswith(('http://', 'https://')):
                 return None
             return default_storage.open(self._visible_header_image_path)
-        return None
 
     def _get_default_submission_type(self):
         from eventyay.base.models import SubmissionType
