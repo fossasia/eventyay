@@ -237,7 +237,6 @@ a {
   text-decoration: none;
 
   &:hover {
-    color: var(--color-primary-text-dark);
     text-decoration: underline;
   }
 }

@@ -5,10 +5,8 @@ email_backend = 'eventyay.base.email.FileSavedEmailBackend'
 
 allowed_hosts = ['*']
 
-site_url = 'http://localhost:8000'
+site_url = 'https://test.eventyay.com'
 
 redis_url = 'redis://localhost/0'
 
 short_url = 'https://test.eventyay.com'
-
-celery_always_eager = true

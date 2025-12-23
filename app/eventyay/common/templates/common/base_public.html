@@ -110,6 +110,7 @@
                             </div>
                             {% if current_event %}
                                 <div class="event-hero-text">
+                                    <div class="event-title">{{ current_event.name }}</div>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
                                             {% timezone tz_name %}
@@ -124,7 +125,6 @@
                                             {% endtimezone %}
                                         {% endwith %}
                                     {% endif %}
-                                    <div class="event-title">{{ current_event.name }}</div>
                                 </div>
                             {% endif %}
                         </div>

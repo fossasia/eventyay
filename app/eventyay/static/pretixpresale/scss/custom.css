@@ -1,10 +1,10 @@
 html {
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 body {
     background: var(--color-grey-lightest);
-    font-size: 16px;
+    font-size: 1rem;
     line-height: 1.5;
     font-family: var(--font-family);
     color: var(--color-text);
@@ -13,23 +13,15 @@ body {
 #top-bg {
     background-color: var(--color-primary);
     position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 270px;
+    height: 320px;
     z-index: -1;
     display: flex;
 }
 
-
-#top-bg #header-image {
-    object-fit: cover;
-    width: 100%;
-}
-
 header {
     z-index: 1000;
-    height: 180px;
+    height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -44,33 +36,6 @@ header .header-wrapper {
     background: var(--color-bg);
     border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
     margin-bottom: 0;
-}
-
-#header-tabs {
-    display: flex;
-    flex-wrap: nowrap;
-    z-index: 400;
-	color: var(--color-primary);
-    background: var(--color-bg);
-    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-    margin-bottom: -4px;
-    padding-bottom: 4px;
-    flex-shrink: 0;
-}
-
-#header-tabs a.header-tab {
-    padding: 8px 10px 4px 10px;
-	color: var(--color-primary);
-    border-bottom: 2px solid transparent;
-}
-
-#header-tabs a.header-tab:hover {
-    text-decoration: none;
-    border-bottom: 2px dotted var(--color-primary);
-}
-
-#header-tabs a.header-tab.active {
-    border-bottom: 2px solid var(--color-primary);
 }
 
 header .header-row-right {
@@ -132,9 +97,9 @@ header .header-row-right {
 }
 
 #btn-add-to-cart:disabled {
-    background: var(--color-primary-text-dark);
+    background: var(--color-primary-light);
     border-color: var(--color-grey-light);
-    color: var(--color-primary);
+    color: var(--color-primary-text-dark);
     cursor: not-allowed;
     box-shadow: none;
 }

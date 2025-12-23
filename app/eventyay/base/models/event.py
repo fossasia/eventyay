@@ -14,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 import icalendar
 import jwt
+import logging
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
@@ -74,6 +75,7 @@ from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
+logger = logging.getLogger(__name__)
 
 
 def event_css_path(instance, filename):
@@ -2188,8 +2190,8 @@ class Event(
                 rel_to_media = os.path.relpath(abs_path, media_root)
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
-            except Exception:
-                pass
+            except OSError:
+                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
 
             # Drop leading media prefixes
             for prefix in ('/media/', 'media/'):
@@ -2243,8 +2245,8 @@ class Event(
                 rel_to_media = os.path.relpath(abs_path, media_root)
                 if not rel_to_media.startswith('..'):
                     path = rel_to_media
-            except Exception:
-                pass
+            except OSError:
+                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
 
             for prefix in ('/media/', 'media/'):
                 if path.startswith(prefix):
@@ -2306,6 +2308,7 @@ class Event(
             if str(self._visible_header_image_path).startswith(('http://', 'https://')):
                 return None
             return default_storage.open(self._visible_header_image_path)
+        return None
 
     def _get_default_submission_type(self):
         from eventyay.base.models import SubmissionType

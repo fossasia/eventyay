@@ -51,23 +51,6 @@
             <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
         {% endcompress %}
     {% endif %}
-    <style>
-        .panel-primary {
-            border-color: {{ settings.primary_color|default:"#2185d0" }};
-        }
-        .panel-primary > .panel-heading,
-        .panel-primary > summary.panel-heading {
-            background-color: {{ settings.primary_color|default:"#2185d0" }};
-            border-color: {{ settings.primary_color|default:"#2185d0" }};
-            color: #fff;
-        }
-        .panel-primary > .panel-heading .panel-title,
-        .panel-primary > summary.panel-heading .panel-title,
-        .panel-primary > .panel-heading .panel-title *,
-        .panel-primary > summary.panel-heading .panel-title * {
-            color: #fff;
-        }
-    </style>
 {% endblock %}
 
 {% block scripts %}
