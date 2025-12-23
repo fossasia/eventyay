@@ -3,13 +3,11 @@
 {% load bootstrap3 %}
 {% load static %}
 {% block form %}
-    <style>
-        .optional-text {
-            display: block;
-            font-weight: normal;
-            margin-top: 5px;
-        }
-    </style>
+    {% block custom_header %}
+        {{ block.super }}
+        <link rel="stylesheet" href="{% static "eventyay-common/css/create_basics.css" %}">
+    {% endblock %}
+
     <fieldset>
         <legend>{% trans "General information" %}</legend>
         {% bootstrap_field form.name layout="control" %}
