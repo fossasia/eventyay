@@ -1826,13 +1826,13 @@ class Event(
 
     @property
     def talk_dashboard_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}')
-        return url
+        from django.urls import reverse
+        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}/settings')
-        return url
+        from django.urls import reverse
+        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
 
     @cached_property
     def live_issues(self):
