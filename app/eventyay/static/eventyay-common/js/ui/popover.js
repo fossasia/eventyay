@@ -14,7 +14,7 @@ $(function () {
     const ticketsPath = `/control/`;
     // Ensure talkHostname ends with / for safe URL construction
     const normalizedTalkHostname = talkHostname.endsWith('/') ? talkHostname : talkHostname + '/';
-    const talksPath = `${normalizedTalkHostname}orga/event/`
+    const talksPath = `/orga/event/`;
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
     const sessionPath = `/common/sessions/`;
