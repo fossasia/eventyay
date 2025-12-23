@@ -6,6 +6,7 @@ const DIRECTION_HORIZONTAL = Symbol();
 const DIRECTION_VERTICAL = Symbol();
 const INTENT_BEFORE = Symbol();
 const INTENT_AFTER = Symbol();
+const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
 
 const computeCentroid = (element) => {
     const rect = element.getBoundingClientRect();
@@ -128,11 +129,7 @@ const pushOrder = (parentElement) => {
         fetch(url, {
             method: "POST",
             headers: {
-                "X-CSRFToken": document.cookie
-                    .split("eventyay_csrftoken=")
-                    .pop()
-                    .split(";")
-                    .shift(),
+                "X-CSRFToken": EVENTYAY_CSRF_TOKEN,
             },
             body: data,
         });
