@@ -29,7 +29,7 @@ class LoginForm(forms.Form):
         'inactive': _('This account is inactive.'),
     }
 
-    def __init__(self, backend, request=None, *args, **kwargs):
+    def __init__(self, backend=None, request=None, *args, **kwargs):
         """
         The 'request' parameter is set for custom auth use by subclasses.
         The form data comes in via the standard 'data' kwarg.
@@ -38,6 +38,9 @@ class LoginForm(forms.Form):
         self.user_cache = None
         self.backend = backend
         super().__init__(*args, **kwargs)
+        if not backend:
+            return
+
         for k, f in backend.login_form_fields.items():
             self.fields[k] = f
 

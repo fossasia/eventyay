@@ -21,7 +21,7 @@ class LoginView(GenericLoginView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["site_name"] = dict(settings.CONFIG.items("site")).get("name")
+        context["site_name"] = dict(settings.TALK_CONFIG.items("site")).get("name")
         return context
 
     @cached_property
