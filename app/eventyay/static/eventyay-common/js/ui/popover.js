@@ -1,6 +1,7 @@
 $(function () {
     const basePath = JSON.parse(document.getElementById('base_path').textContent);
     const isAdminMode = JSON.parse(document.getElementById('is_admin_mode').textContent);
+    const talkHostname = JSON.parse(document.getElementById('talk_hostname_url').textContent);
     const currentPath = window.location.pathname;
     const queryString = window.location.search;
 
@@ -11,7 +12,9 @@ $(function () {
     // TODO: The URL hardcode here is ugly, but we will implement a new dropdown menu in the future.
 
     const ticketsPath = `/control/`;
-    const talksPath = `/orga/event/`
+    // Ensure talkHostname ends with / for safe URL construction
+    const normalizedTalkHostname = talkHostname.endsWith('/') ? talkHostname : talkHostname + '/';
+    const talksPath = `${normalizedTalkHostname}orga/event/`
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
     const sessionPath = `/common/sessions/`;

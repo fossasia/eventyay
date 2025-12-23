@@ -334,8 +334,10 @@ class EventWidgetGenerator:
         """
         Generate a talk button based on event settings.
         """
+        from django.urls import reverse
         if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
-            return f'<a href="{event.talk_dashboard_url}" class="middle-component">{_("Talks")}</a>'
+            talk_url = reverse('orga:event.dashboard', kwargs={'event': event.slug})
+            return f'<a href="{talk_url}" class="middle-component">{_("Talks")}</a>'
         return f"""
             <a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">
                 {_('Talks')}
