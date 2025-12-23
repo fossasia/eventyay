@@ -998,10 +998,8 @@ COMPRESS_PRECOMPILERS = (
     # We don't need to specify {infile} {outfile} because both esbuild and Django-Compressor support stdin/stdout.
     ('module', 'npx esbuild --minify --loader=js --platform=browser'),
 )
-# Enable offline compression only in production.
-# In development (DEBUG=True), use on-the-fly compression to avoid needing to run 'manage.py compress'.
-COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = not DEBUG
+# We have one Vue 2 app to be built by Django-Compressor, so we need to enable offline compression.
+COMPRESS_ENABLED = COMPRESS_OFFLINE = True
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass
