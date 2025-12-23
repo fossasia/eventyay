@@ -734,6 +734,8 @@ class EventsTest(SoupTest):
             assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).exists()
+            assert ev.geo_lat is None
+            assert ev.geo_lon is None
 
     def test_create_event_with_subevents_success(self):
         doc = self.get_doc('/control/events/add')
@@ -790,9 +792,9 @@ class EventsTest(SoupTest):
             assert ev.subevents.count() == 0
 
     def test_create_event_with_location_and_geo(self):
-        doc = self.get_doc('/control/events/add')
+        self.get_doc('/control/events/add')
 
-        doc = self.post_doc(
+        self.post_doc(
             '/control/events/add',
             {
                 'event_wizard-current_step': 'foundation',
@@ -825,6 +827,8 @@ class EventsTest(SoupTest):
             },
         )
 
+        assert not doc.select('.has-error')
+
         self.post_doc(
             '/control/events/add',
             {
@@ -837,8 +841,8 @@ class EventsTest(SoupTest):
         with scopes_disabled():
             ev = Event.objects.get(slug='geoevent')
             assert ev.location == LazyI18nString({'de': 'New York', 'en': 'New York'})
-            assert ev.geo_lat == Decimal('40.7128')
-            assert ev.geo_lon == Decimal('-74.0060')
+            assert ev.geo_lat == 40.7128
+            assert ev.geo_lon == -74.0060
 
     def test_create_event_copy_success(self):
         with scopes_disabled():

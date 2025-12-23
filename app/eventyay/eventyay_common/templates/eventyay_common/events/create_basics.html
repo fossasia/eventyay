@@ -2,12 +2,12 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load static %}
-{% block form %}
-    {% block custom_header %}
-        {{ block.super }}
-        <link rel="stylesheet" href="{% static "eventyay-common/css/create_basics.css" %}">
-    {% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static "eventyay-common/css/create_basics.css" %}">
+{% endblock %}
 
+{% block form %}
     <fieldset>
         <legend>{% trans "General information" %}</legend>
         {% bootstrap_field form.name layout="control" %}
@@ -45,15 +45,15 @@
     </fieldset>
     <fieldset>
         <legend>{% trans "Location" %}</legend>
-        {% bootstrap_field form.location layout="control" label=_("Address") %}
+        {% bootstrap_field form.location layout="control" %}
         
         <div class="form-group">
             <label class="col-md-3 control-label" for="{{ form.geo_lat.id_for_label }}">
                 {% trans "Geo coordinates" %}
-                <span class="text-muted optional-text">{% trans "Optional" %}</span>
+                <span class="text-muted event-field-label__optional">({% trans "Optional" %})</span>
             </label>
             <div class="col-md-9">
-                <div class="row geo-row">
+                <div class="row event-geo-coordinates-row">
                     <div class="col-md-5">
                         {% bootstrap_field form.geo_lat layout="inline" show_label=False %}
                     </div>

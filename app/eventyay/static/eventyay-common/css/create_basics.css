@@ -1,9 +1,9 @@
-.optional-text {
+.event-field-label__optional {
     display: block;
     font-weight: normal;
     margin-top: 5px;
 }
 
-.geo-row {
+.event-geo-coordinates-row {
     margin-left: 0;
 }

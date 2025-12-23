@@ -568,9 +568,9 @@ class EventWizard(PermissionRequired, SensibleBackWizardMixin, SessionWizardView
                 logo=steps['display']['logo'],
                 date_from=steps['timeline']['date_from'],
                 date_to=steps['timeline']['date_to'],
-                location=steps['basics']['location'],
-                geo_lat=steps['basics']['geo_lat'],
-                geo_lon=steps['basics']['geo_lon'],
+                location=steps['basics'].get('location'),
+                geo_lat=steps['basics'].get('geo_lat'),
+                geo_lon=steps['basics'].get('geo_lon'),
             )
         with scope(event=event):
             deadline = steps['timeline'].get('deadline')
