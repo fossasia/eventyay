@@ -136,6 +136,7 @@ dependencies = [
     "mccabe>=0.7.0",
     "more-itertools>=10.7.0",
     "msgpack>=1.1.1",
+    "msgspec>=0.20.0",
     "mt-940>=4.30.0",
     "multidict>=6.1.0",
     "nh3>=0.2.20",

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-17 10:00+0000\n"
+"PO-Revision-Date: 2025-12-22 22:00+0000\n"
 "Last-Translator: Supaplex <bejokeup@gmail.com>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1-dev\n"
+"X-Generator: Weblate 5.15.1\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -435,58 +435,58 @@ msgstr ""
 msgid ""
 "Require attendees to enter their primary email address twice to help prevent "
 "errors."
-msgstr ""
+msgstr "要求參加者必須填寫他們主要電子郵件地址兩次，以避免出現錯誤。"
 
 #: eventyay/base/configurations/default_setting.py:214
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "每筆訂單詢問電話號碼"
 
 #: eventyay/base/configurations/default_setting.py:223
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "每筆訂單要求電話號碼"
 
 #: eventyay/base/configurations/default_setting.py:235
 msgid "Ask for invoice address"
-msgstr ""
+msgstr "詢問收據地址"
 
 #: eventyay/base/configurations/default_setting.py:244
 msgid "Do not ask for invoice address if an order is free of charge."
-msgstr ""
+msgstr "如果訂單免費，不用詢問收據地址。"
 
 #: eventyay/base/configurations/default_setting.py:253
 msgid "Require attendee name"
-msgstr ""
+msgstr "要求訂單名字"
 
 #: eventyay/base/configurations/default_setting.py:262
 msgid "Show attendee names on invoices"
-msgstr ""
+msgstr "在收據上顯示參加者名字"
 
 #: eventyay/base/configurations/default_setting.py:272
 msgid ""
 "On invoices from one EU country to another EU country with a different "
 "currency, display the tax amounts in both currencies."
-msgstr ""
+msgstr "在歐盟不同國家的不同匯率下的收據，用不同貨幣顯示稅額。"
 
 #: eventyay/base/configurations/default_setting.py:283
 msgid "Require invoice address"
-msgstr ""
+msgstr "需要收據地址"
 
 #: eventyay/base/configurations/default_setting.py:295
 msgid "Require a business addresses"
-msgstr ""
+msgstr "需要登記地址"
 
 #: eventyay/base/configurations/default_setting.py:296
 msgid "This will require attendees to enter a company name."
-msgstr ""
+msgstr "需要參與者輸入公司名稱。"
 
 #: eventyay/base/configurations/default_setting.py:308
 msgid "Ask for beneficiary"
-msgstr ""
+msgstr "要求收益人"
 
 #: eventyay/base/configurations/default_setting.py:320
 #: eventyay/base/exporters/orderlist.py:243
 msgid "Custom address field"
-msgstr ""
+msgstr "自訂地址欄位"
 
 #: eventyay/base/configurations/default_setting.py:323
 msgid ""
@@ -496,72 +496,76 @@ msgid ""
 "details and for displaying the value on the invoice. The field will be "
 "optional."
 msgstr ""
+"如果你需要新增自訂文字欄位，像是特定國家的註冊號碼到您的地址表單，請在這邊輸"
+"入標籤。這標籤會被用來讓使用者輸入詳情，並且顯示收據數字，這一欄位是選填的。"
 
 #: eventyay/base/configurations/default_setting.py:336
 msgid "Ask for VAT ID"
-msgstr ""
+msgstr "詢問加值型營業稅編號"
 
 #: eventyay/base/configurations/default_setting.py:338
 msgid ""
 "This option is only applicable if an invoice address is requested. The VAT "
 "ID field will not be required."
-msgstr ""
+msgstr "這個選項只有在要求收據地址時出現，也不需要加值型營業稅編號。"
 
 #: eventyay/base/configurations/default_setting.py:352
 msgid "Invoice address explanation"
-msgstr ""
+msgstr "收據地址說明"
 
 #: eventyay/base/configurations/default_setting.py:356
 msgid "This text will be shown above the invoice address form during checkout."
-msgstr ""
+msgstr "結帳時收據地址表單上方會顯示文字。"
 
 #: eventyay/base/configurations/default_setting.py:366
 msgid "Show paid amount on partially paid invoices"
-msgstr ""
+msgstr "顯示部分付款收據的付款數"
 
 #: eventyay/base/configurations/default_setting.py:368
 msgid ""
 "If an invoice has already been paid partially, this option will add the paid "
 "and pending amount to the invoice."
-msgstr ""
+msgstr "如果收據已經部分付款，這個選項會新增已付以及待付金額的收據。"
 
 #: eventyay/base/configurations/default_setting.py:379
 msgid "Show free products on invoices"
-msgstr ""
+msgstr "顯示免費產品的收據"
 
 #: eventyay/base/configurations/default_setting.py:381
 msgid ""
 "Note that invoices will never be generated for orders that contain only free "
 "products."
-msgstr ""
+msgstr "注意只有免費產品的訂單不會產生收據。"
 
 #: eventyay/base/configurations/default_setting.py:392
 msgid "Show expiration date of order"
-msgstr ""
+msgstr "顯示訂單失效日期"
 
 #: eventyay/base/configurations/default_setting.py:394
 msgid ""
 "The expiration date will not be shown if the invoice is generated after the "
 "order is paid."
-msgstr ""
+msgstr "如果訂單付款後才產生收據，失效日期不會顯示。"
 
 #: eventyay/base/configurations/default_setting.py:404
 msgid "Minimum length of invoice number after prefix"
-msgstr ""
+msgstr "在前綴之後的最短收據號碼長度"
 
 #: eventyay/base/configurations/default_setting.py:406
 msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
+"您前綴之後部分您的收據號碼，會從0之後被填滿到這一長㱽，例如，INV-001 or INV-"
+"00001。"
 
 #: eventyay/base/configurations/default_setting.py:417
 msgid "Generate invoices with consecutive numbers"
-msgstr ""
+msgstr "產生連續編號的收據"
 
 #: eventyay/base/configurations/default_setting.py:419
 msgid "If deactivated, the order code will be used in the invoice number."
-msgstr ""
+msgstr "如果不使用，訂單編輯將會用在收據號碼。"
 
 #: eventyay/base/configurations/default_setting.py:429
 msgid "Invoice number prefix"
@@ -26820,7 +26824,7 @@ msgstr "套用 %(count)s 項待處理的變更？"
 msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
-msgstr "您確定要改變這 %(count)s 個議程投稿的狀態嗎？"
+msgstr "確定是否改變這 %(count)s 個議程投稿的狀態。"
 
 #: pretalx/orga/templates/orga/submission/apply_pending.html:33
 #: pretalx/orga/templates/orga/submission/state_change.html:34
@@ -27694,7 +27698,7 @@ msgstr "選擇了無效的權限：{perms}"
 
 #: pretalx/person/forms/profile.py:39
 msgid "There already exists an account for this email address."
-msgstr "此電子郵件地址已有帳號存在。"
+msgstr "此電子郵件地址已經有對應的帳號存在。"
 
 #: pretalx/person/forms/profile.py:132
 msgid ""
