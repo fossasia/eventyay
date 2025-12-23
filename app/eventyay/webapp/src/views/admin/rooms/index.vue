@@ -13,6 +13,21 @@
 		.header
 			.drag
 			.name Name
+			.visibility Visibility
+			.actions Actions
+		template(v-if="rooms")
+			SlickList.tbody(
+				v-if="!search",
+				v-model:list="rooms",
+				lockAxis="y",
+				:valueKey="'id'",
+				:useDragHandle="true",
+				v-scrollbar.y="",
+				@update:list="onListSort"
+			)
+				RoomListItem(v-for="(room, index) of rooms" :index="index", :key="room.id", :room="room", :disabled="rooms.length < 2")
+			.table-body(v-else, v-scrollbar.y="")
+				RoomListItem(v-for="room of filteredRooms", :key="room.id", :room="room", :disabled="filteredRooms.length < 2")
 		SlickList.tbody(v-if="filteredRooms", v-model:list="rooms", lockAxis="y", :useDragHandle="true", v-scrollbar.y="", @update:list="onListSort")
 			RoomListItem(v-for="(room, index) of filteredRooms" :index="index", :key="index", :room="room", :disabled="filteredRooms !== rooms")
 		bunt-progress-circular(v-else, size="huge", :page="true")

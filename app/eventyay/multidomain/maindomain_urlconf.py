@@ -122,6 +122,28 @@ try:
             single_plugin_patterns += urlmod.urlpatterns
         if hasattr(urlmod, 'event_patterns'):
             patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
+            single_plugin_patterns.append(
+                re_path(
+                    r'^(?P<organizer>[a-zA-Z0-9_.-]+)/(?P<event>[^/]+)/',
+                    include(patterns)
+                )
+            )
+        if hasattr(urlmod, 'organizer_patterns'):
+            patterns = urlmod.organizer_patterns
+            single_plugin_patterns.append(
+                re_path(
+                    r'^(?P<organizer>[a-zA-Z0-9_.-]+)/',
+                    include(patterns)
+                )
+            )
+
+        raw_plugin_patterns.append(
+            path('', include((single_plugin_patterns, 'pretix_venueless')))
+        )
+
+except (ImportError, AttributeError, TypeError):
+    logger.exception('Error including pretix_venueless plugin URLs')
+except TypeError:
             single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
         if hasattr(urlmod, 'organizer_patterns'):
             patterns = urlmod.organizer_patterns

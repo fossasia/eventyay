@@ -91,7 +91,7 @@ with scopes_disabled():
     list=extend_schema(
         summary="List Submissions",
         parameters=[
-            build_search_docs("title", "speaker.fullname"),
+            build_search_docs("title", "speaker.name"),
             build_expand_docs(
                 "speakers",
                 "speakers.answers",

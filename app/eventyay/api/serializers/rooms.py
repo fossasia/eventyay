@@ -23,6 +23,9 @@ class RoomSerializer(I18nAwareModelSerializer):
             "sorting_priority",
             "pretalx_id",
             "schedule_data",
+            "setup_complete",
+            "hidden",
+            "sidebar_hidden",
             # TODO: picture
         ]
 

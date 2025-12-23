@@ -9,105 +9,6 @@
 				template(v-if="inferredType")
 					bunt-input(v-if="inferredType.id === 'stage' || inferredType.id === 'channel-bbb'", name="pretalx_id", v-model="config.pretalx_id", label="pretalx ID", :validation="v$.config.pretalx_id")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
-			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
-	.ui-form-actions
-		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
-		.errors {{ validationErrors.join(', ') }}
-</template>
-<script>
-import { markRaw } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import api from 'lib/api'
-import Prompt from 'components/Prompt'
-import { required, integer } from 'lib/validators'
-import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import { inferType } from 'lib/room-types'
-import Stage from './types-edit/stage'
-import PageStatic from './types-edit/page-static'
-import PageIframe from './types-edit/page-iframe'
-import ChannelBBB from './types-edit/channel-bbb'
-import ChannelJanus from './types-edit/channel-janus'
-import ChannelZoom from './types-edit/channel-zoom'
-import ChannelRoulette from './types-edit/channel-roulette'
-import Posters from './types-edit/posters'
-import PageLanding from './types-edit/page-landing'
-
-export default {
-	components: { Prompt },
-	mixins: [ValidationErrorsMixin],
-	props: {
-		config: {
-			type: Object,
-			required: true
-		},
-		creating: {
-			type: Boolean,
-			default: false
-		}
-	},
-	setup:() => ({v$:useVuelidate()}),
-	data() {
-		return {
-			typeComponents: markRaw({
-				stage: Stage,
-				'page-static': PageStatic,
-				'page-iframe': PageIframe,
-				'page-landing': PageLanding,
-				'channel-bbb': ChannelBBB,
-				'channel-roulette': ChannelRoulette,
-				'channel-janus': ChannelJanus,
-				'channel-zoom': ChannelZoom,
-				posters: Posters
-			}),
-			saving: false,
-			error: null
-		}
-	},
-	computed: {
-		modules() {
-			return this.config?.module_config.reduce((acc, module) => {
-				acc[module.type] = module
-				return acc
-			}, {})
-		},
-		inferredType() {
-			return inferType(this.config)
-		},
-		localizedName: {
-			get() {
-				return this.$localize(this.config.name)
-			},
-			set(value) {
-				this.config.name = value
-			}
-		},
-		localizedDescription: {
-			get() {
-				return this.$localize(this.config.description)
-			},
-			set(value) {
-				this.config.description = value
-			}
-		}
-	},
-	validations() {
-		const config = {
-			name: {
-				required: required('name is required')
-			},
-			sorting_priority: {
-				integer: integer('sorting priority must be a number')
-			},
-			pretalx_id: {
-				integer: integer('pretalx id must be a number')
-			},
-		}
-
-		if (!this.creating) config.sorting_priority.required = required('sorting priority is required')
-
-		return { config }
-	},
-	methods: {
 		async save() {
 			this.error = null
 			this.v$.$touch()
@@ -123,6 +24,20 @@ export default {
 						modules: []
 					}))
 				}
+				const module_config = Array.isArray(this.config.module_config) ? this.config.module_config : []
+				const setup_complete = module_config.length > 0
+				let sidebar_hidden
+				if (setup_complete && !this.config.setup_complete) {
+					// Setup just completed, show in sidebar
+					sidebar_hidden = false
+				} else if (setup_complete) {
+					// Setup was already complete, preserve user preference
+					sidebar_hidden = this.config.sidebar_hidden
+				} else {
+					// Setup incomplete, hide from sidebar
+					sidebar_hidden = true
+				}
+				const roomData = {
 				await api.call('room.config.patch', {
 					room: roomId,
 					name: this.config.name,
@@ -131,6 +46,16 @@ export default {
 					pretalx_id: this.config.pretalx_id || 0, // TODO weird default
 					picture: this.config.picture,
 					force_join: this.config.force_join,
+					hidden: !!this.config.hidden,
+					sidebar_hidden: !!this.config.sidebar_hidden,
+					module_config: this.config.module_config,
+				})
+					sidebar_hidden,
+					setup_complete,
+					module_config,
+				}
+				const updatedConfig = await api.call('room.config.patch', roomData)
+				Object.assign(this.config, updatedConfig)
 					module_config: this.config.module_config,
 				})
 				this.saving = false
