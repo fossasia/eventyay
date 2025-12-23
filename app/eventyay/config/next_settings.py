@@ -146,6 +146,8 @@ class BaseSettings(_BaseSettings):
     zoom_key: str = ''
     zoom_secret: str = ''
     control_secret: str = ''
+
+
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'
@@ -989,8 +991,15 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
     ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
+    # This is to help Django-Compressor minify 'module' type JS files.
+    # The actual job is done by esbuild. Note that due to the limitation of
+    # Django-Compressor + esbuild integration, we cannot use "import" syntax in the JS code
+    # (esbuild cannot resolve the import path).
+    # We don't need to specify {infile} {outfile} because both esbuild and Django-Compressor support stdin/stdout.
+    ('module', 'npx esbuild --minify --loader=js --platform=browser'),
 )
-COMPRESS_ENABLED = COMPRESS_OFFLINE = IS_PRODUCTION
+# We have one Vue 2 app to be built by Django-Compressor, so we need to enable offline compression.
+COMPRESS_ENABLED = COMPRESS_OFFLINE = True
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass
