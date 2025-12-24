@@ -6,6 +6,8 @@ let loggedIn = false
 let apiBaseUrl = null
 let setupRun = false
 
+const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
+
 const spinStar = (star) => {
     star.classList.add('fa-spin')
     setTimeout(() => {
@@ -43,7 +45,7 @@ const loadLocalFavs = () => {
 const apiFetch = async (path, method) => {
     const headers = {'Content-Type': 'application/json'}
     if (method === 'POST' || method === 'DELETE') {
-        headers['X-CSRFToken'] = document.cookie.split('pretalx_csrftoken=').pop().split(';').shift()
+        headers['X-CSRFToken'] = EVENTYAY_CSRF_TOKEN
     }
     const response = await fetch(apiBaseUrl + path, {
         method,
