@@ -311,7 +311,6 @@ class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        from django.urls import reverse
         ctx['talk_edit_url'] = reverse('orga:organizer.dashboard', kwargs={'organizer': self.request.organizer.slug})
         return ctx
 
