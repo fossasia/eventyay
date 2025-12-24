@@ -1451,13 +1451,6 @@ class QuickSetupForm(I18nForm):
         ),
         required=False,
     )
-    imprint_url = forms.URLField(
-        label=_('Imprint URL'),
-        help_text=_(
-            'This should point e.g. to a part of your website that has your contact details and legal information.'
-        ),
-        required=False,
-    )
     total_quota = forms.IntegerField(
         label=_('Total capacity'),
         min_value=0,

@@ -229,7 +229,7 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
 
     class Meta:
         model = Event
-        fields = ("name", "slug", "timezone", "email", "locale")
+        fields = ("name", "slug", "timezone", "locale")
         widgets = {
             "locale": EnhancedSelect,
             "timezone": EnhancedSelect,

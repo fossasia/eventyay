@@ -295,12 +295,9 @@ class EventCreateView(SafeSessionWizardView):
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
             
-            # Save imprint_url to display_settings
+            # Save imprint_url to settings (consistent with EventCommonSettingsForm)
             if basics_data.get('imprint_url'):
-                display_settings = event.display_settings or {}
-                display_settings['imprint_url'] = basics_data['imprint_url']
-                event.display_settings = display_settings
-                event.save(update_fields=['display_settings'])
+                event.settings.set('imprint_url', basics_data['imprint_url'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
