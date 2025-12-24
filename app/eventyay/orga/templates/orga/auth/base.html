@@ -23,10 +23,10 @@
 
     </head>
     <body>
-        <div id="wrapper"{% if request.event.primary_color %} style="background-color: {{ request.event.primary_color }}"{% endif %}>
+        <div id="wrapper">
             {# we're not lazy-loading these images, because they are central and immediately visible, and having them flash in 100ms later looks bad #}
             {% if not request.event.logo %}
-                <img src="{% static "common/img/logo_white.svg" %}" class="logo" alt="{% translate "The eventyay logo" %}">
+                <img src="{% static "common/img/logo.svg" %}" class="logo" alt="{% translate "The eventyay logo" %}">
             {% else %}
                 <img height="150" width="auto" src="{{ request.event.logo.url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
             {% endif %}
