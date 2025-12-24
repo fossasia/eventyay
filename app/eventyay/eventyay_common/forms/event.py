@@ -18,6 +18,22 @@ from eventyay.base.forms import I18nModelForm
 from eventyay.multidomain.models import KnownDomain
 
 
+# Shared constants for organizer email field
+ORGANIZER_EMAIL_LABEL = _('Organizer email address')
+ORGANIZER_EMAIL_HELP_TEXT = _("We'll show this publicly to allow attendees to contact you.")
+
+
+def configure_organizer_email_field(field):
+    """
+    Apply canonical configuration (required, label, help_text) for organizer email fields.
+
+    This is used by multiple event-related forms to ensure consistent wording.
+    """
+    field.required = True
+    field.label = ORGANIZER_EMAIL_LABEL
+    field.help_text = ORGANIZER_EMAIL_HELP_TEXT
+
+
 class EventCommonSettingsForm(SettingsForm):
     timezone = forms.ChoiceField(
         choices=((a, a) for a in common_timezones),
@@ -90,9 +106,7 @@ class EventUpdateForm(I18nModelForm):
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         
         # Configure email field with canonical label and help text
-        self.fields['email'].required = True
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        configure_organizer_email_field(self.fields['email'])
 
         if self.domain_field_enabled:
             self.fields['domain'] = forms.CharField(

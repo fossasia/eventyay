@@ -48,6 +48,11 @@ from eventyay.helpers.countries import CachedCountries
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
 from eventyay.plugins.banktransfer.payment import BankTransfer
+from eventyay.eventyay_common.forms.event import (
+    ORGANIZER_EMAIL_LABEL,
+    ORGANIZER_EMAIL_HELP_TEXT,
+    configure_organizer_email_field,
+)
 
 # Shared constants for require_registered_account_for_tickets field
 REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
@@ -217,9 +222,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        self.fields['email'].required = True
-        self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        configure_organizer_email_field(self.fields['email'])
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -1240,6 +1243,7 @@ class TicketSettingsForm(SettingsForm):
         'ticket_download_nonadm',
         'ticket_download_pending',
         'ticket_download_require_validated_email',
+        'require_registered_account_for_tickets',
     ]
     ticket_secret_generator = forms.ChoiceField(
         label=_('Ticket code generator'),

@@ -18,9 +18,9 @@ from eventyay.common.forms.widgets import (
     TextInputWithAddon,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import Event, Organizer, Team, TeamInvite
+from eventyay.eventyay_common.forms.event import ORGANIZER_EMAIL_LABEL, ORGANIZER_EMAIL_HELP_TEXT
 from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
-from eventyay.base.models import Track
+from eventyay.base.models import Event, Organizer, Team, TeamInvite, Track
 
 
 class TeamForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
@@ -229,7 +229,7 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
 
     class Meta:
         model = Event
-        fields = ("name", "slug", "timezone", "email", "locale")
+        fields = ("name", "slug", "timezone", "locale")
         widgets = {
             "locale": EnhancedSelect,
             "timezone": EnhancedSelect,
@@ -281,8 +281,8 @@ class EventWizardDisplayForm(forms.Form):
         widget=HeaderSelect,
     )
     email = forms.EmailField(
-        label=_("Organizer email address"),
-        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        label=ORGANIZER_EMAIL_LABEL,
+        help_text=ORGANIZER_EMAIL_HELP_TEXT,
         required=True,
     )
 
