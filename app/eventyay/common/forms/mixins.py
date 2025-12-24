@@ -440,13 +440,19 @@ class JsonSubfieldMixin:
             instance = super().save(*args, **kwargs)
         else:
             instance = self.instance
+        
+        # Track which JSON field paths were modified
+        modified_paths = set()
         for field, path in self.Meta.json_fields.items():
             # We don't need nested data for now
             data_dict = getattr(instance, path) or {}
             data_dict[field] = self.cleaned_data.get(field)
             setattr(instance, path, data_dict)
+            modified_paths.add(path)
+        
         if kwargs.get('commit', True):
-            instance.save()
+            # Only save the modified JSON fields to avoid overwriting other model fields
+            instance.save(update_fields=list(modified_paths))
         return instance
 
 
