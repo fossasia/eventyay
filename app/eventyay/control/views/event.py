@@ -1583,7 +1583,6 @@ class QuickSetupView(FormView):
         return {
             'waiting_list_enabled': True,
             'ticket_download': True,
-            'imprint_url': self.request.event.settings.imprint_url,
             'require_registered_account_for_tickets': True,
         }
 
@@ -1676,7 +1675,6 @@ class QuickSetupView(FormView):
         self.request.event.settings.show_quota_left = form.cleaned_data['show_quota_left']
         self.request.event.settings.waiting_list_enabled = form.cleaned_data['waiting_list_enabled']
         self.request.event.settings.attendee_names_required = form.cleaned_data['attendee_names_required']
-        self.request.event.settings.imprint_url = form.cleaned_data['imprint_url']
         self.request.event.log_action(
             'eventyay.event.settings',
             user=self.request.user,
