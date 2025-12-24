@@ -267,6 +267,13 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
             event.settings.set('content_locales', content_locales)
+            
+            # Save imprint_url to display_settings
+            if basics_data.get('imprint_url'):
+                display_settings = event.display_settings or {}
+                display_settings['imprint_url'] = basics_data['imprint_url']
+                event.display_settings = display_settings
+                event.save(update_fields=['display_settings'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
