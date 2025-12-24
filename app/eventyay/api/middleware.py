@@ -95,8 +95,13 @@ class IdempotencyMiddleware:
                 content=content,
                 status=call.response_code,
             )
-            for k, v in json.loads(call.response_headers).values():
-                r[k] = v
+            headers_dict = json.loads(call.response_headers)
+            for header_key, header_value in headers_dict.items():
+                if isinstance(header_value, (list, tuple)) and len(header_value) == 2:
+                    original_name, value = header_value
+                    r[original_name] = value
+                else:
+                    r[header_key] = header_value
             return r
 
 
