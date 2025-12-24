@@ -280,6 +280,11 @@ class EventWizardDisplayForm(forms.Form):
         required=False,
         widget=HeaderSelect,
     )
+    email = forms.EmailField(
+        label=_("Organizer email address"),
+        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        required=True,
+    )
 
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         super().__init__(*args, **kwargs)

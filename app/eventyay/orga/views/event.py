@@ -562,7 +562,7 @@ class EventWizard(PermissionRequired, SensibleBackWizardMixin, SessionWizardView
                 name=steps['basics']['name'],
                 slug=steps['basics']['slug'],
                 timezone=steps['basics']['timezone'],
-                email=steps['basics']['email'],
+                email=steps['display']['email'],
                 locale=steps['basics']['locale'],
                 primary_color=steps['display']['primary_color'],
                 logo=steps['display']['logo'],
