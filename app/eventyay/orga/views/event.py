@@ -458,8 +458,6 @@ class InvitationView(FormView):
         invite.delete()
 
 
-
-
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
     permission_required = 'base.administrator_user'
     model = Event
