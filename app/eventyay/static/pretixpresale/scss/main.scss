@@ -52,7 +52,6 @@ $body-bg: #f5f5f5 !default;
     align-content: center;
 }
 
-
 .login-hdr {
     margin-left: 10px;
 }
@@ -98,6 +97,8 @@ $body-bg: #f5f5f5 !default;
         }
     }
 }
+
+// Ensure locale dropdown menu items remain readable
 .huge {
     font-size: 40px;
 }
