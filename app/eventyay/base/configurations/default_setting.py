@@ -2145,7 +2145,7 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
                 'When you upload a logo, the event name and date will not appear in the header. '
@@ -2155,7 +2155,7 @@ Your {event} team"""
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
             max_size=10 * 1024 * 1024,
         ),
     },
