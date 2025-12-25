@@ -1,8 +1,11 @@
 import copy
 import datetime as dt
+import os
 import string
 import uuid
 from collections import OrderedDict, defaultdict
+from contextlib import suppress
+from urllib.parse import urlparse
 from datetime import datetime, time, timedelta
 from operator import attrgetter
 from typing import List
@@ -11,6 +14,7 @@ from zoneinfo import ZoneInfo
 
 import icalendar
 import jwt
+import logging
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
@@ -71,6 +75,7 @@ from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
+logger = logging.getLogger(__name__)
 
 
 def event_css_path(instance, filename):
@@ -2132,9 +2137,176 @@ class Event(
 
         self.plugins = ','.join(modules)
 
-    @cached_property
+    @property
     def visible_primary_color(self):
-        return self.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        """
+        Prefer the common (event settings) primary color, then fall back to the legacy
+        event field, finally defaulting to the installation default.
+        """
+        return (
+            self.settings.get('primary_color')
+            or self.primary_color
+            or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        )
+
+    @cached_property
+    def _visible_logo_path(self):
+        """
+        Resolve a usable logo path/URL from common settings (event_logo_image/logo_image).
+        Returns a storage-relative path (e.g. ``pub/...``) or an absolute URL.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        for key in ('event_logo_image', 'logo_image'):
+            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_logo)
+            if not path:
+                continue
+
+            # Keep full URLs
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            # Strip file:// scheme if present
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            # Drop leading media prefixes
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+
+            # Collapse to pub/… if present
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        return None
+
+    @cached_property
+    def _visible_header_image_path(self):
+        """
+        Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        # header image for the site is stored in common settings under logo_image (historical)
+        # and in the legacy field header_image; prefer the settings value first
+        for key in ('logo_image', 'header_image'):
+            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_header)
+            if not path:
+                continue
+
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        if self.header_image:
+            return self.header_image.name
+
+        return None
+
+    @cached_property
+    def visible_logo_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            # If already a full URL, return as-is
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return self._visible_logo_path
+            return default_storage.url(self._visible_logo_path)
+        return None
+
+    @cached_property
+    def visible_logo_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_logo_path)
+
+    @cached_property
+    def visible_header_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return self._visible_header_image_path
+            return default_storage.url(self._visible_header_image_path)
+
+    @cached_property
+    def visible_header_image_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_header_image_path)
+        return None
 
     def _get_default_submission_type(self):
         from eventyay.base.models import SubmissionType

@@ -1,0 +1,105 @@
+{% load i18n %}
+{% load rules %}
+{% load event_tags %}
+{% load staff_session %}
+
+{% with current_event=current_event|default:request.event nav_context=nav_context|default:"agenda" %}
+    {% if current_event and current_event.locales|length > 1 and not is_html_export %}
+        {% if current_event.locales|length > 3 %}
+            <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
+                <summary>
+                    {% for l, name in current_event.named_locales %}
+                        {% if l|lower == request.LANGUAGE_CODE|lower %}{{ name }}{% endif %}
+                    {% endfor %}
+                    <i class="fa fa-caret-down ml-1"></i>
+                </summary>
+                <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                    {% for l, name in current_event.named_locales %}
+                        {% if nav_context == "presale" %}
+                            <a href="{% url 'presale:locale.set' %}?locale={{ l }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
+                               class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                               role="menuitem"
+                               tabindex="-1">{{ name }}</a>
+                        {% else %}
+                            {% cfp_locale_switch_url l as locale_switch_url %}
+                            <a href="{{ locale_switch_url }}"
+                               class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                               role="menuitem"
+                               tabindex="-1">{{ name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </details>
+        {% else %}
+            <div class="locales-inline">
+                {% for l, name in current_event.named_locales %}
+                    {% if nav_context == "presale" %}
+                        <a href="{% url 'presale:locale.set' %}?locale={{ l }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
+                           class="locale-link {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">
+                            {{ name }}
+                        </a>
+                    {% else %}
+                        {% cfp_locale_switch_url l as locale_switch_url %}
+                        <a href="{{ locale_switch_url }}"
+                           class="locale-link {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}">
+                            {{ name }}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+
+    {% if current_event and request.user.is_authenticated and not is_html_export %}
+        <details id="user-dropdown-label" class="dropdown" aria-haspopup="menu" role="menu">
+            {% has_event_perm "base.orga_access_event" request.user request current_event as can_see_orga_area %}
+            <summary>
+                {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
+            </summary>
+            <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-shopping-cart mr-2 mb-1"></i>
+                    {% translate "My orders" %}
+                </a>
+                <a href="{% url "cfp:event.user.submissions"  organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
+                    {% translate "My proposals" %}
+                </a>
+                <a href="{{ current_event.urls.user }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-address-card-o mr-2 mb-1"></i>
+                    {% translate "Speaker profile" %}
+                </a>
+                <a href="{{ current_event.urls.user_mails }}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-envelope mr-2 mb-1"></i>
+                    {% translate "Event emails" %}
+                </a>
+                <hr>
+                <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-user mr-2 mb-1"></i>
+                    {% translate "Account" %}
+                </a>
+                {% if can_see_orga_area %}
+                    <hr>
+                    <a href="{% url 'eventyay_common:event.index' organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                        <i class="fa fa-gears mr-2 mb-1"></i>
+                        {% translate "Organizer area" %}
+                    </a>
+                {% endif %}
+                <hr>
+                <form action="{% url 'common:auth.logout' %}" method="post">
+                    {% csrf_token %}
+                    <button class="dropdown-item" role="menuitem" type="submit" tabindex="-1">
+                        <i class="fa fa-sign-out mr-2 mb-1 ml-1"></i>
+                        {% translate "Logout" %}
+                    </button>
+                </form>
+            </div>
+        </details>
+    {% elif not subheader_login_link_disabled and not is_html_export %}
+        {% if current_event %}
+            <a href="{{ current_event.urls.login }}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
+        {% else %}
+			<a href="{% url "orga:login" %}">{% translate "Login" %}</a>
+        {% endif %}
+    {% endif %}
+{% endwith %}
