@@ -296,3 +296,39 @@ This project is maintained by **FOSSASIA**. See the AUTHORS file for a list of a
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
 .. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
+
+
+
+
+
+
+
+Local Development Notes
+-----------------------
+
+Eventyay is a monorepo consisting of multiple services. New contributors should note:
+
+* There are multiple ``manage.py`` files. For the main backend, use:
+  
+  ``app/manage.py``
+
+* Eventyay currently requires **Django 5.2.x**. Newer Django versions may break local setup.
+
+* The default development configuration uses test domains (e.g. ``test.eventyay.com``).
+  For local development, create a local override file:
+
+  ``app/eventyay/config/eventyay.local.toml``
+
+  Example:
+
+  ::
+
+    site_url = 'http://localhost:8000'
+    short_url = 'http://localhost:8000'
+
+  Then export:
+
+  ``EVENTYAY_CONFIG=local``
+
+* Some optional integrations (e.g. pretix, payments) may not build on Windows and are
+  not required for basic development or contributions.
