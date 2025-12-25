@@ -965,6 +965,7 @@ the eventyay team"""
             "profile": self.profile,
             "pretalx_id": self.pretalx_id,
             "deleted": self.deleted,
+            "wikimedia_username": self.wikimedia_username,
             "badges": (
                 sorted(
                     list(
