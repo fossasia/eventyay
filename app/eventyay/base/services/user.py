@@ -90,7 +90,6 @@ def get_public_users(
             profile=u["profile"],
             pretalx_id=u["pretalx_id"],
             deleted=u["deleted"],
-            wikimedia_username=u["wikimedia_username"],
             inactive=(
                 u["last_login"] is None or u["last_login"] < now() - timedelta(hours=36)
             ),
@@ -132,7 +131,6 @@ def get_public_users(
             "last_login",
             "pretalx_id",
             "client_state",
-            "wikimedia_username",
         )
     ]
 
