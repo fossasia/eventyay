@@ -31,6 +31,11 @@ def build_vue3_frontend_apps():
     subprocess.check_call(['npm', 'ci'], cwd=app_dir)
     subprocess.check_call(['npm', 'run', 'build'], cwd=app_dir, env=env)
 
+    # Build schedule widget
+    app_dir = FRONTEND_DEV_DIR / 'schedule'
+    subprocess.check_call(['npm', 'ci'], cwd=app_dir)
+    subprocess.check_call(['npm', 'run', 'build:wc'], cwd=app_dir, env=env)
+
 
 class Command(BaseCommand):
     help = 'Rebuild static files and language files'
