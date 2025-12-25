@@ -21,10 +21,6 @@
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
-	{# Needed by popover.js #}
-    {{ base_path|json_script:"base_path" }}
-    {{ ev.organizer.slug|json_script:"organizer_name" }}
-    {{ ev.slug|json_script:"event_slug" }}
 {% endblock %}
 {% block content %}
 
@@ -34,7 +30,6 @@
         </script>
     {% endautoescape %}
     <main aria-label="{% if show_cart %}{% trans "Your cart, general information, add products to your cart" %}{% else %}{% trans "General information, add products to your cart" %}{% endif %}">
-    {% include "pretixpresale/event/fragment_nav.html" with with_margin=with_margin is_video_plugin_enabled=is_video_plugin_enabled %}
     {% if show_cart %}
         <details class="panel panel-primary cart" open>
             <summary class="panel-heading">
@@ -225,14 +220,14 @@
                             {{ ev.get_date_range_display }}
                             {% if event.settings.show_times %}
                                 <br>
-                                <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                                <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
                                     {% blocktrans trimmed with time=ev.date_from|date:"TIME_FORMAT" %}
                                         Begin: {{ time }}
                                     {% endblocktrans %}
                                 </span>
                                 {% if event.settings.show_date_to and ev.date_to %}
                                     <br>
-                                    <span data-time="{{ ev.date_to.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                                    <span data-time="{{ ev.date_to.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
                                         {% blocktrans trimmed with time=ev.date_to|date:"TIME_FORMAT" %}
                                             End: {{ time }}
                                         {% endblocktrans %}
@@ -242,13 +237,13 @@
                             {% if ev.date_admission %}
                                 <br>
                                 {% if ev.date_admission|date:"SHORT_DATE_FORMAT" == ev.date_from|date:"SHORT_DATE_FORMAT" %}
-                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
                                         {% blocktrans trimmed with time=ev.date_admission|date:"TIME_FORMAT" %}
                                             Admission: {{ time }}
                                         {% endblocktrans %}
                                     </span>
                                 {% else %}
-                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                                    <span data-time="{{ ev.date_admission.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
                                         {% blocktrans trimmed with datetime=ev.date_admission|date:"SHORT_DATETIME_FORMAT" %}
                                             Admission: {{ datetime }}
                                         {% endblocktrans %}
