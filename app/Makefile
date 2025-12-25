@@ -28,8 +28,10 @@ npminstall:
 	# keep this in sync with setup.py!
 	npm ci --prefix=eventyay/frontend/global-nav-menu
 	npm ci --prefix=eventyay/frontend/schedule-editor
+	npm ci --prefix=eventyay/frontend/schedule
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/global-nav-menu
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build:wc --prefix=eventyay/frontend/schedule
 	npm ci --prefix=eventyay/frontend/webcheckin-bundler
 
 webappbuild:

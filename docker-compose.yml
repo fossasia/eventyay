@@ -14,6 +14,7 @@ services:
       - /usr/src/app/eventyay/webapp/node_modules
       - /usr/src/app/eventyay/frontend/global-nav-menu/node_modules
       - /usr/src/app/eventyay/frontend/schedule-editor/node_modules
+      - /usr/src/app/eventyay/frontend/schedule/node_modules
     ports:
       - 8000:8000
     env_file:
@@ -35,6 +36,7 @@ services:
       - /usr/src/app/eventyay/webapp/node_modules
       - /usr/src/app/eventyay/frontend/global-nav-menu/node_modules
       - /usr/src/app/eventyay/frontend/schedule-editor/node_modules
+      - /usr/src/app/eventyay/frontend/schedule/node_modules
     env_file:
       - ./.env.dev
     environment:

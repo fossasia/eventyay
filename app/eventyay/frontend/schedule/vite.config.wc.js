@@ -16,6 +16,10 @@ const stylusOptions = {
 	]
 }
 
+const outDir = process.env.OUT_DIR
+	? path.resolve(process.env.OUT_DIR, 'schedule')
+	: 'dist'
+
 export default defineConfig({
 	define: {
 		"process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
@@ -45,17 +49,21 @@ export default defineConfig({
 		}
 	},
 	build: {
+		outDir,
+		emptyOutDir: true,
+		cssCodeSplit: false,
 		lib: {
 			entry: path.resolve(__dirname, 'src/main-wc.js'),
 			name: 'PretalxSchedule',
 			fileName: 'pretalx-schedule'
 		},
 		rollupOptions: {
-			// output: {
-			// 	globals: {
-			// 		vue: 'Vue'
-			// 	}
-			// }
+			output: {
+				inlineDynamicImports: true,
+				entryFileNames: 'pretalx-schedule.js',
+				chunkFileNames: 'pretalx-schedule-[name].js',
+				assetFileNames: 'pretalx-schedule.[ext]'
+			}
 		}
 	}
 })

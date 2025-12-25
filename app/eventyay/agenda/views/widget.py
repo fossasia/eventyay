@@ -12,7 +12,7 @@ from eventyay.talk_rules.agenda import is_widget_visible
 from eventyay.common.views import conditional_cache_page
 
 WIDGET_JS_CHECKSUM = None
-WIDGET_PATH = 'agenda/js/pretalx-schedule.min.js'
+WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
