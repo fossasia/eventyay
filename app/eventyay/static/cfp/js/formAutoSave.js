@@ -1,6 +1,8 @@
 /**
  * Auto-save CfP form data to sessionStorage to preserve it during browser navigation
  * This ensures data is not lost when users use the browser back button
+ *
+ * Uses the FormData API for reliable form field collection
  */
 
 'use strict';
@@ -30,47 +32,37 @@ function saveFormData() {
     if (!form) return;
 
     const formData = {};
+    const data = new FormData(form);
 
-    // Find all form fields using querySelectorAll for reliability
-    const textareas = form.querySelectorAll('textarea');
-    const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"])');
-    const selects = form.querySelectorAll('select');
+    // Convert FormData to plain object
+    for (const [name, value] of data.entries()) {
+        // Skip excluded fields
+        if (name === 'csrfmiddlewaretoken' || name === 'action') continue;
 
-    // Process all textareas
-    textareas.forEach((textarea) => {
-        const name = textarea.name;
-        if (name && name !== 'csrfmiddlewaretoken') {
-            formData[name] = textarea.value;
-        }
-    });
+        // Skip file inputs - they can't be serialized to sessionStorage
+        const element = form.elements[name];
+        if (element && element.type === 'file') continue;
 
-    // Process all inputs
-    inputs.forEach((input) => {
-        const name = input.name;
-        const type = input.type;
-
-        if (!name || name === 'csrfmiddlewaretoken' || name === 'action') return;
-
-        if (type === 'checkbox') {
-            formData[name] = input.checked;
-        } else if (type === 'radio') {
-            if (input.checked) {
-                formData[name] = input.value;
+        // Handle multiple values for same name (e.g., multi-select)
+        if (formData.hasOwnProperty(name)) {
+            // Convert to array if not already
+            if (!Array.isArray(formData[name])) {
+                formData[name] = [formData[name]];
             }
-        } else if (type !== 'file') {
-            formData[name] = input.value;
+            formData[name].push(value);
+        } else {
+            formData[name] = value;
         }
-    });
+    }
 
-    // Process all selects
-    selects.forEach((select) => {
-        const name = select.name;
-        if (name && name !== 'csrfmiddlewaretoken') {
-            if (select.multiple) {
-                formData[name] = Array.from(select.selectedOptions).map(opt => opt.value);
-            } else {
-                formData[name] = select.value;
-            }
+    // FormData doesn't include unchecked checkboxes, so we need to add them
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    checkboxes.forEach((checkbox) => {
+        if (checkbox.name && checkbox.name !== 'csrfmiddlewaretoken' && !formData.hasOwnProperty(checkbox.name)) {
+            formData[checkbox.name] = false;
+        } else if (checkbox.name && formData.hasOwnProperty(checkbox.name)) {
+            // Checkbox is checked (already in formData from FormData)
+            formData[checkbox.name] = true;
         }
     });
 
@@ -124,38 +116,33 @@ function restoreFormData() {
             const elements = form.elements[name];
             if (!elements) continue;
 
-            // Handle NodeList (radio buttons, checkboxes with same name)
-            if (elements.length > 1) {
-                for (let i = 0; i < elements.length; i++) {
-                    const element = elements[i];
-                    if (element.type === 'checkbox') {
-                        element.checked = value;
-                    } else if (element.type === 'radio') {
-                        element.checked = (element.value === value);
+            // Get the actual element(s)
+            const element = elements.length !== undefined ? elements[0] : elements;
+
+            if (element.type === 'checkbox') {
+                // Handle checkboxes (value is boolean)
+                if (elements.length > 1) {
+                    // Multiple checkboxes with same name
+                    for (let i = 0; i < elements.length; i++) {
+                        elements[i].checked = value;
                     }
+                } else {
+                    element.checked = value;
+                }
+            } else if (element.type === 'radio') {
+                // Handle radio buttons
+                for (let i = 0; i < elements.length; i++) {
+                    elements[i].checked = (elements[i].value === value);
+                }
+            } else if (element.tagName === 'SELECT' && element.multiple) {
+                // Handle multi-select
+                const values = Array.isArray(value) ? value : [value];
+                for (let i = 0; i < element.options.length; i++) {
+                    element.options[i].selected = values.includes(element.options[i].value);
                 }
             } else {
-                const element = elements.length !== undefined ? elements[0] : elements;
-                const type = element.type;
-
-                if (type === 'checkbox') {
-                    element.checked = value;
-                } else if (type === 'radio') {
-                    element.checked = (element.value === value);
-                } else if (element.tagName === 'SELECT') {
-                    if (element.multiple && Array.isArray(value)) {
-                        for (let i = 0; i < element.options.length; i++) {
-                            element.options[i].selected = value.includes(element.options[i].value);
-                        }
-                    } else {
-                        element.value = value;
-                    }
-                } else if (element.tagName === 'TEXTAREA' || element.tagName === 'INPUT') {
-                    // Always restore - sessionStorage takes precedence
-                    // If we got this far, the matching logic already determined
-                    // this is new data that should be restored
-                    element.value = value;
-                }
+                // Handle text inputs, textareas, single selects
+                element.value = value;
             }
         }
     } catch (e) {
