@@ -41,6 +41,7 @@
         {% endfor %}
     </div>
 </details>
+{% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
 {% endblock header_right %}
 
 {% block agenda_content %}

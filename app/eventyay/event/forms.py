@@ -7,7 +7,7 @@ from django_scopes import scopes_disabled
 from django_scopes.forms import SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
 
-from eventyay.common.forms.fields import ColorField, ImageField
+from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
@@ -268,11 +268,6 @@ class EventWizardTimelineForm(forms.ModelForm):
 
 
 class EventWizardDisplayForm(forms.Form):
-    primary_color = ColorField(
-        label=Event._meta.get_field("primary_color").verbose_name,
-        help_text=Event._meta.get_field("primary_color").help_text,
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -280,13 +275,6 @@ class EventWizardDisplayForm(forms.Form):
         required=False,
         widget=HeaderSelect,
     )
-
-    def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
-        super().__init__(*args, **kwargs)
-        logo = Event._meta.get_field("logo")
-        self.fields["logo"] = ImageField(
-            required=False, label=logo.verbose_name, help_text=logo.help_text
-        )
 
 
 class EventWizardCopyForm(forms.Form):

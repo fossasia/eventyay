@@ -11,7 +11,7 @@
         <days>{{ event.duration }}</days>
         <timeslot_duration>00:05</timeslot_duration>
         <base_url>{{ metadata.base_url }}</base_url>
-        {% if event.logo %}<logo>{{ base_url }}{{ event.logo.url }}</logo>{% endif %}
+        {% if event.visible_logo_url %}<logo>{{ event.visible_logo_url }}</logo>{% endif %}
         <time_zone_name>{{ event.timezone }}</time_zone_name>
         {% if event.color %}<color>{{ event.color }}</color>{% endif %}
         {% for track in event.tracks.all %}

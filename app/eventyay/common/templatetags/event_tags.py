@@ -36,3 +36,18 @@ def cfp_locale_switch_url(context, locale_code):
     return f"{base}?{query.urlencode()}"
 
 
+@register.filter
+def short_user_label(user):
+    """
+    Compact user display: prefer first name, then name, then email local part.
+    Truncate to 10 chars with ellipsis when longer.
+    """
+    if not user:
+        return ''
+    first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None) or getattr(user, 'name', None)
+    email = getattr(user, 'email', '') or ''
+    label = (first or '').strip() or (email.split('@')[0] if email else '')
+    if len(label) > 10:
+        label = label[:10] + '...'
+    return label
+
