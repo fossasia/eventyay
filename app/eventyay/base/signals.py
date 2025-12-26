@@ -20,7 +20,7 @@ def _populate_app_cache():
 
 
 @functools.lru_cache(maxsize=1000)
-def _resolve_app_for_module(module_path: str):
+def resolve_app_for_module(module_path: str):
     """
     Thread-safe cached resolution of Django app for a given module path.
     
@@ -41,7 +41,7 @@ def _resolve_app_for_module(module_path: str):
         searchpath, _ = searchpath.rsplit('.', 1)
 
 
-def _check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_list_callable):
+def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_list_callable):
     """
     Shared helper to determine if a plugin/core module should be active.
     
@@ -134,13 +134,13 @@ class EventPluginSignal(django.dispatch.Signal):
         core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
         # Resolve the app using thread-safe cached function
-        app = _resolve_app_for_module(module_path)
+        app = resolve_app_for_module(module_path)
 
         # Get excluded plugins list (preserve original list type from settings)
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
         # Use shared helper to check if receiver should be active
-        return _check_plugin_active(sender, app, core_module, excluded, lambda s: s.get_plugins())
+        return check_plugin_active(sender, app, core_module, excluded, lambda s: s.get_plugins())
 
     def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
         """

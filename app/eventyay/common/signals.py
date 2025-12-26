@@ -10,7 +10,7 @@ from django.core.cache import cache
 from django.dispatch.dispatcher import NO_RECEIVERS
 
 from eventyay.base.models import Event
-from eventyay.base.signals import _resolve_app_for_module, _check_plugin_active
+from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +34,13 @@ class EventPluginSignal(django.dispatch.Signal):
         core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
         # Resolve the app using thread-safe cached function
-        app = _resolve_app_for_module(module_path)
+        app = resolve_app_for_module(module_path)
         
         # Get excluded plugins list (preserve original list type from settings)
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
         # Use shared helper with sender.plugin_list accessor
-        return _check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
+        return check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """Send signal from sender to all connected receivers that belong to
