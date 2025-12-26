@@ -143,10 +143,10 @@
                 {% endif %}
                 {% block navbar_right %}{% endblock navbar_right %}
                 <li class="nav-item d-none d-md-block">
-                    <a class="nav-link active" href="{% url "eventyay_common:account.general" %}">
+                    <span class="nav-link active" style="cursor: pointer; color: var(--color-offwhite, white);" onclick="setTimeout(() => document.querySelector('#global-nav-menu button')?.click(), 0)">
                         <i class="fa fa-user"></i>
                         {{ request.user.get_display_name }}
-                    </a>
+                    </span>
                     {# The menu built by Vue 3 app will be mounted here. The ID must match. #}
                     <div id='global-nav-menu' class='d-inline-block'></div>
                 </li>
