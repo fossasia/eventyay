@@ -1,10 +1,10 @@
 {% load i18n %}
 <div class="navigation-button">
     {% if request.event %}
-        <a href="{{ request.event.tickets_urls.tickets_home_common.full }}" class="header-nav btn btn-outline-success">
+        <a href='{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-home"></i> {% translate "Home" %}
         </a>
-        <a href="{{ request.event.tickets_urls.tickets_dashboard_url.full }}" class="header-nav btn btn-outline-success">
+        <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
         <a href="#" class="header-nav btn btn-success active">

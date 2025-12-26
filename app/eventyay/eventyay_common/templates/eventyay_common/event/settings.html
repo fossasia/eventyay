@@ -25,7 +25,7 @@
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
             {% if is_talk_event_created %}
-            <a href="{{ request.event.talk_dashboard_url }}" class="header-nav btn btn-outline-success">
+            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
@@ -84,11 +84,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{{ request.event.talk_dashboard_url }}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{{ request.event.talk_settings_url }}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:settings.event.view" event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Settings" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
