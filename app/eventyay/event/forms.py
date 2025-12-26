@@ -229,7 +229,7 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
 
     class Meta:
         model = Event
-        fields = ("name", "slug", "timezone", "email", "locale")
+        fields = ("name", "slug", "timezone", "locale")
         widgets = {
             "locale": EnhancedSelect,
             "timezone": EnhancedSelect,
@@ -274,6 +274,11 @@ class EventWizardDisplayForm(forms.Form):
         choices=Event.HEADER_PATTERN_CHOICES,
         required=False,
         widget=HeaderSelect,
+    )
+    email = forms.EmailField(
+        label=_("Organizer email address"),
+        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        required=True,
     )
 
 
