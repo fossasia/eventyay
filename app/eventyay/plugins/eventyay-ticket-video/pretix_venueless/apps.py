@@ -18,7 +18,7 @@ class PluginApp(_BasePluginConfig):
         name = gettext_lazy('Eventyay Video')
         author = 'Eventyay'
         description = gettext_lazy('Grant access to your eventyay video event to your customers.')
-        visible = True
+        visible = False
         picture = "pretix_venueless/eventyay-logo.192.png"
         featured = True
         version = __version__
@@ -28,7 +28,7 @@ class PluginApp(_BasePluginConfig):
         name = gettext_lazy('Eventyay Video')
         author = 'Eventyay'
         description = gettext_lazy('Grant access to your eventyay video event to your customers.')
-        visible = True
+        visible = False
         picture = "pretix_venueless/eventyay-logo.192.png"
         featured = True
         version = __version__
