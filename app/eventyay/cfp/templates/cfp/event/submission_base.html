@@ -13,7 +13,8 @@
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}
     {% compress js %}
-        <script defer src="{% static "cfp/js/proposalTabTitles.js" %}"></script>
+        <script defer src="{% static 'cfp/js/proposalTabTitles.js' %}"></script>
+        <script type="module" src="{% static 'cfp/js/formAutoSave.js' %}"></script>
     {% endcompress %}
     {% block cfp_submission_header %}{% endblock cfp_submission_header %}
 {% endblock cfp_header %}
@@ -39,7 +40,7 @@
     </div>
     {% block cfp_form %}
         {% if request.user.is_authenticated %}
-        <form method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+        <form id="cfp-submission-form" method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
             {% csrf_token %}
             {{ wizard.management_form }}
             <div class="d-flex align-items-start">
@@ -49,6 +50,16 @@
             </div>
             {% block submission_step_text %}<p>{{ text|rich_text }}</p>{% endblock %}
             {% block inner %}
+                {% if uploaded_files %}
+                    <div class="alert alert-info mb-3">
+                        <i class="fa fa-info-circle"></i> {% translate "Previously uploaded files:" %}
+                        <ul class="mb-0 mt-1">
+                            {% for field_name, filename in uploaded_files.items %}
+                                <li><strong>{{ field_name|default:'' }}</strong>: {{ filename }} {% translate "(will be preserved if you don't upload a new file)" %}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
                 {{ form }}
             {% endblock inner %}
             {% block buttons %}
@@ -76,9 +87,9 @@
                     </div>
                     <div class="col-md-3">
                         {% if prev_url %}
-                            <a href="{{ prev_url }}" class="btn btn-block btn-info btn-lg">
+                            <button type="submit" class="btn btn-block btn-info btn-lg" name="action" value="back">
                                 « {{ phrases.base.back_button }}
-                            </a>
+                            </button>
                         {% endif %}
                     </div>
                 </div>
