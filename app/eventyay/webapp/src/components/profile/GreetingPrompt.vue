@@ -118,15 +118,13 @@ export default {
 		// Build profile object, preserving computed display_name
 		this.profile = {
 			greeted: true,
-			display_name: defaultDisplayName,
 			avatar: this.user.profile?.avatar || {
 				identicon: this.user.id
 			},
 			fields: this.user.profile?.fields || {},
-			...this.user.profile
+			...this.user.profile,
+			display_name: defaultDisplayName
 		}
-		// Ensure display_name is not overwritten by spread
-		this.profile.display_name = defaultDisplayName
 
 		// assume that when avatar url is set the social connection happened and skip first step
 		if (this.activeStep === 'connectSocial' && this.profile.avatar.url) this.activeStep = this.nextStep
