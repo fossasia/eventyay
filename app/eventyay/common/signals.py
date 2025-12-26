@@ -12,14 +12,7 @@ from django.dispatch.dispatcher import NO_RECEIVERS
 from eventyay.base.models import Event
 from eventyay.base.signals import _resolve_app_for_module, _check_plugin_active
 
-app_cache = {}
 logger = logging.getLogger(__name__)
-
-
-def _populate_app_cache():
-    apps.check_apps_ready()
-    for app_config in apps.app_configs.values():
-        app_cache[app_config.name] = app_config
 
 
 class EventPluginSignal(django.dispatch.Signal):
@@ -63,9 +56,6 @@ class EventPluginSignal(django.dispatch.Signal):
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:
             return responses
 
-        if not app_cache:
-            _populate_app_cache()
-
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):
                 response = receiver(signal=self, sender=sender, **named)
@@ -89,9 +79,6 @@ class EventPluginSignal(django.dispatch.Signal):
         responses = []
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:
             return []
-
-        if not app_cache:  # pragma: no cover
-            _populate_app_cache()
 
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):
@@ -121,9 +108,6 @@ class EventPluginSignal(django.dispatch.Signal):
         response = named.get(chain_kwarg_name)
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:  # pragma: no cover
             return response
-
-        if not app_cache:  # pragma: no cover
-            _populate_app_cache()
 
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):

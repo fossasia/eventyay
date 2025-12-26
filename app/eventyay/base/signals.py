@@ -61,8 +61,21 @@ def _check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_
     Returns:
         Boolean indicating if the receiver should be active
     """
+    # Handle core modules when sender is None (e.g., register_locales, auth_html)
+    # Core modules should always be active when there's no event context
+    if core_module and sender is None:
+        return True
+    
     # Track plugin metadata when we have a sender and resolved app
     if sender and app:
+        # Performance optimization: fast-path for events with no plugins
+        plugin_list = get_plugin_list_callable(sender)
+        if not plugin_list:
+            # No plugins enabled at all - only core modules can be active
+            if core_module:
+                return True
+            return False
+        
         # Get the list of all available plugins (enabled + disabled)
         available_plugins = getattr(sender, 'available_plugins', {})
         
