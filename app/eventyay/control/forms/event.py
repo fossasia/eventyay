@@ -49,6 +49,14 @@ from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
 from eventyay.plugins.banktransfer.payment import BankTransfer
 
+# Shared constants for require_registered_account_for_tickets field
+REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
+REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
+    'If this option is turned on, users must be logged in before completing an order. '
+    'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+    'The "Continue as a Guest" option will not be available for attendees in this event.'
+)
+
 
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
@@ -1213,7 +1221,6 @@ class TicketSettingsForm(SettingsForm):
         'ticket_download_nonadm',
         'ticket_download_pending',
         'ticket_download_require_validated_email',
-        'require_registered_account_for_tickets',
     ]
     ticket_secret_generator = forms.ChoiceField(
         label=_('Ticket code generator'),
@@ -1221,6 +1228,11 @@ class TicketSettingsForm(SettingsForm):
         required=True,
         widget=forms.RadioSelect,
         choices=[],
+    )
+    require_registered_account_for_tickets = forms.BooleanField(
+        label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
+        help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -1460,11 +1472,8 @@ class QuickSetupForm(I18nForm):
         required=False,
     )
     require_registered_account_for_tickets = forms.BooleanField(
-        label=_('Only allow registered accounts to get a ticket'),
-        help_text=_(
-            'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-            "'Continue as a Guest' option will not be available for attendees."
-        ),
+        label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
+        help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
         required=False,
     )
     btf = BankTransfer.form_fields()
