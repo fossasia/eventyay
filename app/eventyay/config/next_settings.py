@@ -346,7 +346,6 @@ _OURS_APPS = (
     'eventyay.plugins.reports',
     'eventyay.plugins.checkinlists',
     'eventyay.plugins.manualpayment',
-    'eventyay.plugins.returnurl',
     'eventyay.plugins.scheduledtasks',
     'eventyay.plugins.ticketoutputpdf',
     'eventyay.plugins.webcheckin',
