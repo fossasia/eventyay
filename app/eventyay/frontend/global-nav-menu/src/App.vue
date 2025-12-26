@@ -115,10 +115,10 @@ onBeforeUnmount(() => {
         <div class='i-fa-cog h-3 w-3'></div>
         <div>Admin</div>
       </a>
-      <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES, "w-full text-left"]' @click='handleLogout' href="#">
+      <button type='button' :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES, "w-full text-left"]' @click='handleLogout'>
         <div class='i-fa-sign-out h-3 w-3'></div>
         <div>Logout</div>
-      </a>
+      </button>
     </div>
   </div>
 </template>

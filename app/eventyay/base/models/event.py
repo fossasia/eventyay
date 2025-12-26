@@ -49,7 +49,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.plugins import get_all_plugins
+from eventyay.base.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -783,7 +783,6 @@ class Event(
         reset = '{base}reset'
         submit = '{base}submit/'
         user = '{base}me/'
-        user_delete = '{base}me/delete'
         user_submissions = '{user}submissions/'
         user_mails = '{user}mails/'
         schedule = '{base}schedule/'
