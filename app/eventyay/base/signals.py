@@ -41,7 +41,7 @@ def resolve_app_for_module(module_path: str):
         searchpath, _ = searchpath.rsplit('.', 1)
 
 
-def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_list_callable):
+def check_plugin_active(sender, app, is_core_module, excluded_plugins, get_plugin_list_callable):
     """
     Shared helper to determine if a plugin/core module should be active.
     
@@ -53,7 +53,7 @@ def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_l
     Args:
         sender: Event instance or None
         app: Django AppConfig or None
-        core_module: Boolean indicating if this is a core module by path
+        is_core_module: Boolean indicating if this is a core module by path
         excluded_plugins: List of excluded plugin names
         get_plugin_list_callable: Callable that accepts sender and returns plugin list
                                   (e.g., lambda s: s.get_plugins() or lambda s: s.plugin_list)
@@ -61,9 +61,9 @@ def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_l
     Returns:
         Boolean indicating if the receiver should be active
     """
-    # Handle core modules when sender is None (e.g., register_locales, auth_html)
-    # Core modules should always be active when there's no event context
-    if core_module and sender is None:
+    # If no sender (no event context) and it's a core module, allow it
+    # This handles core modules that work outside of event context
+    if sender is None and is_core_module:
         return True
     
     # Track plugin metadata when we have a sender and resolved app
@@ -72,7 +72,7 @@ def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_l
         plugin_list = get_plugin_list_callable(sender)
         if not plugin_list:
             # No plugins enabled at all - only core modules can be active
-            if core_module:
+            if is_core_module:
                 return True
             return False
         
@@ -105,7 +105,7 @@ def check_plugin_active(sender, app, core_module, excluded_plugins, get_plugin_l
     
     # Handle core modules where app resolution failed (app is None)
     # These should still be active as they match CORE_MODULES by path
-    if core_module and not app:
+    if is_core_module and not app:
         return True
     
     return False
@@ -131,7 +131,7 @@ class EventPluginSignal(django.dispatch.Signal):
 
         # Find the Django application this belongs to
         module_path = receiver.__module__
-        core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
+        is_core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
         # Resolve the app using thread-safe cached function
         app = resolve_app_for_module(module_path)
@@ -140,7 +140,7 @@ class EventPluginSignal(django.dispatch.Signal):
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
         
         # Use shared helper to check if receiver should be active
-        return check_plugin_active(sender, app, core_module, excluded, lambda s: s.get_plugins())
+        return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.get_plugins())
 
     def send(self, sender: Event, **named) -> List[Tuple[Callable, Any]]:
         """

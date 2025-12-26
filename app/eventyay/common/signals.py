@@ -31,13 +31,15 @@ class EventPluginSignal(django.dispatch.Signal):
     def _is_active(self, sender, receiver):
         # Find the Django application this belongs to
         module_path = receiver.__module__
-        core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
+        is_core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
         
         # Resolve the app using thread-safe cached function
         app = resolve_app_for_module(module_path)
         
         # Get excluded plugins list (preserve original list type from settings)
         excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
+        
+        return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.plugin_list)
         
         # Use shared helper with sender.plugin_list accessor
         return check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
