@@ -264,7 +264,7 @@ class ProductAddOnViewSet(viewsets.ModelViewSet):
     ordering_fields = ('id', 'position')
     ordering = ('id',)
     permission = None
-    write_permission = 'can_change_products'
+    write_permission = 'can_change_items'
 
     @cached_property
     def product(self):

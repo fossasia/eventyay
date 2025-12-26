@@ -77,8 +77,20 @@ class OrganizerCreate(CreateView):
             can_change_items=True,
             can_view_orders=True,
             can_change_orders=True,
+            can_checkin_orders=True,
             can_view_vouchers=True,
             can_change_vouchers=True,
+            can_change_submissions=True,
+            is_reviewer=True,
+            can_video_create_stages=True,
+            can_video_create_channels=True,
+            can_video_direct_message=True,
+            can_video_manage_announcements=True,
+            can_video_view_users=True,
+            can_video_manage_users=True,
+            can_video_manage_rooms=True,
+            can_video_manage_kiosks=True,
+            can_video_manage_configuration=True,
         )
         t.members.add(self.request.user)
         return ret
@@ -281,13 +293,6 @@ class OrganizerSettingsFormView(OrganizerDetailViewMixin, OrganizerPermissionReq
                 _('We could not save your changes. See below for details.'),
             )
             return self.get(request)
-
-
-class OrganizerTeamView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
-    model = Organizer
-    template_name = 'pretixcontrol/organizers/teams.html'
-    permission = 'can_change_permissions'
-    context_object_name = 'organizer'
 
 
 class OrganizerDetail(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
