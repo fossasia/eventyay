@@ -18,6 +18,7 @@ from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.forms.organizer_forms.team_form import TeamForm
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
 from eventyay.control.views.organizer_views.organizer_detail_view_mixin import (
@@ -61,7 +62,7 @@ class TeamCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             data=self._build_changed_data_dict(form, self.object),
         )
         return ret
-    
+
     def _build_changed_data_dict(self, form, obj):
         data = {}
         for k in form.changed_data:
@@ -305,6 +306,17 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     return self.get(request, *args, **kwargs)
 
                 self.object.members.add(user)
+
+                send_team_invitation_email(
+                    user=user,
+                    organizer_name=self.request.organizer.name,
+                    team_name=self.object.name,
+                    url=build_global_uri('control:organizer.teams',
+                                        kwargs={'organizer': self.request.organizer.slug}),
+                    locale=self.request.LANGUAGE_CODE,
+                    is_registered_user=True,
+                )
+
                 self.object.log_action(
                     'eventyay.team.member.added',
                     user=self.request.user,
@@ -375,7 +387,7 @@ class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     data[field] = [obj.id for obj in field_value.all()]
                 else:
                     data[field] = field_value
-            
+
             for field in self.object._meta.many_to_many:
                 field_value = getattr(self.object, field.name)
                 data[field.name] = [obj.id for obj in field_value.all()]

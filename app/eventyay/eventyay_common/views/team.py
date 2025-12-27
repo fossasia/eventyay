@@ -15,6 +15,7 @@ from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
@@ -199,6 +200,17 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
                     return self.get(request, *args, **kwargs)
 
                 self.object.members.add(user)
+
+                send_team_invitation_email(
+                    user=user,
+                    organizer_name=self.request.organizer.name,
+                    team_name=self.object.name,
+                    url=build_global_uri('control:organizer.teams',
+                                        kwargs={'organizer': self.request.organizer.slug}),
+                    locale=self.request.LANGUAGE_CODE,
+                    is_registered_user=True,
+                )
+
                 self.object.log_action(
                     'eventyay.team.member.added',
                     user=self.request.user,
@@ -267,7 +279,7 @@ class TeamCreateView(OrganizerDetailViewMixin, CreateView, OrganizerPermissionRe
             data=self._build_changed_data_dict(form, self.object),
         )
         return response
-    
+
     def _build_changed_data_dict(self, form, obj):
         data = {}
         for k in form.changed_data:
@@ -389,7 +401,7 @@ class TeamDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
             messages.success(self.request, _("The team '%(team_name)s' has been deleted.") % {"team_name": team_name})
         else:
             messages.success(self.request, _("The team '%(team_name)s' cannot be deleted.") % {"team_name": team_name})
-        
+
         return redirect(success_url)
 
     def get_success_url(self):
