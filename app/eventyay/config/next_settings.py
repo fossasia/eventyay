@@ -142,6 +142,9 @@ class BaseSettings(_BaseSettings):
     log_csp: bool = True
     csp_additional_header: str = ''
     celery_always_eager: bool = False
+    # Being True will make Django-Compressor only look for pre-compiled files
+    # and require us to run "compress" command after each frontend change.
+    compress_offline_required: bool = False
     nanocdn_url: HttpUrl | None = None
     zoom_key: str = ''
     zoom_secret: str = ''
@@ -998,8 +1001,9 @@ COMPRESS_PRECOMPILERS = (
     # We don't need to specify {infile} {outfile} because both esbuild and Django-Compressor support stdin/stdout.
     ('module', 'npx esbuild --minify --loader=js --platform=browser'),
 )
-# We have one Vue 2 app to be built by Django-Compressor, so we need to enable offline compression.
-COMPRESS_ENABLED = COMPRESS_OFFLINE = True
+# We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = conf.compress_offline_required
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass

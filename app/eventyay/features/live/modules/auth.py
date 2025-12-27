@@ -130,6 +130,7 @@ class AuthModule(BaseModule):
                             "trait_badges_map"
                         ),
                         include_client_state=True,
+                        include_personal_data=True,
                     ),
                     "event.config": login_result.event_config,
                     "chat.channels": login_result.chat_channels,
