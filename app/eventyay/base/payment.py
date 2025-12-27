@@ -905,6 +905,13 @@ class PaymentException(Exception):  # NOQA: N818
     pass
 
 
+class PaymentAlreadyConfirmedException(PaymentException):
+    """
+    Raised when attempting to confirm a payment that has already been confirmed.
+    """
+    pass
+
+
 class FreeOrderProvider(BasePaymentProvider):
     is_implicit = True
     is_enabled = True
