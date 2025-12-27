@@ -14,6 +14,25 @@ from eventyay.base.models import User
 from eventyay.helpers.dicts import move_to_end
 from eventyay.helpers.http import get_client_ip
 
+PASSWORD_COMPLEXITY_ERROR = _('Password must be at least 8 characters and include a letter, a number, and a special character.')
+
+
+def validate_password_complexity(password):
+    """
+    Validate password complexity with explicit checks
+    Requirements:
+    - At least 8 characters
+    - Contains at least one letter, one digit, and one special character
+    """
+    if not isinstance(password, str) or not password:
+        raise forms.ValidationError(PASSWORD_COMPLEXITY_ERROR, code='password_complexity')
+
+    has_letter = any(ch.isalpha() for ch in password)
+    has_digit = any(ch.isdigit() for ch in password)
+    has_special = any(not ch.isalnum() for ch in password)
+    if len(password) < 8 or not (has_letter and has_digit and has_special):
+        raise forms.ValidationError(PASSWORD_COMPLEXITY_ERROR, code='password_complexity')
+
 
 class LoginForm(forms.Form):
     """
@@ -154,6 +173,7 @@ class RegistrationForm(forms.Form):
     def clean_password(self):
         password1 = self.cleaned_data.get('password', '')
         user = User(email=self.cleaned_data.get('email'))
+        validate_password_complexity(password1)
         if validate_password(password1, user=user) is not None:
             raise forms.ValidationError(_(password_validators_help_texts()), code='pw_invalid')
         return password1
@@ -196,6 +216,7 @@ class PasswordRecoverForm(forms.Form):
             user = User.objects.get(id=self.user_id)
         except User.DoesNotExist:
             user = None
+        validate_password_complexity(password1)
         if validate_password(password1, user=user) is not None:
             raise forms.ValidationError(_(password_validators_help_texts()), code='pw_invalid')
         return password1
