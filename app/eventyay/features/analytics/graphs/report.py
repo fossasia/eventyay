@@ -57,8 +57,8 @@ class ReportGenerator:
             doc = self.get_doc_template()(
                 f.name,
                 pagesize=self.pagesize,
-                leftMargin=15 * mm,
-                rightMargin=15 * mm,
+                leftMargin=10 * mm,
+                rightMargin=10 * mm,
                 topMargin=20 * mm,
                 bottomMargin=15 * mm,
             )

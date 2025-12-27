@@ -180,7 +180,21 @@ export default {
 			}
 		},
 		open() {
-			window.open(this.result)
+			if (!this.result) {
+				return
+			}
+			// Ensure absolute URL for download
+			let url = this.result
+			if (url && !url.match(/^https?:\/\//)) {
+				// Construct absolute URL from relative path
+				try {
+					url = new URL(url, window.location.origin).href
+				} catch (error) {
+					console.error(error)
+					return
+				}
+			}
+			window.open(url)
 			this.clear()
 		},
 		clear() {
