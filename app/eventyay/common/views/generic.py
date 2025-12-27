@@ -31,6 +31,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.base.forms import user
 from eventyay.base.models import User
+from eventyay.base.forms.auth import LoginForm
 
 
 def get_next_url(request):
@@ -59,7 +60,8 @@ class CreateOrUpdateView(SingleObjectTemplateResponseMixin, ModelFormMixin, Proc
 
 
 class GenericLoginView(FormView):
-    form_class = user
+    form_class = LoginForm
+
 
     @context
     def password_reset_link(self):
@@ -268,6 +270,10 @@ class CRUDView(PaginationMixin, Filterable, View):
         event = getattr(self.request, 'event', None)
         if event and issubclass(self.form_class, I18nModelForm):
             kwargs['locales'] = event.locales
+        backend = self.get_backend()
+        if backend is not None:
+            backend.url = backend.authentication_url(self.request)
+            kwargs['backend'] = backend
         return kwargs
 
     def get_form(self, instance, data=None, files=None, **kwargs):
