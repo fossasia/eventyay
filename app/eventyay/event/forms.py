@@ -281,6 +281,18 @@ class EventWizardDisplayForm(forms.Form):
         required=True,
     )
 
+    def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        logo = Event._meta.get_field('logo')
+        self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        default_email = Event._meta.get_field('email').default
+        if not email or email == default_email:
+            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
+        return email
+
 
 class EventWizardCopyForm(forms.Form):
     @staticmethod
