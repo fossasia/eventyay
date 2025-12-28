@@ -393,7 +393,7 @@ LANGUAGES_INFORMATION = {
     },
     "fa": {
         "name": _("Persian"),
-        "natural_name": "قارسی",
+        "natural_name": "فارسی",
         "official": False,
         "percentage": 99,
         "path": "fa_IR",
