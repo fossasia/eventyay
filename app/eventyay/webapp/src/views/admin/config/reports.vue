@@ -3,33 +3,43 @@
 	.ui-page-header
 		h1 Generate Reports
 	scrollbars(y).ui-form-body
-		h3 Summary report
-		div.flex-row
-			div
-				bunt-input(v-model="day_start", label="First day", name="day_start", :validation="v$.day_start")
-			div
-				bunt-input(v-model="day_end", label="Last day", name="day_end", :validation="v$.day_end")
-		div.flex-row
-			div
-				bunt-input(v-model="time_start", label="Start of day", name="time_start", :validation="v$.time_start")
-			div
-				bunt-input(v-model="time_end", label="End of day", name="time_end", :validation="v$.time_end")
-		bunt-button.btn-generate(@click="generateSummary", :error="task == 'summary' && error") Generate PDF
-		bunt-button.btn-secondary(@click="generateRoomviews", :error="task == 'roomviews' && error") Room activity (XLSX)
-		bunt-button.btn-secondary(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") Session activity (XLSX)
-		bunt-button.btn-secondary(@click="generateViews", :error="task == 'views' && error") Raw tracking data (XLSX)
-		h3 Attendee list
-		bunt-button.btn-generate(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") Generate XLSX for event
-		bunt-button.btn-generate(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") Generate XLSX per session
-		h3 Chat history
-		bunt-select(v-model="channel", label="Room", name="channel", :options="channels", option-label="name")
-		bunt-button.btn-generate(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") Generate XLSX
-		h3 Questions
-		bunt-select(v-model="questionRoom", label="Room", name="questionRoom", :options="questionRooms", option-label="name")
-		bunt-button.btn-generate(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") Generate XLSX
-		h3 Polls
-		bunt-select(v-model="pollRoom", label="Room", name="pollRoom", :options="pollRooms", option-label="name")
-		bunt-button.btn-generate(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") Generate XLSX
+		.report-section
+			.section-header-with-controls
+				h3 Analytics Reports
+				.date-controls
+					.quick-presets
+						bunt-button(@click="setToday", :class="{active: activePreset === 'today'}", :aria-pressed="activePreset === 'today'") Today
+						bunt-button(@click="setYesterday", :class="{active: activePreset === 'yesterday'}", :aria-pressed="activePreset === 'yesterday'") Yesterday
+						bunt-button(@click="setLast7Days", :class="{active: activePreset === 'last7days'}", :aria-pressed="activePreset === 'last7days'") Last 7 Days
+						bunt-button(@click="setThisWeek", :class="{active: activePreset === 'thisweek'}", :aria-pressed="activePreset === 'thisweek'") This Week
+						bunt-button(@click="toggleCustom", :class="{active: activePreset === 'custom'}", :aria-pressed="activePreset === 'custom'") Custom
+					.date-time-inputs(v-if="showCustom")
+						bunt-input(v-model="datetimeStart", name="datetime_start", type="datetime-local", label="From")
+						bunt-input(v-model="datetimeEnd", name="datetime_end", type="datetime-local", label="To")
+			.report-buttons
+				bunt-button(@click="generateSummary", :error="task == 'summary' && error") Summary (PDF)
+				bunt-button(@click="generateRoomviews", :error="task == 'roomviews' && error") Room Activity (XLSX)
+				bunt-button(v-if="world.pretalx", @click="generateSessionviews", :error="task == 'sessionviews' && error") Session Activity (XLSX)
+				bunt-button(@click="generateViews", :error="task == 'views' && error") Raw Tracking (XLSX)
+
+		.report-section
+			h3 Attendee Reports
+			.report-buttons
+				bunt-button(@click="run('attendee_list', {})", :error="task == 'attendee_list' && error") All Attendees (XLSX)
+				bunt-button(@click="run('attendee_session_list', {})", :error="task == 'attendee_session_list' && error") By Session (XLSX)
+		
+		.report-section
+			h3 Room-Specific Reports
+			.room-report-item
+				bunt-select(v-model="channel", label="Chat History", name="channel", :options="channels", option-label="name")
+				bunt-button(@click="run('chat_history', {channel})", :disabled="!channel", :error="task == 'chat_history' && error") Generate XLSX
+			.room-report-item
+				bunt-select(v-model="questionRoom", label="Questions", name="questionRoom", :options="questionRooms", option-label="name")
+				bunt-button(@click="run('question_history', {room: questionRoom})", :disabled="!questionRoom", :error="task == 'question_history' && error") Generate XLSX
+			.room-report-item
+				bunt-select(v-model="pollRoom", label="Polls", name="pollRoom", :options="pollRooms", option-label="name")
+				bunt-button(@click="run('poll_history', {room: pollRoom})", :disabled="!pollRoom", :error="task == 'poll_history' && error") Generate XLSX
+
 	transition(name="prompt")
 		prompt.report-result-prompt(v-if="running || result", @close="clear")
 			.content
@@ -41,25 +51,20 @@
 
 </template>
 <script>
-import { useVuelidate } from '@vuelidate/core'
 import { mapState } from 'vuex'
 import api from 'lib/api'
 import moment from 'lib/timetravelMoment'
-import {helpers, required} from '@vuelidate/validators'
 import Prompt from 'components/Prompt'
-
-const day = helpers.regex('day', /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/)
-const time = helpers.regex('time', /^[0-9]{2}:[0-9]{2}$/)
 
 export default {
 	components: { Prompt },
-	setup:() => ({v$:useVuelidate()}),
 	data() {
+		const now = moment()
 		return {
-			day_start: moment().format('YYYY-MM-DD'),
-			day_end: moment().format('YYYY-MM-DD'),
-			time_start: '07:00',
-			time_end: '19:00',
+			showCustom: false,
+			activePreset: 'today',
+			datetimeStart: now.clone().startOf('day').format('YYYY-MM-DDTHH:mm'),
+			datetimeEnd: now.clone().endOf('day').format('YYYY-MM-DDTHH:mm'),
 			channel: null,
 			questionRoom: null,
 			pollRoom: null,
@@ -74,80 +79,75 @@ export default {
 	computed: {
 		...mapState(['world']),
 		questionRooms() {
-			const r = []
-			r.push(...this.$store.state.rooms.filter((room) => room.modules.filter(m => m.type === 'question').length))
-			return r
+			return this.$store.state.rooms.filter((room) => room.modules.some(m => m.type === 'question'))
 		},
 		pollRooms() {
-			const r = []
-			r.push(...this.$store.state.rooms.filter((room) => room.modules.filter(m => m.type === 'poll').length))
-			return r
+			return this.$store.state.rooms.filter((room) => room.modules.some(m => m.type === 'poll'))
 		},
 		channels() {
-			const r = []
-			r.push(...this.$store.state.rooms.filter((room) => room.modules.filter(m => m.type === 'chat.native').length).map((room) => {
+			return this.$store.state.rooms.filter((room) => room.modules.some(m => m.type === 'chat.native')).map((room) => {
 				return {
 					id: room.modules.find(m => m.type === 'chat.native').channel_id,
 					name: room.name
 				}
-			}))
-			return r
+			})
 		}
-	},
-	validations: {
-		day_start: {
-			day,
-			required,
-		},
-		day_end: {
-			day,
-			required,
-		},
-		time_start: {
-			time,
-			required,
-		},
-		time_end: {
-			time,
-			required,
-		},
 	},
 	unmounted() {
 		window.clearTimeout(this.timeout)
 	},
 	methods: {
-		async generateViews() {
-			this.v$.$touch()
-			if (this.v$.$invalid) return
-			await this.run('views', {
-				begin: this.day_start + 'T' + this.time_start,
-				end: this.day_end + 'T' + this.time_end,
-			})
+		getDateTimePayload() {
+			return {
+				begin: this.datetimeStart,
+				end: this.datetimeEnd,
+			}
 		},
-		async generateRoomviews() {
-			this.v$.$touch()
-			if (this.v$.$invalid) return
-			await this.run('roomviews', {
-				begin: this.day_start + 'T' + this.time_start,
-				end: this.day_end + 'T' + this.time_end,
-			})
+		setPreset(presetName, startMoment, endMoment) {
+			this.datetimeStart = startMoment.format('YYYY-MM-DDTHH:mm')
+			this.datetimeEnd = endMoment.format('YYYY-MM-DDTHH:mm')
+			this.activePreset = presetName
+			this.showCustom = false
 		},
-		async generateSessionviews() {
-			this.v$.$touch()
-			if (this.v$.$invalid) return
-			await this.run('sessionviews', {
-				begin: this.day_start + 'T' + this.time_start,
-				end: this.day_end + 'T' + this.time_end,
-			})
+		setToday() {
+			const today = moment()
+			this.setPreset('today', today.clone().startOf('day'), today.clone().endOf('day'))
 		},
-		async generateSummary() {
-			this.v$.$touch()
-			if (this.v$.$invalid) return
-
-			await this.run('summary', {
-				begin: this.day_start + 'T' + this.time_start,
-				end: this.day_end + 'T' + this.time_end,
-			})
+		setYesterday() {
+			const yesterday = moment().subtract(1, 'day')
+			this.setPreset('yesterday', yesterday.clone().startOf('day'), yesterday.clone().endOf('day'))
+		},
+		setLast7Days() {
+			const now = moment()
+			this.setPreset('last7days', now.clone().subtract(6, 'days').startOf('day'), now.clone().endOf('day'))
+		},
+		setThisWeek() {
+			const now = moment()
+			this.setPreset('thisweek', now.clone().startOf('week'), now.clone().endOf('week'))
+		},
+		toggleCustom() {
+			this.showCustom = !this.showCustom
+			if (this.showCustom) {
+				this.activePreset = 'custom'
+			} else if (this.activePreset === 'custom') {
+				// Reset to today when toggling off custom - updates both preset and datetime values
+				this.setToday()
+			}
+		},
+		generateReport(type) {
+			return this.run(type, this.getDateTimePayload())
+		},
+		generateSummary() {
+			return this.generateReport('summary')
+		},
+		generateRoomviews() {
+			return this.generateReport('roomviews')
+		},
+		generateSessionviews() {
+			return this.generateReport('sessionviews')
+		},
+		generateViews() {
+			return this.generateReport('views')
 		},
 		async run(name, payload) {
 			this.running = true
@@ -157,7 +157,8 @@ export default {
 				const r = await api.call(`world.report.generate.${name}`, payload)
 				this.resultid = r.resultid
 				this.timeout = window.setTimeout(this.check, 2000)
-			} catch {
+			} catch (err) {
+				console.error('Report generation failed:', String(err))
 				this.error = true
 				this.running = false
 			}
@@ -174,7 +175,8 @@ export default {
 				} else {
 					this.timeout = window.setTimeout(this.check, 2000)
 				}
-			} catch {
+			} catch (err) {
+				console.error('Report status check failed:', String(err))
 				this.error = true
 				this.running = false
 			}
@@ -197,29 +199,94 @@ export default {
 	flex: auto
 	display: flex
 	flex-direction: column
-	.flex-row
-		display: flex
-		gap: 20px
-		margin: 0 -10px
-		&> div
-			flex: auto 1 1
-			margin: 0 10px
 
-	.btn-generate
-		margin-bottom: 32px
-		themed-button-primary()
-	.btn-secondary
-		margin-bottom: 32px
-		themed-button-secondary()
+	.ui-form-body
+		padding: 20px
+		max-width: 100%
 
-	.bunt-input-outline-container
-		textarea
-			background-color: transparent
-			border: none
-			outline: none
-			resize: vertical
-			min-height: 250px
-			padding: 0 8px
+	.report-section
+		margin-bottom: 32px
+		padding: 5px 5px 20px 5px
+		background: $clr-white
+		border-radius: 4px
+		box-shadow: 0 1px 3px rgba(0,0,0,0.08)
+
+		h3
+			margin: 0 0 16px 0
+			font-size: 18px
+			font-weight: 600
+			line-height: 1.4
+
+		.section-header-with-controls
+			display: flex
+			justify-content: space-between
+			align-items: flex-start
+			gap: 24px
+			margin-bottom: 16px
+			flex-wrap: wrap
+
+			h3
+				margin: 0
+				flex-shrink: 0
+
+			.date-controls
+				display: flex
+				flex-direction: column
+				gap: 12px
+				align-items: flex-end
+				flex: 1
+				min-width: 300px
+
+				.quick-presets
+					display: flex
+					gap: 6px
+					flex-wrap: wrap
+					justify-content: flex-end
+
+					button
+						themed-button-secondary()
+						font-size: 13px
+						padding: 6px 12px
+
+						&.active
+							themed-button-primary()
+
+				.date-time-inputs
+					display: flex
+					gap: 12px
+					flex-wrap: wrap
+					justify-content: flex-end
+
+					.bunt-input
+						min-width: 200px
+						max-width: 250px
+
+		.report-buttons
+			display: flex
+			flex-wrap: wrap
+			gap: 12px
+
+			button
+				themed-button-secondary()
+				flex-shrink: 0
+
+				&:first-child
+					themed-button-primary()
+
+		.room-report-item
+			display: flex
+			align-items: flex-end
+			gap: 16px
+			margin-bottom: 12px
+
+			.bunt-select
+				flex: 1
+				max-width: 400px
+
+			button
+				themed-button-secondary()
+				flex-shrink: 0
+
 	.report-result-prompt
 		.content
 			padding: 0 20px 20px
