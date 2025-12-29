@@ -131,17 +131,21 @@ export default defineConfig(({ mode }) => {
         // Reduce moment-timezone data size similar to previous webpack plugin
   'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range',
   // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
-  sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
+  sdp: path.resolve(__dirname, 'src/shims/sdp-default.js'),
+        // Use central schedule package - direct component imports to avoid ~ alias conflict
+        '@pretalx/schedule/LinearSchedule': path.resolve(__dirname, '../frontend/schedule/src/components/LinearSchedule.vue'),
+        '@pretalx/schedule/GridSchedule': path.resolve(__dirname, '../frontend/schedule/src/components/GridSchedule.vue'),
+        '@pretalx/schedule/Session': path.resolve(__dirname, '../frontend/schedule/src/components/Session.vue')
       }
     },
     optimizeDeps: {
       include: [
         'color',
-        'buntpapier'
+        'buntpapier',
+        'luxon'
       ],
       exclude: [
-        'pdfjs-dist',
-        '@pretalx/schedule' // excluded pretalx since local components replace its usage
+        'pdfjs-dist'
       ],
       esbuildOptions: {
         target: 'esnext'

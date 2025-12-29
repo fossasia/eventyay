@@ -28,7 +28,8 @@ export default {
 			return moment.tz(this.localTimezone).format('Z z')
 		},
 		eventTimezone() {
-			return 'America/Chicago' // this.schedule.timezone
+			// Get timezone from schedule data (single source of truth from Django)
+			return this.schedule?.timezone || moment.tz.guess()
 		},
 		eventTimezoneLabel() {
 			return moment.tz(this.eventTimezone).format('Z z')

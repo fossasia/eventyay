@@ -22,7 +22,7 @@
 </template>
 <script>
 import { DateTime } from 'luxon'
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString } from '../utils'
 import Session from './Session'
 
 export default {

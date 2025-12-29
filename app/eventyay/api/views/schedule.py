@@ -12,7 +12,8 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from eventyay.agenda.views.utils import get_schedule_exporter_content
+from eventyay.agenda.views.utils import get_schedule_exporter_content, get_schedule_exporters
+from eventyay.common.signals import register_my_data_exporters
 from eventyay.api.documentation import build_expand_docs, build_search_docs
 from eventyay.api.filters.schedule import TalkSlotFilter
 from eventyay.api.mixins import PretalxViewSetMixin
@@ -66,6 +67,7 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
     permission_map = {
         "redirect_version": "schedule.list_schedule",
         "get_exporter": "schedule.list_schedule",
+        "list_exporters": "schedule.list_schedule",
     }
 
     def get_unversioned_serializer_class(self):
@@ -173,6 +175,53 @@ class ScheduleViewSet(PretalxViewSetMixin, viewsets.ReadOnlyModelViewSet):
             schedule, context=self.get_serializer_context()
         )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        summary="List Available Schedule Exporters",
+        description="Lists all available schedule exporters for this event. Returns both public exporters and personal (my) exporters.",
+        responses={
+            200: OpenApiResponse(
+                description="List of available exporters with their identifiers and labels."
+            ),
+        },
+    )
+    @action(detail=False, methods=["get"], url_path="exporters")
+    def list_exporters(self, request, event):
+        """List all available schedule exporters."""
+        # Get public exporters
+        public_exporters = get_schedule_exporters(request, public=True)
+        # Get personal (my) exporters
+        my_exporters = [
+            exporter(request.event)
+            for _, exporter in register_my_data_exporters.send_robust(request.event)
+            if not isinstance(exporter, Exception)
+        ]
+
+        exporters_data = []
+        for exporter in public_exporters:
+            if hasattr(exporter, 'show_public') and not exporter.show_public:
+                continue
+            exporters_data.append({
+                'identifier': exporter.identifier,
+                'label': str(exporter.verbose_name) if hasattr(exporter, 'verbose_name') else exporter.identifier,
+                'type': 'public',
+                'public': getattr(exporter, 'public', True),
+            })
+
+        for exporter in my_exporters:
+            if isinstance(exporter, Exception):
+                continue
+            exporters_data.append({
+                'identifier': exporter.identifier,
+                'label': str(exporter.verbose_name) if hasattr(exporter, 'verbose_name') else exporter.identifier,
+                'type': 'personal',
+                'public': getattr(exporter, 'public', False),
+            })
+
+        return Response({
+            'count': len(exporters_data),
+            'results': exporters_data,
+        })
 
     @extend_schema(
         summary="Get Exporter Content",

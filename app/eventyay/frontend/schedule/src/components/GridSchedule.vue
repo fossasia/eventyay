@@ -44,7 +44,7 @@
 // - optionally only show venueless rooms
 import { DateTime } from 'luxon'
 import Session from './Session'
-import { getLocalizedString, getPrettyDuration, timeWithoutAmPm, timeAmPm} from '~/utils'
+import { getLocalizedString, getPrettyDuration, timeWithoutAmPm, timeAmPm} from '../utils'
 
 const getSliceName = function (date) {
 	return `slice-${date.toFormat('LL-dd-HH-mm')}`

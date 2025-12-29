@@ -548,12 +548,15 @@ class Schedule(PretalxModel):
             locale = speaker.get_locale_for_event(self.event)
             notifications = render_notifications(data, event=self.event, speaker=speaker, locale=locale)
             slots = list(data.get('create') or []) + [talk['new_slot'] for talk in (data.get('update') or [])]
-            submissions = [slot.submission for slot in slots]
+            submissions = [slot.submission for slot in slots if slot.submission]
+            context_kwargs = {'user': speaker, 'event': self.event}
+            if submissions:
+                context_kwargs['submission'] = submissions[0]
             mails.append(
                 self.event.get_mail_template(MailTemplateRoles.NEW_SCHEDULE).to_mail(
                     user=speaker,
                     event=self.event,
-                    context_kwargs={'user': speaker},
+                    context_kwargs=context_kwargs,
                     context={'notifications': notifications},
                     commit=save,
                     locale=locale,
@@ -565,6 +568,7 @@ class Schedule(PretalxModel):
                             'content_type': 'text/calendar',
                         }
                         for slot in slots
+                        if slot.submission
                     ],
                 )
             )
@@ -602,6 +606,7 @@ class Schedule(PretalxModel):
         ).prefetch_related('submission__speakers')
         talks = talks.order_by('start')
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
+        # Only include tracks that are assigned to scheduled sessions
         tracks = set()
         speakers = set()
         result = {

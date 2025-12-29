@@ -23,8 +23,8 @@
 import { mapState, mapGetters } from 'vuex'
 import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
-// Replace '@pretalx/schedule' Session import with local implementation
-import Session from 'views/schedule/schedule-components/Session.vue'
+// Use central schedule package for unified schedule components
+import Session from '@pretalx/schedule/Session'
 
 export default {
 	components: { Identicon, MarkdownContent, Session },

@@ -45,7 +45,14 @@
 
 <script>
 import QRCode from 'qrcode'
-import config from 'config'
+import { getExportUrl } from 'lib/exporters'
+
+function isCalendarExporter(option) {
+	return option.isCalendar ||
+		option.id.includes('.ics') ||
+		option.id.includes('.xcal') ||
+		option.id.includes('.xml')
+}
 
 export default {
 	props: {
@@ -54,7 +61,7 @@ export default {
 			required: true
 		}
 	},
-  emits: ['input', 'update:modelValue'],
+	emits: ['input', 'update:modelValue'],
 	data() {
 		return {
 			isOpen: false,
@@ -66,13 +73,25 @@ export default {
 	mounted() {
 		document.addEventListener('click', this.outsideClick)
 	},
-  beforeUnmount() {
+	beforeUnmount() {
 		document.removeEventListener('click', this.outsideClick)
 	},
 	created() {
 		this.options.forEach(option => {
 			this.generateQRCode(option)
 		})
+	},
+	watch: {
+		options: {
+			handler(newOptions) {
+				newOptions.forEach(option => {
+					if (!this.qrCodes[option.id]) {
+						this.generateQRCode(option)
+					}
+				})
+			},
+			deep: true
+		}
 	},
 	methods: {
 		selectOption(option) {
@@ -87,20 +106,14 @@ export default {
 			}
 		},
 		generateQRCode(option) {
-			if (!['ics', 'xml', 'myics', 'myxml'].includes(option.id)) {
-				return
-			}
-			const url = config.api.base + 'export-talk?export_type=' + option.id
-			QRCode.toDataURL(url, { scale: 1 }, (err, url) => {
-				if (!err) this.qrCodes[option.id] = url
+			if (!isCalendarExporter(option)) return
+			const url = getExportUrl(option.id, 'latest')
+			QRCode.toDataURL(url, { scale: 4, margin: 2, errorCorrectionLevel: 'M' }, (err, dataUrl) => {
+				if (!err) this.qrCodes[option.id] = dataUrl
 			})
 		},
 		setHoveredOption(option) {
-			if (['ics', 'xml', 'myics', 'myxml'].includes(option.id)) {
-				this.hoveredOption = option
-			} else {
-				this.hoveredOption = null
-			}
+			this.hoveredOption = isCalendarExporter(option) ? option : null
 		},
 		clearHoveredOption(option) {
 			if (this.hoveredOption === option) {

@@ -186,6 +186,13 @@ def base_placeholders(sender, **kwargs):
             'https://eventyay.example.com/democon/me/submissions/F8VVL/withdraw',
             _('Link to withdraw the proposal'),
         ),
+        SimpleFunctionalMailTextPlaceholder(
+            'orga_url',
+            ['submission'],
+            lambda submission: submission.orga_urls.base.full(),
+            'https://eventyay.example.com/orga/event/democon/submissions/F8VVL/',
+            _('Link to the organizer view of this proposal'),
+        ),
         *placeholder_aliases(
             ['proposal_title', 'submission_title'],
             ['submission'],

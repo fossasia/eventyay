@@ -40,22 +40,22 @@ export default {
 			return state.schedule.rooms.map(room => rootState.rooms.find(r => r.pretalx_id === room.id) || room)
 		},
 		roomsLookup(state, getters) {
-			if (!state.schedule) return {}
+			if (!state.schedule?.rooms) return {}
 			return getters.rooms.reduce((acc, room) => {
 				acc[room.pretalx_id || room.id] = room
 				return acc
 			}, {})
 		},
 		tracksLookup(state) {
-			if (!state.schedule) return {}
+			if (!state.schedule?.tracks) return {}
 			return state.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		speakersLookup(state) {
-			if (!state.schedule) return {}
+			if (!state.schedule?.speakers) return {}
 			return state.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
 		sessionTypeLookup(state) {
-			if (!state.schedule) return {}
+			if (!state.schedule?.session_type) return {}
 			return state.schedule.session_type.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
 		sessions(state, getters, rootState) {
@@ -160,6 +160,7 @@ export default {
 			return null
 		},
 		filterSessionTypesByLanguage: (state, getters) => (data) => {
+			if (!data || !Array.isArray(data)) return []
 			const uniqueSessionTypes = new Set()
 
 			data.forEach(item => {
@@ -175,16 +176,17 @@ export default {
 			}))
 		},
 		filterItemsByLanguage: (state, getters) => (data) => {
-			const languageMap = new Map()
+			if (!data || !Array.isArray(data)) return []
+			const itemsMap = new Map()
 
 			data.forEach(item => {
 				const selectedName = getters.getSelectedName(item)
 				if (selectedName) {
-					languageMap.set(item.id, selectedName)
+					itemsMap.set(item.id, { name: selectedName, color: item.color })
 				}
 			})
 
-			return Array.from(languageMap).map(([id, name]) => ({ value: id, label: name }))
+			return Array.from(itemsMap).map(([id, { name, color }]) => ({ value: id, label: name, color }))
 		},
 		matchesSessionTypeFilter: (state) => (talk, selectedIds) => {
 			if (typeof talk?.session_type === 'string') {

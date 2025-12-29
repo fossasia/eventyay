@@ -29,28 +29,36 @@
 					label="Add to Calendar"
 					@input="makeExport")
 
-		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay.toISOString()", ref="tabs", v-scrollbar.x="")
+		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDayISO", ref="tabs", v-scrollbar.x="")
 			bunt-tab(v-for="day in days", :key="day.toISOString()", :id="day.toISOString()", :header="moment(day).format('dddd DD. MMMM')", @selected="changeDay(day)")
 		.scroll-parent(ref="scrollParent", v-scrollbar.x.y="")
 			grid-schedule(v-if="$mq.above['m']",
 				:sessions="sessions",
 				:rooms="rooms",
-				:currentDay="currentDay",
-				:now="now",
+				:currentDay="currentDayISO",
+				:now="luxonNow",
+				:timezone="currentTimezone",
+				:locale="userLocale",
+				:hasAmPm="hasAmPm",
+				:onHomeServer="true",
 				:scrollParent="$refs.scrollParent",
 				:favs="favs",
-				@changeDay="currentDay = $event",
+				@changeDay="handleDayChange",
 				@fav="$store.dispatch('schedule/fav', $event)",
 				@unfav="$store.dispatch('schedule/unfav', $event)"
 			)
 			linear-schedule(v-else,
 				:sessions="sessions",
 				:rooms="rooms",
-				:currentDay="currentDay",
-				:now="now",
+				:currentDay="currentDayISO",
+				:now="luxonNow",
+				:timezone="currentTimezone",
+				:locale="userLocale",
+				:hasAmPm="hasAmPm",
+				:onHomeServer="true",
 				:scrollParent="$refs.scrollParent",
 				:favs="favs",
-				@changeDay="changeDayByScroll",
+				@changeDay="handleDayChangeByScroll",
 				@fav="$store.dispatch('schedule/fav', $event)",
 				@unfav="$store.dispatch('schedule/unfav', $event)"
 			)
@@ -62,70 +70,23 @@
 <script>
 import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
-// Replaced external '@pretalx/schedule' imports with local components to avoid TDZ runtime error in pretalx bundle
-import LinearSchedule from './schedule-components/LinearSchedule.vue'
-import GridSchedule from './schedule-components/GridSchedule.vue'
+import LinearSchedule from '@pretalx/schedule/LinearSchedule'
+import GridSchedule from '@pretalx/schedule/GridSchedule'
+import { DateTime } from 'luxon'
 import moment from 'lib/timetravelMoment'
 import TimezoneChanger from 'components/TimezoneChanger'
 import scheduleProvidesMixin from 'components/mixins/schedule-provides'
 import Prompt from 'components/Prompt'
-import api from 'lib/api'
-import config from 'config'
 import CustomDropdown from 'views/schedule/export-select'
 import AppDropdown from 'components/AppDropdown.vue'
 import AppDropdownContent from 'components/AppDropdownContent.vue'
 import AppDropdownItem from 'components/AppDropdownItem.vue'
-const exportTypeSet = [
-	{
-		id: 'ics',
-		label: 'Session ICal'
-	},
-	{
-		id: 'json',
-		label: 'Session JSON'
-	},
-	{
-		id: 'xcal',
-		label: 'Session XCal'
-	},
-	{
-		id: 'xml',
-		label: 'Session XML'
-	},
-	{
-		id: 'myics',
-		label: 'My ⭐ Sessions ICal'
-	},
-	{
-		id: 'myjson',
-		label: 'My ⭐ Sessions JSON'
-	},
-	{
-		id: 'myxcal',
-		label: 'My ⭐ Sessions XCal'
-	},
-	{
-		id: 'myxml',
-		label: 'My ⭐ Sessions XML'
-	},
-]
+import { getExporters, downloadExport, triggerDownload } from 'lib/exporters'
 
 const defaultFilter = {
-	tracks: {
-		refKey: 'track',
-		data: [],
-		title: 'Tracks'
-	},
-	rooms: {
-		refKey: 'room',
-		data: [],
-		title: 'Rooms'
-	},
-	types: {
-		refKey: 'session_type',
-		data: [],
-		title: 'Types'
-	}
+	tracks: { refKey: 'track', data: [], title: 'Tracks' },
+	rooms: { refKey: 'room', data: [], title: 'Rooms' },
+	types: { refKey: 'session_type', data: [], title: 'Types' }
 }
 
 export default {
@@ -141,7 +102,7 @@ export default {
 			exportOptions: [],
 			isExporting: false,
 			error: null,
-			defaultFilter: defaultFilter,
+			defaultFilter,
 			onlyFavs: false,
 			userTimezone: null,
 			currentTimezone: null,
@@ -152,21 +113,33 @@ export default {
 		...mapState('schedule', ['schedule', 'errorLoading']),
 		...mapGetters('schedule', ['days', 'rooms', 'sessions', 'favs', 'filterSessionTypesByLanguage', 'filterItemsByLanguage', 'filteredSessions']),
 		exportType() {
-			return exportTypeSet
+			return this.exportOptions
+		},
+		luxonNow() {
+			return DateTime.fromJSDate(this.now.toDate(), { zone: this.currentTimezone })
+		},
+		currentDayISO() {
+			return this.currentDay.format('YYYY-MM-DD')
+		},
+		userLocale() {
+			return navigator.language || 'en'
+		},
+		hasAmPm() {
+			return moment.localeData().longDateFormat('LT').includes('A')
 		},
 		filteredTracks() {
 			return this.filteredSessions(this.filter)
 		},
 		tracksLookup() {
-			if (!this.schedule) return {}
+			if (!this.schedule?.tracks) return {}
 			return this.schedule.tracks.reduce((acc, t) => { acc[t.id] = t; return acc }, {})
 		},
 		roomsLookup() {
-			if (!this.schedule) return {}
+			if (!this.schedule?.rooms) return {}
 			return this.schedule.rooms.reduce((acc, room) => { acc[room.id] = room; return acc }, {})
 		},
 		speakersLookup() {
-			if (!this.schedule) return {}
+			if (!this.schedule?.speakers) return {}
 			return this.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
 		},
 		sessions() {
@@ -179,8 +152,8 @@ export default {
 					id: session.code,
 					title: session.title,
 					abstract: session.abstract,
-					start: moment.tz(session.start, this.currentTimezone),
-					end: moment.tz(session.end, this.currentTimezone),
+					start: DateTime.fromISO(session.start, { zone: this.currentTimezone }),
+					end: DateTime.fromISO(session.end, { zone: this.currentTimezone }),
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
 					room: this.roomsLookup[session.room],
@@ -190,18 +163,24 @@ export default {
 					session_type: session.session_type
 				})
 			}
-			sessions.sort((a, b) => a.start.diff(b.start))
+			// Sort using luxon DateTime comparison
+			sessions.sort((a, b) => a.start.toMillis() - b.start.toMillis())
 			return sessions
 		},
 		rooms() {
 		  return _.uniqBy(this.sessions, 'room.id').map(s => s.room)
 		},
 		filter() {
-			const filter = this.defaultFilter
+			const filter = {}
 
-			filter.types.data = this.filterSessionTypesByLanguage(this?.schedule?.session_type)
-			filter.rooms.data = this.filterItemsByLanguage(this?.schedule?.rooms)
-			filter.tracks.data = this.filterItemsByLanguage(this?.schedule?.tracks)
+			const typesData = this.filterSessionTypesByLanguage(this?.schedule?.session_type)
+			const roomsData = this.filterItemsByLanguage(this?.schedule?.rooms)
+			const tracksData = this.filterItemsByLanguage(this?.schedule?.tracks)
+
+			// Only include filters that have data
+			if (typesData?.length) filter.types = { refKey: 'session_type', data: typesData, title: 'Types' }
+			if (roomsData?.length) filter.rooms = { refKey: 'room', data: roomsData, title: 'Rooms' }
+			if (tracksData?.length) filter.tracks = { refKey: 'track', data: tracksData, title: 'Tracks' }
 
 			return filter
 		},
@@ -223,7 +202,12 @@ export default {
 	},
 	async created() {
 		this.userTimezone = moment.tz.guess()
-		this.currentTimezone = localStorage.getItem('userTimezone')
+		this.currentTimezone = localStorage.getItem('userTimezone') || this.userTimezone
+		try {
+			this.exportOptions = await getExporters()
+		} catch (error) {
+			console.error('[Schedule] Failed to load exporters:', error)
+		}
 	},
 	methods: {
 		changeDay(day) {
@@ -235,6 +219,21 @@ export default {
 			if (this.$refs.tabs) {
 				const tabElements = this.$refs.tabs.$refs.tabElements || []
 				const tabEl = tabElements.find(el => el.id === day.toISOString())
+				tabEl?.$el?.scrollIntoView()
+			}
+		},
+		handleDayChange(luxonDay) {
+			const momentDay = moment(luxonDay.toJSDate()).startOf('day')
+			if (!momentDay.isSame(this.currentDay)) {
+				this.currentDay = momentDay
+			}
+		},
+		handleDayChangeByScroll(luxonDay) {
+			const momentDay = moment(luxonDay.toJSDate()).startOf('day')
+			this.currentDay = momentDay
+			if (this.$refs.tabs) {
+				const tabElements = this.$refs.tabs.$refs.tabElements || []
+				const tabEl = tabElements.find(el => el.id === momentDay.toISOString())
 				tabEl?.$el?.scrollIntoView()
 			}
 		},
@@ -263,30 +262,14 @@ export default {
 		async makeExport() {
 			try {
 				this.isExporting = true
-				const url = config.api.base + 'export-talk?export_type=' + this.selectedExporter.id
-				const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
-				const result = await fetch(url, {
-					method: 'GET',
-					headers: {
-						Accept: 'application/json',
-						Authorization: authHeader,
-					}
-				}).then(response => response.json())
-				var a = document.createElement('a')
-				document.body.appendChild(a)
-				const blob = new Blob([result], {type: 'octet/stream'})
-				const downloadUrl = window.URL.createObjectURL(blob)
-				a.href = downloadUrl
-				a.download = 'schedule-' + this.selectedExporter.id + '.' + this.selectedExporter.id.replace('my', '')
-				a.click()
-				window.URL.revokeObjectURL(downloadUrl)
-				a.remove()
+				const { blob, filename } = await downloadExport(this.selectedExporter.id, 'latest')
+				triggerDownload(blob, filename)
 				this.isExporting = false
 				this.selectedExporter = null
 			} catch (error) {
 				this.isExporting = false
 				this.error = error
-				console.log(error)
+				console.error('[Schedule] Export failed:', error)
 			}
 		},
 		resetAllFiltered() {
