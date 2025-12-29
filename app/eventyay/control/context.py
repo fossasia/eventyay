@@ -59,7 +59,8 @@ def _default_context(request):
     if hasattr(request, 'event') and request.user.is_authenticated:
         for receiver, response in html_head.send(request.event, request=request):
             _html_head.append(response)
-        ctx['talk_edit_url'] = urljoin(settings.TALK_HOSTNAME, f'orga/event/{request.event.slug}')
+        from django.urls import reverse
+        ctx['talk_edit_url'] = reverse('orga:event.dashboard', kwargs={'event': request.event.slug})
         ctx['is_video_enabled'] = is_video_enabled(request.event)
         ctx['is_talk_event_created'] = False
         if (
