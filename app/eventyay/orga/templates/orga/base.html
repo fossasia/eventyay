@@ -155,9 +155,14 @@ endblocktranslate %}
             {% endif %}
             {% block navbar_right %}{% endblock navbar_right %}
             <li class="nav-item d-none d-md-block">
-                <button type="button" class="nav-link active">
-                    <i class="fa fa-user"></i>
-                    {{ request.user.get_display_name }}
+                <button type="button"
+                    class="nav-link active"
+                    aria-label="{% translate 'User menu' %}"
+                    aria-haspopup="true"
+                    aria-controls="global-nav-menu"
+                    aria-expanded="false">
+                 <i class="fa fa-user"></i>
+                 {{ request.user.get_display_name }}
                 </button>
 
                 {# The menu built by Vue 3 app will be mounted here. The ID must match. #}
