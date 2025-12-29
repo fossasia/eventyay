@@ -3,7 +3,7 @@ import logging
 
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login as django_login
 from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -19,6 +19,8 @@ from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import GenericLoginView, GenericResetView
 from eventyay.base.models import User
+from eventyay.base.forms.auth import LoginForm
+from eventyay.base.auth import get_auth_backends
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
 logger = logging.getLogger(__name__)
@@ -39,6 +41,7 @@ class LogoutView(View):
 
 class LoginView(GenericLoginView):
     template_name = 'cfp/event/login.html'
+    form_class = LoginForm
 
     def dispatch(self, request, *args, **kwargs):
         if not request.event.is_public:
@@ -56,9 +59,27 @@ class LoginView(GenericLoginView):
     def get_password_reset_link(self):
         return self.request.event.urls.reset
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        backenddict = get_auth_backends()
+        backend = backenddict.get('native') or list(backenddict.values())[0]
+        # Populate backend.url as LoginForm expects it in __init__
+        try:
+            backend.url = backend.authentication_url(self.request)
+        except AttributeError:
+            backend.url = None
+        kwargs.update({'backend': backend, 'request': self.request})
+        return kwargs
+
+    def form_valid(self, form):
+        user = form.get_user()
+        if not user:
+            return self.form_invalid(form)
+        django_login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
+        return self.get_redirect()
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['register_url'] = settings.EVENTYAY_TICKET_BASE_PATH
         # We already have a primary login button in this page, disable the subheader login link.
         context['subheader_login_link_disabled'] = True
         return context
