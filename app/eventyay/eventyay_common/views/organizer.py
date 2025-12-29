@@ -654,6 +654,15 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         return data
 
     def _collect_team_change_data(self, team: Team, form: TeamForm):
+        """Collect only changed field data for audit logging.
+        
+        Args:
+            team: The Team model instance
+            form: The TeamForm with changed_data populated
+            
+        Returns:
+            dict: Dictionary of changed field names to their new values
+        """
         data = {}
         model = form._meta.model
         with scopes_disabled():
@@ -664,8 +673,4 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
                     data[field_name] = [instance.id for instance in field_value.all()]
                 else:
                     data[field_name] = field_value
-
-            for field in model._meta.many_to_many:
-                field_value = getattr(team, field.name)
-                data[field.name] = [instance.id for instance in field_value.all()]
         return data

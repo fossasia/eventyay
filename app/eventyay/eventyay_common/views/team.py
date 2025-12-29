@@ -1,4 +1,4 @@
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages

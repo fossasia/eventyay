@@ -133,8 +133,17 @@ def normalize_permission_value(permission):
         
     Returns:
         str: Permission value as string
+        
+    Raises:
+        TypeError: If permission is not a string or Permission enum
     """
-    return permission if isinstance(permission, str) else permission.value
+    if isinstance(permission, str):
+        return permission
+    if isinstance(permission, Permission):
+        return permission.value
+    raise TypeError(
+        f"Expected str or Permission enum, got {type(permission).__name__}"
+    )
 
 
 def traits_match_required(traits: list[str], required_traits: list) -> bool:
