@@ -124,6 +124,41 @@
                 <p>&nbsp;</p>
             </div>
         </fieldset>
+        <fieldset class="quick-setup-step" id="quick-setup-step-payment">
+            <div class="quick-icon">
+                <span class="fa fa-fw fa-money text-muted"></span>
+            </div>
+            <div class="quick-content">
+                <legend>{% trans "Payment" %}</legend>
+                <p class="bigger">
+                    {% blocktrans trimmed %}
+                        eventyay supports a range of payment providers. The available payment methods are listed below, and additional providers can be configured later in the event settings. Events without paid tickets do not require a payment provider.
+                    {% endblocktrans %}
+                </p>
+                {% if form.payment_banktransfer__enabled %}
+                    {% bootstrap_field form.payment_banktransfer__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                    <div data-display-dependency="#id_payment_banktransfer__enabled">
+                        {% bootstrap_field form.payment_banktransfer_bank_details_type layout="control" %}
+                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_name layout="control" %}
+                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_iban layout="control" %}
+                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_bic layout="control" %}
+                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_bank layout="control" %}
+                        {% bootstrap_field form.payment_banktransfer_bank_details layout="control" %}
+                    </div>
+                {% endif %}
+                {% if form.payment_stripe__enabled %}
+                    {% bootstrap_field form.payment_stripe__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                    <div data-display-dependency="#id_payment_stripe__enabled">
+                        <div class="alert alert-info">
+                            {% blocktrans trimmed %}
+                                After the setup, please go to the Payment area and set up the Stripe connection.
+                            {% endblocktrans %}
+                        </div>
+                    </div>
+                {% endif %}
+                <p>&nbsp;</p>
+            </div>
+        </fieldset>
         <fieldset class="quick-setup-step">
             <div class="quick-icon">
                 <span class="fa fa-fw fa-user text-muted"></span>
@@ -149,44 +184,6 @@
                 {% bootstrap_field form.waiting_list_enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
                 {% bootstrap_field form.show_quota_left layout="control" label_class="sr-only" field_class="col-md-12" %}
                 {% bootstrap_field form.attendee_names_required layout="control" label_class="sr-only" field_class="col-md-12" %}
-                <p>&nbsp;</p>
-            </div>
-        </fieldset>
-        <fieldset class="quick-setup-step" id="quick-setup-step-payment">
-            <div class="quick-icon">
-                <span class="fa fa-fw fa-money text-muted"></span>
-            </div>
-            <div class="quick-content">
-                <legend>{% trans "Payment" %}</legend>
-                <p class="bigger">
-                    {% blocktrans trimmed %}
-                        eventyay supports a
-                        wide range of payment
-                            providers allowing you to choose the payment methods that fit your workflow best.
-                        Here are just two of them as examples, you can add more in the "Settings" part of your event.
-                    {% endblocktrans %}
-                </p>
-                {% if form.payment_banktransfer__enabled %}
-                    {% bootstrap_field form.payment_banktransfer__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
-                    <div data-display-dependency="#id_payment_banktransfer__enabled">
-                        {% bootstrap_field form.payment_banktransfer_bank_details_type layout="control" %}
-                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_name layout="control" %}
-                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_iban layout="control" %}
-                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_bic layout="control" %}
-                        {% bootstrap_field form.payment_banktransfer_bank_details_sepa_bank layout="control" %}
-                        {% bootstrap_field form.payment_banktransfer_bank_details layout="control" %}
-                    </div>
-                {% endif %}
-                {% if form.payment_stripe__enabled %}
-                    {% bootstrap_field form.payment_stripe__enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
-                    <div data-display-dependency="#id_payment_stripe__enabled">
-                        <div class="alert alert-info">
-                            {% blocktrans trimmed %}
-                                After the setup, please go to the Payment area and set up the Stripe connection.
-                            {% endblocktrans %}
-                        </div>
-                    </div>
-                {% endif %}
                 <p>&nbsp;</p>
             </div>
         </fieldset>
