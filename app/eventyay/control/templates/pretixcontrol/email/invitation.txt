@@ -1,11 +1,11 @@
 {% load i18n %}{% if is_registered_user|default:False %}{% blocktrans with url=url|safe organizer=organizer team=team %}Hello,
 
-You have been invited to the following event team:
+You have been added to the following event team:
 
 Organizer: {{ organizer }}
 Team: {{ team }}
 
-You have been added to this team. Click the following link to view your team dashboard:
+Click the following link to view your team dashboard:
 
 {{ url }}
 
