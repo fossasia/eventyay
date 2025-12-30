@@ -18,7 +18,6 @@ def send_team_invitation_email(
 ):
     """
     Send a team invitation email to a user.
-    
     Args:
         user: The user object being invited
         organizer_name: Name of the organizer
