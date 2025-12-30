@@ -511,7 +511,7 @@ class EventSettingsForm(SettingsForm):
     name_scheme = forms.ChoiceField(
         label=_('Name format'),
         help_text=_(
-            'This defines how pretix will ask for human names. Changing this after you already received '
+            'This defines how eventyay will ask for human names. Changing this after you already received '
             'orders might lead to unexpected behavior when sorting or changing names.'
         ),
         required=True,
@@ -1455,7 +1455,7 @@ class QuickSetupForm(I18nForm):
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
-            'bank statements to process the payments within pretix, or mark them as paid manually.'
+            'bank statements to process the payments within eventyay, or mark them as paid manually.'
         ),
         required=False,
     )
