@@ -14,14 +14,27 @@ from eventyay.cfp.forms.auth import RecoverForm, ResetForm
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import GenericLoginView, GenericResetView
 from eventyay.base.models import User
+from eventyay.base.auth import get_auth_backends
 
 
 class LoginView(GenericLoginView):
     template_name = "orga/auth/login.html"
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        backenddict = get_auth_backends()
+        backend = backenddict.get(self.request.GET.get('backend', 'native'), None)
+        if not backend and backenddict:
+            backend = list(backenddict.values())[0]
+        
+        backend.url = backend.authentication_url(self.request)
+        kwargs['backend'] = backend
+        kwargs['request'] = self.request
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["site_name"] = dict(settings.CONFIG.items("site")).get("name")
+        context["site_name"] = "Eventyay"
         return context
 
     @cached_property
