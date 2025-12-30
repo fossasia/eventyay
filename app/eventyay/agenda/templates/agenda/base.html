@@ -1,4 +1,4 @@
-{% extends "common/base.html" %}
+{% extends "common/base_public.html" %}
 
 {% load event_tags %}
 {% load staff_session %}
@@ -24,7 +24,7 @@
 {% endblock nav_link %}
 
 {% block header_tabs %}
-    {% include 'agenda/fragment_nav.html' %}
+    {% include "common/fragment_nav.html" with nav_context="agenda" show_online_video_link=True %}
 {% endblock header_tabs %}
 
 {% block content %}

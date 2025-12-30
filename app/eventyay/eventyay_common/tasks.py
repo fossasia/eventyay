@@ -53,8 +53,10 @@ def send_team_webhook(self, user_id, team):
 
     try:
         # Send the POST request with the payload and the headers
+        from django.urls import reverse
+        webhook_url = reverse('eventyay_common:webhook.team')
         response = requests.post(
-            urljoin(settings.TALK_HOSTNAME, 'webhook/team/'),
+            webhook_url,
             json=payload,
             headers=headers,
         )

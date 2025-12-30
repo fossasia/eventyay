@@ -40,7 +40,7 @@
             </p>
             {% if is_talk_event_created %}
                 <p>
-                    {% trans "Go to" %} <a href="{{ request.event.talk_dashboard_url }}">{% trans "Talks Dashboard" %}</a>
+                    {% trans "Go to" %} <a href='{% url "orga:event.dashboard" event=request.event.slug %}'>{% trans "Talks Dashboard" %}</a>
                 </p>
             {% else %}
                 <p>
