@@ -1773,14 +1773,14 @@ class QuickSetupView(FormView):
             event=self.request.event,
             initial=[
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Regular ticket')),
-                    'default_price': Decimal('35.00'),
-                    'quota': 100,
+                    'name': LazyI18nString.from_gettext(gettext('Standard Ticket')),
+                    'default_price': Decimal('49.00'),
+                    'quota': 200,
                 },
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Reduced ticket')),
-                    'default_price': Decimal('29.00'),
-                    'quota': 50,
+                    'name': LazyI18nString.from_gettext(gettext('Virtual Ticket')),
+                    'default_price': Decimal('0.00'),
+                    'quota': 500,
                 },
             ]
             if self.request.method != 'POST'
