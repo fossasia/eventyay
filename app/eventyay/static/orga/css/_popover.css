@@ -1,0 +1,153 @@
+/* Popover styles for user dropdown menu */
+.popover {
+    padding: 0;
+    max-width: 300px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1060;
+    background: white;
+    position: absolute !important;
+    top: 50px !important;
+}
+
+.popover-content {
+    position: relative;
+    padding: 5px 0;
+    min-width: 200px;
+    background: white;
+    max-height: calc(100vh - 60px);
+    overflow-x: visible;
+    overflow-y: visible;
+}
+
+.popover-content #submenu {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    left: auto;
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+    display: none;
+    min-width: 200px;
+    padding: 5px 0;
+    border-radius: 4px;
+    z-index: 1070;
+    background-clip: padding-box;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    background-color: white;
+}
+
+.popover-content .profile-menu {
+    color: #1a69a4;
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+.popover-content .profile-menu a {
+    color: #1a69a4 !important;
+    display: block;
+    padding: 8px 15px;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+}
+
+.popover-content .profile-menu a:hover {
+    color: #fff !important;
+    background-color: #1a69a4 !important;
+}
+
+.popover-content .profile-menu i {
+    margin-right: 10px;
+    width: 16px;
+    text-align: center;
+}
+
+.popover-content .profile-menu.separator {
+    height: 1px;
+    background-color: #e5e5e5;
+    margin: 5px 0;
+    padding: 0;
+}
+
+.popover-content .dashboard-item {
+    color: #1a69a4;
+    font-size: 16px;
+    font-weight: normal;
+    cursor: pointer;
+    position: relative;
+}
+
+.popover-content .dashboard-item .dashboard-content {
+    min-height: 50px;
+    padding: 15px;
+    border: none;
+    background: transparent;
+}
+
+.popover-content .dashboard-item i {
+    margin-right: 10px;
+    width: 16px;
+    text-align: center;
+}
+
+.popover-content .dashboard-item:hover {
+    color: #fff !important;
+    background-color: #1a69a4 !important;
+}
+
+.popover-content .dashboard-item:hover #submenu {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.popover-content .dashboard-item #submenu .submenu-item {
+    background-color: #fff;
+}
+
+.popover-content .dashboard-item #submenu .submenu-item a {
+    color: #1a69a4 !important;
+    display: block;
+    padding: 8px 15px;
+    text-decoration: none;
+    border: none;
+    background: transparent;
+}
+
+.popover-content .dashboard-item #submenu .submenu-item:hover {
+    background-color: #1a69a4 !important;
+}
+
+.popover-content .dashboard-item #submenu .submenu-item:hover a {
+    color: #fff !important;
+}
+
+/* Override btn styling inside popover */
+.popover-content .btn,
+.popover-content .btn-outline-success {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 8px 15px;
+    border-radius: 0;
+}
+
+.popover-content .btn:hover,
+.popover-content .btn-outline-success:hover {
+    background-color: #1a69a4 !important;
+    color: #fff !important;
+}
+
+/* Arrow styling */
+.popover.bottom>.arrow,
+.popover.bottom>.arrow::after {
+    border-bottom-color: white;
+}
