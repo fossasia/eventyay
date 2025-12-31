@@ -2433,9 +2433,12 @@ Your {event} team"""
             label=_('Validity of gift card codes in years'),
             help_text=_(
                 'If you set a number here, gift cards will by default expire at the end of the year after this '
-                'many years. If you keep it empty, gift cards do not have an explicit expiry date.'
+                'many years. For example, 0 means expiry at the end of the current year, 1 means end of next year, etc. '
+                'If you keep it empty, gift cards do not have an explicit expiry date.'
             ),
+            min_value=0,
         ),
+        'serializer_kwargs': dict(validators=[MinValueValidator(0)]),
     },
     'privacy_policy': {
         'default': None,
