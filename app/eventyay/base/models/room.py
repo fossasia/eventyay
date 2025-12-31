@@ -273,6 +273,22 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
         """
         return f'{self.id}-{slugify(self.name)}'
 
+    def get_current_stream(self, at_time=None):
+        """Get the currently active stream schedule for this room."""
+        from django.utils.timezone import now
+
+        from .stream_schedule import StreamSchedule
+
+        at_time = at_time or now()
+
+        return (
+            StreamSchedule.objects.filter(
+                room=self, start_time__lte=at_time, end_time__gt=at_time
+            )
+            .order_by('start_time')
+            .first()
+        )
+
 
 class Reaction(models.Model):
     room = models.ForeignKey("Room", related_name="reactions", on_delete=models.CASCADE)
