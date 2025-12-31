@@ -55,7 +55,7 @@ def test_api_list(env, client):
         ).content.decode('utf-8')
     )
 
-    # ✅ robust assertions (no ordering / no full equality)
+    # robust assertions (no ordering / no full equality)
     assert 'results' in r
     assert len(r['results']) == 1
 
@@ -78,7 +78,7 @@ def test_api_list(env, client):
         ).content.decode('utf-8')
     )
 
-    # ✅ robust badge item checks
+    # robust badge item checks
     assert 'results' in r
     assert len(r['results']) == 1
 
