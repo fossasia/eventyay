@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0002_alter_event_header_image_alter_event_locale_and_more'),
+        ('base', '0004_update_team_permission_labels'),
     ]
 
     operations = [
