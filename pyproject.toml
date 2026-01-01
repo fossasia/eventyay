@@ -44,7 +44,7 @@ dependencies = [
         "celery==5.6.*",
         'kombu==5.6.*',
         'django-statici18n==2.5.*',
-        'css-inline==0.18.*',
+        'css-inline==0.19.*',
         'BeautifulSoup4==4.14.*',
         'lxml',
         'markdownify>=1.2.0',
