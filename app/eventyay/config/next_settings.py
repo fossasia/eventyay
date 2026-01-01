@@ -995,11 +995,11 @@ COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
     ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
     # This is to help Django-Compressor minify 'module' type JS files.
-    # The actual job is done by esbuild. Note that due to the limitation of
-    # Django-Compressor + esbuild integration, we cannot use "import" syntax in the JS code
-    # (esbuild cannot resolve the import path).
-    # We don't need to specify {infile} {outfile} because both esbuild and Django-Compressor support stdin/stdout.
-    ('module', 'npx esbuild --minify --loader=js --platform=browser'),
+    # The actual job is done by esbuild. In the JS code, we can use "import" statements,
+    # but only with relative import paths (like `import Alpine from '../alpinejs.mjs'`).
+    # We don't need to specify {outfile} because both esbuild and Django-Compressor support stdin/stdout.
+    # We still specify {infile} to enable resolving "import" paths.
+    ('module', 'npx esbuild {infile} --bundle --minify --platform=browser'),
 )
 # We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
 COMPRESS_ENABLED = True
