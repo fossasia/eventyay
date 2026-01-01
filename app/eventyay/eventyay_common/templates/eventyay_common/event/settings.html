@@ -43,6 +43,7 @@
     {% csrf_token %}
     {% bootstrap_form_errors form %}
     {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
     <div class="tabbed-form">
         <fieldset>
             <legend>{% trans "Basics" %}</legend>
@@ -58,6 +59,7 @@
             {% bootstrap_field sform.contact_mail layout="control" %}
             {% bootstrap_field sform.imprint_url layout="control" %}
             {% bootstrap_field form.is_public layout="control" %}
+            {% comment %}
             <div class="setting-part">
                 <div class="form-group setting-form">
                     <label class="col-md-3 control-label">{% trans "Tickets system" %}</label>
@@ -122,6 +124,7 @@
                     </div>
                 </div>
             </div>
+            {% endcomment %}
         </fieldset>
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
@@ -160,6 +163,7 @@
         </button>
     </div>
 
+    {% comment %}
     <div class="modal popup-modal" id="alert-modal-enable-talk" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -228,5 +232,6 @@
             </div>
         </div>
     </div>
+    {% endcomment %}
 </form>
 {% endblock %}
