@@ -1107,7 +1107,6 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
-        # We need it to debug permission issues.
         'rules': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
@@ -1127,13 +1126,9 @@ LOGGING = {
 # --- Django allauth settings for social login ---
 
 # NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
-# ACCOUNT_LOGIN_METHODS = {'email'}
-# ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 
@@ -1141,6 +1136,11 @@ SOCIALACCOUNT_ADAPTER = 'eventyay.plugins.socialauth.adapter.CustomSocialAccount
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    # We need this to tell django-allauth that user email address is verified and not make password unusable.
+    'mediawiki': {'VERIFIED_EMAIL': True},
+}
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'
 OAUTH2_PROVIDER_GRANT_MODEL = 'api.OAuthGrant'
