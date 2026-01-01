@@ -955,6 +955,7 @@ the eventyay team"""
         include_admin_info=False,
         trait_badges_map=None,
         include_client_state=False,
+        include_personal_data=False,
     ):
         """Serialize user for public display in video/event context"""
         # Important: If this is updated, eventyay.base.services.user.get_public_users also needs to be updated!
@@ -986,6 +987,8 @@ the eventyay team"""
             d["token_id"] = self.token_id
         if include_client_state:
             d["client_state"] = self.client_state
+        if include_personal_data:
+            d["wikimedia_username"] = self.wikimedia_username
         return d
 
     @property

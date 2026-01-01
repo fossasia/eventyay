@@ -137,6 +137,11 @@ storage_patterns = [
     path('storage/', include('eventyay.storage.urls', namespace='storage')),
 ]
 
+# Add live URLs for video/BBB features (CSS endpoints, etc.)
+live_patterns = [
+    path('', include(('eventyay.features.live.urls', 'live'))),
+]
+
 unified_event_patterns = [
     path(
         '<orgslug:organizer>/<slug:event>/',
@@ -176,6 +181,7 @@ anonymous_invite_patterns = [
 urlpatterns = (
     common_patterns
     + storage_patterns
+    + live_patterns
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
     # Anonymous invite short token redirects (before presale to avoid slug conflict)
