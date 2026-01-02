@@ -1,6 +1,4 @@
 import logging
-from configparser import RawConfigParser
-from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -30,13 +28,11 @@ def orga_events(request):
     # Extract site specific values from settings.CONFIG.items('site') and add them to the context
     # This is a bit of a hack, but it's the only way to get the site specific values into the context
     # rather than using the settings object directly in the template
-    config = cast(RawConfigParser, settings.TALK_CONFIG)
-    site_config = dict(config.items('site'))
-    context['site_config'] = site_config
+    context['SITE_NAME'] = settings.INSTANCE_NAME
     context['base_path'] = settings.BASE_PATH
     context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
     # Login button label
-    key = site_config.get('call_for_speaker_login_button_label', 'default')
+    key = settings.CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL
     button_label = CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.get(key)
     if not button_label:
         logger.warning('%s does not exist in CALL_FOR_SPEAKER_LOGIN_BTN_LABELS', key)

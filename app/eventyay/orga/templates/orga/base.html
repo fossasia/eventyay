@@ -7,17 +7,17 @@
 {% load rules %}
 {% load static %}
 {% load vite %}
-{% blocktranslate trimmed with site_name=site_config.name asvar logo_alt_text %}The {{ site_name }} logo{% endblocktranslate %}
+{% blocktranslate trimmed %}The {{ site_name }} logo{% endblocktranslate %}
 
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block title %}{% block extra_title %}{% endblock %}{% if request.event %}{{ request.event.name }} :: {% endif %}{% endblock %} {{ site_config.name }}</title>
-        <meta name="title" content="{% block meta_title %}{% endblock %} {% if request.event %} - {{ request.event.name }} {% endif %} {{ site_config.name }}">
-        <meta name="description" content="{% block meta_description %}{% if request.event %}Schedule, talks and talk submissions for {{ request.event.name }}{% else %}Talks and talk submissions by {{ site_config.name }} {% endif %}{% endblock %}">
-        <meta name="application-name" content={{ site_config.name }}>
-        <meta name="generator" content={{ site_config.name }}>
+        <title>{% block title %}{% block extra_title %}{% endblock %}{% if request.event %}{{ request.event.name }} :: {% endif %}{% endblock %} {{ site_name }}</title>
+        <meta name="title" content="{% block meta_title %}{% endblock %} {% if request.event %} - {{ request.event.name }} {% endif %} {{ site_name }}">
+        <meta name="description" content="{% block meta_description %}{% if request.event %}Schedule, talks and talk submissions for {{ request.event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
+        <meta name="application-name" content={{ site_name }}>
+        <meta name="generator" content={{ site_name }}>
         <meta name="keywords" content="{% if request.event %}{{ request.event.name }}, {{ request.event.slug }}, {% if request.event.date_from %}{{ request.event.date_from.year }}, {% endif %}{% endif %}schedule, talks, cfp, call for papers, conference, submissions, organizer">
         <meta name="robots" content="nofollow">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -83,8 +83,8 @@
                 </li>
             </ul>
             <a class="navbar-brand" href="{{ tickets_common }}">
-                <img loading="lazy" src="{% static 'common/img/icons/icon.svg' %}" alt="{{ logo_alt_text }}">
-                {{ site_config.name }}
+                <img loading="lazy" src="{% static 'common/img/icons/icon.svg' %}" alt="{{ site_name }}">
+                {{ site_name }}
             </a>
             <div class="navbar-collapse" id="navbartoggle">
                 <ul class="navbar-nav mr-auto flip">
