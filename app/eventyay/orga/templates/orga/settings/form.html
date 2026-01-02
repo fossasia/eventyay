@@ -65,40 +65,6 @@
             <fieldset>
                 <legend id="other-settings">{% translate "Other settings" %}</legend>
                 {{ form.meta_noindex.as_field_group }}
-
-                <div class="form-group hide-optional">
-                    <label class="col-md-3 control-label">
-                        {% translate "Header links" %}<br>
-                        <span class="optional">{% translate "Optional" %}</span>
-                    </label>
-                    <div class="col-md-9">
-                        <p class="mt-1 mb-2 text-muted">
-                            {% blocktranslate trimmed %}
-                                These links will be shown at the top of all your schedule-related pages, e.g.
-                                the schedule itself, speaker pages, session pages, etc.
-                                You could for example link to your home page, your registration page, or your
-                                livestream here.
-                            {% endblocktranslate %}
-                        </p>
-                        {% include "orga/includes/event_links_formset.html" with formset=header_links_formset %}
-                    </div>
-                </div>
-
-                <div class="form-group hide-optional">
-                    <label class="col-md-3 control-label">
-                        {% translate "Footer links" %}<br>
-                        <span class="optional">{% translate "Optional" %}</span>
-                    </label>
-                    <div class="col-md-9">
-                        <p class="mt-1 mb-2 text-muted">
-                            {% blocktranslate trimmed %}
-                                These links will be shown in the footer of all your public pages. You could
-                                for example link your terms of service, imprint, or privacy policy here.
-                            {% endblocktranslate %}
-                        </p>
-                        {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
-                    </div>
-                </div>
             </fieldset>
         </section>
         <section role="tabpanel" id="tabpanel-texts" aria-labelledby="tab-texts" tabindex="0" aria-hidden="true">
