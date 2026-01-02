@@ -1,13 +1,17 @@
 import importlib.util
 import inspect
 import json
+import datetime
+import logging
 import mimetypes
 import os
 import re
+from urllib.parse import urlparse, urlunparse
 from collections import OrderedDict
 from importlib import import_module
 from decimal import Decimal
 
+import jwt
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -21,6 +25,7 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
@@ -83,13 +88,13 @@ from eventyay.presale.views import (
 )
 from eventyay.presale.views.robots import NoSearchIndexViewMixin
 
+from eventyay.base.models.checkin import CheckinList
+from eventyay.base.services.checkin import perform_checkin
+from eventyay.eventyay_common.utils import encode_email
 
-package_name = 'pretix_venueless'
 
-if importlib.util.find_spec(package_name) is not None:
-    pretix_venueless = import_module(package_name)
-else:
-    pretix_venueless = None
+logger = logging.getLogger(__name__)
+
 
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
@@ -134,12 +139,119 @@ class OrderPositionDetailMixin(NoSearchIndexViewMixin):
                 return p
             else:
                 return None
-        else:
-            # Do a comparison as well to harden timing attacks
-            if 'abcdefghijklmnopq'.lower() == self.kwargs['secret'].lower():
-                return None
-            else:
-                return None
+
+
+@method_decorator(xframe_options_exempt, 'dispatch')
+class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
+    """Generate a video access token for a specific order position and redirect to the Video SPA.
+
+    This used to live in the old ticket-video plugin; video is now integrated.
+    """
+
+    def post(self, request, *args, **kwargs):
+        if not self.position:
+            raise Http404(_('Unknown order code or not authorized to access this order.'))
+
+        forbidden = (
+            (self.order.status != Order.STATUS_PAID and not (self.order.status == Order.STATUS_PENDING and request.event.settings.venueless_allow_pending))
+            or self.position.canceled
+            or not self.position.product.admission
+        )
+        if forbidden:
+            raise PermissionDenied()
+
+        if request.event.settings.venueless_start and request.event.settings.venueless_start.datetime(
+            self.position.subevent or request.event
+        ) > now():
+            raise PermissionDenied()
+
+        iat = datetime.datetime.utcnow()
+        exp = iat + datetime.timedelta(days=30)
+        profile = {'fields': {}}
+        if self.position.attendee_name:
+            profile['display_name'] = self.position.attendee_name
+        if self.position.company:
+            profile['fields']['company'] = self.position.company
+
+        for a in self.position.answers.filter(question_id__in=request.event.settings.venueless_questions).select_related('question'):
+            profile['fields'][a.question.identifier] = a.answer
+
+        uid_token = encode_email(self.order.email) if self.order.email else self.position.pseudonymization_id
+
+        payload = {
+            'iss': request.event.settings.venueless_issuer,
+            'aud': request.event.settings.venueless_audience,
+            'exp': exp,
+            'iat': iat,
+            'uid': uid_token,
+            'profile': profile,
+            'traits': list(
+                {
+                    'attendee',
+                    'eventyay-video-event-{}'.format(request.event.slug),
+                    'eventyay-video-subevent-{}'.format(self.position.subevent_id),
+                    'eventyay-video-product-{}'.format(self.position.product_id),
+                    'eventyay-video-variation-{}'.format(self.position.variation_id),
+                    'eventyay-video-category-{}'.format(self.position.product.category_id),
+                }
+                | {'eventyay-video-product-{}'.format(p.product_id) for p in self.position.addons.all()}
+                | {'eventyay-video-variation-{}'.format(p.variation_id) for p in self.position.addons.all() if p.variation_id}
+                | {
+                    'eventyay-video-category-{}'.format(p.product.category_id)
+                    for p in self.position.addons.all()
+                    if p.product.category_id
+                }
+            ),
+        }
+
+        token = jwt.encode(payload, request.event.settings.venueless_secret, algorithm='HS256')
+
+        cl = CheckinList.objects.get_or_create(
+            event=request.event,
+            subevent=self.position.subevent,
+            name=gettext('Eventyay Video'),
+            defaults={
+                'all_products': True,
+                'include_pending': request.event.settings.venueless_allow_pending,
+            },
+        )[0]
+        try:
+            perform_checkin(self.position, cl, {})
+        except Exception:
+            logger.exception(
+                'Error during Eventyay Video check-in',
+                extra={
+                    'event_id': getattr(request.event, 'id', None),
+                    'order_code': getattr(getattr(self, 'order', None), 'code', None),
+                    'position_id': getattr(self.position, 'id', None),
+                },
+            )
+
+        if kwargs.get('view_schedule') == 'True':
+            redirect_url = request.event.settings.venueless_talk_schedule_url
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
+
+        baseurl = request.event.settings.venueless_url
+        if '{token}' in baseurl:
+            redirect_url = baseurl.format(token=token)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
+
+        # Ensure the URL includes the event identifier so VideoSPAView has event context.
+        video_path = reverse(
+            'video.spa',
+            kwargs={
+                'organizer': request.event.organizer.slug,
+                'event': request.event.slug,
+            },
+        )
+        parsed = urlparse(str(baseurl))
+        baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
+
+        redirect_url = '{}/#token={}'.format(baseurl, token).replace('//#', '/#')
+        logger.info('Redirecting to %s...', redirect_url)
+        return redirect(redirect_url)
 
     @cached_property
     def order(self):
@@ -311,16 +423,12 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
         ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
 
-        ctx['is_video_plugin_enabled'] = False
-        if (
-            getattr(
-                getattr(getattr(pretix_venueless, 'apps', None), 'PluginApp', None),
-                'name',
-                None,
-            )
-            in self.request.event.get_plugins()
-        ):
-            ctx['is_video_plugin_enabled'] = True
+        ctx['is_video_plugin_enabled'] = bool(
+            self.request.event.settings.venueless_url
+            and self.request.event.settings.venueless_issuer
+            and self.request.event.settings.venueless_audience
+            and self.request.event.settings.venueless_secret
+        )
 
         return ctx
 
