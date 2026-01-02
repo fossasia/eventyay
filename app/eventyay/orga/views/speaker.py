@@ -1,10 +1,14 @@
+from datetime import timedelta
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
@@ -23,6 +27,10 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     Sortable,
 )
+from eventyay.orga.forms.importers import CSVImportForm
+from eventyay.base.models import CachedFile
+from eventyay.base.services.orderimport import parse_csv
+from eventyay.orga.forms.importers import CSVImportForm, SpeakerImportProcessForm
 from eventyay.orga.forms.speaker import SpeakerExportForm
 from eventyay.person.forms import (
     SpeakerFilterForm,
@@ -287,3 +295,110 @@ class SpeakerExport(EventPermissionRequired, FormView):
             messages.success(self.request, _('No data to be exported'))
             return redirect(self.request.path)
         return result
+
+
+class SpeakerImportStart(EventPermissionRequired, FormView):
+    template_name = 'orga/speaker/import.html'
+    permission_required = 'base.update_event'
+    form_class = CSVImportForm
+
+    def form_valid(self, form):
+        uploaded = form.cleaned_data['file']
+        cached_file = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=uploaded.name or 'import.csv',
+            type='text/csv',
+        )
+        cached_file.file.save(uploaded.name or 'import.csv', uploaded)
+        return redirect(
+            reverse(
+                'orga:speakers.import.process',
+                kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+            )
+        )
+
+    def get_success_url(self):
+        return self.request.event.orga_urls.speakers_import
+
+
+class SpeakerImportProcess(EventPermissionRequired, FormView):
+    template_name = 'orga/speaker/import_process.html'
+    permission_required = 'base.update_event'
+    form_class = SpeakerImportProcessForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.parsed_reader:
+            self.cached_file.delete()
+            messages.error(self.request, _("We've been unable to parse the uploaded file as a CSV file."))
+            return redirect(self.get_start_url())
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_start_url(self):
+        return self.request.event.orga_urls.speakers_import
+
+    @cached_property
+    def cached_file(self):
+        return get_object_or_404(CachedFile, pk=self.kwargs.get('file'), filename__endswith='.csv')
+
+    @cached_property
+    def parsed_reader(self):
+        self.cached_file.file.open('rb')
+        return parse_csv(self.cached_file.file, 1024 * 1024)
+
+    @cached_property
+    def _preview(self):
+        if not self.parsed_reader:
+            return [], False
+        rows = []
+        has_more = False
+        for idx, row in enumerate(self.parsed_reader):
+            if idx < 3:
+                rows.append(row)
+            else:
+                has_more = True
+                break
+        return rows, has_more
+
+    @property
+    def sample_rows(self):
+        return self._preview[0]
+
+    @property
+    def has_additional_rows(self):
+        return self._preview[1]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        event = self.request.event
+        initial = getattr(event.settings, 'speaker_import_settings', None) or {}
+        kwargs.update(
+            {
+                'headers': self.parsed_reader.fieldnames if self.parsed_reader else [],
+                'event': event,
+                'initial': initial,
+            }
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        self.request.event.settings.speaker_import_settings = form.cleaned_data
+        self.cached_file.delete()
+        messages.info(
+            self.request,
+            _('Field mapping saved. Import processing will be added soon, please re-run once available.'),
+        )
+        return redirect(self.get_start_url())
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx.update(
+            {
+                'file': self.cached_file,
+                'headers': self.parsed_reader.fieldnames if self.parsed_reader else [],
+                'sample_rows': self.sample_rows,
+                'has_more_rows': self.has_additional_rows,
+                'header_count': len(self.parsed_reader.fieldnames) if self.parsed_reader and self.parsed_reader.fieldnames else 0,
+            }
+        )
+        return ctx
