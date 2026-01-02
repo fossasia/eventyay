@@ -16,6 +16,7 @@ from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.forms.filter import OrganizerFilterForm
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
@@ -499,6 +500,22 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             return self._render_members_error(team.pk, invite_form)
 
         team.members.add(user)
+
+        send_team_invitation_email(
+            user=user,
+            organizer_name=self.request.organizer.name,
+            team_name=team.name,
+            url=build_global_uri(
+                'eventyay_common:organizer.team',
+                kwargs={
+                    'organizer': self.request.organizer.slug,
+                    'team': team.pk,
+                },
+            ),
+            locale=self.request.LANGUAGE_CODE,
+            is_registered_user=True,
+        )
+
         team.log_action(
             'eventyay.team.member.added',
             user=self.request.user,
