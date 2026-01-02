@@ -28,7 +28,7 @@ def orga_events(request):
     # Extract site specific values from settings.CONFIG.items('site') and add them to the context
     # This is a bit of a hack, but it's the only way to get the site specific values into the context
     # rather than using the settings object directly in the template
-    context['SITE_NAME'] = settings.INSTANCE_NAME
+    context['site_name'] = settings.INSTANCE_NAME
     context['base_path'] = settings.BASE_PATH
     context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
     # Login button label
