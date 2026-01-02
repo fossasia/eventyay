@@ -1,8 +1,8 @@
 import binascii
 import json
+import logging
 import os
 import uuid
-import logging
 from datetime import timedelta
 from hashlib import md5
 from pathlib import Path
@@ -18,9 +18,8 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
-from django.db.models import Q, JSONField
+from django.db.models import JSONField, Q
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.crypto import get_random_string, salted_hmac
