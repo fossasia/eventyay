@@ -45,6 +45,7 @@ from eventyay.eventyay_common.utils import (
     generate_token,
 )
 from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
+from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
 
@@ -486,17 +487,46 @@ class VideoAccessAuthenticator(View):
         @param kwargs: keyword arguments
         @return: redirect to the video system
         """
-        # Check if the organizer has permission for the event
-        if not self.request.user.has_event_permission(
-            self.request.organizer, self.request.event, 'can_change_event_settings', request=self.request
-        ):
-            raise PermissionDenied(_('You do not have permission to access this video system.'))
+        has_staff_video_access = self._has_staff_video_access()
+        video_traits = self._collect_user_video_traits()
 
         # Auto-setup video configuration if missing
         self._ensure_video_configuration()
 
         # Generate token and include in url to video system
-        return redirect(self.generate_token_url(request))
+        token_traits = self._build_token_traits(has_staff_video_access, video_traits)
+        return redirect(self.generate_token_url(request, token_traits))
+
+    def _has_staff_video_access(self) -> bool:
+        request = self.request
+        return request.user.has_active_staff_session(request.session.session_key)
+
+    def _collect_user_video_traits(self):
+        permission_set = self.request.user.get_event_permission_set(self.request.organizer, self.request.event)
+        return collect_user_video_traits(self.request.event.slug, permission_set)
+
+    def _build_token_traits(self, has_staff_video_access: bool, video_traits):
+        """
+        Build the list of traits to include in the JWT token.
+        - All users get 'attendee' trait for basic access
+        - Users get specific video permission traits based on their team permissions
+        - Only staff users (superuser, is_staff, or active staff session) get 'admin' trait
+        """
+        traits = ['attendee']
+        traits.extend(video_traits)
+        # Only add 'admin' trait for staff users - this grants full admin access
+        # Regular organizers should NOT get 'admin' trait, only specific video permission traits
+        if has_staff_video_access:
+            organizer_trait = f'eventyay-video-event-{self.request.event.slug}-organizer'
+            traits.extend(['admin', organizer_trait])
+        # Deduplicate while preserving order
+        seen = set()
+        deduped_traits = []
+        for trait in traits:
+            if trait and trait not in seen:
+                seen.add(trait)
+                deduped_traits.append(trait)
+        return deduped_traits
 
     def _ensure_video_configuration(self):
         """
@@ -574,7 +604,7 @@ class VideoAccessAuthenticator(View):
             event.plugins = ','.join(current_plugins)
             event.save()
 
-    def generate_token_url(self, request):
+    def generate_token_url(self, request, traits):
         uid_token = encode_email(request.user.email)
         iat = datetime.now(tz.utc)
         exp = iat + dt.timedelta(days=1)
@@ -584,12 +614,7 @@ class VideoAccessAuthenticator(View):
             'exp': exp,
             'iat': iat,
             'uid': uid_token,
-            'traits': list(
-                {
-                    'eventyay-video-event-{}-organizer'.format(request.event.slug),
-                    'admin',
-                }
-            ),
+            'traits': traits,
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = self.request.event.settings.venueless_url
