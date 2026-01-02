@@ -104,14 +104,28 @@ export default {
 	},
 	async created() {
 		this.activeStep = this.steps[0]
-		this.profile = Object.assign({
+		// Determine default display name:
+		// 1. Use existing saved display_name if available (even if empty string)
+		// 2. Otherwise, use wikimedia_username if available
+		// 3. Otherwise, leave empty
+		let defaultDisplayName = ''
+		if (this.user.profile?.display_name != null) {
+			defaultDisplayName = this.user.profile.display_name
+		} else if (this.user.wikimedia_username) {
+			defaultDisplayName = this.user.wikimedia_username
+		}
+
+		// Build profile object, preserving computed display_name
+		this.profile = {
 			greeted: true,
-			display_name: '',
-			avatar: {
+			avatar: this.user.profile?.avatar || {
 				identicon: this.user.id
 			},
-			fields: {}
-		}, this.user.profile)
+			fields: this.user.profile?.fields || {},
+			...this.user.profile,
+			display_name: defaultDisplayName
+		}
+
 		// assume that when avatar url is set the social connection happened and skip first step
 		if (this.activeStep === 'connectSocial' && this.profile.avatar.url) this.activeStep = this.nextStep
 	},

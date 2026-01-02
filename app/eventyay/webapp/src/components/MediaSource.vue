@@ -21,6 +21,7 @@ import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 import { isEqual } from 'lodash'
 import api from 'lib/api'
+import { normalizeYoutubeVideoId } from 'lib/validators'
 import JanusCall from 'components/JanusCall'
 import JanusChannelCall from 'components/JanusChannelCall'
 import Livestream from 'components/Livestream'
@@ -157,7 +158,13 @@ async function initializeIframe(mute) {
 			}
 		case 'livestream.youtube': {
 			isYouTube = true
-			const ytid = module.value.config.ytid
+			// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
+			const ytid = normalizeYoutubeVideoId(module.value.config.ytid)
+			// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
+			if (!ytid) {
+				iframeError.value = new Error('Invalid YouTube video ID')
+				break
+			}
 			const config = module.value.config
 			// Smart muting logic to balance autoplay and user control:
 			// - Always mute if already muted (e.g., for language translation)

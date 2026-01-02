@@ -34,7 +34,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
     validate_event_settings,
 )
-from eventyay.common.forms.fields import ColorField, ImageField
+from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
@@ -347,11 +347,6 @@ class EventWizardCopyForm(forms.Form):
 
 
 class EventWizardDisplayForm(forms.Form):
-    primary_color = ColorField(
-        label=Event._meta.get_field('primary_color').verbose_name,
-        help_text=Event._meta.get_field('primary_color').help_text,
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -516,7 +511,7 @@ class EventSettingsForm(SettingsForm):
     name_scheme = forms.ChoiceField(
         label=_('Name format'),
         help_text=_(
-            'This defines how pretix will ask for human names. Changing this after you already received '
+            'This defines how eventyay will ask for human names. Changing this after you already received '
             'orders might lead to unexpected behavior when sorting or changing names.'
         ),
         required=True,
@@ -1461,7 +1456,7 @@ class QuickSetupForm(I18nForm):
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
-            'bank statements to process the payments within pretix, or mark them as paid manually.'
+            'bank statements to process the payments within eventyay, or mark them as paid manually.'
         ),
         required=False,
     )

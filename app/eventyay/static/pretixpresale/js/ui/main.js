@@ -252,7 +252,7 @@ $(function () {
     var update_cart_form = function () {
         var is_enabled = $(".product-row input[type=checkbox]:checked, .variations input[type=checkbox]:checked, .product-row input[type=radio]:checked, .variations input[type=radio]:checked").length;
         if (!is_enabled) {
-            $(".input-item-count").each(function () {
+            $(".input-product-count").each(function () {
                 if ($(this).val() && $(this).val() !== "0") {
                     is_enabled = true;
                 }
@@ -274,7 +274,7 @@ $(function () {
         }
     };
     update_cart_form();
-    $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-item-count, .input-seat-selection")
+    $(".product-row input[type=checkbox], .variations input[type=checkbox], .product-row input[type=radio], .variations input[type=radio], .input-product-count, .input-seat-selection")
         .on("change mouseup keyup", update_cart_form);
 
     $(".table-calendar td.has-events").click(function () {
@@ -432,13 +432,13 @@ $(function () {
 
     var local_tz = moment.tz.guess()
     $("span[data-timezone], small[data-timezone]").each(function() {
-        var t = moment.tz($(this).attr("data-time"), $(this).attr("data-timezone"))
-        var tz = moment.tz.zone($(this).attr("data-timezone"))
+        var tzName = $(this).attr("data-timezone")
+        var t = moment.tz($(this).attr("data-time"), tzName)
 
         $(this).tooltip({
-            'title': gettext("Time zone:") + " " + tz.abbr(t)
+            'title': gettext("Time zone:") + " " + tzName
         });
-        if (t.tz(tz.name).format() !== t.tz(local_tz).format()) {
+        if (t.tz(tzName).format() !== t.tz(local_tz).format()) {
             var $add = $("<span>")
             $add.append($("<span>").addClass("fa fa-globe"))
             if ($(this).is("[data-time-short]")) {
@@ -446,7 +446,7 @@ $(function () {
             } else {
                 $add.addClass("text-muted")
                 $add.append(" " + gettext("Your local time:") + " ")
-                if (t.tz(tz.name).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
+                if (t.tz(tzName).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
                     $add.append(t.tz(local_tz).format($("body").attr("data-datetimeformat")))
                 } else {
                     $add.append(t.tz(local_tz).format($("body").attr("data-timeformat")))
@@ -454,7 +454,7 @@ $(function () {
             }
             $add.insertAfter($(this));
             $add.tooltip({
-                'title': gettext("Time zone:") + " " + moment.tz.zone(local_tz).abbr(t),
+                'title': gettext("Time zone:") + " " + local_tz,
             });
         }
     });
