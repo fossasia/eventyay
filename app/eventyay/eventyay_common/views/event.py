@@ -44,6 +44,7 @@ from eventyay.eventyay_common.utils import (
     encode_email,
     generate_token,
 )
+from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
 
@@ -332,9 +333,29 @@ class EventUpdate(
             files=self.request.FILES if self.request.method == 'POST' else None,
         )
 
+    @cached_property
+    def header_links_formset(self):
+        return EventHeaderLinkFormset(
+            self.request.POST if self.request.method == 'POST' else None,
+            event=self.object,
+            prefix='header-links',
+            instance=self.object,
+        )
+
+    @cached_property
+    def footer_links_formset(self):
+        return EventFooterLinkFormset(
+            self.request.POST if self.request.method == 'POST' else None,
+            event=self.object,
+            prefix='footer-links',
+            instance=self.object,
+        )
+
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['header_links_formset'] = self.header_links_formset
+        context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_talk_event_created'] = False
         if (
@@ -349,6 +370,8 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        self.header_links_formset.save()
+        self.footer_links_formset.save()
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
             content_locales=self.sform.cleaned_data.get('content_locales'),
@@ -424,9 +447,15 @@ class EventUpdate(
             return redirect(self.get_success_url())
 
         form = self.get_form()
-        if form.changed_data or self.sform.changed_data:
+        has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
+        if form.changed_data or self.sform.changed_data or has_formset_changes:
             form.instance.sales_channels = ['web']
-            if form.is_valid() and self.sform.is_valid():
+            if (
+                form.is_valid()
+                and self.sform.is_valid()
+                and self.header_links_formset.is_valid()
+                and self.footer_links_formset.is_valid()
+            ):
                 zone = timezone(self.sform.cleaned_data['timezone'])
                 event = form.instance
                 event.date_from = self.reset_timezone(zone, event.date_from)
