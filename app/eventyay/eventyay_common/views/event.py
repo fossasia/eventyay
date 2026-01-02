@@ -267,6 +267,9 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
             event.settings.set('content_locales', content_locales)
+            # Persist timezone on the event model as well so downstream consumers see the updated value
+            event.timezone = basics_data['timezone']
+            event.save(update_fields=['timezone'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -349,6 +352,10 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        # Keep event model timezone in sync with settings
+        if 'timezone' in self.sform.cleaned_data:
+            self.object.timezone = self.sform.cleaned_data['timezone']
+            self.object.save(update_fields=['timezone'])
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
             content_locales=self.sform.cleaned_data.get('content_locales'),
