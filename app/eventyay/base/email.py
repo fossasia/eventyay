@@ -786,7 +786,12 @@ def base_placeholders(sender: Event, **kwargs):
             _('John Doe'),
         ),
     ]
-    if 'pretix_venueless' in sender.get_plugins():
+    if (
+        sender.settings.venueless_url
+        and sender.settings.venueless_issuer
+        and sender.settings.venueless_audience
+        and sender.settings.venueless_secret
+    ):
         ph.append(
             SimpleFunctionalMailTextPlaceholder(
                 'join_online_event',
@@ -796,7 +801,7 @@ def base_placeholders(sender: Event, **kwargs):
             ),
         )
     else:
-        logger.info('pretix_venueless plugin not found, skipping join_online_event placeholder')
+        logger.info('Video configuration missing, skipping join_online_event placeholder')
     name_scheme = PERSON_NAME_SCHEMES[sender.settings.name_scheme]
     for f, l, w in name_scheme['fields']:
         if f == 'full_name':

@@ -74,13 +74,6 @@ from . import (
     iframe_entry_view_wrapper,
 )
 
-package_name = 'pretix_venueless'
-
-if importlib.util.find_spec(package_name) is not None:
-    pretix_venueless = import_module(package_name)
-else:
-    pretix_venueless = None
-
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 logger = logging.getLogger(__name__)
@@ -598,17 +591,12 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         context['event_name'] = event_name
 
-        context['is_video_plugin_enabled'] = False
-
-        if (
-            getattr(
-                getattr(getattr(pretix_venueless, 'apps', None), 'PluginApp', None),
-                'name',
-                None,
-            )
-            in self.request.event.get_plugins()
-        ):
-            context['is_video_plugin_enabled'] = True
+        context['is_video_plugin_enabled'] = bool(
+            self.request.event.settings.venueless_url
+            and self.request.event.settings.venueless_issuer
+            and self.request.event.settings.venueless_audience
+            and self.request.event.settings.venueless_secret
+        )
 
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
 
@@ -865,10 +853,9 @@ class EventAuth(View):
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
 class JoinOnlineVideoView(EventViewMixin, View):
     def get(self, request, *args, **kwargs):
-        # First check if video plugin is installed and values is set
+        # First check if video is configured
         if (
-            'pretix_venueless' not in self.request.event.get_plugins()
-            or not self.request.event.settings.venueless_url
+            not self.request.event.settings.venueless_url
             or not self.request.event.settings.venueless_issuer
             or not self.request.event.settings.venueless_audience
             or not self.request.event.settings.venueless_secret

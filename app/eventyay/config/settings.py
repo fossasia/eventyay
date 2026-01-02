@@ -21,14 +21,6 @@ from urllib.parse import urlparse
 
 import importlib_metadata
 
-# Ensure local ticket-video plugin is importable (now inside app/eventyay/plugins)
-# Location: app/eventyay/plugins/eventyay-ticket-video/pretix_venueless
-_PLUGIN_LOCAL = Path(__file__).resolve().parents[1] / 'plugins' / 'eventyay-ticket-video'
-if _PLUGIN_LOCAL.is_dir():
-    p = str(_PLUGIN_LOCAL)
-    if p not in sys.path:
-        sys.path.insert(0, p)
-
 import django.conf.locale
 from django.contrib.messages import constants as messages
 from django.utils.translation import gettext_lazy as _
@@ -194,8 +186,6 @@ _OURS_APPS = (
     'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
-    # Load local ticket-video plugin
-    'pretix_venueless',
 )
 INSTALLED_APPS = _LIBRARY_APPS + _OURS_APPS
 
@@ -234,11 +224,11 @@ ALL_PLUGINS = sorted(pretix_plugins + pretalx_plugins)
 
 
 # ---------------------------
-# TODO: Adjust import paths for pretix_venueless, pretix_downstream, pretalx_pages
+# TODO: Adjust import paths for pretix_downstream, pretalx_pages
 # Once ready, remove below 2 lines of code and just add Pretix plugins to INSTALLED_APPS like:
 # INSTALLED_APPS += tuple(pretix_plugins)
 SAFE_PRETIX_PLUGINS = [
-    m for m in pretix_plugins if m not in {'pretix_venueless', 'pretix_pages'}
+    m for m in pretix_plugins if m not in {'pretix_pages'}
 ]
 INSTALLED_APPS += tuple(SAFE_PRETIX_PLUGINS)
 

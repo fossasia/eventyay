@@ -1,4 +1,9 @@
-from django.dispatch import Signal
+from django.dispatch import Signal, receiver
+from django.template.loader import get_template
+from django.utils.timezone import now
+
+from eventyay.base.models import Event, Order
+from eventyay.base.signals import event_copy_data, product_copy_data
 
 from eventyay.base.signals import EventPluginSignal
 
@@ -269,6 +274,89 @@ This signal is sent out to display additional information on top of the position
 
 As with all plugin signals, the ``sender`` keyword argument will contain the event.
 """
+
+
+@receiver(order_info_top, dispatch_uid="venueless_order_info")
+def w_order_info(sender: Event, request, order: Order, **kwargs):
+    if (
+        (order.status != Order.STATUS_PAID and not (order.status == Order.STATUS_PENDING and sender.settings.venueless_allow_pending))
+        or not order.positions.exists()
+        or not sender.settings.venueless_secret
+    ):
+        return
+
+    positions = [p for p in order.positions.filter(product__admission=True, addon_to__isnull=True)]
+    positions = [
+        p
+        for p in positions
+        if (
+            (not sender.settings.venueless_start or sender.settings.venueless_start.datetime(p.subevent or sender) <= now())
+            and (
+                sender.settings.venueless_all_products
+                or p.product_id in (p.event.settings.venueless_products or [])
+            )
+        )
+    ]
+    if not positions:
+        return
+
+    template = get_template('pretix_venueless/order_info.html')
+    ctx = {
+        'order': order,
+        'event': sender,
+        'positions': positions,
+    }
+    return template.render(ctx, request=request)
+
+
+@receiver(position_info_top, dispatch_uid="venueless_position_info")
+def w_pos_info(sender: Event, request, order: Order, position, **kwargs):
+    if (
+        (order.status != Order.STATUS_PAID and not (order.status == Order.STATUS_PENDING and sender.settings.venueless_allow_pending))
+        or not order.positions.exists()
+        or position.canceled
+        or not position.product.admission
+        or (
+            not sender.settings.venueless_all_products
+            and position.product_id not in (position.event.settings.venueless_products or [])
+        )
+        or not sender.settings.venueless_secret
+    ):
+        return
+
+    if sender.settings.venueless_start and sender.settings.venueless_start.datetime(position.subevent or sender) > now():
+        positions = []
+    else:
+        positions = [position]
+
+    template = get_template('pretix_venueless/order_info.html')
+    ctx = {
+        'order': order,
+        'event': sender,
+        'positions': positions,
+    }
+    return template.render(ctx, request=request)
+
+
+@receiver(signal=event_copy_data, dispatch_uid="venueless_event_copy_data")
+def venueless_event_copy_data(sender, other, product_map, question_map, **kwargs):
+    sender.settings['venueless_products'] = [
+        product_map[product].pk
+        for product in other.settings.get('venueless_products', default=[])
+        if product in product_map
+    ]
+    sender.settings['venueless_questions'] = [
+        question_map[q].pk
+        for q in other.settings.get('venueless_questions', default=[])
+        if q in question_map
+    ]
+
+
+@receiver(signal=product_copy_data, dispatch_uid="venueless_product_copy_data")
+def venueless_product_copy_data(sender, source, target, **kwargs):
+    products = sender.settings.get('venueless_products') or []
+    products.append(target.pk)
+    sender.settings['venueless_products'] = products
 
 process_request = EventPluginSignal()
 """
