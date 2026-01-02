@@ -221,14 +221,14 @@
                             {% if event.settings.show_times %}
                                 <br>
                                 <span data-time="{{ ev.date_from.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                    {% blocktrans trimmed with time=ev.date_from|date:"TIME_FORMAT" %}
+                                    {% blocktrans trimmed with time=ev.date_from|date:"h:i A" %}
                                         Begin: {{ time }}
                                     {% endblocktrans %}
                                 </span>
                                 {% if event.settings.show_date_to and ev.date_to %}
                                     <br>
                                     <span data-time="{{ ev.date_to.isoformat }}" data-timezone="{{ request.event.settings.timezone }}">
-                                        {% blocktrans trimmed with time=ev.date_to|date:"TIME_FORMAT" %}
+                                        {% blocktrans trimmed with time=ev.date_to|date:"h:i A" %}
                                             End: {{ time }}
                                         {% endblocktrans %}
                                    </span>
