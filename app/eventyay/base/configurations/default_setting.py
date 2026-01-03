@@ -2422,6 +2422,7 @@ Your {event} team"""
                 'The system generates by default {}-character long gift card codes. However, if a different length '
                 'is required, it can be set here.'.format(settings.ENTROPY['giftcard_secret'])
             ),
+            min_value=4,
         ),
     },
     'giftcard_expiry_years': {
@@ -2433,10 +2434,10 @@ Your {event} team"""
             label=_('Validity of gift card codes in years'),
             help_text=_(
                 'If you set a number here, gift cards will by default expire at the end of the year after this '
-                'many years. For example, 0 means expiry at the end of the current year, 1 means end of next year, etc. '
+                'many years. For example, 1 means expiry at the end of next year, 2 means end of the year after, etc. '
                 'If you keep it empty, gift cards do not have an explicit expiry date.'
             ),
-            min_value=0,
+            min_value=1,
         ),
         'serializer_kwargs': dict(validators=[MinValueValidator(0)]),
     },
