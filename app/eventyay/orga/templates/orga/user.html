@@ -13,8 +13,8 @@
 {% compress js %}
 <script defer src="{% static 'vendored/zxcvbn.js' %}"></script>
 <script defer src="{% static 'common/js/password_strength.js' %}"></script>
-<script defer src="{% static " common/js/copy.js" %}"></script>
-<script defer src="{% static " common/js/user_token.js" %}"></script>
+<script defer src="{% static 'common/js/copy.js' %}"></script>
+<script defer src="{% static 'common/js/user_token.js' %}"></script>
 {% endcompress %}
 {% endblock %}
 
@@ -57,11 +57,7 @@
 <fieldset class="m-2 password-input-form">
     <legend id="login">{% translate "Login settings" %}</legend>
     {% if login_form.is_sso_only_account %}
-    <div class="alert alert-info">
-        <i class="fa fa-info-circle"></i>
-        {% translate "You logged in using a social account (SSO). You can change your email address below, and
-        optionally set a local password for additional login options." %}
-    </div>
+    {% include "eventyay_common/includes/sso_info_message.html" %}
     {% endif %}
     {% include "orga/includes/base_form.html" with form=login_form submit_name="form" submit_value="login" %}
 </fieldset>
@@ -103,7 +99,7 @@
                         <form method="post">
                             {% csrf_token %}
                             <button name="tokenupgrade" value="{{ token.pk }}" class="btn btn-outline-info btn-sm">
-                                {% translate "Updgrade" %}&nbsp;({{ current_version }})
+                                {% translate "Upgrade" %}&nbsp;({{ current_version }})
                             </button>
                         </form>
                         {% endif %}
