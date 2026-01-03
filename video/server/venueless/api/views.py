@@ -19,6 +19,7 @@ from rest_framework.authentication import get_authorization_header
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from typing import Any, Dict
 
 from eventyay.base.api.auth import (
     ApiAccessRequiredPermission,
@@ -334,7 +335,7 @@ class ExportView(APIView):
         return Response(response.content.decode("utf-8"))
 
 
-def get_domain(path):
+def get_domain(path: str) -> str:
     if not path:
         return ""
     domain = urlparse(path).netloc

@@ -9,13 +9,14 @@ from rest_framework import serializers
 from eventyay.base.models.auth import User
 from eventyay.base.models.cache import VersionedModel
 from eventyay.core.permissions import SYSTEM_ROLES, Permission
+from typing import Dict, List, Optional
 
 
-def empty_module_config():
+def empty_module_config() -> List[dict]:
     return []
 
 
-def default_grants():
+def default_grants() -> Dict[str, List[str]]:
     return {
         "viewer": [],
     }
@@ -204,7 +205,7 @@ class RoomConfigSerializer(serializers.ModelSerializer):
         )
 
 
-def approximate_view_number(actual_number):
+def approximate_view_number(actual_number: Optional[int]) -> str:
     if actual_number is None or actual_number < 1:
         return "none"
     elif actual_number > 10:
@@ -213,7 +214,7 @@ def approximate_view_number(actual_number):
         return "few"
 
 
-def generate_short_token():
+def generate_short_token() -> str:
     chars = "abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789"
     return get_random_string(6, chars)
 

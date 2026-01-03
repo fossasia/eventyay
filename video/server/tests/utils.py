@@ -4,9 +4,10 @@ import random
 import jwt
 from channels.testing import WebsocketCommunicator
 from django.utils.crypto import get_random_string
+from typing import List, Optional
 
 
-def get_token(world, traits, uid=None):
+def get_token(world, traits: List[str], uid: Optional[int] = None) -> str:
     config = world.config["JWT_secrets"][0]
 
     iat = dt.datetime.utcnow()
