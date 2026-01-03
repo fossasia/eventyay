@@ -21,7 +21,6 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.common.settings.config import build_config
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -160,6 +159,8 @@ class BaseSettings(_BaseSettings):
     linkedin_client_secret: str = ''
     # Ask to provide comments when making changes in the admin interface.
     admin_audit_comments_asked: bool = False
+    # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
+    call_for_speaker_login_button_label: str = 'default'
 
     @classmethod
     def settings_customise_sources(
@@ -234,9 +235,6 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
-
-talk_config, TALK_CONFIG_FILES = build_config()
-TALK_CONFIG = talk_config
 
 # --- Now, provide values to Django's settings. ---
 
@@ -479,7 +477,6 @@ TEMPLATES = (
                 'django.template.context_processors.tz',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'eventyay.config.settings.instance_name',
                 'eventyay.agenda.context_processors.is_html_export',
                 'eventyay.common.context_processors.add_events',
                 'eventyay.common.context_processors.locale_context',
@@ -1371,3 +1368,5 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
+
+CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
