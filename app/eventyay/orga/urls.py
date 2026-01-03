@@ -57,35 +57,25 @@ urlpatterns = [
                     name="organizer.delete",
                 ),
                 path("api/users", organizer.speaker_search, name="organizer.user_list"),
-                *organizer.TeamView.get_urls(
-                    url_base="teams",
-                    url_name="organizer.teams",
-                    namespace="orga",
-                ),
-                path(
-                    "teams/<int:team_pk>/members/<int:user_pk>/delete/",
-                    organizer.TeamMemberDelete.as_view(),
-                    name="organizer.teams.members.delete",
-                ),
-                path(
-                    "teams/<int:team_pk>/members/<int:user_pk>/reset/",
-                    organizer.TeamResetPassword.as_view(),
-                    name="organizer.teams.members.reset",
-                ),
-                path(
-                    "teams/<int:pk>/invites/<int:invite_pk>/uninvite/",
-                    organizer.TeamUninvite.as_view(),
-                    name="organizer.teams.invites.uninvite",
-                ),
-                path(
-                    "teams/<int:pk>/invites/<int:invite_pk>/resend/",
-                    organizer.TeamResend.as_view(),
-                    name="organizer.teams.invites.resend",
-                ),
                 path(
                     "speakers/",
                     organizer.OrganizerSpeakerList.as_view(),
                     name="organizer.speakers",
+                ),
+                path(
+                    "teams/",
+                    organizer.redirect_team_management,
+                    name="organizer.teams.redirect",
+                ),
+                path(
+                    "teams/<int:team_pk>/",
+                    organizer.redirect_team_management,
+                    name="organizer.teams.team.redirect",
+                ),
+                path(
+                    "teams/<int:team_pk>/<path:rest>/",
+                    organizer.redirect_team_management,
+                    name="organizer.teams.team.extra.redirect",
                 ),
             ]
         ),

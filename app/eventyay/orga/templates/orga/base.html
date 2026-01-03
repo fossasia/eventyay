@@ -454,7 +454,7 @@
                     {% has_event_perm "base.update_team" request.user request request.organizer as can_change_teams %}
                     {% has_event_perm "base.view_organizer" request.user request request.organizer as can_view_speakers %}
                     {% if can_change_teams %}
-                        <a class="nav-link {% if "/teams/" in request.path %} active{% endif %}" href="{% url "orga:organizer.teams.list" organizer=request.organizer.slug %}">
+                        <a class="nav-link" href="{% url "eventyay_common:organizer.update" organizer=request.organizer.slug %}?section=permissions">
                             <i class="fa fa-users"></i>
                             <span>{% translate "Teams" %}</span>
                         </a>
