@@ -1,5 +1,6 @@
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from django.utils.timezone import now
@@ -59,7 +60,7 @@ class EventCfP(EventStartpage):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['site_name'] = 'Eventyay'
+        context['site_name'] = settings.INSTANCE_NAME
         return context
 
     @context
