@@ -4,6 +4,8 @@ from django.utils.translation import gettext_lazy as _
 
 
 class StreamSchedule(models.Model):
+    """A time-based stream schedule for a room."""
+
     room = models.ForeignKey(
         to="Room",
         related_name="stream_schedules",
