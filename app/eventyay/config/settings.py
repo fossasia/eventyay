@@ -31,11 +31,13 @@ if _PLUGIN_LOCAL.is_dir():
 
 import django.conf.locale
 from django.contrib.messages import constants as messages
+from django.http import HttpRequest
 from django.utils.translation import gettext_lazy as _
 from kombu import Queue
 from pycountry import currencies
 from redis.asyncio.retry import Retry
 from redis.backoff import ExponentialBackoff
+from typing import Dict
 
 from eventyay import __version__
 from eventyay.common.settings.config import build_config
@@ -63,7 +65,7 @@ talk_config, TALK_CONFIG_FILES = build_config()
 TALK_CONFIG = talk_config
 
 
-def instance_name(request):
+def instance_name(request: HttpRequest) -> Dict[str, str]:
     from django.conf import settings
 
     return {'INSTANCE_NAME': getattr(settings, 'INSTANCE_NAME', 'eventyay')}
