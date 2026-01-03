@@ -69,7 +69,18 @@
     <form method="post" class="form password-input-form">
         {% csrf_token %}
         {{ login_form.media }}
-        {{ login_form.old_password.as_field_group }}
+        
+        {# Show current password field only for users with a local password #}
+        {% if login_form.is_sso_only_account %}
+            <div class="alert alert-info">
+                <i class="fa fa-info-circle"></i>
+                {% translate "You logged in using a social account (SSO). You can change your email address below, and optionally set a local password for additional login options." %}
+            </div>
+            {{ login_form.old_password }}
+        {% else %}
+            {{ login_form.old_password.as_field_group }}
+        {% endif %}
+        
         {{ login_form.email.as_field_group }}
         {{ login_form.password.as_field_group }}
         {{ login_form.password_repeat.as_field_group }}
