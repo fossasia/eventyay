@@ -1183,13 +1183,17 @@ CHANNEL_LAYERS = {
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'eventyay.api.auth.api_auth.NoPermission',
+        'eventyay.api.auth.permission.EventPermission',
     ],
-    'UNAUTHENTICATED_USER': 'eventyay.api.auth.api_auth.AnonymousUser',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
-    'DEFAULT_AUTHENTICATION_CLASSES': ('eventyay.api.auth.api_auth.EventTokenAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'eventyay.api.auth.token.TeamTokenAuthentication',
+        'eventyay.api.auth.device.DeviceTokenAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
 }
