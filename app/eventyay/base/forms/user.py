@@ -61,14 +61,25 @@ class UserSettingsForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['email'].required = True
         self.fields['wikimedia_username'].disabled = True
-        if self.user.auth_backend != 'native':
-            del self.fields['old_pw']
-            del self.fields['new_pw']
-            del self.fields['new_pw_repeat']
-            self.fields['email'].disabled = True
+        
+        # Determine if this is an SSO-only account (no usable local password)
+        self.is_sso_only_account = not self.user.has_usable_password()
+        
+        # For SSO-only accounts, hide the old_pw field and allow email changes
+        if self.is_sso_only_account:
+            self.fields['old_pw'].widget = forms.HiddenInput()
+            self.fields['old_pw'].required = False
+            # Update new password help text for SSO users
+            self.fields['new_pw'].help_text = _(
+                'You can set a local password to enable email/password login in addition to your SSO login.'
+            )
 
     def clean_old_pw(self):
         old_pw = self.cleaned_data.get('old_pw')
+        
+        # SSO-only accounts don't have a usable password, skip validation
+        if self.is_sso_only_account:
+            return old_pw
 
         if old_pw and settings.HAS_REDIS:
             from django_redis import get_redis_connection
@@ -116,8 +127,10 @@ class UserSettingsForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
-        if (password1 or email != self.user.email) and not old_pw:
-            raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
+        # For users with a local password, require old_pw when making changes
+        if not self.is_sso_only_account:
+            if (password1 or email != self.user.email) and not old_pw:
+                raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 
         if password1:
             self.instance.set_password(password1)
