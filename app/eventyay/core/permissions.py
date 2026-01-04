@@ -15,6 +15,7 @@ class Permission(Enum):
     EVENT_ROOMS_CREATE_POSTER = "event:rooms.create.poster"
     EVENT_USERS_LIST = "event:users.list"
     EVENT_USERS_MANAGE = "event:users.manage"
+    EVENT_KIOSKS_MANAGE = "event:kiosks.manage"
     EVENT_CHAT_DIRECT = "event:chat.direct"
     EVENT_EXHIBITION_CONTACT = "event:exhibition.contact"
     EVENT_CONNECTIONS_UNLIMITED = "event:connections.unlimited"
@@ -76,4 +77,89 @@ SYSTEM_ROLES = {
         Permission.ROOM_POLL_VOTE.value,
         Permission.ROOM_VIEW.value,
     ],
+    "video_stage_manager": [
+        Permission.EVENT_ROOMS_CREATE_STAGE.value,
+    ],
+    "video_channel_manager": [
+        Permission.EVENT_ROOMS_CREATE_CHAT.value,
+        Permission.EVENT_ROOMS_CREATE_BBB.value,
+    ],
+    "video_direct_messaging": [
+        Permission.EVENT_CHAT_DIRECT.value,
+    ],
+    "video_announcement_manager": [
+        Permission.EVENT_ANNOUNCE.value,
+    ],
+    "video_user_viewer": [
+        Permission.EVENT_USERS_LIST.value,
+    ],
+    "video_user_moderator": [
+        Permission.EVENT_USERS_MANAGE.value,
+    ],
+    "video_room_manager": [
+        Permission.ROOM_UPDATE.value,
+        Permission.ROOM_DELETE.value,
+    ],
+    "video_kiosk_manager": [
+        Permission.EVENT_KIOSKS_MANAGE.value,
+    ],
+    "video_config_manager": [
+        Permission.EVENT_UPDATE.value,
+    ],
 }
+
+# Roles that are considered organizer/admin roles for permission management
+ORGANIZER_ROLES = frozenset({
+    'admin',
+    'apiuser',
+    'scheduleuser',
+    'video_stage_manager',
+    'video_channel_manager',
+    'video_announcement_manager',
+    'video_user_viewer',
+    'video_user_moderator',
+    'video_room_manager',
+    'video_kiosk_manager',
+    'video_config_manager',
+    'video_direct_messaging',
+})
+
+
+def normalize_permission_value(permission):
+    """Normalize permission to string value for comparison.
+    
+    Args:
+        permission: Permission enum or string value
+        
+    Returns:
+        str: Permission value as string
+        
+    Raises:
+        TypeError: If permission is not a string or Permission enum
+    """
+    if isinstance(permission, str):
+        return permission
+    if isinstance(permission, Permission):
+        return permission.value
+    raise TypeError(
+        f"Expected str or Permission enum, got {type(permission).__name__}"
+    )
+
+
+def traits_match_required(traits: list[str], required_traits: list) -> bool:
+    """Check if user traits match required traits for a role.
+    
+    Args:
+        traits: List of user traits
+        required_traits: List of required traits (can contain nested lists for OR logic)
+        
+    Returns:
+        bool: True if all required traits are matched
+    """
+    if not isinstance(required_traits, list):
+        return False
+    
+    return all(
+        any(x in traits for x in (r if isinstance(r, list) else [r]))
+        for r in required_traits
+    )

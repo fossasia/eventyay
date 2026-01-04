@@ -41,8 +41,6 @@ from eventyay.event.forms import (
 from eventyay.base.models import Event, Team, TeamInvite
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
-    EventFooterLinkFormset,
-    EventHeaderLinkFormset,
     MailSettingsForm,
     ReviewPhaseForm,
     ReviewScoreCategoryForm,
@@ -84,26 +82,6 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
         return response
 
     @context
-    @cached_property
-    def header_links_formset(self):
-        return EventHeaderLinkFormset(
-            self.request.POST if self.request.method == 'POST' else None,
-            event=self.object,
-            prefix='header-links',
-            instance=self.object,
-        )
-
-    @context
-    @cached_property
-    def footer_links_formset(self):
-        return EventFooterLinkFormset(
-            self.request.POST if self.request.method == 'POST' else None,
-            event=self.object,
-            prefix='footer-links',
-            instance=self.object,
-        )
-
-    @context
     def tablist(self):
         return {
             'display': _('Display settings'),
@@ -115,13 +93,7 @@ class EventDetail(EventSettingsPermission, ActionFromUrl, UpdateView):
 
     @transaction.atomic
     def form_valid(self, form):
-        if not self.footer_links_formset.is_valid() or not self.header_links_formset.is_valid():
-            messages.error(self.request, phrases.base.error_saving_changes)
-            return self.form_invalid(form)
-
         result = super().form_valid(form)
-        self.footer_links_formset.save()
-        self.header_links_formset.save()
 
         form.instance.log_action('eventyay.event.update', person=self.request.user, orga=True)
         messages.success(self.request, phrases.base.saved)

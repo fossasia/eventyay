@@ -516,6 +516,18 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
 class EventExtraLinkForm(I18nModelForm):
     default_renderer = InlineFormLabelRenderer
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for fname in ('label', 'url'):
+            if fname in self.fields:
+                widget = self.fields[fname].widget
+                if hasattr(widget, 'widgets'):
+                    for subwidget in widget.widgets:
+                        css = subwidget.attrs.get('class', '')
+                        subwidget.attrs['class'] = (css + ' form-control').strip()
+                css = widget.attrs.get('class', '')
+                widget.attrs['class'] = (css + ' form-control').strip()
+
     class Meta:
         model = EventExtraLink
         fields = ['label', 'url']

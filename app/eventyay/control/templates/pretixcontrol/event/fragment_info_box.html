@@ -13,7 +13,7 @@
             {% trans "Teams of the organizer are" %} 
             <span></span>
           {% for id, name in organizer_teams %}
-            <strong><a href="{% url 'control:organizer.team' request.organizer.slug id %}">{{ name }}</a></strong>{% if not forloop.last %}, {% endif %}
+            <strong><a href="{% url 'eventyay_common:organizer.update' organizer=request.organizer.slug %}?section=permissions&team={{ id }}">{{ name }}</a></strong>{% if not forloop.last %}, {% endif %}
           {% endfor %}
         </div>
     </div>

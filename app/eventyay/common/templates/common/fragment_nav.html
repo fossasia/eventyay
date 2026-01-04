@@ -41,8 +41,9 @@
                 href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
                 <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
             </a>
-        {% else %}
-            <a class="header-tab disabled" tabindex="-1" aria-disabled="true" href="#">
+        {% elif not cfp.settings.hide_after_deadline %}
+            <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
+                href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
                 <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
             </a>
         {% endif %}
