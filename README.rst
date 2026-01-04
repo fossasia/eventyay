@@ -291,3 +291,6 @@ projects and attribution.
 See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
 This project is maintained by **FOSSASIA**.
+
+.. _uv: https://github.com/astral-sh/uv
+.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
