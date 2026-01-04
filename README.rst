@@ -278,21 +278,16 @@ Support
 
 This project is **free and open-source software**. Professional support is available to customers of the **hosted Eventyay service** or **Eventyay enterprise offerings**. If you are interested in commercial support, hosting services, or supporting this project financially, please go to `eventyay.com`.
 
-Contributing
-------------
+Legal & Licensing
+-----------------
 
-Please look through our issues and start contributing.
+**License**: This project is published under the **Apache License 2.0**.
+See the `LICENSE <LICENSE>`_ file for complete license text.
 
-License
--------
+**Attribution**: See the `NOTICE <NOTICE>`_ file for information about upstream
+projects and attribution.
 
-The code in this repository is published under the terms of the **Apache 2 License**.
-See the LICENSE file for the complete license text.
+**Contributing**: Contributions are accepted under the Apache License 2.0.
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
-This project is maintained by **FOSSASIA**. See the AUTHORS file for a list of all the awesome contributors of this project.
-
-.. _uv: https://docs.astral.sh/uv/getting-started/installation/
-.. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
-.. _eventyay.com: https://eventyay.com
-.. _blog: https://blog.eventyay.com
-.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
+This project is maintained by **FOSSASIA**.
