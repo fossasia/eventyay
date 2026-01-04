@@ -31,6 +31,8 @@
                   {% endif %}
               </div>
           </div>
+        {% empty %}
+        <div class="alert alert-info">{% trans "You have no upcoming events" %}</div>
       {% endfor %}
     </div>
     {% if upcoming %}
