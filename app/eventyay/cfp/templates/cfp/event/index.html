@@ -18,7 +18,7 @@
                     </a>
                 {% endif %}
             {% endif %}
-            {% if request.event.current_schedule and request.event|get_feature_flag:"show_schedule" %}
+            {% if request.event.has_schedule_content and request.event|get_feature_flag:"show_schedule" %}
                 <a class="btn btn-success btn-lg btn-block" href="{{ request.event.urls.schedule }}">
                     {{ phrases.agenda.view_schedule }}
                 </a>
