@@ -2,8 +2,10 @@
 
 Eventyay is developed and maintained by FOSSASIA.
 
-At this time, Eventyay does not require contributors to sign a separate Contributor License Agreement. Contributions are accepted under the Apache License 2.0.
+Eventyay may require a Contributor License Agreement (CLA) for substantial contributions.
 
-If CLA requirements change in the future, contributors will be notified through the repository.
+At present, no separate CLA signing process is enforced in this repository.
+Contributors will be informed if and when a CLA is required.
 
+Contributions are licensed under the Apache License 2.0.
 See the LICENSE file for details.
