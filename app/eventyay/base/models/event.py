@@ -2445,6 +2445,17 @@ class Event(
         return User.objects.filter(submissions__in=self.talks).order_by('id').distinct()
 
     @cached_property
+    def has_schedule_content(self):
+        """Returns True if there are actual scheduled talks in the current schedule.
+        
+        This checks whether the current schedule has any visible, scheduled talks
+        (not just an empty published schedule).
+        """
+        if not self.current_schedule:
+            return False
+        return self.current_schedule.scheduled_talks.exists()
+
+    @cached_property
     def submitters(self):
         """Returns a queryset of all :class:`~eventyay.base.models.user.User`
         objects who have submitted to this event.
