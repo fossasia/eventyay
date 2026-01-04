@@ -534,7 +534,7 @@ class EventWizard(PermissionRequired, SensibleBackWizardMixin, SessionWizardView
                 name=steps['basics']['name'],
                 slug=steps['basics']['slug'],
                 timezone=steps['basics']['timezone'],
-                email=steps['basics']['email'],
+                email=steps['display']['email'],
                 locale=steps['basics']['locale'],
                 date_from=steps['timeline']['date_from'],
                 date_to=steps['timeline']['date_to'],
