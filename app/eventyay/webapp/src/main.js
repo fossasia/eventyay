@@ -26,10 +26,13 @@ import config from 'config'
 import { loadThemeConfig } from 'theme'
 import 'webrtc-adapter'
 
+import { createPinia } from 'pinia'
+
 async function init({ token, inviteToken }) {
   await loadThemeConfig()
   const app = createApp(RouterView)
   app.use(store)
+  app.use(createPinia())
   app.use(router)
   app.use(Buntpapier)
   app.use(VueVirtualScroller)

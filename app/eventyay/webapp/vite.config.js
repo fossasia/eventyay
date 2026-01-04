@@ -92,7 +92,7 @@ export default defineConfig(({ mode }) => {
         include: ['src/**/*.js', 'src/**/*.vue'],
         cache: false
       }),
-  // Modernizr removed; using native feature checks in preloader instead
+      // Modernizr removed; using native feature checks in preloader instead
       mode === 'production' && process.env.ANALYZE && visualizer({
         open: true,
         filename: 'dist/bundle-report.html'
@@ -128,10 +128,11 @@ export default defineConfig(({ mode }) => {
         i18n: path.resolve(__dirname, 'src/i18n'),
         theme: path.resolve(__dirname, 'src/theme'),
         'has-emoji': path.resolve(__dirname, 'build/has-emoji/emoji.json'),
+        modules: path.resolve(__dirname, 'src/modules'),
         // Reduce moment-timezone data size similar to previous webpack plugin
-  'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range',
-  // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
-  sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
+        'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range',
+        // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
+        sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }
     },
     optimizeDeps: {
