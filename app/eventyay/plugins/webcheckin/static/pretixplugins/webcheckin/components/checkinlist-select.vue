@@ -41,7 +41,9 @@ export default {
       this.loading = true
       const cutoff = moment().subtract(8, 'hours').toISOString()
       if (location.hash) {
-        fetch(this.$root.api.lists + location.hash.substr(1) + '/' + '?expand=subevent')
+        fetch(this.$root.api.lists + location.hash.substr(1) + '/' + '?expand=subevent', {
+          credentials: 'same-origin',
+        })
             .then(response => response.json())
             .then(data => {
               this.loading = false
@@ -53,12 +55,16 @@ export default {
               }
             })
             .catch(reason => {
+              this.loading = false
+              this.error = reason
               location.hash = ''
               this.load()
             })
         return
       }
-      fetch(this.$root.api.lists + '?exclude=checkin_count&exclude=position_count&expand=subevent&ends_after=' + cutoff)
+      fetch(this.$root.api.lists + '?exclude=checkin_count&exclude=position_count&expand=subevent&ends_after=' + cutoff, {
+        credentials: 'same-origin',
+      })
           .then(response => response.json())
           .then(data => {
             this.loading = false
@@ -78,7 +84,9 @@ export default {
     },
     loadNext() {
       this.loading = true
-      fetch(this.next_url)
+      fetch(this.next_url, {
+        credentials: 'same-origin',
+      })
           .then(response => response.json())
           .then(data => {
             this.loading = false
