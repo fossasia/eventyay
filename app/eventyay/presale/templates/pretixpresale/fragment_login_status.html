@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load eventurl %}
 {% load login_url %}
+{% load event_tags %}
 
 {{ 'popover-profile'|json_script:"popover_toggle" }}
 <nav class="login-hdr" aria-label="{% translate 'account' %}" style="{% if request.event and request.event.settings.event_logo_image %}margin-right: 18rem{% else %}margin-right: 0{% endif %}">
@@ -8,7 +9,7 @@
     {% if request.user.is_authenticated %}
         <div class="navigation-button">
             <a target="_blank" class="header-nav btn btn-outline-success" data-toggle="popover-profile">
-                <i class="fa fa-user"></i> {{ request.user.fullname|default:request.user.email }}
+                <i class="fa fa-user"></i> {{ request.user|short_user_label }}
                 <i class="fa fa-solid fa-caret-down"></i>
             </a>
         </div>
