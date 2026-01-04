@@ -75,6 +75,10 @@ class SettingsForm(i18nfield.forms.I18nFormMixin, HierarkeyForm):
             if isinstance(field, i18nfield.forms.I18nFormField):
                 field.widget.enabled_locales = self.locales
             self.fields[fname] = field
+            if fname not in self.initial or not self.initial[fname]:
+                default_value = DEFAULTS[fname].get('default')
+                if default_value:
+                    self.initial[fname] = default_value
         for k, f in self.fields.items():
             if isinstance(f, (RelativeDateTimeField, RelativeDateField)):
                 f.set_event(self.obj)
