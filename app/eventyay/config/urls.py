@@ -26,8 +26,7 @@ base_patterns = [
     path('metrics/', metrics.serve_metrics, name='metrics'),
     path('csp_report/', csp.csp_report, name='csp.report'),
     path('js_helpers/states/', js_helpers.states, name='js_helpers.states'),
-    # path('api/v1/', include(('eventyay.api.urls', 'eventyayapi'), namespace='api-v1')),
-    # path('api/', RedirectView.as_view(url='/api/v1/'), name='redirect-api-version'),
+    path('api/v1/', include(('eventyay.api.urls', 'eventyayapi'), namespace='api-v1')),
     path('accounts/', include('allauth.urls')),
 ]
 
