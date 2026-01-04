@@ -343,8 +343,8 @@ aside.sidebar {
       display: none;
       flex-direction: column;
       flex-grow: 1;
+      min-width: 0;
       overflow: hidden;
-      text-overflow: ellipsis;
       margin-left: 6px;
 
       .context-name,
@@ -354,6 +354,7 @@ aside.sidebar {
         white-space: nowrap;
         overflow: hidden;
         line-height: 17px;
+        max-width: 170px;
       }
 
       .context-name {
