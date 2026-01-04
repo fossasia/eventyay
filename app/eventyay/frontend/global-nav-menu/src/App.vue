@@ -109,7 +109,7 @@ onBeforeUnmount(() => {
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/common/account/'>
         <div class='i-fa-user h-3 w-3'></div>
-        <div>Accounts</div>
+        <div>Account</div>
       </a>
       <a :class='[ENTRY_CLASSES, WITH_ICON_CLASSES, WITH_BORDER_CLASSES]' href='/admin/'>
         <div class='i-fa-cog h-3 w-3'></div>
