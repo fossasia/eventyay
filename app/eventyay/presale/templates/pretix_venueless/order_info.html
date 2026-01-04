@@ -5,7 +5,7 @@
 <div class="panel panel-primary">
     <div class="panel-heading">
         <h3 class="panel-title">
-            {% trans "Join online event" %}
+            {% trans "Join online event stream" %}
         </h3>
     </div>
     <ul class="list-group">
@@ -35,17 +35,17 @@
                 <div class="form-inline text-center">
                     <div class="form-group" style="display: inline-block; margin-right: 10px;">
                         <form method="post" target="_blank"
-                              action="{% eventurl event 'plugins:pretix_venueless:join' order=order.code position=p.positionid secret=p.web_secret view_schedule=False %}">
+                              action="{% eventurl event 'presale:event.venueless.join' order=order.code position=p.positionid secret=p.web_secret view_schedule=False %}">
                             {% csrf_token %}
                             <button class="btn btn-primary btn-lg">
-                                {% trans "Join online event" %}
+                                {% trans "Join online event stream" %}
                             </button>
                         </form>
                     </div>
                     {% if request.event.settings.venueless_talk_schedule_url %}
                         <div class="form-group" style="display: inline-block;">
                             <form method="post" target="_blank"
-                                  action="{% eventurl event 'plugins:pretix_venueless:join' order=order.code position=p.positionid secret=p.web_secret view_schedule=True %}">
+                                  action="{% eventurl event 'presale:event.venueless.join' order=order.code position=p.positionid secret=p.web_secret view_schedule=True %}">
                                 {% csrf_token %}
                                 <button class="btn btn-primary btn-lg">
                                     {% trans "View schedule" %}

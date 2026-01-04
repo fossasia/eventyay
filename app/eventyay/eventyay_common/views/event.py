@@ -597,12 +597,7 @@ class VideoAccessAuthenticator(View):
             )
             event.settings.venueless_url = build_video_url()
 
-        # Ensure the pretix_venueless plugin is enabled
-        current_plugins = set(event.get_plugins())
-        if 'pretix_venueless' not in current_plugins:
-            current_plugins.add('pretix_venueless')
-            event.plugins = ','.join(current_plugins)
-            event.save()
+        # Video is integrated; do not toggle event plugins here.
 
     def generate_token_url(self, request, traits):
         uid_token = encode_email(request.user.email)

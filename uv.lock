@@ -959,7 +959,6 @@ dependencies = [
     { name = "phonenumberslite" },
     { name = "pillow" },
     { name = "pretix-pages" },
-    { name = "pretix-venueless" },
     { name = "protobuf" },
     { name = "psycopg2-binary" },
     { name = "pycountry" },
@@ -1076,7 +1075,6 @@ requires-dist = [
     { name = "pillow", specifier = "==11.0.*" },
     { name = "potypo", marker = "extra == 'dev'" },
     { name = "pretix-pages", git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=master" },
-    { name = "pretix-venueless", git = "https://github.com/fossasia/eventyay-ticket-video.git?rev=master" },
     { name = "protobuf", specifier = "==5.28.*" },
     { name = "psycopg2-binary", specifier = "==2.9.9" },
     { name = "pycountry" },
@@ -1581,14 +1579,6 @@ wheels = [
 name = "pretix-pages"
 version = "1.6.1"
 source = { git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=master#a7c33fd26351d409a752baa6989f24be511b5bdd" }
-
-[[package]]
-name = "pretix-venueless"
-version = "1.3.1"
-source = { git = "https://github.com/fossasia/eventyay-ticket-video.git?rev=master#c7009367e02584825dc3378e5b3375a4fb613ca7" }
-dependencies = [
-    { name = "pyjwt" },
-]
 
 [[package]]
 name = "prompt-toolkit"

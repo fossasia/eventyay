@@ -179,6 +179,9 @@ class CRUDView(PaginationMixin, Filterable, View):
         'delete': phrases.base.deleted,
     }
 
+    def get_backend(self):
+        return None
+
     def permission_denied(self):
         if (
             getattr(self.request, 'event', None)

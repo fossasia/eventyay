@@ -196,6 +196,11 @@ event_patterns = [
         name='event.order.position',
     ),
     re_path(
+        r'^ticket/(?P<order>[^/]+)/(?P<position>\d+)/(?P<secret>[A-Za-z0-9]+)/(?P<view_schedule>True|False)/venueless/$',
+        eventyay.presale.views.order.OrderPositionJoin.as_view(),
+        name='event.venueless.join',
+    ),
+    re_path(
         r'^ticket/(?P<order>[^/]+)/(?P<position>\d+)/(?P<secret>[A-Za-z0-9]+)/download/(?P<pid>[0-9]+)/(?P<output>[^/]+)$',
         eventyay.presale.views.order.OrderPositionDownload.as_view(),
         name='event.order.position.download',
