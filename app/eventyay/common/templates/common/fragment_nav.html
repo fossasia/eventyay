@@ -7,7 +7,7 @@
     <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" class="header-tab {% if '/schedule/' not in path and '/sessions/' not in path and '/speakers/' not in path and '/cfp' not in path %}active{% endif %}">
         <i class="fa fa-ticket"></i> {% translate "Tickets" %}
     </a>
-    {% if schedule or current_event.current_schedule %}
+    {% if schedule or current_event.has_schedule_content %}
         {% with schedule_url=current_event.talk_schedule_url|default:current_event.urls.schedule %}
             <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path %}active{% endif %}">
                 <i class="fa fa-calendar"></i> {{ schedule_label }}
