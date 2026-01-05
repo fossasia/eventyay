@@ -86,6 +86,8 @@ def user_has_valid_ticket(context, event=None):
             order__email__iexact=request.user.email,
             order__status__in=allowed_statuses,
             product__admission=True,
+            canceled=False,
+            addon_to__isnull=True,
         ).exists()
 
     allowed_products = event.settings.venueless_products or []
