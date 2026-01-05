@@ -249,6 +249,7 @@ class EventIndexView(TemplateView):
 
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
+        context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
 
         return context
 
