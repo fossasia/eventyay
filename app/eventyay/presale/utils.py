@@ -23,6 +23,29 @@ from eventyay.presale.signals import process_request, process_response
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
 
+def _check_event_access_permission(request, event, organizer, url, error_message):
+    can_access = url.url_name == 'event.auth' or (
+        request.user.is_authenticated
+        and request.user.has_event_permission(organizer, event, request=request)
+    )
+    
+    if not can_access and f'eventyay_event_access_{event.pk}' in request.session:
+        sparent = SessionStore(request.session.get(f'eventyay_event_access_{event.pk}'))
+        try:
+            parentdata = sparent.load()
+        except:
+            pass
+        else:
+            can_access = 'event_access' in parentdata
+
+    if not can_access:
+        return permission_denied(
+            request,
+            PermissionDenied(_(error_message)),
+        )
+    return None
+
+
 @scope(organizer=None)
 def _detect_event(request, require_live=True, require_plugin=None):
     if hasattr(request, '_event_detected'):
@@ -97,26 +120,34 @@ def _detect_event(request, require_live=True, require_plugin=None):
                 return r
         if hasattr(request, 'event'):
             LocaleMiddleware(NotImplementedError).process_request(request)
-
-            if require_live and not request.event.live:
-                can_access = url.url_name == 'event.auth' or (
-                    request.user.is_authenticated
-                    and request.user.has_event_permission(request.organizer, request.event, request=request)
-                )
-                if not can_access and 'eventyay_event_access_{}'.format(request.event.pk) in request.session:
-                    sparent = SessionStore(request.session.get('eventyay_event_access_{}'.format(request.event.pk)))
-                    try:
-                        parentdata = sparent.load()
-                    except:
-                        pass
-                    else:
-                        can_access = 'event_access' in parentdata
-
-                if not can_access:
-                    return permission_denied(
-                        request,
-                        PermissionDenied(_('The selected ticket shop is currently not available.')),
-                    )
+            
+            is_event_index = url.url_name == 'event.index'
+            
+            if require_live:
+                if is_event_index:
+                    # Event start page should be accessible when event is published
+                    if not request.event.is_public:
+                        result = _check_event_access_permission(
+                            request,
+                            request.event,
+                            request.organizer,
+                            url,
+                            'The selected event is currently not available.',
+                        )
+                        if result:
+                            return result
+                else:
+                    # For ticket-related pages check live status
+                    if not request.event.live:
+                        result = _check_event_access_permission(
+                            request,
+                            request.event,
+                            request.organizer,
+                            url,
+                            'The selected ticket shop is currently not available.',
+                        )
+                        if result:
+                            return result
 
             if require_plugin:
                 is_core = any(require_plugin.startswith(m) for m in settings.CORE_MODULES)
