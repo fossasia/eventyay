@@ -1205,7 +1205,7 @@ DEFAULT_SETTINGS = {
             help_text=_(
                 'If this option is turned on, users must be logged in before completing an order. '
                 'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
-                "The 'Continue as a Guest' option will not be available for attendees."
+                'The "Continue as a Guest" option will not be available for attendees in this event.'
             ),
         ),
     },
