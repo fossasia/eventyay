@@ -352,13 +352,13 @@ def checkin_widget(sender, subevent=None, lazy=False, **kwargs):
 @receiver(signal=event_dashboard_widgets)
 def welcome_wizard_widget(sender, **kwargs):
     template = get_template('pretixcontrol/event/dashboard_widget_welcome.html')
-    ctx = {'title': _('Welcome')}
+    ctx = {'title': _('Tickets')}
     kwargs = {'event': sender.slug, 'organizer': sender.organizer.slug}
 
     if not sender.products.exists():
         ctx.update(
             {
-                'subtitle': _('Get started with our setup tool'),
+                'subtitle': _('Get started with ticketing'),
                 'text': _(
                     'To start selling tickets, you need to create products or quotas. The fastest way to create '
                     'this is to use our setup tool.'
