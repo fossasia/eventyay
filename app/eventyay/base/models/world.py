@@ -96,7 +96,7 @@ def default_roles():
     video_user_moderator = [Permission.EVENT_USERS_MANAGE]
     video_room_manager = [Permission.ROOM_UPDATE, Permission.ROOM_DELETE]
     video_kiosk_manager = [Permission.EVENT_KIOSKS_MANAGE]
-    video_config_manager = [Permission.EVENT_UPDATE]
+    video_config_manager = [Permission.EVENT_UPDATE, Permission.EVENT_GRAPHS]
     return {
         "attendee": attendee,
         "viewer": viewer,
