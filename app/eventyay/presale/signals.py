@@ -355,8 +355,9 @@ def venueless_event_copy_data(sender, other, product_map, question_map, **kwargs
 @receiver(signal=product_copy_data, dispatch_uid="venueless_product_copy_data")
 def venueless_product_copy_data(sender, source, target, **kwargs):
     products = sender.settings.get('venueless_products') or []
-    products.append(target.pk)
-    sender.settings['venueless_products'] = products
+    if target.pk not in products:
+        products.append(target.pk)
+        sender.settings['venueless_products'] = products
 
 process_request = EventPluginSignal()
 """
