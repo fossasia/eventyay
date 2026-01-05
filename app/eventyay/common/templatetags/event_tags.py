@@ -81,10 +81,11 @@ def user_has_valid_ticket(context, event=None):
         allowed_statuses.append(Order.STATUS_PENDING)
 
     if event.settings.venueless_all_products:
-        return Order.objects.filter(
-            event=event,
-            email__iexact=request.user.email,
-            status__in=allowed_statuses,
+        return OrderPosition.objects.filter(
+            order__event=event,
+            order__email__iexact=request.user.email,
+            order__status__in=allowed_statuses,
+            product__admission=True,
         ).exists()
 
     allowed_products = event.settings.venueless_products or []
