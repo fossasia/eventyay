@@ -948,11 +948,20 @@
         }).first();
       }
 
+      if (!parent.length) {
+        throw new Error('Colorpicker component should be placed within a non-static positioned container');
+      }
+
+      var leftPos = position.left;
+      if (this.options.align === 'right') {
+        leftPos = position.left + element.outerWidth() - this.picker.outerWidth();
+      }
+
       this.picker.css({
         position: 'absolute',
         top: vertical === 'top' ? 'auto' : position.top + element.outerHeight(),
         bottom: vertical === 'top' ? parent.outerHeight() - (parent[0] === element[0] ? 0 : position.top) : 'auto',
-        left: position.left,
+        left: leftPos,
         right: 'auto'
       });
 
