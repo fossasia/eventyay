@@ -2145,7 +2145,7 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
                 'When you upload a logo, the event name and date will not appear in the header. '
@@ -2155,7 +2155,7 @@ Your {event} team"""
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
             max_size=10 * 1024 * 1024,
         ),
     },
@@ -2470,6 +2470,7 @@ Your {event} team"""
                 'The system generates by default {}-character long gift card codes. However, if a different length '
                 'is required, it can be set here.'.format(settings.ENTROPY['giftcard_secret'])
             ),
+            min_value=4,
         ),
     },
     'giftcard_expiry_years': {
@@ -2481,9 +2482,12 @@ Your {event} team"""
             label=_('Validity of gift card codes in years'),
             help_text=_(
                 'If you set a number here, gift cards will by default expire at the end of the year after this '
-                'many years. If you keep it empty, gift cards do not have an explicit expiry date.'
+                'many years. For example, 1 means expiry at the end of next year, 2 means end of the year after, etc. '
+                'If you keep it empty, gift cards do not have an explicit expiry date.'
             ),
+            min_value=1,
         ),
+        'serializer_kwargs': dict(validators=[MinValueValidator(0)]),
     },
     'privacy_policy': {
         'default': None,

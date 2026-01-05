@@ -85,6 +85,8 @@ RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix
 # rollup needed by Django-Compressor
 COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
 RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME

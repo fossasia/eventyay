@@ -22,9 +22,9 @@
 				.state {{ user.moderation_state }}
 				.actions(v-if="user.id !== ownUser.id", @click.prevent.stop="")
 					.placeholder.mdi.mdi-dots-horizontal
-					bunt-button.btn-open-dm(@click="$store.dispatch('chat/openDirectMessage', {users: [user]})") message
+					bunt-button.btn-open-dm(v-if="hasPermission('world:chat.direct')", @click="$store.dispatch('chat/openDirectMessage', {users: [user]})") message
 					bunt-button.btn-reactivate(
-						v-if="user.moderation_state",
+						v-if="hasPermission('world:users.manage') && user.moderation_state",
 						:key="`${user.id}-reactivate`",
 						:loading="user.updating === 'reactivate'",
 						:error-message="(user.error && user.error.action === 'reactivate') ? user.error.message : null",
@@ -32,7 +32,7 @@
 						@click="doAction(user, 'reactivate', null)")
 						| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
 					bunt-button.btn-ban(
-						v-if="user.moderation_state !== 'banned'",
+						v-if="hasPermission('world:users.manage') && user.moderation_state !== 'banned'",
 						:key="`${user.id}-ban`",
 						:loading="user.updating === 'ban'",
 						:error-message="(user.error && user.error.action === 'ban') ? user.error.message : null",
@@ -40,7 +40,7 @@
 						@click="doAction(user, 'ban', 'banned')")
 						| ban
 					bunt-button.btn-silence(
-						v-if="!user.moderation_state",
+						v-if="hasPermission('world:users.manage') && !user.moderation_state",
 						:key="`${user.id}-silence`",
 						:loading="user.updating === 'silence'",
 						:error-message="(user.error && user.error.action === 'silence') ? user.error.message : null",
@@ -52,7 +52,7 @@
 <script>
 // TODO
 // - search
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import api from 'lib/api'
 import fuzzysearch from 'lib/fuzzysearch'
 import Avatar from 'components/Avatar'
@@ -70,6 +70,7 @@ export default {
 		...mapState({
 			ownUser: 'user'
 		}),
+		...mapGetters(['hasPermission']),
 		filteredUsers() {
 			if (!this.users) return
 			if (!this.search) return this.users

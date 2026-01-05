@@ -5,13 +5,13 @@
 			bunt-icon-button(@click="$router.push({name: 'admin:users'})") arrow_left
 			h1 User: {{ (user.profile && user.profile.display_name) || user.id }}
 			.actions(v-if="user.id !== ownUser.id")
-				bunt-button.btn-dm(v-if="!user.deleted", @click="openDM") message
-				bunt-button.btn-call(v-if="!user.deleted", @click="startCall") call
-				bunt-button.btn-reactivate(v-if="user.moderation_state", @click="userAction = 'reactivate'")
+				bunt-button.btn-dm(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="openDM") message
+				bunt-button.btn-call(v-if="hasPermission('world:chat.direct') && !user.deleted", @click="startCall") call
+				bunt-button.btn-reactivate(v-if="hasPermission('world:users.manage') && user.moderation_state", @click="userAction = 'reactivate'")
 					| {{ user.moderation_state === 'banned' ? 'unban' : 'unsilence'}}
-				bunt-button.btn-delete(v-if="!user.deleted", @click="userAction = 'delete'") {{ $t('UserAction:action.delete:label') }}
-				bunt-button.btn-ban(v-if="!user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") ban
-				bunt-button.btn-silence(v-if="!user.deleted && !user.moderation_state", @click="userAction = 'silence'") silence
+				bunt-button.btn-delete(v-if="hasPermission('world:users.manage') && !user.deleted", @click="userAction = 'delete'") {{ $t('UserAction:action.delete:label') }}
+				bunt-button.btn-ban(v-if="hasPermission('world:users.manage') && !user.deleted && user.moderation_state !== 'banned'", @click="userAction = 'ban'") ban
+				bunt-button.btn-silence(v-if="hasPermission('world:users.manage') && !user.deleted && !user.moderation_state", @click="userAction = 'silence'") silence
 				bunt-button#btn-save(v-if="edit", :disabled="v$.$invalid && v$.$dirty", :loading="saving", @click="save") {{ $t('preferences/index:btn-save:label') }}
 				bunt-button#btn-edit(v-if="!user.deleted", @click="edit=true") edit
 		scrollbars.user-info(y)
@@ -36,7 +36,7 @@
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
-import { mapState } from 'vuex'
+import { mapState, mapGetters } from 'vuex'
 import api from 'lib/api'
 import Avatar from 'components/Avatar'
 import Prompt from 'components/Prompt'
@@ -75,6 +75,7 @@ export default {
 		...mapState({
 			ownUser: 'user'
 		}),
+		...mapGetters(['hasPermission']),
 	},
 	async created() {
 		this.user = await api.call('user.fetch', {id: this.userId})
