@@ -292,5 +292,8 @@ See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
 This project is maintained by **FOSSASIA**.
 
-.. _uv: https://github.com/astral-sh/uv
+.. _uv: https://docs.astral.sh/uv/getting-started/installation/
 .. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
+.. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
+.. _eventyay.com: https://eventyay.com
+.. _blog: https://blog.eventyay.com
