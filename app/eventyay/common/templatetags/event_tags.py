@@ -96,5 +96,7 @@ def user_has_valid_ticket(context, event=None):
         order__email__iexact=request.user.email,
         order__status__in=allowed_statuses,
         product_id__in=allowed_products,
+        canceled=False,
+        addon_to__isnull=True,
     ).exists()
 
