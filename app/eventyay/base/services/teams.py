@@ -25,6 +25,8 @@ def send_team_invitation_email(
         url: The invitation or dashboard URL
         locale: Language code for the email
         is_registered_user: Boolean indicating if user is already registered
+    Returns:
+        bool: True if email was sent successfully, False otherwise
     """
     try:
         mail(
@@ -41,9 +43,11 @@ def send_team_invitation_email(
             event=None,
             locale=locale,
         )
+        return True
     except SendMailException:
         logger.exception(
             'Failed to send team invitation email to %s for team %s',
             user.email,
             team_name,
         )
+        return False
