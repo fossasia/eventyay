@@ -104,6 +104,11 @@ class Voucher(LoggedModel):
         db_index=True,
         validators=[MinLengthValidator(5)],
     )
+    min_usages = models.PositiveIntegerField(
+        verbose_name=_('Minimum usages'),
+        help_text=_('Minimum number of times this voucher must be redeemed before it can be used.'),
+        default=0,
+    )
     max_usages = models.PositiveIntegerField(
         verbose_name=_('Maximum usages'),
         help_text=_('Number of times this voucher can be redeemed.'),
@@ -205,6 +210,32 @@ class Voucher(LoggedModel):
     show_hidden_products = models.BooleanField(
         verbose_name=_('Shows hidden products that match this voucher'), default=True
     )
+    allow_addons = models.BooleanField(
+        default=False,
+        verbose_name=_('Allow free add-ons'),
+        help_text=_('If activated, add-on products can be added to the cart for free when this voucher is used.'),
+    )
+    allow_bundled = models.BooleanField(
+        default=False,
+        verbose_name=_('Include bundled products'),
+        help_text=_('If activated, bundled products will be included when this voucher is used.'),
+    )
+    exhibitor = models.ForeignKey(
+        'Exhibitor',
+        related_name='vouchers',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        verbose_name=_('Exhibitor'),
+        help_text=_('Assign this voucher to a specific exhibitor.'),
+    )
+    exhibitor_comment = models.TextField(
+        blank=True,
+        verbose_name=_('Exhibitor comment'),
+        help_text=_(
+            'A comment that will be visible to the assigned exhibitor. This is separate from the internal staff comment.'
+        ),
+    )
 
     objects = ScopedManager(organizer='event__organizer')
 
@@ -268,13 +299,24 @@ class Voucher(LoggedModel):
 
     @staticmethod
     def clean_max_usages(data, redeemed):
-        if data.get('max_usages', 1) < redeemed:
+        max_usages = data.get('max_usages', 1)
+        min_usages = data.get('min_usages', 0)
+        
+        if max_usages < redeemed:
             raise ValidationError(
                 _(
                     'This voucher has already been redeemed %(redeemed)s times. '
                     'You cannot reduce the maximum number of usages below this number.'
                 ),
                 params={'redeemed': redeemed},
+            )
+        
+        if min_usages > max_usages:
+            raise ValidationError(
+                _(
+                    'Minimum usages (%(min_usages)s) cannot be greater than maximum usages (%(max_usages)s).'
+                ),
+                params={'min_usages': min_usages, 'max_usages': max_usages},
             )
 
     @staticmethod
@@ -457,6 +499,7 @@ class Voucher(LoggedModel):
             return False
         if self.valid_until and self.valid_until < now():
             return False
+        # Note: min_usages is checked during redemption, not here
         return True
 
     def calculate_price(self, original_price: Decimal, max_discount: Decimal = None) -> Decimal:

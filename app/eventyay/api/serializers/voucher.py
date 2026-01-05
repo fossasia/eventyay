@@ -43,6 +43,7 @@ class VoucherSerializer(I18nAwareModelSerializer):
         fields = (
             'id',
             'code',
+            'min_usages',
             'max_usages',
             'redeemed',
             'valid_until',
@@ -57,6 +58,11 @@ class VoucherSerializer(I18nAwareModelSerializer):
             'comment',
             'subevent',
             'show_hidden_products',
+            'allow_addons',
+            'allow_bundled',
+            'exhibitor',
+            'exhibitor_comment',
+            'budget',
             'seat',
         )
         read_only_fields = ('id', 'redeemed')

@@ -13,7 +13,7 @@ from django_scopes.forms import SafeModelChoiceField
 
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import I18nModelForm, PlaceholderValidator
-from eventyay.base.models import Product, Voucher
+from eventyay.base.models import Exhibitor, Product, Voucher
 from eventyay.control.forms import SplitDateTimeField, SplitDateTimePickerWidget
 from eventyay.control.forms.widgets import Select2, Select2ProductVarQuota
 from eventyay.control.signals import voucher_form_validation
@@ -43,15 +43,21 @@ class VoucherForm(I18nModelForm):
             'value',
             'tag',
             'comment',
+            'min_usages',
             'max_usages',
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'allow_addons',
+            'allow_bundled',
+            'exhibitor',
+            'exhibitor_comment',
             'budget',
         ]
         field_classes = {
             'valid_until': SplitDateTimeField,
             'subevent': SafeModelChoiceField,
+            'exhibitor': SafeModelChoiceField,
         }
         widgets = {
             'valid_until': SplitDateTimePickerWidget(),
@@ -132,6 +138,14 @@ class VoucherForm(I18nModelForm):
         )
         self.fields['productvar'].required = False
         self.fields['productvar'].widget.choices = self.fields['productvar'].choices
+
+        # Setup exhibitor field
+        if 'exhibitor' in self.fields:
+            self.fields['exhibitor'].queryset = Exhibitor.objects.filter(event=instance.event)
+            self.fields['exhibitor'].required = False
+            self.fields['exhibitor'].widget.attrs.update({
+                'data-placeholder': _('No exhibitor'),
+            })
 
         if (
             self.instance.event.seating_plan
@@ -309,15 +323,21 @@ class VoucherBulkForm(VoucherForm):
             'value',
             'tag',
             'comment',
+            'min_usages',
             'max_usages',
             'price_mode',
             'subevent',
             'show_hidden_products',
+            'allow_addons',
+            'allow_bundled',
+            'exhibitor',
+            'exhibitor_comment',
             'budget',
         ]
         field_classes = {
             'valid_until': SplitDateTimeField,
             'subevent': SafeModelChoiceField,
+            'exhibitor': SafeModelChoiceField,
         }
         widgets = {
             'valid_until': SplitDateTimePickerWidget(),

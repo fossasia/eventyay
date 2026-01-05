@@ -46,6 +46,7 @@
                             </div>
                         {% endif %}
                     {% endif %}
+                    {% bootstrap_field form.min_usages layout="control" %}
                     {% bootstrap_field form.max_usages layout="control" %}
                     {% bootstrap_field form.valid_until layout="control" %}
                     {% bootstrap_field form.productvar layout="control" %}
@@ -86,6 +87,12 @@
                     {% bootstrap_field form.tag layout="control" %}
                     {% bootstrap_field form.comment layout="control" %}
                     {% bootstrap_field form.show_hidden_products layout="control" %}
+                    {% bootstrap_field form.allow_addons layout="control" %}
+                    {% bootstrap_field form.allow_bundled layout="control" %}
+                    {% if form.exhibitor %}
+                        {% bootstrap_field form.exhibitor layout="control" %}
+                        {% bootstrap_field form.exhibitor_comment layout="control" %}
+                    {% endif %}
                 </fieldset>
                 {% eventsignal request.event "eventyay.control.signals.voucher_form_html" form=form %}
             </div>
