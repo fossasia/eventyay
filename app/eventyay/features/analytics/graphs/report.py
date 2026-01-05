@@ -141,7 +141,7 @@ class ReportGenerator:
         return "eventyay"
 
     def get_left_header_string(self):
-        return self.event.title
+        return str(self.event.name)
 
     def page_header(self, canvas, doc):
         from reportlab.lib.units import mm
@@ -199,7 +199,7 @@ class ReportGenerator:
 
     def get_story(self):
         s = [
-            Paragraph(self.event.title, self.stylesheet["Heading1"]),
+            Paragraph(str(self.event.name), self.stylesheet["Heading1"]),
         ]
         s += self.global_sums()
         s += self.story_for_exhibitors()
@@ -227,7 +227,7 @@ class ReportGenerator:
         s = [
             PageBreak(),
             Paragraph(
-                room.name + (" (deleted)" if room.deleted else ""),
+                str(room.name) + (" (deleted)" if room.deleted else ""),
                 self.stylesheet["Heading2"],
             ),
             # todo: average time spent per user
