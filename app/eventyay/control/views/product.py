@@ -48,6 +48,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.tickets import invalidate_cache
+from eventyay.base.services.waitinglist import assign_automatically
 from eventyay.base.signals import quota_availability
 from eventyay.control.forms.product import (
     CategoryForm,
@@ -1055,7 +1056,7 @@ class QuotaView(ChartContainingView, DetailView):
                     assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
                 else:
                     assign_automatically.apply_async(args=(event.pk, request.user.pk))
-                    
+
         if 'disable' in request.POST:
             quota.closed = False
             quota.close_when_sold_out = False
@@ -1077,7 +1078,7 @@ class QuotaView(ChartContainingView, DetailView):
                     assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
                 else:
                     assign_automatically.apply_async(args=(event.pk, request.user.pk))
-                    
+
         return redirect(
             reverse(
                 'control:event.products.quotas.show',
