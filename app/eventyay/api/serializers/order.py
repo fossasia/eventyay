@@ -1227,8 +1227,12 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                 if pos_data.get('voucher'):
                     v = pos_data['voucher']
 
-                    if pos_data.get('addon_to'):
-                        errs[i]['voucher'] = ['Vouchers are currently not supported for add-on products.']
+                    # Enforce allow_addons: don't allow voucher on add-on products if allow_addons is False
+                    # Add-on products are identified by having addon_to set or product.category.is_addon
+                    product = pos_data.get('product')
+                    is_addon = pos_data.get('addon_to') or (product.category and product.category.is_addon)
+                    if is_addon and not v.allow_addons:
+                        errs[i]['voucher'] = ['This voucher cannot be applied to add-on products.']
                         continue
 
                     if not v.applies_to(pos_data['product'], pos_data.get('variation')):
@@ -1367,6 +1371,30 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                                             'There is not enough quota available on quota "{}" to perform the operation.'
                                         ).format(quota.name)
                                     ]
+
+            # Enforce min_usages: count eligible positions per voucher
+            # Group positions by voucher to check min_usages
+            voucher_positions = defaultdict(list)
+            for i, pos_data in enumerate(positions_data):
+                if pos_data.get('voucher'):
+                    v = pos_data['voucher']
+                    # Only count if it passed other validations (no errors)
+                    if not errs[i].get('voucher'):
+                        voucher_positions[v].append((i, pos_data))
+
+            # Check min_usages for each voucher
+            for voucher, pos_list in voucher_positions.items():
+                if voucher.min_usages > 0:
+                    eligible_count = len(pos_list)
+                    if eligible_count < voucher.min_usages:
+                        # Add error to all positions with this voucher
+                        for i, _ in pos_list:
+                            if not errs[i].get('voucher'):
+                                errs[i]['voucher'] = [
+                                    gettext_lazy(
+                                        'This voucher requires at least {min_usages} eligible products, but you only have {count}.'
+                                    ).format(min_usages=voucher.min_usages, count=eligible_count)
+                                ]
 
             if any(errs):
                 raise ValidationError({'positions': errs})

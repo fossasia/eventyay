@@ -138,6 +138,9 @@ error_messages = {
     'country_blocked': _('One of the selected products is not available in the selected country.'),
     'one_ticket_per_user': _('Only one ticket per user is allowed for a product in your cart. You already have a ticket.'),
     'one_ticket_per_user_cart': _('Only one ticket per user is allowed for this product. Quantity has been adjusted to 1.'),
+    'voucher_min_usages': _(
+        'This voucher requires at least %(min_usages)s eligible products in your cart, but you only have %(count)s.'
+    ),
 }
 
 
@@ -597,6 +600,11 @@ class CartManager:
         if not voucher.is_active():
             raise CartError(error_messages['voucher_expired'])
 
+        # Count eligible products for min_usages validation
+        # This includes all products that would be eligible for the voucher
+        eligible_count = 0
+        eligible_positions = []
+
         for p in self.positions:
             if p.voucher_id:
                 continue
@@ -610,15 +618,40 @@ class CartManager:
             if voucher.subevent_id and voucher.subevent_id != p.subevent_id:
                 continue
 
-            if p.is_bundled:
+            # Enforce allow_addons: skip add-on products if allow_addons is False
+            # Add-ons are identified by having an addon_to_id
+            if not voucher.allow_addons and p.addon_to_id:
                 continue
 
+            # Enforce allow_bundled: skip bundled products if allow_bundled is False
+            # Bundled products are identified by is_bundled flag
+            if not voucher.allow_bundled and p.is_bundled:
+                continue
+
+            # Count this position for min_usages validation
+            eligible_count += 1
+            eligible_positions.append(p)
+
+        # Enforce min_usages: require minimum number of eligible products
+        if voucher.min_usages > 0 and eligible_count < voucher.min_usages:
+            raise CartError(
+                error_messages['voucher_min_usages'],
+                {'min_usages': voucher.min_usages, 'count': eligible_count},
+            )
+
+        # Now apply voucher to eligible positions
+        for p in eligible_positions:
+            # Skip bundled products that are already excluded above, but we need to handle
+            # bundled items attached to non-bundled positions
             bundled_sum = Decimal('0.00')
             if not p.addon_to_id:
                 for bundledp in p.addons.all():
                     if bundledp.is_bundled:
-                        bundledprice = bundledp.price
-                        bundled_sum += bundledprice
+                        # If allow_bundled is False, don't include bundled items in price calculation
+                        # but still calculate the base price correctly
+                        if voucher.allow_bundled:
+                            bundledprice = bundledp.price
+                            bundled_sum += bundledprice
 
             price = self._get_price(p.product, p.variation, voucher, None, p.subevent, bundled_sum=bundled_sum)
             """
@@ -685,7 +718,13 @@ class CartManager:
                 except Voucher.DoesNotExist:
                     raise CartError(error_messages['voucher_invalid'])
                 else:
-                    voucher_use_diff[voucher] += i['count']
+                    # Enforce allow_addons: don't apply voucher to add-on products if allow_addons is False
+                    # Add-on products are identified by having a category with is_addon=True
+                    if not voucher.allow_addons and product.category and product.category.is_addon:
+                        # Don't apply voucher to this add-on product
+                        voucher = None
+                    else:
+                        voucher_use_diff[voucher] += i['count']
 
             # Fetch all quotas. If there are no quotas, this product is not allowed to be sold.
             quotas = list(
@@ -702,61 +741,64 @@ class CartManager:
                 quotas = []
 
             # Fetch bundled products
+            # Enforce allow_bundled: if voucher.allow_bundled is False, don't include bundled items
             bundled = []
             bundled_sum = Decimal('0.00')
-            db_bundles = list(product.bundles.all())
-            self._update_products_cache(
-                [b.bundled_product_id for b in db_bundles],
-                [b.bundled_variation_id for b in db_bundles],
-            )
-            for bundle in db_bundles:
-                if bundle.bundled_product_id not in self._products_cache or (
-                    bundle.bundled_variation_id and bundle.bundled_variation_id not in self._variations_cache
-                ):
-                    raise CartError(error_messages['not_for_sale'])
-                bproduct = self._products_cache[bundle.bundled_product_id]
-                bvar = self._variations_cache[bundle.bundled_variation_id] if bundle.bundled_variation_id else None
-                bundle_quotas = list(
-                    bproduct.quotas.filter(subevent=subevent) if bvar is None else bvar.quotas.filter(subevent=subevent)
+            # Only fetch bundles if voucher allows them or there's no voucher
+            if not voucher or voucher.allow_bundled:
+                db_bundles = list(product.bundles.all())
+                self._update_products_cache(
+                    [b.bundled_product_id for b in db_bundles],
+                    [b.bundled_variation_id for b in db_bundles],
                 )
-                if not bundle_quotas:
-                    raise CartError(error_messages['unavailable'])
-                if not voucher or not voucher.allow_ignore_quota:
-                    for quota in bundle_quotas:
-                        quota_diff[quota] += bundle.count * i['count']
-                else:
-                    bundle_quotas = []
-
-                if bundle.designated_price:
-                    bprice = self._get_price(
-                        bproduct,
-                        bvar,
-                        None,
-                        bundle.designated_price,
-                        subevent,
-                        force_custom_price=True,
-                        cp_is_net=False,
+                for bundle in db_bundles:
+                    if bundle.bundled_product_id not in self._products_cache or (
+                        bundle.bundled_variation_id and bundle.bundled_variation_id not in self._variations_cache
+                    ):
+                        raise CartError(error_messages['not_for_sale'])
+                    bproduct = self._products_cache[bundle.bundled_product_id]
+                    bvar = self._variations_cache[bundle.bundled_variation_id] if bundle.bundled_variation_id else None
+                    bundle_quotas = list(
+                        bproduct.quotas.filter(subevent=subevent) if bvar is None else bvar.quotas.filter(subevent=subevent)
                     )
-                else:
-                    bprice = TAXED_ZERO
-                bundled_sum += bundle.designated_price * bundle.count
+                    if not bundle_quotas:
+                        raise CartError(error_messages['unavailable'])
+                    if not voucher or not voucher.allow_ignore_quota:
+                        for quota in bundle_quotas:
+                            quota_diff[quota] += bundle.count * i['count']
+                    else:
+                        bundle_quotas = []
 
-                bop = self.AddOperation(
-                    count=bundle.count,
-                    product=bproduct,
-                    variation=bvar,
-                    price=bprice,
-                    voucher=None,
-                    quotas=bundle_quotas,
-                    addon_to='FAKE',
-                    subevent=subevent,
-                    includes_tax=bool(bprice.rate),
-                    bundled=[],
-                    seat=None,
-                    price_before_voucher=bprice,
-                )
-                self._check_product_constraints(bop, operations)
-                bundled.append(bop)
+                    if bundle.designated_price:
+                        bprice = self._get_price(
+                            bproduct,
+                            bvar,
+                            None,
+                            bundle.designated_price,
+                            subevent,
+                            force_custom_price=True,
+                            cp_is_net=False,
+                        )
+                    else:
+                        bprice = TAXED_ZERO
+                    bundled_sum += bundle.designated_price * bundle.count
+
+                    bop = self.AddOperation(
+                        count=bundle.count,
+                        product=bproduct,
+                        variation=bvar,
+                        price=bprice,
+                        voucher=None,
+                        quotas=bundle_quotas,
+                        addon_to='FAKE',
+                        subevent=subevent,
+                        includes_tax=bool(bprice.rate),
+                        bundled=[],
+                        seat=None,
+                        price_before_voucher=bprice,
+                    )
+                    self._check_product_constraints(bop, operations)
+                    bundled.append(bop)
 
             price = self._get_price(
                 product,
@@ -784,6 +826,46 @@ class CartManager:
             )
             self._check_product_constraints(op, operations)
             operations.append(op)
+
+        # Enforce min_usages for vouchers: count eligible products (existing + new)
+        # Group by voucher to check each one
+        vouchers_to_check = {}
+        for op in operations:
+            if op.voucher and op.voucher not in vouchers_to_check:
+                vouchers_to_check[op.voucher] = []
+            if op.voucher:
+                vouchers_to_check[op.voucher].append(op)
+
+        for voucher, voucher_ops in vouchers_to_check.items():
+            if voucher.min_usages > 0:
+                # Count existing eligible positions in cart
+                existing_count = 0
+                for p in self.positions:
+                    if p.voucher_id == voucher.pk:
+                        # Already has this voucher, count it
+                        existing_count += 1
+                    elif not p.voucher_id and voucher.applies_to(p.product, p.variation):
+                        # Eligible but doesn't have voucher yet
+                        # Check if it would be eligible (not addon if allow_addons=False, not bundled if allow_bundled=False)
+                        if voucher.seat and voucher.seat != p.seat:
+                            continue
+                        if voucher.subevent_id and voucher.subevent_id != p.subevent_id:
+                            continue
+                        if not voucher.allow_addons and p.addon_to_id:
+                            continue
+                        if not voucher.allow_bundled and p.is_bundled:
+                            continue
+                        existing_count += 1
+
+                # Count new positions being added
+                new_count = sum(op.count for op in voucher_ops)
+                total_count = existing_count + new_count
+
+                if total_count < voucher.min_usages:
+                    raise CartError(
+                        error_messages['voucher_min_usages'],
+                        {'min_usages': voucher.min_usages, 'count': total_count},
+                    )
 
         self._quota_diff.update(quota_diff)
         self._voucher_use_diff += voucher_use_diff
