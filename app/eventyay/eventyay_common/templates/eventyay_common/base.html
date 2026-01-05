@@ -290,6 +290,7 @@
             <div id="page-wrapper">
                 <div class="container-fluid">
                     {% signal "eventyay.control.signals.html_page_start" request %}
+                    <span id="organizer-messages"></span>
                     {% if messages %}
                         {% for message in messages %}
                             <div class="alert {{ message.tags }}">

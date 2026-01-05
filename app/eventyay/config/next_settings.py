@@ -21,7 +21,6 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.common.settings.config import build_config
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -142,10 +141,15 @@ class BaseSettings(_BaseSettings):
     log_csp: bool = True
     csp_additional_header: str = ''
     celery_always_eager: bool = False
+    # Being True will make Django-Compressor only look for pre-compiled files
+    # and require us to run "compress" command after each frontend change.
+    compress_offline_required: bool = False
     nanocdn_url: HttpUrl | None = None
     zoom_key: str = ''
     zoom_secret: str = ''
     control_secret: str = ''
+
+
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'
@@ -155,6 +159,8 @@ class BaseSettings(_BaseSettings):
     linkedin_client_secret: str = ''
     # Ask to provide comments when making changes in the admin interface.
     admin_audit_comments_asked: bool = False
+    # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
+    call_for_speaker_login_button_label: str = 'default'
 
     @classmethod
     def settings_customise_sources(
@@ -229,9 +235,6 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
-
-talk_config, TALK_CONFIG_FILES = build_config()
-TALK_CONFIG = talk_config
 
 # --- Now, provide values to Django's settings. ---
 
@@ -474,7 +477,6 @@ TEMPLATES = (
                 'django.template.context_processors.tz',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'eventyay.config.settings.instance_name',
                 'eventyay.agenda.context_processors.is_html_export',
                 'eventyay.common.context_processors.add_events',
                 'eventyay.common.context_processors.locale_context',
@@ -989,8 +991,16 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
     ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
+    # This is to help Django-Compressor minify 'module' type JS files.
+    # The actual job is done by esbuild. In the JS code, we can use "import" statements,
+    # but only with relative import paths (like `import Alpine from '../alpinejs.mjs'`).
+    # We don't need to specify {outfile} because both esbuild and Django-Compressor support stdin/stdout.
+    # We still specify {infile} to enable resolving "import" paths.
+    ('module', 'npx esbuild {infile} --bundle --minify --platform=browser'),
 )
-COMPRESS_ENABLED = COMPRESS_OFFLINE = IS_PRODUCTION
+# We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = conf.compress_offline_required
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass
@@ -1094,7 +1104,6 @@ LOGGING = {
             'handlers': ['console'],
             'propagate': False,
         },
-        # We need it to debug permission issues.
         'rules': {
             'handlers': [_adaptive_console_handler],
             'level': 'DEBUG' if DEBUG else 'INFO',
@@ -1114,13 +1123,9 @@ LOGGING = {
 # --- Django allauth settings for social login ---
 
 # NOTE: django-allauth changed some settings name. Check https://docs.allauth.org/en/dev/release-notes/recent.html
-# ACCOUNT_LOGIN_METHODS = {'email'}
-# ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
 
@@ -1128,6 +1133,11 @@ SOCIALACCOUNT_ADAPTER = 'eventyay.plugins.socialauth.adapter.CustomSocialAccount
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    # We need this to tell django-allauth that user email address is verified and not make password unusable.
+    'mediawiki': {'VERIFIED_EMAIL': True},
+}
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'api.OAuthApplication'
 OAUTH2_PROVIDER_GRANT_MODEL = 'api.OAuthGrant'
@@ -1173,13 +1183,17 @@ CHANNEL_LAYERS = {
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'eventyay.api.auth.api_auth.NoPermission',
+        'eventyay.api.auth.permission.EventPermission',
     ],
-    'UNAUTHENTICATED_USER': 'eventyay.api.auth.api_auth.AnonymousUser',
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
     'PAGE_SIZE': 50,
-    'DEFAULT_AUTHENTICATION_CLASSES': ('eventyay.api.auth.api_auth.EventTokenAuthentication',),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+        'eventyay.api.auth.token.TeamTokenAuthentication',
+        'eventyay.api.auth.device.DeviceTokenAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ),
     'DEFAULT_RENDERER_CLASSES': ('rest_framework.renderers.JSONRenderer',),
     'UNICODE_JSON': False,
 }
@@ -1358,3 +1372,5 @@ HTMLEXPORT_ROOT = DATA_DIR / 'htmlexport'
 EVENTYAY_PRIMARY_COLOR = '#2185d0'
 DEFAULT_EVENT_PRIMARY_COLOR = '#2185d0'
 PRETIX_PRIMARY_COLOR = EVENTYAY_PRIMARY_COLOR
+
+CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL = conf.call_for_speaker_login_button_label
