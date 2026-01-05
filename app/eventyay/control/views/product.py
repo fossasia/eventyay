@@ -1051,7 +1051,6 @@ class QuotaView(ChartContainingView, DetailView):
             if event.settings.get('waiting_list_enabled', as_type=bool) and \
                event.settings.get('waiting_list_auto', as_type=bool) and \
                (event.presale_is_running or event.has_subevents):
-                from eventyay.base.services.waitinglist import assign_automatically
                 if quota.subevent:
                     assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
                 else:
@@ -1074,7 +1073,6 @@ class QuotaView(ChartContainingView, DetailView):
             if event.settings.get('waiting_list_enabled', as_type=bool) and \
                event.settings.get('waiting_list_auto', as_type=bool) and \
                (event.presale_is_running or event.has_subevents):
-                from eventyay.base.services.waitinglist import assign_automatically
                 if quota.subevent:
                     assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
                 else:
@@ -1148,7 +1146,6 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
                     if event.settings.get('waiting_list_enabled', as_type=bool) and \
                        event.settings.get('waiting_list_auto', as_type=bool) and \
                        (event.presale_is_running or event.has_subevents):
-                        from eventyay.base.services.waitinglist import assign_automatically
                         if form.instance.subevent:
                             assign_automatically.apply_async(
                                 args=(event.pk, self.request.user.pk, form.instance.subevent.pk)
