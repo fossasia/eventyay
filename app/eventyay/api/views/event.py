@@ -62,6 +62,7 @@ from eventyay.base.models.event import Event
 # from pretix.presale.views.organizer import filter_qs_by_attr  # commented out
 from eventyay.api.task import configure_video_settings_for_talks
 from eventyay.api.utils import get_protocol
+from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -325,8 +326,12 @@ class CreateEventView(APIView):
 
             title = titles.get(locale) or titles.get("en") or title_default
 
-            attendee_trait_grants = request.data.get("traits", {}).get("attendee", "")
-            if not isinstance(attendee_trait_grants, str):
+            traits_payload = request.data.get("traits") or {}
+            if not isinstance(traits_payload, dict):
+                raise ValidationError("Traits must be provided as an object.")
+
+            attendee_trait_grants = traits_payload.get("attendee", "")
+            if attendee_trait_grants and not isinstance(attendee_trait_grants, str):
                 raise ValidationError("Attendee traits must be a string")
 
             trait_grants = {
@@ -336,6 +341,15 @@ class CreateEventView(APIView):
                 ),
                 "scheduleuser": ["schedule-update"],
             }
+
+            for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
+                trait_value = traits_payload.get(trait_name, "")
+                if trait_value:
+                    if not isinstance(trait_value, str):
+                        raise ValidationError(
+                            f"Trait '{trait_name}' must be a string value."
+                        )
+                    trait_grants[role_name] = [trait_value]
 
             # if event already exists, update it, otherwise create a new event
             event_id = request.data.get("id")

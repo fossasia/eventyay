@@ -182,9 +182,9 @@ def build_room_view_fig(fig, room, begin, end, tz):
                 )
                 emoji_axs[i].imshow(emoji_img)
                 emoji_axs[i].axis("off")
-        ax.set_title(room.name)
+        ax.set_title(str(room.name))
     else:
-        ax.set_title(room.title)
+        ax.set_title(str(getattr(room, 'title', getattr(room, 'name', 'Room'))))
 
     fig.autofmt_xdate()
     ax.xaxis.set_major_formatter(dates.DateFormatter("%d. %H:%M", tz=tz))

@@ -1,4 +1,6 @@
 {% load i18n %}
+{% load eventurl %}
+{% load oauth_tags %}
 
 <div id="ajaxerr">
 </div>
@@ -14,4 +16,424 @@
         </div>
     </div>
 </div>
+<div id="join-video-popupmodal" hidden aria-live="polite">
+    <div class="modal-card join-online-video">
+        <div class="modal-card-content-join">
+            <div>
+                <h3>
+                    {% translate "This is a ticketed event. If you ordered a ticket as a guest user, you don't have an account but can still access the ticket using the secret link in your ticket confirmation email. On the tickets page there is also a link to join online sessions." %}
+                </h3>
+                <h3>
+                    {% translate 'As a ticket holder please also check your email for the unique link to join online sessions.' %}
+                </h3>
+                {% if request.event %}
+                    <p class="text">
+                        {% translate "Can't find your ticket?" %}
+                        <a class="btn btn-link" href='{% eventurl request.event "presale:event.resend_link" %}'>
+                            {% translate 'Resend the email' %}
+                        </a>
+                        {% translate 'to receive it.' %}
+                    </p>
+                    <p class="text">
+                        {% translate 'Want to order a ticket?' %}
+                        <a class="btn btn-link" href='{% eventurl request.event "presale:event.index" %}'>
+                            {% translate 'Get a ticket here' %}
+                        </a>
+                    </p>
+                {% endif %}
+                {% if not request.user.is_authenticated %}
+                    <p class="text">
+                        {% blocktrans with event_name=event_name %}
+                            Want to create a {{ event_name }} account?
+                        {% endblocktrans %}
+                        <a class="btn btn-link" href='{% url "eventyay_common:auth.register" %}?next={{ request.get_full_path|urlencode }}'>
+                            {% translate 'Sign up here' %}
+                        </a>
+                    </p>
+                    <p class="text">
+                        {% blocktrans with event_name=event_name %}
+                            Already have a {{ event_name }} account?
+                        {% endblocktrans %}
+                        <a class="btn btn-link" href='{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}'>
+                            {% translate 'Login here' %}
+                        </a>
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="join-online-close">
+            <button id="join-online-close-button" class="btn btn-default join-online-close-button">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Checkout Login Popup Modal -->
+<div id="checkout-login-modal" class="checkout-login-overlay" style="display: none;">
+    <div class="checkout-login-popup" role="dialog" aria-modal="true" aria-labelledby="checkout-login-modal-title">
+        <div class="checkout-login-header">
+            <h3 id="checkout-login-modal-title">{% translate "Login" %}</h3>
+            <button type="button" class="checkout-login-close" aria-label="{% translate 'Close' %}">&times;</button>
+        </div>
+        <div class="checkout-login-body">
+            <p class="checkout-login-message">{% translate "Please log in to continue." %}</p>
+
+            <!-- Login Form -->
+            <form id="checkout-login-form" method="post" action="{% url 'eventyay_common:auth.login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" id="checkout-next-url" value="">
+
+                <div class="form-group">
+                    <label for="checkout-email">{% translate "Email" %}</label>
+                    <input type="email" id="checkout-email" name="email" class="form-control" required autocomplete="email" placeholder="{% translate 'Enter your email' %}">
+                </div>
+
+                <div class="form-group">
+                    <label for="checkout-password">{% translate "Password" %}</label>
+                    <input type="password" id="checkout-password" name="password" class="form-control" required autocomplete="current-password" placeholder="{% translate 'Enter your password' %}">
+                </div>
+
+                <div class="form-group">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="keep_logged_in" value="1"> {% translate "Keep me logged in" %}
+                    </label>
+                </div>
+
+                <div id="checkout-login-error" class="alert alert-danger" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-lg btn-block" id="checkout-login-submit">
+                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% translate "Log in" %}
+                </button>
+            </form>
+
+            <div class="checkout-login-divider">
+                <span>{% translate "or" %}</span>
+            </div>
+
+            <!-- SSO Provider Buttons -->
+            <div class="checkout-login-sso">
+                <a href="/oauth_login/mediawiki/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="mediawiki">
+                    {% translate "Login with MediaWiki" %}
+                </a>
+                <a href="/oauth_login/google/" class="btn btn-default btn-block checkout-sso-btn" rel="noopener noreferrer" data-provider="google">
+                    {% translate "Login with Google" %}
+                </a>
+            </div>
+
+            <div class="checkout-login-footer">
+                <p>{% translate "Don't have an account?" %} <a href="{% url 'eventyay_common:auth.register' %}">{% translate "Create one" %}</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.checkout-login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Use semi-transparent black for overlay, respects system themes */
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkout-login-popup {
+    background: white;
+    border-radius: 8px;
+    max-width: 420px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.checkout-login-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.checkout-login-header h3 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.checkout-login-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.checkout-login-close:hover {
+    color: #333;
+}
+
+.checkout-login-body {
+    padding: 20px;
+}
+
+.checkout-login-message {
+    text-align: center;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.checkout-login-divider {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.checkout-login-divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #ddd;
+}
+
+.checkout-login-divider span {
+    background: inherit;
+    padding: 0 15px;
+    position: relative;
+    color: #999;
+}
+
+.checkout-login-sso .btn {
+    margin-bottom: 10px;
+}
+
+.checkout-login-footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    color: #666;
+}
+
+.checkout-login-footer a {
+    color: #337ab7;
+}
+</style>
+
+<script type="module">
+const modal = document.getElementById('checkout-login-modal');
+if (modal) {
+    const loginBtn = document.getElementById('checkout-login-btn');
+    const closeBtn = modal.querySelector('.checkout-login-close');
+    const loginForm = document.getElementById('checkout-login-form');
+    const errorDiv = document.getElementById('checkout-login-error');
+    const nextUrlInput = document.getElementById('checkout-next-url');
+    let checkoutUrl = '';
+
+    // Constants for SSO popup
+    const POPUP_WIDTH = 600;
+    const POPUP_HEIGHT = 700;
+    const POPUP_CHECK_INTERVAL = 500;
+    let activeCheckLogin = null;
+
+    // URL parameter name for redirect after login/register
+    const REDIRECT_PARAM = 'next';
+
+    // Open modal
+    if (loginBtn) {
+        loginBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            checkoutUrl = loginBtn.dataset.checkoutUrl || '';
+            if (nextUrlInput) nextUrlInput.value = checkoutUrl;
+
+            // Update SSO links with next URL
+            const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
+            ssoLinks.forEach((link) => {
+                const url = new URL(link.href, window.location.origin);
+                // Don't overwrite backend - it's already in the href from the template
+                if (checkoutUrl) {
+                    url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                }
+                link.href = url.toString();
+            });
+
+            const registerLink = modal.querySelector('.checkout-login-footer a[href*="register"]');
+            if (registerLink) {
+                const url = new URL(registerLink.href, window.location.origin);
+                url.searchParams.set(REDIRECT_PARAM, checkoutUrl);
+                registerLink.href = url.toString();
+            }
+
+            modal.style.display = 'flex';
+            
+            // Focus management for accessibility
+            const firstInput = modal.querySelector('#checkout-email');
+            if (firstInput) {
+                // Use setTimeout to ensure modal is fully rendered
+                setTimeout(() => firstInput.focus?.(), 100);
+            }
+        });
+    }
+
+    // Centralized function to close modal and cleanup
+    const closeModal = () => {
+        modal.style.display = 'none';
+        // Clean up SSO popup interval if active
+        if (activeCheckLogin) {
+            clearInterval(activeCheckLogin);
+            activeCheckLogin = null;
+        }
+        // Return focus to the button that opened the modal
+        loginBtn?.focus();
+    };
+
+    // Close modal on close button click
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // Close on Escape key - check if modal is visible using modal.style.display
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            closeModal();
+        }
+    });
+
+    // AJAX form submission
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('checkout-login-submit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {% translate "Logging in..." %}';
+
+            if (errorDiv) errorDiv.style.display = 'none';
+
+            const formData = new FormData(loginForm);
+
+            try {
+                const response = await fetch(loginForm.action, {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    redirect: 'manual'
+                });
+
+                // Login endpoint returns 302 on success (redirect: 'manual' prevents auto-follow)
+                if (response.status === 302 || response.type === 'opaqueredirect') {
+                    window.location.href = checkoutUrl;
+                    return;
+                }
+
+                // 200 response from Django form means validation failed (invalid credentials)
+                if (response.ok) {
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Invalid email or password. Please try again." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                } 
+                // Server errors (5xx)
+                else if (response.status >= 500) {
+                    console.error('Server error during login:', response.status, response.statusText);
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Server error. Please try again later." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                } 
+                // Other errors (4xx except handled cases, network issues, etc.)
+                else {
+                    console.error('Login failed with status:', response.status, response.statusText);
+                    if (errorDiv) {
+                        errorDiv.textContent = '{% translate "Login failed. Please try again." %}';
+                        errorDiv.style.display = 'block';
+                    }
+                }
+                
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            } catch (error) {
+                // Network errors, timeouts, CORS issues, etc.
+                console.error('Network error during login:', error);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                if (errorDiv) {
+                    errorDiv.textContent = '{% translate "Connection failed. Please check your network and try again." %}';
+                    errorDiv.style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // Handle SSO popup login
+    const ssoLinks = modal.querySelectorAll('.checkout-sso-btn');
+    ssoLinks.forEach((link) => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const left = (window.innerWidth - POPUP_WIDTH) / 2;
+            const top = (window.innerHeight - POPUP_HEIGHT) / 2;
+            const popup = window.open(link.href, 'sso_login', `width=${POPUP_WIDTH},height=${POPUP_HEIGHT},left=${left},top=${top}`);
+
+            if (!popup) {
+                const popupErrorMessage = '{% translate "Please allow popups for this site to use SSO login." %}';
+                // Show error in the modal's error div
+                if (errorDiv) {
+                    errorDiv.textContent = popupErrorMessage;
+                    errorDiv.style.display = 'block';
+                }
+                // Also show in a more prominent global error container
+                const globalErrorDiv = document.getElementById('ajaxerr');
+                if (globalErrorDiv) {
+                    globalErrorDiv.textContent = popupErrorMessage;
+                    globalErrorDiv.style.display = 'block';
+                    globalErrorDiv.setAttribute('role', 'alert');
+                    globalErrorDiv.setAttribute('aria-live', 'assertive');
+                    // Set tabindex to allow focus for screen reader announcement
+                    globalErrorDiv.setAttribute('tabindex', '-1');
+                    globalErrorDiv.focus();
+                }
+                return;
+            }
+
+            // Check if login was successful
+            if (activeCheckLogin) clearInterval(activeCheckLogin);
+            activeCheckLogin = setInterval(() => {
+                try {
+                    if (popup.closed) {
+                        clearInterval(activeCheckLogin);
+                        activeCheckLogin = null;
+                        // Small delay to ensure session cookie is set before reload
+                        setTimeout(() => {
+                            window.location.href = checkoutUrl;
+                        }, 300);
+                    }
+                } catch(e) {
+                    // Cross-origin errors when checking popup.closed are expected
+                    // Log for debugging but don't break the interval
+                    console.debug('SSO popup check error (expected for cross-origin):', e.message);
+                }
+            }, POPUP_CHECK_INTERVAL);
+        });
+    });
+}
+</script>
 {% include "pretixpresale/fragment_join_online_video.html" %}

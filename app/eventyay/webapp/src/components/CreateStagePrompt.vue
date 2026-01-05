@@ -12,6 +12,7 @@ prompt.c-create-stage-prompt(@close="$emit('close')")
 </template>
 <script>
 import { useVuelidate } from '@vuelidate/core'
+import { mapGetters } from 'vuex'
 import Prompt from 'components/Prompt'
 import { required, url } from 'lib/validators'
 
@@ -28,6 +29,9 @@ export default {
 			error: null
 		}
 	},
+	computed: {
+		...mapGetters(['hasPermission']),
+	},
 	validations: {
 		url: {
 			required: required('HLS URL is required'),
@@ -42,6 +46,12 @@ export default {
 			this.error = null
 			this.v$.$touch()
 			if (this.v$.$invalid) return
+
+			// Check permission before creating
+			if (!this.hasPermission('world:rooms.create.stage')) {
+				this.error = 'You do not have permission to create stages.'
+				return
+			}
 
 			this.loading = true
 			const modules = []
@@ -68,7 +78,6 @@ export default {
 				this.$router.push({name: 'room', params: {roomId: room}})
 				this.$emit('close')
 			} catch (error) {
-				console.log(error)
 				this.loading = false
 				this.error = error.message || error
 			}

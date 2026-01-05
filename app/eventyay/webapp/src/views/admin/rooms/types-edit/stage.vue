@@ -13,13 +13,14 @@
 			bunt-input(name="hls_url", v-model="a.hls_url", label="HLS URL")
 			bunt-icon-button(@click="deleteAlternativeStream(i)") delete-outline
 		bunt-button(@click="modules['livestream.native'].config.alternatives = [...(modules['livestream.native'].config.alternatives || []), {label: '', hls_url: ''}]") Add alternative stream
-	bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID", :validation="v$.modules['livestream.youtube'].config.ytid")
+	// YouTube stream settings
+	bunt-input(v-else-if="modules['livestream.youtube']", name="ytid", v-model="modules['livestream.youtube'].config.ytid", label="YouTube Video ID or URL", :validation="v$.modules['livestream.youtube'].config.ytid", @blur="normalizePrimaryYoutubeId")
 	// Language and URL input for YouTube stream
 	.language-urls(v-if="modules['livestream.youtube']")
 		h4 Languages and YouTube ID
 		.language-url-entry(v-for="(entry, index) in modules['livestream.youtube'].config.languageUrls" :key="index")
 			bunt-select(name="language", v-model="entry.language", :options="ISO_LANGUAGE_OPTIONS", label="Language")
-			bunt-input(name="youtube_id" v-model="entry.youtube_id" label="YouTube Video ID")
+			bunt-input(name="youtube_id" v-model="entry.youtube_id" label="YouTube Video ID or URL" @blur="normalizeLanguageYoutubeId(entry)")
 			bunt-icon-button(@click="deleteLanguageUrl(index)") delete-outline
 		bunt-button(@click="addLanguageUrl") + Add Language and Youtube ID
 		// Switch button for no-cookies domain
@@ -41,7 +42,7 @@ import features from 'features'
 import UploadUrlInput from 'components/UploadUrlInput'
 import mixin from './mixin'
 import SidebarAddons from './SidebarAddons'
-import {youtubeid} from 'lib/validators'
+import {youtubeid, normalizeYoutubeVideoId} from 'lib/validators'
 import ISO6391 from 'iso-639-1'
 
 const STREAM_SOURCE_OPTIONS = [
@@ -70,7 +71,7 @@ export default defineComponent({
 				'livestream.youtube': {
 					config: {
 						ytid: {
-							youtubeid: youtubeid('not a valid YouTube video ID (do not supply the full URL)')
+							youtubeid: youtubeid('not a valid YouTube video ID or URL')
 						}
 					}
 				}
@@ -148,7 +149,7 @@ export default defineComponent({
 	created() {
 		// Initialize language options
 		this.ISO_LANGUAGE_OPTIONS = this.getLanguageOptions()
-		
+
 		if (this.modules['livestream.native']) {
 			this.b_streamSource = 'hls'
 		} else if (this.modules['livestream.youtube']) {
@@ -162,9 +163,20 @@ export default defineComponent({
 		}
 	},
 	methods: {
+		normalizePrimaryYoutubeId() {
+			const val = this.modules['livestream.youtube']?.config?.ytid
+			if (!val) return
+			const id = normalizeYoutubeVideoId(val)
+			if (id) this.modules['livestream.youtube'].config.ytid = id
+		},
+		normalizeLanguageYoutubeId(entry) {
+			if (!entry?.youtube_id) return
+			const id = normalizeYoutubeVideoId(entry.youtube_id)
+			if (id) entry.youtube_id = id
+		},
 		setYoutubeConfigProp(prop, value) {
 			if (!this.modules['livestream.youtube']) return
-			
+
 			if (value) {
 				this.modules['livestream.youtube'].config[prop] = true
 			} else {
