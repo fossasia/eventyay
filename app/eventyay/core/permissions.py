@@ -105,6 +105,7 @@ SYSTEM_ROLES = {
     ],
     "video_config_manager": [
         Permission.EVENT_UPDATE.value,
+        Permission.EVENT_GRAPHS.value,
     ],
 }
 
