@@ -5,6 +5,19 @@ To enable video calls, we integrate the BigBlueButton (BBB) software. eventyay i
 multiple BBB servers, which is why the frontend always needs to convert a room or call ID into an actual meeting
 URL explicitly.
 
+Prerequisites
+-------------
+
+To use BigBlueButton with eventyay, the following prerequisites must be met:
+
+- A running BigBlueButton server supported by the upstream BBB project.
+- The BBB server must be reachable from the eventyay backend.
+- HTTPS is required for production deployments to allow clients to join meetings.
+- The BigBlueButton shared secret must match the value configured in eventyay.
+
+If multiple BBB servers are configured, eventyay will select a server automatically
+based on internal load and availability.
+
 BBB Rooms
 ---------
 
@@ -60,3 +73,47 @@ an error of type ``bbb.join.missing_profile`` is returned. If the BBB server can
 or you do not have permission to join, ``bbb.failed`` is returned.
 
 In a private meeting, everyone has moderator rights.
+
+Required BBB Server Configuration
+---------------------------------
+
+The following configuration aspects are required or recommended on the
+BigBlueButton server:
+
+- API access must be enabled and reachable from eventyay.
+- Recording must be enabled if recordings are expected to be listed.
+- The shared secret configured in BBB must match the secret used by eventyay.
+- The BBB server must be publicly reachable for clients joining meetings.
+
+When using a reverse proxy, ensure that all BBB endpoints are forwarded correctly
+and that WebSocket connections are supported.
+
+Smoke Test Checklist
+--------------------
+
+After configuring BigBlueButton, the following steps can be used to verify
+a basic end-to-end setup:
+
+1. Create a Video Channel using BigBlueButton.
+2. Join the room as a moderator.
+3. Join the same room as an attendee.
+4. Enable recording and end the meeting.
+5. Verify that the recording appears and is accessible.
+
+If any step fails, check backend logs and BBB server availability.
+
+Troubleshooting
+---------------
+
+``bbb.join.missing_profile``
+  The user does not have a display name set. Ensure the user profile
+  contains a valid display name before joining a meeting.
+
+``bbb.failed``
+  A generic failure occurred while joining or creating a meeting. Possible
+  causes include:
+
+  - BigBlueButton server is unreachable
+  - Invalid or mismatched shared secret
+  - Missing permissions to join the room or call
+  - Requested room or call does not exist
