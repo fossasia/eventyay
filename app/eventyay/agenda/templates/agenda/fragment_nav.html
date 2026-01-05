@@ -6,12 +6,12 @@
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
 </a>
-{% if schedule or request.event.current_schedule %}
+{% if schedule or request.event.has_schedule_content %}
     <a href="{{ request.event.urls.schedule }}" class="header-tab {% if '/schedule/' in request.path_info %}active{% endif %}">
         <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
     </a>
 {% endif %}
-{% if schedule or request.event.current_schedule %}
+{% if schedule or request.event.has_schedule_content %}
     {% if request.event.display_settings.schedule_display != "list" %}
         <a href="{{ request.event.urls.talks }}" class="header-tab {% if '/sessions/' in request.path_info %} active{% endif %}">
             <i class="fa fa-comments-o"></i> {{ phrases.schedule.sessions }}
