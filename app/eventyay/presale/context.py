@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.utils import translation
 from django.utils.translation import get_language_info
@@ -91,6 +92,21 @@ def _default_context(request):
                 _footer += response
             else:
                 _footer.append(response)
+
+        if not request.event.settings.get('presale_css_file'):
+            lock_key = f'presale:regenerate_css:{request.event.pk}'
+            if cache.add(lock_key, True, 60):
+                try:
+                    from eventyay.presale.style import regenerate_css
+                    regenerate_css.apply_async(args=(request.event.pk,))
+                except Exception:
+                    cache.delete(lock_key)
+                    logger.warning(
+                        'Could not enqueue presale CSS regeneration for %s/%s',
+                        request.event.organizer.slug,
+                        request.event.slug,
+                        exc_info=True,
+                    )
 
         if request.event.settings.presale_css_file:
             ctx['css_file'] = default_storage.url(request.event.settings.presale_css_file)
