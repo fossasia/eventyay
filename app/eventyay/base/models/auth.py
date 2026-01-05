@@ -1,8 +1,8 @@
 import binascii
 import json
+import logging
 import os
 import uuid
-import logging
 from datetime import timedelta
 from hashlib import md5
 from pathlib import Path
@@ -18,9 +18,8 @@ from django.contrib.auth.models import (
 )
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField
 from django.db import models, transaction
-from django.db.models import Q, JSONField
+from django.db.models import JSONField, Q
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.crypto import get_random_string, salted_hmac
@@ -956,6 +955,7 @@ the eventyay team"""
         include_admin_info=False,
         trait_badges_map=None,
         include_client_state=False,
+        include_personal_data=False,
     ):
         """Serialize user for public display in video/event context"""
         # Important: If this is updated, eventyay.base.services.user.get_public_users also needs to be updated!
@@ -987,6 +987,8 @@ the eventyay team"""
             d["token_id"] = self.token_id
         if include_client_state:
             d["client_state"] = self.client_state
+        if include_personal_data:
+            d["wikimedia_username"] = self.wikimedia_username
         return d
 
     @property

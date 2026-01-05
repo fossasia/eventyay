@@ -17,11 +17,13 @@
 <script>
 import { markRaw } from 'vue'
 import { useVuelidate } from '@vuelidate/core'
+import { mapGetters } from 'vuex'
 import api from 'lib/api'
 import Prompt from 'components/Prompt'
 import { required, integer } from 'lib/validators'
 import ValidationErrorsMixin from 'components/mixins/validation-errors'
-import { inferType } from 'lib/room-types'
+import ROOM_TYPES, { inferType } from 'lib/room-types'
+import { filterRoomTypesByPermission } from 'lib/room-type-permissions'
 import Stage from './types-edit/stage'
 import PageStatic from './types-edit/page-static'
 import PageIframe from './types-edit/page-iframe'
@@ -48,6 +50,7 @@ export default {
 	setup:() => ({v$:useVuelidate()}),
 	data() {
 		return {
+			allRoomTypes: ROOM_TYPES,
 			typeComponents: markRaw({
 				stage: Stage,
 				'page-static': PageStatic,
@@ -64,6 +67,10 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['hasPermission']),
+		roomTypes() {
+			return filterRoomTypesByPermission(this.allRoomTypes, this.hasPermission)
+		},
 		modules() {
 			return this.config?.module_config.reduce((acc, module) => {
 				acc[module.type] = module

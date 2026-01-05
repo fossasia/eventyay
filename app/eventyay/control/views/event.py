@@ -224,7 +224,7 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
         if change_css:
-            regenerate_css.apply_async(args=(self.request.event.pk,))
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
                 _(
@@ -1773,14 +1773,14 @@ class QuickSetupView(FormView):
             event=self.request.event,
             initial=[
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Regular ticket')),
-                    'default_price': Decimal('35.00'),
-                    'quota': 100,
+                    'name': LazyI18nString.from_gettext(gettext('Standard Ticket')),
+                    'default_price': Decimal('49.00'),
+                    'quota': 200,
                 },
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Reduced ticket')),
-                    'default_price': Decimal('29.00'),
-                    'quota': 50,
+                    'name': LazyI18nString.from_gettext(gettext('Virtual Ticket')),
+                    'default_price': Decimal('0.00'),
+                    'quota': 500,
                 },
             ]
             if self.request.method != 'POST'

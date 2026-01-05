@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -22,7 +22,26 @@ from ...control.forms.organizer_forms import TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
 
 
-class TeamListView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
+class UnifiedTeamManagementRedirectMixin:
+    """Redirect legacy team URLs to the unified organizer management surface."""
+
+    def dispatch(self, request, *args, **kwargs):
+        team_id = kwargs.get('team')
+        query_params = {'section': 'permissions'}
+        if team_id:
+            query_params['team'] = team_id
+        target = reverse(
+            'eventyay_common:organizer.update',
+            kwargs={'organizer': request.organizer.slug},
+        )
+        messages.info(
+            request,
+            _('Team management has moved into the unified organizer page.'),
+        )
+        return redirect(f'{target}?{urlencode(query_params)}')
+
+
+class TeamListView(UnifiedTeamManagementRedirectMixin, OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, ListView):
     model = Team
     template_name = 'eventyay_common/organizers/teams/teams.html'
     context_object_name = 'teams'
@@ -32,7 +51,12 @@ class TeamListView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, L
         return self.request.organizer.teams.all().order_by('name')
 
 
-class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DetailView):
+class TeamMemberView(
+    UnifiedTeamManagementRedirectMixin,
+    OrganizerDetailViewMixin,
+    OrganizerPermissionRequiredMixin,
+    DetailView,
+):
     template_name = 'eventyay_common/organizers/teams/team_members.html'
     context_object_name = 'team'
     permission = 'can_change_teams'
@@ -237,7 +261,12 @@ class TeamMemberView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         )
 
 
-class TeamCreateView(OrganizerDetailViewMixin, CreateView, OrganizerPermissionRequiredMixin):
+class TeamCreateView(
+    UnifiedTeamManagementRedirectMixin,
+    OrganizerDetailViewMixin,
+    CreateView,
+    OrganizerPermissionRequiredMixin,
+):
     model = Team
     template_name = 'eventyay_common/organizers/teams/team_edit.html'
     form_class = TeamForm
@@ -292,7 +321,12 @@ class TeamCreateView(OrganizerDetailViewMixin, CreateView, OrganizerPermissionRe
         )
 
 
-class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, UpdateView):
+class TeamUpdateView(
+    UnifiedTeamManagementRedirectMixin,
+    OrganizerDetailViewMixin,
+    OrganizerPermissionRequiredMixin,
+    UpdateView,
+):
     model = Team
     template_name = 'eventyay_common/organizers/teams/team_edit.html'
     context_object_name = 'team'
@@ -311,7 +345,7 @@ class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['talk_edit_url'] = urljoin(settings.TALK_HOSTNAME, f'orga/organizer/{self.request.organizer.slug}')
+        ctx['talk_edit_url'] = reverse('orga:organizer.dashboard', kwargs={'organizer': self.request.organizer.slug})
         return ctx
 
     def get_success_url(self):
@@ -358,7 +392,12 @@ class TeamUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
         return super().form_invalid(form)
 
 
-class TeamDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin, DeleteView):
+class TeamDeleteView(
+    UnifiedTeamManagementRedirectMixin,
+    OrganizerDetailViewMixin,
+    OrganizerPermissionRequiredMixin,
+    DeleteView,
+):
     model = Team
     template_name = 'eventyay_common/organizers/teams/team_delete.html'
     context_object_name = 'team'
