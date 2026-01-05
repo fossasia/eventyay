@@ -16,6 +16,7 @@ $gray-lightest: lighten(#000, 97.25%);
 $font-family-sans-serif:  "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif !default;
 $text-color: #222222 !default;
 $text-muted: #767676 !default;
+$body-color-light: rgba(0, 0, 0, 0.6) !default;
 
 $brand-primary: #2185d0 !default;
 $brand-success: #50a167 !default;
@@ -41,6 +42,8 @@ $navbar-inverse-link-color: white;
 $navbar-inverse-link-hover-color: $gray-lighter;
 $navbar-inverse-brand-hover-color: $gray-lighter;
 $navbar-inverse-color: white;
+$navbar-link-color: #f8f9fa;
+$navbar-link-hover-color: #fff;
 
 $state-success-bg:               white !default;
 $state-success-border:           $brand-success;

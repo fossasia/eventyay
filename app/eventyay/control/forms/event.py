@@ -1,4 +1,4 @@
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode
 
 from django import forms
 from django.conf import settings
@@ -7,9 +7,9 @@ from django.core.validators import validate_email
 from django.db.models import Q
 from django.forms import CheckboxSelectMultiple, formset_factory
 from django.urls import reverse
+from django.utils.crypto import get_random_string
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
-from django.utils.crypto import get_random_string
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext, pgettext_lazy
 from django.utils.translation import gettext_lazy as _
@@ -34,7 +34,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
     validate_event_settings,
 )
-from eventyay.common.forms.fields import ColorField, ImageField
+from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
@@ -53,9 +53,20 @@ from eventyay.plugins.banktransfer.payment import BankTransfer
 class EventWizardFoundationForm(forms.Form):
     locales = forms.MultipleChoiceField(
         choices=settings.LANGUAGES,
-        label=_('Use languages'),
+        label=_('Active languages'),
         widget=MultipleLanguagesWidget,
-        help_text=_('Choose all languages that your event should be available in.'),
+        help_text=_(
+            "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+            "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+            "event's default language instead."
+        ),
+    )
+    content_locales = forms.MultipleChoiceField(
+        choices=settings.LANGUAGES,
+        label=_('Content languages'),
+        widget=MultipleLanguagesWidget,
+        required=False,
+        help_text=_('Users will be able to submit proposals in these languages.'),
     )
     has_subevents = forms.BooleanField(
         label=_('This is an event series'),
@@ -78,7 +89,7 @@ class EventWizardFoundationForm(forms.Form):
         # Make organizer required only if more than one exists
         organizer_count = qs.count()
         is_required = organizer_count > 1
-        
+
         self.fields['organizer'] = forms.ModelChoiceField(
             label=_('Organizer'),
             queryset=qs,
@@ -98,6 +109,21 @@ class EventWizardFoundationForm(forms.Form):
         if organizer_count == 1:
             self.fields['organizer'].initial = qs.first()
             self.fields['organizer'].required = False
+
+    def clean(self):
+        cleaned_data = super().clean()
+        locales = cleaned_data.get('locales', [])
+        content_locales = cleaned_data.get('content_locales')
+        
+        if not content_locales:
+            return cleaned_data
+        
+        if invalid_content_locales := set(content_locales) - set(locales):
+            raise ValidationError({
+                'content_locales': _('Content languages must be a subset of the active languages.')
+            })
+        
+        return cleaned_data
 
 
 class EventWizardBasicsForm(I18nModelForm):
@@ -169,6 +195,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.is_video_creation = kwargs.pop('is_video_creation')
         self.user = kwargs.pop('user')
         kwargs.pop('session')
+        kwargs.pop('content_locales', None)
         super().__init__(*args, **kwargs)
         if 'timezone' not in self.initial:
             self.initial['timezone'] = get_current_timezone_name()
@@ -176,11 +203,11 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        
+
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
             charset = list('abcdefghjklmnpqrstuvwxyz3789')
-            
+
             # Try different lengths until we find a unique slug
             length = 6
             counter = 0
@@ -192,11 +219,11 @@ class EventWizardBasicsForm(I18nModelForm):
                     # Fallback: add counter to ensure uniqueness
                     candidate = f'{get_random_string(length=4, allowed_chars=charset)}{counter}'
                     counter += 1
-                
+
                 if not self.organizer.events.filter(slug__iexact=candidate).exists():
                     self.initial['slug'] = candidate
                     break
-        
+
         if self.has_subevents:
             del self.fields['presale_start']
             del self.fields['presale_end']
@@ -320,11 +347,6 @@ class EventWizardCopyForm(forms.Form):
 
 
 class EventWizardDisplayForm(forms.Form):
-    primary_color = ColorField(
-        label=Event._meta.get_field('primary_color').verbose_name,
-        help_text=Event._meta.get_field('primary_color').help_text,
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -489,7 +511,7 @@ class EventSettingsForm(SettingsForm):
     name_scheme = forms.ChoiceField(
         label=_('Name format'),
         help_text=_(
-            'This defines how pretix will ask for human names. Changing this after you already received '
+            'This defines how eventyay will ask for human names. Changing this after you already received '
             'orders might lead to unexpected behavior when sorting or changing names.'
         ),
         required=True,
@@ -548,7 +570,10 @@ class EventSettingsForm(SettingsForm):
         'checkout_phone_helptext',
         'banner_text',
         'banner_text_bottom',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
+        'include_wikimedia_username',
         'allow_modifications',
         'last_order_modification_date',
         'allow_modifications_after_checkin',
@@ -1074,7 +1099,7 @@ class MailSettingsForm(SettingsForm):
     )
     send_grid_api_key = forms.CharField(
         label=_('Sendgrid Token'),
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'placeholder': 'SG.xxxxxxxx'}),
     )
 
@@ -1171,6 +1196,13 @@ class MailSettingsForm(SettingsForm):
             data['smtp_password'] = self.initial.get('smtp_password')
         if data.get('smtp_use_tls') and data.get('smtp_use_ssl'):
             raise ValidationError(_('You can activate either SSL or STARTTLS security, but not both at the same time.'))
+
+        # Validate SendGrid token is provided when SendGrid is selected
+        if data.get('smtp_use_custom') and data.get('email_vendor') == 'sendgrid':
+            if not data.get('send_grid_api_key'):
+                raise ValidationError({'send_grid_api_key': _('This field is required when using SendGrid as email vendor.')})
+
+        return data
 
 
 class TicketSettingsForm(SettingsForm):
@@ -1423,7 +1455,7 @@ class QuickSetupForm(I18nForm):
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
-            'bank statements to process the payments within pretix, or mark them as paid manually.'
+            'bank statements to process the payments within eventyay, or mark them as paid manually.'
         ),
         required=False,
     )
@@ -1451,7 +1483,7 @@ class QuickSetupForm(I18nForm):
         plugins_active = self.obj.get_plugins()
         if ('eventyay_stripe' not in plugins_active) or (not self.obj.settings.payment_stripe_client_id):
             del self.fields['payment_stripe__enabled']
-        if 'pretix.plugins.banktransfer' not in plugins_active:
+        if 'eventyay.plugins.banktransfer' not in plugins_active:
             del self.fields['payment_banktransfer__enabled']
         self.fields['payment_banktransfer_bank_details'].required = False
         for f in self.fields.values():

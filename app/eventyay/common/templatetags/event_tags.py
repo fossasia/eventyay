@@ -34,3 +34,25 @@ def cfp_locale_switch_url(context, locale_code):
     query['locale'] = locale_code
     query['next'] = request.get_full_path()
     return f"{base}?{query.urlencode()}"
+
+
+@register.filter
+def short_user_label(user):
+    """
+    Compact user display: prefer first name, then name, then email local part.
+    Truncate to 11 chars with ellipsis when longer.
+    """
+    if not user:
+        return ''
+    first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None)
+    if not first:
+        fullname = getattr(user, 'fullname', None) or getattr(user, 'name', None)
+        if fullname:
+            parts = fullname.split()
+            first = parts[0] if parts else fullname
+    email = getattr(user, 'email', '') or ''
+    label = (first or '').strip() or (email.split('@')[0] if email else '')
+    if len(label) > 11:
+        label = label[:11] + '…'
+    return label
+

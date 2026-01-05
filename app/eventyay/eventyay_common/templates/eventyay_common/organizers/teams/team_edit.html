@@ -16,47 +16,7 @@
     <form class="form-horizontal" action="" method="post">
         {% csrf_token %}
         {% bootstrap_form_errors form %}
-        <fieldset>
-            <legend>{% translate "General information" %}</legend>
-            {% bootstrap_field form.name layout="control" %}
-        </fieldset>
-        <fieldset>
-            <legend>{% translate "Organizer permissions" %}</legend>
-            {% bootstrap_field form.can_create_events layout="control" %}
-            {% bootstrap_field form.can_manage_gift_cards layout="control" %}
-            {% bootstrap_field form.can_change_teams layout="control" %}
-            {% bootstrap_field form.can_change_organizer_settings layout="control" %}
-        </fieldset>
-        <fieldset>
-            <legend>{% translate "Event permissions" %}</legend>
-            {% bootstrap_field form.all_events layout="control" %}
-            {% bootstrap_field form.limit_events layout="control" %}
-            {% bootstrap_field form.can_change_event_settings layout="control" %}
-        </fieldset>
-        <fieldset>
-            <legend>{% translate "Ticket permissions" %}</legend>
-            {% bootstrap_field form.can_change_items layout="control" %}
-            {% bootstrap_field form.can_view_orders layout="control" %}
-            {% bootstrap_field form.can_change_orders layout="control" %}
-            {% bootstrap_field form.can_checkin_orders layout="control" %}
-            {% bootstrap_field form.can_view_vouchers layout="control" %}
-            {% bootstrap_field form.can_change_vouchers layout="control" %}
-        </fieldset>
-        <fieldset>
-            <legend>{% translate "Talk permissions" %}</legend>
-            {% bootstrap_field form.can_change_submissions layout="control" %}
-            {% bootstrap_field form.is_reviewer layout="control" id="id_is_reviewer" %}
-            <div id="review-settings" class="form-group" style="display: none;">
-                <label class="control-label col-md-3" for="review-settings" id="review-settings-label">
-                    {% translate "Review settings" %}
-                </label>
-                <div class="col-md-9">
-                    <hr>
-                </div>
-                {% bootstrap_field form.force_hide_speaker_names layout="control" %}
-                {% bootstrap_field form.limit_tracks layout="control" %}
-            </div>
-        </fieldset>
+        {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=form %}
 
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
@@ -64,4 +24,25 @@
             </button>
         </div>
     </form>
+
+    <script>
+        $(document).ready(function() {
+            // Function to toggle review settings visibility
+            function toggleReviewSettings() {
+                if ($('#id_is_reviewer').is(':checked')) {
+                    $('#review-settings').show();
+                } else {
+                    $('#review-settings').hide();
+                }
+            }
+
+            // Toggle on page load
+            toggleReviewSettings();
+
+            // Toggle when checkbox changes
+            $('#id_is_reviewer').change(function() {
+                toggleReviewSettings();
+            });
+        });
+    </script>
 {% endblock %}

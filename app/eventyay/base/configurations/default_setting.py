@@ -12,15 +12,10 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.utils.text import format_lazy
-from django.utils.translation import (
-    gettext_lazy as _,
-)
-from django.utils.translation import (
-    gettext_noop,
-    pgettext,
-    pgettext_lazy,
-)
+from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_noop, pgettext, pgettext_lazy
 from i18nfield.forms import I18nFormField, I18nTextarea, I18nTextInput
+from eventyay.base.forms import I18nAutoExpandingTextarea
 from i18nfield.strings import LazyI18nString
 from rest_framework import serializers
 
@@ -187,6 +182,27 @@ DEFAULT_SETTINGS = {
             widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-attendee_addresses_asked'}),
         ),
     },
+    'order_email_asked': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('E-mail'),
+            help_text=_('Ask for an email address per order. The order confirmation will be sent to this email address.'),
+        ),
+    },
+    'order_email_required': {
+        'default': 'True',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Require email address per order'),
+            help_text=_('Require attendees to fill in an email address for the order.'),
+            widget=forms.CheckboxInput(attrs={'data-checkbox-dependency': '#id_settings-order_email_asked'}),
+        ),
+    },
     'order_email_asked_twice': {
         'default': 'False',
         'type': bool,
@@ -195,6 +211,15 @@ DEFAULT_SETTINGS = {
         'form_kwargs': dict(
             label=_('Ask for the order email address twice'),
             help_text=_('Require attendees to enter their primary email address twice to help prevent errors.'),
+        ),
+    },
+    'include_wikimedia_username': {
+        'default': 'False',
+        'type': bool,
+        'form_class': forms.BooleanField,
+        'serializer_class': serializers.BooleanField,
+        'form_kwargs': dict(
+            label=_('Add the Wikimedia ID for users authenticated via Wikimedia'),
         ),
     },
     'order_phone_asked': {
@@ -849,7 +874,29 @@ DEFAULT_SETTINGS = {
             choices=settings.LANGUAGES,
             widget=MultipleLanguagesWidget,
             required=True,
-            label=_('Available languages'),
+            label=_('Active languages'),
+            help_text=_(
+                "Users will be able to use eventyay in these languages, and you will be able to provide all texts in "
+                "these languages. If you don't provide a text in the language a user selects, it will be shown in your "
+                "event's default language instead."
+            ),
+        ),
+    },
+    'content_locales': {
+        'default': json.dumps([settings.LANGUAGE_CODE]),
+        'type': list,
+        'serializer_class': ListMultipleChoiceField,
+        'serializer_kwargs': dict(
+            choices=settings.LANGUAGES,
+            required=True,
+        ),
+        'form_class': forms.MultipleChoiceField,
+        'form_kwargs': dict(
+            choices=settings.LANGUAGES,
+            widget=MultipleLanguagesWidget,
+            required=True,
+            label=_('Content languages'),
+            help_text=_('Users will be able to submit proposals in these languages.'),
         ),
     },
     'locale': {
@@ -1149,15 +1196,16 @@ DEFAULT_SETTINGS = {
         ),
     },
     'require_registered_account_for_tickets': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
         'form_kwargs': dict(
-            label=_('Only allow registered accounts to get a ticket'),
+            label=_('Require user to be logged in to place an order'),
             help_text=_(
-                'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-                "'Continue as a Guest' option will not be available for attendees."
+                'If this option is turned on, users must be logged in before completing an order. '
+                'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+                "The 'Continue as a Guest' option will not be available for attendees."
             ),
         ),
     },
@@ -2097,7 +2145,7 @@ Your {event} team"""
         'form_class': ExtFileField,
         'form_kwargs': dict(
             label=_('Logo'),
-            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
             max_size=10 * 1024 * 1024,
             help_text=_(
                 'When you upload a logo, the event name and date will not appear in the header. '
@@ -2107,7 +2155,7 @@ Your {event} team"""
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
-            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
             max_size=10 * 1024 * 1024,
         ),
     },
@@ -2204,7 +2252,7 @@ Your {event} team"""
         'type': LazyI18nString,
         'serializer_class': I18nField,
         'form_class': I18nFormField,
-        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nTextarea),
+        'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
     },
     'event_info_text': {
         'default': '',

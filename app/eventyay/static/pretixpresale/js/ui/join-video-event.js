@@ -2,7 +2,7 @@ $(function () {
     var popup_window = null
     var popup_check_interval = null
 
-    $("a[join-event-link]").on("click", function (e) {
+    $("#join-event-link").on("click", function (e) {
         e.preventDefault();  // prevent the default action (redirecting to the href)
         var url = $(this).attr('href');  // get the href attribute
         $.ajax({

@@ -50,7 +50,7 @@ from eventyay.helpers.plugin_enable import is_video_enabled
 from ...base.models.orders import CancellationRequest
 from ..utils import EventCreatedFor, get_subevent
 
-OVERVIEW_BANLIST = ['pretix.plugins.sendmail.order.email.sent']
+OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
 
 
 def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
@@ -150,7 +150,7 @@ class EventIndexView(TemplateView):
                 ContentType.objects.get_for_model(Order),
             ]
 
-            if permissions['can_change_products']:
+            if permissions['can_change_items']:
                 allowed_types += [
                     ContentType.objects.get_for_model(Product),
                     ContentType.objects.get_for_model(ProductCategory),
@@ -335,7 +335,8 @@ class EventWidgetGenerator:
         Generate a talk button based on event settings.
         """
         if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
-            return f'<a href="{event.talk_dashboard_url}" class="middle-component">{_("Talks")}</a>'
+            talk_url = reverse('orga:event.dashboard', kwargs={'event': event.slug})
+            return f'<a href="{talk_url}" class="middle-component">{_("Talks")}</a>'
         return f"""
             <a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">
                 {_('Talks')}

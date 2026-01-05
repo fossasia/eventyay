@@ -102,7 +102,7 @@ class Schedule(PretalxModel):
         wip_schedule = Schedule.objects.create(event=self.event)
 
         self.save(update_fields=['published', 'version', 'comment'])
-        self.log_action('pretalx.schedule.release', person=user, orga=True)
+        self.log_action('eventyay.schedule.release', person=user, orga=True)
 
         # Set visibility
         self.talks.all().update(is_visible=False)
@@ -529,13 +529,13 @@ class Schedule(PretalxModel):
         if self.changes['count'] == len(self.changes['canceled_talks']):
             return result
 
-        speakers = defaultdict(lambda: {'create': [], 'update': []})
+        speakers = {}
         for new_talk in self.changes['new_talks']:
             for speaker in new_talk.submission.speakers.all():
-                speakers[speaker]['create'].append(new_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['create'].append(new_talk)
         for moved_talk in self.changes['moved_talks']:
             for speaker in moved_talk['submission'].speakers.all():
-                speakers[speaker]['update'].append(moved_talk)
+                speakers.setdefault(speaker, {'create': [], 'update': []})['update'].append(moved_talk)
         return speakers
 
     def generate_notifications(self, save=False):

@@ -71,7 +71,7 @@ class SeatCategoryMappingField(Field):
 
 class PluginsField(Field):
     def to_representation(self, obj):
-        from pretix.base.plugins import get_all_plugins
+        from eventyay.base.plugins import get_all_plugins
 
         return sorted(
             [
@@ -222,7 +222,7 @@ class EventSerializer(I18nAwareModelSerializer):
         return {'seat_category_mapping': result}
 
     def validate_plugins(self, value):
-        from pretix.base.plugins import get_all_plugins
+        from eventyay.base.plugins import get_all_plugins
 
         plugins_available = {
             p.module
@@ -267,7 +267,7 @@ class EventSerializer(I18nAwareModelSerializer):
 
         # Product Meta properties
         if product_meta_properties is not None:
-            for key, value in product_meta_properties.products():
+            for key, value in product_meta_properties.items():
                 event.product_meta_properties.create(name=key, default=value, event=event)
 
         # Seats
@@ -698,6 +698,8 @@ class EventSettingsSerializer(SettingsSerializer):
         'attendee_company_required',
         'attendee_data_explanation_text',
         'confirm_texts',
+        'order_email_asked',
+        'order_email_required',
         'order_email_asked_twice',
         'order_phone_asked',
         'order_phone_required',

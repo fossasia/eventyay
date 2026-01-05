@@ -10,15 +10,17 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # install system dependencies
-RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make npm
+RUN apt-get update && apt-get install -y wget gnupg
+# Repo for newer NodeJS
+RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
 
 # copy project files
 COPY . .
 
 # install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
     uv sync --all-extras --all-groups
 
 # copy entrypoint.sh
@@ -35,6 +37,9 @@ RUN make npminstall
 
 # Build webapp
 RUN make webappbuild
+
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

@@ -28,6 +28,8 @@ from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services import tickets
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
@@ -36,13 +38,14 @@ from eventyay.control.views import PaginationMixin, UpdateView
 from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin
 from eventyay.control.views.product import MetaDataEditorMixin
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
-from eventyay.eventyay_common.tasks import create_world
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
     encode_email,
     generate_token,
 )
+from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
+from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
 from ..forms.event import EventUpdateForm
 
@@ -166,6 +169,7 @@ class EventCreateView(SafeSessionWizardView):
         if step == 'foundation':
             initial_form['is_video_creation'] = True
             initial_form['locales'] = ['en']
+            initial_form['content_locales'] = ['en']
             initial_form['create_for'] = EventCreatedFor.BOTH
             if 'organizer' in request_get:
                 try:
@@ -263,6 +267,8 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
             event.settings.set('locales', foundation_data['locales'])
+            content_locales = foundation_data.get('content_locales') or foundation_data['locales']
+            event.settings.set('content_locales', content_locales)
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -280,6 +286,7 @@ class EventCreateView(SafeSessionWizardView):
                     'timezone': str(basics_data.get('timezone')),
                     'locale': event.settings.locale,
                     'locales': event.settings.locales,
+                    'content_locales': content_locales,
                     'is_video_creation': final_is_video_creation,
                 }
 
@@ -287,16 +294,6 @@ class EventCreateView(SafeSessionWizardView):
                     action='eventyay.event.added',
                     user=self.request.user,
                 )
-        # The user automatically creates a world when selecting the add video option in the create ticket form.
-        event_data = dict(
-            id=basics_data.get('slug'),
-            title=basics_data.get('name').data,
-            timezone=basics_data.get('timezone'),
-            locale=basics_data.get('locale'),
-            has_permission=has_permission,
-            token=generate_token(self.request),
-        )
-        create_world.delay(is_video_creation=final_is_video_creation, event_data=event_data)
 
         return redirect(
             reverse(
@@ -337,9 +334,29 @@ class EventUpdate(
             files=self.request.FILES if self.request.method == 'POST' else None,
         )
 
+    @cached_property
+    def header_links_formset(self):
+        return EventHeaderLinkFormset(
+            self.request.POST if self.request.method == 'POST' else None,
+            event=self.object,
+            prefix='header-links',
+            instance=self.object,
+        )
+
+    @cached_property
+    def footer_links_formset(self):
+        return EventFooterLinkFormset(
+            self.request.POST if self.request.method == 'POST' else None,
+            event=self.object,
+            prefix='footer-links',
+            instance=self.object,
+        )
+
     def get_context_data(self, *args, **kwargs) -> dict:
         context = super().get_context_data(*args, **kwargs)
         context['sform'] = self.sform
+        context['header_links_formset'] = self.header_links_formset
+        context['footer_links_formset'] = self.footer_links_formset
         context['is_video_enabled'] = is_video_enabled(self.object)
         context['is_talk_event_created'] = False
         if (
@@ -354,8 +371,26 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        self.header_links_formset.save()
+        self.footer_links_formset.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
+
+        if self.sform.has_changed() and any(p in self.sform.changed_data for p in SETTINGS_AFFECTING_CSS):
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
+            messages.success(
+                self.request,
+                _(
+                    'Your changes have been saved. Please note that it can '
+                    'take a short period of time until your changes become '
+                    'active.'
+                ),
+            )
 
         return super().form_valid(form)
 
@@ -403,17 +438,6 @@ class EventUpdate(
             messages.error(self.request, _('You do not have permission to perform this action.'))
             return False
 
-        create_world.delay(
-            is_video_creation=True,
-            event_data={
-                'id': self.request.event.slug,
-                'title': self.request.event.name.data,
-                'timezone': self.request.event.settings.timezone,
-                'locale': self.request.event.settings.locale,
-                'has_permission': True,
-                'token': generate_token(self.request),
-            },
-        )
         return True
 
     def post(self, request, *args, **kwargs):
@@ -424,9 +448,15 @@ class EventUpdate(
             return redirect(self.get_success_url())
 
         form = self.get_form()
-        if form.changed_data or self.sform.changed_data:
+        has_formset_changes = self.header_links_formset.has_changed() or self.footer_links_formset.has_changed()
+        if form.changed_data or self.sform.changed_data or has_formset_changes:
             form.instance.sales_channels = ['web']
-            if form.is_valid() and self.sform.is_valid():
+            if (
+                form.is_valid()
+                and self.sform.is_valid()
+                and self.header_links_formset.is_valid()
+                and self.footer_links_formset.is_valid()
+            ):
                 zone = timezone(self.sform.cleaned_data['timezone'])
                 event = form.instance
                 event.date_from = self.reset_timezone(zone, event.date_from)
@@ -457,17 +487,46 @@ class VideoAccessAuthenticator(View):
         @param kwargs: keyword arguments
         @return: redirect to the video system
         """
-        # Check if the organizer has permission for the event
-        if not self.request.user.has_event_permission(
-            self.request.organizer, self.request.event, 'can_change_event_settings', request=self.request
-        ):
-            raise PermissionDenied(_('You do not have permission to access this video system.'))
+        has_staff_video_access = self._has_staff_video_access()
+        video_traits = self._collect_user_video_traits()
 
         # Auto-setup video configuration if missing
         self._ensure_video_configuration()
 
         # Generate token and include in url to video system
-        return redirect(self.generate_token_url(request))
+        token_traits = self._build_token_traits(has_staff_video_access, video_traits)
+        return redirect(self.generate_token_url(request, token_traits))
+
+    def _has_staff_video_access(self) -> bool:
+        request = self.request
+        return request.user.has_active_staff_session(request.session.session_key)
+
+    def _collect_user_video_traits(self):
+        permission_set = self.request.user.get_event_permission_set(self.request.organizer, self.request.event)
+        return collect_user_video_traits(self.request.event.slug, permission_set)
+
+    def _build_token_traits(self, has_staff_video_access: bool, video_traits):
+        """
+        Build the list of traits to include in the JWT token.
+        - All users get 'attendee' trait for basic access
+        - Users get specific video permission traits based on their team permissions
+        - Only staff users (superuser, is_staff, or active staff session) get 'admin' trait
+        """
+        traits = ['attendee']
+        traits.extend(video_traits)
+        # Only add 'admin' trait for staff users - this grants full admin access
+        # Regular organizers should NOT get 'admin' trait, only specific video permission traits
+        if has_staff_video_access:
+            organizer_trait = f'eventyay-video-event-{self.request.event.slug}-organizer'
+            traits.extend(['admin', organizer_trait])
+        # Deduplicate while preserving order
+        seen = set()
+        deduped_traits = []
+        for trait in traits:
+            if trait and trait not in seen:
+                seen.add(trait)
+                deduped_traits.append(trait)
+        return deduped_traits
 
     def _ensure_video_configuration(self):
         """
@@ -545,7 +604,7 @@ class VideoAccessAuthenticator(View):
             event.plugins = ','.join(current_plugins)
             event.save()
 
-    def generate_token_url(self, request):
+    def generate_token_url(self, request, traits):
         uid_token = encode_email(request.user.email)
         iat = datetime.now(tz.utc)
         exp = iat + dt.timedelta(days=1)
@@ -555,12 +614,7 @@ class VideoAccessAuthenticator(View):
             'exp': exp,
             'iat': iat,
             'uid': uid_token,
-            'traits': list(
-                {
-                    'eventyay-video-event-{}-organizer'.format(request.event.slug),
-                    'admin',
-                }
-            ),
+            'traits': traits,
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = self.request.event.settings.venueless_url

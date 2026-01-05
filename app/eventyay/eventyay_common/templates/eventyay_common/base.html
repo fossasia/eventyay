@@ -168,12 +168,6 @@
                             <i class="fa fa-solid fa-caret-down"></i>
                         </a>
                     </li>
-                    <li>
-                        <a href="{% url 'common:auth.logout' %}" title="{% trans "Log out" %}">
-                            <i class="fa fa-sign-out"></i>
-                            <span class="visible-xs-inline">{% trans "Log out" %}</span>
-                        </a>
-                    </li>
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
@@ -228,7 +222,7 @@
                                                     <span class="fa fa-fw fa-{{ nav.icon }}"></span>
                                                 {% endif %}
                                             {% endif %}
-                                            {{ nav.label }}
+                                            <span class="sidebar-text">{{ nav.label }}</span>
                                         </a>
                                         {% if nav.children %}
                                             <a href="#" class="arrow">
@@ -240,7 +234,7 @@
                                                         <a href="{{ item.url }}"
                                                                 {% if item.external %}target="_blank"{% endif %}
                                                                 {% if item.active %}class="active"{% endif %}>
-                                                            {{ item.label }}
+                                                            <span class="sidebar-text">{{ item.label }}</span>
                                                         </a>
                                                     </li>
                                                 {% endfor %}
@@ -296,6 +290,7 @@
             <div id="page-wrapper">
                 <div class="container-fluid">
                     {% signal "eventyay.control.signals.html_page_start" request %}
+                    <span id="organizer-messages"></span>
                     {% if messages %}
                         {% for message in messages %}
                             <div class="alert {{ message.tags }}">

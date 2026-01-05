@@ -12,6 +12,7 @@
   background: $brand-warning;
   color: black;
   font-weight: bold;
+  white-space: nowrap;
   &:hover, &:active, &:focus {
     background: $btn-warning-border;
   }
@@ -43,7 +44,6 @@
 }
 
 .btn-primary:active, .btn-primary:active:hover, .btn-primary:active:focus {
-  box-shadow: inset 0 1px 8px 0 shade($brand-primary, 25%);
   background: $btn-primary-bg;
   outline: 0;
 }

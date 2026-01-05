@@ -214,7 +214,7 @@ class QuotaAvailability:
             if self.results[q][0] <= Quota.AVAILABILITY_ORDERED and q.close_when_sold_out and not q.closed:
                 q.closed = True
                 q.save(update_fields=['closed'])
-                q.log_action('pretix.event.quota.closed')
+                q.log_action('eventyay.event.quota.closed')
 
     def _compute(self, quotas, now_dt):
         # Quotas we want to look at now

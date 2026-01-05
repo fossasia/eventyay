@@ -7,3 +7,4 @@ class ControlConfig(AppConfig):
 
     def ready(self):
         from . import tasks  # noqa
+        from . import logdisplay  # noqa

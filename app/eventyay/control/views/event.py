@@ -191,6 +191,11 @@ class EventUpdate(
     def form_valid(self, form):
         self._save_decoupled(self.sform)
         self.sform.save()
+        form.instance.update_language_configuration(
+            locales=self.sform.cleaned_data.get('locales'),
+            content_locales=self.sform.cleaned_data.get('content_locales'),
+            default_locale=self.sform.cleaned_data.get('locale'),
+        )
         self.save_meta()
         self.save_product_meta_property_formset(self.object)
         self.save_confirm_texts_formset(self.object)
@@ -219,7 +224,7 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
         if change_css:
-            regenerate_css.apply_async(args=(self.request.event.pk,))
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
                 _(
@@ -1768,14 +1773,14 @@ class QuickSetupView(FormView):
             event=self.request.event,
             initial=[
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Regular ticket')),
-                    'default_price': Decimal('35.00'),
-                    'quota': 100,
+                    'name': LazyI18nString.from_gettext(gettext('Standard Ticket')),
+                    'default_price': Decimal('49.00'),
+                    'quota': 200,
                 },
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Reduced ticket')),
-                    'default_price': Decimal('29.00'),
-                    'quota': 50,
+                    'name': LazyI18nString.from_gettext(gettext('Virtual Ticket')),
+                    'default_price': Decimal('0.00'),
+                    'quota': 500,
                 },
             ]
             if self.request.method != 'POST'

@@ -1,0 +1,16 @@
+debug = true
+
+# For development, we just store emails as files.
+email_backend = 'eventyay.base.email.FileSavedEmailBackend'
+
+allowed_hosts = ['*']
+
+# For local development, use localhost
+# Can be overridden with EVY_SITE_URL environment variable
+site_url = 'http://localhost:8000'
+
+redis_url = 'redis://localhost/0'
+
+# For local development, use localhost
+# Can be overridden with EVY_SHORT_URL environment variable
+short_url = 'http://localhost:8000'

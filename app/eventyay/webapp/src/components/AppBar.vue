@@ -7,7 +7,14 @@
 			span.bar
 		a.logo(:href="logoHref", :class="{anonymous: isAnonymous}")
 			img(:src="theme.logo.url", :alt="world.title")
-	// Admin quick link to Config
+		span.admin-indicator(
+			v-if="isAdminMode"
+			@mouseenter="onAdminIndicatorEnter"
+			@mouseleave="onAdminIndicatorLeave"
+		) Admin mode ON
+		div.admin-tooltip(
+			v-if="isAdminMode && showAdminTooltip"
+		) Admin mode is ON. Go to the tickets area to disable it and view this event as a staff member.
 	router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
 		bunt-icon-button settings
 	.user-section(v-if="showUser")
@@ -16,18 +23,17 @@
 			span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
 			span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
 			span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
-		button.logout-btn(v-if="!isAnonymous", @click="logout", type="button", :aria-label="'Logout'")
-			i.fa.fa-sign-out
 		.profile-dropdown(v-if="profileMenuOpen", role="menu")
 			template(v-for="item in menuItems", :key="item.key")
 				div.menu-separator(v-if="item.separatorBefore")
-				a.menu-item(:class="{danger: item.action === 'logout'}", :href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
+				a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
 					span.menu-item-icon(v-if="item.icon" aria-hidden="true")
 						i(:class="iconClasses[item.icon]")
 					span.menu-item-label {{ item.label }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { jwtDecode } from 'jwt-decode'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import theme from 'theme'
@@ -71,7 +77,7 @@ const PROFILE_MENU_ITEMS = [
 	{ key: 'organizers', label: 'Organizers', externalPath: 'common/organizers/', icon: 'organizers' },
 	{ key: 'profile', label: 'Profile', route: { name: 'preferences' }, separatorBefore: true, icon: 'profile' },
 	{ key: 'account', label: 'Account', externalPath: 'common/account/general', icon: 'account' },
-	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout' }
+	{ key: 'logout', label: 'Logout', action: 'logout', icon: 'logout', separatorBefore: true }
 ]
 
 const emit = defineEmits(['toggleSidebar'])
@@ -81,8 +87,23 @@ const router = useRouter()
 
 const user = computed(() => store.state.user)
 const world = computed(() => store.state.world)
+const token = computed(() => store.state.token)
 const hasPermission = computed(() => (permission) => {
 	return store.getters.hasPermission(permission)
+})
+
+const isAdminMode = computed(() => {
+	const rawToken = token.value || localStorage.getItem('token')
+	if (!rawToken) return false
+	try {
+		const decoded = jwtDecode(rawToken)
+		return Array.isArray(decoded?.traits) && decoded.traits.includes('admin')
+	} catch (error) {
+		if (process.env.NODE_ENV === 'development') {
+			console.error('Failed to decode JWT token:', error)
+		}
+		return false
+	}
 })
 
 const isAnonymous = computed(() => Object.keys(user.value.profile || {}).length === 0)
@@ -99,6 +120,16 @@ const profileMenuOpen = ref(false)
 const menuItems = ref(PROFILE_MENU_ITEMS)
 const iconClasses = ICON_CLASSES
 const userProfileEl = ref(null)
+const showAdminTooltip = ref(false)
+
+function onAdminIndicatorEnter() {
+	if (!isAdminMode.value) return
+	showAdminTooltip.value = true
+}
+
+function onAdminIndicatorLeave() {
+	showAdminTooltip.value = false
+}
 
 function buildBaseSansVideo() {
 	const { protocol, host } = window.location
@@ -126,10 +157,8 @@ function closeProfileMenu() {
 	profileMenuOpen.value = false
 }
 function logout() {
-	// Clear webapp tokens
 	localStorage.removeItem('token')
 	localStorage.removeItem('clientId')
-	// Navigate to Django logout which handles session and redirects to login
 	const logoutUrl = buildBaseSansVideo() + 'common/logout/'
 	window.location.href = logoutUrl
 }
@@ -223,6 +252,28 @@ onBeforeUnmount(() => {
 		display: flex
 		align-items: center
 		gap: 4px
+		position: relative
+		.admin-indicator
+			margin-left: 8px
+			font-size: 11px
+			font-weight: 600
+			text-transform: uppercase
+			letter-spacing: .05em
+			color: #f44336
+			cursor: default
+		.admin-tooltip
+			position: absolute
+			top: 52px
+			left: 8px
+			right: auto
+			max-width: 260px
+			padding: 4px 8px
+			border-radius: 3px
+			background: rgba(0, 0, 0, 0.8)
+			color: #fff
+			font-size: 11px
+			white-space: normal
+			z-index: 130
 		.hamburger
 			appearance: none
 			background: none
@@ -349,8 +400,6 @@ onBeforeUnmount(() => {
 				text-decoration: none
 				&:hover, &:focus-visible
 					background: rgba(0,0,0,0.06)
-				&.danger
-					color: #b00020
 				.menu-item-icon
 					color: var(--clr-primary)
 					flex: 0 0 auto
@@ -373,9 +422,6 @@ onBeforeUnmount(() => {
 					white-space: nowrap
 					text-overflow: ellipsis
 					overflow: hidden
-			.menu-item.danger .menu-item-icon,
-			.menu-item.danger .menu-item-icon i
-				color: inherit
 			.menu-separator
 				height: 1px
 				background: rgba(0,0,0,0.08)

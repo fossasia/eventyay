@@ -25,8 +25,8 @@ dependencies = [
     "annotated-types>=0.7.0",
     "arabic-reshaper>=3.0.0",
     "argon2-cffi>=23.1.0",
-    "argon2-cffi-bindings>=21.2.0",
-    "asgiref>=3.8.1",
+    "argon2-cffi-bindings>=25.1.0",
+    "asgiref>=3.11.0",
     "asn1crypto>=1.5.1",
     "attrs>=24.3.0",
     "autobahn>=24.4.2",
@@ -37,9 +37,9 @@ dependencies = [
     "bleach>=6.2.0",
     "cbor2>=5.6.5",
     "celery>=5.4.0",
-    "certifi>=2025.4.26",
-    "cffi>=1.17.1",
-    "channels>=4.2.2",
+    "certifi>=2025.11.12",
+    "cffi>=2.0.0",
+    "channels>=4.3.2",
     "channels-redis>=4.2.1",
     "chardet>=5.2.0",
     "charset-normalizer>=3.4.2",
@@ -62,14 +62,16 @@ dependencies = [
     "defusedxml>=0.7.1",
     "dj-static>=0.0.6",
     "django>=5.2.5",
-    "django-allauth>=0.63.6",
-    "django-appconf>=1.1.0",
+    "django-allauth>=65.13.1",
+    "django-appconf>=1.2.0",
     "django-bootstrap3>=24.3",
     "django-celery-beat>=2.7.0",
-    "django-compressor>=4.5.1",
+    "django-compressor>=4.6.0",
     "django-context-decorator>=1.6.1",
     "django-cors-headers>=4.6.0",
     "django-countries>=7.6.1",
+    # Needed by DRF extensions
+    "django-crispy-forms>=2.5",
     "django-csp>=3.8",
     "django-filter>=24.3",
     "django-formset-js-improved>=0.5.0.3",
@@ -94,6 +96,8 @@ dependencies = [
     "djangorestframework>=3.15.2",
     "docopt>=0.6.2",
     "docutils>=0.21.2",
+    "drf-flex-fields>=1.0.0",
+    "drf-spectacular>=0.28.0",
     "elementpath>=4.7.0",
     "emoji>=2.14.1",
     "et-xmlfile>=2.0.0",
@@ -132,6 +136,7 @@ dependencies = [
     "mccabe>=0.7.0",
     "more-itertools>=10.7.0",
     "msgpack>=1.1.1",
+    "msgspec>=0.20.0",
     "mt-940>=4.30.0",
     "multidict>=6.1.0",
     "nh3>=0.2.20",
@@ -165,8 +170,9 @@ dependencies = [
     "pycountry>=24.6.1",
     "pycparser>=2.22",
     "pycryptodome>=3.20.0",
-    "pydantic>=2.10.4",
-    "pydantic-core>=2.27.2",
+    "pydantic>=2.12.4",
+    "pydantic-core>=2.41.5",
+    "pydantic-settings>=2.12.0",
     "pyenchant>=3.2.2",
     "pyflakes>=3.2.0",
     "pygments>=2.19.1",
@@ -230,6 +236,7 @@ dependencies = [
     "webencodings>=0.5.1",
     "websockets>=15.0.1",
     "whitenoise>=6.8.2",
+    "wlc>=1.16.1",
     "xmlschema>=3.4.3",
     "yarl>=1.18.3",
     "zipp>=3.21.0",
@@ -252,18 +259,25 @@ docs = [
     "sphinx>=8.2.3",
 ]
 lint = [
-    "ruff>=0.12.9",
+    "ruff>=0.14.10",
 ]
 test = [
     "pytest>=7.2.2",
     "pytest-cache>=1.0",
     "pytest-cov>=6.0.0",
     "pytest-django>=4.9.0",
+    "pytest-env>=1.1.5",
     "pytest-mock>=3.14.0",
     "pytest-rerunfailures>=14.0",
     "pytest-sugar>=1.0.0",
     "pytest-xdist>=3.6.1",
 ]
+
+[tool.uv.sources]
+# It is `editable` because this package is also in development.
+# TODO: We better organize `eventyay-ticket-video` as workspace member,
+# so that we can install it as `non-editable` in production.
+pretix_venueless = { path = './eventyay/plugins/eventyay-ticket-video', editable = true }
 
 [tool.ruff]
 line-length = 120
@@ -286,3 +300,6 @@ ignore = ["E722", "E741"]
 [tool.setuptools]
 packages = ["eventyay"]
 
+
+[tool.pytest_env]
+EVY_RUNNING_ENVIRONMENT = "testing"

@@ -184,7 +184,7 @@ class ParametrizedOrderNotificationType(NotificationType):
         else:
             n.add_attribute(_('Event date'), order.event.get_date_range_display())
 
-        positions = list(order.positions.select_related('item', 'variation', 'subevent'))
+        positions = list(order.positions.select_related('product', 'variation', 'subevent'))
         fees = list(order.fees.all())
 
         n.add_attribute(_('Order code'), order.code)
@@ -211,10 +211,10 @@ class ParametrizedOrderNotificationType(NotificationType):
         n.add_attribute(_('Order positions'), str(order.positions.count()))
 
         def sortkey(op):
-            return op.item_id, op.variation_id, op.subevent_id
+            return op.product_id, op.variation_id, op.subevent_id
 
         def groupkey(op):
-            return op.item, op.variation, op.subevent
+            return op.product, op.variation, op.subevent
 
         cart = [(k, list(v)) for k, v in groupby(sorted(positions, key=sortkey), key=groupkey)]
         items = []
@@ -235,73 +235,73 @@ def register_default_notification_types(sender, **kwargs):
     return (
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.placed',
+            'eventyay.event.order.placed',
             _('New order placed'),
             _('A new order has been placed: {order.code}'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.placed.require_approval',
+            'eventyay.event.order.placed.require_approval',
             _('New order requires approval'),
             _('A new order has been placed that requires approval: {order.code}'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.paid',
+            'eventyay.event.order.paid',
             _('Order marked as paid'),
             _('Order {order.code} has been marked as paid.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.canceled',
+            'eventyay.event.order.canceled',
             _('Order canceled'),
             _('Order {order.code} has been canceled.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.reactivated',
+            'eventyay.event.order.reactivated',
             _('Order reactivated'),
             _('Order {order.code} has been reactivated.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.expired',
+            'eventyay.event.order.expired',
             _('Order expired'),
             _('Order {order.code} has been marked as expired.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.modified',
+            'eventyay.event.order.modified',
             _('Order information changed'),
             _('The ticket information of order {order.code} has been changed.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.contact.changed',
+            'eventyay.event.order.contact.changed',
             _('Order contact address changed'),
             _('The contact address of order {order.code} has been changed.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.changed.*',
+            'eventyay.event.order.changed.*',
             _('Order changed'),
             _('Order {order.code} has been changed.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.overpaid',
+            'eventyay.event.order.overpaid',
             _('Order has been overpaid'),
             _('Order {order.code} has been overpaid.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.refund.created.externally',
+            'eventyay.event.order.refund.created.externally',
             _('External refund of payment'),
             _('An external refund for {order.code} has occurred.'),
         ),
         ParametrizedOrderNotificationType(
             sender,
-            'pretix.event.order.refund.requested',
+            'eventyay.event.order.refund.requested',
             _('Refund requested'),
             _('You have been requested to issue a refund for {order.code}.'),
         ),

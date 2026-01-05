@@ -1,22 +1,23 @@
 import copy
 import datetime as dt
+import os
 import string
 import uuid
-import zoneinfo
-import jwt
-from typing import List
-import icalendar
-import datetime as dt
 from collections import OrderedDict, defaultdict
+from contextlib import suppress
+from urllib.parse import urlparse
 from datetime import datetime, time, timedelta
 from operator import attrgetter
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
+import icalendar
+import jwt
+import logging
 from dateutil.relativedelta import relativedelta
-from django.conf import global_settings as default_django_settings
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
+from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.mail import get_connection
 from django.core.validators import (
@@ -29,7 +30,6 @@ from django.db import models
 from django.db.models import Exists, OuterRef, Prefetch, Q, Subquery, Value
 from django.template.defaultfilters import date as _date
 from django.urls import reverse
-from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
@@ -48,13 +48,20 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.plugins import get_all_plugins
+from eventyay.base.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
-from eventyay.core.permissions import Permission, SYSTEM_ROLES
-from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.consts import TIMEZONE_CHOICES
+from eventyay.core.permissions import (
+    MAX_PERMISSIONS_IF_SILENCED,
+    ORGANIZER_ROLES,
+    SYSTEM_ROLES,
+    Permission,
+    normalize_permission_value,
+    traits_match_required,
+)
+from eventyay.core.utils.json import CustomJSONEncoder
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.json import safe_string
@@ -65,25 +72,30 @@ from eventyay.talk_rules.event import (
     has_any_permission,
     is_event_visible,
 )
-from .auth import User
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from ..settings import settings_hierarkey
+from .auth import User
 from .mixins import OrderedModel, PretalxModel
 from .organizer import Organizer, OrganizerBillingModel, Team
+from .roomquestion import RoomQuestion
+from .systemlog import SystemLog
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
-LANGUAGE_NAMES = {code: name for code, name in settings.LANGUAGES}
+logger = logging.getLogger(__name__)
+
 
 def event_css_path(instance, filename):
-    return path_with_hash(filename, base_path=f"{instance.slug}/css/")
+    return path_with_hash(filename, base_path=f'{instance.slug}/css/')
+
 
 def event_logo_path(instance, filename):
-    return path_with_hash(filename, base_path=f"{instance.slug}/img/")
+    return path_with_hash(filename, base_path=f'{instance.slug}/img/')
+
 
 def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
-        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -139,91 +151,95 @@ def default_roles():
     apiuser = admin + [Permission.EVENT_API, Permission.EVENT_SECRETS]
     scheduleuser = [Permission.EVENT_API]
     return {
-        "attendee": attendee,
-        "viewer": viewer,
-        "participant": participant,
-        "room_creator": room_creator,
-        "room_owner": room_owner,
-        "speaker": speaker,
-        "moderator": moderator,
-        "admin": admin,
-        "apiuser": apiuser,
-        "scheduleuser": scheduleuser,
+        'attendee': attendee,
+        'viewer': viewer,
+        'participant': participant,
+        'room_creator': room_creator,
+        'room_owner': room_owner,
+        'speaker': speaker,
+        'moderator': moderator,
+        'admin': admin,
+        'apiuser': apiuser,
+        'scheduleuser': scheduleuser,
     }
 
 
 def default_grants():
     return {
-        "attendee": ["attendee"],
-        "admin": ["admin"],
-        "scheduleuser": ["schedule-update"],
+        'attendee': ['attendee'],
+        'admin': ['admin'],
+        'scheduleuser': ['schedule-update'],
     }
 
 
 FEATURE_FLAGS = [
-    "schedule-control",
-    "iframe-player",
-    "roulette",
-    "muxdata",
-    "page.landing",
-    "zoom",
-    "janus",
-    "polls",
-    "poster",
-    "conftool",
-    "cross-origin-isolation",
+    'schedule-control',
+    'iframe-player',
+    'roulette',
+    'muxdata',
+    'page.landing',
+    'zoom',
+    'janus',
+    'polls',
+    'poster',
+    'conftool',
+    'cross-origin-isolation',
 ]
 
 
 def default_feature_flags():
     return {
-        "show_schedule": True,
-        "show_featured": "pre_schedule",
-        "show_widget_if_not_public": False,
-        "export_html_on_release": False,
-        "use_tracks": True,
-        "use_feedback": True,
-        "use_submission_comments": True,
-        "present_multiple_times": False,
-        "submission_public_review": True,
-        "chat-moderation": True,
+        'show_schedule': True,
+        'show_featured': 'pre_schedule',
+        'show_widget_if_not_public': False,
+        'export_html_on_release': False,
+        'use_tracks': True,
+        'use_feedback': True,
+        'use_submission_comments': True,
+        'present_multiple_times': False,
+        'submission_public_review': True,
+        'chat-moderation': True,
+        'polls': True,
+        'schedule-control': True,
     }
+
 
 def default_display_settings():
     return {
-        "schedule": "grid",
-        "imprint_url": None,
-        "header_pattern": "",
-        "html_export_url": "",
-        "meta_noindex": False,
-        "texts": {"agenda_session_above": "", "agenda_session_below": ""},
+        'schedule': 'grid',
+        'imprint_url': None,
+        'header_pattern': '',
+        'html_export_url': '',
+        'meta_noindex': False,
+        'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
     }
 
 
 def default_review_settings():
     return {
-        "score_mandatory": False,
-        "text_mandatory": False,
-        "aggregate_method": "median",
-        "score_format": "words_numbers",
+        'score_mandatory': False,
+        'text_mandatory': False,
+        'aggregate_method': 'median',
+        'score_format': 'words_numbers',
     }
 
 
 def default_mail_settings():
     return {
-        "mail_from": "",
-        "reply_to": "",
-        "signature": "",
-        "subject_prefix": "",
-        "smtp_use_custom": "",
-        "smtp_host": "",
-        "smtp_port": 587,
-        "smtp_username": "",
-        "smtp_password": "",
-        "smtp_use_tls": "",
-        "smtp_use_ssl": "",
-        "mail_on_new_submission": False,
+        'mail_from': '',
+        'reply_to': '',
+        'signature': '',
+        'subject_prefix': '',
+        'smtp_use_custom': '',
+        'smtp_host': '',
+        'smtp_port': 587,
+        'smtp_username': '',
+        'smtp_password': '',
+        'smtp_use_tls': '',
+        'smtp_use_ssl': '',
+        'mail_on_new_submission': False,
     }
+
 
 class EventMixin:
     def clean(self):
@@ -264,6 +280,8 @@ class EventMixin:
         to the current locale and to the ``show_times`` setting.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         return _date(
             self.date_from.astimezone(tz),
             ('SHORT_' if short else '')
@@ -276,6 +294,8 @@ class EventMixin:
         the ``show_times`` setting.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         return _date(self.date_from.astimezone(tz), 'TIME_FORMAT')
 
     def get_date_to_display(self, tz=None, show_times=True, short=False) -> str:
@@ -285,6 +305,8 @@ class EventMixin:
         if ``show_date_to`` is ``False``.
         """
         tz = tz or self.timezone
+        if isinstance(tz, str):
+            tz = ZoneInfo(key=tz)
         if not self.settings.show_date_to or not self.date_to:
             return ''
         return _date(
@@ -491,65 +513,6 @@ class EventMixin:
         if self.settings.seating_minimal_distance > 0:
             q |= Q(has_closeby_taken=True, has_order=False)
         return qs.filter(q)
-
-
-def event_css_path(instance, filename):
-    return path_with_hash(filename, base_path=f'{instance.slug}/css/')
-
-
-def event_logo_path(instance, filename):
-    return path_with_hash(filename, base_path=f'{instance.slug}/img/')
-
-
-def default_feature_flags():
-    return {
-        'show_schedule': True,
-        'show_featured': 'pre_schedule',  # or always, or never
-        'show_widget_if_not_public': False,
-        'export_html_on_release': False,
-        'use_tracks': True,
-        'use_feedback': True,
-        'use_submission_comments': True,
-        'present_multiple_times': False,
-        'submission_public_review': True,
-    }
-
-
-def default_display_settings():
-    return {
-        'schedule': 'grid',  # or list
-        'imprint_url': None,
-        'header_pattern': '',
-        'html_export_url': '',
-        'meta_noindex': False,
-        'texts': {'agenda_session_above': '', 'agenda_session_below': ''},
-    }
-
-
-def default_review_settings():
-    return {
-        'score_mandatory': False,
-        'text_mandatory': False,
-        'aggregate_method': 'median',  # or mean
-        'score_format': 'words_numbers',
-    }
-
-
-def default_mail_settings():
-    return {
-        'mail_from': '',
-        'reply_to': '',
-        'signature': '',
-        'subject_prefix': '',
-        'smtp_use_custom': '',
-        'smtp_host': '',
-        'smtp_port': 587,
-        'smtp_username': '',
-        'smtp_password': '',
-        'smtp_use_tls': '',
-        'smtp_use_ssl': '',
-        'mail_on_new_submission': False,
-    }
 
 
 # We don't subclass PretalxModel because:
@@ -789,11 +752,17 @@ class Event(
         null=True,
         blank=True,
     )
-        # Virtual platform fields
+    # Virtual platform fields
     config = models.JSONField(null=True, blank=True)
     roles = models.JSONField(null=True, blank=True, default=default_roles, encoder=CustomJSONEncoder)
     trait_grants = models.JSONField(null=True, blank=True, default=default_grants)
-    domain = models.CharField(max_length=250, unique=True, null=True, blank=True, validators=[RegexValidator(regex=r"^[a-z0-9-.:]+(/[a-zA-Z0-9-_./]*)?$")])
+    domain = models.CharField(
+        max_length=250,
+        unique=True,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(regex=r'^[a-z0-9-.:]+(/[a-zA-Z0-9-_./]*)?$')],
+    )
     feature_flags = models.JSONField(default=default_feature_flags)
     external_auth_url = models.URLField(null=True, blank=True)
 
@@ -808,6 +777,7 @@ class Event(
 
     class urls(EventUrls):
         """URL patterns for public/frontend views of this event."""
+
         base_path = settings.BASE_PATH
         base = '{base_path}/{self.organizer.slug}/{self.slug}/'
         login = '{base}login/'
@@ -818,14 +788,13 @@ class Event(
         reset = '{base}reset'
         submit = '{base}submit/'
         user = '{base}me/'
-        user_delete = '{base}me/delete'
         user_submissions = '{user}submissions/'
         user_mails = '{user}mails/'
         schedule = '{base}schedule/'
         schedule_nojs = '{schedule}nojs'
         featured = '{base}featured/'
-        talks = '{base}talk/'
-        speakers = '{base}speaker/'
+        talks = '{base}sessions/'
+        speakers = '{base}speakers/'
         changelog = '{schedule}changelog/'
         feed = '{schedule}feed.xml'
         export = '{schedule}export/'
@@ -840,6 +809,7 @@ class Event(
 
     class orga_urls(EventUrls):
         """URL patterns for organizer/admin panel views of this event."""
+
         base_path = settings.BASE_PATH
         base = '{base_path}/orga/event/{self.slug}/'
         login = '{base}login/'
@@ -894,6 +864,7 @@ class Event(
 
     class api_urls(EventUrls):
         """URL patterns for API endpoints related to this event."""
+
         base_path = settings.TALK_BASE_PATH
         base = '{base_path}/api/events/{self.slug}/'
         submissions = '{base}submissions/'
@@ -915,6 +886,7 @@ class Event(
 
     class tickets_urls(EventUrls):
         """URL patterns for ticket/control panel views of this event."""
+
         _full_base_path = settings.BASE_PATH
         base_path = urlparse(_full_base_path).path.rstrip('/')
         base = '{base_path}/control/'
@@ -1345,19 +1317,20 @@ class Event(
             question_map=question_map,
             checkin_list_map=checkin_list_map,
         )
+
     def decode_token(self, token, allow_raise=False):
         exc = None
         tried_any = False
-        for jwt_config in self.config.get("JWT_secrets", []):
+        for jwt_config in self.config.get('JWT_secrets', []):
             tried_any = True
-            secret = jwt_config["secret"]
-            audience = jwt_config["audience"]
-            issuer = jwt_config["issuer"]
+            secret = jwt_config['secret']
+            audience = jwt_config['audience']
+            issuer = jwt_config['issuer']
             try:
                 return jwt.decode(
                     token,
                     secret,
-                    algorithms=["HS256"],
+                    algorithms=['HS256'],
                     audience=audience,
                     issuer=issuer,
                 )
@@ -1376,7 +1349,7 @@ class Event(
                     return jwt.decode(
                         token,
                         secret,
-                        algorithms=["HS256"],
+                        algorithms=['HS256'],
                         audience=audience,
                         issuer=issuer,
                     )
@@ -1388,30 +1361,57 @@ class Event(
         if exc and allow_raise:
             raise exc
 
+    def _get_trait_grants_with_defaults(self):
+        base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        slug = getattr(self, "slug", None) or getattr(self, "id", None)
+        if not slug:
+            return base_trait_grants
+        augmented = dict(base_trait_grants)
+        for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
+            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
+        return augmented
+
+    def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
+        """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
+        
+        Args:
+            result: Permission result dictionary to modify
+            user_traits: List of user traits
+        """
+        direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
+        if not direct_messaging_def:
+            return
+        
+        direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
+        has_direct_messaging_trait = direct_messaging_trait in user_traits
+        
+        if not has_direct_messaging_trait:
+            direct_message_value = Permission.EVENT_CHAT_DIRECT.value
+            result[self] = {
+                p for p in result[self]
+                if normalize_permission_value(p) != direct_message_value
+            }
+
     def has_permission_implicit(
         self,
         *,
         traits,
-        permissions: List[Permission],
+        permissions: list[Permission],
         room=None,
         allow_empty_traits=True,
     ):
         # Ensure trait_grants and roles are not None - use defaults if missing
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
             if (
-                isinstance(required_traits, list)
-                and all(
-                    any(x in traits for x in (r if isinstance(r, list) else [r]))
-                    for r in required_traits
-                )
+                traits_match_required(traits, required_traits)
                 and (required_traits or allow_empty_traits)
             ):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 if any(
-                    p in role_permissions or p.value in role_permissions
+                    normalize_permission_value(p) in role_permissions
                     for p in permissions
                 ):
                     return True
@@ -1420,16 +1420,12 @@ class Event(
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if (
-                    isinstance(required_traits, list)
-                    and all(
-                        any(x in traits for x in (r if isinstance(r, list) else [r]))
-                        for r in required_traits
-                    )
+                    traits_match_required(traits, required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                     if any(
-                        p in role_permissions or p.value in role_permissions
+                        normalize_permission_value(p) in role_permissions
                         for p in permissions
                     ):
                         return True
@@ -1449,13 +1445,11 @@ class Event(
         if not isinstance(permission, list):
             permission = [permission]
 
-        if user.is_silenced and not any(
-            p in MAX_PERMISSIONS_IF_SILENCED for p in permission
-        ):
+        if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
             return False
 
         if self.has_permission_implicit(
-            traits=user.traits,
+            traits=user.traits or [],
             permissions=permission,
             room=room,
             allow_empty_traits=user.type == User.UserType.PERSON,
@@ -1465,10 +1459,8 @@ class Event(
         roles = user.get_role_grants(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(
-                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
-                for p in permission
-            ):
+            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            if any(normalize_permission_value(p) in role_perms for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1483,13 +1475,11 @@ class Event(
         if not isinstance(permission, list):
             permission = [permission]
 
-        if user.is_silenced and not any(
-            p in MAX_PERMISSIONS_IF_SILENCED for p in permission
-        ):
+        if user.is_silenced and not any(p in MAX_PERMISSIONS_IF_SILENCED for p in permission):
             return False
 
         if self.has_permission_implicit(
-            traits=user.traits,
+            traits=user.traits or [],
             permissions=permission,
             room=room,
             allow_empty_traits=user.type == User.UserType.PERSON,
@@ -1499,10 +1489,8 @@ class Event(
         roles = await user.get_role_grants_async(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(
-                p.value in event_roles.get(r, SYSTEM_ROLES.get(r, []))
-                for p in permission
-            ):
+            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            if any(normalize_permission_value(p) in role_perms for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1513,44 +1501,44 @@ class Event(
         allow_empty_traits = user.type == User.UserType.PERSON
 
         # Ensure trait_grants and roles are not None
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
+        user_traits = user.traits or []
+        
         for role, required_traits in event_trait_grants.items():
             if (
-                isinstance(required_traits, list)
-                and all(
-                    any(x in user.traits for x in (r if isinstance(r, list) else [r]))
-                    for r in required_traits
-                )
+                traits_match_required(user_traits, required_traits)
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
-
-        # Removed user.world_grants loop (attribute not present on unified User model)
+                role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                result[self].update(role_perms)
+        
+        # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
+        # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
+        admin_mode_active = "admin" in user_traits
+        
+        if admin_mode_active:
+            # Grant all video manager permissions when admin mode is active
+            for role_name in ORGANIZER_ROLES:
+                role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                result[self].update(role_perms)
+        else:
+            # Remove EVENT_CHAT_DIRECT from ALL users unless they have the direct messaging trait.
+            # Only users with can_video_direct_message team permission get the video_direct_messaging trait.
+            self._remove_direct_messaging_if_unauthorized(result, user_traits)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if (
-                    isinstance(required_traits, list)
-                    and all(
-                        any(
-                            x in user.traits
-                            for x in (r if isinstance(r, list) else [r])
-                        )
-                        for r in required_traits
-                    )
+                    traits_match_required(user_traits, required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
-                    result[room].update(
-                        event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    )
+                    result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
 
-        for grant in user.room_grants.select_related("room"):
-            result[grant.room].update(
-                event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, []))
-            )
+        for grant in user.room_grants.select_related('room'):
+            result[grant.room].update(event_roles.get(grant.role, SYSTEM_ROLES.get(grant.role, [])))
         if user.is_silenced:
             for key in result.keys():
                 result[key] &= MAX_PERMISSIONS_IF_SILENCED
@@ -1568,11 +1556,9 @@ class Event(
             ContactRequest,
             ExhibitorStaff,
             ExhibitorView,
-            Feedback,
             Membership,
             Poll,
             PosterPresenter,
-            Question,
             Reaction,
             RoomView,
         )
@@ -1604,8 +1590,10 @@ class Event(
     def clone_from(self, old, new_secrets):
         from eventyay.base.models import Channel
         from eventyay.base.models.storage_model import StoredFile
+
         if self.pk == old.pk:
-            raise ValueError("Illegal attempt to clone into same event")
+            raise ValueError('Illegal attempt to clone into same event')
+
         def clone_stored_files(*, inst=None, attrs=None, struct=None, url=None):
             if inst and attrs:
                 for a in attrs:
@@ -1648,11 +1636,11 @@ class Event(
         self.config = old.config or {}
         if new_secrets:
             secret = get_random_string(length=64)
-            self.config["JWT_secrets"] = [
+            self.config['JWT_secrets'] = [
                 {
-                    "issuer": "any",
-                    "audience": "eventyay",
-                    "secret": secret,
+                    'issuer': 'any',
+                    'audience': 'eventyay',
+                    'secret': secret,
                 }
             ]
         self.roles = old.roles
@@ -1678,9 +1666,7 @@ class Event(
             room_map[old_id] = r
             if has_channel:
                 Channel.objects.create(room=r, event=self)
-        for r in old.rooms.prefetch_related(
-            "exhibitors", "exhibitors__links", "exhibitors__social_media_links"
-        ):
+        for r in old.rooms.prefetch_related('exhibitors', 'exhibitors__links', 'exhibitors__social_media_links'):
             for ex in r.exhibitors.all():
                 old_links = list(ex.links.all())
                 old_smlinks = list(ex.social_media_links.all())
@@ -1690,9 +1676,7 @@ class Event(
                 ex.room = room_map[ex.room_id]
                 if ex.highlighted_room_id:
                     ex.highlighted_room = room_map[ex.highlighted_room_id]
-                clone_stored_files(
-                    inst=ex, attrs=["logo", "banner_list", "banner_detail"]
-                )
+                clone_stored_files(inst=ex, attrs=['logo', 'banner_list', 'banner_detail'])
                 ex.text_content = clone_stored_files(struct=ex.text_content)
                 ex.save()
 
@@ -1703,7 +1687,7 @@ class Event(
 
                 for link in old_links:
                     link.pk = None
-                    clone_stored_files(inst=link, attrs=["url"])
+                    clone_stored_files(inst=link, attrs=['url'])
                     link.exhibitor = ex
                     link.save()
 
@@ -1889,28 +1873,23 @@ class Event(
 
     @property
     def talk_schedule_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/schedule')
-        return url
+        return self.urls.schedule.full
 
     @property
     def talk_session_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/talk')
-        return url
+        return self.urls.talks.full
 
     @property
     def talk_speaker_url(self):
-        url = urljoin(TALK_HOSTNAME, f'{self.slug}/speaker')
-        return url
+        return self.urls.speakers.full
 
     @property
     def talk_dashboard_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}')
-        return url
+        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}/settings')
-        return url
+        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
 
     @cached_property
     def live_issues(self):
@@ -2080,12 +2059,53 @@ class Event(
     @cached_property
     def locales(self) -> list[str]:
         """Is a list of active event locales."""
-        return self.locale_array.split(',')
+        if hasattr(self, 'settings') and 'locales' in self.settings._cache():
+            if locales := self.settings.get('locales', as_type=list):
+                return locales
+        return [code for code in self.locale_array.split(',') if code]
 
     @cached_property
     def content_locales(self) -> list[str]:
         """Is a list of active content locales."""
-        return self.content_locale_array.split(',')
+        if hasattr(self, 'settings') and 'content_locales' in self.settings._cache():
+            if locales := self.settings.get('content_locales', as_type=list):
+                return locales
+        fallback = [code for code in self.content_locale_array.split(',') if code]
+        return fallback or self.locales
+
+    def _clear_language_caches(self):
+        for attr in [
+            'locales',
+            'content_locales',
+            'is_multilingual',
+            'named_locales',
+            'available_content_locales',
+            'named_content_locales',
+            'named_plugin_locales',
+            'plugin_locales',
+        ]:
+            self.__dict__.pop(attr, None)
+
+    def update_language_configuration(
+        self,
+        *,
+        locales: list[str] | None = None,
+        content_locales: list[str] | None = None,
+        default_locale: str | None = None,
+    ) -> None:
+        locales_list = list(locales or [])
+        if content_locales is None:
+            content_locales_list = locales_list
+        else:
+            content_locales_list = list(content_locales)
+        if locales_list:
+            self.locale_array = ','.join(locales_list)
+        if content_locales_list:
+            self.content_locale_array = ','.join(content_locales_list)
+        if default_locale:
+            self.locale = default_locale
+        if locales_list or content_locales_list or default_locale:
+            self._clear_language_caches()
 
     @cached_property
     def is_multilingual(self) -> bool:
@@ -2097,9 +2117,9 @@ class Event(
         """Is a list of tuples of locale codes and natural names for this
         event."""
         return [
-            (language['code'], language['natural_name'])
-            for language in settings.LANGUAGES_INFORMATION.values()
-            if language['code'] in self.locales
+            (code, language['natural_name'])
+            for code, language in settings.LANGUAGES_INFORMATION.items()
+            if code in self.locales
         ]
 
     @cached_property
@@ -2107,7 +2127,7 @@ class Event(
         # Content locales can be anything eventyay knows as a language, merged with
         # this event's plugin locales.
 
-        locale_names = dict(default_django_settings.LANGUAGES)
+        locale_names = dict(settings.LANGUAGES)
         locale_names.update(self.named_plugin_locales)
         return sorted([(key, value) for key, value in locale_names.items()])
 
@@ -2115,7 +2135,8 @@ class Event(
     def named_content_locales(self) -> list:
         locale_names = dict(self.available_content_locales)
         # locale_names['en-us'] = locale_names['en']
-        return [(code, locale_names[code]) for code in self.content_locales]
+        locale_names |= LANGUAGE_NAMES
+        return [(code, locale_names.get(code, code)) for code in self.content_locales]
 
     @cached_property
     def named_plugin_locales(self) -> list:
@@ -2170,9 +2191,181 @@ class Event(
 
         self.plugins = ','.join(modules)
 
-    @cached_property
+    @property
     def visible_primary_color(self):
-        return self.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        """
+        Prefer the common (event settings) primary color, then fall back to the legacy
+        event field, finally defaulting to the installation default.
+        """
+        return (
+            self.settings.get('primary_color')
+            or self.primary_color
+            or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        )
+
+    @cached_property
+    def _visible_logo_path(self):
+        """
+        Resolve a usable logo path/URL from event_logo_image setting.
+        Returns a storage-relative path (e.g. ``pub/...``) or an absolute URL.
+        
+        NOTE: This method ONLY checks for event_logo_image, NOT logo_image.
+        The logo_image setting is actually used for HEADER images (see default_setting.py),
+        so we must NOT use it here to prevent header images from appearing as logos.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        # Only check event_logo_image - NOT logo_image (which is for header images)
+        for key in ('event_logo_image',):
+            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_logo)
+            if not path:
+                continue
+
+            # Keep full URLs
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            # Strip file:// scheme if present
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            # Drop leading media prefixes
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+
+            # Collapse to pub/… if present
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        return None
+
+    @cached_property
+    def _visible_header_image_path(self):
+        """
+        Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        # header image for the site is stored in common settings under logo_image (historical)
+        # and in the legacy field header_image; prefer the settings value first
+        for key in ('logo_image', 'header_image'):
+            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_header)
+            if not path:
+                continue
+
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        if self.header_image:
+            return self.header_image.name
+
+        return None
+
+    @cached_property
+    def visible_logo_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            # If already a full URL, return as-is
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return self._visible_logo_path
+            return default_storage.url(self._visible_logo_path)
+        return None
+
+    @cached_property
+    def visible_logo_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_logo_path)
+
+    @cached_property
+    def visible_header_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return self._visible_header_image_path
+            return default_storage.url(self._visible_header_image_path)
+
+    @cached_property
+    def visible_header_image_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_header_image_path)
+        return None
 
     def _get_default_submission_type(self):
         from eventyay.base.models import SubmissionType
@@ -2871,32 +3064,33 @@ class SubEventMetaValue(LoggedModel):
         if self.subevent:
             self.subevent.event.cache.clear()
 
+
 class EventPlannedUsage(models.Model):
-    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name="planned_usages")
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='planned_usages')
     start = models.DateField()
     end = models.DateField()
     attendees = models.PositiveIntegerField()
     notes = models.TextField(blank=True)
 
     class Meta:
-        ordering = ("start",)
+        ordering = ('start',)
 
     def as_ical(self):
-        import icalendar
         event = icalendar.Event()
-        event["uid"] = f"{self.event.id}-{self.id}"
-        event["dtstart"] = self.start
-        event["dtend"] = self.start
-        event["summary"] = str(self.event.name)
-        event["description"] = self.notes
-        event["url"] = self.event.domain
+        event['uid'] = f'{self.event.id}-{self.id}'
+        event['dtstart'] = self.start
+        event['dtend'] = self.start
+        event['summary'] = str(self.event.name)
+        event['description'] = self.notes
+        event['url'] = self.event.domain
         return event
 
+
 class EventView(models.Model):
-    event = models.ForeignKey('Event', related_name="views", on_delete=models.CASCADE)
+    event = models.ForeignKey('Event', related_name='views', on_delete=models.CASCADE)
     start = models.DateTimeField(auto_now_add=True)
     end = models.DateTimeField(null=True, db_index=True)
-    user = models.ForeignKey('User', related_name="event_views", on_delete=models.CASCADE)
+    user = models.ForeignKey('User', related_name='event_views', on_delete=models.CASCADE)
 
     class Meta:
-        indexes = [models.Index(fields=["start"])]
+        indexes = [models.Index(fields=['start'])]

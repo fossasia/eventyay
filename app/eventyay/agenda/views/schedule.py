@@ -116,7 +116,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             result = draw_ascii_schedule(data, output_format=output_format)
         except StopIteration:  # pragma: no cover
             result = draw_ascii_schedule(data, output_format='list')
-        result += '\n\n  📆 powered by eventyay'
+        result += '\n\n  powered by eventyay'
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
@@ -171,7 +171,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def show_talk_list(self):
-        return self.request.path.endswith('/talk/') or self.request.event.display_settings['schedule'] == 'list'
+        return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
 
 
 @cache_page(60 * 60 * 24)
