@@ -423,13 +423,6 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
         ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
         ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
 
-        ctx['is_video_plugin_enabled'] = bool(
-            self.request.event.settings.venueless_url
-            and self.request.event.settings.venueless_issuer
-            and self.request.event.settings.venueless_audience
-            and self.request.event.settings.venueless_secret
-        )
-
         return ctx
 
 

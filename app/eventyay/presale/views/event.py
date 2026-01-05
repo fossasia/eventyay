@@ -590,14 +590,6 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             event_name = event_name_data
 
         context['event_name'] = event_name
-
-        context['is_video_plugin_enabled'] = bool(
-            self.request.event.settings.venueless_url
-            and self.request.event.settings.venueless_issuer
-            and self.request.event.settings.venueless_audience
-            and self.request.event.settings.venueless_secret
-        )
-
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
 
         return context
