@@ -150,7 +150,7 @@ class EventIndexView(TemplateView):
                 ContentType.objects.get_for_model(Order),
             ]
 
-            if permissions['can_change_products']:
+            if permissions['can_change_items']:
                 allowed_types += [
                     ContentType.objects.get_for_model(Product),
                     ContentType.objects.get_for_model(ProductCategory),
@@ -249,6 +249,7 @@ class EventIndexView(TemplateView):
 
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
+        context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
 
         return context
 
