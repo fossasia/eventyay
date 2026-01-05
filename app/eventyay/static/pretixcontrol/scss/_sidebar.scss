@@ -107,6 +107,7 @@ body:not(.sidebar-minimized) .sidebar {
       display: flex;
       flex-direction: row;
       align-items: center;
+      height: 56px;
 
       .context-icon {
         min-width: 38px;
@@ -119,22 +120,26 @@ body:not(.sidebar-minimized) .sidebar {
       flex-direction: column;
       flex-grow: 1;
       overflow: hidden;
-      margin-left: 6px;
+      margin-left: 2px;
 
       span {
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
+        line-height: 17px;
       }
 
       span.context-name {
-        font-weight: bold;
+        font-weight: 600;
         font-size: 15px;
+        padding-bottom: 2px;
+        margin-bottom: 2px;
       }
 
       span.context-meta {
-        opacity: 0.7;
         font-size: 11px;
+        color: $body-color-light;
+        font-weight: normal;
       }
     }
   }
@@ -361,22 +366,26 @@ body:not(.sidebar-minimized) #page-wrapper {
         flex-direction: column;
         flex-grow: 1;
         overflow: hidden;
-        margin-left: 6px;
+        margin-left: 2px;
 
         span {
           text-overflow: ellipsis;
           white-space: nowrap;
           overflow: hidden;
+          line-height: 17px;
         }
 
         span.context-name {
-          font-weight: bold;
+          font-weight: 600;
           font-size: 15px;
+          padding-bottom: 2px;
+          margin-bottom: 2px;
         }
 
         span.context-meta {
-          opacity: 0.7;
           font-size: 11px;
+          color: $body-color-light;
+          font-weight: normal;
         }
       }
     }

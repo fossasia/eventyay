@@ -73,12 +73,12 @@
                         <div class="col-md-4 col-sm-6 col-md-offset-4 col-xs-12">
                             {% if guest_checkout_allowed or request.user.is_authenticated %}
                                 <a class="btn btn-block btn-primary btn-lg" href="{% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}">
-                                    Checkout
+                                    {% translate "Checkout" %}
                                 </a>
                             {% else %}
-                                <a class="btn btn-block btn-primary btn-lg" href="{% url 'eventyay_common:auth.login' %}?next={% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}" id="checkout-login-required">
-                                    <i class="fa fa-sign-in" aria-hidden="true"></i> {% trans "Login to Checkout" %}
-                                </a>
+                                <button class="btn btn-block btn-primary btn-lg" type="button" id="checkout-login-btn" data-checkout-url="{% eventurl request.event 'presale:event.checkout.start' cart_namespace=cart_namespace %}" aria-label="{% translate 'Checkout (login required, opens login dialog)' %}">
+                                    {% translate "Checkout" %}
+                                </button>
                             {% endif %}
                         </div>
                         <div class="visible-xs-block col-xs-12">

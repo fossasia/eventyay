@@ -150,7 +150,7 @@ class EventIndexView(TemplateView):
                 ContentType.objects.get_for_model(Order),
             ]
 
-            if permissions['can_change_products']:
+            if permissions['can_change_items']:
                 allowed_types += [
                     ContentType.objects.get_for_model(Product),
                     ContentType.objects.get_for_model(ProductCategory),
