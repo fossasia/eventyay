@@ -42,6 +42,11 @@ settings_hierarkey.add_default('venueless_allow_pending', 'False', bool)
 settings_hierarkey.add_default('venueless_all_products', 'True', bool)
 settings_hierarkey.add_default('venueless_products', '[]', list)
 settings_hierarkey.add_default('venueless_questions', '[]', list)
+settings_hierarkey.add_default('venueless_url', '', str)
+settings_hierarkey.add_default('venueless_secret', '', str)
+settings_hierarkey.add_default('venueless_issuer', '', str)
+settings_hierarkey.add_default('venueless_audience', '', str)
+settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
 
 
 def i18n_uns(v):
