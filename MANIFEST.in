@@ -23,7 +23,5 @@ recursive-include src/pretix/plugins/ticketoutputpdf/templates *
 recursive-include src/pretix/plugins/ticketoutputpdf/static *
 recursive-include src/pretix/plugins/badges/templates *
 recursive-include src/pretix/plugins/badges/static *
-recursive-include src/pretix/plugins/returnurl/templates *
-recursive-include src/pretix/plugins/returnurl/static *
 recursive-include src/pretix/plugins/webcheckin/templates *
 recursive-include src/pretix/plugins/webcheckin/static *
