@@ -463,13 +463,18 @@ ALL_LANGUAGES = [
     ('hu', _('Hungarian')),
     ('id', _('Indonesian')),
     ('it', _('Italian')),
-    ('ja-jp', _('Japanese')),
+    ('ja', _('Japanese')),
     ('ko', _('Korean')),
     ('lv', _('Latvian')),
     ('ms', _('Malay')),
+<<<<<<< HEAD
     ('nb-no', _('Norwegian Bokmål')),
     ('nl', _('Dutch')),
     ('nl-informal', _('Dutch (informal)')),
+=======
+    ('nb', _('Norwegian Bokmål')),
+    ('fa', _('Persian')),
+>>>>>>> b4e0e71d8 (chore(i18n): standardize language codes and fix display names)
     ('pl', _('Polish')),
     ('pl-informal', _('Polish (informal)')),
     ('pt-br', _('Brazilian Portuguese')),
@@ -644,13 +649,13 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 80,
     },
-    'fa-ir': {
+    'fa': {
         'name': _('Persian'),
         'natural_name': 'فارسی',
         'official': False,
         'percentage': 99,
         'path': 'fa_IR',
-        'public_code': 'fa_IR',
+        'public_code': 'fa',
     },
     'fi': {
         'name': _('Finnish'),
@@ -683,12 +688,12 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 90,
     },
-    'ja-jp': {
+    'ja': {
         'name': _('Japanese'),
         'natural_name': '日本語',
         'official': False,
         'percentage': 69,
-        'public_code': 'jp',
+        'public_code': 'ja',
         'path': 'ja',
     },
     'ko': {
@@ -709,7 +714,7 @@ LANGUAGES_INFORMATION = {
         'official': False,
         'percentage': 0,
     },
-    'nb-no': {
+    'nb': {
         'name': _('Norwegian Bokmål'),
         'natural_name': 'Norsk bokmål',
         'official': False,
@@ -835,7 +840,7 @@ LANGUAGES_INFORMATION = {
 }
 LANGUAGES_RTL = {
     'ar',
-    'fa-ir',
+    'fa',
 }
 
 for section in talk_config.sections():
