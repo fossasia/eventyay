@@ -501,6 +501,12 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
 
         team.members.add(user)
 
+        team.log_action(
+            'eventyay.team.member.added',
+            user=self.request.user,
+            data={'email': user.email, 'user': user.pk},
+        )
+
         send_team_invitation_email(
             user=user,
             organizer_name=self.request.organizer.name,
@@ -516,11 +522,6 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             is_registered_user=True,
         )
 
-        team.log_action(
-            'eventyay.team.member.added',
-            user=self.request.user,
-            data={'email': user.email, 'user': user.pk},
-        )
         messages.success(self.request, _('The new member has been added to the team.'))
         return self._redirect_to_team_permissions(team.pk)
 

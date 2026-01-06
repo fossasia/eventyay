@@ -224,6 +224,15 @@ class TeamInviteSerializer(serializers.ModelSerializer):
 
                 self.context['team'].members.add(user)
 
+                self.context['team'].log_action(
+                    'eventyay.team.member.added',
+                    data={
+                        'email': user.email,
+                        'user': user.pk,
+                    },
+                    **self.context['log_kwargs'],
+                )
+
                 send_team_invitation_email(
                     user=user,
                     organizer_name=self.context['organizer'].name,
@@ -239,14 +248,6 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     is_registered_user=True,
                 )
 
-                self.context['team'].log_action(
-                    'eventyay.team.member.added',
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
-                    **self.context['log_kwargs'],
-                )
                 return TeamInvite(email=user.email)
         else:
             raise ValidationError('No email address given.')

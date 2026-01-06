@@ -225,6 +225,15 @@ class TeamMemberView(
 
                 self.object.members.add(user)
 
+                self.object.log_action(
+                    'eventyay.team.member.added',
+                    user=self.request.user,
+                    data={
+                        'email': user.email,
+                        'user': user.pk,
+                    },
+                )
+
                 send_team_invitation_email(
                     user=user,
                     organizer_name=self.request.organizer.name,
@@ -240,14 +249,6 @@ class TeamMemberView(
                     is_registered_user=True,
                 )
 
-                self.object.log_action(
-                    'eventyay.team.member.added',
-                    user=self.request.user,
-                    data={
-                        'email': user.email,
-                        'user': user.pk,
-                    },
-                )
                 messages.success(self.request, _('The new member has been added to the team.'))
                 return redirect(self.get_success_url())
 
