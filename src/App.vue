@@ -74,8 +74,6 @@
 		@fav="fav($event)",
 		@unfav="unfav($event)"
 	)
-	a(href="https://pretalx.com", target="_blank", v-if="!onHomeServer").powered-by powered by
-		span.pretalx(href="https://pretalx.com", target="_blank") pretalx
 </template>
 <script>
 import { computed } from 'vue'

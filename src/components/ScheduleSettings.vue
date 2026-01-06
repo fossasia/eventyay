@@ -15,7 +15,29 @@
 			)
 		| {{ favsCount }}
 	template(v-if="!inEventTimezone")
-		bunt-select.timezone-item(name="timezone", :options="timezoneOptions", v-model="timezoneModel", @blur="$emit('saveTimezone')")
+		bunt-select.timezone-item(
+			ref="timezoneSelect",
+			name="timezone",
+			:options="timezoneOptions.others",
+			v-model="timezoneModel",
+			:findOptionByValue="findTimezoneOption",
+			@getOptionLabel="getTimezoneLabel",
+			dropdownClass="timezone-dropdown-menu",
+			@blur="$emit('saveTimezone')"
+		)
+			template(#result-header)
+				ul.timezone-pinned
+					li.timezone-option(
+						v-for="option in timezoneOptions.pinned",
+						:key="option.id",
+						:class="{ active: timezoneModel === option.id }",
+						@click="selectTimezone(option.id)"
+					)
+						span {{ option.label }}
+				div.timezone-divider(v-if="timezoneOptions.others.length")
+					span Other Timezones
+			template(#no-options)
+				span(v-if="timezoneOptions.others.length") Sorry, no matching options.
 	template(v-else)
 		div.timezone-label.timezone-item.bunt-tab-header-item {{ scheduleTimezone }}
 </template>
@@ -50,11 +72,45 @@ export default {
 	},
 	emits: ['openFilter', 'toggleFavs', 'saveTimezone', 'update:currentTimezone'],
 	computed: {
+		availableTimezones () {
+			if (typeof Intl?.supportedValuesOf === 'function') {
+				return Intl.supportedValuesOf('timeZone') || []
+			}
+			return []
+		},
+		pinnedTimezones () {
+			const pinned = []
+			const seen = new Set()
+			const addTimezone = (id, suffix) => {
+				if (!id || seen.has(id)) return
+				pinned.push({ id, label: `${id} (${suffix})` })
+				seen.add(id)
+			}
+			addTimezone(this.userTimezone, 'local')
+			addTimezone(this.scheduleTimezone, 'event')
+			return pinned
+		},
+		otherTimezones () {
+			const pinnedIds = new Set(this.pinnedTimezones.map(option => option.id))
+			const knownTimezones = this.availableTimezones.length ? [...this.availableTimezones] : []
+			for (const tz of [this.scheduleTimezone, this.userTimezone]) {
+				if (tz && !knownTimezones.includes(tz)) knownTimezones.push(tz)
+			}
+			const uniqueOthers = knownTimezones
+				.filter(Boolean)
+				.filter(tz => !pinnedIds.has(tz))
+				.filter((tz, index, arr) => arr.indexOf(tz) === index)
+				.sort((a, b) => a.localeCompare(b))
+			return uniqueOthers.map(tz => ({ id: tz, label: tz }))
+		},
 		timezoneOptions () {
-			return [
-				{ id: this.scheduleTimezone, label: this.scheduleTimezone },
-				{ id: this.userTimezone, label: this.userTimezone }
-			]
+			return {
+				pinned: this.pinnedTimezones,
+				others: this.otherTimezones
+			}
+		},
+		allTimezoneOptions () {
+			return [...this.pinnedTimezones, ...this.otherTimezones]
 		},
 		timezoneModel: {
 			get () {
@@ -63,6 +119,18 @@ export default {
 			set (value) {
 				this.$emit('update:currentTimezone', value)
 			}
+		}
+	},
+	methods: {
+		findTimezoneOption (value) {
+			return this.allTimezoneOptions.find(option => option.id === value)
+		},
+		getTimezoneLabel (option) {
+			return option?.label || option || ''
+		},
+		selectTimezone (value) {
+			this.$emit('update:currentTimezone', value)
+			this.$refs.timezoneSelect?.blur()
 		}
 	}
 }
@@ -106,4 +174,38 @@ export default {
 		color: $clr-secondary-text-light
 	.timezone-item
 		margin-left: auto
+.timezone-dropdown-menu
+	ul
+		padding: 0
+		margin: 0
+		li
+			padding: 0 12px
+.timezone-pinned
+	list-style: none
+	margin: 0
+	padding: 0
+	.timezone-option
+		display: flex
+		align-items: center
+		height: 32px
+		padding: 0 12px
+		cursor: pointer
+		transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out
+		&:hover
+			background-color: rgba(0, 0, 0, 0.04)
+		&.active
+			background-color: $highlight-color
+			color: $clr-white
+.timezone-divider
+	display: flex
+	align-items: center
+	min-height: 44px
+	padding: 0 12px
+	border-top: 1px solid #d0d7de
+	border-bottom: 1px solid #d0d7de
+	background: #f7f8fa
+	color: $clr-secondary-text-light
+	font-weight: 700
+	text-transform: uppercase
+	letter-spacing: 0.02em
 </style>
