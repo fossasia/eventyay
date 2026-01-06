@@ -1,6 +1,7 @@
 import sys
 
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from django.db.transaction import atomic
 from django.utils.timezone import now
 
@@ -9,6 +10,7 @@ from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import RoomConfigSerializer, RoomView
 from eventyay.base.services.user import get_public_users
+from eventyay.features.live.channels import GROUP_ROOM
 
 
 @database_sync_to_async
@@ -136,5 +138,23 @@ def reorder_rooms(event, id_list, by_user):
         type="event.room.reorder",
         data={
             "id_list": id_list,
+        },
+    )
+
+
+async def broadcast_stream_change(room_id, stream_schedule, reload=False):
+    from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
+
+    data = None
+    if stream_schedule:
+        serializer = StreamScheduleSerializer(stream_schedule)
+        data = serializer.data
+
+    await get_channel_layer().group_send(
+        GROUP_ROOM.format(id=room_id),
+        {
+            "type": "stream.change",
+            "stream": data,
+            "reload": reload,
         },
     )

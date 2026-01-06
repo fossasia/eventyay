@@ -26,6 +26,7 @@ from .views import (
     schedule,
     speaker,
     speaker_information,
+    stream_schedule,
     submission,
     upload,
     user,
@@ -46,7 +47,6 @@ def talks_to_submissions_redirect(request, event, subpath):
 
     if query_string := request.META.get('QUERY_STRING', ''):
         new_path += f'?{query_string}'
-        new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)
 
@@ -111,6 +111,9 @@ checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, ba
 
 question_router = routers.DefaultRouter()
 question_router.register(r'options', product.QuestionOptionViewSet)
+
+room_router = routers.DefaultRouter()
+room_router.register(r"stream-schedules", stream_schedule.StreamScheduleViewSet, basename="stream-schedule")
 
 product_router = routers.DefaultRouter()
 product_router.register(r'variations', product.ProductVariationViewSet)
