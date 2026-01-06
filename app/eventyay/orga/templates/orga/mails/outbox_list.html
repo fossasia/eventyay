@@ -80,11 +80,11 @@
                         </td>
                         <td>
                             {% if mail.scheduled_at %}
-                                <span class="badge bg-info">
+                                <span class="badge bg-info text-white">
                                     {% translate "Scheduled for" %} {{ mail.scheduled_at }}
                                 </span>
                             {% else %}
-                                <span class="badge bg-secondary">{% translate "Immediate" %}</span>
+                                <span class="badge bg-secondary text-white">{% translate "Immediate" %}</span>
                             {% endif %}
                         </td>
                         <td>
