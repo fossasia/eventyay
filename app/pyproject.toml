@@ -148,7 +148,6 @@ dependencies = [
     "pretalx-pages @ git+https://github.com/fossasia/eventyay-talk-pages.git@a726a10459644f0bfde5019be8abf4f66b77cd27",
     "pretalx-venueless @ git+https://github.com/fossasia/eventyay-talk-video.git@8c3316a0ee7e801dc9c30b56a3c523c01209bb61",
     "pretix-pages @ git+https://github.com/fossasia/eventyay-ticket-pages.git@a7c33fd26351d409a752baa6989f24be511b5bdd",
-    "pretix-venueless @ git+https://github.com/fossasia/eventyay-ticket-video.git@c7009367e02584825dc3378e5b3375a4fb613ca7",
     "prompt-toolkit>=3.0.51",
     "propcache>=0.2.1",
     "protobuf>=5.28.3",
@@ -264,11 +263,7 @@ test = [
     "pytest-xdist>=3.6.1",
 ]
 
-[tool.uv.sources]
-# It is `editable` because this package is also in development.
-# TODO: We better organize `eventyay-ticket-video` as workspace member,
-# so that we can install it as `non-editable` in production.
-pretix_venueless = { path = './eventyay/plugins/eventyay-ticket-video', editable = true }
+
 
 [tool.ruff]
 line-length = 120
