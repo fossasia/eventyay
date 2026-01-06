@@ -71,60 +71,28 @@ $body-bg: #f5f5f5 !default;
     img {
         vertical-align: baseline;
     }
-    .popover {
-        border-radius: 0 !important;
-        border: none !important;
-        box-shadow: 0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1) !important;
-        padding: 0 !important;
-
-        &.bottom {
-            margin-top: -10px !important;
-        }
-
-        > .arrow {
-            display: none !important;
-        }
-    }
     .popover-content {
-        padding: 0;
-        min-width: 192px;
+        padding: 8px 0;
+        min-width: 200px;
         .profile-menu {
             color: darken($btn-primary-bg, 10%);
-            font-size: 14px;
+            font-size: 16px;
             font-weight: normal;
             cursor: pointer;
-            padding: 7px 16px;
-            line-height: 1.5;
             a {
-                color: darken($btn-primary-bg, 10%);
-                padding: 0;
-                border: none;
-                background: none;
-                display: inline;
-                line-height: 1.5;
+                color: darken($btn-primary-bg, 10%) !important;
             }
             i {
-                margin-right: 8px;
-                width: 12px;
+                margin-right: 10px;
+                width: 16px;
                 text-align: center;
-                font-size: 12px;
-                display: inline-block;
-                vertical-align: middle;
             }
-            &.separator {
-                display: none;
-            }
-        }
-        .profile-menu.border-top,
-        .profile-menu.admin,
-        .profile-menu:last-child {
-            border-top: 1px solid #d1d5db;
         }
         .profile-menu:hover {
             color: #fff;
-            background-color: darken($btn-primary-bg, 10%);
+            background-color: darken($btn-primary-bg, 10%) !important;
             a {
-                color: #fff;
+                color: #fff !important;
             }
         }
     }
