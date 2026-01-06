@@ -1926,7 +1926,7 @@ class Event(
                 )
 
         gs = GlobalSettingsObject()
-        billing_validation_setting = gs.settings.get('billing_validation', True)
+        billing_validation_setting = gs.settings.get('billing_validation', as_type=bool, default=True)
         if isinstance(billing_validation_setting, str):
             billing_validation_enabled = billing_validation_setting.lower() == 'true'
         else:
