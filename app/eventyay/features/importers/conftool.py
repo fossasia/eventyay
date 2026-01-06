@@ -9,6 +9,7 @@ from io import BytesIO
 import dateutil.parser
 import pytz
 import requests
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.timezone import make_aware, now
 from lxml import etree
@@ -198,7 +199,7 @@ def mirror_conftool_file(event, url, password, nonce, preview=False):
         )
         r.raise_for_status()
 
-        if len(r.content) > 10 * 1024 * 1024:
+        if len(r.content) > settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]:
             logger.warning(
                 f"Not mirroring conftool file {url} because it is {len(r.content)} byte"
             )

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.forms import SettingsForm
@@ -32,7 +33,7 @@ class OrganizerSettingsForm(SettingsForm):
     organizer_logo_image = ExtFileField(
         label=_('Header image'),
         ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["image"],
         required=False,
         help_text=_(
             'If you provide a logo image, we will by default not show your organization name '
@@ -45,7 +46,7 @@ class OrganizerSettingsForm(SettingsForm):
         label=_('Favicon'),
         ext_whitelist=('.ico', '.png', '.jpg', '.gif', '.jpeg'),
         required=False,
-        max_size=1 * 1024 * 1024,
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["favicon"],
         help_text=_(
             'If you provide a favicon, we will show it instead of the default pretix icon. '
             'We recommend a size of at least 200x200px to accommodate most devices.'

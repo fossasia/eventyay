@@ -2,6 +2,8 @@ import logging
 from io import BytesIO
 
 from asgiref.sync import async_to_sync
+
+from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.core.files.base import ContentFile
@@ -109,7 +111,7 @@ class UploadView(UploadMixin, View):
         ".jpeg",
         ".gif",
     )
-    max_size = 10 * 1024 * 1024
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
 
     def post(self, request, *args, **kwargs):
         if not self.user:
@@ -222,7 +224,7 @@ class UploadView(UploadMixin, View):
 class ScheduleImportView(UploadMixin, View):
     permissions = {Permission.EVENT_UPDATE}
     ext_whitelist = (".xlsx",)
-    max_size = 2 * 1024 * 1024
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["xlsx"]
 
     def post(self, request, *args, **kwargs):
         if not self.user:

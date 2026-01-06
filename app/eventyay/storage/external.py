@@ -3,6 +3,8 @@ import uuid
 
 import requests
 from bs4 import BeautifulSoup
+
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
@@ -37,7 +39,7 @@ def store_image(response, event):  # TODO deduplicate
     if not extension:
         return
 
-    max_size = 10 * 1024 * 1024
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
     if not len(response.content) < max_size:
         return
 

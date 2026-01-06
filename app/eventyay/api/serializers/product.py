@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
@@ -156,7 +157,7 @@ class ProductSerializer(I18nAwareModelSerializer):
         required=False,
         allow_null=True,
         allowed_types=('image/png', 'image/jpeg', 'image/gif'),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["image"],
     )
 
     class Meta:

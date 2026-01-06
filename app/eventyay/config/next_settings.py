@@ -1,3 +1,4 @@
+import configparser
 import importlib.util
 import os
 import sys
@@ -21,6 +22,17 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
+from eventyay.helpers.config import EnvOrParserConfig
+
+_config = configparser.RawConfigParser()
+if 'PRETIX_CONFIG_FILE' in os.environ:
+    _config.read_file(open(os.environ.get('PRETIX_CONFIG_FILE'), encoding='utf-8'))
+else:
+    _config.read(
+        ['/etc/pretix/pretix.cfg', os.path.expanduser('~/.pretix.cfg'), 'pretix.cfg'],
+        encoding='utf-8',
+    )
+config = EnvOrParserConfig(_config)
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -1216,6 +1228,23 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/control/video'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+
+MAX_CSV_PARSE_SIZE = 1024 * 1024
+
+MAX_EXTERNAL_RESPONSE_SIZE = {
+    "webhook": 1024 * 1024 * config.getint('file_response_limits', 'webhook', fallback=1),
+}
+
+MAX_FILE_UPLOAD_SIZE_CONFIG = {
+    'csv': 1024 * 1024 * config.getint('file_upload_limits', 'csv', fallback=1),
+    'image': 1024 * 1024 * config.getint('file_upload_limits', 'image', fallback=10),
+    'pdf': 1024 * 1024 * config.getint('file_upload_limits', 'pdf', fallback=10),
+    'xlsx': 1024 * 1024 * config.getint('file_upload_limits', 'xlsx', fallback=2),
+    'favicon': 1024 * 1024 * config.getint('file_upload_limits', 'favicon', fallback=1),
+    'attachment':1024 * 1024 * config.getint('file_upload_limits', 'attachment', fallback=10),
+    'small_attach':1024 * 1024 * config.getint('file_upload_limits', 'small_attach', fallback=4),
+    'other': 1024 * 1024 * config.getint('file_upload_limits', 'other', fallback=10)
+}
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 

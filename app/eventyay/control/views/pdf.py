@@ -38,7 +38,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/pdf/index.html'
     permission = 'can_change_settings'
     accepted_formats = ('application/pdf',)
-    maxfilesize = 1024 * 1024 * 10
+    maxfilesize = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["pdf"]
     minfilesize = 10
     title = None
 

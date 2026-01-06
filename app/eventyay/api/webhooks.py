@@ -6,6 +6,7 @@ from collections import OrderedDict
 import requests
 from celery.exceptions import MaxRetriesExceededError
 from django.db.models import Exists, OuterRef, Q
+from django.conf import settings
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -320,7 +321,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: 1024 * 1024],
+                    response_body=resp.text[: settings.MAX_EXTERNAL_RESPONSE_SIZE["webhook"]],
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -339,7 +340,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=0,
                     payload=json.dumps(payload),
-                    response_body=str(e)[: 1024 * 1024],
+                    response_body=str(e)[: settings.MAX_EXTERNAL_RESPONSE_SIZE["webhook"]],
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)

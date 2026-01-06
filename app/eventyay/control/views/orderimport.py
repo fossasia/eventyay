@@ -45,7 +45,7 @@ class ImportView(EventPermissionRequiredMixin, TemplateView):
                     },
                 )
             )
-        if request.FILES['file'].size > 1024 * 1024 * 10:
+        if request.FILES['file'].size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]:
             messages.error(request, _('Please do not upload files larger than 10 MB.'))
             return redirect(
                 reverse(
@@ -110,7 +110,7 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     @cached_property
     def parsed(self):
-        return parse_csv(self.file.file, 1024 * 1024)
+        return parse_csv(self.file.file, settings.MAX_CSV_PARSE_SIZE)
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:

@@ -393,7 +393,7 @@ def mail_send_task(
                                 args.append((name, content, ct.type))
                                 attach_size += len(content)
 
-                            if attach_size < 4 * 1024 * 1024:
+                            if attach_size < settings.MAX_FILE_UPLOAD_SIZE_CONFIG["small_attach"]:
                                 # Do not attach more than 4MB, it will bounce way to often.
                                 for a in args:
                                     try:

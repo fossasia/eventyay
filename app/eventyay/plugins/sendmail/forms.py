@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -62,7 +63,7 @@ class MailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. We recommend only using PDFs '
             'of no more than 2 MB in size.'
         ),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["attachment"],
     )  # TODO i18n
     products = forms.ModelMultipleChoiceField(
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
@@ -567,7 +568,7 @@ class TeamMailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. '
             'We recommend only using PDFs of no more than 2 MB in size.'
         ),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["attachment"],
     )
 
     def __init__(self, *args, **kwargs):
