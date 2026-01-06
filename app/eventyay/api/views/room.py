@@ -76,3 +76,17 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             serializer = StreamScheduleSerializer(current)
             return Response(serializer.data)
         return Response(status=404)
+
+    @extend_schema(
+        summary="Get Next Stream",
+        description="Returns the next upcoming stream schedule for this room, if any.",
+        responses={200: StreamScheduleSerializer, 404: None},
+    )
+    @action(detail=True, methods=["get"], url_path="streams/next")
+    def next_stream(self, request, pk=None):
+        room = self.get_object()
+        next_stream = room.get_next_stream()
+        if next_stream:
+            serializer = StreamScheduleSerializer(next_stream)
+            return Response(serializer.data)
+        return Response(status=404)

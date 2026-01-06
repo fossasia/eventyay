@@ -289,6 +289,22 @@ class Room(VersionedModel, OrderedModel, PretalxModel):
             .first()
         )
 
+    def get_next_stream(self, at_time=None):
+        """Get the next upcoming stream schedule for this room."""
+        from django.utils.timezone import now
+
+        from .stream_schedule import StreamSchedule
+
+        at_time = at_time or now()
+
+        return (
+            StreamSchedule.objects.filter(
+                room=self, start_time__gt=at_time
+            )
+            .order_by('start_time')
+            .first()
+        )
+
 
 class Reaction(models.Model):
     room = models.ForeignKey("Room", related_name="reactions", on_delete=models.CASCADE)
