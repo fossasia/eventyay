@@ -36,6 +36,8 @@ body {
 // --Topbar
 
 .navbar-top-links {
+    display: flex;
+    align-items: center;
     margin-right: 0;
 }
 
@@ -93,6 +95,29 @@ body {
 .navbar-top-links .dropdown-user {
     right: 0;
     left: auto;
+}
+
+.navbar-top-links .language-switch { display: flex;
+    align-items: center;
+    text-align: right;
+
+    .language-select {
+        background: transparent;
+        padding: 15px;
+        text-align: right;
+        color: #fff;
+        border: transparent;
+        box-shadow: none;
+        outline: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+
+        &:focus, &:active {
+            box-shadow: none;
+            border-color: transparent;
+        }
+
+    }
 }
 
 // --Sidebar

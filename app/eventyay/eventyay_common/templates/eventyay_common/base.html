@@ -142,6 +142,20 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                    <li class="language-switch">
+                        <form method="post" action="{% url 'eventyay_common:account.locale' %}" class="language-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            <label class="sr-only" for="navbar-language-select">{{ _('Language') }}</label>
+                            <select id="navbar-language-select" name="locale" class="language-select">
+                                {% for option in language_options %}
+                                    <option value="{{ option.code }}" {% if option.code == request.LANGUAGE_CODE %}selected{% endif %}>
+                                        {{ option.label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </li>
                     {% if request.user.is_staff and not staff_session %}
                         <li>
                             <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -367,5 +381,25 @@
                 </div>
             </div>
         </div>
+        <script>
+            (function () {
+                try {
+                    var lang = "{{ request.LANGUAGE_CODE|escapejs }}";
+                    if (lang) {
+                        localStorage.setItem('userLanguage', lang);
+                    }
+                } catch (e) {
+                    /* ignore storage errors */
+                }
+            })();
+            (function () {
+                var select = document.getElementById('navbar-language-select');
+                if (select && select.form) {
+                    select.addEventListener('change', function () {
+                        select.form.submit();
+                    });
+                }
+            })();
+        </script>
 	</body>
 </html>
