@@ -453,28 +453,35 @@ aside.sidebar {
 
 /* top navbar, /orga only */
 
-.navbar #global-nav-menu {
+.navbar #profile-dropdown > summary {
+  color: var(--color-offwhite);
   display: inline-flex;
   align-items: center;
-  vertical-align: middle;
-  margin-left: 4px;
-  margin-right: 10px;
+  cursor: pointer;
+  padding: 15px;
+  min-height: 50px;
+  font-size: 14px;
   font-weight: 500;
+  background: transparent;
+  border: none;
+  border-radius: var(--size-border-radius, 0.25rem);
 }
 
-.navbar #global-nav-menu button {
-  padding: 0;
-  line-height: 1;
+.navbar #profile-dropdown > summary:hover,
+.navbar #profile-dropdown > summary:focus {
+  color: var(--color-white);
 }
 
-.navbar #global-nav-menu button > div {
-  width: 0.70rem;
-  height: 0.70rem;
-  margin-left: 6px;
+.navbar #profile-dropdown > summary i {
+  color: inherit;
 }
 
-.navbar .nav-link .fa-user {
+.navbar #profile-dropdown > summary i.fa-user {
   margin-right: 5px;
+}
+
+.navbar #profile-dropdown > summary i.fa-caret-down {
+  margin-left: 6px;
 }
 
 .navbar .navbar-nav .nav-item.d-none.d-md-block {
@@ -495,7 +502,7 @@ nav.navbar,
   right: 0;
   z-index: 200;
   height: 50px;
-  color: var(--color-primary);
+  color: var(--color-offwhite);
   background-color: var(--color-primary);
   border: 1px solid transparent;
   border-color: var(--color-border-navbar);
@@ -510,12 +517,20 @@ nav.navbar,
     line-height: inherit;
     white-space: nowrap;
     font-family: var(--font-family-title);
+    display: flex;
+    align-items: center;
+    color: var(--color-offwhite);
+
+    &:hover {
+      color: var(--color-white);
+    }
 
     img {
       display: inline-block;
       vertical-align: middle;
       height: 30px;
       width: auto;
+      margin-right: 0.5rem;
     }
   }
 
@@ -570,33 +585,6 @@ nav.navbar,
 }
 .navbar .nav-item form button.nav-link.active {
   margin: 0 4px;
-}
-
-.header-nav.btn-outline-success,
-.header-nav .btn-outline-success,
-.header-nav.btn-success,
-.header-nav .btn-success {
-  border-radius: 0 !important;
-  font-size: 16px;
-  font-weight: normal;
-  padding: 6px 10px;
-}
-
-/* Navigation button hover, focus, and active states */
-.header-nav.btn-outline-success:hover,
-.header-nav.btn-outline-success:focus,
-.header-nav.btn-outline-success:active,
-.header-nav.btn-outline-success.active {
-  background-color: var(--color-white);
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-}
-
-/* Active button inset shadow */
-.header-nav.btn-outline-success.active,
-.header-nav.btn-success,
-.header-nav.btn-success.active {
-  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
 }
 
 #main-title {
