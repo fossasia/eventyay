@@ -1,0 +1,31 @@
+EVENTYAY - LEGAL NOTICES AND ATTRIBUTION
+=======================================
+
+Eventyay is developed and maintained by FOSSASIA and is licensed under
+the Apache License, Version 2.0.
+
+UPSTREAM PROJECTS
+=================
+
+This project incorporates, is derived from, or is based on work from
+the following upstream open-source projects:
+
+- Pretix (https://github.com/pretix/pretix)
+  Copyright © Raphael Michel and contributors
+  until April 12, 2021
+
+- Pretalx (https://github.com/pretalx/pretalx)
+  Copyright © pretalx contributors
+  until version October 12, 2023
+
+- venueless (https://github.com/pretalx/venueless)
+  Copyright © venueless contributors
+
+LICENSING
+=========
+
+Eventyay is published under the Apache License 2.0.
+See the LICENSE file for the complete license text.
+
+For licensing questions, please open an issue at:
+https://github.com/fossasia/eventyay/issues

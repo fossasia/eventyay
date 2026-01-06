@@ -1926,7 +1926,13 @@ class Event(
                 )
 
         gs = GlobalSettingsObject()
-        if gs.settings.get('billing_validation', 'True') == 'True':
+        billing_validation_setting = gs.settings.get('billing_validation', True)
+        if isinstance(billing_validation_setting, str):
+            billing_validation_enabled = billing_validation_setting.lower() == 'true'
+        else:
+            billing_validation_enabled = bool(billing_validation_setting)
+
+        if billing_validation_enabled:
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
             if not billing_obj or not billing_obj.stripe_payment_method_id:
                 url = reverse(
@@ -2206,8 +2212,12 @@ class Event(
     @cached_property
     def _visible_logo_path(self):
         """
-        Resolve a usable logo path/URL from common settings (event_logo_image/logo_image).
+        Resolve a usable logo path/URL from event_logo_image setting.
         Returns a storage-relative path (e.g. ``pub/...``) or an absolute URL.
+        
+        NOTE: This method ONLY checks for event_logo_image, NOT logo_image.
+        The logo_image setting is actually used for HEADER images (see default_setting.py),
+        so we must NOT use it here to prevent header images from appearing as logos.
         """
         def _extract_path(obj):
             if not obj:
@@ -2220,7 +2230,8 @@ class Event(
                 return obj.url
             return str(obj)
 
-        for key in ('event_logo_image', 'logo_image'):
+        # Only check event_logo_image - NOT logo_image (which is for header images)
+        for key in ('event_logo_image',):
             settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
             path = _extract_path(settings_logo)
             if not path:
@@ -2443,6 +2454,17 @@ class Event(
         from eventyay.base.models import User
 
         return User.objects.filter(submissions__in=self.talks).order_by('id').distinct()
+
+    @cached_property
+    def has_schedule_content(self):
+        """Returns True if there are actual scheduled talks in the current schedule.
+        
+        This checks whether the current schedule has any visible, scheduled talks
+        (not just an empty published schedule).
+        """
+        if not self.current_schedule:
+            return False
+        return self.current_schedule.scheduled_talks.exists()
 
     @cached_property
     def submitters(self):

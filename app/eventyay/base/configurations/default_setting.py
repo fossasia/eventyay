@@ -1205,7 +1205,7 @@ DEFAULT_SETTINGS = {
             help_text=_(
                 'If this option is turned on, users must be logged in before completing an order. '
                 'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
-                "The 'Continue as a Guest' option will not be available for attendees."
+                'The "Continue as a Guest" option will not be available for attendees in this event.'
             ),
         ),
     },
@@ -2470,6 +2470,7 @@ Your {event} team"""
                 'The system generates by default {}-character long gift card codes. However, if a different length '
                 'is required, it can be set here.'.format(settings.ENTROPY['giftcard_secret'])
             ),
+            min_value=4,
         ),
     },
     'giftcard_expiry_years': {
@@ -2481,9 +2482,12 @@ Your {event} team"""
             label=_('Validity of gift card codes in years'),
             help_text=_(
                 'If you set a number here, gift cards will by default expire at the end of the year after this '
-                'many years. If you keep it empty, gift cards do not have an explicit expiry date.'
+                'many years. For example, 1 means expiry at the end of next year, 2 means end of the year after, etc. '
+                'If you keep it empty, gift cards do not have an explicit expiry date.'
             ),
+            min_value=1,
         ),
+        'serializer_kwargs': dict(validators=[MinValueValidator(0)]),
     },
     'privacy_policy': {
         'default': None,

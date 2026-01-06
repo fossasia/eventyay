@@ -365,9 +365,6 @@ _OURS_APPS = (
     'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
-    # For now, this app is installed from "plugins" folder.
-    # It needs the "tool.uv.sources" entry in pyproject.toml.
-    'pretix_venueless',
 )
 
 PRETIX_PLUGINS_DEFAULT = conf.plugins_default
@@ -384,7 +381,7 @@ pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.mo
 # Pretalx plugins
 pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
 
-SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_venueless', 'pretix_pages'})
+SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
 
 INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
 

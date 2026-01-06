@@ -5,7 +5,6 @@ from typing import Any
 
 from celery import Task
 from django_scopes import scopes_disabled
-# from pretix_venueless.views import VenuelessSettingsForm
 
 from ..base.models import Event
 from .utils import EventCreatedFor
@@ -146,19 +145,11 @@ class CreateWorldTask(Task):
         Raises:
             ValueError: If plugin is not installed or configuration fails
         """
-        plugin_name = 'pretix_venueless'
-        if not self.check_installed_plugin(plugin_name):
-            logger.error('Video integration configuration failed - Plugin not installed')
-            raise ValueError(f"Plugin '{plugin_name}' is not installed")
-
         event_id = world_data.get('id')
         if not event_id:
             raise ValueError('World data missing event ID')
 
-        # Setup plugin
-        self.attach_plugin_to_event(plugin_name, event_id)
-
-        # Configure video settings
+        # Configure video settings (integrated; not a user-facing plugin)
         jwt_config = self.extract_jwt_config(world_data)
         video_settings = {
             'venueless_url': world_data.get('domain', ''),

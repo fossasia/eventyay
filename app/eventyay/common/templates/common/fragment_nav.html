@@ -7,7 +7,7 @@
     <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" class="header-tab {% if '/schedule/' not in path and '/sessions/' not in path and '/speakers/' not in path and '/cfp' not in path %}active{% endif %}">
         <i class="fa fa-ticket"></i> {% translate "Tickets" %}
     </a>
-    {% if schedule or current_event.current_schedule %}
+    {% if schedule or current_event.has_schedule_content %}
         {% with schedule_url=current_event.talk_schedule_url|default:current_event.urls.schedule %}
             <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path %}active{% endif %}">
                 <i class="fa fa-calendar"></i> {{ schedule_label }}
@@ -41,8 +41,9 @@
                 href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
                 <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers" %}
             </a>
-        {% else %}
-            <a class="header-tab disabled" tabindex="-1" aria-disabled="true" href="#">
+        {% elif not cfp.settings.hide_after_deadline %}
+            <a class="header-tab {% if '/cfp' in path %}active{% endif %}"
+                href="{% url 'cfp:event.start' event=current_event.slug organizer=current_event.organizer.slug %}">
                 <i class="fa fa-bullhorn"></i> {% translate "Call for Speakers (Closed)" %}
             </a>
         {% endif %}
@@ -50,9 +51,12 @@
 
     {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
-            <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
-            </a>
+            {% user_has_valid_ticket current_event as can_join_online_video %}
+            {% if can_join_online_video %}
+                <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
+                    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+                </a>
+            {% endif %}
         {% else %}
             <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
                 <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
