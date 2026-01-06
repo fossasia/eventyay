@@ -47,6 +47,28 @@
                                 {% endif %}
                             {% endfor %}
                         </fieldset>
+                    {% elif group_key == "billing_validation" %}
+                        <fieldset>
+                            <legend>{{ group_label }}</legend>
+                            <div class="form-group">
+                                <label class="col-md-3 control-label">
+                                    <strong>{{ form.billing_validation.label }}</strong>
+                                </label>
+                                <div class="col-md-9">
+                                    <div class="checkbox">
+                                        <label>
+                                            {{ form.billing_validation }} {% trans "Enable" %}
+                                        </label>
+                                    </div>
+                                    {% if form.billing_validation.help_text %}
+                                        <span class="help-block">{{ form.billing_validation.help_text }}</span>
+                                    {% endif %}
+                                    {% if form.billing_validation.errors %}
+                                        <div class="help-block">{{ form.billing_validation.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </fieldset>
                     {% else %}
                         {% for field_name in field_names %}
                             {% with form|getitem:field_name as field %}
