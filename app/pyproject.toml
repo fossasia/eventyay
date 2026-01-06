@@ -14,6 +14,7 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Environment :: Web Environment",
   "License :: OSI Approved :: Apache License, Version 2.0",
+  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Framework :: Django :: 5.2",
 ]
