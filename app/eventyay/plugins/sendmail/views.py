@@ -139,6 +139,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
             return self.get(self.request, *self.args, **self.kwargs)
 
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         qm = EmailQueue.objects.create(
             event=self.request.event,
             user=self.request.user,
@@ -149,6 +150,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             reply_to=self.request.event.settings.get('contact_mail') or '',
             bcc=self.request.event.settings.get('mail_bcc'),
             composing_for=ComposingFor.ATTENDEES,
+            scheduled_at=scheduled_at,
         )
 
         EmailQueueFilter.objects.create(
@@ -169,10 +171,21 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
 
         qm.populate_to_users()
 
-        messages.success(
-            self.request,
-            _('Your email has been sent to the outbox.')
-        )
+        if scheduled_at:
+            self.request.event.log_action(
+                'eventyay.sendmail.scheduled',
+                user=self.request.user,
+                data={'email_queue_id': qm.pk, 'scheduled_at': str(scheduled_at)},
+            )
+            messages.success(
+                self.request,
+                _('Your email has been scheduled for {datetime}.').format(datetime=scheduled_at)
+            )
+        else:
+            messages.success(
+                self.request,
+                _('Your email has been sent to the outbox.')
+            )
 
         return redirect(
             'plugins:sendmail:send',
@@ -583,6 +596,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             return self.form_invalid(form)
 
         # Create the EmailQueue instance
+        scheduled_at = form.cleaned_data.get('scheduled_at')
         mail_instance = EmailQueue.objects.create(
             event=event,
             user=user,
@@ -593,6 +607,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             reply_to=event.settings.get('contact_mail') or '',
             bcc=event.settings.get('mail_bcc'),
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
+            scheduled_at=scheduled_at,
         )
 
         # Create associated filter data for teams
@@ -625,10 +640,21 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         ]
         EmailQueueToUser.objects.bulk_create(recipient_objs)
 
-        messages.success(
-            self.request,
-            _('Your email has been sent to the outbox.')
-        )
+        if scheduled_at:
+            event.log_action(
+                'eventyay.sendmail.scheduled',
+                user=user,
+                data={'email_queue_id': mail_instance.pk, 'scheduled_at': str(scheduled_at)},
+            )
+            messages.success(
+                self.request,
+                _('Your email has been scheduled for {datetime}.').format(datetime=scheduled_at)
+            )
+        else:
+            messages.success(
+                self.request,
+                _('Your email has been sent to the outbox.')
+            )
 
         return redirect(reverse('plugins:sendmail:compose_email_teams', kwargs={
             'organizer': event.organizer.slug,
