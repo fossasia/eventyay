@@ -243,6 +243,10 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
                 'other_submissions': speaker.submissions.filter(event=submission.event).exclude(code=submission.code),
+                'email': speaker.email,
+                'avatar': speaker.avatar,
+                'avatar_source': speaker.avatar_source,
+                'avatar_license': speaker.avatar_license,
             }
             for speaker in submission.speakers.all()
         ]
