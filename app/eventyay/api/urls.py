@@ -179,6 +179,10 @@ urlpatterns = [
         'organizers/<orgslug:organizer>/events/<slug:event>/orders/<int:order>/',
         include(order_router.urls),
     ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/rooms/<int:room_pk>/',
+        include(room_router.urls),
+    ),
     path('oauth/authorize', oauth.AuthorizationView.as_view(), name='authorize'),
     path('oauth/token', oauth.TokenView.as_view(), name='token'),
     path('oauth/revoke_token', oauth.RevokeTokenView.as_view(), name='revoke-token'),
@@ -234,6 +238,10 @@ urlpatterns = [
         name='submission.favourite',
     ),
     path('events/<slug:event>/', include(event_router.urls)),
+    path(
+        'events/<slug:event>/rooms/<int:room_pk>/',
+        include(room_router.urls),
+    ),
     path(
         'events/<slug:event>/favourite-talk/',
         submission.SubmissionFavouriteDeprecatedView.as_view(),

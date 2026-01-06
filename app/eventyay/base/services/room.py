@@ -1,15 +1,21 @@
+import asyncio
 import sys
+from datetime import timedelta
 
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.db.transaction import atomic
+from django.dispatch import receiver
 from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import RoomConfigSerializer, RoomView
+from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services.user import get_public_users
+from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
 
 
@@ -158,3 +164,23 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
             "reload": reload,
         },
     )
+
+
+@receiver(signal=periodic_task)
+@scopes_disabled()
+def check_stream_schedule_changes(sender, **kwargs):
+    from django.core.cache import cache
+
+    current_time = now()
+    cache_timeout = 300
+
+    for room in Room.objects.filter(deleted=False).select_related('event'):
+        current_stream = room.get_current_stream()
+        cache_key = f'room:{room.pk}:last_broadcast_stream'
+        last_broadcast_id = cache.get(cache_key)
+
+        current_stream_id = current_stream.pk if current_stream else None
+
+        if current_stream_id != last_broadcast_id:
+            cache.set(cache_key, current_stream_id, cache_timeout)
+            asyncio.run(broadcast_stream_change(str(room.pk), current_stream, reload=current_stream_id is None))
