@@ -58,7 +58,7 @@
                         <a href="{% querystring sort="to" %}"><i class="fa fa-caret-down" title="{% translate "Sort (a-z)" %}"></i></a>
                         <a href="{% querystring sort="-to" %}"><i class="fa fa-caret-up" title="{% translate "Sort (z-a)" %}"></i></a>
                     </th>
-                    <th></th>
+                    <th>{% translate "Status" %}</th>
                     <th></th>
                     <th></th>
                 </tr>
@@ -77,6 +77,15 @@
                                     </a>{% else %}{{ user }}{% endif %}{% if not forloop.last or mail.to %}, {% endif %}
                             {% endfor %}
                             {% if mail.to %}{{ mail.to }}{% endif %}
+                        </td>
+                        <td>
+                            {% if mail.scheduled_at %}
+                                <span class="badge bg-info">
+                                    {% translate "Scheduled for" %} {{ mail.scheduled_at }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">{% translate "Immediate" %}</span>
+                            {% endif %}
                         </td>
                         <td>
                             {% for submission in mail.submissions.all %}

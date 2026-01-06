@@ -70,6 +70,7 @@
                 </th>
             {% endfor %}
             <th>{% translate "Total recipients" %}</th>
+            <th>{% translate "Status" %}</th>
             <th>{% translate "Actions" %}</th>
         </tr>
     </thead>
@@ -104,6 +105,15 @@
                 {% endif %}
             </td>
             <td>{{ mail.recipient_emails_display|split:","|length }}</td>
+            <td>
+                {% if mail.scheduled_at %}
+                    <span class="badge bg-info">
+                        {% translate "Scheduled for" %} {{ mail.scheduled_at }}
+                    </span>
+                {% else %}
+                    <span class="badge bg-secondary">{% translate "Immediate" %}</span>
+                {% endif %}
+            </td>
             <td>
                 <div class="btn-toolbar" role="toolbar">
                     <!-- Send -->

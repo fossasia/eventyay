@@ -103,6 +103,12 @@ class MailForm(forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
     )
+    scheduled_at = forms.SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(),
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
+    )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
         required=False,
@@ -447,18 +453,22 @@ class EmailQueueEditForm(forms.ModelForm):
         fields = [
             'reply_to',
             'bcc',
+            'scheduled_at',
         ]
         labels = {
             'reply_to': _('Reply-To'),
             'bcc': _('BCC'),
+            'scheduled_at': _('Send later'),
         }
         help_texts = {
             'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
+            'scheduled_at': _("Leave empty to send immediately. If set, the email will be sent at this time."),
         }
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
+            'scheduled_at': SplitDateTimePickerWidget(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -601,4 +611,10 @@ class TeamMailForm(forms.Form):
             queryset=Team.objects.filter(organizer=self.event.organizer),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
+        )
+        self.fields['scheduled_at'] = forms.SplitDateTimeField(
+            widget=SplitDateTimePickerWidget(),
+            label=_('Send later'),
+            required=False,
+            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
         )
