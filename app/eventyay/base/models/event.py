@@ -1926,13 +1926,10 @@ class Event(
                 )
 
         gs = GlobalSettingsObject()
-        billing_validation_setting = gs.settings.get('billing_validation', True)
-        if isinstance(billing_validation_setting, str):
-            billing_validation_enabled = billing_validation_setting.lower() == 'true'
-        else:
-            billing_validation_enabled = bool(billing_validation_setting)
+        billing_validation_setting = gs.settings.get('billing_validation', as_type=bool, default=True)
+        billing_validation_enabled = bool(billing_validation_setting)
 
-        if billing_validation_enabled:
+        if billing_validation_enabled and not self.testmode:
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
             if not billing_obj or not billing_obj.stripe_payment_method_id:
                 url = reverse(
