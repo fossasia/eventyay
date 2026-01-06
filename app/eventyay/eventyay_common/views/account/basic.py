@@ -1,6 +1,10 @@
 from collections import defaultdict
+from http import HTTPMethod
 from logging import getLogger
 
+from allauth.account.forms import ResetPasswordForm
+from allauth.socialaccount import providers
+from allauth.socialaccount.models import SocialAccount
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -23,11 +27,44 @@ from .common import AccountMenuMixIn
 logger = getLogger(__name__)
 
 
+def password_reset_provider(user: User) -> str | None:
+    social = SocialAccount.objects.filter(user=user).order_by('-pk').first()
+    return social.provider if social else None
+
+
+def password_reset_provider_label(user: User) -> str:
+    provider_id = password_reset_provider(user)
+    if not provider_id:
+        return ''
+    return next((name for pid, name in providers.registry.as_choices() if pid == provider_id), provider_id)
+
+
 # Copied from src/pretix/control/views/user.py and modified.
 class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
     model = User
     form_class = UserSettingsForm
     template_name = 'eventyay_common/account/general-settings.html'
+
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        requires_reset = not request.user.has_usable_password()
+
+        if 'password_reset' in request.POST and requires_reset:
+            reset_form = ResetPasswordForm(data=request.POST)
+            if reset_form.is_valid():
+                reset_form.save(request)
+                messages.success(request, _('We have emailed you a link to set your password.'))
+                return redirect(self.get_success_url())
+
+            user_form = self.form_class(
+                instance=self.request.user,
+                user=self.request.user,
+                require_password_reset=requires_reset,
+            )
+            return self.render_to_response(
+                self.get_context_data(form=user_form, password_reset_form=reset_form)
+            )
+
+        return super().post(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
         self._old_email = self.request.user.email
@@ -35,7 +72,9 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
+        user = self.request.user
+        kwargs['user'] = user
+        kwargs['require_password_reset'] = not user.has_usable_password()
         return kwargs
 
     def form_invalid(self, form):
@@ -78,7 +117,27 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['nav_items'] = get_account_navigation(self.request)
+        request = self.request
+        user = request.user
+        ctx['nav_items'] = get_account_navigation(request)
+        requires_reset = not user.has_usable_password()
+        ctx['requires_password_reset'] = requires_reset
+        provider_label = password_reset_provider_label(user)
+        ctx['password_reset_provider_label'] = provider_label
+        if requires_reset:
+            if provider_label:
+                ctx['password_reset_message'] = _(
+                    'Your account was created via {provider} login and does not have a password yet. '
+                    'Send yourself a password setup link below.'
+                ).format(provider=provider_label)
+            else:
+                ctx['password_reset_message'] = _(
+                    'Your account does not have a password yet. Send yourself a password setup link below.'
+                )
+        if request.method == HTTPMethod.POST and request.POST.get('password_reset'):
+            ctx['password_reset_form'] = ResetPasswordForm(data=request.POST)
+        else:
+            ctx['password_reset_form'] = ResetPasswordForm(initial={'email': user.email})
         return ctx
 
 
