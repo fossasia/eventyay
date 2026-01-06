@@ -67,15 +67,19 @@
                     {{ speaker.email }}
                 </p>
             {% endif %}
-            {% if speaker.profile.availabilities.all %}
-                <p class="card-text">
-                    <strong>{% translate "Availabilities" %}:</strong><br>
-                    {% for availability in speaker.profile.availabilities.all %}
-                        {% translate "Start time" %}: {{ availability.start }}<br>
-                        {% translate "End time" %}: {{ availability.end }}<br>
-                        <br>
-                    {% endfor %}
-                </p>
+            {% if request.event.cfp.request_availabilities %}
+                {% with speaker.profile.availabilities.all as availabilities %}
+                    {% if availabilities %}
+                        <p class="card-text">
+                            <strong>{% translate "Availabilities" %}:</strong><br>
+                            {% for availability in availabilities %}
+                                {% translate "Start time" %}: {{ availability.start }}<br>
+                                {% translate "End time" %}: {{ availability.end }}<br>
+                                <br>
+                            {% endfor %}
+                        </p>
+                    {% endif %}
+                {% endwith %}
             {% endif %}
             {% if speaker.profile.reviewer_answers %}
                 <div class="card-text">
@@ -89,8 +93,8 @@
                 </div>
             {% endif %}
             {% if speaker.other_submissions %}
-                <p class="card-text">
-                    <h5>{% translate "Other proposals by this speaker:" %}</h5>
+                <div class="card-text">
+                    <strong>{% translate "Other proposals by this speaker:" %}</strong>
                     <ul>
                         {% for submission in speaker.other_submissions %}
                             <li>
@@ -99,7 +103,7 @@
                             </li>
                         {% endfor %}
                     </ul>
-                </p>
+                </div>
             {% endif %}
             {% if can_edit_speakers %}
                 {% if can_mark_speaker and submission.state in 'accepted,confirmed' %}
