@@ -13,6 +13,7 @@ from django.db.models import Count, F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.html import escape
+from django.utils.translation import gettext_lazy as _
 from lxml import etree
 from yarl import URL
 
@@ -32,9 +33,12 @@ def get_url(operation, params, base_url, secret):
 def resolve_bbb_display_name(user):
     """
     Resolve a safe, non-empty display name for BBB joins.
+    Uses a configurable fallback from settings or translation.
     """
+    fallback_name = getattr(settings, "BBB_GUEST_DISPLAY_NAME", _("Guest"))
+
     if not user:
-        return "Guest"
+        return fallback_name
 
     profile = getattr(user, "profile", None)
     if profile:
@@ -47,10 +51,12 @@ def resolve_bbb_display_name(user):
         return full_name.strip()
 
     email = getattr(user, "email", None)
-    if email:
-        return email.split("@")[0]
+    if isinstance(email, str):
+        local_part = email.strip().partition("@")[0]
+        if local_part:
+            return local_part
 
-    return "Guest"
+    return fallback_name
 
 def escape_name(name):
     # Some things break BBB apparently…
