@@ -7,7 +7,11 @@ import django.dispatch
 from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
+from django.db import transaction
+from django.dispatch import receiver
 from django.dispatch.dispatcher import NO_RECEIVERS
+from django.utils.timezone import now
+from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event
 from eventyay.base.signals import resolve_app_for_module, check_plugin_active
@@ -234,3 +238,57 @@ make your locale available to the makemessages command. Otherwise, check that yo
 plugin is enabled in the current event context if your locale should be scoped to
 events with your plugin activated.
 """
+
+
+@receiver(periodic_task)
+@scopes_disabled()
+def process_scheduled_emails(sender, **kwargs):
+    """
+    Process scheduled emails that are due for sending.
+    Handles both QueuedMail (Talk/CfP) and EmailQueue (Tickets).
+    
+    Uses select_for_update(skip_locked=True) to prevent duplicate sends
+    when multiple workers process the same emails concurrently.
+    """
+    from eventyay.base.models.mail import QueuedMail
+    from eventyay.plugins.sendmail.models import EmailQueue
+
+    # Process QueuedMail (Talk/CfP component)
+    with transaction.atomic():
+        due_queued_mails = QueuedMail.objects.filter(
+            scheduled_at__lte=now(),
+            sent__isnull=True,
+        ).select_for_update(skip_locked=True)
+
+        for mail in due_queued_mails:
+            try:
+                mail.send()
+                logger.info(
+                    "[ScheduledMail] QueuedMail ID %s sent successfully.",
+                    mail.pk
+                )
+            except Exception:
+                logger.exception(
+                    "[ScheduledMail] Failed to send QueuedMail ID %s",
+                    mail.pk
+                )
+
+    # Process EmailQueue (Tickets component)
+    with transaction.atomic():
+        due_email_queues = EmailQueue.objects.filter(
+            scheduled_at__lte=now(),
+            sent_at__isnull=True,
+        ).select_for_update(skip_locked=True)
+
+        for mail in due_email_queues:
+            try:
+                mail.send()
+                logger.info(
+                    "[ScheduledMail] EmailQueue ID %s sent successfully.",
+                    mail.pk
+                )
+            except Exception:
+                logger.exception(
+                    "[ScheduledMail] Failed to send EmailQueue ID %s",
+                    mail.pk
+                )

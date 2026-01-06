@@ -179,8 +179,11 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
 
     class Meta:
         model = QueuedMail
-        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text']
-        widgets = {'to_users': EnhancedSelectMultiple}
+        fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text', 'scheduled_at']
+        widgets = {
+            'to_users': EnhancedSelectMultiple,
+            'scheduled_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
 
 
 class WriteMailBaseForm(MailTemplateForm):
@@ -188,6 +191,12 @@ class WriteMailBaseForm(MailTemplateForm):
         label=_('Send immediately'),
         required=False,
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
+    )
+    scheduled_at = forms.DateTimeField(
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time.'),
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
     )
 
     def __init__(self, *args, may_skip_queue=False, **kwargs):
@@ -208,7 +217,9 @@ class WriteTeamsMailForm(WriteMailBaseForm):
 
         # Placing reviewer emails in the outbox would lead to a **ton** of permission
         # issues: who is allowed to see them, who to edit/send them, etc.
+        # Reviewer emails are always sent immediately, no scheduling.
         self.fields.pop('skip_queue')
+        self.fields.pop('scheduled_at', None)
 
         reviewer_teams = self.event.teams.filter(is_reviewer=True)
         other_teams = self.event.teams.exclude(is_reviewer=True)
@@ -398,6 +409,7 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
                 mails_by_user[context['user']].append((mail, context))
 
         result = []
+        scheduled_at = self.cleaned_data.get('scheduled_at')
         for user, user_mails in mails_by_user.items():
             # Deduplicate emails: we don't want speakers to receive the same
             # email twice, just because they have multiple submissions.
@@ -407,13 +419,15 @@ class WriteSessionMailForm(SubmissionFilterForm, WriteMailBaseForm):
             # Now we can create the emails and add the speakers to them
             for mail_list in mail_dict.values():
                 mail = mail_list[0][0]
+                if scheduled_at:
+                    mail.scheduled_at = scheduled_at
                 mail.save()
                 mail.to_users.add(user)
                 for __, context in mail_list:
                     if submission := context.get('submission'):
                         mail.submissions.add(submission)
                 result.append(mail)
-        if self.cleaned_data.get('skip_queue'):
+        if self.cleaned_data.get('skip_queue') and not scheduled_at:
             for mail in result:
                 mail.send()
         return result
