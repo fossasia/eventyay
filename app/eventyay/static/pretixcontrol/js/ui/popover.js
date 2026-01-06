@@ -77,8 +77,7 @@ $(function () {
                             <i class="fa fa-cog"></i> ${window.gettext('Admin')}
                         </a>
                     </div>
-                     <div class="profile-menu separator"></div>
-                    <div class="profile-menu">
+                    <div class="profile-menu border-top">
                         <a href="${basePath}${logoutPath}" target="_self" class="btn btn-outline-success">
                             <i class="fa fa-sign-out"></i> ${window.gettext('Logout')}
                         </a>
