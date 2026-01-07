@@ -250,20 +250,45 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 ),
                 Prefetch(
                     'answers',
-                    queryset=Answer.objects.filter(question__event=submission.event).select_related('question').order_by('question__position'),
+                    queryset=Answer.objects.filter(
+                        question__event=submission.event,
+                        question__is_visible_to_reviewers=True,
+                    ).select_related('question').order_by('question__position'),
                 ),
-                'submissions__answers__question',
+                Prefetch(
+                    'submissions',
+                    queryset=Submission.objects.filter(event=submission.event).prefetch_related(
+                        Prefetch(
+                            'answers',
+                            queryset=Answer.objects.filter(
+                                question__event=submission.event,
+                                question__is_visible_to_reviewers=True,
+                            ).select_related('question').order_by('question__position'),
+                        )
+                    ),
+                ),
             )
         )
         return [
             {
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
-                'other_submissions': speaker.submissions.filter(event=submission.event).exclude(code=submission.code),
+                'other_submissions': [
+                    s for s in speaker.submissions.all()
+                    if s.code != submission.code
+                ],
                 'email': speaker.email,
                 'avatar': speaker.avatar,
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
+                'reviewer_answers': sorted(
+                    list(speaker.answers.all()) + [
+                        answer
+                        for submission_obj in speaker.submissions.all()
+                        for answer in submission_obj.answers.all()
+                    ],
+                    key=lambda a: a.question.position if a.question else 0,
+                ),
             }
             for speaker in speakers_qs
         ]

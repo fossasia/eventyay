@@ -81,10 +81,10 @@
                     {% endif %}
                 {% endwith %}
             {% endif %}
-            {% if speaker.profile.reviewer_answers %}
+            {% if speaker.reviewer_answers %}
                 <div class="card-text">
                     <strong>{% translate "Speaker Information" %}:</strong><br>
-                    {% for answer in speaker.profile.reviewer_answers %}
+                    {% for answer in speaker.reviewer_answers %}
                         <div class="mb-1">
                             <strong>{{ answer.question.question }}:</strong>
                             <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
