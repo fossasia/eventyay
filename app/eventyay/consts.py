@@ -22,6 +22,6 @@ class UploadSize(StrEnum):
     MAIL = "mail"
     QUESTION = "question"
     OTHER = "other"
-    
+
 class ResponseSize(StrEnum):
     WEBHOOK = "webhook"

@@ -47,6 +47,7 @@ class ImportView(EventPermissionRequiredMixin, TemplateView):
                 )
             )
         if request.FILES['file'].size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]:
+            max_size_bytes = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
             max_size_mb = max_size_bytes / (1024 * 1024)
             messages.error(
                 request,

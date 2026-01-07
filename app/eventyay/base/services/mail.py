@@ -395,8 +395,9 @@ def mail_send_task(
                                 attach_size += len(content)
 
                             if attach_size < settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.MAIL]:
-                                # Do not attach more than 4MB, it will bounce way too often.
-                                # 4MB is the effective maximum; configurable value should not exceed this.
+                                # The maximum attachment size is configurable via
+                                # MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.MAIL]. Values above ~4MB are
+                                # not recommended, as larger emails are more likely to bounce.
                                 for a in args:
                                     try:
                                         email.attach(*a)
