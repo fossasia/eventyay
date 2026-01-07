@@ -12,8 +12,8 @@
 			.actions
 				bunt-icon-button(@click="editSchedule(schedule)") edit
 				bunt-icon-button(@click="deleteSchedule(schedule)") delete
-		bunt-progress-circular(v-else, size="huge")
-	bunt-button(@click="showCreateForm = true") Add Stream Schedule
+	bunt-progress-circular(v-else, size="huge")
+	bunt-button(@click="openCreateForm") Add Stream Schedule
 	transition(name="prompt")
 		prompt(v-if="showCreateForm || editingSchedule", @close="closeForm")
 			.content
@@ -22,8 +22,8 @@
 				.stream-schedule-form
 					bunt-input(name="title", v-model="formData.title", label="Title (optional)")
 					bunt-input(name="url", v-model="formData.url", label="Stream URL", :validation="v$.formData.url", required)
-					bunt-input(name="start_time", type="datetime-local", v-model="plainStartTime", label="Start Time", :validation="v$.formData.start_time", required)
-					bunt-input(name="end_time", type="datetime-local", v-model="plainEndTime", label="End Time", :validation="v$.formData.end_time", required)
+					bunt-input.floating-label(name="start_time", type="datetime-local", v-model="plainStartTime", label="Start Time (UTC)", placeholder="YYYY-MM-DDTHH:mm", :validation="v$.formData.start_time", required)
+					bunt-input.floating-label(name="end_time", type="datetime-local", v-model="plainEndTime", label="End Time (UTC)", placeholder="YYYY-MM-DDTHH:mm", :validation="v$.formData.end_time", required)
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", :validation="v$.formData.stream_type")
 				.ui-form-actions
 					bunt-button.btn-save(@click="saveSchedule", :loading="saving", :error-message="saveError") {{ editingSchedule ? 'Save' : 'Create' }}
@@ -76,7 +76,7 @@ export default {
 			get() {
 				return this.formData.start_time
 					? this.formData.start_time.format("YYYY-MM-DDTHH:mm")
-					: "";
+					: undefined;
 			},
 			set(value) {
 				this.formData.start_time = value ? moment(value) : null;
@@ -86,7 +86,7 @@ export default {
 			get() {
 				return this.formData.end_time
 					? this.formData.end_time.format("YYYY-MM-DDTHH:mm")
-					: "";
+					: undefined;
 			},
 			set(value) {
 				this.formData.end_time = value ? moment(value) : null;
@@ -116,6 +116,10 @@ export default {
 		await this.fetchStreamSchedules();
 	},
 	methods: {
+		getCsrfToken() {
+			const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/);
+			return match ? match[1] : null;
+		},
 		getApiBaseUrl() {
 			const base = config.api.base || "/api/v1/";
 			const organizer = this.$store.state.world?.organizer || "default";
@@ -134,7 +138,7 @@ export default {
 				const headers = { Accept: "application/json" };
 				if (authHeader) headers.Authorization = authHeader;
 
-				const response = await fetch(url, { headers });
+				const response = await fetch(url, { headers, credentials: "include" });
 				if (!response.ok)
 					throw new Error(`Failed to fetch: ${response.status}`);
 				this.streamSchedules = await response.json();
@@ -143,7 +147,12 @@ export default {
 				this.error = error.message || "Failed to load stream schedules";
 			}
 		},
+		openCreateForm() {
+			this.v$.$reset();
+			this.showCreateForm = true;
+		},
 		editSchedule(schedule) {
+			this.v$.$reset();
 			this.editingSchedule = schedule;
 			this.formData = {
 				title: schedule.title || "",
@@ -164,6 +173,7 @@ export default {
 				stream_type: "youtube",
 			};
 			this.saveError = null;
+			this.v$.$reset();
 		},
 		async saveSchedule() {
 			this.saveError = null;
@@ -183,12 +193,18 @@ export default {
 					"Content-Type": "application/json",
 				};
 				if (authHeader) headers.Authorization = authHeader;
+				const csrfToken = this.getCsrfToken();
+				if (csrfToken) headers["X-CSRFToken"] = csrfToken;
 
 				const payload = {
 					title: this.formData.title || "",
 					url: this.formData.url,
-					start_time: this.formData.start_time.toISOString(),
-					end_time: this.formData.end_time.toISOString(),
+					start_time: this.formData.start_time
+						? this.formData.start_time.toISOString()
+						: null,
+					end_time: this.formData.end_time
+						? this.formData.end_time.toISOString()
+						: null,
 					stream_type: this.formData.stream_type,
 				};
 
@@ -198,22 +214,82 @@ export default {
 						method: "PATCH",
 						headers,
 						body: JSON.stringify(payload),
+						credentials: "include",
 					});
 				} else {
 					response = await fetch(url, {
 						method: "POST",
 						headers,
 						body: JSON.stringify(payload),
+						credentials: "include",
 					});
 				}
 
 				if (!response.ok) {
-					const errorData = await response.json().catch(() => ({}));
-					throw new Error(
-						errorData.detail ||
-							errorData.message ||
-							`Failed to save: ${response.status}`
-					);
+					const responseClone = response.clone();
+					let errorData = {};
+					try {
+						errorData = await response.json();
+					} catch (e) {
+						try {
+							const text = await responseClone.text();
+							if (text) {
+								try {
+									errorData = JSON.parse(text);
+								} catch (parseError) {
+									errorData = { detail: text };
+								}
+							}
+						} catch (textError) {
+							console.error("Failed to get error response text:", textError);
+						}
+					}
+
+					let errorMessage = null;
+
+					if (errorData && typeof errorData === "object") {
+						if (errorData.__all__) {
+							if (Array.isArray(errorData.__all__) && errorData.__all__[0]) {
+								errorMessage = errorData.__all__[0];
+							} else if (typeof errorData.__all__ === "string") {
+								errorMessage = errorData.__all__;
+							}
+						}
+
+						if (!errorMessage && errorData.detail) {
+							if (Array.isArray(errorData.detail) && errorData.detail[0]) {
+								errorMessage = errorData.detail[0];
+							} else if (typeof errorData.detail === "string") {
+								errorMessage = errorData.detail;
+							}
+						}
+
+						if (!errorMessage && errorData.message) {
+							if (Array.isArray(errorData.message) && errorData.message[0]) {
+								errorMessage = errorData.message[0];
+							} else if (typeof errorData.message === "string") {
+								errorMessage = errorData.message;
+							}
+						}
+
+						if (!errorMessage && Object.keys(errorData).length > 0) {
+							const firstKey = Object.keys(errorData)[0];
+							const firstValue = errorData[firstKey];
+							if (Array.isArray(firstValue) && firstValue[0]) {
+								errorMessage = firstValue[0];
+							} else if (typeof firstValue === "string") {
+								errorMessage = firstValue;
+							}
+						}
+					} else if (typeof errorData === "string") {
+						errorMessage = errorData;
+					}
+
+					if (!errorMessage) {
+						errorMessage = "Bad Request";
+					}
+
+					throw new Error(errorMessage);
 				}
 
 				this.saving = false;
@@ -238,8 +314,14 @@ export default {
 					: null;
 				const headers = { Accept: "application/json" };
 				if (authHeader) headers.Authorization = authHeader;
+				const csrfToken = this.getCsrfToken();
+				if (csrfToken) headers["X-CSRFToken"] = csrfToken;
 
-				const response = await fetch(url, { method: "DELETE", headers });
+				const response = await fetch(url, {
+					method: "DELETE",
+					headers,
+					credentials: "include",
+				});
 				if (!response.ok)
 					throw new Error(`Failed to delete: ${response.status}`);
 

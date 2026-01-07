@@ -21,5 +21,5 @@ class StreamScheduleSerializer(PretalxSerializer):
             'created_at',
             'updated_at',
         )
-        read_only_fields = ('created_at', 'updated_at')
+        read_only_fields = ('room', 'created_at', 'updated_at')
 
