@@ -1,15 +1,19 @@
 import logging
-from django import forms
 
-logger = logging.getLogger(__name__)
+from django import forms
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import Count, Q
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+
 from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceField
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.models import Event, SpeakerProfile, TalkQuestion, User
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import (
     ImageField,
@@ -31,12 +35,9 @@ from eventyay.common.forms.widgets import (
     MarkdownWidget,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.base.models import Event
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion
-from eventyay.base.models.submission import SubmissionStates
+
+logger = logging.getLogger(__name__)
 
 
 def get_email_address_error():
@@ -73,8 +74,7 @@ class SpeakerProfileForm(
         kwargs['instance'] = None
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
-        super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
-        read_only = kwargs.get('read_only', False)
+        
         # CRITICAL: Do NOT modify initial if data was passed, as they might be the same dict
         # When get_form(from_storage=True) is called, it passes the same dict as both data and initial
         # Modifying initial here would contaminate the data being validated
@@ -84,6 +84,11 @@ class SpeakerProfileForm(
         if self.user and not (args and args[0] is not None):
             # Only populate from user if this is NOT a bound form (no data argument)
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
+        
+        kwargs['initial'] = initial
+        super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
+        read_only = kwargs.get('read_only', False)
+
         for field in self.user_fields:
             if field == 'fullname':
                 self.fields[field] = forms.CharField(
@@ -102,15 +107,16 @@ class SpeakerProfileForm(
                     required=True
                 )
             else:
-                field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
-                self.fields[field] = field_class(
-                    initial=initial.get(field),
-                    disabled=read_only,
-                    help_text=User._meta.get_field(field).help_text,
-                )
-            if self.Meta.widgets.get(field):
-                self.fields[field].widget = self.Meta.widgets.get(field)()
-            self._update_cfp_texts(field)
+                 # Check if field exists on the form (from model) before modifying
+                 if field in self.fields:
+                    if initial.get(field):
+                        self.fields[field].initial = initial.get(field)
+                    
+                    self.fields[field].disabled = read_only
+                    self.fields[field].help_text = User._meta.get_field(field).help_text
+                    self._update_cfp_texts(field)
+                 else:
+                     pass
 
         field_names = list(self.fields)
         if 'fullname' in field_names:
@@ -119,7 +125,6 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = True
                 if hasattr(self.fields[field_name].widget, 'is_required'):
                     self.fields[field_name].widget.is_required = True
 
@@ -166,7 +171,6 @@ class SpeakerProfileForm(
                 )
             )
 
-
         return data
 
     def save(self, **kwargs):
@@ -183,10 +187,16 @@ class SpeakerProfileForm(
                 setattr(self.user, user_attribute, value)
             try:
                 self.user.save(update_fields=[user_attribute])
-            except Exception:
+            except (ValidationError, IntegrityError) as e:
                 # We do not want to crash the form save if e.g. the email is already taken
                 # by another user or if there are other database constraints.
-                pass
+                logger.warning(
+                    f"Could not save user attribute {user_attribute}: {e}"
+                )
+            except Exception as e:
+                logger.error(
+                     f"Unexpected error saving user attribute {user_attribute}: {e}"
+                )
 
         self.instance.event = self.event
         self.instance.user = self.user
@@ -205,9 +215,6 @@ class SpeakerProfileForm(
             'avatar': ClearableBasenameFileInput,
             'avatar_source': MarkdownWidget,
             'avatar_license': MarkdownWidget,
-        }
-        field_classes = {
-            'avatar': ImageField,
         }
         field_classes = {
             'avatar': ImageField,
