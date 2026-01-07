@@ -1045,6 +1045,8 @@ INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
 
 EMAIL_BACKEND = conf.email_backend
+# Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
+EMAIL_FILE_PATH = DATA_DIR / 'dev-sent-emails'
 EMAIL_HOST = conf.email_host
 EMAIL_PORT = conf.email_port
 EMAIL_HOST_USER = conf.email_host_user

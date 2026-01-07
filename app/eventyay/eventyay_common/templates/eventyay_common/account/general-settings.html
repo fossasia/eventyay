@@ -97,4 +97,19 @@
         </button>
     </div>
 </form>
+{% if requires_password_reset %}
+    <hr />
+    <h3>{{ _('Set your password') }}</h3>
+    <p>{{ password_reset_message }}</p>
+    <form action='' method='post' class='form-horizontal'>
+        {% csrf_token %}
+        {% bootstrap_form_errors password_reset_form %}
+        {% bootstrap_field password_reset_form.email layout='horizontal' %}
+        <div class='form-group submit-group'>
+            <button type='submit' name='password_reset' value='1' class='btn btn-default'>
+                {{ _('Send password setup link') }}
+            </button>
+        </div>
+    </form>
+{% endif %}
 {% endblock content %}
