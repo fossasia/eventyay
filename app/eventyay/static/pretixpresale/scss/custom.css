@@ -45,7 +45,7 @@ header .header-row-right {
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
-    align-items: flex-end;
+    align-items: center;
     font-size: 1rem;
 }
 
