@@ -1,11 +1,11 @@
 import copy
 import datetime as dt
+import logging
 import os
 import string
 import uuid
 from collections import OrderedDict, defaultdict
 from contextlib import suppress
-from urllib.parse import urlparse
 from datetime import datetime, time, timedelta
 from operator import attrgetter
 from urllib.parse import urljoin, urlparse
@@ -13,7 +13,6 @@ from zoneinfo import ZoneInfo
 
 import icalendar
 import jwt
-import logging
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
@@ -44,11 +43,11 @@ from rules.contrib.models import RulesModelBase, RulesModelMixin
 from eventyay.base.models.base import LoggedModel
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.mixins import FileCleanupMixin, TimestampedModel
+from eventyay.base.plugins import get_all_plugins
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.base.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -62,6 +61,7 @@ from eventyay.core.permissions import (
     traits_match_required,
 )
 from eventyay.core.utils.json import CustomJSONEncoder
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.json import safe_string
@@ -72,7 +72,7 @@ from eventyay.talk_rules.event import (
     has_any_permission,
     is_event_visible,
 )
-from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
+
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
@@ -1373,7 +1373,7 @@ class Event(
 
     def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
         """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
-        
+
         Args:
             result: Permission result dictionary to modify
             user_traits: List of user traits
@@ -1381,10 +1381,10 @@ class Event(
         direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
         if not direct_messaging_def:
             return
-        
+
         direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
         has_direct_messaging_trait = direct_messaging_trait in user_traits
-        
+
         if not has_direct_messaging_trait:
             direct_message_value = Permission.EVENT_CHAT_DIRECT.value
             result[self] = {
@@ -1505,7 +1505,7 @@ class Event(
         event_roles = self.roles if self.roles is not None else default_roles()
 
         user_traits = user.traits or []
-        
+
         for role, required_traits in event_trait_grants.items():
             if (
                 traits_match_required(user_traits, required_traits)
@@ -1513,11 +1513,11 @@ class Event(
             ):
                 role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
                 result[self].update(role_perms)
-        
+
         # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
         # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
         admin_mode_active = "admin" in user_traits
-        
+
         if admin_mode_active:
             # Grant all video manager permissions when admin mode is active
             for role_name in ORGANIZER_ROLES:
@@ -1926,11 +1926,7 @@ class Event(
                 )
 
         gs = GlobalSettingsObject()
-        billing_validation_setting = gs.settings.get('billing_validation', as_type=bool, default=True)
-        if isinstance(billing_validation_setting, str):
-            billing_validation_enabled = billing_validation_setting.lower() == 'true'
-        else:
-            billing_validation_enabled = bool(billing_validation_setting)
+        billing_validation_enabled = gs.settings.get('billing_validation', as_type=bool, default=True)
 
         if billing_validation_enabled:
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
@@ -2214,7 +2210,7 @@ class Event(
         """
         Resolve a usable logo path/URL from event_logo_image setting.
         Returns a storage-relative path (e.g. ``pub/...``) or an absolute URL.
-        
+
         NOTE: This method ONLY checks for event_logo_image, NOT logo_image.
         The logo_image setting is actually used for HEADER images (see default_setting.py),
         so we must NOT use it here to prevent header images from appearing as logos.
@@ -2458,7 +2454,7 @@ class Event(
     @cached_property
     def has_schedule_content(self):
         """Returns True if there are actual scheduled talks in the current schedule.
-        
+
         This checks whether the current schedule has any visible, scheduled talks
         (not just an empty published schedule).
         """
