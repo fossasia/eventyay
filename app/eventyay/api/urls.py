@@ -237,7 +237,6 @@ urlpatterns = [
         submission.favourite_view,
         name='submission.favourite',
     ),
-    path('events/<slug:event>/', include(event_router.urls)),
     path(
         'events/<slug:event>/rooms/<int:room_pk>/',
         include(room_router.urls),
@@ -246,4 +245,5 @@ urlpatterns = [
         'events/<slug:event>/favourite-talk/',
         submission.SubmissionFavouriteDeprecatedView.as_view(),
     ),
+    path('events/<slug:event>/', include(event_router.urls)),
 ]
