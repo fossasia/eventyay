@@ -165,8 +165,6 @@ class SpeakerProfileForm(
                     _('Please provide a profile picture or allow us to load your picture from gravatar!')
                 )
             )
-
-
         return data
 
     def save(self, **kwargs):
