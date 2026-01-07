@@ -1235,6 +1235,24 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                         errs[i]['voucher'] = ['This voucher cannot be applied to add-on products.']
                         continue
 
+                    # Enforce allow_bundled: don't allow voucher on bundled products if allow_bundled is False
+                    # Bundled products are identified by checking if the product/variation is part of a ProductBundle
+                    from eventyay.base.models.product import ProductBundle
+                    variation = pos_data.get('variation')
+                    if variation:
+                        is_bundled = ProductBundle.objects.filter(
+                            bundled_product=product,
+                            bundled_variation=variation,
+                        ).exists()
+                    else:
+                        is_bundled = ProductBundle.objects.filter(
+                            bundled_product=product,
+                            bundled_variation__isnull=True,
+                        ).exists()
+                    if is_bundled and not v.allow_bundled:
+                        errs[i]['voucher'] = ['This voucher cannot be applied to bundled products.']
+                        continue
+
                     if not v.applies_to(pos_data['product'], pos_data.get('variation')):
                         errs[i]['voucher'] = [error_messages['voucher_invalid_product']]
                         continue

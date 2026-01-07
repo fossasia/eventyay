@@ -641,8 +641,9 @@ class CartManager:
 
         # Now apply voucher to eligible positions
         for p in eligible_positions:
-            # Skip bundled products that are already excluded above, but we need to handle
-            # bundled items attached to non-bundled positions
+            # Bundled parent positions were already filtered above based on allow_bundled.
+            # Here we sum the prices of bundled items attached to non-bundled positions
+            # for price calculation purposes.
             bundled_sum = Decimal('0.00')
             if not p.addon_to_id:
                 for bundledp in p.addons.all():

@@ -106,7 +106,7 @@ class Voucher(LoggedModel):
     )
     min_usages = models.PositiveIntegerField(
         verbose_name=_('Minimum usages'),
-        help_text=_('Minimum number of times this voucher must be redeemed before it can be used.'),
+        help_text=_('Minimum number of eligible products required in the cart for this voucher to be applied.'),
         default=0,
     )
     max_usages = models.PositiveIntegerField(
@@ -212,13 +212,13 @@ class Voucher(LoggedModel):
     )
     allow_addons = models.BooleanField(
         default=False,
-        verbose_name=_('Allow free add-ons'),
-        help_text=_('If activated, add-on products can be added to the cart for free when this voucher is used.'),
+        verbose_name=_('Apply to add-on products'),
+        help_text=_('If activated, this voucher will apply to add-on products. If disabled, the voucher will not apply to add-on products.'),
     )
     allow_bundled = models.BooleanField(
         default=False,
         verbose_name=_('Include bundled products'),
-        help_text=_('If activated, bundled products will be included when this voucher is used.'),
+        help_text=_('If activated, this voucher will apply to bundled products. If disabled, the voucher will not apply to bundled products.'),
     )
     exhibitor = models.ForeignKey(
         'Exhibitor',
