@@ -633,7 +633,7 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
 
         if action == 'back':
             if form.is_valid():
-               self.set_data(form.cleaned_data)
+                self.set_data(form.cleaned_data)
             if form.files:
                 self.set_files(form.files)
             prev_url = self.get_prev_url(request)
