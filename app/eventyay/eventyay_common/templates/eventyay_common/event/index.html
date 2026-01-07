@@ -63,9 +63,6 @@
     {% endif %}
     <br>
     {% include "eventyay_common/event/fragment_dashboard.html" %}
-    {% if not request.event.has_subevents or subevent %}
-        {% include "pretixcontrol/event/fragment_timeline.html" %}
-    {% endif %}
     <div class="dashboard">
         {% for w in widgets %}
             <div class="widget-container widget-{{ w.display_size|default:"small" }} {% if w.lazy %}widget-lazy-loading{% endif %}" data-lazy-id="{{ w.lazy }}">

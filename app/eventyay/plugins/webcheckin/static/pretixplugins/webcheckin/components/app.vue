@@ -167,7 +167,7 @@
               <div v-else-if="q.type === 'M'">
                 <div class="checkbox" v-for="op in q.options">
                   <label>
-                    <input type="checkbox" :checked="answers[q.id.toString()] && answers[q.id.toString()].split(',').includes(op.id.toString)" @input="answerSetM(q.id.toString(), op.id.toString(), $event.target.checked)">
+                    <input type="checkbox" :checked="answers[q.id.toString()] && answers[q.id.toString()].split(',').includes(op.id.toString())" @input="answerSetM(q.id.toString(), op.id.toString(), $event.target.checked)">
                     {{ op.answer }}
                   </label>
                 </div>
@@ -255,9 +255,9 @@ export default {
     checkResultItemvar() {
       if (!this.checkResult) return ''
       if (this.checkResult.position.variation) {
-        return `${i18nstring_localize(this.checkResult.position.item.name)} – ${i18nstring_localize(this.checkResult.position.variation.value)}`
+        return `${i18nstring_localize(this.checkResult.position.product.name)} – ${i18nstring_localize(this.checkResult.position.variation.value)}`
       }
-      return i18nstring_localize(this.checkResult.position.item.name)
+      return i18nstring_localize(this.checkResult.position.product.name)
     },
     checkResultText () {
       if (!this.checkResult) return ''
@@ -322,8 +322,9 @@ export default {
       this.checkResult = {}
       window.clearInterval(this.clearTimeout)
 
-      fetch(this.$root.api.lists + this.checkinlist.id + '/positions/' + encodeURIComponent(id) + '/redeem/?expand=item&expand=variation', {
+      fetch(this.$root.api.lists + this.checkinlist.id + '/positions/' + encodeURIComponent(id) + '/redeem/?expand=product&expand=variation', {
         method: 'POST',
+        credentials: 'same-origin',
         headers: {
           'X-CSRFToken': document.querySelector("input[name=csrfmiddlewaretoken]").value,
           'Content-Type': 'application/json'
@@ -430,7 +431,9 @@ export default {
       this.answers = {}
 
       window.clearInterval(this.clearTimeout)
-      fetch(this.$root.api.lists + this.checkinlist.id + '/positions/?ignore_status=true&expand=subevent&expand=item&expand=variation&check_rules=true&search=' + encodeURIComponent(this.query))
+      fetch(this.$root.api.lists + this.checkinlist.id + '/positions/?ignore_status=true&expand=subevent&expand=product&expand=variation&check_rules=true&search=' + encodeURIComponent(this.query), {
+        credentials: 'same-origin',
+      })
           .then(response => response.json())
           .then(data => {
             this.searchLoading = false
@@ -468,7 +471,9 @@ export default {
       this.searchLoading = true
       this.searchError = null
       window.clearInterval(this.clearTimeout)
-      fetch(this.searchNextUrl)
+      fetch(this.searchNextUrl, {
+        credentials: 'same-origin',
+      })
           .then(response => response.json())
           .then(data => {
             this.searchLoading = false
@@ -496,7 +501,9 @@ export default {
     },
     fetchStatus() {
       this.statusLoading++
-      fetch(this.$root.api.lists + this.checkinlist.id + '/status/')
+      fetch(this.$root.api.lists + this.checkinlist.id + '/status/', {
+        credentials: 'same-origin',
+      })
               .then(response => response.json())
               .then(data => {
                 this.statusLoading--

@@ -8,6 +8,7 @@ from django.http import Http404, HttpRequest
 from django.urls import resolve
 from django.utils import translation
 from django_scopes import get_scope
+
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
@@ -61,7 +62,9 @@ def messages(request):
 
 
 def system_information(request):
-    context = {}
+    context = {
+        'INSTANCE_NAME': settings.INSTANCE_NAME,
+    }
     _footer = []
     _head = []
     event = getattr(request, 'event', None)

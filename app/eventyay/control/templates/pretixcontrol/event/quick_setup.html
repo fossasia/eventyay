@@ -129,7 +129,7 @@
                 <span class="fa fa-fw fa-user text-muted"></span>
             </div>
             <div class="quick-content">
-                <legend>{% trans "Ticket buying settings" %}</legend>
+                <legend>{% trans "Guest orders" %}</legend>
                 {% bootstrap_field form.require_registered_account_for_tickets layout="control" label_class="sr-only" field_class="col-md-12" %}
             </div>
         </fieldset>
@@ -160,10 +160,7 @@
                 <legend>{% trans "Payment" %}</legend>
                 <p class="bigger">
                     {% blocktrans trimmed %}
-                        eventyay supports a
-                        wide range of payment
-                            providers allowing you to choose the payment methods that fit your workflow best.
-                        Here are just two of them as examples, you can add more in the "Settings" part of your event.
+                        eventyay supports a range of payment providers. The available payment methods are listed below, and additional providers can be configured later in the event settings. Events without paid tickets do not require a payment provider.
                     {% endblocktrans %}
                 </p>
                 {% if form.payment_banktransfer__enabled %}

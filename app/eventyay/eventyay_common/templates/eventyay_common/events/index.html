@@ -146,13 +146,11 @@
                         {% endif %}
                     </td>
                     <td class="text-right flip">
-                        {% if 'pretix_venueless' in e.plugins_array %}
-                            <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
-                               class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
-                               data-toggle="tooltip">
-                                <span class="fa fa-video-camera"></span>
-                            </a>
-                        {% endif %}
+                        <a href='{% url "eventyay_common:event.create_access_to_video" organizer=e.organizer.slug event=e.slug %}'
+                           class="btn btn-sm btn-default" title="{% trans "Enable video access" %}"
+                           data-toggle="tooltip">
+                            <span class="fa fa-video-camera"></span>
+                        </a>
                         <a href='{% url "eventyay_common:event.update" organizer=e.organizer.slug event=e.slug %}'
                            class="btn btn-sm btn-default" title="{% trans "Edit" %}"
                            data-toggle="tooltip">

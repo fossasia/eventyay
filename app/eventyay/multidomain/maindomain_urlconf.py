@@ -112,29 +112,17 @@ try:
 except (ImportError, AttributeError, TypeError):
     logger.exception('Error loading plugin URLs for eventyay_stripe')
 
-# Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
-# TODO: Do we really want this fallback?
-try:
-    if importlib.util.find_spec('pretix_venueless.urls'):
-        urlmod = importlib.import_module('pretix_venueless.urls')
-        single_plugin_patterns = []
-        if hasattr(urlmod, 'urlpatterns'):
-            single_plugin_patterns += urlmod.urlpatterns
-        if hasattr(urlmod, 'event_patterns'):
-            patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
-            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
-        if hasattr(urlmod, 'organizer_patterns'):
-            patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
-except (ImportError, AttributeError, TypeError):
-    logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
 
 # Add storage URLs for file uploads
 storage_patterns = [
     path('storage/', include('eventyay.storage.urls', namespace='storage')),
+]
+
+# Add live URLs for video/BBB features (CSS endpoints, etc.)
+live_patterns = [
+    path('', include(('eventyay.features.live.urls', 'live'))),
 ]
 
 unified_event_patterns = [
@@ -176,6 +164,7 @@ anonymous_invite_patterns = [
 urlpatterns = (
     common_patterns
     + storage_patterns
+    + live_patterns
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
     # Anonymous invite short token redirects (before presale to avoid slug conflict)

@@ -4,7 +4,9 @@ import string
 import logging
 from contextlib import suppress
 
+from django.contrib import messages
 from django.http import HttpResponse, HttpResponseNotModified, HttpResponseRedirect
+from django.utils.translation import gettext_lazy as _
 from django.utils.translation import activate
 
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
@@ -12,6 +14,32 @@ from eventyay.common.text.path import safe_filename
 from eventyay.base.models.submission import SubmissionFavouriteDeprecated
 
 logger = logging.getLogger(__name__)
+
+
+def redirect_to_presale_with_warning(request, message):
+    """Redirect to the event presale area with a warning message."""
+    messages.warning(request, message)
+    return HttpResponseRedirect(request.event.urls.base)
+
+
+def is_public_schedule_empty(request):
+    """True if a schedule is public but contains no published sessions."""
+    return bool(
+        request.event.is_public
+        and request.event.get_feature_flag('show_schedule')
+        and request.event.current_schedule
+        and not request.event.has_schedule_content
+    )
+
+
+def is_public_speakers_empty(request):
+    """True if speakers are public but there are no published speakers."""
+    return bool(
+        request.event.is_public
+        and request.event.get_feature_flag('show_schedule')
+        and request.event.current_schedule
+        and not request.event.speakers.exists()
+    )
 
 
 def is_visible(exporter, request, public=False):

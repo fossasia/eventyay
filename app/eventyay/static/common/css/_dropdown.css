@@ -9,6 +9,7 @@ details.dropdown {
     list-style: none;
     display: flex;
     align-items: baseline;
+	color: var(--color-primary);
 
     &::before,
     &::marker {

@@ -196,7 +196,7 @@
                                                                                    title="{% blocktrans with item=item.name var=var.name %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
                                                                         </label>
                                                                     {% else %}
-                                                                        <input type="number" class="form-control input-item-count" placeholder="0" min="0"
+                                                                        <input type="number" class="form-control input-product-count" placeholder="0" min="0"
                                                                                {% if var.initial %}value="{{ var.initial }}"{% endif %}
                                                                                max="{{ c.max_count }}"
                                                                                pattern="\d*"
@@ -303,7 +303,7 @@
                                                                        id="cp_{{ form.cartpos.pk }}_item_{{ item.id }}">
                                                             </label>
                                                         {% else %}
-                                                            <input type="number" class="form-control input-item-count" placeholder="0" min="0"
+                                                            <input type="number" class="form-control input-product-count" placeholder="0" min="0"
                                                                    pattern="\d*"
                                                                    max="{{ c.max_count }}"
                                                                    {% if item.initial %}value="{{ item.initial }}"{% endif %}

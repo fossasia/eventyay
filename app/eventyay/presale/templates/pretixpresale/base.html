@@ -1,3 +1,4 @@
+{% extends "common/base_public.html" %}
 {% load compress %}
 {% load static %}
 {% load i18n %}
@@ -5,28 +6,16 @@
 {% load statici18n %}
 {% load thumb %}
 {% load eventurl %}
+{% load rich_text %}
 
-{% get_media_prefix as MEDIA_PREFIX %}
-<!DOCTYPE html>
-<html{% if rtl %} dir="rtl" class="rtl"{% endif %} lang="{{ html_locale }}">
-<head>
-    <title>{% block thetitle %}{% endblock %}</title>
-    {% if css_file %}
-        <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
-        {% compress css %}
-            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/scss/custom.css" %}" />
-        {% endcompress %}
-    {% else %}
-        {% compress css %}
-            <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
-        {% endcompress %}
+{% block title %}
+    {% if messages %}
+        {{ messages|join:" " }} ::
     {% endif %}
+    {% block thetitle %}{% endblock %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name }}
+{% endblock %}
 
-    {% include "pretixpresale/fragment_js.html" %}
-    <meta name="referrer" content="origin">
-    {{ html_head|safe }}
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0">
-    {% block custom_header %}{% endblock %}
+{% block favicons %}
     {% if settings.favicon %}
         <link rel="icon" href="{{ settings.favicon|thumb:'16x16^' }}">
         <link rel="shortcut icon" href="{{ settings.favicon|thumb:'16x16^' }}">
@@ -44,64 +33,72 @@
     {% endif %}
     <link rel="apple-touch-icon" sizes="180x180" href="{% static "pretixbase/img/icons/apple-touch-icon.png" %}">
     <link rel="icon" type="image/png" sizes="192x192" href="{% static "pretixbase/img/icons/android-chrome-192x192.png" %}">
+{% endblock %}
+
+{% block public_head_before_assets %}
+    {% include "pretixpresale/fragment_js.html" %}
+    <meta name="referrer" content="origin">
+{% endblock %}
+
+{% block public_stylesheets %}
+    {% if css_file %}
+        <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
+        {% compress css %}
+            <link rel="stylesheet" type="text/css" href="{% static "pretixpresale/scss/custom.css" %}" />
+        {% endcompress %}
+    {% else %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/main.scss" %}"/>
+        {% endcompress %}
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+    {{ block.super }}
+    {% compress js %}
+        <script type="text/javascript" src="{% static "pretixpresale/js/ui/popover.js" %}"></script>
+        <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
+    {% endcompress %}
+{% endblock %}
+
+{% block custom_header %}
+    {% if event.settings.meta_noindex %}
+        <meta name="robots" content="noindex, nofollow">
+    {% endif %}
     <link rel="manifest" href="{% url "presale:site.webmanifest" %}">
     <link rel="mask-icon" href="{% static "pretixbase/img/icons/safari-pinned-tab.svg" %}" color="{{ settings.primary_color|default:"#2185d0" }}">
     <meta name="msapplication-TileColor" content="{{ settings.primary_color|default:"#2185d0" }}">
     <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
     <meta name="theme-color" content="{{ settings.primary_color|default:"#2185d0" }}">
-    {% compress js %}
-        <script type="text/javascript" src="{% static "pretixpresale/js/ui/popover.js" %}"></script>
-        <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
-    {% endcompress %}
-</head>
-<body class="nojs" data-locale="{{ request.LANGUAGE_CODE }}" data-now="{% now "U.u" %}" data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}" data-currency="{{ request.event.currency }}">
-{{ html_page_header|safe }}
-    <div id="top-bg" class="header bg-primary">
-        {% if event_logo %}
-            {# We use full image because the user may use big screen #}
-            <img id="header-image" src="{{ MEDIA_PREFIX }}{{ event_logo }}" alt="{{ event.name }}" class="event-logo" />
-        {% endif %}
-</div>
-<header {% if event_logo %} class="custom-header" {% endif %} >
-{% block above %}
+    {% if DEBUG %}
+        <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
+    {% else %}
+        <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
+    {% endif %}
+    {{ block.super }}
 {% endblock %}
-</header>
-<div class="page-wrapper">
-    <div class="container main-box">
-        {% block page %}
-        {% endblock %}
-        <div class="footer-placeholder">
-            {% block footer %}
-            {% endblock %}
-        </div>
-    </div>
-    <footer>
-        <nav aria-label="{% trans "Footer Navigation" %}">
-            {% block footernav %}
-            {% endblock %}
-            {% if footer_text %}
-                {{ footer_text }}
-                &middot;
-            {% endif %}
-            {% for f in footer %}
-                <a href="{% safelink f.url %}" target="_blank" rel="noopener">{{ f.label }}</a>
-                &middot;
-            {% endfor %}
-            {% include "pretixpresale/base_footer.html" %}
-        </nav>
-    </footer>
-</div>
-{% include "pretixpresale/fragment_modals.html" %}
-{% if DEBUG %}
-    <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
-{% else %}
-    <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
-{% endif %}
-{% if request.session.iframe_session %}
-    {% compress js %}
-        <script type="text/javascript" src="{% static "iframeresizer/iframeResizer.contentWindow.js" %}"></script>
-    {% endcompress %}
-{% endif %}
-{{ html_foot|safe }}
-</body>
-</html>
+
+{% block body_attrs %}
+    class="nojs"
+    data-locale="{{ request.LANGUAGE_CODE }}"
+    data-now="{% now "U.u" %}"
+    data-datetimeformat="{{ js_datetime_format }}"
+    data-timeformat="{{ js_time_format }}"
+    data-dateformat="{{ js_date_format }}"
+    data-datetimelocale="{{ js_locale }}"
+    data-currency="{{ request.event.currency }}"
+{% endblock %}
+
+{% block body_top %}
+    {{ base_path|json_script:"base_path" }}
+    {% if request.event %}
+        {{ request.event.organizer.slug|json_script:"organizer_name" }}
+        {{ request.event.slug|json_script:"event_slug" }}
+    {% endif %}
+    {{ show_organizer_area|json_script:"show_organizer_area" }}
+    {{ html_page_header|safe }}
+{% endblock %}
+
+{% block body_bottom %}
+    {{ html_foot|safe }}
+{% endblock %}

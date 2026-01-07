@@ -296,7 +296,7 @@ def shop_state_widget(sender, **kwargs):
             'display_size': 'small',
             'priority': 1000,
             'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="fa {icon}"></span> {state}</span>{t2}</div>'.format(
-                t1=_('Your ticket shop is'),
+                t1=_('Ticket shop is'),
                 t2=_('Click here to change'),
                 state=_('live')
                 if sender.live and not sender.testmode
@@ -352,13 +352,13 @@ def checkin_widget(sender, subevent=None, lazy=False, **kwargs):
 @receiver(signal=event_dashboard_widgets)
 def welcome_wizard_widget(sender, **kwargs):
     template = get_template('pretixcontrol/event/dashboard_widget_welcome.html')
-    ctx = {'title': _('Welcome')}
+    ctx = {'title': _('Tickets')}
     kwargs = {'event': sender.slug, 'organizer': sender.organizer.slug}
 
     if not sender.products.exists():
         ctx.update(
             {
-                'subtitle': _('Get started with our setup tool'),
+                'subtitle': _('Get started with ticketing'),
                 'text': _(
                     'To start selling tickets, you need to create products or quotas. The fastest way to create '
                     'this is to use our setup tool.'

@@ -64,7 +64,8 @@ def _default_context(request: HttpRequest):
     if not event:
         return ctx
 
-    ctx['talk_edit_url'] = urljoin(settings.TALK_HOSTNAME, f'orga/event/{event.slug}')
+    from django.urls import reverse
+    ctx['talk_edit_url'] = reverse('orga:event.dashboard', kwargs={'event': event.slug})
     ctx['is_video_enabled'] = is_video_enabled(event)
     ctx['is_talk_event_created'] = False
     if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:

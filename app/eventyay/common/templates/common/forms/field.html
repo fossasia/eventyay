@@ -3,7 +3,7 @@
     {% block field_label_left %}
         {% if field.field.widget.input_type != "checkbox" or field.field.widget.allow_multiple_selected %}
             <label for="{{ field.auto_id }}" class="{{ label_class }}">
-                {{ field.label }}
+                <span>{{ field.label }}<span class="d-inline text-danger">{% if field.field.required %} *{% endif %}</span></span>
                 {% if not field.field.required %}<span class="optional">{% translate "Optional" %}</span>{% endif %}
             </label>
         {% endif %}

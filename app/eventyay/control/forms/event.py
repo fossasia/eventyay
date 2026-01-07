@@ -34,7 +34,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
     validate_event_settings,
 )
-from eventyay.common.forms.fields import ColorField, ImageField
+from eventyay.common.forms.fields import ImageField
 from eventyay.common.forms.widgets import EnhancedSelect, HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.control.forms import (
@@ -48,6 +48,14 @@ from eventyay.helpers.countries import CachedCountries
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.orga.forms.widgets import HeaderSelect, MultipleLanguagesWidget
 from eventyay.plugins.banktransfer.payment import BankTransfer
+
+# Shared constants for require_registered_account_for_tickets field
+REQUIRE_REGISTERED_ACCOUNT_LABEL = _('Only allow registered accounts to get a ticket')
+REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT = _(
+    'If this option is turned on, users must be logged in before completing an order. '
+    'When a user clicks "Checkout" without being logged in, they will be redirected to the login page. '
+    'The "Continue as a Guest" option will not be available for attendees in this event.'
+)
 
 
 class EventWizardFoundationForm(forms.Form):
@@ -349,11 +357,6 @@ class EventWizardCopyForm(forms.Form):
 
 
 class EventWizardDisplayForm(forms.Form):
-    primary_color = ColorField(
-        label=Event._meta.get_field('primary_color').verbose_name,
-        help_text=Event._meta.get_field('primary_color').help_text,
-        required=False,
-    )
     header_pattern = forms.ChoiceField(
         label=phrases.orga.event_header_pattern_label,
         help_text=phrases.orga.event_header_pattern_help_text,
@@ -518,7 +521,7 @@ class EventSettingsForm(SettingsForm):
     name_scheme = forms.ChoiceField(
         label=_('Name format'),
         help_text=_(
-            'This defines how pretix will ask for human names. Changing this after you already received '
+            'This defines how eventyay will ask for human names. Changing this after you already received '
             'orders might lead to unexpected behavior when sorting or changing names.'
         ),
         required=True,
@@ -563,6 +566,7 @@ class EventSettingsForm(SettingsForm):
         'event_list_available_only',
         'frontpage_text',
         'event_info_text',
+        'require_registered_account_for_tickets',
         'attendee_names_asked',
         'attendee_names_required',
         'attendee_emails_asked',
@@ -1220,7 +1224,6 @@ class TicketSettingsForm(SettingsForm):
         'ticket_download_nonadm',
         'ticket_download_pending',
         'ticket_download_require_validated_email',
-        'require_registered_account_for_tickets',
     ]
     ticket_secret_generator = forms.ChoiceField(
         label=_('Ticket code generator'),
@@ -1228,6 +1231,11 @@ class TicketSettingsForm(SettingsForm):
         required=True,
         widget=forms.RadioSelect,
         choices=[],
+    )
+    require_registered_account_for_tickets = forms.BooleanField(
+        label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
+        help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
+        required=False,
     )
 
     def __init__(self, *args, **kwargs):
@@ -1462,16 +1470,13 @@ class QuickSetupForm(I18nForm):
         label=_('Payment by bank transfer'),
         help_text=_(
             'Your customers will be instructed to wire the money to your account. You can then import your '
-            'bank statements to process the payments within pretix, or mark them as paid manually.'
+            'bank statements to process the payments within eventyay, or mark them as paid manually.'
         ),
         required=False,
     )
     require_registered_account_for_tickets = forms.BooleanField(
-        label=_('Only allow registered accounts to get a ticket'),
-        help_text=_(
-            'If this option is turned on, only registered accounts will be allowed to purchase tickets. The '
-            "'Continue as a Guest' option will not be available for attendees."
-        ),
+        label=REQUIRE_REGISTERED_ACCOUNT_LABEL,
+        help_text=REQUIRE_REGISTERED_ACCOUNT_HELP_TEXT,
         required=False,
     )
     btf = BankTransfer.form_fields()

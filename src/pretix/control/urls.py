@@ -223,31 +223,6 @@ urlpatterns = [
         name='organizer.gate.delete',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/teams$',
-        organizer_views.team_view.TeamListView.as_view(),
-        name='organizer.teams',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/add$',
-        organizer_views.team_view.TeamCreateView.as_view(),
-        name='organizer.team.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/$',
-        organizer_views.team_view.TeamMemberView.as_view(),
-        name='organizer.team',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/edit$',
-        organizer_views.team_view.TeamUpdateView.as_view(),
-        name='organizer.team.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/delete$',
-        organizer_views.team_view.TeamDeleteView.as_view(),
-        name='organizer.team.delete',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/slugrng',
         main.SlugRNG.as_view(),
         name='events.add.slugrng',
@@ -620,11 +595,6 @@ urlpatterns = [
                 url(r'^global/settings/$', global_settings.GlobalSettingsView.as_view(), name='admin.global.settings'),
                 url(r'^global/update/$', global_settings.UpdateCheckView.as_view(), name='admin.global.update'),
                 url(r'^global/message/$', global_settings.MessageView.as_view(), name='admin.global.message'),
-                url(
-                    r'^global/billing_validation/$',
-                    global_settings.ToggleBillingValidationView.as_view(),
-                    name='admin.toggle.billing.validation',
-                ),
                 url(r'^vouchers/$', admin.VoucherList.as_view(), name='admin.vouchers'),
                 url(r'^vouchers/add$', admin.VoucherCreate.as_view(), name='admin.vouchers.add'),
                 url(r'^vouchers/(?P<voucher>\d+)/$', admin.VoucherUpdate.as_view(), name='admin.voucher'),

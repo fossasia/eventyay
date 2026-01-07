@@ -9,7 +9,7 @@ $(function () {
     const logoutParams = new URLSearchParams({ back: backUrl });
 
     const ticketsPath = `/control/`;
-    const talksPath = `/orga/event/`
+    const talksPath = `/orga/event/`;
     const mainDashboardPath = `/common/`;
     const orderPath = `/common/orders/`;
     const sessionPath = `/common/sessions/`;

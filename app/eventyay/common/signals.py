@@ -10,15 +10,9 @@ from django.core.cache import cache
 from django.dispatch.dispatcher import NO_RECEIVERS
 
 from eventyay.base.models import Event
+from eventyay.base.signals import resolve_app_for_module, check_plugin_active
 
-app_cache = {}
 logger = logging.getLogger(__name__)
-
-
-def _populate_app_cache():
-    apps.check_apps_ready()
-    for app_config in apps.app_configs.values():
-        app_cache[app_config.name] = app_config
 
 
 class EventPluginSignal(django.dispatch.Signal):
@@ -34,26 +28,21 @@ class EventPluginSignal(django.dispatch.Signal):
             return []
         return receivers[0]
 
-    @staticmethod
-    def _is_active(sender, receiver):
+    def _is_active(self, sender, receiver):
         # Find the Django application this belongs to
-        searchpath = receiver.__module__
-        core_module = any(searchpath.startswith(cm) for cm in settings.CORE_MODULES)
-        # Only fire receivers from active plugins and core modules
-        if core_module:
-            return True
-        # Short out on events without plugins
-        if sender and not sender.plugin_list:
-            return False
-        if sender:
-            app = None
-            while True:
-                app = app_cache.get(searchpath)
-                if '.' not in searchpath or app:  # pragma: no cover
-                    break
-                searchpath, _ = searchpath.rsplit('.', 1)
-            return app and app.name in sender.plugin_list
-        return False
+        module_path = receiver.__module__
+        is_core_module = any(module_path.startswith(cm) for cm in settings.CORE_MODULES)
+        
+        # Resolve the app using thread-safe cached function
+        app = resolve_app_for_module(module_path)
+        
+        # Get excluded plugins list (preserve original list type from settings)
+        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
+        
+        return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.plugin_list)
+        
+        # Use shared helper with sender.plugin_list accessor
+        return check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """Send signal from sender to all connected receivers that belong to
@@ -68,9 +57,6 @@ class EventPluginSignal(django.dispatch.Signal):
         responses = []
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:
             return responses
-
-        if not app_cache:
-            _populate_app_cache()
 
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):
@@ -95,9 +81,6 @@ class EventPluginSignal(django.dispatch.Signal):
         responses = []
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:
             return []
-
-        if not app_cache:  # pragma: no cover
-            _populate_app_cache()
 
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):
@@ -127,9 +110,6 @@ class EventPluginSignal(django.dispatch.Signal):
         response = named.get(chain_kwarg_name)
         if not self.receivers or self.sender_receivers_cache.get(sender) is NO_RECEIVERS:  # pragma: no cover
             return response
-
-        if not app_cache:  # pragma: no cover
-            _populate_app_cache()
 
         for receiver in self.get_live_receivers(sender):
             if self._is_active(sender, receiver):

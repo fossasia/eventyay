@@ -71,6 +71,10 @@ class SubmitWizard(EventPageMixin, View):
                     or step.identifier == 'user'
                 ],
             )
+        if request.method == 'POST' and request.POST.get('action') == 'back':
+            # When clicking Back, the step's POST handler has already saved the data
+            # Now redirect to the previous step
+            return result
         if request.method == 'GET' or (step.get_next_applicable(request) or not step.is_completed(request)):
             if result and (csp_change := step.get_csp_update(request)):
                 result._csp_update = csp_change

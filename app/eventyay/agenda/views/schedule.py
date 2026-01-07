@@ -20,6 +20,8 @@ from django_context_decorator import context
 from eventyay.agenda.views.utils import (
     get_schedule_exporter_content,
     get_schedule_exporters,
+    is_public_schedule_empty,
+    redirect_to_presale_with_warning,
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
@@ -120,6 +122,11 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return HttpResponse(response_start + result, content_type='text/plain; charset=utf-8')
 
     def dispatch(self, request, **kwargs):
+        if self.version is None and is_public_schedule_empty(request):
+            if request.resolver_match and request.resolver_match.url_name == 'talks':
+                return redirect_to_presale_with_warning(request, _('No published sessions.'))
+            return redirect_to_presale_with_warning(request, _('No published schedule.'))
+
         if not self.has_permission() and self.request.user.has_perm(
             'base.list_featured_submission', self.request.event
         ):

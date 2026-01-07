@@ -15,6 +15,7 @@
     var(--color-primary),
     black 40%
   );
+  --color-primary-hover: color-mix(in srgb, var(--color-primary), black 20%);
   --color-primary-light: color-mix(in srgb, var(--color-primary), white 45%);
   --color-primary-lighter: color-mix(in srgb, var(--color-primary), white 72%);
   --color-secondary: var(--color-grey-medium);

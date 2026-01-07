@@ -24,4 +24,7 @@ redis_url = 'redis://eventyay-next-redis/0'
 
 celery_always_eager = false
 
+# To improve performance, we require offline compression of static files.
+compress_offline_required = true
+
 short_url = 'https://next.eventyay.com'

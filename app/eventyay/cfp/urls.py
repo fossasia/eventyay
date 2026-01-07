@@ -34,11 +34,6 @@ urlpatterns = [
     ),
     path("me/", user.ProfileView.as_view(), name="event.user.view"),
     path(
-        "me/delete",
-        user.DeleteAccountView.as_view(),
-        name="event.user.delete",
-    ),
-    path(
         "me/submissions/",
         user.SubmissionsListView.as_view(),
         name="event.user.submissions",

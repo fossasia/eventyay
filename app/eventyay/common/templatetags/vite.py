@@ -1,7 +1,10 @@
-import json
 import logging
+from functools import lru_cache
+from pathlib import Path
+from typing import cast
 from urllib.parse import urljoin
 
+import msgspec
 from django import template
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -9,21 +12,38 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 logger = logging.getLogger(__name__)
-STATIC_FILES_MAPPING = {}
 
 # The vite_asset tag is only used for schedule-editor app, we only need find manifest.json file
 # for this app.
-MANIFEST_PATH = settings.STATIC_ROOT / 'schedule-editor' / 'schedule-editor-manifest.json'
+MANIFEST_PATH = cast(Path, settings.STATIC_ROOT) / 'schedule-editor' / 'schedule-editor-manifest.json'
 
-# We're building the manifest if we don't have a dev server running AND if we're
-# not currently running `rebuild` (which creates the manifest in the first place).
-if not settings.VITE_DEV_MODE and not settings.VITE_IGNORE:
+
+class ViteManifestEntry(msgspec.Struct, forbid_unknown_fields=False):
+    """Typed Vite manifest entry (following Vite's manifest.json).
+
+    Defining an expected structure will help decoding JSON faster and safer.
+    """
+
+    file: str
+    css: list[str] = msgspec.field(default_factory=list)
+    imports: list[str] = msgspec.field(default_factory=list)
+    # There are other fields, but we don't need them.
+
+
+ManifestMapping = dict[str, ViteManifestEntry]
+
+
+@lru_cache(maxsize=1)
+def load_mapping() -> ManifestMapping:
+    """Loads the Vite manifest file mapping using msgspec for fast decoding."""
     try:
-        with open(MANIFEST_PATH) as fp:
-            STATIC_FILES_MAPPING = json.load(fp)
-            logger.info(f'Loaded vite manifest from {MANIFEST_PATH}')
-    except FileNotFoundError:
-        logger.debug(f'Vite manifest not found at {MANIFEST_PATH}, skipping.')
+        return msgspec.json.decode(MANIFEST_PATH.read_text(), type=ManifestMapping)
+    except FileNotFoundError as e:
+        raise ImproperlyConfigured(f'Vite manifest not found at {MANIFEST_PATH}.') from e
+    except OSError as e:
+        raise ImproperlyConfigured(f'Error reading Vite manifest at {MANIFEST_PATH}: {e}') from e
+    except (msgspec.DecodeError, msgspec.ValidationError) as e:
+        raise ImproperlyConfigured(f'Vite manifest at {MANIFEST_PATH} has an unexpected format.') from e
 
 
 def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
@@ -35,25 +55,25 @@ def generate_script_tag(path: str, attrs: dict[str, str]) -> str:
     return f'<script {all_attrs} src="{src}"></script>'
 
 
-def generate_css_tags(asset: str, already_processed: list[str]) -> list[str]:
+def generate_css_tags(asset: str, already_processed: list[str], static_files_mapping: ManifestMapping) -> list[str]:
     """Recursively builds all CSS tags used in a given asset.
 
     Ignore the side effects."""
     tags = []
-    manifest_entry = STATIC_FILES_MAPPING[asset]
+    manifest_entry = static_files_mapping[asset]
 
     # Put our own CSS file first for specificity
-    if 'css' in manifest_entry:
-        for css_path in manifest_entry['css']:
+    if manifest_entry.css:
+        for css_path in manifest_entry.css:
             if css_path not in already_processed:
                 full_path = urljoin(settings.STATIC_URL, f'schedule-editor/{css_path}')
                 tags.append(f'<link rel="stylesheet" href="{full_path}" />')
             already_processed.append(css_path)
 
     # Import each file only one by way of side effects in already_processed
-    if 'imports' in manifest_entry:
-        for import_path in manifest_entry['imports']:
-            tags += generate_css_tags(import_path, already_processed)
+    if manifest_entry.imports:
+        for import_path in manifest_entry.imports:
+            tags += generate_css_tags(import_path, already_processed, static_files_mapping)
 
     return tags
 
@@ -73,8 +93,9 @@ def vite_asset(path: str) -> str:
     if settings.VITE_DEV_MODE:
         return generate_script_tag(path, {'type': 'module'})
 
-    manifest_entry = STATIC_FILES_MAPPING.get(path)
-    if not manifest_entry:
+    static_files_mapping = load_mapping()
+    manifest_entry = static_files_mapping.get(path)
+    if manifest_entry is None:
         msg = (
             f'Cannot find {path} in Vite manifest at {MANIFEST_PATH}.'
             if MANIFEST_PATH.exists()
@@ -82,8 +103,8 @@ def vite_asset(path: str) -> str:
         )
         raise ImproperlyConfigured(msg)
 
-    tags = generate_css_tags(path, [])
-    tags.append(generate_script_tag(manifest_entry['file'], {'type': 'module', 'crossorigin': ''}))
+    tags = generate_css_tags(path, [], static_files_mapping)
+    tags.append(generate_script_tag(manifest_entry.file, {'type': 'module', 'crossorigin': ''}))
     return ''.join(tags)
 
 

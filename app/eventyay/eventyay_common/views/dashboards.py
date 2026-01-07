@@ -150,7 +150,7 @@ class EventIndexView(TemplateView):
                 ContentType.objects.get_for_model(Order),
             ]
 
-            if permissions['can_change_products']:
+            if permissions['can_change_items']:
                 allowed_types += [
                     ContentType.objects.get_for_model(Product),
                     ContentType.objects.get_for_model(ProductCategory),
@@ -249,6 +249,7 @@ class EventIndexView(TemplateView):
 
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
+        context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
 
         return context
 
@@ -335,7 +336,8 @@ class EventWidgetGenerator:
         Generate a talk button based on event settings.
         """
         if event.settings.create_for == EventCreatedFor.BOTH.value or event.settings.talk_schedule_public is not None:
-            return f'<a href="{event.talk_dashboard_url}" class="middle-component">{_("Talks")}</a>'
+            talk_url = reverse('orga:event.dashboard', kwargs={'event': event.slug})
+            return f'<a href="{talk_url}" class="middle-component">{_("Talks")}</a>'
         return f"""
             <a href="#" data-toggle="modal" data-target="#alert-modal" class="middle-component">
                 {_('Talks')}
