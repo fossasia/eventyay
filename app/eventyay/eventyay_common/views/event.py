@@ -269,6 +269,9 @@ class EventCreateView(SafeSessionWizardView):
             event.settings.set('locales', foundation_data['locales'])
             content_locales = foundation_data.get('content_locales') or foundation_data['locales']
             event.settings.set('content_locales', content_locales)
+            # Persist timezone on the event model as well so downstream consumers see the updated value
+            event.timezone = basics_data['timezone']
+            event.save(update_fields=['timezone'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -373,6 +376,10 @@ class EventUpdate(
         self.sform.save()
         self.header_links_formset.save()
         self.footer_links_formset.save()
+        # Keep event model timezone in sync with settings
+        if 'timezone' in self.sform.cleaned_data:
+            self.object.timezone = self.sform.cleaned_data['timezone']
+            self.object.save(update_fields=['timezone'])
         form.instance.update_language_configuration(
             locales=self.sform.cleaned_data.get('locales'),
             content_locales=self.sform.cleaned_data.get('content_locales'),
@@ -597,12 +604,7 @@ class VideoAccessAuthenticator(View):
             )
             event.settings.venueless_url = build_video_url()
 
-        # Ensure the pretix_venueless plugin is enabled
-        current_plugins = set(event.get_plugins())
-        if 'pretix_venueless' not in current_plugins:
-            current_plugins.add('pretix_venueless')
-            event.plugins = ','.join(current_plugins)
-            event.save()
+        # Video is integrated; do not toggle event plugins here.
 
     def generate_token_url(self, request, traits):
         uid_token = encode_email(request.user.email)

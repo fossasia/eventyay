@@ -58,6 +58,7 @@ class UserSettingsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user')
+        self.requires_password_reset = kwargs.pop('require_password_reset', False)
         super().__init__(*args, **kwargs)
         self.fields['email'].required = True
         self.fields['wikimedia_username'].disabled = True
@@ -66,6 +67,9 @@ class UserSettingsForm(forms.ModelForm):
             del self.fields['new_pw']
             del self.fields['new_pw_repeat']
             self.fields['email'].disabled = True
+        elif self.requires_password_reset:
+            for field in ('old_pw', 'new_pw', 'new_pw_repeat'):
+                self.fields.pop(field, None)
 
     def clean_old_pw(self):
         old_pw = self.cleaned_data.get('old_pw')
@@ -116,7 +120,7 @@ class UserSettingsForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
-        if (password1 or email != self.user.email) and not old_pw:
+        if not self.requires_password_reset and (password1 or email != self.user.email) and not old_pw:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 
         if password1:
