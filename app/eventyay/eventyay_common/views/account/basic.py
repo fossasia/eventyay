@@ -1,5 +1,4 @@
 from collections import defaultdict
-from http import HTTPMethod
 from logging import getLogger
 
 from allauth.account.forms import ResetPasswordForm
@@ -25,6 +24,7 @@ from ...navigation import get_account_navigation
 from .common import AccountMenuMixIn
 
 logger = getLogger(__name__)
+PASSWORD_RESET_INTENT = 'password_reset'
 
 
 def password_reset_provider(user: User) -> str | None:
@@ -42,13 +42,15 @@ def password_reset_provider_label(user: User) -> str:
 # Copied from src/pretix/control/views/user.py and modified.
 class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
     model = User
+    # This view will use two forms: UserSettingsForm and ResetPasswordForm.
     form_class = UserSettingsForm
     template_name = 'eventyay_common/account/general-settings.html'
 
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         requires_reset = not request.user.has_usable_password()
 
-        if 'password_reset' in request.POST and requires_reset:
+        # The password reset form was submitted
+        if PASSWORD_RESET_INTENT in request.POST and requires_reset:
             reset_form = ResetPasswordForm(data=request.POST)
             if reset_form.is_valid():
                 reset_form.save(request)
@@ -60,9 +62,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
                 user=self.request.user,
                 require_password_reset=requires_reset,
             )
-            return self.render_to_response(
-                self.get_context_data(form=user_form, password_reset_form=reset_form)
-            )
+            return self.render_to_response(self.get_context_data(form=user_form, password_reset_form=reset_form))
 
         return super().post(request, *args, **kwargs)
 
@@ -123,21 +123,16 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         requires_reset = not user.has_usable_password()
         ctx['requires_password_reset'] = requires_reset
         provider_label = password_reset_provider_label(user)
-        ctx['password_reset_provider_label'] = provider_label
-        if requires_reset:
-            if provider_label:
-                ctx['password_reset_message'] = _(
-                    'Your account was created via {provider} login and does not have a password yet. '
-                    'Send yourself a password setup link below.'
-                ).format(provider=provider_label)
-            else:
-                ctx['password_reset_message'] = _(
-                    'Your account does not have a password yet. Send yourself a password setup link below.'
-                )
-        if request.method == HTTPMethod.POST and request.POST.get('password_reset'):
-            ctx['password_reset_form'] = ResetPasswordForm(data=request.POST)
-        else:
+        ctx['password_reset_message'] = build_password_reset_message(
+            requires_reset, provider_label
+        )
+        # Passed by the post() method when the password reset form was submitted.
+        password_reset_form = kwargs.get('password_reset_form')
+        # If this form is present, it means we need to render it with errors,
+        # otherwise, create a new blank form for password reset.
+        if not password_reset_form and requires_reset:
             ctx['password_reset_form'] = ResetPasswordForm(initial={'email': user.email})
+            return ctx
         return ctx
 
 
@@ -297,3 +292,15 @@ class HistoryView(AccountMenuMixIn, ListView):
 # This view is just a placeholder for the URL patterns that we haven't implemented views for yet.
 class DummyView(TemplateView):
     template_name = 'eventyay_common/base.html'
+
+
+def build_password_reset_message(requires_reset: bool, provider_label: str) -> str:
+    if not requires_reset:
+        return ''
+    if provider_label:
+        return _(
+            'Your account was created via {provider} login and does not have a password yet. '
+            'Send yourself a password setup link below.'
+        ).format(provider=provider_label)
+    return _(
+        'Your account does not have a password yet. Send yourself a password setup link below.')
