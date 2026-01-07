@@ -26,7 +26,8 @@ from eventyay.helpers.config import EnvOrParserConfig
 
 _config = configparser.RawConfigParser()
 if 'PRETIX_CONFIG_FILE' in os.environ:
-    _config.read_file(open(os.environ.get('PRETIX_CONFIG_FILE'), encoding='utf-8'))
+    with open(os.environ.get('PRETIX_CONFIG_FILE'), encoding='utf-8') as fp:
+        _config.read_file(fp)
 else:
     _config.read(
         ['/etc/pretix/pretix.cfg', os.path.expanduser('~/.pretix.cfg'), 'pretix.cfg'],
@@ -1238,8 +1239,9 @@ MAX_FILE_UPLOAD_SIZE_CONFIG = {
     'pdf': 1024 * 1024 * config.getint('file_upload_limits', 'pdf', fallback=10),
     'xlsx': 1024 * 1024 * config.getint('file_upload_limits', 'xlsx', fallback=2),
     'favicon': 1024 * 1024 * config.getint('file_upload_limits', 'favicon', fallback=1),
-    'attachment':1024 * 1024 * config.getint('file_upload_limits', 'attachment', fallback=10),
-    'small_attach':1024 * 1024 * config.getint('file_upload_limits', 'small_attach', fallback=4),
+    'attachment': 1024 * 1024 * config.getint('file_upload_limits', 'attachment', fallback=10),
+    'mail': 1024 * 1024 * config.getint('file_upload_limits', 'mail', fallback=4),
+    'question': 1024 * 1024 * config.getint('file_upload_limits', 'question', fallback=20),
     'other': 1024 * 1024 * config.getint('file_upload_limits', 'other', fallback=10)
 }
 

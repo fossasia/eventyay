@@ -54,6 +54,7 @@ from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.pricing import get_price
 from eventyay.base.settings import COUNTRIES_WITH_STATE_IN_ADDRESS
 from eventyay.base.signals import register_ticket_outputs
+from eventyay.consts import UploadSize
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 
@@ -197,7 +198,7 @@ class AnswerSerializer(I18nAwareModelSerializer):
             raise ValidationError(
                 'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
             )
-        if cf.file.size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]:
+        if cf.file.size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]:
             raise ValidationError('The submitted file "{fid}" is too large to be used in this field.'.format(fid=data))
 
         data['options'] = []

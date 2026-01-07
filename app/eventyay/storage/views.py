@@ -19,6 +19,7 @@ from PIL.Image import Resampling
 from rest_framework.authentication import get_authorization_header
 
 from eventyay.base.models import Event
+from eventyay.consts import UploadSize
 from eventyay.core.permissions import Permission
 from eventyay.base.services.user import AuthError, login
 from eventyay.base.services.event import notify_schedule_change
@@ -111,7 +112,7 @@ class UploadView(UploadMixin, View):
         ".jpeg",
         ".gif",
     )
-    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]
 
     def post(self, request, *args, **kwargs):
         if not self.user:
@@ -224,7 +225,7 @@ class UploadView(UploadMixin, View):
 class ScheduleImportView(UploadMixin, View):
     permissions = {Permission.EVENT_UPDATE}
     ext_whitelist = (".xlsx",)
-    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["xlsx"]
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.XLSX]
 
     def post(self, request, *args, **kwargs):
         if not self.user:

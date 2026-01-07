@@ -18,6 +18,7 @@ from eventyay.api.signals import register_webhook_events
 from eventyay.base.models import LogEntry
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
+from eventyay.consts import ResponseSize
 
 logger = logging.getLogger(__name__)
 _ALL_EVENTS = None
@@ -321,7 +322,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_EXTERNAL_RESPONSE_SIZE["webhook"]],
+                    response_body=resp.text[: settings.MAX_FILE_UPLOAD_SIZE_CONFIG[ResponseSize.WEBHOOK]],
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -340,7 +341,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=0,
                     payload=json.dumps(payload),
-                    response_body=str(e)[: settings.MAX_EXTERNAL_RESPONSE_SIZE["webhook"]],
+                    response_body=str(e)[: settings.MAX_FILE_UPLOAD_SIZE_CONFIG[ResponseSize.WEBHOOK]],
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)

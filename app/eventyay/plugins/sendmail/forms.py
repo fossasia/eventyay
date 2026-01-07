@@ -17,6 +17,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.orders import Order
+from eventyay.consts import UploadSize
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
@@ -63,7 +64,7 @@ class MailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. We recommend only using PDFs '
             'of no more than 2 MB in size.'
         ),
-        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["attachment"],
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER],
     )  # TODO i18n
     products = forms.ModelMultipleChoiceField(
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
@@ -568,7 +569,7 @@ class TeamMailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. '
             'We recommend only using PDFs of no more than 2 MB in size.'
         ),
-        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG["attachment"],
+        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.ATTACHMENT],
     )
 
     def __init__(self, *args, **kwargs):

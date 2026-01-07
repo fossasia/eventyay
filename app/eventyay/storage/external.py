@@ -9,6 +9,7 @@ from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
 from eventyay.base.models.storage_model import StoredFile
+from eventyay.consts import UploadSize
 
 
 def get_extension_from_response(response):
@@ -39,7 +40,7 @@ def store_image(response, event):  # TODO deduplicate
     if not extension:
         return
 
-    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
+    max_size = settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]
     if not len(response.content) < max_size:
         return
 
