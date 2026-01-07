@@ -27,15 +27,16 @@ logger = getLogger(__name__)
 PASSWORD_RESET_INTENT = 'password_reset'
 
 
-def password_reset_provider(user: User) -> str | None:
-    social = SocialAccount.objects.filter(user=user).order_by('-pk').first()
-    return social.provider if social else None
-
-
-def password_reset_provider_label(user: User) -> str:
-    provider_id = password_reset_provider(user)
+def get_social_account_provider_label(user: User) -> str:
+    """
+    Get the social account provider label for the given user.
+    If the user does not have a social account, return an empty string.
+    """
+    social_account = SocialAccount.objects.filter(user=user).order_by('-pk').first()
+    provider_id = social_account.provider if social_account else None
     if not provider_id:
         return ''
+    # Get the first matching provider name from django-allauth's registry.
     return next((name for pid, name in providers.registry.as_choices() if pid == provider_id), provider_id)
 
 
@@ -122,10 +123,8 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         ctx['nav_items'] = get_account_navigation(request)
         requires_reset = not user.has_usable_password()
         ctx['requires_password_reset'] = requires_reset
-        provider_label = password_reset_provider_label(user)
-        ctx['password_reset_message'] = build_password_reset_message(
-            requires_reset, provider_label
-        )
+        provider_label = get_social_account_provider_label(user)
+        ctx['password_reset_message'] = build_password_reset_message(requires_reset, provider_label)
         # Passed by the post() method when the password reset form was submitted.
         password_reset_form = kwargs.get('password_reset_form')
         # If this form is present, it means we need to render it with errors,
@@ -302,5 +301,4 @@ def build_password_reset_message(requires_reset: bool, provider_label: str) -> s
             'Your account was created via {provider} login and does not have a password yet. '
             'Send yourself a password setup link below.'
         ).format(provider=provider_label)
-    return _(
-        'Your account does not have a password yet. Send yourself a password setup link below.')
+    return _('Your account does not have a password yet. Send yourself a password setup link below.')
