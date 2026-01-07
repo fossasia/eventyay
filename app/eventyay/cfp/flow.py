@@ -646,16 +646,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             )
             messages.error(self.request, error_message)
             return self.get(request)
-        
-        # Manually extract and save user fields from POST data
-        # This bypasses the unreliable cleaned_data mechanism for dynamic fields
+
+        # Use only validated and cleaned form data
         saved_data = form.cleaned_data.copy()
-        from eventyay.person.forms import SpeakerProfileForm
-        if isinstance(form, SpeakerProfileForm):
-            for field_name in form.user_fields:
-                if field_name in request.POST:
-                    saved_data[field_name] = request.POST.get(field_name)
-        
         self.set_data(saved_data)
         self.set_files(form.files)
 
