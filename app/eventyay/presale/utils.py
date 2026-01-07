@@ -33,7 +33,7 @@ def _check_event_access_permission(request, event, organizer, url, error_message
         sparent = SessionStore(request.session.get(f'eventyay_event_access_{event.pk}'))
         try:
             parentdata = sparent.load()
-        except:
+        except Exception:
             pass
         else:
             can_access = 'event_access' in parentdata
