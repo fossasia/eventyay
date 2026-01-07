@@ -1,28 +1,14 @@
 from django.conf import settings
-from django.contrib import messages
-from django.db import transaction
 from django.db.models import F, Max, Min, Prefetch
 from django.db.models.functions import Coalesce, Greatest
-from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect
-from django.urls import reverse
+from django.http import JsonResponse
 from django.utils.crypto import get_random_string
 from django.utils.functional import cached_property
-from django.utils.translation import gettext
-from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import ListView
-from i18nfield.strings import LazyI18nString
 
-from eventyay.base.forms import SafeSessionWizardView
-from eventyay.base.i18n import language
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota, Team
+from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services.quotas import QuotaAvailability
-from eventyay.control.forms.event import (
-    EventWizardBasicsForm,
-    EventWizardCopyForm,
-    EventWizardFoundationForm,
-)
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import OrganizerPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin
@@ -102,31 +88,6 @@ class EventList(PaginationMixin, ListView):
     @cached_property
     def filter_form(self):
         return EventFilterForm(data=self.request.GET, request=self.request)
-
-
-class EventWizard(View):
-    """
-    Legacy ticket-only event creation view.
-    This has been replaced by the unified common event creation flow.
-    Redirects to the canonical event creation at /eventyay_common/events/add
-    """
-
-    def dispatch(self, request, *args, **kwargs):
-        messages.info(
-            request,
-            _(
-                'Event creation is now handled through the unified event creation flow. '
-                'You have been redirected to the new event creation page.'
-            ),
-        )
-        
-        # Preserve query parameters (e.g., ?organizer=..., ?clone=...)
-        redirect_url = reverse('eventyay_common:events.add')
-        if request.GET:
-            query_string = request.GET.urlencode()
-            redirect_url = f'{redirect_url}?{query_string}'
-        
-        return HttpResponseRedirect(redirect_url)
 
 
 class SlugRNG(OrganizerPermissionRequiredMixin, View):
