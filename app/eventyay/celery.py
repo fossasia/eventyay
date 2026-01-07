@@ -3,7 +3,7 @@ import os
 from celery import Celery
 
 os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'development')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.next_settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 
 from django.conf import settings
 
