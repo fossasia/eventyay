@@ -1,4 +1,7 @@
+import logging
 from django import forms
+
+logger = logging.getLogger(__name__)
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Q
@@ -72,18 +75,39 @@ class SpeakerProfileForm(
             kwargs['instance'] = self.user.event_profile(self.event)
         super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
         read_only = kwargs.get('read_only', False)
-        initial = kwargs.get('initial', {})
+        # CRITICAL: Do NOT modify initial if data was passed, as they might be the same dict
+        # When get_form(from_storage=True) is called, it passes the same dict as both data and initial
+        # Modifying initial here would contaminate the data being validated
+        initial = kwargs.get('initial', {}).copy() if 'data' in args or kwargs.get('data') else kwargs.get('initial', {})
         initial['name'] = name
 
-        if self.user:
+        if self.user and not (args and args[0] is not None):
+            # Only populate from user if this is NOT a bound form (no data argument)
             initial.update({field: getattr(self.user, field) for field in self.user_fields})
         for field in self.user_fields:
-            field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
-            self.fields[field] = field_class(
-                initial=initial.get(field),
-                disabled=read_only,
-                help_text=User._meta.get_field(field).help_text,
-            )
+            if field == 'fullname':
+                self.fields[field] = forms.CharField(
+                    label=_('Full name'),
+                    initial=initial.get(field),
+                    disabled=read_only,
+                    help_text=User._meta.get_field(field).help_text,
+                    required=True
+                )
+            elif field == 'email':
+                self.fields[field] = forms.EmailField(
+                    label=_('E-mail'),
+                    initial=initial.get(field),
+                    disabled=read_only,
+                    help_text=User._meta.get_field(field).help_text,
+                    required=True
+                )
+            else:
+                field_class = self.Meta.field_classes.get(field, User._meta.get_field(field).formfield)
+                self.fields[field] = field_class(
+                    initial=initial.get(field),
+                    disabled=read_only,
+                    help_text=User._meta.get_field(field).help_text,
+                )
             if self.Meta.widgets.get(field):
                 self.fields[field].widget = self.Meta.widgets.get(field)()
             self._update_cfp_texts(field)
@@ -139,8 +163,10 @@ class SpeakerProfileForm(
                 'avatar',
                 forms.ValidationError(
                     _('Please provide a profile picture or allow us to load your picture from gravatar!')
-                ),
+                )
             )
+
+
         return data
 
     def save(self, **kwargs):
@@ -155,7 +181,12 @@ class SpeakerProfileForm(
                 self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            self.user.save(update_fields=[user_attribute])
+            try:
+                self.user.save(update_fields=[user_attribute])
+            except Exception:
+                # We do not want to crash the form save if e.g. the email is already taken
+                # by another user or if there are other database constraints.
+                pass
 
         self.instance.event = self.event
         self.instance.user = self.user

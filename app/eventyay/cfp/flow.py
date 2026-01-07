@@ -296,6 +296,25 @@ class FormFlowStep(TemplateFlowStep):
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
+
+        if not self.is_completed(request):
+            # This can happen if the data we just saved is valid for the form processing,
+            # but fails when re-loaded from storage (e.g. strict validation in is_completed).
+            # We must not return None here, or the wizard will crash.
+            # Instead, we show the form again with the errors from storage validation.
+            bound_form = self.get_form(from_storage=True)
+            bound_form.is_valid()  # Trigger validation to generate errors
+            
+            error_message = '\n\n'.join(
+                (f'{bound_form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
+                for key, values in bound_form.errors.items()
+            )
+            messages.error(self.request, error_message)
+
+            context = self.get_context_data()
+            context['form'] = bound_form
+            return self.render_to_response(context)
+
         next_url = self.get_next_url(request)
         return redirect(next_url) if next_url else None
 
@@ -580,7 +599,9 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
 
     def done(self, request, draft=False):
         form = self.get_form(from_storage=True)
-        form.is_valid()
+        if not form.is_valid():
+            logger.error('ProfileStep.done called with invalid form: %s', form.errors)
+            return
         form.user = request.user
         form.save()
 
@@ -603,6 +624,57 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
             'img-src': 'https://www.gravatar.com',
             'connect-src': 'https://www.gravatar.com',
         }
+
+    def post(self, request):
+        """Override post to manually handle user fields that aren't properly persisting"""
+        self.request = request
+        form = self.get_form()
+        action = request.POST.get('action', 'submit')
+
+        if action == 'back':
+            if form.is_valid():
+               self.set_data(form.cleaned_data)
+            if form.files:
+                self.set_files(form.files)
+            prev_url = self.get_prev_url(request)
+            return redirect(prev_url) if prev_url else redirect(request.path)
+
+        if not form.is_valid():
+            error_message = '\n\n'.join(
+                (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
+                for key, values in form.errors.items()
+            )
+            messages.error(self.request, error_message)
+            return self.get(request)
+        
+        # Manually extract and save user fields from POST data
+        # This bypasses the unreliable cleaned_data mechanism for dynamic fields
+        saved_data = form.cleaned_data.copy()
+        from eventyay.person.forms import SpeakerProfileForm
+        if isinstance(form, SpeakerProfileForm):
+            for field_name in form.user_fields:
+                if field_name in request.POST:
+                    saved_data[field_name] = request.POST.get(field_name)
+        
+        self.set_data(saved_data)
+        self.set_files(form.files)
+
+        if not self.is_completed(request):
+            bound_form = self.get_form(from_storage=True)
+            bound_form.is_valid()
+            
+            error_message = '\n\n'.join(
+                (f'{bound_form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
+                for key, values in bound_form.errors.items()
+            )
+            messages.error(self.request, error_message)
+
+            context = self.get_context_data()
+            context['form'] = bound_form
+            return self.render_to_response(context)
+
+        next_url = self.get_next_url(request)
+        return redirect(next_url) if next_url else None
 
 
 DEFAULT_STEPS = (
