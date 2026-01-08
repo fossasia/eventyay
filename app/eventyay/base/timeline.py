@@ -24,9 +24,14 @@ def timeline_for_event(event, subevent=None):
                 'subevent': subevent.pk,
             },
         )
+        date_edit_url = ev_edit_url
     else:
         ev_edit_url = reverse(
             'control:event.settings',
+            kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+        )
+        date_edit_url = reverse(
+            'eventyay_common:event.update',
             kwargs={'event': event.slug, 'organizer': event.organizer.slug},
         )
 
@@ -36,7 +41,7 @@ def timeline_for_event(event, subevent=None):
             subevent=subevent,
             datetime=ev.date_from,
             description=pgettext_lazy('timeline', 'Event starts'),
-            edit_url=ev_edit_url,
+            edit_url=date_edit_url,
         )
     )
 
@@ -47,7 +52,7 @@ def timeline_for_event(event, subevent=None):
                 subevent=subevent,
                 datetime=ev.date_to,
                 description=pgettext_lazy('timeline', 'Event ends'),
-                edit_url=ev_edit_url,
+                edit_url=date_edit_url,
             )
         )
 
