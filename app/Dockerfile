@@ -42,7 +42,7 @@ RUN make webappbuild
 RUN npm install -g esbuild
 
 # Create .secrets to suppress warnings about missing directory
-RUN mkdir $APP_HOME/.secrets
+RUN mkdir -p $APP_HOME/.secrets
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
