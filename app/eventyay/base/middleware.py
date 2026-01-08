@@ -206,6 +206,9 @@ class SecurityMiddleware(MiddlewareMixin):
         gs = global_settings_object(request)
         if gs.settings.leaflet_tiles:
             img_src.append(gs.settings.leaflet_tiles[: gs.settings.leaflet_tiles.index('/', 10)].replace('{s}', '*'))
+        else:
+            # Default to OpenStreetMap tiles if not configured
+            img_src.append('https://*.tile.openstreetmap.org')
 
         h = {
             'default-src': ['{static}'],

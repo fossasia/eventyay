@@ -18,8 +18,15 @@
     {% else %}
         <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
     {% endif %}
+    {% if ev.geo_lat and ev.geo_lon %}
+        <link rel="stylesheet" href="{% static 'leaflet/leaflet.css' %}" />
+        <script src="{% static 'leaflet/leaflet.js' %}"></script>
+    {% endif %}
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
+        {% if ev.geo_lat and ev.geo_lon %}
+            <script type="text/javascript" src="{% static "pretixpresale/js/ui/venue-map.js" %}"></script>
+        {% endif %}
     {% endcompress %}
 {% endblock %}
 {% block content %}
@@ -263,6 +270,25 @@
                 {% endif %}
 
             </div>
+
+            {% comment %} Venue Map Section {% endcomment %}
+            {% if ev.geo_lat and ev.geo_lon %}
+                <div class="venue-map-section" style="margin-top: 30px; margin-bottom: 20px;">
+                    <h3>{% trans "Venue Location" %}</h3>
+                    {% if ev.location %}
+                        <p style="margin-bottom: 15px; color: #555;">
+                            <i class="fa fa-map-marker" aria-hidden="true"></i> 
+                            <strong>{{ ev.location }}</strong>
+                        </p>
+                    {% endif %}
+                    <div id="venue-map" 
+                         data-lat="{{ ev.geo_lat }}" 
+                         data-lon="{{ ev.geo_lon }}"
+                         {% if ev.location %}data-location="{{ ev.location|escapejs }}"{% endif %}
+                         style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;">
+                    </div>
+                </div>
+            {% endif %}
 
             {% eventsignal event "eventyay.presale.signals.front_page_top" request=request subevent=subevent %}
         {% endif %}
