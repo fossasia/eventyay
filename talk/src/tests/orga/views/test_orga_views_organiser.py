@@ -280,10 +280,6 @@ def test_remove_other_team_member_but_not_last_member(
 
 
 @pytest.mark.django_db
-
-
-
-@pytest.mark.django_db
 def test_organiser_cannot_delete_organiser(event, orga_client, submission):
     assert Event.objects.count() == 1
     assert Organiser.objects.count() == 1
