@@ -1149,3 +1149,14 @@ h1 .label {
 .navbar-inverse #profile-dropdown > summary:focus i {
     color: $navbar-link-hover-color;
 }
+
+/* eventyay common organizer settings: align panel/submit greys with sidebar */
+.organizer-management {
+    .panel-default > .panel-heading {
+        background-color: $gray-lightest;
+    }
+
+    .submit-group {
+        background: $gray-lightest;
+    }
+}
