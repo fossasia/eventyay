@@ -83,6 +83,7 @@ from .organizer import (
     TeamAPIToken,
     TeamInvite,
 )
+from .partner import Partner, SponsorGroup
 from .poll import Poll, PollOption, PollVote
 from .poster import Poster, PosterLink, PosterPresenter, PosterVote
 from .profile import SpeakerProfile
@@ -185,6 +186,7 @@ __all__ = [
     "Organizer",
     "Organizer_SettingsStore",
     "OrganizerBillingModel",
+    "Partner",
     "Poll",
     "PollOption",
     "PollVote",
@@ -218,6 +220,7 @@ __all__ = [
     "SeatCategoryMapping",
     "SeatingPlan",
     "SpeakerProfile",
+    "SponsorGroup",
     "StreamingServer",
     "SubEvent",
     "SubEventProduct",

@@ -1,0 +1,97 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}
+    {% if sponsor_group.pk %}
+        {% trans "Edit Sponsor Group" %}
+    {% else %}
+        {% trans "Add Sponsor Group" %}
+    {% endif %}
+{% endblock %}
+
+{% block inside %}
+<div class="panel panel-default" style="margin: 0;">
+    <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
+        <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+            {% if sponsor_group.pk %}
+                {% trans "Edit Sponsor Group" %}
+            {% else %}
+                {% trans "Add Sponsor Group" %}
+            {% endif %}
+        </h3>
+    </div>
+    <div class="panel-body" style="padding: 20px;">
+        <form action="" method="post">
+            {% csrf_token %}
+            {% bootstrap_form_errors form %}
+            
+            <div class="form-group">
+                <label for="id_name">{% trans "Group name" %}</label>
+                {{ form.name }}
+                {% if form.name.help_text %}
+                <p class="help-block">{{ form.name.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_logo_size">{% trans "Logo size" %}</label>
+                <div class="row">
+                    <div class="col-md-8">
+                        <input type="range" class="form-control" id="logo_size_slider" 
+                               min="20" max="500" value="{{ form.logo_size.value|default:120 }}"
+                               style="width: 100%; padding: 8px 0;">
+                    </div>
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            {{ form.logo_size }}
+                            <span class="input-group-addon">px</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="help-block">
+                    {% trans "Maximum height for partner logos in this group (20-500 pixels)" %}
+                </p>
+            </div>
+            
+            {{ form.order }}
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save"></i>
+                    {% if sponsor_group.pk %}
+                        {% trans "Save Changes" %}
+                    {% else %}
+                        {% trans "Create Group" %}
+                    {% endif %}
+                </button>
+                <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#partner-tab" 
+                   class="btn btn-default">
+                    <i class="fa fa-times"></i> {% trans "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('logo_size_slider');
+    const input = document.getElementById('id_logo_size');
+    
+    if (slider && input) {
+        // Sync slider with input
+        slider.addEventListener('input', function() {
+            input.value = this.value;
+        });
+        
+        // Sync input with slider
+        input.addEventListener('input', function() {
+            const value = Math.max(20, Math.min(500, this.value));
+            this.value = value;
+            slider.value = value;
+        });
+    }
+});
+</script>
+{% endblock %}

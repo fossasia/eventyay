@@ -368,6 +368,13 @@ class EventUpdate(
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
+        
+        # Add sponsor groups for partner management
+        from eventyay.base.models import SponsorGroup
+        context['sponsor_groups'] = SponsorGroup.objects.filter(
+            event=self.object
+        ).prefetch_related('partners').order_by('order')
+        
         return context
 
     @transaction.atomic

@@ -47,6 +47,7 @@ class EventCommonSettingsForm(SettingsForm):
         'imprint_url',
         'region',
         'frontpage_text',
+        'partner_section_heading',
     ]
 
     def clean(self):

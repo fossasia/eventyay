@@ -169,6 +169,109 @@
             <legend>{{ _('Texts') }}</legend>
             {% bootstrap_field sform.frontpage_text layout="control" %}
         </fieldset>
+        <fieldset id="partner-tab">
+            <legend>{% trans "Partner" %}</legend>
+            
+            <div class="panel panel-default" style="margin-bottom: 20px;">
+                <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
+                    <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+                        {% trans "Partner Section Heading" %}
+                    </h3>
+                </div>
+                <div class="panel-body" style="padding: 20px;">
+                    <div class="form-group">
+                        <label for="id_settings-partner_section_heading">{% trans "Section heading" %}</label>
+                        {{ sform.partner_section_heading }}
+                        <p class="help-block">{{ sform.partner_section_heading.help_text }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel panel-default">
+                <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
+                    <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+                        {% translate "Sponsor groups" %}
+                    </h3>
+                </div>
+                <div class="panel-body" style="padding: 20px;">
+                    <p class="help-block" style="margin-bottom: 15px;">
+                        {% blocktranslate trimmed %}
+                            Create groups for different sponsor tiers (e.g., Platinum, Gold, Silver).
+                            Each group can contain multiple partners with logos and links.
+                        {% endblocktranslate %}
+                    </p>
+                    
+                    {% if sponsor_groups %}
+                    <div id="sponsor-groups-list" class="sponsor-groups-sortable" style="margin-bottom: 15px;">
+                        {% for group in sponsor_groups %}
+                        <div class="sponsor-group-item panel panel-default" data-group-id="{{ group.id }}" style="margin-bottom: 10px;">
+                            <div class="panel-heading" style="background-color: #f9f9f9; padding: 12px 15px;">
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                                            <i class="fa fa-bars"></i>
+                                        </span>
+                                        <strong style="font-size: 15px;">{{ group.name }}</strong>
+                                        <span class="label label-default" style="margin-left: 8px;">
+                                            {{ group.partners.count }} partner{{ group.partners.count|pluralize }}
+                                        </span>
+                                        <span class="text-muted" style="margin-left: 8px; font-size: 12px;">
+                                            • Logo size: {{ group.logo_size }}px
+                                        </span>
+                                    </div>
+                                    <div class="col-md-5 text-right">
+                                        <a href="{% url 'eventyay_common:partner.manage' organizer=request.organizer.slug event=request.event.slug group_pk=group.id %}" 
+                                           class="btn btn-sm btn-default">
+                                            <i class="fa fa-users"></i> {% trans "Manage Partners" %}
+                                        </a>
+                                        <a href="{% url 'eventyay_common:partner.group.edit' organizer=request.organizer.slug event=request.event.slug pk=group.id %}" 
+                                           class="btn btn-sm btn-default">
+                                            <i class="fa fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'eventyay_common:partner.group.delete' organizer=request.organizer.slug event=request.event.slug pk=group.id %}" 
+                                           class="btn btn-sm btn-danger">
+                                            <i class="fa fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if group.partners.exists %}
+                            <div class="panel-body" style="padding: 10px 15px; background-color: #fff;">
+                                <div class="partner-logos-preview partners-inline-sortable" data-group-id="{{ group.id }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                    {% for partner in group.partners.all %}
+                                        <div class="partner-item-inline" data-partner-id="{{ partner.id }}" style="position: relative;">
+                                            <span class="partner-drag-handle" style="cursor: move; position: absolute; top: 2px; left: 2px; background: rgba(0,0,0,0.5); color: white; padding: 2px 4px; border-radius: 3px; font-size: 10px; display: none;">
+                                                <i class="fa fa-bars"></i>
+                                            </span>
+                                            {% if partner.logo %}
+                                            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}" 
+                                                 style="max-height: 40px; max-width: 100px; object-fit: contain; border: 1px solid #ddd; padding: 3px; background: white;" 
+                                                 title="{{ partner.name }}">
+                                            {% else %}
+                                            <span class="label label-info" style="padding: 5px 10px;">{{ partner.name }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info" style="margin-bottom: 15px;">
+                        <i class="fa fa-info-circle"></i>
+                        {% trans "No sponsor groups created yet. Add your first sponsor group to get started." %}
+                    </div>
+                    {% endif %}
+                    
+                    <a href="{% url 'eventyay_common:partner.group.add' organizer=request.organizer.slug event=request.event.slug %}" 
+                       class="btn btn-default">
+                        <i class="fa fa-plus"></i> {% trans "Add Sponsor Group" %}
+                    </a>
+                </div>
+            </div>
+        </fieldset>
         <fieldset>
             <legend>{{ _('Design') }}</legend>
             {% bootstrap_field sform.event_logo_image layout="control" %}
@@ -265,4 +368,182 @@
     </div>
     {% endcomment %}
 </form>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sponsorGroupsList = document.getElementById('sponsor-groups-list');
+    
+    // Initialize group sorting
+    if (sponsorGroupsList) {
+        new Sortable(sponsorGroupsList, {
+            handle: '.handle',
+            animation: 150,
+            onEnd: function(evt) {
+                // Collect group IDs in new order
+                const groupIds = [];
+                const items = sponsorGroupsList.querySelectorAll('.sponsor-group-item');
+                items.forEach(item => {
+                    groupIds.push(parseInt(item.dataset.groupId));
+                });
+                
+                // Send AJAX request to update order
+                fetch('{% url "eventyay_common:partner.group.reorder" organizer=request.organizer.slug event=request.event.slug %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({group_ids: groupIds})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Group order updated successfully');
+                    } else {
+                        console.error('Failed to update group order:', data.message);
+                        alert('{% trans "Failed to update group order. Please refresh and try again." %}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{% trans "An error occurred. Please refresh and try again." %}');
+                });
+            }
+        });
+    }
+    
+    // Initialize inline partner sorting for each group
+    const partnerContainers = document.querySelectorAll('.partners-inline-sortable');
+    partnerContainers.forEach(container => {
+        // Show drag handles on hover
+        container.addEventListener('mouseenter', function() {
+            this.querySelectorAll('.partner-drag-handle').forEach(handle => {
+                handle.style.display = 'block';
+            });
+        });
+        container.addEventListener('mouseleave', function() {
+            this.querySelectorAll('.partner-drag-handle').forEach(handle => {
+                handle.style.display = 'none';
+            });
+        });
+        
+        new Sortable(container, {
+            handle: '.partner-drag-handle',
+            animation: 150,
+            ghostClass: 'partner-sortable-ghost',
+            onEnd: function(evt) {
+                const groupId = container.dataset.groupId;
+                const partnerIds = [];
+                container.querySelectorAll('.partner-item-inline').forEach(item => {
+                    partnerIds.push(parseInt(item.dataset.partnerId));
+                });
+                
+                // Build URL dynamically
+                const baseUrl = '{% url "eventyay_common:partner.reorder" organizer=request.organizer.slug event=request.event.slug %}';
+                
+                // Send AJAX request to update partner order
+                fetch(baseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        group_id: groupId,
+                        partner_ids: partnerIds
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        console.log('Partner order updated successfully');
+                        // Show success feedback
+                        const feedback = document.createElement('span');
+                        feedback.textContent = ' ✓ Order saved';
+                        feedback.style.color = '#5cb85c';
+                        feedback.style.marginLeft = '10px';
+                        feedback.style.fontSize = '12px';
+                        container.appendChild(feedback);
+                        setTimeout(() => feedback.remove(), 2000);
+                    } else {
+                        console.error('Failed to update partner order:', data.message);
+                        alert('{% trans "Failed to update partner order. Please refresh and try again." %}');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('{% trans "An error occurred. Please refresh and try again." %}');
+                });
+            }
+        });
+    });
+    
+    // Handle navigation to partner tab if hash is present
+    if (window.location.hash === '#partner-tab') {
+        const partnerTab = document.getElementById('partner-tab');
+        if (partnerTab) {
+            partnerTab.scrollIntoView({behavior: 'smooth'});
+        }
+    }
+});
+</script>
+
+<style>
+.sponsor-group-item {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sponsor-group-item:hover {
+    border-left-color: #5cb85c;
+}
+
+.sponsor-group-item .handle {
+    transition: color 0.2s ease;
+}
+
+.sponsor-group-item .handle:hover {
+    color: #333 !important;
+}
+
+.sortable-ghost {
+    opacity: 0.5;
+    background: #f0f0f0 !important;
+    transform: rotate(2deg);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.partner-item-inline {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.partner-item-inline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.partner-drag-handle {
+    transition: opacity 0.2s ease;
+}
+
+.partner-sortable-ghost {
+    opacity: 0.4;
+    transform: rotate(3deg);
+}
+
+.partners-inline-sortable {
+    min-height: 50px;
+    transition: background 0.2s ease;
+}
+
+.partners-inline-sortable:hover {
+    background-color: #f9f9f9 !important;
+}
+</style>
 {% endblock %}
+

@@ -592,6 +592,12 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['event_name'] = event_name
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
 
+        # Add sponsor groups for partner section
+        from eventyay.base.models import SponsorGroup
+        context['sponsor_groups'] = SponsorGroup.objects.filter(
+            event=self.request.event
+        ).prefetch_related('partners').order_by('order')
+
         return context
 
     def _subevent_list_context(self):

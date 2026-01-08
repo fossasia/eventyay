@@ -1,0 +1,517 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}{% trans "Manage partners" %} - {{ sponsor_group.name }}{% endblock %}
+
+{% block inside %}
+<div class="panel panel-default" style="margin: 0;">
+    <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
+        <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+            {% trans "Manage partners" %}: <strong>{{ sponsor_group.name }}</strong>
+        </h3>
+    </div>
+    <div class="panel-body" style="padding: 20px;">
+        <div class="alert alert-info">
+            <i class="fa fa-info-circle"></i>
+            {% blocktranslate with size=sponsor_group.logo_size %}
+                Logos in this group will be displayed at maximum {{ size }}px height on the public page.
+                You can drag and drop partners to reorder them.
+            {% endblocktranslate %}
+        </div>
+
+        <form action="" method="post" enctype="multipart/form-data" id="partner-form">
+            {% csrf_token %}
+            {{ formset.management_form }}
+            
+            {% if sponsor_group.partners.exists %}
+            <div id="partners-list" class="partners-sortable">
+                {% for form in formset %}
+                {% if form.instance.pk %}
+                <div class="partner-form-item panel panel-default" data-partner-index="{{ forloop.counter0 }}" style="margin-bottom: 10px;">
+                    <div class="panel-heading" style="background-color: #f5f5f5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                                <i class="fa fa-bars"></i>
+                            </span>
+                            <strong>Partner #{{ forloop.counter }}</strong>
+                            <span class="label label-success" style="margin-left: 8px;">Saved</span>
+                        </div>
+                        {% if formset.can_delete %}
+                        <div>
+                            {{ form.DELETE }}
+                            <button type="button" class="btn btn-danger btn-xs delete-partner-btn" 
+                                    data-partner-name="{{ form.instance.name }}"
+                                    data-partner-index="{{ forloop.counter0 }}">
+                                <i class="fa fa-trash"></i> {% trans "Delete" %}
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="panel-body" style="padding: 12px;">
+                        <div class="form-group">
+                            <label for="id_{{ form.prefix }}-name">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="help-block text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_{{ form.prefix }}-link">{{ form.link.label }}</label>
+                            {{ form.link }}
+                            {% if form.link.errors %}
+                            <div class="help-block text-danger">{{ form.link.errors }}</div>
+                            {% endif %}
+                            <p class="help-block">{% trans "Optional website URL for this partner" %}</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>{{ form.logo.label }}</label>
+                            {{ form.logo }}
+                            {% if form.logo.errors %}
+                            <div class="help-block text-danger">{{ form.logo.errors }}</div>
+                            {% endif %}
+                            <p class="help-block">{% trans "Max 10MB. Formats: GIF, JPEG, JPG, PNG, SVG" %}</p>
+                            
+                            {# Live preview container #}
+                            <div class="logo-preview-container" id="preview-{{ forloop.counter0 }}" style="margin-top: 10px; display: none;">
+                                <strong>{% trans "Preview:" %}</strong><br>
+                                <img class="logo-preview-img" src="" alt="Preview" 
+                                     style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                            </div>
+                            
+                            {# Current logo if exists #}
+                            {% if form.instance.logo %}
+                            <div class="current-logo-container" id="current-{{ forloop.counter0 }}" style="margin-top: 10px;">
+                                <strong>{% trans "Current logo:" %}</strong><br>
+                                <img src="{{ form.instance.logo.url }}" alt="{{ form.instance.name }}" 
+                                     style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        {{ form.order }}
+                        {{ form.id }}
+                    </div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="alert alert-warning" style="text-align: center; padding: 30px;">
+                <i class="fa fa-info-circle" style="font-size: 48px; color: #f0ad4e; margin-bottom: 15px;"></i>
+                <h4>{% trans "No partners in this group yet" %}</h4>
+                <p>{% trans "Click the button below to add your first partner" %}</p>
+            </div>
+            <div id="partners-list" class="partners-sortable" style="display: none;"></div>
+            {% endif %}
+            
+            <div style="margin: 15px 0;">
+                <button type="button" id="add-partner-btn" class="btn btn-success">
+                    <i class="fa fa-plus"></i> 
+                    {% if sponsor_group.partners.exists %}
+                        {% trans "Add Another Partner" %}
+                    {% else %}
+                        {% trans "Add Partner" %}
+                    {% endif %}
+                </button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 20px;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save"></i> {% trans "Save Changes" %}
+                </button>
+                <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#partner-tab" 
+                   class="btn btn-default">
+                    <i class="fa fa-arrow-left"></i> {% trans "Back to Settings" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const partnersList = document.getElementById('partners-list');
+    const addPartnerBtn = document.getElementById('add-partner-btn');
+    const form = document.getElementById('partner-form');
+    
+    // Initialize Sortable for drag-and-drop
+    if (partnersList) {
+        new Sortable(partnersList, {
+            handle: '.handle',
+            animation: 150,
+            onEnd: function(evt) {
+                // Update order fields after reordering
+                updateOrderFields();
+            }
+        });
+    }
+    
+    // Function to update order fields
+    function updateOrderFields() {
+        const items = partnersList.querySelectorAll('.partner-form-item');
+        items.forEach((item, index) => {
+            const orderInput = item.querySelector('input[name$="-order"]');
+            if (orderInput) {
+                orderInput.value = index;
+            }
+            // Update partner number display
+            const heading = item.querySelector('.panel-heading strong');
+            if (heading) {
+                heading.textContent = 'Partner #' + (index + 1);
+            }
+        });
+    }
+    
+    // Add another partner form dynamically
+    if (addPartnerBtn) {
+        addPartnerBtn.addEventListener('click', function() {
+            // Show the partners list if it's hidden (for empty state)
+            if (partnersList && partnersList.style.display === 'none') {
+                partnersList.style.display = 'block';
+                // Hide the empty state alert
+                const emptyAlert = document.querySelector('.alert-warning');
+                if (emptyAlert) {
+                    emptyAlert.style.display = 'none';
+                }
+            }
+            
+            const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+            const currentTotal = parseInt(totalForms.value);
+            const maxForms = parseInt(document.querySelector('input[name$="-MAX_NUM_FORMS"]').value);
+            
+            if (currentTotal >= maxForms) {
+                alert('{% trans "Maximum number of partners reached" %}');
+                return;
+            }
+            
+            // If it's the first partner (empty state), create initial form structure
+            if (partnersList.children.length === 0) {
+                createNewPartnerForm(0);
+                totalForms.value = 1;
+                return;
+            }
+            
+            // Clone the last form
+            const lastForm = partnersList.querySelector('.partner-form-item:last-child');
+            const newForm = lastForm.cloneNode(true);
+            
+            // Update form index
+            const newIndex = currentTotal;
+            newForm.setAttribute('data-partner-index', newIndex);
+            
+            // Clear all input values and update names/ids
+            newForm.querySelectorAll('input, select, textarea').forEach(input => {
+                const name = input.getAttribute('name');
+                const id = input.getAttribute('id');
+                
+                if (name) {
+                    input.setAttribute('name', name.replace(/\d+/, newIndex));
+                }
+                if (id) {
+                    input.setAttribute('id', id.replace(/\d+/, newIndex));
+                }
+                
+                // Clear values
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else if (input.type === 'file') {
+                    input.value = '';
+                } else {
+                    input.value = '';
+                }
+            });
+            
+            // Update labels
+            newForm.querySelectorAll('label').forEach(label => {
+                const forAttr = label.getAttribute('for');
+                if (forAttr) {
+                    label.setAttribute('for', forAttr.replace(/\d+/, newIndex));
+                }
+            });
+            
+            // Clear preview containers
+            const previewContainer = newForm.querySelector('.logo-preview-container');
+            if (previewContainer) {
+                previewContainer.style.display = 'none';
+                previewContainer.setAttribute('id', 'preview-' + newIndex);
+            }
+            
+            const currentContainer = newForm.querySelector('.current-logo-container');
+            if (currentContainer) {
+                currentContainer.remove();
+            }
+            
+            // Update badge to "New"
+            const badge = newForm.querySelector('.label');
+            if (badge) {
+                badge.className = 'label label-default';
+                badge.textContent = '{% trans "New" %}';
+            }
+            
+            // For new forms, add a remove button in the heading instead of delete
+            const existingDeleteBtn = newForm.querySelector('.delete-partner-btn');
+            if (existingDeleteBtn) {
+                existingDeleteBtn.remove();
+            }
+            
+            // Add a "Remove" button for unsaved forms
+            const heading = newForm.querySelector('.panel-heading > div:first-child');
+            if (heading && !heading.querySelector('.remove-partner-btn')) {
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-danger btn-xs remove-partner-btn';
+                removeBtn.style.marginLeft = '10px';
+                removeBtn.innerHTML = '<i class="fa fa-times"></i> {% trans "Remove" %}';
+                heading.appendChild(removeBtn);
+            }
+            
+            // Reset form opacity and border (in case it was cloned from a deleted item)
+            newForm.style.opacity = '1';
+            newForm.style.border = '';
+            
+            // Append new form
+            partnersList.appendChild(newForm);
+            
+            // Update total forms count
+            totalForms.value = currentTotal + 1;
+            
+            // Re-initialize file preview for new form
+            initFilePreview(newIndex);
+            
+            // Update order fields
+            updateOrderFields();
+        });
+    }
+    
+    // Function to create a new partner form from scratch (for empty state)
+    function createNewPartnerForm(index) {
+        const formPrefix = document.querySelector('input[name$="-TOTAL_FORMS"]').name.split('-')[0];
+        
+        const formHtml = `
+            <div class="partner-form-item panel panel-default" data-partner-index="${index}" style="margin-bottom: 10px;">
+                <div class="panel-heading" style="background-color: #f5f5f5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                            <i class="fa fa-bars"></i>
+                        </span>
+                        <strong>Partner #1</strong>
+                        <span class="label label-default" style="margin-left: 8px;">{% trans "New" %}</span>
+                        <button type="button" class="btn btn-danger btn-xs remove-partner-btn" style="margin-left: 10px;">
+                            <i class="fa fa-times"></i> {% trans "Remove" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-body" style="padding: 12px;">
+                    <div class="form-group">
+                        <label for="id_${formPrefix}-${index}-name">{% trans "Name" %}</label>
+                        <input type="text" name="${formPrefix}-${index}-name" class="form-control" placeholder="{% trans "Partner name" %}" id="id_${formPrefix}-${index}-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="id_${formPrefix}-${index}-link">{% trans "Link" %}</label>
+                        <input type="url" name="${formPrefix}-${index}-link" class="form-control" placeholder="https://example.com" id="id_${formPrefix}-${index}-link">
+                        <p class="help-block">{% trans "Optional website URL for this partner" %}</p>
+                    </div>
+                    <div class="form-group">
+                        <label>{% trans "Logo" %}</label>
+                        <input type="file" name="${formPrefix}-${index}-logo" class="form-control" accept="image/*" id="id_${formPrefix}-${index}-logo">
+                        <p class="help-block">{% trans "Max 10MB. Formats: GIF, JPEG, JPG, PNG, SVG" %}</p>
+                        <div class="logo-preview-container" id="preview-${index}" style="margin-top: 10px; display: none;">
+                            <strong>{% trans "Preview:" %}</strong><br>
+                            <img class="logo-preview-img" src="" alt="Preview" style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                        </div>
+                    </div>
+                    <input type="hidden" name="${formPrefix}-${index}-order" value="${index}" id="id_${formPrefix}-${index}-order">
+                    <input type="hidden" name="${formPrefix}-${index}-id" id="id_${formPrefix}-${index}-id">
+                </div>
+            </div>
+        `;
+        
+        partnersList.insertAdjacentHTML('beforeend', formHtml);
+        initFilePreview(index);
+    }
+    
+    // Initialize file preview for all existing inputs
+    const logoInputs = document.querySelectorAll('input[type="file"][name$="-logo"]');
+    logoInputs.forEach((input, index) => {
+        initFilePreview(index);
+    });
+    
+    // Handle delete button clicks with confirmation
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-partner-btn')) {
+            const btn = e.target.closest('.delete-partner-btn');
+            const partnerName = btn.dataset.partnerName;
+            const partnerIndex = btn.dataset.partnerIndex;
+            
+            // Show confirmation dialog
+            const confirmed = confirm(
+                '{% trans "Are you sure you want to delete this partner?" %}\n\n' +
+                '{% trans "Partner:" %} ' + partnerName + '\n\n' +
+                '{% trans "This action cannot be undone!" %}'
+            );
+            
+            if (confirmed) {
+                // Find and check the DELETE checkbox for this form
+                const deleteCheckbox = document.querySelector(`input[name$="-${partnerIndex}-DELETE"]`);
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    
+                    // Optionally hide the form item to show it's marked for deletion
+                    const formItem = btn.closest('.partner-form-item');
+                    if (formItem) {
+                        formItem.style.opacity = '0.5';
+                        formItem.style.border = '2px solid #d9534f';
+                        const badge = formItem.querySelector('.label');
+                        if (badge) {
+                            badge.className = 'label label-danger';
+                            badge.textContent = '{% trans "Marked for deletion" %}';
+                        }
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fa fa-check"></i> {% trans "Will be deleted" %}';
+                    }
+                }
+            }
+        }
+    });
+    
+    // Handle remove button clicks (for unsaved forms)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-partner-btn')) {
+            const btn = e.target.closest('.remove-partner-btn');
+            const formItem = btn.closest('.partner-form-item');
+            
+            if (formItem) {
+                // Simply remove the form from DOM
+                formItem.remove();
+                
+                // Update total forms count
+                const totalForms = document.querySelector('input[name$="-TOTAL_FORMS"]');
+                totalForms.value = parseInt(totalForms.value) - 1;
+                
+                // Update order fields and renumber
+                updateOrderFields();
+                
+                // If no forms left, show empty state
+                if (partnersList.children.length === 0) {
+                    const emptyAlert = document.querySelector('.alert-warning');
+                    if (emptyAlert) {
+                        emptyAlert.style.display = 'block';
+                    }
+                }
+            }
+        }
+    });
+    
+    // Function to initialize file preview for a specific index
+    function initFilePreview(index) {
+        const input = document.querySelector(`input[type="file"][name$="-${index}-logo"]`);
+        if (!input) return;
+        
+        // Remove old listener if exists
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
+        newInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const previewContainer = document.getElementById('preview-' + index);
+            const currentContainer = document.getElementById('current-' + index);
+            const previewImg = previewContainer ? previewContainer.querySelector('.logo-preview-img') : null;
+            
+            if (file && previewImg) {
+                // Validate file size (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('{% trans "File size must not exceed 10MB" %}');
+                    newInput.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Validate file type
+                const validTypes = ['image/gif', 'image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+                if (!validTypes.includes(file.type)) {
+                    alert('{% trans "Supported formats: GIF, JPEG, JPG, PNG, SVG" %}');
+                    newInput.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+                
+                // Show preview
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImg.src = event.target.result;
+                    previewContainer.style.display = 'block';
+                    // Hide current logo when new one is selected
+                    if (currentContainer) {
+                        currentContainer.style.opacity = '0.5';
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // No file selected, hide preview
+                if (previewContainer) {
+                    previewContainer.style.display = 'none';
+                }
+                if (currentContainer) {
+                    currentContainer.style.opacity = '1';
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+.partner-form-item {
+    transition: all 0.3s ease;
+}
+
+.partner-form-item .handle {
+    transition: color 0.2s ease;
+}
+
+.partner-form-item .handle:hover {
+    color: #333 !important;
+}
+
+.sortable-ghost {
+    opacity: 0.5;
+    background: #f0f0f0 !important;
+}
+
+.logo-preview-container {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Hide the DELETE checkbox, we use a button instead */
+input[name$="-DELETE"] {
+    display: none;
+}
+
+.delete-partner-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-partner-btn:hover:not(:disabled) {
+    background-color: #c9302c;
+    transform: scale(1.05);
+}
+
+.remove-partner-btn {
+    transition: all 0.2s ease;
+}
+
+.remove-partner-btn:hover {
+    background-color: #c9302c;
+    transform: scale(1.05);
+}
+</style>
+{% endblock %}
