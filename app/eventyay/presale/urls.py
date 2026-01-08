@@ -69,15 +69,21 @@ frame_wrapped_urls = [
     ),
     path(
         '<int:subevent>/',
-        eventyay.presale.views.event.EventIndex.as_view(),
+        eventyay.presale.views.event.EventInfo.as_view(),
         name='event.index',
+    ),
+    path(
+        'tickets/<int:subevent>/',
+        eventyay.presale.views.event.EventTickets.as_view(),
+        name='event.tickets',
     ),
     path(
         'waitinglist',
         eventyay.presale.views.waiting.WaitingView.as_view(),
         name='event.waitinglist',
     ),
-    path('', eventyay.presale.views.event.EventIndex.as_view(), name='event.index'),
+    path('', eventyay.presale.views.event.EventInfo.as_view(), name='event.index'),
+    path('tickets/', eventyay.presale.views.event.EventTickets.as_view(), name='event.tickets'),
 ]
 event_patterns = [
     # Cart/checkout patterns are a bit more complicated, as they should have simple URLs like cart/clear in normal

@@ -28,13 +28,13 @@
     margin-top: 10px;
     margin-bottom: 3rem;
     overflow: auto;
-    
+
     div {
         font-size: 1.65rem;
         display: flex;
         gap: 2rem;
     }
-    
+
     a {
         cursor: pointer;
         position: relative;
@@ -60,6 +60,7 @@
 
 #schedule-nav {
     margin: 16px 0px;
+
     .header-nav {
         border-color: darken($btn-primary-bg, 10%) !important;
         border: 1px solid;
@@ -67,22 +68,27 @@
         font-weight: normal;
         border-radius: 0;
     }
+
     .navigation {
         display: flex;
         flex-wrap: wrap;
+
         .navigation-button {
             margin-right: 8px;
             margin-bottom: 8px;
         }
+
         @media (min-width: 800px) {
             .video-link {
                 margin-left: auto;
             }
         }
+
         a:hover {
             color: #fff;
             background-color: $hover-button-color !important;
         }
+
         .popover-content {
             .options {
                 color: darken($btn-primary-bg, 10%);
@@ -92,23 +98,48 @@
                 font-weight: normal;
                 border-radius: 0;
             }
+
             .options:hover {
                 color: #fff;
                 color: darken($btn-primary-bg, 10%) !important;
             }
+
             div:first-child {
                 margin-bottom: 8px;
             }
         }
-        
+
     }
-    
+
 }
 
-.page-header-links{
-    .header-part{
+.page-header-links {
+    .header-part {
         a {
             color: #FFFFFF !important;
+        }
+
+        .header-tab {
+            padding: 5px 10px;
+            margin-right: 5px;
+            border-bottom: 2px solid transparent;
+            opacity: 0.9;
+            transition: all 0.2s ease-in-out;
+
+            &:hover,
+            &:focus {
+                text-decoration: none;
+                background-color: rgba(255, 255, 255, 0.1);
+                border-radius: 4px 4px 0 0;
+            }
+
+            &.active {
+                font-weight: bold;
+                border-bottom-color: currentColor !important;
+                opacity: 1;
+                background-color: rgba(255, 255, 255, 0.15);
+                border-radius: 4px 4px 0 0;
+            }
         }
     }
 }

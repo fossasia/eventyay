@@ -64,7 +64,7 @@ class BaseCheckoutFlowStep:
             kwargs = {}
             if request.resolver_match and 'cart_namespace' in request.resolver_match.kwargs:
                 kwargs['cart_namespace'] = request.resolver_match.kwargs['cart_namespace']
-            return eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            return eventreverse(self.request.event, 'presale:event.tickets', kwargs=kwargs)
         else:
             return prev.get_step_url(request)
 

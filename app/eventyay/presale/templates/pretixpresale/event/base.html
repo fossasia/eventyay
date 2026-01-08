@@ -10,115 +10,123 @@
 {% block container_width %} presale-container{% endblock %}
 
 {% block title %}
-    {% if messages %}
-        {{ messages|join:" " }} ::
-    {% endif %}
-    {% block pagetitle %}{{ event.name }}{% endblock %}
+{% if messages %}
+{{ messages|join:" " }} ::
+{% endif %}
+{% block pagetitle %}{{ event.name }}{% endblock %}
 {% endblock %}
 
 {% block custom_header %}
-    {% if event.settings.meta_noindex %}
-        <meta name="robots" content="noindex, nofollow">
-    {% endif %}
-    <meta property="og:type" content="website" />
-    {% if social_image %}
-        <meta property="og:image" content="{{ social_image }}" />
-    {% endif %}
-    {{ block.super }}
+{% if event.settings.meta_noindex %}
+<meta name="robots" content="noindex, nofollow">
+{% endif %}
+<meta property="og:type" content="website" />
+{% if social_image %}
+<meta property="og:image" content="{{ social_image }}" />
+{% endif %}
+{{ block.super }}
 {% endblock %}
 
 {% block site_notice %}
-    {{ block.super }}
-    {{ request.organizer.slug|json_script:"organizer_name" }}
-    {% if not event.live %}
-        <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-            <div class="container">
-                <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% trans "This shop is currently only visible to you and your team." %}
-                <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                    {% trans "Take it live now" %}
-                </a>
-            </div>
-        </div>
-    {% endif %}
+{{ block.super }}
+{{ request.organizer.slug|json_script:"organizer_name" }}
+{% if not event.live %}
+<div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
+    <div class="container">
+        <span class="fa fa-user-secret" aria-hidden="true"></span>
+        {% trans "This shop is currently only visible to you and your team." %}
+        <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
+            {% trans "Take it live now" %}
+        </a>
+    </div>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block header_tabs %}
-    {% if request.event.settings.organizer_link_back %}
-        <a class="header-tab" href="{% eventurl request.organizer "presale:organizer.index" %}">
-            &laquo; {% blocktrans trimmed with name=request.organizer.name %}
-            Show all events of {{ name }}
-        {% endblocktrans %}
-        </a>
-    {% endif %}
-    {% include "common/fragment_nav.html" with nav_context="presale" show_online_video_link=True %}
+{% if request.event.settings.organizer_link_back %}
+<a class="header-tab" href="{% eventurl request.organizer " presale:organizer.index" %}">
+    &laquo; {% blocktrans trimmed with name=request.organizer.name %}
+    Show all events of {{ name }}
+    {% endblocktrans %}
+</a>
+{% endif %}
+{% include "pretixpresale/event/fragment_nav.html" %}
 {% endblock header_tabs %}
 
 
 {% block alerts %}
-    {% if request.event.testmode %}
-        {% if request.sales_channel.testmode_supported %}
-            <div class="alert alert-warning alert-margin">
-                <strong>
-                    {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                </strong>
-            </div>
-        {% else %}
-            <div class="alert alert-danger">
-                <strong>
-                    {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                </strong>
-            </div>
-        {% endif %}
-    {% endif %}
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert {{ message.tags }}">
-                {{ message }}
-            </div>
-        {% endfor %}
-    {% endif %}
-    {% if request.event.settings.banner_text %}
-        <div class="site-notice-top">
-            {{ request.event.settings.banner_text|rich_text }}
-        </div>
-    {% endif %}
+{% if request.event.testmode %}
+{% if request.sales_channel.testmode_supported %}
+<div class="alert alert-warning alert-margin">
+    <strong>
+        {% blocktrans trimmed %}
+        This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice.
+        {% endblocktrans %}
+    </strong>
+</div>
+{% else %}
+<div class="alert alert-danger">
+    <strong>
+        {% blocktrans trimmed %}
+        Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!
+        {% endblocktrans %}
+    </strong>
+</div>
+{% endif %}
+{% endif %}
+{% if messages %}
+{% for message in messages %}
+<div class="alert {{ message.tags }}">
+    {{ message }}
+</div>
+{% endfor %}
+{% endif %}
+{% if request.event.settings.banner_text %}
+<div class="site-notice-top">
+    {{ request.event.settings.banner_text|rich_text }}
+</div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
-    {% block page_content %}{{ block.super }}{% endblock %}
+{% block page_content %}{{ block.super }}{% endblock %}
 {% endblock %}
 
 {% block footer %}
-    {% if request.event.settings.banner_text_bottom %}
-        <div class="site-notice-bottom">
-            {{ request.event.settings.banner_text_bottom|rich_text }}
-        </div>
-    {% endif %}
-    {% if request.event.testmode %}
-        {% if request.sales_channel.testmode_supported %}
-            <div class="alert alert-testmode alert-warning">
-                <strong>
-                    {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                </strong>
-            </div>
-        {% else %}
-            <div class="alert alert-testmode alert-danger">
-                <strong>
-                    {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                </strong>
-            </div>
-        {% endif %}
-    {% endif %}
-    {{ block.super }}
+{% if request.event.settings.banner_text_bottom %}
+<div class="site-notice-bottom">
+    {{ request.event.settings.banner_text_bottom|rich_text }}
+</div>
+{% endif %}
+{% if request.event.testmode %}
+{% if request.sales_channel.testmode_supported %}
+<div class="alert alert-testmode alert-warning">
+    <strong>
+        {% blocktrans trimmed %}
+        This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice.
+        {% endblocktrans %}
+    </strong>
+</div>
+{% else %}
+<div class="alert alert-testmode alert-danger">
+    <strong>
+        {% blocktrans trimmed %}
+        Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!
+        {% endblocktrans %}
+    </strong>
+</div>
+{% endif %}
+{% endif %}
+{{ block.super }}
 {% endblock %}
 
 {% block footernav %}
-    {% if request.event.settings.contact_mail %}
-        <a href="mailto:{{ request.event.settings.contact_mail }}">{% trans "Contact event organizer" %}</a> &middot;
-    {% endif %}
-    {% if request.event.settings.imprint_url %}
-        <a href="{% safelink request.event.settings.imprint_url %}" target="_blank" rel="noopener">{% trans "Imprint" %}</a>
-        &middot;
-    {% endif %}
+{% if request.event.settings.contact_mail %}
+<a href="mailto:{{ request.event.settings.contact_mail }}">{% trans "Contact event organizer" %}</a> &middot;
+{% endif %}
+{% if request.event.settings.imprint_url %}
+<a href="{% safelink request.event.settings.imprint_url %}" target="_blank" rel="noopener">{% trans "Imprint" %}</a>
+&middot;
+{% endif %}
 {% endblock %}

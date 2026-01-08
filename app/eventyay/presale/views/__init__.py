@@ -379,7 +379,7 @@ class EventViewMixin:
         kwargs = {}
         if 'cart_namespace' in self.kwargs:
             kwargs['cart_namespace'] = self.kwargs['cart_namespace']
-        return eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+        return eventreverse(self.request.event, 'presale:event.tickets', kwargs=kwargs)
 
 
 class OrganizerViewMixin:

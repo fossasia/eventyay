@@ -66,7 +66,7 @@ class CartActionMixin:
             kwargs = {}
             if 'cart_namespace' in self.kwargs:
                 kwargs['cart_namespace'] = self.kwargs['cart_namespace']
-            u = eventreverse(self.request.event, 'presale:event.index', kwargs=kwargs)
+            u = eventreverse(self.request.event, 'presale:event.tickets', kwargs=kwargs)
         if '?' in u:
             u += '&require_cookie=true'
         else:
@@ -591,7 +591,7 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
         else:
             context['cart_redirect'] = eventreverse(
                 self.request.event,
-                'presale:event.index',
+                'presale:event.tickets',
                 kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
             )
         if context['cart_redirect'].startswith('https:'):
@@ -655,7 +655,7 @@ class RedeemView(NoSearchIndexViewMixin, EventViewMixin, TemplateView):
                 return redirect(
                     eventreverse(
                         self.request.event,
-                        'presale:event.index',
+                        'presale:event.tickets',
                         kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
                     )
                     + '?voucher='

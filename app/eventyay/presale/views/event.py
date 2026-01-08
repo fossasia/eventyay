@@ -447,7 +447,7 @@ def get_grouped_products(
 
 @method_decorator(allow_frame_if_namespaced, 'dispatch')
 @method_decorator(iframe_entry_view_wrapper, 'dispatch')
-class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
+class EventTickets(EventViewMixin, EventListMixin, CartMixin, TemplateView):
     template_name = 'pretixpresale/event/index.html'
 
     def get(self, request, *args, **kwargs):
@@ -457,13 +457,13 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
             # User has clicked "Open in a new tab" link in widget
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs)
+            redirect_url = eventreverse(request.event, 'presale:event.tickets', kwargs=kwargs)
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
             # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
             get_or_create_cart_id(request)
-            redirect_url = eventreverse(request.event, 'presale:event.index', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            redirect_url = eventreverse(request.event, 'presale:event.tickets', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
         elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
@@ -477,7 +477,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                 {
                     'url': eventreverse(
                         request.event,
-                        'presale:event.index',
+                        'presale:event.tickets',
                         kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
                     )
                     + (
@@ -725,6 +725,94 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
                     for se in context['subevent_list']
                     if not se.presale_has_ended and se.best_availability_state >= Quota.AVAILABILITY_RESERVED
                 ]
+        return context
+
+
+@method_decorator(allow_frame_if_namespaced, 'dispatch')
+@method_decorator(iframe_entry_view_wrapper, 'dispatch')
+class EventInfo(EventViewMixin, EventListMixin, CartMixin, TemplateView):
+    template_name = 'pretixpresale/event/info.html'
+
+    def get(self, request, *args, **kwargs):
+        from eventyay.presale.views.cart import get_or_create_cart_id
+
+        self.subevent = None
+        if request.GET.get('src', '') == 'widget' and 'take_cart_id' in request.GET:
+            # User has clicked "Open in a new tab" link in widget
+            get_or_create_cart_id(request)
+            redirect_url = eventreverse(request.event, 'presale:event.tickets', kwargs=kwargs)
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
+        elif request.GET.get('iframe', '') == '1' and 'take_cart_id' in request.GET:
+            # Widget just opened, a cart already exists. Let's to a stupid redirect to check if cookies are disabled
+            get_or_create_cart_id(request)
+            redirect_url = eventreverse(request.event, 'presale:event.tickets', kwargs=kwargs) + '?require_cookie=true&cart_id={}'.format(request.GET.get('take_cart_id'))
+            logger.info('Redirecting to %s...', redirect_url)
+            return redirect(redirect_url)
+        elif request.GET.get('iframe', '') == '1' and len(self.request.GET.get('widget_data', '{}')) > 3:
+            # We've been passed data from a widget, we need to create a cart session to store it.
+            get_or_create_cart_id(request)
+        elif 'require_cookie' in request.GET and settings.SESSION_COOKIE_NAME not in request.COOKIES:
+            # Cookies are in fact not supported
+            r = render(
+                request,
+                'pretixpresale/event/cookies.html',
+                {
+                    'url': eventreverse(
+                        request.event,
+                        'presale:event.tickets',
+                        kwargs={'cart_namespace': kwargs.get('cart_namespace') or ''},
+                    )
+                    + (
+                        '?src=widget&take_cart_id={}'.format(request.GET.get('cart_id'))
+                        if 'cart_id' in request.GET
+                        else ''
+                    )
+                },
+            )
+            r._csp_ignore = True
+            return r
+
+        if request.event.has_subevents:
+            if 'subevent' in kwargs:
+                self.subevent = (
+                    request.event.subevents.using(settings.DATABASE_REPLICA)
+                    .filter(pk=kwargs['subevent'], active=True)
+                    .first()
+                )
+                if not self.subevent:
+                    raise Http404()
+        return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['ev'] = self.subevent or self.request.event
+        context['subevent'] = self.subevent
+
+        if self.subevent:
+            context['frontpage_text'] = str(self.subevent.frontpage_text)
+        else:
+            context['frontpage_text'] = str(self.request.event.settings.frontpage_text)
+
+        # Get event_name in language code
+        event_name_data = self.request.event.name.data
+
+        if isinstance(event_name_data, dict):
+            # If event_name_data is a dictionary, try to get the name based on LANGUAGE_CODE
+            event_name = event_name_data.get(self.request.LANGUAGE_CODE)
+
+            if event_name is None:
+                # If event_name is not available in the language code, get event name in English
+                event_name = event_name_data.get('en')
+
+            if event_name is None and len(event_name_data) > 0:
+                # If event_name is not available in English, get the first available event name
+                event_name = next(iter(event_name_data.values()))
+        else:
+            # If event_name_data is a string, use it directly
+            event_name = event_name_data
+
+        context['event_name'] = event_name
         return context
 
 
