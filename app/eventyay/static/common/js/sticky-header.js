@@ -7,14 +7,21 @@
         
         if (nav && placeholder) {
             const triggerPoint = nav.offsetTop;
+            let isTicking = false;
             
             window.addEventListener('scroll', function () {
-                if (window.scrollY >= triggerPoint) {
-                    nav.classList.add('is-sticky');
-                    placeholder.classList.add('active');
-                } else {
-                    nav.classList.remove('is-sticky');
-                    placeholder.classList.remove('active');
+                if (!isTicking) {
+                    isTicking = true;
+                    window.requestAnimationFrame(function () {
+                        if (window.scrollY >= triggerPoint) {
+                            nav.classList.add('is-sticky');
+                            placeholder.classList.add('active');
+                        } else {
+                            nav.classList.remove('is-sticky');
+                            placeholder.classList.remove('active');
+                        }
+                        isTicking = false;
+                    });
                 }
             });
         }

@@ -379,8 +379,7 @@ footer {
     }
 
     .header-placeholder.active {
-      height: auto;
-      min-height: 46px;
+      height: 46px;
     }
 
     .user-row {
