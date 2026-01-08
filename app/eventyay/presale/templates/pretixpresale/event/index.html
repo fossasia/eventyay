@@ -18,6 +18,14 @@
     {% else %}
         <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
     {% endif %}
+    {% if ev.geo_lat and ev.geo_lon %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    {% endif %}
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
@@ -263,6 +271,42 @@
                 {% endif %}
 
             </div>
+
+            {% comment %} Venue Map Section {% endcomment %}
+            {% if ev.geo_lat and ev.geo_lon %}
+            <div class="venue-map-section" style="margin-top: 30px; margin-bottom: 20px;">
+                <h3>{% trans "Venue Location" %}</h3>
+                {% if ev.location %}
+                <p style="margin-bottom: 15px; font-size: 16px;">
+                    <i class="fa fa-map-marker" aria-hidden="true" style="margin-right: 8px;"></i>
+                    <strong>{{ ev.location }}</strong>
+                </p>
+                {% endif %}
+                <div id="venue-map" style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;"></div>
+                <script>
+                (function() {
+                    // Fix Leaflet's default icon paths
+                    delete L.Icon.Default.prototype._getIconUrl;
+                    L.Icon.Default.mergeOptions({
+                        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                    });
+                    
+                    var map = L.map('venue-map').setView([{{ ev.geo_lat }}, {{ ev.geo_lon }}], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                        maxZoom: 18,
+                    }).addTo(map);
+                    
+                    var marker = L.marker([{{ ev.geo_lat }}, {{ ev.geo_lon }}]).addTo(map);
+                    {% if ev.location %}
+                    marker.bindPopup("{{ ev.location|escapejs }}");
+                    {% endif %}
+                })();
+                </script>
+            </div>
+            {% endif %}
 
             {% eventsignal event "eventyay.presale.signals.front_page_top" request=request subevent=subevent %}
         {% endif %}
