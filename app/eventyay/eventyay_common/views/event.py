@@ -256,36 +256,28 @@ class EventCreateView(SafeSessionWizardView):
         with transaction.atomic(), language(basics_data['locale']):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
-            
-            # Enable default ticketing plugins for new events
-            # Get base defaults from settings
+
             plugins_default = settings.PRETIX_PLUGINS_DEFAULT
             if isinstance(plugins_default, str):
-                # Handle comma-separated string configuration
                 default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
             else:
-                # Handle tuple/list or other iterable configurations
                 default_plugins = list(plugins_default or [])
-            
-            # Define ticketing plugins to enable by default
+
             ticketing_plugins = [
-                'eventyay.plugins.ticketoutputpdf',  # PDF ticket output
-                'eventyay.plugins.banktransfer',     # Bank transfer payment
-                'eventyay.plugins.manualpayment',    # Manual payment
+                'eventyay.plugins.ticketoutputpdf',
+                'eventyay.plugins.banktransfer',
+                'eventyay.plugins.manualpayment',
             ]
-            
-            # Get all installed plugin names from Django apps registry
+
             installed_apps = {app.name for app in apps.get_app_configs()}
-            
-            # Add external payment plugins if installed
+
             for plugin_name in ['eventyay_stripe', 'eventyay_paypal']:
                 if plugin_name in installed_apps:
                     ticketing_plugins.append(plugin_name)
-            
-            # Combine and deduplicate while preserving order
+
             all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
             event.plugins = ','.join(all_plugins)
-            
+
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = True
