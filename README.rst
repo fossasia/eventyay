@@ -69,7 +69,7 @@ Use ``uv`` to create virtual environment and install Python packages at the same
 5. **Create a PostgreSQL database**
 
 The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
-to work with database is to use its "peer" mode (no need to remember password).
+to work with the database is to use its "peer" mode (no need to remember password).
 
 Create a Postgres user with the same name as your Linux user:
 
@@ -104,7 +104,7 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
 
 7. **Activate virtual environment**
 
-After running ``uv sync```, activate a virtual environment
+After running ``uv sync``, activate a virtual environment.
 
 .. code-block:: sh
 
@@ -116,7 +116,7 @@ After running ``uv sync```, activate a virtual environment
 
   python manage.py migrate
 
-9. **Create a admin user account** (for accessing the admin panel):
+9. **Create an admin user account** (for accessing the admin panel):
 
 .. code-block:: bash
 
@@ -198,7 +198,7 @@ The directory `app/eventyay` is mounted into the docker, thus live editing is su
 Configuration
 -------------
 
-Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
+Our configuration is based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
 Other than that, the configuration is divided to three running environments:
 
 * ``development``: With default values in *eventyay.development.toml*.
