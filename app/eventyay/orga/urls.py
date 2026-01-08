@@ -86,7 +86,7 @@ urlpatterns = [
         'event/<slug:event>/',
         include(
             [
-                path("login/", auth.LoginView.as_view(), name="event.login"),
+                # path("login/", auth.LoginView.as_view(), name="event.login"),
                 path("delete", event.EventDelete.as_view(), name="event.delete"),
                 path("reset/", auth.ResetView.as_view(), name="event.auth.reset"),
                 path(
