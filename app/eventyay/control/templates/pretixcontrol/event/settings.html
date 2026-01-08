@@ -49,7 +49,14 @@
                 {% endif %}
             </fieldset>
             <fieldset>
-                <legend>{% trans "Customer and attendee data" %}</legend>
+                <legend>{% trans "Order Modification" %}</legend>
+                <h4>{% translate "Changes to existing orders" %}</h4>
+                {% bootstrap_field sform.allow_modifications layout="control" %}
+                <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
+                    {% bootstrap_field sform.last_order_modification_date layout="control" %}
+                    {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
+                </div>
+
                 <h4>{% trans "Customer data (once per order)" %}</h4>
                 {% if sform.order_email_asked_required %}
                     {% bootstrap_field sform.order_email_asked_required layout="control" %}
@@ -75,7 +82,6 @@
                 </div>
 
                 <h4>{% trans "Attendee data (once per admission ticket)" %}</h4>
-
                 {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
                 {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
                 {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
@@ -95,17 +101,10 @@
                 </div>
                 {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
 
-                <h4>{% trans "Other settings" %}</h4>
+                <h4>{% trans "Form settings" %}</h4>
                 {% bootstrap_field sform.name_scheme layout="control" %}
                 {% bootstrap_field sform.name_scheme_titles layout="control" %}
                 {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
-
-                <h4>{% translate "Changes to existing orders" %}</h4>
-                {% bootstrap_field sform.allow_modifications layout="control" %}
-                <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
-                    {% bootstrap_field sform.last_order_modification_date layout="control" %}
-                    {% bootstrap_field sform.allow_modifications_after_checkin layout="control" %}
-                </div>
             </fieldset>
             <fieldset>
                 <legend>{% trans "Texts" %}</legend>
