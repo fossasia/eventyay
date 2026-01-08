@@ -255,7 +255,31 @@ class EventCreateView(SafeSessionWizardView):
         with transaction.atomic(), language(basics_data['locale']):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
-            event.plugins = settings.PRETIX_PLUGINS_DEFAULT
+            
+            # Enable default ticketing plugins for new events
+            # Get base defaults from settings
+            default_plugins = list(settings.PRETIX_PLUGINS_DEFAULT)
+            
+            # Define ticketing plugins to enable by default
+            ticketing_plugins = [
+                'eventyay.plugins.ticketoutputpdf',  # PDF ticket output
+                'eventyay.plugins.banktransfer',     # Bank transfer payment
+                'eventyay.plugins.manualpayment',    # Manual payment
+            ]
+            
+            # Get all installed plugin names from Django apps registry
+            from django.apps import apps
+            installed_apps = {app.name for app in apps.get_app_configs()}
+            
+            # Add external payment plugins if installed
+            for plugin_name in ['eventyay_stripe', 'eventyay_paypal']:
+                if plugin_name in installed_apps:
+                    ticketing_plugins.append(plugin_name)
+            
+            # Combine and deduplicate while preserving order
+            all_plugins = default_plugins + [p for p in ticketing_plugins if p not in default_plugins]
+            event.plugins = ','.join(all_plugins)
+            
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = True
