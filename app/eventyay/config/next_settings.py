@@ -1212,7 +1212,11 @@ LOGIN_URL_CONTROL = 'eventyay_common:auth.login'
 VIDEO_BASE_PATH = '/video'
 WEBSOCKET_URL = '/ws/event/'
 TALK_BASE_PATH = ''
-LOGIN_REDIRECT_URL = '/control/video'
+LOGIN_REDIRECT_URL = '/common/account/general/'
+
+# Configure django-allauth to redirect to account settings after email confirmation
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = '/common/account/general/'
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/general/'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
