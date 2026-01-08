@@ -295,9 +295,16 @@ class FormFlowStep(TemplateFlowStep):
 
         # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
-            non_field_errors = form.non_field_errors()
-            if non_field_errors:
-                messages.error(self.request, '\n\n'.join(non_field_errors))
+            warning_messages = getattr(form, 'warning_messages', None) or []
+            for warning in filter(None, warning_messages):
+                messages.warning(self.request, warning)
+
+            error_message = '\n\n'.join(
+                (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
+                for key, values in form.errors.items()
+            )
+            if error_message:
+                messages.error(self.request, error_message)
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
