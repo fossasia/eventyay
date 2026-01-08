@@ -252,7 +252,7 @@ Due to this reason, overriding configuration via environment variables are not e
 Deployment
 ----------
 
-- copy all of the *deployment* directory onto the server into ``<TARGET_DIR>`` (eg. as */home/fossasia/enext*)
+- copy all of the *deployment* directory onto the server into ``<TARGET_DIR>`` (e.g. as */home/fossasia/enext*)
 - prepare the used volumes in docker-compose::
 
     <TARGET_DIR>/data/static
@@ -299,7 +299,7 @@ Frontend
 
 - Get rid of jQuery code, convert them to Vue or AlpineJS.
 - Consider two options:
-  +  Migrating to Single Page Application, where we can use full power of Vue and can apply TypeScript to improve IDE autocomplete and detect bugs early.
+  +  Migrating to a Single Page Application, where we can use the full power of Vue and can apply TypeScript to improve IDE autocomplete and detect bugs early.
   +  HTMX + AlpineJS if we still want Django to produce HTML.
 
 
