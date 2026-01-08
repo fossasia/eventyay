@@ -336,6 +336,7 @@ class EventWizardCopyForm(forms.Form):
         kwargs.pop('has_subevents')
         self.user = kwargs.pop('user')
         kwargs.pop('is_video_creation')
+        kwargs.pop('content_locales', None)  # Handle content_locales parameter
         super().__init__(*args, **kwargs)
 
         self.fields['copy_from_event'] = EventChoiceField(
