@@ -23,6 +23,7 @@ from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
 from django.views import View
+from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
@@ -258,7 +259,13 @@ class EventCreateView(SafeSessionWizardView):
             
             # Enable default ticketing plugins for new events
             # Get base defaults from settings
-            default_plugins = list(settings.PRETIX_PLUGINS_DEFAULT)
+            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
+            if isinstance(plugins_default, str):
+                # Handle comma-separated string configuration
+                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
+            else:
+                # Handle tuple/list or other iterable configurations
+                default_plugins = list(plugins_default or [])
             
             # Define ticketing plugins to enable by default
             ticketing_plugins = [
@@ -268,7 +275,6 @@ class EventCreateView(SafeSessionWizardView):
             ]
             
             # Get all installed plugin names from Django apps registry
-            from django.apps import apps
             installed_apps = {app.name for app in apps.get_app_configs()}
             
             # Add external payment plugins if installed
@@ -277,7 +283,7 @@ class EventCreateView(SafeSessionWizardView):
                     ticketing_plugins.append(plugin_name)
             
             # Combine and deduplicate while preserving order
-            all_plugins = default_plugins + [p for p in ticketing_plugins if p not in default_plugins]
+            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
             event.plugins = ','.join(all_plugins)
             
             event.has_subevents = foundation_data['has_subevents']
