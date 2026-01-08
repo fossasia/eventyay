@@ -49,15 +49,7 @@ def locale_context(request):
             str(l[1]),
         ),
     )
-    language_options = []
-    for code, name in languages:
-        if code in settings.LANGUAGES_OFFICIAL:
-            label = name
-        elif code not in settings.LANGUAGES_INCUBATING:
-            label = _('{} (inofficial translation)').format(name)
-        else:
-            label = _('{} (translation in progress)').format(name)
-        language_options.append({'code': code, 'label': label})
+    language_options = [{'code': code, 'label': name} for code, name in languages]
 
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
