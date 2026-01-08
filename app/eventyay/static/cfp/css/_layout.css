@@ -39,6 +39,12 @@ header {
     max-height: 140px;
     width: auto;
   }
+}
+
+nav.header-navbar  {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 
   .header-wrapper {
     width: 100%;
