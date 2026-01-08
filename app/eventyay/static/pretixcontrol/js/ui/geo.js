@@ -92,7 +92,13 @@ $(function () {
         var tiles = $grp.attr("data-tiles");
         var attrib = $grp.attr("data-attrib");
         if (tiles) {
-            var $map = $("<div>");
+            var $map = $("<div>").css({
+                'height': '400px',
+                'width': '100%',
+                'margin-top': '10px',
+                'border': '1px solid #ddd',
+                'border-radius': '4px'
+            });
             $grp.append($("<div>").addClass("col-md-9 col-md-offset-3").append($map));
             var map = L.map($map.get(0));
             L.tileLayer(tiles, {
