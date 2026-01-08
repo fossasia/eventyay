@@ -24,6 +24,9 @@
     {% endif %}
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
+        {% if ev.geo_lat and ev.geo_lon %}
+            <script type="text/javascript" src="{% static "pretixpresale/js/ui/venue-map.js" %}"></script>
+        {% endif %}
     {% endcompress %}
 {% endblock %}
 {% block content %}
@@ -272,21 +275,18 @@
             {% if ev.geo_lat and ev.geo_lon %}
                 <div class="venue-map-section" style="margin-top: 30px; margin-bottom: 20px;">
                     <h3>{% trans "Venue Location" %}</h3>
-                    <div id="venue-map" style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;"></div>
-                    <script>
-                        (function() {
-                            var map = L.map('venue-map').setView([{{ ev.geo_lat }}, {{ ev.geo_lon }}], 15);
-                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                                maxZoom: 18,
-                            }).addTo(map);
-
-                            var marker = L.marker([{{ ev.geo_lat }}, {{ ev.geo_lon }}]).addTo(map);
-                            {% if ev.location %}
-                                marker.bindPopup("{{ ev.location|escapejs }}");
-                            {% endif %}
-                        })();
-                    </script>
+                    {% if ev.location %}
+                        <p style="margin-bottom: 15px; color: #555;">
+                            <i class="fa fa-map-marker" aria-hidden="true"></i> 
+                            <strong>{{ ev.location }}</strong>
+                        </p>
+                    {% endif %}
+                    <div id="venue-map" 
+                         data-lat="{{ ev.geo_lat }}" 
+                         data-lon="{{ ev.geo_lon }}"
+                         {% if ev.location %}data-location="{{ ev.location|escapejs }}"{% endif %}
+                         style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;">
+                    </div>
                 </div>
             {% endif %}
 
