@@ -70,6 +70,7 @@
             <script defer src="{% static "common/js/lightbox.js" %}"></script>
             <script src="{% static "agenda/js/join-online-event.js" %}"></script>
             <script defer src="{% static "common/js/dropdown.js" %}"></script>
+            <script defer src="{% static "common/js/sticky-header.js" %}"></script>
         {% endcompress %}
         {% block scripts %}{% endblock scripts %}
         {% block custom_header %}{% endblock custom_header %}
@@ -130,7 +131,8 @@
                         </div>
                     </div>
                 </div>
-                <div class="header-wrapper">
+                <div class="header-placeholder" id="header-placeholder"></div>
+                <div class="header-wrapper" id="public-top-nav">
                     <div id="header-tabs">
                         {% block header_tabs %}{% endblock header_tabs %}
                     	<div class="header-row-right">
