@@ -9,7 +9,7 @@ allowed_hosts = ['*']
 # Can be overridden with EVY_SITE_URL environment variable
 site_url = 'http://localhost:8000'
 
-redis_url = 'redis://localhost/0'
+redis_url = 'redis://eventyay-next-redis:6379/0'
 
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable
