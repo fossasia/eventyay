@@ -1235,24 +1235,6 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                         errs[i]['voucher'] = ['This voucher cannot be applied to add-on products.']
                         continue
 
-                    # Enforce allow_bundled: don't allow voucher on bundled products if allow_bundled is False
-                    # Bundled products are identified by checking if the product/variation is part of a ProductBundle
-                    from eventyay.base.models.product import ProductBundle
-                    variation = pos_data.get('variation')
-                    if variation:
-                        is_bundled = ProductBundle.objects.filter(
-                            bundled_product=product,
-                            bundled_variation=variation,
-                        ).exists()
-                    else:
-                        is_bundled = ProductBundle.objects.filter(
-                            bundled_product=product,
-                            bundled_variation__isnull=True,
-                        ).exists()
-                    if is_bundled and not v.allow_bundled:
-                        errs[i]['voucher'] = ['This voucher cannot be applied to bundled products.']
-                        continue
-
                     if not v.applies_to(pos_data['product'], pos_data.get('variation')):
                         errs[i]['voucher'] = [error_messages['voucher_invalid_product']]
                         continue
@@ -1265,15 +1247,18 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                         errs[i]['voucher'] = [error_messages['voucher_expired']]
                         continue
 
+                    # Count voucher usage (for max_usages check)
                     voucher_usage[v] += 1
                     if voucher_usage[v] > 0:
+                        # Count existing cart positions with this voucher (excluding bundled items)
                         redeemed_in_carts = CartPosition.objects.filter(
-                            Q(voucher=pos_data['voucher']) & Q(event=self.context['event']) & Q(expires__gte=now_dt)
+                            Q(voucher=pos_data['voucher']) & Q(event=self.context['event']) & Q(expires__gte=now_dt) & Q(is_bundled=False)
                         ).exclude(pk__in=[cp.pk for cp in delete_cps])
                         v_avail = v.max_usages - v.redeemed - redeemed_in_carts.count()
                         if v_avail < voucher_usage[v]:
                             errs[i]['voucher'] = ['The voucher has already been used the maximum number of times.']
 
+                    # DISCOUNT LOGIC: Calculate voucher discount (only for non-bundled positions)
                     if v.budget is not None:
                         price = pos_data.get('price')
                         if price is None:
@@ -1311,6 +1296,10 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                             pos_data['price'] = price + (disc - new_disc)
                         else:
                             v_budget[v] -= disc
+                        
+                        # VALIDATION LOGIC: Ensure no line item becomes negative
+                        if pos_data.get('price', Decimal('0.00')) < Decimal('0.00'):
+                            pos_data['price'] = Decimal('0.00')
 
                 seated = (
                     pos_data.get('product').seat_category_mappings.filter(subevent=pos_data.get('subevent')).exists()
@@ -1390,7 +1379,9 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                                         ).format(quota.name)
                                     ]
 
-            # Enforce min_usages: count eligible positions per voucher
+            # VALIDATION LOGIC: Enforce min_usages
+            # min_usages counts ONLY actual OrderPositions where position.voucher_id == voucher.id
+            # Do NOT count cart positions, do NOT count eligible/potential positions
             # Group positions by voucher to check min_usages
             voucher_positions = defaultdict(list)
             for i, pos_data in enumerate(positions_data):
@@ -1403,6 +1394,8 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
             # Check min_usages for each voucher
             for voucher, pos_list in voucher_positions.items():
                 if voucher.min_usages > 0:
+                    # Count only positions that will have this voucher applied (passed validation)
+                    # This will become OrderPositions with voucher_id == voucher.id
                     eligible_count = len(pos_list)
                     if eligible_count < voucher.min_usages:
                         # Add error to all positions with this voucher
@@ -1443,8 +1436,16 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                 answers_data = pos_data.pop('answers', [])
                 addon_to = pos_data.pop('addon_to', None)
                 attendee_name = pos_data.pop('attendee_name', '')
+                # Remove is_bundled from pos_data as OrderPosition doesn't have this field
+                # Bundling is a cart-only concept
+                pos_data.pop('is_bundled', None)
                 if attendee_name and not pos_data.get('attendee_name_parts'):
                     pos_data['attendee_name_parts'] = {'_legacy': attendee_name}
+                
+                # PRICING LOGIC: Ensure no line item becomes negative
+                if pos_data.get('price', Decimal('0.00')) < Decimal('0.00'):
+                    pos_data['price'] = Decimal('0.00')
+                
                 pos = OrderPosition(**pos_data)
                 if simulate:
                     pos.order = order._wrapped
@@ -1456,6 +1457,9 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                     else:
                         pos.addon_to = pos_map[addon_to]
 
+                # PRICING LOGIC: Calculate price for position
+                # Voucher discounts are applied in cart layer, not here
+                # OrderPosition should already have the correct price set
                 if pos.price is None:
                     price = get_price(
                         product=pos.product,
@@ -1472,6 +1476,9 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                     pos.tax_rule = pos.product.tax_rule
                 else:
                     pos._calculate_tax()
+                    # VALIDATION LOGIC: Ensure no line item becomes negative
+                    if pos.price < Decimal('0.00'):
+                        pos.price = Decimal('0.00')
 
                 pos.price_before_voucher = get_price(
                     product=pos.product,
@@ -1516,6 +1523,9 @@ class OrderCreateSerializer(I18nAwareModelSerializer):
                 for cp in delete_cps:
                     cp.delete()
 
+        # PRICING LOGIC: Cart total must equal sum of all line items after discounts
+        # This includes all positions (both bundled and non-bundled)
+        # Bundled items are entitlements but still contribute to the total
         order.total = sum([p.price for p in pos_map.values()])
         fees = []
         for fee_data in fees_data:

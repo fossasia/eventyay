@@ -170,7 +170,7 @@ def get_grouped_products(
                         )
                     ),
                 )
-                .filter(active=True, quotas__isnull=False, subevent_disabled=False)
+                .filter(active=True, subevent_disabled=False)
                 .prefetch_related(
                     Prefetch(
                         'quotas',
@@ -193,12 +193,15 @@ def get_grouped_products(
             ),
             requires_seat=requires_seat,
         )
-        .filter(
-            quotac__gt=0,
-            subevent_disabled=False,
-        )
-        .order_by('category__position', 'category_id', 'position', 'name')
     )
+    
+    # When loading add-ons, don't require quotas since they're bundled entitlements
+    if allow_addons:
+        products = products.filter(subevent_disabled=False)
+    else:
+        products = products.filter(quotac__gt=0, subevent_disabled=False)
+    
+    products = products.order_by('category__position', 'category_id', 'position', 'name')
     if require_seat:
         products = products.filter(requires_seat__gt=0)
     else:
