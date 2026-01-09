@@ -118,7 +118,7 @@ class EventLive(EventSettingsPermission, TemplateView):
         if not self.request.event.landing_page_text or len(str(self.request.event.landing_page_text)) < 50:
             warnings.append(
                 {
-                    'text': _('The event doesn’t have a landing page text yet.'),
+                    'text': _('The talk component doesn’t have a landing page text yet.'),
                     'url': self.request.event.orga_urls.settings,
                 }
             )
@@ -179,13 +179,13 @@ class EventLive(EventSettingsPermission, TemplateView):
                         orga=True,
                         data={},
                     )
-                    messages.success(request, _('This event is now public.'))
+                    messages.success(request, _('This talk component is now public.'))
                     for response in responses:
                         if isinstance(response[1], str):
                             messages.success(request, response[1])
         else:  # action == 'deactivate'
             if not event.is_public:
-                messages.success(request, _('This event was already hidden.'))
+                messages.success(request, _('This talk component was already hidden.'))
             else:
                 event.is_public = False
                 event.save()
@@ -195,7 +195,7 @@ class EventLive(EventSettingsPermission, TemplateView):
                     orga=True,
                     data={},
                 )
-                messages.success(request, _('This event is now hidden.'))
+                messages.success(request, _('This talk component is now hidden.'))
         return redirect(event.orga_urls.base)
 
 
