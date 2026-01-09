@@ -99,6 +99,7 @@ urlpatterns = [
         account.TwoFactorAuthRegenerateEmergencyView.as_view(),
         name='account.2fa.regenemergency',
     ),
+    path('account/locale', account.LanguageSwitchView.as_view(), name='account.locale'),
     path(
         'account/oauth/authorized-apps',
         account.OAuthAuthorizedAppListView.as_view(),
