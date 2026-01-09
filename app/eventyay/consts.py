@@ -12,7 +12,7 @@ TIMEZONE_CHOICES = sorted(
 # The directory for frontend development resources (node_modules, build scripts, etc.).
 FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'frontend'
 
-class UploadSize(StrEnum):
+class SizeKey(StrEnum):
     CSV = "csv"
     IMAGE = "image"
     PDF = "pdf"
@@ -21,7 +21,5 @@ class UploadSize(StrEnum):
     ATTACHMENT = "attachment"
     MAIL = "mail"
     QUESTION = "question"
-    OTHER = "other"
-
-class ResponseSize(StrEnum):
     WEBHOOK = "webhook"
+    OTHER = "other"

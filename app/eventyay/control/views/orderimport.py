@@ -13,7 +13,7 @@ from django.views.generic import FormView, TemplateView
 from eventyay.base.models import CachedFile
 from eventyay.base.services.orderimport import import_orders, parse_csv
 from eventyay.base.views.tasks import AsyncAction
-from eventyay.consts import UploadSize
+from eventyay.consts import SizeKey
 from eventyay.control.forms.orderimport import ProcessForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 
@@ -46,8 +46,8 @@ class ImportView(EventPermissionRequiredMixin, TemplateView):
                     },
                 )
             )
-        if request.FILES['file'].size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]:
-            max_size_bytes = settings.MAX_FILE_UPLOAD_SIZE_CONFIG["other"]
+        if request.FILES['file'].size > settings.MAX_SIZE_CONFIG[SizeKey.OTHER]:
+            max_size_bytes = settings.MAX_SIZE_CONFIG["other"]
             max_size_mb = max_size_bytes / (1024 * 1024)
             messages.error(
                 request,
@@ -118,7 +118,7 @@ class ProcessView(EventPermissionRequiredMixin, AsyncAction, FormView):
 
     @cached_property
     def parsed(self):
-        return parse_csv(self.file.file, settings.MAX_CSV_PARSE_SIZE)
+        return parse_csv(self.file.file, settings.MAX_SIZE_CONFIG[SizeKey.CSV])
 
     def get(self, request, *args, **kwargs):
         if 'async_id' in request.GET and settings.HAS_CELERY:

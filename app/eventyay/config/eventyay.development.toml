@@ -14,3 +14,20 @@ redis_url = 'redis://localhost/0'
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable
 short_url = 'http://localhost:8000'
+
+# Optional size limit overrides
+# These override the defaults in `size_limit_mb` dict in Python.
+# Uncomment to override values (in MB):
+# File Size Limits
+# csv = 1                # Max file size for CSVs
+# image = 15             # Max file size for images
+# pdf = 25               # Max file size for PDFs
+# xlsx = 2               # Max file size for XLSX files
+# favicon = 1            # Max file size for favicon
+# attachment = 50        # Max file size for attachments
+# mail = 4               # Max file size for mail attachments
+# question = 20          # Max file size for questions
+# other = 10             # Max file size for other files
+
+# External Response Size Limits
+# webhook = 1            # Max external response size for questions

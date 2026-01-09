@@ -17,7 +17,7 @@ from pdf2image import convert_from_bytes
 
 from eventyay.base.models import Poster
 from eventyay.base.models.storage_model import StoredFile
-from eventyay.consts import UploadSize
+from eventyay.consts import SizeKey
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +200,7 @@ def mirror_conftool_file(event, url, password, nonce, preview=False):
         )
         r.raise_for_status()
 
-        if len(r.content) > settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]:
+        if len(r.content) > settings.MAX_SIZE_CONFIG[SizeKey.OTHER]:
             logger.warning(
                 f"Not mirroring conftool file {url} because it is {len(r.content)} byte"
             )

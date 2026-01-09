@@ -21,7 +21,7 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
-from eventyay.consts import UploadSize
+from eventyay.consts import SizeKey
 
 class InlineProductVariationSerializer(I18nAwareModelSerializer):
     price = serializers.DecimalField(read_only=True, decimal_places=2, max_digits=10, coerce_to_string=True)
@@ -157,7 +157,7 @@ class ProductSerializer(I18nAwareModelSerializer):
         required=False,
         allow_null=True,
         allowed_types=('image/png', 'image/jpeg', 'image/gif'),
-        max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
     )
 
     class Meta:

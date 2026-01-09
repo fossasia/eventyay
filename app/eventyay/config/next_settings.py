@@ -1,4 +1,3 @@
-import configparser
 import importlib.util
 import os
 import sys
@@ -22,18 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.helpers.config import EnvOrParserConfig
-
-_config = configparser.RawConfigParser()
-if 'PRETIX_CONFIG_FILE' in os.environ:
-    with open(os.environ.get('PRETIX_CONFIG_FILE'), encoding='utf-8') as fp:
-        _config.read_file(fp)
-else:
-    _config.read(
-        ['/etc/pretix/pretix.cfg', os.path.expanduser('~/.pretix.cfg'), 'pretix.cfg'],
-        encoding='utf-8',
-    )
-config = EnvOrParserConfig(_config)
+from eventyay.consts import SizeKey
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -207,6 +195,45 @@ class BaseSettings(_BaseSettings):
             toml_settings,
         )
 
+    size_limit_mb: dict[str, int] = Field(
+        default_factory=lambda: {
+            "csv": 1,
+            "image": 10,
+            "pdf": 10,
+            "xlsx": 2,
+            "favicon": 1,
+            "attachment": 10,
+            "mail": 4,
+            "question": 20,
+            "webhook": 1,
+            "other": 10,
+        }
+    )
+
+    # Optional single-line override fields.
+    # These allow simple top-level config entries (e.g. `question = 300` in TOML)
+    # to override corresponding entries in `size_limit_mb`.
+    # The dictionary remains the canonical source of truth.
+    csv: int | None = None
+    image: int | None = None
+    pdf: int | None = None
+    xlsx: int | None = None
+    favicon: int | None = None
+    attachment: int | None = None
+    mail: int | None = None
+    question: int | None = None
+    webhook: int | None = None
+    other: int | None = None
+
+    #   Apply top-level single-line size limit overrides to `size_limit_mb`.
+    #   Any override field that is set (not None) will replace the corresponding
+    #   entry in the size_limit_mb dictionary.
+    def apply_size_limit_overrides(self) -> None:
+        for key in self.size_limit_mb:
+            override = getattr(self, key, None)
+            if override is not None:
+                self.size_limit_mb[key] = override
+
 
 def discover_toml_files() -> list[Path]:
     """Discover TOML configuration files to be loaded.
@@ -248,6 +275,9 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
+
+# Merge single-line TOML overrides into size_limit_mb
+conf.apply_size_limit_overrides()
 
 # --- Now, provide values to Django's settings. ---
 
@@ -1229,22 +1259,12 @@ LOGIN_REDIRECT_URL = '/control/video'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
-MAX_CSV_PARSE_SIZE = 1024 * 1024
+BYTES_IN_MB = 1024 * 1024
 
-MAX_EXTERNAL_RESPONSE_SIZE = {
-    "webhook": 1024 * 1024 * config.getint('file_response_limits', 'webhook', fallback=1),
-}
-
-MAX_FILE_UPLOAD_SIZE_CONFIG = {
-    'csv': 1024 * 1024 * config.getint('file_upload_limits', 'csv', fallback=1),
-    'image': 1024 * 1024 * config.getint('file_upload_limits', 'image', fallback=10),
-    'pdf': 1024 * 1024 * config.getint('file_upload_limits', 'pdf', fallback=10),
-    'xlsx': 1024 * 1024 * config.getint('file_upload_limits', 'xlsx', fallback=2),
-    'favicon': 1024 * 1024 * config.getint('file_upload_limits', 'favicon', fallback=1),
-    'attachment': 1024 * 1024 * config.getint('file_upload_limits', 'attachment', fallback=10),
-    'mail': 1024 * 1024 * config.getint('file_upload_limits', 'mail', fallback=4),
-    'question': 1024 * 1024 * config.getint('file_upload_limits', 'question', fallback=20),
-    'other': 1024 * 1024 * config.getint('file_upload_limits', 'other', fallback=10)
+# Config for max size limits
+MAX_SIZE_CONFIG = {
+    key.value: BYTES_IN_MB * conf.size_limit_mb[key.value]
+    for key in SizeKey
 }
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'

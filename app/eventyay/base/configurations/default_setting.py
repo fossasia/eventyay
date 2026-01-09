@@ -36,7 +36,7 @@ from eventyay.base.reldate import (
     SerializerRelativeDateField,
     SerializerRelativeDateTimeField,
 )
-from eventyay.consts import UploadSize
+from eventyay.consts import SizeKey
 from eventyay.control.forms import (
     ExtFileField,
     FontSelect,
@@ -2127,7 +2127,7 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Header image'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
             help_text=_(
                 'This image appears at the top of all event pages, replacing the default color or pattern. '
                 'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
@@ -2137,7 +2137,7 @@ Your {event} team"""
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
         ),
     },
     'event_logo_image': {
@@ -2147,7 +2147,7 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Logo'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg', '.svg'),
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
             help_text=_(
                 'When you upload a logo, the event name and date will not appear in the header. '
                 'The logo scales to 140 px in height while maintaining aspect ratio. '
@@ -2157,7 +2157,7 @@ Your {event} team"""
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'],
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
         ),
     },
     'logo_image_large': {
@@ -2187,7 +2187,7 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Header image'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
             help_text=_(
                 'This image appears at the top of all organizer pages, replacing the default color or pattern. '
                 'It is center-aligned and not stretched, ensuring the middle part remains visible on smaller screens. '
@@ -2197,7 +2197,7 @@ Your {event} team"""
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
         ),
     },
     'organizer_logo_image_large': {
@@ -2217,7 +2217,7 @@ Your {event} team"""
         'form_kwargs': dict(
             label=_('Social media image'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
             help_text=_(
                 'This image is used as a preview when sharing your event link on social media. '
                 'Facebook recommends a size of 1200 × 630 px, but some platforms such as WhatsApp and Reddit '
@@ -2228,7 +2228,7 @@ Your {event} team"""
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
         ),
     },
     'invoice_logo_image': {
@@ -2239,13 +2239,13 @@ Your {event} team"""
             label=_('Logo image'),
             ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
             required=False,
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
             help_text=_('We will show your logo with a maximal height and width of 2.5 cm.'),
         ),
         'serializer_class': UploadedFileField,
         'serializer_kwargs': dict(
             allowed_types=['image/png', 'image/jpeg', 'image/gif'],
-            max_size=settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.IMAGE],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
         ),
     },
     'frontpage_text': {

@@ -58,7 +58,7 @@ from eventyay.base.services.checkin import (
     SQLLogic,
     perform_checkin,
 )
-from eventyay.consts import UploadSize
+from eventyay.consts import SizeKey
 from eventyay.helpers.database import FixedOrderBy
 
 with scopes_disabled():
@@ -1036,7 +1036,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             raise BaseValidationError(
                 'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
             )
-        if cf.file.size > settings.MAX_FILE_UPLOAD_SIZE_CONFIG[UploadSize.OTHER]:
+        if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.OTHER]:
             raise BaseValidationError(
                 'The submitted file "{fid}" is too large to be used in this field.'.format(fid=data)
             )
