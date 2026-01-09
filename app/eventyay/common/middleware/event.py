@@ -35,7 +35,7 @@ def get_login_redirect(request):
     params = f'?next={quote(next_url)}&{params}'
     event = getattr(request, 'event', None)
     if event:
-        url = event.orga_urls.login if request.path.startswith('/orga') else event.urls.login
+        url = event.urls.login
         return redirect(url.full() + params)
     return redirect(reverse('eventyay_common:auth.login') + params)
 
