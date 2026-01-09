@@ -4,7 +4,6 @@
 {% load static %}
 {% block custom_header %}
     {{ block.super }}
-    <link rel="stylesheet" href="{% static "eventyay-common/css/create_basics.css" %}">
 {% endblock %}
 
 {% block form %}
@@ -50,23 +49,6 @@
     <fieldset>
         <legend>{% trans "Location" %}</legend>
         {% bootstrap_field form.location layout="control" %}
-        
-        <div class="form-group">
-            <label class="col-md-3 control-label" for="{{ form.geo_lat.id_for_label }}">
-                {% trans "Geo coordinates" %}
-                <span class="text-muted event-field-label__optional">({% trans "Optional" %})</span>
-            </label>
-            <div class="col-md-9">
-                <div class="row event-geo-coordinates-row">
-                    <div class="col-md-5">
-                        {% bootstrap_field form.geo_lat layout="inline" show_label=False %}
-                    </div>
-                    <div class="col-md-5 col-md-offset-1">
-                        {% bootstrap_field form.geo_lon layout="inline" show_label=False %}
-                    </div>
-                </div>
-            </div>
-        </div>
     </fieldset>
     <fieldset>
         <legend>{% trans "Display settings" %}</legend>
