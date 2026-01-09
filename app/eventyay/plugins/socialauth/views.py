@@ -183,6 +183,19 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         setting_state = request.POST.get('save_credentials', '').lower()
 
+        # Handle preferred provider selection
+        preferred_provider = request.POST.get('preferred_provider', '')
+
+        # Reset all is_preferred flags
+        for provider in LoginProviders.model_fields.keys():
+            if provider in login_providers:
+                login_providers[provider]['is_preferred'] = False
+
+        # Set the selected provider as preferred (if any enabled provider was selected)
+        if preferred_provider and preferred_provider in login_providers:
+            if login_providers[preferred_provider].get('state', False):
+                login_providers[preferred_provider]['is_preferred'] = True
+
         for provider in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
                 self.update_credentials(request, provider, login_providers)
@@ -211,7 +224,14 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def update_provider_state(self, request, provider, login_providers):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
-            login_providers[provider]['state'] = setting_state == self.SettingState.ENABLED
+            was_enabled = login_providers[provider].get('state', False)
+            is_now_enabled = setting_state == self.SettingState.ENABLED
 
+            login_providers[provider]['state'] = is_now_enabled
+
+            # If disabling a preferred provider, remove its preferred status
+            if was_enabled and not is_now_enabled and login_providers[provider].get('is_preferred', False):
+                login_providers[provider]['is_preferred'] = False
+    
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
