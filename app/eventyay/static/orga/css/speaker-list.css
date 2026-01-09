@@ -1,0 +1,29 @@
+/* Speaker List Drag-and-Drop Styling */
+.drag-handle {
+    cursor: move;
+    cursor: grab;
+    padding: 5px 10px;
+    color: #666;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-handle:hover {
+    color: #000;
+}
+
+.featured-checkbox {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+/* Table column widths */
+.speaker-drag-column {
+    width: 30px;
+}
+
+.speaker-featured-column {
+    width: 100px;
+}

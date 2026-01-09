@@ -7,6 +7,10 @@
 
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
 
+{% block custom_header %}
+    <link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}">
+{% endblock %}
+
 {% block scripts %}
     {{ block.super }}
     <script src="{% static 'sortable/Sortable.js' %}"></script>
@@ -92,24 +96,6 @@
             });
         });
     </script>
-    <style>
-        .drag-handle {
-            cursor: move;
-            cursor: grab;
-            padding: 5px 10px;
-            color: #666;
-        }
-        .drag-handle:active {
-            cursor: grabbing;
-        }
-        .drag-handle:hover {
-            color: #000;
-        }
-        .featured-checkbox {
-            cursor: pointer;
-            transform: scale(1.2);
-        }
-    </style>
 {% endblock scripts %}
 
 {% block content %}
@@ -145,9 +131,9 @@
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
-                    <th style="width: 30px;"></th>
+                    <th class="speaker-drag-column"></th>
                     <th>{% translate "Name" %}</th>
-                    <th class="text-center" style="width: 100px;">{% translate "Featured" %}</th>
+                    <th class="text-center speaker-featured-column">{% translate "Featured" %}</th>
                     <th class="numeric">{% translate "Accepted Proposals" %}</th>
                     <th class="numeric">{% translate "Proposals" %}</th>
                     <th></th>
