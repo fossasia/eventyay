@@ -422,7 +422,7 @@ onBeforeUnmount(() => {
 			box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
 			padding: 0
 			z-index: 120
-			font-size: 14px
+			font-size: 15px
 			user-select: none
 			&::before,
 			&::after
@@ -449,7 +449,7 @@ onBeforeUnmount(() => {
 				align-items: center
 				gap: 8px
 				text-align: left
-				padding: 6px 16px
+				padding: 8px 18px
 				min-height: 0
 				line-height: 1.25
 				cursor: pointer

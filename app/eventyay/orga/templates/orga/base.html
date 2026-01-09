@@ -125,7 +125,7 @@
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <a href="{% url 'control:user.sudo.stop' %}" class="danger">
-                            <i class="fa fa-id-card"></i> {% translate " End admin session" %}
+                            <i class="fa fa-id-card"></i> {% translate "End admin session" %}
                         </a>
                     </li>
                 {% endif %}

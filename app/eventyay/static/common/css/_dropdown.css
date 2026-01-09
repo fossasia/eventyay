@@ -37,6 +37,20 @@ details.dropdown .dropdown-content {
   z-index: 1200;
   box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1));
   color: var(--color-grey-dark, #495057);
+
+  /* Dropdown item accent behavior */
+  --dropdown-item-accent: var(--color-primary, #2185d0);
+  --dropdown-item-accent-contrast: #fff;
+}
+
+@supports (color: color-contrast(white vs black)) {
+  details.dropdown .dropdown-content {
+    --dropdown-item-accent-contrast: color-contrast(
+      var(--dropdown-item-accent) vs
+        rgb(13, 15, 16),
+        #fff
+    );
+  }
 }
 
 @keyframes dropdown-reveal {
@@ -85,7 +99,7 @@ details.dropdown .dropdown-content button.dropdown-item {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: inherit;
+  color: var(--dropdown-item-accent);
   text-decoration: none;
   transition:
     color 0.15s ease-in-out,
@@ -108,8 +122,8 @@ details.dropdown .dropdown-content button.dropdown-item i {
 details.dropdown .dropdown-content .dropdown-item:hover,
 details.dropdown .dropdown-content a.dropdown-item:hover,
 details.dropdown .dropdown-content button.dropdown-item:hover {
-  background-color: var(--color-primary-lighter, #e8f2fb);
-  color: var(--color-primary-text-dark, #1a69a4);
+  background-color: var(--dropdown-item-accent);
+  color: var(--dropdown-item-accent-contrast);
   text-decoration: none;
 }
 
@@ -120,7 +134,8 @@ details.dropdown .dropdown-content button.dropdown-item:hover i {
 }
 
 details.dropdown .dropdown-content summary.dropdown-item:hover {
-  color: var(--color-primary-text-dark, #1a69a4);
+  background-color: var(--dropdown-item-accent);
+  color: var(--dropdown-item-accent-contrast);
 }
 
 details.dropdown .dropdown-content summary.dropdown-item:hover i {
