@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 from eventyay.base.models.base import LoggedModel
 
@@ -27,9 +27,9 @@ class SponsorGroup(LoggedModel):
     )
     logo_size = models.IntegerField(
         default=120,
-        validators=[MinValueValidator(20)],
+        validators=[MinValueValidator(20), MaxValueValidator(500)],
         verbose_name=_('Logo size (px)'),
-        help_text=_('Maximum height for partner logos in this group')
+        help_text=_('Maximum height for partner logos in this group (20-500px)')
     )
 
     class Meta:

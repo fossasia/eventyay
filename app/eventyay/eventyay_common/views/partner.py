@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 
 from eventyay.base.models import Partner, SponsorGroup
 from eventyay.control.permissions import EventPermissionRequiredMixin
-from eventyay.eventyay_common.forms.partner import PartnerForm, PartnerFormSet, SponsorGroupForm
+from eventyay.eventyay_common.forms.partner import PartnerFormSet, SponsorGroupForm
 
 
 class SponsorGroupCreateView(EventPermissionRequiredMixin, CreateView):
@@ -113,7 +113,7 @@ class SponsorGroupReorderView(EventPermissionRequiredMixin, View):
                     ).update(order=index)
             
             return JsonResponse({'status': 'success'})
-        except Exception as e:
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
@@ -189,7 +189,7 @@ class PartnerReorderView(EventPermissionRequiredMixin, View):
                     query.update(order=index)
             
             return JsonResponse({'status': 'success'})
-        except Exception as e:
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 
@@ -221,5 +221,5 @@ class PartnerMoveView(EventPermissionRequiredMixin, View):
                 partner.save()
             
             return JsonResponse({'status': 'success'})
-        except Exception as e:
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

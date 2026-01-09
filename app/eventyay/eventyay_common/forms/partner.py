@@ -1,6 +1,7 @@
 from django import forms
 from django.forms import inlineformset_factory, BaseInlineFormSet
 from django.utils.translation import gettext_lazy as _
+import os
 
 from eventyay.base.models import Partner, SponsorGroup
 
@@ -79,10 +80,10 @@ class PartnerForm(forms.ModelForm):
                 raise forms.ValidationError(
                     _('Logo file size must not exceed 10MB')
                 )
-            # Validate file type
+            # Validate file type using robust extension extraction
             valid_extensions = ['.gif', '.jpeg', '.jpg', '.png', '.svg']
-            ext = logo.name.lower().split('.')[-1]
-            if f'.{ext}' not in valid_extensions:
+            ext = os.path.splitext(logo.name)[1].lower()
+            if ext not in valid_extensions:
                 raise forms.ValidationError(
                     _('Supported formats: gif, jpeg, jpg, png, svg')
                 )
@@ -90,22 +91,8 @@ class PartnerForm(forms.ModelForm):
 
 
 class BasePartnerFormSet(BaseInlineFormSet):
-    """Base formset for partners with custom validation"""
-    
-    def clean(self):
-        """Validate that at least one partner has a name if formset is not being deleted"""
-        if any(self.errors):
-            return
-        
-        names = []
-        for form in self.forms:
-            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
-                name = form.cleaned_data.get('name')
-                if name:
-                    names.append(name)
-        
-        # Allow empty formsets (no partners in group is valid)
-        return
+    """Base formset for partners"""
+    pass
 
 
 # Inline formset for managing partners within a sponsor group
