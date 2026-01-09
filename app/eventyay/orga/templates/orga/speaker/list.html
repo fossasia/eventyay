@@ -43,14 +43,11 @@
                             if (data.status === 'success') {
                                 console.log('✓ Speaker order saved successfully');
                             } else {
-                                alert('Failed to save speaker order: ' + (data.message || 'Unknown error'));
-                                location.reload();
+                                console.error('Failed to save speaker order:', data.message);
                             }
                         })
                         .catch(error => {
-                            console.error('Error:', error);
-                            alert('Failed to save speaker order: ' + error.message);
-                            location.reload();
+                            console.error('Error saving speaker order:', error);
                         });
                     }
                 });
@@ -59,8 +56,11 @@
             // Handle featured checkbox toggle
             document.querySelectorAll('.featured-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
-                    const speakerCode = this.dataset.speakerCode;
-                    const url = '/orga/event/{{ request.event.slug }}/speakers/' + speakerCode + '/toggle-featured';
+                    const url = this.dataset.featuredUrl;
+                    if (!url) {
+                        console.error('Missing data-featured-url on featured checkbox');
+                        return;
+                    }
                     
                     fetch(url, {
                         method: 'POST',
@@ -81,13 +81,12 @@
                             this.checked = data.is_featured;
                         } else {
                             this.checked = !this.checked;
-                            alert('Failed to update featured status: ' + (data.message || 'Unknown error'));
+                            console.error('Failed to update featured status:', data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         this.checked = !this.checked;
-                        alert('Failed to update featured status: ' + error.message);
                     });
                 });
             });
@@ -168,7 +167,7 @@
                         <td class="text-center">
                             <input type="checkbox" 
                                    class="featured-checkbox" 
-                                   data-speaker-code="{{ profile.user.code }}"
+                                   data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
                                    {% if profile.is_featured %}checked{% endif %}
                                    title="{% translate 'Mark as featured speaker' %}">
                         </td>

@@ -303,7 +303,7 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
         self.profile.is_featured = not self.profile.is_featured
         self.profile.save()
         action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
-        self.object.log_action(
+        self.profile.log_action(
             action,
             data={'event': self.request.event.slug},
             user=self.request.user,
@@ -315,11 +315,22 @@ class SpeakerReorderView(EventPermissionRequired, View):
     permission_required = 'base.update_speakerprofile'
 
     def post(self, request, *args, **kwargs):
+        import json
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
         try:
-            import json
             data = json.loads(request.body)
-            speaker_ids = data.get('speaker_ids', [])
-            
+        except json.JSONDecodeError:
+            logger.warning('Invalid JSON in speaker reorder request')
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+        
+        speaker_ids = data.get('speaker_ids', [])
+        if not isinstance(speaker_ids, list):
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+        
+        try:
             with transaction.atomic():
                 for index, speaker_id in enumerate(speaker_ids):
                     SpeakerProfile.objects.filter(
@@ -328,5 +339,6 @@ class SpeakerReorderView(EventPermissionRequired, View):
                     ).update(order=index)
             
             return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        except (ValueError, TypeError) as e:
+            logger.error(f'Error reordering speakers: {e}')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=400)
