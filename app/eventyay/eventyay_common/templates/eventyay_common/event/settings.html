@@ -8,6 +8,7 @@
 {% block custom_header %}
 {{ block.super }}
 <link type="text/css" rel="stylesheet" href='{% url "control:pdf.css" %}'>
+<link type="text/css" rel="stylesheet" href='{% static "eventyay-common/css/partner.css" %}'>
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
@@ -172,13 +173,13 @@
         <fieldset id="partner-tab">
             <legend>{% trans "Partner" %}</legend>
             
-            <div class="panel panel-default" style="margin-bottom: 20px;">
-                <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
-                    <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+            <div class="panel panel-default partner-section-panel">
+                <div class="panel-heading partner-panel-heading">
+                    <h3 class="panel-title partner-panel-title">
                         {% trans "Partner Section Heading" %}
                     </h3>
                 </div>
-                <div class="panel-body" style="padding: 20px;">
+                <div class="panel-body partner-panel-body">
                     <div class="form-group">
                         <label for="id_settings-partner_section_heading">{% trans "Section heading" %}</label>
                         {{ sform.partner_section_heading }}
@@ -188,13 +189,13 @@
             </div>
             
             <div class="panel panel-default">
-                <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
-                    <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+                <div class="panel-heading partner-panel-heading">
+                    <h3 class="panel-title partner-panel-title">
                         {% translate "Sponsor groups" %}
                     </h3>
                 </div>
-                <div class="panel-body" style="padding: 20px;">
-                    <p class="help-block" style="margin-bottom: 15px;">
+                <div class="panel-body partner-panel-body">
+                    <p class="help-block partner-help-block">
                         {% blocktranslate trimmed %}
                             Create groups for different sponsor tiers (e.g., Platinum, Gold, Silver).
                             Each group can contain multiple partners with logos and links.
@@ -202,20 +203,20 @@
                     </p>
                     
                     {% if sponsor_groups %}
-                    <div id="sponsor-groups-list" class="sponsor-groups-sortable" style="margin-bottom: 15px;">
+                    <div id="sponsor-groups-list" class="sponsor-groups-sortable sponsor-groups-list">
                         {% for group in sponsor_groups %}
-                        <div class="sponsor-group-item panel panel-default" data-group-id="{{ group.id }}" style="margin-bottom: 10px;">
-                            <div class="panel-heading" style="background-color: #f9f9f9; padding: 12px 15px;">
+                        <div class="sponsor-group-item panel panel-default" data-group-id="{{ group.id }}">
+                            <div class="panel-heading sponsor-group-heading">
                                 <div class="row">
                                     <div class="col-md-7">
-                                        <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                                        <span class="handle sponsor-group-handle">
                                             <i class="fa fa-bars"></i>
                                         </span>
-                                        <strong style="font-size: 15px;">{{ group.name }}</strong>
-                                        <span class="label label-default" style="margin-left: 8px;">
+                                        <strong class="sponsor-group-title">{{ group.name }}</strong>
+                                        <span class="label label-default sponsor-group-badge">
                                             {{ group.partners.count }} partner{{ group.partners.count|pluralize }}
                                         </span>
-                                        <span class="text-muted" style="margin-left: 8px; font-size: 12px;">
+                                        <span class="text-muted sponsor-group-meta">
                                             • Logo size: {{ group.logo_size }}px
                                         </span>
                                     </div>
@@ -236,19 +237,19 @@
                                 </div>
                             </div>
                             {% if group.partners.exists %}
-                            <div class="panel-body" style="padding: 10px 15px; background-color: #fff;">
-                                <div class="partner-logos-preview partners-inline-sortable" data-group-id="{{ group.id }}" style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div class="panel-body sponsor-group-body">
+                                <div class="partner-logos-preview partners-inline-sortable" data-group-id="{{ group.id }}">
                                     {% for partner in group.partners.all %}
-                                        <div class="partner-item-inline" data-partner-id="{{ partner.id }}" style="position: relative;">
-                                            <span class="partner-drag-handle" style="cursor: move; position: absolute; top: 2px; left: 2px; background: rgba(0,0,0,0.5); color: white; padding: 2px 4px; border-radius: 3px; font-size: 10px; display: none;">
+                                        <div class="partner-item-inline" data-partner-id="{{ partner.id }}">
+                                            <span class="partner-drag-handle">
                                                 <i class="fa fa-bars"></i>
                                             </span>
                                             {% if partner.logo %}
                                             <img src="{{ partner.logo.url }}" alt="{{ partner.name }}" 
-                                                 style="max-height: 40px; max-width: 100px; object-fit: contain; border: 1px solid #ddd; padding: 3px; background: white;" 
+                                                 class="partner-logo-preview" 
                                                  title="{{ partner.name }}">
                                             {% else %}
-                                            <span class="label label-info" style="padding: 5px 10px;">{{ partner.name }}</span>
+                                            <span class="label label-info partner-name-label">{{ partner.name }}</span>
                                             {% endif %}
                                         </div>
                                     {% endfor %}
@@ -259,7 +260,7 @@
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="alert alert-info" style="margin-bottom: 15px;">
+                    <div class="alert alert-info partner-empty-state">
                         <i class="fa fa-info-circle"></i>
                         {% trans "No sponsor groups created yet. Add your first sponsor group to get started." %}
                     </div>
@@ -369,7 +370,7 @@
     {% endcomment %}
 </form>
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="{% static 'sortable/Sortable.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const sponsorGroupsList = document.getElementById('sponsor-groups-list');

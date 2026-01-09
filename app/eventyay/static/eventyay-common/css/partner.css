@@ -1,0 +1,207 @@
+/* Partner and Sponsor Management Styles */
+
+/* Partner section panels */
+.partner-section-panel {
+    margin-bottom: 20px;
+}
+
+.partner-panel-heading {
+    background-color: #e8e8e8;
+    padding: 15px;
+}
+
+.partner-panel-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-panel-body {
+    padding: 20px;
+}
+
+.partner-help-block {
+    margin-bottom: 15px;
+}
+
+/* Sponsor groups list */
+.sponsor-groups-list {
+    margin-bottom: 15px;
+}
+
+.sponsor-group-item {
+    margin-bottom: 10px;
+}
+
+.sponsor-group-heading {
+    background-color: #f9f9f9;
+    padding: 12px 15px;
+}
+
+.sponsor-group-handle {
+    cursor: move;
+    margin-right: 10px;
+    color: #999;
+}
+
+.sponsor-group-title {
+    font-size: 15px;
+}
+
+.sponsor-group-badge {
+    margin-left: 8px;
+}
+
+.sponsor-group-meta {
+    margin-left: 8px;
+    font-size: 12px;
+}
+
+.sponsor-group-body {
+    padding: 10px 15px;
+    background-color: #fff;
+}
+
+/* Partner logos preview */
+.partner-logos-preview {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.partner-item-inline {
+    position: relative;
+}
+
+.partner-drag-handle {
+    cursor: move;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    display: none;
+}
+
+.partner-item-inline:hover .partner-drag-handle {
+    display: block;
+}
+
+.partner-logo-preview {
+    max-height: 40px;
+    max-width: 100px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    padding: 3px;
+    background: white;
+}
+
+.partner-name-label {
+    padding: 5px 10px;
+}
+
+/* Partner form */
+.partner-form-group {
+    margin-bottom: 15px;
+}
+
+.partner-form-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+}
+
+.partner-form-item .panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-form-number {
+    background-color: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.partner-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.partner-logo-upload-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.partner-logo-current {
+    max-width: 200px;
+    max-height: 100px;
+    display: block;
+    margin: 10px auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: white;
+}
+
+.partner-empty-state {
+    margin-bottom: 15px;
+}
+
+.partner-empty-warning {
+    text-align: center;
+    padding: 30px;
+}
+
+.partner-empty-warning i {
+    font-size: 48px;
+    color: #f0ad4e;
+    margin-bottom: 15px;
+}
+
+/* Sortable styles */
+.sortable-ghost {
+    opacity: 0.4;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+/* Logo size slider */
+.logo-size-slider-container {
+    margin-top: 10px;
+}
+
+.logo-size-value {
+    font-weight: bold;
+    color: #333;
+    margin-left: 10px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .sponsor-group-heading .row {
+        flex-direction: column;
+    }
+    
+    .sponsor-group-heading .col-md-5 {
+        margin-top: 10px;
+    }
+    
+    .partner-logos-preview {
+        justify-content: center;
+    }
+}

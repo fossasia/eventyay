@@ -1,17 +1,23 @@
 {% extends "eventyay_common/event/settings_base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 
 {% block title %}{% trans "Manage partners" %} - {{ sponsor_group.name }}{% endblock %}
 
+{% block custom_header %}
+{{ block.super }}
+<link type="text/css" rel="stylesheet" href='{% static "eventyay-common/css/partner.css" %}'>
+{% endblock %}
+
 {% block inside %}
-<div class="panel panel-default" style="margin: 0;">
-    <div class="panel-heading" style="background-color: #e8e8e8; padding: 15px;">
-        <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+<div class="panel panel-default">
+    <div class="panel-heading partner-panel-heading">
+        <h3 class="panel-title partner-panel-title">
             {% trans "Manage partners" %}: <strong>{{ sponsor_group.name }}</strong>
         </h3>
     </div>
-    <div class="panel-body" style="padding: 20px;">
+    <div class="panel-body partner-panel-body">
         <div class="alert alert-info">
             <i class="fa fa-info-circle"></i>
             {% blocktranslate with size=sponsor_group.logo_size %}
@@ -28,19 +34,19 @@
             <div id="partners-list" class="partners-sortable">
                 {% for form in formset %}
                 {% if form.instance.pk %}
-                <div class="partner-form-item panel panel-default" data-partner-index="{{ forloop.counter0 }}" style="margin-bottom: 10px;">
+                <div class="partner-form-item panel panel-default" data-partner-index="{{ forloop.counter0 }}">
                     <div class="panel-heading" style="background-color: #f5f5f5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                            <span class="handle sponsor-group-handle">
                                 <i class="fa fa-bars"></i>
                             </span>
-                            <strong>Partner #{{ forloop.counter }}</strong>
-                            <span class="label label-success" style="margin-left: 8px;">Saved</span>
+                            <strong class="partner-form-number">Partner #{{ forloop.counter }}</strong>
+                            <span class="label label-success sponsor-group-badge">Saved</span>
                         </div>
                         {% if formset.can_delete %}
                         <div>
                             {{ form.DELETE }}
-                            <button type="button" class="btn btn-danger btn-xs delete-partner-btn" 
+                            <button type="button" class="btn btn-danger btn-xs delete-partner-btn partner-delete-btn" 
                                     data-partner-name="{{ form.instance.name }}"
                                     data-partner-index="{{ forloop.counter0 }}">
                                 <i class="fa fa-trash"></i> {% trans "Delete" %}
@@ -48,8 +54,8 @@
                         </div>
                         {% endif %}
                     </div>
-                    <div class="panel-body" style="padding: 12px;">
-                        <div class="form-group">
+                    <div class="panel-body">
+                        <div class="form-group partner-form-group">
                             <label for="id_{{ form.prefix }}-name">{{ form.name.label }}</label>
                             {{ form.name }}
                             {% if form.name.errors %}
@@ -57,7 +63,7 @@
                             {% endif %}
                         </div>
                         
-                        <div class="form-group">
+                        <div class="form-group partner-form-group">
                             <label for="id_{{ form.prefix }}-link">{{ form.link.label }}</label>
                             {{ form.link }}
                             {% if form.link.errors %}
@@ -66,7 +72,7 @@
                             <p class="help-block">{% trans "Optional website URL for this partner" %}</p>
                         </div>
                         
-                        <div class="form-group">
+                        <div class="form-group partner-form-group">
                             <label>{{ form.logo.label }}</label>
                             {{ form.logo }}
                             {% if form.logo.errors %}
@@ -75,18 +81,17 @@
                             <p class="help-block">{% trans "Max 10MB. Formats: GIF, JPEG, JPG, PNG, SVG" %}</p>
                             
                             {# Live preview container #}
-                            <div class="logo-preview-container" id="preview-{{ forloop.counter0 }}" style="margin-top: 10px; display: none;">
+                            <div class="logo-preview-container partner-logo-upload-container" id="preview-{{ forloop.counter0 }}" style="display: none;">
                                 <strong>{% trans "Preview:" %}</strong><br>
-                                <img class="logo-preview-img" src="" alt="Preview" 
-                                     style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                                <img class="logo-preview-img partner-logo-current" src="" alt="Preview">
                             </div>
                             
                             {# Current logo if exists #}
                             {% if form.instance.logo %}
-                            <div class="current-logo-container" id="current-{{ forloop.counter0 }}" style="margin-top: 10px;">
+                            <div class="current-logo-container partner-logo-upload-container" id="current-{{ forloop.counter0 }}">
                                 <strong>{% trans "Current logo:" %}</strong><br>
                                 <img src="{{ form.instance.logo.url }}" alt="{{ form.instance.name }}" 
-                                     style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                                     class="partner-logo-current">
                             </div>
                             {% endif %}
                         </div>
@@ -99,15 +104,15 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="alert alert-warning" style="text-align: center; padding: 30px;">
-                <i class="fa fa-info-circle" style="font-size: 48px; color: #f0ad4e; margin-bottom: 15px;"></i>
+            <div class="alert alert-warning partner-empty-warning">
+                <i class="fa fa-info-circle"></i>
                 <h4>{% trans "No partners in this group yet" %}</h4>
                 <p>{% trans "Click the button below to add your first partner" %}</p>
             </div>
             <div id="partners-list" class="partners-sortable" style="display: none;"></div>
             {% endif %}
             
-            <div style="margin: 15px 0;">
+            <div class="partner-form-group">
                 <button type="button" id="add-partner-btn" class="btn btn-success">
                     <i class="fa fa-plus"></i> 
                     {% if sponsor_group.partners.exists %}
@@ -118,7 +123,7 @@
                 </button>
             </div>
             
-            <div class="form-group" style="margin-top: 20px;">
+            <div class="form-group partner-form-group">
                 <button type="submit" class="btn btn-primary">
                     <i class="fa fa-save"></i> {% trans "Save Changes" %}
                 </button>
@@ -131,7 +136,7 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="{% static 'sortable/Sortable.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const partnersList = document.getElementById('partners-list');
