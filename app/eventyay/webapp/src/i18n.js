@@ -47,7 +47,7 @@ function setStoredLanguage(language) {
 	try {
 		localStorage.userLanguage = language
 	} catch (error) {
-		// Ignore storage errors (e.g. disabled cookies)
+		// Ignore localStorage access errors (e.g. disabled storage, private mode, quota exceeded)
 	}
 }
 

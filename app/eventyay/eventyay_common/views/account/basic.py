@@ -29,6 +29,9 @@ from .common import AccountMenuMixIn
 logger = getLogger(__name__)
 PASSWORD_RESET_INTENT = 'password_reset'
 
+# Pre-computed set of valid language codes for efficient validation
+VALID_LANGUAGE_CODES = {code for code, __ in settings.LANGUAGES}
+
 
 def get_social_account_provider_label(user: User) -> str:
     """
@@ -123,7 +126,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
             sup.set_cookie(
                 settings.LANGUAGE_COOKIE_NAME,
                 new_locale,
-                max_age=max_age,
+                max_age=int(max_age.total_seconds()),
                 expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
@@ -327,7 +330,7 @@ class LanguageSwitchView(View):
 
         response = redirect(next_url)
         locale = request.POST.get('locale')
-        if locale and locale in (code for code, __ in settings.LANGUAGES):
+        if locale and locale in VALID_LANGUAGE_CODES:
             activate(locale)
             if request.user.is_authenticated:
                 if request.user.locale != locale:
