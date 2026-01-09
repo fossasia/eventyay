@@ -41,5 +41,8 @@ RUN make webappbuild
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
+# Create .secrets to suppress warnings about missing directory
+RUN mkdir -p $APP_HOME/.secrets
+
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
