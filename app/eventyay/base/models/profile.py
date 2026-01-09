@@ -41,6 +41,16 @@ class SpeakerProfile(PretalxModel):
         blank=True,
     )
     has_arrived = models.BooleanField(default=False, verbose_name=_('The speaker has arrived'))
+    is_featured = models.BooleanField(
+        default=False,
+        verbose_name=_('Featured speaker'),
+        help_text=_('Featured speakers will be displayed on the event landing page')
+    )
+    order = models.IntegerField(
+        default=0,
+        verbose_name=_('Display order'),
+        help_text=_('Order in which speakers are displayed (lower numbers appear first)')
+    )
 
     log_prefix = 'eventyay.user.profile'
 

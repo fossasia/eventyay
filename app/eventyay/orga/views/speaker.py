@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -92,8 +93,14 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         elif question and unanswered:
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
-        qs = qs.order_by('id').distinct()
-        return self.sort_queryset(qs)
+        
+        # Apply sorting with order field
+        sorted_qs = self.sort_queryset(qs)
+        # If no explicit sort requested, order by 'order' field (for drag-drop), then 'id' for stability
+        if not self.request.GET.get('ordering'):
+            sorted_qs = sorted_qs.order_by('order', 'id')
+        return sorted_qs.distinct()
+
 
 
 class SpeakerViewMixin(PermissionRequired):
@@ -287,3 +294,39 @@ class SpeakerExport(EventPermissionRequired, FormView):
             messages.success(self.request, _('No data to be exported'))
             return redirect(self.request.path)
         return result
+
+
+class SpeakerToggleFeatured(SpeakerViewMixin, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, event, code):
+        self.profile.is_featured = not self.profile.is_featured
+        self.profile.save()
+        action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
+        self.object.log_action(
+            action,
+            data={'event': self.request.event.slug},
+            user=self.request.user,
+        )
+        return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
+
+
+class SpeakerReorderView(EventPermissionRequired, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            import json
+            data = json.loads(request.body)
+            speaker_ids = data.get('speaker_ids', [])
+            
+            with transaction.atomic():
+                for index, speaker_id in enumerate(speaker_ids):
+                    SpeakerProfile.objects.filter(
+                        id=speaker_id,
+                        event=request.event
+                    ).update(order=index)
+            
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)

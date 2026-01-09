@@ -592,6 +592,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         context['event_name'] = event_name
         context['guest_checkout_allowed'] = not self.request.event.settings.require_registered_account_for_tickets
 
+        # Get featured speakers for the landing page
+        from eventyay.base.models import SpeakerProfile
+        featured_speakers = SpeakerProfile.objects.filter(
+            event=self.request.event,
+            is_featured=True
+        ).select_related('user').order_by('order')[:6]  # Limit to 6 featured speakers
+        context['featured_speakers'] = featured_speakers
+
         return context
 
     def _subevent_list_context(self):

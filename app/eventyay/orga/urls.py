@@ -325,6 +325,11 @@ urlpatterns = [
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
                 path(
+                    'speakers/reorder/',
+                    speaker.SpeakerReorderView.as_view(),
+                    name='speakers.reorder',
+                ),
+                path(
                     'speakers/export/',
                     speaker.SpeakerExport.as_view(),
                     name='speakers.export',
@@ -347,6 +352,11 @@ urlpatterns = [
                                 'toggle-arrived',
                                 speaker.SpeakerToggleArrived.as_view(),
                                 name='speakers.arrived',
+                            ),
+                            path(
+                                'toggle-featured',
+                                speaker.SpeakerToggleFeatured.as_view(),
+                                name='speakers.featured',
                             ),
                         ]
                     ),

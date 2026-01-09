@@ -21,6 +21,53 @@
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
+    <style>
+        .featured-speakers {
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+        .featured-speakers h3 {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .speaker-card {
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #f9f9f9;
+            min-height: 300px;
+        }
+        .speaker-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+        .speaker-avatar-placeholder {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: #ddd;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: #999;
+        }
+        .speaker-card h4 {
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        .speaker-bio {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            min-height: 60px;
+        }
+    </style>
 {% endblock %}
 {% block content %}
 
@@ -307,6 +354,40 @@
         {% endif %}
     {% endif %}
     </main>
+    
+    {% if featured_speakers %}
+        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading">
+            <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
+            <div class="row">
+                {% for speaker_profile in featured_speakers %}
+                    <div class="col-md-4 col-sm-6 col-xs-12">
+                        <div class="speaker-card">
+                            {% if speaker_profile.avatar_url %}
+                                <img src="{{ speaker_profile.avatar_url }}" alt="{{ speaker_profile.user.get_display_name }}" class="speaker-avatar">
+                            {% else %}
+                                <div class="speaker-avatar-placeholder">
+                                    <i class="fa fa-user fa-3x"></i>
+                                </div>
+                            {% endif %}
+                            <h4>{{ speaker_profile.user.get_display_name }}</h4>
+                            {% if speaker_profile.biography %}
+                                <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:30|striptags }}</p>
+                            {% endif %}
+                            <a href="{{ speaker_profile.urls.public }}" class="btn btn-sm btn-default">
+                                {% trans "View profile" %}
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="text-center" style="margin-top: 20px;">
+                <a href="{% eventurl event 'agenda:speakers' %}" class="btn btn-primary">
+                    {% trans "More speakers" %} <i class="fa fa-arrow-right"></i>
+                </a>
+            </div>
+        </section>
+    {% endif %}
+    
     {% if show_vouchers %}
         <aside class="front-page" aria-labelledby="redeem-a-voucher">
             <h3 id="redeem-a-voucher">{% trans "Redeem a voucher" %}</h3>

@@ -3,8 +3,115 @@
 {% load staff_session %}
 {% load i18n %}
 {% load rules %}
+{% load static %}
 
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
+
+{% block scripts %}
+    {{ block.super }}
+    <script src="{% static 'sortable/Sortable.js' %}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get CSRF token from Django template
+            const csrftoken = '{{ csrf_token }}';
+
+            // Initialize Sortable for drag-and-drop reordering
+            const tbody = document.getElementById('speaker-tbody');
+            if (tbody) {
+                Sortable.create(tbody, {
+                    handle: '.drag-handle',
+                    animation: 150,
+                    onEnd: function(evt) {
+                        const speakerIds = Array.from(tbody.querySelectorAll('tr[data-speaker-id]'))
+                            .map(row => row.dataset.speakerId);
+                        
+                        fetch('{% url "orga:speakers.reorder" event=request.event.slug %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken
+                            },
+                            body: JSON.stringify({ speaker_ids: speakerIds })
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('HTTP error ' + response.status);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data.status === 'success') {
+                                console.log('✓ Speaker order saved successfully');
+                            } else {
+                                alert('Failed to save speaker order: ' + (data.message || 'Unknown error'));
+                                location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Failed to save speaker order: ' + error.message);
+                            location.reload();
+                        });
+                    }
+                });
+            }
+
+            // Handle featured checkbox toggle
+            document.querySelectorAll('.featured-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const speakerCode = this.dataset.speakerCode;
+                    const url = '/orga/event/{{ request.event.slug }}/speakers/' + speakerCode + '/toggle-featured';
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('HTTP error ' + response.status);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.status === 'success') {
+                            console.log('✓ Featured status updated:', data.is_featured);
+                            this.checked = data.is_featured;
+                        } else {
+                            this.checked = !this.checked;
+                            alert('Failed to update featured status: ' + (data.message || 'Unknown error'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.checked = !this.checked;
+                        alert('Failed to update featured status: ' + error.message);
+                    });
+                });
+            });
+        });
+    </script>
+    <style>
+        .drag-handle {
+            cursor: move;
+            cursor: grab;
+            padding: 5px 10px;
+            color: #666;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .drag-handle:hover {
+            color: #000;
+        }
+        .featured-checkbox {
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+    </style>
+{% endblock scripts %}
 
 {% block content %}
     <div class="d-md-flex justify-content-between">
@@ -39,19 +146,31 @@
         <table class="table table-sm table-flip table-sticky">
             <thead>
                 <tr>
+                    <th style="width: 30px;"></th>
                     <th>{% translate "Name" %}</th>
+                    <th class="text-center" style="width: 100px;">{% translate "Featured" %}</th>
                     <th class="numeric">{% translate "Accepted Proposals" %}</th>
                     <th class="numeric">{% translate "Proposals" %}</th>
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="speaker-tbody">
                 {% for profile in speakers %}
-                    <tr>
+                    <tr data-speaker-id="{{ profile.id }}">
+                        <td class="drag-handle" title="{% translate 'Drag to reorder' %}">
+                            <i class="fa fa-bars"></i>
+                        </td>
                         <td>
                             <a href="{{ profile.orga_urls.base }}">
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
                             </a>
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox" 
+                                   class="featured-checkbox" 
+                                   data-speaker-code="{{ profile.user.code }}"
+                                   {% if profile.is_featured %}checked{% endif %}
+                                   title="{% translate 'Mark as featured speaker' %}">
                         </td>
                         <td class="numeric">{{ profile.accepted_submission_count }}</td>
                         <td class="numeric">{{ profile.submission_count }}</td>
