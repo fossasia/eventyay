@@ -11,18 +11,13 @@ class SponsorGroupForm(forms.ModelForm):
     
     class Meta:
         model = SponsorGroup
-        fields = ['name', 'order', 'logo_size']
+        fields = ['name', 'order']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': _('e.g., Platinum Sponsor, Gold Sponsor')
             }),
             'order': forms.HiddenInput(),
-            'logo_size': forms.NumberInput(attrs={
-                'class': 'form-control logo-size-input',
-                'min': 20,
-                'max': 500,
-            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -55,7 +50,7 @@ class PartnerForm(forms.ModelForm):
     
     class Meta:
         model = Partner
-        fields = ['name', 'link', 'logo', 'order']
+        fields = ['name', 'link', 'logo', 'logo_width', 'order']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -69,6 +64,11 @@ class PartnerForm(forms.ModelForm):
             'logo': forms.FileInput(attrs={
                 'class': 'form-control',
                 'accept': 'image/*'
+            }),
+            'logo_width': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 50,
+                'max': 500,
             }),
         }
     
@@ -101,7 +101,7 @@ PartnerFormSet = inlineformset_factory(
     Partner,
     form=PartnerForm,
     formset=BasePartnerFormSet,
-    extra=1,  # Show 1 empty form, user can add more dynamically
+    extra=0,  # No extra forms by default, user adds them dynamically via JavaScript
     can_delete=True,
     can_order=True,
 )

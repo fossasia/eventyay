@@ -20,11 +20,28 @@
     <div class="panel-body partner-panel-body">
         <div class="alert alert-info">
             <i class="fa fa-info-circle"></i>
-            {% blocktranslate with size=sponsor_group.logo_size %}
-                Logos in this group will be displayed at maximum {{ size }}px height on the public page.
-                You can drag and drop partners to reorder them.
-            {% endblocktranslate %}
+            {% trans "You can drag and drop partners to reorder them. Each partner can have its own logo width setting." %}
         </div>
+
+        {% if formset.non_form_errors %}
+        <div class="alert alert-danger">
+            <strong>{% trans "Formset Errors:" %}</strong>
+            {{ formset.non_form_errors }}
+        </div>
+        {% endif %}
+
+        {% if formset.errors %}
+        <div class="alert alert-warning">
+            <strong>{% trans "Form Errors:" %}</strong>
+            <ul>
+            {% for form in formset %}
+                {% if form.errors %}
+                <li>Partner #{{ forloop.counter }}: {{ form.errors }}</li>
+                {% endif %}
+            {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
 
         <form action="" method="post" enctype="multipart/form-data" id="partner-form">
             {% csrf_token %}
@@ -35,7 +52,7 @@
                 {% for form in formset %}
                 {% if form.instance.pk %}
                 <div class="partner-form-item panel panel-default" data-partner-index="{{ forloop.counter0 }}">
-                    <div class="panel-heading" style="background-color: #f5f5f5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="panel-heading partner-manage-panel-heading">
                         <div>
                             <span class="handle sponsor-group-handle">
                                 <i class="fa fa-bars"></i>
@@ -81,7 +98,7 @@
                             <p class="help-block">{% trans "Max 10MB. Formats: GIF, JPEG, JPG, PNG, SVG" %}</p>
                             
                             {# Live preview container #}
-                            <div class="logo-preview-container partner-logo-upload-container" id="preview-{{ forloop.counter0 }}" style="display: none;">
+                            <div class="logo-preview-container partner-logo-upload-container partner-preview-hidden" id="preview-{{ forloop.counter0 }}">
                                 <strong>{% trans "Preview:" %}</strong><br>
                                 <img class="logo-preview-img partner-logo-current" src="" alt="Preview">
                             </div>
@@ -94,6 +111,20 @@
                                      class="partner-logo-current">
                             </div>
                             {% endif %}
+                        </div>
+                        
+                        <div class="form-group partner-form-group">
+                            <label for="id_{{ form.prefix }}-logo_width">{{ form.logo_width.label }}</label>
+                            <div class="logo-width-container">
+                                <input type="range" min="50" max="500" value="{{ form.logo_width.value|default:150 }}" 
+                                       class="logo-width-slider" data-target="id_{{ form.prefix }}-logo_width">
+                                {{ form.logo_width }}
+                                <span class="logo-width-display">{{ form.logo_width.value|default:150 }}px</span>
+                            </div>
+                            {% if form.logo_width.errors %}
+                            <div class="help-block text-danger">{{ form.logo_width.errors }}</div>
+                            {% endif %}
+                            <p class="help-block">{% trans "Maximum width for this logo (50-500px)" %}</p>
                         </div>
                         
                         {{ form.order }}
@@ -109,7 +140,7 @@
                 <h4>{% trans "No partners in this group yet" %}</h4>
                 <p>{% trans "Click the button below to add your first partner" %}</p>
             </div>
-            <div id="partners-list" class="partners-sortable" style="display: none;"></div>
+            <div id="partners-list" class="partners-sortable partners-list-hidden"></div>
             {% endif %}
             
             <div class="partner-form-group">
@@ -175,10 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (addPartnerBtn) {
         addPartnerBtn.addEventListener('click', function() {
             // Show the partners list if it's hidden (for empty state)
-            if (partnersList && partnersList.style.display === 'none') {
-                partnersList.style.display = 'block';
+            if (partnersList && partnersList.classList.contains('partners-list-hidden')) {
+                partnersList.classList.remove('partners-list-hidden');
                 // Hide the empty state alert
-                const emptyAlert = document.querySelector('.alert-warning');
+                const emptyAlert = document.querySelector('.partner-empty-warning');
                 if (emptyAlert) {
                     emptyAlert.style.display = 'none';
                 }
@@ -202,6 +233,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Clone the last form
             const lastForm = partnersList.querySelector('.partner-form-item:last-child');
+            if (!lastForm) {
+                return;
+            }
+            
             const newForm = lastForm.cloneNode(true);
             
             // Update form index
@@ -220,12 +255,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     input.setAttribute('id', id.replace(/\d+/, newIndex));
                 }
                 
-                // Clear values
+                // Clear values except for fields that need defaults
                 if (input.type === 'checkbox') {
                     input.checked = false;
                 } else if (input.type === 'file') {
                     input.value = '';
-                } else {
+                } else if (name && name.endsWith('-order')) {
+                    // Set order to new index
+                    input.value = newIndex;
+                } else if (name && name.endsWith('-logo_width')) {
+                    // Keep default logo_width or set to 150
+                    input.value = input.value || '150';
+                } else if (name && name.endsWith('-id')) {
+                    // Clear ID for new forms
+                    input.value = '';
+                } else if (name && !name.endsWith('-DELETE')) {
+                    // Clear other fields (name, link, etc.)
                     input.value = '';
                 }
             });
@@ -237,6 +282,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     label.setAttribute('for', forAttr.replace(/\d+/, newIndex));
                 }
             });
+            
+            // Update slider data-target attributes
+            newForm.querySelectorAll('.logo-width-slider').forEach(slider => {
+                const dataTarget = slider.getAttribute('data-target');
+                if (dataTarget) {
+                    slider.setAttribute('data-target', dataTarget.replace(/\d+/, newIndex));
+                }
+                // Set slider to default value
+                slider.value = '150';
+            });
+            
+            // Update logo width display
+            const logoWidthDisplay = newForm.querySelector('.logo-width-display');
+            if (logoWidthDisplay) {
+                logoWidthDisplay.textContent = '150px';
+            }
             
             // Clear preview containers
             const previewContainer = newForm.querySelector('.logo-preview-container');
@@ -287,6 +348,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Re-initialize file preview for new form
             initFilePreview(newIndex);
             
+            // Re-initialize logo width sliders
+            initLogoWidthSliders();
+            
             // Update order fields
             updateOrderFields();
         });
@@ -297,20 +361,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const formPrefix = document.querySelector('input[name$="-TOTAL_FORMS"]').name.split('-')[0];
         
         const formHtml = `
-            <div class="partner-form-item panel panel-default" data-partner-index="${index}" style="margin-bottom: 10px;">
-                <div class="panel-heading" style="background-color: #f5f5f5; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="partner-form-item panel panel-default" data-partner-index="${index}">
+                <div class="panel-heading">
                     <div>
-                        <span class="handle" style="cursor: move; margin-right: 10px; color: #999;">
+                        <span class="handle">
                             <i class="fa fa-bars"></i>
                         </span>
                         <strong>Partner #1</strong>
-                        <span class="label label-default" style="margin-left: 8px;">{% trans "New" %}</span>
-                        <button type="button" class="btn btn-danger btn-xs remove-partner-btn" style="margin-left: 10px;">
+                        <span class="label label-default">{% trans "New" %}</span>
+                        <button type="button" class="btn btn-danger btn-xs remove-partner-btn">
                             <i class="fa fa-times"></i> {% trans "Remove" %}
                         </button>
                     </div>
                 </div>
-                <div class="panel-body" style="padding: 12px;">
+                <div class="panel-body">
                     <div class="form-group">
                         <label for="id_${formPrefix}-${index}-name">{% trans "Name" %}</label>
                         <input type="text" name="${formPrefix}-${index}-name" class="form-control" placeholder="{% trans "Partner name" %}" id="id_${formPrefix}-${index}-name">
@@ -324,10 +388,20 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label>{% trans "Logo" %}</label>
                         <input type="file" name="${formPrefix}-${index}-logo" class="form-control" accept="image/*" id="id_${formPrefix}-${index}-logo">
                         <p class="help-block">{% trans "Max 10MB. Formats: GIF, JPEG, JPG, PNG, SVG" %}</p>
-                        <div class="logo-preview-container" id="preview-${index}" style="margin-top: 10px; display: none;">
+                        <div class="logo-preview-container" id="preview-${index}">
                             <strong>{% trans "Preview:" %}</strong><br>
-                            <img class="logo-preview-img" src="" alt="Preview" style="max-height: 100px; max-width: 200px; border: 1px solid #ddd; padding: 5px; background: white; margin-top: 5px;">
+                            <img class="logo-preview-img" src="" alt="Preview">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="id_${formPrefix}-${index}-logo_width">{% trans "Logo width (px)" %}</label>
+                        <div class="logo-width-container">
+                            <input type="range" min="50" max="500" value="150" 
+                                   class="logo-width-slider" data-target="id_${formPrefix}-${index}-logo_width">
+                            <input type="number" name="${formPrefix}-${index}-logo_width" class="form-control" min="50" max="500" value="150" id="id_${formPrefix}-${index}-logo_width">
+                            <span class="logo-width-display">150px</span>
+                        </div>
+                        <p class="help-block">{% trans "Maximum width for this logo (50-500px)" %}</p>
                     </div>
                     <input type="hidden" name="${formPrefix}-${index}-order" value="${index}" id="id_${formPrefix}-${index}-order">
                     <input type="hidden" name="${formPrefix}-${index}-id" id="id_${formPrefix}-${index}-id">
@@ -337,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         partnersList.insertAdjacentHTML('beforeend', formHtml);
         initFilePreview(index);
+        initLogoWidthSliders();  // Re-initialize sliders for new form
     }
     
     // Initialize file preview for all existing inputs
@@ -466,57 +541,33 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    
+    // Initialize logo width sliders
+    function initLogoWidthSliders() {
+        const sliders = document.querySelectorAll('.logo-width-slider');
+        sliders.forEach(slider => {
+            const targetId = slider.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const display = slider.parentElement.querySelector('.logo-width-display');
+            
+            if (input && display) {
+                // Sync slider to input
+                slider.addEventListener('input', function() {
+                    input.value = this.value;
+                    display.textContent = this.value + 'px';
+                });
+                
+                // Sync input to slider
+                input.addEventListener('input', function() {
+                    slider.value = this.value;
+                    display.textContent = this.value + 'px';
+                });
+            }
+        });
+    }
+    
+    // Initialize sliders on page load
+    initLogoWidthSliders();
 });
 </script>
-
-<style>
-.partner-form-item {
-    transition: all 0.3s ease;
-}
-
-.partner-form-item .handle {
-    transition: color 0.2s ease;
-}
-
-.partner-form-item .handle:hover {
-    color: #333 !important;
-}
-
-.sortable-ghost {
-    opacity: 0.5;
-    background: #f0f0f0 !important;
-}
-
-.logo-preview-container {
-    animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Hide the DELETE checkbox, we use a button instead */
-input[name$="-DELETE"] {
-    display: none;
-}
-
-.delete-partner-btn {
-    transition: all 0.2s ease;
-}
-
-.delete-partner-btn:hover:not(:disabled) {
-    background-color: #c9302c;
-    transform: scale(1.05);
-}
-
-.remove-partner-btn {
-    transition: all 0.2s ease;
-}
-
-.remove-partner-btn:hover {
-    background-color: #c9302c;
-    transform: scale(1.05);
-}
-</style>
 {% endblock %}

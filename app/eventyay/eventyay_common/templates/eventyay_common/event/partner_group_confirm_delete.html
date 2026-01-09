@@ -4,14 +4,14 @@
 {% block title %}{% trans "Delete Sponsor Group" %}{% endblock %}
 
 {% block inside %}
-<div class="panel panel-danger" style="margin: 0;">
-    <div class="panel-heading" style="background-color: #d9534f; color: white; padding: 15px;">
-        <h3 class="panel-title" style="font-size: 16px; margin: 0;">
+<div class="panel panel-danger partner-panel-danger">
+    <div class="panel-heading partner-panel-danger-heading">
+        <h3 class="panel-title partner-panel-danger-title">
             <i class="fa fa-exclamation-triangle"></i> {% trans "Confirm Deletion" %}
         </h3>
     </div>
-    <div class="panel-body" style="padding: 20px;">
-        <div class="alert alert-danger" style="border-left: 4px solid #d9534f;">
+    <div class="panel-body partner-panel-danger-body">
+        <div class="alert alert-danger partner-alert-danger-border">
             <h4><i class="fa fa-warning"></i> <strong>{% trans "Warning!" %}</strong></h4>
             <p>
                 {% blocktranslate with name=sponsor_group.name count=sponsor_group.partners.count %}
@@ -24,8 +24,8 @@
             </p>
         </div>
 
-        <div class="panel panel-default" style="margin-top: 20px;">
-            <div class="panel-heading" style="background-color: #f5f5f5; padding: 12px 15px;">
+        <div class="panel panel-default partner-panel-default-spacing">
+            <div class="panel-heading partner-panel-default-heading">
                 <strong>{{ sponsor_group.name }}</strong>
                 <span class="label label-default pull-right">
                     {{ sponsor_group.partners.count }} partner{{ sponsor_group.partners.count|pluralize }}
@@ -34,23 +34,32 @@
             <div class="panel-body">
                 {% if sponsor_group.partners.exists %}
                 <p><strong>{% trans "Partners that will be deleted:" %}</strong></p>
-                <ul class="list-unstyled" style="margin-left: 15px;">
+                <div class="partners-delete-grid">
                     {% for partner in sponsor_group.partners.all %}
-                    <li style="margin-bottom: 5px;">
-                        <i class="fa fa-user" style="color: #999;"></i> {{ partner.name }}
+                    <div class="partner-delete-card">
                         {% if partner.logo %}
-                        <span class="label label-info">Has logo</span>
+                        <div class="partner-delete-logo-container">
+                            <img src="{{ partner.logo.url }}" 
+                                 alt="{{ partner.name }}"
+                                 class="partner-delete-logo"
+                                 style="max-width: {{ partner.logo_width }}px;">
+                        </div>
+                        {% else %}
+                        <div class="partner-delete-placeholder">
+                            <i class="fa fa-image"></i>
+                        </div>
                         {% endif %}
-                    </li>
+                        <div class="partner-delete-name">{{ partner.name }}</div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
                 {% else %}
                 <p class="text-muted"><i class="fa fa-info-circle"></i> {% trans "No partners in this group" %}</p>
                 {% endif %}
             </div>
         </div>
 
-        <form action="" method="post" style="margin-top: 20px;">
+        <form action="" method="post" class="partner-form-spacing">
             {% csrf_token %}
             <div class="form-group">
                 <button type="submit" class="btn btn-danger btn-lg">

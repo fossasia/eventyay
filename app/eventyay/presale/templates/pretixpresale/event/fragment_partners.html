@@ -1,143 +1,44 @@
-{% load i18n %}
+{% load i18n static %}
 
 {% if sponsor_groups %}
+<link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/partners.css" %}">
 <aside class="front-page partner-section" aria-labelledby="partners-heading">
-    <h3 id="partners-heading">
-        {% if event.settings.partner_section_heading %}
-            {{ event.settings.partner_section_heading }}
-        {% else %}
-            {% trans "Supported by" %}
-        {% endif %}
-    </h3>
-    
-    {% for group in sponsor_groups %}
-    <div class="sponsor-group mb-4">
-        <h4 class="sponsor-group-title">{{ group.name }}</h4>
-        <div class="partner-logos" style="--logo-height: {{ group.logo_size }}px;">
-            {% for partner in group.partners.all %}
-            <div class="partner-item">
-                {% if partner.link %}
-                <a href="{{ partner.link }}" target="_blank" rel="noopener noreferrer" 
-                   title="{{ partner.name }}" class="partner-link">
-                {% endif %}
-                    {% if partner.logo %}
-                    <img src="{{ partner.logo.url }}" 
-                         alt="{{ partner.name }}"
-                         class="partner-logo"
-                         loading="lazy">
-                    {% else %}
-                    <span class="partner-name-only">{{ partner.name }}</span>
+    <div class="partner-section-wrapper">
+        <h3 id="partners-heading">
+            {% if event.settings.partner_section_heading %}
+                {{ event.settings.partner_section_heading }}
+            {% else %}
+                {% trans "Supported by" %}
+            {% endif %}
+        </h3>
+        
+        {% for group in sponsor_groups %}
+        <div class="sponsor-group mb-4">
+            <h4 class="sponsor-group-title">{{ group.name }}</h4>
+            <div class="partner-logos">
+                {% for partner in group.partners.all %}
+                <div class="partner-item">
+                    {% if partner.link %}
+                    <a href="{{ partner.link }}" target="_blank" rel="noopener noreferrer" 
+                       title="{{ partner.name }}" class="partner-link">
                     {% endif %}
-                {% if partner.link %}
-                </a>
-                {% endif %}
+                        {% if partner.logo %}
+                        <img src="{{ partner.logo.url }}" 
+                             alt="{{ partner.name }}"
+                             class="partner-logo"
+                             style="max-width: {{ partner.logo_width }}px;"
+                             loading="lazy">
+                        {% else %}
+                        <span class="partner-name-only">{{ partner.name }}</span>
+                        {% endif %}
+                    {% if partner.link %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </aside>
-
-<style>
-.partner-section {
-    margin: 40px 0;
-    padding: 30px 0;
-    border-top: 1px solid #e0e0e0;
-}
-
-.partner-section h3 {
-    text-align: center;
-    margin-bottom: 30px;
-    font-size: 2em;
-    color: #333;
-}
-
-.sponsor-group {
-    margin-bottom: 40px;
-}
-
-.sponsor-group-title {
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.3em;
-    color: #666;
-    font-weight: 600;
-}
-
-.partner-logos {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    padding: 20px;
-}
-
-.partner-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.partner-link {
-    display: block;
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
-
-.partner-link:hover {
-    transform: scale(1.05);
-    opacity: 0.8;
-}
-
-.partner-logo {
-    max-height: var(--logo-height, 120px);
-    max-width: 100%;
-    height: auto;
-    width: auto;
-    object-fit: contain;
-    display: block;
-}
-
-.partner-name-only {
-    display: inline-block;
-    padding: 10px 20px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-weight: 500;
-    color: #495057;
-    text-align: center;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .partner-logos {
-        gap: 20px;
-        padding: 15px;
-    }
-    
-    .partner-logo {
-        max-height: calc(var(--logo-height, 120px) * 0.75);
-    }
-    
-    .sponsor-group-title {
-        font-size: 1.1em;
-    }
-    
-    .partner-section h3 {
-        font-size: 1.5em;
-    }
-}
-
-@media (max-width: 480px) {
-    .partner-logos {
-        gap: 15px;
-        padding: 10px;
-    }
-    
-    .partner-logo {
-        max-height: calc(var(--logo-height, 120px) * 0.6);
-    }
-}
-</style>
 {% endif %}

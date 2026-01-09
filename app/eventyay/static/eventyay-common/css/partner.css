@@ -201,14 +201,116 @@
 
 /* Sortable styles */
 .sortable-ghost {
-    opacity: 0.4;
+    opacity: 0.5;
+    background: #f0f0f0 !important;
 }
 
 .sortable-drag {
     opacity: 0.8;
 }
 
-/* Logo size slider */
+/* Partner form item transitions */
+.partner-form-item {
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.partner-form-item .handle {
+    cursor: move;
+    margin-right: 10px;
+    color: #999;
+    transition: color 0.2s ease;
+}
+
+.partner-form-item .handle:hover {
+    color: #333 !important;
+}
+
+/* Logo width slider styling */
+.logo-width-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-width-slider {
+    flex: 1;
+    cursor: pointer;
+}
+
+.logo-width-slider::-webkit-slider-thumb {
+    cursor: pointer;
+}
+
+.logo-width-slider::-moz-range-thumb {
+    cursor: pointer;
+}
+
+input[name$="-logo_width"] {
+    width: 80px !important;
+    text-align: center;
+}
+
+.logo-width-display {
+    min-width: 60px;
+    font-weight: bold;
+}
+
+/* Logo preview animations */
+.logo-preview-container {
+    animation: fadeIn 0.3s ease;
+    margin-top: 10px;
+    display: none;
+}
+
+.logo-preview-container.show {
+    display: block;
+}
+
+.logo-preview-img {
+    max-height: 100px;
+    max-width: 200px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: white;
+    margin-top: 5px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Delete and remove buttons */
+input[name$="-DELETE"] {
+    display: none;
+}
+
+.delete-partner-btn,
+.remove-partner-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-partner-btn:hover:not(:disabled),
+.remove-partner-btn:hover {
+    background-color: #c9302c;
+    transform: scale(1.05);
+}
+
+/* Panel styling */
+.partner-form-item .panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-form-item .panel-body {
+    padding: 12px;
+}
+
+/* Logo size slider (deprecated - kept for backward compatibility) */
 .logo-size-slider-container {
     margin-top: 10px;
 }
@@ -233,3 +335,135 @@
         justify-content: center;
     }
 }
+
+/* Delete confirmation page styles */
+.partners-delete-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.partner-delete-card {
+    text-align: center;
+    max-width: 200px;
+}
+
+.partner-delete-logo-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.partner-delete-logo {
+    max-height: 80px;
+    height: auto;
+    width: auto;
+}
+
+.partner-delete-placeholder {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.partner-delete-placeholder i {
+    font-size: 48px;
+}
+
+.partner-delete-name {
+    font-weight: 500;
+    color: #333;
+}
+
+/* Common panel styles */
+.partner-panel-danger {
+    margin: 0;
+}
+
+.partner-panel-danger-heading {
+    background-color: #d9534f;
+    color: white;
+    padding: 15px;
+}
+
+.partner-panel-danger-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-panel-danger-body {
+    padding: 20px;
+}
+
+.partner-alert-danger-border {
+    border-left: 4px solid #d9534f;
+}
+
+.partner-panel-default-spacing {
+    margin-top: 20px;
+}
+
+.partner-panel-default-heading {
+    background-color: #f5f5f5;
+    padding: 12px 15px;
+}
+
+.partner-form-spacing {
+    margin-top: 20px;
+}
+
+/* Group form styles */
+.partner-group-panel {
+    margin: 0;
+}
+
+.partner-group-panel-heading {
+    background-color: #e8e8e8;
+    padding: 15px;
+}
+
+.partner-group-panel-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-group-panel-body {
+    padding: 20px;
+}
+
+.partner-group-form-group-spacing {
+    margin-top: 20px;
+}
+
+/* Manage partners page styles */
+.partner-manage-panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-preview-hidden {
+    display: none;
+}
+
+.partners-list-hidden {
+    display: none;
+}
+
+

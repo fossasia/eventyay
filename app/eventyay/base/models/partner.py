@@ -25,12 +25,6 @@ class SponsorGroup(LoggedModel):
         verbose_name=_('Order'),
         help_text=_('Groups are displayed in ascending order')
     )
-    logo_size = models.IntegerField(
-        default=120,
-        validators=[MinValueValidator(20), MaxValueValidator(500)],
-        verbose_name=_('Logo size (px)'),
-        help_text=_('Maximum height for partner logos in this group (20-500px)')
-    )
 
     class Meta:
         ordering = ['order', 'id']
@@ -68,6 +62,12 @@ class Partner(LoggedModel):
         null=True,
         verbose_name=_('Logo'),
         help_text=_('Partner logo image')
+    )
+    logo_width = models.IntegerField(
+        default=150,
+        validators=[MinValueValidator(50), MaxValueValidator(500)],
+        verbose_name=_('Logo width (px)'),
+        help_text=_('Maximum width for this partner logo (50-500px)')
     )
     order = models.IntegerField(
         default=0,

@@ -159,6 +159,8 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
                     }
                 ) + '#partner-tab'
             )
+        else:
+            messages.error(request, _('Please correct the errors below.'))
         
         return render(request, self.template_name, {
             'sponsor_group': sponsor_group,

@@ -220,9 +220,6 @@
                                         <span class="label label-default sponsor-group-badge">
                                             {{ group.partners.count }} partner{{ group.partners.count|pluralize }}
                                         </span>
-                                        <span class="text-muted sponsor-group-meta">
-                                            • Logo size: {{ group.logo_size }}px
-                                        </span>
                                     </div>
                                     <div class="col-md-5 text-right">
                                         <a href="{% url 'eventyay_common:partner.manage' organizer=request.organizer.slug event=request.event.slug group_pk=group.id %}" 
