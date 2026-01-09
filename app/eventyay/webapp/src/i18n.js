@@ -24,6 +24,9 @@ import config from 'config'
 
 export default i18next
 
+const LANGUAGE_COOKIE_NAME = 'eventyay_language'
+const localeLoaders = import.meta.glob('./locales/*.json')
+
 export function localize(string) {
 	if (typeof string === 'string') return string
 	for (const lang of i18next.languages) {
@@ -32,7 +35,67 @@ export function localize(string) {
 	return Object.values(string)[0]
 }
 
+function getStoredLanguage() {
+	try {
+		return localStorage.userLanguage
+	} catch (error) {
+		return null
+	}
+}
+
+function setStoredLanguage(language) {
+	try {
+		localStorage.userLanguage = language
+	} catch (error) {
+		// Ignore localStorage access errors (e.g. disabled storage, private mode, quota exceeded)
+	}
+}
+
+function getLanguageFromCookie() {
+	try {
+		const cookieName = `${LANGUAGE_COOKIE_NAME}=`
+		const raw = document.cookie.split('; ').find(entry => entry.startsWith(cookieName))
+		return raw ? decodeURIComponent(raw.substring(cookieName.length)) : null
+	} catch (error) {
+		return null
+	}
+}
+
+function resolveLocaleLoader(language) {
+	if (!language) return null
+	const normalized = language.replace('-', '_')
+	const [base, region] = normalized.split('_')
+	const candidates = new Set([language, normalized])
+	if (base && region) {
+		candidates.add(`${base}-${region}`)
+		candidates.add(`${base}-${region.toUpperCase()}`)
+		candidates.add(`${base}_${region.toUpperCase()}`)
+	}
+	if (base) {
+		candidates.add(base)
+	}
+
+	for (const candidate of candidates) {
+		const path = `./locales/${candidate}.json`
+		if (localeLoaders[path]) {
+			return localeLoaders[path]
+		}
+	}
+	return null
+}
+
+function getInitialLanguage() {
+	const stored = getStoredLanguage()
+	const cookie = getLanguageFromCookie()
+	const language = stored || cookie || config.defaultLocale || config.locale || 'en'
+	if (!stored && cookie) {
+		setStoredLanguage(cookie)
+	}
+	return language
+}
+
 export async function init(app) {
+	const initialLanguage = getInitialLanguage()
 	await i18next
 		// dynamic locale loader using webpack chunks
 		.use({
@@ -40,7 +103,11 @@ export async function init(app) {
 			init(services, backendOptions, i18nextOptions) {},
 			async read(language, namespace, callback) {
 				try {
-					const locale = await import(`./locales/${language}.json`)
+					const loader = resolveLocaleLoader(language)
+					if (!loader) {
+						throw new Error(`Missing locale bundle for "${language}"`)
+					}
+					const locale = await loader()
 					callback(null, locale.default)
 				} catch (error) {
 					callback(error)
@@ -56,7 +123,7 @@ export async function init(app) {
 			}
 		})
 		.init({
-			lng: localStorage.userLanguage || config.defaultLocale || config.locale || 'en',
+			lng: initialLanguage,
 			fallbackLng: 'en',
 			debug: ENV_DEVELOPMENT,
 			keySeparator: false,
