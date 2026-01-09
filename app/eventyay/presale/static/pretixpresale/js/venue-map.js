@@ -5,6 +5,15 @@
 (function() {
     'use strict';
     
+    function showError(container, message) {
+        // Safely create error message element to avoid XSS
+        var errorElement = document.createElement('p');
+        errorElement.className = 'venue-map-error';
+        errorElement.textContent = message;
+        container.innerHTML = ''; // Clear container first
+        container.appendChild(errorElement);
+    }
+    
     function initVenueMap() {
         var mapContainer = document.getElementById('venue-map');
         if (!mapContainer) {
@@ -24,7 +33,7 @@
         
         // Check if Leaflet is available
         if (typeof L === 'undefined') {
-            mapContainer.innerHTML = '<p class="venue-map-error">' + errorMessage + '</p>';
+            showError(mapContainer, errorMessage);
             console.error('Leaflet library is not available');
             return;
         }
@@ -55,7 +64,7 @@
                 marker.bindPopup(location);
             }
         } catch (e) {
-            mapContainer.innerHTML = '<p class="venue-map-error">' + errorMessage + '</p>';
+            showError(mapContainer, errorMessage);
             console.error('Error during Leaflet map initialization:', e);
         }
     }
