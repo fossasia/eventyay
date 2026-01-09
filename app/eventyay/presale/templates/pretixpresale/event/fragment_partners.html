@@ -26,7 +26,9 @@
                         <img src="{{ partner.logo.url }}" 
                              alt="{{ partner.name }}"
                              class="partner-logo"
+                             {% if partner.logo_width and partner.logo_width >= 50 and partner.logo_width <= 500 %}
                              style="max-width: {{ partner.logo_width }}px;"
+                             {% endif %}
                              loading="lazy">
                         {% else %}
                         <span class="partner-name-only">{{ partner.name }}</span>

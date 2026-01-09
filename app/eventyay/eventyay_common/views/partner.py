@@ -1,4 +1,5 @@
 import json
+import logging
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Max
@@ -12,6 +13,8 @@ from django.views.generic import CreateView, DeleteView, UpdateView
 from eventyay.base.models import Partner, SponsorGroup
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.eventyay_common.forms.partner import PartnerFormSet, SponsorGroupForm
+
+logger = logging.getLogger(__name__)
 
 
 class SponsorGroupCreateView(EventPermissionRequiredMixin, CreateView):
@@ -140,6 +143,20 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
     
     def post(self, request, *args, **kwargs):
         sponsor_group = self.get_sponsor_group()
+        
+        # Debug: Log the POST data
+        logger.info(f"POST data keys: {list(request.POST.keys())}")
+        logger.info(f"FILES data keys: {list(request.FILES.keys())}")
+        logger.info(f"TOTAL_FORMS: {request.POST.get('partners-TOTAL_FORMS')}")
+        logger.info(f"INITIAL_FORMS: {request.POST.get('partners-INITIAL_FORMS')}")
+        
+        # Log each form's data
+        total_forms = int(request.POST.get('partners-TOTAL_FORMS', 0))
+        for i in range(total_forms):
+            name = request.POST.get(f'partners-{i}-name', '')
+            logo = request.FILES.get(f'partners-{i}-logo')
+            logger.info(f"Form {i}: name='{name}', has_logo={logo is not None}")
+        
         formset = PartnerFormSet(
             request.POST,
             request.FILES,
@@ -148,7 +165,10 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
         )
         
         if formset.is_valid():
-            formset.save()
+            instances = formset.save()
+            logger.info(f"Saved {len(instances)} partner instances")
+            for instance in instances:
+                logger.info(f"Partner: {instance.name}, Logo: {instance.logo}, Logo Width: {instance.logo_width}")
             messages.success(request, _('Partners updated successfully.'))
             return redirect(
                 reverse(
@@ -160,6 +180,8 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
                 ) + '#partner-tab'
             )
         else:
+            logger.error(f"Formset validation failed: {formset.errors}")
+            logger.error(f"Non-form errors: {formset.non_form_errors()}")
             messages.error(request, _('Please correct the errors below.'))
         
         return render(request, self.template_name, {
@@ -192,7 +214,8 @@ class PartnerReorderView(EventPermissionRequiredMixin, View):
             
             return JsonResponse({'status': 'success'})
         except (json.JSONDecodeError, TypeError, ValueError) as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            logger.error(f"Failed to reorder partners: {str(e)}", exc_info=True)
+            return JsonResponse({'status': 'error', 'message': _('Invalid request data')}, status=400)
 
 
 class PartnerMoveView(EventPermissionRequiredMixin, View):
@@ -224,4 +247,5 @@ class PartnerMoveView(EventPermissionRequiredMixin, View):
             
             return JsonResponse({'status': 'success'})
         except (json.JSONDecodeError, TypeError, ValueError) as e:
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+            logger.error(f"Failed to move partner: {str(e)}", exc_info=True)
+            return JsonResponse({'status': 'error', 'message': _('Invalid request data')}, status=400)

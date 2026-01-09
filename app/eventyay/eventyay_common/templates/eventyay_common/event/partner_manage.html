@@ -48,13 +48,13 @@
             {{ formset.management_form }}
             
             {% if sponsor_group.partners.exists %}
-            <div id="partners-list" class="partners-sortable">
+            <div id="partners-list" class="partner-sortable">
                 {% for form in formset %}
                 {% if form.instance.pk %}
                 <div class="partner-form-item panel panel-default" data-partner-index="{{ forloop.counter0 }}">
                     <div class="panel-heading partner-manage-panel-heading">
                         <div>
-                            <span class="handle sponsor-group-handle">
+                            <span class="handle partner-drag-handle" aria-label="{% trans 'Drag to reorder partner' %}">
                                 <i class="fa fa-bars"></i>
                             </span>
                             <strong class="partner-form-number">Partner #{{ forloop.counter }}</strong>
@@ -100,7 +100,8 @@
                             {# Live preview container #}
                             <div class="logo-preview-container partner-logo-upload-container partner-preview-hidden" id="preview-{{ forloop.counter0 }}">
                                 <strong>{% trans "Preview:" %}</strong><br>
-                                <img class="logo-preview-img partner-logo-current" src="" alt="Preview">
+                                <img class="logo-preview-img partner-logo-current partner-logo-resizable" src="" alt="Preview" 
+                                     style="max-width: {{ form.logo_width.value|default:150 }}px;">
                             </div>
                             
                             {# Current logo if exists #}
@@ -108,7 +109,8 @@
                             <div class="current-logo-container partner-logo-upload-container" id="current-{{ forloop.counter0 }}">
                                 <strong>{% trans "Current logo:" %}</strong><br>
                                 <img src="{{ form.instance.logo.url }}" alt="{{ form.instance.name }}" 
-                                     class="partner-logo-current">
+                                     class="partner-logo-current partner-logo-resizable"
+                                     style="max-width: {{ form.instance.logo_width }}px;">
                             </div>
                             {% endif %}
                         </div>
@@ -140,7 +142,7 @@
                 <h4>{% trans "No partners in this group yet" %}</h4>
                 <p>{% trans "Click the button below to add your first partner" %}</p>
             </div>
-            <div id="partners-list" class="partners-sortable partners-list-hidden"></div>
+            <div id="partners-list" class="partner-sortable partner-list-hidden"></div>
             {% endif %}
             
             <div class="partner-form-group">
@@ -545,23 +547,71 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize logo width sliders
     function initLogoWidthSliders() {
         const sliders = document.querySelectorAll('.logo-width-slider');
-        sliders.forEach(slider => {
+        console.log('Initializing logo width sliders, found:', sliders.length);
+        
+        sliders.forEach((slider, idx) => {
             const targetId = slider.getAttribute('data-target');
             const input = document.getElementById(targetId);
             const display = slider.parentElement.querySelector('.logo-width-display');
             
+            console.log('Slider', idx, 'targetId:', targetId, 'input found:', !!input);
+            
             if (input && display) {
-                // Sync slider to input
+                // Find the logo images in this form (both preview and current)
+                const formItem = slider.closest('.partner-form-item');
+                
+                // Update logo size in real-time
+                const updateLogoSize = function(value) {
+                    if (!formItem) {
+                        console.log('No form item found for slider', idx);
+                        return;
+                    }
+                    
+                    // Find all logo images in this form - both visible and hidden
+                    const allImages = formItem.querySelectorAll('img');
+                    const resizableImages = Array.from(allImages).filter(img => {
+                        // Only target logo images (those with partner-logo class or in logo containers)
+                        return img.classList.contains('partner-logo-resizable') || 
+                               img.classList.contains('partner-logo-current') ||
+                               img.classList.contains('logo-preview-img');
+                    });
+                    
+                    console.log('Slider', idx, 'value:', value, 'found images:', resizableImages.length);
+                    
+                    resizableImages.forEach((img, imgIdx) => {
+                        console.log('  Image', imgIdx, 'classes:', img.className, 'current maxWidth:', img.style.maxWidth);
+                        img.style.maxWidth = value + 'px';
+                        // Remove max-height constraint so width can control the size
+                        img.style.maxHeight = 'none';
+                        // Force override with important
+                        img.style.setProperty('max-width', value + 'px', 'important');
+                        img.style.setProperty('max-height', 'none', 'important');
+                        console.log('  Image', imgIdx, 'updated to:', img.style.maxWidth);
+                    });
+                };
+                
+                // Sync slider to input and update logo size in real-time
                 slider.addEventListener('input', function() {
-                    input.value = this.value;
-                    display.textContent = this.value + 'px';
+                    const value = this.value;
+                    console.log('Slider input event, value:', value);
+                    input.value = value;
+                    display.textContent = value + 'px';
+                    updateLogoSize(value);
                 });
                 
-                // Sync input to slider
+                // Sync input to slider and update logo size
                 input.addEventListener('input', function() {
-                    slider.value = this.value;
-                    display.textContent = this.value + 'px';
+                    const value = this.value;
+                    console.log('Input change event, value:', value);
+                    slider.value = value;
+                    display.textContent = value + 'px';
+                    updateLogoSize(value);
                 });
+                
+                // Set initial size on load
+                const initialValue = slider.value;
+                console.log('Setting initial value:', initialValue);
+                updateLogoSize(initialValue);
             }
         });
     }

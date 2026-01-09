@@ -175,13 +175,13 @@
 }
 
 .partner-logo-current {
-    max-width: 200px;
     max-height: 100px;
     display: block;
     margin: 10px auto;
     border: 1px solid #ddd;
     padding: 5px;
     background: white;
+    transition: max-width 0.2s ease;
 }
 
 .partner-empty-state {
@@ -269,11 +269,11 @@ input[name$="-logo_width"] {
 
 .logo-preview-img {
     max-height: 100px;
-    max-width: 200px;
     border: 1px solid #ddd;
     padding: 5px;
     background: white;
     margin-top: 5px;
+    transition: max-width 0.2s ease;
 }
 
 @keyframes fadeIn {

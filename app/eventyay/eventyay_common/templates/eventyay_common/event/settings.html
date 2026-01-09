@@ -213,7 +213,7 @@
                             <div class="panel-heading sponsor-group-heading">
                                 <div class="row">
                                     <div class="col-md-7">
-                                        <span class="handle sponsor-group-handle">
+                                        <span class="handle sponsor-group-handle" aria-label="{% trans 'Drag to reorder sponsor group' %}">
                                             <i class="fa fa-bars"></i>
                                         </span>
                                         <strong class="sponsor-group-title">{{ group.name }}</strong>
@@ -239,10 +239,10 @@
                             </div>
                             {% if group.partners.exists %}
                             <div class="panel-body sponsor-group-body">
-                                <div class="partner-logos-preview partners-inline-sortable" data-group-id="{{ group.id }}">
+                                <div class="partner-logos-preview partner-inline-sortable" data-group-id="{{ group.id }}">
                                     {% for partner in group.partners.all %}
                                         <div class="partner-item-inline" data-partner-id="{{ partner.id }}">
-                                            <span class="partner-drag-handle">
+                                            <span class="partner-drag-handle" aria-label="{% trans 'Drag to reorder partner' %}">
                                                 <i class="fa fa-bars"></i>
                                             </span>
                                             {% if partner.logo %}
@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Initialize inline partner sorting for each group
-    const partnerContainers = document.querySelectorAll('.partners-inline-sortable');
+    const partnerContainers = document.querySelectorAll('.partner-inline-sortable');
     partnerContainers.forEach(container => {
         // Show drag handles on hover
         container.addEventListener('mouseenter', function() {
@@ -460,8 +460,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.status === 'success') {
                         console.log('Partner order updated successfully');
+                        // Remove any existing feedback first
+                        const existingFeedback = container.querySelector('.order-saved-feedback');
+                        if (existingFeedback) {
+                            existingFeedback.remove();
+                        }
                         // Show success feedback
                         const feedback = document.createElement('span');
+                        feedback.className = 'order-saved-feedback';
                         feedback.textContent = ' ✓ Order saved';
                         feedback.style.color = '#5cb85c';
                         feedback.style.marginLeft = '10px';
@@ -482,12 +488,30 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Handle navigation to partner tab if hash is present
-    if (window.location.hash === '#partner-tab') {
-        const partnerTab = document.getElementById('partner-tab');
-        if (partnerTab) {
-            partnerTab.scrollIntoView({behavior: 'smooth'});
+    function activatePartnerTab() {
+        if (window.location.hash === '#partner-tab') {
+            // Find and click the Bootstrap tab link for the partner tab
+            const partnerTabLink = document.querySelector('a[href="#partner-tab"]');
+            if (partnerTabLink) {
+                // Activate the Bootstrap tab
+                $(partnerTabLink).tab('show');
+                
+                // Scroll to the tab content
+                setTimeout(() => {
+                    const partnerTab = document.getElementById('partner-tab');
+                    if (partnerTab) {
+                        partnerTab.scrollIntoView({behavior: 'smooth', block: 'start'});
+                    }
+                }, 100);
+            }
         }
     }
+    
+    // Run on page load (after tabs are initialized)
+    setTimeout(activatePartnerTab, 200);
+    
+    // Also run when hash changes (e.g., when clicking back button)
+    window.addEventListener('hashchange', activatePartnerTab);
 });
 </script>
 
