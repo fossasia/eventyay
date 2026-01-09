@@ -313,22 +313,7 @@ class SingleLanguageWidget(forms.Select):
                 str(l[1]),
             ),
         )
-        new_choices = []
-        for k, v in self.choices:
-            new_choices.append(
-                (
-                    k,
-                    v
-                    if k in settings.LANGUAGES_OFFICIAL
-                    else (
-                        '{} (inofficial translation)'.format(v)
-                        if k not in settings.LANGUAGES_INCUBATING
-                        else '{} (translation in progress)'.format(v)
-                    ),
-                )
-            )
         self._modified = True
-        self.choices = new_choices
 
     def options(self, name, value, attrs=None):
         self.modify()

@@ -68,6 +68,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             event=self.request.event,
             read_only=False,
             with_email=False,
+            enforce_account_name_match=True,
             field_configuration=field_configuration,
             data=self.request.POST if bind else None,
             files=self.request.FILES if bind else None,

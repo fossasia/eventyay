@@ -541,6 +541,7 @@ USE_I18N = True
 USE_TZ = True
 
 LOCALE_PATHS = (BASE_DIR / 'locale',)
+FORMAT_MODULE_PATH = ['eventyay.helpers.formats']
 
 # TODO: Move to consts.py
 # Unified language configuration - single source of truth for all language information
@@ -551,6 +552,42 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': True,
         'percentage': 100,
+        'incubating': False,
+    },
+    'en-us': {
+        'name': _('English (United States)'),
+        'natural_name': 'English (United States)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-gb': {
+        'name': _('English (United Kingdom)'),
+        'natural_name': 'English (United Kingdom)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-au': {
+        'name': _('English (Australia)'),
+        'natural_name': 'English (Australia)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-ca': {
+        'name': _('English (Canada)'),
+        'natural_name': 'English (Canada)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
         'incubating': False,
     },
     'de': {
@@ -1032,6 +1069,8 @@ INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
 
 EMAIL_BACKEND = conf.email_backend
+# Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
+EMAIL_FILE_PATH = DATA_DIR / 'dev-sent-emails'
 EMAIL_HOST = conf.email_host
 EMAIL_PORT = conf.email_port
 EMAIL_HOST_USER = conf.email_host_user

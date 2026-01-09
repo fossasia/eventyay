@@ -3,6 +3,22 @@ export const locales = [{
 	nativeLabel: 'English',
 	englishLabel: 'English'
 }, {
+	code: 'en-us',
+	nativeLabel: 'English (US)',
+	englishLabel: 'English (United States)'
+}, {
+	code: 'en-gb',
+	nativeLabel: 'English (UK)',
+	englishLabel: 'English (United Kingdom)'
+}, {
+	code: 'en-au',
+	nativeLabel: 'English (Australia)',
+	englishLabel: 'English (Australia)'
+}, {
+	code: 'en-ca',
+	nativeLabel: 'English (Canada)',
+	englishLabel: 'English (Canada)'
+}, {
 	code: 'de',
 	nativeLabel: 'Deutsch',
 	englishLabel: 'German'

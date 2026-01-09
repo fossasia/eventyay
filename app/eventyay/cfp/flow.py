@@ -233,9 +233,16 @@ class FormFlowStep(TemplateFlowStep):
                 **self.get_form_kwargs(),
             )
         if from_storage:
+            # Use distinct copies for bound data vs. initial values to avoid
+            # in-form mutations (some forms tweak the ``initial`` dict).
+            # Sharing the same object caused saved form data to be wiped when
+            # a form updated ``initial`` entries, which then also changed the
+            # bound data reference.
+            form_data = copy.deepcopy(form_initial)
+            form_initial = copy.deepcopy(form_initial)
             # For validation checks, create a bound form with session data
             return self.form_class(
-                data=form_initial,
+                data=form_data,
                 initial=form_initial,
                 files=self.get_files(),
                 **self.get_form_kwargs(),
@@ -288,11 +295,16 @@ class FormFlowStep(TemplateFlowStep):
 
         # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
+            warning_messages = getattr(form, 'warning_messages', None) or []
+            for warning in filter(None, warning_messages):
+                messages.warning(self.request, warning)
+
             error_message = '\n\n'.join(
                 (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
                 for key, values in form.errors.items()
             )
-            messages.error(self.request, error_message)
+            if error_message:
+                messages.error(self.request, error_message)
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
@@ -566,6 +578,7 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['name'] = user.fullname if user else user_data.get('register_name')
         result['read_only'] = False
         result['essential_only'] = True
+        result['enforce_account_name_match'] = True
         return result
 
     def get_context_data(self, **kwargs):
