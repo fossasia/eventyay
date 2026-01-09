@@ -23,6 +23,7 @@ from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
 from django.views import View
+from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
@@ -255,7 +256,28 @@ class EventCreateView(SafeSessionWizardView):
         with transaction.atomic(), language(basics_data['locale']):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
-            event.plugins = settings.PRETIX_PLUGINS_DEFAULT
+
+            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
+            if isinstance(plugins_default, str):
+                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
+            else:
+                default_plugins = list(plugins_default or [])
+
+            ticketing_plugins = [
+                'eventyay.plugins.ticketoutputpdf',
+                'eventyay.plugins.banktransfer',
+                'eventyay.plugins.manualpayment',
+            ]
+
+            installed_apps = {app.name for app in apps.get_app_configs()}
+
+            for plugin_name in ['eventyay_stripe', 'eventyay_paypal']:
+                if plugin_name in installed_apps:
+                    ticketing_plugins.append(plugin_name)
+
+            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
+            event.plugins = ','.join(all_plugins)
+
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = True
