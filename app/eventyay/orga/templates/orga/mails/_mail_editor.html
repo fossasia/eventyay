@@ -111,7 +111,7 @@
         {% endblock skip_queue %}
 
         {% block scheduled_at %}
-            {% if form.scheduled_at and request.method == "POST" %}
+            {% if form.scheduled_at %}
                 {{ form.scheduled_at.as_field_group }}
             {% endif %}
         {% endblock scheduled_at %}

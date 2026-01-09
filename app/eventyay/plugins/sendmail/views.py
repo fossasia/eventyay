@@ -175,7 +175,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             self.request.event.log_action(
                 'eventyay.sendmail.scheduled',
                 user=self.request.user,
-                data={'email_queue_id': qm.pk, 'scheduled_at': str(scheduled_at)},
+                data={'email_queue_id': qm.pk, 'scheduled_at': scheduled_at.isoformat()},
             )
             messages.success(
                 self.request,
