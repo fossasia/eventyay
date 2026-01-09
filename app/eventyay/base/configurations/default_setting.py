@@ -2254,6 +2254,17 @@ Your {event} team"""
         'form_class': I18nFormField,
         'form_kwargs': dict(label=_('Frontpage text'), widget=I18nAutoExpandingTextarea),
     },
+    'partner_section_heading': {
+        'default': 'Supported by',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Partner section heading'),
+            help_text=_('Heading text for the partners section on the event landing page'),
+            widget=I18nTextInput,
+        ),
+    },
     'event_info_text': {
         'default': '',
         'type': LazyI18nString,

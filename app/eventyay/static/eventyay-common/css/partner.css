@@ -23,6 +23,34 @@
     margin-bottom: 15px;
 }
 
+/* Partner section heading input */
+.partner-heading-label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.partner-heading-input-wrapper input[type="text"] {
+    width: 100%;
+    font-size: 18px;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.partner-heading-input-wrapper input[type="text"]:focus {
+    border-color: #5bc0de;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(91, 192, 222, 0.1);
+}
+
+.partner-heading-input-wrapper input[type="text"]::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
 /* Sponsor groups list */
 .sponsor-groups-list {
     margin-bottom: 15px;

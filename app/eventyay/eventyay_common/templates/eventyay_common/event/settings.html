@@ -181,8 +181,12 @@
                 </div>
                 <div class="panel-body partner-panel-body">
                     <div class="form-group">
-                        <label for="id_settings-partner_section_heading">{% trans "Section heading" %}</label>
-                        {{ sform.partner_section_heading }}
+                        <label for="id_settings-partner_section_heading" class="partner-heading-label">
+                            {% trans "Section heading" %}
+                        </label>
+                        <div class="partner-heading-input-wrapper">
+                            {{ sform.partner_section_heading }}
+                        </div>
                         <p class="help-block">{{ sform.partner_section_heading.help_text }}</p>
                     </div>
                 </div>
