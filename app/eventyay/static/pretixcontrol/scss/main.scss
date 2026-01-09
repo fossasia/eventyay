@@ -850,7 +850,7 @@ h1 .label {
         a {
             color: darken($btn-primary-bg, 10%) !important;
             i {
-                color: rgb(26, 105, 164) !important;
+                color: darken($btn-primary-bg, 10%) !important;
             }
         }
         .dashboard-item {

@@ -346,17 +346,6 @@ urlpatterns = [
                 ),
                 url(r'^categories/add$', product.CategoryCreate.as_view(), name='event.products.categories.add'),
                 url(r'^orderforms/$', product.OrderFormList.as_view(), name='event.products.orderforms'),
-                url(r'^orderforms/add$', product.OrderFormCreate.as_view(), name='event.products.orderforms.add'),
-                url(
-                    r'^orderforms/(?P<orderform>\d+)/$',
-                    product.OrderFormUpdate.as_view(),
-                    name='event.products.orderforms.edit',
-                ),
-                url(
-                    r'^orderforms/(?P<orderform>\d+)/delete$',
-                    product.OrderFormDelete.as_view(),
-                    name='event.products.orderforms.delete',
-                ),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(

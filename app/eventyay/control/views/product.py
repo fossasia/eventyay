@@ -3,7 +3,6 @@ from collections import OrderedDict, namedtuple
 from json.decoder import JSONDecodeError
 
 from django.contrib import messages
-from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
@@ -24,7 +23,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
 from django_countries.fields import Country
 
 from eventyay.api.serializers.product import (
