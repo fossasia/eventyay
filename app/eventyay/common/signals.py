@@ -249,46 +249,67 @@ def process_scheduled_emails(sender, **kwargs):
     
     Uses select_for_update(skip_locked=True) to prevent duplicate sends
     when multiple workers process the same emails concurrently.
+    
+    Processes emails in batches to reduce lock contention and limit
+    transaction size for better performance and reliability.
     """
     from eventyay.base.models.mail import QueuedMail
     from eventyay.plugins.sendmail.models import EmailQueue
 
-    # Process QueuedMail (Talk/CfP component)
-    with transaction.atomic():
-        due_queued_mails = QueuedMail.objects.filter(
-            scheduled_at__lte=now(),
-            sent__isnull=True,
-        ).select_for_update(skip_locked=True)
+    MAIL_SEND_BATCH_SIZE = 100  # limit emails processed per transaction batch
 
-        for mail in due_queued_mails:
-            try:
-                mail.send()
-                logger.info(
-                    "[ScheduledMail] QueuedMail ID %s sent successfully.",
-                    mail.pk
+    # Process QueuedMail (Talk/CfP component)
+    while True:
+        with transaction.atomic():
+            due_queued_mails = list(
+                QueuedMail.objects.filter(
+                    scheduled_at__lte=now(),
+                    sent__isnull=True,
                 )
-            except Exception:
-                logger.exception(
-                    "[ScheduledMail] Failed to send QueuedMail ID %s",
-                    mail.pk
-                )
+                .select_for_update(skip_locked=True)
+                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+            )
+
+            if not due_queued_mails:
+                break
+
+            for mail in due_queued_mails:
+                try:
+                    mail.send()
+                    logger.info(
+                        "[ScheduledMail] QueuedMail ID %s sent successfully.",
+                        mail.pk
+                    )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Failed to send QueuedMail ID %s",
+                        mail.pk
+                    )
 
     # Process EmailQueue (Tickets component)
-    with transaction.atomic():
-        due_email_queues = EmailQueue.objects.filter(
-            scheduled_at__lte=now(),
-            sent_at__isnull=True,
-        ).select_for_update(skip_locked=True)
+    while True:
+        with transaction.atomic():
+            due_email_queues = list(
+                EmailQueue.objects.filter(
+                    scheduled_at__lte=now(),
+                    sent_at__isnull=True,
+                )
+                .select_for_update(skip_locked=True)
+                .order_by('pk')[:MAIL_SEND_BATCH_SIZE]
+            )
 
-        for mail in due_email_queues:
-            try:
-                mail.send()
-                logger.info(
-                    "[ScheduledMail] EmailQueue ID %s sent successfully.",
-                    mail.pk
-                )
-            except Exception:
-                logger.exception(
-                    "[ScheduledMail] Failed to send EmailQueue ID %s",
-                    mail.pk
-                )
+            if not due_email_queues:
+                break
+
+            for mail in due_email_queues:
+                try:
+                    mail.send()
+                    logger.info(
+                        "[ScheduledMail] EmailQueue ID %s sent successfully.",
+                        mail.pk
+                    )
+                except Exception:
+                    logger.exception(
+                        "[ScheduledMail] Failed to send EmailQueue ID %s",
+                        mail.pk
+                    )
