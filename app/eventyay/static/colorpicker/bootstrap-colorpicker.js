@@ -949,7 +949,14 @@
       }
 
       if (!parent.length) {
-        throw new Error('Colorpicker component should be placed within a non-static positioned container');
+        // Graceful degradation: fallback to body instead of throwing an error
+        if (window && window.console && typeof window.console.warn === 'function') {
+          window.console.warn('Bootstrap Colorpicker: no non-static positioned container found for reposition; falling back to <body>.');
+        }
+        parent = $('body');
+        if (this.picker && this.picker.length) {
+          this.picker.appendTo(parent);
+        }
       }
 
       var leftPos = position.left;
@@ -979,6 +986,7 @@
       this.picker.addClass('colorpicker-visible').removeClass('colorpicker-hidden');
       this.reposition();
       $(window).on('resize.colorpicker', $.proxy(this.reposition, this));
+      $(window).on('scroll.colorpicker', $.proxy(this.reposition, this));
       if (e && (!this.hasInput() || this.input.attr('type') === 'color')) {
         if (e.stopPropagation && e.preventDefault) {
           e.stopPropagation();
@@ -1007,6 +1015,7 @@
       }
       this.picker.addClass('colorpicker-hidden').removeClass('colorpicker-visible');
       $(window).off('resize.colorpicker', this.reposition);
+      $(window).off('scroll.colorpicker', this.reposition);
       $(window.document).off({
         'mousedown.colorpicker': this.hide
       });
