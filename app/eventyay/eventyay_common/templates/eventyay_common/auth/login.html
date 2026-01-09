@@ -6,6 +6,41 @@
 {% load append_next_url %}
 {% block content %}
     <form class="form-signin" action="" method="post">
+        {% csrf_token %}
+        
+        {# Show preferred provider first if one exists #}
+        {% if login_providers %}
+            {% for provider, settings in login_providers.items %}
+                {% if settings.state and settings.is_preferred %}
+                    <div class="form-group buttons" style="margin-bottom: 20px;">
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                           data-method="post" class="btn btn-primary btn-block btn-lg">
+                            {% with provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+                        <div class="checkbox" style="margin-top: 10px; margin-bottom: 0;">
+                            <label style="font-weight: normal; color: #666;">
+                                <input type="checkbox" checked disabled style="margin-right: 5px;">
+                                {% translate "Keep me logged in" %}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    {# Show separator if there are other login options #}
+                    {% if backend.login_form_fields or backends|length > 1 %}
+                        <div style="text-align: center; margin: 20px 0; position: relative;">
+                            <hr style="border-top: 1px solid #e0e0e0; margin: 0;">
+                            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 15px; color: #999; font-size: 14px;">
+                                {% translate "or use the following" %}
+                            </span>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        {# Collapsible email login section #}
         <div id="login-form" class="collapse">
             {% if backends|length > 1 %}
                 <ul class="nav nav-pills">
@@ -21,7 +56,6 @@
                 </ul>
                 <br>
             {% endif %}
-            {% csrf_token %}
             {% bootstrap_form form %}
             <div class="form-group buttons">
                 {% if backend.login_form_fields %}
@@ -48,15 +82,22 @@
                 {% endif %}
             </div>
         </div>
+        
+        {# Secondary login options #}
         <div class="form-group buttons">
-            <button type="button" id="toggle-login" class="btn btn-primary btn-block" data-toggle="collapse" data-target="#login-form">
-                {% translate "Login with Email" %}
-            </button>
+            {# Email login button - only show if there are form fields #}
+            {% if backend.login_form_fields %}
+                <button type="button" id="toggle-login" class="btn btn-default btn-block" data-toggle="collapse" data-target="#login-form">
+                    {% translate "Login with Email" %}
+                </button>
+            {% endif %}
+            
+            {# Non-preferred social login providers #}
             {% if login_providers %}
                 {% for provider, settings in login_providers.items %}
-                    {% if settings.state %}
+                    {% if settings.state and not settings.is_preferred %}
                         <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
-                           data-method="post" class="btn btn-primary btn-block">
+                           data-method="post" class="btn btn-default btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                             {% endwith %}
