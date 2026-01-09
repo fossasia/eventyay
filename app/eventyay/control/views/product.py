@@ -48,6 +48,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.tickets import invalidate_cache
+from eventyay.base.services.waitinglist import assign_automatically
 from eventyay.base.signals import quota_availability
 from eventyay.control.forms.product import (
     CategoryForm,
@@ -1046,6 +1047,17 @@ class QuotaView(ChartContainingView, DetailView):
             quota.save(update_fields=['closed'])
             quota.log_action('eventyay.event.quota.opened', user=request.user)
             messages.success(request, _('The quota has been re-opened.'))
+            
+            # Trigger waiting list assignment when quota is reopened
+            event = request.event
+            if event.settings.get('waiting_list_enabled', as_type=bool) and \
+               event.settings.get('waiting_list_auto', as_type=bool) and \
+               (event.presale_is_running or event.has_subevents):
+                if quota.subevent:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
+                else:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk))
+
         if 'disable' in request.POST:
             quota.closed = False
             quota.close_when_sold_out = False
@@ -1057,6 +1069,17 @@ class QuotaView(ChartContainingView, DetailView):
                 data={'close_when_sold_out': False},
             )
             messages.success(request, _('The quota has been re-opened and will not close again.'))
+            
+            # Trigger waiting list assignment when quota is reopened
+            event = request.event
+            if event.settings.get('waiting_list_enabled', as_type=bool) and \
+               event.settings.get('waiting_list_auto', as_type=bool) and \
+               (event.presale_is_running or event.has_subevents):
+                if quota.subevent:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
+                else:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk))
+
         return redirect(
             reverse(
                 'control:event.products.quotas.show',
@@ -1112,6 +1135,25 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
                         data={'id': form.instance.pk},
                     )
             form.instance.rebuild_cache()
+            
+            # Trigger waiting list assignment if quota size increased
+            if 'size' in form.changed_data:
+                old_size = form.initial.get('size')
+                new_size = form.cleaned_data.get('size')
+                # Check if size actually increased (handle None as unlimited)
+                if (old_size is not None and new_size is not None and new_size > old_size) or \
+                   (old_size is not None and new_size is None):
+                    # Quota increased, trigger waiting list assignment if enabled
+                    event = self.request.event
+                    if event.settings.get('waiting_list_enabled', as_type=bool) and \
+                       event.settings.get('waiting_list_auto', as_type=bool) and \
+                       (event.presale_is_running or event.has_subevents):
+                        if form.instance.subevent:
+                            assign_automatically.apply_async(
+                                args=(event.pk, self.request.user.pk, form.instance.subevent.pk)
+                            )
+                        else:
+                            assign_automatically.apply_async(args=(event.pk, self.request.user.pk))
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
