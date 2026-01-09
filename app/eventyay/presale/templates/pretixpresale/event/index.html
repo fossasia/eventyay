@@ -19,6 +19,7 @@
         <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
     {% endif %}
     {% if ev.geo_lat and ev.geo_lon %}
+    <link rel="stylesheet" href="{% static 'pretixpresale/css/venue-map.css' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
@@ -274,56 +275,21 @@
 
             {% comment %} Venue Map Section {% endcomment %}
             {% if ev.geo_lat and ev.geo_lon %}
-            <div class="venue-map-section" style="margin-top: 30px; margin-bottom: 20px;">
+            <div class="venue-map-section">
                 <h3>{% trans "Venue Location" %}</h3>
                 {% if ev.location %}
-                <p style="margin-bottom: 15px; font-size: 16px;">
-                    <i class="fa fa-map-marker" aria-hidden="true" style="margin-right: 8px;"></i>
+                <p class="venue-location-address">
+                    <i class="fa fa-map-marker" aria-hidden="true"></i>
                     <strong>{{ ev.location }}</strong>
                 </p>
                 {% endif %}
-                <div id="venue-map" style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;"></div>
-                <script>
-                (function() {
-                    var mapContainer = document.getElementById('venue-map');
-                    
-                    // Check if Leaflet is available
-                    if (typeof L === 'undefined') {
-                        if (mapContainer) {
-                            mapContainer.innerHTML = '<p style="padding: 20px; margin: 0; text-align: center; color: #666;">{% trans "Map could not be loaded at this time." %}</p>';
-                        }
-                        console.error('Leaflet library is not available');
-                        return;
-                    }
-                    
-                    try {
-                        // Fix Leaflet's default icon paths
-                        delete L.Icon.Default.prototype._getIconUrl;
-                        L.Icon.Default.mergeOptions({
-                            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                        });
-                        
-                        var map = L.map('venue-map').setView([{{ ev.geo_lat|escapejs }}, {{ ev.geo_lon|escapejs }}], 15);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                            maxZoom: 18,
-                        }).addTo(map);
-                        
-                        var marker = L.marker([{{ ev.geo_lat|escapejs }}, {{ ev.geo_lon|escapejs }}]).addTo(map);
-                        {% if ev.location %}
-                        marker.bindPopup("{{ ev.location|escapejs }}");
-                        {% endif %}
-                    } catch (e) {
-                        if (mapContainer) {
-                            mapContainer.innerHTML = '<p style="padding: 20px; margin: 0; text-align: center; color: #666;">{% trans "An error occurred while loading the map." %}</p>';
-                        }
-                        console.error('Error during Leaflet map initialization:', e);
-                    }
-                })();
-                </script>
+                <div id="venue-map" 
+                     data-lat="{{ ev.geo_lat }}" 
+                     data-lon="{{ ev.geo_lon }}"
+                     data-location="{{ ev.location|escapejs }}"
+                     data-error-message="{% trans "Map could not be loaded at this time." %}"></div>
             </div>
+            <script src="{% static 'pretixpresale/js/venue-map.js' %}"></script>
             {% endif %}
 
             {% eventsignal event "eventyay.presale.signals.front_page_top" request=request subevent=subevent %}
