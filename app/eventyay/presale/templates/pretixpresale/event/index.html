@@ -314,7 +314,7 @@
             <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
             <div class="row">
                 {% for speaker_profile in featured_speakers %}
-                    <div class="col-md-4 col-sm-6 col-xs-12">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
                         <div class="speaker-card">
                             {% if speaker_profile.avatar_url %}
                                 <img src="{{ speaker_profile.avatar_url }}" alt="{{ speaker_profile.user.get_display_name }}" class="speaker-avatar">
@@ -325,7 +325,7 @@
                             {% endif %}
                             <h4>{{ speaker_profile.user.get_display_name }}</h4>
                             {% if speaker_profile.biography %}
-                                <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:30|striptags }}</p>
+                                <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:20|striptags }}</p>
                             {% endif %}
                             <a href="{{ speaker_profile.urls.public }}" class="btn btn-sm btn-default">
                                 {% trans "View profile" %}

@@ -597,7 +597,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         featured_speakers = SpeakerProfile.objects.filter(
             event=self.request.event,
             is_featured=True
-        ).select_related('user').order_by('order')[:6]  # Limit to 6 featured speakers
+        ).select_related('user').order_by('order')[:8]  # Limit to 8 featured speakers (4 columns x 2 rows)
         context['featured_speakers'] = featured_speakers
 
         return context
