@@ -3,6 +3,7 @@ import logging
 from typing import cast
 
 import requests
+from allauth.account.adapter import get_adapter as get_account_adapter
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount import app_settings
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -34,3 +35,20 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     def on_authentication_error(self, request, provider, error=None, exception=None, extra_context=None):
         logger.error('Error while authorizing with %s: %s - %s', provider, error, exception)
         raise ImmediateHttpResponse(HttpResponseRedirect(reverse('control:index')))
+
+    def save_user(self, request, sociallogin, form=None):
+        """
+        Saves a newly signed up social login. In case of auto-signup,
+        the signup form is not available.
+        """
+        u = sociallogin.user
+        if not u.pk:
+            u.set_unusable_password()
+            logger.debug('CustomSocialAccountAdapter set unusable password for user %s', u)
+        account_adapter = get_account_adapter()
+        if form:
+            account_adapter.save_user(request, u, form)
+        else:
+            account_adapter.populate_username(request, u)
+        sociallogin.save(request)
+        return u
