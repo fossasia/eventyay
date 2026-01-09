@@ -408,7 +408,8 @@ class EventUpdate(
         # Pass necessary kwargs to the EventUpdateForm in common
         is_staff_session = self.request.user.has_active_staff_session(self.request.session.session_key)
         kwargs['change_slug'] = is_staff_session
-        kwargs['domain'] = is_staff_session
+        # TODO: Re-enable custom domain when unified system is stable
+        # kwargs['domain'] = is_staff_session
         return kwargs
 
     def enable_talk_system(self, request: HttpRequest) -> bool:
