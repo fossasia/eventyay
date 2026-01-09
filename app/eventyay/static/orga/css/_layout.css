@@ -1,6 +1,13 @@
 body {
   height: 100vh;
   overflow: hidden;
+
+  /* Match common/control (Bootstrap) typography defaults */
+  font-size: 14px;
+  line-height: 1.42857143;
+
+  /* Reset uses antialiased which can look thinner on macOS */
+  -webkit-font-smoothing: auto;
 }
 
 #wrapper {
@@ -357,7 +364,6 @@ aside.sidebar {
       }
 
       .context-name {
-        font-family: "Open Sans";
         font-weight: 600;
         font-size: 15px;
         padding-bottom: 2px;
@@ -435,7 +441,6 @@ aside.sidebar {
         }
 
         .search-title {
-          font-family: "Open Sans";
           padding-bottom: 4px;
           display: flex;
           align-items: center;
@@ -454,7 +459,7 @@ aside.sidebar {
 /* top navbar, /orga only */
 
 .navbar #profile-dropdown > summary {
-  color: var(--color-offwhite);
+  color: #f8f9fa;
   display: inline-flex;
   align-items: center;
   cursor: pointer;
@@ -469,11 +474,11 @@ aside.sidebar {
 
 .navbar #profile-dropdown > summary:hover,
 .navbar #profile-dropdown > summary:focus {
-  color: var(--color-white);
+  color: #fff;
 }
 
 .navbar #profile-dropdown > summary i {
-  color: inherit;
+  color: #f8f9fa;
 }
 
 .navbar #profile-dropdown > summary i.fa-user {
@@ -484,12 +489,51 @@ aside.sidebar {
   margin-left: 6px;
 }
 
+.navbar #profile-dropdown > summary:hover i,
+.navbar #profile-dropdown > summary:focus i {
+  color: #fff;
+}
+
 .navbar .navbar-nav .nav-item.d-none.d-md-block {
   margin-bottom: 0;
 }
 
+/* Sidebar toggle / hamburger menu */
+.navbar #sidebar-toggle {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 15px;
+  padding-right: 0;
+  min-height: 50px;
+  background-color: transparent;
+  border: none;
+  text-decoration: none;
+  color: #f8f9fa;
+
+  i.fa-bars {
+    margin-top: 3px;
+    color: #f8f9fa;
+  }
+
+  &:hover,
+  &:focus {
+    background-color: transparent;
+    color: #fff;
+    outline: none;
+
+    i.fa-bars {
+      color: #fff;
+    }
+  }
+}
+
 nav.navbar,
 .navbar {
+  font-family: var(--font-family, inherit);
+  font-size: 14px;
+  line-height: 1.42857143;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -500,29 +544,30 @@ nav.navbar,
   top: 0;
   left: 0;
   right: 0;
-  z-index: 200;
+  z-index: 1100;
+  margin: 0;
   height: 50px;
   color: var(--color-offwhite);
   background-color: var(--color-primary);
   border: 1px solid transparent;
   border-color: var(--color-border-navbar);
-  padding: .375rem;
-  padding-right: 1.1rem;
+  padding: 0;
 
   .navbar-brand {
-    padding-top: 0.3125rem;
-    padding-bottom: 0.3125rem;
+    height: 50px;
+    padding: 15px 15px;
     margin-right: 1rem;
+    margin-top: 0;
     font-size: 20px;
-    line-height: inherit;
+    line-height: 20px;
     white-space: nowrap;
-    font-family: var(--font-family-title);
+    font-family: inherit;
     display: flex;
     align-items: center;
-    color: var(--color-offwhite);
+    color: #f8f9fa;
 
     &:hover {
-      color: var(--color-white);
+      color: #fff;
     }
 
     img {
@@ -530,6 +575,7 @@ nav.navbar,
       vertical-align: middle;
       height: 30px;
       width: auto;
+      margin-top: 2px;
       margin-right: 0.5rem;
     }
   }
@@ -543,8 +589,10 @@ nav.navbar,
     list-style: none;
     align-items: center;
 
+    /* Force flex in case a utility class sets display:block */
     &.d-block {
-      margin-right: 0.5rem;
+      display: flex;
+      margin-right: 0;
     }
 
     .nav-item.d-none.d-md-block {
@@ -552,8 +600,9 @@ nav.navbar,
     }
   }
 
-  .nav-link {
-    padding: 0.5rem;
+  .nav-link:not(#sidebar-toggle) {
+    padding: 15px;
+    min-height: 50px;
   }
 
   .navbar-collapse {
@@ -565,22 +614,78 @@ nav.navbar,
 
   a,
   button {
-    color: var(--color-offwhite);
+    color: #f8f9fa;
     font-size: 14px;
+    line-height: 20px;
+
+    i {
+      color: #f8f9fa;
+    }
 
     &:hover {
       text-decoration: none;
-      color: var(--color-white);
+      color: #fff;
+
+      i {
+        color: #fff;
+      }
     }
   }
 
-  button {
-    padding: 0.5rem;
+  .btn.admin-mode,
+  .end-admin-mode {
+    display: block;
+    padding: 15px;
+    min-height: 50px;
+    border: none;
+    font-size: 14px;
+    line-height: 20px;
+    color: #f8f9fa;
+
+    background: transparent;
+    text-decoration: none;
+
+    i {
+      color: #f8f9fa;
+    }
+
+    &:hover,
+    &:focus {
+      color: #fff;
+
+      i {
+        color: #fff;
+      }
+    }
   }
 
-  form.mobile-navbar-view-form button {
-    font-family: var(--font-family);
-    font-weight: normal;
+  /* Match control/common navbar action styling */
+  #button-sudo,
+  a.danger {
+    padding: 15px;
+    min-height: 50px;
+    border: none;
+    font-size: 14px;
+    line-height: 20px;
+    color: #f8f9fa;
+    background: transparent;
+    text-decoration: none;
+    display: block;
+
+    i {
+      color: inherit;
+    }
+
+    &:hover,
+    &:focus,
+    &:active {
+      text-decoration: none;
+      color: #fff;
+    }
+  }
+
+  a.danger {
+    background: #db2828;
   }
 }
 .navbar .nav-item form button.nav-link.active {

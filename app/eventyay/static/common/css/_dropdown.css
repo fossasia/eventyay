@@ -29,7 +29,7 @@ details.dropdown .dropdown-content {
   min-width: 160px;
   max-width: 400px;
   padding: 0;
-  margin-top: 2px;
+  margin-top: 8px;
   list-style: none;
   background: white;
   border: 1px solid var(--color-grey-lighter, #e9ecef);
@@ -58,11 +58,15 @@ details.dropdown .dropdown-content::after {
 }
 
 details.dropdown .dropdown-content::before {
+  top: -16px;
+  left: 9px;
   border: 8px solid transparent;
   border-bottom-color: rgb(27 31 35 / 0.15);
 }
 
 details.dropdown .dropdown-content::after {
+  top: -14px;
+  left: 10px;
   border: 7px solid transparent;
   border-bottom-color: white;
 }
@@ -73,10 +77,10 @@ details.dropdown .dropdown-content button.dropdown-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 16px;
+  padding: 8px 18px;
   min-height: 0;
   line-height: 1.25;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   overflow: hidden;
   text-overflow: ellipsis;

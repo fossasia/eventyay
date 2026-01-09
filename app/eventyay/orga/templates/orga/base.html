@@ -72,7 +72,7 @@
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         <nav class="navbar">
-            <ul class="navbar-nav d-block">
+            <ul class="navbar-nav">
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="sidebar" href="#" id="sidebar-toggle">
                         <i class="fa fa-bars fa-lg"></i>
@@ -117,15 +117,15 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn admin-mode" id="button-sudo">
+                            <button type="submit" class="btn btn-link" id="button-sudo">
                                 <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
                             </button>
                         </form>
                     </li>
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
                     <li>
-                        <a href="{% url 'control:user.sudo.stop' %}" class="end-admin-mode">
-                            <i class="fa fa-id-card"></i> {% translate "End admin session" %}
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
+                            <i class="fa fa-id-card"></i> {% translate " End admin session" %}
                         </a>
                     </li>
                 {% endif %}
