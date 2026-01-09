@@ -107,11 +107,11 @@
             <td>{{ mail.recipient_emails_display|split:","|length }}</td>
             <td>
                 {% if mail.scheduled_at %}
-                    <span class="badge bg-info">
+                    <span class="badge badge-info">
                         {% translate "Scheduled for" %} {{ mail.scheduled_at }}
                     </span>
                 {% else %}
-                    <span class="badge bg-secondary">{% translate "Immediate" %}</span>
+                    <span class="badge badge-info">{% translate "Immediate" %}</span>
                 {% endif %}
             </td>
             <td>
@@ -120,7 +120,7 @@
                     <div class="btn-group" role="group">
                         <form method="post" action="{% url 'plugins:sendmail:send_single' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-primary" title="{% translate 'Send this email' %}">
+                            <button type="submit" class="btn btn-sm btn-info" title="{% translate 'Send this email' %}">
                                 <i class="fa fa-mail-forward"></i>
                             </button>
                         </form>
@@ -136,7 +136,7 @@
 
                     <!-- Delete -->
                     <div class="btn-group" role="group">
-                        <a class="btn btn-sm btn-danger" title="{% translate 'Delete this email' %}"
+                        <a class="btn btn-sm btn-info" title="{% translate 'Delete this email' %}"
                            href="{% url 'plugins:sendmail:delete_single' organizer=request.event.organizer.slug event=request.event.slug pk=mail.pk %}">
                             <i class="fa fa-trash"></i>
                         </a>
