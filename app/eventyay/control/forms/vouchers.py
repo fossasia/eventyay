@@ -144,7 +144,7 @@ class VoucherForm(I18nModelForm):
             self.fields['exhibitor'].queryset = Exhibitor.objects.filter(event=instance.event)
             self.fields['exhibitor'].required = False
             self.fields['exhibitor'].widget.attrs.update({
-                'data-placeholder': _('No exhibitor'),
+                'data-placeholder': _('exhibitor not selected'),
             })
 
         if (
