@@ -204,6 +204,15 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
             'scheduled_at': TalkSplitDateTimePickerWidget(),
         }
 
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at <= timezone.now():
+                raise forms.ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
 
 class WriteMailBaseForm(MailTemplateForm):
     skip_queue = forms.BooleanField(
@@ -222,6 +231,16 @@ class WriteMailBaseForm(MailTemplateForm):
         super().__init__(*args, **kwargs)
         if not may_skip_queue:
             self.fields.pop('skip_queue', None)
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at <= timezone.now():
+                raise forms.ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
