@@ -285,24 +285,42 @@
                 <div id="venue-map" style="height: 350px; width: 100%; border: 1px solid #ddd; border-radius: 4px; margin-top: 10px;"></div>
                 <script>
                 (function() {
-                    // Fix Leaflet's default icon paths
-                    delete L.Icon.Default.prototype._getIconUrl;
-                    L.Icon.Default.mergeOptions({
-                        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-                        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-                        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-                    });
+                    var mapContainer = document.getElementById('venue-map');
                     
-                    var map = L.map('venue-map').setView([{{ ev.geo_lat }}, {{ ev.geo_lon }}], 15);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-                        maxZoom: 18,
-                    }).addTo(map);
+                    // Check if Leaflet is available
+                    if (typeof L === 'undefined') {
+                        if (mapContainer) {
+                            mapContainer.innerHTML = '<p style="padding: 20px; margin: 0; text-align: center; color: #666;">{% trans "Map could not be loaded at this time." %}</p>';
+                        }
+                        console.error('Leaflet library is not available');
+                        return;
+                    }
                     
-                    var marker = L.marker([{{ ev.geo_lat }}, {{ ev.geo_lon }}]).addTo(map);
-                    {% if ev.location %}
-                    marker.bindPopup("{{ ev.location|escapejs }}");
-                    {% endif %}
+                    try {
+                        // Fix Leaflet's default icon paths
+                        delete L.Icon.Default.prototype._getIconUrl;
+                        L.Icon.Default.mergeOptions({
+                            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+                            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+                            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+                        });
+                        
+                        var map = L.map('venue-map').setView([{{ ev.geo_lat|escapejs }}, {{ ev.geo_lon|escapejs }}], 15);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                            maxZoom: 18,
+                        }).addTo(map);
+                        
+                        var marker = L.marker([{{ ev.geo_lat|escapejs }}, {{ ev.geo_lon|escapejs }}]).addTo(map);
+                        {% if ev.location %}
+                        marker.bindPopup("{{ ev.location|escapejs }}");
+                        {% endif %}
+                    } catch (e) {
+                        if (mapContainer) {
+                            mapContainer.innerHTML = '<p style="padding: 20px; margin: 0; text-align: center; color: #666;">{% trans "An error occurred while loading the map." %}</p>';
+                        }
+                        console.error('Error during Leaflet map initialization:', e);
+                    }
                 })();
                 </script>
             </div>

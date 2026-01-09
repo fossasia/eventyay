@@ -233,7 +233,17 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://unpkg.com',  # Leaflet CSS from CDN
             ],
             'connect-src': ['{dynamic}', '{media}', 'https://checkout.stripe.com', 'https:', 'blob:'],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com', 'https://*.tile.openstreetmap.org', 'https://unpkg.com'] + img_src,
+            'img-src': [
+                '{static}',
+                '{media}',
+                'data:',
+                'https://*.stripe.com',
+                'https://twemoji.maxcdn.com',
+                'https://a.tile.openstreetmap.org',
+                'https://b.tile.openstreetmap.org',
+                'https://c.tile.openstreetmap.org',
+                'https://unpkg.com',  # Leaflet marker icons
+            ] + img_src,
             'font-src': [
                 '{static}',
                 'https://fonts.gstatic.com',  # fix Google Fonts
