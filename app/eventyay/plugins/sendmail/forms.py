@@ -11,6 +11,7 @@ from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.event import SubEvent
@@ -455,6 +456,9 @@ class EmailQueueEditForm(forms.ModelForm):
             'bcc',
             'scheduled_at',
         ]
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
         labels = {
             'reply_to': _('Reply-To'),
             'bcc': _('BCC'),
@@ -468,7 +472,7 @@ class EmailQueueEditForm(forms.ModelForm):
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
-            'scheduled_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'scheduled_at': SplitDateTimePickerWidget(),
         }
 
     def __init__(self, *args, **kwargs):
