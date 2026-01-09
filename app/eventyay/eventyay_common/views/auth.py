@@ -142,11 +142,15 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(backend=backend, data=request.POST, request=request)
         if form.is_valid() and form.user_cache and form.user_cache.auth_backend == backend.identifier:
+            # Check if logging in with preferred provider - auto-enable keep_logged_in
+            keep_logged_in = form.cleaned_data.get('keep_logged_in', False)
+            
             return process_login_and_set_cookie(
-                request, form.user_cache, form.cleaned_data.get('keep_logged_in', False)
+                request, form.user_cache, keep_logged_in
             )
     else:
         form = LoginForm(backend=backend, request=request)
+    
     ctx['form'] = form
     ctx['can_register'] = settings.EVENTYAY_REGISTRATION
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
@@ -154,9 +158,27 @@ def login(request):
     ctx['backend'] = backend
 
     gs = GlobalSettingsObject()
-    ctx['login_providers'] = gs.settings.get('login_providers', as_type=dict)
+    login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+    
+    # Sort providers: preferred first, then others
+    sorted_providers = {}
+    preferred_provider = None
+    other_providers = {}
+    
+    for provider, provider_settings in login_providers.items():
+        if provider_settings.get('state', False):  # Only enabled providers
+            if provider_settings.get('is_preferred', False):
+                preferred_provider = (provider, provider_settings)
+            else:
+                other_providers[provider] = provider_settings
+    
+    # Construct the sorted dictionary with preferred first
+    if preferred_provider:
+        sorted_providers[preferred_provider[0]] = preferred_provider[1]
+    sorted_providers.update(other_providers)
+    
+    ctx['login_providers'] = sorted_providers
     return render(request, 'eventyay_common/auth/login.html', ctx)
-
 
 def logout(request):
     """
