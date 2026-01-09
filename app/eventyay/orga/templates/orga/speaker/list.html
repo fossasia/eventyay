@@ -27,7 +27,7 @@
                     animation: 150,
                     onEnd: function(evt) {
                         const speakerIds = Array.from(tbody.querySelectorAll('tr[data-speaker-id]'))
-                            .map(row => row.dataset.speakerId);
+                            .map(row => parseInt(row.dataset.speakerId, 10));
                         
                         fetch('{% url "orga:speakers.reorder" event=request.event.slug %}', {
                             method: 'POST',
@@ -142,8 +142,8 @@
             <tbody id="speaker-tbody">
                 {% for profile in speakers %}
                     <tr data-speaker-id="{{ profile.id }}">
-                        <td class="drag-handle" title="{% translate 'Drag to reorder' %}">
-                            <i class="fa fa-bars"></i>
+                        <td class="drag-handle" title="{% translate 'Drag to reorder' %}" aria-label="{% translate 'Drag to reorder' %}">
+                            <i class="fa fa-bars" aria-hidden="true"></i>
                         </td>
                         <td>
                             <a href="{{ profile.orga_urls.base }}">
@@ -155,7 +155,8 @@
                                    class="featured-checkbox" 
                                    data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
                                    {% if profile.is_featured %}checked{% endif %}
-                                   title="{% translate 'Mark as featured speaker' %}">
+                                   title="{% translate 'Mark as featured speaker' %}"
+                                   aria-label="{% translate 'Mark as featured speaker' %}">
                         </td>
                         <td class="numeric">{{ profile.accepted_submission_count }}</td>
                         <td class="numeric">{{ profile.submission_count }}</td>

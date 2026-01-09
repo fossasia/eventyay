@@ -599,6 +599,10 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             is_featured=True
         ).select_related('user').order_by('order')[:8]  # Limit to 8 featured speakers (4 columns x 2 rows)
         context['featured_speakers'] = featured_speakers
+        
+        # Check if there are more speakers than what's shown
+        total_speakers = SpeakerProfile.objects.filter(event=self.request.event).count()
+        context['has_more_speakers'] = total_speakers > len(featured_speakers)
 
         return context
 

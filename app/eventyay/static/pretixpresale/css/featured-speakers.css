@@ -62,13 +62,20 @@
     font-size: 0.85em;
     color: #666;
     margin-bottom: 10px;
-    min-height: 50px;
     line-height: 1.4;
     flex-grow: 1;
 }
 
+/* Only apply min-height when bio exists */
+.speaker-bio:not(:empty) {
+    min-height: 50px;
+}
+
 .speaker-card .btn {
-    margin-top: 5px;
+    margin-top: 0px;
+    padding: 8px 16px;
+    font-size: 0.95em;
+    font-weight: 500;
 }
 
 .featured-speakers-more-link {

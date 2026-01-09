@@ -43,8 +43,8 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('user__email', 'user__fullname')
-    default_sort_field = 'user__fullname'
+    sortable_fields = ('user__email', 'user__fullname', 'order')
+    default_sort_field = 'order'
     permission_required = 'base.orga_list_speakerprofile'
 
     def get_filter_form(self):
@@ -52,8 +52,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return SpeakerFilterForm(self.request.GET, event=self.request.event, filter_arrival=any_arrived)
 
     def get_queryset(self):
+        # Show ALL speakers for the event, not just those with submissions
+        # This allows organizers to feature and reorder any speaker (per issue #1709)
         qs = (
-            speaker_profiles_for_user(self.request.event, self.request.user)
+            SpeakerProfile.objects.filter(event=self.request.event)
             .select_related('event', 'user')
             .annotate(
                 submission_count=Count(
@@ -94,11 +96,8 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
         
-        # Apply sorting: use explicit ordering if requested, otherwise default to 'order' then 'id'
-        if self.request.GET.get('ordering'):
-            qs = self.sort_queryset(qs)
-        else:
-            qs = qs.order_by('order', 'id')
+        # Apply sorting: use sort_queryset() which respects ?sort= parameter or uses default_sort_field
+        qs = self.sort_queryset(qs)
         return qs.distinct()
 
 
@@ -350,13 +349,29 @@ class SpeakerReorderView(EventPermissionRequired, View):
         
         try:
             with transaction.atomic():
+                # Fetch all speakers in one query for bulk update
+                speakers = list(SpeakerProfile.objects.filter(
+                    event=request.event,
+                    id__in=speaker_ids
+                ))
+                speakers_by_id = {speaker.id: speaker for speaker in speakers}
+                
+                # Update order for each speaker
+                speakers_to_update = []
                 for index, speaker_id in enumerate(speaker_ids):
-                    SpeakerProfile.objects.filter(
-                        id=speaker_id,
-                        event=request.event
-                    ).update(order=index)
+                    speaker = speakers_by_id.get(speaker_id)
+                    if speaker is not None:
+                        speaker.order = index
+                        speakers_to_update.append(speaker)
+                
+                # Bulk update all speakers in one query
+                if speakers_to_update:
+                    SpeakerProfile.objects.bulk_update(speakers_to_update, ['order'])
             
             return JsonResponse({'status': 'success'})
         except (ValueError, TypeError) as e:
-            logger.error(f'Error reordering speakers: {e}')
+            logger.error(f'Error reordering speakers (data error): {e}')
             return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=400)
+        except Exception as e:
+            logger.error(f'Error reordering speakers (database error): {e}')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=500)
