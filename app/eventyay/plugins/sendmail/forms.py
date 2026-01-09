@@ -116,6 +116,16 @@ class MailForm(forms.Form):
         initial='UTC',
     )
 
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at <= timezone.now():
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
+
     def clean(self):
         d = super().clean()
         if d.get('subevent') and (d.get('subevents_from') or d.get('subevents_to')):
