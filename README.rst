@@ -14,6 +14,9 @@ ENext is the new and updated version of Eventyay with a unified codebase for the
 External Dependencies
 ----------------------
 
+Linux/macOS
+~~~~~~~~~~~
+
 The *deb-packages.txt* file lists Debian packages we need to install.
 If you are using Debian / Ubuntu, you can install them quickly with this command:
 
@@ -32,7 +35,33 @@ For Nushell:
 
 If you are using other Linux distros, please guess the corresponding package names for that list.
 
-Other than that, please install `uv`_, the Python package manager.
+Windows
+~~~~~~~
+
+**Required tools for Windows:**
+
+1. **PostgreSQL** - Download from https://www.postgresql.org/download/windows/
+2. **GNU gettext tools** - Required for building some dependencies:
+
+   .. code-block:: powershell
+
+     winget install --id GnuWin32.GetText
+
+   After installation, add to your PATH (this is usually done automatically):
+   
+   .. code-block:: powershell
+
+     $env:Path += ";C:\Program Files (x86)\GnuWin32\bin"
+
+3. **Redis** - Either:
+
+   - Use Docker: ``docker run -d -p 6379:6379 --name eventyay-redis redis:latest``
+   - Or install Memurai: ``winget install Memurai.Memurai-Developer``
+
+Python Package Manager
+~~~~~~~~~~~~~~~~~~~~~~~
+
+For all platforms, please install `uv`_, the Python package manager.
 
 Getting Started
 ---------------
@@ -68,6 +97,8 @@ Use ``uv`` to create virtual environment and install Python packages at the same
 
 5. **Create a PostgreSQL database**
 
+**Linux/macOS (using peer authentication):**
+
 The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
 to work with database is to use its "peer" mode (no need to remember password).
 
@@ -91,7 +122,10 @@ From now on, you can do everything with the database without specifying password
 
   psql eventyay-db
 
-In case you cannot take advantage of PostgreSQL *peer* mode, you need to create a *eventyay.local.toml* file with these values:
+**Windows or custom PostgreSQL setup:**
+
+1. Create a database named ``eventyay-db`` using pgAdmin or command line
+2. Create a configuration file ``app/eventyay/config/eventyay.local.toml`` with your database credentials:
 
 .. code-block:: toml
 
@@ -99,16 +133,47 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
   postgres_password = 'your_db_password'
   postgres_host = 'localhost'
   postgres_port = 5432
+  postgres_db = 'eventyay-db'
 
 6. **Install and run Redis**
+
+**Linux/macOS:**
+
+.. code-block:: bash
+
+  sudo apt install redis-server  # Ubuntu/Debian
+  # or
+  brew install redis  # macOS
+
+**Windows:**
+
+Use Docker (recommended):
+
+.. code-block:: powershell
+
+  docker run -d -p 6379:6379 --name eventyay-redis redis:latest
+
+Or install Memurai (Redis for Windows):
+
+.. code-block:: powershell
+
+  winget install Memurai.Memurai-Developer
 
 7. **Activate virtual environment**
 
 After running ``uv sync```, activate a virtual environment
 
+**Linux/macOS:**
+
 .. code-block:: sh
 
   . .venv/bin/activate
+
+**Windows (PowerShell):**
+
+.. code-block:: powershell
+
+  .\.venv\Scripts\Activate.ps1
 
 8. **Initialize the database**:
 
