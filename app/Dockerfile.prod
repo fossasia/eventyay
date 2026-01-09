@@ -23,9 +23,6 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git build-essential gettext make nodejs
 
-# We need to install pretix-venueless from this local directory
-COPY eventyay/plugins/eventyay-ticket-video eventyay/plugins/eventyay-ticket-video
-
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
 RUN --mount=type=cache,target=/root/.cache/uv \

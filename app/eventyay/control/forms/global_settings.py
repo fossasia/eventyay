@@ -20,6 +20,8 @@ class GlobalSettingsForm(SettingsForm):
         Load default email setting form .cfg file if not set
         """
         global_settings = self.obj.settings
+        if global_settings.get('billing_validation') is None:
+            global_settings.set('billing_validation', True)
         if global_settings.get('smtp_port') is None or global_settings.get('smtp_port') == '':
             self.obj.settings.set('smtp_port', settings.EMAIL_PORT)
         if global_settings.get('smtp_host') is None or global_settings.get('smtp_host') == '':
@@ -45,6 +47,17 @@ class GlobalSettingsForm(SettingsForm):
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
+                (
+                    'billing_validation',
+                    forms.BooleanField(
+                        required=False,
+                        label=_('Billing validation'),
+                        help_text=_(
+                            'Billing validation lets you require organizers to set up a billing method before they can create events. '
+                            'When this option is enabled, no new event can be created until a valid billing method has been added.'
+                        ),
+                    ),
+                ),
                 (
                     'footer_text',
                     I18nFormField(
@@ -317,6 +330,9 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('ticket_fee', _('Ticket fee'), [
                 'ticket_fee_percentage',
+            ]),
+            ('billing_validation', _('Billing validation'), [
+                'billing_validation',
             ]),
             ('maps', _('Maps'), [
                 'opencagedata_apikey', 'mapquest_apikey', 'leaflet_tiles', 'leaflet_tiles_attribution',
