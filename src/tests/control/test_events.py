@@ -734,6 +734,8 @@ class EventsTest(SoupTest):
             assert ev.presale_end == berlin_tz.localize(datetime.datetime(2016, 11, 30, 18, 0, 0)).astimezone(pytz.utc)
 
             assert ev.tax_rules.filter(rate=Decimal('19.00')).exists()
+            assert ev.geo_lat is None
+            assert ev.geo_lon is None
 
     def test_create_event_with_subevents_success(self):
         doc = self.get_doc('/control/events/add')
@@ -788,6 +790,59 @@ class EventsTest(SoupTest):
             ev = Event.objects.get(slug='33c3')
             assert ev.has_subevents
             assert ev.subevents.count() == 0
+
+    def test_create_event_with_location_and_geo(self):
+        self.get_doc('/control/events/add')
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'foundation',
+                'event_wizard-prefix': 'event_wizard',
+                'foundation-organizer': self.orga1.pk,
+                'foundation-locales': ('en', 'de'),
+            },
+        )
+        
+        doc = self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'basics',
+                'event_wizard-prefix': 'event_wizard',
+                'basics-name_0': 'GeoEvent',
+                'basics-name_1': 'GeoEvent',
+                'basics-slug': 'geoevent',
+                'basics-date_from_0': '2016-12-27',
+                'basics-date_from_1': '10:00:00',
+                'basics-date_to_0': '2016-12-30',
+                'basics-date_to_1': '19:00:00',
+                'basics-location_0': 'New York',
+                'basics-location_1': 'New York',
+                'basics-geo_lat': '40.7128',
+                'basics-geo_lon': '-74.0060',
+                'basics-currency': 'EUR',
+                'basics-tax_rate': '',
+                'basics-locale': 'en',
+                'basics-timezone': 'Europe/Berlin',
+            },
+        )
+
+        assert not doc.select('.has-error')
+
+        self.post_doc(
+            '/control/events/add',
+            {
+                'event_wizard-current_step': 'copy',
+                'event_wizard-prefix': 'event_wizard',
+                'copy-copy_from_event': '',
+            },
+        )
+
+        with scopes_disabled():
+            ev = Event.objects.get(slug='geoevent')
+            assert ev.location == LazyI18nString({'de': 'New York', 'en': 'New York'})
+            assert ev.geo_lat == 40.7128
+            assert ev.geo_lon == -74.0060
 
     def test_create_event_copy_success(self):
         with scopes_disabled():

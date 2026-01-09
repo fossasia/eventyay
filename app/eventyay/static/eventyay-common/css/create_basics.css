@@ -1,0 +1,9 @@
+.event-field-label__optional {
+    display: block;
+    font-weight: normal;
+    margin-top: 5px;
+}
+
+.event-geo-coordinates-row {
+    margin-left: 0;
+}
