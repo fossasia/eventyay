@@ -468,7 +468,7 @@ class EmailQueueEditForm(forms.ModelForm):
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
-            'scheduled_at': SplitDateTimePickerWidget(),
+            'scheduled_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
     def __init__(self, *args, **kwargs):
