@@ -644,7 +644,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             event.log_action(
                 'eventyay.sendmail.scheduled',
                 user=user,
-                data={'email_queue_id': mail_instance.pk, 'scheduled_at': str(scheduled_at)},
+                data={'email_queue_id': mail_instance.pk, 'scheduled_at': scheduled_at.isoformat()},
             )
             messages.success(
                 self.request,

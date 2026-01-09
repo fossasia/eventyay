@@ -269,6 +269,7 @@ def process_scheduled_emails(sender, **kwargs):
         with transaction.atomic():
             due_queued_mails = list(
                 QueuedMail.objects.filter(
+                    scheduled_at__isnull=False,
                     scheduled_at__lte=now(),
                     sent__isnull=True,
                 )
@@ -297,6 +298,7 @@ def process_scheduled_emails(sender, **kwargs):
         with transaction.atomic():
             due_email_queues = list(
                 EmailQueue.objects.filter(
+                    scheduled_at__isnull=False,
                     scheduled_at__lte=now(),
                     sent_at__isnull=True,
                 )
