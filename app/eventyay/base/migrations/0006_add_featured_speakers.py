@@ -28,4 +28,11 @@ class Migration(migrations.Migration):
                 verbose_name='Display order'
             ),
         ),
+        migrations.AddIndex(
+            model_name='speakerprofile',
+            index=models.Index(
+                fields=['event', 'is_featured', 'order'],
+                name='speaker_featured_order_idx'
+            ),
+        ),
     ]

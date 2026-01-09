@@ -94,12 +94,12 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
         
-        # Apply sorting with order field
-        sorted_qs = self.sort_queryset(qs)
-        # If no explicit sort requested, order by 'order' field (for drag-drop), then 'id' for stability
-        if not self.request.GET.get('ordering'):
-            sorted_qs = sorted_qs.order_by('order', 'id')
-        return sorted_qs.distinct()
+        # Apply sorting: use explicit ordering if requested, otherwise default to 'order' then 'id'
+        if self.request.GET.get('ordering'):
+            qs = self.sort_queryset(qs)
+        else:
+            qs = qs.order_by('order', 'id')
+        return qs.distinct()
 
 
 
@@ -329,6 +329,24 @@ class SpeakerReorderView(EventPermissionRequired, View):
         speaker_ids = data.get('speaker_ids', [])
         if not isinstance(speaker_ids, list):
             return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+        
+        # Validate speaker_ids length to prevent abuse
+        if len(speaker_ids) > 1000:  # Reasonable maximum
+            logger.warning(f'Too many speaker IDs in reorder request: {len(speaker_ids)}')
+            return JsonResponse({'status': 'error', 'message': 'Too many speakers'}, status=400)
+        
+        # Validate all speaker_ids belong to the current event
+        valid_speaker_ids = set(
+            SpeakerProfile.objects.filter(
+                event=request.event,
+                id__in=speaker_ids
+            ).values_list('id', flat=True)
+        )
+        
+        invalid_ids = set(speaker_ids) - valid_speaker_ids
+        if invalid_ids:
+            logger.warning(f'Invalid speaker IDs in reorder request: {invalid_ids}')
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=400)
         
         try:
             with transaction.atomic():

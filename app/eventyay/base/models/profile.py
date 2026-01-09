@@ -67,6 +67,9 @@ class SpeakerProfile(PretalxModel):
             'mark_arrived': orga_can_change_submissions & can_mark_speakers_arrived,
             'delete': is_administrator,
         }
+        indexes = [
+            models.Index(fields=['event', 'is_featured', 'order'], name='speaker_featured_order_idx'),
+        ]
 
     class urls(EventUrls):
         """URL patterns for public speaker profile views."""
