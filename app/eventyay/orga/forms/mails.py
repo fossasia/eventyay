@@ -10,6 +10,9 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
 from i18nfield.forms import I18nModelForm
 
+from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
+
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.forms.mixins import I18nHelpText, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer, TabularFormRenderer
@@ -23,6 +26,19 @@ from eventyay.submission.forms import SubmissionFilterForm
 from eventyay.base.models import Track
 from eventyay.base.models.submission import Submission, SubmissionStates
 
+class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
+    """Talk-specific widget that uses native HTML5 date and time inputs."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Override the widgets to use native HTML5 input types
+        date_widget = self.widgets[0]
+        time_widget = self.widgets[1]
+        date_widget.input_type = 'date'
+        time_widget.input_type = 'time'
+        # Set standard HTML5 formats
+        date_widget.format = '%Y-%m-%d'
+        time_widget.format = '%H:%M:%S'
 
 class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
@@ -180,9 +196,12 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
     class Meta:
         model = QueuedMail
         fields = ['to', 'to_users', 'reply_to', 'cc', 'bcc', 'subject', 'text', 'scheduled_at']
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
         widgets = {
             'to_users': EnhancedSelectMultiple,
-            'scheduled_at': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'scheduled_at': TalkSplitDateTimePickerWidget(),
         }
 
 
@@ -192,11 +211,11 @@ class WriteMailBaseForm(MailTemplateForm):
         required=False,
         help_text=_('If you check this, the emails will be sent immediately, instead of being put in the outbox.'),
     )
-    scheduled_at = forms.DateTimeField(
+    scheduled_at = forms.SplitDateTimeField(
         label=_('Send later'),
         required=False,
         help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time.'),
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        widget=TalkSplitDateTimePickerWidget(),
     )
 
     def __init__(self, *args, may_skip_queue=False, **kwargs):
