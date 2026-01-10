@@ -625,7 +625,7 @@ class BaseQuestionsForm(forms.Form):
                         '.tif',
                         '.tiff',
                     ),
-                    max_size=settings.MAX_SIZE_CONFIG[SizeKey.QUESTION],
+                    max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_QUESTION],
                 )
             elif q.type == Question.TYPE_DATE:
                 attrs = {}

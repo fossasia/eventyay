@@ -64,7 +64,7 @@ class MailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. We recommend only using PDFs '
             'of no more than 2 MB in size.'
         ),
-        max_size=settings.MAX_SIZE_CONFIG[SizeKey.OTHER],
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
     )  # TODO i18n
     products = forms.ModelMultipleChoiceField(
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
@@ -569,7 +569,7 @@ class TeamMailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. '
             'We recommend only using PDFs of no more than 2 MB in size.'
         ),
-        max_size=settings.MAX_SIZE_CONFIG[SizeKey.ATTACHMENT],
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_ATTACHMENT],
     )
 
     def __init__(self, *args, **kwargs):

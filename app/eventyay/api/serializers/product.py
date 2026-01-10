@@ -157,7 +157,7 @@ class ProductSerializer(I18nAwareModelSerializer):
         required=False,
         allow_null=True,
         allowed_types=('image/png', 'image/jpeg', 'image/gif'),
-        max_size=settings.MAX_SIZE_CONFIG[SizeKey.IMAGE],
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
     )
 
     class Meta:

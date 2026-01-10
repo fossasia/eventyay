@@ -322,7 +322,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.WEBHOOK]],
+                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -341,7 +341,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=0,
                     payload=json.dumps(payload),
-                    response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.WEBHOOK]],
+                    response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)

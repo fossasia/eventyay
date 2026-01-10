@@ -394,9 +394,9 @@ def mail_send_task(
                                 args.append((name, content, ct.type))
                                 attach_size += len(content)
 
-                            if attach_size < settings.MAX_SIZE_CONFIG[SizeKey.MAIL]:
+                            if attach_size < settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_MAIL]:
                                 # The maximum attachment size is configurable by overriding
-                                # the `mail` key in your TOML / size_limit_mb dictionary.
+                                # the `upload_size_mail` key in your TOML / size_limit_mb dictionary.
                                 # Values above ~4MB are not recommended, as larger emails are more likely to bounce.
                                 for a in args:
                                     try:

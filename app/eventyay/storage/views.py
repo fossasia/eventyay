@@ -112,7 +112,7 @@ class UploadView(UploadMixin, View):
         ".jpeg",
         ".gif",
     )
-    max_size = settings.MAX_SIZE_CONFIG[SizeKey.OTHER]
+    max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
 
     def post(self, request, *args, **kwargs):
         if not self.user:
@@ -225,7 +225,7 @@ class UploadView(UploadMixin, View):
 class ScheduleImportView(UploadMixin, View):
     permissions = {Permission.EVENT_UPDATE}
     ext_whitelist = (".xlsx",)
-    max_size = settings.MAX_SIZE_CONFIG[SizeKey.XLSX]
+    max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_XLSX]
 
     def post(self, request, *args, **kwargs):
         if not self.user:

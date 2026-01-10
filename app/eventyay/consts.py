@@ -13,13 +13,14 @@ TIMEZONE_CHOICES = sorted(
 FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'frontend'
 
 class SizeKey(StrEnum):
-    CSV = "csv"
-    IMAGE = "image"
-    PDF = "pdf"
-    XLSX = "xlsx"
-    FAVICON = "favicon"
-    ATTACHMENT = "attachment"
-    MAIL = "mail"
-    QUESTION = "question"
-    WEBHOOK = "webhook"
-    OTHER = "other"
+    UPLOAD_SIZE_CSV = "upload_size_csv"
+    UPLOAD_SIZE_IMAGE = "upload_size_image"
+    UPLOAD_SIZE_PDF = "upload_size_pdf"
+    UPLOAD_SIZE_XLSX = "upload_size_xlsx"
+    UPLOAD_SIZE_FAVICON = "upload_size_favicon"
+    UPLOAD_SIZE_ATTACHMENT = "upload_size_attachment"
+    UPLOAD_SIZE_MAIL = "upload_size_mail"
+    UPLOAD_SIZE_QUESTION = "upload_size_question"
+    UPLOAD_SIZE_OTHER = "upload_size_other"
+
+    RESPONSE_SIZE_WEBHOOK = "response_size_webhook"

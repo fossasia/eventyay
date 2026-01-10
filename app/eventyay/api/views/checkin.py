@@ -1036,7 +1036,7 @@ class CheckinListPositionViewSet(viewsets.ReadOnlyModelViewSet):
             raise BaseValidationError(
                 'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
             )
-        if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.OTHER]:
+        if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
             raise BaseValidationError(
                 'The submitted file "{fid}" is too large to be used in this field.'.format(fid=data)
             )

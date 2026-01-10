@@ -40,7 +40,7 @@ def store_image(response, event):  # TODO deduplicate
     if not extension:
         return
 
-    max_size = settings.MAX_SIZE_CONFIG[SizeKey.OTHER]
+    max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
     if not len(response.content) < max_size:
         return
 

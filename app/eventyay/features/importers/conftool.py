@@ -200,7 +200,7 @@ def mirror_conftool_file(event, url, password, nonce, preview=False):
         )
         r.raise_for_status()
 
-        if len(r.content) > settings.MAX_SIZE_CONFIG[SizeKey.OTHER]:
+        if len(r.content) > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
             logger.warning(
                 f"Not mirroring conftool file {url} because it is {len(r.content)} byte"
             )

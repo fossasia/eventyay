@@ -197,16 +197,17 @@ class BaseSettings(_BaseSettings):
 
     size_limit_mb: dict[str, int] = Field(
         default_factory=lambda: {
-            "csv": 1,
-            "image": 10,
-            "pdf": 10,
-            "xlsx": 2,
-            "favicon": 1,
-            "attachment": 10,
-            "mail": 4,
-            "question": 20,
-            "webhook": 1,
-            "other": 10,
+            "upload_size_csv": 1,
+            "upload_size_image": 10,
+            "upload_size_pdf": 10,
+            "upload_size_xlsx": 2,
+            "upload_size_favicon": 1,
+            "upload_size_attachment": 10,
+            "upload_size_mail": 4,
+            "upload_size_question": 20,
+            "upload_size_other": 10,
+
+            "response_size_webhook": 1,
         }
     )
 
@@ -214,16 +215,17 @@ class BaseSettings(_BaseSettings):
     # These allow simple top-level config entries (e.g. `question = 300` in TOML)
     # to override corresponding entries in `size_limit_mb`.
     # The dictionary remains the canonical source of truth.
-    csv: int | None = None
-    image: int | None = None
-    pdf: int | None = None
-    xlsx: int | None = None
-    favicon: int | None = None
-    attachment: int | None = None
-    mail: int | None = None
-    question: int | None = None
-    webhook: int | None = None
-    other: int | None = None
+    upload_size_csv: int | None = None
+    upload_size_image: int | None = None
+    upload_size_pdf: int | None = None
+    upload_size_xlsx: int | None = None
+    upload_size_favicon: int | None = None
+    upload_size_attachment: int | None = None
+    upload_size_mail: int | None = None
+    upload_size_question: int | None = None
+    upload_size_other: int | None = None
+
+    response_size_webhook: int | None = None
 
     #   Apply top-level single-line size limit overrides to `size_limit_mb`.
     #   Any override field that is set (not None) will replace the corresponding
