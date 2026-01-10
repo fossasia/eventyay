@@ -28,6 +28,9 @@ h1 a {
 }
 
 header {
+  position: sticky;
+  top: -180px;
+
   z-index: 1000;
   height: 220px;
   display: flex;
@@ -326,6 +329,7 @@ footer {
     }
 
     header {
+      top: -124px;
       padding: 0;
       #event-logo {
         max-height: 120px;
