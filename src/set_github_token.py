@@ -1,37 +1,47 @@
 import os
-
 import toml
 
-# Get the stripe_key from environment variable
+# Get the GitHub token from environment variables
 github_token = os.getenv('GITHUB_TOKEN')
 
+PYPROJECT_PATH = os.getenv('PYPROJECT_PATH', '/pretix/pyproject.toml')
+
+STRIPE_PREFIX = 'eventyay-stripe'
+PAYPAL_PREFIX = 'eventyay-paypal'
+
+STRIPE_REPO = 'fossasia/eventyay-tickets-stripe'
+PAYPAL_REPO = 'fossasia/eventyay-tickets-paypal'
+BRANCH = 'master'
+
 # Load the pyproject.toml file
-pyproject = toml.load('/pretix/pyproject.toml')
+pyproject = toml.load(PYPROJECT_PATH)
+
+dependencies = pyproject.get('project', {}).get('dependencies', [])
 
 # If github_token is None, remove the eventyay-stripe and eventyay-paypal dependency
 if not github_token:
-    pyproject['project']['dependencies'] = [
-        dep for dep in pyproject['project']['dependencies'] if not dep.startswith('eventyay-stripe')
-    ]
-    pyproject['project']['dependencies'] = [
+    dependencies = [
         dep
-        for dep in pyproject['project']['dependencies']
-        if not (dep.startswith('eventyay-stripe') or dep.startswith('eventyay-paypal'))
+        for dep in dependencies
+            if not dep.startswith((STRIPE_PREFIX, PAYPAL_PREFIX))
     ]
 else:
-    # Iterate over the dependencies
-    for i, dep in enumerate(pyproject['project']['dependencies']):
-        if dep.startswith('eventyay-stripe'):
-            # Update the stripe dependency with the github_token
-            pyproject['project']['dependencies'][i] = (
-                f'eventyay-stripe @ git+https://{github_token}@github.com/fossasia/eventyay-tickets-stripe.git@master'
-            )
-        elif dep.startswith('eventyay-paypal'):
+     # Inject GitHub token into private dependency URLs
+        for i, dep in enumerate(dependencies):
+            if dep.startswith(STRIPE_PREFIX):
+                dependencies[i] = (
+                    f'{STRIPE_PREFIX} @ git+https://{github_token}@github.com/'
+                    f'{STRIPE_REPO}.git@{BRANCH}'
+            ) 
             # Update the PayPal dependency with the github_token
-            pyproject['project']['dependencies'][i] = (
-                f'eventyay-paypal @ git+https://{github_token}@github.com/fossasia/eventyay-tickets-paypal.git@master'
-            )
+            elif dep.startswith(PAYPAL_PREFIX):
+             dependencies[i] = (
+                f'{PAYPAL_PREFIX} @ git+https://{github_token}@github.com/'
+                f'{PAYPAL_REPO}.git@{BRANCH}'
+            )    
+            
+pyproject['project']['dependencies'] = dependencies
 
 # Write the updated pyproject.toml back to file
-with open('/pretix/pyproject.toml', 'w') as f:
-    toml.dump(pyproject, f)
+with open(PYPROJECT_PATH, 'w') as file:
+    toml.dump(pyproject, file)
