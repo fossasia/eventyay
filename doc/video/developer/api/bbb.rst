@@ -60,3 +60,19 @@ an error of type ``bbb.join.missing_profile`` is returned. If the BBB server can
 or you do not have permission to join, ``bbb.failed`` is returned.
 
 In a private meeting, everyone has moderator rights.
+
+Reverse Proxy and CSP Requirements
+----------------------------------
+
+When using a reverse proxy (e.g., Nginx, Apache) for BigBlueButton:
+
+- Forward all BBB endpoints correctly to the backend server.
+- Ensure that WebSocket connections are allowed for real-time audio/video.
+- SSL/TLS (HTTPS) must terminate at the proxy and be correctly forwarded.
+- Content Security Policy (CSP) headers should allow:
+  - `frame-src` for BBB URLs
+  - `connect-src` for WebSocket endpoints
+  - `media-src` for audio/video streams
+
+Failure to configure reverse proxy or CSP headers correctly may cause
+meetings to fail to load or recordings to not appear.

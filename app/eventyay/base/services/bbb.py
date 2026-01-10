@@ -13,6 +13,7 @@ from django.db.models import Count, F, OuterRef, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils.html import escape
+from django.utils.translation import gettext_lazy as _
 from lxml import etree
 from yarl import URL
 
@@ -29,6 +30,33 @@ def get_url(operation, params, base_url, secret):
         base_url, "api/" + operation + "?" + encoded + "&checksum=" + checksum
     )
 
+def resolve_bbb_display_name(user):
+    """
+    Resolve a safe, non-empty display name for BBB joins.
+    Uses a configurable fallback from settings or translation.
+    """
+    fallback_name = getattr(settings, "BBB_GUEST_DISPLAY_NAME", _("Guest"))
+
+    if not user:
+        return fallback_name
+
+    profile = getattr(user, "profile", None)
+    if profile:
+        name = profile.get("display_name")
+        if name and name.strip():
+            return name.strip()
+
+    full_name = getattr(user, "full_name", None)
+    if full_name and full_name.strip():
+        return full_name.strip()
+
+    email = getattr(user, "email", None)
+    if isinstance(email, str):
+        local_part = email.strip().partition("@")[0]
+        if local_part:
+            return local_part
+
+    return fallback_name
 
 def escape_name(name):
     # Some things break BBB apparently…
@@ -261,10 +289,11 @@ class BBBService:
         if req is False:
             return
 
-        if user.profile.get("avatar", {}).get("url"):
-            avatar = {"avatarURL": user.profile.get("avatar", {}).get("url")}
-        else:
-            avatar = {}
+        profile = getattr(user, "profile", {}) or {}
+        avatar_url = profile.get("avatar", {}).get("url")
+        avatar = {"avatarURL": avatar_url} if avatar_url else {}
+
+        full_name = resolve_bbb_display_name(user)
 
         scheme = (
             "http://" if settings.DEBUG else "https://"
@@ -274,7 +303,7 @@ class BBBService:
             "join",
             {
                 "meetingID": create_params["meetingID"],
-                "fullName": escape_name(user.profile.get("display_name", "")),
+                "fullName": escape_name(full_name),
                 "userID": str(user.pk),
                 "password": (
                     create_params["moderatorPW"]
@@ -322,10 +351,11 @@ class BBBService:
         if await self._get(create_url) is False:
             return
 
-        if user.profile.get("avatar", {}).get("url"):
-            avatar = {"avatarURL": user.profile.get("avatar", {}).get("url")}
-        else:
-            avatar = {}
+        profile = getattr(user, "profile", {}) or {}
+        avatar_url = profile.get("avatar", {}).get("url")
+        avatar = {"avatarURL": avatar_url} if avatar_url else {}
+
+        full_name = resolve_bbb_display_name(user)
 
         scheme = (
             "http://" if settings.DEBUG else "https://"
@@ -335,7 +365,7 @@ class BBBService:
             "join",
             {
                 "meetingID": create_params["meetingID"],
-                "fullName": escape_name(user.profile.get("display_name", "")),
+                "fullName": escape_name(full_name),
                 **avatar,
                 "userID": str(user.pk),
                 "password": create_params["moderatorPW"],
