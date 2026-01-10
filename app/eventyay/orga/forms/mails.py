@@ -31,14 +31,17 @@ class TalkSplitDateTimePickerWidget(SplitDateTimePickerWidget):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Override the widgets to use native HTML5 input types
-        date_widget = self.widgets[0]
-        time_widget = self.widgets[1]
-        date_widget.input_type = 'date'
-        time_widget.input_type = 'time'
-        # Set standard HTML5 formats
-        date_widget.format = '%Y-%m-%d'
-        time_widget.format = '%H:%M:%S'
+        # Preserve any attributes configured by the base widget
+        date_attrs = self.widgets[0].attrs.copy()
+        time_attrs = self.widgets[1].attrs.copy()
+        # Set HTML5 input types for native date/time pickers
+        date_attrs['type'] = 'date'
+        time_attrs['type'] = 'time'
+        # Replace widgets with new instances that have the desired HTML5 types and formats
+        self.widgets = (
+            forms.DateInput(attrs=date_attrs, format='%Y-%m-%d'),
+            forms.TimeInput(attrs=time_attrs, format='%H:%M:%S'),
+        )
 
 class MailTemplateForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
