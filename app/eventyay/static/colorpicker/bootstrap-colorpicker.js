@@ -847,7 +847,17 @@
     $picker.find('.colorpicker-saturation, .colorpicker-hue, .colorpicker-alpha')
       .on('mousedown.colorpicker touchstart.colorpicker', $.proxy(this.mousedown, this));
 
-    $picker.appendTo(this.container ? this.container : $('body'));
+    // insert picker after the element instead of appending to body
+    // this makes the picker scroll with the form naturally
+    if (this.container) {
+      $picker.appendTo(this.container);
+    } else if (this.element.is('input')) {
+      this.element.after($picker);
+      this.pickerParent = this.element.parent();
+    } else {
+      this.element.append($picker);
+      this.pickerParent = this.element;
+    }
 
     // Bind other events
     if (this.input !== false) {
@@ -918,16 +928,55 @@
       if (this.options.inline !== false || this.options.container) {
         return false;
       }
-      var type = this.container && this.container[0] !== window.document.body ? 'position' : 'offset';
       var element = this.component || this.element;
-      var offset = element[type]();
-      if (this.options.align === 'right') {
-        offset.left -= this.picker.outerWidth() - element.outerWidth();
+      var position = element.position();
+      var offset = element.offset();
+      var pickerHeight = this.picker.outerHeight();
+      var parent = this.pickerParent || element.parent();
+
+      // determine if picker should open above or below the element
+      var vertical = 'bottom';
+      if (offset.top + pickerHeight * 1.5 >= $(window).height() + $(window).scrollTop() &&
+          pickerHeight + element.outerHeight() < offset.top) {
+        vertical = 'top';
       }
+
+      // Find first positioned parent for correct offset calculation
+      if (parent.css('position') === 'static') {
+        parent = parent.parents().filter(function () {
+          return $(this).css('position') !== 'static';
+        }).first();
+      }
+
+      if (!parent.length) {
+        // Graceful degradation: fallback to body instead of throwing an error
+        if (window && window.console && typeof window.console.warn === 'function') {
+          window.console.warn('Bootstrap Colorpicker: no non-static positioned container found for reposition; falling back to <body>.');
+        }
+        parent = $('body');
+        if (this.picker && this.picker.length) {
+          this.picker.appendTo(parent);
+        }
+      }
+
+      var leftPos = position.left;
+      if (this.options.align === 'right') {
+        leftPos = position.left + element.outerWidth() - this.picker.outerWidth();
+      }
+
       this.picker.css({
-        top: offset.top + element.outerHeight(),
-        left: offset.left
+        position: 'absolute',
+        top: vertical === 'top' ? 'auto' : position.top + element.outerHeight(),
+        bottom: vertical === 'top' ? parent.outerHeight() - (parent[0] === element[0] ? 0 : position.top) : 'auto',
+        left: leftPos,
+        right: 'auto'
       });
+
+      if (vertical === 'top') {
+        this.picker.addClass('colorpicker-top').removeClass('colorpicker-bottom');
+      } else {
+        this.picker.addClass('colorpicker-bottom').removeClass('colorpicker-top');
+      }
     },
     show: function(e) {
       if (this.isDisabled()) {
@@ -937,6 +986,7 @@
       this.picker.addClass('colorpicker-visible').removeClass('colorpicker-hidden');
       this.reposition();
       $(window).on('resize.colorpicker', $.proxy(this.reposition, this));
+      $(window).on('scroll.colorpicker', $.proxy(this.reposition, this));
       if (e && (!this.hasInput() || this.input.attr('type') === 'color')) {
         if (e.stopPropagation && e.preventDefault) {
           e.stopPropagation();
@@ -965,6 +1015,7 @@
       }
       this.picker.addClass('colorpicker-hidden').removeClass('colorpicker-visible');
       $(window).off('resize.colorpicker', this.reposition);
+      $(window).off('scroll.colorpicker', this.reposition);
       $(window.document).off({
         'mousedown.colorpicker': this.hide
       });
