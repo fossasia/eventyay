@@ -208,11 +208,12 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
             from django.utils import timezone
-            if scheduled_at <= timezone.now():
+            if scheduled_at < timezone.now():
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
                 )
         return scheduled_at
+
 
 class WriteMailBaseForm(MailTemplateForm):
     skip_queue = forms.BooleanField(
@@ -236,11 +237,21 @@ class WriteMailBaseForm(MailTemplateForm):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
             from django.utils import timezone
-            if scheduled_at <= timezone.now():
+            if scheduled_at < timezone.now():
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
                 )
         return scheduled_at
+
+    def clean(self):
+        cleaned_data = super().clean()
+        skip_queue = cleaned_data.get('skip_queue')
+        scheduled_at = cleaned_data.get('scheduled_at')
+        if skip_queue and scheduled_at is not None:
+            raise forms.ValidationError(
+                _('You cannot select "Send immediately" and also specify a scheduled time.')
+            )
+        return cleaned_data
 
 
 class WriteTeamsMailForm(WriteMailBaseForm):
