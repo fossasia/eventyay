@@ -16,32 +16,34 @@ BRANCH = 'master'
 # Load the pyproject.toml file
 pyproject = toml.load(PYPROJECT_PATH)
 
-dependencies = pyproject.get('project', {}).get('dependencies', [])
+# Normalize access to project section
+project = pyproject.setdefault('project', {})
+dependencies = project.get('dependencies', [])
 
-# If github_token is None, remove the eventyay-stripe and eventyay-paypal dependency
+# If github_token is None, remove Stripe and PayPal dependencies
 if not github_token:
     dependencies = [
         dep
         for dep in dependencies
-            if not dep.startswith((STRIPE_PREFIX, PAYPAL_PREFIX))
+        if not dep.startswith((STRIPE_PREFIX, PAYPAL_PREFIX))
     ]
 else:
-     # Inject GitHub token into private dependency URLs
-        for i, dep in enumerate(dependencies):
-            if dep.startswith(STRIPE_PREFIX):
-                dependencies[i] = (
-                    f'{STRIPE_PREFIX} @ git+https://{github_token}@github.com/'
-                    f'{STRIPE_REPO}.git@{BRANCH}'
-            ) 
-            # Update the PayPal dependency with the github_token
-            elif dep.startswith(PAYPAL_PREFIX):
-             dependencies[i] = (
+    # Inject GitHub token into private dependency URLs
+    for i, dep in enumerate(dependencies):
+        if dep.startswith(STRIPE_PREFIX):
+            dependencies[i] = (
+                f'{STRIPE_PREFIX} @ git+https://{github_token}@github.com/'
+                f'{STRIPE_REPO}.git@{BRANCH}'
+            )
+        elif dep.startswith(PAYPAL_PREFIX):
+            dependencies[i] = (
                 f'{PAYPAL_PREFIX} @ git+https://{github_token}@github.com/'
                 f'{PAYPAL_REPO}.git@{BRANCH}'
-            )    
-            
-pyproject['project']['dependencies'] = dependencies
+            )
 
-# Write the updated pyproject.toml back to file
+# Write back updated dependencies
+project['dependencies'] = dependencies
+
+# Save the updated pyproject.toml
 with open(PYPROJECT_PATH, 'w') as file:
     toml.dump(pyproject, file)
