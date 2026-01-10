@@ -95,6 +95,9 @@ class SubmissionViewMixin(PermissionRequired):
     @cached_property
     def is_publicly_visible(self):
         # Check if an anonymous user could see this submission's page
+        # Return False for unsaved instances to avoid accessing missing FK
+        if not self.object or not self.object.pk:
+            return False
         return is_agenda_submission_visible(None, self.object)
 
 
@@ -417,7 +420,14 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         # Validate all forms before saving anything
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
-            return self.get(self.request, *self.args, **self.kwargs)
+            # Clear self.object to prevent unsaved instance from being added to context
+            self.object = None
+            return self.render_to_response(
+                self.get_context_data(
+                    form=form,
+                    questions_form=self._questions_form,
+                )
+            )
         
         if created:
             if not self.new_speaker_form.is_valid():
@@ -426,7 +436,15 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                         for error in errors:
                             messages.error(self.request, f'{field}: {error}')
                         break  # Only show errors for the first field
-                return self.get(self.request, *self.args, **self.kwargs)
+                # Clear self.object to prevent unsaved instance from being added to context
+                self.object = None
+                return self.render_to_response(
+                    self.get_context_data(
+                        form=form,
+                        questions_form=self._questions_form,
+                        new_speaker_form=self.new_speaker_form,
+                    )
+                )
         
         # All validations passed - now safe to persist
         form.instance.event = self.request.event
