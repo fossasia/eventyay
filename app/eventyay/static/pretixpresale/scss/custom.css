@@ -28,6 +28,16 @@ header {
     word-break: normal;
 }
 
+header .header-wrapper {
+    width: 100%;
+    max-width: calc(100vw - 8px);
+    word-break: keep-all;
+    flex-wrap: nowrap;
+    background: var(--color-bg);
+    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
+    margin-bottom: 0;
+}
+
 header .header-row-right {
     padding-bottom: 4px;
 	color: var(--color-primary);
@@ -37,16 +47,6 @@ header .header-row-right {
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
-}
-
-nav .header-wrapper {
-    width: 100%;
-    max-width: calc(100vw - 8px);
-    word-break: keep-all;
-    flex-wrap: nowrap;
-    background: var(--color-bg);
-    border-radius: var(--size-border-radius) var(--size-border-radius) 0 0;
-    margin-bottom: 0;
 }
 
 .alert::before {
