@@ -30,14 +30,24 @@ adapter = get_adapter()
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
-        
+
         # Store the 'next' URL in session for redirecting user back after login
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
+        # Check if this provider is the preferred one
         gs = GlobalSettingsObject()
-        client_id = gs.settings.get('login_providers', as_type=dict).get(provider, {}).get('client_id')
+        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+        is_preferred = login_providers.get(provider, {}).get('is_preferred', False)
+
+        # Store in session that this is a preferred provider login
+        if is_preferred:
+            request.session['socialauth_preferred_login'] = True
+        else:
+            request.session.pop('socialauth_preferred_login', None)
+
+        client_id = login_providers.get(provider, {}).get('client_id')
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
         base_url = provider_instance.get_login_url(request)
@@ -76,7 +86,10 @@ class OAuthReturnView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
             user = self.get_or_create_user(request)
-            
+
+            # Check if this was a preferred provider login
+            keep_logged_in = request.session.pop('socialauth_preferred_login', False)
+
             # Check for OAuth2 params first (Talk module integration)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
@@ -87,25 +100,24 @@ class OAuthReturnView(View):
                     # OAuth2 flow takes precedence - redirect to authorization endpoint
                     # Clean up socialauth_next_url to prevent it from being used later
                     request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, False)
+                    response = process_login_and_set_cookie(request, user, keep_logged_in)
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-            
+
             # Retrieve and re-validate the stored 'next' URL from session
             # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
                 # Store in session with a clear key for process_login to use
                 request.session['socialauth_next_url'] = next_url
-            
-            response = process_login_and_set_cookie(request, user, False)
+
+            response = process_login_and_set_cookie(request, user, keep_logged_in)
             return response
         except AttributeError as e:
             messages.error(request, _('Error while authorizing: no email address available.'))
             logger.error('Error while authorizing: %s', e)
             return redirect('eventyay_common:auth.login')
-
     @staticmethod
     def get_or_create_user(request: HttpRequest) -> User:
         """
@@ -173,7 +185,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['login_providers'] = self.gs.settings.get('login_providers', as_type=dict)
+        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        context['login_providers'] = login_providers
+
+        # Check if any provider is preferred for the "No preferred" radio button
+        context['any_preferred'] = any(
+            settings.get('is_preferred', False)
+            for settings in login_providers.values()
+            if settings.get('state', False)
+        )
+
         # tickets_domain is only used to append /github/..., so make sure we don't have
         # a trailing /
         context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
