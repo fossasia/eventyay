@@ -413,13 +413,12 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
         created = not self.object
         self.object = form.instance
         self._questions_form.submission = self.object
+        
+        # Validate all forms before saving anything
         if not self._questions_form.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.get(self.request, *self.args, **self.kwargs)
-        form.instance.event = self.request.event
-        form.save()
-        self._questions_form.save()
-
+        
         if created:
             if not self.new_speaker_form.is_valid():
                 if self.new_speaker_form.errors:
@@ -427,8 +426,15 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
                         for error in errors:
                             messages.error(self.request, f'{field}: {error}')
                         break  # Only show errors for the first field
-                return self.form_invalid(form)
-            elif email := self.new_speaker_form.cleaned_data['email']:
+                return self.get(self.request, *self.args, **self.kwargs)
+        
+        # All validations passed - now safe to persist
+        form.instance.event = self.request.event
+        form.save()
+        self._questions_form.save()
+
+        if created:
+            if email := self.new_speaker_form.cleaned_data['email']:
                 form.instance.add_speaker(
                     email=email,
                     name=self.new_speaker_form.cleaned_data['name'],
