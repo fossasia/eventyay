@@ -124,6 +124,34 @@
                 <p>&nbsp;</p>
             </div>
         </fieldset>
+        <fieldset class="quick-setup-step">
+            <div class="quick-icon">
+                <span class="fa fa-fw fa-user text-muted"></span>
+            </div>
+            <div class="quick-content">
+                <legend>{% trans "Guest orders" %}</legend>
+                {% bootstrap_field form.require_registered_account_for_tickets layout="control" label_class="sr-only" field_class="col-md-12" %}
+            </div>
+        </fieldset>
+        <fieldset class="quick-setup-step">
+            <div class="quick-icon">
+                <span class="fa fa-fw fa-wrench text-muted"></span>
+            </div>
+            <div class="quick-content">
+                <legend>{% trans "Features" %}</legend>
+                <p class="bigger">
+                    {% blocktrans trimmed %}
+                        We recommend that you take some time to go through the "Settings" part of your event, but if
+                        you're in a hurry and want to get started quickly, here's a short version:
+                    {% endblocktrans %}
+                </p>
+                {% bootstrap_field form.ticket_download layout="control" label_class="sr-only" field_class="col-md-12" %}
+                {% bootstrap_field form.waiting_list_enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
+                {% bootstrap_field form.show_quota_left layout="control" label_class="sr-only" field_class="col-md-12" %}
+                {% bootstrap_field form.attendee_names_required layout="control" label_class="sr-only" field_class="col-md-12" %}
+                <p>&nbsp;</p>
+            </div>
+        </fieldset>
         <fieldset class="quick-setup-step" id="quick-setup-step-payment">
             <div class="quick-icon">
                 <span class="fa fa-fw fa-money text-muted"></span>
@@ -156,34 +184,6 @@
                         </div>
                     </div>
                 {% endif %}
-                <p>&nbsp;</p>
-            </div>
-        </fieldset>
-        <fieldset class="quick-setup-step">
-            <div class="quick-icon">
-                <span class="fa fa-fw fa-user text-muted"></span>
-            </div>
-            <div class="quick-content">
-                <legend>{% trans "Ticket buying settings" %}</legend>
-                {% bootstrap_field form.require_registered_account_for_tickets layout="control" label_class="sr-only" field_class="col-md-12" %}
-            </div>
-        </fieldset>
-        <fieldset class="quick-setup-step">
-            <div class="quick-icon">
-                <span class="fa fa-fw fa-wrench text-muted"></span>
-            </div>
-            <div class="quick-content">
-                <legend>{% trans "Features" %}</legend>
-                <p class="bigger">
-                    {% blocktrans trimmed %}
-                        We recommend that you take some time to go through the "Settings" part of your event, but if
-                        you're in a hurry and want to get started quickly, here's a short version:
-                    {% endblocktrans %}
-                </p>
-                {% bootstrap_field form.ticket_download layout="control" label_class="sr-only" field_class="col-md-12" %}
-                {% bootstrap_field form.waiting_list_enabled layout="control" label_class="sr-only" field_class="col-md-12" %}
-                {% bootstrap_field form.show_quota_left layout="control" label_class="sr-only" field_class="col-md-12" %}
-                {% bootstrap_field form.attendee_names_required layout="control" label_class="sr-only" field_class="col-md-12" %}
                 <p>&nbsp;</p>
             </div>
         </fieldset>

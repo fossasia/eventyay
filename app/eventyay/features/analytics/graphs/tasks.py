@@ -202,7 +202,7 @@ def generate_room_views(event, input=None):
             or t.startswith("call.")
             for t in types
         ):
-            name = re.sub("[^a-zA-Z0-9 ]", "", room.name)
+            name = re.sub("[^a-zA-Z0-9 ]", "", str(room.name))
             if room.deleted:
                 name += " (deleted)"
             ws = wb.create_sheet(name)
