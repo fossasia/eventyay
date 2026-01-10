@@ -81,7 +81,7 @@
                         <td>
                             {% if mail.scheduled_at %}
                                 <span class="badge bg-info text-white">
-                                    {% translate "Scheduled for" %} {{ mail.scheduled_at }}
+                                    {% translate "Scheduled for" %} {{ mail.scheduled_at|date:"Y-m-d H:i" }}
                                 </span>
                             {% else %}
                                 <span class="badge bg-info text-white">{% translate "Immediate" %}</span>
