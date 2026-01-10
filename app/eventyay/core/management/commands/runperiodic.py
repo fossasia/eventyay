@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.dispatch.dispatcher import NO_RECEIVERS
 
-from pretix.helpers.periodic import SKIPPED
+from eventyay.helpers.periodic import SKIPPED
 
 from ...signals import periodic_task
 
