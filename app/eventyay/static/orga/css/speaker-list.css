@@ -18,3 +18,82 @@
     cursor: pointer;
     transform: scale(1.2);
 }
+
+/* Table wrapper for horizontal scrolling - Target by ID for specificity */
+#speaker-list-wrapper {
+    width: fit-content !important;
+    max-width: 100% !important;
+    display: block !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* Table styling */
+.speaker-list-table {
+    width: auto !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+    margin: 0 !important;
+}
+
+/* Column specific styling */
+.speaker-drag-column {
+    width: 50px !important;
+    max-width: 50px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+}
+
+.speaker-name-column {
+    width: 220px !important;
+    max-width: 220px !important;
+}
+
+.speaker-name-cell {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+.speaker-accepted-column {
+    width: 160px !important;
+    max-width: 160px !important;
+    text-align: right;
+    padding-right: 20px !important;
+}
+
+.speaker-proposals-column {
+    width: 130px !important;
+    max-width: 130px !important;
+    text-align: right;
+    padding-right: 20px !important;
+}
+
+.speaker-featured-column {
+    width: 110px !important;
+    max-width: 110px !important;
+    text-align: center;
+}
+
+.speaker-arrival-column {
+    width: 180px !important;
+    max-width: 180px !important;
+    text-align: right;
+    padding-right: 15px !important;
+}
+
+.speaker-arrival-cell {
+    white-space: normal;
+    padding-right: 30px;
+}
+
+/* Responsive table adjustments */
+@media (max-width: 768px) {
+    .speaker-list-table {
+        font-size: 0.9em;
+    }
+    
+    .speaker-name-column {
+        width: 25%;
+    }
+}

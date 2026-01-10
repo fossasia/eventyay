@@ -8,7 +8,7 @@
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
 
 {% block custom_header %}
-    <link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}">
+    <link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}?v=3">
 {% endblock %}
 
 {% block scripts %}
@@ -44,9 +44,7 @@
                             return response.json();
                         })
                         .then(data => {
-                            if (data.status === 'success') {
-                                console.log('✓ Speaker order saved successfully');
-                            } else {
+                            if (data.status !== 'success') {
                                 console.error('Failed to save speaker order:', data.message);
                             }
                         })
@@ -81,7 +79,6 @@
                     })
                     .then(data => {
                         if (data.status === 'success') {
-                            console.log('✓ Featured status updated:', data.is_featured);
                             this.checked = data.is_featured;
                         } else {
                             this.checked = !this.checked;
@@ -127,16 +124,16 @@
     {% endif %}
 
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
-    <div class="table-responsive-md">
-        <table class="table table-sm table-flip table-sticky" style="table-layout: fixed; width: 100%;">
+    <div class="table-responsive-always" id="speaker-list-wrapper">
+        <table class="table table-sm table-flip table-sticky speaker-list-table">
             <thead>
                 <tr>
-                    <th class="speaker-drag-column" style="width: 40px;"></th>
-                    <th style="width: 18%;">{% translate "Name" %}</th>
-                    <th class="numeric" style="width: 14%; padding-left: 150px;">{% translate "Accepted Proposals" %}</th>
-                    <th class="numeric" style="width: 12%; padding-left: 260px;">{% translate "Proposals" %}</th>
-                    <th class="text-center speaker-featured-column" style="width: 10%; padding-left: 350px;">{% translate "Featured" %}</th>
-                    <th class="text-right" style="width: auto; padding-right: 90px;">{% translate "Arrival" %}</th>
+                    <th class="speaker-drag-column"></th>
+                    <th class="speaker-name-column">{% translate "Name" %}</th>
+                    <th class="speaker-accepted-column">{% translate "Accepted Proposals" %}</th>
+                    <th class="speaker-proposals-column">{% translate "Proposals" %}</th>
+                    <th class="speaker-featured-column">{% translate "Featured" %}</th>
+                    <th class="speaker-arrival-column">{% translate "Arrival" %}</th>
                 </tr>
             </thead>
             <tbody id="speaker-tbody">
@@ -145,14 +142,14 @@
                         <td class="drag-handle" title="{% translate 'Drag to reorder' %}" aria-label="{% translate 'Drag to reorder' %}">
                             <i class="fa fa-bars" aria-hidden="true"></i>
                         </td>
-                        <td>
+                        <td class="speaker-name-cell">
                             <a href="{{ profile.orga_urls.base }}">
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
                             </a>
                         </td>
-                        <td class="numeric" style="padding-left: 210px;">{{ profile.accepted_submission_count }}</td>
-                        <td class="numeric" style="padding-left: 300px;">{{ profile.submission_count }}</td>
-                        <td class="text-center" style="padding-left: 370px;">
+                        <td class="speaker-accepted-column">{{ profile.accepted_submission_count }}</td>
+                        <td class="speaker-proposals-column">{{ profile.submission_count }}</td>
+                        <td class="speaker-featured-column">
                             <input type="checkbox" 
                                    class="featured-checkbox" 
                                    data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
@@ -160,7 +157,7 @@
                                    title="{% translate 'Mark as featured speaker' %}"
                                    aria-label="{% translate 'Mark as featured speaker' %}">
                         </td>
-                        <td class="text-right" style="padding-left: 10px; padding-right: 80px;">
+                        <td class="speaker-arrival-cell">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
                                     <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}" href="{{ profile.orga_urls.toggle_arrived }}?from=list">

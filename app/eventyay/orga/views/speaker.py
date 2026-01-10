@@ -1,3 +1,6 @@
+import json
+import logging
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
@@ -37,6 +40,8 @@ from eventyay.submission.forms import TalkQuestionsForm
 from eventyay.base.models import Answer
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
+
+logger = logging.getLogger(__name__)
 
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
@@ -299,26 +304,25 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
     permission_required = 'base.update_speakerprofile'
 
     def post(self, request, event, code):
-        self.profile.is_featured = not self.profile.is_featured
-        self.profile.save()
-        action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
-        self.profile.log_action(
-            action,
-            data={'event': self.request.event.slug},
-            user=self.request.user,
-        )
-        return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
+        try:
+            self.profile.is_featured = not self.profile.is_featured
+            self.profile.save()
+            action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
+            self.profile.log_action(
+                action,
+                data={'event': self.request.event.slug},
+                user=self.request.user,
+            )
+            return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
+        except Exception as e:
+            logger.error(f'Error toggling featured status for speaker {code}: {e}', exc_info=True)
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 
 class SpeakerReorderView(EventPermissionRequired, View):
     permission_required = 'base.update_speakerprofile'
 
     def post(self, request, *args, **kwargs):
-        import json
-        import logging
-        
-        logger = logging.getLogger(__name__)
-        
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
@@ -373,5 +377,5 @@ class SpeakerReorderView(EventPermissionRequired, View):
             logger.error(f'Error reordering speakers (data error): {e}')
             return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=400)
         except Exception as e:
-            logger.error(f'Error reordering speakers (database error): {e}')
+            logger.error(f'Error reordering speakers (database error): {e}', exc_info=True)
             return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=500)

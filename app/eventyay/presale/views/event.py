@@ -594,15 +594,24 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
         # Get featured speakers for the landing page
         from eventyay.base.models import SpeakerProfile
+        
+        # Get only featured speaker profiles, ordered by order field
         featured_speakers = SpeakerProfile.objects.filter(
             event=self.request.event,
             is_featured=True
-        ).select_related('user').order_by('order')[:8]  # Limit to 8 featured speakers (4 columns x 2 rows)
-        context['featured_speakers'] = featured_speakers
+        ).select_related('user').order_by('order', 'id')
         
-        # Check if there are more speakers than what's shown
-        total_speakers = SpeakerProfile.objects.filter(event=self.request.event).count()
-        context['has_more_speakers'] = total_speakers > len(featured_speakers)
+        # Count total featured speakers and non-featured speakers
+        total_featured_count = featured_speakers.count()
+        non_featured_count = SpeakerProfile.objects.filter(
+            event=self.request.event,
+            is_featured=False
+        ).count()
+        
+        context['featured_speakers'] = featured_speakers
+        context['total_featured_count'] = total_featured_count
+        # Show "More speakers" button if there are >8 featured speakers OR any non-featured speakers
+        context['has_more_speakers'] = (total_featured_count > 8) or (non_featured_count > 0)
 
         return context
 

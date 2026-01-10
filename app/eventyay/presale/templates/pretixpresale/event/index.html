@@ -310,11 +310,11 @@
     </main>
     
     {% if featured_speakers %}
-        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading" style="padding-left: 15px; padding-right: 15px;">
+        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading">
             <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
-            <div class="row">
+            <div class="row" id="speakers-container">
                 {% for speaker_profile in featured_speakers %}
-                    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 speaker-item {% if forloop.counter > 8 %}hidden-speaker{% endif %}">
                         <div class="speaker-card">
                             {% if speaker_profile.avatar_url %}
                                 <img src="{{ speaker_profile.avatar_url }}" alt="{{ speaker_profile.user.get_display_name }}" class="speaker-avatar">
@@ -337,7 +337,7 @@
                             {% elif speaker_profile.biography %}
                                 <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:20|striptags }}</p>
                             {% endif %}
-                            <a href="{{ speaker_profile.urls.public }}" class="btn btn-default" style="margin-top: 0; padding: 8px 16px; font-size: 0.95em; font-weight: 500;">
+                            <a href="{{ speaker_profile.urls.public }}" class="btn btn-default">
                                 {% trans "View profile" %}
                             </a>
                         </div>
@@ -345,13 +345,33 @@
                 {% endfor %}
             </div>
             {% if has_more_speakers %}
-            <div class="text-center featured-speakers-more-link">
-                <a href="{% eventurl event 'agenda:speakers' %}" class="btn btn-primary">
-                    {% trans "More speakers" %} <i class="fa fa-arrow-right"></i>
-                </a>
+            <div class="text-center featured-speakers-more-link" id="more-speakers-btn-container">
+                <button type="button" class="btn btn-primary" id="show-more-speakers-btn">
+                    {% trans "More speakers" %} <i class="fa fa-angle-down"></i>
+                </button>
             </div>
             {% endif %}
         </section>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const showMoreBtn = document.getElementById('show-more-speakers-btn');
+                const btnContainer = document.getElementById('more-speakers-btn-container');
+                
+                if (showMoreBtn) {
+                    showMoreBtn.addEventListener('click', function() {
+                        // Show all hidden speakers
+                        const hiddenSpeakers = document.querySelectorAll('.hidden-speaker');
+                        hiddenSpeakers.forEach(function(speaker) {
+                            speaker.classList.remove('hidden-speaker');
+                        });
+                        
+                        // Hide the button
+                        btnContainer.style.display = 'none';
+                    });
+                }
+            });
+        </script>
     {% endif %}
     
     {% if show_vouchers %}
