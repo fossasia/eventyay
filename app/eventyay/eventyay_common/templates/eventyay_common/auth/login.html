@@ -13,12 +13,13 @@
             {% for provider, settings in login_providers.items %}
                 {% if settings.state and settings.is_preferred %}
                     <div class="form-group buttons" style="margin-bottom: 20px;">
-                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
                            data-method="post" class="btn btn-primary btn-block btn-lg">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                             {% endwith %}
                         </a>
+                        {# Visual indicator only: long session automatically enabled for preferred provider #}
                         <div class="checkbox" style="margin-top: 10px; margin-bottom: 0;">
                             <label style="font-weight: normal; color: #666;">
                                 <input type="checkbox" checked disabled style="margin-right: 5px;">
@@ -27,8 +28,8 @@
                         </div>
                     </div>
                     
-                    {# Show separator if there are other login options #}
-                    {% if backend.login_form_fields or backends|length > 1 %}
+                    {# Show separator only if there are other login options #}
+                    {% if backend.login_form_fields %}
                         <div style="text-align: center; margin: 20px 0; position: relative;">
                             <hr style="border-top: 1px solid #e0e0e0; margin: 0;">
                             <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 0 15px; color: #999; font-size: 14px;">
@@ -96,7 +97,7 @@
             {% if login_providers %}
                 {% for provider, settings in login_providers.items %}
                     {% if settings.state and not settings.is_preferred %}
-                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
                            data-method="post" class="btn btn-default btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
