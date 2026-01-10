@@ -1,9 +1,11 @@
+import datetime as dt
 from collections import defaultdict
 from logging import getLogger
 
 from allauth.account.forms import ResetPasswordForm
 from allauth.socialaccount import providers
 from allauth.socialaccount.models import SocialAccount
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -11,9 +13,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView, TemplateView, UpdateView
+from django.utils.translation import activate, gettext_lazy as _
+from django.views.generic import ListView, TemplateView, UpdateView, View
 from django_scopes import scopes_disabled
 
 from eventyay.base.forms.user import UserSettingsForm
@@ -25,6 +28,9 @@ from .common import AccountMenuMixIn
 
 logger = getLogger(__name__)
 PASSWORD_RESET_INTENT = 'password_reset'
+
+# Pre-computed set of valid language codes for efficient validation
+VALID_LANGUAGE_CODES = {code for code, __ in settings.LANGUAGES}
 
 
 def get_social_account_provider_label(user: User) -> str:
@@ -111,6 +117,19 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         self.request.user.log_action('eventyay.user.settings.changed', user=self.request.user, data=data)
 
         update_session_auth_hash(self.request, self.request.user)
+
+        new_locale = form.cleaned_data.get('locale')
+        if new_locale:
+            activate(new_locale)
+            max_age = dt.timedelta(seconds=10 * 365 * 24 * 60 * 60)
+            expires = dt.datetime.now(dt.UTC) + max_age
+            sup.set_cookie(
+                settings.LANGUAGE_COOKIE_NAME,
+                new_locale,
+                max_age=int(max_age.total_seconds()),
+                expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                domain=settings.SESSION_COOKIE_DOMAIN,
+            )
         return sup
 
     def get_success_url(self):
@@ -302,3 +321,28 @@ def build_password_reset_message(requires_reset: bool, provider_label: str) -> s
             'Send yourself a password setup link below.'
         ).format(provider=provider_label)
     return _('Your account does not have a password yet. Send yourself a password setup link below.')
+
+class LanguageSwitchView(View):
+    def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or '/'
+        if not url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            next_url = reverse('eventyay_common:dashboard')
+
+        response = redirect(next_url)
+        locale = request.POST.get('locale')
+        if locale and locale in VALID_LANGUAGE_CODES:
+            activate(locale)
+            if request.user.is_authenticated:
+                if request.user.locale != locale:
+                    request.user.locale = locale
+                    request.user.save(update_fields=['locale'])
+            max_age = dt.timedelta(seconds=10 * 365 * 24 * 60 * 60)
+            expires = dt.datetime.now(dt.UTC) + max_age
+            response.set_cookie(
+                settings.LANGUAGE_COOKIE_NAME,
+                locale,
+                max_age=max_age,
+                expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                domain=settings.SESSION_COOKIE_DOMAIN,
+            )
+        return response
