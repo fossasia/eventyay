@@ -310,7 +310,7 @@
     </main>
     
     {% if featured_speakers %}
-        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading">
+        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading" style="padding-left: 15px; padding-right: 15px;">
             <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
             <div class="row">
                 {% for speaker_profile in featured_speakers %}
@@ -324,7 +324,17 @@
                                 </div>
                             {% endif %}
                             <h4>{{ speaker_profile.user.get_display_name }}</h4>
-                            {% if speaker_profile.biography %}
+                            {% if speaker_profile.user.profile.position or speaker_profile.user.profile.affiliation %}
+                                <p class="speaker-bio">
+                                    {% if speaker_profile.user.profile.position and speaker_profile.user.profile.affiliation %}
+                                        {{ speaker_profile.user.profile.position }} {% trans "at" %} {{ speaker_profile.user.profile.affiliation }}
+                                    {% elif speaker_profile.user.profile.position %}
+                                        {{ speaker_profile.user.profile.position }}
+                                    {% else %}
+                                        {{ speaker_profile.user.profile.affiliation }}
+                                    {% endif %}
+                                </p>
+                            {% elif speaker_profile.biography %}
                                 <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:20|striptags }}</p>
                             {% endif %}
                             <a href="{{ speaker_profile.urls.public }}" class="btn btn-default" style="margin-top: 0; padding: 8px 16px; font-size: 0.95em; font-weight: 500;">

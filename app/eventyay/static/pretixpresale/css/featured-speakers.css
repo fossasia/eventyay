@@ -53,13 +53,13 @@
 
 .speaker-card h4 {
     margin: 10px 0 8px 0;
-    font-size: 1.1em;
+    font-size: 1.25em;
     font-weight: 600;
     color: #333;
 }
 
 .speaker-bio {
-    font-size: 0.85em;
+    font-size: 0.95em;
     color: #666;
     margin-bottom: 10px;
     line-height: 1.4;

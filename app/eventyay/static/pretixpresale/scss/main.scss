@@ -242,7 +242,7 @@ body.loading .container {
     }
     p {
         min-height: 30px;
-        margin-left: 40px;
+        margin-left: 20px;  /* Reduced from 40px to 20px */
     }
     p:first-child {
         margin-top: 0;
