@@ -287,5 +287,15 @@ ignore = ["E722", "E741"]
 packages = ["eventyay"]
 
 
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "eventyay.config.next_settings"
+python_files = ["test_*.py"]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
 [tool.pytest_env]
 EVY_RUNNING_ENVIRONMENT = "testing"
