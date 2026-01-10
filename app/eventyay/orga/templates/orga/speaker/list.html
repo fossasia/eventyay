@@ -128,15 +128,15 @@
 
     {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
     <div class="table-responsive-md">
-        <table class="table table-sm table-flip table-sticky">
+        <table class="table table-sm table-flip table-sticky" style="table-layout: fixed; width: 100%;">
             <thead>
                 <tr>
-                    <th class="speaker-drag-column"></th>
-                    <th>{% translate "Name" %}</th>
-                    <th class="text-center speaker-featured-column">{% translate "Featured" %}</th>
-                    <th class="numeric">{% translate "Accepted Proposals" %}</th>
-                    <th class="numeric">{% translate "Proposals" %}</th>
-                    <th></th>
+                    <th class="speaker-drag-column" style="width: 40px;"></th>
+                    <th style="width: 18%;">{% translate "Name" %}</th>
+                    <th class="numeric" style="width: 14%; padding-left: 150px;">{% translate "Accepted Proposals" %}</th>
+                    <th class="numeric" style="width: 12%; padding-left: 260px;">{% translate "Proposals" %}</th>
+                    <th class="text-center speaker-featured-column" style="width: 10%; padding-left: 350px;">{% translate "Featured" %}</th>
+                    <th class="text-right" style="width: auto; padding-right: 90px;">{% translate "Arrival" %}</th>
                 </tr>
             </thead>
             <tbody id="speaker-tbody">
@@ -150,7 +150,9 @@
                                 {% include "orga/includes/user_name.html" with user=profile.user %}
                             </a>
                         </td>
-                        <td class="text-center">
+                        <td class="numeric" style="padding-left: 210px;">{{ profile.accepted_submission_count }}</td>
+                        <td class="numeric" style="padding-left: 300px;">{{ profile.submission_count }}</td>
+                        <td class="text-center" style="padding-left: 370px;">
                             <input type="checkbox" 
                                    class="featured-checkbox" 
                                    data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
@@ -158,9 +160,7 @@
                                    title="{% translate 'Mark as featured speaker' %}"
                                    aria-label="{% translate 'Mark as featured speaker' %}">
                         </td>
-                        <td class="numeric">{{ profile.accepted_submission_count }}</td>
-                        <td class="numeric">{{ profile.submission_count }}</td>
-                        <td class="text-right">
+                        <td class="text-right" style="padding-left: 10px; padding-right: 80px;">
                             {% if profile.accepted_submission_count %}
                                 {% if can_mark_speaker %}
                                     <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}" href="{{ profile.orga_urls.toggle_arrived }}?from=list">
@@ -177,8 +177,8 @@
                                         <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
                                     {% endif %}
                                 {% endif %}
-                                </td>
                             {% endif %}
+                        </td>
                         </tr>
                 {% endfor %}
             </tbody>

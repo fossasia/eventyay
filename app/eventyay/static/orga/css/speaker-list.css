@@ -18,12 +18,3 @@
     cursor: pointer;
     transform: scale(1.2);
 }
-
-/* Table column widths */
-.speaker-drag-column {
-    width: 30px;
-}
-
-.speaker-featured-column {
-    width: 100px;
-}
