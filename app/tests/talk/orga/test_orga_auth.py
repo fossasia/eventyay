@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.urls import reverse
+from urllib.parse import urlparse, parse_qs
 
 from pretalx.event.models import TeamInvite
 
@@ -10,6 +11,7 @@ def test_orga_successful_login(client, user, template_patch):
     user.set_password("testtest")
     user.save()
     response = client.post(
+        reverse("orga:login"),
         data={"login_email": user.email, "login_password": "testtest"},
         follow=True,
     )
@@ -30,7 +32,14 @@ def test_orga_redirect_login(client, orga_user, event):
     response = client.get(request_url, follow=True)
     assert response.status_code == 200
     # Expected redirect to common auth login instead of event specific login
-    assert "/orga/login" in response.redirect_chain[-1][0] or "/common/login" in response.redirect_chain[-1][0] or "login" in response.redirect_chain[-1][0]
+    final_url = response.redirect_chain[-1][0]
+    parsed_url = urlparse(final_url)
+
+    expected_login_url = reverse("orga:login")
+    assert parsed_url.path == expected_login_url
+
+    query_params_parsed = parse_qs(parsed_url.query)
+    assert query_params_parsed.get("next") == [request_url]
 
     response = client.post(
         response.redirect_chain[-1][0],
