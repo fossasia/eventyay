@@ -3,8 +3,8 @@ import sys
 from django.core.management.base import BaseCommand
 from django_scopes import scopes_disabled
 
-from pretix.base.i18n import get_language_without_region
-from pretix.base.models import Customer, Event, Order, Organizer
+from eventyay.base.i18n import get_language_without_region
+from eventyay.base.models import Customer, Event, Order, Organizer
 
 
 class Command(BaseCommand):
