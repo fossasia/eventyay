@@ -31,7 +31,7 @@
             {% endblocktranslate %}
         </div>
         <div class="d-flex justify-content-end mb-2">
-            <a href="{{ request.event.organizer.orga_urls.new_team }}" class="btn btn-info">
+            <a href="{% url 'eventyay_common:organizer.team.add' organizer=request.event.organizer.slug %}?next={{ request.path|urlencode }}" class="btn btn-info">
                 <i class="fa fa-plus"></i> {% translate "New team" %}
             </a>
         </div>
