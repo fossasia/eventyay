@@ -7,16 +7,16 @@ from django.utils.timezone import override
 from django_scopes import scope
 from tqdm import tqdm
 
-from pretix.base.i18n import language
-from pretix.base.models import Event, Organizer
-from pretix.base.signals import (
+from eventyay.base.i18n import language
+from eventyay.base.models import Event, Organizer
+from eventyay.base.signals import (
     register_data_exporters,
     register_multievent_data_exporters,
 )
 
 
 class Command(BaseCommand):
-    help = 'Run an exporter to get data out of pretix'
+    help = 'Run an exporter to get data out of eventyay'
 
     def add_arguments(self, parser):
         parser.add_argument('organizer_slug', type=str)
