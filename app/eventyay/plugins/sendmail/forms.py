@@ -120,7 +120,7 @@ class MailForm(forms.Form):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
             from django.utils import timezone
-            if scheduled_at <= timezone.now():
+            if scheduled_at < timezone.now():
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
                 )
@@ -535,6 +535,16 @@ class EmailQueueEditForm(forms.ModelForm):
         else:
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at < timezone.now():
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
 
     def clean_emails(self):
         updated_emails = [
