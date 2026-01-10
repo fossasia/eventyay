@@ -39,13 +39,18 @@
                 </fieldset>
 
                 <fieldset>
-                    <h4>{{ _('Organizer settings:') }}
+                    <legend>{% translate "Additional settings" %}</legend>
+                    <div class="alert alert-info">
+                        <p>
+                            <strong>{% translate "Tickets specific settings" %}</strong><br>
+                            {% translate "For advanced ticket configuration, payment settings, and other ticket-specific options, visit the tickets specific settings page." %}
+                        </p>
                         <a href='{% url "control:organizer.edit" organizer=organizer.slug  %}'
-                                class="btn btn-sm btn-default" title="{{ _('Settings') }}"
-                                data-toggle="tooltip">
-                            <span class="fa fa-cog"></span>
+                                class="btn btn-primary" target="_blank">
+                            <span class="fa fa-external-link"></span>
+                            {% translate "Go to Tickets specific settings" %}
                         </a>
-                    </h4>
+                    </div>
                 </fieldset>
 
                 <div class="form-group submit-group">

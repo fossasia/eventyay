@@ -20,8 +20,88 @@ class MenuItem(TypedDict):
     icon: str
 
 
+def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
+    """Generate navigation items for common organizer pages."""
+    url = request.resolver_match
+    if not url:
+        return []
+    
+    organizer = getattr(request, 'organizer', None)
+    if not organizer:
+        return []
+    
+    nav = [
+        {
+            'label': _('My events'),
+            'url': reverse('eventyay_common:events'),
+            'active': url.url_name in ['events', 'event.update', 'event.create'] or 'event.' in url.url_name,
+            'icon': 'calendar',
+        },
+    ]
+    
+    # Check permissions for organizer settings
+    orgapermset = getattr(request, 'orgapermset', set())
+    
+    if 'can_change_organizer_settings' in orgapermset:
+        settings_children = [
+            {
+                'label': _('General'),
+                'url': reverse(
+                    'eventyay_common:organizer.update',
+                    kwargs={'organizer': organizer.slug},
+                ),
+                'active': url.url_name == 'organizer.update',
+            },
+            {
+                'label': _('Billing settings'),
+                'url': reverse(
+                    'control:organizer.settings.billing',
+                    kwargs={'organizer': organizer.slug},
+                ),
+                'active': url.url_name == 'organizer.settings.billing',
+            },
+            {
+                'label': _('Tickets specific settings'),
+                'url': reverse(
+                    'control:organizer.edit',
+                    kwargs={'organizer': organizer.slug},
+                ),
+                'active': False,
+                'external': True,
+            },
+        ]
+        nav.append(
+            {
+                'label': _('Settings'),
+                'url': reverse(
+                    'eventyay_common:organizer.update',
+                    kwargs={'organizer': organizer.slug},
+                ),
+                'active': url.url_name in ['organizer.update', 'organizer.settings.billing'] or 'organizer.settings' in url.url_name,
+                'icon': 'wrench',
+                'children': settings_children,
+            }
+        )
+    
+    if 'can_change_teams' in orgapermset:
+        nav.append(
+            {
+                'label': _('Teams'),
+                'url': reverse(
+                    'eventyay_common:organizer.update',
+                    kwargs={'organizer': organizer.slug},
+                )
+                + '?section=permissions',
+                'active': url.url_name in ['organizer.teams', 'organizer.team', 'organizer.team.edit', 'organizer.team.delete'] or 'team' in url.url_name,
+                'icon': 'group',
+            }
+        )
+
+    return nav
+
+
 def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
-    """Generate navigation items for global."""
+    """Generate navigation items for global context (non-organizer pages)."""
     url = request.resolver_match
     if not url:
         return []

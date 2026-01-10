@@ -12,7 +12,9 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.eventyay_common.navigation import (
     get_event_navigation,
     get_global_navigation,
+    get_common_organizer_navigation,
 )
+from eventyay.control.navigation import get_organizer_navigation
 
 from ..helpers.plugin_enable import is_video_enabled
 from ..multidomain.urlreverse import get_event_domain
@@ -49,7 +51,16 @@ def _default_context(request: HttpRequest):
     if not request.user.is_authenticated:
         return ctx
 
-    ctx['nav_items'] = get_global_navigation(request)
+    # Check if this is an organizer-specific page
+    organizer = getattr(request, 'organizer', None)
+    if organizer:
+        # When an organizer is selected, use organizer-scoped navigation
+        ctx['nav_items'] = get_common_organizer_navigation(request)
+        ctx['is_organizer_context'] = True
+    else:
+        # Use global navigation for non-organizer pages
+        ctx['nav_items'] = get_global_navigation(request)
+        ctx['is_organizer_context'] = False
     ctx['staff_session'] = request.user.has_active_staff_session(request.session.session_key)
     ctx['staff_need_to_explain'] = (
         StaffSession.objects.filter(user=request.user, date_end__isnull=False).filter(
