@@ -70,9 +70,20 @@ export default {
 		async fetchNextStream() {
 			if (!this.room) return
 			try {
-				const base = this.$store.state.world ? (config.api.base || '/api/v1/') : '/api/v1/'
-				const organizer = this.$store.state.world?.organizer || 'default'
-				const event = this.$store.state.world?.slug || 'default'
+				const base = config.api.base || '/api/v1/'
+				const world = this.$store.state.world
+				
+				let organizer = world?.organizer || world?.organizer_slug
+				let event = world?.slug || world?.id
+				
+				if (!organizer || organizer === 'default') {
+					const pathParts = window.location.pathname.split('/').filter(Boolean)
+					if (pathParts.length >= 2) {
+						organizer = pathParts[0]
+						event = pathParts[1]
+					}
+				}
+				
 				const url = `${base}organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/next`
 				const authHeader = api._config.token
 					? `Bearer ${api._config.token}`
@@ -82,7 +93,7 @@ export default {
 				const headers = { Accept: 'application/json' }
 				if (authHeader) headers.Authorization = authHeader
 
-				const response = await fetch(url, { headers })
+				const response = await fetch(url, { headers, credentials: 'include' })
 				if (response.ok) {
 					this.upcomingStream = await response.json()
 					this.updateCountdown()

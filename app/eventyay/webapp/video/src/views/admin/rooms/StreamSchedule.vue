@@ -2,28 +2,39 @@
 .c-stream-schedule
 	h2 Stream Schedules
 	.error(v-if="error") {{ error }}
-	.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules !== null")
-		.stream-schedule-item(v-for="schedule in streamSchedules", :key="schedule.id")
-			.info
-				.title {{ schedule.title || 'Untitled Stream' }}
-				.url {{ schedule.url }}
-				.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }}
-				.type {{ schedule.stream_type }}
-			.actions
-				bunt-icon-button(@click="editSchedule(schedule)") edit
-				bunt-icon-button(@click="deleteSchedule(schedule)") delete
-	bunt-progress-circular(v-else, size="huge")
-	bunt-button(@click="openCreateForm") Add Stream Schedule
+	.loading(v-if="loading")
+		bunt-progress-circular(size="large")
+	template(v-else)
+		.stream-schedules-list(v-scrollbar.y="", v-if="streamSchedules && streamSchedules.length > 0")
+			.stream-schedule-item(v-for="schedule in streamSchedules", :key="schedule.id")
+				.info
+					.title {{ schedule.title || 'Untitled Stream' }}
+					.url {{ schedule.url }}
+					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }}
+					.type {{ schedule.stream_type }}
+				.actions
+					bunt-icon-button(@click="editSchedule(schedule)") edit
+					bunt-icon-button(@click="deleteSchedule(schedule)") delete
+		.empty-state(v-else-if="streamSchedules !== null")
+			p No stream schedules configured yet.
+			p Click "Add Stream Schedule" to create one.
+	bunt-button.add-btn(@click="openCreateForm") + Add Stream Schedule
 	transition(name="prompt")
 		prompt(v-if="showCreateForm || editingSchedule", @close="closeForm")
 			.content
 				.prompt-header
 					h3 {{ editingSchedule ? 'Edit' : 'Create' }} Stream Schedule
 				.stream-schedule-form
-					bunt-input(name="title", v-model="formData.title", label="Title (optional)")
-					bunt-input(name="url", v-model="formData.url", label="Stream URL", :validation="v$.formData.url", required)
-					bunt-input.floating-label(name="start_time", type="datetime-local", v-model="plainStartTime", label="Start Time (UTC)", placeholder="YYYY-MM-DDTHH:mm", :validation="v$.formData.start_time", required)
-					bunt-input.floating-label(name="end_time", type="datetime-local", v-model="plainEndTime", label="End Time (UTC)", placeholder="YYYY-MM-DDTHH:mm", :validation="v$.formData.end_time", required)
+					bunt-input(name="title", v-model="formData.title", label="Title (optional)", placeholder="e.g., Day 1 Stream, Keynotes")
+					bunt-input(name="url", v-model="formData.url", label="Stream URL", :validation="v$.formData.url", required, placeholder="https://youtube.com/watch?v=...")
+					.datetime-field
+						label.datetime-label Start Time (UTC)
+						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
+						.error-message(v-if="v$.formData.start_time.$error") Start time is required
+					.datetime-field
+						label.datetime-label End Time (UTC)
+						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
+						.error-message(v-if="v$.formData.end_time.$error") End time is required
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", :validation="v$.formData.stream_type")
 				.ui-form-actions
 					bunt-button.btn-save(@click="saveSchedule", :loading="saving", :error-message="saveError") {{ editingSchedule ? 'Save' : 'Create' }}
@@ -42,7 +53,7 @@ export default {
 	components: { Prompt },
 	props: {
 		roomId: {
-			type: String,
+			type: [String, Number],
 			required: true,
 		},
 	},
@@ -50,6 +61,7 @@ export default {
 	data() {
 		return {
 			streamSchedules: null,
+			loading: true,
 			error: null,
 			showCreateForm: false,
 			editingSchedule: null,
@@ -122,13 +134,28 @@ export default {
 		},
 		getApiBaseUrl() {
 			const base = config.api.base || "/api/v1/";
-			const organizer = this.$store.state.world?.organizer || "default";
-			const event = this.$store.state.world?.slug || "default";
+			const world = this.$store.state.world;
+
+			// Try to get from world state first, then fall back to URL path
+			let organizer = world?.organizer || world?.organizer_slug;
+			let event = world?.slug || world?.id;
+
+			// If not available from world state, try to extract from current URL path
+			if (!organizer || organizer === "default") {
+				const pathParts = window.location.pathname.split("/").filter(Boolean);
+				// URL pattern: /{organizer}/{event}/video/admin/rooms/{roomId}
+				if (pathParts.length >= 2) {
+					organizer = pathParts[0];
+					event = pathParts[1];
+				}
+			}
+
 			return `${base}organizers/${organizer}/events/${event}/rooms/${this.roomId}/stream-schedules/`;
 		},
 		async fetchStreamSchedules() {
 			try {
 				this.error = null;
+				this.loading = true;
 				const url = this.getApiBaseUrl();
 				const authHeader = api._config.token
 					? `Bearer ${api._config.token}`
@@ -139,12 +166,22 @@ export default {
 				if (authHeader) headers.Authorization = authHeader;
 
 				const response = await fetch(url, { headers, credentials: "include" });
-				if (!response.ok)
-					throw new Error(`Failed to fetch: ${response.status}`);
-				this.streamSchedules = await response.json();
+				if (response.status === 404) {
+					this.streamSchedules = [];
+					this.loading = false;
+					return;
+				}
+				if (!response.ok) {
+					throw new Error(`Failed to load schedules: ${response.statusText}`);
+				}
+				const data = await response.json();
+				// Handle both array and paginated response
+				this.streamSchedules = Array.isArray(data) ? data : data.results || [];
 			} catch (error) {
-				console.error(error);
 				this.error = error.message || "Failed to load stream schedules";
+				this.streamSchedules = [];
+			} finally {
+				this.loading = false;
 			}
 		},
 		openCreateForm() {
@@ -248,27 +285,21 @@ export default {
 					let errorMessage = null;
 
 					if (errorData && typeof errorData === "object") {
-						if (errorData.__all__) {
-							if (Array.isArray(errorData.__all__) && errorData.__all__[0]) {
-								errorMessage = errorData.__all__[0];
-							} else if (typeof errorData.__all__ === "string") {
-								errorMessage = errorData.__all__;
-							}
-						}
-
-						if (!errorMessage && errorData.detail) {
-							if (Array.isArray(errorData.detail) && errorData.detail[0]) {
-								errorMessage = errorData.detail[0];
-							} else if (typeof errorData.detail === "string") {
-								errorMessage = errorData.detail;
-							}
-						}
-
-						if (!errorMessage && errorData.message) {
-							if (Array.isArray(errorData.message) && errorData.message[0]) {
-								errorMessage = errorData.message[0];
-							} else if (typeof errorData.message === "string") {
-								errorMessage = errorData.message;
+						const errorKeys = [
+							"__all__",
+							"non_field_errors",
+							"detail",
+							"message",
+						];
+						for (const key of errorKeys) {
+							if (errorData[key]) {
+								const val = errorData[key];
+								if (Array.isArray(val) && val[0]) {
+									errorMessage = val[0];
+								} else if (typeof val === "string") {
+									errorMessage = val;
+								}
+								if (errorMessage) break;
 							}
 						}
 
@@ -296,7 +327,6 @@ export default {
 				this.closeForm();
 				await this.fetchStreamSchedules();
 			} catch (error) {
-				console.error(error);
 				this.saving = false;
 				this.saveError = error.message || "Failed to save stream schedule";
 			}
@@ -327,7 +357,6 @@ export default {
 
 				await this.fetchStreamSchedules();
 			} catch (error) {
-				console.error(error);
 				this.error = error.message || "Failed to delete stream schedule";
 			}
 		},
@@ -339,9 +368,20 @@ export default {
 </script>
 <style lang="stylus">
 .c-stream-schedule
+	margin-top: 24px
+	padding-top: 16px
+	border-top: border-separator()
+	h2
+		margin-bottom: 16px
+		font-size: 18px
+		font-weight: 500
+	.error
+		color: $clr-danger
+		margin-bottom: 16px
 	.stream-schedules-list
 		margin-top: 16px
 		margin-bottom: 16px
+		max-height: 300px
 	.stream-schedule-item
 		display: flex
 		justify-content: space-between
@@ -350,6 +390,7 @@ export default {
 		border: border-separator()
 		border-radius: 4px
 		margin-bottom: 8px
+		background: $clr-grey-50
 		.info
 			flex: auto
 			.title
@@ -359,7 +400,67 @@ export default {
 				font-size: 12px
 				color: $clr-grey-600
 				margin-top: 2px
+			.url
+				word-break: break-all
 		.actions
 			display: flex
 			gap: 8px
+			flex-shrink: 0
+	.stream-schedule-form
+		.datetime-field
+			margin-bottom: 16px
+			.datetime-label
+				display: block
+				font-size: 12px
+				color: $clr-grey-600
+				margin-bottom: 6px
+			.datetime-input
+				width: 100%
+				padding: 12px
+				border: 1px solid $clr-grey-300
+				border-radius: 4px
+				font-size: 14px
+				font-family: inherit
+				background-color: white
+				color: $clr-grey-800
+				box-sizing: border-box
+				&::-webkit-datetime-edit-fields-wrapper
+					padding: 0
+				&::-webkit-datetime-edit
+					padding: 0
+				&::-webkit-datetime-edit-text
+					padding: 0 4px
+				&::-webkit-datetime-edit-month-field,
+				&::-webkit-datetime-edit-day-field,
+				&::-webkit-datetime-edit-year-field,
+				&::-webkit-datetime-edit-hour-field,
+				&::-webkit-datetime-edit-minute-field,
+				&::-webkit-datetime-edit-ampm-field
+					padding: 0
+				&::-webkit-calendar-picker-indicator
+					cursor: pointer
+					opacity: 0.6
+					&:hover
+						opacity: 1
+				&:focus
+					outline: none
+					border-color: var(--clr-primary)
+				&.has-error
+					border-color: $clr-danger
+			.error-message
+				color: $clr-danger
+				font-size: 12px
+				margin-top: 4px
+	.loading
+		display: flex
+		justify-content: center
+		padding: 24px
+	.empty-state
+		text-align: center
+		padding: 24px
+		color: $clr-grey-600
+		p
+			margin: 4px 0
+	.add-btn
+		margin-top: 16px
 </style>

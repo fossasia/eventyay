@@ -89,7 +89,9 @@ class StreamSchedule(models.Model):
         super().clean()
 
     def save(self, *args, **kwargs):
-        self.full_clean()
+        skip_validation = kwargs.pop('skip_validation', False)
+        if not skip_validation:
+            self.full_clean()
         super().save(*args, **kwargs)
 
     def is_active(self, at_time=None):
