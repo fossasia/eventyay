@@ -18,18 +18,31 @@
 	router-link.settings(v-if="hasPermission('world:update')", :to="{name: 'admin:config'}", :aria-label="$t('RoomsSidebar:admin-config:label')")
 		bunt-icon-button settings
 	.user-section(v-if="showUser")
-		div.user-profile(:class="{open: profileMenuOpen}", ref="userProfileEl", @click.self="toggleProfileMenu")
-			avatar(v-if="!isAnonymous", :user="user", :size="32")
-			span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
-			span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
-			span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
-		.profile-dropdown(v-if="profileMenuOpen", role="menu")
-			template(v-for="item in menuItems", :key="item.key")
-				div.menu-separator(v-if="item.separatorBefore")
-				a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
-					span.menu-item-icon(v-if="item.icon" aria-hidden="true")
-						i(:class="iconClasses[item.icon]")
-					span.menu-item-label {{ item.label }}
+		.user-menu(ref="userMenuEl")
+			div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
+				avatar(v-if="!isAnonymous", :user="user", :size="32")
+				span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
+				span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
+				span.user-caret(role="button", :aria-expanded="String(profileMenuOpen)", aria-haspopup="true", tabindex="0", @click.stop="toggleProfileMenu", @keydown.enter.prevent="toggleProfileMenu", @keydown.space.prevent="toggleProfileMenu", :class="{open: profileMenuOpen}")
+			transition(name="dropdown-reveal")
+				.profile-dropdown(v-if="profileMenuOpen", role="menu", @click.stop)
+					template(v-for="item in menuItems", :key="item.key")
+						div.menu-separator(v-if="item.separatorBefore")
+						template(v-if="item.children")
+							div.menu-item.menu-item-parent(:class="{open: dashboardSubmenuOpen}", role="menuitem", tabindex="0", @click.prevent.stop="toggleDashboardSubmenu", @keydown.enter.prevent.stop="toggleDashboardSubmenu", @keydown.space.prevent.stop="toggleDashboardSubmenu")
+								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+									i(:class="iconClasses[item.icon]")
+								span.menu-item-label {{ item.label }}
+								div.profile-submenu(v-if="dashboardSubmenuOpen", role="menu", @click.stop)
+									a.menu-item(v-for="child in item.children", :key="child.key", :href="getItemHref(child)", role="menuitem", @click.prevent="onMenuItem(child)")
+										span.menu-item-icon(v-if="child.icon" aria-hidden="true")
+											i(:class="iconClasses[child.icon]")
+										span.menu-item-label {{ child.label }}
+						template(v-else)
+							a.menu-item(:href="getItemHref(item)", role="menuitem", @click.prevent="onMenuItem(item)")
+								span.menu-item-icon(v-if="item.icon" aria-hidden="true")
+									i(:class="iconClasses[item.icon]")
+								span.menu-item-label {{ item.label }}
 </template>
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
@@ -61,6 +74,7 @@ const ICON_CLASSES = {
 	logout: 'fa fa-sign-out',
 	tickets: 'fa fa-ticket',
 	talks: 'fa fa-microphone',
+	control: 'fa fa-cogs',
 	profile: 'fa fa-user-circle'
 }
 
@@ -69,7 +83,11 @@ const PROFILE_MENU_ITEMS = [
 		key: 'dashboard',
 		label: 'Dashboard',
 		icon: 'dashboard',
-		externalPath: 'common/'
+		children: [
+			{ key: 'dashboard:main', label: 'Main dashboard', icon: 'dashboard', externalPath: 'common/' },
+			{ key: 'dashboard:tickets', label: 'Tickets', icon: 'tickets', externalPath: 'control/' },
+			{ key: 'dashboard:talks', label: 'Talks', icon: 'talks', externalPath: 'orga/event/' }
+		]
 	},
 	{ key: 'orders', label: 'My Orders', externalPath: 'common/orders/', icon: 'orders' },
 	{ key: 'sessions', label: 'My Sessions', externalPath: 'common/sessions/', icon: 'tickets' },
@@ -117,9 +135,10 @@ const logoHref = computed(() => {
 })
 
 const profileMenuOpen = ref(false)
+const dashboardSubmenuOpen = ref(false)
 const menuItems = ref(PROFILE_MENU_ITEMS)
 const iconClasses = ICON_CLASSES
-const userProfileEl = ref(null)
+const userMenuEl = ref(null)
 const showAdminTooltip = ref(false)
 
 function onAdminIndicatorEnter() {
@@ -152,9 +171,16 @@ function buildBaseSansVideo() {
 }
 function toggleProfileMenu() {
 	profileMenuOpen.value = !profileMenuOpen.value
+	if (!profileMenuOpen.value) {
+		dashboardSubmenuOpen.value = false
+	}
 }
 function closeProfileMenu() {
 	profileMenuOpen.value = false
+	dashboardSubmenuOpen.value = false
+}
+function toggleDashboardSubmenu() {
+	dashboardSubmenuOpen.value = !dashboardSubmenuOpen.value
 }
 function logout() {
 	localStorage.removeItem('token')
@@ -195,6 +221,7 @@ function onMenuItem(item) {
 function getItemHref(item) {
 	if (item.action === 'logout') return '#logout'
 	if (item.route) return router.resolve(item.route).href
+	if (item.children) return '#dashboard'
 	if (item.externalPath) {
 		try {
 			const base = buildBaseSansVideo()
@@ -208,7 +235,7 @@ function getItemHref(item) {
 
 function handleClickOutside(e) {
 	if (!profileMenuOpen.value) return
-	const el = userProfileEl.value
+	const el = userMenuEl.value
 	if (el && !el.contains(e.target)) closeProfileMenu()
 }
 function handleGlobalKeydown(e) {
@@ -242,6 +269,8 @@ onBeforeUnmount(() => {
 	align-items: center
 	justify-content: space-between
 	padding: 0 8px
+	font-size: 14px
+	font-weight: 400
 	background-color: var(--clr-sidebar)
 	white-space: nowrap
 	overflow: visible
@@ -321,21 +350,30 @@ onBeforeUnmount(() => {
 		align-items: center
 		gap: 8px
 		position: relative
+	.user-menu
+		position: relative
 	.user-profile
 		display: flex
 		align-items: center
 		gap: 8px
-		padding: 4px 8px
+		padding: 6px 10px
+		border-radius: 4px
 		color: var(--clr-sidebar-text-primary)
 		text-decoration: none
 		position: relative
 		cursor: pointer
+		transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out
+		&:hover
+			background-color: transparent
+		&:focus-visible
+			outline: 2px solid var(--clr-primary)
+			outline-offset: 2px
 		&.open
 			.user-caret
 				transform: rotate(180deg)
 		.display-name
-			font-size: 14px
-			font-weight: 500
+			font-size: inherit
+			font-weight: 400
 			max-width: 140px
 			overflow: hidden
 			text-overflow: ellipsis
@@ -345,7 +383,7 @@ onBeforeUnmount(() => {
 			height: 0
 			border-left: 5px solid transparent
 			border-right: 5px solid transparent
-			border-top: 6px solid var(--clr-sidebar-text-primary)
+			border-top: 6px solid currentColor
 			margin-left: 2px
 			cursor: pointer
 	.logout-btn
@@ -370,38 +408,64 @@ onBeforeUnmount(() => {
 	.user-section
 		.profile-dropdown
 			position: absolute
-			top: calc(100% + 6px)
+			top: calc(100% + 2px)
 			right: 0
-			width: 220px
+			min-width: 160px
+			max-width: 400px
+			width: auto
 			max-height: 500px
 			overflow: visible
-			background: var(--clr-surface, #fff)
-			color: var(--clr-text, #111)
-			border: 1px solid rgba(0,0,0,0.2)
-			border-radius: 2px
-			box-shadow: 0 3px 8px rgba(0,0,0,0.175), 0 1px 3px rgba(0,0,0,0.105)
-			padding: 6px 0
+			background: white
+			color: #495057
+			border: 1px solid #e9ecef
+			border-radius: var(--size-border-radius, 0.25rem)
+			box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
+			padding: 0
 			z-index: 120
-			font-size: 14px
+			font-size: 15px
 			user-select: none
+			&::before,
+			&::after
+				position: absolute
+				display: inline-block
+				content: " "
+			&::before
+				top: -16px
+				right: 12px
+				border: 8px solid transparent
+				border-bottom-color: rgb(27 31 35 / 0.15)
+			&::after
+				top: -14px
+				right: 13px
+				border: 7px solid transparent
+				border-bottom-color: white
 			.menu-item
 				appearance: none
 				background: none
 				border: none
 				width: 100%
+				box-sizing: border-box
 				display: flex
 				align-items: center
 				gap: 8px
 				text-align: left
-				padding: 8px 10px
+				padding: 8px 18px
+				min-height: 0
+				line-height: 1.25
 				cursor: pointer
 				color: inherit
 				font: inherit
+				font-weight: 400
 				text-decoration: none
+				transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out
 				&:hover, &:focus-visible
-					background: rgba(0,0,0,0.06)
+					background: var(--clr-primary-alpha-18)
+					color: var(--clr-primary-darken-15, var(--clr-primary))
+					text-decoration: none
+				&:focus-visible
+					outline: none
 				.menu-item-icon
-					color: var(--clr-primary)
+					color: currentColor
 					flex: 0 0 auto
 					width: 18px
 					height: 18px
@@ -422,10 +486,61 @@ onBeforeUnmount(() => {
 					white-space: nowrap
 					text-overflow: ellipsis
 					overflow: hidden
+			.menu-item-parent
+				position: relative
+			.submenu-caret
+				margin-left: auto
+				width: 0
+				height: 0
+				border-top: 5px solid transparent
+				border-bottom: 5px solid transparent
+				border-left: 6px solid currentColor
+				opacity: 0.75
+			.profile-submenu
+				position: absolute
+				top: 0
+				right: 100%
+				left: auto
+				margin-right: 8px
+				min-width: 160px
+				max-width: 400px
+				width: auto
+				background: white
+				color: #495057
+				border: 1px solid #e9ecef
+				border-radius: var(--size-border-radius, 0.25rem)
+				box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1))
+				padding: 0
+				z-index: 121
+				&::before,
+				&::after
+					position: absolute
+					display: inline-block
+					content: " "
+				&::before
+					top: 10px
+					right: -16px
+					left: auto
+					border: 8px solid transparent
+					border-left-color: rgb(27 31 35 / 0.15)
+				&::after
+					top: 11px
+					right: -14px
+					left: auto
+					border: 7px solid transparent
+					border-left-color: white
 			.menu-separator
 				height: 1px
 				background: rgba(0,0,0,0.08)
 				margin: 6px 0
+
+.dropdown-reveal-enter-active,
+.dropdown-reveal-leave-active
+	transition: opacity 120ms ease-out, transform 120ms ease-out
+.dropdown-reveal-enter-from,
+.dropdown-reveal-leave-to
+	opacity: 0
+	transform: translateY(-4px)
 
 
 @media (max-width: 560px)
