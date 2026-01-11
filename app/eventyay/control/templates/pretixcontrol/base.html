@@ -221,62 +221,7 @@
                     {% endif %}
                     {{ base_path|json_script:"base_path" }}
                     {{ staff_session|json_script:"is_admin_mode" }}
-                    <li class="nav-item">
-                        <details class="dropdown fix-height" id="profile-dropdown">
-                            <summary class="header-nav">
-                                <i class="fa fa-user"></i> {{ request.user.get_full_name }}
-                                <i class="fa fa-caret-down"></i>
-                            </summary>
-                            <div class="dropdown-content dropdown-content-sw">
-                                <details class="dropdown">
-                                    <summary class="dropdown-item">
-                                        <i class="fa fa-tachometer"></i> {% trans "Dashboard" %}
-                                    </summary>
-                                    <div class="dropdown-content dropdown-content-w">
-                                        <a class="dropdown-item" href="{{ base_path }}/common/">
-                                            <i class="fa fa-tachometer"></i> {% trans "Main dashboard" %}
-                                        </a>
-                                        <a class="dropdown-item" href="{{ base_path }}/control/">
-                                            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-                                        </a>
-                                        <a class="dropdown-item" href="{{ base_path }}/orga/event/">
-                                            <i class="fa fa-microphone"></i> {% trans "Talks" %}
-                                        </a>
-                                    </div>
-                                </details>
-
-                                <a class="dropdown-item" href="{{ base_path }}/common/orders/">
-                                    <i class="fa fa-shopping-cart"></i> {% trans "My orders" %}
-                                </a>
-                                <a class="dropdown-item" href="{{ base_path }}/common/sessions/">
-                                    <i class="fa fa-sticky-note-o"></i> {% trans "My sessions" %}
-                                </a>
-                                <a class="dropdown-item" href="{{ base_path }}/common/events/">
-                                    <i class="fa fa-calendar"></i> {% trans "My Events" %}
-                                </a>
-                                <a class="dropdown-item" href="{{ base_path }}/common/organizers/">
-                                    <i class="fa fa-users"></i> {% trans "Organizers" %}
-                                </a>
-
-                                <hr />
-
-                                <a class="dropdown-item" href="{{ base_path }}/common/account/">
-                                    <i class="fa fa-user-circle"></i> {% trans "Account" %}
-                                </a>
-                                {% if request.user.is_staff and staff_session %}
-                                    <a class="dropdown-item" href="{{ base_path }}/admin/">
-                                        <i class="fa fa-cog"></i> {% trans "Admin" %}
-                                    </a>
-                                {% endif %}
-
-                                <hr />
-
-                                <a class="dropdown-item" href="{{ base_path }}/common/logout/?back={{ request.get_full_path|urlencode }}">
-                                    <i class="fa fa-sign-out"></i> {% trans "Logout" %}
-                                </a>
-                            </div>
-                        </details>
-                    </li>
+                    {% include "common/fragment_profile_dropdown.html" %}
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">

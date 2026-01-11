@@ -95,7 +95,6 @@ nav.navbar.navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand {
     padding-top: 0.3125rem;
     padding-bottom: 0.3125rem;
-    margin-right: 1rem;
     margin-top: 0;
     font-size: 20px;
     line-height: inherit;
@@ -1089,65 +1088,6 @@ h1 .label {
         overflow-y: visible;
         box-sizing: border-box;
     }
-}
-
-
-
-/* Navbar dropdown trigger sizing (panel styling lives in common/css/_dropdown.css) */
-.navbar-top-links .nav-item,
-.navbar-inverse .nav-item {
-    margin-bottom: 0;
-}
-
-.navbar-top-links #profile-dropdown,
-.navbar-inverse #profile-dropdown {
-    height: 50px;
-    display: flex;
-    align-items: center;
-}
-
-.navbar-top-links #profile-dropdown > summary,
-.navbar-inverse #profile-dropdown > summary {
-    padding: 15px;
-    min-height: 50px;
-    display: inline-flex;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    border-radius: var(--size-border-radius, 0.25rem);
-    color: $navbar-link-color;
-}
-
-.navbar-top-links #profile-dropdown > summary i,
-.navbar-inverse #profile-dropdown > summary i {
-    color: $navbar-link-color;
-}
-
-.navbar-top-links #profile-dropdown > summary i.fa-user,
-.navbar-inverse #profile-dropdown > summary i.fa-user {
-    margin-right: 5px;
-}
-
-.navbar-top-links #profile-dropdown > summary i.fa-caret-down,
-.navbar-inverse #profile-dropdown > summary i.fa-caret-down {
-    margin-left: 6px;
-}
-
-.navbar-top-links #profile-dropdown > summary:hover,
-.navbar-top-links #profile-dropdown > summary:focus,
-.navbar-inverse #profile-dropdown > summary:hover,
-.navbar-inverse #profile-dropdown > summary:focus {
-    color: $navbar-link-hover-color;
-}
-
-.navbar-top-links #profile-dropdown > summary:hover i,
-.navbar-top-links #profile-dropdown > summary:focus i,
-.navbar-inverse #profile-dropdown > summary:hover i,
-.navbar-inverse #profile-dropdown > summary:focus i {
-    color: $navbar-link-hover-color;
 }
 
 /* eventyay common organizer settings: align panel/submit greys with sidebar */

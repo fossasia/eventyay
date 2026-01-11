@@ -42,6 +42,7 @@
             <link rel="stylesheet" type="text/css" href="{% static "common/css/tabs.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_stages.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/avatar.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_navbar.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_rtl.css" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
@@ -71,48 +72,44 @@
         {{ html_head|safe }}
     </head>
     <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
-        <nav class="navbar">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" data-toggle="sidebar" href="#" id="sidebar-toggle">
-                        <i class="fa fa-bars fa-lg"></i>
-                    </a>
-                </li>
-            </ul>
-            <a class="navbar-brand" href="{{ tickets_common }}">
-                <img loading="lazy" src="{% static 'common/img/icons/icon.svg' %}" alt="{{ site_name }}">
-                {{ site_name }}
-            </a>
-            <div class="navbar-collapse" id="navbartoggle">
-                <ul class="navbar-nav mr-auto flip">
-                    {% if request.event %}
-                        <li class="nav-item">
-                            {% if request.event.custom_domain and not request.event.is_public %}
-                                <form action="{{ request.event.urls.auth.full }}"
-                                      method="post"
-                                      target="_blank"
-                                      class="mobile-navbar-view-form d-flex align-items-center">
-                                    <input type="hidden" value="{{ new_session }}" name="session">
-                                    <input type="hidden" value="{{ go_to_target }}" name="target">
-                                    <button type="submit" class="btn btn-link navbar-toggle pl-2">
-                                        <i class="fa fa-eye mr-1"></i>
-                                        {% translate "View event" %}
-                                    </button>
-                                </form>
-                            {% else %}
-                                <a class="nav-link d-flex align-items-center"
-                                   target="_blank"
-                                   rel="noopener"
-                                   href="{% if go_to_target == "schedule" %}{{ request.event.urls.schedule }}{% else %}{{ request.event.cfp.urls.public }}{% endif %}">
-                                    <i class="fa fa-eye mr-2 mt-0"></i>
-                                    {% translate "View event" %}
-                                </a>
-                            {% endif %}
-                        </li>
-                    {% endif %}
-                </ul>
+        <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+            <button type="button" class="navbar-toggle-sidebar navbar-toggle" id="sidebar-toggle" data-toggle="sidebar">
+                <span class="sr-only">{% translate "Toggle sidebar" %}</span>
+                <i class="fa fa-bars fa-lg"></i>
+            </button>
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{{ tickets_common }}">
+                    <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
+                    {{ site_name }}
+                </a>
             </div>
-            <ul class="navbar-nav">
+            <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
+                {% if request.event %}
+                    <li>
+                        {% if request.event.custom_domain and not request.event.is_public %}
+                            <form action="{{ request.event.urls.auth.full }}"
+                                  method="post"
+                                  target="_blank"
+                                  class="mobile-navbar-view-form">
+                                <input type="hidden" value="{{ new_session }}" name="session">
+                                <input type="hidden" value="{{ go_to_target }}" name="target">
+                                <button type="submit" class="btn btn-link">
+                                    <i class="fa fa-eye"></i>
+                                    {% translate "View event" %}
+                                </button>
+                            </form>
+                        {% else %}
+                            <a target="_blank"
+                               rel="noopener"
+                               href="{% if go_to_target == "schedule" %}{{ request.event.urls.schedule }}{% else %}{{ request.event.cfp.urls.public }}{% endif %}">
+                                <i class="fa fa-eye"></i>
+                                {% translate "View event" %}
+                            </a>
+                        {% endif %}
+                    </li>
+                {% endif %}
+            </ul>
+            <ul class="nav navbar-nav navbar-top-links navbar-right flip">
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -130,72 +127,15 @@
                     </li>
                 {% endif %}
                 {{ staff_session|json_script:"is_admin_mode" }}
-
                 {% if warning_update_available %}
-                    <li class="nav-item">
-                        <a href="{% url "control:admin.update" %}" class="text-danger nav-link">
+                    <li>
+                        <a href="{% url "control:admin.update" %}" class="danger">
                             <i class="fa fa-bell"></i>
                         </a>
                     </li>
                 {% endif %}
                 {% block navbar_right %}{% endblock navbar_right %}
-                <li class="nav-item d-none d-md-block">
-                    <details class="dropdown fix-height" id="profile-dropdown">
-                        <summary class="header-nav btn btn-outline-success">
-                            <i class="fa fa-user"></i>
-                            {{ request.user.get_display_name }}
-                            <i class="fa fa-caret-down"></i>
-                        </summary>
-                        <div class="dropdown-content dropdown-content-sw">
-                            <details class="dropdown">
-                                <summary class="dropdown-item">
-                                    <i class="fa fa-tachometer"></i> {% translate "Dashboard" %}
-                                </summary>
-                                <div class="dropdown-content dropdown-content-w">
-                                    <a class="dropdown-item" href="{{ common_path }}/">
-                                        <i class="fa fa-tachometer"></i> {% translate "Main dashboard" %}
-                                    </a>
-                                    <a class="dropdown-item" href="{{ tickets_path }}/">
-                                        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-                                    </a>
-                                    <a class="dropdown-item" href="{{ talks_path }}/">
-                                        <i class="fa fa-microphone"></i> {% translate "Talks" %}
-                                    </a>
-                                </div>
-                            </details>
-
-                            <a class="dropdown-item" href="{{ common_path }}/orders/">
-                                <i class="fa fa-shopping-cart"></i> {% translate "My orders" %}
-                            </a>
-                            <a class="dropdown-item" href="{{ common_path }}/sessions/">
-                                <i class="fa fa-sticky-note-o"></i> {% translate "My sessions" %}
-                            </a>
-                            <a class="dropdown-item" href="{{ common_path }}/events/">
-                                <i class="fa fa-calendar"></i> {% translate "My Events" %}
-                            </a>
-                            <a class="dropdown-item" href="{{ common_path }}/organizers/">
-                                <i class="fa fa-users"></i> {% translate "Organizers" %}
-                            </a>
-
-                            <hr />
-
-                            <a class="dropdown-item" href="{{ common_path }}/account/">
-                                <i class="fa fa-user-circle"></i> {% translate "Account" %}
-                            </a>
-                            {% if request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
-                                <a class="dropdown-item" href="{{ admin_path }}/">
-                                    <i class="fa fa-cog"></i> {% translate "Admin" %}
-                                </a>
-                            {% endif %}
-
-                            <hr />
-
-                            <a class="dropdown-item" href="{{ common_path }}/logout/?back={{ request.get_full_path|urlencode }}">
-                                <i class="fa fa-sign-out"></i> {% translate "Logout" %}
-                            </a>
-                        </div>
-                    </details>
-                </li>
+                {% include "common/fragment_profile_dropdown.html" %}
             </ul>
         </nav>
         {% staff_need_to_explain request.user as staff_need_to_explain %}

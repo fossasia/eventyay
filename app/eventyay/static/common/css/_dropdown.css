@@ -299,3 +299,74 @@ details.dropdown .dropdown-content-se::after {
   left: 10px;
 }
 
+/* ========================================
+   Navbar profile dropdown trigger styling
+   (single source of truth across orga/control/common)
+   ======================================== */
+
+.navbar-top-links #profile-dropdown,
+.navbar-inverse #profile-dropdown,
+.navbar #profile-dropdown {
+  height: 50px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar-top-links #profile-dropdown > summary,
+.navbar-inverse #profile-dropdown > summary,
+.navbar #profile-dropdown > summary {
+  padding: 15px;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  border-radius: var(--size-border-radius, 0.25rem);
+  color: var(--navbar-link-color, #f8f9fa);
+}
+
+.navbar-top-links #profile-dropdown > summary i,
+.navbar-inverse #profile-dropdown > summary i,
+.navbar #profile-dropdown > summary i {
+  color: var(--navbar-link-color, #f8f9fa);
+}
+
+.navbar-top-links #profile-dropdown > summary i.fa-user,
+.navbar-inverse #profile-dropdown > summary i.fa-user,
+.navbar #profile-dropdown > summary i.fa-user {
+  margin-right: 5px;
+}
+
+.navbar-top-links #profile-dropdown > summary i.fa-caret-down,
+.navbar-inverse #profile-dropdown > summary i.fa-caret-down,
+.navbar #profile-dropdown > summary i.fa-caret-down {
+  margin-left: 6px;
+}
+
+.navbar-top-links #profile-dropdown > summary:hover,
+.navbar-top-links #profile-dropdown > summary:focus,
+.navbar-inverse #profile-dropdown > summary:hover,
+.navbar-inverse #profile-dropdown > summary:focus,
+.navbar #profile-dropdown > summary:hover,
+.navbar #profile-dropdown > summary:focus {
+  color: var(--navbar-link-hover-color, #fff);
+}
+
+.navbar-top-links #profile-dropdown > summary:hover i,
+.navbar-top-links #profile-dropdown > summary:focus i,
+.navbar-inverse #profile-dropdown > summary:hover i,
+.navbar-inverse #profile-dropdown > summary:focus i,
+.navbar #profile-dropdown > summary:hover i,
+.navbar #profile-dropdown > summary:focus i {
+  color: var(--navbar-link-hover-color, #fff);
+}
+
+.navbar-top-links .nav-item,
+.navbar-inverse .nav-item,
+.navbar .nav-item {
+  margin-bottom: 0;
+}
+
