@@ -1,0 +1,103 @@
+{% load i18n %}
+{% load eventurl %}
+{% load static %}
+
+<link rel="stylesheet" href="{% static 'eventyay-common/css/status-boxes.css' %}">
+<div class="dashboard custom">
+    <!-- Box 1: Event Status -->
+    <div class="panel panel-default widget-container widget-small no-padding status-box-widget">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "Event Status" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <div class="widget-content">
+                <p class="widget-text">
+                    {% if event_published %}
+                    {% trans "Your event is public." %}
+                    {% else %}
+                    {% trans "Your event is unpublished." %}
+                    {% endif %}
+                </p>
+                <p>
+                    <a
+                        href="{% url 'eventyay_common:event.publish' organizer=request.event.organizer.slug event=request.event.slug %}">
+                        {% trans "Click here to change" %}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Box 2: Ticket Shop Status -->
+    <div class="panel panel-default widget-container widget-small no-padding status-box-widget">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "Ticket Shop" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <div class="widget-content">
+                <p class="widget-text">
+                    {% if ticket_shop_live %}
+                    {% if ticket_testmode %}
+                    {% trans "Ticket shop is live and in test mode" %}
+                    {% else %}
+                    {% trans "Ticket shop is live" %}
+                    {% endif %}
+                    {% else %}
+                    {% trans "Ticket shop is not live." %}
+                    {% endif %}
+                </p>
+                <p>
+                    <a
+                        href="{% url 'control:event.index' organizer=request.event.organizer.slug event=request.event.slug %}">
+                        {% trans "Click here to change" %}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Box 3: Talks and Speakers Status -->
+    <div class="panel panel-default widget-container widget-small no-padding status-box-widget">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "Talks and Speakers" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <div class="widget-content">
+                <p class="widget-text">
+                    {% if talks_published %}
+                    {% trans "Your talk component is currently live." %}
+                    {% else %}
+                    {% trans "Your talk component is not published." %}
+                    {% endif %}
+                </p>
+                <p>
+                    <a href='{% url "orga:event.dashboard" event=request.event.slug %}'>
+                        {% trans "Click here to change" %}
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Box 4: Video Status -->
+    <div class="panel panel-default widget-container widget-small no-padding status-box-widget">
+        <div class="panel-heading">
+            <h3 class="panel-title">
+                {% trans "Video" %}
+            </h3>
+        </div>
+        <div class="panel-body">
+            <div class="widget-content">
+                <p class="widget-text">
+                    {% trans "Video: Your video is accessible for attendees with tickets if the event is public." %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
