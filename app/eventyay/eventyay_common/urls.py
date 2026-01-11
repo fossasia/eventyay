@@ -7,6 +7,7 @@ from eventyay.eventyay_common.views import (
     dashboards,
     event,
     organizer,
+    partner,
     team,
 )
 from eventyay.eventyay_common.views.orders import MyOrdersView
@@ -53,6 +54,14 @@ urlpatterns = [
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
+                # Partner/Sponsor management URLs
+                path('settings/partner/group/add/', partner.SponsorGroupCreateView.as_view(), name='partner.group.add'),
+                path('settings/partner/group/<int:pk>/edit/', partner.SponsorGroupUpdateView.as_view(), name='partner.group.edit'),
+                path('settings/partner/group/<int:pk>/delete/', partner.SponsorGroupDeleteView.as_view(), name='partner.group.delete'),
+                path('settings/partner/group/reorder/', partner.SponsorGroupReorderView.as_view(), name='partner.group.reorder'),
+                path('settings/partner/group/<int:group_pk>/partners/', partner.PartnerManageView.as_view(), name='partner.manage'),
+                path('settings/partner/reorder/', partner.PartnerReorderView.as_view(), name='partner.reorder'),
+                path('settings/partner/move/', partner.PartnerMoveView.as_view(), name='partner.move'),
             ]
         ),
     ),
