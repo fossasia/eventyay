@@ -117,15 +117,6 @@ class EventModule(BaseModule):
 
             for f in config_fields:
                 if f in body:
-                    if f == "pretalx":
-                        pretalx_data = s.validated_data["pretalx"]
-                        old_pretalx_data = self.consumer.event.config.get("pretalx", {})
-                        if any(
-                            (pretalx_data.get(key) or "")
-                            != (old_pretalx_data.get(key) or "")
-                            for key in ("domain", "url", "event")
-                        ):
-                            s.validated_data["pretalx"]["connected"] = False
                     self.consumer.event.config[f] = s.validated_data[f]
                     update_fields.add("config")
 
