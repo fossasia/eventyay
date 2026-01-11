@@ -299,11 +299,6 @@ details.dropdown .dropdown-content-se::after {
   left: 10px;
 }
 
-/* ========================================
-   Navbar profile dropdown trigger styling
-   (single source of truth across orga/control/common)
-   ======================================== */
-
 .navbar-top-links #profile-dropdown,
 .navbar-inverse #profile-dropdown,
 .navbar #profile-dropdown {
@@ -370,3 +365,64 @@ details.dropdown .dropdown-content-se::after {
   margin-bottom: 0;
 }
 
+.navbar-top-links details.dropdown .dropdown-content,
+.navbar-inverse details.dropdown .dropdown-content,
+.navbar details.dropdown .dropdown-content,
+nav.navbar details.dropdown .dropdown-content {
+  min-width: 160px;
+  max-width: 400px;
+  width: auto;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.navbar-top-links details.dropdown .dropdown-content .dropdown-item,
+.navbar-top-links details.dropdown .dropdown-content a.dropdown-item,
+.navbar-top-links details.dropdown .dropdown-content button.dropdown-item,
+.navbar-inverse details.dropdown .dropdown-content .dropdown-item,
+.navbar-inverse details.dropdown .dropdown-content a.dropdown-item,
+.navbar-inverse details.dropdown .dropdown-content button.dropdown-item,
+nav.navbar details.dropdown .dropdown-content .dropdown-item,
+nav.navbar details.dropdown .dropdown-content a.dropdown-item,
+nav.navbar details.dropdown .dropdown-content button.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  min-height: 0;
+  height: auto;
+  line-height: 1.25;
+  font-size: 15px;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--dropdown-item-accent, var(--color-primary, #2185d0));
+  text-decoration: none;
+}
+
+.navbar-top-links details.dropdown .dropdown-content .dropdown-item:hover,
+.navbar-top-links details.dropdown .dropdown-content a.dropdown-item:hover,
+.navbar-top-links details.dropdown .dropdown-content button.dropdown-item:hover,
+.navbar-inverse details.dropdown .dropdown-content .dropdown-item:hover,
+.navbar-inverse details.dropdown .dropdown-content a.dropdown-item:hover,
+.navbar-inverse details.dropdown .dropdown-content button.dropdown-item:hover,
+nav.navbar details.dropdown .dropdown-content .dropdown-item:hover,
+nav.navbar details.dropdown .dropdown-content a.dropdown-item:hover,
+nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover {
+  background-color: var(--dropdown-item-accent, var(--color-primary, #2185d0));
+  color: #fff;
+  text-decoration: none;
+}
+
+.navbar-top-links details.dropdown .dropdown-content .dropdown-item:hover i,
+.navbar-top-links details.dropdown .dropdown-content a.dropdown-item:hover i,
+.navbar-top-links details.dropdown .dropdown-content button.dropdown-item:hover i,
+.navbar-inverse details.dropdown .dropdown-content .dropdown-item:hover i,
+.navbar-inverse details.dropdown .dropdown-content a.dropdown-item:hover i,
+.navbar-inverse details.dropdown .dropdown-content button.dropdown-item:hover i,
+nav.navbar details.dropdown .dropdown-content .dropdown-item:hover i,
+nav.navbar details.dropdown .dropdown-content a.dropdown-item:hover i,
+nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
+  color: #fff;
+}

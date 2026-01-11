@@ -10,9 +10,9 @@
 		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ settings.INSTANCE_NAME }}</title>
 		{% compress css %}
-    		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
-            <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
-            <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+    		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
+            <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
 		{% endcompress %}
@@ -57,14 +57,14 @@
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
             <script type="text/javascript" src="{% static "colorpicker/bootstrap-colorpicker.js" %}"></script>
-            <script type="text/javascript" src="{% static "fileupload/jquery.ui.widget.js" %}"></script>
-            <script type="text/javascript" src="{% static "fileupload/jquery.fileupload.js" %}"></script>
-            <script type="text/javascript" src="{% static "lightbox/js/lightbox.min.js" %}"></script>
-            <script type="text/javascript" src="{% static "are-you-sure/jquery.are-you-sure.js" %}"></script>
-            <script type="text/javascript" src="{% static "eventyay-common/js/ui/popover.js" %}"></script>
-            <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
-            <script type="text/javascript" src="{% static "eventyay-common/js/ui/team.js" %}"></script>
-			<script type="text/javascript" src="{% static "common/js/dropdown.js" %}"></script>
+            <script type="text/javascript" src="{% static 'fileupload/jquery.ui.widget.js' %}"></script>
+            <script type="text/javascript" src="{% static 'fileupload/jquery.fileupload.js' %}"></script>
+            <script type="text/javascript" src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'are-you-sure/jquery.are-you-sure.js' %}"></script>
+            <script type="text/javascript" src="{% static 'eventyay-common/js/ui/popover.js' %}"></script>
+            <script type="text/javascript" src="{% static 'utils/js/utils.js' %}"></script>
+            <script type="text/javascript" src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
+			<script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
 		{% endcompress %}
         {{ html_head|safe }}
 

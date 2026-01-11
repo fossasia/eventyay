@@ -1,70 +1,67 @@
-(() => {
-    'use strict';
+'use strict';
 
-    // Keep this file dependency-free and small.
-    // Behaviors provided:
-    // - Close dropdowns on outside click
-    // - Close dropdowns on Escape
-    // - When a dropdown opens, close other open dropdowns (except ancestors/descendants)
+// Behavior:
+// - Close dropdowns on outside click
+// - Close dropdowns on Escape
+// - When a dropdown opens, close other open dropdowns (except ancestors/descendants)
 
-    const GLOBAL_INIT_FLAG = 'eventyayDropdownGlobalInit';
-    const initializedDropdowns = new WeakSet();
+const GLOBAL_INIT_FLAG = 'eventyayDropdownGlobalInit';
+const initializedDropdowns = new WeakSet();
 
-    const getOpenDropdowns = () => document.querySelectorAll('details.dropdown[open]');
+const getOpenDropdowns = () => document.querySelectorAll('details.dropdown[open]');
 
-    const closeAllDropdowns = () => {
-        getOpenDropdowns().forEach((dropdown) => {
-            dropdown.open = false;
-        });
-    };
+const closeAllDropdowns = () => {
+    getOpenDropdowns().forEach((dropdown) => {
+        dropdown.open = false;
+    });
+};
 
-    const closeOtherDropdowns = (current) => {
-        getOpenDropdowns().forEach((other) => {
-            if (other === current) return;
-            // Keep ancestors and descendants open to support nested dropdowns.
-            if (other.contains(current)) return;
-            if (current.contains(other)) return;
-            other.open = false;
-        });
-    };
+const closeOtherDropdowns = (current) => {
+    getOpenDropdowns().forEach((other) => {
+        if (other === current) return;
+        // Keep ancestors and descendants open to support nested dropdowns.
+        if (other.contains(current)) return;
+        if (current.contains(other)) return;
+        other.open = false;
+    });
+};
 
-    const ensureGlobalListeners = () => {
-        if (document.documentElement.dataset[GLOBAL_INIT_FLAG] === '1') {
-            return;
-        }
-        document.documentElement.dataset[GLOBAL_INIT_FLAG] = '1';
-
-        document.addEventListener('click', (event) => {
-            getOpenDropdowns().forEach((dropdown) => {
-                if (!dropdown.contains(event.target)) {
-                    dropdown.open = false;
-                }
-            });
-        });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key !== 'Escape' && event.key !== 'Esc') return;
-            closeAllDropdowns();
-        });
-    };
-
-    const initDropdowns = () => {
-        ensureGlobalListeners();
-
-        document.querySelectorAll('details.dropdown').forEach((dropdown) => {
-            if (initializedDropdowns.has(dropdown)) return;
-            initializedDropdowns.add(dropdown);
-
-            dropdown.addEventListener('toggle', () => {
-                if (!dropdown.open) return;
-                closeOtherDropdowns(dropdown);
-            });
-        });
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initDropdowns);
-    } else {
-        initDropdowns();
+const ensureGlobalListeners = () => {
+    if (document.documentElement.dataset[GLOBAL_INIT_FLAG] === '1') {
+        return;
     }
-})();
+    document.documentElement.dataset[GLOBAL_INIT_FLAG] = '1';
+
+    document.addEventListener('click', (event) => {
+        getOpenDropdowns().forEach((dropdown) => {
+            if (!dropdown.contains(event.target)) {
+                dropdown.open = false;
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' && event.key !== 'Esc') return;
+        closeAllDropdowns();
+    });
+};
+
+const initDropdowns = () => {
+    ensureGlobalListeners();
+
+    document.querySelectorAll('details.dropdown').forEach((dropdown) => {
+        if (initializedDropdowns.has(dropdown)) return;
+        initializedDropdowns.add(dropdown);
+
+        dropdown.addEventListener('toggle', () => {
+            if (!dropdown.open) return;
+            closeOtherDropdowns(dropdown);
+        });
+    });
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDropdowns);
+} else {
+    initDropdowns();
+}

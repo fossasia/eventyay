@@ -351,11 +351,12 @@ aside.sidebar {
       flex-direction: column;
       flex-grow: 1;
       overflow: hidden;
-      text-overflow: ellipsis;
       margin-left: 6px;
+      min-width: 0;
 
       .context-name,
       .context-meta {
+        display: block;
         text-decoration: none;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -368,6 +369,7 @@ aside.sidebar {
         font-size: 15px;
         padding-bottom: 2px;
         margin-bottom: 2px;
+        max-width: 180px;
       }
 
       .context-meta {
@@ -456,9 +458,6 @@ aside.sidebar {
   }
 }
 
-/* Navbar styling is now fully centralized in common/css/_navbar.css */
-/* Do not add any navbar overrides here */
-
 #main-title {
   display: flex;
   flex-wrap: wrap;
@@ -471,13 +470,17 @@ aside.sidebar {
 }
 
 #main-title .navigation-title {
-  text-align: center;
+  text-align: left;
+  flex: 0 1 75%;
+  min-width: 0;
 }
 
 #main-title .navigation-title h2 {
   font-size: 30px;
   font-weight: 500;
   line-height: 1.2;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 #main-title .navigation-title h2 .event-date {
@@ -1621,8 +1624,6 @@ h2 .user-name-display img {
 }
 
 @media (max-width: 768px) {
-  /* Navbar responsive styles are in common/css/_navbar.css */
-
   aside.sidebar {
     position: absolute;
     display: none;
