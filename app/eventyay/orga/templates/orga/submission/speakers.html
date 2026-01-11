@@ -68,7 +68,7 @@
                 </p>
             {% endif %}
             {% if request.event.cfp.request_availabilities %}
-                {% with speaker.profile.availabilities.all as availabilities %}
+                {% with speaker.profile.availabilities as availabilities %}
                     {% if availabilities %}
                         <p class="card-text">
                             <strong>{% translate "Availabilities" %}:</strong><br>
