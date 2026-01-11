@@ -1,6 +1,10 @@
+import json
+import logging
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -37,13 +41,15 @@ from eventyay.base.models import Answer
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 
+logger = logging.getLogger(__name__)
+
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('user__email', 'user__fullname')
-    default_sort_field = 'user__fullname'
+    sortable_fields = ('user__email', 'user__fullname', 'featured_order')
+    default_sort_field = 'featured_order'
     permission_required = 'base.orga_list_speakerprofile'
 
     def get_filter_form(self):
@@ -51,8 +57,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return SpeakerFilterForm(self.request.GET, event=self.request.event, filter_arrival=any_arrived)
 
     def get_queryset(self):
+        # Show ALL speakers for the event, not just those with submissions
+        # This allows organizers to feature and reorder any speaker (per issue #1709)
         qs = (
-            speaker_profiles_for_user(self.request.event, self.request.user)
+            SpeakerProfile.objects.filter(event=self.request.event)
             .select_related('event', 'user')
             .annotate(
                 submission_count=Count(
@@ -92,8 +100,11 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         elif question and unanswered:
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
-        qs = qs.order_by('id').distinct()
-        return self.sort_queryset(qs)
+        
+        # Apply sorting: use sort_queryset() which respects ?sort= parameter or uses default_sort_field
+        qs = self.sort_queryset(qs)
+        return qs.distinct()
+
 
 
 class SpeakerViewMixin(PermissionRequired):
@@ -287,3 +298,84 @@ class SpeakerExport(EventPermissionRequired, FormView):
             messages.success(self.request, _('No data to be exported'))
             return redirect(self.request.path)
         return result
+
+
+class SpeakerToggleFeatured(SpeakerViewMixin, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, event, code):
+        try:
+            self.profile.is_featured = not self.profile.is_featured
+            self.profile.save()
+            action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
+            self.profile.log_action(
+                action,
+                data={'event': self.request.event.slug},
+                user=self.request.user,
+            )
+            return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
+        except Exception as e:
+            logger.error(f'Error toggling featured status for speaker {code}: {e}', exc_info=True)
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+
+class SpeakerReorderView(EventPermissionRequired, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            logger.warning('Invalid JSON in speaker reorder request')
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+        
+        speaker_ids = data.get('speaker_ids', [])
+        if not isinstance(speaker_ids, list):
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+        
+        # Validate speaker_ids length to prevent abuse
+        if len(speaker_ids) > 1000:  # Reasonable maximum
+            logger.warning(f'Too many speaker IDs in reorder request: {len(speaker_ids)}')
+            return JsonResponse({'status': 'error', 'message': 'Too many speakers'}, status=400)
+        
+        # Validate all speaker_ids belong to the current event
+        valid_speaker_ids = set(
+            SpeakerProfile.objects.filter(
+                event=request.event,
+                id__in=speaker_ids
+            ).values_list('id', flat=True)
+        )
+        
+        invalid_ids = set(speaker_ids) - valid_speaker_ids
+        if invalid_ids:
+            logger.warning(f'Invalid speaker IDs in reorder request: {invalid_ids}')
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=400)
+        
+        try:
+            with transaction.atomic():
+                # Fetch all speakers in one query for bulk update
+                speakers = list(SpeakerProfile.objects.filter(
+                    event=request.event,
+                    id__in=speaker_ids
+                ))
+                speakers_by_id = {speaker.id: speaker for speaker in speakers}
+                
+                # Update order for each speaker
+                speakers_to_update = []
+                for index, speaker_id in enumerate(speaker_ids):
+                    speaker = speakers_by_id.get(speaker_id)
+                    if speaker is not None:
+                        speaker.featured_order = index
+                        speakers_to_update.append(speaker)
+                
+                # Bulk update all speakers in one query
+                if speakers_to_update:
+                    SpeakerProfile.objects.bulk_update(speakers_to_update, ['featured_order'])
+            
+            return JsonResponse({'status': 'success'})
+        except (ValueError, TypeError) as e:
+            logger.error(f'Error reordering speakers (data error): {e}')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=400)
+        except Exception as e:
+            logger.error(f'Error reordering speakers (database error): {e}', exc_info=True)
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=500)

@@ -9,7 +9,9 @@ allowed_hosts = ['*']
 # Can be overridden with EVY_SITE_URL environment variable
 site_url = 'http://localhost:8000'
 
-redis_url = 'redis://localhost/0'
+# For Docker development, use redis service name
+# For local development without Docker, change to 'redis://localhost/0'
+redis_url = 'redis://redis/0'
 
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable
