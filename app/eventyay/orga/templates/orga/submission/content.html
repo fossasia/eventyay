@@ -22,7 +22,7 @@
 {% block submission_content %}
     {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
     {% has_event_perm "base.list_all_review" request.user request request.event as can_view_all_reviews %}
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" novalidate>
         <fieldset>
             {% if not submission %}
                 <div id="main-title" class="d-md-flex justify-content-between">

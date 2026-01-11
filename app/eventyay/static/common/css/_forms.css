@@ -78,10 +78,19 @@ small.form-text {
   display: block;
 }
 .invalid-feedback {
+  display: none;
   font-size: 0.875rem;
   color: var(--color-danger);
   font-weight: normal;
   font-family: var(--font-family);
+}
+
+.invalid-feedback.d-block {
+  display: block;
+}
+
+.is-invalid ~ .invalid-feedback {
+  display: block;
 }
 
 fieldset {
