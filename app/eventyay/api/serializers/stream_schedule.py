@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
@@ -34,12 +35,28 @@ class StreamScheduleSerializer(PretalxSerializer):
             start_time = start_time or self.instance.start_time
             end_time = end_time or self.instance.end_time
 
+        if start_time and start_time < timezone.now():
+            raise serializers.ValidationError(
+                {'start_time': _('Start time cannot be in the past.')}
+            )
+
         if start_time and end_time and end_time <= start_time:
             raise serializers.ValidationError(
                 {'end_time': _('End time must be after start time.')}
             )
 
         room = self.instance.room if self.instance else self.context.get('room')
+        if not room:
+            request = self.context.get('request')
+            if request and hasattr(request, 'resolver_match'):
+                room_pk = request.resolver_match.kwargs.get('room_pk')
+                if room_pk:
+                    from eventyay.base.models.room import Room
+                    try:
+                        room = Room.objects.get(pk=room_pk)
+                    except Room.DoesNotExist:
+                        pass
+        
         if room and start_time and end_time:
             overlapping = StreamSchedule.objects.filter(
                 room=room, start_time__lt=end_time, end_time__gt=start_time
