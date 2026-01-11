@@ -22,7 +22,7 @@
         {% if show_reviewer_name %}
             {% include "orga/includes/user_name.html" with user=review.user lightbox=True %}
         {% elif not read_only %}
-            <div class="btn btn-success" id="edit-review" role="button">{{ phrases.base.edit }}</div>
+            <div class="btn btn-success edit-review" role="button">{{ phrases.base.edit }}</div>
         {% endif %}
     </td>
 </tr>

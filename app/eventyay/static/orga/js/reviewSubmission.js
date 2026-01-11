@@ -5,12 +5,16 @@ document.body.addEventListener("keydown", function (e) {
         e.target.form.submit()
     }
 })
-const editButton = document.querySelector("#edit-review")
-if (editButton) {
-    editButton.addEventListener("click", () => {
-        document.querySelector("#own-review").classList.remove("d-none")
-    })
-}
+
+// Use event delegation for edit buttons to handle multiple reviews
+document.body.addEventListener("click", function (e) {
+    if (e.target.classList.contains("edit-review")) {
+        const ownReviewSection = document.querySelector("#own-review")
+        if (ownReviewSection) {
+            ownReviewSection.classList.remove("d-none")
+        }
+    }
+})
 
 document.querySelectorAll(".hide-optional").forEach((element) => {
     while (
