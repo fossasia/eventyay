@@ -11,6 +11,7 @@ from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.email import get_available_placeholders
 from eventyay.base.forms import PlaceholderValidator, SettingsForm
 from eventyay.base.forms.widgets import SplitDateTimePickerWidget
+from eventyay.control.forms import SplitDateTimeField
 from eventyay.base.models.base import CachedFile
 from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.event import SubEvent
@@ -103,11 +104,27 @@ class MailForm(forms.Form):
         label=pgettext_lazy('subevent', 'Only send to customers with orders created before'),
         required=False,
     )
+    scheduled_at = forms.SplitDateTimeField(
+        widget=SplitDateTimePickerWidget(),
+        label=_('Send later'),
+        required=False,
+        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
+    )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
         required=False,
         initial='UTC',
     )
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at < timezone.now():
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
 
     def clean(self):
         d = super().clean()
@@ -447,18 +464,25 @@ class EmailQueueEditForm(forms.ModelForm):
         fields = [
             'reply_to',
             'bcc',
+            'scheduled_at',
         ]
+        field_classes = {
+            'scheduled_at': SplitDateTimeField,
+        }
         labels = {
             'reply_to': _('Reply-To'),
             'bcc': _('BCC'),
+            'scheduled_at': _('Send later'),
         }
         help_texts = {
             'reply_to': _("Any changes to the Reply-To field will apply only to this queued email."),
             'bcc': _("Any changes to the BCC field will apply only to this queued email."),
+            'scheduled_at': _("Leave empty to send immediately. If set, the email will be sent at this time."),
         }
         widgets = {
             'reply_to': forms.TextInput(attrs={'class': 'form-control'}),
             'bcc': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
+            'scheduled_at': SplitDateTimePickerWidget(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -511,6 +535,16 @@ class EmailQueueEditForm(forms.ModelForm):
         else:
             self.fields[fn].help_text = ht
         self.fields[fn].validators.append(PlaceholderValidator(phs))
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            from django.utils import timezone
+            if scheduled_at < timezone.now():
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at
 
     def clean_emails(self):
         updated_emails = [
@@ -601,4 +635,10 @@ class TeamMailForm(forms.Form):
             queryset=Team.objects.filter(organizer=self.event.organizer),
             widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
             label=_("Send to members of these teams")
+        )
+        self.fields['scheduled_at'] = forms.SplitDateTimeField(
+            widget=SplitDateTimePickerWidget(),
+            label=_('Send later'),
+            required=False,
+            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
         )

@@ -35,6 +35,12 @@
             {% bootstrap_field form.message layout='horizontal' %}
             {% bootstrap_field form.attachment layout='horizontal' %}
         </fieldset>
+
+        <!-- Scheduling Section -->
+        <fieldset>
+            <legend>{% translate "Scheduling" %}</legend>
+            {% bootstrap_field form.scheduled_at layout='horizontal' %}
+        </fieldset>
     </div>
 
     {% if request.method == "POST" and output %}
