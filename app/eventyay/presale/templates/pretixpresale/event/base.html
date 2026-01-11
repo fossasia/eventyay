@@ -30,16 +30,30 @@
 {% block site_notice %}
     {{ block.super }}
     {{ request.organizer.slug|json_script:"organizer_name" }}
-    {% if not event.live %}
-        <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-            <div class="container">
-                <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% trans "This shop is currently only visible to you and your team." %}
-                <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                    {% trans "Take it live now" %}
-                </a>
+    {% if request.resolver_match.url_name == "event.index" %}
+        {% if not event.is_public %}
+            <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
+                <div class="container">
+                    <span class="fa fa-user-secret" aria-hidden="true"></span>
+                    {% trans "This event is currently only visible to you and your team." %}
+                    <a href='{% url "control:event.settings" event=event.slug organizer=event.organizer.slug %}'>
+                        {% trans "Publish event" %}
+                    </a>
+                </div>
             </div>
-        </div>
+        {% endif %}
+    {% else %}
+        {% if not event.live %}
+            <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
+                <div class="container">
+                    <span class="fa fa-user-secret" aria-hidden="true"></span>
+                    {% trans "This shop is currently only visible to you and your team." %}
+                    <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
+                        {% trans "Take it live now" %}
+                    </a>
+                </div>
+            </div>
+        {% endif %}
     {% endif %}
 {% endblock %}
 
@@ -56,7 +70,7 @@
 
 
 {% block alerts %}
-    {% if request.event.testmode %}
+    {% if request.event.testmode and products_by_category %}
         {% if request.sales_channel.testmode_supported %}
             <div class="alert alert-warning alert-margin">
                 <strong>
@@ -95,7 +109,7 @@
             {{ request.event.settings.banner_text_bottom|rich_text }}
         </div>
     {% endif %}
-    {% if request.event.testmode %}
+    {% if request.event.testmode and products_by_category %}
         {% if request.sales_channel.testmode_supported %}
             <div class="alert alert-testmode alert-warning">
                 <strong>
