@@ -33,9 +33,12 @@ def get_login_redirect(request):
     next_url = next_url[0] if next_url else request.path
     params = request.GET.urlencode() if request.GET else ''
     params = f'?next={quote(next_url)}&{params}'
+    # event = getattr(request, 'event', None)
+    # if event:
+    is_orga_path = request.path.startswith('/orga')
     event = getattr(request, 'event', None)
-    if event:
-        url = event.orga_urls.login if request.path.startswith('/orga') else event.urls.login
+    if event and not is_orga_path: 
+        url = event.urls.login
         return redirect(url.full() + params)
     return redirect(reverse('eventyay_common:auth.login') + params)
 
@@ -47,7 +50,6 @@ class EventPermissionMiddleware:
         'login',
         'auth.reset',
         'auth.recover',
-        'event.login',
         'event.auth.reset',
         'event.auth.recover',
     )
