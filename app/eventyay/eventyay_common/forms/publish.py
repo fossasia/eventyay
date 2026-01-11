@@ -1,7 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from eventyay.base.models import Event
-from eventyay.base.forms import I18nModelForm, SettingsForm
+from eventyay.base.forms import SettingsForm
 
 class EventPublishForm(SettingsForm):
     live = forms.BooleanField(
@@ -16,10 +15,6 @@ class EventPublishForm(SettingsForm):
         help_text=_("If checked, the ticket shop will be accessible to customers. If unchecked, the shop will be hidden/inactive even if the event is live."),
         widget=forms.CheckboxInput(attrs={'data-toggle': 'toggle'})
     )
-
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
 
     def __init__(self, *args, **kwargs):
         self.event = kwargs.get('obj')

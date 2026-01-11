@@ -7,7 +7,6 @@ from eventyay.eventyay_common.views import (
     dashboards,
     event,
     organizer,
-    organizer,
     team,
     publish,
 )

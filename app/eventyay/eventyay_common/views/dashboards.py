@@ -255,6 +255,7 @@ class EventIndexView(TemplateView):
         context['ticket_shop_live'] = request.event.settings.get('ticket_shop_enabled', as_type=bool, default=True)
         context['ticket_testmode'] = request.event.testmode
         context['talks_published'] = request.event.settings.talk_schedule_public is not None
+        context['video_enabled'] = is_video_enabled(request.event)
 
         return context
 

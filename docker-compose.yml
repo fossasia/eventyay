@@ -15,7 +15,7 @@ services:
       - /usr/src/app/eventyay/frontend/global-nav-menu/node_modules
       - /usr/src/app/eventyay/frontend/schedule-editor/node_modules
     ports:
-      - 8000:8000
+      - "8000:8000"
     env_file:
       - ./.env.dev
     depends_on:
@@ -48,8 +48,8 @@ services:
     platform: linux/amd64
     container_name: eventyay-next-redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     volumes:
       - rd:/data
     healthcheck:
@@ -59,8 +59,8 @@ services:
     image: postgres:15
     platform: linux/amd64
     container_name: eventyay-next-db
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
     env_file:

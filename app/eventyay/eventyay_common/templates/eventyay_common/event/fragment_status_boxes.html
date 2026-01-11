@@ -52,7 +52,7 @@
                 </p>
                 <p>
                     <a
-                        href="{% url 'control:event.index' organizer=request.event.organizer.slug event=request.event.slug %}">
+                        href="{% url 'eventyay_common:event.publish' organizer=request.event.organizer.slug event=request.event.slug %}">
                         {% trans "Click here to change" %}
                     </a>
                 </p>
@@ -95,7 +95,11 @@
         <div class="panel-body">
             <div class="widget-content">
                 <p class="widget-text">
-                    {% trans "Video: Your video is accessible for attendees with tickets if the event is public." %}
+                    {% if video_enabled %}
+                    {% trans "Your video is accessible for attendees with tickets if the event is public." %}
+                    {% else %}
+                    {% trans "Video is not configured for this event." %}
+                    {% endif %}
                 </p>
             </div>
         </div>
