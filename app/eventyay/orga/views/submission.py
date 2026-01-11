@@ -254,6 +254,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                         question__event=submission.event,
                         question__is_visible_to_reviewers=True,
                     ).select_related('question').order_by('question__position'),
+                    to_attr='_reviewer_answers',
                 ),
                 Prefetch(
                     'submissions',
@@ -264,8 +265,10 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                                 question__event=submission.event,
                                 question__is_visible_to_reviewers=True,
                             ).select_related('question').order_by('question__position'),
+                            to_attr='_reviewer_answers',
                         )
                     ),
+                    to_attr='_event_submissions',
                 ),
             )
         )
@@ -274,7 +277,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
                 'other_submissions': [
-                    s for s in speaker.submissions.all()
+                    s for s in speaker._event_submissions
                     if s.code != submission.code
                 ],
                 'email': speaker.email,
@@ -282,10 +285,10 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                 'avatar_source': speaker.avatar_source,
                 'avatar_license': speaker.avatar_license,
                 'reviewer_answers': sorted(
-                    list(speaker.answers.all()) + [
+                    speaker._reviewer_answers + [
                         answer
-                        for submission_obj in speaker.submissions.all()
-                        for answer in submission_obj.answers.all()
+                        for submission_obj in speaker._event_submissions
+                        for answer in submission_obj._reviewer_answers
                     ],
                     key=lambda a: a.question.position if a.question else 0,
                 ),

@@ -45,7 +45,7 @@
                 <p class="card-text">
                     <strong>{% translate "Avatar" %}:</strong>
                     <a href="{{ speaker.avatar.url }}" data-lightbox>
-                        <img loading="lazy" width="100" src="{{ speaker.avatar|thumbnail:"default" }}" alt="{% translate "The speaker's profile picture" %}">
+                        <img loading="lazy" width="100px" src="{{ speaker.avatar|thumbnail:"default" }}" alt="{% translate "The speaker's profile picture" %}">
                     </a>
                 </p>
             {% endif %}
@@ -68,7 +68,7 @@
                 </p>
             {% endif %}
             {% if request.event.cfp.request_availabilities %}
-                {% with speaker.profile.availabilities as availabilities %}
+                {% with speaker.profile.availabilities.all as availabilities %}
                     {% if availabilities %}
                         <p class="card-text">
                             <strong>{% translate "Availabilities" %}:</strong><br>
