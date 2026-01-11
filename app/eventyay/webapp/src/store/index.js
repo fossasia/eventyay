@@ -174,10 +174,19 @@ export default new Vuex.Store({
 					return
 				}
 				try {
-					const base = config.api.base || '/api/v1/'
-					const organizer = state.world?.organizer || 'default'
-					const event = state.world?.slug || 'default'
-					const url = `${base}organizers/${organizer}/events/${event}/rooms/${roomId}/streams/current`
+					const organizer = state.world?.organizer || state.world?.organizer_slug || 'default'
+					const event = state.world?.slug || state.world?.id || 'default'
+					
+					// If not available from world state, try to extract from current URL path
+					if (!organizer || organizer === 'default') {
+						const pathParts = window.location.pathname.split('/').filter(Boolean)
+						if (pathParts.length >= 2) {
+							organizer = pathParts[0]
+							event = pathParts[1]
+						}
+					}
+					
+					const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${roomId}/streams/current`
 					const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
 					const headers = { Accept: 'application/json' }
 					if (authHeader) headers.Authorization = authHeader

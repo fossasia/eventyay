@@ -1,6 +1,6 @@
 <template lang="pug">
-.upcoming-stream-countdown(v-if="upcomingStream && timeUntilStart > 0")
-	.content
+.upcoming-stream-countdown
+	.content(v-if="shouldShow")
 		.title {{ upcomingStream.title || 'Upcoming Stream' }}
 		.countdown {{ formattedCountdown }}
 		.time {{ formattedStartTime }}
@@ -9,7 +9,6 @@
 import moment from 'lib/timetravelMoment'
 import { mapState } from 'vuex'
 import api from 'lib/api'
-import config from 'config'
 
 export default {
 	name: 'UpcomingStreamCountdown',
@@ -28,6 +27,9 @@ export default {
 	},
 	computed: {
 		...mapState(['now']),
+		shouldShow() {
+			return this.upcomingStream && this.timeUntilStart > 0
+		},
 		formattedCountdown() {
 			if (this.timeUntilStart <= 0) return ''
 			const duration = moment.duration(this.timeUntilStart, 'seconds')
@@ -66,12 +68,11 @@ export default {
 			clearInterval(this.countdownInterval)
 		}
 	},
-	methods: {
+		methods: {
 		async fetchNextStream() {
-			if (!this.room) return
+			if (!this.room?.id) return
 			try {
-				const base = config.api.base || '/api/v1/'
-				const world = this.$store.state.world
+				const world = this.$store?.state?.world
 				
 				let organizer = world?.organizer || world?.organizer_slug
 				let event = world?.slug || world?.id
@@ -84,7 +85,9 @@ export default {
 					}
 				}
 				
-				const url = `${base}organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/next`
+				if (!organizer || !event) return
+				
+				const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/next`
 				const authHeader = api._config.token
 					? `Bearer ${api._config.token}`
 					: api._config.clientId
@@ -101,7 +104,7 @@ export default {
 					this.upcomingStream = null
 				}
 			} catch (error) {
-				console.error('Failed to fetch next stream:', error)
+				console.error('[UpcomingStreamCountdown] Failed to fetch next stream:', error)
 			}
 		},
 		updateCountdown() {

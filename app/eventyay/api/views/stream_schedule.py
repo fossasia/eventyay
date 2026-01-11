@@ -76,7 +76,9 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['room'] = self.get_room()
+        room = self.get_room()
+        if room:
+            context['room'] = room
         return context
 
     def get_queryset(self):
@@ -101,6 +103,8 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response({'room': ['Room not found.']}, status=400)
 
         serializer = self.get_serializer(data=request.data)
+        serializer.context['room'] = room
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
@@ -127,6 +131,8 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if 'room' not in serializer.context or serializer.context['room'] is None:
+            serializer.context['room'] = instance.room
         if not serializer.is_valid():
             return Response(serializer.errors, status=400)
 
