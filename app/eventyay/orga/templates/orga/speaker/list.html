@@ -8,180 +8,103 @@
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
 
 {% block custom_header %}
-    <link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}?v=3">
 {% endblock %}
 
 {% block scripts %}
-    {{ block.super }}
-    <script src="{% static 'sortable/Sortable.js' %}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get CSRF token from Django template
-            const csrftoken = '{{ csrf_token }}';
-
-            // Initialize Sortable for drag-and-drop reordering
-            const tbody = document.getElementById('speaker-tbody');
-            if (tbody) {
-                Sortable.create(tbody, {
-                    handle: '.drag-handle',
-                    animation: 150,
-                    onEnd: function(evt) {
-                        const speakerIds = Array.from(tbody.querySelectorAll('tr[data-speaker-id]'))
-                            .map(row => parseInt(row.dataset.speakerId, 10));
-                        
-                        fetch('{% url "orga:speakers.reorder" event=request.event.slug %}', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrftoken
-                            },
-                            body: JSON.stringify({ speaker_ids: speakerIds })
-                        })
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('HTTP error ' + response.status);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (data.status !== 'success') {
-                                console.error('Failed to save speaker order:', data.message);
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error saving speaker order:', error);
-                        });
-                    }
-                });
-            }
-
-            // Handle featured checkbox toggle
-            document.querySelectorAll('.featured-checkbox').forEach(checkbox => {
-                checkbox.addEventListener('change', function() {
-                    const url = this.dataset.featuredUrl;
-                    if (!url) {
-                        console.error('Missing data-featured-url on featured checkbox');
-                        return;
-                    }
-                    
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
-                        }
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('HTTP error ' + response.status);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        if (data.status === 'success') {
-                            this.checked = data.is_featured;
-                        } else {
-                            this.checked = !this.checked;
-                            console.error('Failed to update featured status:', data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        this.checked = !this.checked;
-                    });
-                });
-            });
-        });
-    </script>
+{{ block.super }}
+<script src="{% static 'sortable/Sortable.js' %}"></script>
+<script src="{% static 'orga/js/speaker-list.js' %}"></script>
 {% endblock scripts %}
 
 {% block content %}
-    <div class="d-md-flex justify-content-between">
-        <h2>
-            {{ page_obj.paginator.count }}
-            {% blocktranslate trimmed count count=page_obj.paginator.count %}
-                submitter
-            {% plural %}
-                submitters
-            {% endblocktranslate %}
-        </h2>
-        {% include "orga/event/component_link.html" %}
-    </div>
+<div class="d-md-flex justify-content-between">
+    <h2>
+        {{ page_obj.paginator.count }}
+        {% blocktranslate trimmed count count=page_obj.paginator.count %}
+        submitter
+        {% plural %}
+        submitters
+        {% endblocktranslate %}
+    </h2>
+    {% include "orga/event/component_link.html" %}
+</div>
 
-    {% include "common/includes/search_form.html" %}
+{% include "common/includes/search_form.html" %}
 
-    {% if filter_form.is_valid and filter_form.cleaned_data.question %}
-        <p class="text-muted ml-2">
-            <span class="fa fa-filter"></span>
-            {% blocktranslate trimmed with question=filter_form.cleaned_data.question.question %}
-                List filtered by responses to custom field “{{ question }}”.
-            {% endblocktranslate %}
-            <a href="{% querystring question="" answer="" answer__options="" %}" class="text-muted">
-                <span class="fa fa-times"></span>
-                {% translate "Remove filter" %}
-            </a>
-        </p>
-    {% endif %}
+{% if filter_form.is_valid and filter_form.cleaned_data.question %}
+<p class="text-muted ml-2">
+    <span class="fa fa-filter"></span>
+    {% blocktranslate trimmed with question=filter_form.cleaned_data.question.question %}
+    List filtered by responses to custom field “{{ question }}”.
+    {% endblocktranslate %}
+    <a href="{% querystring question="" answer="" answer__options="" %}" class="text-muted">
+        <span class="fa fa-times"></span>
+        {% translate "Remove filter" %}
+    </a>
+</p>
+{% endif %}
 
-    {% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
-    <div class="table-responsive-always" id="speaker-list-wrapper">
-        <table class="table table-sm table-flip table-sticky speaker-list-table">
-            <thead>
-                <tr>
-                    <th class="speaker-drag-column"></th>
-                    <th class="speaker-name-column">{% translate "Name" %}</th>
-                    <th class="speaker-accepted-column">{% translate "Accepted Proposals" %}</th>
-                    <th class="speaker-proposals-column">{% translate "Proposals" %}</th>
-                    <th class="speaker-featured-column">{% translate "Featured" %}</th>
-                    <th class="speaker-arrival-column">{% translate "Arrival" %}</th>
-                </tr>
-            </thead>
-            <tbody id="speaker-tbody">
-                {% for profile in speakers %}
-                    <tr data-speaker-id="{{ profile.id }}">
-                        <td class="drag-handle" title="{% translate 'Drag to reorder' %}" aria-label="{% translate 'Drag to reorder' %}">
-                            <i class="fa fa-bars" aria-hidden="true"></i>
-                        </td>
-                        <td class="speaker-name-cell">
-                            <a href="{{ profile.orga_urls.base }}">
-                                {% include "orga/includes/user_name.html" with user=profile.user %}
-                            </a>
-                        </td>
-                        <td class="speaker-accepted-column">{{ profile.accepted_submission_count }}</td>
-                        <td class="speaker-proposals-column">{{ profile.submission_count }}</td>
-                        <td class="speaker-featured-column">
-                            <input type="checkbox" 
-                                   class="featured-checkbox" 
-                                   data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
-                                   {% if profile.is_featured %}checked{% endif %}
-                                   title="{% translate 'Mark as featured speaker' %}"
-                                   aria-label="{% translate 'Mark as featured speaker' %}">
-                        </td>
-                        <td class="speaker-arrival-cell">
-                            {% if profile.accepted_submission_count %}
-                                {% if can_mark_speaker %}
-                                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}" href="{{ profile.orga_urls.toggle_arrived }}?from=list">
-                                        {% if profile.has_arrived %}
-                                            {% translate "Mark speaker as not arrived" %}
-                                        {% else %}
-                                            {% translate "Mark speaker as arrived" %}
-                                        {% endif %}
-                                    </a>
-                                {% else %}
-                                    {% if profile.has_arrived %}
-                                        <a><i class="fa fa-check"></i> {% translate "Arrived" %}</a>
-                                    {% else %}
-                                        <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
-                                    {% endif %}
-                                {% endif %}
-                            {% endif %}
-                        </td>
-                        </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{% has_event_perm "base.mark_arrived_speakerprofile" request.user request request.event as can_mark_speaker %}
+<div class="table-responsive-always" id="speaker-list-wrapper">
+    <table class="table table-sm table-flip table-sticky speaker-list-table">
+        <thead>
+            <tr>
+                <th class="speaker-drag-column"></th>
+                <th class="speaker-name-column">{% translate "Name" %}</th>
+                <th class="speaker-accepted-column">{% translate "Accepted Proposals" %}</th>
+                <th class="speaker-proposals-column">{% translate "Proposals" %}</th>
+                <th class="speaker-featured-column">{% translate "Featured" %}</th>
+                <th class="speaker-arrival-column">{% translate "Arrival" %}</th>
+            </tr>
+        </thead>
+        <tbody id="speaker-tbody" data-reorder-url="{% url 'orga:speakers.reorder' event=request.event.slug %}">
+            {% for profile in speakers %}
+            <tr data-speaker-id="{{ profile.id }}">
+                <td class="drag-handle" title="{% translate 'Drag to reorder' %}"
+                    aria-label="{% translate 'Drag to reorder' %}">
+                    <i class="fa fa-bars" aria-hidden="true"></i>
+                </td>
+                <td class="speaker-name-cell">
+                    <a href="{{ profile.orga_urls.base }}">
+                        {% include "orga/includes/user_name.html" with user=profile.user %}
+                    </a>
+                </td>
+                <td class="speaker-accepted-column">{{ profile.accepted_submission_count }}</td>
+                <td class="speaker-proposals-column">{{ profile.submission_count }}</td>
+                <td class="speaker-featured-column">
+                    <input type="checkbox" class="featured-checkbox"
+                        data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
+                        {% if profile.is_featured %}checked{% endif %}
+                        title="{% translate 'Mark as featured speaker' %}"
+                        aria-label="{% translate 'Mark as featured speaker' %}">
+                </td>
+                <td class="speaker-arrival-cell">
+                    {% if profile.accepted_submission_count %}
+                    {% if can_mark_speaker %}
+                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:" success,info" }}"
+                        href="{{ profile.orga_urls.toggle_arrived }}?from=list">
+                        {% if profile.has_arrived %}
+                        {% translate "Mark speaker as not arrived" %}
+                        {% else %}
+                        {% translate "Mark speaker as arrived" %}
+                        {% endif %}
+                    </a>
+                    {% else %}
+                    {% if profile.has_arrived %}
+                    <a><i class="fa fa-check"></i> {% translate "Arrived" %}</a>
+                    {% else %}
+                    <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
+                    {% endif %}
+                    {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-    {% include "orga/includes/pagination.html" %}
+{% include "orga/includes/pagination.html" %}
 
 {% endblock content %}

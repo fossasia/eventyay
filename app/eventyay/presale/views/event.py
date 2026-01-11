@@ -599,7 +599,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         featured_speakers = SpeakerProfile.objects.filter(
             event=self.request.event,
             is_featured=True
-        ).select_related('user').order_by('order', 'id')
+        ).select_related('user').order_by('featured_order', 'id')
         
         # Count total featured speakers and non-featured speakers
         total_featured_count = featured_speakers.count()

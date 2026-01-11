@@ -48,8 +48,8 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('user__email', 'user__fullname', 'order')
-    default_sort_field = 'order'
+    sortable_fields = ('user__email', 'user__fullname', 'featured_order')
+    default_sort_field = 'featured_order'
     permission_required = 'base.orga_list_speakerprofile'
 
     def get_filter_form(self):
@@ -365,12 +365,12 @@ class SpeakerReorderView(EventPermissionRequired, View):
                 for index, speaker_id in enumerate(speaker_ids):
                     speaker = speakers_by_id.get(speaker_id)
                     if speaker is not None:
-                        speaker.order = index
+                        speaker.featured_order = index
                         speakers_to_update.append(speaker)
                 
                 # Bulk update all speakers in one query
                 if speakers_to_update:
-                    SpeakerProfile.objects.bulk_update(speakers_to_update, ['order'])
+                    SpeakerProfile.objects.bulk_update(speakers_to_update, ['featured_order'])
             
             return JsonResponse({'status': 'success'})
         except (ValueError, TypeError) as e:

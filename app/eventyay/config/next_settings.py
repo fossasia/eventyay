@@ -1033,9 +1033,8 @@ COMPRESS_PRECOMPILERS = (
     ('module', 'npx esbuild {infile} --bundle --minify --platform=browser'),
 )
 # We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
-# Disabled for development to avoid CACHE issues
-COMPRESS_ENABLED = not DEBUG
-COMPRESS_OFFLINE = conf.compress_offline_required if not DEBUG else False
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = conf.compress_offline_required
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass

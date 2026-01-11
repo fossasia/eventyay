@@ -46,7 +46,7 @@ class SpeakerProfile(PretalxModel):
         verbose_name=_('Featured speaker'),
         help_text=_('Featured speakers will be displayed on the event landing page')
     )
-    order = models.IntegerField(
+    featured_order = models.IntegerField(
         default=0,
         verbose_name=_('Display order'),
         help_text=_('Order in which speakers are displayed (lower numbers appear first)')
@@ -68,7 +68,7 @@ class SpeakerProfile(PretalxModel):
             'delete': is_administrator,
         }
         indexes = [
-            models.Index(fields=['event', 'is_featured', 'order'], name='speaker_featured_order_idx'),
+            models.Index(fields=['event', 'is_featured', 'featured_order'], name='speaker_featured_order_idx'),
         ]
 
     class urls(EventUrls):
