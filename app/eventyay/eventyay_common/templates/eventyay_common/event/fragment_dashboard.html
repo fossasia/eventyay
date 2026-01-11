@@ -8,17 +8,23 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "The event dashboard provides an overview of the three core components: Tickets, Talks and Speakers, and Video, enabling end to end event management. Ticketing and registration are handled through the Tickets module, session content and schedules are organized via Talks and Speakers, and the Video component supports engaging and interactive virtual events with integrated live interpretation." %}
+                {% blocktrans trimmed %}
+                The event dashboard provides an overview of the three core components: Tickets, Talks and Speakers, and
+                Video, enabling end to end event management. Ticketing and registration are handled through the Tickets
+                module, session content and schedules are organized via Talks and Speakers, and the Video component
+                supports engaging and interactive virtual events with integrated live interpretation.
+                {% endblocktrans %}
             </p>
         </div>
     </div>
 </div>
 <div class="dashboard custom">
     {% if not request.event.has_subevents or subevent %}
-        {% include "pretixcontrol/event/fragment_timeline.html" %}
+    {% include "pretixcontrol/event/fragment_timeline.html" %}
     {% endif %}
     {% include "pretixcontrol/event/fragment_info_box.html" %}
 </div>
+{% include "eventyay_common/event/fragment_status_boxes.html" %}
 <div class="dashboard custom">
     <div class="panel panel-default widget-container widget-small no-padding column">
         <div class="panel-heading">
@@ -28,10 +34,16 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
+                {% blocktrans trimmed %}
+                Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage
+                attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted
+                emails.
+                {% endblocktrans %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% trans "Go to" %} <a
+                    href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">
+                    {% trans "Tickets Dashboard" %}</a>
             </p>
         </div>
     </div>
@@ -43,16 +55,21 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Set up and configure content for the event, create calls for proposals and speakers and build a schedule. Manage the submission and review process, and select speakers." %}
+                {% blocktrans trimmed %}
+                Set up and configure content for the event, create calls for proposals and speakers and build a
+                schedule. Manage the submission and review process, and select speakers.
+                {% endblocktrans %}
             </p>
             {% if is_talk_event_created %}
-                <p>
-                    {% trans "Go to" %} <a href='{% url "orga:event.dashboard" event=request.event.slug %}'>{% trans "Talks Dashboard" %}</a>
-                </p>
+            <p>
+                {% trans "Go to" %} <a href='{% url "orga:event.dashboard" event=request.event.slug %}'>
+                    {% trans "Talks Dashboard" %}</a>
+            </p>
             {% else %}
-                <p>
-                    {% trans "Go to" %} <a href="#" data-toggle="modal" data-target="#alert-modal">{% trans "Talks Dashboard" %}</a>
-                </p>
+            <p>
+                {% trans "Go to" %} <a href="#" data-toggle="modal" data-target="#alert-modal">
+                    {% trans "Talks Dashboard" %}</a>
+            </p>
             {% endif %}
         </div>
     </div>
@@ -64,11 +81,15 @@
         </div>
         <div class="panel-body">
             <p>
-                {% trans "Set up and configure live video streams, online workshops with live-audio interpretation and chats. Offer virtual exhibitor booths with rich content and social media integration." %}
+                {% blocktrans trimmed %}
+                Set up and configure live video streams, online workshops with live-audio interpretation and chats.
+                Offer virtual exhibitor booths with rich content and social media integration.
+                {% endblocktrans %}
             </p>
             <p>
                 {% trans "Go to" %}
-                <a href="{% url 'eventyay_common:event.create_access_to_video' organizer=request.organizer.slug event=request.event.slug %}" target="_blank" rel="noopener noreferrer">{% trans "Video Configuration" %}</a>
+                <a href="{% url 'eventyay_common:event.create_access_to_video' organizer=request.organizer.slug event=request.event.slug %}"
+                    target="_blank" rel="noopener noreferrer">{% trans "Video Configuration" %}</a>
             </p>
         </div>
     </div>
@@ -84,7 +105,8 @@
                         <div class="modal-card-content">
                             <h3>{% trans "Component not enabled!" %}</h3>
                             <p>{% trans "You need to enable this component first" %}</p>
-                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok"
+                                %}</button>
                         </div>
                     </div>
                 </div>

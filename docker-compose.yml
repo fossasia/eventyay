@@ -48,6 +48,8 @@ services:
     platform: linux/amd64
     container_name: eventyay-next-redis
     restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
       - rd:/data
     healthcheck:
@@ -57,6 +59,8 @@ services:
     image: postgres:15
     platform: linux/amd64
     container_name: eventyay-next-db
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data_dev:/var/lib/postgresql/data/
     env_file:

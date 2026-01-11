@@ -251,6 +251,11 @@ class EventIndexView(TemplateView):
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
         context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
 
+        context['event_published'] = request.event.live
+        context['ticket_shop_live'] = request.event.settings.get('ticket_shop_enabled', as_type=bool, default=True)
+        context['ticket_testmode'] = request.event.testmode
+        context['talks_published'] = request.event.settings.talk_schedule_public is not None
+
         return context
 
 
