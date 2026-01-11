@@ -2,7 +2,7 @@ import secrets
 
 from django.core.management.base import BaseCommand
 
-from pretix.api.models import OAuthApplication
+from eventyay.api.models import OAuthApplication
 
 
 class Command(BaseCommand):
