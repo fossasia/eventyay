@@ -3,10 +3,13 @@ import uuid
 
 import requests
 from bs4 import BeautifulSoup
+
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.utils.timezone import now
 
 from eventyay.base.models.storage_model import StoredFile
+from eventyay.consts import SizeKey
 
 
 def get_extension_from_response(response):
@@ -37,7 +40,7 @@ def store_image(response, event):  # TODO deduplicate
     if not extension:
         return
 
-    max_size = 10 * 1024 * 1024
+    max_size = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]
     if not len(response.content) < max_size:
         return
 
