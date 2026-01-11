@@ -197,6 +197,8 @@ def get_event_config_for_user(event, user):
         "id": str(event.id),
         "title": getattr(event, "title", getattr(event, "name", "")),
         "slug": getattr(event, "slug", str(event.id)),
+        "organizer": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
+        "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "pretalx": cfg.get("pretalx", {}),
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),

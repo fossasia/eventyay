@@ -140,6 +140,10 @@ export default {
 			return 'quality-high'
 		},
 		hlsUrl() {
+			// Use scheduled stream URL if available, otherwise fall back to module config
+			if (this.room?.currentStream?.url && this.room.currentStream.stream_type === 'hls') {
+				return this.room.currentStream.url
+			}
 			if (this.chosenAlternative) {
 				const alternative = (this.module.config.alternatives || []).find((a) => a.label === this.chosenAlternative)
 				if (alternative) {
@@ -154,6 +158,15 @@ export default {
 	},
 	watch: {
 		hlsUrl: 'initializePlayer',
+		'room.currentStream': {
+			handler(newStream, oldStream) {
+				// Reload player when scheduled stream changes
+				if (newStream?.id !== oldStream?.id || newStream?.url !== oldStream?.url) {
+					this.initializePlayer()
+				}
+			},
+			deep: true
+		}
 	},
 	created() {
 		// don't start playing when autoplay is disabled
