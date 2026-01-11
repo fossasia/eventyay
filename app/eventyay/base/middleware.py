@@ -214,6 +214,7 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'http://localhost:8080',
+                'https://unpkg.com',  # Leaflet JS from CDN
                 "'unsafe-eval'",  # Required for buntpapier and other libraries that use eval()
             ],
             'object-src': ["'none'"],
@@ -229,9 +230,20 @@ class SecurityMiddleware(MiddlewareMixin):
                 '{static}',
                 '{media}',
                 "'unsafe-inline'",  # allow inline styles
+                'https://unpkg.com',  # Leaflet CSS from CDN
             ],
             'connect-src': ['{dynamic}', '{media}', 'https://checkout.stripe.com', 'https:', 'blob:'],
-            'img-src': ['{static}', '{media}', 'data:', 'https://*.stripe.com', 'https://twemoji.maxcdn.com'] + img_src,
+            'img-src': [
+                '{static}',
+                '{media}',
+                'data:',
+                'https://*.stripe.com',
+                'https://twemoji.maxcdn.com',
+                'https://a.tile.openstreetmap.org',
+                'https://b.tile.openstreetmap.org',
+                'https://c.tile.openstreetmap.org',
+                'https://unpkg.com',  # Leaflet marker icons
+            ] + img_src,
             'font-src': [
                 '{static}',
                 'https://fonts.gstatic.com',  # fix Google Fonts

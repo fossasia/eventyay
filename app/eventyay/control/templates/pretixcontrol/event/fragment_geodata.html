@@ -5,13 +5,14 @@
 <div class="geodata-section">
     {% bootstrap_field form.location layout="control" %}
     <div class="form-group geodata-group"
-         data-tiles="{{ global_settings.leaflet_tiles|default_if_none:"" }}"
-         data-attrib="{{ global_settings.leaflet_tiles_attribution }}"
+         data-tiles="{{ global_settings.leaflet_tiles|default_if_none:'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' }}"
+         data-attrib="{{ global_settings.leaflet_tiles_attribution|default_if_none:'&copy; <a href=&quot;https://www.openstreetmap.org/copyright&quot;>OpenStreetMap</a> contributors' }}"
          data-icon="{% static "leaflet/images/marker-icon.png" %}"
          data-shadow="{% static "leaflet/images/marker-shadow.png" %}">
         <label class="col-md-3 control-label">
             {% trans "Geo coordinates" %}<br>
             <span class="optional">{% trans "Optional" %}</span>
+            {% include "pretixcontrol/event/fragment_geodata_autoupdate.html" %}
         </label>
         <div class="col-md-4">
             {% bootstrap_field form.geo_lat layout="inline" %}
@@ -27,6 +28,14 @@
             {% bootstrap_field form.geo_lon layout="inline" %}
         </div>
         <div class="col-md-1">
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-9 col-md-offset-3">
+            <div class="help-block">
+                <i class="fa fa-info-circle"></i>
+                {% trans "You can drag the map marker to adjust the exact venue location. The coordinates will update automatically." %}
+            </div>
         </div>
     </div>
 </div>
