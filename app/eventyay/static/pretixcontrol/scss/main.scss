@@ -1100,3 +1100,24 @@ h1 .label {
         background: $gray-lightest;
     }
 }
+
+/* Event name in main content - max width and wrap */
+#event-nav .navigation,
+.header-nav .navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#event-nav .navigation-title,
+.header-nav .navigation-title {
+    text-align: left;
+    flex: 0 1 75%;
+    min-width: 0;
+
+    h2 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
