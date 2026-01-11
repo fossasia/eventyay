@@ -1,0 +1,77 @@
+{% extends "pretixcontrol/items/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block title %}
+    {% if orderform %}
+        {% blocktrans with name=orderform.name %}Order form: {{ name }}{% endblocktrans %}
+    {% else %}
+        {% trans "Create order form" %}
+    {% endif %}
+{% endblock %}
+{% block inside %}
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                {% if orderform %}
+                    <h1>{% blocktrans with name=orderform.name %}Order form: {{ name }}{% endblocktrans %}</h1>
+                {% else %}
+                    <h1>{% trans "Create order form" %}</h1>
+                {% endif %}
+            </div>
+            {% include "pretixcontrol/event/component_link.html" %}
+        </div>
+    </nav>
+    
+    <div class="alert alert-info">
+        <strong>{% trans "Coming soon!" %}</strong>
+        {% blocktrans trimmed %}
+            Order forms functionality is currently under development. This feature will allow you to create
+            custom forms for collecting additional information during the order process.
+        {% endblocktrans %}
+    </div>
+    
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        <div class="tabbed-form">
+            <fieldset>
+                <legend>{% trans "General" %}</legend>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{% trans "Form name" %}</label>
+                    <div class="col-md-9">
+                        <input type="text" class="form-control" placeholder="{% trans 'Enter form name' %}" disabled>
+                        <p class="help-block">{% trans "A descriptive name for this order form." %}</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-md-3 control-label">{% trans "Description" %}</label>
+                    <div class="col-md-9">
+                        <textarea class="form-control" rows="3" placeholder="{% trans 'Enter description' %}" disabled></textarea>
+                        <p class="help-block">{% trans "Optional description of what this form is used for." %}</p>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-offset-3 col-md-9">
+                        <div class="checkbox">
+                            <label>
+                                <input type="checkbox" disabled> {% trans "Active" %}
+                            </label>
+                            <p class="help-block">{% trans "Whether this form is currently active and available for use." %}</p>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>{% trans "Form fields" %}</legend>
+                <p class="text-muted">
+                    {% trans "Form field configuration will be available when this feature is fully implemented." %}
+                </p>
+            </fieldset>
+        </div>
+        <div class="form-group submit-group">
+            <a href="{% url "control:event.products.orderforms" organizer=request.event.organizer.slug event=request.event.slug %}" class="btn btn-default">
+                {% trans "Back to order forms" %}
+            </a>
+        </div>
+    </form>
+{% endblock %}
