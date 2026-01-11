@@ -190,11 +190,14 @@ export default new Vuex.Store({
 					const streamId = currentStream?.id || null
 					if (state.lastKnownStreamId !== streamId) {
 						const previousStreamId = state.lastKnownStreamId
+						const previousStreamUrl = state.rooms.find(r => r.id === roomId)?.currentStream?.url
 						state.lastKnownStreamId = streamId
 						const room = state.rooms.find(r => r.id === roomId)
 						if (room) {
+							const newStreamUrl = currentStream?.url
 							room.currentStream = currentStream
-							if (!currentStream && previousStreamId !== null) {
+							// Reload if stream changed (including when it becomes null or changes URL)
+							if (previousStreamId !== streamId || previousStreamUrl !== newStreamUrl) {
 								commit('setStreamReload', true)
 								setTimeout(() => {
 									commit('setStreamReload', false)
@@ -358,10 +361,14 @@ export default new Vuex.Store({
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
 			const streamId = stream?.id || null
-			if (state.lastKnownStreamId !== streamId) {
+			const streamUrl = stream?.url || null
+			const previousStreamId = state.lastKnownStreamId
+			const previousStreamUrl = room.currentStream?.url || null
+			if (previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
 				room.currentStream = stream
 				state.lastKnownStreamId = streamId
-				if (reload) {
+				// Always reload if stream changed (ID or URL), or if explicitly requested
+				if (reload || previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
 					commit('setStreamReload', true)
 					setTimeout(() => {
 						commit('setStreamReload', false)

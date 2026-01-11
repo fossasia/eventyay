@@ -16,313 +16,375 @@
 </template>
 <script setup>
 // TODO functional component?
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { useRoute } from 'vue-router'
-import { useStore } from 'vuex'
-import { isEqual } from 'lodash'
-import api from 'lib/api'
-import { normalizeYoutubeVideoId } from 'lib/validators'
-import JanusCall from 'components/JanusCall'
-import JanusChannelCall from 'components/JanusChannelCall'
-import Livestream from 'components/Livestream'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { useRoute } from "vue-router";
+import { useStore } from "vuex";
+import { isEqual } from "lodash";
+import api from "lib/api";
+import { normalizeYoutubeVideoId } from "lib/validators";
+import JanusCall from "components/JanusCall";
+import JanusChannelCall from "components/JanusChannelCall";
+import Livestream from "components/Livestream";
 
 // Props & Emits
 defineOptions({
-	components: { Livestream, JanusCall, JanusChannelCall }
-})
+	components: { Livestream, JanusCall, JanusChannelCall },
+});
 const props = defineProps({
 	room: Object,
 	call: Object,
 	background: {
 		type: Boolean,
-		default: false
-	}
-})
-defineEmits(['close'])
+		default: false,
+	},
+});
+defineEmits(["close"]);
 
-const store = useStore()
-const route = useRoute()
+const store = useStore();
+const route = useRoute();
 
-const iframeError = ref(null)
-const iframeEl = ref(null)
-const languageIframeUrl = ref(null)
-const isUnmounted = ref(false)
+const iframeError = ref(null);
+const iframeEl = ref(null);
+const languageIframeUrl = ref(null);
+const isUnmounted = ref(false);
 
 // Template refs
-const livestream = ref(null)
-const janus = ref(null)
+const livestream = ref(null);
+const janus = ref(null);
 
 // Mapped state/getters
-const streamingRoom = computed(() => store.state.streamingRoom)
-const youtubeTransUrl = computed(() => store.state.youtubeTransUrl)
-const autoplay = computed(() => store.getters.autoplay)
+const streamingRoom = computed(() => store.state.streamingRoom);
+const youtubeTransUrl = computed(() => store.state.youtubeTransUrl);
+const autoplay = computed(() => store.getters.autoplay);
 
 const module = computed(() => {
-	if (!props.room) return null
-	return props.room.modules.find(m => ['livestream.native', 'livestream.youtube', 'livestream.iframe', 'call.bigbluebutton', 'call.janus', 'call.zoom'].includes(m.type))
-})
+	if (!props.room) return null;
+	return props.room.modules.find((m) =>
+		[
+			"livestream.native",
+			"livestream.youtube",
+			"livestream.iframe",
+			"call.bigbluebutton",
+			"call.janus",
+			"call.zoom",
+		].includes(m.type)
+	);
+});
 
-const inRoomManager = computed(() => route.name === 'room:manage')
+const inRoomManager = computed(() => route.name === "room:manage");
 
-watch(() => props.background, (value) => {
-	if (!iframeEl.value) return
-	if (value) {
-		iframeEl.value.classList.add('background')
-		iframeEl.value.classList.add('size-tiny')
-	} else {
-		iframeEl.value.classList.remove('background')
-		iframeEl.value.classList.remove('size-tiny')
+watch(
+	() => props.background,
+	(value) => {
+		if (!iframeEl.value) return;
+		if (value) {
+			iframeEl.value.classList.add("background");
+			iframeEl.value.classList.add("size-tiny");
+		} else {
+			iframeEl.value.classList.remove("background");
+			iframeEl.value.classList.remove("size-tiny");
+		}
 	}
-})
+);
 
 watch(module, (value, oldValue) => {
-	if (isEqual(value, oldValue)) return
-	destroyIframe()
-	initializeIframe(false)
-})
+	if (isEqual(value, oldValue)) return;
+	destroyIframe();
+	initializeIframe(false);
+});
+
+watch(
+	() => props.room?.currentStream,
+	(newStream, oldStream) => {
+		// Reload iframe when scheduled stream changes
+		if (!isEqual(newStream, oldStream) && module.value) {
+			destroyIframe();
+			initializeIframe(false);
+		}
+	},
+	{ deep: true }
+);
 
 watch(youtubeTransUrl, (ytUrl) => {
-	if (!props.room) return
+	if (!props.room) return;
 	// Only react for YouTube livestream modules
-	if (module.value?.type !== 'livestream.youtube') return
+	if (module.value?.type !== "livestream.youtube") return;
 
 	// Handle translation: mute main player and create translation audio iframe
 	if (ytUrl) {
 		// Create hidden translation audio iframe first
-		languageIframeUrl.value = getLanguageIframeUrl(ytUrl)
+		languageIframeUrl.value = getLanguageIframeUrl(ytUrl);
 		// Mute the main player using postMessage after a short delay
 		setTimeout(() => {
-			muteYouTubePlayer()
-		}, 500)
+			muteYouTubePlayer();
+		}, 500);
 	} else {
 		// Remove translation audio iframe
-		languageIframeUrl.value = null
+		languageIframeUrl.value = null;
 		// Unmute the main player using postMessage after a short delay
 		setTimeout(() => {
-			unmuteYouTubePlayer()
-		}, 100)
+			unmuteYouTubePlayer();
+		}, 100);
 	}
-})
+});
 
 onMounted(async () => {
-	if (!props.room) return
-	await initializeIframe(false)
-})
+	if (!props.room) return;
+	await initializeIframe(false);
+});
 
 onBeforeUnmount(() => {
-	isUnmounted.value = true
-	iframeEl.value?.remove()
-	if (api.socketState !== 'open') return
+	isUnmounted.value = true;
+	iframeEl.value?.remove();
+	if (api.socketState !== "open") return;
 	// TODO move to store?
-	if (props.room) api.call('room.leave', { room: props.room.id })
-})
+	if (props.room) api.call("room.leave", { room: props.room.id });
+});
 
 function muteYouTubePlayer() {
-	if (!iframeEl.value || !iframeEl.value.contentWindow) return
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
 	try {
-		iframeEl.value.contentWindow.postMessage('{"event":"command","func":"mute","args":""}', '*')
+		iframeEl.value.contentWindow.postMessage(
+			'{"event":"command","func":"mute","args":""}',
+			"*"
+		);
 	} catch (error) {
-		console.error('Failed to mute YouTube player:', error)
+		console.error("Failed to mute YouTube player:", error);
 	}
 }
 
 function unmuteYouTubePlayer() {
-	if (!iframeEl.value || !iframeEl.value.contentWindow) return
+	if (!iframeEl.value || !iframeEl.value.contentWindow) return;
 	try {
-		iframeEl.value.contentWindow.postMessage('{"event":"command","func":"unMute","args":""}', '*')
+		iframeEl.value.contentWindow.postMessage(
+			'{"event":"command","func":"unMute","args":""}',
+			"*"
+		);
 	} catch (error) {
-		console.error('Failed to unmute YouTube player:', error)
+		console.error("Failed to unmute YouTube player:", error);
 	}
 }
 
 async function initializeIframe(mute) {
 	try {
-		if (!module.value) return
-		let iframeUrl
-		let hideIfBackground = false
-		let isYouTube = false
+		if (!module.value) return;
+		let iframeUrl;
+		let hideIfBackground = false;
+		let isYouTube = false;
 		switch (module.value.type) {
-			case 'call.bigbluebutton': {
-				({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }))
-				hideIfBackground = true
-				break
+			case "call.bigbluebutton": {
+				({ url: iframeUrl } = await api.call("bbb.room_url", {
+					room: props.room.id,
+				}));
+				hideIfBackground = true;
+				break;
 			}
-			case 'call.zoom': {
-				({ url: iframeUrl } = await api.call('zoom.room_url', { room: props.room.id }))
-				hideIfBackground = true
-				break
+			case "call.zoom": {
+				({ url: iframeUrl } = await api.call("zoom.room_url", {
+					room: props.room.id,
+				}));
+				hideIfBackground = true;
+				break;
 			}
-			case 'livestream.iframe': {
-				iframeUrl = module.value.config.url
-				break
+			case "livestream.iframe": {
+				// Use scheduled stream URL if available, otherwise fall back to module config
+				if (props.room?.currentStream?.url) {
+					iframeUrl = props.room.currentStream.url;
+				} else {
+					iframeUrl = module.value.config.url;
+				}
+				break;
 			}
-		case 'livestream.youtube': {
-			isYouTube = true
-			// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
-			const ytid = normalizeYoutubeVideoId(module.value.config.ytid)
-			// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
-			if (!ytid) {
-				iframeError.value = new Error('Invalid YouTube video ID')
-				break
+			case "livestream.youtube": {
+				isYouTube = true;
+				// Use scheduled stream URL if available, otherwise fall back to module config
+				let ytid;
+				if (props.room?.currentStream?.url) {
+					// Extract YouTube ID from scheduled stream URL
+					ytid = normalizeYoutubeVideoId(props.room.currentStream.url);
+				} else {
+					// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
+					ytid = normalizeYoutubeVideoId(module.value.config.ytid);
+				}
+				// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
+				if (!ytid) {
+					iframeError.value = new Error("Invalid YouTube video ID");
+					break;
+				}
+				const config = module.value.config;
+				// Smart muting logic to balance autoplay and user control:
+				// - Always mute if already muted (e.g., for language translation)
+				// - Mute for autoplay ONLY if controls are visible (so user can unmute)
+				// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
+				const shouldMute = mute || (autoplay.value && !config.hideControls);
+				iframeUrl = getYoutubeUrl(
+					ytid,
+					autoplay.value,
+					shouldMute,
+					config.hideControls,
+					config.noRelated,
+					config.showinfo,
+					config.disableKb,
+					config.loop,
+					config.modestBranding,
+					config.enablePrivacyEnhancedMode
+				);
+				break;
 			}
-			const config = module.value.config
-			// Smart muting logic to balance autoplay and user control:
-			// - Always mute if already muted (e.g., for language translation)
-			// - Mute for autoplay ONLY if controls are visible (so user can unmute)
-			// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
-			const shouldMute = mute || (autoplay.value && !config.hideControls)
-			iframeUrl = getYoutubeUrl(
-				ytid,
-				autoplay.value,
-				shouldMute,
-				config.hideControls,
-				config.noRelated,
-				config.showinfo,
-				config.disableKb,
-				config.loop,
-				config.modestBranding,
-				config.enablePrivacyEnhancedMode
-			)
-			break
 		}
-	}
-	if (!iframeUrl || isUnmounted.value) return
-	const iframe = document.createElement('iframe')
-	iframe.src = iframeUrl
-	iframe.classList.add('iframe-media-source')
-	if (hideIfBackground) {
-		iframe.classList.add('hide-if-background')
-	}
-	// Add background and size-tiny classes if in background mode
-	if (props.background) {
-		iframe.classList.add('background')
-		iframe.classList.add('size-tiny')
-	}
-	// Set iframe permissions and attributes
-	iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
-	iframe.allowFullscreen = true
-	iframe.setAttribute('allowusermedia', 'true')
-	iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
-	// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
-	// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-	if (isYouTube) {
-		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
-		iframe.id = `youtube-player-${Date.now()}`
-	}
-		const container = document.querySelector('#media-source-iframes')
-		if (!container) return
-		container.appendChild(iframe)
-		iframeEl.value = iframe
+		if (!iframeUrl || isUnmounted.value) return;
+		const iframe = document.createElement("iframe");
+		iframe.src = iframeUrl;
+		iframe.classList.add("iframe-media-source");
+		if (hideIfBackground) {
+			iframe.classList.add("hide-if-background");
+		}
+		// Add background and size-tiny classes if in background mode
+		if (props.background) {
+			iframe.classList.add("background");
+			iframe.classList.add("size-tiny");
+		}
+		// Set iframe permissions and attributes
+		iframe.allow =
+			"screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *" +
+			(autoplay.value ? "; autoplay *" : "");
+		iframe.allowFullscreen = true;
+		iframe.setAttribute("allowusermedia", "true");
+		iframe.setAttribute("allowfullscreen", ""); // iframe.allowfullscreen is not enough in firefox
+		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+		if (isYouTube) {
+			iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+			iframe.id = `youtube-player-${Date.now()}`;
+		}
+		const container = document.querySelector("#media-source-iframes");
+		if (!container) return;
+		container.appendChild(iframe);
+		iframeEl.value = iframe;
 
 		// Wait for iframe to load before sending postMessage commands
 		if (isYouTube) {
 			iframe.onload = () => {
 				// If translation is already selected, mute the main player
 				if (youtubeTransUrl.value) {
-					setTimeout(() => muteYouTubePlayer(), 1000)
+					setTimeout(() => muteYouTubePlayer(), 1000);
 				}
-			}
+			};
 		}
 	} catch (error) {
 		// TODO handle bbb/zoom.join.missing_profile
-		iframeError.value = error
-		console.error(error)
+		iframeError.value = error;
+		console.error(error);
 	}
 }
 
 function destroyIframe() {
-	iframeEl.value?.remove()
-	iframeEl.value = null
+	iframeEl.value?.remove();
+	iframeEl.value = null;
 }
 
 function isPlaying() {
 	if (props.call) {
-		return janus.value?.roomId
+		return janus.value?.roomId;
 	}
-	if (module.value?.type === 'livestream.native') {
-		return livestream.value?.playing && !livestream.value?.offline
+	if (module.value?.type === "livestream.native") {
+		return livestream.value?.playing && !livestream.value?.offline;
 	}
-	if (module.value?.type === 'call.janus') {
-		return janus.value?.roomId
+	if (module.value?.type === "call.janus") {
+		return janus.value?.roomId;
 	}
-	if (module.value?.type === 'call.bigbluebutton') {
-		return !!iframeEl.value
+	if (module.value?.type === "call.bigbluebutton") {
+		return !!iframeEl.value;
 	}
-	if (module.value?.type === 'call.zoom') {
-		return !!iframeEl.value
+	if (module.value?.type === "call.zoom") {
+		return !!iframeEl.value;
 	}
-	return true
+	return true;
 }
 
-
-function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
-	const params = new URLSearchParams()
+function getYoutubeUrl(
+	ytid,
+	autoplayVal,
+	mute,
+	hideControls,
+	noRelated,
+	showinfo,
+	disableKb,
+	loop,
+	modestBranding,
+	enablePrivacyEnhancedMode
+) {
+	const params = new URLSearchParams();
 
 	// Always add autoplay and mute as they control core functionality
-	params.append('autoplay', autoplayVal ? '1' : '0')
-	params.append('mute', mute ? '1' : '0')
+	params.append("autoplay", autoplayVal ? "1" : "0");
+	params.append("mute", mute ? "1" : "0");
 
 	// Enable IFrame API for programmatic control
-	params.append('enablejsapi', '1')
-	params.append('origin', window.location.origin)
+	params.append("enablejsapi", "1");
+	params.append("origin", window.location.origin);
 
 	// Only add optional parameters when explicitly enabled
 	if (hideControls) {
-		params.append('controls', '0')
+		params.append("controls", "0");
 	}
 
 	if (noRelated) {
-		params.append('rel', '0')
+		params.append("rel", "0");
 	}
 
 	if (showinfo) {
-		params.append('showinfo', '0')
+		params.append("showinfo", "0");
 	}
 
 	if (disableKb) {
-		params.append('disablekb', '1')
+		params.append("disablekb", "1");
 	}
 
 	if (loop) {
-		params.append('loop', '1')
+		params.append("loop", "1");
 		// Loop requires playlist parameter to work properly
-		params.append('playlist', ytid)
+		params.append("playlist", ytid);
 	}
 
 	if (modestBranding) {
-		params.append('modestbranding', '1')
+		params.append("modestbranding", "1");
 	}
 
-	const domain = enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
-	return `https://${domain}/embed/${ytid}?${params}`
+	const domain = enablePrivacyEnhancedMode
+		? "www.youtube-nocookie.com"
+		: "www.youtube.com";
+	return `https://${domain}/embed/${ytid}?${params}`;
 }
 
 // Added method to get the language iframe URL
 function getLanguageIframeUrl(languageUrl) {
 	// Checks if the languageUrl is not provided then return null
-	if (!languageUrl) return null
-	const config = module.value?.config || {}
-	const origin = window.location.origin
+	if (!languageUrl) return null;
+	const config = module.value?.config || {};
+	const origin = window.location.origin;
 	const params = new URLSearchParams({
-		enablejsapi: '1',
-		autoplay: '1',
-		mute: '0', // Ensure translation audio is not muted
-		modestbranding: '1',
-		loop: '1',
-		controls: '0',
-		disablekb: '1',
-		rel: '0',
-		showinfo: '0',
+		enablejsapi: "1",
+		autoplay: "1",
+		mute: "0", // Ensure translation audio is not muted
+		modestbranding: "1",
+		loop: "1",
+		controls: "0",
+		disablekb: "1",
+		rel: "0",
+		showinfo: "0",
 		playlist: languageUrl,
 		origin, // Required when using enablejsapi=1 (fixes Error 153)
-	})
+	});
 
-	const domain = config.enablePrivacyEnhancedMode ? 'www.youtube-nocookie.com' : 'www.youtube.com'
-	return `https://${domain}/embed/${languageUrl}?${params}`
+	const domain = config.enablePrivacyEnhancedMode
+		? "www.youtube-nocookie.com"
+		: "www.youtube.com";
+	return `https://${domain}/embed/${languageUrl}?${params}`;
 }
 
 // Expose instance methods (used by parents via template refs)
-defineExpose({ isPlaying })
+defineExpose({ isPlaying });
 </script>
 <style lang="stylus">
 .c-media-source

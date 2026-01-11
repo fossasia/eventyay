@@ -1,3 +1,4 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 
 from eventyay.api.mixins import PretalxSerializer
@@ -23,3 +24,50 @@ class StreamScheduleSerializer(PretalxSerializer):
         )
         read_only_fields = ('room', 'created_at', 'updated_at')
 
+    def validate(self, data):
+        data = super().validate(data)
+
+        start_time = data.get('start_time')
+        end_time = data.get('end_time')
+
+        if self.instance:
+            start_time = start_time or self.instance.start_time
+            end_time = end_time or self.instance.end_time
+
+        if start_time and end_time and end_time <= start_time:
+            raise serializers.ValidationError(
+                {'end_time': _('End time must be after start time.')}
+            )
+
+        room = self.instance.room if self.instance else self.context.get('room')
+        if room and start_time and end_time:
+            overlapping = StreamSchedule.objects.filter(
+                room=room, start_time__lt=end_time, end_time__gt=start_time
+            )
+            if self.instance:
+                overlapping = overlapping.exclude(pk=self.instance.pk)
+
+            if overlapping.exists():
+                raise serializers.ValidationError(
+                    {
+                        '__all__': [
+                            _(
+                                'This stream schedule overlaps with an existing schedule for this room. '
+                                'Please adjust the time range.'
+                            )
+                        ]
+                    }
+                )
+
+        return data
+
+    def create(self, validated_data):
+        instance = StreamSchedule(**validated_data)
+        instance.save(skip_validation=True)
+        return instance
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save(skip_validation=True)
+        return instance
