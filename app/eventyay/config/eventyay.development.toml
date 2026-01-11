@@ -12,7 +12,9 @@ site_url = 'http://localhost:8000'
 # For Docker: 'redis://eventyay-next-redis:6379/0'
 # For local development without Docker: 'redis://localhost:6379/0'
 # Can be overridden with EVY_REDIS_URL environment variable
-redis_url = 'redis://eventyay-next-redis:6379/0'
+# For local development, use localhost
+# Can be overridden with EVY_REDIS_URL environment variable
+redis_url = 'redis://localhost:6379/0'
 
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable
