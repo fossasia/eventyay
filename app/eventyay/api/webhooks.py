@@ -6,6 +6,7 @@ from collections import OrderedDict
 import requests
 from celery.exceptions import MaxRetriesExceededError
 from django.db.models import Exists, OuterRef, Q
+from django.conf import settings
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
@@ -17,6 +18,7 @@ from eventyay.api.signals import register_webhook_events
 from eventyay.base.models import LogEntry
 from eventyay.base.services.tasks import ProfiledTask, TransactionAwareTask
 from eventyay.celery_app import app
+from eventyay.consts import SizeKey
 
 logger = logging.getLogger(__name__)
 _ALL_EVENTS = None
@@ -320,7 +322,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=resp.status_code,
                     payload=json.dumps(payload),
-                    response_body=resp.text[: 1024 * 1024],
+                    response_body=resp.text[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                     success=200 <= resp.status_code <= 299,
                 )
                 if resp.status_code == 410:
@@ -339,7 +341,7 @@ def send_webhook(self, logentry_id: int, action_type: str, webhook_id: int):
                     execution_time=time.time() - t,
                     return_code=0,
                     payload=json.dumps(payload),
-                    response_body=str(e)[: 1024 * 1024],
+                    response_body=str(e)[: settings.MAX_SIZE_CONFIG[SizeKey.RESPONSE_SIZE_WEBHOOK]],
                 )
                 raise self.retry(
                     countdown=2 ** (self.request.retries * 2)
