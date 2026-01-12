@@ -133,11 +133,11 @@
                 <div class="header-wrapper">
                     <div id="header-tabs">
                         {% block header_tabs %}{% endblock header_tabs %}
-                    	<div class="header-row-right">
-                    	    {% block header_right %}
-                    	    	{% include "common/fragment_header_user.html" with current_event=current_event %}
-                    	    {% endblock header_right %}
-						</div>
+                        <div class="header-row-right">
+                            {% block header_right %}
+                                {% include "common/fragment_header_user.html" with current_event=current_event %}
+                            {% endblock header_right %}
+                        </div>
                     </div>
                 </div>
             </header>
