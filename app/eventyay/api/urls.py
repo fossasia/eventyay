@@ -33,6 +33,7 @@ from .views import (
     voucher,
     waitinglist,
     webhooks,
+    event_message,
 )
 from .views.stripe import stripe_webhook_view
 
@@ -93,6 +94,7 @@ event_router.register('tags', submission.TagViewSet, basename='tag')
 event_router.register('submission-types', submission.SubmissionTypeViewSet, basename='submission_type')
 event_router.register('tracks', submission.TrackViewSet, basename='track')
 event_router.register('mail-templates', mail.MailTemplateViewSet, basename='mail_template')
+event_router.register("messages", event_message.EventMessageViewSet, basename="event-messages")
 event_router.register('access-codes', access_code.SubmitterAccessCodeViewSet, basename='access_code')
 event_router.register('speakers', speaker.SpeakerViewSet, basename='speaker')
 event_router.register('reviews', review.ReviewViewSet, basename='review')

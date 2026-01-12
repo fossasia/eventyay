@@ -1,23 +1,24 @@
 import uuid
+from django.conf import settings
 from django.db import models
 
 
 class EventMessage(models.Model):
     class States(models.TextChoices):
-        DRAFT = "draft"
-        QUEUED = "queued"
-        SENDING = "sending"
-        SENT = "sent"
+        DRAFT = "draft", "Draft"
+        QUEUED = "queued", "Queued"
+        SENDING = "sending", "Sending"
+        SENT = "sent", "Sent"
 
     class Audiences(models.TextChoices):
-        ATTENDEES = "attendees"
-        SPEAKERS = "speakers"
-        STAFF = "staff"
-        ALL = "all"
+        ATTENDEES = "attendees", "Attendees"
+        SPEAKERS = "speakers", "Speakers"
+        STAFF = "staff", "Staff"
+        ALL = "all", "All"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     event = models.ForeignKey(
-        "Event",
+        "base.Event",
         on_delete=models.CASCADE,
         related_name="messages",
     )
@@ -34,12 +35,19 @@ class EventMessage(models.Model):
     scheduled_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["event"]),
+            models.Index(fields=["state"]),
+            models.Index(fields=["scheduled_at"]),
+        ]
+
 
 class EventMessageDelivery(models.Model):
     class States(models.TextChoices):
-        PENDING = "pending"
-        SENT = "sent"
-        FAILED = "failed"
+        PENDING = "pending", "Pending"
+        SENT = "sent", "Sent"
+        FAILED = "failed", "Failed"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     message = models.ForeignKey(
@@ -49,7 +57,7 @@ class EventMessageDelivery(models.Model):
     )
 
     user = models.ForeignKey(
-        "User",
+        settings.AUTH_USER_MODEL,
         null=True,
         blank=True,
         on_delete=models.SET_NULL,
@@ -63,3 +71,13 @@ class EventMessageDelivery(models.Model):
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.TextField(blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = [
+            ("message", "email"),
+        ]
+        indexes = [
+            models.Index(fields=["message"]),
+            models.Index(fields=["state"]),
+        ]
+
