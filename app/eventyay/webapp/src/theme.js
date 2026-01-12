@@ -94,6 +94,12 @@ function updateThemeVariables() {
 	for (const [key, value] of Object.entries(colors)) {
 		themeVariables[`--clr-${kebabCase(key)}`] = value.string()
 	}
+
+	// Match shared (server-rendered) dropdown tokens for consistent UI.
+	themeVariables['--size-border-radius'] = '0.25rem'
+	themeVariables['--shadow-lightest'] = '0 1px 2px rgb(0 0 0 / 0.24)'
+	themeVariables['--shadow-lighter'] = '0 1px 3px rgb(0 0 0 / 0.12), var(--shadow-lightest)'
+	themeVariables['--shadow-light'] = '0 0 6px 1px rgb(0 0 0 / 0.1), var(--shadow-lighter)'
 }
 
 function populateColorObjects(colorValues = {}) {
