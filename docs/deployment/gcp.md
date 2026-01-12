@@ -43,6 +43,14 @@ This guide outlines how to deploy Eventyay to [Google Cloud Run](https://cloud.g
 
     This will deploy both the `eventyay-next-web` and `eventyay-next-worker` services.
 
+    By default, Cloud Run services are private. To allow public access to the website:
+
+    ```bash
+    gcloud run services add-iam-policy-binding eventyay-next-web \
+      --member="allUsers" \
+      --role="roles/run.invoker"
+    ```
+
     _Note_: The Worker service is configured with `minScale: 1` and CPU throttling disabled to ensure it runs continuously for background tasks.
 
 ## Static Assets

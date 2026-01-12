@@ -22,7 +22,7 @@ spec:
         - name: EVY_RUNNING_ENVIRONMENT
           value: production
         - name: EVY_ALLOWED_HOSTS
-          value: "*"
+          value: '["*"]'
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
