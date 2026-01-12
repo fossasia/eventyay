@@ -6,6 +6,7 @@
 {% load safelink %}
 {% load rich_text %}
 {% load compress %}
+{% load presale_locale %}
 
 {% block container_width %} presale-container{% endblock %}
 
@@ -13,7 +14,7 @@
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block pagetitle %}{{ event.name }}{% endblock %}
+    {% block pagetitle %}{{ event.name|event_localize }}{% endblock %}
 {% endblock %}
 
 {% block custom_header %}

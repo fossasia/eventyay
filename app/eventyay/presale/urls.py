@@ -262,6 +262,11 @@ locale_patterns = [
         eventyay.presale.views.locale.LocaleSet.as_view(),
         name='locale.set',
     ),
+    path(
+        'locale/event',
+        eventyay.presale.views.locale.EventLocaleSet.as_view(),
+        name='locale.event',
+    ),
     path('robots.txt', eventyay.presale.views.robots.robots_txt, name='robots.txt'),
     path(
         'browserconfig.xml',
