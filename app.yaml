@@ -13,7 +13,7 @@ services:
   - key: EVY_SECRET_KEY
     type: SECRET
   - key: EVY_ALLOWED_HOSTS
-    value: "${APP_DOMAIN}"
+    value: '["${APP_DOMAIN}"]'
   - key: DATABASE_URL
     value: ${eventyay-db.DATABASE_URL}
   - key: REDIS_URL

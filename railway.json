@@ -19,7 +19,7 @@
           "description": "Secret key for Django",
           "generator": "RANDOM"
         },
-        "EVY_ALLOWED_HOSTS": "*",
+        "EVY_ALLOWED_HOSTS": "[\"*\"]",
         "DATABASE_URL": {
           "description": "PostgreSQL Connection URL"
         },

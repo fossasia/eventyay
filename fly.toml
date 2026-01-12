@@ -9,6 +9,7 @@ primary_region = "iad"
 [env]
   PORT = "8000"
   EVY_RUNNING_ENVIRONMENT = "production"
+  EVY_ALLOWED_HOSTS = '["*"]'
 
 # Define process groups
 [processes]

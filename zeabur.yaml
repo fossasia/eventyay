@@ -11,7 +11,7 @@ services:
         type: http
     env:
       EVY_RUNNING_ENVIRONMENT: production
-      EVY_ALLOWED_HOSTS: "*"
+      EVY_ALLOWED_HOSTS: '["*"]'
       # Zeabur automatically injects DATABASE_URL if Postgres service is present
       # Zeabur automatically injects REDIS_URL if Redis service is present
 
