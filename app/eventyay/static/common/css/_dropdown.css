@@ -108,49 +108,6 @@ details.dropdown .dropdown-content {
     }
   }
 
-  #locale-dropdown .language-columns {
-	max-height: 300px;
-	max-width: 520px;
-	overflow-y: auto;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(160px, 1fr));
-    border-top: 1px solid var(--color-border);
-  }
-
-  #locale-dropdown .language-column {
-	max-height: 300px;
-	max-width: 520px;
-	overflow-y: auto;
-    background: #fff;
-    border-right: 1px solid var(--color-border);
-    &:last-child {
-      border-right: none;
-    }
-
-    .dropdown-heading {
-      margin: 0;
-      padding: 6px 12px;
-      font-weight: 600;
-      color: var(--color-grey);
-      background: var(--color-grey-lightest);
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .dropdown-item {
-      background: #fff;
-      color: var(--color-grey-dark);
-      border-radius: 0;
-
-      &.active {
-        background: var(--color-primary);
-        color: #fff;
-      }
-
-      &:hover {
-        background: var(--color-primary-lighter);
-      }
-    }
-  }
   .dropdown-content-w {
     top: 0;
     right: 100%;
@@ -502,6 +459,51 @@ details.dropdown .dropdown-content-se::before {
 details.dropdown .dropdown-content-se::after {
   top: -14px;
   left: 10px;
+}
+
+#locale-dropdown .language-columns {
+  max-width: 440px;
+  max-height: 350px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  border-top: 1px solid var(--color-border, #ced4da);
+}
+
+#locale-dropdown .language-column {
+  max-width: 440px;
+  max-height: 350px;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid var(--color-border, #ced4da);
+}
+
+#locale-dropdown .language-column:last-child {
+  border-right: none;
+}
+
+#locale-dropdown .language-column .dropdown-heading {
+  margin: 0;
+  padding: 6px 12px;
+  font-weight: 600;
+  color: var(--color-grey, #6c757d);
+  background: var(--color-grey-lightest, #f8f9fa);
+  border-bottom: 1px solid var(--color-border, #ced4da);
+}
+
+#locale-dropdown .language-column .dropdown-item {
+  background: #fff;
+  color: var(--color-grey-dark, #495057);
+  border-radius: 0;
+}
+
+#locale-dropdown .language-column .dropdown-item.active {
+  background: var(--color-primary, #2185d0);
+  color: #fff;
+}
+
+#locale-dropdown .language-column .dropdown-item:hover {
+  background: var(--color-primary-lighter, #d9ebf9);
 }
 
 .navbar-top-links #profile-dropdown,
