@@ -948,6 +948,19 @@ the eventyay team"""
         self.token_id = None
         self.show_publicly = False
         self.profile = {}
+
+        # Anonymize user data to prevent re-login and invalidate session
+        self.email = f"deleted_{uuid.uuid4()}@localhost"
+        self.fullname = "Deleted User"
+        self.wikimedia_username = None
+        
+        # Delete social accounts to prevent automatic re-association
+        try:
+            from allauth.socialaccount.models import SocialAccount
+            self.socialaccount_set.all().delete()
+        except ImportError:
+            pass
+
         self.save()
 
     def serialize_public(
