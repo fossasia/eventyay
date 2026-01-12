@@ -2,15 +2,15 @@
   "name": "webcheckin",
   "version": "0.0.0",
   "private": true,
-  "scripts": {},
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
   "dependencies": {
-    "@babel/core": "^7.28.6",
-    "@babel/preset-env": "^7.28.6",
-    "@rollup/plugin-babel": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^13.3.0",
-    "vue": "^2.7.10",
-    "rollup": "^2.79.2",
-    "rollup-plugin-vue": "<6.0.0",
-    "vue-template-compiler": "^2.7.10"
+    "vue": "^3.5.26"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^5.4.14"
   }
 }

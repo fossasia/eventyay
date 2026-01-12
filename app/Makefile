@@ -31,6 +31,7 @@ npminstall:
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
 	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build:wc --prefix=eventyay/frontend/schedule
 	npm ci --prefix=eventyay/frontend/webcheckin-bundler
+	OUT_DIR=$(shell pwd)/eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/dist/webcheckin npm run build --prefix=eventyay/frontend/webcheckin-bundler
 
 webappbuild:
 	npm ci --prefix=eventyay/webapp

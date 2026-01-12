@@ -1071,7 +1071,7 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 
 COMPRESS_PRECOMPILERS = (
     ('text/x-scss', 'django_libsass.SassCompiler'),
-    ('text/vue', 'eventyay.helpers.compressor.VueCompiler'),
+    # Vue SFC compilation for webcheckin is handled by Vite during the frontend build.
     # This is to help Django-Compressor minify 'module' type JS files.
     # The actual job is done by esbuild. In the JS code, we can use "import" statements,
     # but only with relative import paths (like `import Alpine from '../alpinejs.mjs'`).
