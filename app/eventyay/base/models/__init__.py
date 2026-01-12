@@ -112,6 +112,7 @@ from .turn import TurnServer
 from .type import SubmissionType
 from .vouchers import InvoiceVoucher, Voucher
 from .waitinglist import WaitingListEntry
+from .event_message import EventMessage, EventMessageDelivery
 
 __all__ = [
     "AbstractPosition",
