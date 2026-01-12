@@ -13,7 +13,7 @@ spec:
         run.googleapis.com/cpu-throttling: "false"
     spec:
       containers:
-      - image: gcr.io/striking-effort-475914-v5/eventyay-next
+      - image: gcr.io/YOUR_PROJECT_ID/eventyay-next
         command: ["celery"]
         args: ["-A", "eventyay", "worker", "-l", "info"]
         env:
