@@ -40,6 +40,7 @@ class EventMessage(models.Model):
             models.Index(fields=["event"]),
             models.Index(fields=["state"]),
             models.Index(fields=["scheduled_at"]),
+            models.Index(fields=["event","-created_at"]),
         ]
 
 

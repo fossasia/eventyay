@@ -16,4 +16,4 @@ class EventMessageSerializer(serializers.ModelSerializer):
             "scheduled_at",
             "created_at",
         )
-        read_only_fields = ("id", "created_at", "state")
+        read_only_fields = ("id", "event", "created_at")
