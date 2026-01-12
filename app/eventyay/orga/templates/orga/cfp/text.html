@@ -85,15 +85,14 @@
                         <i class="fa fa-question-circle-o text-info"></i>
                     </span>
                 </div></legend>
-                
-            <section id="session-information">
-                <h3>{% translate "Session Information" %}</h3>
                 <dialog class="info-dialog" id="proposal-info-dialog">
                     <div class="alert alert-info"><span>
                         {% translate "Select which information should be requested and/or required during CfP proposal." %}
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
+                
+                <h3 class="offset-md-1">{% translate "Session Information" %}</h3>
                 <div class="table-responsive-sm offset-md-3"><table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -168,9 +167,8 @@
                         </tr>
                     </tbody>
                 </table></div>
-            </section>
-            <section id="speaker-information">
-                <h3>{% translate "Speaker Information" %}</h3>
+
+                <h3 class="offset-md-1">{% translate "Speaker Profile" %}</h3>
                 <div class="table-responsive-sm offset-md-3"><table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -213,7 +211,6 @@
                         </tr>
                     </tbody>
                 </table></div>
-            </section>
             </fieldset>
         </section>
 
