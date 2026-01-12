@@ -949,17 +949,15 @@ the eventyay team"""
         self.show_publicly = False
         self.profile = {}
 
-        # Anonymize user data to prevent re-login and invalidate session
+        # Anonymize user data to prevent re-login via reused credentials;
+        # session/token invalidation is handled by the authentication/session layer
         self.email = f"deleted_{uuid.uuid4()}@localhost"
-        self.fullname = "Deleted User"
+        self.fullname = str(_("Deleted User"))
         self.wikimedia_username = None
         
         # Delete social accounts to prevent automatic re-association
-        try:
-            from allauth.socialaccount.models import SocialAccount
+        if hasattr(self, "socialaccount_set"):
             self.socialaccount_set.all().delete()
-        except ImportError:
-            pass
 
         self.save()
 

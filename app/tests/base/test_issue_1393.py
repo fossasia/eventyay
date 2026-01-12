@@ -29,7 +29,7 @@ def test_soft_delete_anonymization():
     # Verify Anonymization
     assert user.deleted is True
     assert "deleted_" in user.email
-    assert user.fullname == "Deleted User"
+    assert user.fullname == "Deleted User" # This should still pass if locale is EN
     assert user.wikimedia_username is None
     
     # Verify SocialAccount deletion
