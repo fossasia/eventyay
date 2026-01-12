@@ -58,6 +58,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
 )
 from eventyay.base.templatetags.rich_text import rich_text
+from eventyay.consts import SizeKey
 from eventyay.control.forms import ExtFileField, SplitDateTimeField
 from eventyay.helpers.countries import CachedCountries
 from eventyay.helpers.escapejson import escapejson_attr
@@ -624,7 +625,7 @@ class BaseQuestionsForm(forms.Form):
                         '.tif',
                         '.tiff',
                     ),
-                    max_size=10 * 1024 * 1024,
+                    max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_QUESTION],
                 )
             elif q.type == Question.TYPE_DATE:
                 attrs = {}
