@@ -1,0 +1,40 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: eventyay-next-web
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "0"
+        autoscaling.knative.dev/maxScale: "10"
+    spec:
+      containers:
+      - image: gcr.io/striking-effort-475914-v5/eventyay-next
+        ports:
+        - containerPort: 8000
+        command: ["gunicorn"]
+        args: ["eventyay.config.wsgi:application", "--bind", "0.0.0.0:8000"]
+        env:
+        - name: EVY_RUNNING_ENVIRONMENT
+          value: production
+        - name: EVY_ALLOWED_HOSTS
+          value: "*"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-database-url
+              key: latest
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-redis-url
+              key: latest
+        - name: EVY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-secret-key
+              key: latest

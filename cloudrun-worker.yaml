@@ -1,0 +1,36 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: eventyay-next-worker
+  annotations:
+    run.googleapis.com/ingress: internal
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "5"
+        run.googleapis.com/cpu-throttling: "false"
+    spec:
+      containers:
+      - image: gcr.io/striking-effort-475914-v5/eventyay-next
+        command: ["celery"]
+        args: ["-A", "eventyay", "worker", "-l", "info"]
+        env:
+        - name: EVY_RUNNING_ENVIRONMENT
+          value: production
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-database-url
+              key: latest
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-redis-url
+              key: latest
+        - name: EVY_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: eventyay-secret-key
+              key: latest

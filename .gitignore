@@ -1,4 +1,6 @@
-env/
+venv*
+cloudbuild.yaml
+
 .venv
 .coverage
 htmlcov/

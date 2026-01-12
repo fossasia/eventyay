@@ -1,6 +1,6 @@
 # Deploying Eventyay to Google Cloud Run
 
-This guide outlines how to deploy Eventyay to [Google Cloud Run](https://cloud.google.com/run) using the provided `cloudrun.yaml` configuration.
+This guide outlines how to deploy Eventyay to [Google Cloud Run](https://cloud.google.com/run) using the provided `cloudrun.yaml` configuration (split into `cloudrun-web.yaml` and `cloudrun-worker.yaml`).
 
 ## Prerequisites
 
@@ -37,7 +37,8 @@ This guide outlines how to deploy Eventyay to [Google Cloud Run](https://cloud.g
 4.  **Deploy Services**:
 
     ```bash
-    gcloud run services replace cloudrun.yaml
+    gcloud run services replace cloudrun-web.yaml
+    gcloud run services replace cloudrun-worker.yaml
     ```
 
     This will deploy both the `eventyay-next-web` and `eventyay-next-worker` services.
