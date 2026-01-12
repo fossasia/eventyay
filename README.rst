@@ -249,6 +249,28 @@ TOML has dedicated syntax for lists, making it easier to read and write such con
 Due to this reason, overriding configuration via environment variables are not encouraged. The environment variables only have one data type: string!
 
 
+
+One-Click Deployment
+--------------------
+
+Deploy Eventyay Next to your favorite cloud provider with a single click:
+
+.. image:: https://render.com/images/deploy-to-render-button.svg
+   :target: https://render.com/deploy?repo=https://github.com/fossasia/eventyay
+   :alt: Deploy to Render
+
+.. image:: https://railway.app/button.svg
+   :target: https://railway.app/template/new?template=https://github.com/fossasia/eventyay
+   :alt: Deploy to Railway
+
+.. image:: https://zeabur.com/button.svg
+   :target: https://zeabur.com/templates/https://github.com/fossasia/eventyay
+   :alt: Deploy to Zeabur
+
+.. image:: https://www.deploytodo.com/do-btn-blue.svg
+   :target: https://cloud.digitalocean.com/apps/new?repo=https://github.com/fossasia/eventyay/tree/main
+   :alt: Deploy to DigitalOcean
+
 Deployment
 ----------
 

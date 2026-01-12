@@ -1,0 +1,142 @@
+services:
+  # Web Service (Django)
+  - type: web
+    name: eventyay-next-web
+    runtime: docker
+    dockerContext: ./app
+    plan: starter
+    healthCheckPath: /
+    envVars:
+      - key: EVY_SECRET_KEY
+        generateValue: true
+      - key: EVY_RUNNING_ENVIRONMENT
+        value: production
+      - key: EVY_ALLOWED_HOSTS
+        value: "*"
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: eventyay-next-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: eventyay-next-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: eventyay-next-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: eventyay-next-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: eventyay-next-db
+          property: password
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: eventyay-next-redis
+          property: connectionString
+      # Add other necessary env vars here
+
+  # Worker Service (Celery)
+  - type: worker
+    name: eventyay-next-worker
+    runtime: docker
+    dockerContext: ./app
+    dockerCommand: celery -A eventyay worker -l info
+    envVars:
+      - key: EVY_SECRET_KEY
+        fromService:
+          type: web
+          name: eventyay-next-web
+          envVarKey: EVY_SECRET_KEY
+      - key: EVY_RUNNING_ENVIRONMENT
+        value: production
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: eventyay-next-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: eventyay-next-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: eventyay-next-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: eventyay-next-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: eventyay-next-db
+          property: password
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: eventyay-next-redis
+          property: connectionString
+
+  # Scheduler Service (Celery Beat)
+  - type: worker
+    name: eventyay-next-scheduler
+    runtime: docker
+    dockerContext: ./app
+    dockerCommand: celery -A eventyay beat -l info
+    envVars:
+      - key: EVY_SECRET_KEY
+        fromService:
+          type: web
+          name: eventyay-next-web
+          envVarKey: EVY_SECRET_KEY
+      - key: EVY_RUNNING_ENVIRONMENT
+        value: production
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: eventyay-next-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: eventyay-next-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: eventyay-next-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: eventyay-next-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: eventyay-next-db
+          property: password
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: eventyay-next-redis
+          property: connectionString
+
+  # Frontend (Static Site)
+  - type: web
+    name: eventyay-next-frontend
+    runtime: static
+    rootDir: app/eventyay/webapp
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /**
+        destination: /index.html
+
+databases:
+  - name: eventyay-next-db
+    databaseName: eventyay_db
+    user: eventyay_user
+    plan: starter
+
+  - name: eventyay-next-redis
+    plan: starter

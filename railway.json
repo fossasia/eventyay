@@ -1,0 +1,100 @@
+{
+  "name": "Eventyay Next",
+  "icon": "https://raw.githubusercontent.com/fossasia/eventyay/dev/res/logo.png",
+  "description": "Open Source Event Management Tool.",
+  "keywords": ["django", "python", "vue", "celery", "event"],
+  "services": [
+    {
+      "name": "Web",
+      "icon": "https://raw.githubusercontent.com/fossasia/eventyay/dev/res/logo.png",
+      "code": {
+        "root": ".",
+        "dockerfile": "app/Dockerfile",
+        "context": "."
+      },
+      "startCommand": "gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:$PORT",
+      "env": {
+        "EVY_RUNNING_ENVIRONMENT": "production",
+        "EVY_SECRET_KEY": {
+          "description": "Secret key for Django",
+          "generator": "RANDOM"
+        },
+        "EVY_ALLOWED_HOSTS": "*",
+        "DATABASE_URL": {
+          "description": "PostgreSQL Connection URL"
+        },
+        "REDIS_URL": {
+          "description": "Redis Connection URL"
+        }
+      },
+      "networking": {
+        "public": true,
+        "healthcheckPath": "/"
+      }
+    },
+    {
+      "name": "Worker",
+      "code": {
+        "root": ".",
+        "dockerfile": "app/Dockerfile",
+        "context": "."
+      },
+      "startCommand": "celery -A eventyay worker -l info",
+      "env": {
+        "EVY_RUNNING_ENVIRONMENT": "production",
+        "EVY_SECRET_KEY": {
+          "description": "Secret key for Django (Must match Web)",
+          "value": "${Web.EVY_SECRET_KEY}"
+        },
+        "DATABASE_URL": {
+          "value": "${Web.DATABASE_URL}"
+        },
+        "REDIS_URL": {
+          "value": "${Web.REDIS_URL}"
+        }
+      }
+    },
+    {
+      "name": "Scheduler",
+      "code": {
+        "root": ".",
+        "dockerfile": "app/Dockerfile",
+        "context": "."
+      },
+      "startCommand": "celery -A eventyay beat -l info",
+      "env": {
+        "EVY_RUNNING_ENVIRONMENT": "production",
+        "EVY_SECRET_KEY": {
+          "value": "${Web.EVY_SECRET_KEY}"
+        },
+        "DATABASE_URL": {
+          "value": "${Web.DATABASE_URL}"
+        },
+        "REDIS_URL": {
+          "value": "${Web.REDIS_URL}"
+        }
+      }
+    },
+    {
+      "name": "Frontend",
+      "code": {
+        "root": "app/eventyay/webapp"
+      },
+      "buildCommand": "npm install && npm run build",
+      "startCommand": "npm run preview -- --port $PORT --host 0.0.0.0",
+      "networking": {
+        "public": true
+      }
+    }
+  ],
+  "databases": [
+    {
+      "name": "Postgres",
+      "type": "POSTGRES"
+    },
+    {
+      "name": "Redis",
+      "type": "REDIS"
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+# fly.toml app configuration file generated for eventyay-next on 2025-01-01
+
+app = "eventyay-next"
+primary_region = "iad"
+
+[build]
+  dockerfile = "app/Dockerfile"
+
+[env]
+  PORT = "8000"
+  EVY_RUNNING_ENVIRONMENT = "production"
+
+# Define process groups
+[processes]
+  web = "gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000"
+  worker = "celery -A eventyay worker -l info"
+  scheduler = "celery -A eventyay beat -l info"
+
+# Web Service Configuration
+[[services]]
+  processes = ["web"]
+  protocol = "tcp"
+  internal_port = 8000
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.http_checks]]
+    interval = "10s"
+    timeout = "2s"
+    grace_period = "5s"
+    restart_limit = 0
+    method = "get"
+    path = "/"
+    protocol = "http"
+    tls_skip_verify = false
+
+# Mounts for persistent storage if needed (optional for stateless web, but needed for media)
+# [[mounts]]
+#   source = "eventyay_data"
+#   destination = "/home/app/web/eventyay/data"
+#   processes = ["web"]
+
+# Database and Redis are managed externally or via Fly Postgres/Redis
