@@ -26,4 +26,10 @@
         {{ form.availabilities.as_field_group }}
     {% endif %}
 
+    {% for field in form %}
+        {% if field.name|slice:":9" == "question_" %}
+            {{ field.as_field_group }}
+        {% endif %}
+    {% endfor %}
+
 {% endblock inner %}
