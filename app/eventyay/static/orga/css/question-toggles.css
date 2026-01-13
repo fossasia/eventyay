@@ -1,10 +1,80 @@
 /**
  * Toggle styles for CfP Custom Fields page
  * Issue #1005: on/off buttons for Required, Active and Public
- * Design matches cbum-dev's reference implementation
+ * Design: Colorful dropdowns for required status
  */
 
-/* Required status button - single button with state-based styling */
+/* Required status dropdown - colorful select with state-based styling */
+.required-status-dropdown {
+    padding: 4px 24px 4px 8px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 95px;
+    text-align: center;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    background-size: 10px;
+}
+
+/* Keyboard focus styles */
+.required-status-dropdown:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.required-status-dropdown:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+/* Color styles based on selected value */
+.required-status-dropdown[data-current="required"],
+.required-status-dropdown option[value="required"] {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+.required-status-dropdown[data-current="optional"],
+.required-status-dropdown option[value="optional"] {
+    background-color: #fff;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.required-status-dropdown[data-current="after_deadline"],
+.required-status-dropdown option[value="after_deadline"] {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+}
+
+/* Disabled state for dropdown */
+.required-status-dropdown:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading state for dropdown */
+.required-status-dropdown.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Hover effects for dropdown */
+.required-status-dropdown:not(:disabled):hover {
+    filter: brightness(0.95);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Legacy button styles (if any remain on form page) */
 .required-status {
     display: inline-block;
     padding: 2px 8px;
@@ -13,45 +83,6 @@
     font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
-    min-width: 60px;
-    text-align: center;
-    /* Make it keyboard accessible */
-    -webkit-user-select: none;
-    user-select: none;
-}
-
-/* Keyboard focus styles */
-.required-status:focus {
-    outline: 2px solid #007bff;
-    outline-offset: 2px;
-}
-
-.required-status:focus:not(:focus-visible) {
-    outline: none;
-}
-
-.required-status:focus-visible {
-    outline: 2px solid #007bff;
-    outline-offset: 2px;
-}
-
-.required-status[data-state="required"] {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: #fff;
-}
-
-.required-status[data-state="optional"] {
-    background-color: #fff;
-    border-color: #6c757d;
-    color: #6c757d;
-}
-
-.required-status[data-state="after_deadline"] {
-    background-color: #fff;
-    border-color: #dc3545;
-    color: #dc3545;
 }
 
 .required-status:hover {

@@ -24,16 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initToggles() {
-    // Required status buttons - cycle through states on click
-    document.querySelectorAll('.required-status:not([data-field-id])').forEach(btn => {
-        btn.addEventListener('click', handleRequiredClick);
-        // Add keyboard accessibility
-        btn.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleRequiredClick(e);
-            }
-        });
+    // Required status dropdowns - change event updates state
+    document.querySelectorAll('.required-status-dropdown:not([data-field-id])').forEach(dropdown => {
+        dropdown.addEventListener('change', handleRequiredDropdownChange);
     });
 
     // Binary toggles (active, is_public) - select only those without data-field-id (which are for form page)
@@ -43,31 +36,38 @@ function initToggles() {
 }
 
 /* AJAX Logic for List Page (list.html) */
-async function handleRequiredClick(e) {
-    const btn = e.target.closest('.required-status');
-    const questionId = btn.dataset.questionId;
-    const currentState = btn.dataset.state;
-    const previousState = currentState; // Store for error recovery
+async function handleRequiredDropdownChange(e) {
+    const dropdown = e.target;
+    const questionId = dropdown.dataset.questionId;
+    const newState = dropdown.value;
+    const previousState = dropdown.dataset.current; // Store for error recovery
 
-    // Cycle to next state
-    const currentIdx = REQUIRED_STATES_ARRAY.indexOf(currentState);
-    const nextState = REQUIRED_STATES_ARRAY[(currentIdx + 1) % REQUIRED_STATES_ARRAY.length];
+    console.log('Changing required state:', {
+        questionId,
+        previousState,
+        newState
+    });
 
     // Optimistic UI update
-    btn.dataset.state = nextState;
-    btn.textContent = REQUIRED_LABELS[nextState];
-    btn.classList.add('loading');
+    dropdown.dataset.current = newState;
+    dropdown.classList.add('loading');
 
     try {
-        await updateField(questionId, 'question_required', nextState);
+        await updateField(questionId, 'question_required', newState);
     } catch (err) {
-        console.error('Required toggle failed:', err);
+        console.error('Required dropdown change failed:', {
+            questionId,
+            error: err.message,
+            stack: err.stack,
+            previousState,
+            newState
+        });
         // Revert to previous state on error
-        btn.dataset.state = previousState;
-        btn.textContent = REQUIRED_LABELS[previousState];
+        dropdown.dataset.current = previousState;
+        dropdown.value = previousState;
         showError('Failed to update required status. Please try again.');
     } finally {
-        btn.classList.remove('loading');
+        dropdown.classList.remove('loading');
     }
 }
 
@@ -79,12 +79,26 @@ async function handleBinaryToggle(e) {
     const value = input.checked;
     const previousValue = !value; // Store for error recovery
 
+    console.log('Toggling binary field:', {
+        questionId,
+        field,
+        value,
+        previousValue
+    });
+
     toggle.classList.add('loading');
 
     try {
         await updateField(questionId, field, value);
     } catch (err) {
-        console.error('Toggle failed:', err);
+        console.error('Toggle failed:', {
+            questionId,
+            field,
+            error: err.message,
+            stack: err.stack,
+            value,
+            previousValue
+        });
         // Revert checkbox state on error
         input.checked = previousValue;
         showError('Failed to update field. Please try again.');
@@ -98,15 +112,11 @@ async function updateField(questionId, field, value) {
         document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
     
     if (!csrfToken) {
+        console.error('CSRF token is missing. Aborting request for question:', questionId);
+        alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
         throw new Error('CSRF token not found. Please refresh the page and try again.');
     }
-
-    if (!csrfToken) {
-        console.error('CSRF token is missing. Aborting request for question:', questionId);
-        // Basic user feedback; can be replaced with a nicer UI mechanism if available.
-        alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
-        throw new Error('Missing CSRF token');
-    }
+    
     const response = await fetch(`${questionId}/toggle/`, {
         method: 'POST',
         headers: {
@@ -118,10 +128,21 @@ async function updateField(questionId, field, value) {
 
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorMessage = errorData.error || `HTTP ${response.status}`;
+        console.error('Toggle API error:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorMessage,
+            field: field,
+            value: value,
+            questionId: questionId
+        });
+        throw new Error(errorMessage);
     }
 
-    return response.json();
+    const result = await response.json();
+    console.log('Toggle successful:', result);
+    return result;
 }
 
 /**
@@ -162,34 +183,23 @@ function initFormPageToggles() {
     // Function to update visual state based on hidden input value
     function updateVisualState(fieldId, value) {
         // Use getElementById for more secure selection
-        const requiredBtn = document.querySelector(`.required-status[data-field-id="${CSS.escape(fieldId)}"]`);
+        const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
         const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${CSS.escape(fieldId)}"] input`);
 
-        if (!requiredBtn || !toggleInput) return;
+        if (!requiredDropdown || !toggleInput) return;
 
         if (value === 'do_not_ask') {
             toggleInput.checked = false;
-            requiredBtn.style.opacity = '0.5';
-            requiredBtn.style.pointerEvents = 'none';
-            requiredBtn.setAttribute('aria-disabled', 'true');
+            requiredDropdown.disabled = true;
+            requiredDropdown.style.opacity = '0.5';
         } else {
             toggleInput.checked = true;
-            requiredBtn.style.opacity = '1';
-            requiredBtn.style.pointerEvents = 'auto';
-            requiredBtn.removeAttribute('aria-disabled');
-
-            // Handle all three states: optional, required, after_deadline
-            const state = value;
-            requiredBtn.dataset.state = state;
+            requiredDropdown.disabled = false;
+            requiredDropdown.style.opacity = '1';
             
-            // Set button text based on state
-            if (state === REQUIRED_STATES.REQUIRED) {
-                requiredBtn.textContent = 'Required';
-            } else if (state === REQUIRED_STATES.AFTER_DEADLINE) {
-                requiredBtn.textContent = 'Deadline';
-            } else {
-                requiredBtn.textContent = 'Optional';
-            }
+            // Update dropdown value and data-current attribute for color
+            requiredDropdown.value = value;
+            requiredDropdown.dataset.current = value;
         }
     }
 
@@ -198,35 +208,22 @@ function initFormPageToggles() {
         updateVisualState(input.id, input.value);
     });
 
-    // Handle Required status click (Form Page)
-    document.querySelectorAll('.required-status[data-field-id]').forEach(btn => {
-        btn.addEventListener('click', function () {
-            if (this.getAttribute('aria-disabled') === 'true') return;
-            
+    // Handle Required status dropdown change (Form Page)
+    document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
+        dropdown.addEventListener('change', function () {
             const fieldId = this.dataset.fieldId;
             const hiddenInput = document.getElementById(fieldId);
             const checkbox = document.querySelector(`.toggle-switch[data-field-id="${CSS.escape(fieldId)}"] input`);
 
-            if (!checkbox.checked) return; // Can't toggle if inactive
+            if (!checkbox.checked) return; // Can't change if inactive
 
-            const currentState = this.dataset.state;
+            const newValue = this.value;
             
-            // Cycle through all three states: optional → required → after_deadline → optional
-            const currentIdx = REQUIRED_STATES_ARRAY.indexOf(currentState);
-            const nextState = REQUIRED_STATES_ARRAY[(currentIdx + 1) % REQUIRED_STATES_ARRAY.length];
-
             // Update hidden input
-            hiddenInput.value = nextState;
-            updateVisualState(fieldId, nextState);
+            hiddenInput.value = newValue;
+            updateVisualState(fieldId, newValue);
         });
-        
-        // Add keyboard accessibility
-        btn.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                this.click();
-            }
-        });
+    });
     });
 
     // Handle Active toggle (Form Page)
@@ -234,13 +231,13 @@ function initFormPageToggles() {
         input.addEventListener('change', function () {
             const toggle = this.closest('.toggle-switch');
             const fieldId = toggle.dataset.fieldId;
-            const requiredBtn = document.querySelector(`.required-status[data-field-id="${CSS.escape(fieldId)}"]`);
+            const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
             const hiddenInput = document.getElementById(fieldId);
 
             if (this.checked) {
                 // Activate - restore previous state or default to 'optional'
                 // Check if we have a stored previous state
-                let state = hiddenInput.dataset.previousState || requiredBtn.dataset.state;
+                let state = hiddenInput.dataset.previousState || requiredDropdown.value;
                 if (!REQUIRED_STATES_ARRAY.includes(state)) {
                     state = REQUIRED_STATES.OPTIONAL;
                 }

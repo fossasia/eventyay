@@ -67,20 +67,20 @@
                 </td>
                 <td>{{ question.get_target_display }}</td>
                 <td class="text-center">
-                    <button type="button" 
-                            class="required-status" 
+                    <select class="required-status-dropdown" 
                             data-question-id="{{ question.id }}"
-                            data-state="{{ question.question_required }}"
-                            aria-label="Toggle required status for {{ question.question }}"
-                            tabindex="0">
-                        {% if question.question_required == 'required' %}
-                        Required
-                        {% elif question.question_required == 'after_deadline' %}
-                        Deadline
-                        {% else %}
-                        Optional
-                        {% endif %}
-                    </button>
+                            data-current="{{ question.question_required }}"
+                            aria-label="Required status for {{ question.question }}">
+                        <option value="optional" 
+                                {% if question.question_required == 'optional' %}selected{% endif %}
+                                data-color="optional">Optional</option>
+                        <option value="required" 
+                                {% if question.question_required == 'required' %}selected{% endif %}
+                                data-color="required">Required</option>
+                        <option value="after_deadline" 
+                                {% if question.question_required == 'after_deadline' %}selected{% endif %}
+                                data-color="after_deadline">Deadline</option>
+                    </select>
                 </td>
                 <td class="text-center">
                     <label class="toggle-switch" 
