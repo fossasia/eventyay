@@ -85,7 +85,22 @@
     </section>
 
     <section role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" tabindex="0" aria-hidden="true">
-        {{ form.count_length_in.as_field_group }}
+        <div class="row">
+            <label class="col-md-3 col-form-label text-md-right">
+                {{ form.count_length_in.label }}
+                {% if form.count_length_in.field.required %}*{% endif %}
+            </label>
+            <div class="col-md-9 d-flex align-items-center">
+                {% for radio in form.count_length_in %}
+                <div class="form-check me-3">
+                    {{ radio.tag }}
+                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                        {{ radio.choice_label }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         <fieldset>
 
             <div class="table-responsive-sm offset-md-3">
@@ -113,7 +128,7 @@
                         {# Abstract #}
                         {% with field=sform.cfp_ask_abstract %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Abstract" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -122,7 +137,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -135,7 +150,7 @@
                         {# Description #}
                         {% with field=sform.cfp_ask_description %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Description" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -144,7 +159,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -157,7 +172,7 @@
                         {# Notes #}
                         {% with field=sform.cfp_ask_notes %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Notes" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -166,7 +181,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -179,7 +194,7 @@
                         {# Track #}
                         {% with field=sform.cfp_ask_track %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Track" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -188,7 +203,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -201,7 +216,7 @@
                         {# Duration #}
                         {% with field=sform.cfp_ask_duration %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Duration" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -210,7 +225,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -224,7 +239,7 @@
                         {% with field=sform.cfp_ask_content_locale %}
                         {% if field %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -233,7 +248,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -247,7 +262,7 @@
                         {# Image #}
                         {% with field=sform.cfp_ask_image %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Session image" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -256,7 +271,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -269,7 +284,7 @@
                         {# Do not record #}
                         {% with field=sform.cfp_ask_do_not_record %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Recording opt-out" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -278,7 +293,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -297,7 +312,7 @@
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Biography" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -306,7 +321,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -319,7 +334,7 @@
                         {# Avatar #}
                         {% with field=sform.cfp_ask_avatar %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Avatar" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -328,7 +343,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -341,7 +356,7 @@
                         {# Availability #}
                         {% with field=sform.cfp_ask_availabilities %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Availability" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -350,7 +365,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -363,7 +378,7 @@
                         {# Additional Speaker #}
                         {% with field=sform.cfp_ask_additional_speaker %}
                         <tr>
-                            <th>{{ field.label }}</th>
+                            <th>{% translate "Additional speakers" %}</th>
                             <td class="text-center">
                                 <span class="required-status" data-field-id="{{ field.auto_id }}"
                                     data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -372,7 +387,7 @@
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
