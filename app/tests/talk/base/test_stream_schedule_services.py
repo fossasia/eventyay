@@ -1,6 +1,5 @@
-import asyncio
 from datetime import timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from channels.layers import InMemoryChannelLayer
@@ -170,13 +169,13 @@ def test_check_stream_schedule_changes_stream_switched(room):
 def test_check_stream_schedule_changes_multiple_rooms(room, other_room):
     cache.clear()
     with scope(event=room.event):
-        schedule1 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=room,
             url="https://www.youtube.com/watch?v=test1",
             start_time=now() - timedelta(hours=1),
             end_time=now() + timedelta(hours=1),
         )
-        schedule2 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=other_room,
             url="https://www.youtube.com/watch?v=test2",
             start_time=now() - timedelta(hours=1),

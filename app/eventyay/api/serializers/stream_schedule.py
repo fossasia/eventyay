@@ -1,5 +1,8 @@
+from contextlib import suppress
+
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django_scopes import scope
 from rest_framework import serializers
 
 from eventyay.api.mixins import PretalxSerializer
@@ -68,29 +71,28 @@ class StreamScheduleSerializer(PretalxSerializer):
                 room_pk = request.resolver_match.kwargs.get('room_pk')
                 if room_pk:
                     from eventyay.base.models.room import Room
-                    try:
+                    with suppress(Room.DoesNotExist):
                         room = Room.objects.get(pk=room_pk)
-                    except Room.DoesNotExist:
-                        pass
         
         if room and start_time and end_time:
-            overlapping = StreamSchedule.objects.filter(
-                room=room, start_time__lt=end_time, end_time__gt=start_time
-            )
-            if self.instance:
-                overlapping = overlapping.exclude(pk=self.instance.pk)
-
-            if overlapping.exists():
-                raise serializers.ValidationError(
-                    {
-                        '__all__': [
-                            _(
-                                'This stream schedule overlaps with an existing schedule for this room. '
-                                'Please adjust the time range.'
-                            )
-                        ]
-                    }
+            with scope(event=room.event):
+                overlapping = StreamSchedule.objects.filter(
+                    room=room, start_time__lt=end_time, end_time__gt=start_time
                 )
+                if self.instance:
+                    overlapping = overlapping.exclude(pk=self.instance.pk)
+
+                if overlapping.exists():
+                    raise serializers.ValidationError(
+                        {
+                            '__all__': [
+                                _(
+                                    'This stream schedule overlaps with an existing schedule for this room. '
+                                    'Please adjust the time range.'
+                                )
+                            ]
+                        }
+                    )
 
         return data
 

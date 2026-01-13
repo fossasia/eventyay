@@ -68,7 +68,7 @@ export default {
 			clearInterval(this.countdownInterval)
 		}
 	},
-		methods: {
+	methods: {
 		async fetchNextStream() {
 			if (!this.room?.id) return
 			try {

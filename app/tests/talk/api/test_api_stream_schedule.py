@@ -207,7 +207,7 @@ def test_get_next_stream_none(client, orga_user_write_token, room):
 def test_get_next_stream_returns_earliest(client, orga_user_write_token, room):
     url = f"/api/v1/organizers/{room.event.organizer.slug}/events/{room.event.slug}/rooms/{room.pk}/streams/next"
     with scope(event=room.event):
-        schedule2 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=room,
             url="https://www.youtube.com/watch?v=test2",
             start_time=now() + timedelta(hours=2),
