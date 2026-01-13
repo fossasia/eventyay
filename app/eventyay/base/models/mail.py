@@ -194,11 +194,20 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
+            # Use unified Reply-To resolution
+            from eventyay.common.mail import get_reply_to_address
+            
+            resolved_reply_to = get_reply_to_address(
+                event,
+                template=self,
+                auto_email=True  # Template emails are automated
+            )
+
             mail = QueuedMail(
                 event=event,
                 template=self,
                 to=address,
-                reply_to=self.reply_to,
+                reply_to=resolved_reply_to,
                 bcc=self.bcc,
                 subject=subject,
                 text=text,
