@@ -187,10 +187,32 @@ function initFormPageToggles() {
         });
     });
 
-
-        // Handle Active toggle (Form Page)
+    // Handle Active toggle (Form Page)
     document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
         input.addEventListener('change', function () {
             const toggle = this.closest('.toggle-switch');
             const fieldId = toggle.dataset.fieldId;
+            const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
+            const hiddenInput = document.getElementById(fieldId);
+
+            if (this.checked) {
+                // Activate - restore previous state or default to 'optional'
+                let state = hiddenInput.dataset.previousState || requiredDropdown.value;
+                if (!REQUIRED_STATES_ARRAY.includes(state)) {
+                    state = REQUIRED_STATES.OPTIONAL;
+                }
+                hiddenInput.value = state;
+                updateVisualState(fieldId, state);
+                // Clear stored previous state
+                delete hiddenInput.dataset.previousState;
+            } else {
+                // Deactivate - store current state before deactivating
+                if (hiddenInput.value !== 'do_not_ask') {
+                    hiddenInput.dataset.previousState = hiddenInput.value;
+                }
+                hiddenInput.value = 'do_not_ask';
+                updateVisualState(fieldId, 'do_not_ask');
+            }
+        });
+    });
 }
