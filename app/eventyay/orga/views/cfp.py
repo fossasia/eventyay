@@ -574,8 +574,8 @@ class CfPFlowEditor(EventPermissionRequired, TemplateView):
         ctx['current_configuration'] = self.request.event.cfp_flow.get_editor_config(json_compat=True)
         ctx['event_configuration'] = {
             'header_pattern': self.request.event.display_settings['header_pattern'] or 'bg-primary',
-            'header_image': (self.request.event.header_image.url if self.request.event.header_image else None),
-            'logo_image': (self.request.event.logo.url if self.request.event.logo else None),
+            'header_image': self.request.event.visible_header_image_url,
+            'logo_image': self.request.event.visible_logo_url,
             'primary_color': self.request.event.visible_primary_color,
             'locales': self.request.event.locales,
         }

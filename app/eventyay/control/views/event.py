@@ -224,7 +224,7 @@ class EventUpdate(
 
         tickets.invalidate_cache.apply_async(kwargs={'event': self.request.event.pk})
         if change_css:
-            regenerate_css.apply_async(args=(self.request.event.pk,))
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(self.request.event.pk,)))
             messages.success(
                 self.request,
                 _(
@@ -1583,8 +1583,6 @@ class QuickSetupView(FormView):
         return {
             'waiting_list_enabled': True,
             'ticket_download': True,
-            'contact_mail': self.request.event.settings.contact_mail,
-            'imprint_url': self.request.event.settings.imprint_url,
             'require_registered_account_for_tickets': True,
         }
 
@@ -1677,8 +1675,6 @@ class QuickSetupView(FormView):
         self.request.event.settings.show_quota_left = form.cleaned_data['show_quota_left']
         self.request.event.settings.waiting_list_enabled = form.cleaned_data['waiting_list_enabled']
         self.request.event.settings.attendee_names_required = form.cleaned_data['attendee_names_required']
-        self.request.event.settings.contact_mail = form.cleaned_data['contact_mail']
-        self.request.event.settings.imprint_url = form.cleaned_data['imprint_url']
         self.request.event.log_action(
             'eventyay.event.settings',
             user=self.request.user,
@@ -1773,14 +1769,14 @@ class QuickSetupView(FormView):
             event=self.request.event,
             initial=[
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Regular ticket')),
-                    'default_price': Decimal('35.00'),
-                    'quota': 100,
+                    'name': LazyI18nString.from_gettext(gettext('Standard Ticket')),
+                    'default_price': Decimal('49.00'),
+                    'quota': 200,
                 },
                 {
-                    'name': LazyI18nString.from_gettext(gettext('Reduced ticket')),
-                    'default_price': Decimal('29.00'),
-                    'quota': 50,
+                    'name': LazyI18nString.from_gettext(gettext('Virtual Ticket')),
+                    'default_price': Decimal('0.00'),
+                    'quota': 500,
                 },
             ]
             if self.request.method != 'POST'

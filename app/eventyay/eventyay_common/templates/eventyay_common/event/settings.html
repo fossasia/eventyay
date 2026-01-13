@@ -25,7 +25,7 @@
                 <i class="fa fa-ticket"></i> {% trans "Tickets" %}
             </a>
             {% if is_talk_event_created %}
-            <a href="{{ request.event.talk_dashboard_url }}" class="header-nav btn btn-outline-success">
+            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
@@ -43,6 +43,7 @@
     {% csrf_token %}
     {% bootstrap_form_errors form %}
     {% bootstrap_form_errors sform %} {# Added to show sform errors #}
+    {% comment %} TODO: Reintroduce component selection when unified component initialization is stable. {% endcomment %}
     <div class="tabbed-form">
         <fieldset>
             <legend>{% trans "Basics" %}</legend>
@@ -55,9 +56,41 @@
             {% bootstrap_field form.date_to layout="control" %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            {% bootstrap_field sform.contact_mail layout="control" %}
+            {% bootstrap_field form.email layout="control" %}
             {% bootstrap_field sform.imprint_url layout="control" %}
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {% translate "Header links" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="help-block text-muted">
+                        {% blocktranslate trimmed %}
+                            These links will be shown at the top of all your schedule-related pages, e.g.
+                            the schedule itself, speaker pages, session pages, etc.
+                            You could for example link to your home page, your registration page, or your
+                            livestream here.
+                        {% endblocktranslate %}
+                    </div>
+                    {% include "orga/includes/event_links_formset.html" with formset=header_links_formset %}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-md-3 control-label">
+                    {% translate "Footer links" %}
+                </label>
+                <div class="col-md-9">
+                    <div class="help-block text-muted">
+                        {% blocktranslate trimmed %}
+                            These links will be shown in the footer of all your public pages. You could
+                            for example link your terms of service, imprint, or privacy policy here.
+                        {% endblocktranslate %}
+                    </div>
+                    {% include "orga/includes/event_links_formset.html" with formset=footer_links_formset %}
+                </div>
+            </div>
             {% bootstrap_field form.is_public layout="control" %}
+            {% comment %}
             <div class="setting-part">
                 <div class="form-group setting-form">
                     <label class="col-md-3 control-label">{% trans "Tickets system" %}</label>
@@ -84,11 +117,11 @@
                             data-target="#alert-modal-disabled">
                             {% trans "Enabled" %}
                         </button>
-                        <a href='{{ request.event.talk_dashboard_url }}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Dashboard" %}' data-toggle="tooltip">
                             <span class="fa fa-dashboard"></span>
                         </a>
-                        <a href='{{ request.event.talk_settings_url }}' class="btn btn-sm btn-default"
+                        <a href='{% url "orga:settings.event.view" event=request.event.slug %}' class="btn btn-sm btn-default"
                             title='{% trans "Settings" %}' data-toggle="tooltip">
                             <span class="fa fa-edit"></span>
                         </a>
@@ -122,6 +155,7 @@
                     </div>
                 </div>
             </div>
+            {% endcomment %}
         </fieldset>
         <fieldset>
             <legend>{% trans "Localization" %}</legend>
@@ -160,6 +194,7 @@
         </button>
     </div>
 
+    {% comment %}
     <div class="modal popup-modal" id="alert-modal-enable-talk" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
@@ -228,5 +263,6 @@
             </div>
         </div>
     </div>
+    {% endcomment %}
 </form>
 {% endblock %}

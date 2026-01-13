@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.db.models import Q
 from django.forms import ValidationError
 from django.http import HttpResponseNotAllowed
+from django.utils.datastructures import MultiValueDict
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.functional import Promise, cached_property
@@ -219,14 +220,47 @@ class FormFlowStep(TemplateFlowStep):
         return copy.deepcopy({**initial_data, **previous_data})
 
     def get_form(self, from_storage=False):
-        if self.request.method == 'GET' or from_storage:
+        # Cache form initial data to avoid repeated work
+        form_initial = self.get_form_initial()
+
+        if self.request.method == 'GET':
+            # For initial GET requests, use an unbound form populated from session data
+            # This shows saved values but intentionally does not display validation errors
             return self.form_class(
-                data=self.get_form_initial() if from_storage else None,
-                initial=self.get_form_initial(),
+                data=None,
+                initial=form_initial,
+                files=None,
+                **self.get_form_kwargs(),
+            )
+        if from_storage:
+            # Use distinct copies for bound data vs. initial values to avoid
+            # in-form mutations (some forms tweak the ``initial`` dict).
+            # Sharing the same object caused saved form data to be wiped when
+            # a form updated ``initial`` entries, which then also changed the
+            # bound data reference.
+            form_data = copy.deepcopy(form_initial)
+            form_initial = copy.deepcopy(form_initial)
+            # For validation checks, create a bound form with session data
+            return self.form_class(
+                data=form_data,
+                initial=form_initial,
                 files=self.get_files(),
                 **self.get_form_kwargs(),
             )
-        return self.form_class(data=self.request.POST, files=self.request.FILES, **self.get_form_kwargs())
+        # For POST requests, merge new uploads with existing session files
+        # This allows users to navigate back without losing previously uploaded files
+        session_files = self.get_files() or {}
+
+        # Preserve MultiValueDict semantics for proper multi-file field support
+        files = MultiValueDict()
+        # Add session files first
+        for field, file_obj in session_files.items():
+            files[field] = file_obj
+        # For each field, new uploads completely replace any existing session files
+        for field, file_list in self.request.FILES.lists():
+            files.setlist(field, file_list)
+
+        return self.form_class(data=self.request.POST, files=files, **self.get_form_kwargs())
 
     def is_completed(self, request):
         self.request = request
@@ -237,17 +271,40 @@ class FormFlowStep(TemplateFlowStep):
         result['form'] = self.get_form()
         previous_data = self.cfp_session.get('data')
         result['submission_title'] = previous_data.get('info', {}).get('title')
+        # Add information about uploaded files for display in templates
+        saved_files = self.cfp_session.get('files', {}).get(self.identifier, {}) or {}
+        result['uploaded_files'] = {
+            field: file_dict.get('name') for field, file_dict in saved_files.items()
+        }
         return result
 
     def post(self, request):
         self.request = request
         form = self.get_form()
+        action = request.POST.get('action', 'submit')
+
+        # For "back" action, only save data if form is valid
+        if action == 'back':
+            if form.is_valid():
+                self.set_data(form.cleaned_data)
+            # Always save files if present
+            if form.files:
+                self.set_files(form.files)
+            prev_url = self.get_prev_url(request)
+            return redirect(prev_url) if prev_url else redirect(request.path)
+
+        # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
+            warning_messages = getattr(form, 'warning_messages', None) or []
+            for warning in filter(None, warning_messages):
+                messages.warning(self.request, warning)
+
             error_message = '\n\n'.join(
                 (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
                 for key, values in form.errors.items()
             )
-            messages.error(self.request, error_message)
+            if error_message:
+                messages.error(self.request, error_message)
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
@@ -521,6 +578,7 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['name'] = user.fullname if user else user_data.get('register_name')
         result['read_only'] = False
         result['essential_only'] = True
+        result['enforce_account_name_match'] = True
         return result
 
     def get_context_data(self, **kwargs):

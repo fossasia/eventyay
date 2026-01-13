@@ -5,7 +5,6 @@ from django.apps import apps
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
-from eventyay.cfp.views.event import EventStartpage
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -17,7 +16,7 @@ from eventyay.presale.urls import (
     organizer_patterns,
 )
 
-from .views import VideoAssetView, VideoSPAView
+from .views import VideoAssetView, VideoSPAView, AnonymousInviteRedirectView
 
 logger = logging.getLogger(__name__)
 
@@ -112,29 +111,17 @@ try:
 except (ImportError, AttributeError, TypeError):
     logger.exception('Error loading plugin URLs for eventyay_stripe')
 
-# Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
-# TODO: Do we really want this fallback?
-try:
-    if importlib.util.find_spec('pretix_venueless.urls'):
-        urlmod = importlib.import_module('pretix_venueless.urls')
-        single_plugin_patterns = []
-        if hasattr(urlmod, 'urlpatterns'):
-            single_plugin_patterns += urlmod.urlpatterns
-        if hasattr(urlmod, 'event_patterns'):
-            patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
-            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
-        if hasattr(urlmod, 'organizer_patterns'):
-            patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
-except (ImportError, AttributeError, TypeError):
-    logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
 
 # Add storage URLs for file uploads
 storage_patterns = [
     path('storage/', include('eventyay.storage.urls', namespace='storage')),
+]
+
+# Add live URLs for video/BBB features (CSS endpoints, etc.)
+live_patterns = [
+    path('', include(('eventyay.features.live.urls', 'live'))),
 ]
 
 unified_event_patterns = [
@@ -144,14 +131,16 @@ unified_event_patterns = [
             [
                 # Video patterns under {organizer}/{event}/video/
                 # Match static assets with file extensions (js, css, png, etc.)
+                re_path(r'^video/assets/(?P<path>.*)$', VideoAssetView.as_view(), name='video.assets'),
                 re_path(
-                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$', VideoAssetView.as_view(), name='video.assets.file'
+                    r'^video/(?P<path>[^?]*\.[a-zA-Z0-9._-]+)$',
+                    VideoAssetView.as_view(),
+                    name='video.assets.file',
                 ),
                 # The frontend Video SPA app is not served by Nginx so the Django view needs to
                 # serve all paths under /video/ to allow client-side routing.
                 # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                path('talk/', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]
@@ -159,11 +148,25 @@ unified_event_patterns = [
     ),
 ]
 
+# Anonymous room invite short token pattern (6 characters)
+# The token uses characters: abcdefghijklmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789
+# (excludes visually confusing characters: l, o, I, O, 0)
+anonymous_invite_patterns = [
+    re_path(
+        r'^(?P<token>[a-km-np-zA-HJ-NP-Z1-9]{6})/?$',
+        AnonymousInviteRedirectView.as_view(),
+        name='anonymous.invite.redirect',
+    ),
+]
+
 urlpatterns = (
     common_patterns
     + storage_patterns
+    + live_patterns
     # The plugins patterns must be before presale_patterns_main
     # to avoid misdetection of plugin prefixes and organizer/event slugs.
+    # Anonymous invite short token redirects (before presale to avoid slug conflict)
+    + anonymous_invite_patterns
     + plugin_patterns
     + presale_patterns_main
     + unified_event_patterns

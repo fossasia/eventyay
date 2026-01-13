@@ -41,6 +41,21 @@ legend {
   margin-bottom: 0.5rem;
 }
 
+.public-event-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 80px;
+}
+.public-event-header .event-logo a {
+  display: inline-flex;
+}
+.public-event-header #event-logo {
+  max-height: 70px;
+  width: auto;
+  object-fit: contain;
+}
+
 button,
 [role="button"],
 a.btn,
@@ -57,7 +72,6 @@ summary.btn {
   text-decoration: none;
 
   border: 1px solid var(--highlight-color);
-  border-radius: var(--size-border-radius);
   background: var(--highlight-color);
   color: white;
   transition:
@@ -97,18 +111,14 @@ summary.btn {
     font-weight: normal;
     --highlight-color: transparent;
     color: var(--color-primary-text);
+	border: none;	
+	background: transparent;
 
     &:hover {
       color: var(--color-primary-text-dark);
     }
   }
 
-  &:hover,
-  &:active {
-    background: color-mix(in hsl, var(--highlight-color), black 10%);
-    text-decoration: none;
-    color: white;
-  }
   &:active {
     box-shadow: var(--shadow-light);
   }
@@ -119,9 +129,9 @@ summary.btn {
   &.btn-outline-warning,
   &.btn-outline-danger {
     background: var(--color-bg);
-    color: var(--highlight-color);
+    color: var(--color-primary);
     &:hover {
-      background: var(--highlight-color);
+      background: var(--color-primary);
       color: white;
     }
   }
@@ -155,6 +165,11 @@ summary.btn {
 }
 a[data-toggle] {
   cursor: pointer;
+}
+
+button, a.btn{
+	background-color: var(--color-primary);
+	border-color: var(--color-primary);
 }
 
 button,
@@ -221,10 +236,6 @@ a {
   color: var(--color-primary-text);
   text-decoration: none;
 
-  &:hover {
-    color: var(--color-primary-text-dark);
-    text-decoration: underline;
-  }
 }
 
 /* Conventions and custom elements */
@@ -301,17 +312,18 @@ a {
   box-shadow: var(--shadow-light);
   background: var(--color-bg);
 
-  &::before {
+    &::before {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     align-self: stretch;
     min-width: 64px;
     background-color: var(--highlight-color);
     color: white;
     font-family: "ForkAwesome";
     font-size: 20px;
-    padding: 0.75rem 1.25rem;
     margin: -16px;
     margin-right: 16px;
-    text-align: center;
   }
 
   hr {

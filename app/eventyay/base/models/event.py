@@ -1,11 +1,13 @@
 import copy
 import datetime as dt
+import logging
+import os
 import string
 import uuid
 from collections import OrderedDict, defaultdict
+from contextlib import suppress
 from datetime import datetime, time, timedelta
 from operator import attrgetter
-from typing import List
 from urllib.parse import urljoin, urlparse
 from zoneinfo import ZoneInfo
 
@@ -41,17 +43,25 @@ from rules.contrib.models import RulesModelBase, RulesModelMixin
 from eventyay.base.models.base import LoggedModel
 from eventyay.base.models.fields import MultiStringField
 from eventyay.base.models.mixins import FileCleanupMixin, TimestampedModel
+from eventyay.base.plugins import get_all_plugins
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
 from eventyay.common.language import LANGUAGE_NAMES
-from eventyay.common.plugins import get_all_plugins
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.consts import TIMEZONE_CHOICES
-from eventyay.core.permissions import MAX_PERMISSIONS_IF_SILENCED, SYSTEM_ROLES, Permission
+from eventyay.core.permissions import (
+    MAX_PERMISSIONS_IF_SILENCED,
+    ORGANIZER_ROLES,
+    SYSTEM_ROLES,
+    Permission,
+    normalize_permission_value,
+    traits_match_required,
+)
 from eventyay.core.utils.json import CustomJSONEncoder
+from eventyay.eventyay_common.video.permissions import VIDEO_PERMISSION_BY_FIELD, VIDEO_TRAIT_ROLE_MAP
 from eventyay.helpers.database import GroupConcat
 from eventyay.helpers.daterange import daterange
 from eventyay.helpers.json import safe_string
@@ -71,6 +81,7 @@ from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
+logger = logging.getLogger(__name__)
 
 
 def event_css_path(instance, filename):
@@ -85,7 +96,6 @@ def default_roles():
     attendee = [
         Permission.EVENT_VIEW,
         Permission.EVENT_EXHIBITION_CONTACT,
-        Permission.EVENT_CHAT_DIRECT,
     ]
     viewer = attendee + [Permission.ROOM_VIEW, Permission.ROOM_CHAT_READ]
     participant = viewer + [
@@ -190,6 +200,7 @@ def default_feature_flags():
         'submission_public_review': True,
         'chat-moderation': True,
         'polls': True,
+        'schedule-control': True,
     }
 
 
@@ -723,16 +734,6 @@ class Event(
         choices=settings.LANGUAGES,
         verbose_name=_('Default language'),
     )
-    landing_page_text = I18nTextField(
-        verbose_name=_('Landing page text'),
-        help_text=_(
-            'This text will be shown on the landing page, alongside with links to the CfP and schedule, if appropriate.'
-        )
-        + ' '
-        + phrases.base.use_markdown,
-        null=True,
-        blank=True,
-    )
     featured_sessions_text = I18nTextField(
         verbose_name=_('Featured sessions text'),
         help_text=_('This text will be shown at the top of the featured sessions page instead of the default text.')
@@ -777,7 +778,6 @@ class Event(
         reset = '{base}reset'
         submit = '{base}submit/'
         user = '{base}me/'
-        user_delete = '{base}me/delete'
         user_submissions = '{user}submissions/'
         user_mails = '{user}mails/'
         schedule = '{base}schedule/'
@@ -1351,38 +1351,73 @@ class Event(
         if exc and allow_raise:
             raise exc
 
+    def _get_trait_grants_with_defaults(self):
+        base_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        slug = getattr(self, "slug", None) or getattr(self, "id", None)
+        if not slug:
+            return base_trait_grants
+        augmented = dict(base_trait_grants)
+        for role, trait_name in VIDEO_TRAIT_ROLE_MAP.items():
+            augmented.setdefault(role, [f"eventyay-video-event-{slug}-{trait_name.replace('_', '-')}"])
+        return augmented
+
+    def _remove_direct_messaging_if_unauthorized(self, result, user_traits):
+        """Remove EVENT_CHAT_DIRECT permission if user doesn't have the direct messaging trait.
+
+        Args:
+            result: Permission result dictionary to modify
+            user_traits: List of user traits
+        """
+        direct_messaging_def = VIDEO_PERMISSION_BY_FIELD.get('can_video_direct_message')
+        if not direct_messaging_def:
+            return
+
+        direct_messaging_trait = direct_messaging_def.trait_value(self.slug)
+        has_direct_messaging_trait = direct_messaging_trait in user_traits
+
+        if not has_direct_messaging_trait:
+            direct_message_value = Permission.EVENT_CHAT_DIRECT.value
+            result[self] = {
+                p for p in result[self]
+                if normalize_permission_value(p) != direct_message_value
+            }
+
     def has_permission_implicit(
         self,
         *,
         traits,
-        permissions: List[Permission],
+        permissions: list[Permission],
         room=None,
         allow_empty_traits=True,
     ):
         # Ensure trait_grants and roles are not None - use defaults if missing
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
 
         for role, required_traits in event_trait_grants.items():
             if (
-                isinstance(required_traits, list)
-                and all(any(x in traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
+                traits_match_required(traits, required_traits)
                 and (required_traits or allow_empty_traits)
             ):
                 role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                if any(p in role_permissions or p.value in role_permissions for p in permissions):
+                if any(
+                    normalize_permission_value(p) in role_permissions
+                    for p in permissions
+                ):
                     return True
 
         if room:
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if (
-                    isinstance(required_traits, list)
-                    and all(any(x in traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
+                    traits_match_required(traits, required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
                     role_permissions = event_roles.get(role, SYSTEM_ROLES.get(role, []))
-                    if any(p in role_permissions or p.value in role_permissions for p in permissions):
+                    if any(
+                        normalize_permission_value(p) in role_permissions
+                        for p in permissions
+                    ):
                         return True
 
         # Return False if no permission was granted
@@ -1404,7 +1439,7 @@ class Event(
             return False
 
         if self.has_permission_implicit(
-            traits=user.traits,
+            traits=user.traits or [],
             permissions=permission,
             room=room,
             allow_empty_traits=user.type == User.UserType.PERSON,
@@ -1414,7 +1449,8 @@ class Event(
         roles = user.get_role_grants(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(p.value in event_roles.get(r, SYSTEM_ROLES.get(r, [])) for p in permission):
+            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            if any(normalize_permission_value(p) in role_perms for p in permission):
                 return True
 
     async def has_permission_async(self, *, user, permission: Permission, room=None):
@@ -1433,7 +1469,7 @@ class Event(
             return False
 
         if self.has_permission_implicit(
-            traits=user.traits,
+            traits=user.traits or [],
             permissions=permission,
             room=room,
             allow_empty_traits=user.type == User.UserType.PERSON,
@@ -1443,7 +1479,8 @@ class Event(
         roles = await user.get_role_grants_async(room)
         event_roles = self.roles if self.roles is not None else default_roles()
         for r in roles:
-            if any(p.value in event_roles.get(r, SYSTEM_ROLES.get(r, [])) for p in permission):
+            role_perms = event_roles.get(r, SYSTEM_ROLES.get(r, []))
+            if any(normalize_permission_value(p) in role_perms for p in permission):
                 return True
 
     def get_all_permissions(self, user):
@@ -1454,25 +1491,38 @@ class Event(
         allow_empty_traits = user.type == User.UserType.PERSON
 
         # Ensure trait_grants and roles are not None
-        event_trait_grants = self.trait_grants if self.trait_grants is not None else default_grants()
+        event_trait_grants = self._get_trait_grants_with_defaults()
         event_roles = self.roles if self.roles is not None else default_roles()
+
+        user_traits = user.traits or []
 
         for role, required_traits in event_trait_grants.items():
             if (
-                isinstance(required_traits, list)
-                and all(any(x in user.traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
+                traits_match_required(user_traits, required_traits)
                 and (required_traits or allow_empty_traits)
             ):
-                result[self].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
+                role_perms = event_roles.get(role, SYSTEM_ROLES.get(role, []))
+                result[self].update(role_perms)
 
-        # Removed user.world_grants loop (attribute not present on unified User model)
+        # Admin mode in the ticket/talk system is represented by the ``admin`` trait on the video side.
+        # When admin mode is ON, the user has the ``admin`` trait and should retain full access.
+        admin_mode_active = "admin" in user_traits
+
+        if admin_mode_active:
+            # Grant all video manager permissions when admin mode is active
+            for role_name in ORGANIZER_ROLES:
+                role_perms = event_roles.get(role_name, SYSTEM_ROLES.get(role_name, []))
+                result[self].update(role_perms)
+        else:
+            # Remove EVENT_CHAT_DIRECT from ALL users unless they have the direct messaging trait.
+            # Only users with can_video_direct_message team permission get the video_direct_messaging trait.
+            self._remove_direct_messaging_if_unauthorized(result, user_traits)
 
         for room in self.rooms.all():
             room_trait_grants = room.trait_grants if room.trait_grants is not None else {}
             for role, required_traits in room_trait_grants.items():
                 if (
-                    isinstance(required_traits, list)
-                    and all(any(x in user.traits for x in (r if isinstance(r, list) else [r])) for r in required_traits)
+                    traits_match_required(user_traits, required_traits)
                     and (required_traits or allow_empty_traits)
                 ):
                     result[room].update(event_roles.get(role, SYSTEM_ROLES.get(role, [])))
@@ -1825,13 +1875,11 @@ class Event(
 
     @property
     def talk_dashboard_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}')
-        return url
+        return reverse('orga:event.dashboard', kwargs={'event': self.slug})
 
     @property
     def talk_settings_url(self):
-        url = urljoin(TALK_HOSTNAME, f'orga/event/{self.slug}/settings')
-        return url
+        return reverse('orga:settings.event.view', kwargs={'event': self.slug})
 
     @cached_property
     def live_issues(self):
@@ -1868,7 +1916,9 @@ class Event(
                 )
 
         gs = GlobalSettingsObject()
-        if gs.settings.get('billing_validation', 'True') == 'True':
+        billing_validation_enabled = gs.settings.get('billing_validation', as_type=bool, default=True)
+
+        if billing_validation_enabled:
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
             if not billing_obj or not billing_obj.stripe_payment_method_id:
                 url = reverse(
@@ -2133,9 +2183,181 @@ class Event(
 
         self.plugins = ','.join(modules)
 
-    @cached_property
+    @property
     def visible_primary_color(self):
-        return self.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        """
+        Prefer the common (event settings) primary color, then fall back to the legacy
+        event field, finally defaulting to the installation default.
+        """
+        return (
+            self.settings.get('primary_color')
+            or self.primary_color
+            or settings.DEFAULT_EVENT_PRIMARY_COLOR
+        )
+
+    @cached_property
+    def _visible_logo_path(self):
+        """
+        Resolve a usable logo path/URL from event_logo_image setting.
+        Returns a storage-relative path (e.g. ``pub/...``) or an absolute URL.
+
+        NOTE: This method ONLY checks for event_logo_image, NOT logo_image.
+        The logo_image setting is actually used for HEADER images (see default_setting.py),
+        so we must NOT use it here to prevent header images from appearing as logos.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        # Only check event_logo_image - NOT logo_image (which is for header images)
+        for key in ('event_logo_image',):
+            settings_logo = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_logo)
+            if not path:
+                continue
+
+            # Keep full URLs
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            # Strip file:// scheme if present
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            # Normalize absolute filesystem paths to be relative to MEDIA_ROOT
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            # Drop leading media prefixes
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+
+            # Collapse to pub/… if present
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        return None
+
+    @cached_property
+    def _visible_header_image_path(self):
+        """
+        Resolve a usable header image path/URL from common settings, falling back to the legacy field.
+        """
+        def _extract_path(obj):
+            if not obj:
+                return None
+            if isinstance(obj, dict):
+                return obj.get('name') or obj.get('path') or obj.get('url')
+            if hasattr(obj, 'name') and obj.name:
+                return obj.name
+            if hasattr(obj, 'url'):
+                return obj.url
+            return str(obj)
+
+        # header image for the site is stored in common settings under logo_image (historical)
+        # and in the legacy field header_image; prefer the settings value first
+        for key in ('logo_image', 'header_image'):
+            settings_header = self.settings.get(key, default=None) or getattr(self.settings, key, None)
+            path = _extract_path(settings_header)
+            if not path:
+                continue
+
+            if path.startswith(('http://', 'https://')):
+                return path
+
+            parsed = urlparse(path)
+            if parsed.scheme == 'file':
+                path = parsed.path
+
+            abs_path = os.path.abspath(path)
+            media_root = os.path.abspath(settings.MEDIA_ROOT)
+            try:
+                rel_to_media = os.path.relpath(abs_path, media_root)
+                if not rel_to_media.startswith('..'):
+                    path = rel_to_media
+            except OSError:
+                logger.exception("Failed to relativize header image path %s against MEDIA_ROOT %s", abs_path, media_root)
+
+            for prefix in ('/media/', 'media/'):
+                if path.startswith(prefix):
+                    path = path[len(prefix):]
+            if '/pub/' in path and not path.startswith('pub/'):
+                path = path[path.index('pub/'):]
+
+            path = path.lstrip('/')
+            if path:
+                return path
+
+        if self.header_image:
+            return self.header_image.name
+
+        return None
+
+    @cached_property
+    def visible_logo_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            # If already a full URL, return as-is
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return self._visible_logo_path
+            return default_storage.url(self._visible_logo_path)
+        return None
+
+    @cached_property
+    def visible_logo_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_logo_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_logo_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_logo_path)
+
+    @cached_property
+    def visible_header_image_url(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return self._visible_header_image_path
+            return default_storage.url(self._visible_header_image_path)
+
+    @cached_property
+    def visible_header_image_file(self):
+        from django.core.files.storage import default_storage
+
+        if not self._visible_header_image_path:
+            return None
+        with suppress(Exception):
+            if str(self._visible_header_image_path).startswith(('http://', 'https://')):
+                return None
+            return default_storage.open(self._visible_header_image_path)
+        return None
 
     def _get_default_submission_type(self):
         from eventyay.base.models import SubmissionType
@@ -2218,6 +2440,17 @@ class Event(
         from eventyay.base.models import User
 
         return User.objects.filter(submissions__in=self.talks).order_by('id').distinct()
+
+    @cached_property
+    def has_schedule_content(self):
+        """Returns True if there are actual scheduled talks in the current schedule.
+
+        This checks whether the current schedule has any visible, scheduled talks
+        (not just an empty published schedule).
+        """
+        if not self.current_schedule:
+            return False
+        return self.current_schedule.scheduled_talks.exists()
 
     @cached_property
     def submitters(self):

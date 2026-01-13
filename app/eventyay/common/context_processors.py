@@ -7,7 +7,9 @@ from django.conf import settings
 from django.http import Http404, HttpRequest
 from django.urls import resolve
 from django.utils import translation
+from django.utils.translation import gettext_lazy as _
 from django_scopes import get_scope
+
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
@@ -40,6 +42,15 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
+    languages = sorted(
+        settings.LANGUAGES,
+        key=lambda l: (
+            0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2),
+            str(l[1]),
+        ),
+    )
+    language_options = [{'code': code, 'label': name} for code, name in languages]
+
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
         'js_datetime_format': get_javascript_format('DATETIME_INPUT_FORMATS'),
@@ -49,10 +60,15 @@ def locale_context(request):
         'DAY_MONTH_DATE_FORMAT': get_day_month_date_format(),
         'rtl': getattr(request, 'LANGUAGE_CODE', 'en') in settings.LANGUAGES_BIDI,
         'AVAILABLE_CALENDAR_LOCALES': AVAILABLE_CALENDAR_LOCALES,
+        'language_options': language_options,
     }
 
     lang = translation.get_language()
-    context['html_locale'] = translation.get_language_info(lang).get('public_code', lang)
+    try:
+        lang_info = translation.get_language_info(lang)
+        context['html_locale'] = lang_info.get('public_code', lang)
+    except KeyError:
+        context['html_locale'] = lang
     return context
 
 
@@ -61,7 +77,9 @@ def messages(request):
 
 
 def system_information(request):
-    context = {}
+    context = {
+        'INSTANCE_NAME': settings.INSTANCE_NAME,
+    }
     _footer = []
     _head = []
     event = getattr(request, 'event', None)

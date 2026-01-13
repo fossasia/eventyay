@@ -1,7 +1,7 @@
 eventyay-tickets (ENext)
 ========================
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/enext/graph/badge.svg
+.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/dev/graph/badge.svg
   :target: https://codecov.io/gh/pretix/pretix
 
 Project status & release cycle
@@ -49,11 +49,11 @@ Getting Started
 
   cd eventyay/app
 
-3. **Switch to the `enext` branch**:
+3. **Switch to the `dev` branch**:
 
 .. code-block:: bash
 
-  git switch enext
+  git switch dev
 
 
 4. **Install Python packages**
@@ -141,11 +141,12 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-      cp deployment/env.dev-sample .env.dev
+      cp deployment/env.sample .env.dev
 
 2. **Edit .env.dev**
 
-   Only if necessary
+   Change <SERVER_NAME> and the value of `EVY_RUNNING_ENVIRONMENT=production`
+   to `EVY_RUNNING_ENVIRONMENT=development`
 
 3. **Make sure you don't have some old volumes hanging around**
 
@@ -251,42 +252,48 @@ Due to this reason, overriding configuration via environment variables are not e
 Deployment
 ----------
 
-* copy all of the `deployment` directory onto the server (eg. as `/home/fossasia/enext`)
-* prepare the used volumes in docker-compose: one for static files and one for
-  the postgres database. Create on the server:
-        /home/fossasia/enext/data/static
-        /home/fossasia/enext/data/postgres
+* copy all of the `deployment` directory onto the server into <TARGET_DIR> (eg. as `/home/fossasia/enext`)
+* prepare the used volumes in docker-compose: 
+        <TARGET_DIR>/data/static
+        <TARGET_DIR>/data/postgres
+        <TARGET_DIR>/data/data
   and
-        chown 100:101 /home/fossasia/enext/data/static
-* copy `env.prod-sample` to `.env` in `/home/fossasia/enext`, and edit it to your
-  liking
-* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available`
+        chown 100:101 <TARGET_DIR>/data/data
+        chmod a+x <TARGET_DIR>/data/static
+* copy `env.sample` to `.env` in `/home/fossasia/enext`, and edit it:
+  - replace <SERVER_NAME> with your server, like next.eventyay.com
+  - all the CHANGEME entries
+* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available` and edit it:
+  - replace <SERVER_NAME> with your server, like `next.eventyay.com`
+  - replace <PATH_TO> with the <TARGET_DIR> you choose, like `/home/fossasia/enext`
   The file needs to be adjusted if the `enext` dir is NOT in `/home/fossasia`!
 * Link the `enext-direct` file into `/etc/nginx/sites-enabled`
 * Restart nginx
 * Run
         docker compose up -d
 
+
 Support
 -------
 
 This project is **free and open-source software**. Professional support is available to customers of the **hosted Eventyay service** or **Eventyay enterprise offerings**. If you are interested in commercial support, hosting services, or supporting this project financially, please go to `eventyay.com`.
 
-Contributing
-------------
+Legal & Licensing
+-----------------
 
-Please look through our issues and start contributing.
+**License**: This project is published under the **Apache License 2.0**.
+See the `LICENSE <LICENSE>`_ file for complete license text.
 
-License
--------
+**Attribution**: See the `NOTICE <NOTICE>`_ file for information about upstream
+projects and attribution.
 
-The code in this repository is published under the terms of the **Apache 2 License**.
-See the LICENSE file for the complete license text.
+**Contributing**: Contributions are accepted under the Apache License 2.0.
+See `CONTRIBUTING.md <CONTRIBUTING.md>`_ and `CLA.md <CLA.md>`_ for details.
 
-This project is maintained by **FOSSASIA**. See the AUTHORS file for a list of all the awesome contributors of this project.
+This project is maintained by **FOSSASIA**.
 
 .. _uv: https://docs.astral.sh/uv/getting-started/installation/
+.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/
 .. _installation guide: https://docs.eventyay.com/en/latest/admin/installation/index.html
 .. _eventyay.com: https://eventyay.com
 .. _blog: https://blog.eventyay.com
-.. _Docker secrets: https://docs.docker.com/engine/swarm/secrets/

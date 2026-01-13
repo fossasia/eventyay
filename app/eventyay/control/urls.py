@@ -209,31 +209,6 @@ urlpatterns = [
         name='organizer.gate.delete',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/teams$',
-        organizer_views.team_view.TeamListView.as_view(),
-        name='organizer.teams',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/add$',
-        organizer_views.team_view.TeamCreateView.as_view(),
-        name='organizer.team.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/$',
-        organizer_views.team_view.TeamMemberView.as_view(),
-        name='organizer.team',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/edit$',
-        organizer_views.team_view.TeamUpdateView.as_view(),
-        name='organizer.team.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/team/(?P<team>[^/]+)/delete$',
-        organizer_views.team_view.TeamDeleteView.as_view(),
-        name='organizer.team.delete',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/slugrng',
         main.SlugRNG.as_view(),
         name='events.add.slugrng',
@@ -259,7 +234,6 @@ urlpatterns = [
         RedirectView.as_view(pattern_name='eventyay_common:events', permanent=True, query_string=True),
         name='events',
     ),
-    url(r'^events/add$', main.EventWizard.as_view(), name='events.add'),
     url(r'^events/typeahead/$', typeahead.event_list, name='events.typeahead'),
     url(r'^events/typeahead/meta/$', typeahead.meta_values, name='events.meta.typeahead'),
     url(r'^search/orders/$', search.OrderSearch.as_view(), name='search.orders'),
@@ -370,6 +344,7 @@ urlpatterns = [
                     name='event.products.categories.edit',
                 ),
                 url(r'^categories/add$', product.CategoryCreate.as_view(), name='event.products.categories.add'),
+                url(r'^orderforms/$', product.OrderFormList.as_view(), name='event.products.orderforms'),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(

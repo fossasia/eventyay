@@ -9,6 +9,7 @@ from django.core.files.storage import Storage
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import redirect
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import DetailView, ListView, TemplateView
 from django_context_decorator import context
@@ -20,6 +21,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
+from eventyay.agenda.views.utils import is_public_speakers_empty, redirect_to_presale_with_warning
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models import TalkQuestionTarget
 
@@ -29,6 +31,11 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
     template_name = 'agenda/speakers.html'
     permission_required = 'base.list_schedule'
     default_filters = ('user__fullname__icontains',)
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_public_speakers_empty(request):
+            return redirect_to_presale_with_warning(request, _('No published speakers.'))
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         qs = (
@@ -52,6 +59,11 @@ class SpeakerView(PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
+
+    def dispatch(self, request, *args, **kwargs):
+        if is_public_speakers_empty(request):
+            return redirect_to_presale_with_warning(request, _('No published speakers.'))
+        return super().dispatch(request, *args, **kwargs)
 
     @context
     @cached_property
@@ -142,7 +154,7 @@ class SpeakerSocialMediaCard(SocialMediaCardMixin, SpeakerView):
 @cache_page(60 * 60)
 def empty_avatar_view(request, organizer=None, event=None):
     # cached for an hour
-    color = request.event.primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
+    color = request.event.visible_primary_color or settings.DEFAULT_EVENT_PRIMARY_COLOR
     avatar_template = f"""<svg
    xmlns="http://www.w3.org/2000/svg"
    viewBox="0 0 100 100">

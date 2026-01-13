@@ -31,6 +31,7 @@ from ..helpers.jwt_generate import generate_sso_token
 from .base_tasks import CreateWorldTask, SendEventTask
 from .billing_invoice import InvoicePDFGenerator
 from .schemas.billing import CollectBillingResponse
+from .video.permissions import build_video_traits_for_event
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +54,10 @@ def send_team_webhook(self, user_id, team):
 
     try:
         # Send the POST request with the payload and the headers
+        from django.urls import reverse
+        webhook_url = reverse('eventyay_common:webhook.team')
         response = requests.post(
-            urljoin(settings.TALK_HOSTNAME, 'webhook/team/'),
+            webhook_url,
             json=payload,
             headers=headers,
         )
@@ -120,6 +123,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         return None
 
     event_slug = event_data.get('id', '')
+    video_traits = build_video_traits_for_event(event_slug)
     payload = {
         'id': event_slug,
         'title': event_data.get('title', ''),
@@ -127,6 +131,7 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         'locale': event_data.get('locale', ''),
         'traits': {
             'attendee': 'eventyay-video-event-{}'.format(event_slug),
+            **video_traits,
         },
     }
 
@@ -169,7 +174,7 @@ def collect_billing_invoice(
 ) -> CollectBillingResponse:
     """
     Collect billing data for an event on a monthly basis.
-    
+
     This function checks if a billing invoice already exists for the given event and
     month. If not, it checks if there were any paid orders in the last
     month, and if there were, it calculates the total amount and ticket

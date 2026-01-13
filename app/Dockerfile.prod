@@ -23,9 +23,6 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git build-essential gettext make nodejs
 
-# We need to install pretix-venueless from this local directory
-COPY eventyay/plugins/eventyay-ticket-video eventyay/plugins/eventyay-ticket-video
-
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
 RUN --mount=type=cache,target=/root/.cache/uv \
@@ -70,14 +67,14 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 # copy project
 COPY . $APP_HOME
 
-# global-nav-menu
-COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
-RUN npm ci --prefix=eventyay/frontend/global-nav-menu
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/global-nav-menu
 # schedule editor
 COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
 RUN npm ci --prefix=eventyay/frontend/schedule-editor
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/schedule-editor
+# schedule widget
+COPY eventyay/frontend/schedule eventyay/frontend/schedule
+RUN npm ci --prefix=eventyay/frontend/schedule
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --prefix=eventyay/frontend/schedule
 # Video SPA app
 COPY eventyay/webapp eventyay/webapp
 RUN npm ci --prefix=eventyay/webapp
@@ -85,6 +82,8 @@ RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix
 # rollup needed by Django-Compressor
 COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
 RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME

@@ -203,164 +203,6 @@ Development
 
 Global Navigation Menu
 ----------------------
-
-A lightweight web component providing unified navigation across all eventyay interfaces.
-
-**Location**: ``app/eventyay/frontend/global-nav-menu/``
-
-**Framework**: Vue 3 with TypeScript
-
-**Styling**: UnoCSS (atomic CSS)
-
-**Purpose**: Consistent navigation bar across tickets, talk, and video interfaces
-
-Architecture
-~~~~~~~~~~~~
-
-**Build System**: Vite
-
-**Language**: TypeScript
-
-**Output**: Web Component (can be embedded anywhere)
-
-**Code Quality**: Biome for linting and formatting
-
-Implementation
-~~~~~~~~~~~~~~
-
-Web Component
-^^^^^^^^^^^^^
-
-Built as a standard Web Component that can be embedded in any page:
-
-.. code-block:: html
-
-      <!-- Include the component -->
-      <script src="/static/js/global-nav-menu.js"></script>
-   <!-- Use in templates -->
-   <global-nav-menu 
-       user-name="Jane Doe"
-       :is-authenticated="true"
-       current-module="talk">
-   </global-nav-menu>
-
-
-Main Component
-^^^^^^^^^^^^^^
-
-**File**: ``src/App.vue``
-
-The navigation menu component with:
-- User authentication status
-- Event switcher dropdown
-- Module navigation (Tickets, Talk, Video)
-- User profile menu
-- Notifications
-- Settings access
-
-Features
-~~~~~~~~
-
-Navigation Links
-^^^^^^^^^^^^^^^^
-
-- **Dashboard**: Quick access to main dashboard
-- **Events**: Switch between events
-- **Tickets**: Link to ticketing interface
-- **Talk**: Link to CfP/organizer interface  
-- **Video**: Link to virtual event platform
-- **Profile**: User profile and settings
-- **Logout**: Sign out option
-
-Responsive Design
-^^^^^^^^^^^^^^^^^
-
-- Mobile-friendly hamburger menu
-- Tablet optimization
-- Desktop full menu
-- Touch-friendly interactions
-
-Theming
-^^^^^^^
-
-Uses eventyay design system:
-- Brand colors
-- Consistent typography
-- Icon set
-- Spacing system
-
-Development
-~~~~~~~~~~~
-
-**Setup**:
-.. code-block:: bash
-
-      cd app/eventyay/frontend/global-nav-menu
-      npm install
-      npm run dev
-
-**Build**:
-.. code-block:: bash
-
-      npm run build
-      # Output: dist/js/global-nav-menu.js
-
-**Configuration**:
-- ``vite.config.ts`` - Vite build as web component
-- ``tsconfig.json`` - TypeScript strict mode
-- ``tsconfig.app.json`` - App-specific TS config
-- ``tsconfig.node.json`` - Node environment config
-- ``uno.config.ts`` - UnoCSS atomic utility configuration
-- ``biome.json`` - Code quality and formatting
-
-TypeScript Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-**Strict Mode**: Enabled for type safety
-
-**Target**: ES2020
-
-**Module**: ESNext
-
-**Features**:
-- Strict null checks
-- No implicit any
-- Strict property initialization
-- No unused locals/parameters
-
-UnoCSS Integration
-~~~~~~~~~~~~~~~~~~
-
-**Atomic CSS Utilities**:
-.. code-block:: typescript
-
-      // Examples of UnoCSS classes used
-      'flex items-center gap-2'
-      'px-4 py-2 rounded-lg'
-      'hover:bg-gray-100 transition-colors'
-
-**Benefits**:
-- Small bundle size
-- Fast build times
-- Consistent spacing
-- Easy theming
-
-Integration with Django
-~~~~~~~~~~~~~~~~~~~~~~~
-
-The navigation menu is integrated into Django templates:
-
-.. code-block:: django
-
-      {% load static %}
-      <script src="{% static 'js/global-nav-menu.js' %}"></script>
-   <global-nav-menu
-       user-name="{{ request.user.get_full_name }}"
-       :is-authenticated="{{ request.user.is_authenticated|lower }}"
-       current-module="talk">
-   </global-nav-menu>
-
-
 Development Workflow
 --------------------
 
@@ -381,14 +223,6 @@ Local Development
       npm run dev
       # Access: http://localhost:5173
 
-**3. Start Global Nav Menu**:
-.. code-block:: bash
-
-      cd app/eventyay/frontend/global-nav-menu
-      npm install  
-      npm run dev
-      # Access: http://localhost:5174
-
 Testing
 ~~~~~~~
 
@@ -400,11 +234,6 @@ Testing
    cd app/eventyay/frontend/schedule-editor
    npm run lint
    
-   # Global Nav Menu
-   cd app/eventyay/frontend/global-nav-menu
-   npx biome check src/
-
-
 **Type Checking**:
 
 .. code-block:: bash
@@ -422,12 +251,6 @@ Production Build
    npm run build
    # Output: dist/
    
-   # Global Nav Menu
-   cd app/eventyay/frontend/global-nav-menu
-   npm run build
-   # Output: dist/js/global-nav-menu.js
-
-
 **Deployment**:
 Built assets are collected by Django's static file system.
 

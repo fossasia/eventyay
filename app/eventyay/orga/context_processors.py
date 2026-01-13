@@ -1,6 +1,4 @@
 import logging
-from configparser import RawConfigParser
-from typing import cast
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -27,16 +25,18 @@ def orga_events(request):
     """Add data to all template contexts."""
     context = {'settings': settings}
 
-    # Extract site specific values from settings.CONFIG.items('site') and add them to the context
-    # This is a bit of a hack, but it's the only way to get the site specific values into the context
-    # rather than using the settings object directly in the template
-    config = cast(RawConfigParser, settings.TALK_CONFIG)
-    site_config = dict(config.items('site'))
-    context['site_config'] = site_config
+    # Extract site specific values from individual settings attributes and add them to the context
+    # so that templates can use simple context variables instead of accessing the settings object
+    # directly.
+    context['site_name'] = settings.INSTANCE_NAME
     context['base_path'] = settings.BASE_PATH
-    context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
+    context['common_path'] = urljoin(settings.BASE_PATH, '/common')
+    context['tickets_common'] = context['common_path']
+    context['tickets_path'] = urljoin(settings.BASE_PATH, '/control')
+    context['talks_path'] = urljoin(settings.BASE_PATH, '/orga/event')
+    context['admin_path'] = urljoin(settings.BASE_PATH, '/admin')
     # Login button label
-    key = site_config.get('call_for_speaker_login_button_label', 'default')
+    key = settings.CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL
     button_label = CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.get(key)
     if not button_label:
         logger.warning('%s does not exist in CALL_FOR_SPEAKER_LOGIN_BTN_LABELS', key)

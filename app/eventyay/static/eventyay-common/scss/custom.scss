@@ -6,7 +6,8 @@
         border: 1px solid;
         font-size: 16px;
         font-weight: normal;
-        border-radius: 0;
+        border-radius: 0.25rem;
+        padding: 7px 7px;
     }
     .header-nav.active {
         background-color: $hover-button-color !important;
@@ -16,6 +17,7 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
+        font-weight: 200;
         .navigation-button {
             margin-left: auto;
         }
@@ -154,6 +156,18 @@
 @media (min-width: $screen-md-min){
     .panel-body {
         min-height: 90%;
+    }
+}
+
+@media (min-width: $screen-lg-min) {
+    #event-nav .navigation .navigation-button {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: $screen-sm-max) {
+    #event-nav .navigation {
+        margin-top: 18px;
     }
 }
 

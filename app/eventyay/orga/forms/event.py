@@ -12,7 +12,6 @@ from django_scopes.forms import SafeModelMultipleChoiceField
 from i18nfield.fields import I18nFormField, I18nTextarea
 from i18nfield.forms import I18nFormMixin, I18nFormSetMixin, I18nModelForm
 
-from eventyay.common.forms.fields import ColorField, ImageField
 from eventyay.common.forms.mixins import (
     HierarkeyMixin,
     I18nHelpText,
@@ -142,9 +141,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     def save(self, *args, **kwargs):
         result = super().save(*args, **kwargs)
         css_text = self.cleaned_data.get('custom_css_text', '')
-        for image_field in ('logo', 'header_image'):
-            if image_field in self.changed_data:
-                self.instance.process_image(image_field)
         if css_text and 'custom_css_text' in self.changed_data:
             self.instance.custom_css.save(self.instance.slug + '.css', ContentFile(css_text))
         return result
@@ -154,18 +150,9 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         model = Event
         fields = [
             'email',
-            'primary_color',
             'custom_css',
-            'logo',
-            'header_image',
-            'landing_page_text',
             'featured_sessions_text',
         ]
-        field_classes = {
-            'logo': ImageField,
-            'header_image': ImageField,
-            'primary_color': ColorField,
-        }
         json_fields = {
             'imprint_url': 'display_settings',
             'show_schedule': 'feature_flags',
@@ -527,6 +514,18 @@ class ReviewScoreCategoryForm(I18nHelpText, I18nModelForm):
 
 class EventExtraLinkForm(I18nModelForm):
     default_renderer = InlineFormLabelRenderer
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for fname in ('label', 'url'):
+            if fname in self.fields:
+                widget = self.fields[fname].widget
+                if hasattr(widget, 'widgets'):
+                    for subwidget in widget.widgets:
+                        css = subwidget.attrs.get('class', '')
+                        subwidget.attrs['class'] = (css + ' form-control').strip()
+                css = widget.attrs.get('class', '')
+                widget.attrs['class'] = (css + ' form-control').strip()
 
     class Meta:
         model = EventExtraLink

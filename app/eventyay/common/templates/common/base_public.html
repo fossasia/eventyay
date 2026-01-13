@@ -1,0 +1,182 @@
+{% load compress %}
+{% load safelink %}
+{% load staff_session %}
+{% load i18n %}
+{% load rules %}
+{% load event_tags %}
+{% load tz %}
+{% load static %}
+
+{% with current_event=request.event|default:event %}
+<!DOCTYPE html>
+<html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+    <head>
+        <meta charset="utf-8">
+        <title>{% block title %}{% endblock title %}{% if current_event %} {{ current_event.name }}{% endif %} :: {{ site_name }}</title>
+        <meta name="title" content="{% block meta_title %}{% endblock meta_title %}{% if current_event %} - {{ current_event.name }}{% endif %} {{ site_name }}">
+        <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
+        <meta name="application-name" content="{{ site_name }}">
+        <meta name="generator" content="{{ site_name }}">
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        {{ html_head|safe }}
+        {% if current_event and current_event.display_settings.meta_noindex %}
+            <meta name="robots" content="noindex, nofollow">
+        {% else %}
+            <meta name="robots" content="index, follow">
+        {% endif %}
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="{% if current_event %}{{ current_event.visible_primary_color }}{% else %}#2185d0{% endif %}">
+        <meta name="HandheldFriendly" content="True"/>
+        {% block meta_image %}{% if current_event %}<meta property="thumbnail" content="{{ current_event.urls.social_image.full }}">
+            <meta property="og:image" content="{{ current_event.urls.social_image.full }}">
+        {% endif %}{% endblock meta_image %}
+        <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name }}{% endif %}">
+        <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">
+        <meta property="og:url" content="{% if current_event and current_event.display_settings.html_export_url %}{{ current_event.display_settings.html_export_url }}{{ request.path|slice:"1:" }}{% else %}{{ request.build_absolute_uri }}{% endif %}">
+        <meta property="twitter:card" content="summary">
+
+        {% block favicons %}
+            {% include "common/includes/favicon.html" %}
+        {% endblock %}
+
+        <script src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
+
+        {% block public_head_before_assets %}{% endblock public_head_before_assets %}
+
+        {% if current_event and current_event.display_settings.header_pattern %}
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/headers-uncompressed.css" %}" />
+        {% endif %}
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "vendored/forkawesome/scss/fork-awesome.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_reset.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/base.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_tooltip.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_rtl.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_stages.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+        {% endcompress %}
+        {% block stylesheets %}{% endblock stylesheets %}
+        {% block public_stylesheets %}{% endblock public_stylesheets %}
+        {% if current_event and current_event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ current_event.urls.settings_css }}?c={{ current_event.visible_primary_color|urlencode }}" />{% endif %}
+        {% if current_event and current_event.custom_css %}<link rel="stylesheet" type="text/css" href="{{ current_event.custom_css.url }}"/>{% endif %}
+        {% compress js %}
+            <script defer src="{% static 'common/js/base.js' %}"></script>
+            <script defer src="{% static 'common/js/lightbox.js' %}"></script>
+            <script src="{% static 'agenda/js/join-online-event.js' %}"></script>
+            <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+        {% endcompress %}
+        {% block scripts %}{% endblock scripts %}
+        {% block custom_header %}{% endblock custom_header %}
+    </head>
+    <body {% block body_attrs %}data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"{% endblock %}>
+        {% block body_top %}{% endblock body_top %}
+        <div id="top-bg" class="header {{ current_event.display_settings.header_pattern|default:"bg-primary" }}">
+            {% if current_event and current_event.visible_header_image_url %}
+                {# not lazy-loading to avoid flash #}
+                <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name }}">
+            {% endif %}
+            <div class="header-image-overlay"></div>
+            {% block header_background %}{% endblock header_background %}
+        </div>
+        {% block site_notice %}
+            {% if current_event and not current_event.is_public and not is_html_export %}
+                <div id="event-nonpublic" class="d-print-none">
+                    <i class="fa fa-user-secret"></i>
+                    {% blocktranslate trimmed %}
+                        This event is currently non-public. Only organisers can see it.
+                    {% endblocktranslate %}
+                </div>
+            {% endif %}
+        {% endblock site_notice %}
+        <div class="container{% block container_width %}{% endblock container_width %}" id="main-container">
+            <header>
+                <div class="event-hero">
+                    <div class="event-hero-overlay">
+                        <div class="event-brand">
+                            <div class="event-logo">
+                                <a href="{% block nav_link %}{% endblock nav_link %}">
+                                    {% block event_logo %}
+                                        {% if current_event and current_event.visible_logo_url %}
+                                            <img loading="lazy" src="{{ current_event.visible_logo_url }}" id="event-logo" alt="{% translate "The event’s logo" %}">
+                                        {% endif %}
+                                    {% endblock event_logo %}
+                                </a>
+                            </div>
+                            {% if current_event %}
+                                <div class="event-hero-text">
+                                    <div class="event-title">{{ current_event.name }}</div>
+                                    {% if current_event.date_from %}
+                                        {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
+                                            {% timezone tz_name %}
+                                                <div class="event-date-line">
+                                                    {{ current_event.date_from|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                </div>
+                                                {% if current_event.date_to and current_event.date_to|date:"Y-m-d" != current_event.date_from|date:"Y-m-d" %}
+                                                    <div class="event-date-line">
+                                                        {% translate "To" %} {{ current_event.date_to|date:"l, j F, Y g:i A" }} ({{ tz_name }})
+                                                    </div>
+                                                {% endif %}
+                                            {% endtimezone %}
+                                        {% endwith %}
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="header-wrapper">
+                    <div id="header-tabs">
+                        {% block header_tabs %}{% endblock header_tabs %}
+                        <div class="header-row-right">
+                            {% block header_right %}
+                                {% include "common/fragment_header_user.html" with current_event=current_event %}
+                            {% endblock header_right %}
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="card" id="main-card">
+                {% block alerts %}
+                    {% if messages %}
+                        {% for message in messages %}<div class="alert alert-{{ message.tags }}">{{ message }}</div>{% endfor %}
+                    {% endif %}
+                {% endblock alerts %}
+                <main>
+                    {% block content %}{% endblock content %}
+                </main>
+            </div>
+            <footer>
+                {% if is_html_export %}
+                    <div id="exporttimestamp" class="text-muted mb-4">
+                        {% now "Y-m-d H:i T" as timestamp %}
+                        {% blocktranslate trimmed %}
+                            This is a static export generated at {{ timestamp }}
+                        {% endblocktranslate %}
+                    </div>
+                {% endif %}
+                {% include "common/powered_by.html" %}
+                {% if current_event %}
+                    ·
+                    <a href="mailto:{{ current_event.email }}">{% translate "Contact us" %}</a>
+                {% endif %}
+                {% if current_event and current_event.display_settings.imprint_url %}
+                    ·
+                    <a href="{{ current_event.display_settings.imprint_url }}" target="_blank" rel="noopener">{% translate "Imprint" %}</a>
+                {% endif %}
+                {% for footer in footer_links %}
+                    ·
+                    <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
+                {% endfor %}
+            </footer>
+        </div>
+        {% include "common/includes/modals.html" %}
+        {% block body_bottom %}{% endblock body_bottom %}
+    </body>
+</html>
+{% endwith %}

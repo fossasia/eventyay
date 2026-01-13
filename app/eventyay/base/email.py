@@ -11,6 +11,7 @@ from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
 from css_inline import inline as inline_css
 from django.conf import settings
@@ -38,10 +39,7 @@ from eventyay.base.signals import (
     register_html_mail_renderers,
     register_mail_placeholders,
 )
-from eventyay.mail.signals import talk_register_mail_placeholders
 from eventyay.base.templatetags.rich_text import markdown_compile_email
-
-from zoneinfo import ZoneInfo
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +174,10 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
             subdir = self.get_subdir_path()
             # We use local time, because this backend is only for development and testing.
             now = datetime.now()
-            file_name = f'{now:%Y%m%d-%H%M%S}-{abs(id(self))}.eml'
+            # Compact format: timestamp with milliseconds + random suffix
+            milliseconds = now.microsecond // 1000
+            random_suffix = secrets.token_hex(2)  # 4 characters
+            file_name = f'{now:%H%M%S}{milliseconds:03d}-{random_suffix}.eml'
             self._fname = str(subdir / file_name)
         return self._fname
 
@@ -266,7 +267,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
 
         if self.event:
             htmlctx['event'] = self.event
-            htmlctx['color'] = self.event.settings.primary_color
+            htmlctx['color'] = self.event.visible_primary_color
 
         if plain_signature:
             signature_md = plain_signature.replace('\n', '<br>\n')
@@ -786,7 +787,12 @@ def base_placeholders(sender: Event, **kwargs):
             _('John Doe'),
         ),
     ]
-    if 'pretix_venueless' in sender.get_plugins():
+    if (
+        sender.settings.venueless_url
+        and sender.settings.venueless_issuer
+        and sender.settings.venueless_audience
+        and sender.settings.venueless_secret
+    ):
         ph.append(
             SimpleFunctionalMailTextPlaceholder(
                 'join_online_event',
@@ -796,7 +802,7 @@ def base_placeholders(sender: Event, **kwargs):
             ),
         )
     else:
-        logger.info('pretix_venueless plugin not found, skipping join_online_event placeholder')
+        logger.info('Video configuration missing, skipping join_online_event placeholder')
     name_scheme = PERSON_NAME_SCHEMES[sender.settings.name_scheme]
     for f, l, w in name_scheme['fields']:
         if f == 'full_name':

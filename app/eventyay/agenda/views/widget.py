@@ -12,11 +12,11 @@ from eventyay.talk_rules.agenda import is_widget_visible
 from eventyay.common.views import conditional_cache_page
 
 WIDGET_JS_CHECKSUM = None
-WIDGET_PATH = 'agenda/js/pretalx-schedule.min.js'
+WIDGET_PATH = 'schedule/pretalx-schedule.js'
 
 
 def color_etag(request, organizer=None, event=None, **kwargs):
-    return request.event.primary_color or 'none'
+    return request.event.visible_primary_color or 'none'
 
 
 def widget_js_etag(request, organizer=None, event=None, **kwargs):
@@ -124,17 +124,20 @@ def widget_script(request, organizer=None, event=None, **kwargs):
 
 
 @condition(etag_func=color_etag)
-@cache_page(5 * 60)
 @csp_exempt()
 def event_css(request, organizer=None, event=None, **kwargs):
     # If this event has custom colours, we send back a simple CSS file that sets the
     # root colours for the event.
     result = ''
-    if request.event.primary_color:
+    if request.event.visible_primary_color:
         if request.GET.get('target') == 'orga':
             # The organizer area sometimes needs the event’s colour, but shouldn’t use
             # it as primary colour automatically.
-            result = ':root {' + f'--color-primary-event: {request.event.primary_color};' + '}'
+            result = ':root {' + f'--color-primary-event: {request.event.visible_primary_color};' + '}'
         else:
-            result = ':root {' + f'--color-primary: {request.event.primary_color};' + '}'
-    return HttpResponse(result, content_type='text/css')
+            result = ':root {' + f'--color-primary: {request.event.visible_primary_color};' + '}'
+    response = HttpResponse(result, content_type='text/css')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    return response

@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.utils import translation
 from django.utils.translation import get_language_info
@@ -36,6 +37,13 @@ def contextprocessor(request):
     if not hasattr(request, '_eventyay_presale_default_context'):
         request._eventyay_presale_default_context = _default_context(request)
     return request._eventyay_presale_default_context
+
+
+def _safe_language_info(code):
+    try:
+        return get_language_info(code)
+    except KeyError:
+        return {'code': code, 'name': code, 'bidi': False, 'name_local': code, 'public_code': code}
 
 
 def _default_context(request):
@@ -92,6 +100,21 @@ def _default_context(request):
             else:
                 _footer.append(response)
 
+        if not request.event.settings.get('presale_css_file'):
+            lock_key = f'presale:regenerate_css:{request.event.pk}'
+            if cache.add(lock_key, True, 60):
+                try:
+                    from eventyay.presale.style import regenerate_css
+                    regenerate_css.apply_async(args=(request.event.pk,))
+                except Exception:
+                    cache.delete(lock_key)
+                    logger.warning(
+                        'Could not enqueue presale CSS regeneration for %s/%s',
+                        request.event.organizer.slug,
+                        request.event.slug,
+                        exc_info=True,
+                    )
+
         if request.event.settings.presale_css_file:
             ctx['css_file'] = default_storage.url(request.event.settings.presale_css_file)
 
@@ -105,12 +128,12 @@ def _default_context(request):
             logger.error('Could not generate social image. Error: %s', e)
 
         ctx['event'] = request.event
-        ctx['languages'] = [get_language_info(code) for code in request.event.settings.locales]
+        ctx['languages'] = [_safe_language_info(code) for code in request.event.settings.locales]
 
         if request.resolver_match:
             ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
-        ctx['languages'] = [get_language_info(code) for code in request.organizer.settings.locales]
+        ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
 
     if hasattr(request, 'organizer'):
         if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
@@ -133,9 +156,11 @@ def _default_context(request):
     ctx['js_date_format'] = get_javascript_format_without_seconds('DATE_INPUT_FORMATS')
     ctx['js_time_format'] = get_javascript_format_without_seconds('TIME_INPUT_FORMATS')
     ctx['js_locale'] = get_moment_locale()
-    ctx['html_locale'] = translation.get_language_info(get_language_without_region()).get(
-        'public_code', translation.get_language()
-    )
+    lang = get_language_without_region()
+    try:
+        ctx['html_locale'] = translation.get_language_info(lang).get('public_code', translation.get_language())
+    except KeyError:
+        ctx['html_locale'] = translation.get_language()
     ctx['settings'] = eventyay_settings
     ctx['django_settings'] = settings
 
