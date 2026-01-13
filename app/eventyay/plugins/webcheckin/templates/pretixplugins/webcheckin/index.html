@@ -36,7 +36,7 @@
     <script type="text/javascript" src="{% static "datetimepicker/bootstrap-datetimepicker.js" %}"></script>
 {% endcompress %}
 
-<script type="module" src="{% static 'pretixplugins/webcheckin/dist/webcheckin/webcheckin.js' %}"></script>
+<script type="module" src="{% static 'webcheckin/webcheckin.js' %}"></script>
 <script type="application/json" id="countries">{{ countries|escapejson_dumps }}</script>
 {% csrf_token %}
 </body>

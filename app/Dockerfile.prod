@@ -80,10 +80,10 @@ COPY eventyay/webapp eventyay/webapp
 RUN npm ci --prefix=eventyay/webapp
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
 # webcheckin web component build
-COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
-RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
-# Write build output into plugin static directory (collected by collectstatic)
-RUN OUT_DIR=/home/app/web/eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/dist/webcheckin npm run build --prefix=eventyay/frontend/webcheckin-bundler
+COPY eventyay/frontend/webcheckin eventyay/frontend/webcheckin
+RUN npm ci --prefix=eventyay/frontend/webcheckin
+# Write build output to compiled-frontend (collected by collectstatic)
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/webcheckin
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 

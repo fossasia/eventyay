@@ -10,14 +10,40 @@
         @selected="selectList($event)"
       ></checkinlist-select>
 
-      <input
-        v-if="checkinlist"
-        v-model="query"
-        ref="input"
-        :placeholder="$root.strings['input.placeholder']"
-        @keyup="inputKeyup"
-        class="form-control scan-input"
-      />
+      <div class="autocomplete-wrapper" v-if="checkinlist">
+        <input
+          v-model="query"
+          ref="input"
+          :placeholder="$root.strings['input.placeholder']"
+          @keyup="inputKeyup"
+          @input="onInputChange"
+          @keydown="onInputKeydown"
+          @blur="onInputBlur"
+          @focus="onInputFocus"
+          class="form-control scan-input"
+          autocomplete="off"
+        />
+        <ul v-if="showSuggestions && suggestions.length" class="autocomplete-dropdown">
+          <li
+            v-for="(s, idx) in suggestions"
+            :key="s.id"
+            :class="{ active: idx === selectedSuggestionIndex }"
+            @mousedown.prevent="selectSuggestion(s)"
+          >
+            <div class="suggestion-main">
+              <strong>{{ s.order }}-{{ s.positionid }}</strong>
+              <span v-if="s.attendee_name"> {{ s.attendee_name }}</span>
+            </div>
+            <div class="suggestion-detail">
+              {{ getSuggestionProduct(s) }}
+              <span class="suggestion-secret">{{ s.secret.substring(0, 8) }}…</span>
+            </div>
+          </li>
+          <li v-if="suggestionsLoading" class="loading">
+            <span class="fa fa-cog fa-spin"></span>
+          </li>
+        </ul>
+      </div>
 
       <div v-if="checkResult !== null" class="panel panel-primary check-result">
         <div class="panel-heading">
@@ -325,6 +351,12 @@ export default {
       showUnpaidModal: false,
       showQuestionsModal: false,
       answers: {},
+      // Autocomplete state
+      suggestions: [],
+      suggestionsLoading: false,
+      showSuggestions: false,
+      selectedSuggestionIndex: -1,
+      debounceTimer: null,
     }
   },
   mounted() {
@@ -339,6 +371,7 @@ export default {
     document.removeEventListener('keydown', this.globalKeydown)
     window.clearInterval(this.statusInterval)
     window.clearInterval(this.clearTimeout)
+    if (this.debounceTimer) clearTimeout(this.debounceTimer)
   },
   computed: {
     countries() {
@@ -509,10 +542,97 @@ export default {
     },
     inputKeyup(e) {
       if (e.key === 'Enter') {
+        // If a suggestion is selected, use it
+        if (this.showSuggestions && this.selectedSuggestionIndex >= 0 && this.suggestions[this.selectedSuggestionIndex]) {
+          this.selectSuggestion(this.suggestions[this.selectedSuggestionIndex])
+          return
+        }
+        this.hideSuggestions()
         this.startSearch(true)
       } else if (this.query === '') {
         this.clear()
       }
+    },
+    onInputChange() {
+      // Debounced autocomplete search
+      if (this.debounceTimer) clearTimeout(this.debounceTimer)
+      
+      if (this.query.length < 2) {
+        this.hideSuggestions()
+        return
+      }
+      
+      this.debounceTimer = setTimeout(() => {
+        this.fetchSuggestions()
+      }, 250)
+    },
+    onInputKeydown(e) {
+      if (!this.showSuggestions || !this.suggestions.length) return
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        this.selectedSuggestionIndex = Math.min(this.selectedSuggestionIndex + 1, this.suggestions.length - 1)
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        this.selectedSuggestionIndex = Math.max(this.selectedSuggestionIndex - 1, -1)
+      } else if (e.key === 'Escape') {
+        this.hideSuggestions()
+      }
+    },
+    onInputBlur() {
+      // Delay hiding to allow click on suggestion
+      setTimeout(() => {
+        this.hideSuggestions()
+      }, 150)
+    },
+    onInputFocus() {
+      if (this.query.length >= 2 && this.suggestions.length) {
+        this.showSuggestions = true
+      }
+    },
+    hideSuggestions() {
+      this.showSuggestions = false
+      this.selectedSuggestionIndex = -1
+    },
+    fetchSuggestions() {
+      if (!this.checkinlist || this.query.length < 2) return
+      
+      this.suggestionsLoading = true
+      this.showSuggestions = true
+      
+      fetch(
+        this.$root.api.lists +
+          this.checkinlist.id +
+          '/positions/?ignore_status=true&expand=product&expand=variation&search=' +
+          encodeURIComponent(this.query) +
+          '&page_size=8',
+        {
+          credentials: 'same-origin',
+        }
+      )
+        .then((response) => response.json())
+        .then((data) => {
+          this.suggestionsLoading = false
+          if (data.results) {
+            this.suggestions = data.results
+            this.selectedSuggestionIndex = -1
+          }
+        })
+        .catch(() => {
+          this.suggestionsLoading = false
+          this.suggestions = []
+        })
+    },
+    selectSuggestion(suggestion) {
+      this.hideSuggestions()
+      this.query = suggestion.secret
+      this.check(suggestion.secret, false, false, false, false)
+    },
+    getSuggestionProduct(s) {
+      if (s.variation) {
+        return `${i18nstring_localize(s.product.name)} – ${i18nstring_localize(s.variation.value)}`
+      }
+      return i18nstring_localize(s.product.name)
     },
     startSearch(from_enter) {
       if (this.query.length >= 32 && from_enter) {
