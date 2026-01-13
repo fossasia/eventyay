@@ -134,10 +134,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Abstract"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -164,10 +164,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Description"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -194,10 +194,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Notes"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -224,10 +224,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Track"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -254,10 +254,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Duration"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -285,10 +285,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Content Locale"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -316,10 +316,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Session image"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -346,10 +346,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Recording opt-out"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -382,10 +382,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Biography"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -412,10 +412,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Avatar"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -442,10 +442,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Availability"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">
@@ -472,10 +472,10 @@
                                 <button type="button"
                                     class="required-status" 
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
                                     aria-label="Toggle required status for Additional speakers"
                                     tabindex="0">
-                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
                                 </button>
                             </td>
                             <td class="text-center">

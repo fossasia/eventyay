@@ -127,10 +127,16 @@ function showError(message) {
     const alert = document.createElement('div');
     alert.className = 'alert alert-danger alert-dismissible fade show';
     alert.setAttribute('role', 'alert');
-    alert.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
+    
+    const messageText = document.createTextNode(message);
+    alert.appendChild(messageText);
+    
+    const closeButton = document.createElement('button');
+    closeButton.type = 'button';
+    closeButton.className = 'btn-close';
+    closeButton.setAttribute('data-bs-dismiss', 'alert');
+    closeButton.setAttribute('aria-label', 'Close');
+    alert.appendChild(closeButton);
     
     // Insert at top of container
     alertContainer.insertBefore(alert, alertContainer.firstChild);
@@ -229,7 +235,7 @@ function initFormPageToggles() {
                 // Activate - restore previous state or default to 'optional'
                 // Check if we have a stored previous state
                 let state = hiddenInput.dataset.previousState || requiredBtn.dataset.state;
-                if (state !== REQUIRED_STATES.REQUIRED && state !== REQUIRED_STATES.OPTIONAL) {
+                if (!REQUIRED_STATES_ARRAY.includes(state)) {
                     state = REQUIRED_STATES.OPTIONAL;
                 }
                 hiddenInput.value = state;
