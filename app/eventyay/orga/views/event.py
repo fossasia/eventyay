@@ -108,13 +108,6 @@ class EventLive(EventSettingsPermission, TemplateView):
                     'url': self.request.event.cfp.urls.text,
                 }
             )
-        if not self.request.event.landing_page_text or len(str(self.request.event.landing_page_text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The event doesn’t have a landing page text yet.'),
-                    'url': self.request.event.orga_urls.settings,
-                }
-            )
         # TODO: test that mails can be sent
         if (
             self.request.event.get_feature_flag('use_tracks')
@@ -172,13 +165,13 @@ class EventLive(EventSettingsPermission, TemplateView):
                         orga=True,
                         data={},
                     )
-                    messages.success(request, _('This event is now public.'))
+                    messages.success(request, _('This talk component is now public.'))
                     for response in responses:
                         if isinstance(response[1], str):
                             messages.success(request, response[1])
         else:  # action == 'deactivate'
             if not event.is_public:
-                messages.success(request, _('This event was already hidden.'))
+                messages.success(request, _('This talk component was already hidden.'))
             else:
                 event.is_public = False
                 event.save()
@@ -188,7 +181,7 @@ class EventLive(EventSettingsPermission, TemplateView):
                     orga=True,
                     data={},
                 )
-                messages.success(request, _('This event is now hidden.'))
+                messages.success(request, _('This talk component is now hidden.'))
         return redirect(event.orga_urls.base)
 
 
@@ -456,8 +449,6 @@ class InvitationView(FormView):
         invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
         messages.info(self.request, _('You are now part of the team!'))
         invite.delete()
-
-
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
