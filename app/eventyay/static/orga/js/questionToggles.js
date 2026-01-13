@@ -209,9 +209,16 @@ function initFormPageToggles() {
         }
     }
 
-    // Init from hidden inputs
-    document.querySelectorAll('input[type=hidden][name^="cfp_ask_"]').forEach(input => {
-        updateVisualState(input.id, input.value);
+    // Init from hidden inputs (note: form has 'settings-' prefix)
+    document.querySelectorAll('input[type=hidden][name^="settings-cfp_ask_"]').forEach(input => {
+        let value = input.value;
+        // If value is empty or invalid, default to 'do_not_ask'
+        if (!value || !REQUIRED_STATES_ARRAY.includes(value)) {
+            value = 'do_not_ask';
+            input.value = value;
+            console.log('[Init] Fixed invalid value for', input.id, 'to:', value);
+        }
+        updateVisualState(input.id, value);
     });
 
     // Handle Required status dropdown change (Form Page)
