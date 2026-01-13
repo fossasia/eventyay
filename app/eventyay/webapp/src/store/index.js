@@ -205,15 +205,10 @@ export default new Vuex.Store({
 						if (room) {
 							const newStreamUrl = currentStream?.url
 							room.currentStream = currentStream
-							// Reload if stream changed (including when it becomes null or changes URL)
 							if (previousStreamId !== streamId || previousStreamUrl !== newStreamUrl) {
-								commit('setStreamReload', true)
-								setTimeout(() => {
-									commit('setStreamReload', false)
-									if (window.location) {
-										window.location.reload()
-									}
-								}, 100)
+								if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+									window.location.reload()
+								}
 							}
 						}
 					}
@@ -376,15 +371,10 @@ export default new Vuex.Store({
 			if (previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
 				room.currentStream = stream
 				state.lastKnownStreamId = streamId
-				// Always reload if stream changed (ID or URL), or if explicitly requested
 				if (reload || previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
-					commit('setStreamReload', true)
-					setTimeout(() => {
-						commit('setStreamReload', false)
-						if (window.location) {
-							window.location.reload()
-						}
-					}, 100)
+					if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+						window.location.reload()
+					}
 				}
 			}
 		},

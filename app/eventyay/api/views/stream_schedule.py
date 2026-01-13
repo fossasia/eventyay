@@ -109,11 +109,12 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
+            previous_stream = room.get_current_stream()
             instance = serializer.save(room=room)
             current_stream = instance.room.get_current_stream()
-            if current_stream and current_stream.pk == instance.pk:
+            if previous_stream != current_stream:
                 async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, instance, reload=True
+                    instance.room.pk, current_stream, reload=True
                 )
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
@@ -137,11 +138,12 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(serializer.errors, status=400)
 
         try:
+            previous_stream = instance.room.get_current_stream()
             instance = serializer.save()
             current_stream = instance.room.get_current_stream()
-            if current_stream and current_stream.pk == instance.pk:
+            if previous_stream != current_stream:
                 async_to_sync(broadcast_stream_change)(
-                    instance.room.pk, instance, reload=True
+                    instance.room.pk, current_stream, reload=True
                 )
             event_id = self.event.id if self.event else instance.room.event_id
             async_to_sync(notify_event_change)(event_id)
