@@ -1,0 +1,45 @@
+/* Preferred provider spacing */
+.preferred-provider {
+    margin-bottom: 20px;
+}
+
+/* Disabled remember-me indicator */
+.preferred-provider-remember {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.preferred-provider-remember label {
+    font-weight: normal;
+    color: #666;
+    cursor: default; /* Shows it's not clickable */
+}
+
+.preferred-provider-remember input[type="checkbox"] {
+    margin-right: 5px;
+}
+
+/* Login separator ("or use the following") */
+.login-separator {
+    position: relative;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.login-separator hr {
+    border-top: 1px solid #e0e0e0;
+    margin: 0;
+}
+
+.login-separator span {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    padding: 0 15px;
+    color: #999;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+}
