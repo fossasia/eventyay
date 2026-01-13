@@ -21,6 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
+from eventyay.consts import SizeKey
 
 # To avoid loading unnecessary environment variables
 # designated for other applications
@@ -194,6 +195,47 @@ class BaseSettings(_BaseSettings):
             toml_settings,
         )
 
+    size_limit_mb: dict[str, int] = Field(
+        default_factory=lambda: {
+            "upload_size_csv": 1,
+            "upload_size_image": 10,
+            "upload_size_pdf": 10,
+            "upload_size_xlsx": 2,
+            "upload_size_favicon": 1,
+            "upload_size_attachment": 10,
+            "upload_size_mail": 4,
+            "upload_size_question": 20,
+            "upload_size_other": 10,
+
+            "response_size_webhook": 1,
+        }
+    )
+
+    # Optional single-line override fields.
+    # These allow simple top-level config entries (e.g. `question = 300` in TOML)
+    # to override corresponding entries in `size_limit_mb`.
+    # The dictionary remains the canonical source of truth.
+    upload_size_csv: int | None = None
+    upload_size_image: int | None = None
+    upload_size_pdf: int | None = None
+    upload_size_xlsx: int | None = None
+    upload_size_favicon: int | None = None
+    upload_size_attachment: int | None = None
+    upload_size_mail: int | None = None
+    upload_size_question: int | None = None
+    upload_size_other: int | None = None
+
+    response_size_webhook: int | None = None
+
+    #   Apply top-level single-line size limit overrides to `size_limit_mb`.
+    #   Any override field that is set (not None) will replace the corresponding
+    #   entry in the size_limit_mb dictionary.
+    def apply_size_limit_overrides(self) -> None:
+        for key in self.size_limit_mb:
+            override = getattr(self, key, None)
+            if override is not None:
+                self.size_limit_mb[key] = override
+
 
 def discover_toml_files() -> list[Path]:
     """Discover TOML configuration files to be loaded.
@@ -235,6 +277,9 @@ def increase_redis_db(url: str, increment: int) -> str:
 
 
 conf = BaseSettings()
+
+# Merge single-line TOML overrides into size_limit_mb
+conf.apply_size_limit_overrides()
 
 # --- Now, provide values to Django's settings. ---
 
@@ -353,9 +398,6 @@ _OURS_APPS = (
     'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
-    # For now, this app is installed from "plugins" folder.
-    # It needs the "tool.uv.sources" entry in pyproject.toml.
-    'pretix_venueless',
 )
 
 PRETIX_PLUGINS_DEFAULT = conf.plugins_default
@@ -372,7 +414,7 @@ pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.mo
 # Pretalx plugins
 pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
 
-SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_venueless', 'pretix_pages'})
+SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
 
 INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
 
@@ -544,6 +586,7 @@ USE_I18N = True
 USE_TZ = True
 
 LOCALE_PATHS = (BASE_DIR / 'locale',)
+FORMAT_MODULE_PATH = ['eventyay.helpers.formats']
 
 # TODO: Move to consts.py
 # Unified language configuration - single source of truth for all language information
@@ -554,6 +597,42 @@ _LANGUAGES_CONFIG = {
         'bidi': False,
         'official': True,
         'percentage': 100,
+        'incubating': False,
+    },
+    'en-us': {
+        'name': _('English (United States)'),
+        'natural_name': 'English (United States)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-gb': {
+        'name': _('English (United Kingdom)'),
+        'natural_name': 'English (United Kingdom)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-au': {
+        'name': _('English (Australia)'),
+        'natural_name': 'English (Australia)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
+        'incubating': False,
+    },
+    'en-ca': {
+        'name': _('English (Canada)'),
+        'natural_name': 'English (Canada)',
+        'bidi': False,
+        'official': True,
+        'percentage': 100,
+        'public_code': 'en',
         'incubating': False,
     },
     'de': {
@@ -1035,6 +1114,8 @@ INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
 
 EMAIL_BACKEND = conf.email_backend
+# Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
+EMAIL_FILE_PATH = DATA_DIR / 'dev-sent-emails'
 EMAIL_HOST = conf.email_host
 EMAIL_PORT = conf.email_port
 EMAIL_HOST_USER = conf.email_host_user
@@ -1216,6 +1297,14 @@ TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/control/video'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
+
+BYTES_IN_MB = 1024 * 1024
+
+# Config for max size limits
+MAX_SIZE_CONFIG = {
+    key.value: BYTES_IN_MB * conf.size_limit_mb[key.value]
+    for key in SizeKey
+}
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
 

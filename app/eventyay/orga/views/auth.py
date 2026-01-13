@@ -17,40 +17,7 @@ from eventyay.common.text.phrases import phrases
 from eventyay.common.views import GenericLoginView, GenericResetView
 
 
-class LoginView(GenericLoginView):
-    template_name = 'orga/auth/login.html'
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        backenddict = get_auth_backends()
-        backend = backenddict.get(self.request.GET.get('backend', 'native'), None)
-        if not backend and backenddict:
-            backend = list(backenddict.values())[0]
-
-        backend.url = backend.authentication_url(self.request)
-        kwargs['backend'] = backend
-        kwargs['request'] = self.request
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['site_name'] = settings.INSTANCE_NAME
-        return context
-
-    @cached_property
-    def event(self):
-        return getattr(self.request, 'event', None)
-
-    @cached_property
-    def success_url(self):
-        if self.event:
-            return self.event.orga_urls.base
-        return reverse('orga:event.list')
-
-    def get_password_reset_link(self):
-        if self.event:
-            return reverse('orga:event.auth.reset', kwargs={'event': self.event.slug})
-        return reverse('orga:auth.reset')
 
 
 def logout_view(request):

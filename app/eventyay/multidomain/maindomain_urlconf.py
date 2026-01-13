@@ -5,7 +5,6 @@ from django.apps import apps
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
-from eventyay.cfp.views.event import EventStartpage
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -112,23 +111,6 @@ try:
 except (ImportError, AttributeError, TypeError):
     logger.exception('Error loading plugin URLs for eventyay_stripe')
 
-# Fallback: include pretix_venueless plugin URLs even if lacking EventyayPluginMeta
-# TODO: Do we really want this fallback?
-try:
-    if importlib.util.find_spec('pretix_venueless.urls'):
-        urlmod = importlib.import_module('pretix_venueless.urls')
-        single_plugin_patterns = []
-        if hasattr(urlmod, 'urlpatterns'):
-            single_plugin_patterns += urlmod.urlpatterns
-        if hasattr(urlmod, 'event_patterns'):
-            patterns = plugin_event_urls(urlmod.event_patterns, plugin='pretix_venueless')
-            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
-        if hasattr(urlmod, 'organizer_patterns'):
-            patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'pretix_venueless'))))
-except (ImportError, AttributeError, TypeError):
-    logger.exception('Error including pretix_venueless plugin URLs')
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
 
@@ -159,7 +141,6 @@ unified_event_patterns = [
                 # serve all paths under /video/ to allow client-side routing.
                 # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]

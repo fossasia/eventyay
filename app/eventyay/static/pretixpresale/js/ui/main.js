@@ -430,7 +430,10 @@ $(function () {
         });
     }
 
-    var local_tz = moment.tz.guess()
+    const local_tz = moment.tz.guess();
+    const localTimeFormat = moment.localeData().longDateFormat('LT') || $("body").attr("data-timeformat") || "h:mm A";
+    const localDateTimeFormat = moment.localeData().longDateFormat('LLL') || $("body").attr("data-datetimeformat") || "LL h:mm A";
+
     $("span[data-timezone], small[data-timezone]").each(function() {
         var tzName = $(this).attr("data-timezone")
         var t = moment.tz($(this).attr("data-time"), tzName)
@@ -442,14 +445,14 @@ $(function () {
             var $add = $("<span>")
             $add.append($("<span>").addClass("fa fa-globe"))
             if ($(this).is("[data-time-short]")) {
-                $add.append($("<em>").text(" " + t.tz(local_tz).format($("body").attr("data-timeformat"))))
+                $add.append($("<em>").text(" " + t.tz(local_tz).format(localTimeFormat)))
             } else {
                 $add.addClass("text-muted")
                 $add.append(" " + gettext("Your local time:") + " ")
                 if (t.tz(tzName).format("YYYY-MM-DD") != t.tz(local_tz).format("YYYY-MM-DD")) {
-                    $add.append(t.tz(local_tz).format($("body").attr("data-datetimeformat")))
+                    $add.append(t.tz(local_tz).format(localDateTimeFormat))
                 } else {
-                    $add.append(t.tz(local_tz).format($("body").attr("data-timeformat")))
+                    $add.append(t.tz(local_tz).format(localTimeFormat))
                 }
             }
             $add.insertAfter($(this));

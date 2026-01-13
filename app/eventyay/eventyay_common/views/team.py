@@ -7,6 +7,7 @@ from django.db.models import ManyToManyField
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
@@ -290,6 +291,11 @@ class TeamCreateView(
     form_class = TeamForm
     permission = 'can_change_teams'
 
+    def dispatch(self, request, *args, **kwargs):
+        if 'next' in request.GET:
+            return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
@@ -333,6 +339,9 @@ class TeamCreateView(
         return super().form_invalid(form)
 
     def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
+            return next_url
         return reverse(
             'eventyay_common:organizer.update',
             kwargs={'organizer': self.request.organizer.slug},
