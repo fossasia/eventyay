@@ -204,7 +204,8 @@ function initFormPageToggles() {
     // Handle Active toggle (Form Page)
     document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
         input.addEventListener('change', function () {
-            const fieldId = toggle.dataset.fieldId;
+            const toggle = this.closest('.toggle-switch');
+            const fieldId = toggle ? toggle.dataset.fieldId : this.dataset.fieldId;
             const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
             const hiddenInput = document.getElementById(fieldId);
 
