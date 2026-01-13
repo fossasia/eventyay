@@ -6,7 +6,7 @@ from django_scopes.forms import SafeModelChoiceField
 
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
-from eventyay.common.forms.mixins import PublicContent, RequestRequire
+from eventyay.common.forms.mixins import PublicContent, RequestRequire, localize_event_text
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
@@ -24,6 +24,11 @@ from eventyay.base.models import (
     Tag,
     Track,
 )
+
+
+class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'name', obj))
 
 
 class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
@@ -191,8 +196,8 @@ class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
             'track': EnhancedSelect(description_field='description', color_field='color'),
         }
         field_classes = {
-            'submission_type': SafeModelChoiceField,
-            'track': SafeModelChoiceField,
+            'submission_type': EventLocalizedSafeModelChoiceField,
+            'track': EventLocalizedSafeModelChoiceField,
         }
 
 

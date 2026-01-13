@@ -55,7 +55,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
             locale = validate_language(locale, supported)
             if locale:
                 max_age = 10 * 365 * 24 * 60 * 60
-                cookie_name = get_event_language_cookie_name(event.slug)
+                cookie_name = get_event_language_cookie_name(event.slug, event.organizer.slug)
                 resp.set_cookie(
                     cookie_name,
                     locale,

@@ -4,7 +4,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{{ submission.title }} :: {% endblock title %}
+{% block title %}{{ submission.title|event_localize }} :: {% endblock title %}
 
 {% block content %}
     <div class="col-md-10 ml-auto mr-auto">

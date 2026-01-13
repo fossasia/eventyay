@@ -46,7 +46,7 @@
                                        href="{{ event.url }}">
                                         {% if show_names|default_if_none:True %}
                                             <span class="event-name">
-                                                {{ event.event.name }}
+                                                {{ event.event.name|event_localize }}
                                             </span>
                                         {% endif %}
                                         {% if not event.continued %}

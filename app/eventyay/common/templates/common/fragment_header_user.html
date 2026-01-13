@@ -15,18 +15,10 @@
                     <div class="language-column">
                         <p class="dropdown-heading">{% translate "Event Language" %}</p>
                         {% for l, name in current_event.named_locales %}
-                            {% if nav_context == "presale" %}
-                                <a href="{% url 'presale:locale.event' %}?locale={{ l }}&event={{ current_event.slug }}&organizer={{ current_event.organizer.slug }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
-                                   class="dropdown-item {% if l|lower == request.event_language|default:request.LANGUAGE_CODE|lower %}active{% endif %}"
-                                   role="menuitem"
-                                   tabindex="-1">{{ name }}</a>
-                            {% else %}
-                                {% cfp_locale_switch_url l as locale_switch_url %}
-                                <a href="{{ locale_switch_url }}"
-                                   class="dropdown-item {% if l|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
-                                   role="menuitem"
-                                   tabindex="-1">{{ name }}</a>
-                            {% endif %}
+                            <a href="{% url 'presale:locale.event' %}?locale={{ l }}&event={{ current_event.slug }}&organizer={{ current_event.organizer.slug }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
+                               class="dropdown-item {% if l|lower == request.event_language|default:current_event.locale|default:request.LANGUAGE_CODE|lower %}active{% endif %}"
+                               role="menuitem"
+                               tabindex="-1">{{ name }}</a>
                         {% endfor %}
                     </div>
                     <div class="language-column">

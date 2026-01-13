@@ -142,10 +142,12 @@ class EventPermissionMiddleware:
         event_language = None
         if hasattr(request, 'event') and request.event:
             event_supported = request.event.locales
-            cookie_name = get_event_language_cookie_name(request.event.slug)
+            cookie_name = get_event_language_cookie_name(request.event.slug, request.event.organizer.slug)
             event_language = self._language_from_cookie(request, event_supported, cookie_name)
             if not event_language:
                 event_language = self._language_from_event(request, event_supported)
+            if not event_language and event_supported:
+                event_language = event_supported[0]
 
         if not event_language:
             event_language = ui_language

@@ -81,7 +81,7 @@
     {% endif %}
     {% if request.event.settings.banner_text %}
         <div class="site-notice-top">
-            {{ request.event.settings.banner_text|rich_text }}
+            {{ request.event.settings.banner_text|event_localize|rich_text }}
         </div>
     {% endif %}
 {% endblock %}
@@ -93,7 +93,7 @@
 {% block footer %}
     {% if request.event.settings.banner_text_bottom %}
         <div class="site-notice-bottom">
-            {{ request.event.settings.banner_text_bottom|rich_text }}
+            {{ request.event.settings.banner_text_bottom|event_localize|rich_text }}
         </div>
     {% endif %}
     {% if request.event.testmode %}

@@ -22,6 +22,7 @@ from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.views.utils import encode_email
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
+from eventyay.common.utils.language import localize_event_text
 from eventyay.common.views.mixins import (
     EventPermissionRequired,
     PermissionRequired,
@@ -148,7 +149,10 @@ class TalkView(TalkMixin, TemplateView):
         return (
             self.submission.abstract
             or self.submission.description
-            or _('The session “{title}” at {event}').format(title=self.submission.title, event=self.request.event.name)
+            or _('The session “{title}” at {event}').format(
+                title=localize_event_text(self.submission.title),
+                event=localize_event_text(self.request.event.name),
+            )
         )
 
     @context
