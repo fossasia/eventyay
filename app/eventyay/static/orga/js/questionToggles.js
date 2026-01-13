@@ -101,6 +101,12 @@ async function updateField(questionId, field, value) {
         throw new Error('CSRF token not found. Please refresh the page and try again.');
     }
 
+    if (!csrfToken) {
+        console.error('CSRF token is missing. Aborting request for question:', questionId);
+        // Basic user feedback; can be replaced with a nicer UI mechanism if available.
+        alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
+        throw new Error('Missing CSRF token');
+    }
     const response = await fetch(`${questionId}/toggle/`, {
         method: 'POST',
         headers: {
