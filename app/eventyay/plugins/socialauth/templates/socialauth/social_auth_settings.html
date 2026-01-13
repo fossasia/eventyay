@@ -26,23 +26,6 @@
                 <div class="table-responsive">
                     <table class="table">
                         <tbody>
-                            {# Option to clear preferred provider selection #}
-                            <tr>
-                                <td colspan="2" style="background-color: #f9f9f9; padding: 15px;">
-                                    <div class="form-group" style="margin-bottom: 0;">
-                                        <div class="radio">
-                                            <label>
-                                                <input type="radio"
-                                                       name="preferred_provider"
-                                                       value=""
-                                                       {% if not any_preferred %}checked{% endif %}>
-                                                {% trans "No preferred provider (all providers shown equally)" %}
-                                            </label>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                            
                             {# Individual provider settings #}
                             {% for provider, settings in login_providers.items %}
                                 <tr class="{% if settings.state %}success{% else %}default{% endif %}">
@@ -111,6 +94,26 @@
                                 </tr>
                                 {% endif %}
                             {% endfor %}
+                            
+                            {# Option to clear preferred provider selection - moved to bottom for better UX #}
+                            <tr>
+                                <td colspan="2" style="background-color: #f9f9f9; padding: 15px; border-top: 2px solid #ddd;">
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <div class="radio">
+                                            <label>
+                                                <input type="radio"
+                                                       name="preferred_provider"
+                                                       value=""
+                                                       {% if not any_preferred %}checked{% endif %}>
+                                                {% trans "No preferred provider (all providers shown equally)" %}
+                                            </label>
+                                        </div>
+                                        <p class="help-block" style="margin-top: 10px; margin-bottom: 0;">
+                                            {% trans "Select this option if you want all enabled login providers to be displayed equally, without any provider being highlighted or pre-selected." %}
+                                        </p>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
