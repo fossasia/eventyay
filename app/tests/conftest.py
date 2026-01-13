@@ -6,7 +6,6 @@ import pytest
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import Client
 from django.utils import timezone
 
 User = get_user_model()
@@ -85,12 +84,6 @@ def team(db, organizer, user):
     )
     team.members.add(user)
     return team
-
-
-@pytest.fixture
-def client():
-    """Return a Django test client."""
-    return Client()
 
 
 @pytest.fixture
