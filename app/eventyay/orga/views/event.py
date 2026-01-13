@@ -108,13 +108,6 @@ class EventLive(EventSettingsPermission, TemplateView):
                     'url': self.request.event.cfp.urls.text,
                 }
             )
-        if not self.request.event.landing_page_text or len(str(self.request.event.landing_page_text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The talk component doesn’t have a landing page text yet.'),
-                    'url': self.request.event.orga_urls.settings,
-                }
-            )
         # TODO: test that mails can be sent
         if (
             self.request.event.get_feature_flag('use_tracks')
@@ -456,8 +449,6 @@ class InvitationView(FormView):
         invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
         messages.info(self.request, _('You are now part of the team!'))
         invite.delete()
-
-
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):
