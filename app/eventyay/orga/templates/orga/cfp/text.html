@@ -14,6 +14,7 @@
 {% compress js %}
 <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
 <script defer src="{% static 'orga/js/cfp.js' %}"></script>
+<script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
 {% endcompress %}
 {% endblock scripts %}
 
@@ -130,14 +131,22 @@
                         <tr>
                             <th>{% translate "Abstract" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Abstract"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Abstract">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Abstract">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -152,14 +161,22 @@
                         <tr>
                             <th>{% translate "Description" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Description"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Description">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Description">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -174,14 +191,22 @@
                         <tr>
                             <th>{% translate "Notes" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Notes"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Notes">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Notes">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -196,14 +221,22 @@
                         <tr>
                             <th>{% translate "Track" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Track"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Track">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Track">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -218,14 +251,22 @@
                         <tr>
                             <th>{% translate "Duration" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Duration"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Duration">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Duration">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -241,14 +282,22 @@
                         <tr>
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Content Locale"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Content Locale">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Content Locale">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -264,14 +313,22 @@
                         <tr>
                             <th>{% translate "Session image" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Session image"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Session image">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Session image">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -286,14 +343,22 @@
                         <tr>
                             <th>{% translate "Recording opt-out" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Recording opt-out"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Recording opt-out">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Recording opt-out">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -314,14 +379,22 @@
                         <tr>
                             <th>{% translate "Biography" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Biography"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Biography">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Biography">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -336,14 +409,22 @@
                         <tr>
                             <th>{% translate "Avatar" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Avatar"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Avatar">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Avatar">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -358,14 +439,22 @@
                         <tr>
                             <th>{% translate "Availability" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Availability"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Availability">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Availability">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -380,14 +469,22 @@
                         <tr>
                             <th>{% translate "Additional speakers" %}</th>
                             <td class="text-center">
-                                <span class="required-status" data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <button type="button"
+                                    class="required-status" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Toggle required status for Additional speakers"
+                                    tabindex="0">
                                     {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
-                                </span>
+                                </button>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
-                                    <input type="checkbox" {% if field.value !='do_not_ask' %}checked{% endif %}>
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Additional speakers">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Additional speakers">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 {{ field.as_hidden }}
@@ -408,140 +505,5 @@
 
 </form>
 
-<style>
-    .cfp-option-table select {
-        display: none;
-    }
 
-    .cfp-option-table .form-group {
-        margin-bottom: 0;
-    }
-
-    .cfp-option-table th[colspan] {
-        background-color: #f8f9fa;
-        font-weight: bold;
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }
-
-    /* Ensure toggle visibility */
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 32px;
-        height: 18px;
-        cursor: pointer;
-        vertical-align: middle;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-        position: absolute;
-        /* Ensure it doesn't take layout space if opacity fails */
-    }
-
-    .toggle-slider {
-        position: absolute;
-        inset: 0;
-        background-color: #ccc;
-        border-radius: 18px;
-        transition: background-color 0.2s ease;
-        display: block;
-        /* Force block */
-    }
-
-    .toggle-slider::before {
-        position: absolute;
-        content: "";
-        height: 14px;
-        width: 14px;
-        left: 2px;
-        bottom: 2px;
-        background-color: #fff;
-        border-radius: 50%;
-        transition: transform 0.2s ease;
-    }
-
-    .toggle-switch input:checked+.toggle-slider {
-        background-color: #007bff;
-    }
-
-    .toggle-switch input:checked+.toggle-slider::before {
-        transform: translateX(14px);
-    }
-</style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Function to update visual state based on hidden input value
-        function updateVisualState(fieldId, value) {
-            const requiredBtn = document.querySelector(`.required-status[data-field-id="${fieldId}"]`);
-            const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${fieldId}"] input`);
-
-            if (!requiredBtn || !toggleInput) return;
-
-            if (value === 'do_not_ask') {
-                toggleInput.checked = false;
-                requiredBtn.style.opacity = '0.5';
-                requiredBtn.style.pointerEvents = 'none';
-                // We don't change requiredBtn text to preserve "default" if re-enabled
-            } else {
-                toggleInput.checked = true;
-                requiredBtn.style.opacity = '1';
-                requiredBtn.style.pointerEvents = 'auto';
-
-                const state = value; // 'required' or 'optional'
-                requiredBtn.dataset.state = state;
-                requiredBtn.textContent = state.charAt(0).toUpperCase() + state.slice(1);
-            }
-        }
-
-        // Init from hidden inputs
-        document.querySelectorAll('input[type=hidden][name^="cfp_ask_"]').forEach(input => {
-            updateVisualState(input.id, input.value);
-        });
-
-        // Handle Required status click
-        document.querySelectorAll('.required-status').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const fieldId = this.dataset.fieldId;
-                const checkbox = document.querySelector(`.toggle-switch[data-field-id="${fieldId}"] input`);
-
-                if (!checkbox.checked) return; // Can't toggle if inactive
-
-                const currentState = this.dataset.state;
-                const nextState = currentState === 'optional' ? 'required' : 'optional';
-
-                // Update hidden input
-                document.getElementById(fieldId).value = nextState;
-                updateVisualState(fieldId, nextState);
-            });
-        });
-
-        // Handle Active toggle
-        document.querySelectorAll('.toggle-switch input').forEach(input => {
-            input.addEventListener('change', function () {
-                const toggle = this.closest('.toggle-switch');
-                const fieldId = toggle.dataset.fieldId;
-                const requiredBtn = document.querySelector(`.required-status[data-field-id="${fieldId}"]`);
-                const hiddenInput = document.getElementById(fieldId);
-
-                if (this.checked) {
-                    // Activate - default to what button thinks, or 'optional'
-                    let state = requiredBtn.dataset.state;
-                    // If button state was stale (e.g. we defaulted to optional visually but logic needs confirmation)
-                    if (state !== 'required' && state !== 'optional') state = 'optional';
-                    hiddenInput.value = state;
-                    updateVisualState(fieldId, state);
-                } else {
-                    // Deactivate
-                    hiddenInput.value = 'do_not_ask';
-                    updateVisualState(fieldId, 'do_not_ask');
-                }
-            });
-        });
-    });
-</script>
 {% endblock content %}

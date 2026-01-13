@@ -30,8 +30,7 @@
 
 {% block title_actions %}
 {% if question_list %}
-<a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom
-    fields without responses" %}</a>
+<a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
 {% endif %}
 {% endblock title_actions %}
 
@@ -68,8 +67,12 @@
                 </td>
                 <td>{{ question.get_target_display }}</td>
                 <td class="text-center">
-                    <span class="required-status" data-question-id="{{ question.id }}"
-                        data-state="{{ question.question_required }}">
+                    <button type="button" 
+                            class="required-status" 
+                            data-question-id="{{ question.id }}"
+                            data-state="{{ question.question_required }}"
+                            aria-label="Toggle required status for {{ question.question }}"
+                            tabindex="0">
                         {% if question.question_required == 'required' %}
                         Required
                         {% elif question.question_required == 'after_deadline' %}
@@ -77,17 +80,27 @@
                         {% else %}
                         Optional
                         {% endif %}
-                    </span>
+                    </button>
                 </td>
                 <td class="text-center">
-                    <label class="toggle-switch" data-question-id="{{ question.id }}" data-field="active">
-                        <input type="checkbox" {% if question.active %}checked{% endif %}>
+                    <label class="toggle-switch" 
+                           data-question-id="{{ question.id }}" 
+                           data-field="active"
+                           aria-label="Toggle active state for {{ question.question }}">
+                        <input type="checkbox" 
+                               {% if question.active %}checked{% endif %}
+                               aria-label="Active toggle for {{ question.question }}">
                         <span class="toggle-slider"></span>
                     </label>
                 </td>
                 <td class="text-center">
-                    <label class="toggle-switch" data-question-id="{{ question.id }}" data-field="is_public">
-                        <input type="checkbox" {% if question.is_public %}checked{% endif %}>
+                    <label class="toggle-switch" 
+                           data-question-id="{{ question.id }}" 
+                           data-field="is_public"
+                           aria-label="Toggle public visibility for {{ question.question }}">
+                        <input type="checkbox" 
+                               {% if question.is_public %}checked{% endif %}
+                               aria-label="Public toggle for {{ question.question }}">
                         <span class="toggle-slider"></span>
                     </label>
                 </td>

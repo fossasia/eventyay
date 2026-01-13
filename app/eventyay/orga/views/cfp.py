@@ -41,6 +41,7 @@ from eventyay.base.models import (
     AnswerOption,
     CfP,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     SubmissionType,
     SubmitterAccessCode,
@@ -320,17 +321,31 @@ class CfPQuestionToggle(PermissionRequired, View):
         field = data.get('field')
         value = data.get('value')
 
+        # Validate that both field and value are present
+        if field is None:
+            return JsonResponse({'error': 'Missing field parameter'}, status=400)
+        if value is None:
+            return JsonResponse({'error': 'Missing value parameter'}, status=400)
+
         if field == 'active':
-            question.active = bool(value)
+            # Validate type for boolean fields
+            if not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be boolean for active field'}, status=400)
+            question.active = value
             question.save(update_fields=['active'])
         elif field == 'is_public':
-            question.is_public = bool(value)
+            # Validate type for boolean fields
+            if not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be boolean for is_public field'}, status=400)
+            question.is_public = value
             question.save(update_fields=['is_public'])
         elif field == 'question_required':
-            from eventyay.base.models.question import TalkQuestionRequired
+            # Validate type for string fields
+            if not isinstance(value, str):
+                return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
             valid = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
             if value not in valid:
-                return JsonResponse({'error': f'Invalid value: {value}'}, status=400)
+                return JsonResponse({'error': f'Invalid value: {value}. Must be one of: {", ".join(valid)}'}, status=400)
             question.question_required = value
             question.save(update_fields=['question_required'])
         else:

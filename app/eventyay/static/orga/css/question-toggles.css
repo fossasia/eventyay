@@ -16,6 +16,24 @@
     transition: all 0.2s ease;
     min-width: 60px;
     text-align: center;
+    /* Make it keyboard accessible */
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Keyboard focus styles */
+.required-status:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.required-status:focus:not(:focus-visible) {
+    outline: none;
+}
+
+.required-status:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
 }
 
 .required-status[data-state="required"] {
@@ -45,6 +63,13 @@
     pointer-events: none;
 }
 
+/* Disabled state for required button */
+.required-status[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Toggle switch for Active and Public columns */
 .toggle-switch {
     position: relative;
@@ -59,6 +84,23 @@
     opacity: 0;
     width: 0;
     height: 0;
+    position: absolute;
+}
+
+/* Focus styles for keyboard accessibility */
+.toggle-switch input:focus + .toggle-slider {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.toggle-switch input:focus:not(:focus-visible) + .toggle-slider {
+    outline: none;
+}
+
+.toggle-switch input:focus-visible + .toggle-slider {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
 }
 
 .toggle-slider {
@@ -67,6 +109,8 @@
     background-color: #ccc;
     border-radius: 18px;
     transition: background-color 0.2s ease;
+    display: block;
+    /* Copilot feedback: Force block */
 }
 
 .toggle-slider::before {
@@ -91,4 +135,20 @@
 
 .toggle-switch.loading .toggle-slider {
     opacity: 0.6;
+}
+
+/* CFP Option Table Styles - Use more specific selectors to avoid unintended hiding */
+.cfp-option-table tbody select[name^="cfp_ask_"] {
+    display: none;
+}
+
+.cfp-option-table .form-group {
+    margin-bottom: 0;
+}
+
+.cfp-option-table th[colspan] {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
