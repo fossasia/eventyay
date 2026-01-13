@@ -41,7 +41,8 @@ jobs:
         env:
           EVY_SECRET_KEY: ci-test-secret-key
           EVY_DEBUG: "true"
-        run: uv run python app/manage.py check
+        working-directory: app
+        run: uv run python manage.py check
 
   webapp-build:
     name: Webapp build (Vite)
@@ -119,7 +120,8 @@ jobs:
           EVY_REDIS_URL: redis://localhost:6379/0
           EVY_SECRET_KEY: ci-test-secret-key
           EVY_DEBUG: "true"
-        run: uv run python app/manage.py migrate --noinput
+        working-directory: app
+        run: uv run python manage.py migrate --noinput
 
       - name: Run pytest
         env:
@@ -210,7 +212,8 @@ jobs:
           done
           redis-cli -h localhost -p 6379 ping
 
-          uv run python app/manage.py migrate --noinput
+          cd app
+          uv run python manage.py migrate --noinput
 
       - name: Start development server
         env:
@@ -224,7 +227,8 @@ jobs:
           EVY_DEBUG: "true"
         run: |
           set -e
-          uv run python app/manage.py runserver 0.0.0.0:8000 &
+          cd app
+          uv run python manage.py runserver 0.0.0.0:8000 &
           echo $! > server.pid
           # Wait for server to be ready
           for _ in {1..30}; do
@@ -249,6 +253,6 @@ jobs:
       - name: Stop server
         if: always()
         run: |
-          if [ -f server.pid ]; then
-            kill -TERM "$(cat server.pid)" || true
+          if [ -f app/server.pid ]; then
+            kill -TERM "$(cat app/server.pid)" || true
           fi
