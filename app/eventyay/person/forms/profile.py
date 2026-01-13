@@ -17,6 +17,7 @@ from eventyay.common.forms.fields import (
 from eventyay.common.forms.mixins import (
     I18nHelpText,
     PublicContent,
+    QuestionFieldsMixin,
     ReadOnlyFlag,
     RequestRequire,
 )
@@ -46,6 +47,7 @@ def get_email_address_error():
 
 class SpeakerProfileForm(
     CfPFormMixin,
+    QuestionFieldsMixin,
     AvailabilitiesFormMixin,
     ReadOnlyFlag,
     PublicContent,
@@ -111,8 +113,18 @@ class SpeakerProfileForm(
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
-            self.data = self.data.copy()
-            self.data['availabilities'] = self.initial['availabilities']
+            pass
+        self.inject_questions_into_fields(
+            target='speaker',
+            event=self.event,
+            speaker=self.user,
+            readonly=read_only,
+        )
+
+        # Reorder fields based on configuration
+        fields_config = self.event.cfp.settings.get('fields_config', {}).get('speaker', [])
+        if fields_config:
+            self.order_fields(fields_config)
 
     @cached_property
     def user_fields(self):
@@ -181,6 +193,13 @@ class SpeakerProfileForm(
 
         if self.user.avatar and 'avatar' in self.changed_data:
             self.user.process_image('avatar', generate_thumbnail=True)
+        if self.user.avatar and 'avatar' in self.changed_data:
+            self.user.process_image('avatar', generate_thumbnail=True)
+            
+        for key, value in self.cleaned_data.items():
+            if key.startswith('question_'):
+                self.save_questions(key, value)
+                
         return result
 
     class Meta:

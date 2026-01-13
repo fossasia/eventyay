@@ -128,6 +128,54 @@ class RequestRequire:
 
 
 class QuestionFieldsMixin:
+    def get_question_queryset(self, target, event):
+        from eventyay.base.models import TalkQuestion
+        qs = TalkQuestion.all_objects.filter(event=event, active=True, target=target)
+        return qs.order_by('position')
+
+    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
+        from eventyay.base.models import TalkQuestionVariant
+
+        questions = self.get_question_queryset(target, event)
+        # Apply filters based on submission context
+        from django.db.models import Q
+        if track:
+            questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))
+        if submission_type:
+            questions = questions.filter(Q(submission_types__in=[submission_type]) | Q(submission_types__isnull=True))
+        
+        # Pre-fetch existing answers
+        target_object = None
+        if target == 'submission':
+            target_object = submission
+        elif target == 'speaker':
+            target_object = speaker
+        elif target == 'reviewer':
+            target_object = review
+
+        for question in questions.prefetch_related('options'):
+            initial_object = None
+            initial = question.default_answer
+            
+            if target_object:
+                # Optimized answer lookup could be done in bulk, but for now we keep it simple
+                answers = [a for a in target_object.answers.all() if a.question_id == question.id]
+                if answers:
+                    initial_object = answers[0]
+                    initial = (
+                        answers[0].answer_file if question.variant == TalkQuestionVariant.FILE else answers[0].answer
+                    )
+
+            field = self.get_field(
+                question=question,
+                initial=initial,
+                initial_object=initial_object,
+                readonly=readonly,
+            )
+            field.question = question
+            field.answer = initial_object
+            self.fields[f'question_{question.pk}'] = field
+
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.templatetags.rich_text import rich_text
         from eventyay.base.models import TalkQuestionVariant
