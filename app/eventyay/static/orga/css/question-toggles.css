@@ -34,11 +34,6 @@
     outline-offset: 2px;
 }
 
-/* Color styles based on selected value - using :has() and direct value checking */
-.required-status-dropdown {
-    /* Default styles already set above */
-}
-
 /* Apply green background when Required is selected */
 select.required-status-dropdown:has(option[value="required"]:checked),
 select.required-status-dropdown[data-current="required"] {
