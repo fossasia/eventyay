@@ -546,7 +546,7 @@
                                        data-field-id="{{ field.auto_id }}"
                                        aria-label="Toggle active state for Additional speakers">
                                     <input type="checkbox" 
-                                           {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
                                            aria-label="Active toggle for Additional speakers">
                                     <span class="toggle-slider"></span>
                                 </label>
