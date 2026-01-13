@@ -23,7 +23,7 @@ from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.edit import DeleteView, CreateView, UpdateView
+from django.views.generic.edit import DeleteView
 from django_countries.fields import Country
 
 from eventyay.api.serializers.product import (
@@ -1700,73 +1700,3 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
             'organizer': self.request.event.organizer.slug,
             'event': self.request.event.slug,
         })
-
-
-class OrderFormCreate(EventPermissionRequiredMixin, CreateView):
-    """
-    Create view for Order Forms.
-    This is a placeholder implementation that will be expanded when the OrderForm model is created.
-    """
-    model = Question  # Temporary placeholder - will be replaced with OrderForm model
-    template_name = 'pretixcontrol/items/orderform_edit.html'
-    permission = 'can_change_items'
-
-    def get_success_url(self):
-        return reverse('control:event.products.orderforms', kwargs={
-            'organizer': self.request.event.organizer.slug,
-            'event': self.request.event.slug,
-        })
-
-    def form_valid(self, form):
-        messages.success(self.request, _('The order form has been created.'))
-        return super().form_valid(form)
-
-
-class OrderFormUpdate(EventPermissionRequiredMixin, UpdateView):
-    """
-    Update view for Order Forms.
-    This is a placeholder implementation that will be expanded when the OrderForm model is created.
-    """
-    model = Question  # Temporary placeholder - will be replaced with OrderForm model
-    template_name = 'pretixcontrol/items/orderform_edit.html'
-    permission = 'can_change_items'
-    context_object_name = 'orderform'
-
-    def get_object(self, queryset=None):
-        # Placeholder - will be replaced with actual OrderForm lookup
-        raise Http404("Order forms are not yet implemented")
-
-    def get_success_url(self):
-        return reverse('control:event.products.orderforms', kwargs={
-            'organizer': self.request.event.organizer.slug,
-            'event': self.request.event.slug,
-        })
-
-    def form_valid(self, form):
-        messages.success(self.request, _('The order form has been updated.'))
-        return super().form_valid(form)
-
-
-class OrderFormDelete(EventPermissionRequiredMixin, DeleteView):
-    """
-    Delete view for Order Forms.
-    This is a placeholder implementation that will be expanded when the OrderForm model is created.
-    """
-    model = Question  # Temporary placeholder - will be replaced with OrderForm model
-    template_name = 'pretixcontrol/items/orderform_delete.html'
-    permission = 'can_change_items'
-    context_object_name = 'orderform'
-
-    def get_object(self, queryset=None):
-        # Placeholder - will be replaced with actual OrderForm lookup
-        raise Http404("Order forms are not yet implemented")
-
-    def get_success_url(self):
-        return reverse('control:event.products.orderforms', kwargs={
-            'organizer': self.request.event.organizer.slug,
-            'event': self.request.event.slug,
-        })
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(self.request, _('The order form has been deleted.'))
-        return super().delete(request, *args, **kwargs)
