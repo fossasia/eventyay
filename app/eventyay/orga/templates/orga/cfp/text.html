@@ -164,6 +164,19 @@
                             <td></td>
                             <td></td>
                         </tr>
+                        {% for item in custom_session_fields %}
+                            <tr>
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info" style="color: black;">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="hide-label">
+                                    {{ item.field.as_field_group }}
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table></div>
             </fieldset>
@@ -216,6 +229,19 @@
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
                         </tr>
+                        {% for item in custom_speaker_fields %}
+                            <tr>
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="hide-label">
+                                    {{ item.field.as_field_group }}
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table></div>
             </fieldset>

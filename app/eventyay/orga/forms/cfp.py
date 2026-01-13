@@ -112,6 +112,28 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
                     ('required', _('Ask and require input')),
                 ],
             )
+        
+        # Add fields for custom questions
+        for question in obj.talkquestions.all():
+            field_name = f'question_{question.pk}'
+            initial = 'do_not_ask'
+            if question.active:
+                if question.question_required == TalkQuestionRequired.REQUIRED:
+                    initial = 'required'
+                else:
+                    initial = 'optional'
+            
+            self.fields[field_name] = forms.ChoiceField(
+                required=False,
+                initial=initial,
+                label=question.question,
+                choices=[
+                    ('do_not_ask', _('Do not ask')),
+                    ('optional', _('Ask, but do not require input')),
+                    ('required', _('Ask and require input')),
+                ],
+            )
+
         if not obj.is_multilingual:
             self.fields.pop('cfp_ask_content_locale', None)
 
@@ -120,9 +142,26 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
             self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
+        
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
+            
+        # Save custom questions
+        for question in self.instance.talkquestions.all():
+            field_name = f'question_{question.pk}'
+            if field_name in self.cleaned_data:
+                value = self.cleaned_data[field_name]
+                if value == 'do_not_ask':
+                    question.active = False
+                else:
+                    question.active = True
+                    if value == 'required':
+                        question.question_required = TalkQuestionRequired.REQUIRED
+                    else:
+                        question.question_required = TalkQuestionRequired.OPTIONAL
+                question.save()
+
         self.instance.cfp.save()
         super().save(*args, **kwargs)
 
