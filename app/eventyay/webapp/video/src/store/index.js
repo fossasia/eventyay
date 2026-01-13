@@ -2,7 +2,6 @@ import Vuex from 'vuex'
 import i18n from 'i18n'
 import { jwtDecode } from 'jwt-decode'
 import api, { initApi } from 'lib/api'
-import config from 'config'
 import { doesTraitsMatchGrants } from 'lib/traitGrants'
 import announcement from './announcement'
 import chat from './chat'
@@ -174,9 +173,9 @@ export default new Vuex.Store({
 					return
 				}
 				try {
-					const organizer = state.world?.organizer || state.world?.organizer_slug || 'default'
-					const event = state.world?.slug || state.world?.id || 'default'
-					
+					let organizer = state.world?.organizer || state.world?.organizer_slug || 'default'
+					let event = state.world?.slug || state.world?.id || 'default'
+
 					// If not available from world state, try to extract from current URL path
 					if (!organizer || organizer === 'default') {
 						const pathParts = window.location.pathname.split('/').filter(Boolean)
@@ -185,7 +184,7 @@ export default new Vuex.Store({
 							event = pathParts[1]
 						}
 					}
-					
+
 					const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${roomId}/streams/current`
 					const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
 					const headers = { Accept: 'application/json' }

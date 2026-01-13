@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from asgiref.sync import async_to_sync
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -50,18 +52,16 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
         return super().dispatch(request, *args, **kwargs)
 
     def initial(self, request, *args, **kwargs):
-        '''Ensure request.event is set from the room if not already present.'''
+        """Ensure request.event is set from the room if not already present."""
         super().initial(request, *args, **kwargs)
         room_id = self.kwargs.get('room_pk')
         if room_id and (not hasattr(request, 'event') or not request.event):
-            try:
+            with suppress(Room.DoesNotExist):
                 room = Room.objects.select_related('event', 'event__organizer').get(
                     pk=room_id
                 )
                 request.event = room.event
                 request.organizer = room.event.organizer
-            except Room.DoesNotExist:
-                pass
 
     def get_room(self):
         room_id = self.kwargs.get('room_pk')
@@ -159,17 +159,18 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         room_id = instance.room.pk
-        was_current = (
-            instance.room.get_current_stream()
-            and instance.room.get_current_stream().pk == instance.pk
-        )
+        current_stream = instance.room.get_current_stream()
+        was_current = current_stream and current_stream.pk == instance.pk
         instance.delete()
-
+        room = None
         if was_current:
-            new_current = Room.objects.get(pk=room_id).get_current_stream()
+            room = Room.objects.get(pk=room_id)
+            new_current = room.get_current_stream()
             async_to_sync(broadcast_stream_change)(room_id, new_current, reload=True)
-
-        event_id = (
-            self.event.id if self.event else Room.objects.get(pk=room_id).event_id
-        )
+        if self.event:
+            event_id = self.event.id
+        else:
+            if room is None:
+                room = Room.objects.get(pk=room_id)
+            event_id = room.event_id
         async_to_sync(notify_event_change)(event_id)
