@@ -218,10 +218,18 @@ export default {
 			this.v$.$touch();
 			if (this.v$.$invalid) return;
 
-			// Frontend validation for time ordering and past dates
 			const now = moment();
 			if (this.formData.start_time) {
-				if (this.formData.start_time.isBefore(now)) {
+				if (!this.editingSchedule && this.formData.start_time.isBefore(now)) {
+					this.saveError = 'Start time cannot be in the past.';
+					return;
+				}
+				if (
+					this.editingSchedule &&
+					this.editingSchedule.start_time &&
+					moment(this.editingSchedule.start_time).isSameOrAfter(now) &&
+					this.formData.start_time.isBefore(now)
+				) {
 					this.saveError = 'Start time cannot be in the past.';
 					return;
 				}

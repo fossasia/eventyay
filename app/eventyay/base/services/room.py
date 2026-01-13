@@ -1,7 +1,7 @@
-import asyncio
 import sys
 from datetime import timedelta
 
+from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.db.transaction import atomic
@@ -183,4 +183,6 @@ def check_stream_schedule_changes(sender, **kwargs):
 
         if current_stream_id != last_broadcast_id:
             cache.set(cache_key, current_stream_id, cache_timeout)
-            asyncio.run(broadcast_stream_change(str(room.pk), current_stream, reload=current_stream_id is None))
+            async_to_sync(broadcast_stream_change)(
+                str(room.pk), current_stream, reload=current_stream_id is None
+            )
