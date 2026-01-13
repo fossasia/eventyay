@@ -344,6 +344,8 @@ class CfPQuestionToggle(PermissionRequired, View):
             if not isinstance(value, str):
                 return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
             valid = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
+            if not isinstance(value, str):
+                return JsonResponse({'error': f'Invalid value type for question_required: {value!r}'}, status=400)
             if value not in valid:
                 return JsonResponse({'error': f'Invalid value: {value}. Must be one of: {", ".join(valid)}'}, status=400)
             question.question_required = value
