@@ -285,14 +285,16 @@
                         <tr>
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
-                                <button type="button"
-                                    class="required-status" 
+                                <select class="required-status-dropdown"
                                     data-field-id="{{ field.auto_id }}"
-                                    data-state="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
-                                    aria-label="Toggle required status for Content Locale"
-                                    tabindex="0">
-                                    {% if field.value == 'required' %}Required{% elif field.value == 'after_deadline' %}Deadline{% else %}Optional{% endif %}
-                                </button>
+                                    data-current="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
+                                    aria-label="Required status for Content Locale">
+                                    {% if field.value != 'do_not_ask' %}
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
+                                    <option value="after_deadline" {% if field.value == 'after_deadline' %}selected{% endif %}>Deadline</option>
+                                    {% endif %}
+                                </select>
                             </td>
                             <td class="text-center">
                                 <label class="toggle-switch" 
