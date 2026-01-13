@@ -3,6 +3,8 @@ from collections import Counter, defaultdict
 from decimal import Decimal
 
 import pycountry
+
+from django.conf import settings
 from django.core.files import File
 from django.db.models import F, Q
 from django.utils.timezone import now
@@ -52,6 +54,7 @@ from eventyay.base.services.locking import NoLockManager
 from eventyay.base.services.pricing import get_price
 from eventyay.base.settings import COUNTRIES_WITH_STATE_IN_ADDRESS
 from eventyay.base.signals import register_ticket_outputs
+from eventyay.consts import SizeKey
 from eventyay.multidomain.urlreverse import build_absolute_uri
 
 
@@ -195,7 +198,7 @@ class AnswerSerializer(I18nAwareModelSerializer):
             raise ValidationError(
                 'The submitted file "{fid}" has a file type that is not allowed in this field.'.format(fid=data)
             )
-        if cf.file.size > 10 * 1024 * 1024:
+        if cf.file.size > settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER]:
             raise ValidationError('The submitted file "{fid}" is too large to be used in this field.'.format(fid=data))
 
         data['options'] = []

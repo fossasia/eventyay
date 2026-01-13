@@ -21,15 +21,15 @@ def build_vue3_frontend_apps():
     env['BASE_URL'] = settings.STATIC_URL
     env['OUT_DIR'] = str(settings.COMPILED_FRONTEND_DIR)
 
-    # Build global-nav-menu
-    app_dir = FRONTEND_DEV_DIR / 'global-nav-menu'
-    subprocess.check_call(['npm', 'ci'], cwd=app_dir)
-    subprocess.check_call(['npm', 'run', 'build'], cwd=app_dir, env=env)
-
     # Build schedule-editor
     app_dir = FRONTEND_DEV_DIR / 'schedule-editor'
     subprocess.check_call(['npm', 'ci'], cwd=app_dir)
     subprocess.check_call(['npm', 'run', 'build'], cwd=app_dir, env=env)
+
+    # Build schedule widget
+    app_dir = FRONTEND_DEV_DIR / 'schedule'
+    subprocess.check_call(['npm', 'ci'], cwd=app_dir)
+    subprocess.check_call(['npm', 'run', 'build:wc'], cwd=app_dir, env=env)
 
 
 class Command(BaseCommand):
