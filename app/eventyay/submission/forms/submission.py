@@ -70,7 +70,6 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
         self._set_track(instance=instance)
         self._set_submission_types(instance=instance)
         self._set_locales()
-        self._set_locales()
         self._set_slot_count(instance=instance)
 
         self.inject_questions_into_fields(
@@ -169,9 +168,7 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
         result = super().save(*args, **kwargs)
         if 'image' in self.cleaned_data:
             self.instance.process_image('image')
-        result = super().save(*args, **kwargs)
-        if 'image' in self.cleaned_data:
-            self.instance.process_image('image')
+
         
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):

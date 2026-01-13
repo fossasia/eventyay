@@ -153,17 +153,23 @@ class QuestionFieldsMixin:
         elif target == 'reviewer':
             target_object = review
 
+        answers_by_question = {}
+        if target_object:
+            # Build a lookup dict to avoid scanning all answers for each question
+            for answer in target_object.answers.all():
+                # Preserve the first answer per question to match previous behavior
+                answers_by_question.setdefault(answer.question_id, answer)
+
         for question in questions.prefetch_related('options'):
             initial_object = None
             initial = question.default_answer
             
             if target_object:
-                # Optimized answer lookup could be done in bulk, but for now we keep it simple
-                answers = [a for a in target_object.answers.all() if a.question_id == question.id]
-                if answers:
-                    initial_object = answers[0]
+                answer = answers_by_question.get(question.id)
+                if answer:
+                    initial_object = answer
                     initial = (
-                        answers[0].answer_file if question.variant == TalkQuestionVariant.FILE else answers[0].answer
+                        answer.answer_file if question.variant == TalkQuestionVariant.FILE else answer.answer
                     )
 
             field = self.get_field(

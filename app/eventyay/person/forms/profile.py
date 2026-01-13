@@ -66,6 +66,7 @@ class SpeakerProfileForm(
 
     def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
         self.user = kwargs.pop('user', None)
+        self.speaker = self.user
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
@@ -113,7 +114,10 @@ class SpeakerProfileForm(
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
-            pass
+            if 'availabilities' in initial:
+                data = self.data.copy()
+                data['availabilities'] = initial['availabilities']
+                self.data = data
         self.inject_questions_into_fields(
             target='speaker',
             event=self.event,
@@ -191,8 +195,6 @@ class SpeakerProfileForm(
         self.instance.user = self.user
         result = super().save(**kwargs)
 
-        if self.user.avatar and 'avatar' in self.changed_data:
-            self.user.process_image('avatar', generate_thumbnail=True)
         if self.user.avatar and 'avatar' in self.changed_data:
             self.user.process_image('avatar', generate_thumbnail=True)
             
