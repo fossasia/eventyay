@@ -34,25 +34,48 @@
     outline-offset: 2px;
 }
 
-/* Color styles based on selected value */
-.required-status-dropdown[data-current="required"],
+/* Color styles based on selected value - using :has() and direct value checking */
+.required-status-dropdown {
+    /* Default styles already set above */
+}
+
+/* Apply green background when Required is selected */
+select.required-status-dropdown:has(option[value="required"]:checked),
+select.required-status-dropdown[data-current="required"] {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+
+/* Apply gray/white background when Optional is selected */
+select.required-status-dropdown:has(option[value="optional"]:checked),
+select.required-status-dropdown[data-current="optional"] {
+    background-color: #fff !important;
+    border-color: #6c757d !important;
+    color: #6c757d !important;
+}
+
+/* Apply red background when Deadline is selected */
+select.required-status-dropdown:has(option[value="after_deadline"]:checked),
+select.required-status-dropdown[data-current="after_deadline"] {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: #fff !important;
+}
+
+/* Option colors (for when dropdown is open) */
 .required-status-dropdown option[value="required"] {
     background-color: #28a745;
-    border-color: #28a745;
     color: #fff;
 }
 
-.required-status-dropdown[data-current="optional"],
 .required-status-dropdown option[value="optional"] {
     background-color: #fff;
-    border-color: #6c757d;
     color: #6c757d;
 }
 
-.required-status-dropdown[data-current="after_deadline"],
 .required-status-dropdown option[value="after_deadline"] {
     background-color: #dc3545;
-    border-color: #dc3545;
     color: #fff;
 }
 

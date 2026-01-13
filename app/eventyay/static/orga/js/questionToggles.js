@@ -26,6 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
 function initToggles() {
     // Required status dropdowns - change event updates state
     document.querySelectorAll('.required-status-dropdown:not([data-field-id])').forEach(dropdown => {
+        // Set initial data-current attribute based on selected value
+        const selectedValue = dropdown.value;
+        dropdown.setAttribute('data-current', selectedValue);
+        console.log('[Init] Set data-current for dropdown to:', selectedValue);
+        
         dropdown.addEventListener('change', handleRequiredDropdownChange);
     });
 
@@ -48,8 +53,8 @@ async function handleRequiredDropdownChange(e) {
         newState
     });
 
-    // Optimistic UI update
-    dropdown.dataset.current = newState;
+    // Optimistic UI update - set data-current for CSS colors
+    dropdown.setAttribute('data-current', newState);
     dropdown.classList.add('loading');
 
     try {
@@ -63,7 +68,7 @@ async function handleRequiredDropdownChange(e) {
             newState
         });
         // Revert to previous state on error
-        dropdown.dataset.current = previousState;
+        dropdown.setAttribute('data-current', previousState);
         dropdown.value = previousState;
         showError('Failed to update required status. Please try again.');
     } finally {
@@ -199,7 +204,8 @@ function initFormPageToggles() {
             
             // Update dropdown value and data-current attribute for color
             requiredDropdown.value = value;
-            requiredDropdown.dataset.current = value;
+            requiredDropdown.setAttribute('data-current', value);
+            console.log('[Form Page] Updated data-current to:', value, 'for field:', fieldId);
         }
     }
 
@@ -218,6 +224,10 @@ function initFormPageToggles() {
             if (!checkbox.checked) return; // Can't change if inactive
 
             const newValue = this.value;
+            
+            // Update data-current for CSS color
+            this.setAttribute('data-current', newValue);
+            console.log('[Form Page] Dropdown changed to:', newValue, 'for field:', fieldId);
             
             // Update hidden input
             hiddenInput.value = newValue;
