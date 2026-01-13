@@ -183,18 +183,19 @@ def mail(
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if not auto_email:
-                if (
-                    event_reply_to
-                    and not headers.get('Reply-To')
-                ):
-                    headers['Reply-To'] = event_reply_to          
-            elif (
-                event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
-                and event.settings.contact_mail
-                and not headers.get('Reply-To')
-            ):
-                headers['Reply-To'] = event.settings.contact_mail
+            # Use unified Reply-To resolution
+            if not headers.get('Reply-To'):
+                from eventyay.common.mail import get_reply_to_address
+                
+                reply_to = get_reply_to_address(
+                    event,
+                    override=event_reply_to if not auto_email else None,
+                    auto_email=auto_email,
+                    use_custom_smtp=event.settings.mail_from != settings.DEFAULT_FROM_EMAIL
+                )
+                
+                if reply_to:
+                    headers['Reply-To'] = reply_to
 
             prefix = event.settings.get('mail_prefix')
             if prefix and prefix.startswith('[') and prefix.endswith(']'):
