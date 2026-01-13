@@ -79,6 +79,26 @@ select.required-status-dropdown[data-current="after_deadline"] {
     color: #fff;
 }
 
+/* Display-only status indicator (for Title field) */
+.required-status-display {
+    display: inline-block;
+    padding: 0.375rem 2rem 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    border: 1px solid #28a745;
+    border-radius: 0.25rem;
+    min-width: 120px;
+    background-color: #28a745;
+    color: #fff;
+    
+    /* Dropdown arrow to match select elements */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
 /* Disabled state for dropdown */
 .required-status-dropdown:disabled {
     opacity: 0.5;
