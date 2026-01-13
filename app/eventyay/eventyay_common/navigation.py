@@ -26,6 +26,8 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
     if not url:
         return []
     
+    url_name = url.url_name or ""
+    
     organizer = getattr(request, 'organizer', None)
     if not organizer:
         return []
@@ -34,7 +36,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
         {
             'label': _('My events'),
             'url': reverse('eventyay_common:events'),
-            'active': url.url_name in ['events', 'event.update', 'event.create'] or 'event.' in url.url_name,
+            'active': url_name in ['events', 'event.update', 'event.create'] or 'event.' in url_name,
             'icon': 'calendar',
         },
     ]
@@ -50,7 +52,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                     'eventyay_common:organizer.update',
                     kwargs={'organizer': organizer.slug},
                 ),
-                'active': url.url_name == 'organizer.update',
+                'active': url_name == 'organizer.update',
             },
             {
                 'label': _('Billing settings'),
@@ -58,7 +60,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                     'control:organizer.settings.billing',
                     kwargs={'organizer': organizer.slug},
                 ),
-                'active': url.url_name == 'organizer.settings.billing',
+                'active': url_name == 'organizer.settings.billing',
             },
             {
                 'label': _('Tickets specific settings'),
@@ -77,7 +79,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                     'eventyay_common:organizer.update',
                     kwargs={'organizer': organizer.slug},
                 ),
-                'active': url.url_name in ['organizer.update', 'organizer.settings.billing'] or 'organizer.settings' in url.url_name,
+                'active': url_name in ['organizer.update', 'organizer.settings.billing'] or 'organizer.settings' in url_name,
                 'icon': 'wrench',
                 'children': settings_children,
             }
@@ -92,7 +94,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
                     kwargs={'organizer': organizer.slug},
                 )
                 + '?section=permissions',
-                'active': url.url_name in ['organizer.teams', 'organizer.team', 'organizer.team.edit', 'organizer.team.delete'] or 'team' in url.url_name,
+                'active': url_name in ['organizer.teams', 'organizer.team', 'organizer.team.edit', 'organizer.team.delete'] or 'team' in url_name,
                 'icon': 'group',
             }
         )
@@ -101,33 +103,36 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
 
 
 def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
-    """Generate navigation items for global"""
+    """Generate navigation items for global context (non-organizer pages)."""
     url = request.resolver_match
     if not url:
         return []
+    
+    url_name = url.url_name or ""
+    
     nav = [
         {
             'label': _('My Orders'),
             'url': reverse('eventyay_common:orders'),
-            'active': 'orders' in url.url_name,
+            'active': 'orders' in url_name,
             'icon': 'shopping-cart',
         },
         {
             'label': _('My Sessions'),
             'url': reverse('eventyay_common:sessions'),
-            'active': 'sessions' in url.url_name,
+            'active': 'sessions' in url_name,
             'icon': 'sticky-note-o',
         },
         {
             'label': _('My Events'),
             'url': reverse('eventyay_common:events'),
-            'active': 'events' in url.url_name,
+            'active': 'events' in url_name,
             'icon': 'calendar',
         },
         {
             'label': _('Organizers'),
             'url': reverse('eventyay_common:organizers'),
-            'active': 'organizers' in url.url_name,
+            'active': 'organizers' in url_name,
             'icon': 'group',
         },
     ]
@@ -153,6 +158,9 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
+    
+    url_name = url.url_name or ""
+    
     nav = [
         {
             'label': _('Settings'),
@@ -163,7 +171,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
                     'organizer': event.organizer.slug,
                 },
             ),
-            'active': (url.url_name == 'event.update'),
+            'active': (url_name == 'event.update'),
             'icon': 'wrench',
         },
     ]
