@@ -17,14 +17,15 @@ Customized Templates:
      * Authenticated users: Links to manage email addresses and return to dashboard
      * Anonymous users: Prompts to log in with the confirmed email
    - Uses same styling and branding as other account pages
-   - Extends base_entrance.jinja for consistency
+   - Extends base.jinja for consistency
 
-3. base_entrance.jinja
-   - Base template for account-related entrance pages (login, signup, confirmations, etc.)
-   - Provides consistent layout and styling across all auth flows
+3. base.jinja
+   - Base template for email confirmation pages
+   - Provides consistent layout and styling across email confirmation flows
    - Includes Eventyay branding colors (#2185d0 theme color)
    - Minimal, focused design to keep users on task
    - Integrated CSS styling for alerts, buttons, and forms
+   - Loads Font Awesome icons locally (relative paths for CSP compliance)
 
 Configuration:
 ==============
@@ -34,3 +35,9 @@ Configuration:
   * Anonymous users use the template-based flow with email_confirm_success.jinja
   * This provides optimal UX for both authenticated (managing multiple emails) and
     anonymous users (first-time email verification)
+
+- Icon fonts:
+  * Alert icons use Font Awesome icon codes (\f00c, \f05a, \f071)
+  * Font files are served locally from static/fontawesome/fonts/ with relative paths
+  * CSS font-family set to "FontAwesome" for proper icon rendering
+  * All fonts loaded locally to comply with Content Security Policy
