@@ -21,9 +21,9 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView
+from django.views.generic import ListView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
 from django_countries.fields import Country
 
 from eventyay.api.serializers.product import (
@@ -66,6 +66,7 @@ from eventyay.control.forms.product import (
     QuestionOptionForm,
     QuotaForm,
 )
+from eventyay.control.forms.event import EventSettingsForm
 from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
@@ -1655,3 +1656,47 @@ def question_options_ajax(request, organizer, event, question):
         })
     except Question.DoesNotExist:
         return JsonResponse({'error': 'Question not found'}, status=404)
+
+
+# Order Form Views (Placeholder implementation)
+class OrderFormList(EventPermissionRequiredMixin, FormView):
+    """
+    List view for Order Forms.
+    This handles the order form settings that were moved from event settings.
+    """
+    template_name = 'pretixcontrol/items/orderforms.html'
+    permission = 'can_change_items'
+
+    @cached_property
+    def sform(self):
+        return EventSettingsForm(
+            obj=self.request.event,
+            prefix='settings',
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+        )
+
+    def get_form(self, form_class=None):
+        return self.sform
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['sform'] = self.sform
+        return ctx
+
+    def form_valid(self, form):
+        form.save()
+        if form.has_changed():
+            self.request.event.log_action(
+                'eventyay.event.settings', user=self.request.user, data={
+                    k: form.cleaned_data.get(k) for k in form.changed_data
+                }
+            )
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('control:event.products.orderforms', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        })
