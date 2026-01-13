@@ -30,12 +30,28 @@ class StreamScheduleSerializer(PretalxSerializer):
 
         start_time = data.get('start_time')
         end_time = data.get('end_time')
+        now = timezone.now()
 
         if self.instance:
-            start_time = start_time or self.instance.start_time
+            orig_start_time = self.instance.start_time
+            start_time = start_time or orig_start_time
             end_time = end_time or self.instance.end_time
+        else:
+            orig_start_time = None
 
-        if start_time and start_time < timezone.now():
+        if not self.instance and start_time and start_time < now:
+            raise serializers.ValidationError(
+                {'start_time': _('Start time cannot be in the past.')}
+            )
+
+        if (
+            self.instance
+            and 'start_time' in getattr(self, 'initial_data', {})
+            and start_time
+            and start_time < now
+            and orig_start_time
+            and orig_start_time >= now
+        ):
             raise serializers.ValidationError(
                 {'start_time': _('Start time cannot be in the past.')}
             )
