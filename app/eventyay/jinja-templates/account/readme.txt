@@ -28,6 +28,9 @@ Customized Templates:
 
 Configuration:
 ==============
-- Email confirmation redirects: Removed ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL
-  and ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL settings to enable template-based
-  flow using email_confirm_success.jinja instead of hardcoded URL redirects
+- Email confirmation redirects:
+  * ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL is set to '/common/account/email'
+    to redirect logged-in users to their email management page after confirming additional emails
+  * Anonymous users use the template-based flow with email_confirm_success.jinja
+  * This provides optimal UX for both authenticated (managing multiple emails) and
+    anonymous users (first-time email verification)

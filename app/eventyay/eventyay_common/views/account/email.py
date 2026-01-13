@@ -7,7 +7,7 @@ from .common import AccountMenuMixIn
 
 
 class EmailAddressManagementView(LoginRequiredMixin, AccountMenuMixIn, EmailView):
-    template_name = 'eventyay_common/account/email_management.html'
+    template_name = 'eventyay_common/account/email-management.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
