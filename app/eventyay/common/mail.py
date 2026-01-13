@@ -82,9 +82,14 @@ def mail_send_task(
         if event.mail_settings['smtp_use_custom']:  # pragma: no cover
             sender = event.mail_settings['mail_from'] or sender
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        # Use unified Reply-To resolution
+        if not reply_to:
+            reply_to = get_reply_to_address(
+                event,
+                override=reply_to,
+                use_custom_smtp=event.mail_settings['smtp_use_custom'],
+                auto_email=False  # Legacy path is typically manual
+            )
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
@@ -134,3 +139,77 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None,
+    auto_email=False,
+    use_custom_smtp=False
+):
+    """
+    Resolve Reply-To email address with unified precedence across all components.
+    
+    This function consolidates Reply-To logic that was previously scattered across
+    tickets (base/services/mail.py), talks (base/models/mail.py), and plugins.
+    
+    Precedence (highest to lowest):
+    1. Explicit override parameter (manual emails, highest priority)
+    2. Template-level reply_to (talk/CfP specific templates)
+    3. Custom SMTP reply_to (event.mail_settings['reply_to'])
+    4. Event email (event.email - canonical organizer email from unification)
+    5. None (let system default handle it)
+    
+    Note: event.settings.contact_mail is intentionally NOT used for Reply-To.
+    Event.email is the canonical contact address set during event creation and
+    is consistently used across tickets, talks, and all email types.
+    
+    Args:
+        event: Event instance
+        override: Explicit Reply-To address (e.g., from function parameter)
+        template: MailTemplate instance (for talk/CfP emails)
+        auto_email: Whether this is an automated email (vs manual)
+        use_custom_smtp: Whether custom SMTP is being used
+        
+    Returns:
+        str or None: Reply-To email address, or None if no override needed
+        
+    Examples:
+        # Manual email with explicit override
+        >>> get_reply_to_address(event, override='support@example.com')
+        'support@example.com'
+        
+        # Talk email with template-level reply_to
+        >>> get_reply_to_address(event, template=mail_template)
+        'speakers@example.com'  # from template.reply_to
+        
+        # Auto-email using event.email
+        >>> get_reply_to_address(event, auto_email=True)
+        'organizer@example.com'  # from event.email
+        
+        # Manual email using event.email
+        >>> get_reply_to_address(event)
+        'organizer@example.com'  # from event.email
+    """
+    # 1. Explicit override (highest priority)
+    if override:
+        return override
+    
+    # 2. Template-level reply_to (talk/CfP specific)
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+    
+    # 3. Custom SMTP reply_to
+    if use_custom_smtp and event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+    
+    # 4. Event email (canonical organizer email from unification)
+    # This is the single "Organizer email address" set during event creation
+    # and is used consistently across all email types (tickets, talks, etc.)
+    if event.email and event.email != 'org@mail.com':
+        return event.email
+    
+    # 5. No override - let caller use system default
+    return None
