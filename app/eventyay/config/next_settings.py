@@ -1217,11 +1217,6 @@ WEBSOCKET_URL = '/ws/event/'
 TALK_BASE_PATH = ''
 LOGIN_REDIRECT_URL = '/common/account/general'
 
-# django-allauth email confirmation - let templates handle the flow
-# ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL and
-# ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL are not set,
-# allowing django-allauth to use its template-based default behavior
-
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
