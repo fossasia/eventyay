@@ -30,7 +30,11 @@ def orga_events(request):
     # directly.
     context['site_name'] = settings.INSTANCE_NAME
     context['base_path'] = settings.BASE_PATH
-    context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
+    context['common_path'] = urljoin(settings.BASE_PATH, '/common')
+    context['tickets_common'] = context['common_path']
+    context['tickets_path'] = urljoin(settings.BASE_PATH, '/control')
+    context['talks_path'] = urljoin(settings.BASE_PATH, '/orga/event')
+    context['admin_path'] = urljoin(settings.BASE_PATH, '/admin')
     # Login button label
     key = settings.CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL
     button_label = CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.get(key)

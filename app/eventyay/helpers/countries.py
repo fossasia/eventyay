@@ -59,7 +59,6 @@ class FastCountryField(CountryField):
             *self._check_backend_specific_checks(**kwargs),
             *self._check_validators(),
             *self._check_deprecation_details(),
-            *self._check_multiple(),
             *self._check_max_length_attribute(**kwargs),
         ]
 

@@ -90,6 +90,7 @@ from .question import (
     Answer,
     AnswerOption,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     TalkQuestionVariant,
 )
