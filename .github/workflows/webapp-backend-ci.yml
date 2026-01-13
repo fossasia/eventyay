@@ -22,6 +22,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -89,6 +94,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
@@ -153,6 +163,11 @@ jobs:
           --health-retries=5
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
 
       - uses: actions/setup-python@v5
         with:
