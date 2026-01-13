@@ -146,7 +146,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             message=form.cleaned_data['message'].data,
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
             locale=self.request.event.settings.locale,
-            reply_to=self.request.event.settings.get('contact_mail') or '',
+            reply_to=self._get_reply_to_for_bulk_email() or '',
             bcc=self.request.event.settings.get('mail_bcc'),
             composing_for=ComposingFor.ATTENDEES,
         )
@@ -178,6 +178,14 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             'plugins:sendmail:send',
             event=self.request.event.slug,
             organizer=self.request.event.organizer.slug,
+        )
+
+    def _get_reply_to_for_bulk_email(self):
+        """Use unified Reply-To resolution for manual bulk emails."""
+        from eventyay.common.mail import get_reply_to_address
+        return get_reply_to_address(
+            self.request.event,
+            auto_email=False  # Manual bulk send
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -590,7 +598,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             subject=subject.data,
             message=message.data,
             locale=event.settings.locale,
-            reply_to=event.settings.get('contact_mail') or '',
+            reply_to=self._get_reply_to_for_bulk_email() or '',
             bcc=event.settings.get('mail_bcc'),
             attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
         )
@@ -634,3 +642,11 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             'organizer': event.organizer.slug,
             'event': event.slug
         }))
+
+    def _get_reply_to_for_bulk_email(self):
+        """Use unified Reply-To resolution for manual bulk emails."""
+        from eventyay.common.mail import get_reply_to_address
+        return get_reply_to_address(
+            self.request.event,
+            auto_email=False  # Manual bulk send
+        )
