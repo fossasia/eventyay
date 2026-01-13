@@ -55,3 +55,7 @@
         margin-left: 0;
     }
 }
+
+.form-narrow {
+    max-width: 600px;
+}
