@@ -2,7 +2,7 @@ name: Webapp & Backend CI
 
 on:
   pull_request:
-    branches: [enext]
+    branches: [dev]
     paths:
       - "app/eventyay/webapp/**"
       - "app/**.py"
@@ -82,7 +82,7 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd="redis-cli ping || exit 1"
+          --health-cmd="redis-cli ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -147,7 +147,7 @@ jobs:
         ports:
           - 6379:6379
         options: >-
-          --health-cmd="redis-cli ping || exit 1"
+          --health-cmd="redis-cli ping"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -176,21 +176,25 @@ jobs:
           EVY_DEBUG: "true"
         run: |
           # Wait for Postgres
-          for i in {1..30}; do
-            if (echo > /dev/tcp/localhost/5432) >/dev/null 2>&1; then
+          for _ in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db >/dev/null 2>&1; then
               echo "Postgres is up"
               break
             fi
             sleep 2
           done
+          pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db
+
           # Wait for Redis
-          for i in {1..30}; do
-            if (echo > /dev/tcp/localhost/6379) >/dev/null 2>&1; then
+          for _ in {1..30}; do
+            if redis-cli -h localhost -p 6379 ping >/dev/null 2>&1; then
               echo "Redis is up"
               break
             fi
             sleep 2
           done
+          redis-cli -h localhost -p 6379 ping
+
           uv run python app/manage.py migrate --noinput
 
       - name: Start development server
@@ -208,13 +212,14 @@ jobs:
           uv run python app/manage.py runserver 0.0.0.0:8000 &
           echo $! > server.pid
           # Wait for server to be ready
-          for i in {1..30}; do
+          for _ in {1..30}; do
             if curl -fsS http://127.0.0.1:8000/healthcheck/ >/dev/null; then
               echo "Server is healthy"
               break
             fi
             sleep 2
           done
+          curl -fsS http://127.0.0.1:8000/healthcheck/ >/dev/null
 
       - name: Verify healthcheck endpoint
         run: |
