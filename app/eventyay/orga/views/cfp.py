@@ -96,6 +96,9 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @transaction.atomic
     def form_valid(self, form):
         if not self.sform.is_valid():
+            # Debug: log form errors
+            logger.error(f"CfPSettingsForm validation failed. Errors: {self.sform.errors}")
+            logger.error(f"Form data received: {self.request.POST}")
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
         messages.success(self.request, phrases.base.saved)

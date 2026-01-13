@@ -435,6 +435,66 @@
                         </tr>
                         {% endwith %}
 
+                        {# Avatar Source #}
+                        {% with field=sform.cfp_ask_avatar_source %}
+                        <tr>
+                            <th>{% translate "Avatar source" %}</th>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
+                                    aria-label="Required status for Avatar source">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
+                                    <option value="after_deadline" {% if field.value == 'after_deadline' %}selected{% endif %}>Deadline</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Avatar source">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Avatar source">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Avatar License #}
+                        {% with field=sform.cfp_ask_avatar_license %}
+                        <tr>
+                            <th>{% translate "Avatar license" %}</th>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" 
+                                    data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
+                                    aria-label="Required status for Avatar license">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
+                                    <option value="after_deadline" {% if field.value == 'after_deadline' %}selected{% endif %}>Deadline</option>
+                                </select>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" 
+                                       data-field-id="{{ field.auto_id }}"
+                                       aria-label="Toggle active state for Avatar license">
+                                    <input type="checkbox" 
+                                           {% if field.value  != 'do_not_ask' %}checked{% endif %}
+                                           aria-label="Active toggle for Avatar license">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                        </tr>
+                        {% endwith %}
+
                         {# Availability #}
                         {% with field=sform.cfp_ask_availabilities %}
                         <tr>
