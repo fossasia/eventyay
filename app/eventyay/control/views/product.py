@@ -21,9 +21,9 @@ from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView
+from django.views.generic import ListView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, CreateView, UpdateView
 from django_countries.fields import Country
 
 from eventyay.api.serializers.product import (
@@ -48,6 +48,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import ProductAddOn, ProductBundle, ProductMetaValue
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.services.tickets import invalidate_cache
+from eventyay.base.services.waitinglist import assign_automatically
 from eventyay.base.signals import quota_availability
 from eventyay.control.forms.product import (
     CategoryForm,
@@ -65,6 +66,7 @@ from eventyay.control.forms.product import (
     QuestionOptionForm,
     QuotaForm,
 )
+from eventyay.control.forms.event import EventSettingsForm
 from eventyay.control.permissions import (
     EventPermissionRequiredMixin,
     event_permission_required,
@@ -1045,6 +1047,17 @@ class QuotaView(ChartContainingView, DetailView):
             quota.save(update_fields=['closed'])
             quota.log_action('eventyay.event.quota.opened', user=request.user)
             messages.success(request, _('The quota has been re-opened.'))
+            
+            # Trigger waiting list assignment when quota is reopened
+            event = request.event
+            if event.settings.get('waiting_list_enabled', as_type=bool) and \
+               event.settings.get('waiting_list_auto', as_type=bool) and \
+               (event.presale_is_running or event.has_subevents):
+                if quota.subevent:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
+                else:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk))
+
         if 'disable' in request.POST:
             quota.closed = False
             quota.close_when_sold_out = False
@@ -1056,6 +1069,17 @@ class QuotaView(ChartContainingView, DetailView):
                 data={'close_when_sold_out': False},
             )
             messages.success(request, _('The quota has been re-opened and will not close again.'))
+            
+            # Trigger waiting list assignment when quota is reopened
+            event = request.event
+            if event.settings.get('waiting_list_enabled', as_type=bool) and \
+               event.settings.get('waiting_list_auto', as_type=bool) and \
+               (event.presale_is_running or event.has_subevents):
+                if quota.subevent:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk, quota.subevent.pk))
+                else:
+                    assign_automatically.apply_async(args=(event.pk, request.user.pk))
+
         return redirect(
             reverse(
                 'control:event.products.quotas.show',
@@ -1111,6 +1135,25 @@ class QuotaUpdate(EventPermissionRequiredMixin, UpdateView):
                         data={'id': form.instance.pk},
                     )
             form.instance.rebuild_cache()
+            
+            # Trigger waiting list assignment if quota size increased
+            if 'size' in form.changed_data:
+                old_size = form.initial.get('size')
+                new_size = form.cleaned_data.get('size')
+                # Check if size actually increased (handle None as unlimited)
+                if (old_size is not None and new_size is not None and new_size > old_size) or \
+                   (old_size is not None and new_size is None):
+                    # Quota increased, trigger waiting list assignment if enabled
+                    event = self.request.event
+                    if event.settings.get('waiting_list_enabled', as_type=bool) and \
+                       event.settings.get('waiting_list_auto', as_type=bool) and \
+                       (event.presale_is_running or event.has_subevents):
+                        if form.instance.subevent:
+                            assign_automatically.apply_async(
+                                args=(event.pk, self.request.user.pk, form.instance.subevent.pk)
+                            )
+                        else:
+                            assign_automatically.apply_async(args=(event.pk, self.request.user.pk))
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
@@ -1613,3 +1656,47 @@ def question_options_ajax(request, organizer, event, question):
         })
     except Question.DoesNotExist:
         return JsonResponse({'error': 'Question not found'}, status=404)
+
+
+# Order Form Views (Placeholder implementation)
+class OrderFormList(EventPermissionRequiredMixin, FormView):
+    """
+    List view for Order Forms.
+    This handles the order form settings that were moved from event settings.
+    """
+    template_name = 'pretixcontrol/items/orderforms.html'
+    permission = 'can_change_items'
+
+    @cached_property
+    def sform(self):
+        return EventSettingsForm(
+            obj=self.request.event,
+            prefix='settings',
+            data=self.request.POST if self.request.method == 'POST' else None,
+            files=self.request.FILES if self.request.method == 'POST' else None,
+        )
+
+    def get_form(self, form_class=None):
+        return self.sform
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['sform'] = self.sform
+        return ctx
+
+    def form_valid(self, form):
+        form.save()
+        if form.has_changed():
+            self.request.event.log_action(
+                'eventyay.event.settings', user=self.request.user, data={
+                    k: form.cleaned_data.get(k) for k in form.changed_data
+                }
+            )
+        messages.success(self.request, _('Your changes have been saved.'))
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('control:event.products.orderforms', kwargs={
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        })

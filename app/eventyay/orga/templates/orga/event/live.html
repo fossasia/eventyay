@@ -2,12 +2,12 @@
 
 {% load i18n %}
 
-{% block extra_title %}{% if request.event.is_public %}{% translate "Deactivate event" %}{% else %}{% translate "Go live" %}{% endif %} :: {% endblock extra_title %}
+{% block extra_title %}{% if request.event.is_public %}{% translate "Deactivate talk component" %}{% else %}{% translate "Go live" %}{% endif %} :: {% endblock extra_title %}
 
 {% block content %}
     <h2>
         {% if request.event.is_public %}
-            {% translate "Deactivate event" %}
+            {% translate "Deactivate talk component" %}
         {% else %}
             {% translate "Go live" %}
         {% endif %}
@@ -15,18 +15,18 @@
 
     {% if request.event.is_public %}
         {% blocktranslate trimmed %}
-            Your event is currently live and publicly visible.
+            Your talk component is currently live and publicly visible.
             If you take it down, it will only be visible to you and your team.
         {% endblocktranslate %}
     {% else %}
         {% blocktranslate trimmed %}
-            Your event is currently only visible to you and your team.
+            Your talk component is currently only visible to you and your team.
             By going live, it will be publicly visible.
         {% endblocktranslate %}
 
         {% if warnings %}
             <p>
-                <h4>{% translate "Your event may not be ready for release yet!" %}</h4>
+                <h4>{% translate "Your talk component may not be ready for release yet!" %}</h4>
                 <ul>
                     {% for warning in warnings %}
                         <li>
@@ -38,7 +38,7 @@
         {% endif %}
         {% if suggestions %}
             <p>
-                <h4>{% translate "There may be easy ways to improve your event before its release!" %}</h4>
+                <h4>{% translate "There may be easy ways to improve your talk component before its release!" %}</h4>
                 <ul>
                     {% for suggestion in suggestions %}
                         <li>
