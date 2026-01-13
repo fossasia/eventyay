@@ -101,7 +101,7 @@ def get_common_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
 
 
 def get_global_navigation(request: HttpRequest) -> List[MenuItem]:
-    """Generate navigation items for global context (non-organizer pages)."""
+    """Generate navigation items for global"""
     url = request.resolver_match
     if not url:
         return []
