@@ -1,0 +1,94 @@
+/**
+ * Toggle styles for CfP Custom Fields page
+ * Issue #1005: on/off buttons for Required, Active and Public
+ * Design matches cbum-dev's reference implementation
+ */
+
+/* Required status button - single button with state-based styling */
+.required-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.required-status[data-state="required"] {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: #fff;
+}
+
+.required-status[data-state="optional"] {
+    background-color: #fff;
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.required-status[data-state="after_deadline"] {
+    background-color: #fff;
+    border-color: #dc3545;
+    color: #dc3545;
+}
+
+.required-status:hover {
+    opacity: 0.85;
+}
+
+.required-status.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Toggle switch for Active and Public columns */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 32px;
+    height: 18px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background-color: #ccc;
+    border-radius: 18px;
+    transition: background-color 0.2s ease;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background-color: #007bff;
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+    transform: translateX(14px);
+}
+
+.toggle-switch.loading .toggle-slider {
+    opacity: 0.6;
+}

@@ -285,6 +285,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
 
 
 class CfPQuestionToggle(PermissionRequired, View):
+    """Toggle question field states via AJAX POST or legacy GET."""
     permission_required = 'base.update_talkquestion'
 
     def get_object(self) -> TalkQuestion:
@@ -294,9 +295,47 @@ class CfPQuestionToggle(PermissionRequired, View):
         super().dispatch(request, *args, **kwargs)
         question = self.get_object()
 
-        question.active = not question.active
-        question.save(update_fields=['active'])
-        return redirect(question.urls.base)
+        if not question:
+            return JsonResponse({'error': 'Question not found'}, status=404)
+
+        # Legacy GET: toggle active
+        if request.method == 'GET':
+            question.active = not question.active
+            question.save(update_fields=['active'])
+            return redirect(question.urls.base)
+
+        # AJAX POST: toggle specific field
+        if request.method == 'POST':
+            return self._handle_post(request, question)
+
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    def _handle_post(self, request, question):
+        try:
+            data = json.loads(request.body.decode())
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        field = data.get('field')
+        value = data.get('value')
+
+        if field == 'active':
+            question.active = bool(value)
+            question.save(update_fields=['active'])
+        elif field == 'is_public':
+            question.is_public = bool(value)
+            question.save(update_fields=['is_public'])
+        elif field == 'question_required':
+            from eventyay.base.models.question import TalkQuestionRequired
+            valid = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
+            if value not in valid:
+                return JsonResponse({'error': f'Invalid value: {value}'}, status=400)
+            question.question_required = value
+            question.save(update_fields=['question_required'])
+        else:
+            return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
+
+        return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):

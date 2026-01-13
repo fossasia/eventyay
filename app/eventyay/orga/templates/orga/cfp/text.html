@@ -4,17 +4,23 @@
 {% load i18n %}
 {% load static %}
 
+{% block stylesheets %}
+{% compress css %}
+<link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+{% endcompress %}
+{% endblock stylesheets %}
+
 {% block scripts %}
-    {% compress js %}
-        <script defer src="{% static "common/js/modalDialog.js" %}"></script>
-        <script defer src="{% static "orga/js/cfp.js" %}"></script>
-    {% endcompress %}
+{% compress js %}
+<script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+<script defer src="{% static 'orga/js/cfp.js' %}"></script>
+{% endcompress %}
 {% endblock scripts %}
 
 {% block extra_title %}{% translate "Call for Proposals" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
+<div id="main-title" class="d-md-flex justify-content-between">
     <h2>
         {% translate "Call for Proposals" %}
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
@@ -22,206 +28,505 @@
         </span>
     </h2>
     {% include "orga/event/component_link.html" %}
+</div>
+<dialog class="info-dialog" id="info-dialog">
+    <div class="alert alert-info">
+        <span>
+            {% translate "A good Call for Participation will engage potential speakers. Remember to include:" %}
+            <br>
+            <ul>
+                <li>{% translate "The formats (sessions, workshops, panels) and their durations" %}</li>
+                <li>{% translate "Topics you are looking for" %}</li>
+                <li>{% translate "How open you are to alternative topics" %}</li>
+                <li>{% translate "The people coming to your conference: interests, experience level …" %}</li>
+                <li>{% translate "Link your Code of Conduct and Data Protection statements." %}</li>
+                <li>{% translate "Do you offer financial or other support, e.g. support for first time speakers?" %}
+                </li>
+                <li>{% translate "Dates and location" %}</li>
+            </ul>
+        </span>
     </div>
-    <dialog class="info-dialog" id="info-dialog">
-        <div class="alert alert-info">
-            <span>
-                {% translate "A good Call for Participation will engage potential speakers. Remember to include:" %}
-                <br>
-                <ul>
-                    <li>{% translate "The formats (sessions, workshops, panels) and their durations" %}</li>
-                    <li>{% translate "Topics you are looking for" %}</li>
-                    <li>{% translate "How open you are to alternative topics" %}</li>
-                    <li>{% translate "The people coming to your conference: interests, experience level …" %}</li>
-                    <li>{% translate "Link your Code of Conduct and Data Protection statements." %}</li>
-                    <li>{% translate "Do you offer financial or other support, e.g. support for first time speakers?" %}</li>
-                    <li>{% translate "Dates and location" %}</li>
+</dialog>
+<form method="post">
+    {% csrf_token %}
+
+    {% include "common/forms/errors.html" %}
+    {% include "common/forms/errors.html" with form=sform %}
+
+    {% include "orga/includes/tablist.html" %}
+    <section role="tabpanel" id="tabpanel-general" aria-labelledby="tab-general" tabindex="0" aria-hidden="false">
+        {{ form.headline.as_field_group }}
+        {{ form.text.as_field_group }}
+        {{ form.deadline.as_field_group }}
+        {% if different_deadlines %}
+        <div class="offset-md-3 alert alert-info">
+            <div>
+                {% translate "Some of your session types have different deadlines:" %}
+                <ul class="mb-0">
+                    {% for deadline, session_types in different_deadlines.items %}
+                    <li>
+                        {% for session_type in session_types %}
+                        <a href="{{ session_type.urls.base }}">{{ session_type.name }}</a>{% if not forloop.last %},{%
+                        else %}:{% endif %}
+                        {% endfor %}
+                        {{ deadline }}
+                    </li>
+                    {% endfor %}
                 </ul>
-            </span>
+            </div>
         </div>
-    </dialog>
-    <form method="post">
-        {% csrf_token %}
+        {% endif %}
+        {{ form.show_deadline.as_field_group }}
+        {{ form.hide_after_deadline.as_field_group }}
+        {{ sform.use_tracks.as_field_group }}
+        {{ sform.present_multiple_times.as_field_group }}
+        {{ sform.submission_public_review.as_field_group }}
+        {{ sform.mail_on_new_submission.as_field_group }}
+    </section>
 
-        {% include "common/forms/errors.html" %}
-        {% include "common/forms/errors.html" with form=sform %}
+    <section role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" tabindex="0" aria-hidden="true">
+        {{ form.count_length_in.as_field_group }}
+        <fieldset>
 
-        {% include "orga/includes/tablist.html" %}
-        <section role="tabpanel" id="tabpanel-general" aria-labelledby="tab-general" tabindex="0" aria-hidden="false">
-            {{ form.headline.as_field_group }}
-            {{ form.text.as_field_group }}
-            {{ form.deadline.as_field_group }}
-            {% if different_deadlines %}
-                <div class="offset-md-3 alert alert-info">
-                    <div>
-                        {% translate "Some of your session types have different deadlines:" %}
-                        <ul class="mb-0">
-                            {% for deadline, session_types in different_deadlines.items %}
-                                <li>
-                                    {% for session_type in session_types %}
-                                        <a href="{{ session_type.urls.base }}">{{ session_type.name }}</a>{% if not forloop.last %},{% else %}:{% endif %}
-                                    {% endfor %}
-                                    {{ deadline }}
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-                </div>
-            {% endif %}
-            {{ form.show_deadline.as_field_group }}
-            {{ form.hide_after_deadline.as_field_group }}
-            {{ sform.use_tracks.as_field_group }}
-            {{ sform.present_multiple_times.as_field_group }}
-            {{ sform.submission_public_review.as_field_group }}
-            {{ sform.mail_on_new_submission.as_field_group }}
-        </section>
-
-        <section role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" tabindex="0" aria-hidden="true">
-            {{ form.count_length_in.as_field_group }}
-            <fieldset>
-
-                <legend id="information"><div>
-                    {% translate "Proposal information" %}
-                    <span data-dialog-target="#proposal-info-dialog" data-toggle="dialog">
-                        <i class="fa fa-question-circle-o text-info"></i>
-                    </span>
-                </div></legend>
-                <dialog class="info-dialog" id="proposal-info-dialog">
-                    <div class="alert alert-info"><span>
-                        {% translate "Select which information should be requested and/or required during CfP proposal." %}
-                        <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
-                    </span></div>
-                </dialog>
-                <div class="table-responsive-sm offset-md-3"><table class="table table-sm table-flip table-sticky cfp-option-table">
+            <div class="table-responsive-sm offset-md-3">
+                <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
-                            <th></th>
-                            <th></th>
+                            <th>{% translate "Proposal information" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th class="text-center">{% translate "Active" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
                         </tr>
                     </thead>
                     <tbody>
+                        {# Title #}
                         <tr>
                             <th>{% translate "Title" %}</th>
-                            <td></td>
+                            <td class="text-center"><span class="badge bg-success">{% translate "Required" %}</span>
+                            </td>
+                            <td class="text-center"><i class="fa fa-check-circle text-success"></i></td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
                         </tr>
+
+                        {# Abstract #}
+                        {% with field=sform.cfp_ask_abstract %}
                         <tr>
-                            <th>{% translate "Abstract" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_abstract.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
                         </tr>
+                        {% endwith %}
+
+                        {# Description #}
+                        {% with field=sform.cfp_ask_description %}
                         <tr>
-                            <th>{% translate "Description" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_description.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
                         </tr>
-                        <tr{% if request.event.settings.use_tracks %}class="d-none"{% endif %}>
-                            <th>{% translate "Track" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_track.as_field_group }}</td>
+                        {% endwith %}
+
+                        {# Notes #}
+                        {% with field=sform.cfp_ask_notes %}
+                        <tr>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
-                        {% if request.event.is_multilingual %}
-                            <tr>
-                                <th>{{ phrases.base.language }}</th>
-                                <td class="hide-label">{{ sform.cfp_ask_content_locale.as_field_group }}</td>
-                                <td></td>
-                                <td></td>
-                            </tr>
+                        {% endwith %}
+
+                        {# Track #}
+                        {% with field=sform.cfp_ask_track %}
+                        <tr>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Duration #}
+                        {% with field=sform.cfp_ask_duration %}
+                        <tr>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Content Locale #}
+                        {% with field=sform.cfp_ask_content_locale %}
+                        {% if field %}
+                        <tr>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
                         {% endif %}
+                        {% endwith %}
+
+                        {# Image #}
+                        {% with field=sform.cfp_ask_image %}
                         <tr>
-                            <th>{% translate "Additional speakers" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_additional_speaker.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
+                        {% endwith %}
+
+                        {# Do not record #}
+                        {% with field=sform.cfp_ask_do_not_record %}
                         <tr>
-                            <th>{% translate "Notes" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_notes.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
+                        {% endwith %}
+
+
+                        {# Speaker Section #}
                         <tr>
-                            <th>{% translate "Recording opt-out" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_do_not_record.as_field_group }}</td>
-                            <td></td>
-                            <td></td>
+                            <th colspan="5" class="thead-light">{% translate "Speaker Information" %}</th>
                         </tr>
+
+                        {# Biography #}
+                        {% with field=sform.cfp_ask_biography %}
                         <tr>
-                            <th>{% translate "Session image" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_image.as_field_group }}</td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <th>{% translate "Duration" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_duration.as_field_group }}</td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                    </tbody>
-                </table></div>
-            </fieldset>
-            <fieldset>
-                <legend id="speaker-information">
-                    <div>
-                        {% translate "Speaker Information" %}
-                        <span data-dialog-target="#proposal-info-dialog" data-toggle="dialog">
-                            <i class="fa fa-question-circle-o text-info"></i>
-                        </span>
-                    </div>
-                </legend>
-                <div class="table-responsive-sm offset-md-3"><table class="table table-sm table-flip table-sticky cfp-option-table">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th></th>
-                            <th>{% translate "Minimum length" %}</th>
-                            <th>{% translate "Maximum length" %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th>{% translate "Biography" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_biography.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
                         </tr>
+                        {% endwith %}
+
+                        {# Avatar #}
+                        {% with field=sform.cfp_ask_avatar %}
                         <tr>
-                            <th>{% translate "Profile picture" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_avatar.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
+                        {% endwith %}
+
+                        {# Availability #}
+                        {% with field=sform.cfp_ask_availabilities %}
                         <tr>
-                            <th>{% translate "Availability" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_availabilities.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
+                        {% endwith %}
+
+                        {# Additional Speaker #}
+                        {% with field=sform.cfp_ask_additional_speaker %}
                         <tr>
-                            <th>{% translate "Profile picture source" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_avatar_source.as_field_group }}</td>
-                            <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
-                            <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <th>{{ field.label }}</th>
+                            <td class="text-center">
+                                <span class="required-status" data-field-id="{{ field.auto_id }}"
+                                    data-state="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    {% if field.value == 'required' %}Required{% else %}Optional{% endif %}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}">
+                                    <input type="checkbox" {% if field.value  != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                {{ field.as_hidden }}
+                            </td>
+                            <td></td>
+                            <td></td>
                         </tr>
-                        <tr>
-                            <th>{% translate "Profile picture license" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_avatar_license.as_field_group }}</td>
-                            <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
-                            <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
-                        </tr>
+                        {% endwith %}
+
                     </tbody>
-                </table></div>
-            </fieldset>
-        </section>
+                </table>
+            </div>
+        </fieldset>
 
-        {% include "orga/includes/submit_row.html" %}
+    </section>
 
-    </form>
+    {% include "orga/includes/submit_row.html" %}
+
+</form>
+
+<style>
+    .cfp-option-table select {
+        display: none;
+    }
+
+    .cfp-option-table .form-group {
+        margin-bottom: 0;
+    }
+
+    .cfp-option-table th[colspan] {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+
+    /* Ensure toggle visibility */
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 32px;
+        height: 18px;
+        cursor: pointer;
+        vertical-align: middle;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+        position: absolute;
+        /* Ensure it doesn't take layout space if opacity fails */
+    }
+
+    .toggle-slider {
+        position: absolute;
+        inset: 0;
+        background-color: #ccc;
+        border-radius: 18px;
+        transition: background-color 0.2s ease;
+        display: block;
+        /* Force block */
+    }
+
+    .toggle-slider::before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 2px;
+        bottom: 2px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+    }
+
+    .toggle-switch input:checked+.toggle-slider {
+        background-color: #007bff;
+    }
+
+    .toggle-switch input:checked+.toggle-slider::before {
+        transform: translateX(14px);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Function to update visual state based on hidden input value
+        function updateVisualState(fieldId, value) {
+            const requiredBtn = document.querySelector(`.required-status[data-field-id="${fieldId}"]`);
+            const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${fieldId}"] input`);
+
+            if (!requiredBtn || !toggleInput) return;
+
+            if (value === 'do_not_ask') {
+                toggleInput.checked = false;
+                requiredBtn.style.opacity = '0.5';
+                requiredBtn.style.pointerEvents = 'none';
+                // We don't change requiredBtn text to preserve "default" if re-enabled
+            } else {
+                toggleInput.checked = true;
+                requiredBtn.style.opacity = '1';
+                requiredBtn.style.pointerEvents = 'auto';
+
+                const state = value; // 'required' or 'optional'
+                requiredBtn.dataset.state = state;
+                requiredBtn.textContent = state.charAt(0).toUpperCase() + state.slice(1);
+            }
+        }
+
+        // Init from hidden inputs
+        document.querySelectorAll('input[type=hidden][name^="cfp_ask_"]').forEach(input => {
+            updateVisualState(input.id, input.value);
+        });
+
+        // Handle Required status click
+        document.querySelectorAll('.required-status').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const fieldId = this.dataset.fieldId;
+                const checkbox = document.querySelector(`.toggle-switch[data-field-id="${fieldId}"] input`);
+
+                if (!checkbox.checked) return; // Can't toggle if inactive
+
+                const currentState = this.dataset.state;
+                const nextState = currentState === 'optional' ? 'required' : 'optional';
+
+                // Update hidden input
+                document.getElementById(fieldId).value = nextState;
+                updateVisualState(fieldId, nextState);
+            });
+        });
+
+        // Handle Active toggle
+        document.querySelectorAll('.toggle-switch input').forEach(input => {
+            input.addEventListener('change', function () {
+                const toggle = this.closest('.toggle-switch');
+                const fieldId = toggle.dataset.fieldId;
+                const requiredBtn = document.querySelector(`.required-status[data-field-id="${fieldId}"]`);
+                const hiddenInput = document.getElementById(fieldId);
+
+                if (this.checked) {
+                    // Activate - default to what button thinks, or 'optional'
+                    let state = requiredBtn.dataset.state;
+                    // If button state was stale (e.g. we defaulted to optional visually but logic needs confirmation)
+                    if (state !== 'required' && state !== 'optional') state = 'optional';
+                    hiddenInput.value = state;
+                    updateVisualState(fieldId, state);
+                } else {
+                    // Deactivate
+                    hiddenInput.value = 'do_not_ask';
+                    updateVisualState(fieldId, 'do_not_ask');
+                }
+            });
+        });
+    });
+</script>
 {% endblock content %}
