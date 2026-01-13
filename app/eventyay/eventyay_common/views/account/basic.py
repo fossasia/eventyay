@@ -125,6 +125,14 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         ctx['requires_password_reset'] = requires_reset
         provider_label = get_social_account_provider_label(user)
         ctx['password_reset_message'] = build_password_reset_message(requires_reset, provider_label)
+
+        # Get the primary email or fallback to first email or user email
+        email_addresses = user.emailaddress_set.all()
+        primary_email = next((ea.email for ea in email_addresses if ea.primary), None)
+        if not primary_email:
+            primary_email = next((ea.email for ea in email_addresses), user.email)
+        ctx['primary_email'] = primary_email
+
         # Passed by the post() method when the password reset form was submitted.
         password_reset_form = kwargs.get('password_reset_form')
         # If this form is present, it means we need to render it with errors,
