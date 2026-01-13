@@ -233,6 +233,7 @@ __all__ = [
     "SystemLog",
     "Tag",
     "TalkQuestion",
+    "TalkQuestionRequired",
     "TalkQuestionTarget",
     "TalkQuestionVariant",
     "TalkSlot",
