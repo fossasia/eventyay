@@ -1,5 +1,4 @@
 import sys
-from datetime import timedelta
 
 from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
@@ -13,7 +12,6 @@ from eventyay.base.models import AuditLog, Channel, User
 from eventyay.base.models.room import Room
 from eventyay.base.models.event import Event
 from eventyay.base.models.room import RoomConfigSerializer, RoomView
-from eventyay.base.models.stream_schedule import StreamSchedule
 from eventyay.base.services.user import get_public_users
 from eventyay.base.signals import periodic_task
 from eventyay.features.live.channels import GROUP_ROOM
@@ -171,7 +169,6 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
 def check_stream_schedule_changes(sender, **kwargs):
     from django.core.cache import cache
 
-    current_time = now()
     cache_timeout = 300
 
     for room in Room.objects.filter(deleted=False).select_related('event'):

@@ -1,4 +1,3 @@
-import datetime as dt
 from datetime import timedelta
 
 import pytest

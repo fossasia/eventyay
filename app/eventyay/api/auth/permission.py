@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from eventyay.api.models import OAuthAccessToken
@@ -69,7 +71,7 @@ class EventPermission(BasePermission):
                 .first()
             )
             if not request.event:
-                try:
+                with suppress(ValueError, TypeError):
                     event_id = int(event_slug)
                     request.event = (
                         Event.objects.filter(
@@ -78,8 +80,6 @@ class EventPermission(BasePermission):
                         .select_related('organizer')
                         .first()
                     )
-                except (ValueError, TypeError):
-                    pass
             if not request.event:
                 return False
             if not perm_holder.has_event_permission(

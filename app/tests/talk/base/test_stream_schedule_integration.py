@@ -1,4 +1,3 @@
-import datetime as dt
 from datetime import timedelta
 
 import pytest
@@ -80,7 +79,7 @@ def test_multiple_rooms_independent_schedules(room, other_room):
 @pytest.mark.django_db
 def test_stream_schedule_gap_between_streams(room):
     with scope(event=room.event):
-        schedule1 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=room,
             url="https://www.youtube.com/watch?v=test1",
             start_time=now() + timedelta(hours=1),

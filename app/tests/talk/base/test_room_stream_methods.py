@@ -1,4 +1,3 @@
-import datetime as dt
 from datetime import timedelta
 
 import pytest
@@ -64,7 +63,7 @@ def test_room_get_current_stream_multiple_returns_first(room):
             start_time=now() - timedelta(hours=2),
             end_time=now() + timedelta(hours=2),
         )
-        schedule2 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=room,
             url="https://www.youtube.com/watch?v=test2",
             start_time=now() - timedelta(hours=1),
@@ -147,7 +146,7 @@ def test_room_get_next_stream_current_active(room):
 @pytest.mark.django_db
 def test_room_get_next_stream_returns_earliest(room):
     with scope(event=room.event):
-        schedule2 = StreamSchedule.objects.create(
+        StreamSchedule.objects.create(
             room=room,
             url="https://www.youtube.com/watch?v=test2",
             start_time=now() + timedelta(hours=2),
