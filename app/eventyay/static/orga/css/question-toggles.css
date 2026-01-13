@@ -118,33 +118,6 @@ select.required-status-dropdown[data-current="after_deadline"] {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Legacy button styles (if any remain on form page) */
-.required-status {
-    display: inline-block;
-    padding: 2px 8px;
-    border: 1px solid;
-    border-radius: 3px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    cursor: pointer;
-}
-
-.required-status:hover {
-    opacity: 0.85;
-}
-
-.required-status.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Disabled state for required button */
-.required-status[aria-disabled="true"] {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-
 /* Toggle switch for Active and Public columns */
 .toggle-switch {
     position: relative;
