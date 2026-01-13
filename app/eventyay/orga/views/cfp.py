@@ -289,14 +289,15 @@ class CfPQuestionToggle(PermissionRequired, View):
     permission_required = 'base.update_talkquestion'
 
     def get_object(self) -> TalkQuestion:
-        return TalkQuestion.all_objects.filter(event=self.request.event, pk=self.kwargs.get('pk')).first()
+        return get_object_or_404(
+            TalkQuestion.all_objects,
+            event=self.request.event,
+            pk=self.kwargs.get('pk')
+        )
 
     def dispatch(self, request, *args, **kwargs):
         super().dispatch(request, *args, **kwargs)
         question = self.get_object()
-
-        if not question:
-            return JsonResponse({'error': 'Question not found'}, status=404)
 
         # Legacy GET: toggle active
         if request.method == 'GET':
