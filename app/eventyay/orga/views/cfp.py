@@ -96,9 +96,6 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @transaction.atomic
     def form_valid(self, form):
         if not self.sform.is_valid():
-            # Debug: log form errors (development only)
-            logger.debug(f"CfPSettingsForm validation failed. Errors: {self.sform.errors}")
-            logger.debug(f"Form data received: {self.request.POST}")
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
         messages.success(self.request, phrases.base.saved)
@@ -315,6 +312,7 @@ class CfPQuestionToggle(PermissionRequired, View):
 
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
+    @transaction.atomic
     def _handle_post(self, request, question):
         try:
             data = json.loads(request.body.decode())
@@ -346,9 +344,9 @@ class CfPQuestionToggle(PermissionRequired, View):
             # Validate type for string fields
             if not isinstance(value, str):
                 return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
-            valid = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
-            if value not in valid:
-                return JsonResponse({'error': f'Invalid value: {value}. Must be one of: {", ".join(valid)}'}, status=400)
+            allowed_values = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
+            if value not in allowed_values:
+                return JsonResponse({'error': f'Invalid value: {value}. Must be one of: {", ".join(allowed_values)}'}, status=400)
             question.question_required = value
             question.save(update_fields=['question_required'])
         else:

@@ -10,12 +10,6 @@ const REQUIRED_STATES = {
     AFTER_DEADLINE: 'after_deadline'
 };
 
-const REQUIRED_LABELS = {
-    [REQUIRED_STATES.OPTIONAL]: 'Optional',
-    [REQUIRED_STATES.REQUIRED]: 'Required',
-    [REQUIRED_STATES.AFTER_DEADLINE]: 'Deadline'
-};
-
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
 
 document.addEventListener('DOMContentLoaded', () => {

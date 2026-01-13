@@ -158,7 +158,6 @@ select.required-status-dropdown[data-current="after_deadline"] {
     border-radius: 18px;
     transition: background-color 0.2s ease;
     display: block;
-    /* Copilot feedback: Force block */
 }
 
 .toggle-slider::before {

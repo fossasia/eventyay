@@ -288,12 +288,11 @@
                                 <select class="required-status-dropdown"
                                     data-field-id="{{ field.auto_id }}"
                                     data-current="{% if field.value == 'required' %}required{% elif field.value == 'after_deadline' %}after_deadline{% else %}optional{% endif %}"
+                                    {% if field.value == 'do_not_ask' %}disabled style="opacity: 0.5;"{% endif %}
                                     aria-label="Required status for Content Locale">
-                                    {% if field.value != 'do_not_ask' %}
                                     <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                     <option value="required" {% if field.value == 'required' %}selected{% endif %}>Required</option>
                                     <option value="after_deadline" {% if field.value == 'after_deadline' %}selected{% endif %}>Deadline</option>
-                                    {% endif %}
                                 </select>
                             </td>
                             <td class="text-center">
