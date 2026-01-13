@@ -10,7 +10,6 @@ class Thumbnail(models.Model):
     thumb = models.FileField(upload_to='pub/thumbs/', max_length=255)
 
     class Meta:
-        app_label = 'helpers'
         unique_together = (('source', 'size'),)
 
 
