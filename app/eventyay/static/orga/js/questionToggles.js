@@ -241,7 +241,6 @@ function initFormPageToggles() {
             updateVisualState(fieldId, newValue);
         });
     });
-    });
 
     // Handle Active toggle (Form Page)
     document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
