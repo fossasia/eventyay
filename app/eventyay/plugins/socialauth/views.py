@@ -100,7 +100,8 @@ class OAuthReturnView(View):
                     # OAuth2 flow takes precedence - redirect to authorization endpoint
                     # Clean up socialauth_next_url to prevent it from being used later
                     request.session.pop('socialauth_next_url', None)
-                    response = process_login_and_set_cookie(request, user, keep_logged_in)
+                    # Process login and set cookie, then redirect to auth URL
+                    process_login_and_set_cookie(request, user, keep_logged_in)
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
@@ -118,6 +119,7 @@ class OAuthReturnView(View):
             messages.error(request, _('Error while authorizing: no email address available.'))
             logger.error('Error while authorizing: %s', e)
             return redirect('eventyay_common:auth.login')
+    
     @staticmethod
     def get_or_create_user(request: HttpRequest) -> User:
         """
@@ -188,11 +190,11 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         login_providers = self.gs.settings.get('login_providers', as_type=dict)
         context['login_providers'] = login_providers
 
-        # Check if any provider is preferred for the "No preferred" radio button
+        # Consider all providers, regardless of their state, to avoid inconsistencies
+        # Using provider_settings instead of settings to avoid shadowing the settings module
         context['any_preferred'] = any(
-            settings.get('is_preferred', False)
-            for settings in login_providers.values()
-            if settings.get('state', False)
+            provider_settings.get('is_preferred', False)
+            for provider_settings in login_providers.values()
         )
 
         # tickets_domain is only used to append /github/..., so make sure we don't have
@@ -213,7 +215,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 login_providers[provider]['is_preferred'] = False
 
         # Set the selected provider as preferred (if any enabled provider was selected)
-        if preferred_provider and preferred_provider in login_providers:
+        # Validate that the preferred_provider is a valid provider from the schema
+        if (preferred_provider 
+            and preferred_provider in LoginProviders.model_fields.keys() 
+            and preferred_provider in login_providers):
             if login_providers[preferred_provider].get('state', False):
                 login_providers[preferred_provider]['is_preferred'] = True
 
@@ -243,6 +248,16 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             )
 
     def update_provider_state(self, request, provider, login_providers):
+        """
+        Update the state (enabled/disabled) of a login provider.
+        
+        When a provider is disabled, this method automatically removes its preferred status
+        to prevent stale preferred_provider values. This handles the edge case where:
+        1. A provider is marked as preferred and enabled
+        2. User disables that provider without selecting a new preferred provider
+        3. The disabled provider's radio button is removed from DOM (not in form submission)
+        4. Without this logic, the disabled provider could remain marked as preferred
+        """
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
             was_enabled = login_providers[provider].get('state', False)
@@ -250,7 +265,9 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
             login_providers[provider]['state'] = is_now_enabled
 
-            # If disabling a preferred provider, remove its preferred status
+            # Critical: If disabling a preferred provider, remove its preferred status
+            # This prevents the form from retaining a stale preferred_provider value
+            # when the provider's radio button is no longer in the DOM
             if was_enabled and not is_now_enabled and login_providers[provider].get('is_preferred', False):
                 login_providers[provider]['is_preferred'] = False
     
