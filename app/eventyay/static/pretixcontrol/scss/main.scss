@@ -1141,9 +1141,9 @@ a.header-nav.btn,
 .header-nav .btn.btn-outline-success:focus,
 .header-nav .btn.btn-outline-success:active,
 .header-nav .btn.btn-outline-success.active {
-    background-color: var(--color-white);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    background-color: $hover-button-color;
+    border-color: $hover-button-color;
+    color: #fff;
 }
 
 /* Active button inset shadow */
