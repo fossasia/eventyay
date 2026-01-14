@@ -10,6 +10,7 @@ services:
     name: eventyay-next-web
     runtime: docker
     dockerContext: ./app
+    dockerfilePath: Dockerfile
     plan: starter
     healthCheckPath: /
     envVars:
@@ -51,6 +52,7 @@ services:
     name: eventyay-next-worker
     runtime: docker
     dockerContext: ./app
+    dockerfilePath: Dockerfile
     dockerCommand: celery -A eventyay worker -l info
     envVars:
       - key: EVY_SECRET_KEY
@@ -91,6 +93,7 @@ services:
     name: eventyay-next-scheduler
     runtime: docker
     dockerContext: ./app
+    dockerfilePath: Dockerfile
     dockerCommand: celery -A eventyay beat -l info
     envVars:
       - key: EVY_SECRET_KEY
