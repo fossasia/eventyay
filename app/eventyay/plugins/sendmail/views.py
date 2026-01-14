@@ -188,8 +188,6 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
             reverse('plugins:sendmail:send', kwargs={
                 'event': self.request.event.slug,
                 'organizer': self.request.event.organizer.slug,
-            }) + '?' + urlencode({
-                'organizer': self.request.event.organizer.slug,
             })
         )
 
