@@ -88,8 +88,7 @@ def mail_send_task(
         if not reply_to:
             reply_to = get_reply_to_address(
                 event,
-                use_custom_smtp=event.mail_settings['smtp_use_custom'],
-                auto_email=False
+                use_custom_smtp=event.mail_settings['smtp_use_custom']
             )
 
         if isinstance(reply_to, str):
@@ -147,7 +146,6 @@ def get_reply_to_address(
     *,
     override=None,
     template=None,
-    auto_email=False,
     use_custom_smtp=False
 ):
     """
