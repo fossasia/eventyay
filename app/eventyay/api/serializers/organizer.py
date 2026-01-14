@@ -25,6 +25,7 @@ from eventyay.base.models import (
 )
 from eventyay.base.models.seating import SeatingPlanLayoutValidator
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.base.settings import validate_organizer_settings
 from eventyay.helpers.urls import build_absolute_uri
 
@@ -222,6 +223,7 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     raise ValidationError(_('This user already has permissions for this team.'))
 
                 self.context['team'].members.add(user)
+
                 self.context['team'].log_action(
                     'eventyay.team.member.added',
                     data={
@@ -230,6 +232,22 @@ class TeamInviteSerializer(serializers.ModelSerializer):
                     },
                     **self.context['log_kwargs'],
                 )
+
+                send_team_invitation_email(
+                    user=user,
+                    organizer_name=self.context['organizer'].name,
+                    team_name=self.context['team'].name,
+                    url=build_absolute_uri(
+                        'eventyay_common:organizer.team',
+                        kwargs={
+                            'organizer': self.context['organizer'].slug,
+                            'team': self.context['team'].pk,
+                        },
+                    ),
+                    locale=get_language_without_region(),
+                    is_registered_user=True,
+                )
+
                 return TeamInvite(email=user.email)
         else:
             raise ValidationError('No email address given.')
