@@ -321,7 +321,11 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
             )
             return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
         except Exception as e:
-            logger.error(f'Error toggling featured status for speaker {code}: {e}', exc_info=True)
+            logger.error(
+                'Error toggling featured status for speaker',
+                exc_info=True,
+                extra={'speaker_code': code, 'error': str(e)},
+            )
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
 
 

@@ -613,7 +613,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         
         context['featured_speakers'] = featured_speakers
         context['total_featured_count'] = total_featured_count
-        # Show "More speakers" button if there are > 8 featured speakers OR any non-featured speakers
+        # Show "More speakers" button if there are more than 8 featured speakers OR any non-featured speakers
         context['has_more_speakers'] = (total_featured_count > 8) or (non_featured_count > 0)
 
         return context
