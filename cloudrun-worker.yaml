@@ -11,22 +11,29 @@ spec:
         autoscaling.knative.dev/minScale: "1"
         autoscaling.knative.dev/maxScale: "5"
         run.googleapis.com/cpu-throttling: "false"
+        run.googleapis.com/cloudsql-instances: "striking-effort-475914-v5:us-central1:eventyay-db-prod"
     spec:
       containers:
-      - image: gcr.io/YOUR_PROJECT_ID/eventyay-next
-        command: ["celery"]
-        args: ["-A", "eventyay", "worker", "-l", "info"]
+      - image: gcr.io/striking-effort-475914-v5/eventyay-next
+        command: ["/bin/bash", "-c"]
+        args: ["python -m http.server 8080 & celery -A eventyay worker -l info"]
         env:
         - name: EVY_RUNNING_ENVIRONMENT
           value: production
         - name: EVY_ALLOWED_HOSTS
           value: '["*"]'
-        - name: DATABASE_URL
+        - name: EVY_POSTGRES_DB
+          value: "eventyay_db"
+        - name: EVY_POSTGRES_USER
+          value: "eventyay_user"
+        - name: EVY_POSTGRES_HOST
+          value: "/cloudsql/striking-effort-475914-v5:us-central1:eventyay-db-prod"
+        - name: EVY_POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: eventyay-database-url
+              name: eventyay-db-password
               key: latest
-        - name: REDIS_URL
+        - name: EVY_REDIS_URL
           valueFrom:
             secretKeyRef:
               name: eventyay-redis-url

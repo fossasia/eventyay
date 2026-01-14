@@ -1,87 +1,284 @@
 # Deploying Eventyay to Fly.io
 
-This guide outlines how to deploy Eventyay to [Fly.io](https://fly.io) using the provided `fly.toml` configuration.
+This guide explains how to deploy Eventyay to [Fly.io](https://fly.io) using the provided `fly.toml` configuration.
 
 ## Prerequisites
 
-- [flyctl](https://fly.io/docs/hands-on/install-flyctl/) installed.
-- A Fly.io account.
+- [flyctl](https://fly.io/docs/hands-on/install-flyctl/) installed
+- A Fly.io account
 
-## Setup & Deployment
+## Initial Setup
 
-1.  **Login to Fly.io**:
+### 1. Install flyctl
 
-    ```bash
-    fly auth login
-    ```
+```bash
+# macOS
+brew install flyctl
 
-2.  **Initialize the App**:
-    From the root of the repository, run:
+# Linux
+curl -L https://fly.io/install.sh | sh
 
-    ```bash
-    fly launch --no-deploy
-    ```
+# Windows
+pwsh -Command "iwr https://fly.io/install.ps1 -useb | iex"
+```
 
-    - Choose an app name (e.g., `eventyay-next`).
-    - Select a region.
-    - Select `N` for database (we'll set it up separately) or `Y` to provision a Development Postgres.
-    - Select `N` for Redis (we'll set it up separately) or `Y` to provision Upstash Redis.
+### 2. Login to Fly.io
 
-3.  **Database & Redis Setup**:
+```bash
+fly auth login
+```
 
-    - **Postgres**: Create a Fly Postgres cluster or use an external provider.
-      ```bash
-      fly postgres create
-      fly postgres attach <postgres-app-name>
-      ```
-    - **Redis**: Create a Fly Redis (Upstash) or use an external provider.
-      ```bash
-      fly redis create
-      ```
-      Get the connection string and set it as secret:
-      ```bash
-      fly secrets set REDIS_URL=<redis-connection-string>
-      ```
+### 3. Create App
 
-4.  **Configuration**:
-    The `fly.toml` file defines three processes:
+From the repository root:
 
-    - `web`: Django application
-    - `worker`: Celery worker
-    - `scheduler`: Celery Beat
+```bash
+fly launch --no-deploy
+```
 
-    Ensure your secrets are set:
+When prompted:
 
-    ```bash
-    fly secrets set EVY_SECRET_KEY='<random-secret>'
-    fly secrets set EVY_ALLOWED_HOSTS='*'
-    ```
+- Choose an app name (e.g., `eventyay-next`)
+- Select a region close to your users
+- Say **No** to Postgres (we'll set it up separately)
+- Say **No** to Redis (we'll set it up separately)
 
-5.  **Deploy**:
-    ```bash
-    fly deploy
-    ```
+## Database Setup
+
+### Create PostgreSQL Database
+
+```bash
+# Create Postgres cluster
+fly postgres create
+
+# Attach to your app
+fly postgres attach <postgres-app-name>
+```
+
+This automatically sets the `DATABASE_URL` environment variable.
+
+### Create Redis Instance
+
+```bash
+# Create Redis (Upstash)
+fly redis create
+
+# Get connection string
+fly redis status <redis-name>
+
+# Set as secret
+fly secrets set REDIS_URL=<redis-connection-string>
+```
+
+## Configuration
+
+### Set Required Secrets
+
+```bash
+# Django secret key
+fly secrets set EVY_SECRET_KEY=$(python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+
+# Allowed hosts
+fly secrets set EVY_ALLOWED_HOSTS='["*.fly.dev"]'
+```
+
+### Review fly.toml
+
+The `fly.toml` file defines three processes:
+
+- **web**: Django application (public)
+- **worker**: Celery worker (internal)
+- **scheduler**: Celery Beat (internal)
+
+## Deploy
+
+```bash
+fly deploy
+```
+
+This will:
+
+1. Build the Docker image
+2. Push to Fly.io registry
+3. Deploy all three processes
+4. Run health checks
+
+## After Deployment
+
+### Access Your Application
+
+Your app will be available at:
+
+```
+https://<your-app-name>.fly.dev
+```
+
+### Check Status
+
+```bash
+# View app status
+fly status
+
+# View logs
+fly logs
+
+# SSH into app
+fly ssh console
+```
+
+### Run Migrations
+
+```bash
+# Run migrations
+fly ssh console -C "python manage.py migrate"
+
+# Create superuser
+fly ssh console -C "python manage.py createsuperuser"
+```
+
+## Scaling
+
+### Horizontal Scaling
+
+```bash
+# Scale web process
+fly scale count web=2
+
+# Scale worker process
+fly scale count worker=3
+```
+
+### Vertical Scaling
+
+```bash
+# Change machine size
+fly scale vm shared-cpu-1x --memory 512
+```
+
+### Auto-scaling
+
+```bash
+# Set auto-scaling limits
+fly autoscale set min=1 max=10
+```
 
 ## Multi-Process Architecture
 
-Fly.io runs these processes as separate VMs (Firecrackers) within the same app context, scaling them independently.
+Fly.io runs each process as a separate VM:
 
-- To scale the web process: `fly scale count web=2`
-- To scale the worker: `fly scale count worker=1`
+- **web**: Handles HTTP requests (public)
+- **worker**: Processes background tasks (internal)
+- **scheduler**: Runs periodic tasks (internal)
 
-## Frontend Deployment
-
-For the frontend, you can either:
-
-1.  Serve it via Django (if configured with Whitenoise and collected static files).
-2.  Deploy it as a separate Static site on Fly.io (requires a separate `fly.toml` in `app/eventyay/webapp`).
+All processes share the same environment variables and secrets.
 
 ## Persistent Storage
 
-If you need to store media files locally instead of S3, you must uncomment the `[[mounts]]` section in `fly.toml` and create a volume:
+### For Media Files
+
+If you need local file storage:
 
 ```bash
-fly volumes create eventyay_data --region <your-region>
+# Create volume
+fly volumes create eventyay_data --region <your-region> --size 10
+
+# Uncomment [[mounts]] section in fly.toml
 ```
 
-However, using S3-compatible storage is recommended for production.
+**Note**: Using S3-compatible storage is recommended for production.
+
+## Custom Domain
+
+### Add Domain
+
+```bash
+# Add domain
+fly certs add yourdomain.com
+
+# Add www subdomain
+fly certs add www.yourdomain.com
+```
+
+### Update DNS
+
+Add these records to your DNS:
+
+```
+A     @     <fly-ip-address>
+AAAA  @     <fly-ipv6-address>
+CNAME www   <your-app-name>.fly.dev
+```
+
+Get IP addresses with:
+
+```bash
+fly ips list
+```
+
+## Monitoring
+
+### View Metrics
+
+```bash
+# View metrics
+fly dashboard metrics
+
+# View logs
+fly logs --app <your-app-name>
+```
+
+### Set Up Alerts
+
+1. Go to [Fly.io Dashboard](https://fly.io/dashboard)
+2. Select your app
+3. Go to **Monitoring**
+4. Configure alerts for:
+   - High CPU usage
+   - Memory limits
+   - Failed health checks
+
+## Troubleshooting
+
+### Build Failures
+
+```bash
+# View build logs
+fly logs --app <your-app-name>
+
+# Try local build
+fly deploy --local-only
+```
+
+### Database Connection Issues
+
+```bash
+# Check Postgres status
+fly postgres db list --app <postgres-app-name>
+
+# View connection string
+fly postgres connect --app <postgres-app-name>
+```
+
+### Health Check Failures
+
+```bash
+# Check health endpoint
+curl https://<your-app-name>.fly.dev/
+
+# View detailed logs
+fly logs --app <your-app-name>
+```
+
+## Cost Optimization
+
+- Free tier includes 3 shared-cpu-1x VMs
+- Postgres and Redis have separate free tiers
+- Stop unused apps: `fly apps destroy <app-name>`
+- Use `fly scale count web=0` to pause without destroying
+
+## Support
+
+For Fly.io-specific issues:
+
+- [Fly.io Documentation](https://fly.io/docs)
+- [Fly.io Community](https://community.fly.io)

@@ -1321,7 +1321,12 @@ class CountriesAndEU(CachedCountries):
 
 
 class TaxRuleLineForm(I18nForm):
-    country = LazyTypedChoiceField(choices=CountriesAndEU(), required=False)
+    try:
+        country = LazyTypedChoiceField(choices=CountriesAndEU(), required=False)
+    except Exception:
+        # Fallback if cache/db fails at import time
+        from django.forms import CharField
+        country = CharField(required=False)
     address_type = forms.ChoiceField(
         choices=[
             ('', _('Any customer')),

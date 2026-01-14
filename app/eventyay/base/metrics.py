@@ -13,7 +13,12 @@ from eventyay.celery_app import app
 if settings.HAS_REDIS:
     import django_redis
 
-    redis = django_redis.get_redis_connection('redis')
+    try:
+        redis = django_redis.get_redis_connection('redis')
+    except (NotImplementedError, Exception):
+        redis = None
+else:
+    redis = None
 
 REDIS_KEY = 'eventyay_metrics'
 _INF = float('inf')
@@ -76,7 +81,7 @@ class Metric(object):
         """
         Increments given key in Redis.
         """
-        if settings.HAS_REDIS:
+        if redis:
             if not pipeline:
                 pipeline = redis
             pipeline.hincrbyfloat(REDIS_KEY, key, amount)
@@ -85,17 +90,17 @@ class Metric(object):
         """
         Sets given key in Redis.
         """
-        if settings.HAS_REDIS:
+        if redis:
             if not pipeline:
                 pipeline = redis
             pipeline.hset(REDIS_KEY, key, value)
 
     def _get_redis_pipeline(self):
-        if settings.HAS_REDIS:
+        if redis:
             return redis.pipeline()
 
     def _execute_redis_pipeline(self, pipeline):
-        if settings.HAS_REDIS:
+        if redis:
             return pipeline.execute()
 
 

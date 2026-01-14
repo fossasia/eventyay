@@ -20,8 +20,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditio
 COPY . .
 
 # install dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --all-extras --all-groups
+RUN uv sync --all-extras --all-groups
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh .
@@ -40,6 +39,17 @@ RUN make webappbuild
 
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
+
+# Generate i18n JavaScript files FIRST
+RUN EVY_SECRET_KEY=build_dummy EVY_REDIS_URL=redis://localhost:6379/0 python manage.py compilejsi18n
+# Generate static files (with dummy secrets for build time)
+RUN EVY_SECRET_KEY=build_dummy EVY_REDIS_URL=redis://localhost:6379/0 python manage.py collectstatic --noinput
+# Run compress with production settings to generate correct manifest
+RUN EVY_SECRET_KEY=build_dummy \
+    EVY_REDIS_URL=redis://localhost:6379/0 \
+    EVY_RUNNING_ENVIRONMENT=production \
+    EVY_SITE_URL=https://eventyay-next-web-287238307795.us-central1.run.app \
+    python manage.py compress --force
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

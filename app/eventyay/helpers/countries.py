@@ -22,7 +22,10 @@ class CachedCountries(Countries):
             yield from self._cached_lists[cache_key]
             return
 
-        val = cache.get(cache_key)
+        try:
+            val = cache.get(cache_key)
+        except Exception:
+            val = None
         if val:
             self._cached_lists[cache_key] = val
             yield from val

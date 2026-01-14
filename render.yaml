@@ -136,7 +136,7 @@ databases:
   - name: eventyay-next-db
     databaseName: eventyay_db
     user: eventyay_user
-    plan: starter
+    plan: free
 
   - name: eventyay-next-redis
-    plan: starter
+    plan: free

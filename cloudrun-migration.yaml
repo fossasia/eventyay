@@ -1,0 +1,45 @@
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: migrate-db
+  annotations:
+    run.googleapis.com/launch-stage: BETA
+spec:
+  template:
+    metadata:
+      annotations:
+        run.googleapis.com/cloudsql-instances: "striking-effort-475914-v5:us-central1:eventyay-db-prod"
+    spec:
+      template:
+        spec:
+          containers:
+          - image: gcr.io/striking-effort-475914-v5/eventyay-next
+            command: ["python", "manage.py", "migrate"]
+            env:
+            - name: EVY_RUNNING_ENVIRONMENT
+              value: "production"
+            - name: RUNNING_MIGRATIONS
+              value: "true"
+            - name: EVY_ALLOWED_HOSTS
+              value: '["*"]'
+            - name: EVY_POSTGRES_DB
+              value: "eventyay_db"
+            - name: EVY_POSTGRES_USER
+              value: "eventyay_user"
+            - name: EVY_POSTGRES_HOST
+              value: "/cloudsql/striking-effort-475914-v5:us-central1:eventyay-db-prod"
+            - name: EVY_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: eventyay-db-password
+                  key: latest
+            - name: EVY_REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: eventyay-redis-url
+                  key: latest
+            - name: EVY_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eventyay-secret-key
+                  key: latest

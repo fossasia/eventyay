@@ -5,7 +5,7 @@ from enum import StrEnum
 from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Annotated
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qs
 
 import django.conf.locale
 import importlib_metadata
@@ -104,6 +104,7 @@ class BaseSettings(_BaseSettings):
     # The names follow what is in Django and converted to lowercase.
     debug: bool = False
     secret_key: str = 'please-give-one-in-secret-file'
+    database_url: str | None = None
     postgres_db: str = _DEFAULT_DB_NAME
     # When these values are `None`, "peer" connection method will be used.
     # We just need to have a PostgreSQL user with the same name as Linux user.
@@ -320,6 +321,22 @@ DATABASES = {
     }
 }
 
+if conf.database_url:
+    _db_info = urlparse(conf.database_url)
+    DATABASES['default']['NAME'] = _db_info.path.lstrip('/')
+    DATABASES['default']['USER'] = _db_info.username
+    DATABASES['default']['PASSWORD'] = _db_info.password
+    DATABASES['default']['HOST'] = _db_info.hostname
+    DATABASES['default']['PORT'] = _db_info.port or 5432
+    
+    # Check for host in query params (required for Cloud SQL Unix Sockets)
+    _query = parse_qs(_db_info.query)
+    if 'host' in _query:
+        DATABASES['default']['HOST'] = _query['host'][0]
+
+print(f"DEBUG: DATABASES Configuration: {DATABASES}", file=sys.stderr)
+print(f"DEBUG: CONF DATABASE_URL: {conf.database_url}", file=sys.stderr)
+
 _LIBRARY_APPS = (
     'bootstrap3',
     'corsheaders',
@@ -459,6 +476,8 @@ _LIBRARY_MIDDLEWARES = (
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -986,7 +1005,7 @@ REDIS_URL = conf.redis_url
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache' if os.environ.get("RUNNING_MIGRATIONS") == "true" else 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': REDIS_URL,
     },
     'process': {
@@ -1079,7 +1098,8 @@ COMPRESS_PRECOMPILERS = (
 )
 # We have one Vue 2 app to be built by Django-Compressor, so we need to enable compression.
 COMPRESS_ENABLED = True
-COMPRESS_OFFLINE = conf.compress_offline_required
+# Enable offline compression - Cloud Run filesystem is read-only, so we must pre-compress
+COMPRESS_OFFLINE = True
 COMPRESS_CSS_FILTERS = (
     # CssAbsoluteFilter is incredibly slow, especially when dealing with our _flags.scss
     # However, we don't need it if we consequently use the static() function in Sass
@@ -1111,7 +1131,49 @@ CORS_ORIGIN_REGEX_WHITELIST = (
 ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
-ALLOWED_HOSTS = conf.allowed_hosts
+
+# Security
+ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["https://*.run.app"]
+
+# Robust Redis Cache
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,  # Prevent crash if Redis is unavailable
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        }
+    },
+    'redis': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        }
+    },
+    'process': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'IGNORE_EXCEPTIONS': True,
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        }
+    }
+}
+if os.environ.get("RUNNING_MIGRATIONS") == "true":
+    CACHES['default']['BACKEND'] = 'django.core.cache.backends.locmem.LocMemCache'
+    CACHES['redis']['BACKEND'] = 'django.core.cache.backends.locmem.LocMemCache'
+    CACHES['process']['BACKEND'] = 'django.core.cache.backends.locmem.LocMemCache'
+conf.allowed_hosts
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
@@ -1280,6 +1342,16 @@ REST_FRAMEWORK = {
 }
 
 STATIC_URL = '/static/'
+STATIC_ROOT = DATA_DIR / 'static'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 MEDIA_URL = '/media/'
 # TODO: Remove.
 BASE_PATH = ''

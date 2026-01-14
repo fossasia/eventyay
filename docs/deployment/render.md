@@ -1,71 +1,139 @@
 # Deploying Eventyay to Render
 
-This guide outlines how to deploy the full Eventyay stack to [Render](https://render.com) using the provided `render.yaml` Blueprint.
+This guide explains how to deploy Eventyay to [Render](https://render.com) using the provided `render.yaml` blueprint.
 
 ## Prerequisites
 
-- A [Render](https://render.com) account.
-- A fork of the [Eventyay repository](https://github.com/fossasia/eventyay) connected to your Render account.
+- A [Render](https://render.com) account
+- A fork of the [Eventyay repository](https://github.com/fossasia/eventyay)
 
 ## One-Click Deployment
 
-1.  Go to your Render Dashboard.
-2.  Click **New +** and select **Blueprint**.
-3.  Connect your repository.
-4.  Render will automatically detect the `render.yaml` file.
-5.  Review the services and resources to be created:
-    - **Web Service**: The Django application.
-    - **Worker Service**: Celery worker for background tasks.
-    - **Scheduler Service**: Celery Beat for scheduled tasks.
-    - **Frontend Service**: Static site for the Vue.js frontend.
-    - **PostgreSQL**: Managed database.
-    - **Redis**: Managed key-value store.
-6.  Click **Apply Blueprint**.
+1. Go to your [Render Dashboard](https://dashboard.render.com)
+2. Click **New +** and select **Blueprint**
+3. Connect your GitHub repository
+4. Render will detect the `render.yaml` file automatically
+5. Review the services to be created
+6. Click **Apply Blueprint**
 
-## Service Details
+## What Gets Deployed
 
-### Web Service (Django)
+### Services
 
-- **Name**: `eventyay-next-web`
-- **Environment**: Docker
-- **Command**: `gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000` (handled via Dockerfile entrypoint)
+- **Web Service**: Django application (accessible via HTTPS)
+- **Worker Service**: Celery worker for background tasks
+- **Scheduler Service**: Celery Beat for periodic tasks
+- **Frontend Service**: Vue.js static site
 
-### Worker & Scheduler
+### Databases
 
-- **Worker**: Runs simple Celery tasks.
-- **Scheduler**: Runs periodic tasks using Celery Beat.
-
-### Frontend
-
-- **Name**: `eventyay-next-frontend`
-- **Type**: Static Site
-- **Build Command**: `npm install && npm run build`
-- **Publish Directory**: `dist`
-- **Rewrite Rules**: All routes rewrite to `index.html` (SPA support).
+- **PostgreSQL**: Managed database (free tier available)
+- **Redis**: Managed key-value store (free tier available)
 
 ## Environment Variables
 
-The `render.yaml` blueprint automatically maps necessary environment variables between services, including:
+Render automatically configures these variables:
 
-- `DATABASE_URL` / `POSTGRES_HOST`, `POSTGRES_PORT`, etc.
-- `REDIS_URL`
+- `EVY_SECRET_KEY`: Auto-generated Django secret
+- `DATABASE_URL`: PostgreSQL connection string
+- `REDIS_URL`: Redis connection string
+- `POSTGRES_*`: Individual database connection parameters
 
-You can customize additional environment variables in the Render Dashboard under **Environment** for each service.
+All services share the same secret key and database connections.
 
-## Manual Configuration (Optional)
+## After Deployment
 
-If you prefer determining services manually or need specific configurations (e.g., S3 storage, Email settings), you can add the following environment variables to your Web and Worker services:
+### Access Your Application
+
+Your web service will be available at:
+
+```
+https://eventyay-next-web.onrender.com
+```
+
+### Check Service Status
+
+1. Go to your Render Dashboard
+2. Click on each service to view logs
+3. Ensure all services show "Live" status
+
+### Run Database Migrations
+
+Migrations run automatically during the first deployment. To run them manually:
+
+1. Go to the Web service in your dashboard
+2. Click **Shell**
+3. Run:
+   ```bash
+   python manage.py migrate
+   ```
+
+## Custom Configuration
+
+### Email Settings
+
+Add these environment variables to the Web service:
 
 - `EVY_EMAIL_HOST`
 - `EVY_EMAIL_HOST_USER`
 - `EVY_EMAIL_HOST_PASSWORD`
 - `EVY_EMAIL_PORT`
 - `EVY_EMAIL_USE_TLS`
-- `AWS_ACCESS_KEY_ID` (if using S3)
-- `AWS_SECRET_ACCESS_KEY` (if using S3)
-- `AWS_STORAGE_BUCKET_NAME` (if using S3)
+
+### File Storage (S3)
+
+Add these environment variables for S3 storage:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_STORAGE_BUCKET_NAME`
+- `AWS_S3_REGION_NAME`
+
+## Scaling
+
+### Upgrade Service Plan
+
+1. Go to your service in the dashboard
+2. Click **Settings**
+3. Select a different instance type under **Instance Type**
+
+### Scale Workers
+
+To run multiple worker instances:
+
+1. Go to the Worker service
+2. Click **Settings**
+3. Increase **Number of Instances**
 
 ## Troubleshooting
 
-- **Database Connections**: Ensure the `POSTGRES_HOST` allows connections from the internal network. Render Blueprints handle this automatically.
-- **Static Assets**: If frontend assets are missing, check the Static Site build logs in Render.
+### Database Connection Issues
+
+- Ensure PostgreSQL service is running
+- Check that `DATABASE_URL` is set correctly
+- Verify the database was created successfully
+
+### Static Files Not Loading
+
+- Check the Frontend service build logs
+- Ensure `npm run build` completed successfully
+- Verify the `dist` directory was created
+
+### Worker Not Processing Tasks
+
+- Check Worker service logs for errors
+- Ensure `REDIS_URL` is set correctly
+- Verify Celery is connecting to Redis
+
+## Cost Optimization
+
+- Free tier includes 750 hours/month per service
+- Database and Redis have separate free tiers
+- Upgrade only the services that need more resources
+
+## Support
+
+For Render-specific issues:
+
+- [Render Documentation](https://render.com/docs)
+- [Render Community](https://community.render.com)

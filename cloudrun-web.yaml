@@ -11,9 +11,10 @@ spec:
       annotations:
         autoscaling.knative.dev/minScale: "0"
         autoscaling.knative.dev/maxScale: "10"
+        run.googleapis.com/cloudsql-instances: "striking-effort-475914-v5:us-central1:eventyay-db-prod"
     spec:
       containers:
-      - image: gcr.io/YOUR_PROJECT_ID/eventyay-next
+      - image: gcr.io/striking-effort-475914-v5/eventyay-next
         ports:
         - containerPort: 8000
         command: ["gunicorn"]
@@ -23,12 +24,18 @@ spec:
           value: production
         - name: EVY_ALLOWED_HOSTS
           value: '["*"]'
-        - name: DATABASE_URL
+        - name: EVY_POSTGRES_DB
+          value: "eventyay_db"
+        - name: EVY_POSTGRES_USER
+          value: "eventyay_user"
+        - name: EVY_POSTGRES_HOST
+          value: "/cloudsql/striking-effort-475914-v5:us-central1:eventyay-db-prod"
+        - name: EVY_POSTGRES_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: eventyay-database-url
+              name: eventyay-db-password
               key: latest
-        - name: REDIS_URL
+        - name: EVY_REDIS_URL
           valueFrom:
             secretKeyRef:
               name: eventyay-redis-url
@@ -38,3 +45,6 @@ spec:
             secretKeyRef:
               name: eventyay-secret-key
               key: latest
+        - name: EVY_SITE_URL
+          value: "https://eventyay-next-web-287238307795.us-central1.run.app"
+

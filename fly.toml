@@ -9,7 +9,7 @@ primary_region = "iad"
 [env]
   PORT = "8000"
   EVY_RUNNING_ENVIRONMENT = "production"
-  EVY_ALLOWED_HOSTS = '["*"]'
+  EVY_ALLOWED_HOSTS = '[".fly.dev"]'
 
 # Define process groups
 [processes]
