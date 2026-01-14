@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="{% static 'pretixpresale/css/featured-speakers.css' %}">
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
+        <script type="text/javascript" src="{% static "pretixpresale/js/ui/featured-speakers.js" %}"></script>
     {% endcompress %}
 {% endblock %}
 {% block content %}
@@ -351,27 +352,6 @@
                 </button>
             </div>
             {% endif %}
-        </section>
-        
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const showMoreBtn = document.getElementById('show-more-speakers-btn');
-                const btnContainer = document.getElementById('more-speakers-btn-container');
-                
-                if (showMoreBtn) {
-                    showMoreBtn.addEventListener('click', function() {
-                        // Show all hidden speakers
-                        const hiddenSpeakers = document.querySelectorAll('.hidden-speaker');
-                        hiddenSpeakers.forEach(function(speaker) {
-                            speaker.classList.remove('hidden-speaker');
-                        });
-                        
-                        // Hide the button
-                        btnContainer.style.display = 'none';
-                    });
-                }
-            });
-        </script>
     {% endif %}
     
     {% if show_vouchers %}

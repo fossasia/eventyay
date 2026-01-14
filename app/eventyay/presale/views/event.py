@@ -595,22 +595,25 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         # Get featured speakers for the landing page
         from eventyay.base.models import SpeakerProfile
         
+        # Base queryset for all speaker profiles of this event
+        base_speakers_qs = SpeakerProfile.objects.filter(event=self.request.event)
+        
         # Get only featured speaker profiles, ordered by order field
-        featured_speakers = SpeakerProfile.objects.filter(
-            event=self.request.event,
+        featured_speakers = base_speakers_qs.filter(
             is_featured=True
         ).select_related('user').order_by('featured_order', 'id')
         
-        # Count total featured speakers and non-featured speakers
-        total_featured_count = featured_speakers.count()
-        non_featured_count = SpeakerProfile.objects.filter(
-            event=self.request.event,
-            is_featured=False
-        ).count()
+        # Count total featured speakers and non-featured speakers using a single aggregate query
+        speaker_counts = base_speakers_qs.aggregate(
+            total_featured_count=Count('pk', filter=Q(is_featured=True)),
+            non_featured_count=Count('pk', filter=Q(is_featured=False)),
+        )
+        total_featured_count = speaker_counts['total_featured_count']
+        non_featured_count = speaker_counts['non_featured_count']
         
         context['featured_speakers'] = featured_speakers
         context['total_featured_count'] = total_featured_count
-        # Show "More speakers" button if there are >8 featured speakers OR any non-featured speakers
+        # Show "More speakers" button if there are > 8 featured speakers OR any non-featured speakers
         context['has_more_speakers'] = (total_featured_count > 8) or (non_featured_count > 0)
 
         return context

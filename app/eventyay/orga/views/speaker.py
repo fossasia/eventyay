@@ -50,6 +50,7 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
     sortable_fields = ('user__email', 'user__fullname', 'featured_order')
     default_sort_field = 'featured_order'
+    secondary_sort = {'featured_order': ['user__fullname']}
     permission_required = 'base.orga_list_speakerprofile'
 
     def get_filter_form(self):
@@ -101,18 +102,23 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
         
+        # Ensure deterministic ordering for PostgreSQL before applying distinct
+        qs = qs.order_by('id').distinct()
         # Apply sorting: use sort_queryset() which respects ?sort= parameter or uses default_sort_field
         qs = self.sort_queryset(qs)
-        return qs.distinct()
+        return qs
 
 
 
 class SpeakerViewMixin(PermissionRequired):
     def get_object(self):
+        if self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event):
+            qs = User.objects.filter(profiles__event=self.request.event)
+        else:
+            qs = User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
+        
         return get_object_or_404(
-            User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
-            .order_by('id')
-            .distinct(),
+            qs.order_by('id').distinct(),
             code=self.kwargs['code'],
         )
 

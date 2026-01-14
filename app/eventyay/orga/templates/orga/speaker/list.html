@@ -8,7 +8,7 @@
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
 
 {% block custom_header %}
-<link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}">
 {% endblock %}
 
 {% block scripts %}
@@ -73,16 +73,18 @@
                 <td class="speaker-accepted-column">{{ profile.accepted_submission_count }}</td>
                 <td class="speaker-proposals-column">{{ profile.submission_count }}</td>
                 <td class="speaker-featured-column">
-                    <input type="checkbox" class="featured-checkbox"
-                        data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
-                        {% if profile.is_featured %}checked{% endif %}
-                        title="{% translate 'Mark as featured speaker' %}"
-                        aria-label="{% translate 'Mark as featured speaker' %}">
+                    <label>
+                        <input type="checkbox" class="featured-checkbox"
+                            data-featured-url="{% url 'orga:speakers.featured' event=request.event.slug code=profile.user.code %}"
+                            {% if profile.is_featured %}checked{% endif %}
+                            title="{% translate 'Mark as featured speaker' %}"
+                            aria-label="{% translate 'Mark as featured speaker' %}">
+                    </label>
                 </td>
                 <td class="speaker-arrival-cell">
                     {% if profile.accepted_submission_count %}
                     {% if can_mark_speaker %}
-                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:" success,info" }}"
+                    <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:"success,info" }}"
                         href="{{ profile.orga_urls.toggle_arrived }}?from=list">
                         {% if profile.has_arrived %}
                         {% translate "Mark speaker as not arrived" %}

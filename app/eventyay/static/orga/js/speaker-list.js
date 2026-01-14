@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return cookieValue;
     }
+    // Project uses 'eventyay_csrftoken' as configured in settings
     const csrftoken = getCookie('eventyay_csrftoken') || getCookie('csrftoken');
 
     // Initialize Sortable for drag-and-drop reordering
@@ -58,10 +59,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(data => {
                         if (data.status !== 'success') {
                             console.error('Failed to save speaker order:', data.message);
+                            alert('Failed to save order: ' + data.message);
                         }
                     })
                     .catch(error => {
                         console.error('Error saving speaker order:', error);
+                        alert('Error saving order. Check console for details.');
                     });
             }
         });
