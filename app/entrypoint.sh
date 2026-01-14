@@ -19,4 +19,11 @@ python manage.py migrate
 echo "Migrations completed."
 
 echo "Executing final command: $@"
-exec "$@"
+
+if [ -z "$1" ]; then
+    echo "No arguments passed. Defaulting to gunicorn web server..."
+    # Use explicit bind to 0.0.0.0 and PORT env var
+    exec gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:${PORT:-8000}
+else
+    exec "$@"
+fi

@@ -67,3 +67,6 @@ RUN EVY_SECRET_KEY=build_dummy \
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
+
+# Default command if none provided
+CMD ["gunicorn", "eventyay.config.wsgi:application", "--bind", "0.0.0.0:8000"]
