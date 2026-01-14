@@ -84,7 +84,21 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
 
         fields_config = self.event.cfp.settings.get('fields_config', {}).get('session', [])
         if fields_config:
-            self.order_fields(fields_config)
+            configured_names = []
+            for item in fields_config:
+                name = None
+                if isinstance(item, str):
+                    name = item
+                elif isinstance(item, dict):
+                    # Try common keys for field name in configuration dicts
+                    name = item.get('name') or item.get('field')
+                if name and name in self.fields and name not in configured_names:
+                    configured_names.append(name)
+            
+            if configured_names:
+                # Preserve any fields not mentioned in the configuration at the end
+                remaining = [n for n in self.fields if n not in configured_names]
+                self.order_fields(configured_names + remaining)
 
         if self.readonly:
             for field in self.fields.values():
