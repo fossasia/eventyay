@@ -9,13 +9,11 @@
     <h1>{{ _('Confirm Email Address') }}</h1>
 
     {% if confirmation %}
-      {% set user_display = confirmation.email_address.user.get_full_name() or confirmation.email_address.user.email %}
-
       {% if can_confirm %}
         <div class='alert alert-info'>
           <p>
-            {{ _('Please confirm that <a href="mailto:%(email)s">%(email)s</a> is an email address for user %(user)s.',
-                 email=confirmation.email_address.email, user=user_display)|safe }}
+            {{ confirmation_message }}
+            <a href="mailto:{{ confirmation_email }}">{{ confirmation_email }}</a>
           </p>
         </div>
 
@@ -35,10 +33,7 @@
         </form>
       {% else %}
         <div class='alert alert-danger'>
-          <p>
-            {{ _('Unable to confirm %(email)s because it is already confirmed by a different account.',
-                 email=confirmation.email_address.email) }}
-          </p>
+          <p>{{ already_confirmed_message }}</p>
         </div>
 
         <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
@@ -49,8 +44,7 @@
     {% else %}
       <div class='alert alert-warning'>
         <p>
-          {{ _('This email confirmation link expired or is invalid. Please <a href="%(email_url)s">issue a new email confirmation request</a>.',
-               email_url=url_for('eventyay_common:account.email'))|safe }}
+          {{ invalid_confirmation_message }}
         </p>
       </div>
 

@@ -13,9 +13,10 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.functional import cached_property
-from django.utils.translation import activate, gettext_lazy as _
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import activate
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import ListView, TemplateView, UpdateView, View
 from django_scopes import scopes_disabled
 
@@ -329,6 +330,7 @@ def build_password_reset_message(requires_reset: bool, provider_label: str) -> s
             'Send yourself a password setup link below.'
         ).format(provider=provider_label)
     return _('Your account does not have a password yet. Send yourself a password setup link below.')
+
 
 class LanguageSwitchView(View):
     def post(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
