@@ -19,5 +19,8 @@
 .fa-lg { font-size: 1.33333333em; line-height: .75em; vertical-align: -15%; }
 /* Icons used in account pages */
 .fa-check:before { content: "\f00c"; }
+.fa-check-circle:before { content: "\f05d"; }
 .fa-times:before { content: "\f00d"; }
 .fa-arrow-left:before { content: "\f060"; }
+.fa-envelope:before { content: "\f0e0"; }
+.fa-sign-in:before { content: "\f090"; }
