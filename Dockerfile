@@ -21,14 +21,14 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
 
-# copy project files
-COPY . .
+# copy project files from app directory
+COPY app/ .
 
 # install dependencies
 RUN uv sync --all-extras --all-groups
 
 # copy entrypoint.sh
-COPY ./entrypoint.sh .
+COPY app/entrypoint.sh .
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
