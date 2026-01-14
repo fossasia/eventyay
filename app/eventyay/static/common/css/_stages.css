@@ -12,9 +12,11 @@
     &:before {
       left: 0;
     }
+
     &:after {
       left: 50%;
     }
+
     &:after,
     &:before {
       position: absolute;
@@ -25,6 +27,7 @@
       z-index: 100;
       content: "";
     }
+
     &:last-child:after,
     &:first-child:before {
       width: 0;
@@ -35,28 +38,34 @@
       &:before {
         background: var(--color, var(--color-primary));
       }
+
       .step-icon {
         border: 1px solid var(--color, var(--color-primary));
         background: var(--color, var(--color-primary));
         color: white;
       }
+
       .step-label {
         color: var(--color, var(--color-primary));
         font-weight: bold;
       }
     }
+
     &.step-done {
       .step-label {
         font-weight: normal;
       }
+
       &:after {
         background: var(--color, var(--color-primary));
       }
     }
+
     &:hover,
     &:active {
       text-decoration: none;
     }
+
     .step-icon {
       border: 1px solid var(--color-text-muted);
       display: inline-block;
@@ -69,26 +78,31 @@
       background: white;
       position: relative;
     }
+
     .step-label {
       padding-top: 8px;
       color: var(--color-text-muted);
     }
+
     .fa-paper-plane {
       margin-left: -4px;
     }
+
     .step-links {
       display: none;
       position: absolute;
       box-shadow: var(--shadow-lighter);
       text-align: left;
-      z-index: 10;
+      z-index: 200;
       padding: 8px 0;
       width: 300px;
       background: var(--color-bg);
     }
+
     &:hover .step-links {
       display: block;
     }
+
     &:last-of-type .step-links {
       left: -50px;
     }

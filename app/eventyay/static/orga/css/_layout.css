@@ -207,6 +207,7 @@ aside.sidebar {
     }
 
     #nav-search {
+
       #search-context-icon .fa-stack-1x,
       #search-context-icon .fa-stack-2x {
         margin-left: 0;
@@ -508,9 +509,9 @@ a.header-nav.btn,
 .header-nav .btn.btn-outline-success:focus,
 .header-nav .btn.btn-outline-success:active,
 .header-nav .btn.btn-outline-success.active {
-  background-color: var(--color-white);
+  background-color: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: var(--color-white);
 }
 
 /* Active button inset shadow */
@@ -616,6 +617,7 @@ footer {
 }
 
 .submit-group form {
+
   .form-group,
   button {
     margin-bottom: 0;
