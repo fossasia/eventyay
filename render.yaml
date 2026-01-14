@@ -19,6 +19,8 @@ services:
         value: production
       - key: EVY_ALLOWED_HOSTS
         value: '["*"]'
+      - key: EVY_SITE_URL
+        value: https://eventyay-next-web.onrender.com
       - key: EVY_POSTGRES_HOST
         fromDatabase:
           name: eventyay-next-db
