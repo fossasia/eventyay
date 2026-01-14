@@ -688,10 +688,10 @@ def _redeem_process(
                     user=user,
                     auth=auth,
                 )
-                Checkin.objects.create(
-                    position=op,
-                    **common_checkin_args,
-                )
+                # Checkin.objects.create(    # commented out to avoid double logging
+                #     position=op,
+                #     **common_checkin_args,
+                # )
 
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
             position_data = CheckinListOrderPositionSerializer(op, context=serializer_context).data
@@ -700,13 +700,13 @@ def _redeem_process(
 
             return Response(
                 {
-                    'status': 'redeemed',
-                    'reason': 'Already checked in',
+                    'status': 'error', # Correct: 'error'
+                    'reason': e.code,  # Correct: dynamic code
                     'require_attention': op.require_checkin_attention,
                     'position': position_data,
                     'list': MiniCheckinListSerializer(list_by_event[op.order.event_id]).data,
                 },
-                status=201,
+                status=400,   # Correct: 400 Bad Request
             )
         else:
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
