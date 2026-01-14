@@ -1121,3 +1121,37 @@ h1 .label {
         overflow-wrap: break-word;
     }
 }
+
+/* Navigation button styling - ensure consistent appearance across components */
+.header-nav.btn.btn-outline-success,
+.header-nav .btn.btn-outline-success,
+.header-nav.btn.btn-success,
+.header-nav .btn.btn-success,
+a.header-nav.btn,
+.header-nav a.btn {
+    border-radius: 0 !important;
+}
+
+/* Navigation button hover, focus, and active states */
+.header-nav.btn.btn-outline-success:hover,
+.header-nav.btn.btn-outline-success:focus,
+.header-nav.btn.btn-outline-success:active,
+.header-nav.btn.btn-outline-success.active,
+.header-nav .btn.btn-outline-success:hover,
+.header-nav .btn.btn-outline-success:focus,
+.header-nav .btn.btn-outline-success:active,
+.header-nav .btn.btn-outline-success.active {
+    background-color: var(--color-white);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/* Active button inset shadow */
+.header-nav.btn.btn-outline-success.active,
+.header-nav .btn.btn-outline-success.active,
+.header-nav.btn.btn-success,
+.header-nav.btn.btn-success.active,
+.header-nav .btn.btn-success,
+.header-nav .btn.btn-success.active {
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
