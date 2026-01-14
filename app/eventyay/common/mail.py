@@ -93,6 +93,7 @@ def mail_send_task(
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -154,7 +155,7 @@ def get_reply_to_address(
     Precedence (highest to lowest):
     1. Explicit override parameter
     2. Template-level reply_to
-    3. Custom SMTP reply_to
+    3. event.mail_settings['reply_to'] (legacy-compatible, checked regardless of SMTP)
     4. Event.email (canonical organizer email from unification)
        Note: The legacy placeholder value 'org@mail.com' is explicitly
        excluded to avoid using unset default emails from older event records.
@@ -166,7 +167,7 @@ def get_reply_to_address(
     if template and hasattr(template, 'reply_to') and template.reply_to:
         return template.reply_to
     
-    if use_custom_smtp and event.mail_settings.get('reply_to'):
+    if event.mail_settings.get('reply_to'):
         return event.mail_settings['reply_to']
     
     if event.email and event.email != LEGACY_DEFAULT_EMAIL:
