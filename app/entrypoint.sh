@@ -1,4 +1,8 @@
 #!/bin/sh
+set -e
+
+echo "Entrypoint script starting..."
+echo "Arguments passed: '$@'"
 
 echo "Waiting for postgres..."
 
@@ -8,6 +12,11 @@ done
 
 echo "PostgreSQL started"
 
+# Only run migrations if we are the web entrypoint (heuristic: check for gunicorn)
+# actually, it's safer to always run them for now, but logged
+echo "Running migrations..."
 python manage.py migrate
+echo "Migrations completed."
 
+echo "Executing final command: $@"
 exec "$@"
