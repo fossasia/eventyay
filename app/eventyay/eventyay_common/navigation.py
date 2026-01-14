@@ -134,4 +134,4 @@ def get_account_navigation(request: HttpRequest) -> List[MenuItem]:
 
 def is_url_matched(url_name: str | None, prefixes: Sequence[str]) -> bool:
     """Check if the current URL name matches the given prefix."""
-    return url_name and any(url_name.startswith(prefix) for prefix in prefixes)
+    return bool(url_name) and any(url_name.startswith(prefix) for prefix in prefixes)

@@ -37,9 +37,8 @@ class ConfirmEmailView(AllauthConfirmEmailView):
             action_text = _('issue a new email confirmation request')
             link_html = f'<a href="{email_url}">{action_text}</a>'
             message = _(
-                'This email confirmation link expired or is invalid. Please %(email_action_link)s.',
-                email_action_link=link_html,
-            )
+                'This email confirmation link expired or is invalid. Please %(email_action_link)s.'
+            ) % {'email_action_link': link_html}
             context['invalid_confirmation_message'] = mark_safe(message)
 
         return context

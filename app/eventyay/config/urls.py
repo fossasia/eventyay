@@ -7,9 +7,9 @@ from django.urls import include, path
 import eventyay.control.urls
 import eventyay.eventyay_common.urls
 import eventyay.presale.urls
-from eventyay.eventyay_common.views.custom import ConfirmEmailView
 from eventyay.base.views import cachedfiles, csp, health, js_catalog, js_helpers, metrics, redirect
 from eventyay.control.views import pages
+from eventyay.eventyay_common.views.custom import ConfirmEmailView
 
 base_patterns = [
     path(

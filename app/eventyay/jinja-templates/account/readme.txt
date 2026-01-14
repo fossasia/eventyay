@@ -33,9 +33,8 @@ Customized Templates:
 Configuration:
 ==============
 - View override:
-  * ConfirmEmailView lives in eventyay_common/views/custom.py and is explicitly wired to
-    template account/email_confirm.jinja to ensure the Jinja override is used.
-  * Root URL override: /accounts/confirm-email/<key>/ is registered with name account_confirm_email
+  * ConfirmEmailView lives in eventyay_common/views/custom.py and is an override of django-allauth to build messages in safe way: not leak HTML code to translatable string.
+  * Root URL override: /accounts/confirm-email/<key>/ is registered with name `account_confirm_email`
     in config/urls.py before including allauth, so allauth-generated links resolve to our view.
 
 - Email confirmation redirects:

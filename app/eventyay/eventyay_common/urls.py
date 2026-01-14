@@ -10,7 +10,6 @@ from eventyay.eventyay_common.views import (
     team,
 )
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
-from eventyay.eventyay_common.views.custom import ConfirmEmailView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
 
@@ -60,10 +59,6 @@ urlpatterns = [
     path('sessions/', MySessionsView.as_view(), name='sessions'),
     path('account/', RedirectView.as_view(pattern_name='eventyay_common:account.general'), name='account'),
     path('account/general', account.GeneralSettingsView.as_view(), name='account.general'),
-    # Override django-allauth's default ConfirmEmailView with our custom implementation
-    # The URL name 'account_confirm_email' (with underscore) must match django-allauth's default
-    # to properly override it and ensure email confirmation links use our custom view
-    path('account/confirm-email/<str:key>/', ConfirmEmailView.as_view(), name='account_confirm_email'),
     path('account/email', EmailAddressManagementView.as_view(), name='account.email'),
     path('account/notifications', account.NotificationSettingsView.as_view(), name='account.notifications'),
     path(
