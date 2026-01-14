@@ -4,6 +4,12 @@ set -e
 echo "Entrypoint script starting..."
 echo "Arguments passed: '$@'"
 
+# Render Auto-Configuration
+if [ -z "$EVY_SITE_URL" ] && [ -n "$RENDER_EXTERNAL_URL" ]; then
+    echo "Detected Render environment. Setting EVY_SITE_URL to $RENDER_EXTERNAL_URL"
+    export EVY_SITE_URL="$RENDER_EXTERNAL_URL"
+fi
+
 echo "Waiting for postgres..."
 
 while ! nc -z ${EVY_POSTGRES_HOST:-$POSTGRES_HOST} ${EVY_POSTGRES_PORT:-$POSTGRES_PORT}; do
