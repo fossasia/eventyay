@@ -75,3 +75,4 @@ dist
 dist-ssr
 
 app/eventyay/data
+app/eventyay/helpers/countries.py
