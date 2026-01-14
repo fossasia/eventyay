@@ -38,7 +38,7 @@ local/
 .vscode/extensions.json
 .zed
 app/.vscode
-
+mise.toml
 .gnupg
 .ssh
 .vscode-server
