@@ -5,3 +5,7 @@
 {% endblock custom_header %}
 
 {% block nav_link %}{{ request.event.urls.base }}{% endblock nav_link %}
+
+{% block header_tabs %}
+    {% include 'agenda/fragment_nav.html' %}
+{% endblock header_tabs %}
