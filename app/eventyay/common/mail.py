@@ -155,7 +155,9 @@ def get_reply_to_address(
     1. Explicit override parameter
     2. Template-level reply_to
     3. Custom SMTP reply_to
-    4. Event.email
+    4. Event.email (canonical organizer email from unification)
+       Note: The legacy placeholder value 'org@mail.com' is explicitly
+       excluded to avoid using unset default emails from older event records.
     5. None (system default)
     """
     if override:
