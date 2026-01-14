@@ -62,11 +62,12 @@ class SpeakerProfileForm(
     ]
     FIRST_TIME_EXCLUDE = ['email']
 
-    def __init__(self, *args, name=None, **kwargs):
+    def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
         self.user = kwargs.pop('user', None)
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
+        self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
@@ -139,6 +140,23 @@ class SpeakerProfileForm(
                 'avatar',
                 forms.ValidationError(
                     _('Please provide a profile picture or allow us to load your picture from gravatar!')
+                ),
+            )
+        fullname = self.cleaned_data.get('fullname')
+        if (
+            self.enforce_account_name_match
+            and self.user
+            and fullname
+            and self.user.fullname
+            and fullname.strip() != self.user.fullname.strip()
+        ):
+            self.add_error(
+                'fullname',
+                forms.ValidationError(
+                    _(
+                        'The name you entered does not match the name on your account. '
+                        'Please update your account name in your profile before submitting.'
+                    )
                 ),
             )
         return data

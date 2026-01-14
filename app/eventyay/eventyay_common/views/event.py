@@ -23,6 +23,7 @@ from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
 from django.views import View
+from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
@@ -255,7 +256,28 @@ class EventCreateView(SafeSessionWizardView):
         with transaction.atomic(), language(basics_data['locale']):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
-            event.plugins = settings.PRETIX_PLUGINS_DEFAULT
+
+            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
+            if isinstance(plugins_default, str):
+                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
+            else:
+                default_plugins = list(plugins_default or [])
+
+            ticketing_plugins = [
+                'eventyay.plugins.ticketoutputpdf',
+                'eventyay.plugins.banktransfer',
+                'eventyay.plugins.manualpayment',
+            ]
+
+            installed_apps = {app.name for app in apps.get_app_configs()}
+
+            for plugin_name in ['eventyay_stripe', 'eventyay_paypal']:
+                if plugin_name in installed_apps:
+                    ticketing_plugins.append(plugin_name)
+
+            all_plugins = list(dict.fromkeys(default_plugins + ticketing_plugins))
+            event.plugins = ','.join(all_plugins)
+
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
             event.testmode = True
@@ -272,6 +294,10 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
+            
+            # Save imprint_url to settings (consistent with EventCommonSettingsForm)
+            if basics_data.get('imprint_url'):
+                event.settings.set('imprint_url', basics_data['imprint_url'])
 
             # Use the selected create_for option, but ensure smart defaults work for all
             create_for = self.storage.extra_data.get('create_for', EventCreatedFor.BOTH)
@@ -415,7 +441,8 @@ class EventUpdate(
         # Pass necessary kwargs to the EventUpdateForm in common
         is_staff_session = self.request.user.has_active_staff_session(self.request.session.session_key)
         kwargs['change_slug'] = is_staff_session
-        kwargs['domain'] = is_staff_session
+        # TODO: Re-enable custom domain when unified system is stable
+        # kwargs['domain'] = is_staff_session
         return kwargs
 
     def enable_talk_system(self, request: HttpRequest) -> bool:

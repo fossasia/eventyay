@@ -7,6 +7,7 @@ from django.db.models import ManyToManyField
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 from django_scopes import scopes_disabled
@@ -15,6 +16,7 @@ from eventyay.base.auth import get_auth_backends
 from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
@@ -223,6 +225,7 @@ class TeamMemberView(
                     return self.get(request, *args, **kwargs)
 
                 self.object.members.add(user)
+
                 self.object.log_action(
                     'eventyay.team.member.added',
                     user=self.request.user,
@@ -231,6 +234,22 @@ class TeamMemberView(
                         'user': user.pk,
                     },
                 )
+
+                send_team_invitation_email(
+                    user=user,
+                    organizer_name=self.request.organizer.name,
+                    team_name=self.object.name,
+                    url=build_global_uri(
+                        'eventyay_common:organizer.team',
+                        kwargs={
+                            'organizer': self.request.organizer.slug,
+                            'team': self.object.pk,
+                        },
+                    ),
+                    locale=self.request.LANGUAGE_CODE,
+                    is_registered_user=True,
+                )
+
                 messages.success(self.request, _('The new member has been added to the team.'))
                 return redirect(self.get_success_url())
 
@@ -272,6 +291,11 @@ class TeamCreateView(
     form_class = TeamForm
     permission = 'can_change_teams'
 
+    def dispatch(self, request, *args, **kwargs):
+        if 'next' in request.GET:
+            return super(UnifiedTeamManagementRedirectMixin, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs['organizer'] = self.request.organizer
@@ -296,7 +320,7 @@ class TeamCreateView(
             data=self._build_changed_data_dict(form, self.object),
         )
         return response
-    
+
     def _build_changed_data_dict(self, form, obj):
         data = {}
         for k in form.changed_data:
@@ -315,6 +339,9 @@ class TeamCreateView(
         return super().form_invalid(form)
 
     def get_success_url(self):
+        next_url = self.request.GET.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
+            return next_url
         return reverse(
             'eventyay_common:organizer.update',
             kwargs={'organizer': self.request.organizer.slug},
@@ -428,7 +455,7 @@ class TeamDeleteView(
             messages.success(self.request, _("The team '%(team_name)s' has been deleted.") % {"team_name": team_name})
         else:
             messages.success(self.request, _("The team '%(team_name)s' cannot be deleted.") % {"team_name": team_name})
-        
+
         return redirect(success_url)
 
     def get_success_url(self):

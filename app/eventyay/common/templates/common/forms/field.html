@@ -18,9 +18,11 @@
             </label>
         {% endif %}
         {% if field.use_fieldset %}</fieldset>{% endif %}
-        {% for text in field.errors %}
-            <div class="invalid-feedback">{{ text }}</div>
-        {% endfor %}
+        {% if field.errors %}
+            {% for text in field.errors %}
+                <div class="invalid-feedback d-block">{{ text }}</div>
+            {% endfor %}
+        {% endif %}
         {% if field.help_text %}<small class="form-text text-muted"{% if field.auto_id %} id="{{ field.auto_id }}_helptext"{% endif %}>{{ field.help_text|safe }}</small>{% endif %}
     {% endblock %}
 </div>

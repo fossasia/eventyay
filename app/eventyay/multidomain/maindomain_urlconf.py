@@ -5,7 +5,6 @@ from django.apps import apps
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 
-from eventyay.cfp.views.event import EventStartpage
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -142,7 +141,6 @@ unified_event_patterns = [
                 # serve all paths under /video/ to allow client-side routing.
                 # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]

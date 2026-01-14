@@ -31,7 +31,7 @@ from eventyay.common.image import gravatar_csp
 from eventyay.common.middleware.event import get_login_redirect
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import is_form_bound
-from eventyay.person.forms import LoginInfoForm, SpeakerProfileForm
+from eventyay.person.forms import SpeakerProfileForm
 from eventyay.talk_rules.person import can_view_information
 from eventyay.schedule.forms import AvailabilitiesFormMixin
 from eventyay.submission.forms import InfoForm, TalkQuestionsForm, ResourceForm
@@ -43,14 +43,6 @@ logger = logging.getLogger(__name__)
 @method_decorator(gravatar_csp(), name='dispatch')
 class ProfileView(LoggedInEventPageMixin, TemplateView):
     template_name = 'cfp/event/user_profile.html'
-
-    @context
-    @cached_property
-    def login_form(self):
-        return LoginInfoForm(
-            user=self.request.user,
-            data=self.request.POST if is_form_bound(self.request, 'login') else None,
-        )
 
     @context
     @cached_property
@@ -68,6 +60,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             event=self.request.event,
             read_only=False,
             with_email=False,
+            enforce_account_name_match=True,
             field_configuration=field_configuration,
             data=self.request.POST if bind else None,
             files=self.request.FILES if bind else None,
@@ -90,10 +83,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
         return self.request.event.talkquestions.filter(target='speaker').exists()
 
     def post(self, request, *args, **kwargs):
-        if self.login_form.is_bound and self.login_form.is_valid():
-            self.login_form.save()
-            request.user.log_action('eventyay.user.password.update')
-        elif self.profile_form.is_bound and self.profile_form.is_valid():
+        if self.profile_form.is_bound and self.profile_form.is_valid():
             self.profile_form.save()
             profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
             profile.log_action('eventyay.user.profile.update', person=request.user)

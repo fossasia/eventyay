@@ -151,7 +151,6 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         fields = [
             'email',
             'custom_css',
-            'landing_page_text',
             'featured_sessions_text',
         ]
         json_fields = {

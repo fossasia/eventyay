@@ -31,7 +31,7 @@
             {% endblocktranslate %}
         </div>
         <div class="d-flex justify-content-end mb-2">
-            <a href="{{ request.event.organizer.orga_urls.new_team }}" class="btn btn-info">
+            <a href="{% url 'eventyay_common:organizer.team.add' organizer=request.event.organizer.slug %}?next={{ request.path|urlencode }}" class="btn btn-info">
                 <i class="fa fa-plus"></i> {% translate "New team" %}
             </a>
         </div>
@@ -121,8 +121,8 @@
         </p>
         <div class="float-right">
             <details class="dropdown" aria-haspopup="menu" role="menu">
-                <summary class="btn btn-info" id="review-actions">
-                    {% translate "Actions" %} <i class="fa fa-caret-down"></i>
+                <summary class="btn btn-outline-info" id="review-actions">
+                    {% translate "Actions" %} <i class="fa fa-caret-down ml-1"></i>
                 </summary>
 
                 <div class="dropdown-content dropdown-front dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">

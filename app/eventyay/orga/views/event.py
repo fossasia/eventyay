@@ -31,13 +31,6 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SensibleBackWizardMixin,
 )
-from eventyay.event.forms import (
-    EventWizardBasicsForm,
-    EventWizardCopyForm,
-    EventWizardDisplayForm,
-    EventWizardInitialForm,
-    EventWizardTimelineForm,
-)
 from eventyay.base.models import Event, Team, TeamInvite
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
@@ -115,13 +108,6 @@ class EventLive(EventSettingsPermission, TemplateView):
                     'url': self.request.event.cfp.urls.text,
                 }
             )
-        if not self.request.event.landing_page_text or len(str(self.request.event.landing_page_text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The event doesn’t have a landing page text yet.'),
-                    'url': self.request.event.orga_urls.settings,
-                }
-            )
         # TODO: test that mails can be sent
         if (
             self.request.event.get_feature_flag('use_tracks')
@@ -179,13 +165,13 @@ class EventLive(EventSettingsPermission, TemplateView):
                         orga=True,
                         data={},
                     )
-                    messages.success(request, _('This event is now public.'))
+                    messages.success(request, _('This talk component is now public.'))
                     for response in responses:
                         if isinstance(response[1], str):
                             messages.success(request, response[1])
         else:  # action == 'deactivate'
             if not event.is_public:
-                messages.success(request, _('This event was already hidden.'))
+                messages.success(request, _('This talk component was already hidden.'))
             else:
                 event.is_public = False
                 event.save()
@@ -195,7 +181,7 @@ class EventLive(EventSettingsPermission, TemplateView):
                     orga=True,
                     data={},
                 )
-                messages.success(request, _('This event is now hidden.'))
+                messages.success(request, _('This talk component is now hidden.'))
         return redirect(event.orga_urls.base)
 
 
@@ -463,133 +449,6 @@ class InvitationView(FormView):
         invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
         messages.info(self.request, _('You are now part of the team!'))
         invite.delete()
-
-
-def condition_copy(wizard):
-    return EventWizardCopyForm.copy_from_queryset(wizard.request.user).exists()
-
-
-class EventWizard(PermissionRequired, SensibleBackWizardMixin, SessionWizardView):
-    permission_required = 'base.create_event'
-    file_storage = FileSystemStorage(location=Path(settings.MEDIA_ROOT) / 'new_event')
-    form_list = [
-        ('initial', EventWizardInitialForm),
-        ('basics', EventWizardBasicsForm),
-        ('timeline', EventWizardTimelineForm),
-        ('display', EventWizardDisplayForm),
-        ('copy', EventWizardCopyForm),
-    ]
-    condition_dict = {'copy': condition_copy}
-
-    def get_template_names(self):
-        return [f'orga/event/wizard/{self.steps.current}.html']
-
-    @context
-    def organizer(self):
-        return self.get_cleaned_data_for_step('initial').get('organizer') if self.steps.current != 'initial' else None
-
-    def render(self, form=None, **kwargs):
-        if self.steps.current != 'initial' and self.get_cleaned_data_for_step('initial') is None:
-            return self.render_goto_step('initial')
-        if self.steps.current == 'timeline':
-            fdata = self.get_cleaned_data_for_step('basics')
-            year = now().year % 100
-            if fdata and str(year) not in fdata['slug'] and str(year + 1) not in fdata['slug']:
-                messages.warning(
-                    self.request,
-                    str(_('Please consider including your event’s year in the slug, e.g. myevent{number}.')).format(
-                        number=year
-                    ),
-                )
-        elif self.steps.current == 'display':
-            date_to = self.get_cleaned_data_for_step('timeline').get('date_to')
-            if date_to and date_to < now():
-                messages.warning(
-                    self.request,
-                    _('Did you really mean to make your event take place in the past?'),
-                )
-        return super().render(form, **kwargs)
-
-    def get_form_kwargs(self, step=None):
-        kwargs = {'user': self.request.user}
-        if step != 'initial':
-            fdata = self.get_cleaned_data_for_step('initial')
-            kwargs.update(fdata or {})
-        return kwargs
-
-    @transaction.atomic()
-    def done(self, form_list, *args, **kwargs):
-        steps = {}
-        for step in ('initial', 'basics', 'timeline', 'display', 'copy'):
-            try:
-                steps[step] = self.get_cleaned_data_for_step(step)
-            except KeyError:
-                steps[step] = {}
-
-        with scopes_disabled():
-            event = Event.objects.create(
-                organizer=steps['initial']['organizer'],
-                locale_array=','.join(steps['initial']['locales']),
-                content_locale_array=','.join(steps['initial']['locales']),
-                name=steps['basics']['name'],
-                slug=steps['basics']['slug'],
-                timezone=steps['basics']['timezone'],
-                email=steps['basics']['email'],
-                locale=steps['basics']['locale'],
-                date_from=steps['timeline']['date_from'],
-                date_to=steps['timeline']['date_to'],
-            )
-        with scope(event=event):
-            deadline = steps['timeline'].get('deadline')
-            if deadline:
-                event.cfp.deadline = deadline.replace(tzinfo=event.tz)
-                event.cfp.save()
-            for setting in ('display_header_data',):
-                value = steps['display'].get(setting)
-                if value:
-                    event.settings.set(setting, value)
-
-        has_control_rights = self.request.user.teams.filter(
-            organizer=event.organizer,
-            all_events=True,
-            can_change_event_settings=True,
-            can_change_submissions=True,
-        ).exists()
-        if not has_control_rights:
-            team = Team.objects.create(
-                organizer=event.organizer,
-                name=_(f'Team {event.name}'),
-                can_change_event_settings=True,
-                can_change_submissions=True,
-            )
-            team.members.add(self.request.user)
-            team.limit_events.add(event)
-
-        logdata = {}
-        for form in form_list:
-            logdata.update(form.cleaned_data)
-        with scope(event=event):
-            event.log_action(
-                'eventyay.event.create',
-                person=self.request.user,
-                data=logdata,
-                orga=True,
-            )
-
-            if steps['copy'] and steps['copy']['copy_from_event']:
-                event.copy_data_from(
-                    steps['copy']['copy_from_event'],
-                    skip_attributes=[
-                        'locale',
-                        'locales',
-                        'primary_color',
-                        'timezone',
-                        'email',
-                        'deadline',
-                    ],
-                )
-
-        return redirect(event.orga_urls.base + '?congratulations')
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):

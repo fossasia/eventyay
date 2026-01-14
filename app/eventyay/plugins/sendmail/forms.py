@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -16,6 +17,7 @@ from eventyay.base.models.event import SubEvent
 from eventyay.base.models.product import Product
 from eventyay.base.models.organizer import Team
 from eventyay.base.models.orders import Order
+from eventyay.consts import SizeKey
 from eventyay.control.forms import CachedFileField
 from eventyay.control.forms.widgets import Select2, Select2Multiple
 from eventyay.plugins.sendmail.models import ComposingFor, EmailQueue, EmailQueueToUser
@@ -62,7 +64,7 @@ class MailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. We recommend only using PDFs '
             'of no more than 2 MB in size.'
         ),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_OTHER],
     )  # TODO i18n
     products = forms.ModelMultipleChoiceField(
         widget=forms.CheckboxSelectMultiple(attrs={'class': 'scrolling-multiple-choice'}),
@@ -567,7 +569,7 @@ class TeamMailForm(forms.Form):
             'Sending an attachment increases the chance of your email not arriving or being sorted into spam folders. '
             'We recommend only using PDFs of no more than 2 MB in size.'
         ),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_ATTACHMENT],
     )
 
     def __init__(self, *args, **kwargs):
