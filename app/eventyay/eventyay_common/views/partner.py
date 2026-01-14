@@ -144,19 +144,6 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         sponsor_group = self.get_sponsor_group()
         
-        # Debug: Log the POST data
-        logger.info(f"POST data keys: {list(request.POST.keys())}")
-        logger.info(f"FILES data keys: {list(request.FILES.keys())}")
-        logger.info(f"TOTAL_FORMS: {request.POST.get('partners-TOTAL_FORMS')}")
-        logger.info(f"INITIAL_FORMS: {request.POST.get('partners-INITIAL_FORMS')}")
-        
-        # Log each form's data
-        total_forms = int(request.POST.get('partners-TOTAL_FORMS', 0))
-        for i in range(total_forms):
-            name = request.POST.get(f'partners-{i}-name', '')
-            logo = request.FILES.get(f'partners-{i}-logo')
-            logger.info(f"Form {i}: name='{name}', has_logo={logo is not None}")
-        
         formset = PartnerFormSet(
             request.POST,
             request.FILES,
@@ -166,9 +153,6 @@ class PartnerManageView(EventPermissionRequiredMixin, View):
         
         if formset.is_valid():
             instances = formset.save()
-            logger.info(f"Saved {len(instances)} partner instances")
-            for instance in instances:
-                logger.info(f"Partner: {instance.name}, Logo: {instance.logo}, Logo Width: {instance.logo_width}")
             messages.success(request, _('Partners updated successfully.'))
             return redirect(
                 reverse(

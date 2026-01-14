@@ -544,26 +544,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialize logo width sliders
     function initLogoWidthSliders() {
         const sliders = document.querySelectorAll('.logo-width-slider');
-        console.log('Initializing logo width sliders, found:', sliders.length);
         
         sliders.forEach((slider, idx) => {
             const targetId = slider.getAttribute('data-target');
             const input = document.getElementById(targetId);
             const display = slider.parentElement.querySelector('.logo-width-display');
             
-            console.log('Slider', idx, 'targetId:', targetId, 'input found:', !!input);
-            
             if (input && display) {
                 // Find the logo images in this form (both preview and current)
                 const formItem = slider.closest('.partner-form-item');
                 
-                // Update logo size in real-time
                 const updateLogoSize = function(value) {
                     if (!formItem) {
-                        console.log('No form item found for slider', idx);
                         return;
                     }
                     
@@ -576,33 +570,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                img.classList.contains('logo-preview-img');
                     });
                     
-                    console.log('Slider', idx, 'value:', value, 'found images:', resizableImages.length);
-                    
                     resizableImages.forEach((img, imgIdx) => {
-                        console.log('  Image', imgIdx, 'classes:', img.className, 'current maxWidth:', img.style.maxWidth);
                         img.style.maxWidth = value + 'px';
                         // Remove max-height constraint so width can control the size
                         img.style.maxHeight = 'none';
                         // Force override with important
                         img.style.setProperty('max-width', value + 'px', 'important');
                         img.style.setProperty('max-height', 'none', 'important');
-                        console.log('  Image', imgIdx, 'updated to:', img.style.maxWidth);
                     });
                 };
                 
-                // Sync slider to input and update logo size in real-time
                 slider.addEventListener('input', function() {
                     const value = this.value;
-                    console.log('Slider input event, value:', value);
                     input.value = value;
                     display.textContent = value + 'px';
                     updateLogoSize(value);
                 });
                 
-                // Sync input to slider and update logo size
                 input.addEventListener('input', function() {
                     const value = this.value;
-                    console.log('Input change event, value:', value);
                     slider.value = value;
                     display.textContent = value + 'px';
                     updateLogoSize(value);
@@ -610,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Set initial size on load
                 const initialValue = slider.value;
-                console.log('Setting initial value:', initialValue);
                 updateLogoSize(initialValue);
             }
         });

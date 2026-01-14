@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        console.log('Group order updated successfully');
+                        // Group order updated successfully
                     } else {
                         console.error('Failed to update group order:', data.message);
                         alert('{% trans "Failed to update group order. Please refresh and try again." %}');
@@ -459,7 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        console.log('Partner order updated successfully');
+                        // Partner order updated successfully
                         // Remove any existing feedback first
                         const existingFeedback = container.querySelector('.order-saved-feedback');
                         if (existingFeedback) {
