@@ -4,12 +4,15 @@ app = "eventyay-next"
 primary_region = "iad"
 
 [build]
-  dockerfile = "app/Dockerfile"
+  dockerfile = "Dockerfile"
 
 [env]
   PORT = "8000"
   EVY_RUNNING_ENVIRONMENT = "production"
   EVY_ALLOWED_HOSTS = '[".fly.dev"]'
+  # EVY_SITE_URL will need to be set manually via `fly secrets set` or `fly deploy --env`
+  # EVY_DATABASE_URL and EVY_REDIS_URL are handled by Fly's attachment logic usually, 
+  # but if manual, they should be mapped.
 
 # Define process groups
 [processes]

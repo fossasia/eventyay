@@ -2,7 +2,7 @@ name: eventyay-next
 region: nyc
 services:
 - name: eventyay-web
-  dockerfile_path: app/Dockerfile
+  dockerfile_path: Dockerfile
   source_dir: .
   http_port: 8000
   instance_count: 1
@@ -14,14 +14,16 @@ services:
     type: SECRET
   - key: EVY_ALLOWED_HOSTS
     value: '["${APP_DOMAIN}"]'
-  - key: DATABASE_URL
+  - key: EVY_SITE_URL
+    value: ${APP_URL}
+  - key: EVY_DATABASE_URL
     value: ${eventyay-db.DATABASE_URL}
-  - key: REDIS_URL
+  - key: EVY_REDIS_URL
     value: ${eventyay-redis.REDIS_URL}
 
 workers:
 - name: eventyay-worker
-  dockerfile_path: app/Dockerfile
+  dockerfile_path: Dockerfile
   source_dir: .
   run_command: celery -A eventyay worker -l info
   instance_count: 1
@@ -31,13 +33,13 @@ workers:
     value: production
   - key: EVY_SECRET_KEY
     type: SECRET
-  - key: DATABASE_URL
+  - key: EVY_DATABASE_URL
     value: ${eventyay-db.DATABASE_URL}
-  - key: REDIS_URL
+  - key: EVY_REDIS_URL
     value: ${eventyay-redis.REDIS_URL}
 
 - name: eventyay-scheduler
-  dockerfile_path: app/Dockerfile
+  dockerfile_path: Dockerfile
   source_dir: .
   run_command: celery -A eventyay beat -l info
   instance_count: 1
@@ -47,9 +49,9 @@ workers:
     value: production
   - key: EVY_SECRET_KEY
     type: SECRET
-  - key: DATABASE_URL
+  - key: EVY_DATABASE_URL
     value: ${eventyay-db.DATABASE_URL}
-  - key: REDIS_URL
+  - key: EVY_REDIS_URL
     value: ${eventyay-redis.REDIS_URL}
 
 databases:
