@@ -4,10 +4,12 @@
  */
 
 // State constants - MUST stay in sync with TalkQuestionRequired in base/models/question.py
+// Note: We use values (not keys) because they match the Python constant values
+// The Active toggle controls whether field is shown (active=true) or hidden (active=false, equivalent to 'do_not_ask')
 const REQUIRED_STATES = {
     OPTIONAL: 'optional',
     REQUIRED: 'required',
-    AFTER_DEADLINE: 'after_deadline'
+    AFTER_DEADLINE: 'after_deadline'  // Still defined for reference, but not used in dropdowns (Active toggle replaces this)
 };
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
@@ -101,7 +103,7 @@ async function updateField(questionId, field, value) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-Csrftoken': csrfToken,
+            'X-CSRFToken': csrfToken,
         },
         body: JSON.stringify({ field, value }),
     });
