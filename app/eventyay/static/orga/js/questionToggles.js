@@ -1,6 +1,6 @@
 /**
  * Question toggle handlers
- * Issue #1005: on/off buttons for Required, Active and Public
+
  */
 
 // State constants - MUST stay in sync with TalkQuestionRequired in base/models/question.py
@@ -89,14 +89,14 @@ async function updateField(questionId, field, value) {
         }
         return cookieValue;
     }
-    
+
     const csrfToken = getCookie('eventyay_csrftoken');
-    
+
     if (!csrfToken) {
         alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
         throw new Error('CSRF token not found. Please refresh the page and try again.');
     }
-    
+
     const response = await fetch(`${questionId}/toggle/`, {
         method: 'POST',
         headers: {
@@ -125,20 +125,20 @@ function showError(message) {
     const alert = document.createElement('div');
     alert.className = 'alert alert-danger alert-dismissible fade show';
     alert.setAttribute('role', 'alert');
-    
+
     const messageText = document.createTextNode(message);
     alert.appendChild(messageText);
-    
+
     const closeButton = document.createElement('button');
     closeButton.type = 'button';
     closeButton.className = 'btn-close';
     closeButton.setAttribute('data-bs-dismiss', 'alert');
     closeButton.setAttribute('aria-label', 'Close');
     alert.appendChild(closeButton);
-    
+
     // Insert at top of container
     alertContainer.insertBefore(alert, alertContainer.firstChild);
-    
+
     // Auto-dismiss after 5 seconds
     setTimeout(() => {
         alert.classList.remove('show');
@@ -167,7 +167,7 @@ function initFormPageToggles() {
             toggleInput.checked = true;
             requiredDropdown.disabled = false;
             requiredDropdown.style.opacity = '1';
-            
+
             // Update dropdown value and data-current attribute for color
             requiredDropdown.value = value;
             requiredDropdown.dataset.current = value;
@@ -191,7 +191,7 @@ function initFormPageToggles() {
             }
 
             const newValue = this.value;
-            
+
             // Update hidden input
             hiddenInput.value = newValue;
             updateVisualState(fieldId, newValue);
