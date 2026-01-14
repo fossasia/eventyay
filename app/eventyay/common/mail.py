@@ -13,6 +13,8 @@ from eventyay.common.exceptions import SendMailException
 
 logger = logging.getLogger(__name__)
 
+LEGACY_DEFAULT_EMAIL = 'org@mail.com'
+
 
 class CustomSMTPBackend(EmailBackend):
     def test(self, from_addr):
@@ -86,9 +88,8 @@ def mail_send_task(
         if not reply_to:
             reply_to = get_reply_to_address(
                 event,
-                override=reply_to,
                 use_custom_smtp=event.mail_settings['smtp_use_custom'],
-                auto_email=False  # Legacy path is typically manual
+                auto_email=False
             )
 
         if isinstance(reply_to, str):
@@ -168,7 +169,7 @@ def get_reply_to_address(
     if use_custom_smtp and event.mail_settings.get('reply_to'):
         return event.mail_settings['reply_to']
     
-    if event.email and event.email != 'org@mail.com':
+    if event.email and event.email != LEGACY_DEFAULT_EMAIL:
         return event.email
     
     return None
