@@ -190,7 +190,6 @@ def mail(
                 reply_to = get_reply_to_address(
                     event,
                     override=event_reply_to if not auto_email else None,
-                    auto_email=auto_email,
                     use_custom_smtp=event.settings.mail_from != settings.DEFAULT_FROM_EMAIL
                 )
                 
