@@ -27,8 +27,7 @@ COPY app/ .
 # install dependencies
 RUN uv sync --all-extras --all-groups
 
-# copy entrypoint.sh
-COPY app/entrypoint.sh .
+# Setup entrypoint script
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
