@@ -37,12 +37,23 @@ from . import forms
 logger = logging.getLogger(__name__)
 
 
+class BulkReplyToMixin:
+    """Mixin for bulk email views to resolve Reply-To address."""
+    
+    def _get_reply_to_for_bulk_email(self):
+        from eventyay.common.mail import get_reply_to_address
+        return get_reply_to_address(
+            self.request.event,
+            auto_email=False
+        )
+
+
 class ComposeMailChoice(EventPermissionRequiredMixin, TemplateView):
     permission_required = 'can_change_orders'
     template_name = 'pretixplugins/sendmail/compose_choice.html'
 
 
-class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
+class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin, FormView):
     template_name = 'pretixplugins/sendmail/send_form.html'
     permission = 'can_change_orders'
     form_class = forms.MailForm
@@ -175,17 +186,66 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         )
 
         return redirect(
-            'plugins:sendmail:send',
-            event=self.request.event.slug,
-            organizer=self.request.event.organizer.slug,
+            reverse('plugins:sendmail:send', kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+            }) + '?' + urlencode({
+                'organizer': self.request.event.organizer.slug,
+            })
         )
 
-    def _get_reply_to_for_bulk_email(self):
-        """Use unified Reply-To resolution for manual bulk emails."""
-        from eventyay.common.mail import get_reply_to_address
-        return get_reply_to_address(
-            self.request.event,
-            auto_email=False  # Manual bulk send
+    def get_context_data(self, *args, **kwargs):
+        ctx = super().get_context_data(*args, **kwargs)
+        ctx['output'] = getattr(self, 'output', None)
+        return ctx
+
+
+class ComposeTeamsMail(EventPermissionRequiredMixin, BulkReplyToMixin, FormView):
+    template_name = 'pretixplugins/sendmail/compose_teams.html'
+    permission = 'can_change_teams'
+    form_class = TeamMailForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        return kwargs
+
+    def form_invalid(self, form):
+        messages.error(self.request, _('We could not queue the email. See below for details.'))
+        return super().form_invalid(form)
+
+    def form_valid(self, form):
+        qm = EmailQueue.objects.create(
+            event=self.request.event,
+            user=self.request.user,
+            subject=form.cleaned_data['subject'].data,
+            message=form.cleaned_data['message'].data,
+            attachments=[form.cleaned_data['attachment'].id] if form.cleaned_data.get('attachment') else [],
+            locale=self.request.event.settings.locale,
+            reply_to=self._get_reply_to_for_bulk_email() or '',
+            bcc=self.request.event.settings.get('mail_bcc'),
+            composing_for=ComposingFor.TEAMS,
+        )
+
+        EmailQueueFilter.objects.create(
+            mail=qm,
+            teams=form.cleaned_data['teams'],
+        )
+
+        qm.populate_to_users()
+
+        messages.success(
+            self.request,
+            _('Your email has been sent to the outbox.')
+        )
+
+        return redirect(
+            reverse('plugins:sendmail:send', kwargs={
+                'event': self.request.event.slug,
+                'organizer': self.request.event.organizer.slug,
+            }) + '?' + urlencode({
+                'organizer': self.request.event.organizer.slug,
+            })
         )
 
     def get_context_data(self, *args, **kwargs):
@@ -510,7 +570,7 @@ class SentMailView(EventPermissionRequiredMixin, QueryFilterOrderingMixin, ListV
         return ctx
 
 
-class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
+class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin, FormView):
     template_name = 'pretixplugins/sendmail/send_team_form.html'
     permission = 'can_change_orders'
     form_class = TeamMailForm
@@ -642,11 +702,3 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
             'organizer': event.organizer.slug,
             'event': event.slug
         }))
-
-    def _get_reply_to_for_bulk_email(self):
-        """Use unified Reply-To resolution for manual bulk emails."""
-        from eventyay.common.mail import get_reply_to_address
-        return get_reply_to_address(
-            self.request.event,
-            auto_email=False  # Manual bulk send
-        )
