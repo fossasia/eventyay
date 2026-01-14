@@ -70,9 +70,9 @@ databases:
 - name: eventyay-db
   engine: PG
   version: "15"
-  production: true
+  production: false
   
 - name: eventyay-redis
   engine: REDIS
   version: "7"
-  production: true
+  production: false
