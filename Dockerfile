@@ -1,4 +1,9 @@
 # pull official base image
+# This is a copy of app/Dockerfile for Render.com compatibility
+# Render expects Dockerfile at repository root
+# For all other platforms, use app/Dockerfile
+# Keep both files in sync when making changes
+
 FROM python:3.12-slim-trixie
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
