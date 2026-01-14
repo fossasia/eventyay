@@ -351,7 +351,7 @@ class CfPQuestionToggle(PermissionRequired, View):
                 return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
             allowed_values = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
             if value not in allowed_values:
-                return JsonResponse({'error': f'Invalid value: {value}. Must be one of: {", ".join(allowed_values)}'}, status=400)
+                return JsonResponse({'error': 'Invalid value for question_required field'}, status=400)
             question.question_required = value
             question.save(update_fields=['question_required'])
         else:
