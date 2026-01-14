@@ -1359,12 +1359,6 @@ BASE_PATH = ''
 SITE_URL = str(conf.site_url)
 SITE_NETLOC = urlparse(SITE_URL).netloc
 
-# Debug SITE_URL loading
-print(f"DEBUG: EVY_SITE_URL env var: {os.environ.get('EVY_SITE_URL')}", file=sys.stderr)
-print(f"DEBUG: conf.site_url: {conf.site_url}", file=sys.stderr)
-print(f"DEBUG: SITE_URL: {SITE_URL}", file=sys.stderr)
-print(f"DEBUG: SITE_NETLOC: {SITE_NETLOC}", file=sys.stderr)
-
 LOGIN_URL = 'eventyay_common:auth.login'
 LOGIN_URL_CONTROL = 'eventyay_common:auth.login'
 

@@ -75,4 +75,4 @@ databases:
 - name: eventyay-redis
   engine: REDIS
   version: "7"
-  production: false
+  production: true
