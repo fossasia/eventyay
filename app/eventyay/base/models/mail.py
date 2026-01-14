@@ -198,8 +198,7 @@ class MailTemplate(PretalxModel):
             
             resolved_reply_to = get_reply_to_address(
                 event,
-                template=self,
-                auto_email=True  # Template emails are automated
+                template=self
             )
 
             mail = QueuedMail(
