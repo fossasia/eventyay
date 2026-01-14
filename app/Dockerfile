@@ -17,13 +17,14 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
 
 # copy project files
-COPY . .
+# For Render: build context is repo root, so copy from app/
+# For other platforms with app/ as context, this is overridden
+COPY app/ .
 
 # install dependencies
 RUN uv sync --all-extras --all-groups
 
-# copy entrypoint.sh
-COPY ./entrypoint.sh .
+# copy entrypoint.sh (already included in app/ copy above)
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 

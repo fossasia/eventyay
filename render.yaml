@@ -9,8 +9,7 @@ services:
   - type: web
     name: eventyay-next-web
     runtime: docker
-    dockerContext: ./app
-    dockerfilePath: Dockerfile
+    dockerfilePath: app/Dockerfile
     plan: starter
     startCommand: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:$PORT
     healthCheckPath: /
@@ -52,8 +51,7 @@ services:
   - type: worker
     name: eventyay-next-worker
     runtime: docker
-    dockerContext: ./app
-    dockerfilePath: Dockerfile
+    dockerfilePath: app/Dockerfile
     dockerCommand: celery -A eventyay worker -l info
     envVars:
       - key: EVY_SECRET_KEY
@@ -93,8 +91,7 @@ services:
   - type: worker
     name: eventyay-next-scheduler
     runtime: docker
-    dockerContext: ./app
-    dockerfilePath: Dockerfile
+    dockerfilePath: app/Dockerfile
     dockerCommand: celery -A eventyay beat -l info
     envVars:
       - key: EVY_SECRET_KEY
