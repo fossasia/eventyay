@@ -9,7 +9,7 @@
       "icon": "https://raw.githubusercontent.com/fossasia/eventyay/dev/res/logo.png",
       "code": {
         "root": ".",
-        "dockerfile": "app/Dockerfile",
+        "dockerfile": "Dockerfile",
         "context": "."
       },
       "startCommand": "gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:$PORT",
@@ -20,11 +20,14 @@
           "generator": "RANDOM"
         },
         "EVY_ALLOWED_HOSTS": "[\"*\"]",
-        "DATABASE_URL": {
-          "description": "PostgreSQL Connection URL"
+        "EVY_SITE_URL": {
+           "description": "Public URL (Railway sets RAILWAY_PUBLIC_DOMAIN, we can use that if available, else set manually)"
         },
-        "REDIS_URL": {
-          "description": "Redis Connection URL"
+        "EVY_DATABASE_URL": {
+          "value": "${{Postgres.DATABASE_URL}}"
+        },
+        "EVY_REDIS_URL": {
+          "value": "${{Redis.REDIS_URL}}"
         }
       },
       "networking": {
@@ -36,7 +39,7 @@
       "name": "Worker",
       "code": {
         "root": ".",
-        "dockerfile": "app/Dockerfile",
+        "dockerfile": "Dockerfile",
         "context": "."
       },
       "startCommand": "celery -A eventyay worker -l info",
