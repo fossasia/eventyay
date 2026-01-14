@@ -18,27 +18,27 @@ services:
         value: production
       - key: EVY_ALLOWED_HOSTS
         value: '["*"]'
-      - key: POSTGRES_HOST
+      - key: EVY_POSTGRES_HOST
         fromDatabase:
           name: eventyay-next-db
           property: host
-      - key: POSTGRES_PORT
+      - key: EVY_POSTGRES_PORT
         fromDatabase:
           name: eventyay-next-db
           property: port
-      - key: POSTGRES_DB
+      - key: EVY_POSTGRES_DB
         fromDatabase:
           name: eventyay-next-db
           property: database
-      - key: POSTGRES_USER
+      - key: EVY_POSTGRES_USER
         fromDatabase:
           name: eventyay-next-db
           property: user
-      - key: POSTGRES_PASSWORD
+      - key: EVY_POSTGRES_PASSWORD
         fromDatabase:
           name: eventyay-next-db
           property: password
-      - key: REDIS_URL
+      - key: EVY_REDIS_URL
         fromService:
           type: redis
           name: eventyay-next-redis
@@ -58,27 +58,27 @@ services:
           envVarKey: EVY_SECRET_KEY
       - key: EVY_RUNNING_ENVIRONMENT
         value: production
-      - key: POSTGRES_HOST
+      - key: EVY_POSTGRES_HOST
         fromDatabase:
           name: eventyay-next-db
           property: host
-      - key: POSTGRES_PORT
+      - key: EVY_POSTGRES_PORT
         fromDatabase:
           name: eventyay-next-db
           property: port
-      - key: POSTGRES_DB
+      - key: EVY_POSTGRES_DB
         fromDatabase:
           name: eventyay-next-db
           property: database
-      - key: POSTGRES_USER
+      - key: EVY_POSTGRES_USER
         fromDatabase:
           name: eventyay-next-db
           property: user
-      - key: POSTGRES_PASSWORD
+      - key: EVY_POSTGRES_PASSWORD
         fromDatabase:
           name: eventyay-next-db
           property: password
-      - key: REDIS_URL
+      - key: EVY_REDIS_URL
         fromService:
           type: redis
           name: eventyay-next-redis
@@ -97,27 +97,27 @@ services:
           envVarKey: EVY_SECRET_KEY
       - key: EVY_RUNNING_ENVIRONMENT
         value: production
-      - key: POSTGRES_HOST
+      - key: EVY_POSTGRES_HOST
         fromDatabase:
           name: eventyay-next-db
           property: host
-      - key: POSTGRES_PORT
+      - key: EVY_POSTGRES_PORT
         fromDatabase:
           name: eventyay-next-db
           property: port
-      - key: POSTGRES_DB
+      - key: EVY_POSTGRES_DB
         fromDatabase:
           name: eventyay-next-db
           property: database
-      - key: POSTGRES_USER
+      - key: EVY_POSTGRES_USER
         fromDatabase:
           name: eventyay-next-db
           property: user
-      - key: POSTGRES_PASSWORD
+      - key: EVY_POSTGRES_PASSWORD
         fromDatabase:
           name: eventyay-next-db
           property: password
-      - key: REDIS_URL
+      - key: EVY_REDIS_URL
         fromService:
           type: redis
           name: eventyay-next-redis
