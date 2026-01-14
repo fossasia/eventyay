@@ -3,6 +3,7 @@ services:
   - type: redis
     name: eventyay-next-redis
     plan: free
+    ipAllowList: []
 
   # Web Service (Django)
   - type: web
