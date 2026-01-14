@@ -39,6 +39,7 @@ local/
 .zed
 app/.vscode
 mise.toml
+
 .gnupg
 .ssh
 .vscode-server
