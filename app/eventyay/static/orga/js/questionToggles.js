@@ -1,15 +1,8 @@
-/**
- * Question toggle handlers
-
- */
-
-// State constants - MUST stay in sync with TalkQuestionRequired in base/models/question.py
-// Note: We use values (not keys) because they match the Python constant values
-// The Active toggle controls whether field is shown (active=true) or hidden (active=false, equivalent to 'do_not_ask')
+// Question toggle handlers - sync with TalkQuestionRequired model
 const REQUIRED_STATES = {
     OPTIONAL: 'optional',
     REQUIRED: 'required',
-    AFTER_DEADLINE: 'after_deadline'  // Still defined for reference, but not used in dropdowns (Active toggle replaces this)
+    AFTER_DEADLINE: 'after_deadline'
 };
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
@@ -76,23 +69,13 @@ async function handleBinaryToggle(e) {
 }
 
 async function updateField(questionId, field, value) {
-    // Get CSRF token from cookie - using eventyay's custom cookie name
     function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
     }
 
-    const csrfToken = getCookie('eventyay_csrftoken');
+    const csrfToken = getCookie('eventyay_csrftoken') || getCookie('csrftoken');
 
     if (!csrfToken) {
         alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
@@ -118,34 +101,8 @@ async function updateField(questionId, field, value) {
     return result;
 }
 
-/**
- * Show error message to user
- */
 function showError(message) {
-    // Try to use existing alert system if available
-    const alertContainer = document.querySelector('.alert-container') || document.body;
-    const alert = document.createElement('div');
-    alert.className = 'alert alert-danger alert-dismissible fade show';
-    alert.setAttribute('role', 'alert');
-
-    const messageText = document.createTextNode(message);
-    alert.appendChild(messageText);
-
-    const closeButton = document.createElement('button');
-    closeButton.type = 'button';
-    closeButton.className = 'btn-close';
-    closeButton.setAttribute('data-bs-dismiss', 'alert');
-    closeButton.setAttribute('aria-label', 'Close');
-    alert.appendChild(closeButton);
-
-    // Insert at top of container
-    alertContainer.insertBefore(alert, alertContainer.firstChild);
-
-    // Auto-dismiss after 5 seconds
-    setTimeout(() => {
-        alert.classList.remove('show');
-        setTimeout(() => alert.remove(), 150);
-    }, 5000);
+    alert(message);
 }
 
 /* Local Logic for Form Page (text.html) which uses hidden inputs */
@@ -153,11 +110,10 @@ function initFormPageToggles() {
     // Only run if we are on the form page
     if (!document.querySelector('.cfp-option-table')) return;
 
-    // Function to update visual state based on hidden input value
     function updateVisualState(fieldId, value) {
-        // Use getElementById for more secure selection
-        const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
-        const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${CSS.escape(fieldId)}"] input`);
+        const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+        const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
+        const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
         if (!requiredDropdown || !toggleInput) return;
 
@@ -181,12 +137,12 @@ function initFormPageToggles() {
         updateVisualState(input.id, input.value);
     });
 
-    // Handle Required status dropdown change (Form Page)
     document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
         dropdown.addEventListener('change', function () {
             const fieldId = this.dataset.fieldId;
             const hiddenInput = document.getElementById(fieldId);
-            const checkbox = document.querySelector(`.toggle-switch[data-field-id="${CSS.escape(fieldId)}"] input`);
+            const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+            const checkbox = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
             if (!hiddenInput || !checkbox.checked) {
                 return; // Can't change if inactive
@@ -200,12 +156,12 @@ function initFormPageToggles() {
         });
     });
 
-    // Handle Active toggle (Form Page)
     document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
         input.addEventListener('change', function () {
             const toggle = this.closest('.toggle-switch');
             const fieldId = toggle.dataset.fieldId;
-            const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${CSS.escape(fieldId)}"]`);
+            const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+            const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
             const hiddenInput = document.getElementById(fieldId);
 
             if (this.checked) {

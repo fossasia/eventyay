@@ -116,7 +116,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {# Title - always required, not editable #}
                         <tr>
                             <th>{% translate "Title" %}</th>
                             <td class="text-center">
@@ -124,12 +123,11 @@
                                     aria-describedby="title-required-help" data-current="required">
                                     <option value="required" selected>Required</option>
                                 </select>
-                                <span id="title-required-help" class="sr-only">{% translate "The title is always
-                                    required and cannot be changed." %}</span>
+                                <span id="title-required-help" class="sr-only">{% translate "The title is always required and cannot be changed." %}</span>
                             </td>
                             <td class="text-center">
-                                <label class="toggle-switch always-on" aria-label="Title is always active">
-                                    <input type="checkbox" checked disabled aria-label="Title always active">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
                                     <span class="toggle-slider"></span>
                                 </label>
                             </td>

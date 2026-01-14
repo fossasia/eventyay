@@ -1,10 +1,5 @@
-/**
- * Toggle styles for CfP Custom Fields page
+/* Toggle styles for CfP Custom Fields */
 
- * Design: Colorful dropdowns for required status
- */
-
-/* Required status dropdown - colorful select with state-based styling */
 .required-status-dropdown {
     padding: 4px 24px 4px 8px;
     border: 1px solid;
@@ -34,33 +29,24 @@
     outline-offset: 2px;
 }
 
-/* Apply green background when Required is selected */
-select.required-status-dropdown:has(option[value="required"]:checked),
 select.required-status-dropdown[data-current="required"] {
     background-color: #28a745 !important;
     border-color: #28a745 !important;
     color: #fff !important;
-    /* White arrow for dark background */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
 }
 
-/* Apply gray/white background when Optional is selected */
-select.required-status-dropdown:has(option[value="optional"]:checked),
 select.required-status-dropdown[data-current="optional"] {
     background-color: #fff !important;
     border-color: #6c757d !important;
     color: #6c757d !important;
-    /* Dark arrow for light background */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
 }
 
-/* Apply red background when Deadline is selected */
-select.required-status-dropdown:has(option[value="after_deadline"]:checked),
 select.required-status-dropdown[data-current="after_deadline"] {
     background-color: #dc3545 !important;
     border-color: #dc3545 !important;
     color: #fff !important;
-    /* White arrow for dark background */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
 }
 
@@ -80,7 +66,6 @@ select.required-status-dropdown[data-current="after_deadline"] {
     color: #fff;
 }
 
-/* Display-only status indicator (for Title field) */
 .required-status-display {
     display: inline-block;
     padding: 0.375rem 2rem 0.375rem 0.75rem;
