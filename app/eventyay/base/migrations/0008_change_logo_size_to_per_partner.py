@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0006_alter_event_locale_alter_user_locale_sponsorgroup_and_more'),
+        ('base', '0007_alter_event_locale_alter_user_locale_sponsorgroup_and_more'),
     ]
 
     operations = [

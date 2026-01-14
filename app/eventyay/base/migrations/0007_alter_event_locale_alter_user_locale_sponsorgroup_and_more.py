@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0005_team_can_video_create_channels_and_more'),
+        ('base', '0006_remove_landing_page_text'),
     ]
 
     operations = [
