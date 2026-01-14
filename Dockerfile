@@ -20,7 +20,7 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
 
 # copy project files from app directory
-COPY app/ .
+COPY app/ /usr/src/app/
 
 # install dependencies
 RUN uv sync --all-extras --all-groups
