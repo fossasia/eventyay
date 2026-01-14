@@ -19,8 +19,20 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
 
-# copy project files from app directory
-COPY app/ /usr/src/app/
+# copy project files
+COPY . .
+
+# Universal Build Context Fix:
+# Check if we are at repo root (have app/ folder) or inside app/ (have manage.py)
+RUN if [ -d "app" ]; then \
+    echo "Detected repo root context, copying app/ contents to WORKDIR..."; \
+    cp -r app/* .; \
+    else \
+    echo "No app/ directory found. Checking for manage.py..."; \
+    fi
+
+# Verify we have the code
+RUN ls -la && if [ ! -f "manage.py" ]; then echo "ERROR: manage.py not found in $(pwd)!"; exit 1; fi
 
 # install dependencies
 RUN uv sync --all-extras --all-groups
