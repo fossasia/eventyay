@@ -86,10 +86,7 @@ def mail_send_task(
 
         # Use unified Reply-To resolution
         if not reply_to:
-            reply_to = get_reply_to_address(
-                event,
-                use_custom_smtp=event.mail_settings['smtp_use_custom']
-            )
+            reply_to = get_reply_to_address(event)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
@@ -146,8 +143,7 @@ def get_reply_to_address(
     event,
     *,
     override=None,
-    template=None,
-    use_custom_smtp=False
+    template=None
 ):
     """
     Resolve Reply-To email address with unified precedence.
