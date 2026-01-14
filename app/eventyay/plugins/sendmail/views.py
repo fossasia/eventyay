@@ -185,10 +185,9 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, BulkReplyToMixin,
         )
 
         return redirect(
-            reverse('plugins:sendmail:send', kwargs={
-                'event': self.request.event.slug,
-                'organizer': self.request.event.organizer.slug,
-            })
+            'plugins:sendmail:send',
+            event=self.request.event.slug,
+            organizer=self.request.event.organizer.slug,
         )
 
     def get_context_data(self, *args, **kwargs):
