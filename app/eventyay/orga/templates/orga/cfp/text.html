@@ -91,9 +91,9 @@
                 {{ form.count_length_in.label }}
                 {% if form.count_length_in.field.required %}*{% endif %}
             </label>
-            <div class="col-md-9 d-flex align-items-center">
+            <div class="col-md-9">
                 {% for radio in form.count_length_in %}
-                <div class="form-check me-3">
+                <div class="form-check mb-2">
                     {{ radio.tag }}
                     <label class="form-check-label" for="{{ radio.id_for_label }}">
                         {{ radio.choice_label }}
