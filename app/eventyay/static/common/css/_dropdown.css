@@ -13,6 +13,11 @@ details.dropdown summary {
   color: inherit;
 }
 
+details.dropdown summary.color-primary,
+details.dropdown summary.btn-primary {
+  color: white;
+}
+
 details.dropdown summary::before,
 details.dropdown summary::marker {
   display: none;
