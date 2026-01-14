@@ -74,8 +74,23 @@ async function handleBinaryToggle(e) {
 }
 
 async function updateField(questionId, field, value) {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value ||
-        document.cookie.split(';').find(c => c.trim().startsWith('csrftoken='))?.split('=')[1];
+    // Get CSRF token from cookie - using eventyay's custom cookie name
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    const csrfToken = getCookie('eventyay_csrftoken');
     
     if (!csrfToken) {
         alert('Unable to save your changes because a security token is missing or your session has expired. Please reload the page and try again.');
@@ -86,7 +101,7 @@ async function updateField(questionId, field, value) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': csrfToken,
+            'X-Csrftoken': csrfToken,
         },
         body: JSON.stringify({ field, value }),
     });
@@ -160,7 +175,7 @@ function initFormPageToggles() {
     }
 
     // Init from hidden inputs
-    document.querySelectorAll('input[type=hidden][name^="cfp_ask_"]').forEach(input => {
+    document.querySelectorAll('input[type=hidden][name^="settings-cfp_ask_"]').forEach(input => {
         updateVisualState(input.id, input.value);
     });
 
@@ -171,7 +186,9 @@ function initFormPageToggles() {
             const hiddenInput = document.getElementById(fieldId);
             const checkbox = document.querySelector(`.toggle-switch[data-field-id="${CSS.escape(fieldId)}"] input`);
 
-            if (!checkbox.checked) return; // Can't change if inactive
+            if (!hiddenInput || !checkbox.checked) {
+                return; // Can't change if inactive
+            }
 
             const newValue = this.value;
             

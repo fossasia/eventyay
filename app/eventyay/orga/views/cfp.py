@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
@@ -285,6 +286,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             )
 
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class CfPQuestionToggle(PermissionRequired, View):
     """Toggle question field states via AJAX POST or legacy GET."""
     permission_required = 'base.update_talkquestion'
@@ -297,7 +299,10 @@ class CfPQuestionToggle(PermissionRequired, View):
         )
 
     def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
+        # Check permissions first
+        if not self.has_permission():
+            return self.handle_no_permission()
+            
         question = self.get_object()
 
         # Legacy GET: toggle active

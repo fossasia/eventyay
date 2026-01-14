@@ -92,7 +92,7 @@ select.required-status-dropdown[data-current="after_deadline"] {
     min-width: 120px;
     background-color: #28a745;
     color: #fff;
-    
+
     /* Dropdown arrow to match select elements */
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
@@ -115,13 +115,13 @@ select.required-status-dropdown[data-current="after_deadline"] {
 /* Hover effects for dropdown */
 .required-status-dropdown:not(:disabled):hover {
     filter: brightness(0.95);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Toggle switch for Active and Public columns */
 .toggle-switch {
     position: relative;
-    display: inline-block;
+    display: inline-block !important;
     width: 32px;
     height: 18px;
     cursor: pointer;
@@ -136,16 +136,16 @@ select.required-status-dropdown[data-current="after_deadline"] {
 }
 
 /* Focus styles for keyboard accessibility */
-.toggle-switch input:focus + .toggle-slider {
+.toggle-switch input:focus+.toggle-slider {
     outline: 2px solid #007bff;
     outline-offset: 2px;
 }
 
-.toggle-switch input:focus:not(:focus-visible) + .toggle-slider {
+.toggle-switch input:focus:not(:focus-visible)+.toggle-slider {
     outline: none;
 }
 
-.toggle-switch input:focus-visible + .toggle-slider {
+.toggle-switch input:focus-visible+.toggle-slider {
     outline: 2px solid #007bff;
     outline-offset: 2px;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
@@ -182,6 +182,16 @@ select.required-status-dropdown[data-current="after_deadline"] {
 
 .toggle-switch.loading .toggle-slider {
     opacity: 0.6;
+}
+
+/* Disabled/always-on toggle for Title field */
+.toggle-switch.always-on {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.toggle-switch.always-on .toggle-slider {
+    cursor: not-allowed;
 }
 
 /* CFP Option Table Styles - Use more specific selectors to avoid unintended hiding */
