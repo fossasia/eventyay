@@ -33,7 +33,7 @@ from eventyay.base.models import Event
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget
 from eventyay.base.models.submission import SubmissionStates
 
 
@@ -119,7 +119,7 @@ class SpeakerProfileForm(
                 data['availabilities'] = initial['availabilities']
                 self.data = data
         self.inject_questions_into_fields(
-            target='speaker',
+            target=TalkQuestionTarget.SPEAKER,
             event=self.event,
             speaker=self.user,
             readonly=read_only,
@@ -197,11 +197,9 @@ class SpeakerProfileForm(
 
         if self.user.avatar and 'avatar' in self.changed_data:
             self.user.process_image('avatar', generate_thumbnail=True)
-            
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)
-                
         return result
 
     class Meta:

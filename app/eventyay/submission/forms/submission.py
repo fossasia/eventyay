@@ -22,6 +22,7 @@ from eventyay.base.models import (
     Submission,
     SubmissionStates,
     Tag,
+    TalkQuestionTarget,
     Track,
 )
 
@@ -73,7 +74,7 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
         self._set_slot_count(instance=instance)
 
         self.inject_questions_into_fields(
-            target='submission',
+            target=TalkQuestionTarget.SUBMISSION,
             event=self.event,
             submission=instance,
             track=initial.get('track'),
@@ -168,12 +169,9 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
         result = super().save(*args, **kwargs)
         if 'image' in self.cleaned_data:
             self.instance.process_image('image')
-
-        
         for key, value in self.cleaned_data.items():
             if key.startswith('question_'):
                 self.save_questions(key, value)
-        
         return result
 
     class Meta:

@@ -22,6 +22,8 @@ from eventyay.common.forms.validators import (
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models.cfp import default_fields
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
 
@@ -129,16 +131,12 @@ class RequestRequire:
 
 class QuestionFieldsMixin:
     def get_question_queryset(self, target, event):
-        from eventyay.base.models import TalkQuestion
         qs = TalkQuestion.all_objects.filter(event=event, active=True, target=target)
         return qs.order_by('position')
 
     def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
-        from eventyay.base.models import TalkQuestionVariant
-
         questions = self.get_question_queryset(target, event)
         # Apply filters based on submission context
-        from django.db.models import Q
         if track:
             questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))
         if submission_type:
@@ -146,11 +144,11 @@ class QuestionFieldsMixin:
         
         # Pre-fetch existing answers
         target_object = None
-        if target == 'submission':
+        if target == TalkQuestionTarget.SUBMISSION:
             target_object = submission
-        elif target == 'speaker':
+        elif target == TalkQuestionTarget.SPEAKER:
             target_object = speaker
-        elif target == 'reviewer':
+        elif target == TalkQuestionTarget.REVIEWER:
             target_object = review
 
         answers_by_question = {}

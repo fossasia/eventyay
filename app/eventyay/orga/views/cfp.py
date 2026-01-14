@@ -202,7 +202,6 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
         if not self.sform.is_valid():
             messages.error(self.request, phrases.base.error_saving_changes)
             return self.form_invalid(form)
-            
         messages.success(self.request, phrases.base.saved)
         form.instance.event = self.request.event
         result = super().form_valid(form)
@@ -210,7 +209,6 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
             form.instance.log_action('eventyay.cfp.update', person=self.request.user, orga=True)
         self.sform.save()
         return result
-
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
