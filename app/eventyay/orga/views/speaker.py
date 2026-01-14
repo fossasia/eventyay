@@ -359,24 +359,55 @@ class SpeakerReorderView(EventPermissionRequired, View):
         
         try:
             with transaction.atomic():
-                # Fetch all speakers in one query for bulk update
-                speakers = list(SpeakerProfile.objects.filter(
-                    event=request.event,
-                    id__in=speaker_ids
-                ))
-                speakers_by_id = {speaker.id: speaker for speaker in speakers}
+                # Fetch all speakers for this event in their current global order
+                all_speakers = list(
+                    SpeakerProfile.objects.filter(
+                        event=request.event
+                    ).order_by('featured_order', 'id')
+                )
                 
-                # Update order for each speaker
-                speakers_to_update = []
-                for index, speaker_id in enumerate(speaker_ids):
+                # Map IDs to speaker instances for quick lookup
+                speakers_by_id = {speaker.id: speaker for speaker in all_speakers}
+                
+                # Determine the indices of the speakers being reordered
+                moving_indices = [
+                    index for index, speaker in enumerate(all_speakers)
+                    if speaker.id in valid_speaker_ids
+                ]
+                
+                # If none of the speakers are found (should not happen after validation), do nothing
+                if not moving_indices:
+                    return JsonResponse({'status': 'success'})
+                
+                start_index = min(moving_indices)
+                end_index = max(moving_indices) + 1
+                
+                # Build the segment of speakers in the new order specified by speaker_ids
+                reordered_segment = []
+                for speaker_id in speaker_ids:
                     speaker = speakers_by_id.get(speaker_id)
                     if speaker is not None:
-                        speaker.featured_order = index
-                        speakers_to_update.append(speaker)
+                        reordered_segment.append(speaker)
+                
+                # Prefix: speakers before the reordered segment
+                prefix = all_speakers[:start_index]
+                
+                # Suffix: speakers after the reordered segment, excluding any that are being reordered
+                suffix = [
+                    speaker for speaker in all_speakers[end_index:]
+                    if speaker.id not in valid_speaker_ids
+                ]
+                
+                # Construct the final global sequence
+                final_sequence = prefix + reordered_segment + suffix
+                
+                # Reassign order values globally to keep them contiguous and unique
+                for index, speaker in enumerate(final_sequence):
+                    speaker.featured_order = index
                 
                 # Bulk update all speakers in one query
-                if speakers_to_update:
-                    SpeakerProfile.objects.bulk_update(speakers_to_update, ['featured_order'])
+                if final_sequence:
+                    SpeakerProfile.objects.bulk_update(final_sequence, ['featured_order'])
             
             return JsonResponse({'status': 'success'})
         except (ValueError, TypeError) as e:
