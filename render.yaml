@@ -9,6 +9,7 @@ services:
   - type: web
     name: eventyay-next-web
     runtime: docker
+    dockerContext: .
     dockerfilePath: app/Dockerfile
     plan: starter
     healthCheckPath: /
@@ -50,6 +51,7 @@ services:
   - type: worker
     name: eventyay-next-worker
     runtime: docker
+    dockerContext: .
     dockerfilePath: app/Dockerfile
     dockerCommand: celery -A eventyay worker -l info
     envVars:
@@ -90,6 +92,7 @@ services:
   - type: worker
     name: eventyay-next-scheduler
     runtime: docker
+    dockerContext: .
     dockerfilePath: app/Dockerfile
     dockerCommand: celery -A eventyay beat -l info
     envVars:
