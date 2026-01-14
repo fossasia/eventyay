@@ -1,4 +1,9 @@
 services:
+  # Redis (MUST be a service, not database)
+  - type: redis
+    name: eventyay-next-redis
+    plan: free
+
   # Web Service (Django)
   - type: web
     name: eventyay-next-web
@@ -12,7 +17,7 @@ services:
       - key: EVY_RUNNING_ENVIRONMENT
         value: production
       - key: EVY_ALLOWED_HOSTS
-        value: '["*"]'
+        value: '[\"*\"]'
       - key: POSTGRES_HOST
         fromDatabase:
           name: eventyay-next-db
@@ -136,7 +141,4 @@ databases:
   - name: eventyay-next-db
     databaseName: eventyay_db
     user: eventyay_user
-    plan: free
-
-  - name: eventyay-next-redis
     plan: free
