@@ -10,6 +10,7 @@ services:
     name: eventyay-next-web
     runtime: docker
     plan: starter
+    startCommand: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:$PORT
     healthCheckPath: /
     envVars:
       - key: EVY_SECRET_KEY
