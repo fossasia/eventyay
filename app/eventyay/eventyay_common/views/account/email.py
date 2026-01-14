@@ -5,6 +5,8 @@ from django.urls import reverse
 from .common import AccountMenuMixIn
 
 
+# Override allauth's EmailView to add our menu and customize the success URL.
+# The removal of email addresses is still handled by allauth's internal flows.
 class EmailAddressManagementView(LoginRequiredMixin, AccountMenuMixIn, EmailView):
     template_name = 'eventyay_common/account/email-management.html'
 

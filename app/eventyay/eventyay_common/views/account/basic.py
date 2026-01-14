@@ -150,7 +150,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         email_addresses = user.emailaddress_set.all()
         primary_email = next((ea.email for ea in email_addresses if ea.primary), None)
         if not primary_email:
-            primary_email = next((ea.email for ea in email_addresses), user.email)
+            primary_email = next((ea.email for ea in email_addresses), user.email or _('(no email address)'))
         ctx['primary_email'] = primary_email
 
         # Passed by the post() method when the password reset form was submitted.
@@ -158,7 +158,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         # If this form is present, it means we need to render it with errors,
         # otherwise, create a new blank form for password reset.
         if not password_reset_form and requires_reset:
-            ctx['password_reset_form'] = ResetPasswordForm(initial={'email': user.email})
+            ctx['password_reset_form'] = ResetPasswordForm(initial={'email': primary_email})
             return ctx
         return ctx
 
