@@ -4,7 +4,7 @@
 services:
   - name: eventyay-web
     build:
-      dockerfile: app/Dockerfile
+      dockerfile: Dockerfile
       context: .
     ports:
       - port: 8000
@@ -12,33 +12,29 @@ services:
     env:
       EVY_RUNNING_ENVIRONMENT: production
       EVY_ALLOWED_HOSTS: '["*"]'
-      # Zeabur automatically injects DATABASE_URL if Postgres service is present
-      # Zeabur automatically injects REDIS_URL if Redis service is present
+      EVY_SITE_URL: '${ZEABUR_WEB_URL}'
+      EVY_DATABASE_URL: '${POSTGRES_URL}'
+      EVY_REDIS_URL: '${REDIS_URL}'
 
   - name: eventyay-worker
     build:
-      dockerfile: app/Dockerfile
+      dockerfile: Dockerfile
       context: .
     startCommand: celery -A eventyay worker -l info
     env:
       EVY_RUNNING_ENVIRONMENT: production
+      EVY_DATABASE_URL: '${POSTGRES_URL}'
+      EVY_REDIS_URL: '${REDIS_URL}'
 
   - name: eventyay-scheduler
     build:
-      dockerfile: app/Dockerfile
+      dockerfile: Dockerfile
       context: .
     startCommand: celery -A eventyay beat -l info
     env:
       EVY_RUNNING_ENVIRONMENT: production
-
-  - name: eventyay-frontend
-    build:
-      context: app/eventyay/webapp
-      command: npm install && npm run build
-    output: dist
-    ports:
-      - port: 8080 # Static site port
-        type: http
+      EVY_DATABASE_URL: '${POSTGRES_URL}'
+      EVY_REDIS_URL: '${REDIS_URL}'
 
 databases:
   - name: eventyay-db
