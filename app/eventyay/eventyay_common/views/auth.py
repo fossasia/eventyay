@@ -143,13 +143,13 @@ def login(request):
         form = LoginForm(backend=backend, data=request.POST, request=request)
         if form.is_valid() and form.user_cache and form.user_cache.auth_backend == backend.identifier:
             keep_logged_in = form.cleaned_data.get('keep_logged_in', False)
-            
+
             return process_login_and_set_cookie(
                 request, form.user_cache, keep_logged_in
             )
     else:
         form = LoginForm(backend=backend, request=request)
-    
+
     ctx['form'] = form
     ctx['can_register'] = settings.EVENTYAY_REGISTRATION
     ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
@@ -158,54 +158,54 @@ def login(request):
 
     gs = GlobalSettingsObject()
     login_providers = gs.settings.get('login_providers', as_type=dict) or {}
-    
-    # Order providers: preferred first, then others.
-    # If multiple providers are (mis)configured as preferred, keep the first
-    # one as preferred and treat the rest as normal providers, logging a warning.
-    preferred_providers = []
-    non_preferred_providers = []
+
+    # Filter enabled providers and sort by is_preferred (True first, then False)
+    enabled_providers = {
+        provider: settings
+        for provider, settings in login_providers.items()
+        if settings.get('state', False)
+    }
+
+    # Sort: preferred providers first, then non-preferred
+    # sorted() with key returning (not is_preferred, provider) ensures:
+    # - is_preferred=True comes first (False < True, so not True = False comes before not False = True)
+    # - Within same preference level, maintain alphabetical order by provider name
+    ordered_providers = dict(
+        sorted(
+            enabled_providers.items(),
+            key=lambda item: (not item[1].get('is_preferred', False), item[0])
+        )
+    )
+
+    # Log warning if preferred provider is disabled
     for provider, provider_settings in login_providers.items():
-        # Log if a preferred provider is disabled (helps with debugging)
         if provider_settings.get('is_preferred', False) and not provider_settings.get('state', False):
             logger.warning(
                 "Login provider '%s' is marked as preferred but is disabled. "
                 "It will not appear in the login page.",
                 provider
             )
-        
-        if not provider_settings.get('state', False):  # Only enabled providers
-            continue
-        if provider_settings.get('is_preferred', False):
-            preferred_providers.append((provider, provider_settings))
-        else:
-            non_preferred_providers.append((provider, provider_settings))
-    
-    ordered_providers = {}
-    if not preferred_providers:
-        # No preferred provider: preserve original order of enabled providers.
-        for provider, provider_settings in non_preferred_providers:
-            ordered_providers[provider] = provider_settings
-    else:
-        if len(preferred_providers) > 1:
-            logger.warning(
-                "Multiple login providers are marked as preferred. "
-                "Using the first one and treating the rest as non-preferred. "
-                "Providers: %s",
-                [p[0] for p in preferred_providers],
-            )
-        # First preferred provider goes first.
-        first_preferred, *remaining_preferred = preferred_providers
-        ordered_providers[first_preferred[0]] = first_preferred[1]
-        # Then all non-preferred providers in their original order.
-        for provider, provider_settings in non_preferred_providers:
-            ordered_providers[provider] = provider_settings
-        # Finally, any extra preferred providers (if misconfigured) in their original order.
-        for provider, provider_settings in remaining_preferred:
-            if provider not in ordered_providers:
-                ordered_providers[provider] = provider_settings
-    
+
+    # Log warning if multiple providers are marked as preferred
+    preferred_count = sum(
+        1 for settings in enabled_providers.values()
+        if settings.get('is_preferred', False)
+    )
+    if preferred_count > 1:
+        preferred_names = [
+            provider for provider, settings in enabled_providers.items()
+            if settings.get('is_preferred', False)
+        ]
+        logger.warning(
+            "Multiple login providers are marked as preferred. "
+            "All will be shown in order, but only the first will be truly preferred. "
+            "Providers: %s",
+            preferred_names,
+        )
+
     ctx['login_providers'] = ordered_providers
     return render(request, 'eventyay_common/auth/login.html', ctx)
+
 
 def logout(request):
     """
