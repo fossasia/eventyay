@@ -1,9 +1,9 @@
 function preview_task_callback(data, jqXHR, status) {
     "use strict";
-    if (data.item) {
-        $('#' + data.item + '_panel').data('ajaxing', false);
+    if (data.product) {
+        $('#' + data.product + '_panel').data('ajaxing', false);
         for (var m in data.msgs){
-            var target = $('div[for=' + data.item + '][lang=' + m +']');
+            var target = $('div[for=' + data.product + '][lang=' + m +']');
             if (target.length === 1){
                 target.html(data.msgs[m]);
                 target.find('.placeholder').tooltip();
@@ -44,7 +44,7 @@ $(function () {
         var parentForm = $(this).closest('form');
         var previewUrl = $(parentForm).attr('mail-preview-url');
         var token = $(parentForm).find('input[name=csrfmiddlewaretoken]').val();
-        var dataString = 'item=' + itemName + '&csrfmiddlewaretoken=' + token;
+        var dataString = 'product=' + encodeURIComponent(itemName) + '&csrfmiddlewaretoken=' + encodeURIComponent(token);
         $('#' + itemName + '_edit textarea').each(function () {
             dataString += '&' + $(this).serialize();
         });

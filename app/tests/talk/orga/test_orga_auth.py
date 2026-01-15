@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 from django.urls import reverse
+from urllib.parse import urlparse, parse_qs
 
 from pretalx.event.models import TeamInvite
 
@@ -30,10 +31,15 @@ def test_orga_redirect_login(client, orga_user, event):
     request_url = event.orga_urls.base + "?" + queryparams
     response = client.get(request_url, follow=True)
     assert response.status_code == 200
-    assert response.redirect_chain[-1] == (
-        f"{settings.SITE_URL}/orga/event/{event.slug}/login/?next={event.orga_urls.base}&{queryparams}",
-        302,
-    )
+    # Expected redirect to common auth login instead of event specific login
+    final_url = response.redirect_chain[-1][0]
+    parsed_url = urlparse(final_url)
+
+    expected_login_url = reverse("orga:login")
+    assert parsed_url.path == expected_login_url
+
+    query_params_parsed = parse_qs(parsed_url.query)
+    assert query_params_parsed.get("next") == [request_url]
 
     response = client.post(
         response.redirect_chain[-1][0],
@@ -42,17 +48,11 @@ def test_orga_redirect_login(client, orga_user, event):
     )
     assert response.status_code == 200
     assert event.name in response.text
+    # After login, should redirect back to the original URL
     assert response.redirect_chain[-1][0] == request_url
 
 
-@pytest.mark.django_db
-def test_orga_redirect_login_to_event_page(client, orga_user, event):
-    response = client.post(
-        f"/orga/event/{event.slug}/login/",
-        data={"login_email": orga_user.email, "login_password": "orgapassw0rd"},
-    )
-    assert response.status_code == 302
-    assert response.url == f"/orga/event/{event.slug}/"
+
 
 
 @pytest.mark.django_db

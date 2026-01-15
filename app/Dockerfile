@@ -52,5 +52,8 @@ RUN EVY_SECRET_KEY=build_dummy \
     EVY_SITE_URL=https://eventyay-next-web-287238307795.us-central1.run.app \
     python manage.py compress --force
 
+# Create .secrets to suppress warnings about missing directory (from upstream)
+RUN mkdir -p /usr/src/app/.secrets
+
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
