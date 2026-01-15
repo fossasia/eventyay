@@ -21,7 +21,7 @@
   "main": "dist/schedule-editor.common.js",
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.25",
-    "i18next": "^22.4.8",
+    "i18next": "^25.7.4",
     "lodash": "^4.17.21",
     "markdown-it": "^13.0.2",
     "moment": "^2.30.1",
