@@ -20,12 +20,8 @@
     {% endif %}
     {% if ev.geo_lat and ev.geo_lon %}
     <link rel="stylesheet" href="{% static 'pretixpresale/css/venue-map.css' %}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
+    <link rel="stylesheet" href="{% static 'leaflet/leaflet.css' %}">
+    <script src="{% static 'leaflet/leaflet.js' %}"></script>
     {% endif %}
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
@@ -283,11 +279,14 @@
                     <strong>{{ ev.location }}</strong>
                 </p>
                 {% endif %}
-                <div id="venue-map" 
+    <div id="venue-map" 
                      data-lat="{{ ev.geo_lat }}" 
                      data-lon="{{ ev.geo_lon }}"
                      data-location="{{ ev.location|escapejs }}"
-                     data-error-message="{% trans "Map could not be loaded at this time." %}"></div>
+                     data-error-message="{% trans "Map could not be loaded at this time." %}"
+                     data-icon-url="{% static 'leaflet/images/marker-icon.png' %}"
+                     data-icon-retina-url="{% static 'leaflet/images/marker-icon-2x.png' %}"
+                     data-shadow-url="{% static 'leaflet/images/marker-shadow.png' %}"></div>
             </div>
             <script src="{% static 'pretixpresale/js/venue-map.js' %}"></script>
             {% endif %}
