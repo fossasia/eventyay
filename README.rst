@@ -1,8 +1,6 @@
 eventyay-tickets
 ======
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/pretix/pretix
 
 Project status & release cycle
 ------------------------------
