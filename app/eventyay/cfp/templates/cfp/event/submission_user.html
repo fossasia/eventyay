@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 {% block submission_step_title %}
     {% if request.GET.draft == "1" %}
         {% translate "Sign in or register to save your draft" %}

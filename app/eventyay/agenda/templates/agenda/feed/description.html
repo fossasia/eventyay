@@ -1,5 +1,6 @@
 {% load i18n %}
 
+{% load presale_locale %}
 <p>
     {% if obj.changes.action == "update" %}
         {% blocktranslate trimmed with event_name=obj.event.name|event_localize %}

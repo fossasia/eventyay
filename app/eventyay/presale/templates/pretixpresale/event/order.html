@@ -7,6 +7,7 @@
 {% load eventurl %}
 {% load phone_format %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block title %}
     {% if "thanks" in request.GET or "paid" in request.GET %}
         {% trans "Thank you!" %}

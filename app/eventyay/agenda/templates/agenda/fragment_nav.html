@@ -3,6 +3,7 @@
 {% load event_tags %}
 {% load eventurl %}
 
+{% load presale_locale %}
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
 </a>

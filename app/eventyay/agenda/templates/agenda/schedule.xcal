@@ -1,3 +1,4 @@
+{% load presale_locale %}
 <?xml version='1.0' encoding='utf-8' ?>
 <iCalendar xmlns:pentabarf='http://pentabarf.org' xmlns:xCal='urn:ietf:params:xml:ns:xcal'>
     <vcalendar>

@@ -1,6 +1,7 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 {% if schedule.comment %}
     <p>{{ schedule.comment|event_localize|rich_text }}</p>
 {% elif schedule.changes.action == "create" %}

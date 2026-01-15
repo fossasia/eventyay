@@ -8,6 +8,11 @@
 {% load rules %}
 {% load safelink %}
 
+{% load presale_locale %}
+{% block header_tabs %}
+    {% include 'agenda/fragment_nav.html' %}
+{% endblock header_tabs %}
+
 {% block content %}
     {% with cfp=request.event.cfp %}
         {% has_event_perm "base.list_featured_submission" request.user request request.event as can_view_featured_submissions %}

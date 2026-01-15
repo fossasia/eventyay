@@ -6,6 +6,7 @@
 {% load rules %}
 {% load safelink %}
 
+{% load presale_locale %}
 {% block custom_header %}
     {% block alternate_link %}
         <link rel="alternate" type="application/atom+xml" title="{{ request.event.name|event_localize }} Schedule Versions" href="{{ request.event.urls.feed }}" />

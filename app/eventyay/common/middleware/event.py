@@ -137,6 +137,7 @@ class EventPermissionMiddleware:
         )
         translation.activate(ui_language)
         request.LANGUAGE_CODE = translation.get_language()
+        request.ui_language = ui_language
 
         # Event content language: limited to event locales when available
         event_language = None
