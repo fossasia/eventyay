@@ -47,6 +47,7 @@ from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
+from eventyay.common.mail import get_reply_to_address
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -185,8 +186,6 @@ def mail(
 
             # Use unified Reply-To resolution
             if not headers.get('Reply-To'):
-                from eventyay.common.mail import get_reply_to_address
-                
                 reply_to = get_reply_to_address(
                     event,
                     override=event_reply_to if not auto_email else None
