@@ -27,6 +27,7 @@ from eventyay.base.notifications import get_all_notification_types
 from ...navigation import get_account_navigation
 from .common import AccountMenuMixIn
 
+
 logger = getLogger(__name__)
 PASSWORD_RESET_INTENT = 'password_reset'
 
@@ -209,14 +210,14 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
                 self.request.user.log_action('eventyay.user.settings.notifications.enabled', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
-                dest += '?event={}'.format(self.event.pk)
+                dest += f'?event={self.event.pk}'
             return redirect(dest)
         else:
             for method, __ in NotificationSetting.CHANNELS:
                 old_enabled = self.currently_set[method]
 
                 for at in self.types.keys():
-                    val = request.POST.get('{}:{}'.format(method, at))
+                    val = request.POST.get(f'{method}:{at}')
 
                     # True → False
                     if old_enabled.get(at) is True and val == 'off':
@@ -249,7 +250,7 @@ class NotificationSettingsView(LoginRequiredMixin, AccountMenuMixIn, TemplateVie
             self.request.user.log_action('eventyay.user.settings.notifications.changed', user=self.request.user)
             dest = reverse('eventyay_common:account.notifications')
             if self.event:
-                dest += '?event={}'.format(self.event.pk)
+                dest += f'?event={self.event.pk}'
             return redirect(dest)
 
     def get_context_data(self, **kwargs):
