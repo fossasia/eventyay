@@ -31,6 +31,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 from django_otp import match_token
 from oauth2_provider.views import AuthorizationView
+from pydantic import BaseModel, Field
 from webauthn.helpers import generate_challenge
 
 from eventyay.base.auth import get_auth_backends
@@ -50,6 +51,12 @@ from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
 
 logger = logging.getLogger(__name__)
+
+
+class LoginProviderSettings(BaseModel):
+    """Pydantic model for login provider settings"""
+    state: bool = False
+    is_preferred: bool = False
 
 
 def get_used_backend(request):
@@ -157,44 +164,51 @@ def login(request):
     ctx['backend'] = backend
 
     gs = GlobalSettingsObject()
-    login_providers = gs.settings.get('login_providers', as_type=dict) or {}
+    login_providers_raw = gs.settings.get('login_providers', as_type=dict) or {}
+    
+    # Parse raw settings into Pydantic models for type safety and cleaner access
+    login_providers = {}
+    for provider_name, provider_settings in login_providers_raw.items():
+        try:
+            login_providers[provider_name] = LoginProviderSettings(**provider_settings)
+        except Exception as e:
+            logger.warning(
+                "Failed to parse login provider settings for '%s': %s. Skipping this provider.",
+                provider_name,
+                str(e)
+            )
+            continue
 
-    # Filter enabled providers and sort by is_preferred (True first, then False)
+    # Filter enabled providers
     enabled_providers = {
         provider: settings
         for provider, settings in login_providers.items()
-        if settings.get('state', False)
+        if settings.state
     }
 
-    # Sort: preferred providers first, then non-preferred
-    # sorted() with key returning (not is_preferred, provider) ensures:
-    # - is_preferred=True comes first (False < True, so not True = False comes before not False = True)
-    # - Within same preference level, maintain alphabetical order by provider name
+    # Sort: preferred providers first, then non-preferred, with alphabetical ordering within each group
     ordered_providers = dict(
         sorted(
             enabled_providers.items(),
-            key=lambda item: (not item[1].get('is_preferred', False), item[0])
+            key=lambda name_settings: (not name_settings[1].is_preferred, name_settings[0])
         )
     )
 
     # Log warning if preferred provider is disabled
-    for provider, provider_settings in login_providers.items():
-        if provider_settings.get('is_preferred', False) and not provider_settings.get('state', False):
+    for provider_name, provider_settings in login_providers.items():
+        if provider_settings.is_preferred and not provider_settings.state:
             logger.warning(
                 "Login provider '%s' is marked as preferred but is disabled. "
                 "It will not appear in the login page.",
-                provider
+                provider_name
             )
 
     # Log warning if multiple providers are marked as preferred
-    preferred_count = sum(
-        1 for settings in enabled_providers.values()
-        if settings.get('is_preferred', False)
-    )
+    preferred_count = sum(1 for settings in enabled_providers.values() if settings.is_preferred)
     if preferred_count > 1:
         preferred_names = [
             provider for provider, settings in enabled_providers.items()
-            if settings.get('is_preferred', False)
+            if settings.is_preferred
         ]
         logger.warning(
             "Multiple login providers are marked as preferred. "
