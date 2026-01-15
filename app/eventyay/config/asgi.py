@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/5.1/howto/deployment/asgi/
 import os
 
 os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'production')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.next_settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 
 # Initialize Django ASGI application early to ensure apps are loaded
 from django.core.asgi import get_asgi_application
