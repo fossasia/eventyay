@@ -525,9 +525,7 @@ a.header-nav.btn,
 /* Active button inset shadow */
 .header-nav.btn.btn-outline-success.active,
 .header-nav .btn.btn-outline-success.active,
-.header-nav.btn.btn-success,
 .header-nav.btn.btn-success.active,
-.header-nav .btn.btn-success,
 .header-nav .btn.btn-success.active {
   box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
 }
