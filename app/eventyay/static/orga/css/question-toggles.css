@@ -217,3 +217,8 @@ select.required-status-dropdown[data-current="after_deadline"] {
     padding-top: 1rem;
     padding-bottom: 1rem;
 }
+
+/* Vertically center toggle switches and dropdowns in table cells */
+.cfp-option-table tbody td {
+    vertical-align: middle;
+}
