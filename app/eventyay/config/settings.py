@@ -1133,7 +1133,25 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 INTERNAL_IPS = ('127.0.0.1', '::1')
 
 # Security
-ALLOWED_HOSTS = ["*"]
+# ALLOWED_HOSTS logic to handle JSON strings (for platforms like older configs) or direct lists
+import json
+
+val = conf.allowed_hosts
+if val:
+    if isinstance(val, str):
+        if val.strip().startswith("["):
+             try:
+                 ALLOWED_HOSTS = json.loads(val)
+             except json.JSONDecodeError:
+                 ALLOWED_HOSTS = [val]
+        else:
+            ALLOWED_HOSTS = [val]
+    elif isinstance(val, list):
+         ALLOWED_HOSTS = val
+    else:
+         ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = ["*"]
 CSRF_TRUSTED_ORIGINS = ["https://*.run.app"]
 
 # Robust Redis Cache
