@@ -9,7 +9,7 @@
 
 .required-status-wrapper::after {
     content: '\f0d7'; /* Font Awesome caret-down */
-    font-family: 'ForkAwesome';
+    font-family: 'FontAwesome';
     position: absolute;
     right: 8px;
     top: 50%;
