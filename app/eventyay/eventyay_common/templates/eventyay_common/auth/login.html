@@ -6,116 +6,116 @@
 {% load append_next_url %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'eventyay-common/css/auth_login.css' %}">
-<form class="form-signin" action="" method="post">
-    {% csrf_token %}
+    <link rel="stylesheet" href="{% static 'eventyay-common/css/auth_login.css' %}">
+    <form class="form-signin" action="" method="post">
+        {% csrf_token %}
 
-    {# Show preferred provider first if one exists #}
-    {% if login_providers %}
-        {% for provider, settings in login_providers.items %}
-            {% if settings.state and settings.is_preferred %}
-                <div class="form-group buttons preferred-provider">
-                    <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
-                       data-method="post"
-                       class="btn btn-primary btn-block btn-lg">
-                        {% with provider|capfirst as provider_capitalized %}
-                            {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-                        {% endwith %}
-                    </a>
-
-                    {# Visual indicator only: long session automatically enabled for preferred provider #}
-                    <div class="checkbox preferred-provider-remember">
-                        <label>
-                            <input type="checkbox" checked disabled>
-                            {% translate "Keep me logged in" %}
-                        </label>
-                    </div>
-                </div>
-
-                {# Show separator only if there are OTHER login options (email or other providers) #}
-                {% if backend.login_form_fields or login_providers|length > 1 %}
-                    <div class="login-separator">
-                        <hr>
-                        <span>{% translate "or use the following" %}</span>
-                    </div>
-                {% endif %}
-            {% endif %}
-        {% endfor %}
-    {% endif %}
-
-    {# Collapsible email login section (unchanged behavior) #}
-    <div id="login-form" class="collapse">
-        {% if backends|length > 1 %}
-            <ul class="nav nav-pills">
-                {% for b in backends %}
-                    {% if b.visible %}
-                        <li class="{% if backend.identifier == b.identifier %}active{% endif %}">
-                            <a href="{% if b.url %}{{ b.url }}{% else %}?{% url_replace request "backend" b.identifier %}{% endif %}">
-                                {{ b.verbose_name }}
-                            </a>
-                        </li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-            <br>
-        {% endif %}
-
-        {% bootstrap_form form %}
-
-        <div class="form-group buttons">
-            {% if backend.login_form_fields %}
-                <button type="submit" class="btn btn-primary btn-block">
-                    {% translate "Log in" %}
-                </button>
-            {% endif %}
-
-            {% if backend.url %}
-                <a href="{{ backend.url }}" class="btn btn-primary btn-block">
-                    {{ backend.verbose_name }}
-                </a>
-            {% endif %}
-
-            {% if backend.identifier == "native" %}
-                {% if can_reset %}
-                    <a href="{% url "eventyay_common:auth.forgot" %}" class="btn btn-link btn-block">
-                        {% translate "Lost password?" %}
-                    </a>
-                {% endif %}
-                {% if can_register %}
-                    <a href='{% url "eventyay_common:auth.register" %}{% append_next request.GET.next %}'
-                       class="btn btn-link btn-block">
-                        {% translate "Register" %}
-                    </a>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
-
-    {# Secondary login options #}
-    <div class="form-group buttons">
-        {% if backend.login_form_fields %}
-            <button type="button"
-                    id="toggle-login"
-                    class="btn btn-default btn-block"
-                    data-toggle="collapse"
-                    data-target="#login-form">
-                {% translate "Login with Email" %}
-            </button>
-        {% endif %}
-
+        {# Show preferred provider first if one exists #}
         {% if login_providers %}
             {% for provider, settings in login_providers.items %}
-                {% if settings.state and not settings.is_preferred %}
-                    <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
-                       data-method="post"
-                       class="btn btn-default btn-block">
-                        {% with provider|capfirst as provider_capitalized %}
-                            {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
-                        {% endwith %}
-                    </a>
+                {% if settings.state and settings.is_preferred %}
+                    <div class="form-group buttons preferred-provider">
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
+                           data-method="post"
+                           class="btn btn-primary btn-block btn-lg">
+                            {% with provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+
+                        {# Visual indicator only: long session automatically enabled for preferred provider #}
+                        <div class="checkbox preferred-provider-remember">
+                            <label>
+                                <input type="checkbox" checked disabled>
+                                {% translate "Keep me logged in" %}
+                            </label>
+                        </div>
+                    </div>
+
+                    {# Show separator only if there are OTHER login options (email or other providers) #}
+                    {% if backend.login_form_fields or login_providers|length > 1 %}
+                        <div class="login-separator">
+                            <hr>
+                            <span>{% translate "or use the following" %}</span>
+                        </div>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
         {% endif %}
-    </div>
-</form>
+
+        {# Collapsible email login section (unchanged behavior) #}
+        <div id="login-form" class="collapse">
+            {% if backends|length > 1 %}
+                <ul class="nav nav-pills">
+                    {% for b in backends %}
+                        {% if b.visible %}
+                            <li class="{% if backend.identifier == b.identifier %}active{% endif %}">
+                                <a href="{% if b.url %}{{ b.url }}{% else %}?{% url_replace request "backend" b.identifier %}{% endif %}">
+                                    {{ b.verbose_name }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                <br>
+            {% endif %}
+
+            {% bootstrap_form form %}
+
+            <div class="form-group buttons">
+                {% if backend.login_form_fields %}
+                    <button type="submit" class="btn btn-primary btn-block">
+                        {% translate "Log in" %}
+                    </button>
+                {% endif %}
+
+                {% if backend.url %}
+                    <a href="{{ backend.url }}" class="btn btn-primary btn-block">
+                        {{ backend.verbose_name }}
+                    </a>
+                {% endif %}
+
+                {% if backend.identifier == "native" %}
+                    {% if can_reset %}
+                        <a href="{% url "eventyay_common:auth.forgot" %}" class="btn btn-link btn-block">
+                            {% translate "Lost password?" %}
+                        </a>
+                    {% endif %}
+                    {% if can_register %}
+                        <a href='{% url "eventyay_common:auth.register" %}{% append_next request.GET.next %}'
+                           class="btn btn-link btn-block">
+                            {% translate "Register" %}
+                        </a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        {# Secondary login options #}
+        <div class="form-group buttons">
+            {% if backend.login_form_fields %}
+                <button type="button"
+                        id="toggle-login"
+                        class="btn btn-default btn-block"
+                        data-toggle="collapse"
+                        data-target="#login-form">
+                    {% translate "Login with Email" %}
+                </button>
+            {% endif %}
+
+            {% if login_providers %}
+                {% for provider, settings in login_providers.items %}
+                    {% if settings.state and not settings.is_preferred %}
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
+                           data-method="post"
+                           class="btn btn-default btn-block">
+                            {% with provider|capfirst as provider_capitalized %}
+                                {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
+                            {% endwith %}
+                        </a>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+    </form>
 {% endblock %}
