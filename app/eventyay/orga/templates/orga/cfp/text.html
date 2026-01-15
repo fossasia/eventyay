@@ -108,9 +108,12 @@
                 <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
-                            <th>{% translate "Proposal information" %}</th>
-                            <th class="text-center">{% translate "Required" %}</th>
+                            <th colspan="5" class="thead-light text-left">{% translate "Proposal information" %}</th>
+                        </tr>
+                        <tr>
+                            <th></th>
                             <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
                         </tr>
@@ -119,17 +122,17 @@
                         <tr>
                             <th>{% translate "Title" %}</th>
                             <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">
                                 <select class="required-status-dropdown" disabled aria-readonly="true"
                                     aria-describedby="title-required-help" data-current="required">
                                     <option value="required" selected>Required</option>
                                 </select>
                                 <span id="title-required-help" class="sr-only">{% translate "The title is always required and cannot be changed." %}</span>
-                            </td>
-                            <td class="text-center">
-                                <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
-                                    <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
-                                    <span class="toggle-slider"></span>
-                                </label>
                             </td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
@@ -140,15 +143,6 @@
                         <tr>
                             <th>{% translate "Abstract" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Abstract">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Abstract">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -157,6 +151,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Abstract">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
@@ -168,15 +171,6 @@
                         <tr>
                             <th>{% translate "Description" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Description">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Description">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -185,6 +179,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Description">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
@@ -196,15 +199,6 @@
                         <tr>
                             <th>{% translate "Notes" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Notes">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Notes">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -213,6 +207,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Notes">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -224,15 +227,6 @@
                         <tr>
                             <th>{% translate "Track" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Track">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Track">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -241,6 +235,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Track">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -252,15 +255,6 @@
                         <tr>
                             <th>{% translate "Duration" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Duration">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Duration">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -269,6 +263,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Duration">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -281,16 +284,6 @@
                         <tr>
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    {% if field.value == 'do_not_ask' %}disabled{% endif %}
-                                    aria-label="Required status for Content Locale">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Content Locale">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -299,6 +292,16 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    {% if field.value == 'do_not_ask' %}disabled{% endif %}
+                                    aria-label="Required status for Content Locale">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -311,15 +314,6 @@
                         <tr>
                             <th>{% translate "Session image" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Session image">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Session image">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -328,6 +322,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Session image">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -339,15 +342,6 @@
                         <tr>
                             <th>{% translate "Recording opt-out" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Recording opt-out">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Recording opt-out">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -357,6 +351,15 @@
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
                             </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Recording opt-out">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
+                            </td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -365,22 +368,13 @@
 
                         {# Speaker Section #}
                         <tr>
-                            <th colspan="5" class="thead-light">{% translate "Speaker Information" %}</th>
+                            <th colspan="5" class="thead-light text-left">{% translate "Speaker Information" %}</th>
                         </tr>
 
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
                         <tr>
                             <th>{% translate "Biography" %}</th>
-                            <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Biography">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Biography">
@@ -390,6 +384,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Biography">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
@@ -401,15 +404,6 @@
                         <tr>
                             <th>{% translate "Avatar" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Avatar">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Avatar">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -418,6 +412,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Avatar">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -429,15 +432,6 @@
                         <tr>
                             <th>{% translate "Avatar source" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Avatar source">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Avatar source">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -446,6 +440,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Avatar source">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
@@ -457,15 +460,6 @@
                         <tr>
                             <th>{% translate "Avatar license" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Avatar license">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Avatar license">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -474,6 +468,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Avatar license">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
@@ -485,15 +488,6 @@
                         <tr>
                             <th>{% translate "Availability" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Availability">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Availability">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -502,6 +496,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Availability">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>
@@ -513,15 +516,6 @@
                         <tr>
                             <th>{% translate "Additional speakers" %}</th>
                             <td class="text-center">
-                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                    aria-label="Required status for Additional speakers">
-                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
-                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
-                                        Required</option>
-                                </select>
-                            </td>
-                            <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-label="Toggle active state for Additional speakers">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
@@ -530,6 +524,15 @@
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
                                     id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                    data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                    aria-label="Required status for Additional speakers">
+                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                        Required</option>
+                                </select>
                             </td>
                             <td></td>
                             <td></td>

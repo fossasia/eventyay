@@ -8,7 +8,8 @@
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
-    min-width: 80px;
+    width: 110px;
+    max-width: 110px;
     text-align: center;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
@@ -193,4 +194,9 @@ select.required-status-dropdown[data-current="after_deadline"] {
     font-weight: bold;
     padding-top: 1rem;
     padding-bottom: 1rem;
+}
+
+/* Vertically center toggle switches and dropdowns in table cells */
+.cfp-option-table tbody td {
+    vertical-align: middle;
 }
