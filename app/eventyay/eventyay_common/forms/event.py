@@ -43,6 +43,7 @@ class EventCommonSettingsForm(SettingsForm):
         'theme_round_borders',
         'primary_font',
         'frontpage_text',
+        'partner_section_heading',
     ]
 
     def clean(self):

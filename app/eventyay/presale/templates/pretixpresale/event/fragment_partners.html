@@ -1,0 +1,46 @@
+{% load i18n static %}
+
+{% if sponsor_groups %}
+<link rel="stylesheet" type="text/css" href="{% static "pretixpresale/css/partners.css" %}">
+<aside class="front-page partner-section" aria-labelledby="partners-heading">
+    <div class="partner-section-wrapper">
+        <h3 id="partners-heading">
+            {% if event.settings.partner_section_heading %}
+                {{ event.settings.partner_section_heading }}
+            {% else %}
+                {% trans "Supported by" %}
+            {% endif %}
+        </h3>
+        
+        {% for group in sponsor_groups %}
+        <div class="sponsor-group mb-4">
+            <h4 class="sponsor-group-title">{{ group.name }}</h4>
+            <div class="partner-logos">
+                {% for partner in group.partners.all %}
+                <div class="partner-item">
+                    {% if partner.link %}
+                    <a href="{{ partner.link }}" target="_blank" rel="noopener noreferrer" 
+                       title="{{ partner.name }}" class="partner-link">
+                    {% endif %}
+                        {% if partner.logo %}
+                        <img src="{{ partner.logo.url }}" 
+                             alt="{{ partner.name }}"
+                             class="partner-logo"
+                             {% if partner.logo_width %}
+                             style="max-width: {{ partner.logo_width }}px;"
+                             {% endif %}
+                             loading="lazy">
+                        {% else %}
+                        <span class="partner-name-only">{{ partner.name }}</span>
+                        {% endif %}
+                    {% if partner.link %}
+                    </a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</aside>
+{% endif %}

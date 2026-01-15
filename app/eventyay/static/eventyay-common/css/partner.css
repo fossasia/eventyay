@@ -1,0 +1,469 @@
+/* Partner and Sponsor Management Styles */
+
+/* Partner section panels */
+.partner-section-panel {
+    margin-bottom: 20px;
+}
+
+.partner-panel-heading {
+    background-color: #e8e8e8;
+    padding: 15px;
+}
+
+.partner-panel-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-panel-body {
+    padding: 20px;
+}
+
+.partner-help-block {
+    margin-bottom: 15px;
+}
+
+/* Partner section heading input */
+.partner-heading-label {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.partner-heading-input-wrapper input[type="text"] {
+    width: 100%;
+    font-size: 18px;
+    padding: 12px 15px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    transition: border-color 0.3s;
+}
+
+.partner-heading-input-wrapper input[type="text"]:focus {
+    border-color: #5bc0de;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(91, 192, 222, 0.1);
+}
+
+.partner-heading-input-wrapper input[type="text"]::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+/* Sponsor groups list */
+.sponsor-groups-list {
+    margin-bottom: 15px;
+}
+
+.sponsor-group-item {
+    margin-bottom: 10px;
+}
+
+.sponsor-group-heading {
+    background-color: #f9f9f9;
+    padding: 12px 15px;
+}
+
+.sponsor-group-handle {
+    cursor: move;
+    margin-right: 10px;
+    color: #999;
+}
+
+.sponsor-group-title {
+    font-size: 15px;
+}
+
+.sponsor-group-badge {
+    margin-left: 8px;
+}
+
+.sponsor-group-meta {
+    margin-left: 8px;
+    font-size: 12px;
+}
+
+.sponsor-group-body {
+    padding: 10px 15px;
+    background-color: #fff;
+}
+
+/* Partner logos preview */
+.partner-logos-preview {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.partner-item-inline {
+    position: relative;
+}
+
+.partner-drag-handle {
+    cursor: move;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 10px;
+    display: none;
+}
+
+.partner-item-inline:hover .partner-drag-handle {
+    display: block;
+}
+
+.partner-logo-preview {
+    max-height: 40px;
+    max-width: 100px;
+    object-fit: contain;
+    border: 1px solid #ddd;
+    padding: 3px;
+    background: white;
+}
+
+.partner-name-label {
+    padding: 5px 10px;
+}
+
+/* Partner form */
+.partner-form-group {
+    margin-bottom: 15px;
+}
+
+.partner-form-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    position: relative;
+}
+
+.partner-form-item .panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-form-number {
+    background-color: #f0f0f0;
+    padding: 5px 10px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.partner-delete-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.partner-logo-upload-container {
+    margin-top: 10px;
+    padding: 10px;
+    border: 2px dashed #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.partner-logo-current {
+    max-height: 100px;
+    display: block;
+    margin: 10px auto;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: white;
+    transition: max-width 0.2s ease;
+}
+
+.partner-empty-state {
+    margin-bottom: 15px;
+}
+
+.partner-empty-warning {
+    text-align: center;
+    padding: 30px;
+}
+
+.partner-empty-warning i {
+    font-size: 48px;
+    color: #f0ad4e;
+    margin-bottom: 15px;
+}
+
+/* Sortable styles */
+.sortable-ghost {
+    opacity: 0.5;
+    background: #f0f0f0 !important;
+}
+
+.sortable-drag {
+    opacity: 0.8;
+}
+
+/* Partner form item transitions */
+.partner-form-item {
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.partner-form-item .handle {
+    cursor: move;
+    margin-right: 10px;
+    color: #999;
+    transition: color 0.2s ease;
+}
+
+.partner-form-item .handle:hover {
+    color: #333 !important;
+}
+
+/* Logo width slider styling */
+.logo-width-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.logo-width-slider {
+    flex: 1;
+    cursor: pointer;
+}
+
+.logo-width-slider::-webkit-slider-thumb {
+    cursor: pointer;
+}
+
+.logo-width-slider::-moz-range-thumb {
+    cursor: pointer;
+}
+
+input[name$="-logo_width"] {
+    width: 80px !important;
+    text-align: center;
+}
+
+.logo-width-display {
+    min-width: 60px;
+    font-weight: bold;
+}
+
+/* Logo preview animations */
+.logo-preview-container {
+    animation: fadeIn 0.3s ease;
+    margin-top: 10px;
+    display: none;
+}
+
+.logo-preview-container.show {
+    display: block;
+}
+
+.logo-preview-img {
+    max-height: 100px;
+    border: 1px solid #ddd;
+    padding: 5px;
+    background: white;
+    margin-top: 5px;
+    transition: max-width 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Delete and remove buttons */
+input[name$="-DELETE"] {
+    display: none;
+}
+
+.delete-partner-btn,
+.remove-partner-btn {
+    transition: all 0.2s ease;
+}
+
+.delete-partner-btn:hover:not(:disabled),
+.remove-partner-btn:hover {
+    background-color: #c9302c;
+    transform: scale(1.05);
+}
+
+/* Panel styling */
+.partner-form-item .panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-form-item .panel-body {
+    padding: 12px;
+}
+
+/* Logo size slider (deprecated - kept for backward compatibility) */
+.logo-size-slider-container {
+    margin-top: 10px;
+}
+
+.logo-size-value {
+    font-weight: bold;
+    color: #333;
+    margin-left: 10px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .sponsor-group-heading .row {
+        flex-direction: column;
+    }
+    
+    .sponsor-group-heading .col-md-5 {
+        margin-top: 10px;
+    }
+    
+    .partner-logos-preview {
+        justify-content: center;
+    }
+}
+
+/* Delete confirmation page styles */
+.partners-delete-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.partner-delete-card {
+    text-align: center;
+    max-width: 200px;
+}
+
+.partner-delete-logo-container {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.partner-delete-logo {
+    max-height: 80px;
+    height: auto;
+    width: auto;
+}
+
+.partner-delete-placeholder {
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 10px;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.partner-delete-placeholder i {
+    font-size: 48px;
+}
+
+.partner-delete-name {
+    font-weight: 500;
+    color: #333;
+}
+
+/* Common panel styles */
+.partner-panel-danger {
+    margin: 0;
+}
+
+.partner-panel-danger-heading {
+    background-color: #d9534f;
+    color: white;
+    padding: 15px;
+}
+
+.partner-panel-danger-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-panel-danger-body {
+    padding: 20px;
+}
+
+.partner-alert-danger-border {
+    border-left: 4px solid #d9534f;
+}
+
+.partner-panel-default-spacing {
+    margin-top: 20px;
+}
+
+.partner-panel-default-heading {
+    background-color: #f5f5f5;
+    padding: 12px 15px;
+}
+
+.partner-form-spacing {
+    margin-top: 20px;
+}
+
+/* Group form styles */
+.partner-group-panel {
+    margin: 0;
+}
+
+.partner-group-panel-heading {
+    background-color: #e8e8e8;
+    padding: 15px;
+}
+
+.partner-group-panel-title {
+    font-size: 16px;
+    margin: 0;
+}
+
+.partner-group-panel-body {
+    padding: 20px;
+}
+
+.partner-group-form-group-spacing {
+    margin-top: 20px;
+}
+
+/* Manage partners page styles */
+.partner-manage-panel-heading {
+    background-color: #f5f5f5;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-preview-hidden {
+    display: none;
+}
+
+.partners-list-hidden {
+    display: none;
+}
+
+

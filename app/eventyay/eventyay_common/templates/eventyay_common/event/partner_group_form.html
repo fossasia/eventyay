@@ -1,0 +1,56 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}
+    {% if sponsor_group.pk %}
+        {% trans "Edit Sponsor Group" %}
+    {% else %}
+        {% trans "Add Sponsor Group" %}
+    {% endif %}
+{% endblock %}
+
+{% block inside %}
+<div class="panel panel-default partner-group-panel">
+    <div class="panel-heading partner-group-panel-heading">
+        <h3 class="panel-title partner-group-panel-title">
+            {% if sponsor_group.pk %}
+                {% trans "Edit Sponsor Group" %}
+            {% else %}
+                {% trans "Add Sponsor Group" %}
+            {% endif %}
+        </h3>
+    </div>
+    <div class="panel-body partner-group-panel-body">
+        <form action="" method="post">
+            {% csrf_token %}
+            {% bootstrap_form_errors form %}
+            
+            <div class="form-group">
+                <label for="id_name">{% trans "Group name" %}</label>
+                {{ form.name }}
+                {% if form.name.help_text %}
+                <p class="help-block">{{ form.name.help_text }}</p>
+                {% endif %}
+            </div>
+            
+            {{ form.order }}
+            
+            <div class="form-group partner-group-form-group-spacing">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa fa-save"></i>
+                    {% if sponsor_group.pk %}
+                        {% trans "Save Changes" %}
+                    {% else %}
+                        {% trans "Create Group" %}
+                    {% endif %}
+                </button>
+                <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#partner-tab" 
+                   class="btn btn-default">
+                    <i class="fa fa-times"></i> {% trans "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
