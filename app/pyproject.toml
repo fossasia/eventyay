@@ -222,6 +222,7 @@ dependencies = [
     "zipp>=3.21.0",
     "zope-interface>=7.2",
     "zxcvbn>=4.4.28",
+    "whitenoise>=6.6.0",
 ]
 
 [build-system]
