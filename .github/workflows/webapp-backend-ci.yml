@@ -177,10 +177,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install system packages (gettext)
+      - name: Install system packages (gettext + redis-tools)
         run: |
           sudo apt-get update
-          sudo apt-get install -y gettext
+          # redis-cli is provided by redis-tools; curl is needed for the HTTP healthcheck.
+          # postgresql-client provides pg_isready on ubuntu-latest (often already present, but keep it explicit).
+          sudo apt-get install -y gettext redis-tools curl postgresql-client
 
       - uses: actions/setup-python@v5
         with:
