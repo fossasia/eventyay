@@ -21,6 +21,7 @@ from eventyay.base.models.event import Event
 from eventyay.base.models.orders import Order, OrderPosition
 from eventyay.base.services.mail import TolerantDict
 from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.common.mail import get_reply_to_address
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.helpers.timezone import get_browser_timezone, attach_timezone_to_naive_clock_time
 from eventyay.plugins.sendmail.forms import EmailQueueEditForm
@@ -41,7 +42,6 @@ class BulkReplyToMixin:
     """Mixin for bulk email views to resolve Reply-To address."""
     
     def _get_reply_to_for_bulk_email(self):
-        from eventyay.common.mail import get_reply_to_address
         return get_reply_to_address(
             self.request.event
         )
