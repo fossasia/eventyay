@@ -678,7 +678,7 @@ def _redeem_process(
                         'position': op.id,
                         'positionid': op.positionid,
                         'errorcode': e.code,
-                        'reason_explanation': 'unkown',
+                        'reason_explanation': str(e.msg),
                         'force': force,
                         'datetime': dateandtime,
                         'type': checkin_type,
@@ -687,26 +687,17 @@ def _redeem_process(
                     user=user,
                     auth=auth,
                 )
-                Checkin.objects.create(
-                    position=op,
-                    **common_checkin_args,
-                )
-
-            serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
-            position_data = CheckinListOrderPositionSerializer(op, context=serializer_context).data
-            downloads = _append_badge_download(position_data['downloads'], op, request)
-            position_data['downloads'] = downloads
 
             return Response(
                 {
-                    'status': 'redeemed',
-                    'reason': 'Already checked in',
+                    'status': 'error',
+                    'code': e.code,
+                    'reason': str(e.msg),
                     'require_attention': op.require_checkin_attention,
-                    'position': position_data,
-                    'list': MiniCheckinListSerializer(list_by_event[op.order.event_id]).data,
                 },
-                status=201,
+                status=400,
             )
+
         else:
             serializer_context = _setup_context(request, expand, op.order.event, pdf_data, user, auth)
             position_data = CheckinListOrderPositionSerializer(op, context=serializer_context).data
