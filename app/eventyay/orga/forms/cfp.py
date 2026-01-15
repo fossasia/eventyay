@@ -55,6 +55,12 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         help_text=_('Allow submitters to share a secret link to their proposal with others.'),
         required=False,
     )
+    count_length_in = forms.ChoiceField(
+        label=_('Count text length in'),
+        choices=(('chars', _('Characters')), ('words', _('Words'))),
+        widget=forms.RadioSelect(),
+        required=False,
+    )
 
     def __init__(self, *args, obj, **kwargs):
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
@@ -62,6 +68,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         super().__init__(*args, **kwargs)
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
+        self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
         self.length_fields = [
             'title',
             'abstract',
@@ -116,6 +123,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
+        self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in')
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]

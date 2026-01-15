@@ -10,6 +10,7 @@ from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -61,8 +62,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
-            'fields': _('Fields'),
+            'general': _('General information')
         }
 
     @context
@@ -106,12 +106,53 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
         return result
 
 
+class CfPForms(EventPermissionRequired, TemplateView):
+    template_name = 'orga/cfp/forms.html'
+    permission_required = 'base.update_event'
+
+    @context
+    @cached_property
+    def sform(self):
+        return CfPSettingsForm(
+            read_only=False,
+            locales=self.request.event.locales,
+            obj=self.request.event,
+            data=self.request.POST if self.request.method == 'POST' else None,
+            prefix='settings',
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['generic_title'] = _('Forms')
+        context['has_create_permission'] = True
+        context['question_list'] = (
+            questions_for_user(self.request, self.request.event, self.request.user)
+            .annotate(answer_count=Count('answers'))
+            .order_by('position')
+        )
+        context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if self.sform.is_valid():
+            self.sform.save()
+            messages.success(request, phrases.base.saved)
+            return redirect(request.path)
+        messages.error(request, phrases.base.error_saving_changes)
+        return self.get(request, *args, **kwargs)
+
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
     form_class = TalkQuestionForm
     template_namespace = 'orga/cfp'
     context_object_name = 'question'
     detail_is_update = False
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if 'target' in self.request.GET:
+            initial['target'] = self.request.GET['target']
+        return initial
 
     def get_queryset(self):
         return (
