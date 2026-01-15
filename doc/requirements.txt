@@ -1,4 +1,4 @@
--e ../
+
 sphinx
 sphinx-rtd-theme
 sphinxcontrib-httpdomain

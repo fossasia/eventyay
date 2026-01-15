@@ -1,10 +1,11 @@
 version: 2
 
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  # Application dependencies - managed by uv
+  - package-ecosystem: "uv"
+    directory: "/app"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     versioning-strategy: increase
 
   - package-ecosystem: "npm"
