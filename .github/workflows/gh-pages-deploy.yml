@@ -27,7 +27,8 @@ jobs:
         run: |
           sudo add-apt-repository universe multiverse
           sudo apt update
-          sudo apt install -y enchant-2 libffi-dev libssl-dev libxml2-dev libxslt1-dev libxslt1-dev gettext libfreetype-dev libjpeg-dev
+          sudo apt install -y enchant-2 libffi-dev libssl-dev libxml2-dev libxslt1-dev gettext libfreetype-dev libjpeg-dev
+
 
       - name: Install dependencies
         working-directory: doc
@@ -48,8 +49,10 @@ jobs:
           path: doc/_build/html
 
   deploy:
+    if: github.repository == 'fossasia/eventyay'
     runs-on: ubuntu-latest
     needs: build
+
 
     environment:
       name: github-pages
