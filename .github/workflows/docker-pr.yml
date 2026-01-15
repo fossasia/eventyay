@@ -1,0 +1,22 @@
+name: Docker PR Build
+
+on:
+  pull_request:
+    branches: [development, master]
+
+jobs:
+  build_docker_image:
+    name: Build Docker image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        with:
+          context: .
+          push: false
+          tags: eventyay-ticket:${{ github.sha }}
+          build-args: GITHUB_TOKEN=${{ secrets.EVENTYAY_TOKEN }}
