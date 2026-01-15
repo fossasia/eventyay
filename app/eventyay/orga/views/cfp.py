@@ -133,6 +133,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
         return context
 
+    @transaction.atomic
     def post(self, request, *args, **kwargs):
         if self.sform.is_valid():
             self.sform.save()

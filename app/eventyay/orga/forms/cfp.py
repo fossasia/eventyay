@@ -155,11 +155,6 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         help_text=_('If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'),
     )
-    count_length_in = forms.ChoiceField(
-        label=_('Count text length in'),
-        choices=(('chars', _('Characters')), ('words', _('Words'))),
-        widget=forms.RadioSelect(),
-    )
 
     class Meta:
         model = CfP
@@ -169,7 +164,6 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         json_fields = {
             'show_deadline': 'settings',
             'hide_after_deadline': 'settings',
-            'count_length_in': 'settings',
         }
 
 
