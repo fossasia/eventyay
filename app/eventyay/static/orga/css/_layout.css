@@ -498,6 +498,14 @@ aside.sidebar {
 a.header-nav.btn,
 .header-nav a.btn {
   border-radius: 0 !important;
+  border: 1px solid var(--color-primary) !important;
+  font-size: 14px;
+  font-weight: normal;
+  padding: 6px 12px;
+  line-height: 1.42857143;
+  box-sizing: border-box;
+  min-height: 34px;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out;
 }
 
 /* Navigation button hover, focus, and active states */
