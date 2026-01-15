@@ -30,10 +30,11 @@
 }
 
 /* Table styling */
+/* Table styling */
 .speaker-list-table {
   width: 100%;
-  /* min-width increased to account for fixed column widths: 30+580+100+400+80+200 ~= 1400px */
-  min-width: 1400px;
+  /* min-width reduced to fit laptop screens: 30+400+100+300+80+180 ~= 1100px */
+  min-width: 1100px;
   table-layout: fixed;
   margin: 0;
 }
@@ -47,8 +48,8 @@
 }
 
 .speaker-name-column {
-  width: 580px;
-  max-width: 580px;
+  width: 400px;
+  max-width: 400px;
   padding-left: 5px;
 }
 
@@ -65,10 +66,10 @@
 }
 
 .speaker-proposals-column {
-  width: 400px;
-  max-width: 400px;
+  width: 300px;
+  max-width: 300px;
   text-align: right;
-  padding-right: 200px;
+  padding-right: 150px;
 }
 
 .speaker-featured-column {
@@ -78,8 +79,8 @@
 }
 
 .speaker-arrival-column {
-  width: 200px;
-  max-width: 200px;
+  width: 180px;
+  max-width: 180px;
   text-align: right;
   padding-right: 20px;
 }
