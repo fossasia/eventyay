@@ -153,6 +153,7 @@ div[data-formset-body], div[data-formset-form], div[data-nested-formset-form], d
   display: flex;
   align-items: center;
   width: 100%;
+  position: relative;
 }
 
 .colorpicker-preview {
