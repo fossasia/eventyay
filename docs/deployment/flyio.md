@@ -67,7 +67,7 @@ fly redis create
 fly redis status <redis-name>
 
 # Set as secret
-fly secrets set REDIS_URL=<redis-connection-string>
+fly secrets set EVY_REDIS_URL=<redis-connection-string>
 ```
 
 ## Configuration
