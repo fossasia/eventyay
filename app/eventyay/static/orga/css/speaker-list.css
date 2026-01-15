@@ -21,7 +21,7 @@
 
 /* Table wrapper for horizontal scrolling - Target by ID for specificity */
 #speaker-list-wrapper {
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
   display: block;
   overflow-x: auto;
@@ -31,23 +31,25 @@
 
 /* Table styling */
 .speaker-list-table {
-  width: auto;
-  min-width: 0;
-  table-layout: auto;
+  width: 100%;
+  /* min-width increased to account for fixed column widths: 30+580+100+400+80+200 ~= 1400px */
+  min-width: 1400px;
+  table-layout: fixed;
   margin: 0;
 }
 
 /* Column specific styling */
 .speaker-drag-column {
-  width: 50px;
-  max-width: 50px;
-  padding-left: 10px;
-  padding-right: 10px;
+  width: 30px;
+  max-width: 30px;
+  padding-left: 5px;
+  padding-right: 0;
 }
 
 .speaker-name-column {
-  width: 220px;
-  max-width: 220px;
+  width: 580px;
+  max-width: 580px;
+  padding-left: 5px;
 }
 
 .speaker-name-cell {
@@ -56,44 +58,36 @@
 }
 
 .speaker-accepted-column {
-  width: 160px;
-  max-width: 160px;
+  width: 100px;
+  max-width: 100px;
   text-align: right;
-  padding-right: 20px;
+  padding-right: 2px;
 }
 
 .speaker-proposals-column {
-  width: 130px;
-  max-width: 130px;
+  width: 400px;
+  max-width: 400px;
   text-align: right;
-  padding-right: 20px;
+  padding-right: 200px;
 }
 
 .speaker-featured-column {
-  width: 110px;
-  max-width: 110px;
+  width: 80px;
+  max-width: 80px;
   text-align: center;
 }
 
 .speaker-arrival-column {
-  width: 180px;
-  max-width: 180px;
+  width: 200px;
+  max-width: 200px;
   text-align: right;
-  padding-right: 15px;
+  padding-right: 20px;
 }
 
 .speaker-arrival-cell {
   white-space: normal;
-  padding-right: 30px;
+  text-align: right;
+  padding-right: 20px;
 }
 
 /* Responsive table adjustments */
-@media (max-width: 768px) {
-  .speaker-list-table {
-    font-size: 0.9em;
-  }
-
-  .speaker-name-column {
-    width: 25%;
-  }
-}

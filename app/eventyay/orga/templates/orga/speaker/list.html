@@ -7,7 +7,7 @@
 
 {% block extra_title %}{{ page_obj.paginator.count }} {% blocktranslate trimmed count count=page_obj.paginator.count %}submitter{% plural %}submitters{% endblocktranslate %} :: {% endblock extra_title %}
 
-{% block custom_header %}
+{% block stylesheets %}
 <link rel="stylesheet" href="{% static 'orga/css/speaker-list.css' %}">
 {% endblock %}
 
@@ -82,7 +82,6 @@
                     </label>
                 </td>
                 <td class="speaker-arrival-cell">
-                    {% if profile.accepted_submission_count %}
                     {% if can_mark_speaker %}
                     <a class="btn btn-sm btn-{{ profile.has_arrived|yesno:'success,info' }}"
                         href="{{ profile.orga_urls.toggle_arrived }}?from=list">
@@ -97,7 +96,6 @@
                     <a><i class="fa fa-check"></i> {% translate "Arrived" %}</a>
                     {% else %}
                     <a><i class="fa fa-times"></i> {% translate "Not arrived" %}</a>
-                    {% endif %}
                     {% endif %}
                     {% endif %}
                 </td>
