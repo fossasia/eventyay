@@ -75,14 +75,13 @@
             {{ sform.submission_public_review.as_field_group }}
             {{ sform.mail_on_new_submission.as_field_group }}
         </section>
-
+        
         <section role="tabpanel" id="tabpanel-fields" aria-labelledby="tab-fields" tabindex="0" aria-hidden="true">
             {{ form.count_length_in.as_field_group }}
             <fieldset>
-
-                <legend id="information"><div>
-                    {% translate "Proposal information" %}
-                    <span data-dialog-target="#proposal-info-dialog" data-toggle="dialog">
+                <legend id="proposal-information"><div>
+                    {% translate "Session Information" %}
+                    <span data-dialog-target="#session-info-dialog" data-toggle="dialog">
                         <i class="fa fa-question-circle-o text-info"></i>
                     </span>
                 </div></legend>
@@ -92,6 +91,7 @@
                         <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
                     </span></div>
                 </dialog>
+                
                 <div class="table-responsive-sm offset-md-3"><table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
                         <tr>
@@ -134,12 +134,6 @@
                                 <td></td>
                             </tr>
                         {% endif %}
-                        <tr>
-                            <th>{% translate "Additional speakers" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_additional_speaker.as_field_group }}</td>
-                            <td></td>
-                            <td></td>
-                        </tr>
                         <tr>
                             <th>{% translate "Notes" %}</th>
                             <td class="hide-label">{{ sform.cfp_ask_notes.as_field_group }}</td>
@@ -200,20 +194,8 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <th>{% translate "Biography" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_biography.as_field_group }}</td>
-                            <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
-                            <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
-                        </tr>
-                        <tr>
                             <th>{% translate "Profile picture" %}</th>
                             <td class="hide-label">{{ sform.cfp_ask_avatar.as_field_group }}</td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                        <tr>
-                            <th>{% translate "Availability" %}</th>
-                            <td class="hide-label">{{ sform.cfp_ask_availabilities.as_field_group }}</td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -228,6 +210,18 @@
                             <td class="hide-label">{{ sform.cfp_ask_avatar_license.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                        </tr>
+                        <tr>
+                            <th>{% translate "Biography" %}</th>
+                            <td class="hide-label">{{ sform.cfp_ask_biography.as_field_group }}</td>
+                            <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                        </tr>
+                        <tr>
+                            <th>{% translate "Availability" %}</th>
+                            <td class="hide-label">{{ sform.cfp_ask_availabilities.as_field_group }}</td>
+                            <td></td>
+                            <td></td>
                         </tr>
                         {% for item in custom_speaker_fields %}
                             <tr>
