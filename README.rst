@@ -195,7 +195,7 @@ The directory `app/eventyay` is mounted into the docker, thus live editing is su
 Configuration
 -------------
 
-Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/next_settings.py* for possible keys and original values.
+Our configuration are based on TOML files. First of all, check the ``BaseSettings`` class in *app/eventyay/config/settings.py* for possible keys and original values.
 Other than that, the configuration is divided to three running environments:
 
 * ``development``: With default values in *eventyay.development.toml*.
