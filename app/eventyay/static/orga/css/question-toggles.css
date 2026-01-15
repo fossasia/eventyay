@@ -1,5 +1,23 @@
 /* Toggle styles for CfP Custom Fields */
 
+/* Dropdown wrapper for FA icon */
+.required-status-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 110px;
+}
+
+.required-status-wrapper::after {
+    content: '\f0d7'; /* Font Awesome caret-down */
+    font-family: 'ForkAwesome';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 14px;
+}
+
 .required-status-dropdown {
     padding: 4px 24px 4px 8px;
     border: 1px solid;
@@ -11,11 +29,12 @@
     width: 110px;
     max-width: 110px;
     text-align: center;
+    font-family: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
-    background-size: 10px;
+    background-color: transparent;
+    padding-right: 24px;
 }
 
 /* Keyboard focus styles */
@@ -34,21 +53,30 @@ select.required-status-dropdown[data-current="required"] {
     background-color: #28a745 !important;
     border-color: #28a745 !important;
     color: #fff !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+}
+
+.required-status-wrapper[data-current="required"]::after {
+    color: #fff;
 }
 
 select.required-status-dropdown[data-current="optional"] {
     background-color: #fff !important;
     border-color: #6c757d !important;
     color: #6c757d !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c757d' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+}
+
+.required-status-wrapper[data-current="optional"]::after {
+    color: #6c757d;
 }
 
 select.required-status-dropdown[data-current="after_deadline"] {
     background-color: #dc3545 !important;
     border-color: #dc3545 !important;
     color: #fff !important;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 9L1 4h10z'/%3E%3C/svg%3E") !important;
+}
+
+.required-status-wrapper[data-current="after_deadline"]::after {
+    color: #fff;
 }
 
 /* Option colors (for when dropdown is open) */
@@ -78,12 +106,6 @@ select.required-status-dropdown[data-current="after_deadline"] {
     min-width: 120px;
     background-color: #28a745;
     color: #fff;
-
-    /* Dropdown arrow to match select elements */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 12px;
 }
 
 /* Disabled state for dropdown */
@@ -194,9 +216,4 @@ select.required-status-dropdown[data-current="after_deadline"] {
     font-weight: bold;
     padding-top: 1rem;
     padding-bottom: 1rem;
-}
-
-/* Vertically center toggle switches and dropdowns in table cells */
-.cfp-option-table tbody td {
-    vertical-align: middle;
 }
