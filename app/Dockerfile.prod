@@ -112,6 +112,8 @@ RUN python manage.py collectstatic --noinput
 RUN mkdir $APP_HOME/eventyay/static.dist.backup && \
     mv $APP_HOME/eventyay/static.dist/* $APP_HOME/eventyay/static.dist.backup
 
+# Create .secrets to suppress warnings about missing directory
+RUN mkdir -p $APP_HOME/.secrets
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]

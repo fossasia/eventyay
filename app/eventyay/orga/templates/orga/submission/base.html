@@ -97,8 +97,8 @@
                 {% endif %}
                 {% if submission.state == "confirmed" or can_view_speakers %}
                     <details class="dropdown" aria-haspopup="menu" role="menu">
-                        <summary class="color-primary" role="button">
-                            {% translate "Links" %} <i class="fa fa-caret-down"></i>
+                        <summary class="btn btn-outline-info" role="button">
+                            {% translate "Links" %} <i class="fa fa-caret-down ml-1"></i>
                         </summary>
                         <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                             {% if is_publicly_visible or submission.state == "accepted" or submission.state == "confirmed" %}
