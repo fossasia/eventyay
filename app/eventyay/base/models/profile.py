@@ -46,7 +46,7 @@ class SpeakerProfile(PretalxModel):
         verbose_name=_('Featured speaker'),
         help_text=_('Featured speakers will be displayed on the event landing page')
     )
-    featured_order = models.IntegerField(
+    featured_order = models.PositiveSmallIntegerField(
         default=0,
         verbose_name=_('Display order'),
         help_text=_('Order in which speakers are displayed (lower numbers appear first)')

@@ -1,5 +1,6 @@
 import json
 import logging
+from http import HTTPStatus
 
 from django.contrib import messages
 from django.db import transaction
@@ -320,13 +321,9 @@ class SpeakerToggleFeatured(SpeakerViewMixin, View):
                 user=self.request.user,
             )
             return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
-        except Exception as e:
-            logger.error(
-                'Error toggling featured status for speaker',
-                exc_info=True,
-                extra={'speaker_code': code, 'error': str(e)},
-            )
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+        except Exception:
+            logger.exception('Error toggling featured status for speaker %s', code)
+            return JsonResponse({'status': 'error', 'message': 'An error occurred'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
 
 
 class SpeakerReorderView(EventPermissionRequired, View):
@@ -337,16 +334,23 @@ class SpeakerReorderView(EventPermissionRequired, View):
             data = json.loads(request.body)
         except json.JSONDecodeError:
             logger.warning('Invalid JSON in speaker reorder request')
-            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
         
+        if not isinstance(data, dict):
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
+
         speaker_ids = data.get('speaker_ids', [])
         if not isinstance(speaker_ids, list):
-            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
         
+        # Verify all elements are integers
+        if not all(isinstance(x, int) for x in speaker_ids):
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=HTTPStatus.BAD_REQUEST)
+
         # Validate speaker_ids length to prevent abuse
         if len(speaker_ids) > 1000:  # Reasonable maximum
             logger.warning(f'Too many speaker IDs in reorder request: {len(speaker_ids)}')
-            return JsonResponse({'status': 'error', 'message': 'Too many speakers'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Too many speakers'}, status=HTTPStatus.BAD_REQUEST)
         
         # Validate all speaker_ids belong to the current event
         valid_speaker_ids = set(
@@ -359,7 +363,7 @@ class SpeakerReorderView(EventPermissionRequired, View):
         invalid_ids = set(speaker_ids) - valid_speaker_ids
         if invalid_ids:
             logger.warning(f'Invalid speaker IDs in reorder request: {invalid_ids}')
-            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=400)
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=HTTPStatus.BAD_REQUEST)
         
         try:
             with transaction.atomic():
@@ -416,7 +420,7 @@ class SpeakerReorderView(EventPermissionRequired, View):
             return JsonResponse({'status': 'success'})
         except (ValueError, TypeError) as e:
             logger.error(f'Error reordering speakers (data error): {e}')
-            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=400)
-        except Exception as e:
-            logger.error(f'Error reordering speakers (database error): {e}', exc_info=True)
-            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=500)
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=HTTPStatus.BAD_REQUEST)
+        except Exception:
+            logger.exception('Error reordering speakers (database error)')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
