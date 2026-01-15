@@ -1152,13 +1152,11 @@ h1 .label {
                 }
             }
 
-
             &.show {
                 transform: translateY(0);
                 opacity: 1;
             }
         }
-
 
         &.menu-open #submenu {
             display: block;
@@ -1193,7 +1191,7 @@ h1 .label {
 
 /* eventyay common organizer settings: align panel/submit greys with sidebar */
 .organizer-management {
-    .panel-default>.panel-heading {
+    .panel-default > .panel-heading {
         background-color: $gray-lightest;
     }
 
