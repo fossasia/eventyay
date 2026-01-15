@@ -11,6 +11,7 @@ from django.utils.translation import override, pgettext_lazy
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
 from eventyay.mail.context import get_available_placeholders, get_mail_context
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
@@ -195,8 +196,6 @@ class MailTemplate(PretalxModel):
                 subject = subject[:198] + '…'
 
             # Use unified Reply-To resolution
-            from eventyay.common.mail import get_reply_to_address
-            
             resolved_reply_to = get_reply_to_address(
                 event,
                 template=self
