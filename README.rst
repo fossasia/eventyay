@@ -1,9 +1,6 @@
 eventyay-tickets (ENext)
 ========================
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/dev/graph/badge.svg
-  :target: https://codecov.io/gh/pretix/pretix
-
 Project status & release cycle
 ------------------------------
 
