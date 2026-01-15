@@ -2,11 +2,14 @@ from django.db import transaction
 from django.db.models.deletion import ProtectedError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import exceptions, pagination, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.response import Response
 
 from eventyay.api.documentation import build_search_docs
 from eventyay.api.mixins import PretalxViewSetMixin
 from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
+from eventyay.api.serializers.stream_schedule import StreamScheduleSerializer
 from eventyay.base.models.room import Room
 
 
@@ -42,7 +45,9 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     search_fields = ("name",)
 
     def get_queryset(self):
-        return self.event.rooms.all().select_related("event")
+        if self.event:
+            return self.event.rooms.all().select_related("event")
+        return Room.objects.none()
 
     def get_unversioned_serializer_class(self):
         if self.request.method not in SAFE_METHODS or self.has_perm("update"):
@@ -58,3 +63,31 @@ class RoomViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             raise exceptions.ValidationError(
                 "You cannot delete a room that has been used in the schedule."
             )
+
+    @extend_schema(
+        summary="Get Current Stream",
+        description="Returns the currently active stream schedule for this room, if any.",
+        responses={200: StreamScheduleSerializer, 404: None},
+    )
+    @action(detail=True, methods=["get"], url_path="streams/current")
+    def current_stream(self, request, pk=None, **kwargs):
+        room = self.get_object()
+        current = room.get_current_stream()
+        if current:
+            serializer = StreamScheduleSerializer(current)
+            return Response(serializer.data)
+        return Response(status=404)
+
+    @extend_schema(
+        summary="Get Next Stream",
+        description="Returns the next upcoming stream schedule for this room, if any.",
+        responses={200: StreamScheduleSerializer, 404: None},
+    )
+    @action(detail=True, methods=["get"], url_path="streams/next")
+    def next_stream(self, request, pk=None, **kwargs):
+        room = self.get_object()
+        next_stream = room.get_next_stream()
+        if next_stream:
+            serializer = StreamScheduleSerializer(next_stream)
+            return Response(serializer.data)
+        return Response(status=404)

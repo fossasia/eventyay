@@ -1,0 +1,33 @@
+import django.db.models.deletion
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('base', '0005_team_can_video_create_channels_and_more'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='StreamSchedule',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(blank=True, help_text='Optional label for this stream (e.g., "Day 1 Stream", "Keynotes")', max_length=255, verbose_name='Title')),
+                ('url', models.URLField(help_text='URL of the stream (YouTube, Vimeo, HLS, or other live link)', verbose_name='Stream URL')),
+                ('start_time', models.DateTimeField(help_text='When this stream becomes active (UTC)', verbose_name='Start Time')),
+                ('end_time', models.DateTimeField(help_text='When this stream stops being active (UTC)', verbose_name='End Time')),
+                ('stream_type', models.CharField(choices=[('youtube', 'YouTube'), ('vimeo', 'Vimeo'), ('hls', 'HLS'), ('iframe', 'Iframe'), ('native', 'Native')], default='youtube', max_length=50, verbose_name='Stream Type')),
+                ('config', models.JSONField(blank=True, default=dict, help_text='Extra configuration for the stream (e.g., YouTube video ID, language settings)', verbose_name='Additional Configuration')),
+                ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('room', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='stream_schedules', to='base.room', verbose_name='Room')),
+            ],
+            options={
+                'verbose_name': 'Stream Schedule',
+                'verbose_name_plural': 'Stream Schedules',
+                'ordering': ('start_time',),
+                'indexes': [models.Index(fields=['room', 'start_time', 'end_time'], name='base_stream_room_id_513e02_idx')],
+            },
+        ),
+    ]

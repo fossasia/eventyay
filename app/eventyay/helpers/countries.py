@@ -51,7 +51,7 @@ class FastCountryField(CountryField):
     def check(self, **kwargs):
         # Disable _check_choices since it would require sorting all country names at every import of this field,
         # which takes 1-2 seconds
-        return [
+        checks = [
             *self._check_field_name(),
             # *self._check_choices(),
             *self._check_db_index(),
@@ -59,9 +59,11 @@ class FastCountryField(CountryField):
             *self._check_backend_specific_checks(**kwargs),
             *self._check_validators(),
             *self._check_deprecation_details(),
-            *self._check_multiple(),
             *self._check_max_length_attribute(**kwargs),
         ]
+        if hasattr(self, '_check_multiple'):
+            checks.extend(self._check_multiple())
+        return checks
 
 
 def get_country_name(country_code):
