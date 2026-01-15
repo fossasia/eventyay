@@ -272,7 +272,7 @@
             {% comment %} Venue Map Section {% endcomment %}
             {% if ev.geo_lat and ev.geo_lon %}
             <div class="venue-map-section">
-                <h3>{% trans "Venue Location" %}</h3>
+                <h3>{% translate "Venue Location" %}</h3>
                 {% if ev.location %}
                 <p class="venue-location-address">
                     <i class="fa fa-map-marker" aria-hidden="true"></i>
@@ -283,7 +283,7 @@
                      data-lat="{{ ev.geo_lat }}" 
                      data-lon="{{ ev.geo_lon }}"
                      data-location="{{ ev.location|escapejs }}"
-                     data-error-message="{% trans "Map could not be loaded at this time." %}"
+                     data-error-message="{% translate "Map could not be loaded at this time." %}"
                      data-icon-url="{% static 'leaflet/images/marker-icon.png' %}"
                      data-icon-retina-url="{% static 'leaflet/images/marker-icon-2x.png' %}"
                      data-shadow-url="{% static 'leaflet/images/marker-shadow.png' %}"></div>
