@@ -33,6 +33,13 @@ async function handleRequiredDropdownChange(e) {
 
     // Optimistic UI update
     dropdown.dataset.current = newState;
+    
+    // Update wrapper data-current for Font Awesome icon color
+    const wrapper = dropdown.closest('.required-status-wrapper');
+    if (wrapper) {
+        wrapper.dataset.current = newState;
+    }
+    
     dropdown.classList.add('loading');
 
     try {
@@ -41,6 +48,9 @@ async function handleRequiredDropdownChange(e) {
         // Revert to previous state on error
         dropdown.dataset.current = previousState;
         dropdown.value = previousState;
+        if (wrapper) {
+            wrapper.dataset.current = previousState;
+        }
         showError('Failed to update required status. Please try again.');
     } finally {
         dropdown.classList.remove('loading');
@@ -129,6 +139,12 @@ function initFormPageToggles() {
             // Update dropdown value and data-current attribute for color
             requiredDropdown.value = value;
             requiredDropdown.dataset.current = value;
+            
+            // Update wrapper data-current for Font Awesome icon color
+            const wrapper = requiredDropdown.closest('.required-status-wrapper');
+            if (wrapper) {
+                wrapper.dataset.current = value;
+            }
         }
     }
 

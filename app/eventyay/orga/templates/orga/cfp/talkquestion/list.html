@@ -67,20 +67,22 @@
                     </td>
                     <td>{{ question.get_target_display }}</td>
                     <td class="text-center">
-                        <select class="required-status-dropdown" 
-                                data-question-id="{{ question.id }}"
-                                data-current="{{ question.question_required }}"
-                                aria-label="Required status for {{ question.question }}">
-                            <option value="optional" 
-                                    {% if question.question_required == 'optional' %}selected{% endif %}
-                                    data-color="optional">Optional</option>
-                            <option value="required" 
-                                    {% if question.question_required == 'required' %}selected{% endif %}
-                                    data-color="required">Required</option>
-                            <option value="after_deadline" 
-                                    {% if question.question_required == 'after_deadline' %}selected{% endif %}
-                                    data-color="after_deadline">Deadline</option>
-                        </select>
+                        <div class="required-status-wrapper" data-current="{{ question.question_required }}">
+                            <select class="required-status-dropdown" 
+                                    data-question-id="{{ question.id }}"
+                                    data-current="{{ question.question_required }}"
+                                    aria-label="Required status for {{ question.question }}">
+                                <option value="optional" 
+                                        {% if question.question_required == 'optional' %}selected{% endif %}
+                                        data-color="optional">Optional</option>
+                                <option value="required" 
+                                        {% if question.question_required == 'required' %}selected{% endif %}
+                                        data-color="required">Required</option>
+                                <option value="after_deadline" 
+                                        {% if question.question_required == 'after_deadline' %}selected{% endif %}
+                                        data-color="after_deadline">Deadline</option>
+                            </select>
+                        </div>
                     </td>
                     <td class="text-center">
                         <label class="toggle-switch" 
