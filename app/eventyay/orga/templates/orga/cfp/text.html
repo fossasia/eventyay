@@ -103,13 +103,23 @@
             </div>
         </div>
         <fieldset>
-
+            <legend id="proposal-information">
+                <div>
+                    {% translate "Proposal information" %}
+                    <span data-dialog-target="#proposal-info-dialog" data-toggle="dialog">
+                        <i class="fa fa-question-circle-o text-info"></i>
+                    </span>
+                </div>
+            </legend>
+            <dialog class="info-dialog" id="proposal-info-dialog">
+                <div class="alert alert-info"><span>
+                    {% translate "Select which information should be requested and/or required during CfP proposal." %}
+                    <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
+                </span></div>
+            </dialog>
             <div class="table-responsive-sm offset-md-3">
                 <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
-                        <tr>
-                            <th colspan="5" class="thead-light text-left">{% translate "Proposal information" %}</th>
-                        </tr>
                         <tr>
                             <th></th>
                             <th class="text-center">{% translate "Active" %}</th>
@@ -366,11 +376,36 @@
                         {% endwith %}
 
 
-                        {# Speaker Section #}
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend id="speaker-information">
+                <div>
+                    {% translate "Speaker Information" %}
+                    <span data-dialog-target="#speaker-info-dialog" data-toggle="dialog">
+                        <i class="fa fa-question-circle-o text-info"></i>
+                    </span>
+                </div>
+            </legend>
+            <dialog class="info-dialog" id="speaker-info-dialog">
+                <div class="alert alert-info"><span>
+                    {% translate "Select which information should be requested and/or required from speakers." %}
+                </span></div>
+            </dialog>
+            <div class="table-responsive-sm offset-md-3">
+                <table class="table table-sm table-flip table-sticky cfp-option-table">
+                    <thead>
                         <tr>
-                            <th colspan="5" class="thead-light text-left">{% translate "Speaker Information" %}</th>
+                            <th></th>
+                            <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th>{% translate "Minimum length" %}</th>
+                            <th>{% translate "Maximum length" %}</th>
                         </tr>
-
+                    </thead>
+                    <tbody>
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
                         <tr>
@@ -538,7 +573,6 @@
                             <td></td>
                         </tr>
                         {% endwith %}
-
                     </tbody>
                 </table>
             </div>
