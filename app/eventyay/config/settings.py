@@ -533,6 +533,7 @@ TEMPLATES = (
                 'django.template.context_processors.request',
             ],
             'loaders': template_loaders,
+            'builtins': ['eventyay.presale.templatetags.presale_locale'],
         },
     },
     {

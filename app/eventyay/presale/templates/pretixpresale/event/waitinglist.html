@@ -1,5 +1,6 @@
 {% extends "pretixpresale/event/base.html" %}
 {% load i18n eventurl bootstrap3 %}
+{% load presale_locale %}
 {% block title %}{% trans "Waiting list" %}{% endblock %}
 {% block content %}
     <h2>{% trans "Add me to the waiting list" %}</h2>
@@ -10,7 +11,7 @@
                 <label class="col-md-3 control-label" for="id_email">{% trans "Product" %}</label>
                 <div class="col-md-9">
                     <input class="form-control" readonly="readonly"
-                           value="{{ item.name }}{% if variation %} – {{ variation.value }}{% endif %}">
+                           value="{{ item.name|event_localize }}{% if variation %} – {{ variation.value|event_localize }}{% endif %}">
                 </div>
             </div>
             {% if subevent %}
@@ -18,7 +19,7 @@
                     <label class="col-md-3 control-label" for="id_email">{% trans "Event" %}</label>
                     <div class="col-md-9">
                         <input class="form-control" readonly="readonly"
-                                value="{{ subevent.name }} – {{ subevent.get_date_range_display }}">
+                                value="{{ subevent.name|event_localize }} – {{ subevent.get_date_range_display }}">
                     </div>
                 </div>
             {% endif %}

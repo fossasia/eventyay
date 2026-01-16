@@ -15,6 +15,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay import __version__
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.urls import get_base_url
+from eventyay.common.utils.language import localize_event_text
 
 
 class ScheduleData(BaseExporter):
@@ -79,17 +80,19 @@ class ScheduleData(BaseExporter):
             day_data = data.get(talk_date)
             if not day_data:
                 continue
-            if str(talk.room.name) not in day_data['rooms']:
-                day_data['rooms'][str(talk.room.name)] = {
+            room_name = localize_event_text(talk.room.name)
+            room_key = str(room_name)
+            if room_key not in day_data['rooms']:
+                day_data['rooms'][room_key] = {
                     'id': talk.room.id,
                     'guid': talk.room.uuid,
-                    'name': talk.room.name,
-                    'description': talk.room.description,
+                    'name': room_name,
+                    'description': localize_event_text(talk.room.description),
                     'position': talk.room.position,
                     'talks': [talk],
                 }
             else:
-                day_data['rooms'][str(talk.room.name)]['talks'].append(talk)
+                day_data['rooms'][room_key]['talks'].append(talk)
             if not day_data['first_start'] or talk.start < day_data['first_start']:
                 day_data['first_start'] = talk.start
             if not day_data['last_end'] or talk.local_end > day_data['last_end']:
@@ -187,10 +190,10 @@ class FrabJsonExporter(ScheduleData):
         return {
             'url': self.metadata['url'],
             'version': schedule.version,
-            'base_url': self.metadata['base_url'],
-            'conference': {
-                'acronym': self.event.slug,
-                'title': str(self.event.name),
+                'base_url': self.metadata['base_url'],
+                'conference': {
+                    'acronym': self.event.slug,
+                    'title': localize_event_text(self.event.name),
                 'start': self.event.date_from.strftime('%Y-%m-%d'),
                 'end': self.event.date_to.strftime('%Y-%m-%d'),
                 'daysCount': self.event.duration,
@@ -199,18 +202,18 @@ class FrabJsonExporter(ScheduleData):
                 'colors': {'primary': self.event.visible_primary_color or '#2185d0'},
                 'rooms': [
                     {
-                        'name': str(room.name),
+                        'name': localize_event_text(room.name),
                         'slug': room.slug,
                         # TODO room url
                         'guid': room.uuid,
-                        'description': str(room.description) or None,
+                        'description': localize_event_text(room.description) or None,
                         'capacity': room.capacity,
                     }
                     for room in self.event.rooms.all()
                 ],
                 'tracks': [
                     {
-                        'name': str(track.name),
+                        'name': localize_event_text(track.name),
                         'slug': track.slug,
                         'color': track.color,
                     }
@@ -232,16 +235,20 @@ class FrabJsonExporter(ScheduleData):
                                     'date': talk.local_start.isoformat(),
                                     'start': talk.local_start.strftime('%H:%M'),
                                     'duration': talk.export_duration,
-                                    'room': str(room['name']),
+                                    'room': localize_event_text(room['name']),
                                     'slug': talk.frab_slug,
                                     'url': talk.submission.urls.public.full(),
-                                    'title': talk.submission.title,
+                                    'title': localize_event_text(talk.submission.title),
                                     'subtitle': '',
-                                    'track': (str(talk.submission.track.name) if talk.submission.track else None),
-                                    'type': str(talk.submission.submission_type.name),
+                                    'track': (
+                                        localize_event_text(talk.submission.track.name)
+                                        if talk.submission.track
+                                        else None
+                                    ),
+                                    'type': localize_event_text(talk.submission.submission_type.name),
                                     'language': talk.submission.content_locale,
-                                    'abstract': talk.submission.abstract,
-                                    'description': talk.submission.description,
+                                    'abstract': localize_event_text(talk.submission.abstract),
+                                    'description': localize_event_text(talk.submission.description),
                                     'recording_license': '',
                                     'do_not_record': talk.submission.do_not_record,
                                     'persons': [
@@ -249,7 +256,7 @@ class FrabJsonExporter(ScheduleData):
                                             'code': person.code,
                                             'name': person.get_display_name(),
                                             'avatar': person.get_avatar_url(self.event) or None,
-                                            'biography': person.event_profile(self.event).biography,
+                                            'biography': localize_event_text(person.event_profile(self.event).biography),
                                             'public_name': person.get_display_name(),  # deprecated
                                             'guid': person.guid,
                                             'url': person.event_profile(self.event).urls.public.full(),
@@ -258,7 +265,7 @@ class FrabJsonExporter(ScheduleData):
                                     ],
                                     'links': [
                                         {
-                                            'title': resource.description,
+                                            'title': localize_event_text(resource.description),
                                             'url': resource.link,
                                             'type': 'related',
                                         }
@@ -269,7 +276,7 @@ class FrabJsonExporter(ScheduleData):
                                     'origin_url': talk.submission.urls.public.full(),
                                     'attachments': [
                                         {
-                                            'title': resource.description,
+                                            'title': localize_event_text(resource.description),
                                             'url': resource.resource.url,
                                             'type': 'related',
                                         }

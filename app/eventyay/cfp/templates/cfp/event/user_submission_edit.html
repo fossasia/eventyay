@@ -9,7 +9,8 @@
 {% load rules %}
 {% load static %}
 
-{% block title %}{{ submission.title }} :: {% endblock title %}
+{% load presale_locale %}
+{% block title %}{{ submission.title|event_localize }} :: {% endblock title %}
 
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}

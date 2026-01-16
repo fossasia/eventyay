@@ -14,6 +14,7 @@ from eventyay.common.forms.widgets import (
     SearchInput,
     SelectMultipleWithCount,
 )
+from eventyay.common.utils.language import localize_event_text
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import Filterable
 from eventyay.base.models import (
@@ -24,6 +25,11 @@ from eventyay.base.models import (
     Tag,
     Track,
 )
+
+
+class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'name', obj))
 
 
 class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
@@ -191,8 +197,8 @@ class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
             'track': EnhancedSelect(description_field='description', color_field='color'),
         }
         field_classes = {
-            'submission_type': SafeModelChoiceField,
-            'track': SafeModelChoiceField,
+            'submission_type': EventLocalizedSafeModelChoiceField,
+            'track': EventLocalizedSafeModelChoiceField,
         }
 
 

@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block title %}{% trans "Modify order" %}{% endblock %}
 {% block content %}
     <h2>
@@ -15,9 +16,9 @@
             <div class="panel panel-default items">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{{ position.item }}</strong>
+                        <strong>{{ position.item.name|event_localize }}</strong>
                         {% if position.variation %}
-                            – {{ position.variation }}
+                            – {{ position.variation.value|event_localize }}
                         {% endif %}
                     </h3>
                 </div>
@@ -30,7 +31,7 @@
                                 </label>
                                 <div class="col-md-9 form-control-text">
                                     <ul class="addon-list">
-                                        {{ pos.subevent.name }} &middot; {{ pos.subevent.get_date_range_display }}
+                                        {{ pos.subevent.name|event_localize }} &middot; {{ pos.subevent.get_date_range_display }}
                                         {% if pos.event.settings.show_times %}
                                             <span class="fa fa-clock-o" aria-hidden="true"></span>
                                             {{ pos.subevent.date_from|date:"TIME_FORMAT" }}
@@ -43,7 +44,7 @@
                         {% for p in positions %}
                             {% if p.pk != position.pk %}
                                 {# Add-Ons #}
-                                <legend>+ {{ p.item.name }}{% if p.variation %} – {{ p.variation.value }}{% endif %}</legend>
+                                <legend>+ {{ p.item.name|event_localize }}{% if p.variation %} – {{ p.variation.value|event_localize }}{% endif %}</legend>
                             {% endif %}
                             {% if p.attendee_name %}
                                 <div class="form-group">
