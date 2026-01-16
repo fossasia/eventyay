@@ -77,6 +77,11 @@ frame_wrapped_urls = [
         eventyay.presale.views.waiting.WaitingView.as_view(),
         name='event.waitinglist',
     ),
+    path(
+        'tickets/',
+        eventyay.presale.views.event.EventIndex.as_view(),
+        name='event.tickets',
+    ),
     path('', eventyay.presale.views.event.EventIndex.as_view(), name='event.index'),
 ]
 event_patterns = [
