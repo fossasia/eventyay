@@ -175,7 +175,7 @@ class BaseSettings(_BaseSettings):
         # Insert the TOML which matches the running environment
         toml_files = discover_toml_files()
         # We need `walk_up` because sometimes we stand in the "doc" directory.
-        file_list_for_display = [str(p.relative_to(Path.cwd(), walk_up=True)) for p in toml_files]
+        file_list_for_display = [os.path.relpath(p, Path.cwd()) for p in toml_files]
         print(f'Loading configuration from: [blue]{file_list_for_display}[/]', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,
@@ -184,7 +184,7 @@ class BaseSettings(_BaseSettings):
         if Path('.env').is_file():
             print('Loading additional configuration from: [blue].env[/]', file=sys.stderr)
         if SECRETS_DIR.is_dir() and (files := tuple(SECRETS_DIR.glob(f'{_ENV_PREFIX}*'))):
-            secrets_for_display = [str(p.relative_to(Path.cwd(), walk_up=True)) for p in files]
+            secrets_for_display = [str(p.relative_to(Path.cwd())) for p in files]
             print(f'Loading secrets from: [blue]{secrets_for_display}[/]', file=sys.stderr)
         return (
             file_secret_settings,
