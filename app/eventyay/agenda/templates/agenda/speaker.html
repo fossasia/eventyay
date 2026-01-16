@@ -6,6 +6,7 @@
 {% load thumbnail %}
 {% load static %}
 
+{% load presale_locale %}
 {% block title %}{{ profile.user.get_display_name }} ::{% endblock title %}
 {% block meta_title %}{{ profile.user.get_display_name }}{% endblock meta_title %}
 {% block social_title %}{{ profile.user.get_display_name }}{% endblock social_title %}
@@ -16,7 +17,7 @@
     {% endif %}
 {% endblock meta_image %}
 {% block alternate_link %}
-    <link rel="alternate" type="application/json" title="{{ request.event.name }} API" href="{{ request.event.api_urls.speakers.full }}{{ profile.code }}" />
+    <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.speakers.full }}{{ profile.code }}" />
 {% endblock alternate_link %}
 
 {% block agenda_content %}
@@ -35,7 +36,7 @@
         </div>
         <div class="speaker-container">
             <section class="speaker-info">
-                <div class="speaker-bio">{{ profile.biography|rich_text }}</div>
+                <div class="speaker-bio">{{ profile.biography|event_localize|rich_text }}</div>
                 {% if profile.user.avatar_url and request.event.cfp.request_avatar %}
                     <div class="speaker-avatar">
                         <a href="{{ profile.user.avatar.url }}" data-lightbox>
@@ -48,7 +49,7 @@
                 <hr />
                 <section class="answers">
                     {% for answer in answers %}
-                        <span class="question"><strong>{{ answer.question.question }}</strong></span>
+                        <span class="question"><strong>{{ answer.question.question|event_localize }}</strong></span>
                         <span class="answer">– {% include "common/question_answer.html" with answer=answer %}</span>
                     {% endfor %}
                 </section>
