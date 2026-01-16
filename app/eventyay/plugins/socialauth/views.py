@@ -22,6 +22,7 @@ from eventyay.helpers.urls import build_absolute_uri
 
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
+from .utils import validate_login_providers
 
 logger = logging.getLogger(__name__)
 adapter = get_adapter()
@@ -36,10 +37,19 @@ class OAuthLoginView(View):
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
-        # Check if this provider is the preferred one
+        # VALIDATE LOGIN PROVIDERS 
         gs = GlobalSettingsObject()
-        login_providers = gs.settings.get('login_providers', as_type=dict) or {}
-        is_preferred = login_providers.get(provider, {}).get('is_preferred', False)
+        raw_providers = gs.settings.get('login_providers', as_type=dict)
+        providers = validate_login_providers(raw_providers)
+        
+        # Get provider configuration safely
+        provider_config = getattr(providers, provider, None)
+        
+        # Check if this provider is the preferred one
+        is_preferred = provider_config.is_preferred if provider_config else False
+        
+        # Get client_id for the provider
+        client_id = provider_config.client_id if provider_config else None
 
         # Store in session that this is a preferred provider login
         if is_preferred:
@@ -47,7 +57,7 @@ class OAuthLoginView(View):
         else:
             request.session.pop('socialauth_preferred_login', None)
 
-        client_id = login_providers.get(provider, {}).get('client_id')
+        # Get provider instance with client_id
         provider_instance = adapter.get_provider(request, provider, client_id=client_id)
 
         base_url = provider_instance.get_login_url(request)
@@ -169,50 +179,61 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
 
     def set_initial_state(self):
         """
-        Set the initial state of the login providers
-        If the login providers are not valid, set them to the default
+        Set the initial state of the login providers.
+        If the login providers are not valid, set them to the default.
         """
-
-        def validate_login_providers(login_providers):
+        raw_providers = self.gs.settings.get('login_providers', as_type=dict)
+        
+        # Validate login providers
+        if raw_providers is None:
+            # No providers set - initialize with defaults
+            self.gs.settings.set('login_providers', LoginProviders().model_dump())
+        else:
+            # Validate existing providers
             try:
-                validated_providers = LoginProviders.model_validate(login_providers)
-                return validated_providers
+                LoginProviders.model_validate(raw_providers)
             except ValidationError as e:
                 logger.error('Error while validating login providers: %s', e)
-                return None
-
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
-        if login_providers is None or validate_login_providers(login_providers) is None:
-            self.gs.settings.set('login_providers', LoginProviders().model_dump())
+                # Invalid providers - reset to defaults
+                self.gs.settings.set('login_providers', LoginProviders().model_dump())
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
-        context['login_providers'] = login_providers
 
-        # Consider all providers, regardless of their state, to avoid inconsistencies
-        # Using provider_settings instead of settings to avoid shadowing the settings module
+        # Get and validate login providers
+        raw_providers = self.gs.settings.get('login_providers', as_type=dict)
+        providers = validate_login_providers(raw_providers)
+
+        # Calculate any_preferred using typed objects
         context['any_preferred'] = any(
-            provider_settings.get('is_preferred', False)
-            for provider_settings in login_providers.values()
+            provider.is_preferred
+            for provider in providers._providers().values()
         )
 
-        # tickets_domain is only used to append /github/..., so make sure we don't have
-        # a trailing /
+        # Convert to dict for template
+        context['login_providers'] = providers.model_dump()
+
+        # tickets_domain is only used to append /github/..., so make sure we don't have a trailing /
         context['tickets_domain'] = urljoin(settings.SITE_URL, settings.BASE_PATH).rstrip("/")
         return context
 
     def post(self, request, *args, **kwargs):
-        login_providers = self.gs.settings.get('login_providers', as_type=dict)
+        # Get current login providers
+        raw_providers = self.gs.settings.get('login_providers', as_type=dict)
+        providers = validate_login_providers(raw_providers)
+        
+        # Convert to mutable dict for updates
+        login_providers = providers.model_dump()
+        
         setting_state = request.POST.get('save_credentials', '').lower()
 
         # Handle preferred provider selection
         preferred_provider = request.POST.get('preferred_provider', '')
 
         # Reset all is_preferred flags
-        for provider in LoginProviders.model_fields.keys():
-            if provider in login_providers:
-                login_providers[provider]['is_preferred'] = False
+        for provider_name in LoginProviders.model_fields.keys():
+            if provider_name in login_providers:
+                login_providers[provider_name]['is_preferred'] = False
 
         # Set the selected provider as preferred (if any enabled provider was selected)
         # Validate that the preferred_provider is a valid provider from the schema
@@ -222,16 +243,24 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             if login_providers[preferred_provider].get('state', False):
                 login_providers[preferred_provider]['is_preferred'] = True
 
-        for provider in LoginProviders.model_fields.keys():
+        for provider_name in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
-                self.update_credentials(request, provider, login_providers)
+                self.update_credentials(request, provider_name, login_providers)
             else:
-                self.update_provider_state(request, provider, login_providers)
+                self.update_provider_state(request, provider_name, login_providers)
 
-        self.gs.settings.set('login_providers', login_providers)
+        # Validate before saving
+        try:
+            validated_providers = LoginProviders.model_validate(login_providers)
+            self.gs.settings.set('login_providers', validated_providers.model_dump())
+        except ValidationError as e:
+            logger.error('Error while validating updated login providers: %s', e)
+            messages.error(request, _('Invalid provider configuration. Please check your settings.'))
+        
         return redirect(self.get_success_url())
 
     def update_credentials(self, request, provider, login_providers):
+        """Update OAuth credentials for a provider"""
         client_id_value = request.POST.get(f'{provider}_client_id', '')
         secret_value = request.POST.get(f'{provider}_secret', '')
 
