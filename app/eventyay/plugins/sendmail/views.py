@@ -1,3 +1,4 @@
+# TODO: Remove bleach import
 import bleach
 import logging
 import uuid
@@ -127,6 +128,7 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
                             v.render_sample(self.request.event),
                         )
 
+                    # TODO: Implement nh3 equivalent
                     subject = bleach.clean(form.cleaned_data['subject'].localize(l), tags=[])
                     preview_subject = subject.format_map(context_dict)
                     message = form.cleaned_data['message'].localize(l)

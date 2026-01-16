@@ -1,3 +1,4 @@
+# TODO: Remove bleach import
 import bleach
 from django.contrib import messages
 from django.http import HttpResponse
@@ -390,6 +391,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                             content=escape(value.render_sample(self.request.event)),
                         )
 
+                    # TODO: Implement nh3 equivalent
                     subject = bleach.clean(form.cleaned_data['subject'].localize(locale), tags={})
                     preview_subject = get_prefixed_subject(self.request.event, subject.format_map(context_dict))
                     message = form.cleaned_data['text'].localize(locale)
