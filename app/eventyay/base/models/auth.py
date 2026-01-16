@@ -151,7 +151,7 @@ class User(
     :param is_staff: ``True`` for system operators.
     :type is_staff: bool
     :param date_joined: The datetime of the user's registration.
-    :type date_joined: datetime
+    :type date_joined: datetime.datetime
     :param locale: The user's preferred locale code.
     :type locale: str
     :param timezone: The user's preferred timezone.

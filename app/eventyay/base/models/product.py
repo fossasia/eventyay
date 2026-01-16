@@ -230,9 +230,9 @@ class Product(LoggedModel):
     :param picture: A product picture to be shown next to the product description
     :type picture: File
     :param available_from: The date this product goes on sale
-    :type available_from: datetime
+    :type available_from: datetime.datetime
     :param available_until: The date until when the product is on sale
-    :type available_until: datetime
+    :type available_until: datetime.datetime
     :param require_voucher: If set to ``True``, this product can only be bought using a voucher.
     :type require_voucher: bool
     :param hide_without_voucher: If set to ``True``, this product is only visible and available when a voucher is used.
