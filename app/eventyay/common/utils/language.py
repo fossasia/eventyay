@@ -1,5 +1,5 @@
 from contextlib import suppress
-from threading import local
+from contextvars import ContextVar
 
 from django.conf import settings
 from django.utils import translation
@@ -24,17 +24,17 @@ def validate_language(value, supported):
     return None
 
 
-_thread_state = local()
+_event_language = ContextVar('event_language', default=None)
 
 
 def set_current_event_language(lang: str | None):
-    """Store event language for the current thread/request."""
-    _thread_state.event_language = lang
+    """Store event language for the current request context."""
+    _event_language.set(lang)
 
 
 def get_current_event_language() -> str | None:
-    """Return event language stored for the current thread/request."""
-    return getattr(_thread_state, 'event_language', None)
+    """Return event language stored for the current request context."""
+    return _event_language.get()
 
 
 def localize_event_text(value):

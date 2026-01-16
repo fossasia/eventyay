@@ -19,7 +19,6 @@ from eventyay.base.models import Event, Organizer
 from eventyay.base.models import User
 from eventyay.base.models import Schedule
 from eventyay.common.utils.language import (
-    get_current_event_language,
     get_event_language_cookie_name,
     set_current_event_language,
     validate_language,

@@ -6,7 +6,7 @@ from django_scopes.forms import SafeModelChoiceField
 
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
-from eventyay.common.forms.mixins import PublicContent, RequestRequire, localize_event_text
+from eventyay.common.forms.mixins import PublicContent, RequestRequire
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
@@ -14,6 +14,7 @@ from eventyay.common.forms.widgets import (
     SearchInput,
     SelectMultipleWithCount,
 )
+from eventyay.common.utils.language import localize_event_text
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import Filterable
 from eventyay.base.models import (

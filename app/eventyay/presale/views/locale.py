@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from django.conf import settings
 from django.http import HttpResponseRedirect
@@ -25,7 +25,7 @@ class LocaleSet(NoSearchIndexViewMixin, View):
                 settings.LANGUAGE_COOKIE_NAME,
                 locale,
                 max_age=max_age,
-                expires=(datetime.utcnow() + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                expires=(datetime.now(timezone.utc) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
 
@@ -60,7 +60,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                     cookie_name,
                     locale,
                     max_age=max_age,
-                    expires=(datetime.utcnow() + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                    expires=(datetime.now(timezone.utc) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                     domain=settings.SESSION_COOKIE_DOMAIN,
                     path='/',
                 )
