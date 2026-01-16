@@ -491,9 +491,7 @@ aside.sidebar {
 
 /* Navigation button styling - ensure consistent appearance across components */
 .header-nav.btn.btn-outline-success,
-.header-nav .btn.btn-outline-success,
 .header-nav.btn.btn-success,
-.header-nav .btn.btn-success,
 a.header-nav.btn,
 .header-nav a.btn {
   border-radius: 0 !important;
