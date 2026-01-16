@@ -9,7 +9,7 @@
             <i class="fa fa-info-circle"></i> {% translate "Info" %}
         </a>
 
-        <a href="{% eventurl request.event 'presale:event.tickets' %}" class="header-tab {% if request.resolver_match.url_name == 'event.tickets' %}underline{% endif %}">
+        <a href="{% eventurl request.event 'presale:event.index' %}#tickets" class="header-tab">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
 
