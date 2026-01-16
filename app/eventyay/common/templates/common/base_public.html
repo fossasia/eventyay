@@ -4,6 +4,7 @@
 {% load i18n %}
 {% load rules %}
 {% load event_tags %}
+{% load presale_locale %}
 {% load tz %}
 {% load static %}
 
@@ -12,12 +13,12 @@
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
         <meta charset="utf-8">
-        <title>{% block title %}{% endblock title %}{% if current_event %} {{ current_event.name }}{% endif %} :: {{ site_name }}</title>
-        <meta name="title" content="{% block meta_title %}{% endblock meta_title %}{% if current_event %} - {{ current_event.name }}{% endif %} {{ site_name }}">
-        <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
+        <title>{% block title %}{% endblock title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %} :: {{ site_name }}</title>
+        <meta name="title" content="{% block meta_title %}{% endblock meta_title %}{% if current_event %} - {{ current_event.name|event_localize }}{% endif %} {{ site_name }}">
+        <meta name="description" content="{% block meta_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock %}">
         <meta name="application-name" content="{{ site_name }}">
         <meta name="generator" content="{{ site_name }}">
-        <meta name="keywords" content="{% if current_event %}{{ current_event.name }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
+        <meta name="keywords" content="{% if current_event %}{{ current_event.name|event_localize }}, {{ current_event.slug }},{% if current_event.date_from %} {{ current_event.date_from.year }},{% endif %}{% endif %} schedule, talks, cfp, call for papers, conference, submissions, organizer">
         {{ html_head|safe }}
         {% if current_event and current_event.display_settings.meta_noindex %}
             <meta name="robots" content="noindex, nofollow">
@@ -30,8 +31,8 @@
         {% block meta_image %}{% if current_event %}<meta property="thumbnail" content="{{ current_event.urls.social_image.full }}">
             <meta property="og:image" content="{{ current_event.urls.social_image.full }}">
         {% endif %}{% endblock meta_image %}
-        <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name }}{% endif %}">
-        <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">
+        <meta property="og:title" content="{% block social_title %}{% endblock social_title %}{% if current_event %} {{ current_event.name|event_localize }}{% endif %}">
+        <meta property="og:description" content="{% block social_description %}{% if current_event %}Schedule, talks and talk submissions for {{ current_event.name|event_localize }}{% else %}Talks and talk submissions by {{ site_name }} {% endif %}{% endblock social_description %}">
         <meta property="og:url" content="{% if current_event and current_event.display_settings.html_export_url %}{{ current_event.display_settings.html_export_url }}{{ request.path|slice:"1:" }}{% else %}{{ request.build_absolute_uri }}{% endif %}">
         <meta property="twitter:card" content="summary">
 
@@ -79,7 +80,7 @@
         <div id="top-bg" class="header {{ current_event.display_settings.header_pattern|default:"bg-primary" }}">
             {% if current_event and current_event.visible_header_image_url %}
                 {# not lazy-loading to avoid flash #}
-                <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name }}">
+                <img src="{{ current_event.visible_header_image_url }}" id="header-image" alt="{{ current_event.name|event_localize }}">
             {% endif %}
             <div class="header-image-overlay"></div>
             {% block header_background %}{% endblock header_background %}
@@ -110,7 +111,7 @@
                             </div>
                             {% if current_event %}
                                 <div class="event-hero-text">
-                                    <div class="event-title">{{ current_event.name }}</div>
+                                    <div class="event-title">{{ current_event.name|event_localize }}</div>
                                     {% if current_event.date_from %}
                                         {% with tz_name=current_event.settings.timezone|default:current_event.timezone %}
                                             {% timezone tz_name %}

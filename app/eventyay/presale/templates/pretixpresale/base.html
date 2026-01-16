@@ -7,12 +7,13 @@
 {% load thumb %}
 {% load eventurl %}
 {% load rich_text %}
+{% load presale_locale %}
 
 {% block title %}
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block thetitle %}{% endblock %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name }}
+    {% block thetitle %}{% endblock %}{% if request.resolver_match.url_name != "event.index" %} :: {% endif %}{{ event.name|event_localize }}
 {% endblock %}
 
 {% block favicons %}

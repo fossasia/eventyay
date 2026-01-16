@@ -21,9 +21,20 @@ from eventyay.common.forms.validators import (
 )
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
+from eventyay.common.utils.language import localize_event_text
 from eventyay.base.models.cfp import default_fields
 
 logger = logging.getLogger(__name__)
+
+
+class EventLocalizedModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'answer', obj))
+
+
+class EventLocalizedModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'answer', obj))
 
 
 class ReadOnlyFlag:
@@ -133,8 +144,9 @@ class QuestionFieldsMixin:
         from eventyay.base.models import TalkQuestionVariant
 
         read_only = readonly or question.read_only
-        original_help_text = question.help_text
-        help_text = rich_text(question.help_text)[len('<p>') : -len('</p>')]
+        label_text = localize_event_text(question.question)
+        original_help_text = localize_event_text(question.help_text)
+        help_text = rich_text(original_help_text or '')[len('<p>') : -len('</p>')]
         if question.is_public and self.event.get_feature_flag('show_schedule'):
             help_text += ' ' + str(phrases.base.public_content)
         count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
@@ -150,7 +162,7 @@ class QuestionFieldsMixin:
             field = forms.BooleanField(
                 disabled=read_only,
                 help_text=help_text,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=widget,
                 initial=((initial == 'True') if initial else bool(question.default_answer)),
@@ -161,7 +173,7 @@ class QuestionFieldsMixin:
             field = forms.DecimalField(
                 disabled=read_only,
                 help_text=help_text,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 min_value=question.min_number,
                 max_value=question.max_number,
@@ -179,7 +191,7 @@ class QuestionFieldsMixin:
                     question.max_length,
                     self.event.cfp.settings['count_length_in'],
                 ),
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 initial=initial,
                 min_length=question.min_length if count_chars else None,
@@ -198,10 +210,10 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.URL:
             field = forms.URLField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
-                help_text=question.help_text,
+                help_text=original_help_text,
                 initial=initial,
             )
             field.original_help_text = original_help_text
@@ -209,7 +221,7 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.TEXT:
             field = forms.CharField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=forms.Textarea,
                 disabled=read_only,
@@ -236,7 +248,7 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.FILE:
             field = ExtensionFileField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
@@ -284,9 +296,9 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.CHOICES:
             choices = question.options.all()
-            field = forms.ModelChoiceField(
+            field = EventLocalizedModelChoiceField(
                 queryset=choices,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 empty_label=None,
                 initial=(initial_object.options.first() if initial_object else question.default_answer),
@@ -299,9 +311,9 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.MULTIPLE:
             choices = question.options.all()
-            field = forms.ModelMultipleChoiceField(
+            field = EventLocalizedModelMultipleChoiceField(
                 queryset=choices,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=(
                     forms.CheckboxSelectMultiple
@@ -322,7 +334,7 @@ class QuestionFieldsMixin:
             if question.max_date:
                 attrs['data-date-end-date'] = question.max_date.isoformat()
             field = forms.DateField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
@@ -343,7 +355,7 @@ class QuestionFieldsMixin:
             if question.max_datetime:
                 attrs['max'] = question.max_datetime.isoformat()
             field = forms.DateTimeField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
