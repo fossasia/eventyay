@@ -96,7 +96,7 @@ def get_organizer_navigation(request):
         return []
     nav = [
         {
-            'label': _('My events'),
+            'label': _('Events'),
             'url': reverse('eventyay_common:organizer.events', kwargs={'organizer': request.resolver_match.kwargs.get('organizer')}),
             'active': url.url_name == 'organizer.events',
             'icon': 'calendar',
