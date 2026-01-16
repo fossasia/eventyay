@@ -271,7 +271,7 @@
     {% endif %}
     {% endif %}
 
-        {% if current_section == 'event.tickets' %}
+    {% if current_section == 'event.tickets' %}
     {% if subevent or not event.has_subevents %}
         {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
             <form method="post" data-asynctask
@@ -312,7 +312,7 @@
             </form>
         {% endif %}
     {% endif %}
-        {% endif %}
+    {% endif %}
     </main>
     {% if show_vouchers %}
         <aside class="front-page" aria-labelledby="redeem-a-voucher">
