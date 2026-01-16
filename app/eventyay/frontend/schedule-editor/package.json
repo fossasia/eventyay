@@ -48,7 +48,7 @@
     "stylelint": "^16.26.1",
     "stylelint-config-standard": "^36.0.0",
     "stylelint-plugin-stylus": "^1.0.0",
-    "stylus": "^0.63.0",
+    "stylus": "^0.64.0",
     "typescript": "^5.3.3",
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^0.10.0",
