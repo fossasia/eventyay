@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.6",
-    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-inject": "^5.0.5",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue-macros/reactivity-transform": "^0.4.3",
