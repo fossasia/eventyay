@@ -515,9 +515,6 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Show section based on current URL pattern
-        context['current_section'] = self.request.resolver_match.url_name
 
         # Show voucher option if an event is selected and vouchers exist
         vouchers_exist = self.request.event.cache.get('vouchers_exist')
