@@ -17,51 +17,235 @@
         {% csrf_token %}
         {% bootstrap_form_errors sform %}
         
-        <fieldset>
-            <legend>{% trans "Customer data (once per order)" %}</legend>
-            {% if sform.order_email_asked_required %}
-                {% bootstrap_field sform.order_email_asked_required layout="control" %}
-            {% else %}
-                {% bootstrap_field sform.order_email_asked layout="control" %}
-                {% bootstrap_field sform.order_email_required layout="control" %}
-            {% endif %}
-            {% bootstrap_field sform.order_email_asked_twice layout="control" %}
-            {% bootstrap_field sform.order_phone_asked_required layout="control" %}
-            <div class="form-group">
-                <label class="control-label col-md-3">
-                    {% trans "Name and address" %}
-                </label>
-                <div class="col-md-9 static-form-row">
-                    <p>
-                        <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
-                            {% trans "See invoice settings" %}
-                        </a>
-                    </p>
-                </div>
+        {# --- Section 1: Customer Data --- #}
+        <section class="form-section" style="margin-bottom: 3rem;">
+            <div class="section-header" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 600; color: #333; margin: 0 0 0.5rem 0;">
+                    {% trans "Customer data" %}
+                </h2>
+                <p style="color: #666; font-size: 1.2rem; margin: 0;">
+                    {% trans "Collected once per order" %}
+                </p>
             </div>
-        </fieldset>
+            <div class="table-responsive">
+                <table class="table table-hover" style="margin-bottom: 0; table-layout: fixed;">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="width: 35%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Field" %}</th>
+                            <th style="width: 65%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Options" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {% trans "Contact E-mail" %}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% if sform.order_email_asked_required %}
+                                    {% bootstrap_field sform.order_email_asked_required layout="inline" show_label=False %}
+                                {% else %}
+                                    <div class="form-inline">
+                                        {% bootstrap_field sform.order_email_asked layout="inline" %}
+                                        {% bootstrap_field sform.order_email_required layout="inline" %}
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.order_email_asked_twice.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.order_email_asked_twice layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.order_phone_asked_required.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.order_phone_asked_required layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {% trans "Name and address" %}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank" class="btn btn-sm btn-default" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                                    <span class="fa fa-cog"></span>
+                                    {% trans "Configure in Invoice Settings" %}
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-        <fieldset>
-            <legend>{% trans "Attendee data (once per admission ticket)" %}</legend>
-            {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
-        </fieldset>
+        {# --- Section 2: Attendee Data --- #}
+        <section class="form-section" style="margin-bottom: 3rem;">
+            <div class="section-header" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 600; color: #333; margin: 0 0 0.5rem 0;">
+                    {% trans "Attendee data" %}
+                </h2>
+                <p style="color: #666; font-size: 1.2rem; margin: 0;">
+                    {% trans "Collected once per admission ticket" %}
+                </p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" style="margin-bottom: 0; table-layout: fixed;">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="width: 35%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Field" %}</th>
+                            <th style="width: 65%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Options" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.attendee_names_asked_required.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.attendee_names_asked_required layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.attendee_emails_asked_required.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.attendee_emails_asked_required layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.attendee_company_asked_required.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.attendee_company_asked_required layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.attendee_addresses_asked_required.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.attendee_addresses_asked_required layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.attendee_data_explanation_text.label }}
+                                </label>
+                                <div class="help-block" style="margin: 0.5rem 0 0 0; color: #6c757d; font-size: 0.875rem;">
+                                    {% trans "Optional" %}
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.attendee_data_explanation_text layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
-        <fieldset>
-            <legend>{% trans "Form settings" %}</legend>
-            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
-            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
-            {% bootstrap_field sform.name_scheme layout="control" %}
-            {% bootstrap_field sform.name_scheme_titles layout="control" %}
-            {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
-        </fieldset>
+        {# --- Section 3: Form Settings --- #}
+        <section class="form-section" style="margin-bottom: 2rem;">
+            <div class="section-header" style="margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 600; color: #333; margin: 0 0 0.5rem 0;">
+                    {% trans "Form settings" %}
+                </h2>
+                <p style="color: #666; font-size: 1.2rem; margin: 0;">
+                    {% trans "General checkout and form behavior" %}
+                </p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover" style="margin-bottom: 0; table-layout: fixed;">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="width: 35%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Option" %}</th>
+                            <th style="width: 65%; padding: 0.75rem; font-weight: 600; border-bottom: 2px solid #dee2e6;">{% trans "Configuration" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.require_registered_account_for_tickets.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.require_registered_account_for_tickets layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.include_wikimedia_username.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.include_wikimedia_username layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.name_scheme.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.name_scheme layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #e9ecef;">
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.name_scheme_titles.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.name_scheme_titles layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                <label class="control-label" style="margin: 0; font-weight: 500;">
+                                    {{ sform.checkout_show_copy_answers_button.label }}
+                                </label>
+                            </td>
+                            <td style="padding: 1rem; vertical-align: middle;">
+                                {% bootstrap_field sform.checkout_show_copy_answers_button layout="inline" show_label=False %}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
         
-        <div class="form-group submit-group">
-            <button type="submit" class="btn btn-primary btn-save">
-                {% trans "Save" %}
+        <div class="form-group submit-group" style="margin-top: 2.5rem; padding-top: 2rem; border-top: 2px solid #e9ecef;">
+            <button type="submit" class="btn btn-primary btn-save" style="padding: 0.5rem 1.5rem; font-size: 1rem;">
+                <span class="fa fa-save"></span>
+                {% trans "Save changes" %}
             </button>
         </div>
     </form>
