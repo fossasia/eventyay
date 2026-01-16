@@ -158,7 +158,7 @@ def get_organizer_navigation(request):
                     'eventyay_common:organizer.teams',
                     kwargs={'organizer': request.organizer.slug},
                 ),
-                'active': False,
+                'active': url.url_name == 'organizer.teams',
                 'icon': 'group',
             }
         )
