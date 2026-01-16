@@ -15,6 +15,12 @@
 import os
 import sys
 
+# Make `eventyay` importable from the source checkout.
+DOCS_DIR = os.path.dirname(os.path.abspath(__file__))
+APP_SRC_DIR = os.path.abspath(os.path.join(DOCS_DIR, '..', 'app'))
+if APP_SRC_DIR not in sys.path:
+    sys.path.insert(0, APP_SRC_DIR)
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -26,26 +32,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'testing')
 
 import django
-
-
-# Patch urlman to handle documentation builds gracefully
-try:
-    import urlman
-    original_urls_getattribute = urlman.Urls.__getattribute__
-    
-    def patched_getattribute(self, name):
-        try:
-            return original_urls_getattribute(self, name)
-        except Exception:
-            # During docs build, return a placeholder for missing attributes
-            if name in ('__wrapped__', '__name__'):
-                return self.__class__.__name__
-            raise
-    
-    urlman.Urls.__getattribute__ = patched_getattribute
-except Exception:
-    # urlman not available or patching failed, continue anyway
-    pass
 
 # Configure Django and override LOGGING settings for documentation builds
 # This must be done AFTER django.setup() to avoid triggering early settings initialization
@@ -72,6 +58,7 @@ except ImportError:
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
     'sphinx.ext.doctest',
     'sphinx.ext.coverage',
     'sphinxcontrib.httpdomain',
@@ -89,6 +76,7 @@ autodoc_default_options = {
     'undoc-members': False,
     'show-inheritance': True,
 }
+autodoc_typehints = 'none'
 
 # Don't fail the build on autodoc import errors
 autodoc_warningiserror = False
@@ -402,6 +390,15 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Also skip any attribute ending with _urls
     if name.endswith('_urls'):
         return True
+
+    # Avoid evaluating QuerySets during introspection (repr() can hit the DB).
+    try:
+        from django.db.models.query import QuerySet as DjangoQuerySet
+
+        if isinstance(obj, DjangoQuerySet):
+            return True
+    except Exception:
+        pass
     return skip
 
 
