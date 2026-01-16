@@ -1,0 +1,83 @@
+/* Order Forms Table Styles - extending question-toggles.css */
+
+.order-forms-table {
+    margin-top: 1rem;
+}
+
+.order-forms-table thead th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.order-forms-table tbody th {
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.order-forms-table tbody td {
+    vertical-align: middle;
+}
+
+/* Hide the actual form fields that are replaced by toggles */
+.order-forms-table tbody select[name$="_asked_required"],
+.order-forms-table tbody input[name$="_asked_twice"] {
+    display: none;
+}
+
+/* Settings column styling */
+.order-forms-table td .text-muted.small {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Full-width rows for explanation text fields */
+.order-forms-table th[colspan] {
+    background-color: #f8f9fa;
+    padding: 1rem;
+}
+
+.order-forms-table th[colspan] .form-group {
+    margin-bottom: 0;
+}
+
+.order-forms-table th[colspan] label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.order-forms-table th[colspan] textarea {
+    width: 100%;
+    min-height: 80px;
+}
+
+.order-forms-table th[colspan] .help-block {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Button in settings column */
+.order-forms-table .btn-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .order-forms-table {
+        font-size: 0.875rem;
+    }
+    
+    .order-forms-table th,
+    .order-forms-table td {
+        padding: 0.5rem;
+    }
+}
+
+/* Loading state */
+.order-forms-table .loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
