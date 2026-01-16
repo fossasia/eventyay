@@ -15,7 +15,7 @@ class CachedCountries(Countries):
         django-countries performs a unicode-aware sorting based on pyuca which is incredibly
         slow.
         """
-        cache_key = 'countries:all:{}'.format(get_language_without_region())
+        cache_key = f'countries:all:{get_language_without_region()}'
         if self.cache_subkey:
             cache_key += ':' + self.cache_subkey
         if cache_key in self._cached_lists:
@@ -47,21 +47,6 @@ class FastCountryField(CountryField):
                 kwargs['max_length'] = 2
 
         super().__init__(*args, **kwargs)
-
-    def check(self, **kwargs):
-        # Disable _check_choices since it would require sorting all country names at every import of this field,
-        # which takes 1-2 seconds
-        return [
-            *self._check_field_name(),
-            # *self._check_choices(),
-            *self._check_db_index(),
-            *self._check_null_allowed_for_primary_keys(),
-            *self._check_backend_specific_checks(**kwargs),
-            *self._check_validators(),
-            *self._check_deprecation_details(),
-            *self._check_multiple(),
-            *self._check_max_length_attribute(**kwargs),
-        ]
 
 
 def get_country_name(country_code):
