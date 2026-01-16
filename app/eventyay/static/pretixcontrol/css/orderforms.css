@@ -1,8 +1,24 @@
-/* Order Forms Table Styles - extending question-toggles.css */
+/**
+ * Order Forms Table Styles
+ * 
+ * Styling for the table-based order form configuration UI.
+ * Extends the existing toggle switch and dropdown styles from the talk component
+ * to maintain visual consistency across the platform.
+ * 
+ * @see orga/css/question-toggles.css - Base toggle and dropdown styles
+ */
+
+/* ============================================================================
+   Base Table Structure
+   ========================================================================= */
 
 .order-forms-table {
     margin-top: 1rem;
 }
+
+/* ============================================================================
+   Table Headers and Cells
+   ========================================================================= */
 
 .order-forms-table thead th {
     font-weight: 600;
@@ -19,19 +35,29 @@
     vertical-align: middle;
 }
 
-/* Hide the actual form fields that are replaced by toggles */
+/* ============================================================================
+   Form Field Hiding
+   Hide the original form fields that are replaced by interactive toggles
+   ========================================================================= */
+
 .order-forms-table tbody select[name$="_asked_required"],
 .order-forms-table tbody input[name$="_asked_twice"] {
     display: none;
 }
 
-/* Settings column styling */
+/* ============================================================================
+   Settings Column Styling
+   ========================================================================= */
+
 .order-forms-table td .text-muted.small {
     font-size: 0.875rem;
     color: #6c757d;
 }
 
-/* Full-width rows for explanation text fields */
+/* ============================================================================
+   Full-Width Rows (e.g., Explanation Text)
+   ========================================================================= */
+
 .order-forms-table th[colspan] {
     background-color: #f8f9fa;
     padding: 1rem;
@@ -58,13 +84,20 @@
     color: #6c757d;
 }
 
-/* Button in settings column */
+/* ============================================================================
+   Button Styling
+   ========================================================================= */
+
 .order-forms-table .btn-sm {
     font-size: 0.875rem;
     padding: 0.25rem 0.5rem;
 }
 
-/* Responsive adjustments */
+/* ============================================================================
+   Responsive Design
+   Mobile and tablet optimizations
+   ========================================================================= */
+
 @media (max-width: 768px) {
     .order-forms-table {
         font-size: 0.875rem;
@@ -76,7 +109,10 @@
     }
 }
 
-/* Loading state */
+/* ============================================================================
+   Loading States
+   ========================================================================= */
+
 .order-forms-table .loading {
     opacity: 0.6;
     pointer-events: none;
