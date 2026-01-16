@@ -161,7 +161,22 @@
 
                 <div id="own-review" {% if form.instance.pk %}class="d-none"{% endif %}>
                     {% for score_field in form.get_score_fields %}
-                        {{ score_field.as_field_group }}
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label text-md-right">
+                                {{ score_field.label }}
+                                {% if score_field.field.required %}*{% endif %}
+                            </label>
+                            <div class="col-md-9">
+                                {% for radio in score_field %}
+                                <div class="form-check mb-2">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     {% endfor %}
                     {{ qform }}
                     {{ form.text.as_field_group }}

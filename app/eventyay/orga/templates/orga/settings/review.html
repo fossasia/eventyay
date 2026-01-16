@@ -42,8 +42,38 @@
                     {% endblocktranslate %}
                 </div>
             </div>
-            {{ form.aggregate_method.as_field_group }}
-            {{ form.score_format.as_field_group }}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right">
+                    {{ form.aggregate_method.label }}
+                    {% if form.aggregate_method.field.required %}*{% endif %}
+                </label>
+                <div class="col-md-9">
+                    {% for radio in form.aggregate_method %}
+                    <div class="form-check mb-2">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">
+                            {{ radio.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right">
+                    {{ form.score_format.label }}
+                    {% if form.score_format.field.required %}*{% endif %}
+                </label>
+                <div class="col-md-9">
+                    {% for radio in form.score_format %}
+                    <div class="form-check mb-2">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">
+                            {{ radio.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             {{ form.review_help_text.as_field_group }}
 
         </section>
