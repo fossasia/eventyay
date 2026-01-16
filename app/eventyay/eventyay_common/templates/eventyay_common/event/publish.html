@@ -1,0 +1,24 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% block title %}{% trans "Event Publish Status" %}{% endblock %}
+{% block inside %}
+<h1>{% trans "Event Publish Status" %}</h1>
+<form action="" method="post" class="form-horizontal">
+    {% csrf_token %}
+    {% bootstrap_form_errors form %}
+    <fieldset>
+        <legend>{% trans "Visibility" %}</legend>
+        <div class="help-block">
+            {% trans "Control the visibility of your event and its components." %}
+        </div>
+        {% bootstrap_field form.live layout="control" %}
+        {% bootstrap_field form.ticket_shop_enabled layout="control" %}
+    </fieldset>
+    <div class="form-group submit-group">
+        <button type="submit" class="btn btn-primary btn-save">
+            {% trans "Save" %}
+        </button>
+    </div>
+</form>
+{% endblock %}
