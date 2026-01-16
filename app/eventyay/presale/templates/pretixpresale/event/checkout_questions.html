@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load form_widget_filters %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block inner %}
     <p>{% trans "Before we continue, we need you to answer some questions." %}</p>
     <p class="required-legend" aria-hidden="true">
@@ -44,7 +45,7 @@
                         <div class="panel-body">
                             {% if event.settings.invoice_address_explanation_text %}
                                 <div>
-                                    {{ event.settings.invoice_address_explanation_text|rich_text }}
+                                    {{ event.settings.invoice_address_explanation_text|event_localize|rich_text }}
                                 </div>
                             {% endif %}
                             {% bootstrap_form invoice_form layout="checkout" %}
@@ -57,9 +58,9 @@
                 <details class="panel panel-default" open>
                     <summary class="panel-heading">
                         <h4 class="panel-title">
-                            <strong>{{ pos.product.name }}</strong>
+                            <strong>{{ pos.product.name|event_localize }}</strong>
                             {% if pos.variation %}
-                                – {{ pos.variation }}
+                                – {{ pos.variation.value|event_localize }}
                             {% endif %}
                             {% if forloop.counter > 1 %}
                                 <span class="text-right flip">
@@ -77,7 +78,7 @@
                     <div>
                         <div class="panel-body questions-form">
                             {% if event.settings.attendee_data_explanation_text and pos.product.admission %}
-                                {{ event.settings.attendee_data_explanation_text|rich_text }}
+                                {{ event.settings.attendee_data_explanation_text|event_localize|rich_text }}
                             {% endif %}
                             {% if pos.seat %}
                                 <div class="form-group">
@@ -101,7 +102,7 @@
                                     <div class="col-md-9 form-control-text">
                                         <ul class="addon-list">
                                             {% for a in pos.addons.all %}
-                                                <li>{{ a.product.name }}{% if a.variation %} – {{ a.variation.value }}{% endif %}</li>
+                                                <li>{{ a.product.name|event_localize }}{% if a.variation %} – {{ a.variation.value|event_localize }}{% endif %}</li>
                                             {% endfor %}
                                         </ul>
                                     </div>
@@ -114,7 +115,7 @@
                                     </label>
                                     <div class="col-md-9 form-control-text">
                                         <ul class="addon-list">
-                                            {{ pos.subevent.name }} &middot; {{ pos.subevent.get_date_range_display }}
+                                            {{ pos.subevent.name|event_localize }} &middot; {{ pos.subevent.get_date_range_display }}
                                             {% if pos.event.settings.show_times %}
                                                 <span data-time="{{ pos.subevent.date_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
                                                     <span class="fa fa-clock-o" aria-hidden="true"></span>
@@ -134,7 +135,7 @@
                                                 <button type="button" data-id="{{ forloop.parentloop.counter0 }}" data-addonid="{{ forloop.counter0 }}" name="copy" class="js-copy-answers-addon btn btn-default btn-xs">{% trans "Copy answers" %}</button>
                                             </span>
                                         {% endif %}
-                                        + {{ form.pos.product.name }}{% if form.pos.variation %} – {{ form.pos.variation.value }}{% endif %}
+                                        + {{ form.pos.product.name|event_localize }}{% if form.pos.variation %} – {{ form.pos.variation.value|event_localize }}{% endif %}
                                     </legend>
                                 {% endif %}
                                 <div data-idx="{{ forloop.parentloop.counter0 }}" data-addonidx="{{ forloop.counter0 }}">
