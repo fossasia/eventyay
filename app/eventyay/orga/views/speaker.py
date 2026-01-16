@@ -130,7 +130,9 @@ class SpeakerViewMixin(PermissionRequired):
     @context
     @cached_property
     def profile(self):
-        return self.object.event_profile(self.request.event)
+        if hasattr(self.object, 'event_profile'):
+            return self.object.event_profile(self.request.event)
+        return self.object
 
     def get_permission_object(self):
         return self.profile
