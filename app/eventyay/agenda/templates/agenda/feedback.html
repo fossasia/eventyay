@@ -3,13 +3,14 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 {% block content %}
     <h3 class="talk-title">
         <a href="{{ talk.urls.public }}">
-            {% translate "Feedback" %}: {{ quotation_open }}{{ talk.title }}{{ quotation_close }}
+            {% translate "Feedback" %}: {{ quotation_open }}{{ talk.title|event_localize }}{{ quotation_close }}
         </a>
         <small class="text-muted">
-            {{ talk.slot.local_start|date:DAY_MONTH_DATE_FORMAT }}, {{ talk.slot.local_start|date:"TIME_FORMAT" }}–{{ talk.slot.end|date:"TIME_FORMAT" }}, {{ talk.slot.room.name }}
+            {{ talk.slot.local_start|date:DAY_MONTH_DATE_FORMAT }}, {{ talk.slot.local_start|date:"TIME_FORMAT" }}–{{ talk.slot.end|date:"TIME_FORMAT" }}, {{ talk.slot.room.name|event_localize }}
         </small>
     </h3>
     <div class="talk feedback-list flex-column">
