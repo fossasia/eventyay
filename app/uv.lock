@@ -4212,7 +4212,7 @@ wheels = [
 
 [[package]]
 name = "webauthn"
-version = "2.6.0"
+version = "2.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asn1crypto" },
@@ -4220,9 +4220,9 @@ dependencies = [
     { name = "cryptography" },
     { name = "pyopenssl" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/63/38/5792cb2034673c162a721df0ad65825699516ee0c938a65670ad3cdabf6c/webauthn-2.6.0.tar.gz", hash = "sha256:13cf5b009a64cef569599ffecf24550df1d7c0cd4fbaea870f937148484a80b4", size = 123608, upload-time = "2025-06-16T22:25:26.76Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/f0/e1036df8842782a2947e5f41e76a4accb92e3dba972dba882321ebe15af0/webauthn-2.7.0.tar.gz", hash = "sha256:3c45c25e75a7d7d419220ccd10b8b899984de8012732e10d898f0a8f8c480575", size = 123770, upload-time = "2025-09-04T23:19:21.602Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/c5/b1bba7f6a50caca77f37003e098f48f8dc68d990aba8a03ac8376016430b/webauthn-2.6.0-py3-none-any.whl", hash = "sha256:459973eb5780c1f41bec42b682acf587456b185733398a0b99a0714705b79447", size = 71189, upload-time = "2025-06-16T22:25:25.535Z" },
+    { url = "https://files.pythonhosted.org/packages/73/b1/3f380d02552f1d75d3db789f761a1ee0dafd6181ebc07dd4b9ded61225a4/webauthn-2.7.0-py3-none-any.whl", hash = "sha256:2ecfee7959b09ebeaaffee9f8982ecdbbdc369a11766d20d4bc0637b36e235b7", size = 71311, upload-time = "2025-09-04T23:19:20.269Z" },
 ]
 
 [[package]]
@@ -4295,14 +4295,14 @@ wheels = [
 
 [[package]]
 name = "xmlschema"
-version = "4.1.0"
+version = "4.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "elementpath" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/dd/cb/dc0236ae209c924c1a7f4d3ae9d3371980beda85d1e0b5bd2d4f07372e48/xmlschema-4.1.0.tar.gz", hash = "sha256:88ac771cf94d5fc6bbd1a763db8c157f3d683ad23120b0d0b8c46fe4537f2adf", size = 633811, upload-time = "2025-06-05T21:17:39.32Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/bb/3dbd57318bab855dd9c70d6e7d79da27cd4dc34118f59451e86a3727c847/xmlschema-4.3.0.tar.gz", hash = "sha256:174c531dd869cd29bf2d1203603d9e619bddf168d6289725738914c96c80936e", size = 645232, upload-time = "2026-01-06T11:22:15.758Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c5/2c/3ba8f8aeb3cb566e88a61ab0b0b767d5398d1e7293a0f7a76df9051e2b08/xmlschema-4.1.0-py3-none-any.whl", hash = "sha256:eabf610f398a58700bc4ac94380ad9ce558297a3f9ca8b7722ed3f7888eb4498", size = 458466, upload-time = "2025-06-05T21:17:35.265Z" },
+    { url = "https://files.pythonhosted.org/packages/c6/98/f7ee16a9350060a8ef9aacedff492311343e580ab0cd2897f8d0e726a50d/xmlschema-4.3.0-py3-none-any.whl", hash = "sha256:2b97df551039519eed0eaf015f2ea523b958f64917a6ea4303d7025169fa423e", size = 468972, upload-time = "2026-01-06T11:22:13.4Z" },
 ]
 
 [[package]]
