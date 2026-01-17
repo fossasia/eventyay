@@ -3,7 +3,7 @@ name = "eventyay-unified"
 version = "0.1.0"
 description = "Platform to manage events (ticketing, talk schedule)."
 readme = "README.rst"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.11, <3.12"
 keywords = ["tickets", "events", "web", "shop", "ecommerce"]
 authors = [ {name = "eventyay", email = "info@eventyay.com"}, ]
 maintainers = [ {name = "eventyay", email = "info@eventyay.com"}, ]
@@ -15,7 +15,7 @@ classifiers = [
   "Environment :: Web Environment",
   "License :: OSI Approved :: Apache License, Version 2.0",
   "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
+
   "Framework :: Django :: 5.2",
 ]
 dependencies = [
