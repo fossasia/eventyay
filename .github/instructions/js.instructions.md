@@ -6,7 +6,7 @@ applyTo: 'app/**/*.js'
 
 ## Development Standards
 
-### Modenization
+### Modernization
 
 - Don't use jQuery
 - Use module type, not IIFE.
@@ -27,7 +27,7 @@ applyTo: 'app/**/*.js'
   }
   ```
 
-- When you work with a libary that comes with its own error types (like `ky` with `HTTPError`), don't replace this specific error type with a generic one. For example, don't do this:
+- When you work with a library that comes with its own error types (like `ky` with `HTTPError`), don't replace this specific error type with a generic one. For example, don't do this:
   ```ts
   try {
     await ky.get('/some-endpoint')

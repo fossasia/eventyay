@@ -72,7 +72,7 @@ The import lines should be on the top of the file, not inside functions, except 
 
 ## REST API
 
-- When defining DjangoRestFramework serializer, avoid `SerializerMethodField` because looking at it, if is difficult to know the shape of data that the field will return.
+- When defining DjangoRestFramework serializer, avoid `SerializerMethodField` because looking at it, it is difficult to know the shape of data that the field will return.
 
 ## Django command
 
