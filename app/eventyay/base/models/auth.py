@@ -948,6 +948,17 @@ the eventyay team"""
         self.token_id = None
         self.show_publicly = False
         self.profile = {}
+
+        # Anonymize user data to prevent re-login via reused credentials;
+        # session/token invalidation is handled by the authentication/session layer
+        self.email = f"deleted_{uuid.uuid4()}@localhost"
+        self.fullname = str(_("Deleted User"))
+        self.wikimedia_username = None
+        
+        # Delete social accounts to prevent automatic re-association
+        if hasattr(self, "socialaccount_set"):
+            self.socialaccount_set.all().delete()
+
         self.save()
 
     def serialize_public(
