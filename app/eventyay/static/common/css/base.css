@@ -357,7 +357,7 @@ a {
   font-weight: bold;
   font-size: 75%;
 
-  color: var(--color-text);
+  color: white;
   background: var(--highlight-color);
   border-radius: var(--size-border-radius);
 

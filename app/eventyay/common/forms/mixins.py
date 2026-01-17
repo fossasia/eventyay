@@ -146,6 +146,16 @@ class QuestionFieldsMixin:
         return qs.order_by('position')
 
     def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
+        """
+        Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
+
+        Args:
+            target (str): TalkQuestionTarget (SUBMISSION/SPEAKER/REVIEWER).
+            event (Event): Event context.
+            submission, speaker, review: Answer contexts.
+            track, submission_type: Visibility filters.
+            readonly (bool): If True, fields are disabled.
+        """
         questions = self.get_question_queryset(target, event)
         # Apply filters based on submission context
         if track:

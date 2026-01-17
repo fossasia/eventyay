@@ -95,6 +95,17 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
         return self.object.urls.text
 
     def get_unified_fields(self, target):
+        """
+        Merges/orders fields for target ('session'/'speaker') based on `fields_config`.
+        Prioritizes configured order, then remaining native fields, then custom questions.
+
+        Args:
+            target (str): The target type ('session' or 'speaker').
+
+        Returns:
+            list: Field dicts containing metadata (key, label, visibility), state (is_custom),
+                  objects (TalkQuestion), and bound form fields (e.g., visibility_field).
+        """
         event = self.request.event
         fields_config = event.cfp.settings.get('fields_config', {}).get(target, [])
         sform = self.sform
