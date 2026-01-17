@@ -8,9 +8,13 @@ const REQUIRED_STATES = {
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
 
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        initOrderFormToggles();
+    });
+} else {
     initOrderFormToggles();
-});
+}
 
 function initOrderFormToggles() {
     // Only run if we are on the order forms page
