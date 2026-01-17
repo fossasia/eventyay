@@ -6,11 +6,11 @@
   "dependencies": {
     "@babel/core": "^7.28.6",
     "@babel/preset-env": "^7.28.6",
-    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-babel": "^6.1.0",
     "@rollup/plugin-node-resolve": "^13.3.0",
     "vue": "^2.7.10",
     "rollup": "^2.79.2",
-    "rollup-plugin-vue": "^5.0.1",
+    "rollup-plugin-vue": "<6.0.0",
     "vue-template-compiler": "^2.7.10"
   }
 }
