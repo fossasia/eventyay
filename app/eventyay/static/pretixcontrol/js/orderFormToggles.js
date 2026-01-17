@@ -3,8 +3,7 @@
 
 const REQUIRED_STATES = {
     OPTIONAL: 'optional',
-    REQUIRED: 'required',
-    AFTER_DEADLINE: 'after_deadline'
+    REQUIRED: 'required'
 };
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);

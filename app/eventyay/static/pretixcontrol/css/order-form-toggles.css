@@ -70,16 +70,6 @@ select.required-status-dropdown[data-current="optional"] {
     color: #6c757d;
 }
 
-select.required-status-dropdown[data-current="after_deadline"] {
-    background-color: #dc3545 !important;
-    border-color: #dc3545 !important;
-    color: #fff !important;
-}
-
-.required-status-wrapper[data-current="after_deadline"]::after {
-    color: #fff;
-}
-
 /* Option colors and sizing (for when dropdown is open) */
 .required-status-dropdown option {
     font-size: 1rem;
@@ -94,11 +84,6 @@ select.required-status-dropdown[data-current="after_deadline"] {
 .required-status-dropdown option[value="optional"] {
     background-color: #fff;
     color: #6c757d;
-}
-
-.required-status-dropdown option[value="after_deadline"] {
-    background-color: #dc3545;
-    color: #fff;
 }
 
 .required-status-display {
