@@ -14,7 +14,6 @@ from eventyay.common.forms.widgets import (
     SearchInput,
     SelectMultipleWithCount,
 )
-from eventyay.common.enums import FieldConfigType
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import Filterable
@@ -88,7 +87,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             readonly=self.readonly,
         )
 
-        self.order_fields_by_config(FieldConfigType.SESSION)
+        self.order_fields_by_config('session')
 
         if self.readonly:
             for field in self.fields.values():

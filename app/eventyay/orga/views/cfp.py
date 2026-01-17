@@ -136,7 +136,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
         # Custom questions
         from eventyay.base.models import TalkQuestionTarget
         target_enum = TalkQuestionTarget.SUBMISSION if target == 'session' else TalkQuestionTarget.SPEAKER
-        custom_questions = list(event.talkquestions.filter(target=target_enum, active=True))
+        custom_questions = list(event.talkquestions.filter(target=target_enum))
         
         custom_field_map = {
             f'question_{q.pk}': {

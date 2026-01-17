@@ -30,7 +30,6 @@ from eventyay.common.forms.widgets import (
     MarkdownWidget,
 )
 from eventyay.common.text.phrases import phrases
-from eventyay.common.enums import FieldConfigType
 from eventyay.base.models import Event
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.information import SpeakerInformation
@@ -69,7 +68,6 @@ class SpeakerProfileForm(
 
     def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
         self.user = kwargs.pop('user', None)
-        self.speaker = self.user
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
@@ -78,6 +76,7 @@ class SpeakerProfileForm(
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
         super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
+        self.speaker = self.user
         read_only = kwargs.get('read_only', False)
         initial = kwargs.get('initial', {})
         initial['name'] = name
@@ -118,8 +117,7 @@ class SpeakerProfileForm(
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
             data = self.data.copy()
-            if 'availabilities' in initial:
-                data['availabilities'] = initial['availabilities']
+            data['availabilities'] = initial.get('availabilities', [])
             self.data = data
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
@@ -129,7 +127,7 @@ class SpeakerProfileForm(
         )
 
         # Reorder fields based on configuration
-        self.order_fields_by_config(FieldConfigType.SPEAKER)
+        self.order_fields_by_config('speaker')
 
     @cached_property
     def user_fields(self):
