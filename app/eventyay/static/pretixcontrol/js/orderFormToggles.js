@@ -63,7 +63,7 @@ function initOrderFormToggles() {
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const checkbox = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
 
-            if (!hiddenInput || !checkbox.checked) {
+            if (!hiddenInput || !checkbox || !checkbox.checked) {
                 return; // Can't change if inactive
             }
 

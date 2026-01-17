@@ -78,6 +78,7 @@
 
                         {# Ask for email twice #}
                         {% with field=sform.order_email_asked_twice %}
+                        {% if field %}
                         <tr>
                             <th id="{{ field.auto_id }}_label">{% trans "Ask for the order email address twice" %}</th>
                             <td class="text-center">
@@ -86,7 +87,7 @@
                                     <input type="checkbox" {% if field.value %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|default:'False' }}"
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|yesno:'True,False' }}"
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
@@ -94,6 +95,7 @@
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
                         </tr>
+                        {% endif %}
                         {% endwith %}
 
                         {# Phone number #}
