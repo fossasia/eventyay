@@ -128,15 +128,9 @@ function initOrderFormToggles() {
                     if (hiddenInput.value !== 'do_not_ask') {
                         hiddenInput.dataset.previousState = hiddenInput.value;
                     }
-                    // Set hidden input to do_not_ask for backend
+                    // Set hidden input to do_not_ask for backend and update visuals accordingly
                     hiddenInput.value = 'do_not_ask';
-                    // But preserve visual semantic state
-                    const wrapper = requiredDropdown.closest('.required-status-wrapper');
-                    if (wrapper) {
-                        wrapper.classList.add('is-disabled');
-                    }
-                    requiredDropdown.disabled = true;
-                    toggleInput.checked = false;
+                    updateVisualState(fieldId, 'do_not_ask');
                 }
             }
         });
