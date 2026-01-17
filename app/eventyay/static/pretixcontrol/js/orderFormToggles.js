@@ -29,6 +29,13 @@ function initOrderFormToggles() {
                 toggleInput.checked = false;
                 requiredDropdown.disabled = true;
                 requiredDropdown.style.opacity = '0.5';
+                
+                // Update data-current for do_not_ask styling
+                requiredDropdown.dataset.current = 'do_not_ask';
+                const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                if (wrapper) {
+                    wrapper.dataset.current = 'do_not_ask';
+                }
             } else {
                 toggleInput.checked = true;
                 requiredDropdown.disabled = false;
