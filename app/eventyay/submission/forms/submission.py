@@ -6,7 +6,7 @@ from django_scopes.forms import SafeModelChoiceField
 
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
-from eventyay.common.forms.mixins import PublicContent, RequestRequire
+from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicContent, QuestionFieldsMixin, RequestRequire
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
@@ -23,16 +23,16 @@ from eventyay.base.models import (
     Submission,
     SubmissionStates,
     Tag,
+    TalkQuestionTarget,
     Track,
 )
-
 
 class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
     def label_from_instance(self, obj):
         return localize_event_text(getattr(obj, 'name', obj))
 
 
-class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
+class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm):
     additional_speaker = forms.EmailField(
         label=_('Additional Speaker'),
         help_text=_(
@@ -66,6 +66,7 @@ class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
             initial['content_locale'] = self.event.locale
 
         super().__init__(initial=initial, **kwargs)
+        self.submission = self.instance
 
         if remove_additional_speaker and 'additional_speaker' in self.fields:
             self.fields.pop('additional_speaker')
@@ -76,6 +77,17 @@ class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
         self._set_submission_types(instance=instance)
         self._set_locales()
         self._set_slot_count(instance=instance)
+
+        self.inject_questions_into_fields(
+            target=TalkQuestionTarget.SUBMISSION,
+            event=self.event,
+            submission=instance,
+            track=initial.get('track'),
+            submission_type=initial.get('submission_type'),
+            readonly=self.readonly,
+        )
+
+        self.order_fields_by_config('session')
 
         if self.readonly:
             for field in self.fields.values():
@@ -160,6 +172,9 @@ class InfoForm(CfPFormMixin, RequestRequire, PublicContent, forms.ModelForm):
         result = super().save(*args, **kwargs)
         if 'image' in self.cleaned_data:
             self.instance.process_image('image')
+        for key, value in self.cleaned_data.items():
+            if key.startswith('question_'):
+                self.save_questions(key, value)
         return result
 
     class Meta:
