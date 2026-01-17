@@ -572,3 +572,26 @@ class HierarkeyMixin:
         nonce = get_random_string(length=8)
         suffix = name.split('.')[-1]
         return f'{self.obj._meta.model_name}-{self.attribute_name}/{self.obj.pk}/{name}.{nonce}.{suffix}'
+
+
+class ConfiguredFieldOrderMixin:
+    def order_fields_by_config(self, config_key):
+        fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
+        if fields_config:
+            configured_names = []
+            for item in fields_config:
+                name = None
+                if isinstance(item, str):
+                    name = item
+                elif isinstance(item, dict):
+                    # Try common keys for field name in configuration dicts
+                    name = item.get('name') or item.get('field')
+                else:
+                    logger.warning('Field configuration item %r is ignored (unknown type)', item)
+                if name and name in self.fields and name not in configured_names:
+                    configured_names.append(name)
+
+            if configured_names:
+                # Preserve any fields not mentioned in the configuration at the end
+                remaining = [n for n in self.fields if n not in configured_names]
+                self.order_fields(configured_names + remaining)

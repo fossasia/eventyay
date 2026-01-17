@@ -27,7 +27,7 @@
     {% endif %}
 
     {% for field in form %}
-        {% if field.name|slice:":9" == "question_" %}
+        {% if field.name|startswith:"question_" %}
             {{ field.as_field_group }}
         {% endif %}
     {% endfor %}

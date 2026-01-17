@@ -6,7 +6,7 @@ from django_scopes.forms import SafeModelChoiceField
 
 from eventyay.cfp.forms.cfp import CfPFormMixin
 from eventyay.common.forms.fields import ImageField
-from eventyay.common.forms.mixins import PublicContent, QuestionFieldsMixin, RequestRequire
+from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicContent, QuestionFieldsMixin, RequestRequire
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
@@ -14,6 +14,7 @@ from eventyay.common.forms.widgets import (
     SearchInput,
     SelectMultipleWithCount,
 )
+from eventyay.common.enums import FieldConfigType
 from eventyay.common.utils.language import localize_event_text
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views.mixins import Filterable
@@ -32,7 +33,7 @@ class EventLocalizedSafeModelChoiceField(SafeModelChoiceField):
         return localize_event_text(getattr(obj, 'name', obj))
 
 
-class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm):
+class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, RequestRequire, PublicContent, forms.ModelForm):
     additional_speaker = forms.EmailField(
         label=_('Additional Speaker'),
         help_text=_(
@@ -87,23 +88,7 @@ class InfoForm(CfPFormMixin, QuestionFieldsMixin, RequestRequire, PublicContent,
             readonly=self.readonly,
         )
 
-        fields_config = self.event.cfp.settings.get('fields_config', {}).get('session', [])
-        if fields_config:
-            configured_names = []
-            for item in fields_config:
-                name = None
-                if isinstance(item, str):
-                    name = item
-                elif isinstance(item, dict):
-                    # Try common keys for field name in configuration dicts
-                    name = item.get('name') or item.get('field')
-                if name and name in self.fields and name not in configured_names:
-                    configured_names.append(name)
-            
-            if configured_names:
-                # Preserve any fields not mentioned in the configuration at the end
-                remaining = [n for n in self.fields if n not in configured_names]
-                self.order_fields(configured_names + remaining)
+        self.order_fields_by_config(FieldConfigType.SESSION)
 
         if self.readonly:
             for field in self.fields.values():

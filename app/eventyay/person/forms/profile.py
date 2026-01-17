@@ -15,6 +15,7 @@ from eventyay.common.forms.fields import (
     SizeFileField,
 )
 from eventyay.common.forms.mixins import (
+    ConfiguredFieldOrderMixin,
     I18nHelpText,
     PublicContent,
     QuestionFieldsMixin,
@@ -29,6 +30,7 @@ from eventyay.common.forms.widgets import (
     MarkdownWidget,
 )
 from eventyay.common.text.phrases import phrases
+from eventyay.common.enums import FieldConfigType
 from eventyay.base.models import Event
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.information import SpeakerInformation
@@ -47,6 +49,7 @@ def get_email_address_error():
 
 class SpeakerProfileForm(
     CfPFormMixin,
+    ConfiguredFieldOrderMixin,
     QuestionFieldsMixin,
     AvailabilitiesFormMixin,
     ReadOnlyFlag,
@@ -114,10 +117,10 @@ class SpeakerProfileForm(
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
+            data = self.data.copy()
             if 'availabilities' in initial:
-                data = self.data.copy()
                 data['availabilities'] = initial['availabilities']
-                self.data = data
+            self.data = data
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
             event=self.event,
@@ -126,23 +129,7 @@ class SpeakerProfileForm(
         )
 
         # Reorder fields based on configuration
-        fields_config = self.event.cfp.settings.get('fields_config', {}).get('speaker', [])
-        if fields_config:
-            configured_names = []
-            for item in fields_config:
-                name = None
-                if isinstance(item, str):
-                    name = item
-                elif isinstance(item, dict):
-                    # Try common keys for field name in configuration dicts
-                    name = item.get('name') or item.get('field')
-                if name and name in self.fields and name not in configured_names:
-                    configured_names.append(name)
-            
-            if configured_names:
-                # Preserve any fields not mentioned in the configuration at the end
-                remaining = [n for n in self.fields if n not in configured_names]
-                self.order_fields(configured_names + remaining)
+        self.order_fields_by_config(FieldConfigType.SPEAKER)
 
     @cached_property
     def user_fields(self):
