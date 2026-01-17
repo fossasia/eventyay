@@ -25,30 +25,29 @@ function initOrderFormToggles() {
 
         // Handle fields with required dropdown (asked_required pattern)
         if (requiredDropdown) {
+            const wrapper = requiredDropdown.closest('.required-status-wrapper');
+            
             if (value === 'do_not_ask') {
                 toggleInput.checked = false;
                 requiredDropdown.disabled = true;
-                requiredDropdown.style.opacity = '0.5';
                 
-                // Update data-current for do_not_ask styling
-                requiredDropdown.dataset.current = 'do_not_ask';
-                const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                // Add .is-disabled class for interaction state
+                // Do NOT modify data-current (semantic state must persist)
                 if (wrapper) {
-                    wrapper.dataset.current = 'do_not_ask';
+                    wrapper.classList.add('is-disabled');
                 }
             } else {
                 toggleInput.checked = true;
                 requiredDropdown.disabled = false;
-                requiredDropdown.style.opacity = '1';
 
-                // Update dropdown value and data-current attribute for color
+                // Update dropdown value and data-current attribute for semantic state
                 requiredDropdown.value = value;
                 requiredDropdown.dataset.current = value;
                 
-                // Update wrapper data-current for Font Awesome icon color
-                const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                // Update wrapper data-current for semantic color
                 if (wrapper) {
                     wrapper.dataset.current = value;
+                    wrapper.classList.remove('is-disabled');
                 }
             }
         } else {
@@ -114,8 +113,15 @@ function initOrderFormToggles() {
                     if (hiddenInput.value !== 'do_not_ask') {
                         hiddenInput.dataset.previousState = hiddenInput.value;
                     }
+                    // Set hidden input to do_not_ask for backend
                     hiddenInput.value = 'do_not_ask';
-                    updateVisualState(fieldId, 'do_not_ask');
+                    // But preserve visual semantic state
+                    const wrapper = requiredDropdown.closest('.required-status-wrapper');
+                    if (wrapper) {
+                        wrapper.classList.add('is-disabled');
+                    }
+                    requiredDropdown.disabled = true;
+                    toggleInput.checked = false;
                 }
             }
         });

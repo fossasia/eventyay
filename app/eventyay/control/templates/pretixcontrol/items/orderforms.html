@@ -63,7 +63,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for E-mail' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
@@ -100,7 +100,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for Phone number' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
@@ -161,7 +161,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for Attendee names' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
@@ -178,11 +178,25 @@
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
                         <tr>
-                            <th id="{{ field.auto_id }}_label">
-                                {% trans "Attendee emails" %}
-                                <a href="#" class="text-muted" data-toggle="tooltip" data-placement="right" title="{% trans 'Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings.' %}">
-                                    <span class="fa fa-info-circle"></span>
-                                </a>
+                            <th id="{{ field.auto_id }}_label" style="position: relative;">
+                                <div style="display: inline-block;">
+                                    <span>{% trans "Attendee emails" %}</span>
+                                    <span class="info-toggle" onclick="this.nextElementSibling.classList.toggle('d-none')" style="cursor: pointer; margin-left: 0.35em;">
+                                        <i class="fa fa-info-circle text-info" style="font-size: 1.1em;"></i>
+                                    </span>
+                                    <div class="inline-info-box d-none">
+                                        <div class="talk-info-box">
+                                            <div class="talk-info-icon">
+                                                <i class="fa fa-info-circle"></i>
+                                            </div>
+                                            <div class="talk-info-content">
+                                                <span>
+                                                    {% trans "Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings." %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -194,7 +208,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for Attendee emails' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
@@ -222,7 +236,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for Company' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
@@ -250,7 +264,7 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         aria-label="{% trans 'Required status for Postal addresses' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>

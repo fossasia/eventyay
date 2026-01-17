@@ -70,15 +70,14 @@ select.required-status-dropdown[data-current="optional"] {
     color: #6c757d;
 }
 
-select.required-status-dropdown[data-current="do_not_ask"] {
-    background-color: #e9ecef !important;
-    border-color: #ced4da !important;
-    color: #6c757d !important;
-    cursor: not-allowed;
+/* When toggle is OFF, preserve semantic color but dim interaction */
+.required-status-wrapper.is-disabled {
+    opacity: 0.5;
+    pointer-events: none;
 }
 
-.required-status-wrapper[data-current="do_not_ask"]::after {
-    color: #adb5bd;
+.required-status-wrapper.is-disabled .required-status-dropdown {
+    cursor: not-allowed;
 }
 
 /* Option colors and sizing (for when dropdown is open) */
@@ -250,4 +249,72 @@ select.required-status-dropdown[data-current="do_not_ask"] {
 .order-form-option-table label.toggle-switch {
     display: inline-block !important;
     margin-bottom: 0;
+}
+
+/* Inline info box styling to match Talk CFP component */
+.inline-info-box {
+    position: absolute;
+    z-index: 1000;
+    left: 0;
+    top: 100%;
+    margin-top: 0.5em;
+    min-width: 600px;
+    max-width: 700px;
+}
+
+.inline-info-box .alert {
+    margin: 0;
+}
+
+/* Custom Talk-style info box - no Pretix alert interference */
+.talk-info-box {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #2185d0;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
+    background: white;
+    overflow: hidden;
+    animation: fadeInSlide 200ms ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Blue strip - left flex child */
+.talk-info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    background-color: #2185d0;
+    color: white;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* White content area - right flex child */
+.talk-info-content {
+    flex: 1;
+    padding: 16px;
+    color: color-mix(in srgb, #2185d0, black 40%);
+    font-weight: normal;
+    line-height: 1.5;
+}
+
+.talk-info-content span {
+    font-weight: normal;
+}
+
+/* Utility class for hiding elements */
+.d-none {
+    display: none !important;
 }
