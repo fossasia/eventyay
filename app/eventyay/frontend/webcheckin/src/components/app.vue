@@ -212,6 +212,7 @@
             <div
               :class="q.type === 'M' ? '' : q.type === 'B' ? 'checkbox' : 'form-group'"
               v-for="q in checkResult.questions"
+              :key="q.id"
             >
               <label :for="'q_' + q.id" v-if="q.type !== 'B'">
                 {{ q.question }}
@@ -259,11 +260,11 @@
                 :required="q.required"
               >
                 <option v-if="!q.required"></option>
-                <option v-for="op in q.options" :value="op.id.toString()">{{ op.answer }}</option>
+                <option v-for="op in q.options" :key="op.id" :value="op.id.toString()">{{ op.answer }}</option>
               </select>
               <div v-else-if="q.type === 'F'"><em>file input not supported</em></div>
               <div v-else-if="q.type === 'M'">
-                <div class="checkbox" v-for="op in q.options">
+                <div class="checkbox" v-for="op in q.options" :key="op.id">
                   <label>
                     <input
                       type="checkbox"
@@ -292,7 +293,7 @@
                 :required="q.required"
               >
                 <option v-if="!q.required"></option>
-                <option v-for="op in countries" :value="op.key">{{ op.value }}</option>
+                <option v-for="op in countries" :key="op.key" :value="op.key">{{ op.value }}</option>
               </select>
               <input
                 v-else
@@ -409,8 +410,8 @@ export default {
     },
   },
   methods: {
-    selectResult(e) {
-      this.check(e.id, false, false, false)
+    selectResult(position) {
+      this.check(position.secret, false, false, false)
     },
     answerSetM(qid, oid, checked) {
       let v = this.answers[qid] ? this.answers[qid].split(',') : []

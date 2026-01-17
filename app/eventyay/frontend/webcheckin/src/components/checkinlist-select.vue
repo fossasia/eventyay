@@ -38,6 +38,7 @@ export default {
   components: {
     CheckinlistItem,
   },
+  emits: ['selected'],
   data() {
     return {
       loading: false,
