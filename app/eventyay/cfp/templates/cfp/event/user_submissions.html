@@ -9,6 +9,7 @@
 {% load rules %}
 {% load static %}
 
+{% load presale_locale %}
 {% block title %}{% translate "Your proposals" %} :: {% endblock title %}
 
 {% block scripts %}
@@ -24,10 +25,10 @@
     {% if information %}
         <h2>{% translate "Important Information" %}</h2>
         {% for info in information %}
-            <h4>{{ info.title }}</h4>
-            {{ info.text|rich_text }}
+            <h4>{{ info.title|event_localize }}</h4>
+            {{ info.text|event_localize|rich_text }}
             {% if info.resource %}
-                <a href="{{ info.resource.url }}"><i class="fa fa-file-o"></i> {{ info.resource.name }}</a>
+                <a href="{{ info.resource.url }}"><i class="fa fa-file-o"></i> {{ info.resource.name|event_localize }}</a>
             {% endif %}
             {% if not forloop.last %}<hr>{% endif %}
         {% endfor %}
@@ -47,7 +48,7 @@
                     {% for submission in drafts %}
                         <tr>
                             <td>
-                                <a href="{{ submission.urls.user_base }}">{{ submission.title }}</a>
+                                <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
                             </td>
                             <td class="flip text-right">
                                 {% if submission.review_code and request.event|get_feature_flag:"submission_public_review" %}
@@ -91,7 +92,7 @@
                     {% for submission in submissions %}
                         <tr>
                             <td>
-                                <a href="{{ submission.urls.user_base }}">{{ submission.title }}</a>
+                                <a href="{{ submission.urls.user_base }}">{{ submission.title|event_localize }}</a>
                             </td>
                             <td>
 
@@ -102,7 +103,7 @@
                                 {% if submission.public_slots %}
                                     <a href="{{ submission.urls.public }}">
                                         {% for talk in submission.public_slots %}
-                                            {{ talk.start|datetimerange:talk.end }}, {{ talk.room.name }}
+                                            {{ talk.start|datetimerange:talk.end }}, {{ talk.room.name|event_localize }}
                                             {% if not forloop.last %}<br>{% endif %}
                                         {% endfor %}
                                     </a>

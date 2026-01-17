@@ -28,7 +28,7 @@
         {% bootstrap_field form.locale layout='horizontal' %}
         {% bootstrap_field form.timezone layout='horizontal' %}
         <div class='form-group'>
-            <label class='col-md-3 control-label' for="id_new_pw_repeat">{{ _('Notifications') }}</label>
+            <label class='col-md-3 control-label' for='id_new_pw_repeat'>{{ _('Notifications') }}</label>
             <div class='col-md-9 static-form-row'>
                 {% if request.user.notifications_send and request.user.notification_settings.exists %}
                     <span class='label label-success'>
@@ -51,13 +51,23 @@
         {% if form.old_pw %}
             {% bootstrap_field form.old_pw layout='horizontal' %}
         {% endif %}
-        {% bootstrap_field form.email layout='horizontal' %}
+        <div class='form-group'>
+            <label class='col-md-3 control-label'>{{ _('Email Address') }}</label>
+            <div class='col-md-9'>
+                <p>{{ primary_email }}</p>
+                <p class='help-block'>
+                    <a href="{% url 'eventyay_common:account.email' %}">
+                        {{ _('Manage email addresses') }}
+                    </a>
+                </p>
+            </div>
+        </div>
         {% if form.new_pw %}
             {% bootstrap_field form.new_pw layout='horizontal' %}
             {% bootstrap_field form.new_pw_repeat layout='horizontal' %}
         {% endif %}
         <div class='form-group'>
-            <label class='col-md-3 control-label' for="id_new_pw_repeat">{{ _('Two-factor authentication') }}</label>
+            <label class='col-md-3 control-label' for='id_new_pw_repeat'>{{ _('Two-factor authentication') }}</label>
             <div class='col-md-9 static-form-row'>
                 {% if user.require_2fa %}
                     <span class='label label-success'>{{ _('Enabled') }}</span> &nbsp;
@@ -73,7 +83,7 @@
             </div>
         </div>
         <div class='form-group'>
-            <label class='col-md-3 control-label' for="">{{ _('Authorized applications') }}</label>
+            <label class='col-md-3 control-label' for=''>{{ _('Authorized applications') }}</label>
             <div class='col-md-9 static-form-row'>
                 <a href="{% url 'eventyay_common:account.oauth.authorized-apps' %}">
                     <span class='fa fa-plug'></span>
@@ -82,7 +92,7 @@
             </div>
         </div>
         <div class='form-group'>
-            <label class='col-md-3 control-label' for="">{{ _('Account history') }}</label>
+            <label class='col-md-3 control-label' for=''>{{ _('Account history') }}</label>
             <div class='col-md-9 static-form-row'>
                 <a href="{% url 'eventyay_common:account.history' %}">
                     <span class='fa fa-history'></span>
