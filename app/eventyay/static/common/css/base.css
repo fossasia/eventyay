@@ -377,6 +377,10 @@ a {
   }
 }
 
+.badge.text-dark {
+  color: #333 !important;
+}
+
 .card {
   position: relative;
   display: flex;

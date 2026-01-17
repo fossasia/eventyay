@@ -231,7 +231,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_fields'] = self.get_unified_fields('session')
         context['speaker_fields'] = self.get_unified_fields('speaker')
         
-        questions = self.request.event.talkquestions.all()
+        questions = TalkQuestion.all_objects.filter(event=self.request.event)
         sform = self.sform
         
         def get_field_data(targets):
@@ -246,6 +246,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
 
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
+        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
        
         
         

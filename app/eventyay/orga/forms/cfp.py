@@ -121,7 +121,9 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             )
         
         # Add fields for custom questions
-        for question in obj.talkquestions.all():
+        # We use all_objects because we want to include reviewer questions and inactive questions
+        # (so they can be re-activated)
+        for question in TalkQuestion.all_objects.filter(event=obj):
             field_name = f'question_{question.pk}'
             initial = 'do_not_ask'
             if question.active:
@@ -156,7 +158,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
             
         # Save custom questions
-        for question in self.instance.talkquestions.all():
+        for question in TalkQuestion.all_objects.filter(event=self.instance):
             field_name = f'question_{question.pk}'
             if field_name in self.cleaned_data:
                 value = self.cleaned_data[field_name]
