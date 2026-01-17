@@ -70,6 +70,17 @@ select.required-status-dropdown[data-current="optional"] {
     color: #6c757d;
 }
 
+select.required-status-dropdown[data-current="do_not_ask"] {
+    background-color: #e9ecef !important;
+    border-color: #ced4da !important;
+    color: #6c757d !important;
+    cursor: not-allowed;
+}
+
+.required-status-wrapper[data-current="do_not_ask"]::after {
+    color: #adb5bd;
+}
+
 /* Option colors and sizing (for when dropdown is open) */
 .required-status-dropdown option {
     font-size: 1rem;
