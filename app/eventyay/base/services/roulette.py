@@ -47,12 +47,12 @@ def roulette_request(user, room, socket_id, module_config):
                 ),
                 has_met_recently=Exists(
                     RoulettePairing.objects.filter(
-                        Q(room=room) &
                         (
-                            Q(user1=OuterRef("user"), user2=user) |
+                            Q(user1=OuterRef("user"), user2=user) | 
                             Q(user1=user, user2=OuterRef("user"))
-                        ) &
-                        Q(timestamp__gte=now() - INTERVAL_REMATCH)
+                        ),
+                        room=room,
+                        timestamp__gte=now() - INTERVAL_REMATCH,
                     )
                 ),
             )
