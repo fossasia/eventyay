@@ -3,6 +3,7 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load eventsignal %}
+{% load presale_locale %}
 {% block title %}{% trans "Review order" %}{% endblock %}
 {% block content %}
 <main aria-label="{% trans "Review order" %}">
@@ -115,7 +116,7 @@
                                     <dd>{{ addr.beneficiary|linebreaksbr }}</dd>
                                 {% endif %}
                                 {% if request.event.settings.invoice_address_custom_field and addr.custom_field %}
-                                    <dt>{{ request.event.settings.invoice_address_custom_field }}</dt>
+                                    <dt>{{ request.event.settings.invoice_address_custom_field|event_localize }}</dt>
                                     <dd>{{ addr.custom_field }}</dd>
                                 {% endif %}
                                 <dt>{% trans "Internal reference" %}</dt>

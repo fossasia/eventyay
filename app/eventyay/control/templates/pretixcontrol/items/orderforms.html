@@ -25,9 +25,7 @@
                 {% bootstrap_field sform.order_email_asked layout="control" %}
                 {% bootstrap_field sform.order_email_required layout="control" %}
             {% endif %}
-            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
             {% bootstrap_field sform.order_email_asked_twice layout="control" %}
-            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
             {% bootstrap_field sform.order_phone_asked_required layout="control" %}
             <div class="form-group">
                 <label class="control-label col-md-3">
@@ -49,24 +47,13 @@
             {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
             {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
             {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
-
-            <div class="form-group">
-                <label class="control-label col-md-3">
-                    {% trans "Custom fields" %}
-                </label>
-                <div class="col-md-9 static-form-row">
-                    <p>
-                        <a href="{% url "control:event.products.questions" event=request.event.slug organizer=request.organizer.slug %}" target="_blank">
-                            {% trans "Manage custom fields" %}
-                        </a>
-                    </p>
-                </div>
-            </div>
             {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
         </fieldset>
 
         <fieldset>
             <legend>{% trans "Form settings" %}</legend>
+            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
+            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
             {% bootstrap_field sform.name_scheme layout="control" %}
             {% bootstrap_field sform.name_scheme_titles layout="control" %}
             {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
