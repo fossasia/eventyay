@@ -234,24 +234,31 @@
                 class="form-control"
                 :required="q.required"
               />
-              <datefield
+              <input
                 v-else-if="q.type === 'D'"
+                type="date"
                 v-model="answers[q.id.toString()]"
                 :id="'q_' + q.id"
+                class="form-control"
                 :required="q.required"
-              ></datefield>
-              <timefield
+              />
+              <input
                 v-else-if="q.type === 'H'"
+                type="time"
+                step="1"
                 v-model="answers[q.id.toString()]"
                 :id="'q_' + q.id"
+                class="form-control"
                 :required="q.required"
-              ></timefield>
-              <datetimefield
+              />
+              <input
                 v-else-if="q.type === 'W'"
+                type="datetime-local"
                 v-model="answers[q.id.toString()]"
                 :id="'q_' + q.id"
+                class="form-control"
                 :required="q.required"
-              ></datetimefield>
+              />
               <select
                 v-else-if="q.type === 'C'"
                 v-model="answers[q.id.toString()]"
@@ -321,17 +328,11 @@
 <script>
 import CheckinlistSelect from './checkinlist-select.vue'
 import SearchresultItem from './searchresult-item.vue'
-import Datetimefield from './datetimefield.vue'
-import Timefield from './timefield.vue'
-import Datefield from './datefield.vue'
 
 export default {
   components: {
     CheckinlistSelect,
     SearchresultItem,
-    Datetimefield,
-    Timefield,
-    Datefield,
   },
   data() {
     return {
@@ -445,8 +446,40 @@ export default {
       this.showQuestionsModal = false
       this.checkLoading = true
       this.checkError = null
+      const existingQuestions = this.checkResult && this.checkResult.questions ? this.checkResult.questions : null
       this.checkResult = {}
       window.clearInterval(this.clearTimeout)
+
+      const normalizedAnswers = { ...this.answers }
+      if (existingQuestions) {
+        const typeById = new Map(existingQuestions.map((q) => [q.id.toString(), q.type]))
+        for (const [qid, val] of Object.entries(normalizedAnswers)) {
+          if (!val) continue
+          const qtype = typeById.get(qid)
+
+          // Time: previously HH:mm:ss
+          if (qtype === 'H' && /^\d{2}:\d{2}$/.test(val)) {
+            normalizedAnswers[qid] = `${val}:00`
+          }
+
+          // Datetime: previously ISO string (moment().toISOString())
+          // Native datetime-local usually yields YYYY-MM-DDTHH:mm, but can include seconds.
+          if (qtype === 'W' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(val)) {
+            if (typeof moment !== 'undefined') {
+              try {
+                const tz = this.$root?.timezone
+                const fmt = val.length === 16 ? 'YYYY-MM-DDTHH:mm' : 'YYYY-MM-DDTHH:mm:ss'
+                normalizedAnswers[qid] =
+                  tz && moment.tz
+                    ? moment.tz(val, fmt, tz).toISOString()
+                    : moment(val, fmt).toISOString()
+              } catch {
+                // keep original value if parsing fails
+              }
+            }
+          }
+        }
+      }
 
       fetch(
         this.$root.api.lists +
@@ -466,7 +499,7 @@ export default {
             canceled_supported: true,
             ignore_unpaid: ignore_unpaid || false,
             type: this.type,
-            answers: this.answers,
+            answers: normalizedAnswers,
           }),
         }
       )
