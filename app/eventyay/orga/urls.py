@@ -214,6 +214,16 @@ urlpatterns = [
                     submission.AllFeedbacksList.as_view(),
                     name='submissions.feedback',
                 ),
+                path(
+                    'submissions/import/',
+                    submission.SubmissionImportStart.as_view(),
+                    name='submissions.import',
+                ),
+                path(
+                    'submissions/import/<uuid:file>/',
+                    submission.SubmissionImportProcess.as_view(),
+                    name='submissions.import.process',
+                ),
                 *submission.TagView.get_urls(
                     url_base='submissions/tags',
                     url_name='submissions.tags',
@@ -322,6 +332,16 @@ urlpatterns = [
                     ),
                 ),
                 path('speakers/', speaker.SpeakerList.as_view(), name='speakers.list'),
+                path(
+                    'speakers/import/',
+                    speaker.SpeakerImportStart.as_view(),
+                    name='speakers.import',
+                ),
+                path(
+                    'speakers/import/<uuid:file>/',
+                    speaker.SpeakerImportProcess.as_view(),
+                    name='speakers.import.process',
+                ),
                 path(
                     'speakers/export/',
                     speaker.SpeakerExport.as_view(),

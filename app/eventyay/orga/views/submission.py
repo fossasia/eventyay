@@ -1,4 +1,5 @@
 import json
+from datetime import timedelta
 from collections import Counter
 from operator import itemgetter
 
@@ -7,13 +8,16 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils import feedgenerator
 from django.utils.functional import cached_property
 from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView, View
 from django_context_decorator import context
@@ -34,6 +38,8 @@ from eventyay.common.views.mixins import (
     Sortable,
 )
 from eventyay.base.models.mail import MailTemplateRoles
+from eventyay.base.services.orderimport import parse_csv
+from eventyay.orga.forms.importers import CSVImportForm, SessionImportProcessForm
 from eventyay.orga.forms.submission import (
     AddSpeakerForm,
     AddSpeakerInlineForm,
@@ -51,6 +57,7 @@ from eventyay.submission.forms import (
     TagForm,
 )
 from eventyay.base.models import (
+    CachedFile,
     Feedback,
     Resource,
     Submission,
@@ -865,6 +872,182 @@ class SubmissionStats(EventPermissionRequired, TemplateView):
                 )
             )
         return ''
+
+
+class SubmissionImportStart(EventPermissionRequired, FormView):
+    template_name = 'orga/submission/import.html'
+    permission_required = 'base.update_event'
+    form_class = CSVImportForm
+
+    def form_valid(self, form):
+        uploaded = form.cleaned_data['file']
+        cached_file = CachedFile.objects.create(
+            expires=now() + timedelta(days=1),
+            date=now(),
+            filename=uploaded.name or 'import.csv',
+            type='text/csv',
+        )
+        cached_file.file.save(uploaded.name or 'import.csv', uploaded)
+        return redirect(
+            reverse(
+                'orga:submissions.import.process',
+                kwargs={'event': self.request.event.slug, 'file': cached_file.id},
+            )
+        )
+
+    def get_success_url(self):
+        return self.request.event.orga_urls.submissions_import
+
+
+class SubmissionImportProcess(EventPermissionRequired, FormView):
+    template_name = 'orga/submission/import_process.html'
+    permission_required = 'base.update_event'
+    form_class = SessionImportProcessForm
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.parsed_reader:
+            self.cached_file.delete()
+            messages.error(self.request, _("We've been unable to parse the uploaded file as a CSV file."))
+            return redirect(self.get_start_url())
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_start_url(self):
+        return self.request.event.orga_urls.submissions_import
+
+    @cached_property
+    def cached_file(self):
+        return get_object_or_404(CachedFile, pk=self.kwargs.get('file'), filename__endswith='.csv')
+
+    @cached_property
+    def parsed_reader(self):
+        self.cached_file.file.open('rb')
+        return parse_csv(self.cached_file.file, 1024 * 1024)
+
+    @cached_property
+    def _preview(self):
+        if not self.parsed_reader:
+            return [], False
+        rows = []
+        has_more = False
+        for idx, row in enumerate(self.parsed_reader):
+            if idx < 3:
+                rows.append(row)
+            else:
+                has_more = True
+                break
+        return rows, has_more
+
+    @property
+    def sample_rows(self):
+        return self._preview[0]
+
+    @property
+    def has_additional_rows(self):
+        return self._preview[1]
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        event = self.request.event
+        initial = getattr(event.settings, 'submission_import_settings', None) or {}
+        kwargs.update(
+            {
+                'headers': self.parsed_reader.fieldnames if self.parsed_reader else [],
+                'event': event,
+                'initial': initial,
+            }
+        )
+        return kwargs
+
+    def form_valid(self, form):
+        try:
+            self._validate_references(form.cleaned_data)
+        except ValidationError as error:
+            form.add_error(None, error.message)
+            return self.form_invalid(form)
+
+        self.request.event.settings.submission_import_settings = form.cleaned_data
+        self.cached_file.delete()
+        messages.info(
+            self.request,
+            _('Field mapping saved. Import processing will be added soon, please re-run once available.'),
+        )
+        return redirect(self.get_start_url())
+
+    def _validate_references(self, mapping: dict) -> None:
+        rows = self._read_rows()
+        if not rows:
+            return
+
+        event = self.request.event
+        type_lookup = self._build_lookup(event.submission_types.all())
+        track_lookup = self._build_lookup(event.tracks.all() if hasattr(event, 'tracks') else [])
+        room_lookup = self._build_lookup(event.rooms.filter(deleted=False))
+
+        checks = (
+            ('submission_type', type_lookup, _('Session type')),
+            ('track', track_lookup, _('Track')),
+            ('room', room_lookup, _('Room')),
+        )
+
+        for row_index, row in enumerate(rows, start=2):  # +1 for header, +1 for 1-based rows
+            for mapping_key, lookup, label in checks:
+                selection = mapping.get(mapping_key)
+                value = self._extract_value(selection, row)
+                if not value:
+                    continue
+                normalized = value.casefold()
+                if lookup and normalized not in lookup:
+                    raise ValidationError(
+                        _('The value "%(value)s" doesn’t exist for %(field)s in %(event)s (row %(row)s).')
+                        % {
+                            'value': value,
+                            'field': label,
+                            'event': event.name,
+                            'row': row_index,
+                        }
+                    )
+
+    def _extract_value(self, selection: str, row: dict) -> str:
+        if not selection:
+            return ''
+        if selection.startswith('csv:'):
+            column = selection[4:]
+            return (row.get(column) or '').strip()
+        if selection.startswith('static:'):
+            return selection.split(':', 1)[1].strip()
+        return ''
+
+    def _read_rows(self) -> list[dict]:
+        self.cached_file.file.open('rb')
+        reader = parse_csv(self.cached_file.file, 1024 * 1024)
+        self.cached_file.file.close()
+        if not reader:
+            return []
+        return list(reader)
+
+    @staticmethod
+    def _build_lookup(iterable):
+        lookup = {}
+        for obj in iterable:
+            name = str(getattr(obj, 'name', obj)).strip()
+            if not name:
+                continue
+            lookup[name.casefold()] = name
+        return lookup
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        headers = self.parsed_reader.fieldnames if self.parsed_reader else []
+        ctx.update(
+            {
+                'file': self.cached_file,
+                'headers': headers,
+                'sample_rows': self.sample_rows,
+                'has_more_rows': self.has_additional_rows,
+                'header_count': len(headers) or 1,
+            }
+        )
+        return ctx
 
 
 class AllFeedbacksList(EventPermissionRequired, PaginationMixin, ListView):

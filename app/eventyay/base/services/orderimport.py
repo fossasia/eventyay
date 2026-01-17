@@ -44,7 +44,10 @@ def parse_csv(file, length=None):
         charset = chardet.detect(data)['encoding']
     except ImportError:
         charset = file.charset
-    data = data.decode(charset or 'utf-8')
+    try:
+        data = data.decode(charset or 'utf-8')
+    except UnicodeDecodeError:
+        data = data.decode(charset or 'utf-8', errors='replace')
     # If the file was modified on a Mac, it only contains \r as line breaks
     if '\r' in data and '\n' not in data:
         data = data.replace('\r', '\n')
