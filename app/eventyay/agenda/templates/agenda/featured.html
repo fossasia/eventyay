@@ -5,10 +5,11 @@
 {% load rich_text %}
 {% load static %}
 
+{% load presale_locale %}
 {% block agenda_content %}
     <p>
         {% if request.event.featured_sessions_text %}
-            {{ request.event.featured_sessions_text|rich_text }}
+            {{ request.event.featured_sessions_text|event_localize|rich_text }}
         {% else %}
             {% if talks %}
                 <strong>{% translate "Welcome to our list of featured sessions!" %}</strong>
@@ -32,13 +33,13 @@
         {% for talk in talks %}
             <section>
                 <h3 class="talk-title">
-                    <div>{{ quotation_open }}{{ talk.title }}{{ quotation_close }}</div>
+                    <div>{{ quotation_open }}{{ talk.title|event_localize }}{{ quotation_close }}</div>
                     <small class="text-muted">
                         {% if talk.display_speaker_names %}{{ talk.display_speaker_names }};{% endif %}
-                        <i>{{ talk.submission_type.name }}</i>
+                        <i>{{ talk.submission_type.name|event_localize }}</i>
                     </small>
                 </h3>
-                <p>{{ talk.abstract|default:talk.description|default:""|rich_text }}</p>
+                <p>{{ talk.abstract|default:talk.description|default:""|event_localize|rich_text }}</p>
                 {% if not forloop.last %}<hr>{% endif %}
             </section>
         {% endfor %}
