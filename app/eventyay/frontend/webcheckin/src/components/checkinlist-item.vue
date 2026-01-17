@@ -10,19 +10,22 @@
     </div>
   </a>
 </template>
+
 <script>
 export default {
-  components: {},
   props: {
-    list: Object
+    list: Object,
   },
   computed: {
-    subevent () {
-      if (!this.list.subevent) return '';
+    subevent() {
+      if (!this.list?.subevent) return ''
       const name = i18nstring_localize(this.list.subevent.name)
-      const date = moment.utc(this.list.subevent.date_from).tz(this.$root.timezone).format(this.$root.datetime_format)
+      const date = moment
+        .utc(this.list.subevent.date_from)
+        .tz(this.$root.timezone)
+        .format(this.$root.datetime_format)
       return `${name} · ${date}`
-    }
+    },
   },
 }
 </script>
