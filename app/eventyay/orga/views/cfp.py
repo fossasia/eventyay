@@ -13,6 +13,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import FormView, TemplateView, UpdateView, View
 from django_context_decorator import context
 
@@ -41,6 +42,7 @@ from eventyay.base.models import (
     AnswerOption,
     CfP,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     SubmissionType,
     SubmitterAccessCode,
@@ -284,19 +286,78 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             )
 
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
 class CfPQuestionToggle(PermissionRequired, View):
+    """Toggle question field states via AJAX POST or legacy GET."""
     permission_required = 'base.update_talkquestion'
 
     def get_object(self) -> TalkQuestion:
-        return TalkQuestion.all_objects.filter(event=self.request.event, pk=self.kwargs.get('pk')).first()
+        return get_object_or_404(
+            TalkQuestion.all_objects,
+            event=self.request.event,
+            pk=self.kwargs.get('pk')
+        )
 
     def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
+        # Check permissions first
+        if not self.has_permission():
+            return self.handle_no_permission()
+            
         question = self.get_object()
 
-        question.active = not question.active
-        question.save(update_fields=['active'])
-        return redirect(question.urls.base)
+        # Legacy GET: toggle active
+        if request.method == 'GET':
+            question.active = not question.active
+            question.save(update_fields=['active'])
+            return redirect(question.urls.base)
+
+        # AJAX POST: toggle specific field
+        if request.method == 'POST':
+            return self._handle_post(request, question)
+
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    @transaction.atomic
+    def _handle_post(self, request, question):
+        try:
+            data = json.loads(request.body.decode())
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        field = data.get('field')
+        value = data.get('value')
+
+        # Validate that both field and value are present
+        if field is None:
+            return JsonResponse({'error': 'Missing field parameter'}, status=400)
+        if value is None:
+            return JsonResponse({'error': 'Missing value parameter'}, status=400)
+
+        if field == 'active':
+            # Validate type for boolean fields
+            if not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be boolean for active field'}, status=400)
+            question.active = value
+            question.save(update_fields=['active'])
+        elif field == 'is_public':
+            # Validate type for boolean fields
+            if not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be boolean for is_public field'}, status=400)
+            question.is_public = value
+            question.save(update_fields=['is_public'])
+        elif field == 'question_required':
+            # Validate type for string fields
+            if not isinstance(value, str):
+                return JsonResponse({'error': 'Value must be string for question_required field'}, status=400)
+            allowed_values = [TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED, TalkQuestionRequired.AFTER_DEADLINE]
+            if value not in allowed_values:
+                return JsonResponse({'error': 'Invalid value for question_required field'}, status=400)
+            question.question_required = value
+            question.save(update_fields=['question_required'])
+        else:
+            return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
+
+        return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):

@@ -12,7 +12,7 @@ Configuration & Settings
 Settings Management
 ~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: eventyay.config.settings_helpers
+.. automodule:: eventyay.config.settings
    :members:
 
 Channels & Sales
