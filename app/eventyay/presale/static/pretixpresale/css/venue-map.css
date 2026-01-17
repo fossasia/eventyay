@@ -1,0 +1,30 @@
+/* Venue Map Styles */
+
+.venue-map-section {
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+.venue-location-address {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.venue-location-address .fa-map-marker {
+    margin-right: 8px;
+}
+
+#venue-map {
+    height: 350px;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.venue-map-error {
+    padding: 20px;
+    margin: 0;
+    text-align: center;
+    color: #666;
+}
