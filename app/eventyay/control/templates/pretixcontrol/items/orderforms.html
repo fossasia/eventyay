@@ -63,9 +63,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for E-mail' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
@@ -112,9 +111,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for Phone number' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
@@ -174,9 +172,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for Attendee names' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
@@ -203,9 +200,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for Attendee emails' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
@@ -232,9 +228,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for Company' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
@@ -261,9 +256,8 @@
                                     id="{{ field.auto_id }}">
                             </td>
                             <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                <div class="required-status-wrapper" data-current="{{ field.value|default:'optional' }}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
                                         aria-label="{% trans 'Required status for Postal addresses' %}">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>

@@ -95,18 +95,22 @@ function initOrderFormToggles() {
                 // asked_required field
                 if (this.checked) {
                     // Activate - restore previous state or default to 'optional'
-                    let state = hiddenInput.dataset.previousState || requiredDropdown.value;
+                    let state = (hiddenInput.dataset && hiddenInput.dataset.previousState) || requiredDropdown.value;
                     if (!REQUIRED_STATES_ARRAY.includes(state)) {
                         state = REQUIRED_STATES.OPTIONAL;
                     }
                     hiddenInput.value = state;
                     updateVisualState(fieldId, state);
                     // Clear stored previous state
-                    delete hiddenInput.dataset.previousState;
+                    if (hiddenInput.dataset) {
+                        delete hiddenInput.dataset.previousState;
+                    }
                 } else {
                     // Deactivate - store current state before deactivating
                     if (hiddenInput.value !== 'do_not_ask') {
-                        hiddenInput.dataset.previousState = hiddenInput.value;
+                        if (hiddenInput.dataset) {
+                            hiddenInput.dataset.previousState = hiddenInput.value;
+                        }
                     }
                     hiddenInput.value = 'do_not_ask';
                     updateVisualState(fieldId, 'do_not_ask');
