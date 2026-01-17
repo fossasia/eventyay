@@ -29,9 +29,9 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
@@ -48,25 +48,24 @@ jobs:
             libpq-dev \
             build-essential
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          cd doc
-          # Install all dependencies (Sphinx, Django, and all packages)
-          bash install-all-deps.sh
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+          enable-cache: true
+
+      - name: Install Python dependencies
+        run: uv sync --group docs
+        working-directory: ./app/
 
       - name: Build unified documentation
         run: |
-          cd doc
           # Set environment variables (conf.py handles Django setup automatically)
-          export DJANGO_SETTINGS_MODULE=eventyay.config.settings
-          export EVENTYAY_CONFIG_FILE=$(pwd)/eventyay-docs.cfg
-          export DATABASE_URL="sqlite:///:memory:"
-          export REDIS_URL="redis://localhost:6379/0"
           export MPLCONFIGDIR=/tmp/matplotlib
           mkdir -p $MPLCONFIGDIR
           # Build documentation
-          make html
+          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees   . _build/html
+        working-directory: ./doc/
 
       - name: Prepare deployment
         run: |

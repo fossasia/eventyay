@@ -23,6 +23,7 @@ from rich import print
 from eventyay import __version__
 from eventyay.consts import SizeKey
 
+
 # To avoid loading unnecessary environment variables
 # designated for other applications
 # we only load those with EVY_ prefix.
@@ -150,7 +151,6 @@ class BaseSettings(_BaseSettings):
     zoom_secret: str = ''
     control_secret: str = ''
 
-
     statsd_host: str = ''
     statsd_port: int = 8125
     statsd_prefix: str = 'eventyay'
@@ -174,7 +174,8 @@ class BaseSettings(_BaseSettings):
     ) -> tuple[PydanticBaseSettingsSource, ...]:
         # Insert the TOML which matches the running environment
         toml_files = discover_toml_files()
-        file_list_for_display = [str(p.relative_to(Path.cwd())) for p in toml_files]
+        # We need `walk_up` because sometimes we stand in the "doc" directory.
+        file_list_for_display = [str(p.relative_to(Path.cwd(), walk_up=True)) for p in toml_files]
         print(f'Loading configuration from: [blue]{file_list_for_display}[/]', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,
@@ -183,7 +184,7 @@ class BaseSettings(_BaseSettings):
         if Path('.env').is_file():
             print('Loading additional configuration from: [blue].env[/]', file=sys.stderr)
         if SECRETS_DIR.is_dir() and (files := tuple(SECRETS_DIR.glob(f'{_ENV_PREFIX}*'))):
-            secrets_for_display = [str(p.relative_to(Path.cwd())) for p in files]
+            secrets_for_display = [str(p.relative_to(Path.cwd(), walk_up=True)) for p in files]
             print(f'Loading secrets from: [blue]{secrets_for_display}[/]', file=sys.stderr)
         return (
             file_secret_settings,
@@ -532,6 +533,7 @@ TEMPLATES = (
                 'django.template.context_processors.request',
             ],
             'loaders': template_loaders,
+            'builtins': ['eventyay.presale.templatetags.presale_locale'],
         },
     },
     {

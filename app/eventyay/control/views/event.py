@@ -1,4 +1,5 @@
 import json
+import logging
 import operator
 import re
 from collections import OrderedDict
@@ -667,27 +668,40 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        ctx['gets_notification'] = self.request.user.notifications_send and (
-            (
-                self.request.user.notification_settings.filter(
-                    event=self.request.event,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=True,
-                ).exists()
+        
+        # Check notification settings with fallback for errors
+        try:
+            ctx['gets_notification'] = self.request.user.notifications_send and (
+                (
+                    self.request.user.notification_settings.filter(
+                        event=self.request.event,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=True,
+                    ).exists()
+                )
+                or (
+                    self.request.user.notification_settings.filter(
+                        event__isnull=True,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=True,
+                    ).exists()
+                    and not self.request.user.notification_settings.filter(
+                        event=self.request.event,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=False,
+                    ).exists()
+                )
             )
-            or (
-                self.request.user.notification_settings.filter(
-                    event__isnull=True,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=True,
-                ).exists()
-                and not self.request.user.notification_settings.filter(
-                    event=self.request.event,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=False,
-                ).exists()
+        except Exception as e:
+            # Log unexpected errors for debugging while maintaining functionality
+            logging.getLogger(__name__).warning(
+                'Error checking notification settings for user %s: %s',
+                getattr(self.request.user, 'pk', 'unknown'),
+                str(e),
+                exc_info=True
             )
-        )
+            ctx['gets_notification'] = False
+            
         return ctx
 
 

@@ -33,27 +33,29 @@ class LocaleMiddleware(MiddlewareMixin):
     """
 
     def process_request(self, request: HttpRequest):
-        language = get_language_from_request(request)
+        ui_language = getattr(request, 'ui_language', None)
+        language = ui_language or get_language_from_request(request)
         # Normally, this middleware runs *before* the event is set. However, on event frontend pages it
         # might be run a second time by eventyay.presale.EventMiddleware and in this case the event is already
         # set and can be taken into account for the decision.
         if not request.path.startswith(get_script_prefix() + 'control'):
-            if hasattr(request, 'event'):
-                if language not in request.event.settings.locales:
-                    firstpart = language.split('-')[0]
-                    if firstpart in request.event.settings.locales:
-                        language = firstpart
-                    else:
-                        language = request.event.settings.locale
-                        for lang in request.event.settings.locales:
-                            if lang.startswith(firstpart + '-'):
-                                language = lang
-                                break
-                if '-' not in language and request.event.settings.region:
-                    language += '-' + request.event.settings.region
-            elif hasattr(request, 'organizer'):
-                if '-' not in language and request.organizer.settings.region:
-                    language += '-' + request.organizer.settings.region
+            if not ui_language:
+                if hasattr(request, 'event'):
+                    if language not in request.event.settings.locales:
+                        firstpart = language.split('-')[0]
+                        if firstpart in request.event.settings.locales:
+                            language = firstpart
+                        else:
+                            language = request.event.settings.locale
+                            for lang in request.event.settings.locales:
+                                if lang.startswith(firstpart + '-'):
+                                    language = lang
+                                    break
+                    if '-' not in language and request.event.settings.region:
+                        language += '-' + request.event.settings.region
+                elif hasattr(request, 'organizer'):
+                    if '-' not in language and request.organizer.settings.region:
+                        language += '-' + request.organizer.settings.region
         else:
             gs = global_settings_object(request)
             if '-' not in language and gs.settings.region:

@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 {% block title %}{% translate "Accept invitation?" %}{% endblock title %}
 
 {% block content %}
@@ -23,7 +24,7 @@
         </p>
     {% else %}
         <p>
-            {% blocktranslate with name=request.user.get_display_name talk=submission.title trimmed %}
+            {% blocktranslate with name=request.user.get_display_name talk=submission.title|event_localize trimmed %}
                 You, {{ name }}, have been invited to be a speaker for the session
                 “{{ talk }}”. Do you accept the invitation?
             {% endblocktranslate %}
@@ -31,9 +32,9 @@
 
         {% if submission.abstract %}
             <div class="card ml-auto mr-auto p-0 col-md-9">
-                <div class="card-header">{% translate "Abstract:" %} {{ submission.title }}</div>
+                <div class="card-header">{% translate "Abstract:" %} {{ submission.title|event_localize }}</div>
                 <div class="card-body mt-0 mb-0 mr-3 ml-3">
-                    <p class="card-text">{{ submission.abstract|rich_text }}</p>
+                    <p class="card-text">{{ submission.abstract|event_localize|rich_text }}</p>
                 </div>
             </div>
         {% endif %}

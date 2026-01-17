@@ -154,7 +154,7 @@ details summary.card-header::before {
   justify-content: center;
   align-items: center;
   font-size: 16px;
-  font-family: ForkAwesome;
+  font-family: FontAwesome;
   transform: rotate(90deg);
   transition: transform 150ms ease-in 0s;
 }
@@ -1089,7 +1089,7 @@ table .color-square {
         position: relative;
 
         &:before {
-          font-family: ForkAwesome;
+          font-family: FontAwesome;
           font-weight: bold;
           color: rgb(0 0 0 / 0.3);
           text-align: center;

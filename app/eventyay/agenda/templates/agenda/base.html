@@ -6,10 +6,11 @@
 {% load rules %}
 {% load safelink %}
 
+{% load presale_locale %}
 {% block custom_header %}
     {% block alternate_link %}
-        <link rel="alternate" type="application/atom+xml" title="{{ request.event.name }} Schedule Versions" href="{{ request.event.urls.feed }}" />
-        <link rel="alternate" type="application/json" title="{{ request.event.name }} API" href="{{ request.event.api_urls.base.full }}" />
+        <link rel="alternate" type="application/atom+xml" title="{{ request.event.name|event_localize }} Schedule Versions" href="{{ request.event.urls.feed }}" />
+        <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.base.full }}" />
     {% endblock alternate_link %}
     {% block agenda_custom_header %}{% endblock agenda_custom_header %}
 {% endblock custom_header %}

@@ -3,6 +3,7 @@
 {% load safelink %}
 {% load rich_text %}
 {% load money %}
+{% load presale_locale %}
 {% blocktrans asvar s_taxes %}taxes{% endblocktrans %}
 {% for line in cart.positions %}
     <div class="row cart-row {% if download %}has-downloads{% endif %}{% if editable %}editable{% endif %}">
@@ -10,9 +11,9 @@
             {% if line.addon_to %}
                 <span class="addon-signifier">+</span>
             {% endif %}
-            <strong>{{ line.product.name }}</strong>
+            <strong>{{ line.product.name|event_localize }}</strong>
             {% if line.variation %}
-                – {{ line.variation }}
+                – {{ line.variation.value|event_localize }}
             {% endif %}
             {% if line.seat %}
                 <br />
@@ -26,7 +27,7 @@
                 <br /><span class="fa fa-tags fa-fw" aria-hidden="true"></span> {% trans "Voucher code used:" %} {{ line.voucher.code }}
             {% endif %}
             {% if line.subevent %}
-                <br /><span class="fa fa-calendar fa-fw" aria-hidden="true"></span> {{ line.subevent.name }} &middot; {{ line.subevent.get_date_range_display }}
+                <br /><span class="fa fa-calendar fa-fw" aria-hidden="true"></span> {{ line.subevent.name|event_localize }} &middot; {{ line.subevent.get_date_range_display }}
                 {% if event.settings.show_times %}
                     <span data-time="{{ line.subevent.date_from.isoformat }}" data-timezone="{{ request.event.timezone }}" data-time-short>
                         <span class="fa fa-clock-o" aria-hidden="true"></span>
@@ -95,7 +96,7 @@
                     {% endif %}
                     {% for q in line.questions %}
                         {% if q.type != "DES" %}
-                            <dt>{{ q.question|rich_text_snippet }}</dt>
+                            <dt>{{ q.question|event_localize|rich_text_snippet }}</dt>
                             <dd>
                                 {% if q.answer %}
                                     {% if q.answer.file %}
@@ -115,7 +116,7 @@
                         {% endif %}
                     {% endfor %}
                     {% for q in line.additional_answers %}
-                        <dt>{{ q.question }}</dt>
+                        <dt>{{ q.question|event_localize }}</dt>
                         <dd>{% if q.answer %}{{ q.answer|linebreaksbr }}{% else %}<em>{% trans "not answered" %}</em>{% endif %}</dd>
                     {% endfor %}
                 </dl>
