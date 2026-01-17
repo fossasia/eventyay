@@ -45,14 +45,12 @@ def roulette_request(user, room, socket_id, module_config):
                         to_user=user,
                     )
                 ),
-                has_met_recently=Exists(
+                already_paired=Exists(
                     RoulettePairing.objects.filter(
-                        (
-                            Q(user1=OuterRef("user"), user2=user) | 
-                            Q(user1=user, user2=OuterRef("user"))
-                        ),
+                        Q(user1=OuterRef("user"), user2=user) | 
+                        Q(user1=user, user2=OuterRef("user")),
                         room=room,
-                        timestamp__gte=now() - INTERVAL_REMATCH,
+                        timestamp__gte=now() - INTERVAL_REMATCH
                     )
                 ),
             )
@@ -62,7 +60,7 @@ def roulette_request(user, room, socket_id, module_config):
                 & Q(expiry__gte=now())
                 & Q(is_blocked_by_me=False)
                 & Q(is_blocked_by_other=False)
-                & Q(has_met_recently=False)
+                & Q(already_paired=False)
             )
             .select_related("user")[:1]
         )
