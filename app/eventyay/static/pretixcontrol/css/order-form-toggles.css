@@ -305,6 +305,7 @@ select.required-status-dropdown[data-current="optional"] {
 .talk-info-content {
     flex: 1;
     padding: 16px;
+    color: #1b6aa6; /* Fallback for browsers without color-mix support */
     color: color-mix(in srgb, #2185d0, black 40%);
     font-weight: normal;
     line-height: 1.5;
