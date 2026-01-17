@@ -71,29 +71,16 @@
                                     </select>
                                 </div>
                             </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                        </tr>
-                        {% endif %}
-                        {% endwith %}
-
-                        {# Ask for email twice #}
-                        {% with field=sform.order_email_asked_twice %}
-                        {% if field %}
-                        <tr>
-                            <th id="{{ field.auto_id }}_label">{% trans "Ask for the order email address twice" %}</th>
                             <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-labelledby="{{ field.auto_id }}_label">
-                                    <input type="checkbox" {% if field.value %}checked{% endif %}>
-                                    <span class="toggle-slider"></span>
+                                {% with twice_field=sform.order_email_asked_twice %}
+                                {% if twice_field %}
+                                <label class="checkbox-inline" title="{% trans 'Ask for the order email address twice' %}">
+                                    <input type="checkbox" name="{{ twice_field.html_name }}" id="{{ twice_field.auto_id }}" {% if twice_field.value %}checked{% endif %} aria-label="{% trans 'Ask for the order email address twice' %}">
+                                    {% trans "Ask twice" %}
                                 </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value|yesno:'True,False' }}"
-                                    id="{{ field.auto_id }}">
+                                {% endif %}
+                                {% endwith %}
                             </td>
-                            <td class="text-center">
-                                <span class="text-muted">—</span>
-                            </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -191,7 +178,12 @@
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
                         <tr>
-                            <th id="{{ field.auto_id }}_label">{% trans "Attendee emails" %}</th>
+                            <th id="{{ field.auto_id }}_label">
+                                {% trans "Attendee emails" %}
+                                <a href="#" class="text-muted" data-toggle="tooltip" data-placement="right" title="{% trans 'Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings.' %}">
+                                    <span class="fa fa-info-circle"></span>
+                                </a>
+                            </th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
                                     aria-labelledby="{{ field.auto_id }}_label">
@@ -278,11 +270,11 @@
 
         <fieldset>
             <legend>{% trans "Form settings" %}</legend>
-            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
-            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
             {% bootstrap_field sform.name_scheme layout="control" %}
             {% bootstrap_field sform.name_scheme_titles layout="control" %}
             {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
+            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
+            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
         </fieldset>
         
         <div class="form-group submit-group">
