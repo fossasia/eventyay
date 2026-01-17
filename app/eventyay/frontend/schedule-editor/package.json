@@ -51,7 +51,7 @@
     "stylus": "^0.64.0",
     "typescript": "^5.3.3",
     "vite": "^6.3.5",
-    "vite-bundle-visualizer": "^0.10.0",
+    "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-checker": "^0.10.1",
     "vue-tsc": "^3.2.2"
   },
