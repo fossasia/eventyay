@@ -178,11 +178,11 @@
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
                         <tr>
-                            <th id="{{ field.auto_id }}_label" style="position: relative;">
-                                <div style="display: inline-block;">
+                            <th id="{{ field.auto_id }}_label" class="info-toggle-header">
+                                <div class="info-toggle-wrapper">
                                     <span>{% trans "Attendee emails" %}</span>
-                                    <span class="info-toggle" onclick="this.nextElementSibling.classList.toggle('d-none')" style="cursor: pointer; margin-left: 0.35em;">
-                                        <i class="fa fa-info-circle text-info" style="font-size: 1.1em;"></i>
+                                    <span class="info-toggle" data-toggle="info-box">
+                                        <i class="fa fa-info-circle text-info"></i>
                                     </span>
                                     <div class="inline-info-box d-none">
                                         <div class="talk-info-box">

@@ -314,6 +314,24 @@ select.required-status-dropdown[data-current="optional"] {
     font-weight: normal;
 }
 
+/* Info toggle header and wrapper styles */
+.info-toggle-header {
+    position: relative;
+}
+
+.info-toggle-wrapper {
+    display: inline-block;
+}
+
+.info-toggle {
+    cursor: pointer;
+    margin-left: 0.35em;
+}
+
+.info-toggle .fa-info-circle {
+    font-size: 1.1em;
+}
+
 /* Utility class for hiding elements */
 .d-none {
     display: none !important;

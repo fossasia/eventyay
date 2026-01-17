@@ -61,6 +61,16 @@ function initOrderFormToggles() {
         updateVisualState(input.id, input.value);
     });
 
+    // Handle info-toggle click for info boxes (CSP-compliant)
+    document.querySelectorAll('.info-toggle[data-toggle="info-box"]').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const infoBox = this.nextElementSibling;
+            if (infoBox && infoBox.classList.contains('inline-info-box')) {
+                infoBox.classList.toggle('d-none');
+            }
+        });
+    });
+
     // Handle required dropdown changes
     document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
         dropdown.addEventListener('change', function () {
@@ -74,6 +84,11 @@ function initOrderFormToggles() {
             }
 
             const newValue = this.value;
+
+            // Validate dropdown value before assigning
+            if (!REQUIRED_STATES_ARRAY.includes(newValue)) {
+                return;
+            }
 
             // Update hidden input
             hiddenInput.value = newValue;
