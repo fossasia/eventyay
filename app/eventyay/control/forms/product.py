@@ -80,12 +80,6 @@ class QuestionForm(I18nModelForm):
         self.fields['help_text'].widget.attrs['rows'] = 3
         self.fields['type'].label = _('Type')
         self.fields['hidden'].label = _('Hidden field')
-        self.fields['hidden'].help_text = _(
-            'This field and its input field are invisible to customers in the public ticket shop. '
-            'This feature is intended for internal use. Only staff members logged into the control panel '
-            'can see and fill out this field. The purpose is for internal note taking or tracking information '
-            'that the customer does not need to see, such as internal seat assignment, VIP status, or internal notes.'
-        )
 
     def clean_dependency_values(self):
         val = self.data.getlist('dependency_values')
