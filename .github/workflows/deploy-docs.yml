@@ -8,6 +8,8 @@ on:
       - loop
     paths:
       - 'doc/**'
+      - 'app/pyproject.toml'
+      - 'app/uv.lock'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -32,13 +34,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.11.14'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            enchant-2 \
             libffi-dev \
             libssl-dev \
             libxml2-dev \
@@ -56,17 +57,16 @@ jobs:
           enable-cache: true
 
       - name: Install Python dependencies
-        run: uv sync --group docs
+        run: uv sync --frozen --group docs
         working-directory: ./app/
+        env:
+          UV_PROJECT_ENVIRONMENT: ../doc/.venv
 
       - name: Build unified documentation
+        working-directory: ./doc
         run: |
-          # Set environment variables (conf.py handles Django setup automatically)
-          export MPLCONFIGDIR=/tmp/matplotlib
-          mkdir -p $MPLCONFIGDIR
-          # Build documentation
-          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees   . _build/html
-        working-directory: ./doc/
+          make SPHINXBUILD=./.venv/bin/sphinx-build clean
+          make SPHINXBUILD=./.venv/bin/sphinx-build html
 
       - name: Prepare deployment
         run: |
