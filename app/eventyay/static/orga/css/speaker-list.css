@@ -1,0 +1,98 @@
+/* Speaker List Drag-and-Drop Styling */
+.drag-handle {
+  cursor: move;
+  cursor: grab;
+  padding: 5px 10px;
+  color: #666;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle:hover {
+  color: #000;
+}
+
+.featured-checkbox {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+/* Table wrapper for horizontal scrolling - Target by ID for specificity */
+#speaker-list-wrapper {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table styling */
+/* Table styling */
+.speaker-list-table {
+  width: 100%;
+  /* min-width sum: 30+400+100+300+80+220 = 1130px. Set to 1150px for safety */
+  min-width: 1150px;
+  table-layout: fixed;
+  margin: 0;
+}
+
+/* Column specific styling */
+.speaker-drag-column {
+  width: 30px;
+  max-width: 30px;
+  padding-left: 5px;
+  padding-right: 0;
+}
+
+.speaker-name-column {
+  width: 400px;
+  max-width: 400px;
+  padding-left: 5px;
+}
+
+.speaker-name-cell {
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.speaker-accepted-column {
+  width: 140px;
+  max-width: 140px;
+  text-align: right !important;
+  padding-right: 40px;
+}
+
+.speaker-proposals-column {
+  width: 300px;
+  max-width: 300px;
+  text-align: right;
+  padding-right: 150px;
+}
+
+.speaker-featured-column {
+  width: 80px;
+  max-width: 80px;
+  text-align: center;
+}
+
+.speaker-arrival-column {
+  width: 220px;
+  max-width: 220px;
+  text-align: right;
+  padding-right: 20px;
+}
+
+.speaker-arrival-cell {
+  white-space: normal;
+  text-align: right;
+  padding-right: 20px;
+}
+
+.speaker-arrival-cell .btn {
+  width: 100%;
+}
+
+/* Responsive table adjustments */

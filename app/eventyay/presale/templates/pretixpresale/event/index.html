@@ -19,8 +19,10 @@
     {% else %}
         <meta property="og:url" content="{% abseventurl request.event "presale:event.index" %}" />
     {% endif %}
+    <link rel="stylesheet" href="{% static 'pretixpresale/css/featured-speakers.css' %}">
     {% compress js %}
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
+        <script type="text/javascript" src="{% static "pretixpresale/js/ui/featured-speakers.js" %}"></script>
     {% endcompress %}
 {% endblock %}
 {% block content %}
@@ -308,6 +310,52 @@
         {% endif %}
     {% endif %}
     </main>
+    
+    {% if featured_speakers %}
+        <section class="front-page featured-speakers" aria-labelledby="featured-speakers-heading">
+            <h3 id="featured-speakers-heading">{% trans "Featured Speakers" %}</h3>
+            <div class="row" id="speakers-container">
+                {% for speaker_profile in featured_speakers %}
+                    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12 speaker-item {% if forloop.counter > 8 %}hidden-speaker{% endif %}">
+                        <div class="speaker-card">
+                            {% if speaker_profile.avatar_url %}
+                                <img src="{{ speaker_profile.avatar_url }}" alt="{{ speaker_profile.user.get_display_name }}" class="speaker-avatar">
+                            {% else %}
+                                <div class="speaker-avatar-placeholder">
+                                    <i class="fa fa-user fa-3x"></i>
+                                </div>
+                            {% endif %}
+                            <h4>{{ speaker_profile.user.get_display_name }}</h4>
+                            {% if speaker_profile.user.profile.position or speaker_profile.user.profile.affiliation %}
+                                <p class="speaker-bio">
+                                    {% if speaker_profile.user.profile.position and speaker_profile.user.profile.affiliation %}
+                                        {{ speaker_profile.user.profile.position }} {% trans "at" %} {{ speaker_profile.user.profile.affiliation }}
+                                    {% elif speaker_profile.user.profile.position %}
+                                        {{ speaker_profile.user.profile.position }}
+                                    {% else %}
+                                        {{ speaker_profile.user.profile.affiliation }}
+                                    {% endif %}
+                                </p>
+                            {% elif speaker_profile.biography %}
+                                <p class="speaker-bio">{{ speaker_profile.biography|truncatewords:20|striptags }}</p>
+                            {% endif %}
+                            <a href="{{ speaker_profile.urls.public }}" class="btn btn-default">
+                                {% trans "View profile" %}
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if has_more_speakers %}
+            <div class="text-center featured-speakers-more-link" id="more-speakers-btn-container">
+                <button type="button" class="btn btn-primary" id="show-more-speakers-btn">
+                    {% trans "More speakers" %} <i class="fa fa-angle-down"></i>
+                </button>
+            </div>
+            {% endif %}
+        </section>
+    {% endif %}
+    
     {% if show_vouchers %}
         <aside class="front-page" aria-labelledby="redeem-a-voucher">
             <h3 id="redeem-a-voucher">{% trans "Redeem a voucher" %}</h3>

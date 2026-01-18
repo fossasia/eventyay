@@ -1,6 +1,11 @@
+import json
+import logging
+from http import HTTPStatus
+
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count, Exists, OuterRef, Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -37,13 +42,16 @@ from eventyay.base.models import Answer
 from eventyay.base.models.submission import SubmissionStates
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 
+logger = logging.getLogger(__name__)
+
 
 class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin, ListView):
     template_name = 'orga/speaker/list.html'
     context_object_name = 'speakers'
     default_filters = ('user__email__icontains', 'user__fullname__icontains')
-    sortable_fields = ('user__email', 'user__fullname')
-    default_sort_field = 'user__fullname'
+    sortable_fields = ('user__email', 'user__fullname', 'featured_order')
+    default_sort_field = 'featured_order'
+    secondary_sort = {'featured_order': ['user__fullname']}
     permission_required = 'base.orga_list_speakerprofile'
 
     def get_filter_form(self):
@@ -51,8 +59,10 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         return SpeakerFilterForm(self.request.GET, event=self.request.event, filter_arrival=any_arrived)
 
     def get_queryset(self):
+        # Show ALL speakers for the event, not just those with submissions
+        # This allows organizers to feature and reorder any speaker (per issue #1709)
         qs = (
-            speaker_profiles_for_user(self.request.event, self.request.user)
+            SpeakerProfile.objects.filter(event=self.request.event)
             .select_related('event', 'user')
             .annotate(
                 submission_count=Count(
@@ -92,16 +102,24 @@ class SpeakerList(EventPermissionRequired, Sortable, Filterable, PaginationMixin
         elif question and unanswered:
             answers = Answer.objects.filter(question_id=question, person_id=OuterRef('user_id'))
             qs = qs.annotate(has_answer=Exists(answers)).filter(has_answer=False)
+        
+        # Ensure deterministic ordering for PostgreSQL before applying distinct
         qs = qs.order_by('id').distinct()
-        return self.sort_queryset(qs)
+        # Apply sorting: use sort_queryset() which respects ?sort= parameter or uses default_sort_field
+        qs = self.sort_queryset(qs)
+        return qs
+
 
 
 class SpeakerViewMixin(PermissionRequired):
     def get_object(self):
+        if self.request.user.has_perm('base.orga_list_speakerprofile', self.request.event):
+            qs = User.objects.filter(profiles__event=self.request.event)
+        else:
+            qs = User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
+        
         return get_object_or_404(
-            User.objects.filter(profiles__in=speaker_profiles_for_user(self.request.event, self.request.user))
-            .order_by('id')
-            .distinct(),
+            qs.order_by('id').distinct(),
             code=self.kwargs['code'],
         )
 
@@ -112,7 +130,9 @@ class SpeakerViewMixin(PermissionRequired):
     @context
     @cached_property
     def profile(self):
-        return self.object.event_profile(self.request.event)
+        if hasattr(self.object, 'event_profile'):
+            return self.object.event_profile(self.request.event)
+        return self.object
 
     def get_permission_object(self):
         return self.profile
@@ -287,3 +307,122 @@ class SpeakerExport(EventPermissionRequired, FormView):
             messages.success(self.request, _('No data to be exported'))
             return redirect(self.request.path)
         return result
+
+
+class SpeakerToggleFeatured(SpeakerViewMixin, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, event, code):
+        try:
+            self.profile.is_featured = not self.profile.is_featured
+            self.profile.save()
+            action = 'eventyay.speaker.featured' if self.profile.is_featured else 'eventyay.speaker.unfeatured'
+            self.profile.log_action(
+                action,
+                data={'event': self.request.event.slug},
+                user=self.request.user,
+            )
+            return JsonResponse({'status': 'success', 'is_featured': self.profile.is_featured})
+        except Exception:
+            logger.exception('Error toggling featured status for speaker %s', code)
+            return JsonResponse({'status': 'error', 'message': 'An error occurred'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
+
+
+class SpeakerReorderView(EventPermissionRequired, View):
+    permission_required = 'base.update_speakerprofile'
+
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            logger.warning('Invalid JSON in speaker reorder request')
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
+        
+        if not isinstance(data, dict):
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
+
+        speaker_ids = data.get('speaker_ids', [])
+        if not isinstance(speaker_ids, list):
+            return JsonResponse({'status': 'error', 'message': 'Invalid request data'}, status=HTTPStatus.BAD_REQUEST)
+        
+        # Verify all elements are integers
+        if not all(isinstance(x, int) for x in speaker_ids):
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=HTTPStatus.BAD_REQUEST)
+
+        # Validate speaker_ids length to prevent abuse
+        if len(speaker_ids) > 1000:  # Reasonable maximum
+            logger.warning(f'Too many speaker IDs in reorder request: {len(speaker_ids)}')
+            return JsonResponse({'status': 'error', 'message': 'Too many speakers'}, status=HTTPStatus.BAD_REQUEST)
+        
+        # Validate all speaker_ids belong to the current event
+        valid_speaker_ids = set(
+            SpeakerProfile.objects.filter(
+                event=request.event,
+                id__in=speaker_ids
+            ).values_list('id', flat=True)
+        )
+        
+        invalid_ids = set(speaker_ids) - valid_speaker_ids
+        if invalid_ids:
+            logger.warning(f'Invalid speaker IDs in reorder request: {invalid_ids}')
+            return JsonResponse({'status': 'error', 'message': 'Invalid speaker IDs'}, status=HTTPStatus.BAD_REQUEST)
+        
+        try:
+            with transaction.atomic():
+                # Fetch all speakers for this event in their current global order
+                all_speakers = list(
+                    SpeakerProfile.objects.filter(
+                        event=request.event
+                    ).order_by('featured_order', 'id')
+                )
+                
+                # Map IDs to speaker instances for quick lookup
+                speakers_by_id = {speaker.id: speaker for speaker in all_speakers}
+                
+                # Determine the indices of the speakers being reordered
+                moving_indices = [
+                    index for index, speaker in enumerate(all_speakers)
+                    if speaker.id in valid_speaker_ids
+                ]
+                
+                # If none of the speakers are found (should not happen after validation), do nothing
+                if not moving_indices:
+                    return JsonResponse({'status': 'success'})
+                
+                start_index = min(moving_indices)
+                end_index = max(moving_indices) + 1
+                
+                # Build the segment of speakers in the new order specified by speaker_ids
+                reordered_segment = []
+                for speaker_id in speaker_ids:
+                    speaker = speakers_by_id.get(speaker_id)
+                    if speaker is not None:
+                        reordered_segment.append(speaker)
+                
+                # Prefix: speakers before the reordered segment
+                prefix = all_speakers[:start_index]
+                
+                # Suffix: speakers after the reordered segment, excluding any that are being reordered
+                suffix = [
+                    speaker for speaker in all_speakers[end_index:]
+                    if speaker.id not in valid_speaker_ids
+                ]
+                
+                # Construct the final global sequence
+                final_sequence = prefix + reordered_segment + suffix
+                
+                # Reassign order values globally to keep them contiguous and unique
+                for index, speaker in enumerate(final_sequence):
+                    speaker.featured_order = index
+                
+                # Bulk update all speakers in one query
+                if final_sequence:
+                    SpeakerProfile.objects.bulk_update(final_sequence, ['featured_order'])
+            
+            return JsonResponse({'status': 'success'})
+        except (ValueError, TypeError) as e:
+            logger.error(f'Error reordering speakers (data error): {e}')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=HTTPStatus.BAD_REQUEST)
+        except Exception:
+            logger.exception('Error reordering speakers (database error)')
+            return JsonResponse({'status': 'error', 'message': 'Failed to save speaker order'}, status=HTTPStatus.INTERNAL_SERVER_ERROR)
