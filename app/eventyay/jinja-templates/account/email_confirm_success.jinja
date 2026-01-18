@@ -1,0 +1,36 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Email Confirmed') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='email-confirm-success-container'>
+    <div class='alert alert-success'>
+      <h1><i class='fa fa-check-circle'></i> {{ _('Email Address Confirmed') }}</h1>
+      <p>
+        {{ _('Your email address has been successfully confirmed.') }}
+      </p>
+    </div>
+
+    <div class='btn-group'>
+      {% if user.is_authenticated %}
+        <a href="{{ url_for('eventyay_common:account.email') }}" class='btn btn-primary'>
+          <i class='fa fa-envelope'></i>
+          {{ _('Manage Email Addresses') }}
+        </a>
+
+        <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
+          <i class='fa fa-arrow-left'></i>
+          {{ _('Return to Dashboard') }}
+        </a>
+      {% else %}
+        <p>{{ _('You can now log in with this email address.') }}</p>
+        <a href="{{ url_for('account_login') }}" class='btn btn-primary'>
+          <i class='fa fa-sign-in'></i>
+          {{ _('Log In') }}
+        </a>
+      {% endif %}
+    </div>
+  </div>
+{% endblock content %}

@@ -29,7 +29,7 @@ from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import SpeakerProfileForm, UserForm
 from eventyay.base.models import User
-from eventyay.submission.forms import InfoForm, TalkQuestionsForm
+from eventyay.submission.forms import InfoForm
 from eventyay.base.models import (
     TalkQuestionTarget,
     SubmissionStates,
@@ -454,66 +454,7 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         )
 
 
-class QuestionsStep(GenericFlowStep, FormFlowStep):
-    identifier = 'questions'
-    icon = 'question-circle-o'
-    form_class = TalkQuestionsForm
-    template_name = 'cfp/event/submission_questions.html'
-    priority = 25
 
-    def is_applicable(self, request):
-        self.request = request
-        info_data = self.cfp_session.get('data', {}).get('info', {})
-        track = info_data.get('track')
-        if track:
-            questions = self.event.talkquestions.exclude(
-                Q(target=TalkQuestionTarget.SUBMISSION)
-                & (
-                    (~Q(tracks__in=[info_data.get('track')]) & Q(tracks__isnull=False))
-                    | (~Q(submission_types__in=[info_data.get('submission_type')]) & Q(submission_types__isnull=False))
-                )
-            )
-        else:
-            questions = self.event.talkquestions.exclude(
-                Q(target=TalkQuestionTarget.SUBMISSION)
-                & (~Q(submission_types__in=[info_data.get('submission_type')]) & Q(submission_types__isnull=False))
-            )
-        return questions.exists()
-
-    def get_extra_form_kwargs(self):
-        return {'target': ''}
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        info_data = self.cfp_session.get('data', {}).get('info', {})
-        result['track'] = info_data.get('track')
-        access_code = getattr(self.request, 'access_code', None)
-        if access_code and access_code.submission_type:
-            result['submission_type'] = access_code.submission_type
-        else:
-            result['submission_type'] = info_data.get('submission_type')
-        if not self.request.user.is_anonymous:
-            result['speaker'] = self.request.user
-        return result
-
-    def done(self, request, draft=False):
-        form = self.get_form(from_storage=True)
-        form.speaker = request.user
-        form.submission = request.submission
-        form.is_valid()
-        form.save()
-
-    @property
-    def label(self):
-        return _('Additional information')
-
-    @property
-    def _title(self):
-        return _('Tell us more!')
-
-    @property
-    def _text(self):
-        return _('Before we can save your proposal, we have some more questions for you.')
 
 
 class UserStep(GenericFlowStep, FormFlowStep):
@@ -620,7 +561,6 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
 
 DEFAULT_STEPS = (
     InfoStep,
-    QuestionsStep,
     UserStep,
     ProfileStep,
 )

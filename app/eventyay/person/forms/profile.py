@@ -15,8 +15,10 @@ from eventyay.common.forms.fields import (
     SizeFileField,
 )
 from eventyay.common.forms.mixins import (
+    ConfiguredFieldOrderMixin,
     I18nHelpText,
     PublicContent,
+    QuestionFieldsMixin,
     ReadOnlyFlag,
     RequestRequire,
 )
@@ -32,7 +34,7 @@ from eventyay.base.models import Event
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget
 from eventyay.base.models.submission import SubmissionStates
 
 
@@ -46,6 +48,8 @@ def get_email_address_error():
 
 class SpeakerProfileForm(
     CfPFormMixin,
+    ConfiguredFieldOrderMixin,
+    QuestionFieldsMixin,
     AvailabilitiesFormMixin,
     ReadOnlyFlag,
     PublicContent,
@@ -72,6 +76,7 @@ class SpeakerProfileForm(
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
         super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
+        self.speaker = self.user
         read_only = kwargs.get('read_only', False)
         initial = kwargs.get('initial', {})
         initial['name'] = name
@@ -111,8 +116,18 @@ class SpeakerProfileForm(
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
-            self.data = self.data.copy()
-            self.data['availabilities'] = self.initial['availabilities']
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
+        self.inject_questions_into_fields(
+            target=TalkQuestionTarget.SPEAKER,
+            event=self.event,
+            speaker=self.user,
+            readonly=read_only,
+        )
+
+        # Reorder fields based on configuration
+        self.order_fields_by_config('speaker')
 
     @cached_property
     def user_fields(self):
@@ -181,6 +196,9 @@ class SpeakerProfileForm(
 
         if self.user.avatar and 'avatar' in self.changed_data:
             self.user.process_image('avatar', generate_thumbnail=True)
+        for key, value in self.cleaned_data.items():
+            if key.startswith('question_'):
+                self.save_questions(key, value)
         return result
 
     class Meta:

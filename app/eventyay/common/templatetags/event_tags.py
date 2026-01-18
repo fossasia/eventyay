@@ -103,3 +103,10 @@ def user_has_valid_ticket(context, event=None):
         addon_to__isnull=True,
     ).exists()
 
+
+@register.filter
+def startswith(value, arg):
+    """Usage: {% if value|startswith:"arg" %}"""
+    if isinstance(value, str):
+        return value.startswith(arg)
+    return False

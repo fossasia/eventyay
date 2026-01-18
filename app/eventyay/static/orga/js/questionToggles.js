@@ -149,7 +149,7 @@ function initFormPageToggles() {
     }
 
     // Init from hidden inputs
-    document.querySelectorAll('input[type=hidden][name^="settings-cfp_ask_"]').forEach(input => {
+    document.querySelectorAll('input[type=hidden][data-is-question-field="true"]').forEach(input => {
         updateVisualState(input.id, input.value);
     });
 
