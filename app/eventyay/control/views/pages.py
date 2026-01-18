@@ -1,3 +1,4 @@
+# TODO: Remove bleach import
 import bleach
 from django import forms
 from django.conf import settings
@@ -131,12 +132,14 @@ class ShowPageView(TemplateView):
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
+        # TODO: Implement nh3 equivalent
         attributes = dict(bleach.ALLOWED_ATTRIBUTES)
         attributes['a'] = ['href', 'title', 'target']
         attributes['p'] = ['class']
         attributes['li'] = ['class']
         attributes['img'] = ['src']
 
+        # TODO: Implement nh3 equivalent
         ctx['content'] = bleach.clean(
             str(page.text),
             tags=bleach.ALLOWED_TAGS + ['img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'],

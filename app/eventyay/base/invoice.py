@@ -4,6 +4,7 @@ from decimal import Decimal
 from io import BytesIO
 from typing import Tuple
 
+# TODO: Remove bleach import
 import bleach
 import vat_moss.exchange_rates
 from django.contrib.staticfiles import finders
@@ -290,6 +291,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     invoice_to_top = 52 * mm
 
     def _draw_invoice_to(self, canvas):
+        # TODO: Implement nh3 equivalent
         p = Paragraph(
             bleach.clean(self.invoice.address_invoice_to, tags=[]).strip().replace('\n', '<br />\n'),
             style=self.stylesheet['Normal'],
@@ -308,6 +310,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     invoice_from_top = 17 * mm
 
     def _draw_invoice_from(self, canvas):
+        # TODO: Implement nh3 equivalent
         p = Paragraph(
             bleach.clean(self.invoice.full_invoice_from, tags=[]).strip().replace('\n', '<br />\n'),
             style=self.stylesheet['InvoiceFrom'],
@@ -423,6 +426,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
     def _draw_event(self, canvas):
         def shorten(txt):
+            # TODO: Implement nh3 equivalent
             txt = str(txt)
             txt = bleach.clean(txt, tags=[]).strip()
             p = Paragraph(txt.strip().replace('\n', '<br />\n'), style=self.stylesheet['Normal'])
@@ -522,6 +526,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
         ]
 
     def _get_intro(self):
+        # TODO: Implement nh3 equivalent
         story = []
         if self.invoice.custom_field:
             story.append(
@@ -540,6 +545,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
             )
 
         if self.invoice.internal_reference:
+            # TODO: Implement nh3 equivalent
             story.append(
                 Paragraph(
                     pgettext('invoice', 'Customer reference: {reference}').format(
@@ -552,6 +558,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
             )
 
         if self.invoice.invoice_to_vat_id:
+            # TODO: Implement nh3 equivalent
             story.append(
                 Paragraph(
                     pgettext('invoice', 'Customer VAT ID')
@@ -562,6 +569,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
             )
 
         if self.invoice.invoice_to_beneficiary:
+            # TODO: Implement nh3 equivalent
             story.append(
                 Paragraph(
                     pgettext('invoice', 'Beneficiary')
@@ -867,6 +875,7 @@ class Modern1Renderer(ClassicInvoiceRenderer):
         return stylesheet
 
     def _draw_invoice_from(self, canvas):
+        # TODO: Implement nh3 equivalent
         if not self.invoice.invoice_from:
             return
         c = [
