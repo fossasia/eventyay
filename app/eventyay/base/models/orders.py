@@ -140,9 +140,9 @@ class Order(LockModel, LoggedModel):
     :param secret: A secret string that is required to modify the order
     :type secret: str
     :param datetime: The datetime of the order placement
-    :type datetime: datetime
+    :type datetime: datetime.datetime
     :param expires: The date until this order has to be paid to guarantee the fulfillment
-    :type expires: datetime
+    :type expires: datetime.datetime
     :param total: The total amount of the order, including the payment fee
     :type total: decimal.Decimal
     :param comment: An internal comment that will only be visible to staff, and never displayed to the user
@@ -1261,9 +1261,9 @@ class AbstractPosition(models.Model):
     :param variation: The selected ProductVariation or null, if the product has no variations
     :type variation: ProductVariation
     :param datetime: The datetime this product was put into the cart
-    :type datetime: datetime
+    :type datetime: datetime.datetime
     :param expires: The date until this product is guaranteed to be reserved
-    :type expires: datetime
+    :type expires: datetime.datetime
     :param price: The price of this product
     :type price: decimal.Decimal
     :param attendee_name_parts: The parts of the attendee's name, if entered.
@@ -1482,9 +1482,9 @@ class OrderPayment(models.Model):
     :param order: The order that is paid
     :type order: Order
     :param created: The creation time of this record
-    :type created: datetime
+    :type created: datetime.datetime
     :param payment_date: The completion time of this payment
-    :type payment_date: datetime
+    :type payment_date: datetime.datetime
     :param provider: The payment provider in use
     :type provider: str
     :param info: Provider-specific meta information (in JSON format)
@@ -1837,7 +1837,7 @@ class OrderPayment(models.Model):
         :param amount: Amount to refund. If not given, the full payment amount will be used.
         :type amount: Decimal
         :param execution_date: Date of the refund. Defaults to the current time.
-        :type execution_date: datetime
+        :type execution_date: datetime.datetime
         :param info: Additional information, defaults to ``"{}"``.
         :type info: str
         :return: OrderRefund
@@ -1883,9 +1883,9 @@ class OrderRefund(models.Model):
     :param order: The order that is refunded
     :type order: Order
     :param created: The creation time of this record
-    :type created: datetime
+    :type created: datetime.datetime
     :param execution_date: The completion time of this refund
-    :type execution_date: datetime
+    :type execution_date: datetime.datetime
     :param provider: The payment provider in use
     :type provider: str
     :param info: Provider-specific meta information in JSON format
