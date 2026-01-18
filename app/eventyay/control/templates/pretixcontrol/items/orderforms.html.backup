@@ -1,0 +1,68 @@
+{% extends "pretixcontrol/items/base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+{% load rich_text %}
+{% block title %}{% trans "Order forms" %}{% endblock %}
+{% block inside %}
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h1>{% trans "Order forms" %}</h1>
+            </div>
+            {% include "pretixcontrol/event/component_link.html" %}
+        </div>
+    </nav>
+    
+    <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% bootstrap_form_errors sform %}
+        
+        <fieldset>
+            <legend>{% trans "Customer data (once per order)" %}</legend>
+            {% if sform.order_email_asked_required %}
+                {% bootstrap_field sform.order_email_asked_required layout="control" %}
+            {% else %}
+                {% bootstrap_field sform.order_email_asked layout="control" %}
+                {% bootstrap_field sform.order_email_required layout="control" %}
+            {% endif %}
+            {% bootstrap_field sform.order_email_asked_twice layout="control" %}
+            {% bootstrap_field sform.order_phone_asked_required layout="control" %}
+            <div class="form-group">
+                <label class="control-label col-md-3">
+                    {% trans "Name and address" %}
+                </label>
+                <div class="col-md-9 static-form-row">
+                    <p>
+                        <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
+                            {% trans "See invoice settings" %}
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Attendee data (once per admission ticket)" %}</legend>
+            {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
+            {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
+        </fieldset>
+
+        <fieldset>
+            <legend>{% trans "Form settings" %}</legend>
+            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
+            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
+            {% bootstrap_field sform.name_scheme layout="control" %}
+            {% bootstrap_field sform.name_scheme_titles layout="control" %}
+            {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
+        </fieldset>
+        
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

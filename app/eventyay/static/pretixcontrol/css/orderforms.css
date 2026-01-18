@@ -1,0 +1,119 @@
+/**
+ * Order Forms Table Styles
+ * 
+ * Styling for the table-based order form configuration UI.
+ * Extends the existing toggle switch and dropdown styles from the talk component
+ * to maintain visual consistency across the platform.
+ * 
+ * @see orga/css/question-toggles.css - Base toggle and dropdown styles
+ */
+
+/* ============================================================================
+   Base Table Structure
+   ========================================================================= */
+
+.order-forms-table {
+    margin-top: 1rem;
+}
+
+/* ============================================================================
+   Table Headers and Cells
+   ========================================================================= */
+
+.order-forms-table thead th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.order-forms-table tbody th {
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+.order-forms-table tbody td {
+    vertical-align: middle;
+}
+
+/* ============================================================================
+   Form Field Hiding
+   Hide the original form fields that are replaced by interactive toggles
+   ========================================================================= */
+
+.order-forms-table tbody select[name$="_asked_required"],
+.order-forms-table tbody input[name$="_asked_twice"] {
+    display: none;
+}
+
+/* ============================================================================
+   Settings Column Styling
+   ========================================================================= */
+
+.order-forms-table td .text-muted.small {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* ============================================================================
+   Full-Width Rows (e.g., Explanation Text)
+   ========================================================================= */
+
+.order-forms-table th[colspan] {
+    background-color: #f8f9fa;
+    padding: 1rem;
+}
+
+.order-forms-table th[colspan] .form-group {
+    margin-bottom: 0;
+}
+
+.order-forms-table th[colspan] label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.order-forms-table th[colspan] textarea {
+    width: 100%;
+    min-height: 80px;
+}
+
+.order-forms-table th[colspan] .help-block {
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* ============================================================================
+   Button Styling
+   ========================================================================= */
+
+.order-forms-table .btn-sm {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* ============================================================================
+   Responsive Design
+   Mobile and tablet optimizations
+   ========================================================================= */
+
+@media (max-width: 768px) {
+    .order-forms-table {
+        font-size: 0.875rem;
+    }
+    
+    .order-forms-table th,
+    .order-forms-table td {
+        padding: 0.5rem;
+    }
+}
+
+/* ============================================================================
+   Loading States
+   ========================================================================= */
+
+.order-forms-table .loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
