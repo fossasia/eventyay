@@ -43,6 +43,26 @@ services:
       - db
       - redis
 
+  beat:
+    build: ./app
+    platform: linux/amd64
+    container_name: eventyay-next-beat
+    entrypoint: celery -A eventyay beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./app/eventyay:/usr/src/app/eventyay
+      - /usr/src/app/eventyay/static/webapp
+      - /usr/src/app/eventyay/static/global-nav-menu
+      - /usr/src/app/eventyay/static/schedule-editor
+      - /usr/src/app/eventyay/webapp/node_modules
+      - /usr/src/app/eventyay/frontend/global-nav-menu/node_modules
+      - /usr/src/app/eventyay/frontend/schedule-editor/node_modules
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - db
+      - redis
+      - worker
+
   redis:
     image: redis:latest
     platform: linux/amd64
