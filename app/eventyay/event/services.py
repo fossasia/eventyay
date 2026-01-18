@@ -48,7 +48,8 @@ def task_periodic_event_services(event_slug):
 
         if (
             not event.settings.sent_mail_event_over
-            and ((_now.date() - dt.timedelta(days=3)) <= event.date_to <= (_now.date() - dt.timedelta(days=1)))
+            and event.date_to
+            and ((_now.date() - dt.timedelta(days=3)) <= event.date_to.date() <= (_now.date() - dt.timedelta(days=1)))
             and event.current_schedule
             and event.current_schedule.talks.filter(is_visible=True).count()
         ):
