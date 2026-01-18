@@ -1667,7 +1667,6 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/items/orderforms.html'
     permission = 'can_change_items'
 
-    @cached_property
     def sform(self):
         return EventSettingsForm(
             obj=self.request.event,
@@ -1677,14 +1676,22 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         )
 
     def get_form(self, form_class=None):
-        return self.sform
+        return self.sform()
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['sform'] = self.sform
+        ctx['sform'] = self.sform()
         return ctx
 
     def form_valid(self, form):
+        # Debug logging to identify persistence issue
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"POST data keys: {list(self.request.POST.keys())}")
+        logger.info(f"Form cleaned_data keys: {list(form.cleaned_data.keys())}")
+        logger.info(f"Form changed_data: {form.changed_data}")
+        logger.info(f"Virtual keys: {getattr(form, 'virtual_keys', [])}")
+        
         form.save()
         if form.has_changed():
             self.request.event.log_action(
@@ -1694,6 +1701,17 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
             )
         messages.success(self.request, _('Your changes have been saved.'))
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        # Debug logging to identify validation errors
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Form validation FAILED")
+        logger.error(f"Form errors: {form.errors}")
+        logger.error(f"Form non_field_errors: {form.non_field_errors()}")
+        logger.error(f"POST data keys: {list(self.request.POST.keys())}")
+        messages.error(self.request, _('Please correct the errors below.'))
+        return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse('control:event.products.orderforms', kwargs={
