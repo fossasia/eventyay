@@ -100,6 +100,11 @@ class AddOnsStep(CartMixin, AsyncAction, TemplateFlowStep):
                     current_addon_products[a.product_id, a.variation_id].append(a)
 
             for iao in cartpos.product.addons.all():
+                # Skip this addon category if it has voucher with allow_addons=True
+                # (auto-added free add-ons already in cart)
+                if cartpos.voucher_id and cartpos.voucher.allow_addons:
+                    continue
+                
                 ckey = '{}-{}'.format(
                     cartpos.subevent.pk if cartpos.subevent else 0,
                     iao.addon_category.pk,
