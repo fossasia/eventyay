@@ -23,7 +23,7 @@
     "color-blend": "^4.0.0",
     "core-js": "^3.47.0",
     "dompurify": "^3.3.1",
-    "emoji-datasource-twitter": "^5.0.1",
+    "emoji-datasource-twitter": "^16.0.0",
     "emoji-mart": "^3.0.0",
     "emoji-regex": "^10.6.0",
     "events": "^3.3.0",
