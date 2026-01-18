@@ -442,3 +442,8 @@ table.dataTable thead .sorting:after {
         }
     }
 }
+// Utility class for sharp corners (matching talk component).
+.btn.btn-sharp,
+a.btn.btn-sharp {
+    border-radius: 0;
+}
