@@ -175,7 +175,7 @@ class BaseSettings(_BaseSettings):
         # Insert the TOML which matches the running environment
         toml_files = discover_toml_files()
         # We need `walk_up` because sometimes we stand in the "doc" directory.
-        file_list_for_display = [str(p.relative_to(Path.cwd(), walk_up=True)) for p in toml_files]
+        file_list_for_display = [str(p.resolve()) for p in toml_files]
         print(f'Loading configuration from: [blue]{file_list_for_display}[/]', file=sys.stderr)
         toml_settings = TomlConfigSettingsSource(
             settings_cls,

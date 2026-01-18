@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.12-slim-trixie
+FROM python:3.11-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # set work directory
