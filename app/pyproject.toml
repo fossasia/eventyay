@@ -35,7 +35,6 @@ dependencies = [
     "babel>=2.16.0",
     "beautifulsoup4>=4.14.3",
     "billiard>=4.2.4",
-    "bleach>=6.3.0",
     "cbor2>=5.8.0",
     "celery>=5.4.0",
     "certifi>=2026.1.4",
