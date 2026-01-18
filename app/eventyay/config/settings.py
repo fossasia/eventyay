@@ -1217,9 +1217,12 @@ LOGGING = {
 ACCOUNT_LOGIN_METHODS = {'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
+# Prefer Jinja2 templates for django-allauth
+ACCOUNT_TEMPLATE_EXTENSION = 'jinja'
+ACCOUNT_EMAIL_CONFIRMATION_AUTHENTICATED_REDIRECT_URL = '/common/account/email'
+
 SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-
 SOCIALACCOUNT_ADAPTER = 'eventyay.plugins.socialauth.adapter.CustomSocialAccountAdapter'
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_QUERY_EMAIL = True
@@ -1304,7 +1307,7 @@ LOGIN_URL_CONTROL = 'eventyay_common:auth.login'
 VIDEO_BASE_PATH = '/video'
 WEBSOCKET_URL = '/ws/event/'
 TALK_BASE_PATH = ''
-LOGIN_REDIRECT_URL = '/control/video'
+LOGIN_REDIRECT_URL = '/common/account/general'
 
 FILE_UPLOAD_DEFAULT_LIMIT = 10 * 1024 * 1024
 
