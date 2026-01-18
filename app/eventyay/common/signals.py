@@ -240,21 +240,20 @@ events with your plugin activated.
 """
 
 
-@receiver(periodic_task)
+@receiver(periodic_task, dispatch_uid="process_scheduled_emails")
 @scopes_disabled()
 def process_scheduled_emails(sender, **kwargs):
     """
-    Process scheduled emails that are due for sending.
-    Handles both QueuedMail (Talk/CfP) and EmailQueue (Tickets).
+    Periodic task to process scheduled emails for both Talk and Tickets components.
     
-    Uses select_for_update(skip_locked=True) to prevent duplicate sends
+    Uses select_for_update(skip_locked=True) to prevent duplicate processing
     when multiple workers process the same emails concurrently.
     
     Processes emails in batches to reduce lock contention and limit
     transaction size for better performance and reliability.
     """
-    from eventyay.base.models.mail import QueuedMail
     from eventyay.plugins.sendmail.models import EmailQueue
+    from eventyay.base.models.mail import QueuedMail
 
     MAIL_SEND_BATCH_SIZE = 100  # limit emails processed per transaction batch
 
