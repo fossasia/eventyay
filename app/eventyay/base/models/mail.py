@@ -327,6 +327,13 @@ class QueuedMail(PretalxModel):
     subject = models.CharField(max_length=200, verbose_name=pgettext_lazy('email subject', 'Subject'))
     text = models.TextField(verbose_name=_('Text'))
     sent = models.DateTimeField(null=True, blank=True, verbose_name=_('Sent at'))
+    scheduled_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=_('Scheduled for'),
+        help_text=_('If set, the email will be sent at this time instead of immediately.'),
+    )
     locale = models.CharField(max_length=32, null=True, blank=True)
     attachments = models.JSONField(default=None, null=True, blank=True)
     submissions = models.ManyToManyField(
@@ -403,6 +410,9 @@ class QueuedMail(PretalxModel):
         """
         if self.sent:
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
+
+        if self.scheduled_at and self.scheduled_at > now():
+            return
 
         has_event = getattr(self, 'event', None)
 
