@@ -1,4 +1,4 @@
-import bleach
+import nh3
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -131,16 +131,24 @@ class ShowPageView(TemplateView):
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
-        attributes = dict(bleach.ALLOWED_ATTRIBUTES)
-        attributes['a'] = ['href', 'title', 'target']
-        attributes['p'] = ['class']
-        attributes['li'] = ['class']
-        attributes['img'] = ['src']
+        allowed_tags = {
+            'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul',
+            'img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'
+        }
+        
+        attributes = {
+            'a': {'href', 'title', 'target'},
+            'abbr': {'title'},
+            'acronym': {'title'},
+            'img': {'src'},
+            'p': {'class'},
+            'li': {'class'},
+        }
 
-        ctx['content'] = bleach.clean(
+        ctx['content'] = nh3.clean(
             str(page.text),
-            tags=bleach.ALLOWED_TAGS + ['img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'],
+            tags=allowed_tags,
             attributes=attributes,
-            protocols=bleach.ALLOWED_PROTOCOLS + ['data'],
+            url_schemes={'http', 'https', 'mailto', 'data'},
         )
         return ctx
