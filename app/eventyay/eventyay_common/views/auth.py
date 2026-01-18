@@ -4,6 +4,7 @@ import logging
 import time
 from typing import cast
 from urllib.parse import quote, urlparse
+from pydantic import ValidationError
 
 import webauthn
 from django.conf import settings
@@ -12,11 +13,7 @@ from django.contrib.auth import (
     BACKEND_SESSION_KEY,
     authenticate,
     load_backend,
-)
-from django.contrib.auth import (
     login as auth_login,
-)
-from django.contrib.auth import (
     logout as auth_logout,
 )
 from django.contrib.auth.tokens import default_token_generator
@@ -45,6 +42,7 @@ from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.models.page import Page
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.plugins.socialauth.utils import validate_login_providers
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
@@ -54,24 +52,18 @@ logger = logging.getLogger(__name__)
 
 def get_used_backend(request):
     backend_str = request.session[BACKEND_SESSION_KEY]
-    backend = load_backend(backend_str)
-    return backend
+    return load_backend(backend_str)
 
 
 def process_login(request, user, keep_logged_in):
-    """
-    This method allows you to return a response to a successful log-in. This will set all session values correctly
-    and redirect to either the URL specified in the ``next`` parameter, or the 2FA login screen, or the dashboard.
+    request.session['eventyay_auth_long_session'] = (
+        settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
+    )
 
-    :return: This method returns a ``HttpResponse``.
-    """
-    request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
-    
-    # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
     next_url = request.session.pop('socialauth_next_url', None)
     if not next_url:
         next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
-    
+
     if user.require_2fa:
         request.session['eventyay_auth_2fa_user'] = user.pk
         request.session['eventyay_auth_2fa_time'] = str(int(time.time()))
@@ -79,29 +71,23 @@ def process_login(request, user, keep_logged_in):
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             twofa_url += '?next=' + quote(next_url)
         return redirect(twofa_url)
-    else:
-        auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        request.session['eventyay_auth_login_time'] = int(time.time())
-        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
-            return redirect(next_url)
-        return redirect(reverse('eventyay_common:dashboard'))
+
+    auth_login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    request.session['eventyay_auth_login_time'] = int(time.time())
+
+    if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
+        return redirect(next_url)
+
+    return redirect(reverse('eventyay_common:dashboard'))
 
 
 def process_login_and_set_cookie(request, user, keep_logged_in):
-    """
-    Process user login and set a JWT cookie.
-    """
-    # Perform login logic (e.g., set session, authenticate user)
     response = process_login(request, user, keep_logged_in)
-
-    # Generate JWT token
-    response = set_cookie_after_logged_in(request, response)
-    return response
+    return set_cookie_after_logged_in(request, response)
 
 
 def set_cookie_after_logged_in(request, response):
     if response.status_code == 302 and request.user.is_authenticated:
-        # Set JWT as a cookie in the response
         token = generate_sso_token(request.user)
         set_cookie_without_samesite(
             request,
@@ -123,38 +109,89 @@ def login(request):
     parameter "next" for redirection after successful login
     """
     ctx = {}
+
     backenddict = get_auth_backends()
-    backends = sorted(backenddict.values(), key=lambda b: (b.identifier != 'native', b.verbose_name))
-    for b in backends:
-        u = b.request_authenticate(request)
-        if u and u.auth_backend == b.identifier:
-            return process_login_and_set_cookie(request, u, False)
-        b.url = b.authentication_url(request)
+    backends = sorted(
+        backenddict.values(),
+        key=lambda b: (b.identifier != 'native', b.verbose_name),
+    )
+
+    for backend in backends:
+        user = backend.request_authenticate(request)
+        if user and user.auth_backend == backend.identifier:
+            return process_login_and_set_cookie(request, user, False)
+        backend.url = backend.authentication_url(request)
 
     backend = backenddict.get(request.GET.get('backend', 'native'), backends[0])
     if not backend.visible:
-        backend = [b for b in backends if b.visible][0]
+        backend = next(b for b in backends if b.visible)
+
     if request.user.is_authenticated:
         next_url = backend.get_next_url(request) or 'eventyay_common:dashboard'
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             return redirect(next_url)
         return redirect(reverse('eventyay_common:dashboard'))
+
     if request.method == 'POST':
         form = LoginForm(backend=backend, data=request.POST, request=request)
-        if form.is_valid() and form.user_cache and form.user_cache.auth_backend == backend.identifier:
-            return process_login_and_set_cookie(
-                request, form.user_cache, form.cleaned_data.get('keep_logged_in', False)
-            )
+        if form.is_valid() and form.user_cache:
+            keep_logged_in = form.cleaned_data.get('keep_logged_in', False)
+            return process_login_and_set_cookie(request, form.user_cache, keep_logged_in)
     else:
         form = LoginForm(backend=backend, request=request)
-    ctx['form'] = form
-    ctx['can_register'] = settings.EVENTYAY_REGISTRATION
-    ctx['can_reset'] = settings.EVENTYAY_PASSWORD_RESET
-    ctx['backends'] = backends
-    ctx['backend'] = backend
 
+    ctx.update(
+        {
+            'form': form,
+            'can_register': settings.EVENTYAY_REGISTRATION,
+            'can_reset': settings.EVENTYAY_PASSWORD_RESET,
+            'backends': backends,
+            'backend': backend,
+        }
+    )
+
+    # LOGIN PROVIDER HANDLING
     gs = GlobalSettingsObject()
-    ctx['login_providers'] = gs.settings.get('login_providers', as_type=dict)
+    raw_providers = gs.settings.get('login_providers', as_type=dict)
+    providers = validate_login_providers(raw_providers)
+
+    # Get only enabled providers
+    enabled_providers = providers.get_enabled_providers()
+
+    # Sort: preferred providers first, then alphabetically
+    def sort_key(name_and_provider):
+        name, provider = name_and_provider
+        return (not provider.is_preferred, name)
+    
+    ordered_providers = dict(sorted(enabled_providers.items(), key=sort_key))
+
+    # Validation: Check for multiple preferred providers (among enabled ones)
+    preferred_enabled = [
+        name for name, provider in enabled_providers.items() 
+        if provider.is_preferred
+    ]
+
+    if len(preferred_enabled) > 1:
+        logger.warning(
+            "Multiple login providers are marked as preferred. Providers: %s",
+            preferred_enabled,
+        )
+
+    # Validation: Check for preferred providers that are disabled
+    all_providers = providers._providers()
+    for name, provider in all_providers.items():
+        if provider.is_preferred and not provider.state:
+            logger.warning(
+                "Login provider '%s' is marked as preferred but is disabled.",
+                name,
+            )
+
+    # Convert to dict format for template (Django templates need plain dicts)
+    ctx['login_providers'] = {
+        name: provider.model_dump()
+        for name, provider in ordered_providers.items()
+    }
+
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 
