@@ -35,9 +35,9 @@
                 <table class="table table-sm order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
-                        <col style="width: 115px;">
-                        <col style="width: 150px;">
-                        <col style="width: 135px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
                     </colgroup>
                     <thead>
                         <tr>
@@ -116,7 +116,9 @@
                         {# Name and address - static link #}
                         <tr>
                             <th>{% trans "Name and address" %}</th>
-                            <td colspan="3">
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="text-center">
                                 <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
                                     {% trans "See invoice settings" %}
                                 </a>
@@ -133,9 +135,9 @@
                 <table class="table table-sm order-form-option-table">
                     <colgroup>
                         <col class="field-col" style="width: auto;">
-                        <col style="width: 115px;">
-                        <col style="width: 150px;">
-                        <col style="width: 135px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
                     </colgroup>
                     <thead>
                         <tr>
