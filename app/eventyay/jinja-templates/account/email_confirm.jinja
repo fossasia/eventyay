@@ -1,0 +1,64 @@
+{% extends 'account/base.jinja' %}
+
+{% block head_title %}
+  {{ _('Confirm Email Address') }}
+{% endblock head_title %}
+
+{% block content %}
+  <div class='email-confirm-container'>
+    <h1>{{ _('Confirm Email Address') }}</h1>
+
+    {% if confirmation %}
+      {% if can_confirm %}
+        <div class='alert alert-info'>
+          <p>
+            {{ confirmation_message }}
+            <a href="mailto:{{ confirmation_email }}">{{ confirmation_email }}</a>
+          </p>
+        </div>
+
+        <form method='post' action="{{ url_for('account_confirm_email', key=confirmation.key) }}">
+          <input type='hidden' name='csrfmiddlewaretoken' value='{{ csrf_token }}'>
+          {{ redirect_field }}
+
+          <button type='submit' class='btn btn-primary btn-lg'>
+            <i class='fa fa-check'></i>
+            {{ _('Confirm') }}
+          </button>
+
+          <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
+            <i class='fa fa-times'></i>
+            {{ _('Cancel') }}
+          </a>
+        </form>
+      {% else %}
+        <div class='alert alert-danger'>
+          <p>{{ already_confirmed_message }}</p>
+        </div>
+
+        <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
+          <i class='fa fa-arrow-left'></i>
+          {{ _('Return to Dashboard') }}
+        </a>
+      {% endif %}
+    {% else %}
+      <div class='alert alert-warning'>
+        <p>
+          {{ invalid_confirmation_message }}
+        </p>
+      </div>
+
+      <div class='btn-group'>
+        <a href="{{ url_for('eventyay_common:account.email') }}" class='btn btn-primary'>
+          <i class='fa fa-envelope'></i>
+          {{ _('Manage Email Addresses') }}
+        </a>
+
+        <a href="{{ url_for('eventyay_common:dashboard') }}" class='btn btn-default'>
+          <i class='fa fa-arrow-left'></i>
+          {{ _('Return to Dashboard') }}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock content %}

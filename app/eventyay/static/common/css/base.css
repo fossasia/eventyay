@@ -111,7 +111,7 @@ summary.btn {
     font-weight: normal;
     --highlight-color: transparent;
     color: var(--color-primary-text);
-	border: none;	
+	border: none;
 	background: transparent;
 
     &:hover {
