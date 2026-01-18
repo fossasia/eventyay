@@ -174,8 +174,7 @@ _OURS_APPS = (
     'eventyay.features.importers.ImportersConfig',
     'eventyay.storage.StorageConfig',
     'eventyay.features.social.SocialConfig',
-    'eventyay.features.integrations.zoom.ZoomConfig',
-    'eventyay.helpers',
+    'eventyay.features.integrations.zoom.ZoomConfig',    'eventyay.helpers',
     'eventyay.mail',
     'eventyay.multidomain',
     'eventyay.person',
@@ -194,7 +193,6 @@ _OURS_APPS = (
     'eventyay.plugins.webcheckin',
     'eventyay.schedule',
     'eventyay.submission',
-    # Load local ticket-video plugin
     'pretix_venueless',
 )
 INSTALLED_APPS = _LIBRARY_APPS + _OURS_APPS
