@@ -11,6 +11,7 @@ from django.utils.translation import override, pgettext_lazy
 from i18nfield.fields import I18nCharField, I18nTextField
 
 from eventyay.common.exceptions import SendMailException
+from eventyay.common.mail import get_reply_to_address
 from eventyay.common.urls import EventUrls
 from eventyay.mail.context import get_available_placeholders, get_mail_context
 from eventyay.mail.placeholders import SimpleFunctionalMailTextPlaceholder
@@ -193,11 +194,17 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
+            # Use unified Reply-To resolution
+            resolved_reply_to = get_reply_to_address(
+                event,
+                template=self
+            )
+
             mail = QueuedMail(
                 event=event,
                 template=self,
                 to=address,
-                reply_to=self.reply_to,
+                reply_to=resolved_reply_to,
                 bcc=self.bcc,
                 subject=subject,
                 text=text,

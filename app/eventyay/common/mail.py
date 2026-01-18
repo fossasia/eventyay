@@ -13,6 +13,8 @@ from eventyay.common.exceptions import SendMailException
 
 logger = logging.getLogger(__name__)
 
+LEGACY_DEFAULT_EMAIL = 'org@mail.com'
+
 
 class CustomSMTPBackend(EmailBackend):
     def test(self, from_addr):
@@ -82,12 +84,13 @@ def mail_send_task(
         if event.mail_settings['smtp_use_custom']:  # pragma: no cover
             sender = event.mail_settings['mail_from'] or sender
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        # Use unified Reply-To resolution
+        if not reply_to:
+            reply_to = get_reply_to_address(event)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -134,3 +137,36 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None
+):
+    """
+    Resolve Reply-To email address with unified precedence.
+    
+    Precedence (highest to lowest):
+    1. Explicit override parameter
+    2. Template-level reply_to
+    3. Custom SMTP reply_to (event.mail_settings['reply_to'])
+    4. Event.email (canonical organizer email)
+    5. None (system default)
+    
+    Note: The placeholder value 'org@mail.com' is excluded from Event.email.
+    """
+    if override:
+        return override
+    
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+    
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+    
+    if event.email and event.email != LEGACY_DEFAULT_EMAIL:
+        return event.email
+    
+    return None
