@@ -26,7 +26,8 @@
     <form action="" method="post" class="form-horizontal">
         {% csrf_token %}
         {% bootstrap_form_errors form %}
-        <fieldset>
+        <div class="tab-content">
+            <fieldset>
             {% bootstrap_field form.question layout="control" %}
             {% bootstrap_field form.type layout="control" %}
             {% bootstrap_field form.products layout="control" %}
@@ -141,7 +142,8 @@
                     {% bootstrap_field form.dependency_values layout="inline" form_group_class="inner" %}
                 </div>
             </div>
-        </fieldset>
+            </fieldset>
+        </div>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}
