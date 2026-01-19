@@ -4,6 +4,7 @@
 {% load eventurl %}
 {% load l10n %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block title %}{% trans "Cancel order" %}{% endblock %}
 {% block content %}
     <h2>
@@ -51,7 +52,7 @@
                 {% endif %}
             </p>
             <p>
-                {{ request.event.settings.cancel_allow_user_paid_adjust_fees_explanation|rich_text }}
+                {{ request.event.settings.cancel_allow_user_paid_adjust_fees_explanation|event_localize|rich_text }}
             </p>
             <div class="cancel-fee-slider">
                 <div id="cancel-fee-keep">Enter how much we can keep:</div>

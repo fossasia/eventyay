@@ -3,6 +3,7 @@
 {% load i18n %}
 {% load static %}
 
+{% load presale_locale %}
 {% compress js %}
     <script defer src="{% static "vendored/moment-with-locales.js" %}"></script>
     <script defer src="{% static "vendored/moment-timezone-with-data-10-year-range.js" %}"></script>
@@ -10,7 +11,7 @@
 {% endcompress %}
 
 <h2>
-    {{ quotation_open }}{{ submission.title }}{{ quotation_close }}
+    {{ quotation_open }}{{ submission.title|event_localize }}{{ quotation_close }}
     {% if submission.state == "draft" %}
         <span class="badge color-secondary">{% translate "Draft" %}</span>
     {% endif %}
@@ -34,7 +35,7 @@
     <h3>
         <small>
             {% for talk in submission.public_slots %}
-                {{ talk.start|datetimerange:talk.end }}, {{ talk.room.name }}
+                {{ talk.start|datetimerange:talk.end }}, {{ talk.room.name|event_localize }}
                 {% if not forloop.last %}·{% endif %}
             {% endfor %}
         </small>
@@ -43,13 +44,13 @@
 <div class="submission-info d-flex">
     {% if submission.submission_type and request.event.submission_types.all|length > 1 %}
         <p class="mr-1 ml-1">
-            <strong>{% translate "Session type" %}</strong>: {{ submission.submission_type.name }}
+            <strong>{% translate "Session type" %}</strong>: {{ submission.submission_type.name|event_localize }}
         </p>
         ·
     {% endif %}
     {% if submission.track and request.event.tracks.all|length > 1 %}
         <p class="mr-1 ml-1">
-            <strong>{% translate "Track" %}</strong> {{ submission.track.name }}
+            <strong>{% translate "Track" %}</strong> {{ submission.track.name|event_localize }}
         </p>
         ·
     {% endif %}
