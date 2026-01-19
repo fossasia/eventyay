@@ -98,7 +98,7 @@ def get_organizer_navigation(request):
     nav = [
         {
             'label': _('Events'),
-            'url': reverse('eventyay_common:organizer.events', kwargs={'organizer': request.resolver_match.kwargs.get('organizer')}),
+            'url': reverse('eventyay_common:organizer.events', kwargs={'organizer': request.organizer.slug}),
             'active': url.url_name == 'organizer.events',
             'icon': 'calendar',
         },
@@ -158,7 +158,8 @@ def get_organizer_navigation(request):
                 'url': reverse(
                     'eventyay_common:organizer.teams',
                     kwargs={'organizer': request.organizer.slug},
-                ),
+                )
+                + '?section=permissions',
                 'active': url.url_name == 'organizer.teams',
                 'icon': 'group',
             }
