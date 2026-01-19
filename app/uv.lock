@@ -265,6 +265,18 @@ wheels = [
 ]
 
 [[package]]
+name = "bleach"
+version = "6.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/07/18/3c8523962314be6bf4c8989c79ad9531c825210dd13a8669f6b84336e8bd/bleach-6.3.0.tar.gz", hash = "sha256:6f3b91b1c0a02bb9a78b5a454c92506aa0fdf197e1d5e114d2e00c6f64306d22", size = 203533, upload-time = "2025-10-27T17:57:39.211Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/3a/577b549de0cc09d95f11087ee63c739bba856cd3952697eec4c4bb91350a/bleach-6.3.0-py3-none-any.whl", hash = "sha256:fe10ec77c93ddf3d13a73b035abaac7a9f5e436513864ccdad516693213c65d6", size = 164437, upload-time = "2025-10-27T17:57:37.538Z" },
+]
+
+[[package]]
 name = "cbor2"
 version = "5.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1253,6 +1265,7 @@ dependencies = [
     { name = "babel" },
     { name = "beautifulsoup4" },
     { name = "billiard" },
+    { name = "bleach" },
     { name = "cbor2" },
     { name = "celery" },
     { name = "certifi" },
@@ -1487,6 +1500,7 @@ requires-dist = [
     { name = "babel", specifier = ">=2.16.0" },
     { name = "beautifulsoup4", specifier = ">=4.14.3" },
     { name = "billiard", specifier = ">=4.2.4" },
+    { name = "bleach", specifier = ">=6.3.0" },
     { name = "cbor2", specifier = ">=5.8.0" },
     { name = "celery", specifier = ">=5.4.0" },
     { name = "certifi", specifier = ">=2026.1.4" },
