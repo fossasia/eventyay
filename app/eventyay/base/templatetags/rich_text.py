@@ -1,13 +1,14 @@
 import html
-import re
 import urllib.parse
 from copy import copy
+from functools import partial
 
+import bleach
 import markdown
-import nh3
+from bleach import DEFAULT_CALLBACKS
+from bleach.linkifier import build_email_re, build_url_re
 from django import template
 from django.conf import settings
-from django.utils.html import escape
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
 from markdownify import markdownify as html_to_markdown
@@ -15,7 +16,7 @@ from markdownify import markdownify as html_to_markdown
 try:
     from publicsuffixlist import PublicSuffixList
 
-    TLD_SET = sorted({suffix.rsplit('.')[-1] for suffix in PublicSuffixList()._publicsuffix}, key=len, reverse=True)
+    TLD_SET = sorted({suffix.rsplit('.')[-1] for suffix in PublicSuffixList()._publicsuffix}, reverse=True)
 except ImportError:
     from tlds import tld_set
 
@@ -62,101 +63,103 @@ ALLOWED_TAGS = {
 }
 
 ALLOWED_ATTRIBUTES = {
-    'a': {'href', 'title', 'class', 'target'},
-    'abbr': {'title'},
-    'acronym': {'title'},
-    'table': {'width'},
-    'td': {'width', 'align'},
-    'div': {'class'},
-    'p': {'class'},
-    'span': {'class', 'title'},
+    'a': ['href', 'title', 'class'],
+    'abbr': ['title'],
+    'acronym': ['title'],
+    'table': ['width'],
+    'td': ['width', 'align'],
+    'div': ['class'],
+    'p': ['class'],
+    'span': ['class', 'title'],
 }
 
 ALLOWED_PROTOCOLS = {'http', 'https', 'mailto', 'tel'}
 
-tld_pattern = '|'.join(re.escape(tld) for tld in TLD_SET)
+URL_RE = build_url_re(tlds=TLD_SET)
+EMAIL_RE = build_email_re(tlds=TLD_SET)
 
-# Requires www. or protocol prefix (http://, https://) to prevent false positives with bare domains
-URL_RE = re.compile(
-    r'(?:(?:https?://)|(?:www\.))'
-    r'(?:[a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+'
-    r'\.(?:' + tld_pattern + r')'
-    r'(?:[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]*)',
-    re.IGNORECASE
+
+def link_callback(attrs, is_new, safelink=True):
+    url = attrs.get((None, 'href'), '/')
+    if url.startswith('mailto:') or url.startswith('tel:') or url_has_allowed_host_and_scheme(url, allowed_hosts=None):
+        return attrs
+    attrs[None, 'target'] = '_blank'
+    attrs[None, 'rel'] = 'noopener'
+    if safelink:
+        url = html.unescape(url)
+        attrs[None, 'href'] = sl(url)
+    else:
+        url = html.unescape(url)
+        attrs[None, 'href'] = urllib.parse.urljoin(settings.SITE_URL, url)
+    return attrs
+
+
+safelink_callback = partial(link_callback, safelink=True)
+abslink_callback = partial(link_callback, safelink=False)
+
+CLEANER = bleach.Cleaner(
+    tags=ALLOWED_TAGS,
+    attributes=ALLOWED_ATTRIBUTES,
+    protocols=ALLOWED_PROTOCOLS,
+    filters=[
+        partial(
+            bleach.linkifier.LinkifyFilter,
+            url_re=URL_RE,
+            parse_email=True,
+            email_re=EMAIL_RE,
+            skip_tags={'pre', 'code'},
+            callbacks=DEFAULT_CALLBACKS + [safelink_callback],
+        )
+    ],
 )
-EMAIL_RE = re.compile(
-    r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.(?:' + tld_pattern + r')\b',
-    re.IGNORECASE
+
+ABSLINK_CLEANER = bleach.Cleaner(
+    tags=ALLOWED_TAGS,
+    attributes=ALLOWED_ATTRIBUTES,
+    protocols=ALLOWED_PROTOCOLS,
+    filters=[
+        partial(
+            bleach.linkifier.LinkifyFilter,
+            url_re=URL_RE,
+            parse_email=True,
+            email_re=EMAIL_RE,
+            skip_tags={'pre', 'code'},
+            callbacks=DEFAULT_CALLBACKS + [abslink_callback],
+        )
+    ],
 )
 
-
-def linkify_text(text, use_safelink=True):
-    """
-    Convert plain-text URLs/emails to HTML links on already-sanitized content.
-    Only matches URLs starting with http://, https://, or www., and uses escape() for safety.
-    Assumes input was previously cleaned (e.g. via clean_html()/nh3.clean()) and does not
-    filter dangerous protocols like javascript: or data:. Skips text inside <a> tags to prevent nesting.
-    """
-
-    def replace_url(match):
-        raw_match = match.group(0)
-        unescaped_url = html.unescape(raw_match)
-        url = unescaped_url
-        if not url.startswith(('http://', 'https://')):
-            url = 'http://' + url
-        display_url = unescaped_url
-        if use_safelink and not url_has_allowed_host_and_scheme(url, allowed_hosts=None):
-            href = sl(url)
-            return f'<a href="{escape(href)}" target="_blank" rel="noopener noreferrer">{escape(display_url)}</a>'
-        elif not use_safelink:
-            href = urllib.parse.urljoin(settings.SITE_URL, url)
-            return f'<a href="{escape(href)}" target="_blank" rel="noopener noreferrer">{escape(display_url)}</a>'
-        else:
-            return f'<a href="{escape(url)}" rel="noopener noreferrer">{escape(display_url)}</a>'
-
-    def replace_email(match):
-        email = match.group(0)
-        return f'<a href="mailto:{escape(email)}">{escape(email)}</a>'
-
-    parts = re.split(r'(<a\s[^>]*>.*?</a>)', text, flags=re.IGNORECASE | re.DOTALL)
-    result = []
-    for i, part in enumerate(parts):
-        if i % 2 == 0:
-            part = re.sub(URL_RE, replace_url, part)
-            part = re.sub(EMAIL_RE, replace_email, part)
-        result.append(part)
-    return ''.join(result)
-
-
-def clean_html(
-    text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRIBUTES, strip_tags=False
-):
-    """
-    Sanitize HTML using nh3. Note: nh3 auto-adds rel="noopener noreferrer" to external links,
-    so 'rel' must NOT be in ALLOWED_ATTRIBUTES or it will panic.
-    """
-    if strip_tags:
-        tags = copy(tags) - {'a'}
-    return nh3.clean(
-        text,
-        tags=tags,
-        attributes=attributes,
-        url_schemes=ALLOWED_PROTOCOLS,
-    )
-
+NO_LINKS_CLEANER = bleach.Cleaner(
+    tags=copy(ALLOWED_TAGS) - {'a'},
+    attributes=ALLOWED_ATTRIBUTES,
+    protocols=ALLOWED_PROTOCOLS,
+    strip=True,
+)
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
 
 
 def markdown_compile_email(source):
-    html_content = markdown.markdown(
-        source,
-        extensions=[
-            'markdown.extensions.sane_lists',
-        ],
+    linker = bleach.Linker(
+        url_re=URL_RE,
+        email_re=EMAIL_RE,
+        callbacks=DEFAULT_CALLBACKS + [abslink_callback],
+        parse_email=True,
     )
-    cleaned = clean_html(html_content)
-    return linkify_text(cleaned, use_safelink=False)
+    return linker.linkify(
+        bleach.clean(
+            markdown.markdown(
+                source,
+                extensions=[
+                    'markdown.extensions.sane_lists',
+                    #  'markdown.extensions.nl2br' # disabled for backwards-compatibility
+                ],
+            ),
+            tags=ALLOWED_TAGS,
+            attributes=ALLOWED_ATTRIBUTES,
+            protocols=ALLOWED_PROTOCOLS,
+        )
+    )
 
 
 class StrikeThroughExtension(markdown.Extension):
@@ -181,33 +184,30 @@ md = markdown.Markdown(
 )
 
 
-def render_markdown(text: str, use_safelink=True, strip_links=False) -> str:
+def render_markdown(text: str, cleaner=CLEANER) -> str:
     if not text:
         return ''
-    html_content = md.reset().convert(str(text))
-    cleaned = clean_html(html_content, strip_tags=strip_links)
-    if not strip_links:
-        cleaned = linkify_text(cleaned, use_safelink=use_safelink)
-    return mark_safe(cleaned)
+    body_md = cleaner.clean(md.reset().convert(str(text)))
+    return mark_safe(body_md)
 
 
 def render_markdown_abslinks(text: str) -> str:
-    return render_markdown(text, use_safelink=False)
+    return render_markdown(text, cleaner=ABSLINK_CLEANER)
 
 
 @register.filter
-def rich_text(text: str, safelinks=True):
-    return render_markdown(text, use_safelink=safelinks)
+def rich_text(text: str):
+    return render_markdown(text, cleaner=CLEANER)
 
 
 @register.filter
 def rich_text_without_links(text: str):
-    return render_markdown(text, use_safelink=True, strip_links=True)
+    return render_markdown(text, cleaner=NO_LINKS_CLEANER)
 
 
 @register.filter
-def rich_text_snippet(text: str, safelinks=False):
-    return render_markdown(text, use_safelink=safelinks)
+def rich_text_snippet(text: str):
+    return render_markdown(text, cleaner=ABSLINK_CLEANER)
 
 
 @register.filter
