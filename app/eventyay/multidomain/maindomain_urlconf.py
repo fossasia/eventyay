@@ -2,10 +2,19 @@ import importlib.util
 import logging
 
 from django.apps import apps
+from django.conf import settings
 from django.urls import include, path, re_path
+from django.utils.translation import get_language
 from django.views.generic import TemplateView
 
+from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
+from eventyay.eventyay_common.navigation import get_global_navigation
+from eventyay.helpers.i18n import (
+    get_javascript_format,
+    get_javascript_output_format,
+    get_moment_locale,
+)
 
 
 class RootIndexView(TemplateView):
@@ -15,14 +24,18 @@ class RootIndexView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.user.is_authenticated:
-            from eventyay.eventyay_common.navigation import get_global_navigation
-            from django.conf import settings
-            from eventyay.base.settings import GlobalSettingsObject
-            
             context['nav_items'] = get_global_navigation(self.request)
             context['settings'] = settings
             context['django_settings'] = settings
             context['staff_session'] = self.request.user.has_active_staff_session(self.request.session.session_key) if hasattr(self.request.user, 'has_active_staff_session') else False
+            context['js_datetime_format'] = get_javascript_format('DATETIME_INPUT_FORMATS')
+            context['js_date_format'] = get_javascript_format('DATE_INPUT_FORMATS')
+            context['js_time_format'] = get_javascript_format('TIME_INPUT_FORMATS')
+            context['js_long_date_format'] = get_javascript_output_format('DATE_FORMAT')
+            context['js_locale'] = get_moment_locale()
+            context['select2locale'] = get_language()[:2]
+            context['js_payment_weekdays_disabled'] = '[]'  # Default for root page
+            context['talk_hostname'] = settings.TALK_HOSTNAME
             
             gs = GlobalSettingsObject()
             context['global_settings'] = gs.settings

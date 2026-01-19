@@ -28,3 +28,31 @@
         transform: scale(1.05);
     }
 }
+
+.logo {
+    width: 200px;
+    margin: auto;
+    display: block;
+    margin-top: 1.5vh;
+    height: auto;
+    max-width: 100%;
+}
+
+.form-signin {
+    background: white;
+    box-shadow: 0 7px 14px 0 rgba(78, 50, 92, 0.1), 0 3px 6px 0 rgba(0, 0, 0, .07);
+    border: 1px solid white;
+    max-width: 420px;
+    margin: auto;
+    margin-top: 1.5vh;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.form-signin h3 {
+    margin-top: 0;
+}
+
+.form-signin p:last-child {
+    margin-bottom: 20px;
+}
