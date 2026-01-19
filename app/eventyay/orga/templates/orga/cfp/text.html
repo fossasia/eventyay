@@ -162,7 +162,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -192,7 +192,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -222,7 +222,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -252,7 +252,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -282,7 +282,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -313,7 +313,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -345,7 +345,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -375,7 +375,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -394,6 +394,37 @@
                         {% endwith %}
 
 
+                        {% for item in custom_session_fields %}
+                            <tr>
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
+                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
+                                            aria-label="Active toggle for {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
+                                        id="{{ item.field.auto_id }}" data-is-question-field="true">
+                                </td>
+                                <td class="text-center">
+                                    <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
+                                        <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
+                                            data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
+                                            aria-label="Required status for {{ item.question.question }}">
+                                            <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                            <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
+                                                Required</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                     </table>
                 </div>
@@ -436,7 +467,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -457,22 +488,22 @@
                         {# Avatar #}
                         {% with field=sform.cfp_ask_avatar %}
                         <tr>
-                            <th>{% translate "Avatar" %}</th>
+                            <th>{% translate "Profile picture" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Avatar">
+                                    aria-label="Toggle active state for Profile picture">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Avatar">
+                                        aria-label="Active toggle for Profile picture">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Avatar">
+                                        aria-label="Required status for Profile picture">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -487,22 +518,22 @@
                         {# Avatar Source #}
                         {% with field=sform.cfp_ask_avatar_source %}
                         <tr>
-                            <th>{% translate "Avatar source" %}</th>
+                            <th>{% translate "Profile picture source" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Avatar source">
+                                    aria-label="Toggle active state for Profile picture source">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Avatar source">
+                                        aria-label="Active toggle for Profile picture source">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Avatar source">
+                                        aria-label="Required status for Profile picture source">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -517,22 +548,22 @@
                         {# Avatar License #}
                         {% with field=sform.cfp_ask_avatar_license %}
                         <tr>
-                            <th>{% translate "Avatar license" %}</th>
+                            <th>{% translate "Profile picture license" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-label="Toggle active state for Avatar license">
+                                    aria-label="Toggle active state for Profile picture license">
                                     <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
-                                        aria-label="Active toggle for Avatar license">
+                                        aria-label="Active toggle for Profile picture license">
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
                                     <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
                                         data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
-                                        aria-label="Required status for Avatar license">
+                                        aria-label="Required status for Profile picture license">
                                         <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
                                         <option value="required" {% if field.value == 'required' %}selected{% endif %}>
                                             Required</option>
@@ -556,7 +587,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -586,7 +617,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -602,6 +633,37 @@
                             <td></td>
                             <td></td>
                         </tr>
+                        {% for item in custom_speaker_fields %}
+                            <tr>
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
+                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
+                                            aria-label="Active toggle for {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
+                                        id="{{ item.field.auto_id }}" data-is-question-field="true">
+                                </td>
+                                <td class="text-center">
+                                    <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
+                                        <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
+                                            data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
+                                            aria-label="Required status for {{ item.question.question }}">
+                                            <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                            <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
+                                                Required</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        {% endfor %}
                         {% endwith %}
                     </tbody>
                     </table>

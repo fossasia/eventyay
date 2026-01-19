@@ -5,6 +5,7 @@ from dateutil import rrule
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.common.text.console import LR, UD, get_separator
+from eventyay.common.utils.language import localize_event_text
 
 
 def draw_schedule_list(data):
@@ -20,13 +21,13 @@ def draw_schedule_list(data):
                 f'* \033[33m{talk.start:%H:%M}\033[0m '
                 + (
                     '{}, {} ({}); in {}\n'.format(
-                        talk.submission.title,
+                        localize_event_text(talk.submission.title),
                         talk.submission.display_speaker_names or _('No speakers'),
                         talk.submission.content_locale,
-                        talk.room.name,
+                        localize_event_text(talk.room.name),
                     )
                     if talk.submission
-                    else f'{talk.description} in {talk.room.name}\n'
+                    else f'{localize_event_text(talk.description)} in {localize_event_text(talk.room.name)}\n'
                 )
                 for talk in talk_list
             )
@@ -37,7 +38,7 @@ def talk_card(talk, col_width):
     empty_line = ' ' * col_width
     text_width = col_width - 4
     titlelines = textwrap.wrap(
-        talk.submission.title if talk.submission else str(talk.description),
+        localize_event_text(talk.submission.title) if talk.submission else str(localize_event_text(talk.description)),
         text_width,
     )
     height = talk.duration // 5 - 1
