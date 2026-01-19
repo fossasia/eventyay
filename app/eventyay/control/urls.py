@@ -64,16 +64,6 @@ urlpatterns = [
     url(r'^organizers/add$', organizer_views.organizer_view.OrganizerCreate.as_view(), name='organizers.add'),
     url(r'^organizers/select2$', typeahead.organizer_select2, name='organizers.select2'),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/$',
-        organizer_views.organizer_view.OrganizerDetail.as_view(),
-        name='organizer',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/edit$',
-        organizer_views.organizer_view.OrganizerUpdate.as_view(),
-        name='organizer.edit',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/delete$',
         organizer_views.organizer_view.OrganizerDelete.as_view(),
         name='organizer.delete',
@@ -82,11 +72,6 @@ urlpatterns = [
         r'^organizer/(?P<organizer>[^/]+)/settings/display$',
         organizer_views.organizer_view.OrganizerDisplaySettings.as_view(),
         name='organizer.display',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/settings/billing$',
-        organizer_views.organizer_view.BillingSettings.as_view(),
-        name='organizer.settings.billing',
     ),
     url(
         r'^organizer/(?P<organizer>[^/]+)/setup_intent$',
@@ -159,11 +144,6 @@ urlpatterns = [
         name='organizer.webhook.logs',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/devices$',
-        organizer_views.device_view.DeviceListView.as_view(),
-        name='organizer.devices',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/device/add$',
         organizer_views.device_view.DeviceCreateView.as_view(),
         name='organizer.device.add',
@@ -189,11 +169,6 @@ urlpatterns = [
         name='organizer.device.logs',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/gates$',
-        organizer_views.gate_view.GateListView.as_view(),
-        name='organizer.gates',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/gate/add$',
         organizer_views.gate_view.GateCreateView.as_view(),
         name='organizer.gate.add',
@@ -217,11 +192,6 @@ urlpatterns = [
         r'^organizer/(?P<organizer>[^/]+)/logs',
         organizer.LogView.as_view(),
         name='organizer.log',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/export/$',
-        organizer.ExportView.as_view(),
-        name='organizer.export',
     ),
     url(
         r'^organizer/(?P<organizer>[^/]+)/export/do$',

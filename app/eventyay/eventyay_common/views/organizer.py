@@ -279,7 +279,7 @@ class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
             override['token_form'] = token_form
 
     def _teams_tab_url(self, team_id=None, section='teams', panel=None, anchor='organizer-messages'):
-        base = reverse('eventyay_common:organizer.update', kwargs={'organizer': self.request.organizer.slug})
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.request.organizer.slug})
         query = {'section': section}
         if team_id:
             query['team'] = team_id
