@@ -10,6 +10,7 @@ from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -63,8 +64,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     def tablist(self):
         return {
-            'general': _('General information'),
-            'fields': _('Fields'),
+            'general': _('General information')
         }
 
     @context
@@ -93,6 +93,35 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
 
     def get_success_url(self) -> str:
         return self.object.urls.text
+
+    @transaction.atomic
+    def form_valid(self, form):
+        if not self.sform.is_valid():
+            messages.error(self.request, phrases.base.error_saving_changes)
+            return self.form_invalid(form)
+        messages.success(self.request, phrases.base.saved)
+        form.instance.event = self.request.event
+        result = super().form_valid(form)
+        if form.has_changed():
+            form.instance.log_action('eventyay.cfp.update', person=self.request.user, orga=True)
+        self.sform.save()
+        return result
+
+
+class CfPForms(EventPermissionRequired, TemplateView):
+    template_name = 'orga/cfp/forms.html'
+    permission_required = 'base.update_event'
+
+    @context
+    @cached_property
+    def sform(self):
+        return CfPSettingsForm(
+            read_only=False,
+            locales=self.request.event.locales,
+            obj=self.request.event,
+            data=self.request.POST if self.request.method == 'POST' else None,
+            prefix='settings',
+        )
 
     def get_unified_fields(self, target):
         """
@@ -189,11 +218,20 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
         return unified_list
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['session_fields'] = self.get_unified_fields('session')
-        ctx['speaker_fields'] = self.get_unified_fields('speaker')
+        context = super().get_context_data(**kwargs)
+        context['generic_title'] = _('Forms')
+        context['has_create_permission'] = True
+        context['question_list'] = (
+            questions_for_user(self.request, self.request.event, self.request.user)
+            .annotate(answer_count=Count('answers'))
+            .order_by('position')
+        )
+        context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
         
-        questions = self.request.event.talkquestions.all()
+        context['session_fields'] = self.get_unified_fields('session')
+        context['speaker_fields'] = self.get_unified_fields('speaker')
+        
+        questions = TalkQuestion.all_objects.filter(event=self.request.event)
         sform = self.sform
         
         def get_field_data(targets):
@@ -206,22 +244,22 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
                     })
             return data
 
-        ctx['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
-        ctx['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
-        return ctx
+        context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
+        context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
+        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
+       
+        
+        
+        return context
 
     @transaction.atomic
-    def form_valid(self, form):
-        if not self.sform.is_valid():
-            messages.error(self.request, phrases.base.error_saving_changes)
-            return self.form_invalid(form)
-        messages.success(self.request, phrases.base.saved)
-        form.instance.event = self.request.event
-        result = super().form_valid(form)
-        if form.has_changed():
-            form.instance.log_action('eventyay.cfp.update', person=self.request.user, orga=True)
-        self.sform.save()
-        return result
+    def post(self, request, *args, **kwargs):
+        if self.sform.is_valid():
+            self.sform.save()
+            messages.success(request, phrases.base.saved)
+            return redirect(request.path)
+        messages.error(request, phrases.base.error_saving_changes)
+        return self.get(request, *args, **kwargs)
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
@@ -229,6 +267,12 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     template_namespace = 'orga/cfp'
     context_object_name = 'question'
     detail_is_update = False
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if 'target' in self.request.GET:
+            initial['target'] = self.request.GET['target']
+        return initial
 
     def get_queryset(self):
         return (
