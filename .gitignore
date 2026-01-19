@@ -76,3 +76,6 @@ dist
 dist-ssr
 
 app/eventyay/data
+
+# AI history
+*.aider.*
