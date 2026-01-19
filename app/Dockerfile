@@ -1,5 +1,5 @@
 # pull official base image
-FROM python:3.11.9-slim-bookworm
+FROM python:3.12-slim-bookworm
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # set work directory

@@ -3,7 +3,7 @@
 ###########
 
 # pull official base image
-FROM python:3.11.9-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # set work directory
@@ -38,7 +38,7 @@ COPY Makefile Makefile
 #########
 
 # pull official base image
-FROM python:3.11.9-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 # create directory for the app user
 RUN mkdir -p /home/app
