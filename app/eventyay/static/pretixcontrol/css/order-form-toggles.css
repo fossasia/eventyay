@@ -1,5 +1,5 @@
 /* Toggle and dropdown styles for Order Forms */
-/* Copied from orga/css/question-toggles.css and adapted for pretixcontrol */
+/* Created for pretixcontrol, inspired by the Talk component question toggle design */
 
 /* Dropdown wrapper for FA icon */
 .required-status-wrapper {
@@ -94,19 +94,6 @@ select.required-status-dropdown[data-current="optional"] {
 .required-status-dropdown option[value="optional"] {
     background-color: #fff;
     color: #6c757d;
-}
-
-.required-status-display {
-    display: inline-block;
-    padding: 0.375rem 2rem 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    line-height: 1.5;
-    border: 1px solid #28a745;
-    border-radius: 0.25rem;
-    min-width: 120px;
-    background-color: #28a745;
-    color: #fff;
 }
 
 /* Disabled state for dropdown */

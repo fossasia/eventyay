@@ -119,7 +119,10 @@
                             <td class="text-center"><span class="text-muted">—</span></td>
                             <td class="text-center"><span class="text-muted">—</span></td>
                             <td class="text-center">
-                                <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
+                                <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   aria-label="{% trans 'See invoice settings (opens in new tab)' %}">
                                     {% trans "See invoice settings" %}
                                 </a>
                             </td>
