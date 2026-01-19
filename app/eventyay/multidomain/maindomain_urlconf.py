@@ -7,6 +7,27 @@ from django.views.generic import TemplateView
 
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
+
+class RootIndexView(TemplateView):
+    """Root page view with navigation context for authenticated users."""
+    template_name = 'pretixpresale/index.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.is_authenticated:
+            from eventyay.eventyay_common.navigation import get_global_navigation
+            from django.conf import settings
+            from eventyay.base.settings import GlobalSettingsObject
+            
+            context['nav_items'] = get_global_navigation(self.request)
+            context['settings'] = settings
+            context['django_settings'] = settings
+            context['staff_session'] = self.request.user.has_active_staff_session(self.request.session.session_key) if hasattr(self.request.user, 'has_active_staff_session') else False
+            
+            gs = GlobalSettingsObject()
+            context['global_settings'] = gs.settings
+        return context
+
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
 from eventyay.config.urls import common_patterns
 from eventyay.multidomain.plugin_handler import plugin_event_urls
@@ -35,7 +56,7 @@ presale_patterns_main = [
                     ),
                     path(
                         '',
-                        TemplateView.as_view(template_name='pretixpresale/index.html'),
+                        RootIndexView.as_view(),
                         name='index',
                     ),
                 ],
