@@ -38,7 +38,7 @@ COPY Makefile Makefile
 #########
 
 # pull official base image
-FROM python:3.1-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 # create directory for the app user
 RUN mkdir -p /home/app
