@@ -27,6 +27,7 @@ from eventyay.base.i18n import language
 from eventyay.base.models import CachedFile, InvoiceAddress, OrderPosition
 from eventyay.base.pdf import get_images, get_variables
 from eventyay.base.settings import PERSON_NAME_SCHEMES
+from eventyay.consts import SizeKey
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.helpers.database import rolledback_transaction
 from eventyay.presale.style import get_fonts
@@ -38,7 +39,7 @@ class BaseEditorView(EventPermissionRequiredMixin, TemplateView):
     template_name = 'pretixcontrol/pdf/index.html'
     permission = 'can_change_settings'
     accepted_formats = ('application/pdf',)
-    maxfilesize = 1024 * 1024 * 10
+    maxfilesize = settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_PDF]
     minfilesize = 10
     title = None
 

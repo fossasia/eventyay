@@ -49,7 +49,7 @@
                 </fieldset>
 
                 <div class="form-group submit-group">
-                    <button type="submit" class="btn btn-primary btn-save">
+                    <button type="submit" class="btn btn-primary">
                         {% translate "Save" %}
                     </button>
                 </div>
@@ -69,7 +69,7 @@
                         {% bootstrap_form_errors team_create_form %}
                         {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=team_create_form %}
                         <div class="form-group submit-group">
-                            <button type="submit" class="btn btn-primary btn-save">
+                            <button type="submit" class="btn btn-primary">
                                 {% translate "Create team" %}
                             </button>
                         </div>
@@ -173,7 +173,7 @@
                                 {% bootstrap_form_errors panel.form %}
                                 {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=panel.form %}
                                 <div class="form-group submit-group">
-                                    <button type="submit" class="btn btn-primary btn-save">
+                                    <button type="submit" class="btn btn-primary">
                                         {% translate "Save permissions" %}
                                     </button>
                                 </div>
@@ -214,7 +214,7 @@
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-member" value="{{ member.id }}"
-                                                                class="btn btn-delete btn-danger btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block">
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>
@@ -240,7 +240,7 @@
                                                     </td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-invite" value="{{ invite.id }}"
-                                                                class="btn btn-delete btn-danger btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block">
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>
@@ -288,7 +288,7 @@
                                                     <td>{{ token.name }}</td>
                                                     <td class="text-right flip">
                                                         <button type="submit" name="remove-token" value="{{ token.id }}"
-                                                                class="btn btn-delete btn-danger btn-sm btn-block">
+                                                                class="btn btn-delete btn-sm btn-block">
                                                             <i class="fa fa-times"></i> {% translate "Remove" %}
                                                         </button>
                                                     </td>

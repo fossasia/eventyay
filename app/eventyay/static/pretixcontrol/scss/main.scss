@@ -95,7 +95,6 @@ nav.navbar.navbar-inverse .navbar-brand,
 .navbar-inverse .navbar-brand {
     padding-top: 0.3125rem;
     padding-bottom: 0.3125rem;
-    margin-right: 1rem;
     margin-top: 0;
     font-size: 20px;
     line-height: inherit;
@@ -128,30 +127,6 @@ nav.navbar.navbar-inverse .navbar-brand,
 nav.navbar .danger, nav.navbar .danger:hover, nav.navbar .danger:active {
     background: $brand-danger !important;
     font-size: 14px;
-}
-
-nav.navbar.navbar-inverse .header-nav,
-.navbar-inverse .header-nav {
-    font-size: 14px;
-    color: $navbar-link-color;
-    
-    .fa-caret-down {
-        margin-left: 14px;
-        margin-right: 10px;
-    }
-    
-    i {
-        color: $navbar-link-color;
-    }
-    
-    &:hover,
-    &:focus {
-        color: $navbar-link-hover-color;
-        
-        i {
-            color: $navbar-link-hover-color;
-        }
-    }
 }
 
 .navbar-header .navbar-events {
@@ -1115,3 +1090,34 @@ h1 .label {
     }
 }
 
+/* eventyay common organizer settings: align panel/submit greys with sidebar */
+.organizer-management {
+    .panel-default > .panel-heading {
+        background-color: $gray-lightest;
+    }
+
+    .submit-group {
+        background: $gray-lightest;
+    }
+}
+
+/* Event name in main content - max width and wrap */
+#event-nav .navigation,
+.header-nav .navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#event-nav .navigation-title,
+.header-nav .navigation-title {
+    text-align: left;
+    flex: 0 1 75%;
+    min-width: 0;
+
+    h2 {
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}

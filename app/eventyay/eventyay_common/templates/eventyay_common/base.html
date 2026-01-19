@@ -10,8 +10,9 @@
 		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ settings.INSTANCE_NAME }}</title>
 		{% compress css %}
-    		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
-            <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
+    		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
+            <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
 		{% endcompress %}
@@ -41,6 +42,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/menu.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
 		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
+            <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/geo.js' %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/question.js" %}"></script>
@@ -56,13 +58,14 @@
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
             <script type="text/javascript" src="{% static "colorpicker/bootstrap-colorpicker.js" %}"></script>
-            <script type="text/javascript" src="{% static "fileupload/jquery.ui.widget.js" %}"></script>
-            <script type="text/javascript" src="{% static "fileupload/jquery.fileupload.js" %}"></script>
-            <script type="text/javascript" src="{% static "lightbox/js/lightbox.min.js" %}"></script>
-            <script type="text/javascript" src="{% static "are-you-sure/jquery.are-you-sure.js" %}"></script>
-            <script type="text/javascript" src="{% static "eventyay-common/js/ui/popover.js" %}"></script>
-            <script type="text/javascript" src="{% static "utils/js/utils.js" %}"></script>
-            <script type="text/javascript" src="{% static "eventyay-common/js/ui/team.js" %}"></script>
+            <script type="text/javascript" src="{% static 'fileupload/jquery.ui.widget.js' %}"></script>
+            <script type="text/javascript" src="{% static 'fileupload/jquery.fileupload.js' %}"></script>
+            <script type="text/javascript" src="{% static 'lightbox/js/lightbox.min.js' %}"></script>
+            <script type="text/javascript" src="{% static 'are-you-sure/jquery.are-you-sure.js' %}"></script>
+            <script type="text/javascript" src="{% static 'eventyay-common/js/ui/popover.js' %}"></script>
+            <script type="text/javascript" src="{% static 'utils/js/utils.js' %}"></script>
+            <script type="text/javascript" src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
+			<script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
 		{% endcompress %}
         {{ html_head|safe }}
 
@@ -142,6 +145,38 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+					<li class="language-switch">
+					  <form method="post"
+					        action="{% url 'eventyay_common:account.locale' %}"
+					        class="language-form">
+					    {% csrf_token %}
+					    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+					
+					    <details class="dropdown locales" aria-haspopup="menu">
+					      <summary class="language-summary" aria-label="{{ _('Language') }}">
+					        {% for option in language_options %}
+					          {% if option.code|lower == request.LANGUAGE_CODE|lower %}
+					            <span class="current-locale">{{ option.label }}</span>
+					          {% endif %}
+					        {% endfor %}
+					        <i class="fa fa-caret-down ml-1" aria-hidden="true"></i>
+					      </summary>
+					
+					      <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}"
+					           role="menu">
+					        {% for option in language_options %}
+					          <button type="submit"
+					                  name="locale"
+					                  value="{{ option.code }}"
+					                  class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+					                  role="menuitem">
+					            {{ option.label }}
+					          </button>
+					        {% endfor %}
+					      </div>
+					    </details>
+					  </form>
+					</li>
                     {% if request.user.is_staff and not staff_session %}
                         <li>
                             <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -162,12 +197,7 @@
                     {{ base_path|json_script:"base_path" }}
                     {{ staff_session|json_script:"is_admin_mode" }}
                     {{ talk_hostname|json_script:"talk_hostname_url" }}
-                    <li>
-                         <a target="_blank" class="header-nav btn btn-outline-success" data-toggle="popover-profile">
-                            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
-                            <i class="fa fa-solid fa-caret-down"></i>
-                        </a>
-                    </li>
+                    {% include "common/fragment_profile_dropdown.html" %}
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
@@ -192,7 +222,7 @@
                                         </span>
                                         <div class="context-indicator">
                                             <span class="context-name">{{ request.organizer }}</span>
-                                            <span class="context-meta">{% trans "Organizer account" %}</span>
+                                            <span class="context-meta">{% translate "Organizer account" %}</span>
                                         </div>
                                     </a>
                                 {% else %}
@@ -202,7 +232,7 @@
                                             <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
                                         </span>
                                         <div class="context-indicator">
-                                            <span class="context-name">{% trans "Main dashboard" %}</span>
+                                            <span class="context-name">{% translate "Main dashboard" %}</span>
                                         </div>
                                     </a>
                                 {% endif %}
@@ -367,5 +397,7 @@
                 </div>
             </div>
         </div>
+        <span id="user-language-code" data-lang="{{ request.LANGUAGE_CODE|escapejs }}" style="display:none;"></span>
+        <script type="module" src="{% static 'common/js/language-storage.js' %}"></script>
 	</body>
 </html>

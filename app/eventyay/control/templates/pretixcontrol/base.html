@@ -13,6 +13,7 @@
 		{% compress css %}
     		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -54,6 +55,7 @@
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
+            <script type="module" src="{% static "common/js/dropdown.js" %}"></script>
             <script type="text/javascript" src="{% static "colorpicker/bootstrap-colorpicker.js" %}"></script>
             <script type="text/javascript" src="{% static "fileupload/jquery.ui.widget.js" %}"></script>
             <script type="text/javascript" src="{% static "fileupload/jquery.fileupload.js" %}"></script>
@@ -194,6 +196,39 @@
                         {% endfor %}
                     {% endif %}
 
+                    <li class="language-switch">
+                        <form method="post"
+                              action="{% url 'eventyay_common:account.locale' %}"
+                              class="language-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+                            <details class="dropdown locales" aria-haspopup="menu">
+                                <summary class="language-summary" aria-label="{{ _('Language') }}">
+                                    {% for option in language_options %}
+                                        {% if option.code|lower == request.LANGUAGE_CODE|lower %}
+                                            <span class="current-locale">{{ option.label }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <i class="fa fa-caret-down ml-1" aria-hidden="true"></i>
+                                </summary>
+
+                                <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}"
+                                     role="menu">
+                                    {% for option in language_options %}
+                                        <button type="submit"
+                                                name="locale"
+                                                value="{{ option.code }}"
+                                                class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                                                role="menuitem">
+                                            {{ option.label }}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </details>
+                        </form>
+                    </li>
+
                     {% if request.user.is_staff and not staff_session %}
                         <li>
 							<form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -217,16 +252,9 @@
                             </a>
                         </li>
                     {% endif %}
-                    {{ 'popover-profile'|json_script:"popover_toggle" }}
                     {{ base_path|json_script:"base_path" }}
                     {{ staff_session|json_script:"is_admin_mode" }}
-                    {{ talk_hostname|json_script:"talk_hostname_url" }}
-                    <li>
-                        <a target="_blank" class="header-nav btn btn-outline-success" data-toggle="popover-profile">
-                            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
-                            <i class="fa fa-solid fa-caret-down"></i>
-                        </a>
-                    </li>
+                    {% include "common/fragment_profile_dropdown.html" %}
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">

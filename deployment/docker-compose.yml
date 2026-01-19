@@ -23,6 +23,7 @@ services:
     container_name: eventyay-next-websocket
     entrypoint: daphne -b 0.0.0.0 -p 8001 eventyay.config.asgi:application
     volumes:
+      - ./data/static:/home/app/web/eventyay/static.dist
       - ./data/data:/home/app/web/eventyay/data
     ports:
       - 8001:8001

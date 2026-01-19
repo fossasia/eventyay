@@ -234,7 +234,6 @@ urlpatterns = [
         RedirectView.as_view(pattern_name='eventyay_common:events', permanent=True, query_string=True),
         name='events',
     ),
-    url(r'^events/add$', main.EventWizard.as_view(), name='events.add'),
     url(r'^events/typeahead/$', typeahead.event_list, name='events.typeahead'),
     url(r'^events/typeahead/meta/$', typeahead.meta_values, name='events.meta.typeahead'),
     url(r'^search/orders/$', search.OrderSearch.as_view(), name='search.orders'),
@@ -345,6 +344,7 @@ urlpatterns = [
                     name='event.products.categories.edit',
                 ),
                 url(r'^categories/add$', product.CategoryCreate.as_view(), name='event.products.categories.add'),
+                url(r'^orderforms/$', product.OrderFormList.as_view(), name='event.products.orderforms'),
                 url(r'^questions/$', product.QuestionList.as_view(), name='event.products.questions'),
                 url(r'^questions/reorder$', product.reorder_questions, name='event.products.questions.reorder'),
                 url(

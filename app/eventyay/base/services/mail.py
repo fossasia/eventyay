@@ -48,6 +48,7 @@ from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
 from eventyay.celery_app import app
+from eventyay.consts import SizeKey
 from eventyay.multidomain.urlreverse import build_absolute_uri
 from eventyay.presale.ical import get_ical
 
@@ -393,8 +394,10 @@ def mail_send_task(
                                 args.append((name, content, ct.type))
                                 attach_size += len(content)
 
-                            if attach_size < 4 * 1024 * 1024:
-                                # Do not attach more than 4MB, it will bounce way to often.
+                            if attach_size < settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_MAIL]:
+                                # The maximum attachment size is configurable by overriding
+                                # the `upload_size_mail` key in your TOML / size_limit_mb dictionary.
+                                # Values above ~4MB are not recommended, as larger emails are more likely to bounce.
                                 for a in args:
                                     try:
                                         email.attach(*a)

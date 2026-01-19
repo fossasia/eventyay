@@ -347,14 +347,6 @@ A TypeScript/Vue 3 application for visual schedule editing.
 
 For complete documentation, see :doc:`/talk/developer/frontend`.
 
-**Global Navigation Menu**
-
-A web component for unified navigation across all eventyay interfaces.
-
-**Location**: ``app/eventyay/frontend/global-nav-menu/``
-
-For complete documentation, see :doc:`/talk/developer/frontend`.
-
 Development Setup
 -----------------
 

@@ -4,4 +4,8 @@
     {% block cfp_header %}{% endblock cfp_header %}
 {% endblock custom_header %}
 
+{% block header_tabs %}
+    {% include 'agenda/fragment_nav.html' %}
+{% endblock header_tabs %}
+
 {% block nav_link %}{{ request.event.urls.base }}{% endblock nav_link %}

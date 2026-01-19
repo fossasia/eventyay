@@ -187,22 +187,6 @@
                 <p>&nbsp;</p>
             </div>
         </fieldset>
-        <fieldset class="quick-setup-step">
-            <div class="quick-icon">
-                <span class="fa fa-fw fa-envelope text-muted"></span>
-            </div>
-            <div class="quick-content">
-                <legend>{% trans "Getting in touch with you" %}</legend>
-                <p class="bigger">
-                    {% blocktrans trimmed %}
-                        In case something goes wrong or is unclear, we strongly suggest that you provide ways for your
-                        attendees to contact you:
-                    {% endblocktrans %}
-                </p>
-                {% bootstrap_field form.contact_mail layout="control" %}
-                {% bootstrap_field form.imprint_url layout="control" %}
-            </div>
-        </fieldset>
         <div class="form-group submit-group">
             <button type="submit" class="btn btn-primary btn-save">
                 {% trans "Save" %}

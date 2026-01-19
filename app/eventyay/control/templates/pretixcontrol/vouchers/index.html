@@ -20,7 +20,7 @@
         {% endblocktrans %}
     </p>
     <div class="row filter-form">
-        <form class="col-lg-2 col-sm-6 col-xs-6"
+        <form class="col-lg-4 col-sm-6 col-xs-6"
               action="{% url "control:event.vouchers.go" event=request.event.slug organizer=request.event.organizer.slug %}">
             <div class="input-group">
                 <input type="text" name="code" class="form-control" placeholder="{% trans "Voucher code" %}" autofocus>
@@ -30,10 +30,10 @@
             </div>
         </form>
         <form class="" action="" method="get">
-            <div class="col-lg-2 col-sm-3 col-xs-6">
+            <div class="col-lg-4 col-sm-3 col-xs-6">
                 {% bootstrap_field filter_form.search layout='inline' %}
             </div>
-            <div class="col-lg-1 col-sm-3 col-xs-6">
+            <div class="col-lg-4 col-sm-3 col-xs-6">
                 {% bootstrap_field filter_form.tag layout='inline' %}
             </div>
             {% if request.event.has_subevents %}
@@ -44,23 +44,25 @@
                     {% bootstrap_field filter_form.subevent layout='inline' %}
                 </div>
             {% else %}
-                <div class="col-lg-3 col-sm-6 col-xs-6">
+                <div class="col-lg-4 col-sm-6 col-xs-6">
                     {% bootstrap_field filter_form.status layout='inline' %}
                 </div>
             {% endif %}
-            <div class="col-lg-2 col-sm-6 col-xs-6">
+            <div class="col-lg-4 col-sm-6 col-xs-6">
                 {% bootstrap_field filter_form.productvar layout='inline' %}
             </div>
-            <div class="col-lg-1 col-sm-6 col-xs-6">
+            <div class="col-lg-2 col-sm-6 col-xs-6">
                 {% bootstrap_field filter_form.qm layout='inline' %}
             </div>
-            <div class="col-lg-1 col-sm-6 col-xs-6">
-                <button class="btn btn-primary btn-block" type="submit">
-                    <span class="fa fa-filter"></span>
-                    <span class="hidden-md">
-                            {% trans "Filter" %}
-                        </span>
-                </button>
+            <div class="col-lg-2 col-sm-6 col-xs-12">
+                <div class="form-group">
+                    <button class="btn btn-primary btn-block" type="submit">
+                        <span class="fa fa-filter"></span>
+                        <span class="hidden-md">
+                                {% trans "Filter" %}
+                            </span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>

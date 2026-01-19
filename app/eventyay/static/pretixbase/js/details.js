@@ -9,20 +9,24 @@ setup_collapsible_details = function (el) {
         var $details = $(this).closest("details");
         var isOpen = $details.prop("open");
         var $detailsNotSummary = $details.children(':not(summary)');
+
+        var dropdownDuration = 150;
+        var duration = $details.hasClass('dropdown') ? dropdownDuration : undefined;
+
         if ($detailsNotSummary.is(':animated')) {
             e.preventDefault();
             return false;
         }
         if (isOpen) {
             $details.removeClass("details-open");
-            $detailsNotSummary.stop().show().slideUp(500, function () {
+            $detailsNotSummary.stop().show().slideUp(duration || 500, function () {
                 $details.prop("open", false);
             });
         } else {
             $detailsNotSummary.stop().hide();
             $details.prop("open", true);
             $details.addClass("details-open");
-            $detailsNotSummary.slideDown();
+            $detailsNotSummary.slideDown(duration);
         }
         e.preventDefault();
         return false;

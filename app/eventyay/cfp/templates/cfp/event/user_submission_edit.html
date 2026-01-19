@@ -9,7 +9,8 @@
 {% load rules %}
 {% load static %}
 
-{% block title %}{{ submission.title }} :: {% endblock title %}
+{% load presale_locale %}
+{% block title %}{{ submission.title|event_localize }} :: {% endblock title %}
 
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}
@@ -63,7 +64,7 @@
                 </div>
             </form>
         </h5>
-        <form method="post" enctype="multipart/form-data">
+        <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}
             {% include "common/forms/errors.html" with form=qform %}
             {% csrf_token %}

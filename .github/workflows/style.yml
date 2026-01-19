@@ -18,23 +18,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.11
-      - uses: actions/cache@v4
+          python-version: 3.12
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          version: latest
+          enable-cache: true
       - name: Install system packages
         run: sudo apt update && sudo apt install gettext
       - name: Install Dependencies
         run: |
           sed -i '/eventyay-stripe/d' pyproject.toml
           sed -i '/eventyay-paypal/d' pyproject.toml
-          pip3 install -e ".[dev]" psycopg2-binary ruff
+          uv sync --group lint
+        working-directory: ./app
       - name: Run Ruff
-        run: ruff check . && ruff format --check .
-        working-directory: ./src
+        run: uv run ruff check . && ruff format --check .
+        working-directory: ./app
