@@ -4,10 +4,10 @@
 {% load eventurl %}
 
 {% with current_event=request.event path=request.path_info schedule_label=phrases.schedule.schedule|default:_("Schedule") sessions_label=phrases.schedule.sessions|default:_("Sessions") speakers_label=phrases.schedule.speakers|default:_("Speakers") %}
-    <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" class="header-tab {% if request.resolver_match.url_name == 'event.index' and '#tickets' not in request.get_full_path %}active{% endif %}">
+    <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' and '#tickets' not in request.get_full_path %}active{% endif %}">
         <i class="fa fa-info-circle"></i> {% translate "Info" %}
     </a>
-    <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" class="header-tab">
+    <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
         <i class="fa fa-ticket"></i> {% translate "Tickets" %}
     </a>
     {% if schedule or current_event.has_schedule_content %}
