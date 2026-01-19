@@ -2,9 +2,8 @@ import json
 from collections import defaultdict
 from decimal import Decimal
 
-# TODO: Remove bleach import
-import bleach
 import dateutil.parser
+import nh3
 import pytz
 from django.dispatch import receiver
 from django.urls import reverse
@@ -715,10 +714,9 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
     if action_type.startswith('eventyay.event.tickets.provider.'):
         return _('The settings of a ticket output provider have been changed.')
 
-    # TODO: Implement nh3 equivalent
     if action_type == 'eventyay.event.order.consent':
         return _('The user confirmed the following message: "{}"').format(
-            bleach.clean(logentry.parsed_data.get('msg'), tags=[], strip=True)
+            nh3.clean(logentry.parsed_data.get('msg'), tags=set())
         )
 
     if sender and action_type.startswith('eventyay.event.checkin'):
