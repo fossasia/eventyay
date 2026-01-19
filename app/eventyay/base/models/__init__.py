@@ -91,6 +91,7 @@ from .question import (
     Answer,
     AnswerOption,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     TalkQuestionVariant,
 )
@@ -235,6 +236,7 @@ __all__ = [
     "SystemLog",
     "Tag",
     "TalkQuestion",
+    "TalkQuestionRequired",
     "TalkQuestionTarget",
     "TalkQuestionVariant",
     "TalkSlot",

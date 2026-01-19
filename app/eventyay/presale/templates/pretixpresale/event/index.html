@@ -8,10 +8,11 @@
 {% load rich_text %}
 {% load compress %}
 {% load static %}
+{% load presale_locale %}
 
 {% block custom_header %}
     {{ block.super }}
-    <meta property="og:title" content="{{ ev.name }}" />
+    <meta property="og:title" content="{{ ev.name|event_localize }}" />
     <meta property="og:description" content="{{ ev.get_date_range_display }}" />
     {% if subevent %}
         <meta property="og:url" content="{% abseventurl request.event "presale:event.index" subevent=subevent.pk %}" />
@@ -99,12 +100,12 @@
         {% if not subevent %}
             {% if event_logo_image and request.event.settings.logo_show_title %}
                 <h2 class="content-header">
-                    {{ event.name }}
+                    {{ event.name|event_localize }}
                 </h2>
             {% endif %}
             {% if frontpage_text and not cart_namespace %}
                 <div>
-                    {{ frontpage_text|rich_text }}
+                    {{ frontpage_text|event_localize|rich_text }}
                 </div>
             {% endif %}
 
@@ -150,17 +151,17 @@
             </div>
         </div>
         {% if subevent %}
-            <h2 class="subevent-head">{{ subevent.name }}</h2>
+            <h2 class="subevent-head">{{ subevent.name|event_localize }}</h2>
             {% if frontpage_text and not cart_namespace %}
                 <div>
-                    {{ frontpage_text|rich_text }}
+                    {{ frontpage_text|event_localize|rich_text }}
                 </div>
             {% endif %}
         {% endif %}
     {% else %}
         {% if event_logo_image and request.event.settings.logo_show_title %}
             <h2 class="content-header">
-                {{ event.name }}
+                {{ event.name|event_localize }}
                 {% if request.event.settings.show_dates_on_frontpage %}
                     <small>{{ event.get_date_range_display }}</small>
                 {% endif %}
@@ -168,7 +169,7 @@
         {% endif %}
         {% if not event_logo_image %}
             <h2 class="content-header">
-                {{ event.name }}
+                {{ event.name|event_localize }}
                 {% if request.event.settings.show_dates_on_frontpage %}
                     <small>{{ event.get_date_range_display }}</small>
                 {% endif %}
@@ -176,7 +177,7 @@
         {% endif %}
         {% if frontpage_text and not cart_namespace %}
             <div>
-                {{ frontpage_text|rich_text }}
+                {{ frontpage_text|event_localize|rich_text }}
             </div>
         {% endif %}
     {% endif %}
@@ -186,7 +187,7 @@
             <div class="alert alert-info">
                 {% if ev.presale_has_ended %}
                     {% if event.settings.presale_has_ended_text %}
-                        {{ event.settings.presale_has_ended_text|rich_text }}
+                        {{ event.settings.presale_has_ended_text|event_localize|rich_text }}
                     {% else %}
                         {% blocktrans trimmed %}
                             The presale period for this event is over.
@@ -209,7 +210,7 @@
                     <div class="info-row">
                         <span class="fa fa-map-marker fa-fw" aria-hidden="true"></span>
                         <p><span class="sr-only">{% trans "Location" %}:</span>
-                            {{ ev.location|linebreaksbr }}
+                            {{ ev.location|event_localize|linebreaksbr }}
                         </p>
                     </div>
                 {% endif %}
@@ -313,7 +314,7 @@
             <h3 id="redeem-a-voucher">{% trans "Redeem a voucher" %}</h3>
             {% if event.settings.voucher_explanation_text %}
                 <div>
-                    {{ event.settings.voucher_explanation_text|rich_text }}
+                    {{ event.settings.voucher_explanation_text|event_localize|rich_text }}
                 </div>
             {% endif %}
             <form method="get" action="{% eventurl event "presale:event.redeem" cart_namespace=cart_namespace %}">

@@ -79,9 +79,11 @@ RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --pre
 COPY eventyay/webapp eventyay/webapp
 RUN npm ci --prefix=eventyay/webapp
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
-# rollup needed by Django-Compressor
-COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
-RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
+# webcheckin web component build
+COPY eventyay/frontend/webcheckin eventyay/frontend/webcheckin
+RUN npm ci --prefix=eventyay/frontend/webcheckin
+# Write build output to compiled-frontend (collected by collectstatic)
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/webcheckin
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
@@ -112,6 +114,8 @@ RUN python manage.py collectstatic --noinput
 RUN mkdir $APP_HOME/eventyay/static.dist.backup && \
     mv $APP_HOME/eventyay/static.dist/* $APP_HOME/eventyay/static.dist.backup
 
+# Create .secrets to suppress warnings about missing directory
+RUN mkdir -p $APP_HOME/.secrets
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]
