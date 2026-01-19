@@ -14,7 +14,7 @@
             </a>
         </li>
         {% if can_manage_teams %}
-        <li role="presentation" class="{% if active_section == 'teams' or active_section == 'general' %}active{% endif %}">
+        <li role="presentation" class="{% if active_section == 'teams' %}active{% endif %}">
             <a href="#" data-target="#teams" aria-controls="teams" role="tab" data-toggle="tab">
                 {% translate "Create Team" %}
             </a>
@@ -57,7 +57,7 @@
         </div>
 
         {% if can_manage_teams %}
-        <div role="tabpanel" class="tab-pane {% if active_section == 'teams' or active_section == 'general' %}active{% endif %}" id="teams">
+        <div role="tabpanel" class="tab-pane {% if active_section == 'teams' %}active{% endif %}" id="teams">
             <div class="panel panel-default mt-3">
                 <div class="panel-heading">
                     <h3 class="panel-title">{% translate "Create a new team" %}</h3>

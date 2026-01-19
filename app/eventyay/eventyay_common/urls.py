@@ -10,12 +10,12 @@ from eventyay.eventyay_common.views import (
     team,
 )
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
+from eventyay.eventyay_common.views.orders import MyOrdersView
+from eventyay.eventyay_common.views.sessions import MySessionsView
 from eventyay.control.views import (
     organizer_views,
     organizer as organizer_control
 )
-from eventyay.eventyay_common.views.orders import MyOrdersView
-from eventyay.eventyay_common.views.sessions import MySessionsView
 
 app_name = 'eventyay_common'
 class DashboardView(TemplateView):
