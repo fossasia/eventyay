@@ -290,7 +290,7 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
                         for submission_obj in speaker._event_submissions
                         for answer in submission_obj._reviewer_answers
                     ],
-                    key=lambda a: a.question.position if a.question else 0,
+                    key=lambda a: a.question.position,
                 ),
             }
             for speaker in speakers_qs
