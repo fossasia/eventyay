@@ -74,14 +74,12 @@ ALLOWED_ATTRIBUTES = {
 
 ALLOWED_PROTOCOLS = {'http', 'https', 'mailto', 'tel'}
 
-common_tlds = ['com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'eu', 'us', 'uk', 'ca', 'au', 'de', 'fr', 'it', 'es', 'nl', 'jp', 'kr', 'cn', 'br', 'ru', 'in', 'mx', 'za', 'se', 'no', 'dk', 'fi', 'be', 'ch', 'at', 'pl', 'cz', 'gr', 'pt', 'ie', 'nz', 'sg', 'hk', 'il', 'ar', 'co', 'io', 'info', 'biz', 'name', 'pro', 'mobi', 'tel', 'travel', 'xxx', 'asia']
-other_tlds = [tld for tld in TLD_SET if tld not in common_tlds][:250]
-tld_pattern = '|'.join(re.escape(tld) for tld in (common_tlds + other_tlds))
+tld_pattern = '|'.join(re.escape(tld) for tld in TLD_SET)
 
 # Requires www. or protocol prefix (http://, https://) to prevent false positives with bare domains
 URL_RE = re.compile(
     r'(?:(?:https?://)|(?:www\.))'
-    r'(?:[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]+)'
+    r'(?:[a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+'
     r'\.(?:' + tld_pattern + r')'
     r'(?:[a-zA-Z0-9\-._~:/?#\[\]@!$&\'()*+,;=%]*)',
     re.IGNORECASE
@@ -94,23 +92,27 @@ EMAIL_RE = re.compile(
 
 def linkify_text(text, use_safelink=True):
     """
-    Convert plain URLs/emails to links. Only matches http:/https:/www. (not javascript:/data:).
-    Uses escape() for safety. Skips text inside existing <a> tags to prevent nesting.
+    Convert plain-text URLs/emails to HTML links on already-sanitized content.
+    Only matches URLs starting with http://, https://, or www., and uses escape() for safety.
+    Assumes input was previously cleaned (e.g. via clean_html()/nh3.clean()) and does not
+    filter dangerous protocols like javascript: or data:. Skips text inside <a> tags to prevent nesting.
     """
 
     def replace_url(match):
-        url = match.group(0)
+        raw_match = match.group(0)
+        unescaped_url = html.unescape(raw_match)
+        url = unescaped_url
         if not url.startswith(('http://', 'https://')):
             url = 'http://' + url
-        display_url = match.group(0)
+        display_url = unescaped_url
         if use_safelink and not url_has_allowed_host_and_scheme(url, allowed_hosts=None):
-            href = sl(html.unescape(url))
-            return f'<a href="{href}" target="_blank">{escape(display_url)}</a>'
+            href = sl(url)
+            return f'<a href="{escape(href)}" target="_blank" rel="noopener noreferrer">{escape(display_url)}</a>'
         elif not use_safelink:
-            href = urllib.parse.urljoin(settings.SITE_URL, html.unescape(url))
-            return f'<a href="{href}" target="_blank">{escape(display_url)}</a>'
+            href = urllib.parse.urljoin(settings.SITE_URL, url)
+            return f'<a href="{escape(href)}" target="_blank" rel="noopener noreferrer">{escape(display_url)}</a>'
         else:
-            return f'<a href="{escape(url)}">{escape(display_url)}</a>'
+            return f'<a href="{escape(url)}" rel="noopener noreferrer">{escape(display_url)}</a>'
 
     def replace_email(match):
         email = match.group(0)
