@@ -18,7 +18,6 @@ from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
 
 app_name = 'eventyay_common'
-
 class DashboardView(TemplateView):
     template_name = 'pretixpresale/index.html'
 
@@ -40,7 +39,7 @@ urlpatterns = [
     path('organizer/<str:organizer>/edit', organizer_views.organizer_view.OrganizerUpdate.as_view(), name='organizer.update'),
     path('organizer/<str:organizer>/events', organizer_views.organizer_view.OrganizerDetail.as_view(), name='organizer.events'),
     path('organizer/<str:organizer>/billing', organizer_views.organizer_view.BillingSettings.as_view(), name='organizer.billing'),
-    path('organizer/<str:organizer>/teams', organizer.OrganizerTeamManagement.as_view(), name='organizer.teams'),
+    path('organizer/<str:organizer>/teams', organizer.OrganizerTeamsView.as_view(), name='organizer.teams'),
     path('organizer/<str:organizer>/devices', organizer_views.device_view.DeviceListView.as_view(), name='organizer.devices'),
     path('organizer/<str:organizer>/gates', organizer_views.gate_view.GateListView.as_view(), name='organizer.gates'),
     path('organizer/<str:organizer>/export', organizer_control.ExportView.as_view(), name='organizer.export'),

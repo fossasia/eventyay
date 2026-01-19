@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Event
 from eventyay.control.navigation import merge_in
-from eventyay.control.signals import nav_event, nav_global, nav_organizer
+from eventyay.control.signals import nav_global, nav_organizer
 
 logger = logging.getLogger(__name__)
 

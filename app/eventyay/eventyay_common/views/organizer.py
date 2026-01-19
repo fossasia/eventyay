@@ -100,7 +100,7 @@ class OrganizerCreate(CreateView):
     def get_success_url(self) -> str:
         return reverse('eventyay_common:organizers')
 
-class OrganizerTeamManagement(UpdateView, OrganizerPermissionRequiredMixin):
+class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     model = Organizer
     form_class = OrganizerUpdateForm
     template_name = 'eventyay_common/organizers/edit.html'
