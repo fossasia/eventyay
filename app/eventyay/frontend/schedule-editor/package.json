@@ -38,7 +38,7 @@
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/eslint-config-typescript": "^14.6.0",
-    "@vue/tsconfig": "^0.4.0",
+    "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^9.25.0",
     "eslint-plugin-vue-pug": "^0.6.2",
