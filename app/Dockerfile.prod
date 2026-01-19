@@ -26,10 +26,9 @@ RUN apt-get update && \
 # install python dependencies
 # Ref: https://docs.astral.sh/uv/guides/integration/docker/#non-editable-installs
 RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=cache,target=/root/.cache/git \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-editable
+    uv sync --locked --no-install-project --no-editable
 
 COPY Makefile Makefile
 
@@ -39,7 +38,7 @@ COPY Makefile Makefile
 #########
 
 # pull official base image
-FROM python:3.12-slim-bookworm
+FROM python:3.1-slim-bookworm
 
 # create directory for the app user
 RUN mkdir -p /home/app
@@ -80,11 +79,9 @@ RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --pre
 COPY eventyay/webapp eventyay/webapp
 RUN npm ci --prefix=eventyay/webapp
 RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
-# webcheckin web component build
-COPY eventyay/frontend/webcheckin eventyay/frontend/webcheckin
-RUN npm ci --prefix=eventyay/frontend/webcheckin
-# Write build output to compiled-frontend (collected by collectstatic)
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/webcheckin
+# rollup needed by Django-Compressor
+COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
+RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
