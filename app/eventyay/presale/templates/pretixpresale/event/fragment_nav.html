@@ -5,11 +5,11 @@
 
 <nav id='header-nav-bar'>
     <div class="navigation">
-        <a href="{% eventurl request.event 'presale:event.index' %}" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}underline{% endif %}">
+        <a href="{% eventurl request.event 'presale:event.index' %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}underline{% endif %}">
             <i class="fa fa-info-circle"></i> {% translate "Info" %}
         </a>
 
-        <a href="{% eventurl request.event 'presale:event.index' %}#tickets" class="header-tab">
+        <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
 
