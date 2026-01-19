@@ -26,11 +26,11 @@ class StreamSchedule(models.Model):
     )
     start_time = models.DateTimeField(
         verbose_name=_('Start Time'),
-        help_text=_('When this stream becomes active (UTC)'),
+        help_text=_('When this stream becomes active'),
     )
     end_time = models.DateTimeField(
         verbose_name=_('End Time'),
-        help_text=_('When this stream stops being active (UTC)'),
+        help_text=_('When this stream stops being active'),
     )
     stream_type = models.CharField(
         max_length=50,
