@@ -1,5 +1,10 @@
 # Creating a new server and deployment
 
+## Assumptions
+
+We assume that the user running the deployments is called `fossasia`.
+If you want a different user, many things here need to be updated.
+
 ## Create hetzner server
 
 ## Log into server and update
@@ -56,6 +61,9 @@ chmod 0755 /home/fossasia
 
 ## Create deployment data directories
 
+The `NAME_OF_THE_DEPLOYMENT` can by any proper name for a directory,
+but without spaces!
+
 ```root@server
 DEPLOYMENT=<NAME_OF_THE_DEPLOYMENT>
 mkdir -p /home/fossasia/$DEPLOYMENT/data
@@ -70,10 +78,12 @@ chmod ugo+rwx /home/fossasia/$DEPLOYMENT/data/static
 ## Install nginx
 
 ```root@server
-apt install nginx ssl-cert certbot
+apt install nginx ssl-cert certbot python3-certbot-nginx
 ```
 
-## Switch to user fossasia
+## Set up deployment data
+
+Note, this should run as user `fossasia`
 
 ```fossasia@server
 DEPLOYMENT=<NAME_OF_THE_DEPLOYMENT>
@@ -81,13 +91,62 @@ cd /home/fossasia/$DEPLOYMENT
 git clone https://github.com/fossasia/eventyay.git
 cd eventyay
 git checkout main
+cd ..
 ln -s eventyay/deployment/docker-compose.yaml .
 ```
 
-Create .env
-- change SERVER_NAME and CHANGEME entries
+Create `.env` from the `sample.env` by changing `SERVER_NAME`
+and all `CHANGEME` entries.
 
-Copy eventyay/deployment/nginx/enext-direct to /etc/nginx/sites-available
-ssl update
-    apt install python3-certbot-nginx certbot
-    certbot -m eventyay-devops@fossasia.org --agree-tos --nginx
+## Install the nginx entry
+
+On the server, copy `eventyay/deployment/nginx/enext-direct` to `/etc/nginx/sites-available`
+
+### ssl update
+
+```
+certbot -m eventyay-devops@fossasia.org --agree-tos --nginx
+```
+
+## Install fdupes and rclone
+
+```root@server
+apt install fdupes rclone
+```
+
+## Install and edit backup files
+
+Install the files from `server-setup/scripts/` to `/usr/local/bin`
+and ensure they are 0755 permissions.
+
+## Create fossasia rclone
+
+```
+mkdir -p ~/.config/rclone
+```
+create `.config/rclone/rclone.conf` with 0600 perm and the following content,
+replacing `<ACCOUNT_ID>` and `<ACCOUNT_KEY>` with correct values.
+
+Note that one can use a different `type` here, the outer `b2` is just a tag.
+```
+[b2]
+type = b2
+account = <ACCOUNT_ID>
+key = <ACCOUNT_KEY>
+```
+
+## Create /var/log/fossasia 
+
+```root@server
+mkdir -p /var/log/fossasia
+chown fossasia:fossasia /var/log/fossasia
+```
+
+## Create crontab for fossasia
+
+**Edit** the `server-setup/crontab` according to the explanations there
+(replace ENVFILE path and UUIDs for healthcheck) and install it as
+crontab of user `fossasia`.
+
+
+
