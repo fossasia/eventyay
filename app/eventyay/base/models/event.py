@@ -168,7 +168,7 @@ def default_grants():
     return {
         'attendee': ['attendee'],
         'admin': ['admin'],
-        'scheduleuser': ['schedule-update'],
+        'scheduleuser': [],
     }
 
 
