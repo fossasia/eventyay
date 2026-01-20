@@ -231,7 +231,7 @@ urlpatterns = [
                             path(
                                 'edit',
                                 submission.SubmissionContent.as_view(),  # Edit view
-                                name="submissions.content.view",
+                                name="submissions.content.edit",
                             ),
                             path(
                                 'submit',
