@@ -11,6 +11,7 @@ if [ ! -r "$1" ] ; then
 fi
 
 . "$1"
+shift
 
 if [ "x$DEPLOYMENT_NAME" = "x" ] ; then
   echo "DEPLOYMENT_NAME is undefined, exiting." >&2
