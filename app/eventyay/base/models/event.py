@@ -916,6 +916,7 @@ class Event(
         self.settings.event_list_type = 'calendar'
         self.settings.invoice_email_attachment = True
         self.settings.name_scheme = 'given_family'
+        self.settings.ticket_download = True
 
     @property
     def social_image(self):
