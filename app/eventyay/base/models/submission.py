@@ -1120,4 +1120,4 @@ class SubmissionFavourite(PretalxModel):
     objects = ScopedManager(event='submission__event')
 
     class Meta:
-        unique_together = (('user', 'submission'),) 
+        unique_together = (('user', 'submission'),)
