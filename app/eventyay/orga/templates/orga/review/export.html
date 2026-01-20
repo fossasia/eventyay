@@ -63,13 +63,16 @@
                     </label>
                     <div class="col-md-9">
                         {% for radio in form.export_format %}
-                        <div class="form-check mb-2">
+                        <div class="form-check form-check-inline">
                             {{ radio.tag }}
                             <label class="form-check-label" for="{{ radio.id_for_label }}">
                                 {{ radio.choice_label }}
                             </label>
                         </div>
                         {% endfor %}
+                        {% if form.export_format.help_text %}
+                        <small class="form-text text-muted d-block mt-2">{{ form.export_format.help_text }}</small>
+                        {% endif %}
                     </div>
                 </div>
             </fieldset>
