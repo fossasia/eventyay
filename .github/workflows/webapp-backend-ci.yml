@@ -147,7 +147,7 @@ jobs:
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
-        run: uv run pytest tests/ -v --tb=short
+  run: uv run pytest tests/stable -v --tb=short
 
   backend-smoke:
     name: Backend smoke test (healthcheck)

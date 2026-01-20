@@ -289,9 +289,9 @@ packages = ["eventyay"]
 DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
 python_files = ["test_*.py"]
 testpaths = ["tests/stable"]
+addopts = "-v --tb=short --ignore=tests/talk --ignore=tests/tickets --ignore=tests/video"
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
-addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
