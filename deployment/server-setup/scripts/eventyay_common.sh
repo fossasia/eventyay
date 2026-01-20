@@ -10,8 +10,10 @@ if [ ! -r "$1" ] ; then
   exit 1
 fi
 
-. "$1"
+ENV_FILE="$1"
 shift
+
+. "$ENV_FILE"
 
 if [ "x$DEPLOYMENT_NAME" = "x" ] ; then
   echo "DEPLOYMENT_NAME is undefined, exiting." >&2
@@ -43,7 +45,7 @@ if [ "x$DATA_DIR" = "x" ] ; then
 fi
 
 if [[ $DATA_DIR == \./* ]] ; then
-  DATA_DIR="$(dirname "$1")/$DATA_DIR"
+  DATA_DIR="$(dirname "$ENV_FILE")/$DATA_DIR"
 fi
 
 if [ ! -r "$DATA_DIR/data" ] ; then
