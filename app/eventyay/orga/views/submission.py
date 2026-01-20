@@ -273,7 +273,6 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
     model = Submission
     form_class = SubmissionForm
     template_name = 'orga/submission/content_edit.html'
-    permission_required = 'base.orga_list_submission'
 
     def get_object(self):
         try:
@@ -395,7 +394,7 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
     def get_permission_required(self):
         if 'code' in self.kwargs:
-            return ['base.orga_list_submission']
+            return ['base.orga_update_submission']
         return ['base.create_submission']
 
     @property
@@ -466,13 +465,7 @@ class SubmissionContentView(SubmissionContent):
     template_name = "orga/submission/content.html"
     
     def get_object(self):
-        try:
-            return super().get_object()
-        except Http404 as not_found:
-            # Only allow creating new submissions from the edit URL
-            if self.request.path.rstrip("/").endswith("/new"):
-                return None
-            raise not_found
+        return super().get_object()
 
     def get_permission_required(self):
         if "code" in self.kwargs:
