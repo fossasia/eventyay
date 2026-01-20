@@ -8,11 +8,6 @@
 {% load rules %}
 {% load rich_text %}
 
-{% block scripts %}
-    {{ block.super }}
-    <script src="{% static "vendored/marked.min.js" %}" defer></script>
-{% endblock scripts %}
-
 {% block stylesheets %}
     {{ block.super }}
     {% compress css %}
@@ -226,7 +221,7 @@
         <div class="submit-group panel">
             <span></span>
             <span>
-                {% if can_edit %}
+                {% if can_edit_submission %}
                     <a class="btn btn-info btn-lg" href="{{ submission.orga_urls.edit }}">
                         <i class="fa fa-edit"></i>
                         {% translate "Edit" %}
