@@ -141,21 +141,24 @@ function appendHeartbeat(payload) {
     payload.instance_id || '',                     // instance_id
     payload.eventyay_version || '',                // eventyay_version
     payload.schema_version || '',                  // schema_version
-    payload.python_version || '',                  // python_version
+    payload.build_metadata || '',                  // build_metadata
+    payload.canonical_base_url_hash || '',         // canonical_base_url (hashed)
+    payload.deployment_type || '',                 // deployment_type
     payload.os_family || '',                       // os_family
     payload.database_type || '',                   // database_type
     payload.database_version || '',                // database_version
-    payload.deployment_type || '',                 // deployment_type
-    payload.storage_backend || '',                 // storage_backend
+    JSON.stringify(payload.enabled_modules || payload.enabled_plugins || []), // enabled_modules
     metrics.events_bucket || '',                   // events_bucket
-    metrics.live_events_bucket || '',              // live_events_bucket
-    metrics.organizers_bucket || '',               // organizers_bucket
+    metrics.attendees_bucket || '',                // attendees_bucket
+    metrics.tickets_issued_bucket || '',           // tickets_issued_bucket
+    metrics.paid_tickets_bucket || '',             // paid_tickets_bucket
+    metrics.free_tickets_bucket || '',             // free_tickets_bucket
     metrics.orders_bucket || '',                   // orders_bucket
-    metrics.paid_orders_bucket || '',              // paid_orders_bucket
-    metrics.submissions_bucket || '',              // submissions_bucket
-    JSON.stringify(payload.enabled_plugins || []), // enabled_plugins
-    payload.celery_enabled || false,               // celery_enabled
-    payload.redis_enabled || false,                // redis_enabled
+    metrics.uptime_bucket || '',                   // uptime_bucket
+    payload.background_jobs_enabled || false,      // background_jobs_enabled
+    payload.storage_backend || '',                 // storage_backend
+    metrics.error_count_bucket || '0',             // error_count_bucket
+    payload.inferred_country || '',                // inferred_country
     payload.maintainer_contact || '',              // maintainer_contact
     JSON.stringify(payload),                       // raw_payload (for debugging)
   ];
@@ -173,27 +176,29 @@ function getOrCreateSheet() {
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
     
-    // Add header row
+    // Add header row - matches all required columns
     const headers = [
       'received_at_utc',
       'instance_id',
       'eventyay_version',
       'schema_version',
-      'python_version',
-      'os_family',
-      'database_type',
-      'database_version',
+      'build_metadata',
+      'canonical_base_url',
       'deployment_type',
-      'storage_backend',
+      'os_family',
+      'database_type_version',
+      'enabled_modules',
       'events_bucket',
-      'live_events_bucket',
-      'organizers_bucket',
+      'attendees_bucket',
+      'tickets_issued_bucket',
+      'paid_tickets_bucket',
+      'free_tickets_bucket',
       'orders_bucket',
-      'paid_orders_bucket',
-      'submissions_bucket',
-      'enabled_plugins',
-      'celery_enabled',
-      'redis_enabled',
+      'uptime_bucket',
+      'background_jobs_enabled',
+      'storage_backend',
+      'error_count_bucket',
+      'inferred_country',
       'maintainer_contact',
       'raw_payload',
     ];

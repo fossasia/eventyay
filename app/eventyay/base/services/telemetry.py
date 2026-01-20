@@ -178,6 +178,15 @@ def collect_telemetry_payload() -> dict:
     # Get database info
     db_type, db_version = get_database_info()
     
+    # Get canonical base URL (hashed for privacy)
+    try:
+        import hashlib
+        base_url = getattr(settings, 'SITE_URL', '') or ''
+        # Hash the URL for privacy - only allows identifying same instance
+        base_url_hash = hashlib.sha256(base_url.encode()).hexdigest()[:16] if base_url else ''
+    except Exception:
+        base_url_hash = ''
+    
     # Collect model counts
     try:
         event_count = Event.objects.count()
@@ -203,13 +212,59 @@ def collect_telemetry_payload() -> dict:
     except Exception:
         submission_count = 0
     
+    # Count attendees (order positions / tickets)
+    try:
+        from eventyay.base.models import OrderPosition
+        total_tickets = OrderPosition.objects.count()
+        paid_tickets = OrderPosition.objects.filter(order__status='p').count()
+        free_tickets = OrderPosition.objects.filter(price=0).count()
+    except Exception:
+        total_tickets = 0
+        paid_tickets = 0
+        free_tickets = 0
+    
     # Get enabled plugins
     try:
         enabled_plugins = [p.module for p in get_all_plugins() if p.module]
     except Exception:
         enabled_plugins = []
     
-    # Build payload
+    # Get uptime info (if available)
+    try:
+        import os
+        # Try to get process start time
+        uptime_seconds = 0
+        if hasattr(os, 'getpid'):
+            import psutil
+            process = psutil.Process(os.getpid())
+            uptime_seconds = int(now().timestamp() - process.create_time())
+    except Exception:
+        uptime_seconds = 0
+    
+    # Uptime bucket (in hours)
+    uptime_hours = uptime_seconds // 3600
+    if uptime_hours == 0:
+        uptime_bucket = '0-1h'
+    elif uptime_hours < 24:
+        uptime_bucket = '1-24h'
+    elif uptime_hours < 168:  # 7 days
+        uptime_bucket = '1-7d'
+    elif uptime_hours < 720:  # 30 days
+        uptime_bucket = '7-30d'
+    else:
+        uptime_bucket = '30d+'
+    
+    # Build metadata
+    try:
+        import git
+        repo = git.Repo(search_parent_directories=True)
+        git_commit = repo.head.commit.hexsha[:8]
+        git_branch = repo.active_branch.name
+        build_metadata = f"{git_branch}@{git_commit}"
+    except Exception:
+        build_metadata = f"v{__version__}"
+    
+    # Build payload with all required columns
     payload = {
         'schema_version': '1',
         'instance_id': instance_id,
@@ -217,9 +272,11 @@ def collect_telemetry_payload() -> dict:
         
         # Version info
         'eventyay_version': __version__,
+        'build_metadata': build_metadata,
         'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
         
         # Environment info
+        'canonical_base_url_hash': base_url_hash,
         'os_family': platform.system(),
         'os_version': platform.release(),
         'database_type': db_type,
@@ -230,6 +287,7 @@ def collect_telemetry_payload() -> dict:
         # Feature flags
         'celery_enabled': getattr(settings, 'HAS_CELERY', False),
         'redis_enabled': getattr(settings, 'HAS_REDIS', False),
+        'background_jobs_enabled': getattr(settings, 'HAS_CELERY', False),
         
         # Bucketed metrics (privacy-preserving)
         'metrics': {
@@ -239,10 +297,21 @@ def collect_telemetry_payload() -> dict:
             'orders_bucket': get_count_bucket(order_count),
             'paid_orders_bucket': get_count_bucket(paid_order_count),
             'submissions_bucket': get_count_bucket(submission_count),
+            # New required metrics
+            'attendees_bucket': get_count_bucket(total_tickets),
+            'tickets_issued_bucket': get_count_bucket(total_tickets),
+            'paid_tickets_bucket': get_count_bucket(paid_tickets),
+            'free_tickets_bucket': get_count_bucket(free_tickets),
+            'uptime_bucket': uptime_bucket,
+            'error_count_bucket': '0',  # Placeholder - can be enhanced later
         },
         
-        # Plugin info
+        # Plugin info (enabled modules)
         'enabled_plugins': enabled_plugins,
+        'enabled_modules': enabled_plugins,  # Alias for compatibility
+        
+        # Country/region - not collected for privacy (would need IP geolocation)
+        'inferred_country': '',
     }
     
     # Optional: Add contact email if configured
