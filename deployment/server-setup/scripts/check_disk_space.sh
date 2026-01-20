@@ -24,10 +24,14 @@
 #########################################################################
  
 ### initializing variables
- 
+__dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+. ${__dir}/eventyay_common.sh
+
+
 ## To enable email notification set ENABLE_EMAIL_ALERT to 1
 ENABLE_EMAIL_ALERT=1
-NOTIFICATION_EMAIL="eventyay-devops@fossasia.org"
+NOTIFICATION_EMAIL=$MANAGEMENT_EMAIL
  
 ## Uncomment and set a custom hostname, default uses the system's hostname
 #HOSTNAME="web-server1"
