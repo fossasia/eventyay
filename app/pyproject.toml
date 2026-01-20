@@ -294,7 +294,7 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "eventyay.config.next_settings"
 python_files = ["test_*.py"]
-testpaths = ["tests"]
+testpaths = ["tests/stable"]
 addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning",

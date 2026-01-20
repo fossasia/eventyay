@@ -80,9 +80,6 @@ jobs:
     name: Integration tests (pytest)
     runs-on: ubuntu-latest
     needs: python-uv-check
-    # Tests under app/tests are currently under work and contain broken imports.
-    # Disable this job for now to keep CI signal from Django checks and smoke healthcheck.
-    if: false
     services:
       postgres:
         image: postgres:16
