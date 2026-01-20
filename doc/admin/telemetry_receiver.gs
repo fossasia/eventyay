@@ -158,7 +158,6 @@ function appendHeartbeat(payload) {
     payload.background_jobs_enabled || false,      // background_jobs_enabled
     payload.storage_backend || '',                 // storage_backend
     metrics.error_count_bucket || '0',             // error_count_bucket
-    payload.inferred_country || '',                // inferred_country
     payload.maintainer_contact || '',              // maintainer_contact
     JSON.stringify(payload),                       // raw_payload (for debugging)
   ];
@@ -186,7 +185,8 @@ function getOrCreateSheet() {
       'canonical_base_url',
       'deployment_type',
       'os_family',
-      'database_type_version',
+      'database_type',
+      'database_version',
       'enabled_modules',
       'events_bucket',
       'attendees_bucket',
@@ -198,7 +198,6 @@ function getOrCreateSheet() {
       'background_jobs_enabled',
       'storage_backend',
       'error_count_bucket',
-      'inferred_country',
       'maintainer_contact',
       'raw_payload',
     ];
@@ -230,7 +229,7 @@ function jsonResponse(data, statusCode = 200) {
 function testSetup() {
   const sheet = getOrCreateSheet();
   console.log('Sheet name:', sheet.getName());
-  console.log('Header row:', sheet.getRange(1, 1, 1, 21).getValues()[0]);
+  console.log('Header row:', sheet.getRange(1, 1, 1, 23).getValues()[0]);  // 23 = number of headers
   
   // Test with sample payload
   const testPayload = {

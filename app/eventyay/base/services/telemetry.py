@@ -312,9 +312,6 @@ def collect_telemetry_payload() -> dict:
         # Plugin info (enabled modules)
         'enabled_plugins': enabled_plugins,
         'enabled_modules': enabled_plugins,  # Alias for compatibility
-        
-        # Country/region - not collected for privacy (would need IP geolocation)
-        'inferred_country': '',
     }
     
     # Optional: Add contact email if configured
