@@ -367,12 +367,7 @@ if HAS_PYENCHANT:
     spelling_show_suggestions = True
 
     # List of filter classes to be added to the tokenizer that produces words to be checked.
-    # Note: spelling_filters is read by sphinxcontrib.spelling extension
-    try:
-        spelling_filters = ['checkin_filter.CheckinFilter']
-    except ImportError:
-        # checkin_filter module not available, skip custom filters
-        spelling_filters = []
+    spelling_filters = ['checkin_filter.CheckinFilter']
 
 
 def autodoc_skip_member(app, what, name, obj, skip, options):
@@ -393,12 +388,10 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
     # Avoid evaluating QuerySets during introspection (repr() can hit the DB).
     try:
         from django.db.models.query import QuerySet as DjangoQuerySet
-
         if isinstance(obj, DjangoQuerySet):
             return True
-    except Exception:
-        pass
-    return skip
+    except ImportError:
+        return skip
 
 
 def setup(app):

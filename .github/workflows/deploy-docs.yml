@@ -36,9 +36,10 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
+        id: setup-python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11.14'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
@@ -52,16 +53,24 @@ jobs:
             libfreetype-dev \
             libjpeg-dev \
             libpq-dev \
+            libenchant-2-dev \
+            enchant-2 \
+            hunspell \
+            aspell-en \
             build-essential
 
-      - name: Create documentation venv
-        run: python -m venv doc/.venv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+          enable-cache: true
 
-      - name: Upgrade packaging tools
-        run: doc/.venv/bin/python -m pip install --upgrade pip setuptools wheel
-
-      - name: Install documentation dependencies
-        run: doc/.venv/bin/python -m pip install --upgrade-strategy eager -Ur doc/requirements.txt
+      - name: Install Python dependencies (docs)
+        working-directory: ./app
+        env:
+          UV_PROJECT_ENVIRONMENT: ../doc/.venv
+          UV_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+        run: uv sync --frozen --group docs
 
       - name: Add docs venv to PATH
         run: echo "${{ github.workspace }}/doc/.venv/bin" >> "$GITHUB_PATH"
