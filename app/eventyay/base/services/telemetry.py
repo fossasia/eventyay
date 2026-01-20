@@ -415,9 +415,10 @@ def send_telemetry(self):
     except requests.RequestException as e:
         # Network errors, timeouts, etc. - don't update timestamp, allow retry
         logger.warning("Telemetry request failed: %s", e)
-        return {'status': 'error', 'message': str(e)}
+        return {'status': 'error', 'error_type': type(e).__name__}
     except (TypeError, ValueError) as e:
         # JSON serialization errors - log and mark as sent to avoid repeated failures
         logger.warning("Telemetry payload error: %s", e)
         gs.settings.set('telemetry_last_sent', now())
-        return {'status': 'error', 'message': str(e)}
+        return {'status': 'error', 'error_type': type(e).__name__}
+
