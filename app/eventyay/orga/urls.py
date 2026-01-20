@@ -10,7 +10,6 @@ from eventyay.orga.views import (
     mails,
     organizer,
     person,
-
     review,
     schedule,
     speaker,
