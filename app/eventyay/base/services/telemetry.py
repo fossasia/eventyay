@@ -38,17 +38,27 @@ def get_count_bucket(count: int) -> str:
     Examples:
         0 -> "0"
         5 -> "1-10"
-        75 -> "50-100"
+        75 -> "51-100"
         10000 -> "5000+"
     """
     if count == 0:
         return "0"
     
-    for i, threshold in enumerate(COUNT_BUCKETS[1:], 1):
-        if count <= threshold:
-            return f"{COUNT_BUCKETS[i-1]+1 if COUNT_BUCKETS[i-1] > 0 else 1}-{threshold}"
+    # Buckets: 1-10, 11-50, 51-100, 101-500, 501-1000, 1001-5000, 5000+
+    bucket_ranges = [
+        (1, 10),
+        (11, 50),
+        (51, 100),
+        (101, 500),
+        (501, 1000),
+        (1001, 5000),
+    ]
     
-    return f"{COUNT_BUCKETS[-1]}+"
+    for low, high in bucket_ranges:
+        if count <= high:
+            return f"{low}-{high}"
+    
+    return "5000+"
 
 
 def get_database_info() -> tuple:
