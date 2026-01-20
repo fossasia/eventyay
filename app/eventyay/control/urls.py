@@ -148,46 +148,46 @@ urlpatterns = [
         organizer_views.web_hook_view.WebHookLogsView.as_view(),
         name='organizer.webhook.logs',
     ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/add$',
-        organizer_views.device_view.DeviceCreateView.as_view(),
-        name='organizer.device.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/edit$',
-        organizer_views.device_view.DeviceUpdateView.as_view(),
-        name='organizer.device.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/connect$',
-        organizer_views.device_view.DeviceConnectView.as_view(),
-        name='organizer.device.connect',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/revoke$',
-        organizer_views.device_view.DeviceRevokeView.as_view(),
-        name='organizer.device.revoke',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/logs$',
-        organizer_views.device_view.DeviceLogView.as_view(),
-        name='organizer.device.logs',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/add$',
-        organizer_views.gate_view.GateCreateView.as_view(),
-        name='organizer.gate.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/edit$',
-        organizer_views.gate_view.GateUpdateView.as_view(),
-        name='organizer.gate.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/delete$',
-        organizer_views.gate_view.GateDeleteView.as_view(),
-        name='organizer.gate.delete',
-    ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/device/add$',
+    #     organizer_views.device_view.DeviceCreateView.as_view(),
+    #     name='organizer.device.add',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/edit$',
+    #     organizer_views.device_view.DeviceUpdateView.as_view(),
+    #     name='organizer.device.edit',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/connect$',
+    #     organizer_views.device_view.DeviceConnectView.as_view(),
+    #     name='organizer.device.connect',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/revoke$',
+    #     organizer_views.device_view.DeviceRevokeView.as_view(),
+    #     name='organizer.device.revoke',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/logs$',
+    #     organizer_views.device_view.DeviceLogView.as_view(),
+    #     name='organizer.device.logs',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/gate/add$',
+    #     organizer_views.gate_view.GateCreateView.as_view(),
+    #     name='organizer.gate.add',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/edit$',
+    #     organizer_views.gate_view.GateUpdateView.as_view(),
+    #     name='organizer.gate.edit',
+    # ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/delete$',
+    #     organizer_views.gate_view.GateDeleteView.as_view(),
+    #     name='organizer.gate.delete',
+    # ),
     url(
         r'^organizer/(?P<organizer>[^/]+)/slugrng',
         main.SlugRNG.as_view(),
@@ -198,11 +198,11 @@ urlpatterns = [
         organizer.LogView.as_view(),
         name='organizer.log',
     ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/export/do$',
-        organizer.ExportDoView.as_view(),
-        name='organizer.export.do',
-    ),
+    # url(
+    #     r'^organizer/(?P<organizer>[^/]+)/export/do$',
+    #     organizer.ExportDoView.as_view(),
+    #     name='organizer.export.do',
+    # ),
     url(r'^nav/typeahead/$', typeahead.nav_context_list, name='nav.typeahead'),
     url(
         r'^events/$',
