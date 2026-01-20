@@ -12,10 +12,12 @@ from eventyay.eventyay_common.views import (
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
+from eventyay.control.views import (
+    organizer_views,
+    organizer as organizer_control
+)
 
 app_name = 'eventyay_common'
-
-
 class DashboardView(TemplateView):
     template_name = 'pretixpresale/index.html'
 
@@ -33,8 +35,16 @@ urlpatterns = [
     path('widgets.json/', dashboards.user_index_widgets_lazy, name='dashboard.widgets'),
     path('organizers/', organizer.OrganizerList.as_view(), name='organizers'),
     path('organizers/add', organizer.OrganizerCreate.as_view(), name='organizers.add'),
-    path('organizer/<str:organizer>/', organizer.OrganizerUpdate.as_view(), name='organizer.update'),
-    path('organizer/<str:organizer>/teams', team.TeamListView.as_view(), name='organizer.teams'),
+    
+    path('organizer/<str:organizer>/edit', organizer_views.organizer_view.OrganizerUpdate.as_view(), name='organizer.update'),
+    path('organizer/<str:organizer>/events', organizer_views.organizer_view.OrganizerDetail.as_view(), name='organizer.events'),
+    path('organizer/<str:organizer>/billing', organizer_views.organizer_view.BillingSettings.as_view(), name='organizer.billing'),
+    path('organizer/<str:organizer>/teams', organizer.OrganizerTeamsView.as_view(), name='organizer.teams'),
+    path('organizer/<str:organizer>/devices', organizer_views.device_view.DeviceListView.as_view(), name='organizer.devices'),
+    path('organizer/<str:organizer>/gates', organizer_views.gate_view.GateListView.as_view(), name='organizer.gates'),
+    path('organizer/<str:organizer>/export', organizer_control.ExportView.as_view(), name='organizer.export'),
+    
+
     path('organizer/<str:organizer>/team/add', team.TeamCreateView.as_view(), name='organizer.team.add'),
     path('organizer/<str:organizer>/team/<str:team>', team.TeamMemberView.as_view(), name='organizer.team'),
     path('organizer/<str:organizer>/team/<str:team>/edit', team.TeamUpdateView.as_view(), name='organizer.team.edit'),
