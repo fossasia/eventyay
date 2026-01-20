@@ -1,21 +1,14 @@
 name: Deploy Documentation
 
 on:
+  pull_request:
+    branches:
+      - dev
   push:
     branches:
       - dev
       - main
-    paths:
-      - 'doc/**'
-      - 'app/pyproject.toml'
-      - 'app/uv.lock'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -24,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     services:
       redis:
         image: redis:7-alpine
@@ -94,11 +89,15 @@ jobs:
           path: _site
 
   deploy:
+    if: github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
