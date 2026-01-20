@@ -5,9 +5,10 @@ on:
     branches:
       - dev
       - main
-      - loop
     paths:
       - 'doc/**'
+      - 'app/pyproject.toml'
+      - 'app/uv.lock'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -23,6 +24,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,13 +43,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
+          python-version: '3.11.14'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            enchant-2 \
             libffi-dev \
             libssl-dev \
             libxml2-dev \
@@ -49,37 +59,30 @@ jobs:
             libpq-dev \
             build-essential
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          version: latest
-          enable-cache: true
+      - name: Create documentation venv
+        run: python -m venv doc/.venv
 
-      - name: Install Python dependencies
-        run: uv sync --group docs
-        working-directory: ./app/
+      - name: Upgrade packaging tools
+        run: doc/.venv/bin/python -m pip install --upgrade pip setuptools wheel
 
-      - name: Build unified documentation
+      - name: Install documentation dependencies
+        run: doc/.venv/bin/python -m pip install --upgrade-strategy eager -Ur doc/requirements.txt
+
+      - name: Add docs venv to PATH
+        run: echo "${{ github.workspace }}/doc/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Build documentation
+        working-directory: ./doc
         run: |
-          # Set environment variables (conf.py handles Django setup automatically)
-          export MPLCONFIGDIR=/tmp/matplotlib
-          mkdir -p $MPLCONFIGDIR
-          # Build documentation
-          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees   . _build/html
-        working-directory: ./doc/
+          make clean
+          make html
 
       - name: Prepare deployment
         run: |
           mkdir -p _site
-          # Copy unified documentation (includes all components: tickets, talk, video)
-          echo "Copying unified documentation..."
           cp -r doc/_build/html/* _site/
-          # Copy CNAME for custom domain (docs.eventyay.com)
           cp doc/CNAME _site/
-          # Create .nojekyll to prevent GitHub Pages from ignoring files starting with _
           touch _site/.nojekyll
-          # List contents for verification
-          echo "Documentation site structure:"
           ls -la _site/
 
       - name: Setup Pages
@@ -88,7 +91,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: '_site'
+          path: _site
 
   deploy:
     environment:

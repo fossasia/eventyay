@@ -369,8 +369,7 @@ if HAS_PYENCHANT:
     # List of filter classes to be added to the tokenizer that produces words to be checked.
     # Note: spelling_filters is read by sphinxcontrib.spelling extension
     try:
-        from checkin_filter import CheckinFilter
-        spelling_filters = [CheckinFilter]
+        spelling_filters = ['checkin_filter.CheckinFilter']
     except ImportError:
         # checkin_filter module not available, skip custom filters
         spelling_filters = []
