@@ -343,7 +343,7 @@ class TeamCreateView(
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
             return next_url
         return reverse(
-            'eventyay_common:organizer.teams',
+            'eventyay_common:organizer.update',
             kwargs={'organizer': self.request.organizer.slug},
         )
 
