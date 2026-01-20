@@ -131,16 +131,16 @@ class ShowPageView(TemplateView):
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
-        allowed_tags = {
+        allowed_tags = nh3.ALLOWED_TAGS & {
             'a', 'abbr', 'acronym', 'b', 'blockquote', 'code', 'em', 'i', 'li', 'ol', 'strong', 'ul',
             'img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'
         }
         
         attributes = {
-            'a': {'href', 'title', 'target'},
+            'a': nh3.ALLOWED_ATTRIBUTES.get('a', set()) | {'title', 'target'},
             'abbr': {'title'},
             'acronym': {'title'},
-            'img': {'src'},
+            'img': nh3.ALLOWED_ATTRIBUTES.get('img', set()) & {'src'},
             'p': {'class'},
             'li': {'class'},
         }
@@ -149,6 +149,6 @@ class ShowPageView(TemplateView):
             str(page.text),
             tags=allowed_tags,
             attributes=attributes,
-            url_schemes={'http', 'https', 'mailto', 'data'},
+            url_schemes = (nh3.ALLOWED_URL_SCHEMES & {'http', 'https', 'mailto'}) | {'data'}
         )
         return ctx
