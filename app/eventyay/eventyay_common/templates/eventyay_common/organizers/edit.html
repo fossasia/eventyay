@@ -40,7 +40,7 @@
 
                 <fieldset>
                     <h4>{{ _('Organizer settings:') }}
-                        <a href='{% url "eventyay_common:organizer.update" organizer=organizer.slug  %}'
+                        <a href='{% url "control:organizer.edit" organizer=organizer.slug  %}'
                                 class="btn btn-sm btn-default" title="{{ _('Settings') }}"
                                 data-toggle="tooltip">
                             <span class="fa fa-cog"></span>
