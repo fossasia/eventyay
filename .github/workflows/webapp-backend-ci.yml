@@ -145,7 +145,7 @@ jobs:
           EVY_SECRET_KEY: ci-test-secret-key
           EVY_DEBUG: "true"
           EVY_RUNNING_ENVIRONMENT: testing
-          DJANGO_SETTINGS_MODULE: eventyay.config.next_settings
+          DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
         run: uv run pytest tests/ -v --tb=short
 

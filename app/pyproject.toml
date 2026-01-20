@@ -285,16 +285,12 @@ lines-after-imports = 2
 [tool.setuptools]
 packages = ["eventyay"]
 
-[tool.pytest]
-testpaths = ["tests"]
-DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
-asyncio_mode = "strict"
-asyncio_default_fixture_loop_scope = "function"
-
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "eventyay.config.next_settings"
+DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
 python_files = ["test_*.py"]
 testpaths = ["tests/stable"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
 addopts = "-v --tb=short"
 filterwarnings = [
     "ignore::DeprecationWarning",
