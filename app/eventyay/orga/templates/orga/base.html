@@ -55,7 +55,7 @@
         {% compress js %}
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/collapse.js' %}"></script>
-            <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+            <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'orga/js/main.js' %}"></script>
             <script defer src="{% static 'orga/js/typeahead.js' %}"></script>
             <script defer src="{% static 'vendored/choices/choices.min.js' %}"></script>
@@ -285,6 +285,34 @@
                         {% endif %}
                     {% endif %}
                     {% if can_see_orga_area %}
+                        {% if can_view_speakers %}
+                            <div class="nav-fold">
+                                <span class="has-children">
+                                    <a class="nav-link nav-link-inner" href="{{ request.event.orga_urls.speakers }}">
+                                        <i class="fa fa-address-card-o"></i>
+                                        <span class="sidebar-text">{{ phrases.schedule.speakers }}</span>
+                                    </a>
+                                    <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSpeakers" aria-controls="collapseSpeakers">
+                                        <i class="fa fa-angle-down"></i>
+                                    </a>
+                                </span>
+                                <div class="collapse in{% if "speakers." in url_name|slice:":9" %} show{% endif %}" aria-expand="true" id="collapseSpeakers">
+                                    <a href="{{ request.event.orga_urls.speakers }}" class="nav-link nav-link-second-level{% if "speakers.list" in url_name or "speakers.view" in url_name %} active{% endif %}">
+                                        <span>{{ phrases.schedule.speakers }}</span>
+                                    </a>
+                                    {% if can_see_orga_exclusive %}
+                                        <a href="{{ request.event.orga_urls.information }}" class="nav-link nav-link-second-level{% if "speakers.information" in url_name %} active{% endif %}">
+                                            <span>{% translate "Speaker Information" %}</span>
+                                        </a>
+                                    {% endif %}
+                                    {% if can_change_settings %}
+                                        <a href="{{ request.event.orga_urls.speakers }}export/" class="nav-link nav-link-second-level{% if "speakers.export" in url_name %} active{% endif %}">
+                                            <span>{% translate "Export" %}</span>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
                         <div class="nav-fold">
                             <span class="has-children">
                                 <a class="nav-link nav-link-inner" href="{{ request.event.orga_urls.submissions }}">
@@ -346,34 +374,7 @@
                                 <span class="sidebar-text">{% translate "Review" %}</span>
                             </a>
                         {% endif %}
-                        {% if can_view_speakers %}
-                            <div class="nav-fold">
-                                <span class="has-children">
-                                    <a class="nav-link nav-link-inner" href="{{ request.event.orga_urls.speakers }}">
-                                        <i class="fa fa-address-card-o"></i>
-                                        <span class="sidebar-text">{{ phrases.schedule.speakers }}</span>
-                                    </a>
-                                    <a class="arrow nav-link" data-toggle="collapse" data-target="#collapseSpeakers" aria-controls="collapseSpeakers">
-                                        <i class="fa fa-angle-down"></i>
-                                    </a>
-                                </span>
-                                <div class="collapse in{% if "speakers." in url_name|slice:":9" %} show{% endif %}" aria-expand="true" id="collapseSpeakers">
-                                    <a href="{{ request.event.orga_urls.speakers }}" class="nav-link nav-link-second-level{% if "speakers.list" in url_name or "speakers.view" in url_name %} active{% endif %}">
-                                        <span>{{ phrases.schedule.speakers }}</span>
-                                    </a>
-                                    {% if can_see_orga_exclusive %}
-                                        <a href="{{ request.event.orga_urls.information }}" class="nav-link nav-link-second-level{% if "speakers.information" in url_name %} active{% endif %}">
-                                            <span>{% translate "Speaker Information" %}</span>
-                                        </a>
-                                    {% endif %}
-                                    {% if can_change_settings %}
-                                        <a href="{{ request.event.orga_urls.speakers }}export/" class="nav-link nav-link-second-level{% if "speakers.export" in url_name %} active{% endif %}">
-                                            <span>{% translate "Export" %}</span>
-                                        </a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endif %}
+                        
                     {% endif %}
                     {% if can_see_orga_exclusive %}
 
