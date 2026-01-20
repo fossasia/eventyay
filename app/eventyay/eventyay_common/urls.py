@@ -45,8 +45,6 @@ urlpatterns = [
     path('organizer/<str:organizer>/device/<str:device>/revoke', organizer_views.device_view.DeviceRevokeView.as_view(), name='organizer.devices.revoke'),
     path('organizer/<str:organizer>/device/<str:device>/logs', organizer_views.device_view.DeviceLogView.as_view(), name='organizer.devices.logs'),
     path('organizer/<str:organizer>/device/<str:device>/connect', organizer_views.device_view.DeviceConnectView.as_view(), name='organizer.devices.connect'),
-    
-
     path('organizer/<str:organizer>/gates', organizer_views.gate_view.GateListView.as_view(), name='organizer.gates'),
     path('organizer/<str:organizer>/gate/add', organizer_views.gate_view.GateCreateView.as_view(), name='organizer.gates.add'),
     path('organizer/<str:organizer>/gate/<str:gate>/edit', organizer_views.gate_view.GateUpdateView.as_view(), name='organizer.gates.edit'),
