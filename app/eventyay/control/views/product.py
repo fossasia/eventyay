@@ -1,5 +1,4 @@
 import json
-import logging
 from collections import OrderedDict, namedtuple
 from json.decoder import JSONDecodeError
 
@@ -1685,13 +1684,6 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         return ctx
 
     def form_valid(self, form):
-        # Debug logging to identify persistence issue
-        logger = logging.getLogger(__name__)
-        logger.info(f"POST data keys: {list(self.request.POST.keys())}")
-        logger.info(f"Form cleaned_data keys: {list(form.cleaned_data.keys())}")
-        logger.info(f"Form changed_data: {form.changed_data}")
-        logger.info(f"Virtual keys: {getattr(form, 'virtual_keys', [])}")
-        
         form.save()
         if form.has_changed():
             self.request.event.log_action(
@@ -1703,12 +1695,6 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        # Debug logging to identify validation errors
-        logger = logging.getLogger(__name__)
-        logger.error(f"Form validation FAILED")
-        logger.error(f"Form errors: {form.errors}")
-        logger.error(f"Form non_field_errors: {form.non_field_errors()}")
-        logger.error(f"POST data keys: {list(self.request.POST.keys())}")
         messages.error(self.request, _('Please correct the errors below.'))
         return super().form_invalid(form)
 
