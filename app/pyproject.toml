@@ -249,6 +249,7 @@ test = [
     "fakeredis>=2.33.0",
     "freezegun>=1.5.5",
     "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
     "pytest-cache>=1.0",
     "pytest-cov>=7.0.0",
     "pytest-django>=4.9.0",
@@ -284,6 +285,11 @@ lines-after-imports = 2
 [tool.setuptools]
 packages = ["eventyay"]
 
+[tool.pytest]
+testpaths = ["tests"]
+DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "eventyay.config.next_settings"
