@@ -129,6 +129,7 @@ def get_deployment_type() -> str:
             if 'docker' in f.read():
                 return 'docker'
     except (FileNotFoundError, PermissionError, OSError):
+        # Cannot read /proc/1/cgroup, assume not in a container
         pass
     
     return 'native'
@@ -168,6 +169,7 @@ def collect_telemetry_payload() -> dict:
     gs = GlobalSettingsObject()
     
     # Get instance identifier
+    # Note: Import inside function to avoid circular import with models.settings
     try:
         from eventyay.base.models.settings import GlobalSettings
         instance_id = str(GlobalSettings().get_instance_identifier())
@@ -212,6 +214,7 @@ def collect_telemetry_payload() -> dict:
         submission_count = 0
     
     # Count attendees (order positions / tickets)
+    # Note: Import inside function as OrderPosition may not always be available
     try:
         from eventyay.base.models import OrderPosition
         total_tickets = OrderPosition.objects.count()
@@ -231,6 +234,7 @@ def collect_telemetry_payload() -> dict:
         enabled_plugins = []
     
     # Get uptime info (if available)
+    # Note: psutil is an optional dependency
     uptime_seconds = 0
     try:
         import psutil
@@ -252,20 +256,28 @@ def collect_telemetry_payload() -> dict:
     else:
         uptime_bucket = '30d+'
     
-    # Build metadata
+    # Build metadata from git (optional dependency)
     build_metadata = f"v{__version__}"
     try:
         import git
         try:
             repo = git.Repo(search_parent_directories=True)
             git_commit = repo.head.commit.hexsha[:8]
-            git_branch = repo.active_branch.name
+            # Handle detached HEAD state where active_branch may not exist
+            try:
+                git_branch = repo.active_branch.name
+            except TypeError:
+                # Detached HEAD state - use commit hash instead
+                git_branch = 'detached'
             build_metadata = f"{git_branch}@{git_commit}"
-        except (git.InvalidGitRepositoryError, git.GitCommandNotFound, TypeError) as e:
+        except (git.InvalidGitRepositoryError, git.GitCommandNotFound, TypeError, AttributeError) as e:
             logger.debug("Could not get git info: %s", e)
     except ImportError:
         # git module not installed, use version-based metadata
         pass
+    
+    # Get optional contact email
+    contact_email = gs.settings.get('telemetry_contact_email') or ''
     
     # Build payload with all required columns
     payload = {
@@ -300,7 +312,6 @@ def collect_telemetry_payload() -> dict:
             'orders_bucket': get_count_bucket(order_count),
             'paid_orders_bucket': get_count_bucket(paid_order_count),
             'submissions_bucket': get_count_bucket(submission_count),
-            # Required metrics
             'attendees_bucket': get_count_bucket(total_tickets),
             'tickets_issued_bucket': get_count_bucket(total_tickets),
             'paid_tickets_bucket': get_count_bucket(paid_tickets),
@@ -309,15 +320,12 @@ def collect_telemetry_payload() -> dict:
             'error_count_bucket': '0',  # Placeholder - can be enhanced later
         },
         
-        # Plugin info (enabled modules)
+        # Plugin info
         'enabled_plugins': enabled_plugins,
-        'enabled_modules': enabled_plugins,  # Alias for compatibility
+        
+        # Contact info (always included for consistent column count)
+        'maintainer_contact': contact_email,
     }
-    
-    # Optional: Add contact email if configured
-    contact_email = gs.settings.get('telemetry_contact_email')
-    if contact_email:
-        payload['maintainer_contact'] = contact_email
     
     return payload
 
@@ -345,7 +353,7 @@ def run_telemetry(sender, **kwargs):
     send_telemetry.apply_async()
 
 
-@app.task(bind=True, max_retries=3)
+@app.task(bind=True)
 @scopes_disabled()
 def send_telemetry(self):
     """
@@ -380,7 +388,7 @@ def send_telemetry(self):
         # Collect payload
         payload = collect_telemetry_payload()
         
-        # Prepare headers
+        # Prepare headers - only use X-API-Key header for security
         headers = {
             'Content-Type': 'application/json',
             'User-Agent': f'Eventyay/{__version__}',
@@ -396,27 +404,20 @@ def send_telemetry(self):
             timeout=30,
         )
         
-        # Update last sent timestamp
-        gs.settings.set('telemetry_last_sent', now())
-        
         if response.status_code == 200:
+            # Only update timestamp on successful response
+            gs.settings.set('telemetry_last_sent', now())
             return {'status': 'success'}
         else:
+            # Don't update timestamp on error - allow retry
             return {'status': 'error', 'code': response.status_code}
             
     except requests.RequestException as e:
-        # Network errors, timeouts, etc.
+        # Network errors, timeouts, etc. - don't update timestamp, allow retry
         logger.warning("Telemetry request failed: %s", e)
-        gs.settings.set('telemetry_last_sent', now())
-        
-        # Retry on transient failures
-        try:
-            self.retry(countdown=3600)  # Retry in 1 hour
-        except self.MaxRetriesExceededError:
-            pass
-        
         return {'status': 'error', 'message': str(e)}
     except (TypeError, ValueError) as e:
-        # JSON serialization errors
+        # JSON serialization errors - log and mark as sent to avoid repeated failures
         logger.warning("Telemetry payload error: %s", e)
+        gs.settings.set('telemetry_last_sent', now())
         return {'status': 'error', 'message': str(e)}

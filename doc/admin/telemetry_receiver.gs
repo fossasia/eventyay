@@ -19,6 +19,7 @@
 const SHEET_NAME = 'heartbeats';
 const MAX_PAYLOAD_SIZE = 10000;  // bytes
 const RATE_LIMIT_HOURS = 23;
+const RATE_LIMIT_CHECK_ROWS = 500;  // Only check last N rows for rate limiting
 
 /**
  * Handle POST requests from Eventyay instances.
@@ -30,14 +31,13 @@ function doPost(e) {
       return jsonResponse({ok: false, error: 'payload_too_large'}, 413);
     }
     
-    // 2. Authenticate
+    // 2. Authenticate via X-API-Key header only (more secure than URL params)
     const apiKey = PropertiesService.getScriptProperties().getProperty('API_KEY');
     if (!apiKey) {
-      console.error('API_KEY not configured in Script Properties');
+      Logger.log('ERROR: API_KEY not configured in Script Properties');
       return jsonResponse({ok: false, error: 'server_config_error'}, 500);
     }
     
-    // Check X-API-Key header or api_key parameter
     const receivedKey = getApiKeyFromRequest(e);
     if (receivedKey !== apiKey) {
       return jsonResponse({ok: false, error: 'unauthorized'}, 401);
@@ -68,7 +68,7 @@ function doPost(e) {
     return jsonResponse({ok: true, message: 'heartbeat_recorded'});
     
   } catch (err) {
-    console.error('Error processing request:', err);
+    Logger.log('ERROR processing request: ' + err.message);
     return jsonResponse({ok: false, error: 'internal_error'}, 500);
   }
 }
@@ -80,27 +80,29 @@ function doGet(e) {
   return jsonResponse({
     ok: true,
     service: 'eventyay-telemetry-receiver',
-    version: '1.0',
+    version: '1.1',
     message: 'Send POST requests with telemetry payload'
   });
 }
 
 /**
- * Extract API key from request headers or parameters.
+ * Extract API key from request headers.
+ * Only accepts X-API-Key header for security (no URL parameters).
  */
 function getApiKeyFromRequest(e) {
-  // Try to get from custom headers (note: Apps Script may not expose all headers)
-  if (e.parameter && e.parameter.api_key) {
-    return e.parameter.api_key;
-  }
-  
-  // Check if we can access headers
+  // Only accept API key via header for security - URL params may be logged
   if (e.headers) {
-    // Try various header formats
     return e.headers['X-API-Key'] || 
            e.headers['x-api-key'] || 
            e.headers['X-Api-Key'] ||
            null;
+  }
+  
+  // Fallback to URL param only for backwards compatibility during transition
+  // TODO: Remove URL param support in future version
+  if (e.parameter && e.parameter.api_key) {
+    Logger.log('WARNING: API key passed via URL parameter - please use X-API-Key header');
+    return e.parameter.api_key;
   }
   
   return null;
@@ -108,16 +110,28 @@ function getApiKeyFromRequest(e) {
 
 /**
  * Check if instance has sent a heartbeat recently.
+ * Optimized to only check recent entries for better performance.
  */
 function isRateLimited(instanceId) {
   const sheet = getOrCreateSheet();
-  const data = sheet.getDataRange().getValues();
+  const lastRow = sheet.getLastRow();
+  
+  // Only check last N rows for efficiency
+  const startRow = Math.max(2, lastRow - RATE_LIMIT_CHECK_ROWS + 1);  // Skip header
+  const numRows = lastRow - startRow + 1;
+  
+  if (numRows <= 0) {
+    return false;  // No data rows yet
+  }
+  
+  // Get only the columns we need: received_at (A) and instance_id (B)
+  const data = sheet.getRange(startRow, 1, numRows, 2).getValues();
   const cutoffTime = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000);
   
-  // Check recent entries for this instance_id
-  for (let i = data.length - 1; i >= 1; i--) {  // Skip header row
-    const rowInstanceId = data[i][1];  // instance_id is column B
-    const rowTimestamp = data[i][0];   // received_at is column A
+  // Check recent entries for this instance_id (iterate backwards for efficiency)
+  for (let i = data.length - 1; i >= 0; i--) {
+    const rowTimestamp = data[i][0];  // received_at is column A
+    const rowInstanceId = data[i][1]; // instance_id is column B
     
     if (rowInstanceId === instanceId) {
       if (rowTimestamp instanceof Date && rowTimestamp > cutoffTime) {
@@ -147,7 +161,7 @@ function appendHeartbeat(payload) {
     payload.os_family || '',                       // os_family
     payload.database_type || '',                   // database_type
     payload.database_version || '',                // database_version
-    JSON.stringify(payload.enabled_modules || payload.enabled_plugins || []), // enabled_modules
+    JSON.stringify(payload.enabled_plugins || []), // enabled_plugins
     metrics.events_bucket || '',                   // events_bucket
     metrics.attendees_bucket || '',                // attendees_bucket
     metrics.tickets_issued_bucket || '',           // tickets_issued_bucket
@@ -187,7 +201,7 @@ function getOrCreateSheet() {
       'os_family',
       'database_type',
       'database_version',
-      'enabled_modules',
+      'enabled_plugins',
       'events_bucket',
       'attendees_bucket',
       'tickets_issued_bucket',
@@ -228,8 +242,11 @@ function jsonResponse(data, statusCode = 200) {
  */
 function testSetup() {
   const sheet = getOrCreateSheet();
-  console.log('Sheet name:', sheet.getName());
-  console.log('Header row:', sheet.getRange(1, 1, 1, 23).getValues()[0]);  // 23 = number of headers
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  
+  Logger.log('Sheet name: ' + sheet.getName());
+  Logger.log('Number of columns: ' + headers.length);
+  Logger.log('Headers: ' + headers.join(', '));
   
   // Test with sample payload
   const testPayload = {
@@ -253,8 +270,9 @@ function testSetup() {
     enabled_plugins: ['badges', 'sendmail'],
     celery_enabled: true,
     redis_enabled: true,
+    maintainer_contact: 'test@example.com',
   };
   
   appendHeartbeat(testPayload);
-  console.log('Test heartbeat appended successfully!');
+  Logger.log('Test heartbeat appended successfully!');
 }
