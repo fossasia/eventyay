@@ -318,6 +318,24 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return self.object.orga_urls.speakers
 
 
+
+class SubmissionContentReadView(
+    ReviewerSubmissionFilter, SubmissionViewMixin, TemplateView
+):
+    template_name = 'orga/submission/content_view.html'
+    permission_required = 'base.orga_list_submission'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        submission = self.object
+        ctx['questions'] = (
+            submission.answers.all()
+            .select_related('question')
+            .order_by('question__position')
+        )
+        return ctx
+
+
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm

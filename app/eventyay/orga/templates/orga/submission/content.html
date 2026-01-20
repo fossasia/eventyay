@@ -41,11 +41,7 @@
             {% include "common/forms/errors.html" %}
             {% csrf_token %}
 
-            <div class="d-flex justify-content-end mb-2">
-                <a href="#" class="btn btn-outline-info">
-                    <i class="fa fa-pencil"></i> {% translate "Edit Form" %}
-                </a>
-            </div>
+
 
             {{ form.title.as_field_group }}
 
