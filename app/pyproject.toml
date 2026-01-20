@@ -3,7 +3,7 @@ name = "eventyay-unified"
 version = "0.1.0"
 description = "Platform to manage events (ticketing, talk schedule)."
 readme = "README.rst"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.12, <3.13"
 keywords = ["tickets", "events", "web", "shop", "ecommerce"]
 authors = [ {name = "eventyay", email = "info@eventyay.com"}, ]
 maintainers = [ {name = "eventyay", email = "info@eventyay.com"}, ]
