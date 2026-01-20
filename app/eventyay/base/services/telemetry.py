@@ -7,13 +7,16 @@ version adoption, and usage patterns.
 
 Based on the pattern established in update_check.py.
 """
+import hashlib
+import logging
+import os
 import platform
 import sys
 from datetime import timedelta
 
 import requests
 from django.conf import settings
-from django.db import connection
+from django.db import DatabaseError, connection
 from django.dispatch import receiver
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
@@ -26,9 +29,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import periodic_task
 from eventyay.celery_app import app
 
-
-# Bucket thresholds for privacy-preserving count reporting
-COUNT_BUCKETS = [0, 1, 10, 50, 100, 500, 1000, 5000]
+logger = logging.getLogger(__name__)
 
 
 def get_count_bucket(count: int) -> str:
@@ -101,8 +102,8 @@ def get_database_info() -> tuple:
                 result = cursor.fetchone()
                 if result:
                     db_version = result[0].split('.')[0]
-    except Exception:
-        pass
+    except DatabaseError as e:
+        logger.debug("Could not fetch database version: %s", e)
     
     return db_type, db_version
 
@@ -114,8 +115,6 @@ def get_deployment_type() -> str:
     Returns:
         One of: 'docker', 'kubernetes', 'native', 'unknown'
     """
-    import os
-    
     # Check for Docker
     if os.path.exists('/.dockerenv'):
         return 'docker'
@@ -129,7 +128,7 @@ def get_deployment_type() -> str:
         with open('/proc/1/cgroup', 'r') as f:
             if 'docker' in f.read():
                 return 'docker'
-    except (FileNotFoundError, PermissionError):
+    except (FileNotFoundError, PermissionError, OSError):
         pass
     
     return 'native'
@@ -172,44 +171,44 @@ def collect_telemetry_payload() -> dict:
     try:
         from eventyay.base.models.settings import GlobalSettings
         instance_id = str(GlobalSettings().get_instance_identifier())
-    except Exception:
+    except (ImportError, AttributeError, TypeError) as e:
+        logger.debug("Could not get instance identifier: %s", e)
         instance_id = 'unknown'
     
     # Get database info
     db_type, db_version = get_database_info()
     
     # Get canonical base URL (hashed for privacy)
-    try:
-        import hashlib
-        base_url = getattr(settings, 'SITE_URL', '') or ''
-        # Hash the URL for privacy - only allows identifying same instance
-        base_url_hash = hashlib.sha256(base_url.encode()).hexdigest()[:16] if base_url else ''
-    except Exception:
-        base_url_hash = ''
+    base_url = getattr(settings, 'SITE_URL', '') or ''
+    base_url_hash = hashlib.sha256(base_url.encode()).hexdigest()[:16] if base_url else ''
     
     # Collect model counts
     try:
         event_count = Event.objects.count()
         live_event_count = Event.objects.filter(live=True).count()
-    except Exception:
+    except DatabaseError as e:
+        logger.debug("Could not count events: %s", e)
         event_count = 0
         live_event_count = 0
     
     try:
         organizer_count = Organizer.objects.count()
-    except Exception:
+    except DatabaseError as e:
+        logger.debug("Could not count organizers: %s", e)
         organizer_count = 0
     
     try:
         order_count = Order.objects.count()
         paid_order_count = Order.objects.filter(status='p').count()
-    except Exception:
+    except DatabaseError as e:
+        logger.debug("Could not count orders: %s", e)
         order_count = 0
         paid_order_count = 0
     
     try:
         submission_count = Submission.objects.count()
-    except Exception:
+    except DatabaseError as e:
+        logger.debug("Could not count submissions: %s", e)
         submission_count = 0
     
     # Count attendees (order positions / tickets)
@@ -218,7 +217,8 @@ def collect_telemetry_payload() -> dict:
         total_tickets = OrderPosition.objects.count()
         paid_tickets = OrderPosition.objects.filter(order__status='p').count()
         free_tickets = OrderPosition.objects.filter(price=0).count()
-    except Exception:
+    except (ImportError, DatabaseError) as e:
+        logger.debug("Could not count tickets: %s", e)
         total_tickets = 0
         paid_tickets = 0
         free_tickets = 0
@@ -226,20 +226,18 @@ def collect_telemetry_payload() -> dict:
     # Get enabled plugins
     try:
         enabled_plugins = [p.module for p in get_all_plugins() if p.module]
-    except Exception:
+    except (ImportError, AttributeError) as e:
+        logger.debug("Could not get plugins: %s", e)
         enabled_plugins = []
     
     # Get uptime info (if available)
+    uptime_seconds = 0
     try:
-        import os
-        # Try to get process start time
-        uptime_seconds = 0
-        if hasattr(os, 'getpid'):
-            import psutil
-            process = psutil.Process(os.getpid())
-            uptime_seconds = int(now().timestamp() - process.create_time())
-    except Exception:
-        uptime_seconds = 0
+        import psutil
+        process = psutil.Process(os.getpid())
+        uptime_seconds = int(now().timestamp() - process.create_time())
+    except (ImportError, OSError, AttributeError) as e:
+        logger.debug("Could not get uptime: %s", e)
     
     # Uptime bucket (in hours)
     uptime_hours = uptime_seconds // 3600
@@ -255,14 +253,19 @@ def collect_telemetry_payload() -> dict:
         uptime_bucket = '30d+'
     
     # Build metadata
+    build_metadata = f"v{__version__}"
     try:
         import git
-        repo = git.Repo(search_parent_directories=True)
-        git_commit = repo.head.commit.hexsha[:8]
-        git_branch = repo.active_branch.name
-        build_metadata = f"{git_branch}@{git_commit}"
-    except Exception:
-        build_metadata = f"v{__version__}"
+        try:
+            repo = git.Repo(search_parent_directories=True)
+            git_commit = repo.head.commit.hexsha[:8]
+            git_branch = repo.active_branch.name
+            build_metadata = f"{git_branch}@{git_commit}"
+        except (git.InvalidGitRepositoryError, git.GitCommandNotFound, TypeError) as e:
+            logger.debug("Could not get git info: %s", e)
+    except ImportError:
+        # git module not installed, use version-based metadata
+        pass
     
     # Build payload with all required columns
     payload = {
@@ -297,7 +300,7 @@ def collect_telemetry_payload() -> dict:
             'orders_bucket': get_count_bucket(order_count),
             'paid_orders_bucket': get_count_bucket(paid_order_count),
             'submissions_bucket': get_count_bucket(submission_count),
-            # New required metrics
+            # Required metrics
             'attendees_bucket': get_count_bucket(total_tickets),
             'tickets_issued_bucket': get_count_bucket(total_tickets),
             'paid_tickets_bucket': get_count_bucket(paid_tickets),
@@ -405,6 +408,8 @@ def send_telemetry(self):
             return {'status': 'error', 'code': response.status_code}
             
     except requests.RequestException as e:
+        # Network errors, timeouts, etc.
+        logger.warning("Telemetry request failed: %s", e)
         gs.settings.set('telemetry_last_sent', now())
         
         # Retry on transient failures
@@ -414,6 +419,7 @@ def send_telemetry(self):
             pass
         
         return {'status': 'error', 'message': str(e)}
-    except Exception as e:
-        # Don't let telemetry errors affect the application
+    except (TypeError, ValueError) as e:
+        # JSON serialization errors
+        logger.warning("Telemetry payload error: %s", e)
         return {'status': 'error', 'message': str(e)}
