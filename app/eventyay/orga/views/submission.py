@@ -463,21 +463,13 @@ class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewM
 
 class SubmissionContentView(SubmissionContent):
     template_name = "orga/submission/content.html"
-    
-    def get_object(self):
-        return super().get_object()
+    http_method_names = ['get', 'head', 'options']
 
     def get_permission_required(self):
         if "code" in self.kwargs:
             return ["base.orga_list_submission"]  # View permission for reviewers
         return ["base.create_submission"]
-
-    @property
-    def permission_object(self):
-        return self.object or self.request.event
-
-    def get_permission_object(self):
-        return self.permission_object  
+  
 
 
 class BaseSubmissionList(Sortable, ReviewerSubmissionFilter, PaginationMixin, ListView):
@@ -624,7 +616,7 @@ class Anonymise(SubmissionViewMixin, UpdateView):
 
 class SubmissionHistory(SubmissionViewMixin, ListView):
     template_name = 'orga/submission/history.html'
-    permission_required = 'base.administrator_user'
+    permission_required = 'base.orga_update_submission'
     paginate_by = 200
     context_object_name = 'log_entries'
 
