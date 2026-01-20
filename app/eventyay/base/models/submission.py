@@ -336,7 +336,8 @@ class Submission(GenerateCode, PretalxModel):
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this submission."""
-        base = edit = '{self.event.orga_urls.submissions}{self.code}/'
+        base = '{self.event.orga_urls.submissions}{self.code}/'
+        edit = '{base}edit'
         make_submitted = '{base}submit'
         accept = '{base}accept'
         reject = '{base}reject'
@@ -1119,4 +1120,4 @@ class SubmissionFavourite(PretalxModel):
     objects = ScopedManager(event='submission__event')
 
     class Meta:
-        unique_together = (('user', 'submission'),)
+        unique_together = (('user', 'submission'),) 
