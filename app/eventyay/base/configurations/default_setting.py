@@ -1104,7 +1104,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'ticket_download': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
