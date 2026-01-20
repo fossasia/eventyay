@@ -6,13 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('api', '0002_initial'),
+        ("api", "0002_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='oauthapplication',
-            name='authorization_grant_type',
-            field=models.CharField(choices=[('authorization-code', 'Authorization code'), ('urn:ietf:params:oauth:grant-type:device_code', 'Device Code'), ('implicit', 'Implicit'), ('password', 'Resource owner password-based'), ('client-credentials', 'Client credentials'), ('openid-hybrid', 'OpenID connect hybrid')], max_length=44),
+            model_name="oauthapplication",
+            name="authorization_grant_type",
+            field=models.CharField(
+                choices=[
+                    ("authorization-code", "Authorization code"),
+                    ("urn:ietf:params:oauth:grant-type:device_code", "Device Code"),
+                    ("implicit", "Implicit"),
+                    ("password", "Resource owner password-based"),
+                    ("client-credentials", "Client credentials"),
+                    ("openid-hybrid", "OpenID connect hybrid"),
+                ],
+                max_length=44,
+            ),
         ),
     ]

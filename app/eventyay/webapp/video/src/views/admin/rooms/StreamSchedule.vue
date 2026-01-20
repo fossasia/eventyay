@@ -10,7 +10,7 @@
 				.info
 					.title {{ schedule.title || 'Untitled Stream' }}
 					.url {{ schedule.url }}
-					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }}
+					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
 					.type {{ schedule.stream_type }}
 				.actions
 					bunt-icon-button(@click="editSchedule(schedule)") edit
@@ -26,14 +26,16 @@
 				form.stream-schedule-form(@submit.prevent="saveSchedule")
 					bunt-input(name="title", v-model="formData.title", label="Title (optional)", placeholder="e.g., Day 1 Stream, Keynotes")
 					bunt-input(name="url", v-model="formData.url", label="Stream URL", :validation="v$.formData.url", required, placeholder="https://youtube.com/watch?v=...")
-				.datetime-field
-					label.datetime-label Start Time
-					input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
-					.error-message(v-if="v$.formData.start_time.$error") Start time is required
-				.datetime-field
-					label.datetime-label End Time
-					input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
-					.error-message(v-if="v$.formData.end_time.$error") End time is required
+					.datetime-field
+						label.datetime-label Start Time ({{ eventTimezone }})
+						input.datetime-input(type="datetime-local", v-model="plainStartTime", :class="{'has-error': v$.formData.start_time.$error}")
+						.error-message(v-if="v$.formData.start_time.$error") Start time is required
+					.datetime-field
+						label.datetime-label End Time ({{ eventTimezone }})
+						input.datetime-input(type="datetime-local", v-model="plainEndTime", :class="{'has-error': v$.formData.end_time.$error}")
+						.error-message(v-if="v$.formData.end_time.$error") End time is required
+					.timezone-hint
+						i All times in {{ eventTimezone }}
 					bunt-select(name="stream_type", v-model="formData.stream_type", label="Stream Type", :options="streamTypes", :validation="v$.formData.stream_type")
 					.form-error(v-if="saveError")
 						| {{ saveError }}
@@ -85,6 +87,9 @@ export default {
 		};
 	},
 	computed: {
+		eventTimezone() {
+			return this.$store.state.world?.timezone || 'UTC';
+		},
 		plainStartTime: {
 			get() {
 				return this.formData.start_time
@@ -501,6 +506,12 @@ export default {
 				color: $clr-danger
 				font-size: 12px
 				margin-top: 4px
+		.timezone-hint
+			margin-bottom: 16px
+			font-size: 14px
+			color: $clr-grey-600
+			i
+				font-style: italic
 		.form-error
 			color: $clr-danger
 			font-size: 14px

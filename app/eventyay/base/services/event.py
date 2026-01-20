@@ -204,6 +204,7 @@ def get_event_config_for_user(event, user):
         "slug": getattr(event, "slug", str(event.id)),
         "organizer": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
         "organizer_slug": getattr(event.organizer, "slug", None) if hasattr(event, "organizer") and event.organizer else None,
+        "timezone": event.timezone,
         "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),
