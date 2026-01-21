@@ -330,12 +330,13 @@ def category_move_down(request, organizer, event, category):
     )
 
 
-class QuestionList(ListView):
+class QuestionList(EventPermissionRequiredMixin, ListView):
     """
     Redirects to Order Forms page where custom fields are now integrated.
     This view is kept for backward compatibility with any external links.
     """
     model = Question
+    permission = 'can_view_items'
 
     def get(self, request, *args, **kwargs):
         # Redirect to the Order Forms page where custom fields are now managed
