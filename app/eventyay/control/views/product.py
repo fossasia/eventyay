@@ -347,8 +347,6 @@ class QuestionList(ListView):
         )
 
 
-
-
 @transaction.atomic
 @event_permission_required('can_change_items')
 def reorder_questions(request, organizer, event):
