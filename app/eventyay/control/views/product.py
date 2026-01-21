@@ -336,7 +336,7 @@ class QuestionList(EventPermissionRequiredMixin, ListView):
     This view is kept for backward compatibility with any external links.
     """
     model = Question
-    permission = 'can_view_items'
+    permission = 'can_change_items'
 
     def get(self, request, *args, **kwargs):
         # Redirect to the Order Forms page where custom fields are now managed

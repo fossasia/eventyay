@@ -322,7 +322,7 @@
                         <tr data-dnd-id="{{ q.id }}">
                             <td>
                                 <strong>
-                                    {% if q.type == "T" %}
+                                    {% if q.type == "DES" %}
                                         <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
                                     {% else %}
                                         <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
@@ -361,7 +361,7 @@
                             </td>
                             <td class="dnd-container"></td>
                             <td class="text-right flip">
-                                {% if q.type == "T" %}
+                                {% if q.type == "DES" %}
                                     <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
                                     <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
                                 {% else %}
