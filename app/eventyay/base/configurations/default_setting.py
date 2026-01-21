@@ -1104,7 +1104,7 @@ DEFAULT_SETTINGS = {
         ),
     },
     'ticket_download': {
-        'default': 'False',
+        'default': 'True',
         'type': bool,
         'serializer_class': serializers.BooleanField,
         'form_class': forms.BooleanField,
@@ -2325,8 +2325,7 @@ Your {event} team"""
             widget_kwargs={'attrs': {'rows': '2'}},
             help_text=_(
                 'This text will be shown above the questions asked for every admission product. You can use it e.g. '
-                'to explain'
-                'why you need information from them.'
+                'to explain why you need information from them.'
             ),
         ),
     },
