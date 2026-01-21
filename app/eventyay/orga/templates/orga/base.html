@@ -490,12 +490,6 @@
                     {% if development_mode %}
                         <span class="text-warning">· {% translate "running in development mode" %}</span>
                     {% endif %}
-                    {% if pretalx_version %}
-                        <span>·
-                            {% if development_mode %}<a href="https://github.com/fossasia/eventyay-talk/tree/development/"> development<!--{{ pretalx_version }}--></a>
-                            {% else %}v{{ pretalx_version }}{% endif %}
-                        </span>
-                    {% endif %}
                 </footer>
             </div>
         </div>
