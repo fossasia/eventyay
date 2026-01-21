@@ -68,12 +68,11 @@ jobs:
       - name: Install Python dependencies (docs)
         working-directory: ./app
         env:
-          UV_PROJECT_ENVIRONMENT: ../doc/.venv
           UV_PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: uv sync --frozen --group docs
 
-      - name: Add docs venv to PATH
-        run: echo "${{ github.workspace }}/doc/.venv/bin" >> "$GITHUB_PATH"
+      - name: Add venv to PATH
+        run: echo "${{ github.workspace }}/app/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Build documentation
         working-directory: ./doc

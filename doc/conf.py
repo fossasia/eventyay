@@ -15,12 +15,6 @@
 import os
 import sys
 
-# Make `eventyay` importable from the source checkout.
-DOCS_DIR = os.path.dirname(os.path.abspath(__file__))
-APP_SRC_DIR = os.path.abspath(os.path.join(DOCS_DIR, '..', 'app'))
-if APP_SRC_DIR not in sys.path:
-    sys.path.insert(0, APP_SRC_DIR)
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
