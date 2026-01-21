@@ -20,7 +20,7 @@ from eventyay.helpers.i18n import (
 class RootIndexView(TemplateView):
     """Root page view with navigation context for authenticated users."""
     template_name = 'pretixpresale/index.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         if self.request.user.is_authenticated:
@@ -36,6 +36,23 @@ class RootIndexView(TemplateView):
             context['select2locale'] = get_language()[:2]
             context['js_payment_weekdays_disabled'] = '[]'  # Default for root page
             context['talk_hostname'] = settings.TALK_HOSTNAME
+            context['base_path'] = settings.BASE_PATH
+            language_code = getattr(self.request, 'LANGUAGE_CODE', get_language())
+            context['rtl'] = language_code in settings.LANGUAGES_RTL
+            
+            # Build language_options for language switcher dropdown
+            languages_with_natural_names = [
+                (code, settings.LANGUAGES_INFORMATION[code]['natural_name'])
+                for code in dict(settings.LANGUAGES)
+            ]
+            languages = sorted(
+                languages_with_natural_names,
+                key=lambda l: (
+                    0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2),
+                    str(l[1]),
+                ),
+            )
+            context['language_options'] = [{'code': code, 'label': name} for code, name in languages]
             
             gs = GlobalSettingsObject()
             context['global_settings'] = gs.settings
