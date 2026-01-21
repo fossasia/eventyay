@@ -1,8 +1,8 @@
 Bank transfer HTTP API
 ======================
 
-The banktransfer plugin provides a HTTP API that `eventyay-banktool`_ uses to send bank
-transactions to the eventyay server. This API is integrated with the regular :ref:`rest-api`
+The banktransfer plugin provides a HTTP API for sending bank transactions to
+the eventyay server. This API is integrated with the regular :ref:`rest-api`
 and therefore follows the conventions listed there.
 
 Bank import job resource
@@ -203,5 +203,3 @@ Endpoints
    :statuscode 400: Invalid input
    :statuscode 401: Authentication failure
    :statuscode 403: The requested organizer does not exist **or** you have no permission to perform this action.
-
-.. _eventyay-banktool: https://github.com/fossasia/eventyay-banktool
