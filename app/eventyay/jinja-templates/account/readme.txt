@@ -48,7 +48,7 @@ Shared Styling:
 Configuration:
 ==============
 - View overrides:
-  * ConfirmEmailView lives in eventyay_common/views/custom.py and is an override of django-allauth to build messages in safe way: not leak HTML code to translatable string.
+  * ConfirmEmailView lives in eventyay_common/views/custom.py and is an override of django-allauth to build messages in a safe way: not leak HTML code to translatable strings.
   * PasswordResetFromKeyView and PasswordResetFromKeyDoneView use built-in django-allauth views.
   * Root URL override: /accounts/confirm-email/<key>/ is registered with name `account_confirm_email`
     in config/urls.py before including allauth, so allauth-generated links resolve to our view.
