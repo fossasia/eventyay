@@ -1,7 +1,7 @@
 Bank transfer HTTP API
 ======================
 
-The banktransfer plugin provides a HTTP API for sending bank transactions to
+The banktransfer plugin provides an HTTP API for sending bank transactions to
 the eventyay server. This API is integrated with the regular :ref:`rest-api`
 and therefore follows the conventions listed there.
 
