@@ -47,8 +47,15 @@
                 shadowUrl: mapContainer.dataset.shadowUrl,
             });
             
-            // Initialize map
-            var map = L.map('venue-map').setView([lat, lon], 15);
+            // Initialize map with zoom control on right side
+            var map = L.map('venue-map', {
+                zoomControl: false  // Disable default zoom control
+            }).setView([lat, lon], 15);
+            
+            // Add zoom control to top-right to avoid overlaying form elements
+            L.control.zoom({
+                position: 'topright'
+            }).addTo(map);
             
             // Add OpenStreetMap tiles
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {

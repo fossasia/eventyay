@@ -103,7 +103,13 @@ $(function () {
                 'border-radius': '4px'
             });
             $grp.append($("<div>").addClass("col-md-9 col-md-offset-3").append($map));
-            var map = L.map($map.get(0));
+            var map = L.map($map.get(0), {
+                zoomControl: false  // Disable default zoom control
+            });
+            // Add zoom control to top-right instead of top-left
+            L.control.zoom({
+                position: 'topright'
+            }).addTo(map);
             L.tileLayer(tiles, {
                 attribution: attrib,
                 maxZoom: 18,
