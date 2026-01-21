@@ -93,7 +93,7 @@ As we did not implement an overall front page yet, you need to go directly to
 http://localhost:8000/control/ for the admin view.
 
 .. note:: If you want the development server to listen on a different interface or
-          port (for example because you develop on the eventyaydroid Android app), you can check
+          port (for example because you develop a custom Android check-in app), you can check
           `Django's documentation`_ for more options.
 
 .. _`checksandtests`:
