@@ -1,7 +1,7 @@
 Eventyaydroid HTTP API
 ======================
 
-The eventyaydroid plugin provides a HTTP API for check-in and ticket validation.
+The eventyaydroid plugin provides an HTTP API for check-in and ticket validation.
 
 .. warning:: This API is **DEPRECATED** and will probably go away soon.
              There are no backwards compatibility guarantees on this API.
