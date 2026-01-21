@@ -91,7 +91,10 @@ $(function () {
         var $grp = $(".geodata-group", this);
         var tiles = $grp.attr("data-tiles");
         var attrib = $grp.attr("data-attrib");
-        if (tiles) {
+        
+        // Guard: only initialize map once per geodata section
+        if (tiles && !$grp.attr("data-map-initialized")) {
+            $grp.attr("data-map-initialized", "true");
             var $map = $("<div>").css({
                 'height': '400px',
                 'width': '100%',
