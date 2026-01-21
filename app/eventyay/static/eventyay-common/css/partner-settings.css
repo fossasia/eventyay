@@ -1,0 +1,61 @@
+/* Partner Settings Page Styles */
+
+/* Sponsor group item styling */
+.sponsor-group-item {
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.sponsor-group-item:hover {
+    border-left-color: #5cb85c;
+}
+
+.sponsor-group-item .handle {
+    transition: color 0.2s ease;
+}
+
+.sponsor-group-item .handle:hover {
+    color: #333 !important;
+}
+
+/* Sortable ghost states */
+.sortable-ghost {
+    opacity: 0.5;
+    background: #f0f0f0 !important;
+    transform: rotate(2deg);
+}
+
+.sortable-drag {
+    opacity: 0.8;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Inline partner items */
+.partner-item-inline {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.partner-item-inline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Partner drag handle */
+.partner-drag-handle {
+    transition: opacity 0.2s ease;
+}
+
+.partner-sortable-ghost {
+    opacity: 0.4;
+    transform: rotate(3deg);
+}
+
+/* Partner sortable container */
+.partners-inline-sortable {
+    min-height: 50px;
+    transition: background 0.2s ease;
+}
+
+.partners-inline-sortable:hover {
+    background-color: #f9f9f9 !important;
+}
