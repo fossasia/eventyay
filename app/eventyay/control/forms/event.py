@@ -701,7 +701,7 @@ class EventSettingsForm(SettingsForm):
             self.fields[virtual_key] = forms.ChoiceField(
                 label=asked_field.label,
                 help_text=asked_field.help_text,
-                required=True,
+                required=False,
                 widget=forms.RadioSelect,
                 choices=[
                     # default key needs a value other than '' because with '' it would also overwrite
