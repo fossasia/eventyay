@@ -7,8 +7,8 @@ You want to install eventyay on your own server? That’s great! We have
 documentation for a standard installation using ``pip`` on Linux.
 
 If you want a more out-of-the-box way of running eventyay, please consider our
-hosted version at `eventyay.com`_. Other than that, we also have an
-`ansible role`_ and a community-provided `docker-compose setup`_. Please
+hosted version at `eventyay.com`_. Other than that, we also have a
+community-provided `docker-compose setup`_. Please
 note that the docker setup is not officially supported.
 
 .. toctree::
