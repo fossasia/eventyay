@@ -288,6 +288,102 @@
         </fieldset>
 
         <fieldset>
+            <legend>{% trans "Custom fields" %}</legend>
+            <p>
+                {% blocktrans trimmed %}
+                    Custom Fields allow your attendees to fill in additional data about their ticket. If you provide food, one
+                    example might be to ask your users about dietary requirements.
+                {% endblocktrans %}
+            </p>
+            <p>
+                <a href="{% url "control:event.products.questions.add" event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> {% trans "Create a new custom field" %}
+                </a>
+                <a href="{% url "control:event.products.descriptions.add" event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                    <i class="fa fa-plus"></i> {% trans "Create a text field" %}
+                </a>
+            </p>
+            <div class="table-responsive">
+                <table class="table table-hover table-quotas">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Custom Field" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th class="iconcol"></th>
+                            <th class="iconcol"></th>
+                            <th class="iconcol"></th>
+                            <th>{% trans "Products" %}</th>
+                            <th class="action-col-2"></th>
+                            <th class="action-col-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.organizer.slug %}">
+                        {% for q in questions %}
+                        <tr data-dnd-id="{{ q.id }}">
+                            <td>
+                                <strong>
+                                    {% if q.type == "T" %}
+                                        <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
+                                    {% else %}
+                                        <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
+                                    {% endif %}
+                                    {{ q.question }}
+                                    </a>
+                                </strong><br>
+                                <small class="text-muted">{{ q.identifier }}</small>
+                            </td>
+                            <td>
+                                {{ q.get_type_display }}
+                            </td>
+                            <td>
+                                {% if q.required %}
+                                    <span class="fa fa-exclamation-circle text-muted" data-toggle="tooltip" title="{% trans 'Required custom field' %}"></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if q.ask_during_checkin %}
+                                    <span class="fa fa-check-square text-muted" data-toggle="tooltip" title="{% trans 'Ask during check-in' %}"></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if q.hidden %}
+                                    <span class="fa fa-eye-slash text-muted" data-toggle="tooltip" title="{% trans 'Hidden custom field' %}"></span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <ul>
+                                    {% for product in q.products.all %}
+                                        <li>
+                                            <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="dnd-container"></td>
+                            <td class="text-right flip">
+                                {% if q.type == "T" %}
+                                    <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
+                                    <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                                {% else %}
+                                    <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-bar-chart"></i></a>
+                                    <a href="{% url "control:event.products.questions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit"></i></a>
+                                    <a href="{% url "control:event.products.questions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash"></i></a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">
+                                {% trans "No custom fields have been created yet." %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </fieldset>
+
+        <fieldset>
             <legend>{% trans "Form settings" %}</legend>
             {% bootstrap_field sform.name_scheme layout="control" %}
             {% bootstrap_field sform.name_scheme_titles layout="control" %}

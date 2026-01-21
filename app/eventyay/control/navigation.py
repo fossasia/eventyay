@@ -201,18 +201,7 @@ def get_event_navigation(request: HttpRequest):
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.products.orderforms' in url.url_name,
-            },
-            {
-                'label': _('Custom fields'),
-                'url': reverse(
-                    'control:event.products.questions',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.products.questions' in url.url_name,
+                'active': 'event.products.orderforms' in url.url_name or 'event.products.questions' in url.url_name,
             },
         ]
 
