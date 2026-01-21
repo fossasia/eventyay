@@ -21,7 +21,7 @@
   "main": "dist/schedule-editor.common.js",
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.25",
-    "i18next": "^25.7.4",
+    "i18next": "^25.8.0",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "moment": "^2.30.1",
@@ -34,7 +34,7 @@
     "@types/lodash": "^4.17.23",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.0.9",
-    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-vue": "^6.0.3",
     "@vue/eslint-config-typescript": "^14.6.0",

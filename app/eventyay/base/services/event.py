@@ -193,11 +193,16 @@ def get_room_config(room, permissions):
 def get_event_config_for_user(event, user):
     permissions = event.get_all_permissions(user)
     cfg = event.config or {}
+    # Only expose schedule import-related pretalx config keys to the frontend.
+    # (The legacy eventyay-talk connection keys like domain/event/connected/pushed were removed.)
+    pretalx_cfg = (cfg.get("pretalx") or {})
+    pretalx_public = {k: pretalx_cfg.get(k) for k in ("url", "conftool") if k in pretalx_cfg}
+
     world_block = {
         "id": str(event.id),
         "title": getattr(event, "title", getattr(event, "name", "")),
         "slug": getattr(event, "slug", str(event.id)),
-        "pretalx": cfg.get("pretalx", {}),
+        "pretalx": pretalx_public,
         "profile_fields": cfg.get("profile_fields", []),
         "social_logins": cfg.get("social_logins", []),
         "iframe_blockers": cfg.get(
