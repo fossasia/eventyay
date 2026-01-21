@@ -1,12 +1,12 @@
 Eventyaydroid HTTP API
 ======================
 
-The eventyaydroid plugin provides a HTTP API that the `eventyaydroid Android app`_
-uses to communicate with the eventyay server.
+The eventyaydroid plugin provides a HTTP API that compatible Android check-in apps
+can use to communicate with the eventyay server.
 
 .. warning:: This API is **DEPRECATED** and will probably go away soon. It is used **only** to serve the eventyaydroid
              Android app. There are no backwards compatibility guarantees on this API. We will not add features that
-             are not required for the  Android App. There is a general-purpose :ref:`rest-api` that provides all
+             are not required for the Android App. There is a general-purpose :ref:`rest-api` that provides all
              features that you need to check in.
 
 .. versionchanged:: 1.12
@@ -365,4 +365,3 @@ uses to communicate with the eventyay server.
    :statuscode 404: Unknown organizer or event
    :statuscode 403: Invalid authorization key
 
-.. _Eventyaydroid Android app: https://github.com/fossasia/eventyaydroid
