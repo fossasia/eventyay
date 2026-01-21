@@ -18,22 +18,11 @@ export default {
 			if (!rootState.world.pretalx) {
 				return ''
 			}
-			const pretalx = rootState.world.pretalx
-			if (pretalx.url) {
-				return pretalx.url
-			}
-			if (!pretalx.domain || !pretalx.event || !pretalx.organizer) return ''
-			const domain = pretalx.domain.endsWith('/') ? pretalx.domain : pretalx.domain + '/'
-			const path = `${pretalx.organizer}/${pretalx.event}/schedule/widgets/schedule.json`
-			const url = new URL(path, domain)
-			return url.toString()
+			return rootState.world.pretalx.url || ''
 		},
 		pretalxApiBaseUrl(state, getters, rootState) {
-			if (!rootState.world.pretalx?.domain || !rootState.world.pretalx?.event) return
-			const domain = rootState.world.pretalx.domain.endsWith('/') 
-				? rootState.world.pretalx.domain 
-				: rootState.world.pretalx.domain + '/'
-			return domain + 'api/events/' + rootState.world.pretalx.event
+			// Legacy eventyay-talk integration exposed domain/event here. We now only support a direct schedule URL.
+			return
 		},
 		rooms(state, getters, rootState) {
 			if (!state.schedule) return
@@ -227,7 +216,7 @@ export default {
 		async fetch({state, getters, rootState}) {
 			try {
 				state.errorLoading = null
-				
+
 				if (window.eventyay?.schedule) {
 					state.schedule = window.eventyay.schedule
 				} else if (rootState.world?.schedule) {
@@ -237,7 +226,7 @@ export default {
 				} else {
 					return
 				}
-				
+
 				if (state.schedule?.talks) {
 					state.schedule.session_type = state.schedule.talks.reduce((acc, current) => {
 						const sessionType = current.session_type

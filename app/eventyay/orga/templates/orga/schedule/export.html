@@ -20,14 +20,65 @@
             {% include "common/forms/errors.html" %}
             <fieldset>
                 <legend>{% translate "Export settings" %}</legend>
-                {{ form.export_format.as_field_group }}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">
+                        {{ form.export_format.label }}
+                        {% if form.export_format.field.required %}*{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in form.export_format %}
+                        <div class="form-check form-check-inline">
+                            {{ radio.tag }}
+                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        {% if form.export_format.help_text %}
+                        <small class="form-text text-muted d-block mt-2">{{ form.export_format.help_text }}</small>
+                        {% endif %}
+                    </div>
+                </div>
                 <div id="data-delimiter">
-                    {{ form.data_delimiter.as_field_group }}
+                    <div class="form-group row">
+                        <label class="col-md-3 col-form-label text-md-right">
+                            {{ form.data_delimiter.label }}
+                            {% if form.data_delimiter.field.required %}*{% endif %}
+                        </label>
+                        <div class="col-md-9">
+                            {% for radio in form.data_delimiter %}
+                            <div class="form-check form-check-inline">
+                                {{ radio.tag }}
+                                <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                    {{ radio.choice_label }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% if form.data_delimiter.help_text %}
+                            <small class="form-text text-muted d-block mt-2">{{ form.data_delimiter.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </fieldset>
             <fieldset>
                 <legend id="dataset">{% translate "Dataset" %}</legend>
-                {{ form.target.as_field_group }}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">
+                        {{ form.target.label }}
+                        {% if form.target.field.required %}*{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in form.target %}
+                        <div class="form-check">
+                            {{ radio.tag }}
+                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </fieldset>
             <fieldset>
                 <legend id="fields">{% translate "Data fields" %}</legend>
@@ -47,16 +98,20 @@
     </section>
 
     <section role="tabpanel" id="tabpanel-general" aria-labelledby="tab-general" tabindex="0" aria-hidden="true">
-        {% blocktranslate trimmed %}
-            eventyay provides a range of exports. If none of these match what you are looking
-            for, you can also provide a custom plugin to export the data – please ask
-            your administrator to install the plugin.
-        {% endblocktranslate %}
-        {% blocktranslate trimmed %}
-            If you are looking for exports of proposals, sessions or schedule data, please head
-            here:
-        {% endblocktranslate %}
-        <a class="btn btn-outline-info btn-sm" href="{{ request.event.orga_urls.speakers }}export/">{% translate "Speaker exports" %}</a>
+        <p>
+            {% blocktranslate trimmed %}
+                eventyay provides a range of exports. If none of these match what you are looking
+                for, you can also provide a custom plugin to export the data – please ask
+                your administrator to install the plugin.
+            {% endblocktranslate %}
+        </p>
+        <p>
+            {% blocktranslate trimmed %}
+                If you are looking for exports of proposals, sessions or schedule data, please head
+                here:
+            {% endblocktranslate %}
+            <a class="btn btn-outline-info btn-sm ml-2" href="{{ request.event.orga_urls.speakers }}export/">{% translate "Speaker exports" %}</a>
+        </p>
         {% if not request.event.current_schedule %}
             <div class="alert alert-warning">
                 {% blocktranslate trimmed %}
@@ -64,9 +119,9 @@
                 {% endblocktranslate %}
             </div>
         {% endif %}
-        <ul>
+        <ul class="mt-3">
             {% for exporter in exporters %}
-                <li>
+                <li class="mb-2">
                     <a href="{{ exporter.urls.base }}">
                         {% if exporter.icon|slice:":3" == "fa-" %}
                             <i class="fa {{ exporter.icon }}"></i>

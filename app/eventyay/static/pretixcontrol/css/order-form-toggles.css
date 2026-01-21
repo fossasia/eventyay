@@ -1,0 +1,326 @@
+/* Toggle and dropdown styles for Order Forms */
+/* Created for pretixcontrol, inspired by the Talk component question toggle design */
+
+/* Dropdown wrapper for FA icon */
+.required-status-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 110px;
+}
+
+.required-status-wrapper::after {
+    content: '\f0d7'; /* Font Awesome caret-down */
+    font-family: 'FontAwesome';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 14px;
+}
+
+.required-status-dropdown {
+    padding: 6px 28px 6px 10px;
+    border: 1px solid;
+    border-radius: 3px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 110px;
+    max-width: 110px;
+    text-align: center;
+    font-family: inherit;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-color: transparent;
+    line-height: 1.4;
+}
+
+/* Keyboard focus styles */
+.required-status-dropdown:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.required-status-dropdown:focus-visible {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+select.required-status-dropdown[data-current="required"] {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: #fff !important;
+}
+
+.required-status-wrapper[data-current="required"]::after {
+    color: #fff;
+}
+
+select.required-status-dropdown[data-current="optional"] {
+    background-color: #fff !important;
+    border-color: #6c757d !important;
+    color: #6c757d !important;
+}
+
+.required-status-wrapper[data-current="optional"]::after {
+    color: #6c757d;
+}
+
+/* When toggle is OFF, preserve semantic color but dim interaction */
+.required-status-wrapper.is-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.required-status-wrapper.is-disabled .required-status-dropdown {
+    cursor: not-allowed;
+}
+
+/* Option colors and sizing (for when dropdown is open) */
+.required-status-dropdown option {
+    font-size: 1rem;
+    padding: 6px 10px;
+}
+
+.required-status-dropdown option[value="required"] {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.required-status-dropdown option[value="optional"] {
+    background-color: #fff;
+    color: #6c757d;
+}
+
+/* Disabled state for dropdown */
+.required-status-dropdown:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Loading state for dropdown */
+.required-status-dropdown.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Hover effects for dropdown */
+.required-status-dropdown:not(:disabled):hover {
+    filter: brightness(0.95);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Toggle switch for Active column */
+.toggle-switch {
+    position: relative;
+    display: inline-block !important;
+    width: 32px;
+    height: 18px;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+/* Focus styles for keyboard accessibility */
+.toggle-switch input:focus+.toggle-slider {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.toggle-switch input:focus:not(:focus-visible)+.toggle-slider {
+    outline: none;
+}
+
+.toggle-switch input:focus-visible+.toggle-slider {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background-color: #ccc;
+    border-radius: 18px;
+    transition: background-color 0.2s ease;
+    display: block;
+}
+
+.toggle-slider::before {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #fff;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background-color: #007bff;
+}
+
+.toggle-switch input:checked+.toggle-slider::before {
+    transform: translateX(14px);
+}
+
+.toggle-switch.loading .toggle-slider {
+    opacity: 0.6;
+}
+
+/* Disabled/always-on toggle */
+.toggle-switch.always-on {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.toggle-switch.always-on .toggle-slider {
+    cursor: not-allowed;
+}
+
+/* Order Form Option Table Styles */
+.order-form-option-table tbody select[name^="settings-order_"],
+.order-form-option-table tbody select[name^="settings-attendee_"] {
+    display: none;
+}
+
+.order-form-option-table .form-group {
+    margin-bottom: 0;
+}
+
+.order-form-option-table th[colspan] {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Vertically center toggle switches and dropdowns in table cells */
+.order-form-option-table tbody td {
+    vertical-align: middle;
+}
+
+/* Constrain field column width to prevent excessive stretching */
+.order-form-option-table col.field-col {
+    max-width: 320px;
+}
+
+/* Align field labels to the left with consistent padding */
+.order-form-option-table tbody th {
+    text-align: left;
+    padding-right: 12px;
+    vertical-align: middle;
+    font-weight: 600;
+    white-space: normal;
+}
+
+/* Center column headers */
+.order-form-option-table thead th {
+    vertical-align: middle;
+    font-weight: 600;
+}
+
+/* Ensure toggle switches and dropdowns are properly displayed */
+.order-form-option-table label.toggle-switch {
+    display: inline-block !important;
+    margin-bottom: 0;
+}
+
+/* Inline info box styling to match Talk CFP component */
+.inline-info-box {
+    position: absolute;
+    z-index: 1000;
+    left: 0;
+    top: 100%;
+    margin-top: 0.5em;
+    min-width: 600px;
+    max-width: 700px;
+}
+
+.inline-info-box .alert {
+    margin: 0;
+}
+
+/* Custom Talk-style info box - no Pretix alert interference */
+.talk-info-box {
+    display: flex;
+    align-items: stretch;
+    border: 2px solid #2185d0;
+    border-radius: 0.25rem;
+    box-shadow: 0 4px 6px rgb(0 0 0 / 0.1), 0 2px 4px rgb(0 0 0 / 0.06);
+    background: white;
+    overflow: hidden;
+    animation: fadeInSlide 200ms ease-out;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Blue strip - left flex child */
+.talk-info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 64px;
+    background-color: #2185d0;
+    color: white;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* White content area - right flex child */
+.talk-info-content {
+    flex: 1;
+    padding: 16px;
+    color: #1b6aa6; /* Fallback for browsers without color-mix support */
+    color: color-mix(in srgb, #2185d0, black 40%);
+    font-weight: normal;
+    line-height: 1.5;
+}
+
+.talk-info-content span {
+    font-weight: normal;
+}
+
+/* Info toggle header and wrapper styles */
+.info-toggle-header {
+    position: relative;
+}
+
+.info-toggle-wrapper {
+    display: inline-block;
+}
+
+.info-toggle {
+    cursor: pointer;
+    margin-left: 0.35em;
+}
+
+.info-toggle .fa-info-circle {
+    font-size: 1.1em;
+}
+
+/* Utility class for hiding elements */
+.d-none {
+    display: none !important;
+}
