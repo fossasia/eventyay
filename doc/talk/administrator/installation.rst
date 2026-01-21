@@ -288,7 +288,7 @@ Check out :ref:`configure` for details on the available configuration options.
 If you want to read about updates, backups, and monitoring, head over to our
 :ref:`maintenance` documentation!
 
-
+.. _Ansible role:
 .. _Let’s Encrypt: https://letsencrypt.org/
 .. _PostgreSQL: https://www.postgresql.org/docs/
 .. _redis: https://redis.io/docs/latest/
