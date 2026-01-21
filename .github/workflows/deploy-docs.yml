@@ -82,6 +82,7 @@ jobs:
           make html
 
       - name: Prepare deployment
+        if: github.event_name == 'push'
         run: |
           mkdir -p _site
           cp -r doc/_build/html/* _site/
@@ -90,9 +91,11 @@ jobs:
           ls -la _site/
 
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
+        if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
