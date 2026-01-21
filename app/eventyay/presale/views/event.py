@@ -523,7 +523,7 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             self.request.event.cache.set('vouchers_exist', vouchers_exist)
         context['show_vouchers'] = context['vouchers_exist'] = vouchers_exist
 
-        if not self.request.event.has_subevents or self.subevent:
+        if (not self.request.event.has_subevents or self.subevent) and self.request.event.settings.get('ticket_shop_enabled', as_type=bool, default=True):
             # Fetch all products
             products, display_add_to_cart = get_grouped_products(
                 self.request.event,
@@ -544,6 +544,11 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
             # Regroup those by category
             context['products_by_category'] = product_group_by_category(products)
             context['display_add_to_cart'] = display_add_to_cart
+        else:
+            context['productnum'] = 0
+            context['allfree'] = True
+            context['products_by_category'] = []
+            context['display_add_to_cart'] = False
 
         context['ev'] = self.subevent or self.request.event
         context['subevent'] = self.subevent

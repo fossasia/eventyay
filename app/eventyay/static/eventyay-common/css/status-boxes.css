@@ -1,0 +1,28 @@
+.dashboard .widget-container.status-box-widget {
+    width: 23.5%;
+    margin-right: 2%;
+}
+
+.dashboard .widget-container.status-box-widget:last-child {
+    margin-right: 0;
+}
+
+@media (max-width: 991px) {
+    .dashboard .widget-container.status-box-widget {
+        width: 48%;
+        margin-right: 4%;
+        margin-bottom: 20px;
+    }
+
+    .dashboard .widget-container.status-box-widget:nth-child(2n) {
+        margin-right: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .dashboard .widget-container.status-box-widget {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+}

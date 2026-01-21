@@ -8,6 +8,7 @@ from eventyay.eventyay_common.views import (
     event,
     organizer,
     team,
+    publish,
 )
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
@@ -51,6 +52,7 @@ urlpatterns = [
                 path('', dashboards.EventIndexView.as_view(), name='event.index'),
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
+                path('publish/', publish.EventPublishView.as_view(), name='event.publish'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),
