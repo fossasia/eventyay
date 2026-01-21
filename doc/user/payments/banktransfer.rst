@@ -34,5 +34,3 @@ if the transaction is not related to the event at all.
 
 .. tip:: If you aren't afraid of getting a bit more technical and your bank supports the HBCI/FinTS protocol (as most
          German banks do), you can use `eventyay-banktool`_ to fully automate this process.
-
-.. _eventyay-banktool: https://github.com/fossasia/eventyay-banktool

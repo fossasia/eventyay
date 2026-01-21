@@ -21,6 +21,5 @@ note that the docker setup is not officially supported.
    commands
 
 
-.. _ansible role: https://github.com/eventyay/ansible-Eventyay
 .. _docker-compose setup: https://github.com/fossasia/eventyay-docker
 .. _Eventyay.com: https://eventyay.com/
