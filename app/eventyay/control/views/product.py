@@ -330,16 +330,13 @@ def category_move_down(request, organizer, event, category):
     )
 
 
-FakeQuestion = namedtuple('FakeQuestion', 'id question position required')
-
-
 class QuestionList(ListView):
     """
     Redirects to Order Forms page where custom fields are now integrated.
     This view is kept for backward compatibility with any external links.
     """
     model = Question
-    
+
     def get(self, request, *args, **kwargs):
         # Redirect to the Order Forms page where custom fields are now managed
         return HttpResponseRedirect(
@@ -1621,10 +1618,10 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['sform'] = self.sform()
-        
+
         # Include custom fields (questions) for attendee data section
         ctx['questions'] = list(self.request.event.questions.prefetch_related('products').order_by('position'))
-        
+
         return ctx
 
     def form_valid(self, form):

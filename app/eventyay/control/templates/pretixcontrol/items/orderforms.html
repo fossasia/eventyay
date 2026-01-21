@@ -296,10 +296,10 @@
                 {% endblocktrans %}
             </p>
             <p>
-                <a href="{% url "control:event.products.questions.add" event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                <a href="{% url "control:event.products.questions.add" event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-primary">
                     <i class="fa fa-plus"></i> {% trans "Create a new custom field" %}
                 </a>
-                <a href="{% url "control:event.products.descriptions.add" event=request.event.slug organizer=request.organizer.slug %}" class="btn btn-primary">
+                <a href="{% url "control:event.products.descriptions.add" event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-primary">
                     <i class="fa fa-plus"></i> {% trans "Create a text field" %}
                 </a>
             </p>
@@ -317,7 +317,7 @@
                             <th class="action-col-2"></th>
                         </tr>
                     </thead>
-                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.organizer.slug %}">
+                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
                         {% for q in questions %}
                         <tr data-dnd-id="{{ q.id }}">
                             <td>
