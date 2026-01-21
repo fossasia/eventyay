@@ -2,10 +2,10 @@ from django.urls import reverse
 from django.views.generic import FormView
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
-from eventyay.control.views.event import EventSettingsViewMixin
+from eventyay.control.views.event import EventPermissionRequiredMixin, EventSettingsViewMixin
 from eventyay.eventyay_common.forms.publish import EventPublishForm
 
-class EventPublishView(EventSettingsViewMixin, FormView):
+class EventPublishView(EventPermissionRequiredMixin, EventSettingsViewMixin, FormView):
     template_name = 'eventyay_common/event/publish.html'
     permission = 'can_change_event_settings'
     form_class = EventPublishForm
