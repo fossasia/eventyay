@@ -70,7 +70,7 @@ class ContactForm(forms.Form):
             )
 
         if event.settings.order_phone_asked:
-            self.fields['phone'].required = True
+            self.fields['phone'].required = event.settings.order_phone_required and not self.all_optional
             self.fields['phone'].help_text = event.settings.checkout_phone_helptext
             with language(get_babel_locale()):
                 default_country = guess_country(event)
