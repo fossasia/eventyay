@@ -33,7 +33,7 @@
     "janus-gateway": "git+https://wtf-npm@github.com/meetecho/janus-gateway.git#7b010cd265991132158541ea80afcaa14bf4eb42",
     "js-md5": "^0.8.3",
     "jwt-decode": "^4.0.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "lodash-es": "^4.17.22",
     "markdown-it": "^14.1.0",
     "moment": "^2.30.1",
