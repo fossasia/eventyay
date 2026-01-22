@@ -15,12 +15,12 @@
     </nav>
     <ul class="nav nav-tabs">
         <li {% if tab == "vouchers" %}class="active"{% endif %}>
-            <a href="?tab=vouchers">
+            <a href="?{% url_replace request 'tab' 'vouchers' %}">
                 {% trans "All vouchers" %}
             </a>
         </li>
         <li {% if tab == "tags" %}class="active"{% endif %}>
-            <a href="?tab=tags">
+            <a href="?{% url_replace request 'tab' 'tags' %}">
                 {% trans "Voucher Tags" %}
             </a>
         </li>
@@ -43,6 +43,7 @@
                         </span>
                     </div>
                 </form>
+                {% if filter_form %}
                 <form class="" action="" method="get">
                     <input type="hidden" name="tab" value="vouchers">
                     <div class="col-lg-4 col-sm-3 col-xs-6">
@@ -80,6 +81,7 @@
                         </div>
                     </div>
                 </form>
+                {% endif %}
             </div>
             {% if vouchers|length == 0 %}
                 <div class="empty-collection">

@@ -53,23 +53,31 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
                 'product', 'variation', 'seat'
             )
         )
-        if self.filter_form.is_valid():
+        if self.filter_form and self.filter_form.is_valid():
             qs = self.filter_form.filter_qs(qs)
 
         return qs.distinct()
 
     @cached_property
+    def _active_tab(self):
+        return self.request.GET.get('tab', 'vouchers')
+
+    @cached_property
     def filter_form(self):
-        return VoucherFilterForm(data=self.request.GET, event=self.request.event)
+        if self._active_tab == 'vouchers' or self.request.GET.get('download') == 'yes':
+            return VoucherFilterForm(data=self.request.GET, event=self.request.event)
+        return None
 
     @cached_property
     def tags_filter_form(self):
-        return VoucherTagFilterForm(data=self.request.GET, event=self.request.event)
+        if self._active_tab == 'tags':
+            return VoucherTagFilterForm(data=self.request.GET, event=self.request.event)
+        return None
 
     def get_tags_queryset(self):
         qs = self.request.event.vouchers.order_by('tag').filter(tag__isnull=False, waitinglistentries__isnull=True)
 
-        if self.tags_filter_form.is_valid():
+        if self.tags_filter_form and self.tags_filter_form.is_valid():
             qs = self.tags_filter_form.filter_qs(qs)
 
         qs = qs.values('tag').annotate(total=Sum('max_usages'), redeemed=Sum('redeemed'))
@@ -80,7 +88,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['tags_filter_form'] = self.tags_filter_form
-        ctx['tab'] = self.request.GET.get('tab', 'vouchers')
+        ctx['tab'] = self._active_tab
         if ctx['tab'] == 'tags':
             tags = self.get_tags_queryset()
             for t in tags:
