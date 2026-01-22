@@ -1,7 +1,7 @@
 Bank transfer HTTP API
 ======================
 
-The banktransfer plugin provides a HTTP API that compatible HBCI/FinTS tools can use to send bank
+The banktransfer plugin provides an HTTP API that compatible HBCI/FinTS tools can use to send bank
 transactions to the eventyay server. This API is integrated with the regular :ref:`rest-api`
 and therefore follows the conventions listed there.
 
