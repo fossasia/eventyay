@@ -865,6 +865,34 @@ the eventyay team"""
             return urljoin(event.custom_domain, image.url)
         return urljoin(settings.SITE_URL, image.url)
 
+    def get_primary_email(self) -> str:
+        """
+        Returns the user's primary email address.
+        
+        Checks django-allauth's EmailAddress model for the email marked as primary.
+        Falls back to the user.email field if no primary email is found.
+        
+        :return: The primary email address as a string
+        """
+        try:
+            from allauth.account.models import EmailAddress
+            
+            # Get the primary email from allauth's EmailAddress model
+            primary_email_obj = EmailAddress.objects.filter(
+                user=self, 
+                primary=True
+            ).first()
+            
+            if primary_email_obj:
+                return primary_email_obj.email
+        except (ImportError, Exception):
+            # If allauth is not available or any other error, fall back to user.email
+            pass
+        
+        # Fallback to the user.email field
+        return self.email or ''
+
+
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""
         self.log_action(action='eventyay.user.token.reset')

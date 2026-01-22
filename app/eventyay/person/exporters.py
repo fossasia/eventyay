@@ -30,7 +30,7 @@ class CSVSpeakerExporter(CSVExporterMixin, BaseExporter):
             data.append(
                 {
                     'name': speaker.get_display_name(),
-                    'email': speaker.email,
+                    'email': speaker.get_primary_email(),
                     'confirmed': str(bool(confirmed_talks)),
                 }
             )

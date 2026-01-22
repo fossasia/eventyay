@@ -1035,7 +1035,7 @@ class Submission(GenerateCode, PretalxModel):
                 orga=orga,
                 data={
                     'code': speaker.code,
-                    'email': speaker.email,
+                    'email': speaker.get_primary_email(),
                     'name': speaker.name,
                 },
             )

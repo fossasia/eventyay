@@ -39,7 +39,7 @@ class SpeakerQuestionData(CSVExporterMixin, BaseExporter):
                 {
                     'code': answer.person.code,
                     'name': answer.person.name,
-                    'email': answer.person.email,
+                    'email': answer.person.get_primary_email(),
                     'question': answer.question.question,
                     'answer': answer.answer_string,
                 }
