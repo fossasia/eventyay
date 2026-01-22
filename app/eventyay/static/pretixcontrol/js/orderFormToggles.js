@@ -130,8 +130,6 @@ function initOrderFormToggles() {
                     throw new Error(errorData.error || `HTTP ${response.status}`);
                 }
                 
-                const result = await response.json();
-                
                 // Success - show brief feedback
                 const originalBg = this.style.backgroundColor;
                 this.style.backgroundColor = '#d4edda';
