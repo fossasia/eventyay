@@ -17,7 +17,7 @@
 			.error-message {{ iframeError.message || $t('MediaSource:iframe-error:text') }}
 			.error-code(v-if="iframeError.code") {{ $t('MediaSource:error-code:label') }}: {{ iframeError.code }}
 			.error-actions
-				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="$router.push({name: 'preferences'})") {{ $t('MediaSource:error-goto-profile:button') }}
+				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="$router.push({name: 'profile'})") {{ $t('MediaSource:error-goto-profile:button') }}
 				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
@@ -251,6 +251,7 @@ function destroyIframe() {
 	iframeEl.value = null
 }
 
+
 function handleBBBError(error) {
 	const errorCode = error.apiError?.code
 	console.error('[BBB Error]', errorCode, error)
@@ -318,7 +319,7 @@ async function retryInitializeIframe() {
 	await initializeIframe(false)
 }
 
-
+function isPlaying() {
 	if (props.call) {
 		return janus.value?.roomId
 	}
@@ -336,7 +337,6 @@ async function retryInitializeIframe() {
 	}
 	return true
 }
-
 
 function getYoutubeUrl(ytid, autoplayVal, mute, hideControls, noRelated, showinfo, disableKb, loop, modestBranding, enablePrivacyEnhancedMode) {
 	const params = new URLSearchParams()
