@@ -19,18 +19,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    env:
-      EVY_REDIS_URL: redis://localhost:6379/0
     services:
       redis:
         image: redis:7-alpine
         ports:
           - 6379:6379
         options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 30
+          --health-cmd "redis-cli ping" --health-timeout "5s" --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,9 +61,9 @@ jobs:
           version: latest
           enable-cache: true
 
-      - name: Install Python dependencies (docs)
+      - name: Install Python dependencies
+        run: uv sync --group docs
         working-directory: ./app
-        run: uv sync --frozen --group docs
 
       - name: Build documentation
         working-directory: ./doc
@@ -92,7 +87,7 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v4
         with:
-          path: _site
+          path: '_site'
 
   deploy:
     if: github.event_name == 'push'
