@@ -1247,8 +1247,14 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
         return self.retrieve(request, [], **kwargs)
 
     @action(detail=True, methods=['POST'])
+    @transaction.atomic
     def refund(self, request, **kwargs):
-        payment = self.get_object()
+        # Acquire row-level lock on payment to prevent concurrent refund race conditions.
+        # We reuse DRF's filtering & permission logic while issuing a single SELECT ... FOR UPDATE.
+        queryset = self.filter_queryset(self.get_queryset().select_for_update())
+        lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
+        lookup_value = self.kwargs[lookup_url_kwarg]
+        payment = get_object_or_404(queryset, **{self.lookup_field: lookup_value})
         amount = serializers.DecimalField(max_digits=10, decimal_places=2).to_internal_value(
             request.data.get('amount', str(payment.amount))
         )
@@ -1265,6 +1271,7 @@ class PaymentViewSet(CreateModelMixin, viewsets.ReadOnlyModelViewSet):
 
         full_refund_possible = payment.payment_provider.payment_refund_supported(payment)
         partial_refund_possible = payment.payment_provider.payment_partial_refund_supported(payment)
+        # Calculate available amount under lock - prevents TOCTOU race condition
         available_amount = payment.amount - payment.refunded_amount
 
         if amount <= 0:
