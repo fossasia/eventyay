@@ -1,9 +1,5 @@
 {% extends "orga/submission/base.html" %}
 
-{% load compress %}
-{% load filesize %}
-{% load formset_tags %}
-{% load staff_session %}
 {% load i18n %}
 {% load static %}
 {% load rules %}
@@ -15,10 +11,6 @@
 {% endblock scripts %}
 
 {% block submission_content %}
-    {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
-    {% has_event_perm "base.list_all_review" request.user request request.event as can_view_all_reviews %}
-    {% has_event_perm "base.update_submission" request.user request submission as can_edit_submission %}
-
     {% if submission.access_code %}
         <div class="alert alert-info"><span></span><span>
             {% blocktranslate trimmed %}
@@ -27,21 +19,9 @@
         </span></div>
     {% endif %}
 
-    {% if can_edit_submission %}
-    <div class="d-flex justify-content-end mb-2">
-        <a href="edit" class="btn btn-outline-info">
-            <i class="fa fa-pencil"></i> {% translate "Edit Form" %}
-        </a>
-    </div>
-    {% endif %}
-
     <div class="card mb-3">
         <div class="card-body">
-            <h3 class="card-title">{% translate "Proposal Information" %}</h3>
-            
-            <p class="card-text">
-                <strong>{% translate "Title" %}:</strong> {{ submission.title }}
-            </p>
+            <h3 class="card-title text-info">{{ submission.title }}</h3>
             <p class="card-text">
                 <strong>{% translate "Session type" %}:</strong> {{ submission.submission_type.name }}
             </p>
@@ -83,8 +63,6 @@
             </div>
             {% endif %}
             
-            <hr>
-            
             <p class="card-text">
                 <strong>{% translate "Duration" %}:</strong> {{ submission.get_duration }} min
             </p>
@@ -113,7 +91,6 @@
             {% endif %}
             
             {% if submission.resources.exists %}
-                <hr>
                 <div class="card-text">
                     <strong>{% translate "Resources" %}:</strong>
                     <ul>
@@ -127,21 +104,26 @@
             {% endif %}
 
             {% if questions %}
-                <hr>
                 <div class="card-text">
-                    <strong>{{ phrases.cfp.custom_fields }}:</strong>
                     {% for answer in questions %}
                         <div class="mb-1">
                             <strong>{{ answer.question.question }}:</strong>
-                            <span class="ml-1">{% include "common/question_answer.html" with answer=answer %}</span>
+                            {% include "common/question_answer.html" with answer=answer %}
                         </div>
                     {% endfor %}
                 </div>
             {% endif %}
+            {% if can_edit_submission %}
+            <div class="d-flex justify-content-start mb-2">
+                <a href="{{ submission.orga_urls.edit }}" class="btn btn-info">
+                    <i class="fa fa-pencil"></i> {% translate "Edit Form" %}
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    {% if submission.instance.median_score != None and can_view_all_reviews %}
+    {% if submission.median_score != None and can_view_all_reviews %}
     <div class="card mb-3">
         <div class="card-body">
             <h3 class="card-title">{% translate "Reviews" %}</h3>
