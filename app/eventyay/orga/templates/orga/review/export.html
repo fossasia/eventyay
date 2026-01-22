@@ -25,7 +25,22 @@
             {% csrf_token %}
             <fieldset>
                 <legend id="dataset">{% translate "Dataset" %}</legend>
-                {{ form.target.as_field_group }}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">
+                        {{ form.target.label }}
+                        {% if form.target.field.required %}*{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in form.target %}
+                        <div class="form-check mb-2">
+                            {{ radio.tag }}
+                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </fieldset>
             <fieldset>
                 <legend id="fields">{% translate "Data fields" %}</legend>
@@ -41,7 +56,25 @@
             </fieldset>
             <fieldset>
                 <legend id="settings">{% translate "Export settings" %}</legend>
-                {{ form.export_format.as_field_group }}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label text-md-right">
+                        {{ form.export_format.label }}
+                        {% if form.export_format.field.required %}*{% endif %}
+                    </label>
+                    <div class="col-md-9">
+                        {% for radio in form.export_format %}
+                        <div class="form-check form-check-inline">
+                            {{ radio.tag }}
+                            <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                {{ radio.choice_label }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        {% if form.export_format.help_text %}
+                        <small class="form-text text-muted d-block mt-2">{{ form.export_format.help_text }}</small>
+                        {% endif %}
+                    </div>
+                </div>
             </fieldset>
 
             {% include "orga/includes/submit_row.html" %}

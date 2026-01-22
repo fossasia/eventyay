@@ -28,7 +28,7 @@ class LogEntry(models.Model):
     relation to an arbitrary database object.
 
     :param datetime: The timestamp of the logged action
-    :type datetime: datetime
+    :type datetime: datetime.datetime
     :param user: The user that performed the action
     :type user: User
     :param action_type: The type of action that has been performed. This is
