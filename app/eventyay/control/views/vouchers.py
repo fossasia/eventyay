@@ -23,6 +23,7 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     ListView,
+    RedirectView,
     TemplateView,
     UpdateView,
     View,
@@ -58,14 +59,38 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
 
         return qs.distinct()
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        ctx['filter_form'] = self.filter_form
-        return ctx
-
     @cached_property
     def filter_form(self):
         return VoucherFilterForm(data=self.request.GET, event=self.request.event)
+
+    @cached_property
+    def tags_filter_form(self):
+        return VoucherTagFilterForm(data=self.request.GET, event=self.request.event)
+
+    def get_tags_queryset(self):
+        qs = self.request.event.vouchers.order_by('tag').filter(tag__isnull=False, waitinglistentries__isnull=True)
+
+        if self.tags_filter_form.is_valid():
+            qs = self.tags_filter_form.filter_qs(qs)
+
+        qs = qs.values('tag').annotate(total=Sum('max_usages'), redeemed=Sum('redeemed'))
+
+        return qs.distinct()
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['filter_form'] = self.filter_form
+        ctx['tags_filter_form'] = self.tags_filter_form
+
+        tags = self.get_tags_queryset()
+        for t in tags:
+            if t['total'] == 0:
+                t['percentage'] = 0
+            else:
+                t['percentage'] = int((t['redeemed'] / t['total']) * 100)
+        ctx['tab'] = self.request.GET.get('tab', 'vouchers')
+        ctx['tags'] = tags
+        return ctx
 
     def get(self, request, *args, **kwargs):
         if request.GET.get('download', '') == 'yes':
@@ -123,38 +148,7 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         return r
 
 
-class VoucherTags(EventPermissionRequiredMixin, TemplateView):
-    template_name = 'pretixcontrol/vouchers/tags.html'
-    permission = 'can_view_vouchers'
 
-    def get_queryset(self):
-        qs = self.request.event.vouchers.order_by('tag').filter(tag__isnull=False, waitinglistentries__isnull=True)
-
-        if self.filter_form.is_valid():
-            qs = self.filter_form.filter_qs(qs)
-
-        qs = qs.values('tag').annotate(total=Sum('max_usages'), redeemed=Sum('redeemed'))
-
-        return qs.distinct()
-
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        tags = self.get_queryset()
-
-        for t in tags:
-            if t['total'] == 0:
-                t['percentage'] = 0
-            else:
-                t['percentage'] = int((t['redeemed'] / t['total']) * 100)
-
-        ctx['tags'] = tags
-        ctx['filter_form'] = self.filter_form
-        return ctx
-
-    @cached_property
-    def filter_form(self):
-        return VoucherTagFilterForm(data=self.request.GET, event=self.request.event)
 
 
 class VoucherDelete(EventPermissionRequiredMixin, DeleteView):

@@ -228,7 +228,7 @@ def get_event_navigation(request: HttpRequest):
                                 'organizer': request.event.organizer.slug,
                             },
                         ),
-                        'active': url.url_name != 'event.vouchers.tags' and 'event.vouchers' in url.url_name,
+                        'active': 'event.vouchers' in url.url_name,
                     }
                 ]
             )
