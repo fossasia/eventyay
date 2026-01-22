@@ -59,3 +59,4 @@ class BBBModule(BaseModule):
             self.room,
         )
         await self.consumer.send_success({"results": recordings})
+        
