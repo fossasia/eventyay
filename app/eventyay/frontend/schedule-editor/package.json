@@ -22,7 +22,7 @@
   "dependencies": {
     "buntpapier": "^2.0.0-alpha.25",
     "i18next": "^25.8.0",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "markdown-it": "^14.1.0",
     "moment": "^2.30.1",
     "moment-timezone": "^0.6.0",
