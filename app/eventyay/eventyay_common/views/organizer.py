@@ -1,5 +1,6 @@
 import logging
 from urllib.parse import urlencode
+
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -24,6 +25,7 @@ from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
 from ...control.permissions import OrganizerPermissionRequiredMixin
+
 
 logger = logging.getLogger(__name__)
 
@@ -446,7 +448,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         team.log_action(
             'eventyay.team.member.removed',
             user=self.request.user,
-            data={'email': user.email, 'user': user.pk},
+            data={'email': user.primary_email, 'user': user.pk},
         )
         messages.success(self.request, _('The member has been removed from the team.'))
         return self._redirect_to_team_permissions(team.pk)
@@ -504,7 +506,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
         team.log_action(
             'eventyay.team.member.added',
             user=self.request.user,
-            data={'email': user.email, 'user': user.pk},
+            data={'email': user.primary_email, 'user': user.pk},
         )
 
         send_team_invitation_email(
@@ -673,11 +675,11 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
 
     def _collect_team_change_data(self, team: Team, form: TeamForm):
         """Collect only changed field data for audit logging.
-        
+
         Args:
             team: The Team model instance
             form: The TeamForm with changed_data populated
-            
+
         Returns:
             dict: Dictionary of changed field names to their new values
         """

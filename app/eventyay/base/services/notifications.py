@@ -118,14 +118,13 @@ def send_notification_mail(notification: Notification, user: User):
     tpl_plain = get_template('pretixbase/email/notification.txt')
     body_plain = tpl_plain.render(ctx)
 
+    site_name = settings.INSTANCE_NAME
+    prefix = notification.event.settings.mail_prefix or notification.event.slug.upper()
+    title = notification.title
     mail_send_task.apply_async(
         kwargs={
-            'to': [user.email],
-            'subject': '[{}] {}: {}'.format(
-                settings.INSTANCE_NAME,
-                notification.event.settings.mail_prefix or notification.event.slug.upper(),
-                notification.title,
-            ),
+            'to': [user.primary_email],
+            'subject': f'[{site_name}] {prefix}: {title}',
             'body': body_plain,
             'html': body_html,
             'sender': settings.MAIL_FROM,

@@ -1,26 +1,28 @@
-import importlib.util
+import datetime
 import inspect
 import json
-import datetime
 import logging
 import mimetypes
 import os
 import re
-from urllib.parse import urlparse, urlunparse
 from collections import OrderedDict
-from importlib import import_module
 from decimal import Decimal
+from typing import cast
+from urllib.parse import urlparse, urlunparse
 
 import jwt
 from django import forms
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser
+from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, Sum
 from django.http import (
     FileResponse,
     Http404,
+    HttpRequest,
     HttpResponseRedirect,
     JsonResponse,
 )
@@ -42,7 +44,9 @@ from eventyay.base.models import (
     OrderPosition,
     Quota,
     TaxRule,
+    User,
 )
+from eventyay.base.models.checkin import CheckinList
 from eventyay.base.models.orders import (
     CachedCombinedTicket,
     InvoiceAddress,
@@ -52,6 +56,7 @@ from eventyay.base.models.orders import (
     QuestionAnswer,
 )
 from eventyay.base.payment import PaymentException
+from eventyay.base.services.checkin import perform_checkin
 from eventyay.base.services.invoices import (
     generate_cancellation,
     generate_invoice,
@@ -76,6 +81,7 @@ from eventyay.base.signals import (
 from eventyay.base.templatetags.money import money_filter
 from eventyay.base.views.mixins import OrderQuestionsViewMixin
 from eventyay.base.views.tasks import AsyncAction
+from eventyay.eventyay_common.utils import encode_email
 from eventyay.helpers.safedownload import check_token
 from eventyay.multidomain.urlreverse import build_absolute_uri, eventreverse
 from eventyay.presale.forms.checkout import InvoiceAddressForm, QuestionsForm
@@ -87,10 +93,6 @@ from eventyay.presale.views import (
     iframe_entry_view_wrapper,
 )
 from eventyay.presale.views.robots import NoSearchIndexViewMixin
-
-from eventyay.base.models.checkin import CheckinList
-from eventyay.base.services.checkin import perform_checkin
-from eventyay.eventyay_common.utils import encode_email
 
 
 logger = logging.getLogger(__name__)
@@ -188,16 +190,16 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
             'traits': list(
                 {
                     'attendee',
-                    'eventyay-video-event-{}'.format(request.event.slug),
-                    'eventyay-video-subevent-{}'.format(self.position.subevent_id),
-                    'eventyay-video-product-{}'.format(self.position.product_id),
-                    'eventyay-video-variation-{}'.format(self.position.variation_id),
-                    'eventyay-video-category-{}'.format(self.position.product.category_id),
+                    f'eventyay-video-event-{request.event.slug}',
+                    f'eventyay-video-subevent-{self.position.subevent_id}',
+                    f'eventyay-video-product-{self.position.product_id}',
+                    f'eventyay-video-variation-{self.position.variation_id}',
+                    f'eventyay-video-category-{self.position.product.category_id}',
                 }
-                | {'eventyay-video-product-{}'.format(p.product_id) for p in self.position.addons.all()}
-                | {'eventyay-video-variation-{}'.format(p.variation_id) for p in self.position.addons.all() if p.variation_id}
+                | {f'eventyay-video-product-{p.product_id}' for p in self.position.addons.all()}
+                | {f'eventyay-video-variation-{p.variation_id}' for p in self.position.addons.all() if p.variation_id}
                 | {
-                    'eventyay-video-category-{}'.format(p.product.category_id)
+                    f'eventyay-video-category-{p.product.category_id}'
                     for p in self.position.addons.all()
                     if p.product.category_id
                 }
@@ -249,7 +251,7 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         parsed = urlparse(str(baseurl))
         baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
 
-        redirect_url = '{}/#token={}'.format(baseurl, token).replace('//#', '/#')
+        redirect_url = f'{baseurl}/#token={token}'.replace('//#', '/#')
         logger.info('Redirecting to %s...', redirect_url)
         return redirect(redirect_url)
 
@@ -419,7 +421,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
             if r.provider == 'giftcard':
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
                 r.giftcard = gc
-        
+
         ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
         ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
 
@@ -505,8 +507,8 @@ class OrderPaymentStart(EventViewMixin, OrderDetailMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         resp = self.payment.payment_provider.payment_prepare(request, self.payment)
-        if 'payment_change_{}'.format(self.order.pk) in request.session:
-            del request.session['payment_change_{}'.format(self.order.pk)]
+        if f'payment_change_{self.order.pk}' in request.session:
+            del request.session[f'payment_change_{self.order.pk}']
         if isinstance(resp, str):
             return redirect(resp)
         elif resp is True:
@@ -594,8 +596,8 @@ class OrderPaymentConfirm(EventViewMixin, OrderDetailMixin, TemplateView):
         except PaymentException as e:
             messages.error(request, str(e))
             return redirect(self.get_order_url())
-        if 'payment_change_{}'.format(self.order.pk) in request.session:
-            del request.session['payment_change_{}'.format(self.order.pk)]
+        if f'payment_change_{self.order.pk}' in request.session:
+            del request.session[f'payment_change_{self.order.pk}']
         return redirect(resp or self.get_order_url())
 
     def get_context_data(self, **kwargs):
@@ -800,7 +802,7 @@ class OrderPayChangeMethod(EventViewMixin, OrderDetailMixin, TemplateView):
         for p in self.provider_forms:
             if p['provider'].identifier == request.POST.get('payment', ''):
                 request.session['payment'] = p['provider'].identifier
-                request.session['payment_change_{}'.format(self.order.pk)] = '1'
+                request.session[f'payment_change_{self.order.pk}'] = '1'
 
                 with transaction.atomic():
                     old_fee, new_fee, fee, newpayment = change_payment_provider(self.order, p['provider'], None)
@@ -967,12 +969,13 @@ class OrderModify(EventViewMixin, OrderDetailMixin, OrderQuestionsViewMixin, Tem
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args, **kwargs):
         self.request = request
+        user = cast(User | AnonymousUser, request.user)
         self.kwargs = kwargs
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
-        email = self.request.user.email if self.request.user.is_authenticated else ''
+        email = user.primary_email if user.is_authenticated else ''
 
         if not self.order.is_modification_allowed_by(email):
             messages.error(request, _('You cannot modify this order'))
@@ -1196,20 +1199,11 @@ class OrderDownloadMixin:
                         value.extension,
                     )
                 else:
-                    resp['Content-Disposition'] = 'attachment; filename="{}-{}-{}{}"'.format(
-                        self.request.event.slug.upper(),
-                        self.order.code,
-                        self.order_position.positionid,
-                        value.extension,
-                    )
+                    resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{self.order.code}-{self.order_position.positionid}{value.extension}"'
                 return resp
         elif isinstance(value, CachedCombinedTicket):
             resp = FileResponse(value.file.file, content_type=value.type)
-            resp['Content-Disposition'] = 'attachment; filename="{}-{}{}"'.format(
-                self.request.event.slug.upper(),
-                self.order.code,
-                value.extension,
-            )
+            resp['Content-Disposition'] = f'attachment; filename="{self.request.event.slug.upper()}-{self.order.code}{value.extension}"'
             return resp
         else:
             return redirect(self.get_self_url())
@@ -1313,7 +1307,7 @@ class InvoiceDownload(EventViewMixin, OrderDetailMixin, View):
         except FileNotFoundError:
             invoice_pdf_task.apply(args=(invoice.pk,))
             return self.get(request, *args, **kwargs)
-        resp['Content-Disposition'] = 'inline; filename="{}.pdf"'.format(invoice.number)
+        resp['Content-Disposition'] = f'inline; filename="{invoice.number}.pdf"'
         resp._csp_ignore = True  # Some browser's PDF readers do not work with CSP
         return resp
 
@@ -1366,7 +1360,7 @@ class OrderChange(EventViewMixin, OrderDetailMixin, TemplateView):
             ia = None
         for p in positions:
             p.form = OrderPositionChangeForm(
-                prefix='op-{}'.format(p.pk),
+                prefix=f'op-{p.pk}',
                 instance=p,
                 invoice_address=ia,
                 event=self.request.event,

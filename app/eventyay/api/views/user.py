@@ -14,6 +14,7 @@ class MeView(APIView):
         return Response(
             {
                 'email': request.user.email,
+                'primary_email': request.user.primary_email,
                 'fullname': request.user.fullname,
                 'locale': request.user.locale,
                 'is_staff': request.user.is_staff,

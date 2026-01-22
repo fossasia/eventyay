@@ -1,16 +1,15 @@
 import datetime as dt
 import logging
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from urllib.parse import urlparse
 
 import jwt
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
-from django.core.exceptions import PermissionDenied
 from django.db import transaction
-from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
+from django.db.models import Case, F, IntegerField, Max, Min, Prefetch, Q, Sum, When
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
@@ -18,20 +17,18 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import ListView
 from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
-from django.views import View
-from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
-from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
@@ -43,12 +40,14 @@ from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
     encode_email,
-    generate_token,
 )
-from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
+from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
+from eventyay.presale.style import regenerate_css
+
 from ..forms.event import EventUpdateForm
+
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +293,7 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
-            
+
             # Save imprint_url to settings (consistent with EventCommonSettingsForm)
             if basics_data.get('imprint_url'):
                 event.settings.set('imprint_url', basics_data['imprint_url'])
@@ -634,8 +633,9 @@ class VideoAccessAuthenticator(View):
         # Video is integrated; do not toggle event plugins here.
 
     def generate_token_url(self, request, traits):
+        # For authentication, we don't use primary_email.
         uid_token = encode_email(request.user.email)
-        iat = datetime.now(tz.utc)
+        iat = datetime.now(UTC)
         exp = iat + dt.timedelta(days=1)
         payload = {
             'iss': self.request.event.settings.venueless_issuer,
@@ -647,7 +647,7 @@ class VideoAccessAuthenticator(View):
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = self.request.event.settings.venueless_url
-        return '{}/#token={}'.format(base_url, token).replace('//#', '/#')
+        return f'{base_url}/#token={token}'.replace('//#', '/#')
 
 
 class EventSearchView(views.APIView):

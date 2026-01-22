@@ -1,12 +1,14 @@
 from logging import getLogger
+from typing import cast
 
 from django.db.models import Q
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
 
-from eventyay.base.models import Order
+from eventyay.base.models import Order, User
 
 from ..forms.filters import UserOrderFilterForm
+
 
 logger = getLogger(__name__)
 
@@ -16,8 +18,8 @@ class MyOrdersView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        user = self.request.user
-        qs = Order.objects.filter(Q(email__iexact=user.email)).select_related('event').order_by('-datetime')
+        user = cast(User, self.request.user)
+        qs = Order.objects.filter(Q(email__iexact=user.primary_email)).select_related('event').order_by('-datetime')
 
         # Filter by event if provided
         filter_form = UserOrderFilterForm(self.request.GET, user=user)

@@ -18,5 +18,5 @@ class UserOrderFilterForm(forms.Form):
 
         if user:
             # Query distinct events based on the user's orders
-            events = Event.objects.filter(orders__email__iexact=user.email).distinct()
+            events = Event.objects.filter(orders__email__iexact=user.primary_email).distinct()
             self.fields['event'].queryset = events
