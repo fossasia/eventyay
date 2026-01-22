@@ -202,7 +202,7 @@ dependencies = [
     "tzdata>=2025.3",
     "urllib3>=2.6.3",
     "urlman>=2.0.3",
-    # This library prevent us from being compatible with newer Python.
+    # This library prevents us from being compatible with Python v3.13+.
     "vat-moss-forked>=2020.3.20.0.11.0",
     "vine>=5.1.0",
     "vobject>=0.9.9",
