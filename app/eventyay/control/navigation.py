@@ -441,7 +441,7 @@ def get_organizer_navigation(request):
             {
                 'label': _('Settings'),
                 'url': reverse(
-                    'control:organizer.edit',
+                    'eventyay_common:organizer.edit',
                     kwargs={'organizer': request.organizer.slug},
                 ),
                 'icon': 'wrench',
@@ -449,7 +449,7 @@ def get_organizer_navigation(request):
                     {
                         'label': _('General'),
                         'url': reverse(
-                            'control:organizer.edit',
+                            'eventyay_common:organizer.edit',
                             kwargs={'organizer': request.organizer.slug},
                         ),
                         'active': url.url_name == 'organizer.edit',
@@ -473,10 +473,10 @@ def get_organizer_navigation(request):
                     {
                         'label': _('Billing settings'),
                         'url': reverse(
-                            'control:organizer.settings.billing',
+                            'eventyay_common:organizer.billing',
                             kwargs={'organizer': request.organizer.slug},
                         ),
-                        'active': url.url_name == 'organizer.settings.billing',
+                        'active': url.url_name == 'organizer.billing',
                     },
                 ],
             }
@@ -486,7 +486,7 @@ def get_organizer_navigation(request):
             {
                 'label': _('Teams'),
                 'url': reverse(
-                    'eventyay_common:organizer.update',
+                    'eventyay_common:organizer.edit',
                     kwargs={'organizer': request.organizer.slug},
                 )
                 + '?section=permissions',
@@ -509,7 +509,7 @@ def get_organizer_navigation(request):
             {
                 'label': _('Devices'),
                 'url': reverse(
-                    'control:organizer.devices',
+                    'eventyay_common:organizer.devices',
                     kwargs={'organizer': request.organizer.slug},
                 ),
                 'icon': 'tablet',
@@ -517,7 +517,7 @@ def get_organizer_navigation(request):
                     {
                         'label': _('Devices'),
                         'url': reverse(
-                            'control:organizer.devices',
+                            'eventyay_common:organizer.devices',
                             kwargs={'organizer': request.organizer.slug},
                         ),
                         'active': 'organizer.device' in url.url_name,
@@ -525,7 +525,7 @@ def get_organizer_navigation(request):
                     {
                         'label': _('Gates'),
                         'url': reverse(
-                            'control:organizer.gates',
+                            'eventyay_common:organizer.gates',
                             kwargs={'organizer': request.organizer.slug},
                         ),
                         'active': 'organizer.gate' in url.url_name,
@@ -538,7 +538,7 @@ def get_organizer_navigation(request):
         {
             'label': _('Export'),
             'url': reverse(
-                'control:organizer.export',
+                'eventyay_common:organizer.export',
                 kwargs={
                     'organizer': request.organizer.slug,
                 },

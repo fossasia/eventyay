@@ -1923,7 +1923,7 @@ class Event(
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
             if not billing_obj or not billing_obj.stripe_payment_method_id:
                 url = reverse(
-                    'control:organizer.settings.billing',
+                    'eventyay_common:organizer.billing',
                     kwargs={'organizer': self.organizer.slug},
                 )
                 issue = format_html(

@@ -91,7 +91,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     return nav
 
 
-def get_organizer_navigation(request):
+def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
@@ -111,7 +111,7 @@ def get_organizer_navigation(request):
             {
                 'label': _('Settings'),
                 'url': reverse(
-                    'eventyay_common:organizer.update',
+                    'eventyay_common:organizer.edit',
                     kwargs={'organizer': request.organizer.slug},
                 ),
                 'icon': 'wrench',
@@ -119,10 +119,10 @@ def get_organizer_navigation(request):
                     {
                         'label': _('General'),
                         'url': reverse(
-                            'eventyay_common:organizer.update',
+                            'eventyay_common:organizer.edit',
                             kwargs={'organizer': request.organizer.slug},
                         ),
-                        'active': url.url_name == 'organizer.update',
+                        'active': url.url_name == 'organizer.edit',
                     },
                     # Temporary disabled
                     # {

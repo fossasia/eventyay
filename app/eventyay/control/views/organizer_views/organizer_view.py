@@ -181,7 +181,7 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_common:organizer.update',
+            'eventyay_common:organizer.edit',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
@@ -249,7 +249,7 @@ class OrganizerDisplaySettings(OrganizerDetailViewMixin, OrganizerPermissionRequ
     def get(self, request, *wargs, **kwargs):
         return redirect(
             reverse(
-                'eventyay_common:organizer.update',
+                'eventyay_common:organizer.edit',
                 kwargs={
                     'organizer': self.request.organizer.slug,
                 },

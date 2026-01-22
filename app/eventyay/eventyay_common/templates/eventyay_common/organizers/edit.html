@@ -8,11 +8,6 @@
 <div class="organizer-management">
     <h1 class="page-header">{{ organizer.name }}</h1>
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="{% if active_section == 'general' %}active{% endif %}">
-            <a href="#" data-target="#general" aria-controls="general" role="tab" data-toggle="tab">
-                {% translate "General" %}
-            </a>
-        </li>
         {% if can_manage_teams %}
         <li role="presentation" class="{% if active_section == 'teams' %}active{% endif %}">
             <a href="#" data-target="#teams" aria-controls="teams" role="tab" data-toggle="tab">
@@ -21,41 +16,13 @@
         </li>
         <li role="presentation" class="{% if active_section == 'permissions' %}active{% endif %}">
             <a href="#" data-target="#permissions" aria-controls="permissions" role="tab" data-toggle="tab">
-                {% translate "Manage Team Permissions" %}
+                {% translate "Manage Teams" %}
             </a>
         </li>
         {% endif %}
     </ul>
 
     <div class="tab-content">
-        <div role="tabpanel" class="tab-pane {% if active_section == 'general' %}active{% endif %}" id="general">
-            <form action="" method="post" class="form-horizontal mt-3">
-                {% csrf_token %}
-                {% bootstrap_form_errors form %}
-                <fieldset>
-                    <legend>{% translate "General information" %}</legend>
-                    {% bootstrap_field form.name layout="horizontal" %}
-                    {% bootstrap_field form.slug layout="horizontal" %}
-                </fieldset>
-
-                <fieldset>
-                    <h4>{{ _('Organizer settings:') }}
-                        <a href='{% url "eventyay_common:organizer.update" organizer=organizer.slug  %}'
-                                class="btn btn-sm btn-default" title="{{ _('Settings') }}"
-                                data-toggle="tooltip">
-                            <span class="fa fa-cog"></span>
-                        </a>
-                    </h4>
-                </fieldset>
-
-                <div class="form-group submit-group">
-                    <button type="submit" class="btn btn-primary">
-                        {% translate "Save" %}
-                    </button>
-                </div>
-            </form>
-        </div>
-
         {% if can_manage_teams %}
         <div role="tabpanel" class="tab-pane {% if active_section == 'teams' %}active{% endif %}" id="teams">
             <div class="panel panel-default mt-3">

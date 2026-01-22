@@ -51,7 +51,7 @@
                     <ul>
                         {% for t in teams %}
                             <li>
-                                <a href='{% url "eventyay_common:organizer.update" organizer=t.organizer.slug %}?section=permissions&team={{ t.pk }}'>
+                                <a href='{% url "eventyay_common:organizer.edit" organizer=t.organizer.slug %}?section=permissions&team={{ t.pk }}'>
                                     {% blocktrans trimmed with team=t.name organizer=t.organizer.name %}
                                         Team "{{ team }}" of organizer "{{ organizer }}"
                                     {% endblocktrans %}
