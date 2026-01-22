@@ -1,8 +1,20 @@
 {% extends "pretixcontrol/items/base.html" %}
+{% load compress %}
 {% load i18n %}
 {% load bootstrap3 %}
 {% load rich_text %}
+{% load static %}
 {% block title %}{% trans "Order forms" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
+    {% endcompress %}
+    {% compress js %}
+        <script defer src="{% static 'pretixcontrol/js/orderFormToggles.js' %}"></script>
+    {% endcompress %}
+{% endblock %}
 {% block inside %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -19,44 +31,269 @@
         
         <fieldset>
             <legend>{% trans "Customer data (once per order)" %}</legend>
-            {% if sform.order_email_asked_required %}
-                {% bootstrap_field sform.order_email_asked_required layout="control" %}
-            {% else %}
-                {% bootstrap_field sform.order_email_asked layout="control" %}
-                {% bootstrap_field sform.order_email_required layout="control" %}
-            {% endif %}
-            {% bootstrap_field sform.order_email_asked_twice layout="control" %}
-            {% bootstrap_field sform.order_phone_asked_required layout="control" %}
-            <div class="form-group">
-                <label class="control-label col-md-3">
-                    {% trans "Name and address" %}
-                </label>
-                <div class="col-md-9 static-form-row">
-                    <p>
-                        <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
-                            {% trans "See invoice settings" %}
-                        </a>
-                    </p>
-                </div>
+            <div class="table-responsive-sm">
+                <table class="table table-sm order-form-option-table">
+                    <colgroup>
+                        <col class="field-col" style="width: auto;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Field" %}</th>
+                            <th class="text-center">{% trans "Active" %}</th>
+                            <th class="text-center">{% trans "Required" %}</th>
+                            <th class="text-center">{% trans "Settings" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# E-mail #}
+                        {% with field=sform.order_email_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label">{% trans "E-mail" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for E-mail' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% with twice_field=sform.order_email_asked_twice %}
+                                {% if twice_field %}
+                                <label class="checkbox-inline" title="{% trans 'Ask for the order email address twice' %}">
+                                    <input type="checkbox" name="{{ twice_field.html_name }}" id="{{ twice_field.auto_id }}" {% if twice_field.value %}checked{% endif %} aria-label="{% trans 'Ask for the order email address twice' %}">
+                                    {% trans "Ask twice" %}
+                                </label>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Phone number #}
+                        {% with field=sform.order_phone_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label">{% trans "Phone number" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for Phone number' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Name and address - static link #}
+                        <tr>
+                            <th>{% trans "Name and address" %}</th>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="text-center">
+                                <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open"
+                                   target="_blank"
+                                   rel="noopener noreferrer"
+                                   aria-label="{% trans 'See invoice settings (opens in new tab)' %}">
+                                    {% trans "See invoice settings" %}
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </fieldset>
 
         <fieldset>
             <legend>{% trans "Attendee data (once per admission ticket)" %}</legend>
-            {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
-            {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
+            <div class="table-responsive-sm">
+                <table class="table table-sm order-form-option-table">
+                    <colgroup>
+                        <col class="field-col" style="width: auto;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                        <col style="width: 180px;">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Field" %}</th>
+                            <th class="text-center">{% trans "Active" %}</th>
+                            <th class="text-center">{% trans "Required" %}</th>
+                            <th class="text-center">{% trans "Settings" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {# Attendee names #}
+                        {% with field=sform.attendee_names_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label">{% trans "Attendee names" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for Attendee names' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Attendee emails #}
+                        {% with field=sform.attendee_emails_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label" class="info-toggle-header">
+                                <div class="info-toggle-wrapper">
+                                    <span>{% trans "Attendee emails" %}</span>
+                                    <span class="info-toggle" data-toggle="info-box">
+                                        <i class="fa fa-info-circle text-info"></i>
+                                    </span>
+                                    <div class="inline-info-box d-none">
+                                        <div class="talk-info-box">
+                                            <div class="talk-info-icon">
+                                                <i class="fa fa-info-circle"></i>
+                                            </div>
+                                            <div class="talk-info-content">
+                                                <span>
+                                                    {% trans "Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings." %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for Attendee emails' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Attendee company #}
+                        {% with field=sform.attendee_company_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label">{% trans "Company" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for Company' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Attendee addresses #}
+                        {% with field=sform.attendee_addresses_asked_required %}
+                        {% if field %}
+                        <tr>
+                            <th id="{{ field.auto_id }}_label">{% trans "Postal addresses" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-labelledby="{{ field.auto_id }}_label">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        aria-label="{% trans 'Required status for Postal addresses' %}">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% trans "Optional" %}</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% trans "Required" %}</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td class="text-center"><span class="text-muted">—</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+                    </tbody>
+                </table>
+            </div>
             {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
         </fieldset>
 
         <fieldset>
             <legend>{% trans "Form settings" %}</legend>
-            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
-            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
             {% bootstrap_field sform.name_scheme layout="control" %}
             {% bootstrap_field sform.name_scheme_titles layout="control" %}
             {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
+            {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
+            {% bootstrap_field sform.include_wikimedia_username layout="control" %}
         </fieldset>
         
         <div class="form-group submit-group">
