@@ -23,7 +23,6 @@ from django.views.generic import (
     CreateView,
     DeleteView,
     ListView,
-    RedirectView,
     TemplateView,
     UpdateView,
     View,
@@ -81,15 +80,18 @@ class VoucherList(PaginationMixin, EventPermissionRequiredMixin, ListView):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
         ctx['tags_filter_form'] = self.tags_filter_form
-
-        tags = self.get_tags_queryset()
-        for t in tags:
-            if t['total'] == 0:
-                t['percentage'] = 0
-            else:
-                t['percentage'] = int((t['redeemed'] / t['total']) * 100)
         ctx['tab'] = self.request.GET.get('tab', 'vouchers')
-        ctx['tags'] = tags
+        if ctx['tab'] == 'tags':
+            tags = self.get_tags_queryset()
+            for t in tags:
+                if t['total'] == 0:
+                    t['percentage'] = 0
+                else:
+                    t['percentage'] = int((t['redeemed'] / t['total']) * 100)
+            ctx['tags'] = tags
+        else:
+            ctx['tags'] = []
+
         return ctx
 
     def get(self, request, *args, **kwargs):
