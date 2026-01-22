@@ -109,7 +109,7 @@ function initOrderFormToggles() {
                 }
                 
                 // Build URL for toggle endpoint
-                const baseUrl = window.location.pathname.replace(/\/orderforms\/?$/, '');
+                const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
                 const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
                 
                 // Send AJAX request
@@ -139,6 +139,11 @@ function initOrderFormToggles() {
                 
             } catch (error) {
                 // Revert on error
+                console.error('Failed to update required status', {
+                    questionId,
+                    fieldName,
+                    error,
+                });
                 this.dataset.current = previousValue;
                 this.value = previousValue;
                 if (wrapper) {
