@@ -9,6 +9,8 @@ updates:
     ignore:
       - dependency-name: "django"
         versions: [">=6.0.0"]
+      - dependency-name: "stripe"
+        versions: [">=11.4.0"]
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp"
