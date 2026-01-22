@@ -3,7 +3,7 @@ name = "eventyay-unified"
 version = "0.1.0"
 description = "Platform to manage events (ticketing, talk schedule)."
 readme = "README.rst"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.12, <3.13"
 keywords = ["tickets", "events", "web", "shop", "ecommerce"]
 authors = [ {name = "eventyay", email = "info@eventyay.com"}, ]
 maintainers = [ {name = "eventyay", email = "info@eventyay.com"}, ]
@@ -14,7 +14,6 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Environment :: Web Environment",
   "License :: OSI Approved :: Apache License, Version 2.0",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Framework :: Django :: 5.2",
 ]
@@ -203,6 +202,7 @@ dependencies = [
     "tzdata>=2025.3",
     "urllib3>=2.6.3",
     "urlman>=2.0.3",
+    # This library prevent us from being compatible with newer Python.
     "vat-moss-forked>=2020.3.20.0.11.0",
     "vine>=5.1.0",
     "vobject>=0.9.9",
@@ -285,15 +285,12 @@ lines-after-imports = 2
 [tool.setuptools]
 packages = ["eventyay"]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
-python_files = ["test_*.py"]
-testpaths = ["tests/stable"]
-addopts = "-v --tb=short --ignore=tests/talk --ignore=tests/tickets --ignore=tests/video"
+testpaths = ["tests"]
 asyncio_mode = "strict"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
-    "ignore::DeprecationWarning",
     "ignore::PendingDeprecationWarning",
 ]
 
