@@ -5,83 +5,38 @@
 {% block title %}{% translate "Organizer settings" %}{% endblock %}
 
 {% block content %}
+<h1 class="page-header">{% translate "Teams" %}</h1>
 <div class="organizer-management">
-    <h1 class="page-header">{{ organizer.name }}</h1>
-    <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="{% if active_section == 'general' %}active{% endif %}">
-            <a href="#" data-target="#general" aria-controls="general" role="tab" data-toggle="tab">
-                {% translate "General" %}
-            </a>
-        </li>
-        {% if can_manage_teams %}
-        <li role="presentation" class="{% if active_section == 'teams' %}active{% endif %}">
-            <a href="#" data-target="#teams" aria-controls="teams" role="tab" data-toggle="tab">
-                {% translate "Create Team" %}
-            </a>
-        </li>
-        <li role="presentation" class="{% if active_section == 'permissions' %}active{% endif %}">
-            <a href="#" data-target="#permissions" aria-controls="permissions" role="tab" data-toggle="tab">
-                {% translate "Manage Team Permissions" %}
-            </a>
-        </li>
-        {% endif %}
-    </ul>
-
-    <div class="tab-content">
-        <div role="tabpanel" class="tab-pane {% if active_section == 'general' %}active{% endif %}" id="general">
-            <form action="" method="post" class="form-horizontal mt-3">
-                {% csrf_token %}
-                {% bootstrap_form_errors form %}
-                <fieldset>
-                    <legend>{% translate "General information" %}</legend>
-                    {% bootstrap_field form.name layout="horizontal" %}
-                    {% bootstrap_field form.slug layout="horizontal" %}
-                </fieldset>
-
-                <fieldset>
-                    <h4>{{ _('Organizer settings:') }}
-                        <a href='{% url "control:organizer.edit" organizer=organizer.slug  %}'
-                                class="btn btn-sm btn-default" title="{{ _('Settings') }}"
-                                data-toggle="tooltip">
-                            <span class="fa fa-cog"></span>
-                        </a>
-                    </h4>
-                </fieldset>
-
-                <div class="form-group submit-group">
-                    <button type="submit" class="btn btn-primary">
-                        {% translate "Save" %}
+    {% if can_manage_teams %}
+            <div class="mt-3">
+                <div class="clearfix">
+                    <h2 class="pull-left" style="margin: 0;">{{ organizer.name }} {% translate "Teams" %}</h2>
+                    <button type="button" class="btn btn-primary pull-right" data-toggle="collapse" data-target="#create-team-form">
+                        <i class="fa fa-plus"></i> {% translate "Create a team" %}
                     </button>
                 </div>
-            </form>
-        </div>
+                <p class="text-muted" style="clear: both; padding-top: 10px;">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
 
-        {% if can_manage_teams %}
-        <div role="tabpanel" class="tab-pane {% if active_section == 'teams' %}active{% endif %}" id="teams">
-            <div class="panel panel-default mt-3">
-                <div class="panel-heading">
-                    <h3 class="panel-title">{% translate "Create a new team" %}</h3>
-                </div>
-                <div class="panel-body">
-                    <form action="" method="post" class="form-horizontal">
-                        {% csrf_token %}
-                        <input type="hidden" name="team_action" value="create">
-                        {% bootstrap_form_errors team_create_form %}
-                        {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=team_create_form %}
-                        <div class="form-group submit-group">
-                            <button type="submit" class="btn btn-primary">
-                                {% translate "Create team" %}
-                            </button>
+                <div id="create-team-form" class="collapse">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h3 class="panel-title">{% translate "Create a new team" %}</h3>
                         </div>
-                    </form>
+                        <div class="panel-body">
+                            <form action="" method="post" class="form-horizontal">
+                                {% csrf_token %}
+                                <input type="hidden" name="team_action" value="create">
+                                {% bootstrap_form_errors team_create_form %}
+                                {% include "eventyay_common/organizers/teams/_permissions_fieldsets.html" with form=team_create_form %}
+                                <div class="form-group submit-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        {% translate "Create team" %}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <div role="tabpanel" class="tab-pane {% if active_section == 'permissions' %}active{% endif %}" id="permissions">
-            <div class="mt-3">
-                <h2>{% translate "Manage Team Permissions" %}</h2>
-                <p class="text-muted">{% translate "Edit permissions for existing teams. Click 'Edit' to expand the permissions form." %}</p>
 
                 {% for panel in team_panels %}
                 <div class="panel-group team-permissions-panel" id="team-accordion-{{ panel.team.pk }}">
@@ -323,12 +278,10 @@
                 </div>
                 {% empty %}
                 <div class="alert alert-info">
-                    {% translate "No teams exist yet. Create a team in the 'Create Teams' tab first." %}
+                    {% translate "No teams exist yet. Click 'Create a team' to add your first team." %}
                 </div>
                 {% endfor %}
             </div>
-        </div>
-        {% endif %}
-    </div>
+    {% endif %}
 </div>
 {% endblock %}
