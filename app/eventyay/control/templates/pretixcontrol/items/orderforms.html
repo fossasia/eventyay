@@ -339,12 +339,12 @@
                             </td>
                             <td class="dnd-container text-center text-nowrap">
                                 {% if q.type == "DES" %}
-                                    <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-xs"><i class="fa fa-edit"></i></a>
-                                    <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-xs"><i class="fa fa-trash"></i></a>
+                                    <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
+                                    <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
                                 {% else %}
-                                    <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-xs"><i class="fa fa-bar-chart"></i></a>
-                                    <a href="{% url "control:event.products.questions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-xs"><i class="fa fa-edit"></i></a>
-                                    <a href="{% url "control:event.products.questions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-xs"><i class="fa fa-trash"></i></a>
+                                    <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-bar-chart fa-fw"></i></a>
+                                    <a href="{% url "control:event.products.questions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
+                                    <a href="{% url "control:event.products.questions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
                                 {% endif %}
                             </td>
                         </tr>
