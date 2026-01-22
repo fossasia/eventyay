@@ -247,9 +247,6 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
-       
-        
-        
         return context
 
     @transaction.atomic

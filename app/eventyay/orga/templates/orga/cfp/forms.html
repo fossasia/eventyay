@@ -8,15 +8,15 @@
 
 {% block stylesheets %}
     {% compress css %}
-        <link rel="stylesheet" href="{% static "orga/css/dragsort.css" %}">
+        <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
         <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
     {% endcompress %}
 {% endblock stylesheets %}
 
 {% block scripts %}
     {% compress js %}
-        <script defer src="{% static "common/js/modalDialog.js" %}"></script>
-        <script defer src="{% static "orga/js/dragsort.js" %}"></script>
+        <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+        <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
         <script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
         <script defer src="{% static 'orga/js/cfp.js' %}"></script>
     {% endcompress %}
@@ -112,7 +112,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -142,7 +142,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -172,7 +172,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -202,7 +202,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -232,7 +232,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -263,7 +263,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -295,7 +295,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -325,7 +325,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -422,7 +422,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -452,7 +452,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -482,7 +482,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -512,7 +512,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -542,7 +542,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
@@ -572,7 +572,7 @@
                                     <span class="toggle-slider"></span>
                                 </label>
                                 <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
                             </td>
                             <td class="text-center">
                                 <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
