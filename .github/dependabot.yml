@@ -6,6 +6,9 @@ updates:
     schedule:
       interval: "daily"
     versioning-strategy: increase
+    ignore:
+      - dependency-name: "django"
+        versions: [">=6.0.0"]
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp"
