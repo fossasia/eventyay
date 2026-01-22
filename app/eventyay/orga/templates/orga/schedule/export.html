@@ -64,19 +64,12 @@
             <fieldset>
                 <legend id="dataset">{% translate "Dataset" %}</legend>
                 <div class="form-group row">
-                    <label class="col-md-3 col-form-label text-md-right">
+                    <label class="col-md-3 col-form-label text-md-right" for="{{ form.target.id_for_label }}">
                         {{ form.target.label }}
                         {% if form.target.field.required %}*{% endif %}
                     </label>
                     <div class="col-md-9">
-                        {% for radio in form.target %}
-                        <div class="form-check">
-                            {{ radio.tag }}
-                            <label class="form-check-label" for="{{ radio.id_for_label }}">
-                                {{ radio.choice_label }}
-                            </label>
-                        </div>
-                        {% endfor %}
+                        {{ form.target }}
                     </div>
                 </div>
             </fieldset>
