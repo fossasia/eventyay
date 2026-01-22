@@ -1253,10 +1253,6 @@ dependencies = [
     { name = "pillow" },
     { name = "polib" },
     { name = "potypo" },
-    { name = "pretalx-downstream" },
-    { name = "pretalx-pages" },
-    { name = "pretalx-venueless" },
-    { name = "pretix-pages" },
     { name = "protobuf" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "publicsuffixlist" },
@@ -1488,10 +1484,6 @@ requires-dist = [
     { name = "pillow", specifier = ">=12.1.0" },
     { name = "polib", specifier = ">=1.2.0" },
     { name = "potypo", specifier = ">=0.0.2" },
-    { name = "pretalx-downstream", git = "https://github.com/fossasia/eventyay-talk-downstream.git?rev=6ad15e7bce1a621cdbf52a3d43c0f0a5e7eca664" },
-    { name = "pretalx-pages", git = "https://github.com/fossasia/eventyay-talk-pages.git?rev=a726a10459644f0bfde5019be8abf4f66b77cd27" },
-    { name = "pretalx-venueless", git = "https://github.com/fossasia/eventyay-talk-video.git?rev=8c3316a0ee7e801dc9c30b56a3c523c01209bb61" },
-    { name = "pretix-pages", git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=a7c33fd26351d409a752baa6989f24be511b5bdd" },
     { name = "protobuf", specifier = ">=6.33.4" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.2" },
     { name = "publicsuffixlist", specifier = ">=1.0.2.20260114" },
@@ -2325,29 +2317,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/cf/17/a733904540a3ce401
 wheels = [
     { url = "https://files.pythonhosted.org/packages/94/3b/e36e09cfeab743de3ca26373d15599748c4aa9251d86f315b60f0da44d47/potypo-0.0.2-py3-none-any.whl", hash = "sha256:1d8efe5ebb3d584fe1a9d121d9d9536c7214edf6660a39af8ce92090e1d05eac", size = 9185, upload-time = "2018-05-03T15:20:07.086Z" },
 ]
-
-[[package]]
-name = "pretalx-downstream"
-version = "1.3.1"
-source = { git = "https://github.com/fossasia/eventyay-talk-downstream.git?rev=6ad15e7bce1a621cdbf52a3d43c0f0a5e7eca664#6ad15e7bce1a621cdbf52a3d43c0f0a5e7eca664" }
-
-[[package]]
-name = "pretalx-pages"
-version = "1.6.0"
-source = { git = "https://github.com/fossasia/eventyay-talk-pages.git?rev=a726a10459644f0bfde5019be8abf4f66b77cd27#a726a10459644f0bfde5019be8abf4f66b77cd27" }
-
-[[package]]
-name = "pretalx-venueless"
-version = "1.5.0"
-source = { git = "https://github.com/fossasia/eventyay-talk-video.git?rev=8c3316a0ee7e801dc9c30b56a3c523c01209bb61#8c3316a0ee7e801dc9c30b56a3c523c01209bb61" }
-dependencies = [
-    { name = "pyjwt" },
-]
-
-[[package]]
-name = "pretix-pages"
-version = "1.6.1"
-source = { git = "https://github.com/fossasia/eventyay-ticket-pages.git?rev=a7c33fd26351d409a752baa6989f24be511b5bdd#a7c33fd26351d409a752baa6989f24be511b5bdd" }
 
 [[package]]
 name = "prompt-toolkit"
