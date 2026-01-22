@@ -21,7 +21,7 @@
     "buntpapier": "^2.0.0-alpha.34",
     "color": "^5.0.3",
     "color-blend": "^4.0.0",
-    "core-js": "^3.47.0",
+    "core-js": "^3.48.0",
     "dompurify": "^3.3.1",
     "emoji-datasource-twitter": "^16.0.0",
     "emoji-mart": "^3.0.0",
