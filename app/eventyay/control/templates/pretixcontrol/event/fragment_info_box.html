@@ -7,7 +7,7 @@
     </div>
     <div class="panel-body timeline overide-panel-body">
         <div class="info-row">
-            {% trans "This event is organized by" %} <strong><a href="{% url 'eventyay_commmon:organizer' request.organizer.slug %}">{{ request.organizer }}</a></strong>
+            {% trans "This event is organized by" %} <strong><a href="{% url 'control:organizer' request.organizer.slug %}">{{ request.organizer }}</a></strong>
         </div>
         <div class="info-row">
             {% trans "Teams of the organizer are" %} 
