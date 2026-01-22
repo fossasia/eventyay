@@ -13,7 +13,7 @@
             {% include "pretixcontrol/event/component_link.html" %}
         </div>
     </nav>
-    <ul class="nav nav-tabs" style="margin-bottom: 20px; border: none;">
+    <ul class="nav nav-tabs">
         <li {% if tab == "vouchers" %}class="active"{% endif %}>
             <a href="?tab=vouchers">
                 {% trans "All vouchers" %}
@@ -25,7 +25,7 @@
             </a>
         </li>
     </ul>
-    <div class="tab-content" style="border: none;">
+    <div class="tab-content">
         <div id="vouchers" class="tab-pane {% if tab == "vouchers" %}active{% endif %}">
             <p>
                 {% blocktrans trimmed %}
