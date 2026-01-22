@@ -131,7 +131,6 @@ class SenderView(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
                     preview_subject = subject.format_map(context_dict)
                     message = form.cleaned_data['message'].localize(l)
                     preview_text = markdown_compile_email(message.format_map(context_dict))
-                    logger.debug("TESTING %s", preview_text)
 
                     self.output[l] = {
                         'subject': _('Subject: {subject}').format(subject=preview_subject),

@@ -132,10 +132,12 @@ class ShowPageView(TemplateView):
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
-        attributes = deepcopy(nh3.ALLOWED_ATTRIBUTES)
-        attributes['a'].update({'title', 'target'})
-        attributes.setdefault('p', set()).add('class')
-        attributes.setdefault('li', set()).add('class')
+        attributes = {
+            **nh3.ALLOWED_ATTRIBUTES,
+            'a': nh3.ALLOWED_ATTRIBUTES['a'] | {'title', 'target'},
+            'p': {'class'},
+            'li': {'class'},
+        }
 
         tags = nh3.ALLOWED_TAGS
 
