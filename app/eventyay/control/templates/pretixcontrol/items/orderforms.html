@@ -152,7 +152,7 @@
                             <th class="text-center">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
+                    <tbody>
                         {# Attendee names #}
                         {% with field=sform.attendee_names_asked_required %}
                         {% if field %}
@@ -287,8 +287,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
-                        
-                        {# Custom fields #}
+                    </tbody>
+                    
+                    {# Custom fields with drag-and-drop reordering #}
+                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
                         {% for q in questions %}
                         <tr data-dnd-id="{{ q.id }}">
                             <th>

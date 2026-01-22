@@ -86,6 +86,7 @@ function initOrderFormToggles() {
     document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
         dropdown.addEventListener('change', async function() {
             const questionId = this.dataset.questionId;
+            const fieldName = this.getAttribute('aria-label') || 'this field';
             const newValue = this.value === 'required'; // Convert to boolean
             const previousValue = this.dataset.current;
             const wrapper = this.closest('.required-status-wrapper');
@@ -140,13 +141,12 @@ function initOrderFormToggles() {
                 
             } catch (error) {
                 // Revert on error
-                console.error('Failed to update required status:', error);
                 this.dataset.current = previousValue;
                 this.value = previousValue;
                 if (wrapper) {
                     wrapper.dataset.current = previousValue;
                 }
-                alert('Failed to update required status. Please try again or refresh the page.');
+                alert(`Failed to update required status for ${fieldName}. Please try again or refresh the page.`);
             } finally {
                 this.disabled = false;
                 this.classList.remove('loading');
