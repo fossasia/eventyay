@@ -4,7 +4,7 @@ from decimal import Decimal
 from io import BytesIO
 from typing import Tuple
 
-import bleach
+import nh3
 import vat_moss.exchange_rates
 from django.contrib.staticfiles import finders
 from django.dispatch import receiver
@@ -291,7 +291,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
     def _draw_invoice_to(self, canvas):
         p = Paragraph(
-            bleach.clean(self.invoice.address_invoice_to, tags=[]).strip().replace('\n', '<br />\n'),
+            nh3.clean(self.invoice.address_invoice_to, tags=set()).strip().replace('\n', '<br />\n'),
             style=self.stylesheet['Normal'],
         )
         p.wrapOn(canvas, self.invoice_to_width, self.invoice_to_height)
@@ -309,7 +309,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
 
     def _draw_invoice_from(self, canvas):
         p = Paragraph(
-            bleach.clean(self.invoice.full_invoice_from, tags=[]).strip().replace('\n', '<br />\n'),
+            nh3.clean(self.invoice.full_invoice_from, tags=set()).strip().replace('\n', '<br />\n'),
             style=self.stylesheet['InvoiceFrom'],
         )
         p.wrapOn(canvas, self.invoice_from_width, self.invoice_from_height)
@@ -424,7 +424,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
     def _draw_event(self, canvas):
         def shorten(txt):
             txt = str(txt)
-            txt = bleach.clean(txt, tags=[]).strip()
+            txt = nh3.clean(txt, tags=set()).strip()
             p = Paragraph(txt.strip().replace('\n', '<br />\n'), style=self.stylesheet['Normal'])
             p_size = p.wrap(self.event_width, self.event_height)
 
@@ -527,13 +527,13 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
             story.append(
                 Paragraph(
                     '{}: {}'.format(
-                        bleach.clean(
+                        nh3.clean(
                             str(self.invoice.event.settings.invoice_address_custom_field),
-                            tags=[],
+                            tags=set(),
                         )
                         .strip()
                         .replace('\n', '<br />\n'),
-                        bleach.clean(self.invoice.custom_field, tags=[]).strip().replace('\n', '<br />\n'),
+                        nh3.clean(self.invoice.custom_field, tags=set()).strip().replace('\n', '<br />\n'),
                     ),
                     self.stylesheet['Normal'],
                 )
@@ -543,7 +543,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
             story.append(
                 Paragraph(
                     pgettext('invoice', 'Customer reference: {reference}').format(
-                        reference=bleach.clean(self.invoice.internal_reference, tags=[])
+                        reference=nh3.clean(self.invoice.internal_reference, tags=set())
                         .strip()
                         .replace('\n', '<br />\n'),
                     ),
@@ -556,7 +556,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
                 Paragraph(
                     pgettext('invoice', 'Customer VAT ID')
                     + ': '
-                    + bleach.clean(self.invoice.invoice_to_vat_id, tags=[]).replace('\n', '<br />\n'),
+                    + nh3.clean(self.invoice.invoice_to_vat_id, tags=set()).replace('\n', '<br />\n'),
                     self.stylesheet['Normal'],
                 )
             )
@@ -566,7 +566,7 @@ class ClassicInvoiceRenderer(BaseReportlabInvoiceRenderer):
                 Paragraph(
                     pgettext('invoice', 'Beneficiary')
                     + ':<br />'
-                    + bleach.clean(self.invoice.invoice_to_beneficiary, tags=[]).replace('\n', '<br />\n'),
+                    + nh3.clean(self.invoice.invoice_to_beneficiary, tags=set()).replace('\n', '<br />\n'),
                     self.stylesheet['Normal'],
                 )
             )
@@ -870,7 +870,7 @@ class Modern1Renderer(ClassicInvoiceRenderer):
         if not self.invoice.invoice_from:
             return
         c = [
-            bleach.clean(l, tags=[]).strip().replace('\n', '<br />\n')
+            nh3.clean(l, tags=set()).strip().replace('\n', '<br />\n')
             for l in self.invoice.address_invoice_from.strip().split('\n')
         ]
         p = Paragraph(' · '.join(c), style=self.stylesheet['Sender'])
