@@ -353,6 +353,11 @@ urlpatterns = [
                     name='event.products.questions.delete',
                 ),
                 url(
+                    r'^questions/(?P<question>\d+)/toggle/$',
+                    product.QuestionToggle.as_view(),
+                    name='event.products.questions.toggle',
+                ),
+                url(
                     r'^questions/(?P<question>\d+)/$',
                     product.QuestionView.as_view(),
                     name='event.products.questions.show',

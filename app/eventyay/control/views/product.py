@@ -15,12 +15,15 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import resolve, reverse
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext
 from django.utils.translation import gettext_lazy as _
+from django.views import View
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic import ListView, FormView
 from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import DeleteView, CreateView, UpdateView
@@ -427,6 +430,53 @@ class QuestionDelete(EventPermissionRequiredMixin, DeleteView):
 
 class DescriptionDelete(QuestionDelete):
     template_name = 'pretixcontrol/items/desciption_delete.html'
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class QuestionToggle(EventPermissionRequiredMixin, View):
+    """Toggle question field states via AJAX POST."""
+    permission = 'can_change_items'
+
+    def get_object(self) -> Question:
+        return get_object_or_404(
+            Question,
+            event=self.request.event,
+            pk=self.kwargs.get('question')
+        )
+
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        question = self.get_object()
+        
+        try:
+            data = json.loads(request.body.decode())
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+        field = data.get('field')
+        value = data.get('value')
+
+        # Validate that both field and value are present
+        if field is None:
+            return JsonResponse({'error': 'Missing field parameter'}, status=400)
+        if value is None:
+            return JsonResponse({'error': 'Missing value parameter'}, status=400)
+
+        if field == 'required':
+            # Validate type for boolean fields
+            if not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be boolean for required field'}, status=400)
+            question.required = value
+            question.save(update_fields=['required'])
+            question.log_action(
+                'eventyay.event.question.changed',
+                user=self.request.user,
+                data={'required': value}
+            )
+        else:
+            return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
+
+        return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
 
 
 class QuestionMixin:

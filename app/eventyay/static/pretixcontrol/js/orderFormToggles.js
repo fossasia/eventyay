@@ -8,6 +8,13 @@ const REQUIRED_STATES = {
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
 
+// Helper function to get cookie value
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         initOrderFormToggles();
@@ -71,6 +78,78 @@ function initOrderFormToggles() {
             const infoBox = this.nextElementSibling;
             if (infoBox && infoBox.classList.contains('inline-info-box')) {
                 infoBox.classList.toggle('d-none');
+            }
+        });
+    });
+
+    // Handle custom field required dropdown changes (AJAX update)
+    document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
+        dropdown.addEventListener('change', async function() {
+            const questionId = this.dataset.questionId;
+            const newValue = this.value === 'required'; // Convert to boolean
+            const previousValue = this.dataset.current;
+            const wrapper = this.closest('.required-status-wrapper');
+            
+            // Optimistic UI update
+            this.dataset.current = this.value;
+            if (wrapper) {
+                wrapper.dataset.current = this.value;
+            }
+            
+            // Add loading state
+            this.disabled = true;
+            this.classList.add('loading');
+            
+            try {
+                // Get CSRF token
+                const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+                
+                // Build URL for toggle endpoint
+                const baseUrl = window.location.pathname.replace(/\/orderforms\/?$/, '');
+                const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
+                
+                // Send AJAX request
+                const response = await fetch(toggleUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        field: 'required',
+                        value: newValue
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                // Success - show brief feedback
+                const originalBg = this.style.backgroundColor;
+                this.style.backgroundColor = '#d4edda';
+                setTimeout(() => {
+                    this.style.backgroundColor = originalBg;
+                }, 500);
+                
+            } catch (error) {
+                // Revert on error
+                console.error('Failed to update required status:', error);
+                this.dataset.current = previousValue;
+                this.value = previousValue;
+                if (wrapper) {
+                    wrapper.dataset.current = previousValue;
+                }
+                alert('Failed to update required status. Please try again or refresh the page.');
+            } finally {
+                this.disabled = false;
+                this.classList.remove('loading');
             }
         });
     });
