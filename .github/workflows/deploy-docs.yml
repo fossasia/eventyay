@@ -19,6 +19,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      EVY_REDIS_URL: redis://localhost:6379/0
     services:
       redis:
         image: redis:7-alpine
@@ -36,7 +38,6 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
-        id: setup-python
         uses: actions/setup-python@v6
         with:
           python-version: '3.12'
@@ -67,18 +68,12 @@ jobs:
 
       - name: Install Python dependencies (docs)
         working-directory: ./app
-        env:
-          UV_PYTHON: ${{ steps.setup-python.outputs.python-path }}
         run: uv sync --frozen --group docs
-
-      - name: Add venv to PATH
-        run: echo "${{ github.workspace }}/app/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Build documentation
         working-directory: ./doc
         run: |
-          make clean
-          make html
+          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
 
       - name: Prepare deployment
         if: github.event_name == 'push'
