@@ -338,7 +338,6 @@ class QuestionList(EventPermissionRequiredMixin, ListView):
     Redirects to Order Forms page where custom fields are now integrated.
     This view is kept for backward compatibility with any external links.
     """
-    model = Question
     permission = 'can_change_items'
 
     def get(self, request, *args, **kwargs):
@@ -465,7 +464,9 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
         if field == 'required':
             # Validate type for boolean fields
             if not isinstance(value, bool):
-                return JsonResponse({'error': 'Value must be boolean for required field'}, status=400)
+                return JsonResponse({
+                    'error': f'Value must be a boolean for required field, received: {type(value).__name__}'
+                }, status=400)
             question.required = value
             question.save(update_fields=['required'])
             question.log_action(
