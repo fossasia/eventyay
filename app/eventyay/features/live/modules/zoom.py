@@ -22,7 +22,7 @@ class ZoomModule(BaseModule):
     )
     async def room_url(self, body):
         if not self.consumer.user.profile.get("display_name"):
-            raise ConsumerException("bbb.join.missing_profile")
+            raise ConsumerException("zoom.join.missing_profile")
 
         if not self.module_config.get("meeting_number"):
             raise ConsumerException("zoom.no_meeting_id")
