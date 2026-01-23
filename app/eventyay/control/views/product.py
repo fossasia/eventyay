@@ -1,4 +1,5 @@
 import json
+import logging
 from collections import OrderedDict, namedtuple
 from json.decoder import JSONDecodeError
 
@@ -79,6 +80,8 @@ from eventyay.helpers.models import modelcopy
 
 from ...base.channels import get_all_sales_channels
 from . import ChartContainingView, CreateView, PaginationMixin, UpdateView
+
+logger = logging.getLogger(__name__)
 
 
 class ProductList(ListView):
@@ -450,31 +453,26 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
         try:
             data = json.loads(request.body.decode())
         except json.JSONDecodeError as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.warning('Invalid JSON in QuestionToggle request: %s', e)
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
         field = data.get('field')
         value = data.get('value')
 
-        # Validate that both field and value are present
+        # Validate that the field name is present
         if field is None:
             return JsonResponse({'error': 'Missing field parameter'}, status=400)
-        if value is None:
-            return JsonResponse({'error': 'Missing value parameter'}, status=400)
 
         if field == 'required':
-            # Validate type for boolean fields
-            if not isinstance(value, bool):
-                import logging
-                logger = logging.getLogger(__name__)
+            # Validate presence and type for boolean fields
+            if value is None or not isinstance(value, bool):
                 logger.warning(
-                    'Invalid value type for question %s field %s: expected bool, got %s',
-                    question.pk, field, type(value).__name__
+                    'Invalid value for question %s field %s: expected bool, got %s',
+                    question.pk, field, type(value).__name__ if value is not None else 'None'
                 )
                 return JsonResponse({
-                    'error': f'Value must be a boolean for required field, received: {type(value).__name__}'
+                    'error': 'Value must be a boolean for required field',
+                    'received': type(value).__name__ if value is not None else 'None'
                 }, status=400)
             question.required = value
             question.save(update_fields=['required'])

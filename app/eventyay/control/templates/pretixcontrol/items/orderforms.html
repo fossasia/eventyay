@@ -304,10 +304,18 @@
                                 <br><small class="text-muted">{{ q.identifier }}</small>
                             </th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on" aria-label="{% translate 'Custom field is always active' %}">
-                                    <input type="checkbox" checked disabled aria-label="{% translate 'Always active' %}">
+                                <label class="toggle-switch always-on"
+                                    aria-label="{% translate 'Custom field is always active' %}"
+                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
+                                    <input type="checkbox"
+                                        checked
+                                        disabled
+                                        aria-describedby="custom-field-always-active-{{ q.id }}">
                                     <span class="toggle-slider"></span>
                                 </label>
+                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
+                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
+                                </span>
                             </td>
                             <td class="text-center">
                                 {% if q.type != "DES" %}
@@ -325,7 +333,7 @@
                                 {% endif %}
                             </td>
                             <td class="text-center">
-                                <ul class="list-unstyled" style="margin: 0;">
+                                <ul class="list-unstyled products-list">
                                     {% for product in q.products.all %}
                                         <li>
                                             <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
@@ -351,7 +359,7 @@
                 </table>
             </div>
             
-            <p style="margin-top: 2em; text-align: right;">
+            <p class="order-form-create-buttons">
                 <a href="{% url "control:event.products.questions.add" event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-primary">
                     <i class="fa fa-plus"></i> {% translate "Create a new custom field" %}
                 </a>
@@ -360,7 +368,7 @@
                 </a>
             </p>
             
-            <div style="margin-top: 3em;">
+            <div class="attendee-data-explanation">
                 {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
             </div>
         </fieldset>
