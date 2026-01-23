@@ -107,7 +107,7 @@
                     <a href="{% url "control:event.vouchers.bulk" organizer=request.event.organizer.slug event=request.event.slug %}"
                             class="btn btn-default"><i class="fa fa-plus"></i>
                         {% trans "Create multiple new vouchers" %}</a>
-                    <a href="?{% url_replace request "download" "yes" %}"
+                    <a href="?{% url_replace request "download" "yes" "tab" tab %}"
                             class="btn btn-default"><i class="fa fa-download"></i>
                         {% trans "Download list" %}</a>
                 </p>
