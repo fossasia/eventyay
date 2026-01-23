@@ -856,7 +856,7 @@ class Event(
         """URL patterns for API endpoints related to this event."""
 
         base_path = settings.TALK_BASE_PATH
-        base = '{base_path}/api/events/{self.slug}/'
+        base = '{base_path}/api/v1/events/{self.slug}/'
         submissions = '{base}submissions/'
         slots = '{base}slots/'
         talks = '{base}talks/'

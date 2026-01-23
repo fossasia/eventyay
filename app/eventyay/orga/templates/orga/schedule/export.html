@@ -64,19 +64,12 @@
             <fieldset>
                 <legend id="dataset">{% translate "Dataset" %}</legend>
                 <div class="form-group row">
-                    <label class="col-md-3 col-form-label text-md-right">
+                    <label class="col-md-3 col-form-label text-md-right" for="{{ form.target.id_for_label }}">
                         {{ form.target.label }}
                         {% if form.target.field.required %}*{% endif %}
                     </label>
                     <div class="col-md-9">
-                        {% for radio in form.target %}
-                        <div class="form-check">
-                            {{ radio.tag }}
-                            <label class="form-check-label" for="{{ radio.id_for_label }}">
-                                {{ radio.choice_label }}
-                            </label>
-                        </div>
-                        {% endfor %}
+                        {{ form.target }}
                     </div>
                 </div>
             </fieldset>
@@ -190,7 +183,7 @@
  curl -H "Authorization: Token {{ request.user.auth_token.key }}" {{ request.event.api_urls.submissions.full }} </pre>
 
         <div class="submit-group"><span></span><span>
-            <a class="btn btn-lg btn-info" href="https://eventyay.com/developer/api/">
+            <a class="btn btn-lg btn-info" href="https://docs.eventyay.com/api/fundamentals" target="_blank" rel="noopener noreferrer">
                 <i class="fa fa-book"></i>
                 {% translate "Documentation" %}
             </a>
