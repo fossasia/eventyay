@@ -19,6 +19,7 @@ from eventyay.common.forms.widgets import (
     HtmlDateTimeInput,
     TextInputWithAddon,
 )
+from eventyay.helpers.escapejson import escapejson_attr
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import (
     AnswerOption,
@@ -240,6 +241,55 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
 
+            self.fields['is_public'].disabled = True
+
+        self.fields['dependency_question'].queryset = self.instance.event.talkquestions.filter(
+            variant__in=[
+                TalkQuestionVariant.BOOLEAN,
+                TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.MULTIPLE,
+            ]
+        )
+        if self.instance.pk:
+            self.fields['dependency_question'].queryset = self.fields['dependency_question'].queryset.exclude(
+                pk=self.instance.pk
+            )
+        self.fields['dependency_values'].required = False
+
+        self.fields['dependency_values'].required = False
+
+        dep_q_id = None
+        if self.is_bound:
+            dep_q_id = self.data.get(self.add_prefix('dependency_question'))
+        
+        if not dep_q_id and self.instance.pk and self.instance.dependency_question_id:
+            dep_q_id = self.instance.dependency_question_id
+
+        if dep_q_id:
+            try:
+                q = self.fields['dependency_question'].queryset.get(pk=dep_q_id)
+                if q.variant == TalkQuestionVariant.BOOLEAN:
+                    self.fields['dependency_values'].widget.choices = [('True', _('Yes')), ('False', _('No'))]
+                elif q.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+                     self.fields['dependency_values'].widget.choices = [
+                         (str(o.pk), str(o.answer)) 
+                         for o in q.options.all()
+                     ]
+            except Exception:
+                pass
+
+        dep_data = {}
+        for q in self.fields['dependency_question'].queryset:
+            if q.variant == TalkQuestionVariant.BOOLEAN:
+                dep_data[q.pk] = [{'id': 'True', 'label': str(_('Yes'))}, {'id': 'False', 'label': str(_('No'))}]
+            elif q.variant in (TalkQuestionVariant.CHOICES, TalkQuestionVariant.MULTIPLE):
+                dep_data[q.pk] = [{'id': str(o.pk), 'label': str(o.answer)} for o in q.options.all()]
+        
+        self.fields['dependency_question'].widget.attrs['data-dependency-map'] = escapejson_attr(json.dumps(dep_data))
+
+    def clean_dependency_values(self):
+        return self.data.getlist(self.add_prefix('dependency_values'))
+
     def clean_options(self):
         # read uploaded file, return list of strings or list of i18n strings
         options = self.cleaned_data.get('options')
@@ -339,6 +389,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date',
             'min_datetime',
             'max_datetime',
+            'dependency_question',
+            'dependency_values',
         ]
         widgets = {
             'deadline': HtmlDateTimeInput,
@@ -350,11 +402,13 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date': HtmlDateInput,
             'tracks': EnhancedSelectMultiple,
             'submission_types': EnhancedSelectMultiple,
+            'dependency_values': forms.SelectMultiple,
         }
         field_classes = {
             'variant': SafeModelChoiceField,
             'tracks': SafeModelMultipleChoiceField,
             'submission_types': SafeModelMultipleChoiceField,
+            'dependency_question': SafeModelChoiceField,
         }
 
 

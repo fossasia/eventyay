@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from functools import partial
@@ -11,7 +12,9 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from hierarkey.forms import HierarkeyForm
 from i18nfield.forms import I18nFormField
+from django.core.exceptions import ValidationError
 
+from eventyay.helpers.escapejson import escapejson_attr
 from eventyay.common.forms.fields import ExtensionFileField
 from eventyay.common.forms.validators import (
     MaxDateTimeValidator,
@@ -199,7 +202,52 @@ class QuestionFieldsMixin:
             )
             field.question = question
             field.answer = initial_object
+            
+            if question.dependency_question_id:
+                field.widget.attrs['data-question-dependency'] = question.dependency_question_id
+                field.widget.attrs['data-question-dependency-values'] = escapejson_attr(json.dumps(question.dependency_values))
+                if question.required:
+                    field._required = True
+                field.required = False
+                
             self.fields[f'question_{question.pk}'] = field
+
+    def clean(self):
+        cleaned_data = super().clean()
+        question_cache = {f.question.pk: f.question for f in self.fields.values() if getattr(f, 'question', None)}
+
+        def question_is_visible(parentid, qvals):
+            if parentid not in question_cache:
+                return False
+            parentq = question_cache[parentid]
+            if parentq.dependency_question_id and not question_is_visible(
+                parentq.dependency_question_id, parentq.dependency_values
+            ):
+                return False
+            if 'question_%d' % parentid not in cleaned_data:
+                return False
+            dval = cleaned_data.get('question_%d' % parentid)
+            return (
+                ('True' in qvals and dval)
+                or ('False' in qvals and not dval)
+                or (hasattr(dval, 'identifier') and dval.identifier in qvals)
+                or (isinstance(dval, (list, tuple)) and any(qval in [getattr(o, 'identifier', str(o)) for o in dval] for qval in qvals))
+                or (isinstance(dval, str) and dval in qvals)
+            )
+
+        for q in question_cache.values():
+            if not getattr(self.fields[f'question_{q.pk}'], '_required', False):
+                continue
+            
+            is_visible = not q.dependency_question_id or question_is_visible(
+                q.dependency_question_id, q.dependency_values
+            )
+            if is_visible:
+                value = cleaned_data.get(f'question_{q.pk}')
+                if not value and value != 0 and value is not False:
+                     self.add_error(f'question_{q.pk}', self.fields[f'question_{q.pk}'].error_messages['required'])
+
+        return cleaned_data
 
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.templatetags.rich_text import rich_text

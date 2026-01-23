@@ -7,9 +7,9 @@ const question_page_toggle_view = () => {
     setVisibility(
         "#alert-required-boolean",
         variant === "boolean" &&
-            document.querySelector(
-                "#id_question_required input[value=required]",
-            ).checked,
+        document.querySelector(
+            "#id_question_required input[value=required]",
+        ).checked,
     )
     setVisibility("#limit-length", variant === "text" || variant === "string")
     setVisibility("#limit-number", variant === "number")
@@ -42,6 +42,38 @@ const question_page_toggle_deadline = () => {
         setVisibility(deadlineWrapper, false)
         deadline.removeAttribute("required")
     }
+}
+
+const question_page_toggle_dependency = () => {
+    const dependency_question = document.querySelector("#id_dependency_question")
+    const dependency_values = document.querySelector("#id_dependency_values")
+    const dependency_values_wrapper = dependency_values.closest(".form-group")
+
+    if (!dependency_question.value) {
+        setVisibility(dependency_values_wrapper, false)
+        return
+    }
+
+    setVisibility(dependency_values_wrapper, true)
+    const map = JSON.parse(dependency_question.getAttribute("data-dependency-map"))
+    const values = map[dependency_question.value] || []
+
+    // Save currently selected values
+    const selected = Array.from(dependency_values.options)
+        .filter(opt => opt.selected)
+        .map(opt => opt.value)
+
+    // Clear and repopulate options
+    dependency_values.innerHTML = ""
+    values.forEach(v => {
+        const opt = document.createElement("option")
+        opt.value = v.id
+        opt.text = v.label
+        if (selected.includes(v.id)) {
+            opt.selected = true
+        }
+        dependency_values.appendChild(opt)
+    })
 }
 
 const setVisibility = (element, value) => {
@@ -78,4 +110,10 @@ onReady(() => {
     question_page_toggle_view()
     question_page_toggle_target_view()
     question_page_toggle_deadline()
+
+    const param = document.querySelector("#id_dependency_question")
+    if (param) {
+        param.addEventListener("change", question_page_toggle_dependency)
+        question_page_toggle_dependency()
+    }
 })

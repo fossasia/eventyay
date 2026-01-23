@@ -15,6 +15,7 @@ from eventyay.talk_rules.person import is_reviewer
 from eventyay.talk_rules.submission import is_cfp_open, orga_can_change_submissions
 
 from .mixins import OrderedModel, PretalxModel
+from eventyay.base.models.fields import MultiStringField
 
 
 def answer_file_path(instance, filename):
@@ -243,6 +244,20 @@ class TalkQuestion(OrderedModel, PretalxModel):
             'Should responses to this field be shown to reviewers? This is helpful if you want to collect '
             'personal information, but use anonymous reviews.'
         ),
+    )
+    dependency_question = models.ForeignKey(
+        to='TalkQuestion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='dependent_questions',
+        verbose_name=_('Dependency question'),
+        help_text=_('This question will only be shown if the answer to the selected question matches the selected values.'),
+    )
+    dependency_values = MultiStringField(
+        default=[],
+        verbose_name=_('Dependency values'),
+        help_text=_('If any of these values is selected, this question will be shown.'),
     )
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllTalkQuestionManager)
