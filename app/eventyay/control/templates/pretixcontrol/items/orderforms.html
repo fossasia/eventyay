@@ -152,11 +152,11 @@
                             <th class="text-center">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
                         {# Attendee names #}
                         {% with field=sform.attendee_names_asked_required %}
                         {% if field %}
-                        <tr>
+                        <tr data-dnd-id="attendee_name_parts">
                             <th id="{{ field.auto_id }}_label">{% translate "Attendee names" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -177,7 +177,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center"></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -185,7 +185,7 @@
                         {# Attendee emails #}
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
-                        <tr>
+                        <tr data-dnd-id="attendee_email">
                             <th id="{{ field.auto_id }}_label" class="info-toggle-header">
                                 <div class="info-toggle-wrapper">
                                     <span>{% translate "Attendee emails" %}</span>
@@ -225,7 +225,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center"></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -233,7 +233,7 @@
                         {# Attendee company #}
                         {% with field=sform.attendee_company_asked_required %}
                         {% if field %}
-                        <tr>
+                        <tr data-dnd-id="attendee_company">
                             <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -254,7 +254,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center"></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -262,7 +262,7 @@
                         {# Attendee addresses #}
                         {% with field=sform.attendee_addresses_asked_required %}
                         {% if field %}
-                        <tr>
+                        <tr data-dnd-id="attendee_address">
                             <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -283,14 +283,12 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
+                            <td class="dnd-container text-center"></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
-                    </tbody>
-                    
-                    {# Custom fields with drag-and-drop reordering #}
-                    <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
+                        
+                        {# Custom fields #}
                         {% for q in questions %}
                         <tr data-dnd-id="{{ q.id }}">
                             <th>
@@ -353,7 +351,7 @@
                 </table>
             </div>
             
-            <p style="margin-top: 2em;">
+            <p style="margin-top: 2em; text-align: right;">
                 <a href="{% url "control:event.products.questions.add" event=request.event.slug organizer=request.event.organizer.slug %}" class="btn btn-primary">
                     <i class="fa fa-plus"></i> {% translate "Create a new custom field" %}
                 </a>
