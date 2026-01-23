@@ -486,7 +486,7 @@ def get_organizer_navigation(request):
             {
                 'label': _('Teams'),
                 'url': reverse(
-                    'eventyay_common:organizer.edit',
+                    'eventyay_common:organizer.teams',
                     kwargs={'organizer': request.organizer.slug},
                 )
                 + '?section=permissions',

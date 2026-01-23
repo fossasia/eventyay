@@ -33,7 +33,7 @@ class UnifiedTeamManagementRedirectMixin:
         if team_id:
             query_params['team'] = team_id
         target = reverse(
-            'eventyay_common:organizer.edit',
+            'eventyay_common:organizer.teams',
             kwargs={'organizer': request.organizer.slug},
         )
         messages.info(

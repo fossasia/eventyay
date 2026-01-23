@@ -104,7 +104,7 @@ def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:
         },
     ]
     orgapermset = getattr(request, 'orgapermset', None)
-    if not orgapermset:
+    if orgapermset is None:
         return get_global_navigation(request)
     if 'can_change_organizer_settings' in orgapermset:
         nav.append(

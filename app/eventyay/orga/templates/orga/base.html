@@ -433,7 +433,7 @@
                     </a>
                     {% has_event_perm "base.view_organizer" request.user request request.organizer as can_view_speakers %}
                     {% if can_change_teams %}
-                        <a class="nav-link" href="{% url "eventyay_common:organizer.edit" organizer=request.organizer.slug %}?section=permissions">
+                        <a class="nav-link" href="{% url "eventyay_common:organizer.teams" organizer=request.organizer.slug %}?section=permissions">
                             <i class="fa fa-users"></i>
                             <span>{% translate "Teams" %}</span>
                         </a>
