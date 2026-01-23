@@ -73,6 +73,14 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
+    has_settings_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_change_event_settings',
+        request=request,
+    )
+    if not has_settings_perm:
+        return []
     nav = [
         {
             'label': _('Settings'),

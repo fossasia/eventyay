@@ -257,7 +257,11 @@ urlpatterns = [
                 url(r'^settings/$', event.EventUpdate.as_view(), name='event.settings'),
                 url(
                     r'^settings/plugins$',
-                    RedirectView.as_view(pattern_name='eventyay_common:event.plugins'),
+                    RedirectView.as_view(
+                        pattern_name='eventyay_common:event.plugins',
+                        permanent=True,
+                        query_string=True,
+                    ),
                     name='event.settings.plugins',
                 ),
                 url(
