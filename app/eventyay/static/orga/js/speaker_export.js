@@ -16,9 +16,7 @@ const addHook = () => {
         const delimiter = document.querySelector("#data-delimiter")
         if (delimiter) {
             const csvRadio = document.querySelector("#id_export_format input[value='csv']")
-            if (csvRadio) {
-                delimiter.style.display = csvRadio.checked ? "block" : "none"
-            }
+            delimiter.style.display = csvRadio?.checked ? "block" : "none"
         }
     }
 
