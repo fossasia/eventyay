@@ -6,6 +6,7 @@
 {% load eventsignal %}
 {% load thumb %}
 {% load rich_text %}
+{% load presale_locale %}
 {% block title %}{% trans "Voucher redemption" %}{% endblock %}
 
 {% block content %}
@@ -17,7 +18,7 @@
                 {% trans "This voucher is valid only for the following specific date and time." %}
             </div>
         {% endif %}
-        <h3>{{ subevent.name }}</h3>
+        <h3>{{ subevent.name|event_localize }}</h3>
         {% with ev=subevent %}
             <div class="info-row">
                 <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
@@ -88,9 +89,9 @@
             {% for tup in products_by_category %}
                 <section>
                     {% if tup.0 %}
-                        <h3>{{ tup.0.name }}</h3>
+                        <h3>{{ tup.0.name|event_localize }}</h3>
                         {% if tup.0.description %}
-                            <p>{{ tup.0.description|localize|rich_text }}</p>
+                            <p>{{ tup.0.description|event_localize|rich_text }}</p>
                         {% endif %}
                     {% endif %}
                     {% for item in tup.1 %}
@@ -100,20 +101,20 @@
                                     <div class="col-md-8 col-xs-12">
                                         {% if item.picture %}
                                             <a href="{{ item.picture.url }}" class="productpicture"
-                                                    data-title="{{ item.name|force_escape|force_escape }}"
+                                                    data-title="{{ item.name|event_localize|force_escape|force_escape }}"
                                                     {# Yes, double-escape to prevent XSS in lightbox #}
                                                     data-lightbox="{{ item.id }}">
                                                 <img src="{{ item.picture|thumb:'60x60^' }}"
-                                                        alt="{{ item.name }}"/>
+                                                        alt="{{ item.name|event_localize }}"/>
                                             </a>
                                         {% endif %}
                                         <div class="product-description {% if item.picture %}with-picture{% endif %}">
                                             <h4>
-                                                {{ item.name }}
+                                                {{ item.name|event_localize }}
                                             </h4>
                                             {% if item.description %}
                                                 <div class="product-description">
-                                                    {{ item.description|localize|rich_text }}
+                                                    {{ item.description|event_localize|rich_text }}
                                                 </div>
                                             {% endif %}
                                             {% if item.limit_one_per_user %}
@@ -146,12 +147,12 @@
                                             <div class="col-md-8 col-xs-12">
                                                 <h5>
                                                     <label for="variation_{{ item.id }}_{{ var.id }}">
-                                                        {{ var }}
+                                                        {{ var.value|event_localize }}
                                                     </label>
                                                 </h5>
                                                 {% if var.description %}
                                                     <div class="variation-description">
-                                                        {{ var.description|localize|rich_text }}
+                                                        {{ var.description|event_localize|rich_text }}
                                                     </div>
                                                 {% endif %}
                                             </div>
@@ -171,7 +172,7 @@
                                                                 placeholder="0"
                                                                 min="{% if event.settings.display_net_prices %}{{ var.display_price.net|stringformat:"0.2f" }}{% else %}{{ var.display_price.gross|stringformat:"0.2f" }}{% endif %}"
                                                                 name="price_{{ item.id }}_{{ var.id }}"
-                                                                title="{% blocktrans trimmed with item=var.value %}Modify price for {{ item }}{% endblocktrans %}"
+                                                                title="{% blocktrans trimmed with item=var.value|event_localize %}Modify price for {{ item }}{% endblocktrans %}"
                                                                 value="{% if event.settings.display_net_prices %}{{var.display_price.net|stringformat:"0.2f" }}{% else %}{{ var.display_price.gross|stringformat:"0.2f" }}{% endif %}"
                                                                 step="any">
                                                     </div>
@@ -211,7 +212,7 @@
                                                                         id="variation_{{ item.id }}_{{ var.id }}"
                                                                         name="variation_{{ item.id }}_{{ var.id }}"
                                                                         {% if options == 1 %}checked{% endif %}
-                                                                        title="{% blocktrans with item=item.name var=var.name %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
+                                                                        title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
                                                             </label>
                                                         {% else %}
                                                             <input type="number" class="form-control input-product-count" placeholder="0" min="0"
@@ -220,7 +221,7 @@
                                                                     id="variation_{{ item.id }}_{{ var.id }}"
                                                                     name="variation_{{ item.id }}_{{ var.id }}"
                                                                     {% if options == 1 %}value="1"{% endif %}
-                                                                    title="{% blocktrans with item=item.name var=var.name %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
+                                                                    title="{% blocktrans with item=item.name|event_localize var=var.value|event_localize %}Amount of {{ item }} – {{ var }} to order{% endblocktrans %}">
                                                         {% endif %}
                                                     {% else %}
                                                         <label>
@@ -244,20 +245,20 @@
                                 <div class="col-md-8 col-xs-12">
                                     {% if item.picture %}
                                         <a href="{{ item.picture.url }}" class="productpicture"
-                                                data-title="{{ item.name|force_escape|force_escape }}"
+                                                data-title="{{ item.name|event_localize|force_escape|force_escape }}"
                                                 {# Yes, double-escape to prevent XSS in lightbox #}
                                                 data-lightbox="{{ item.id }}">
                                             <img src="{{ item.picture|thumb:'60x60^' }}"
-                                                    alt="{{ item.name }}"/>
+                                                    alt="{{ item.name|event_localize }}"/>
                                         </a>
                                     {% endif %}
                                     <div class="product-description {% if item.picture %}with-picture{% endif %}">
                                         <h4>
-                                            <label for="item_{{ item.id }}">{{ item.name }}</label>
+                                            <label for="item_{{ item.id }}">{{ item.name|event_localize }}</label>
                                         </h4>
                                         {% if item.description %}
                                             <div class="product-description">
-                                                {{ item.description|localize|rich_text }}
+                                                {{ item.description|event_localize|rich_text }}
                                             </div>
                                         {% endif %}
                                         {% if item.limit_one_per_user %}
@@ -284,7 +285,7 @@
                                             <input type="number" class="form-control input-item-price" placeholder="0"
                                                     min="{% if event.settings.display_net_prices %}{{ item.display_price.net|stringformat:"0.2f" }}{% else %}{{ item.display_price.gross|stringformat:"0.2f" }}{% endif %}"
                                                     name="price_{{ item.id }}"
-                                                    title="{% blocktrans trimmed with item=item.name %}Modify price for {{ item }}{% endblocktrans %}"
+                                                    title="{% blocktrans trimmed with item=item.name|event_localize %}Modify price for {{ item }}{% endblocktrans %}"
                                                     value="{% if event.settings.display_net_prices %}{{ item.display_price.net|stringformat:"0.2f" }}{% else %}{{ item.display_price.gross|stringformat:"0.2f" }}{% endif %}"
                                                     step="any">
                                         </div>
@@ -324,7 +325,7 @@
                                                             id="item_{{ item.id }}"
                                                             name="item_{{ item.id }}"
                                                             {% if options == 1 %}checked{% endif %}
-                                                            title="{% blocktrans with item=item.name %}Amount of {{ item }} to order{% endblocktrans %}">
+                                                            title="{% blocktrans with item=item.name|event_localize %}Amount of {{ item }} to order{% endblocktrans %}">
                                                 </label>
                                             {% else %}
                                                 <input type="number" class="form-control input-product-count" placeholder="0" min="0"
@@ -333,7 +334,7 @@
                                                         id="item_{{ item.id }}"
                                                         name="item_{{ item.id }}"
                                                         {% if options == 1 %}value="1"{% endif %}
-                                                        title="{% blocktrans with item=item.name %}Amount of {{ item }} to order{% endblocktrans %}">
+                                                        title="{% blocktrans with item=item.name|event_localize %}Amount of {{ item }} to order{% endblocktrans %}">
                                             {% endif %}
                                         {% else %}
                                             <label>
