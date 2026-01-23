@@ -326,6 +326,10 @@ select.required-status-dropdown[data-current="optional"] {
 }
 
 /* Action button styles - ensure consistent size and centered icons */
+.order-form-option-table .dnd-container {
+    text-align: right;
+}
+
 .order-form-option-table .dnd-container .btn {
     display: inline-flex;
     align-items: center;
