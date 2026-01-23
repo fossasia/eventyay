@@ -203,17 +203,6 @@ def get_event_navigation(request: HttpRequest):
                 ),
                 'active': 'event.products.orderforms' in url.url_name,
             },
-            {
-                'label': _('Custom fields'),
-                'url': reverse(
-                    'control:event.products.questions',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.products.questions' in url.url_name,
-            },
         ]
 
         if 'can_view_vouchers' in request.eventpermset:
