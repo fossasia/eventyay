@@ -1,3 +1,4 @@
+import http
 import json
 import logging
 from collections import defaultdict
@@ -74,7 +75,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
             read_only=(self.action == 'view'),
             locales=self.request.event.locales,
             obj=self.request.event,
-            data=self.request.POST if self.request.method == 'POST' else None,
+            data=self.request.POST if self.request.method == http.HTTPMethod.POST else None,
             prefix='settings',
         )
 
@@ -119,7 +120,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             read_only=False,
             locales=self.request.event.locales,
             obj=self.request.event,
-            data=self.request.POST if self.request.method == 'POST' else None,
+            data=self.request.POST if self.request.method == http.HTTPMethod.POST else None,
             prefix='settings',
         )
 
@@ -303,7 +304,7 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
             extra=0,
         )
         return formset_class(
-            self.request.POST if self.request.method == 'POST' else None,
+            self.request.POST if self.request.method == http.HTTPMethod.POST else None,
             queryset=(
                 AnswerOption.objects.filter(question=self.object) if self.object else AnswerOption.objects.none()
             ),
@@ -462,13 +463,13 @@ class CfPQuestionToggle(PermissionRequired, View):
         question = self.get_object()
 
         # Legacy GET: toggle active
-        if request.method == 'GET':
+        if request.method == http.HTTPMethod.GET:
             question.active = not question.active
             question.save(update_fields=['active'])
             return redirect(question.urls.base)
 
         # AJAX POST: toggle specific field
-        if request.method == 'POST':
+        if request.method == http.HTTPMethod.POST:
             return self._handle_post(request, question)
 
         return JsonResponse({'error': 'Method not allowed'}, status=405)
