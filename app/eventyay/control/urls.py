@@ -388,7 +388,6 @@ urlpatterns = [
                 ),
                 url(r'^quotas/add$', product.QuotaCreate.as_view(), name='event.products.quotas.add'),
                 url(r'^vouchers/$', vouchers.VoucherList.as_view(), name='event.vouchers'),
-                url(r'^vouchers/tags/$', vouchers.VoucherTags.as_view(), name='event.vouchers.tags'),
                 url(r'^vouchers/rng$', vouchers.VoucherRNG.as_view(), name='event.vouchers.rng'),
                 url(
                     r'^vouchers/product_select$',
