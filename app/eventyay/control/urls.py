@@ -69,11 +69,6 @@ urlpatterns = [
         name='organizer',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/delete$',
-        organizer_views.organizer_view.OrganizerDelete.as_view(),
-        name='organizer.delete',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/settings/display$',
         organizer_views.organizer_view.OrganizerDisplaySettings.as_view(),
         name='organizer.display',

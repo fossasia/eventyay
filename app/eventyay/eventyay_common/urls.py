@@ -38,6 +38,7 @@ urlpatterns = [
     path('organizers/', organizer.OrganizerList.as_view(), name='organizers'),
     path('organizers/add', organizer.OrganizerCreate.as_view(), name='organizers.add'),
     path('organizer/<str:organizer>/edit', organizer_views.organizer_view.OrganizerUpdate.as_view(), name='organizer.edit'),
+    path('organizer/<str:organizer>/delete', organizer_views.organizer_view.OrganizerDelete.as_view(), name='organizer.delete'),
     path('organizer/<str:organizer>/events', organizer_views.organizer_view.OrganizerDetail.as_view(), name='organizer.events'),
     path('organizer/<str:organizer>/billing', organizer_views.organizer_view.BillingSettings.as_view(), name='organizer.billing'),
     path('organizer/<str:organizer>/teams', organizer.OrganizerTeamsView.as_view(), name='organizer.teams'),
