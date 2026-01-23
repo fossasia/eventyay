@@ -1,4 +1,5 @@
-import bleach
+import nh3
+from copy import deepcopy
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -131,16 +132,21 @@ class ShowPageView(TemplateView):
         ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
         ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
-        attributes = dict(bleach.ALLOWED_ATTRIBUTES)
-        attributes['a'] = ['href', 'title', 'target']
-        attributes['p'] = ['class']
-        attributes['li'] = ['class']
-        attributes['img'] = ['src']
+        attributes = {
+            **nh3.ALLOWED_ATTRIBUTES,
+            'a': nh3.ALLOWED_ATTRIBUTES['a'] | {'title', 'target'},
+            'p': {'class'},
+            'li': {'class'},
+        }
 
-        ctx['content'] = bleach.clean(
+        tags = nh3.ALLOWED_TAGS
+
+        url_schemes = nh3.DEFAULT_URL_SCHEMES | {'data'}
+
+        ctx['content'] = nh3.clean(
             str(page.text),
-            tags=bleach.ALLOWED_TAGS + ['img', 'p', 'br', 's', 'sup', 'sub', 'u', 'h3', 'h4', 'h5', 'h6'],
+            tags=tags,
             attributes=attributes,
-            protocols=bleach.ALLOWED_PROTOCOLS + ['data'],
+            url_schemes=url_schemes,
         )
         return ctx
