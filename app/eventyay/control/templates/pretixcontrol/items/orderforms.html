@@ -233,7 +233,7 @@
                         {# Attendee company #}
                         {% with field=sform.attendee_company_asked_required %}
                         {% if field %}
-                        <tr data-dnd-id="attendee_company">
+                        <tr data-dnd-id="company">
                             <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -259,10 +259,10 @@
                         {% endif %}
                         {% endwith %}
 
-                        {# Attendee addresses #}
+                        {# Attendee addresses - represents multiple backend fields #}
                         {% with field=sform.attendee_addresses_asked_required %}
                         {% if field %}
-                        <tr data-dnd-id="attendee_address">
+                        <tr data-dnd-id="street">
                             <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"

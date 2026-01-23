@@ -333,7 +333,7 @@ def category_move_down(request, organizer, event, category):
     )
 
 
-class QuestionList(EventPermissionRequiredMixin, ListView):
+class QuestionList(EventPermissionRequiredMixin, View):
     """
     Redirects to Order Forms page where custom fields are now integrated.
     This view is kept for backward compatibility with any external links.
@@ -449,7 +449,10 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
         
         try:
             data = json.loads(request.body.decode())
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning('Invalid JSON in QuestionToggle request: %s', e)
             return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
         field = data.get('field')
@@ -464,6 +467,12 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
         if field == 'required':
             # Validate type for boolean fields
             if not isinstance(value, bool):
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    'Invalid value type for question %s field %s: expected bool, got %s',
+                    question.pk, field, type(value).__name__
+                )
                 return JsonResponse({
                     'error': f'Value must be a boolean for required field, received: {type(value).__name__}'
                 }, status=400)
