@@ -88,7 +88,7 @@ class BaseSettings(_BaseSettings):
 
     Priority of settings sources (from highest to lowest):
     1. Secret files in ".secrets/" directory or Docker Secrets.
-    2. Environment variables (with "EVY_" prefix).
+    2. Environment variables (with ``EVY_`` prefix).
     3. ".env" file in the current working directory.
     4. Local TOML configuration file (eventyay.local.toml).
     5. Environment-specific TOML configuration file (eventyay.{active_environment}.toml).

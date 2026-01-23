@@ -110,6 +110,7 @@
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% include "common/fragment_language_switch.html" %}
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
