@@ -1,0 +1,152 @@
+.startpage-navbar {
+  background: #2185d0;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+}
+
+.startpage-navbar-inner {
+  align-items: center;
+  display: flex;
+  height: 54px;
+  justify-content: space-between;
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 0 1.5rem;
+}
+
+.startpage-brand {
+  align-items: center;
+  color: #fff;
+  display: flex;
+  font-size: 1.1rem;
+  font-weight: 600;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+
+.startpage-brand img {
+  height: 24px;
+  width: auto;
+}
+
+.startpage-nav {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.startpage-nav .nav-item {
+  list-style: none;
+}
+
+.startpage-nav .header-nav,
+.startpage-nav summary,
+.startpage-nav a {
+  color: #fff;
+}
+
+.startpage-nav a:hover,
+.startpage-nav summary:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+.startpage-nav .dropdown-content {
+  color: var(--color-text);
+}
+
+header.startpage-hero-header {
+  height: auto;
+  margin: 2rem 0 2.5rem;
+  position: static;
+  top: auto;
+}
+
+.startpage-hero {
+  margin: 0;
+}
+
+.startpage-hero .event-hero-text {
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+.startpage-events h2 {
+  margin-bottom: 1rem;
+}
+
+.startpage-event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.startpage-event-card {
+  background: #fff;
+  border: 1px solid var(--color-grey-light);
+  border-radius: var(--size-border-radius);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.startpage-event-title {
+  font-size: 1.25rem;
+  margin: 0 0 0.35rem;
+}
+
+.startpage-event-title a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.startpage-event-title a:hover {
+  text-decoration: underline;
+}
+
+.startpage-event-meta {
+  color: var(--color-grey-dark);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.startpage-event-action {
+  margin-left: auto;
+}
+
+.startpage-empty {
+  color: var(--color-grey-dark);
+  font-style: italic;
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .startpage-event-card {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .startpage-event-main {
+    max-width: 70%;
+  }
+}
+
+@media (max-width: 767px) {
+  .startpage-navbar-inner {
+    gap: 0.75rem;
+    padding: 0 1rem;
+  }
+
+  .startpage-nav {
+    gap: 0.5rem;
+  }
+}

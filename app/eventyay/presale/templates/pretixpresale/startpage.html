@@ -1,0 +1,150 @@
+{% load compress %}
+{% load safelink %}
+{% load i18n %}
+{% load static %}
+{% load eventurl %}
+{% load statici18n %}
+
+<!DOCTYPE html>
+<html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
+    <head>
+        <meta charset="utf-8">
+        <title>{% trans "Start page" %} :: {{ site_name }}</title>
+        <meta name="title" content="{% trans "Start page" %} {{ site_name }}">
+        <meta name="description" content="{% trans "Browse live events on" %} {{ site_name }}">
+        <meta name="application-name" content="{{ site_name }}">
+        <meta name="generator" content="{{ site_name }}">
+        {{ html_head|safe }}
+        <meta name="robots" content="index, follow">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#2185d0">
+        <meta name="HandheldFriendly" content="True"/>
+        {% include "common/includes/favicon.html" %}
+
+        <script src="{% static "jquery/js/jquery-3.7.1.min.js" %}"></script>
+
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static "fontawesome/scss/font-awesome.scss" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_reset.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/base.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_variables.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_fonts.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_tooltip.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_pretalx.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_rtl.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_stages.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "cfp/css/_layout.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_agenda.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "agenda/css/_speaker.css" %}" />
+            <link rel="stylesheet" type="text/x-scss" href="{% static "pretixpresale/scss/startpage.scss" %}" />
+        {% endcompress %}
+        {% if css_file %}
+            <link rel="stylesheet" type="text/css" href="{{ css_file }}" />
+        {% endif %}
+        {% compress js %}
+            <script defer src="{% static 'common/js/base.js' %}"></script>
+            <script defer src="{% static 'common/js/lightbox.js' %}"></script>
+            <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+        {% endcompress %}
+        {% if DEBUG %}
+            <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
+        {% else %}
+            <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
+        {% endif %}
+    </head>
+    <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+        {{ base_path|json_script:"base_path" }}
+        {{ html_page_header|safe }}
+
+        <nav class="startpage-navbar" aria-label="{% trans "Main navigation" %}">
+            <div class="startpage-navbar-inner">
+                <a class="startpage-brand" href="{% url "presale:index" %}">
+                    <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
+                    <span>{{ site_name }}</span>
+                </a>
+                <ul class="startpage-nav">
+                    {% include "common/fragment_language_switch.html" %}
+                    {% if request.user.is_authenticated %}
+                        {% include "common/fragment_profile_dropdown.html" %}
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="header-nav" href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
+                                <i class="fa fa-sign-in"></i> {% trans "Login" %}
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </nav>
+
+        <div id="top-bg" class="header startpage-header">
+            {% if startpage_header_image_url %}
+                <img src="{{ startpage_header_image_url }}" id="header-image" alt="{% trans "Start page header" %}">
+            {% endif %}
+            <div class="header-image-overlay"></div>
+        </div>
+
+        <div class="container presale-container" id="main-container">
+            <header class="startpage-hero-header">
+                <div class="event-hero startpage-hero">
+                    <div class="event-hero-overlay">
+                        <div class="event-brand">
+                            <div class="event-hero-text">
+                                <div class="event-title">
+                                    {{ startpage_header_text }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="card" id="main-card">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+                <main>
+                    <section class="startpage-events" aria-label="{% trans "Live events" %}">
+                        <h2>{% trans "Live events" %}</h2>
+                        <div class="startpage-event-list">
+                            {% for event in events %}
+                                {% eventurl event "presale:event.index" as event_url %}
+                                <article class="startpage-event-card">
+                                    <div class="startpage-event-main">
+                                        <h3 class="startpage-event-title">
+                                            <a href="{{ event_url }}">{{ event.name }}</a>
+                                        </h3>
+                                        <div class="startpage-event-meta">
+                                            <span>{{ event.organizer.name }}</span>
+                                            <span>{{ event.get_date_range_display }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="startpage-event-action">
+                                        <a class="btn btn-primary" href="{{ event_url }}">
+                                            {% trans "View event" %}
+                                        </a>
+                                    </div>
+                                </article>
+                            {% empty %}
+                                <p class="startpage-empty">{% trans "No public events available yet." %}</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </main>
+            </div>
+            <footer>
+                {% include "common/powered_by.html" %}
+                {% if footer_text %}
+                    · {{ footer_text|safe }}
+                {% endif %}
+                {% for footer in footer_links %}
+                    · <a href="{% safelink footer.url %}" target="_blank" rel="noopener">{{ footer.label }}</a>
+                {% endfor %}
+            </footer>
+        </div>
+        {% include "common/includes/modals.html" %}
+        {{ html_foot|safe }}
+    </body>
+</html>
