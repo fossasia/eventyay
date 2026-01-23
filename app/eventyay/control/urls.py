@@ -255,7 +255,15 @@ urlpatterns = [
                 url(r'^comment/$', event.EventComment.as_view(), name='event.comment'),
                 url(r'^quickstart/$', event.QuickSetupView.as_view(), name='event.quick'),
                 url(r'^settings/$', event.EventUpdate.as_view(), name='event.settings'),
-                url(r'^settings/plugins$', event.EventPlugins.as_view(), name='event.settings.plugins'),
+                url(
+                    r'^settings/plugins$',
+                    RedirectView.as_view(
+                        pattern_name='eventyay_common:event.plugins',
+                        permanent=True,
+                        query_string=True,
+                    ),
+                    name='event.settings.plugins',
+                ),
                 url(
                     r'^settings/payment/(?P<provider>[^/]+)$',
                     event.PaymentProviderSettings.as_view(),
