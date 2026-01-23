@@ -9,10 +9,9 @@ from eventyay.eventyay_common.views import (
     organizer,
     team,
 )
+from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
-
-app_name = 'eventyay_common'
 
 app_name = 'eventyay_common'
 
@@ -52,6 +51,7 @@ urlpatterns = [
                 path('', dashboards.EventIndexView.as_view(), name='event.index'),
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
+                path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),
@@ -60,6 +60,7 @@ urlpatterns = [
     path('sessions/', MySessionsView.as_view(), name='sessions'),
     path('account/', RedirectView.as_view(pattern_name='eventyay_common:account.general'), name='account'),
     path('account/general', account.GeneralSettingsView.as_view(), name='account.general'),
+    path('account/email', EmailAddressManagementView.as_view(), name='account.email'),
     path('account/notifications', account.NotificationSettingsView.as_view(), name='account.notifications'),
     path(
         'account/notification/off/<int:id>/<str:token>',

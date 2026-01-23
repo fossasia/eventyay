@@ -6,6 +6,7 @@
 {% load safelink %}
 {% load rich_text %}
 {% load compress %}
+{% load presale_locale %}
 
 {% block container_width %} presale-container{% endblock %}
 
@@ -13,7 +14,7 @@
     {% if messages %}
         {{ messages|join:" " }} ::
     {% endif %}
-    {% block pagetitle %}{{ event.name }}{% endblock %}
+    {% block pagetitle %}{{ event.name|event_localize }}{% endblock %}
 {% endblock %}
 
 {% block custom_header %}
@@ -80,7 +81,7 @@
     {% endif %}
     {% if request.event.settings.banner_text %}
         <div class="site-notice-top">
-            {{ request.event.settings.banner_text|rich_text }}
+            {{ request.event.settings.banner_text|event_localize|rich_text }}
         </div>
     {% endif %}
 {% endblock %}
@@ -92,7 +93,7 @@
 {% block footer %}
     {% if request.event.settings.banner_text_bottom %}
         <div class="site-notice-bottom">
-            {{ request.event.settings.banner_text_bottom|rich_text }}
+            {{ request.event.settings.banner_text_bottom|event_localize|rich_text }}
         </div>
     {% endif %}
     {% if request.event.testmode %}

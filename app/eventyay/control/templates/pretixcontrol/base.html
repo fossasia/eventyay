@@ -55,7 +55,7 @@
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
             <script type="text/javascript" src="{% static "sortable/Sortable.js" %}"></script>
-               <script type="text/javascript" src="{% static "common/js/dropdown.js" %}"></script>
+            <script type="module" src="{% static "common/js/dropdown.js" %}"></script>
             <script type="text/javascript" src="{% static "colorpicker/bootstrap-colorpicker.js" %}"></script>
             <script type="text/javascript" src="{% static "fileupload/jquery.ui.widget.js" %}"></script>
             <script type="text/javascript" src="{% static "fileupload/jquery.fileupload.js" %}"></script>
@@ -195,6 +195,8 @@
                                 </li>
                         {% endfor %}
                     {% endif %}
+
+                    {% include "common/fragment_language_switch.html" %}
 
                     {% if request.user.is_staff and not staff_session %}
                         <li>

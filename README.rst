@@ -1,9 +1,6 @@
 eventyay-tickets (ENext)
 ========================
 
-.. image:: https://codecov.io/gh/fossasia/eventyay-tickets/branch/dev/graph/badge.svg
-  :target: https://codecov.io/gh/pretix/pretix
-
 Project status & release cycle
 ------------------------------
 
@@ -252,25 +249,27 @@ Due to this reason, overriding configuration via environment variables are not e
 Deployment
 ----------
 
-* copy all of the `deployment` directory onto the server into <TARGET_DIR> (eg. as `/home/fossasia/enext`)
-* prepare the used volumes in docker-compose: 
-        <TARGET_DIR>/data/static
-        <TARGET_DIR>/data/postgres
-        <TARGET_DIR>/data/data
-  and
-        chown 100:101 <TARGET_DIR>/data/data
-        chmod a+x <TARGET_DIR>/data/static
-* copy `env.sample` to `.env` in `/home/fossasia/enext`, and edit it:
-  - replace <SERVER_NAME> with your server, like next.eventyay.com
-  - all the CHANGEME entries
-* copy `nginx/enext-direct` to your system `/etc/nginx/sites-available` and edit it:
-  - replace <SERVER_NAME> with your server, like `next.eventyay.com`
-  - replace <PATH_TO> with the <TARGET_DIR> you choose, like `/home/fossasia/enext`
-  The file needs to be adjusted if the `enext` dir is NOT in `/home/fossasia`!
-* Link the `enext-direct` file into `/etc/nginx/sites-enabled`
-* Restart nginx
-* Run
-        docker compose up -d
+See DEPLOYMENT.md
+
+
+Future improvement
+------------------
+
+Backend
+~~~~~~~
+
+- Apply type annotation for Python and MyPy (or ty) checking. Benefit: It improves IDE autocomplete and detect some bugs early.
+- Use Jinja for templating (replacing Django template).
+  Benefit: We can embed Python function to template and call. With Django template, we have to define filter, custom tags.
+- Use djlint (or a better tool) to clean template code.
+
+Frontend
+~~~~~~~~
+
+- Get rid of jQuery code, convert them to Vue or AlpineJS.
+- Consider two options:
+  +  Migrating to a Single Page Application, where we can use the full power of Vue and can apply TypeScript to improve IDE autocomplete and detect bugs early.
+  +  HTMX + AlpineJS if we still want Django to produce HTML.
 
 
 Support

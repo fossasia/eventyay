@@ -60,7 +60,6 @@ from eventyay.base.models.event import Event
 # from pretix.helpers.dicts import merge_dicts  # commented out
 # from pretix.presale.style import regenerate_css  # commented out
 # from pretix.presale.views.organizer import filter_qs_by_attr  # commented out
-from eventyay.api.task import configure_video_settings_for_talks
 from eventyay.api.utils import get_protocol
 from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 
@@ -339,7 +338,7 @@ class CreateEventView(APIView):
                 "attendee": (
                     [attendee_trait_grants] if attendee_trait_grants else ["attendee"]
                 ),
-                "scheduleuser": ["schedule-update"],
+                "scheduleuser": [],
             }
 
             for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
@@ -379,9 +378,7 @@ class CreateEventView(APIView):
                         config=config,
                         trait_grants=trait_grants,
                     )
-                configure_video_settings_for_talks.delay(
-                    event_id, days=30, number=1, traits=["schedule-update"], long=True
-                )
+                # Legacy eventyay-talk schedule connection is removed; video gets configured elsewhere.
                 site_url = settings.SITE_URL
                 protocol = get_protocol(site_url)
                 event.domain = "{}://{}".format(protocol, domain_path)
@@ -489,75 +486,11 @@ class UserFavouriteView(APIView):
         return token_decode.get("uid")
 
 
-class ExportView(APIView):
-    permission_classes = []
+"""Legacy eventyay-talk integration helpers (schedule export proxy and schedule_update push endpoint)
 
-    @staticmethod
-    def get(request, *args, **kwargs):
-        export_type = request.GET.get("export_type", "json")
-        event = get_object_or_404(Event, id=kwargs["event_id"])
-        talk_config = event.config.get("pretalx")
-        user = User.objects.filter(token_id=request.user)
-        talk_base_url = (
-            talk_config.get("domain")
-            + "/"
-            + talk_config.get("event")
-            + "/schedule/export/"
-        )
-        export_endpoint = "schedule." + export_type
-        talk_url = talk_base_url + export_endpoint
-        if "my" in export_type and user:
-            user_state = user.first().client_state
-            if (
-                user_state
-                and user_state.get("schedule")
-                and user_state.get("schedule").get("favs")
-            ):
-                talk_list = user_state.get("schedule").get("favs")
-                talk_list_str = ",".join(talk_list)
-                export_endpoint = "schedule-my." + export_type.replace("my", "")
-                talk_url = talk_base_url + export_endpoint + "?talks=" + talk_list_str
-        header = {"Content-Type": "application/json"}
-        response = requests.get(talk_url, headers=header)
-        return Response(response.content.decode("utf-8"))
-
-
-def get_domain(path):
-    if not path:
-        return ""
-    domain = urlparse(path).netloc
-    if ":" in domain:
-        domain = domain.split(":")[0]
-    return domain.lower()
-
-
-@api_view(http_method_names=["POST"])
-@permission_classes([ApiAccessRequiredPermission])
-def schedule_update(request, **kwargs):
-    """POST endpoint to notify eventyay that schedule data has changed.
-
-    Optionally, the request may contain data for the ``pretalx`` field in the
-    event config.
-    """
-    domain = get_domain(request.data.get("domain"))
-    event = request.data.get("event")
-
-    if not domain or not event:
-        return Response("Missing fields in request.", status=401)
-
-    pretalx_config = request.event.config.get("pretalx", {})
-    if domain != get_domain(
-        pretalx_config.get("domain")
-    ) or event != pretalx_config.get("event"):
-        return Response("Incorrect domain or event data", status=401)
-
-    # We assume that only pretalx uses this endpoint
-    request.event.config["pretalx"]["connected"] = True
-    request.event.config["pretalx"]["pushed"] = now().isoformat()
-    request.event.save()
-
-    async_to_sync(notify_schedule_change)(request.event.id)
-    return Response(status=200)
+These were used for connecting a talk system instance as a schedule source. The video SPA now
+connects directly, so the legacy endpoints have been removed.
+"""
 
 
 @api_view(http_method_names=["POST"])

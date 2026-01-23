@@ -55,6 +55,12 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         help_text=_('Allow submitters to share a secret link to their proposal with others.'),
         required=False,
     )
+    count_length_in = forms.ChoiceField(
+        label=_('Count text length in'),
+        choices=(('chars', _('Characters')), ('words', _('Words'))),
+        widget=forms.RadioSelect(),
+        required=False,
+    )
 
     def __init__(self, *args, obj, **kwargs):
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
@@ -62,6 +68,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         super().__init__(*args, **kwargs)
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
+        self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
         self.length_fields = [
             'title',
             'abstract',
@@ -112,17 +119,59 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
                     ('required', _('Ask and require input')),
                 ],
             )
+        
+        # Add fields for custom questions
+        # We use all_objects because we want to include reviewer questions and inactive questions
+        # (so they can be re-activated)
+        for question in TalkQuestion.all_objects.filter(event=obj):
+            field_name = f'question_{question.pk}'
+            initial = 'do_not_ask'
+            if question.active:
+                if question.question_required == TalkQuestionRequired.REQUIRED:
+                    initial = 'required'
+                else:
+                    initial = 'optional'
+            
+            self.fields[field_name] = forms.ChoiceField(
+                required=False,
+                initial=initial,
+                label=question.question,
+                choices=[
+                    ('do_not_ask', _('Do not ask')),
+                    ('optional', _('Ask, but do not require input')),
+                    ('required', _('Ask and require input')),
+                ],
+            )
+
         if not obj.is_multilingual:
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
+        self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
             self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
+        
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
             self.instance.cfp.fields[key]['max_length'] = self.cleaned_data.get(f'cfp_{key}_max_length')
+            
+        # Save custom questions
+        for question in TalkQuestion.all_objects.filter(event=self.instance):
+            field_name = f'question_{question.pk}'
+            if field_name in self.cleaned_data:
+                value = self.cleaned_data[field_name]
+                if value == 'do_not_ask':
+                    question.active = False
+                else:
+                    question.active = True
+                    if value == 'required':
+                        question.question_required = TalkQuestionRequired.REQUIRED
+                    else:
+                        question.question_required = TalkQuestionRequired.OPTIONAL
+                question.save()
+
         self.instance.cfp.save()
         super().save(*args, **kwargs)
 
@@ -147,11 +196,6 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         required=False,
         help_text=_('If enabled, the Call for Speakers link will be hidden from navigation menus once the submission deadline has passed.'),
     )
-    count_length_in = forms.ChoiceField(
-        label=_('Count text length in'),
-        choices=(('chars', _('Characters')), ('words', _('Words'))),
-        widget=forms.RadioSelect(),
-    )
 
     class Meta:
         model = CfP
@@ -161,7 +205,6 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
         json_fields = {
             'show_deadline': 'settings',
             'hide_after_deadline': 'settings',
-            'count_length_in': 'settings',
         }
 
 

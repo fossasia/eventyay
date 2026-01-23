@@ -1,24 +1,53 @@
-src/pretix/static/fontawesome/* linguist-vendored
-src/pretix/static/lightbox/* linguist-vendored
-src/pretix/static/typeahead/* linguist-vendored
-src/pretix/static/moment/* linguist-vendored
-src/pretix/static/datetimepicker/* linguist-vendored
-src/pretix/static/colorpicker/* linguist-vendored
-src/pretix/static/fileupload/* linguist-vendored
-src/pretix/static/vuejs/* linguist-vendored
-src/pretix/static/select2/* linguist-vendored
-src/pretix/static/charts/* linguist-vendored
-src/pretix/static/rrule/* linguist-vendored
-src/pretix/static/iframeresizer/* linguist-vendored
-src/pretix/static/pdfjs/* linguist-vendored
-src/pretix/static/fabric/* linguist-vendored
+# GitHub Linguist: mark third party static libraries as vendored
+app/eventyay/static/are-you-sure/** linguist-vendored
+app/eventyay/static/bootstrap/** linguist-vendored
+app/eventyay/static/charts/** linguist-vendored
+app/eventyay/static/clipboard/** linguist-vendored
+app/eventyay/static/colorpicker/** linguist-vendored
+app/eventyay/static/datetimepicker/** linguist-vendored
+app/eventyay/static/fabric/** linguist-vendored
+app/eventyay/static/fileupload/** linguist-vendored
+app/eventyay/static/fontawesome/** linguist-vendored
+app/eventyay/static/iframeresizer/** linguist-vendored
+app/eventyay/static/jquery/** linguist-vendored
+app/eventyay/static/leaflet/** linguist-vendored
+app/eventyay/static/lightbox/** linguist-vendored
+app/eventyay/static/moment/** linguist-vendored
+app/eventyay/static/pdfjs/** linguist-vendored
+app/eventyay/static/rrule/** linguist-vendored
+app/eventyay/static/select2/** linguist-vendored
+app/eventyay/static/slider/** linguist-vendored
+app/eventyay/static/sortable/** linguist-vendored
+app/eventyay/static/typeahead/** linguist-vendored
+app/eventyay/static/vuejs/** linguist-vendored
 
-# Denote all files that are truly binary and should not be modified.
+# Additional upstream libraries collected under vendored
+app/eventyay/static/vendored/** linguist-vendored
+
+# Minified assets and source maps are typically generated artifacts
+*.min.js linguist-generated
+*.min.css linguist-generated
+*.map linguist-generated
+
+# Binary assets
 *.eot binary
 *.otf binary
 *.ttf binary
 *.woff binary
+*.woff2 binary
 *.zip binary
 *.png binary
 *.gif binary
 *.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.mp4 binary
+*.webm binary
+
+# Optional: normalize line endings for common text assets
+*.css text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.svg text eol=lf
