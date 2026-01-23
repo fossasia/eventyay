@@ -427,6 +427,7 @@
                         {% endfor %}
                     {% endif %}
                 {% elif request.organizer %}  {# if request.event #}
+                    {% has_event_perm "base.update_team" request.user request request.organizer as can_change_teams %}
                     <a class="nav-link {% if "/settings/" in request.path %} active{% endif %}" href="{{ request.organizer.orga_urls.settings }}">
                         <i class="fa fa-cog"></i>
                         <span>{% translate "Settings" %}</span>
