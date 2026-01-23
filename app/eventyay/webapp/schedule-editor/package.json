@@ -46,7 +46,7 @@
     "i18next-parser": "^9.0.0",
     "pug": "^3.0.3",
     "stylelint": "^16.26.1",
-    "stylelint-config-standard": "^36.0.0",
+    "stylelint-config-standard": "^40.0.0",
     "stylelint-plugin-stylus": "^1.0.0",
     "stylus": "^0.64.0",
     "typescript": "^5.3.3",
