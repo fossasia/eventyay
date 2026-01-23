@@ -41,17 +41,6 @@ def get_event_navigation(request: HttpRequest):
                 'active': url.url_name == 'event.settings.payment',
             },
             {
-                'label': _('Plugins'),
-                'url': reverse(
-                    'control:event.settings.plugins',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name == 'event.settings.plugins',
-            },
-            {
                 'label': _('Tickets'),
                 'url': reverse(
                     'control:event.settings.tickets',
