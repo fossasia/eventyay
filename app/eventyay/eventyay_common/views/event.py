@@ -604,7 +604,7 @@ class VideoAccessAuthenticator(View):
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
 
-        # Setup video plugin settings for the webapp
+        # Setup video plugin settings for the video frontend
         # Set each video config setting individually if missing
         if not event.settings.venueless_secret:
             event.settings.venueless_secret = secret

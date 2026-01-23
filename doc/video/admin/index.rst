@@ -9,4 +9,4 @@ Welcome to our administrator documentation! Here, we document everything around 
 
    setup
    management
-   webapp-config
+   video-config

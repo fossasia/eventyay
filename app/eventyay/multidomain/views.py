@@ -20,7 +20,8 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 
-WEBAPP_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'webapp'
+_dist_root = getattr(settings, 'COMPILED_FRONTEND_DIR', None) or settings.STATIC_ROOT
+VIDEO_DIST_DIR = cast(Path, _dist_root) / 'video'
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +48,7 @@ class VideoSPAView(View):
             except Event.DoesNotExist:
                 return HttpResponse('Event not found', status=404)
 
-        index_path = WEBAPP_DIST_DIR / 'index.html'
+        index_path = VIDEO_DIST_DIR / 'index.html'
         if index_path.is_file():
             html_content = index_path.read_text()
         else:
@@ -132,16 +133,16 @@ class VideoAssetView(View):
         # Accept empty path -> index handling done by SPA view
         candidate_paths = (
             [
-                os.path.join(WEBAPP_DIST_DIR, path),
-                os.path.join(WEBAPP_DIST_DIR, 'assets', path),
+                os.path.join(VIDEO_DIST_DIR, path),
+                os.path.join(VIDEO_DIST_DIR, 'assets', path),
             ]
             if path
             else []
         )
         for fp in candidate_paths:
             if os.path.isfile(fp):
-                rel = os.path.relpath(fp, WEBAPP_DIST_DIR)
-                resp = static_serve(request, rel, document_root=WEBAPP_DIST_DIR)
+                rel = os.path.relpath(fp, VIDEO_DIST_DIR)
+                resp = static_serve(request, rel, document_root=VIDEO_DIST_DIR)
                 resp._csp_ignore = True
                 # Ensure proper content type for module scripts
                 ctype, _ = guess_type(fp)
