@@ -26,9 +26,8 @@ from eventyay.base.models.room import AnonymousInvite
 class SourceCache:
     @cached_property
     def source(self):
-        wapath = os.path.normpath(
-            os.path.join(os.path.dirname(__file__), "../../../static/webapp/index.html")
-        )
+        dist_root = getattr(settings, 'COMPILED_FRONTEND_DIR', None) or settings.STATIC_ROOT
+        wapath = os.path.join(dist_root, 'video', 'index.html')
         try:
             with open(wapath) as f:
                 return f.read()
