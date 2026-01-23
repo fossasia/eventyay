@@ -209,7 +209,7 @@ nav.navbar.navbar-inverse .navbar-brand img,
   height: 30px;
   width: auto;
   margin-top: 2px;
-  margin-right: 6px;
+  margin-right: 4px;
 }
 
 nav.navbar.navbar-inverse .navbar-brand:hover,
@@ -316,6 +316,7 @@ nav.navbar.navbar-inverse #button-sudo,
   color: #f8f9fa;
   background: transparent;
   line-height: 20px;
+  margin-left: 2px;
 }
 
 nav.navbar.navbar-inverse #button-shop i,

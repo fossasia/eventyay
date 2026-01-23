@@ -540,13 +540,13 @@ class Event(
     :param currency: The currency of all prices and payments of this event
     :type currency: str
     :param date_from: The datetime this event starts
-    :type date_from: datetime
+    :type date_from: datetime.datetime
     :param date_to: The datetime this event ends
-    :type date_to: datetime
+    :type date_to: datetime.datetime
     :param presale_start: No tickets will be sold before this date.
-    :type presale_start: datetime
+    :type presale_start: datetime.datetime
     :param presale_end: No tickets will be sold after this date.
-    :type presale_end: datetime
+    :type presale_end: datetime.datetime
     :param location: venue
     :type location: str
     :param plugins: A comma-separated list of plugin names that are active for this
@@ -856,7 +856,7 @@ class Event(
         """URL patterns for API endpoints related to this event."""
 
         base_path = settings.TALK_BASE_PATH
-        base = '{base_path}/api/events/{self.slug}/'
+        base = '{base_path}/api/v1/events/{self.slug}/'
         submissions = '{base}submissions/'
         slots = '{base}slots/'
         talks = '{base}talks/'
@@ -2392,7 +2392,7 @@ class Event(
     def datetime_from(self) -> dt.datetime:
         """The localised datetime of the event start date.
 
-        :rtype: datetime
+        :rtype: datetime.datetime
         """
         return make_aware(
             dt.datetime.combine(self.date_from, dt.time(hour=0, minute=0, second=0)),
@@ -2403,7 +2403,7 @@ class Event(
     def datetime_to(self) -> dt.datetime:
         """The localised datetime of the event end date.
 
-        :rtype: datetime
+        :rtype: datetime.datetime
         """
         return make_aware(
             dt.datetime.combine(self.date_to, dt.time(hour=23, minute=59, second=59)),
@@ -2699,13 +2699,13 @@ class SubEvent(EventMixin, LoggedModel):
     :param name: This event's full title
     :type name: str
     :param date_from: The datetime this event starts
-    :type date_from: datetime
+    :type date_from: datetime.datetime
     :param date_to: The datetime this event ends
-    :type date_to: datetime
+    :type date_to: datetime.datetime
     :param presale_start: No tickets will be sold before this date.
-    :type presale_start: datetime
+    :type presale_start: datetime.datetime
     :param presale_end: No tickets will be sold after this date.
-    :type presale_end: datetime
+    :type presale_end: datetime.datetime
     :param location: venue
     :type location: str
     """
@@ -2905,8 +2905,8 @@ class RequiredAction(models.Model):
     Represents an action that is to be done by an admin. The admin will be
     displayed a list of actions to do.
 
-    :param datatime: The timestamp of the required action
-    :type datetime: datetime
+    :param datetime: The timestamp of the required action
+    :type datetime: datetime.datetime
     :param user: The user that performed the action
     :type user: User
     :param done: If this action has been completed or dismissed

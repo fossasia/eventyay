@@ -146,38 +146,7 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-top-links navbar-right flip">
-					<li class="language-switch">
-					  <form method="post"
-					        action="{% url 'eventyay_common:account.locale' %}"
-					        class="language-form">
-					    {% csrf_token %}
-					    <input type="hidden" name="next" value="{{ request.get_full_path }}">
-					
-					    <details class="dropdown locales" aria-haspopup="menu">
-					      <summary class="language-summary" aria-label="{{ _('Language') }}">
-					        {% for option in language_options %}
-					          {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-					            <span class="current-locale">{{ option.label }}</span>
-					          {% endif %}
-					        {% endfor %}
-					        <i class="fa fa-caret-down ml-1" aria-hidden="true"></i>
-					      </summary>
-					
-					      <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}"
-					           role="menu">
-					        {% for option in language_options %}
-					          <button type="submit"
-					                  name="locale"
-					                  value="{{ option.code }}"
-					                  class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
-					                  role="menuitem">
-					            {{ option.label }}
-					          </button>
-					        {% endfor %}
-					      </div>
-					    </details>
-					  </form>
-					</li>
+                    {% include "common/fragment_language_switch.html" %}
                     {% if request.user.is_staff and not staff_session %}
                         <li>
                             <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
