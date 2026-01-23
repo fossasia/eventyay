@@ -87,6 +87,29 @@
         </span>
     </fieldset>
 
+    <fieldset>
+        <legend id="dependency">{% translate "Field dependency" %}</legend>
+        <div class="form-group row">
+            <label class="col-md-3 col-form-label">
+                {% translate "Custom field dependency" %}
+                <br><span class="text-muted">{% translate "Optional" %}</span>
+            </label>
+            <div class="col-md-4">
+                {{ form.dependency_question.as_field_group }}
+            </div>
+            <div class="col-md-5">
+                <script type="text/plain" id="dependency_value_val">{{ form.instance.dependency_values|json_script:"dependency-values" }}</script>
+                {{ form.dependency_values.as_field_group }}
+            </div>
+        </div>
+        <div class="alert alert-info col-md-9 offset-md-3">
+            {% blocktranslate trimmed %}
+                This field will only be shown if the selected parent field has one of the specified values.
+                Dependencies only work within the same field type (speaker fields can only depend on other speaker fields).
+            {% endblocktranslate %}
+        </div>
+    </fieldset>
+
     <fieldset id="answer-options" class="d-none">
         <legend id="options">{% translate "Response options" %}</legend>
         {% if formset %}

@@ -243,6 +243,27 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             self.fields['submission_types'].queryset = event.submission_types.all()
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
+        
+        # Filter dependency_question to valid parent types
+        self.fields['dependency_question'].queryset = event.talkquestions.filter(
+            variant__in=(
+                TalkQuestionVariant.BOOLEAN,
+                TalkQuestionVariant.CHOICES,
+                TalkQuestionVariant.MULTIPLE,
+            ),
+        )
+        
+        # Exclude self from parent options and limit to same target type
+        if instance and instance.pk:
+            self.fields['dependency_question'].queryset = (
+                self.fields['dependency_question'].queryset.exclude(pk=instance.pk)
+            )
+            if instance.target:
+                self.fields['dependency_question'].queryset = (
+                    self.fields['dependency_question'].queryset.filter(target=instance.target)
+                )
+        
+        self.fields['dependency_values'].required = False
 
     def clean_options(self):
         # read uploaded file, return list of strings or list of i18n strings
@@ -265,23 +286,43 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             options = content.split('\n')
             return [opt.strip() for opt in options if opt.strip()]
 
+    def clean_dependency_values(self):
+        val = self.data.getlist('dependency_values')
+        return val
+
+    def clean_dependency_question(self):
+        dep = self.cleaned_data.get('dependency_question')
+        if dep:
+            # Check circular dependencies
+            seen_ids = {self.instance.pk} if self.instance else set()
+            while dep:
+                if dep.pk in seen_ids:
+                    raise forms.ValidationError(_('Circular dependency between questions detected.'))
+                seen_ids.add(dep.pk)
+                dep = dep.dependency_question
+        return self.cleaned_data.get('dependency_question')
+
     def clean(self):
-        deadline = self.cleaned_data['deadline']
-        question_required = self.cleaned_data['question_required']
+        d = super().clean()
+        deadline = d.get('deadline')
+        question_required = d.get('question_required')
         if (not deadline) and (question_required == TalkQuestionRequired.AFTER_DEADLINE):
             self.add_error(
                 'deadline',
                 forms.ValidationError(_('Please select a deadline after which the field should become mandatory.')),
             )
         if question_required in (TalkQuestionRequired.OPTIONAL, TalkQuestionRequired.REQUIRED):
-            self.cleaned_data['deadline'] = None
-        options = self.cleaned_data.get('options')
-        options_replace = self.cleaned_data.get('options_replace')
+            d['deadline'] = None
+        options = d.get('options')
+        options_replace = d.get('options_replace')
         if options_replace and not options:
             self.add_error(
                 'options_replace',
                 forms.ValidationError(_('You cannot replace options without uploading new ones.')),
             )
+        if d.get('dependency_question') and not d.get('dependency_values'):
+            raise forms.ValidationError({'dependency_values': [_('This field is required')]})
+        return d
 
     def save(self, *args, **kwargs):
         instance = super().save(*args, **kwargs)
@@ -343,6 +384,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date',
             'min_datetime',
             'max_datetime',
+            'dependency_question',
+            'dependency_values',
         ]
         widgets = {
             'deadline': HtmlDateTimeInput,
@@ -354,11 +397,13 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date': HtmlDateInput,
             'tracks': EnhancedSelectMultiple,
             'submission_types': EnhancedSelectMultiple,
+            'dependency_values': forms.SelectMultiple,
         }
         field_classes = {
             'variant': SafeModelChoiceField,
             'tracks': SafeModelMultipleChoiceField,
             'submission_types': SafeModelMultipleChoiceField,
+            'dependency_question': SafeModelChoiceField,
         }
 
 
