@@ -153,207 +153,211 @@
                         </tr>
                     </thead>
                     <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
-                        {# Attendee names #}
-                        {% with field=sform.attendee_names_asked_required %}
-                        {% if field %}
-                        <tr data-dnd-id="attendee_name_parts">
-                            <th id="{{ field.auto_id }}_label">{% translate "Attendee names" %}</th>
-                            <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-labelledby="{{ field.auto_id }}_label">
-                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
-                            </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
-                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        aria-label="{% translate 'Required status for Attendee names' %}">
-                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
-                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
-                        </tr>
-                        {% endif %}
-                        {% endwith %}
-
-                        {# Attendee emails #}
-                        {% with field=sform.attendee_emails_asked_required %}
-                        {% if field %}
-                        <tr data-dnd-id="attendee_email">
-                            <th id="{{ field.auto_id }}_label" class="info-toggle-header">
-                                <div class="info-toggle-wrapper">
-                                    <span>{% translate "Attendee emails" %}</span>
-                                    <span class="info-toggle" data-toggle="info-box">
-                                        <i class="fa fa-info-circle text-info"></i>
-                                    </span>
-                                    <div class="inline-info-box d-none">
-                                        <div class="talk-info-box">
-                                            <div class="talk-info-icon">
-                                                <i class="fa fa-info-circle"></i>
+                        {# Unified ordered field list - system fields and custom fields mixed #}
+                        {% for field_item in ordered_fields %}
+                            {% if field_item.type == 'system' %}
+                                {# System field rendering #}
+                                {% if field_item.name == 'attendee_name_parts' %}
+                                    {% with field=sform.attendee_names_asked_required %}
+                                    {% if field %}
+                                    <tr data-dnd-id="attendee_name_parts">
+                                        <th id="{{ field.auto_id }}_label">{% translate "Attendee names" %}</th>
+                                        <td class="text-center">
+                                            <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                                aria-labelledby="{{ field.auto_id }}_label">
+                                                <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                            <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                                id="{{ field.auto_id }}">
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                                    aria-label="{% translate 'Required status for Attendee names' %}">
+                                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                                </select>
                                             </div>
-                                            <div class="talk-info-content">
-                                                <span>
-                                                    {% translate "Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings." %}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </th>
-                            <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-labelledby="{{ field.auto_id }}_label">
-                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
-                            </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
-                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        aria-label="{% translate 'Required status for Attendee emails' %}">
-                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
-                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
-                        </tr>
-                        {% endif %}
-                        {% endwith %}
-
-                        {# Attendee company #}
-                        {% with field=sform.attendee_company_asked_required %}
-                        {% if field %}
-                        <tr data-dnd-id="company">
-                            <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
-                            <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-labelledby="{{ field.auto_id }}_label">
-                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
-                            </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
-                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        aria-label="{% translate 'Required status for Company' %}">
-                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
-                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
-                        </tr>
-                        {% endif %}
-                        {% endwith %}
-
-                        {# Attendee addresses - represents multiple backend fields #}
-                        {% with field=sform.attendee_addresses_asked_required %}
-                        {% if field %}
-                        <tr data-dnd-id="street">
-                            <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
-                            <td class="text-center">
-                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
-                                    aria-labelledby="{{ field.auto_id }}_label">
-                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
-                                    id="{{ field.auto_id }}">
-                            </td>
-                            <td class="text-center">
-                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
-                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
-                                        aria-label="{% translate 'Required status for Postal addresses' %}">
-                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
-                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
-                                    </select>
-                                </div>
-                            </td>
-                            <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
-                        </tr>
-                        {% endif %}
-                        {% endwith %}
-                        
-                        {# Custom fields #}
-                        {% for q in questions %}
-                        <tr data-dnd-id="{{ q.id }}">
-                            <th>
-                                <strong>
-                                    {% if q.type == "DES" %}
-                                        <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
-                                    {% else %}
-                                        <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
+                                        </td>
+                                        <td class="text-center"><span class="text-muted">—</span></td>
+                                        <td class="dnd-container text-center text-nowrap"></td>
+                                    </tr>
                                     {% endif %}
-                                    {{ q.question }}
-                                    </a>
-                                </strong>
-                                <br><small class="text-muted">{{ q.identifier }}</small>
-                            </th>
-                            <td class="text-center">
-                                <label class="toggle-switch always-on"
-                                    aria-label="{% translate 'Custom field is always active' %}"
-                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
-                                    <input type="checkbox"
-                                        checked
-                                        disabled
-                                        aria-describedby="custom-field-always-active-{{ q.id }}">
-                                    <span class="toggle-slider"></span>
-                                </label>
-                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
-                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                {% if q.type != "DES" %}
-                                    <div class="required-status-wrapper" data-current="{% if q.required %}required{% else %}optional{% endif %}">
-                                        <select class="required-status-dropdown question-required-dropdown" 
-                                            data-question-id="{{ q.id }}"
-                                            aria-label="{% translate 'Required status for' %} {{ q.question }}" 
-                                            data-current="{% if q.required %}required{% else %}optional{% endif %}">
-                                            <option value="optional" {% if not q.required %}selected{% endif %}>{% translate "Optional" %}</option>
-                                            <option value="required" {% if q.required %}selected{% endif %}>{% translate "Required" %}</option>
-                                        </select>
-                                    </div>
-                                {% else %}
-                                    <span class="text-muted">—</span>
+                                    {% endwith %}
+                                {% elif field_item.name == 'attendee_email' %}
+                                    {% with field=sform.attendee_emails_asked_required %}
+                                    {% if field %}
+                                    <tr data-dnd-id="attendee_email">
+                                        <th id="{{ field.auto_id }}_label" class="info-toggle-header">
+                                            <div class="info-toggle-wrapper">
+                                                <span>{% translate "Attendee emails" %}</span>
+                                                <span class="info-toggle" data-toggle="info-box">
+                                                    <i class="fa fa-info-circle text-info"></i>
+                                                </span>
+                                                <div class="inline-info-box d-none">
+                                                    <div class="talk-info-box">
+                                                        <div class="talk-info-icon">
+                                                            <i class="fa fa-info-circle"></i>
+                                                        </div>
+                                                        <div class="talk-info-content">
+                                                            <span>
+                                                                {% translate "Normally, eventyay asks for one email address per order and the order confirmation will be sent only to that email address. If you enable this option, the system will additionally ask for individual email addresses for every admission ticket. This might be useful if you want to obtain individual addresses for every attendee even in case of group orders. However, eventyay will send the order confirmation by default only to the primary email address, not to the per-attendee addresses. You can however enable this in the E-mail settings." %}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </th>
+                                        <td class="text-center">
+                                            <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                                aria-labelledby="{{ field.auto_id }}_label">
+                                                <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                            <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                                id="{{ field.auto_id }}">
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                                    aria-label="{% translate 'Required status for Attendee emails' %}">
+                                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><span class="text-muted">—</span></td>
+                                        <td class="dnd-container text-center text-nowrap"></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endwith %}
+                                {% elif field_item.name == 'company' %}
+                                    {% with field=sform.attendee_company_asked_required %}
+                                    {% if field %}
+                                    <tr data-dnd-id="company">
+                                        <th id="{{ field.auto_id }}_label">{% translate "Company" %}</th>
+                                        <td class="text-center">
+                                            <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                                aria-labelledby="{{ field.auto_id }}_label">
+                                                <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                            <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                                id="{{ field.auto_id }}">
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                                    aria-label="{% translate 'Required status for Company' %}">
+                                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><span class="text-muted">—</span></td>
+                                        <td class="dnd-container text-center text-nowrap"></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endwith %}
+                                {% elif field_item.name == 'street' %}
+                                    {% with field=sform.attendee_addresses_asked_required %}
+                                    {% if field %}
+                                    <tr data-dnd-id="street">
+                                        <th id="{{ field.auto_id }}_label">{% translate "Postal addresses" %}</th>
+                                        <td class="text-center">
+                                            <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                                aria-labelledby="{{ field.auto_id }}_label">
+                                                <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                            <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                                id="{{ field.auto_id }}">
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                                <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                                    aria-label="{% translate 'Required status for Postal addresses' %}">
+                                                    <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>{% translate "Optional" %}</option>
+                                                    <option value="required" {% if field.value == 'required' %}selected{% endif %}>{% translate "Required" %}</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td class="text-center"><span class="text-muted">—</span></td>
+                                        <td class="dnd-container text-center text-nowrap"></td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endwith %}
                                 {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <ul class="list-unstyled products-list">
-                                    {% for product in q.products.all %}
-                                        <li>
-                                            <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
-                                        </li>
-                                    {% empty %}
-                                        <li class="text-muted">{% translate "All products" %}</li>
-                                    {% endfor %}
-                                </ul>
-                            </td>
-                            <td class="dnd-container text-center text-nowrap">
-                                {% if q.type == "DES" %}
-                                    <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
-                                    <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
-                                {% else %}
-                                    <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-bar-chart fa-fw"></i></a>
-                                    <a href="{% url "control:event.products.questions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
-                                    <a href="{% url "control:event.products.questions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
-                                {% endif %}
-                            </td>
-                        </tr>
+                            {% elif field_item.type == 'question' %}
+                                {# Custom field rendering #}
+                                {% with q=field_item.question %}
+                                <tr data-dnd-id="{{ q.id }}">
+                                    <th>
+                                        <strong>
+                                            {% if q.type == "DES" %}
+                                                <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
+                                            {% else %}
+                                                <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
+                                            {% endif %}
+                                            {{ q.question }}
+                                            </a>
+                                        </strong>
+                                        <br><small class="text-muted">{{ q.identifier }}</small>
+                                    </th>
+                                    <td class="text-center">
+                                        <label class="toggle-switch always-on"
+                                            aria-label="{% translate 'Custom field is always active' %}"
+                                            title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
+                                            <input type="checkbox"
+                                                checked
+                                                disabled
+                                                aria-describedby="custom-field-always-active-{{ q.id }}">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                        <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
+                                            {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if q.type != "DES" %}
+                                            <div class="required-status-wrapper" data-current="{% if q.required %}required{% else %}optional{% endif %}">
+                                                <select class="required-status-dropdown question-required-dropdown" 
+                                                    data-question-id="{{ q.id }}"
+                                                    aria-label="{% translate 'Required status for' %} {{ q.question }}" 
+                                                    data-current="{% if q.required %}required{% else %}optional{% endif %}">
+                                                    <option value="optional" {% if not q.required %}selected{% endif %}>{% translate "Optional" %}</option>
+                                                    <option value="required" {% if q.required %}selected{% endif %}>{% translate "Required" %}</option>
+                                                </select>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <ul class="list-unstyled products-list">
+                                            {% for product in q.products.all %}
+                                                <li>
+                                                    <a href="{% url "control:event.product" organizer=request.event.organizer.slug event=request.event.slug product=product.id %}">{{ product }}</a>
+                                                </li>
+                                            {% empty %}
+                                                <li class="text-muted">{% translate "All products" %}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </td>
+                                    <td class="dnd-container text-center text-nowrap">
+                                        {% if q.type == "DES" %}
+                                            <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
+                                            <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
+                                        {% else %}
+                                            <a href="{% url "control:event.products.questions.show" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-bar-chart fa-fw"></i></a>
+                                            <a href="{% url "control:event.products.questions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
+                                            <a href="{% url "control:event.products.questions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>

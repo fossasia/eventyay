@@ -366,9 +366,6 @@ def reorder_questions(request, organizer, event):
     if input_questions.count() != len([i for i in ids if i.isdigit()]):
         raise Http404(_('Some of the provided question ids are invalid.'))
 
-    if input_questions.count() != request.event.questions.count():
-        raise Http404(_('Not all questions have been selected.'))
-
     for q in input_questions:
         pos = ids.index(str(q.pk))
         if pos != q.position:  # Save unneccessary UPDATE queries
@@ -376,14 +373,12 @@ def reorder_questions(request, organizer, event):
             q.save(update_fields=['position'])
 
     system_question_order = {}
+    # Only track attendee-specific fields (not invoice/address fields like zipcode, city, country)
     for s in (
         'attendee_name_parts',
         'attendee_email',
         'company',
         'street',
-        'zipcode',
-        'city',
-        'country',
     ):
         if s in ids:
             system_question_order[s] = ids.index(s)
@@ -1676,8 +1671,54 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         ctx = super().get_context_data(**kwargs)
         ctx['sform'] = self.sform()
 
-        # Include custom fields (questions) for attendee data section
-        ctx['questions'] = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        # Build unified ordered field list (system fields + custom fields)
+        system_question_order = self.request.event.settings.system_question_order or {}
+        questions = list(self.request.event.questions.prefetch_related('products'))
+        
+        # Create list of all fields with their positions
+        all_fields = []
+        
+        # Add system fields with their saved positions (or defaults if not saved)
+        # Only include attendee-specific fields (not invoice/address fields like zipcode, city, country)
+        system_fields = [
+            'attendee_name_parts',
+            'attendee_email',
+            'company',
+            'street',
+        ]
+        
+        # If no system_question_order exists, assign default positions (system fields first)
+        if not system_question_order:
+            for idx, field_name in enumerate(system_fields):
+                all_fields.append({
+                    'type': 'system',
+                    'name': field_name,
+                    'position': idx,
+                })
+        else:
+            for field_name in system_fields:
+                position = system_question_order.get(field_name, -1)
+                if position >= 0:
+                    all_fields.append({
+                        'type': 'system',
+                        'name': field_name,
+                        'position': position,
+                    })
+        
+        # Add custom fields (questions) with their positions
+        for q in questions:
+            all_fields.append({
+                'type': 'question',
+                'question': q,
+                'position': q.position,
+            })
+        
+        # Sort all fields by position
+        all_fields.sort(key=lambda x: x['position'])
+        
+        ctx['ordered_fields'] = all_fields
+        # Keep questions for backward compatibility
+        ctx['questions'] = questions
 
         return ctx
 

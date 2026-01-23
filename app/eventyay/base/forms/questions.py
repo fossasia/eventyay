@@ -501,15 +501,30 @@ class BaseQuestionsForm(forms.Form):
             )
             add_fields['state'].widget.is_required = True
 
-        field_positions = list(
-            [
-                (
-                    n,
-                    event.settings.system_question_order.get(n if n != 'state' else 'country', 0),
-                )
-                for n in add_fields.keys()
-            ]
-        )
+        # Get saved field order, with fallback to default positions
+        system_question_order = event.settings.system_question_order or {}
+        
+        # Default positions for system fields (used when no saved order exists)
+        default_positions = {
+            'attendee_name_parts': 0,
+            'attendee_email': 1,
+            'company': 2,
+            'street': 3,
+            'zipcode': 4,
+            'city': 5,
+            'country': 6,
+            'state': 6,  # state follows country
+        }
+        
+        field_positions = []
+        for n in add_fields.keys():
+            # Use saved position if available, otherwise use default position
+            lookup_key = n if n != 'state' else 'country'
+            if lookup_key in system_question_order and system_question_order[lookup_key] >= 0:
+                position = system_question_order[lookup_key]
+            else:
+                position = default_positions.get(n, 999)
+            field_positions.append((n, position))
 
         for q in questions:
             # Do we already have an answer? Provide it as the initial value
