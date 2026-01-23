@@ -73,13 +73,41 @@ function initOrderFormToggles() {
     });
 
     // Handle info-toggle click for info boxes (CSP-compliant)
-    document.querySelectorAll('.info-toggle[data-toggle="info-box"]').forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const infoBox = this.nextElementSibling;
-            if (infoBox && infoBox.classList.contains('inline-info-box')) {
+    let currentOpenInfoBox = null;
+    
+    // Use event delegation for efficient event handling
+    document.addEventListener('click', function(e) {
+        const toggle = e.target.closest('.info-toggle[data-toggle="info-box"]');
+        
+        // Handle info-toggle click
+        if (toggle) {
+            const infoBox = toggle.nextElementSibling;
+            if (infoBox?.classList.contains('inline-info-box')) {
+                // Close any other open info boxes
+                if (currentOpenInfoBox && currentOpenInfoBox !== infoBox) {
+                    currentOpenInfoBox.classList.add('d-none');
+                }
+                
+                // Toggle current info box
                 infoBox.classList.toggle('d-none');
+                
+                // Update reference to currently open info box
+                currentOpenInfoBox = infoBox.classList.contains('d-none') ? null : infoBox;
             }
-        });
+            e.stopPropagation();
+            return;
+        }
+        
+        // Close info box when clicking outside (check related elements)
+        if (e.target.closest('.inline-info-box, .info-toggle-wrapper')) {
+            return;
+        }
+        
+        // Close any open info boxes
+        if (currentOpenInfoBox) {
+            currentOpenInfoBox.classList.add('d-none');
+            currentOpenInfoBox = null;
+        }
     });
 
     // Handle custom field required dropdown changes (AJAX update)
