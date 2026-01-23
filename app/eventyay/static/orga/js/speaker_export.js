@@ -5,8 +5,7 @@ const changeSelectAll = () => {
     const fieldset = selectAllCheckbox.closest("fieldset")
     if (!fieldset) return
 
-    fieldset.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
-        if (checkbox.id === "select-all") return
+    fieldset.querySelectorAll('input[type="checkbox"]:not(#select-all)').forEach((checkbox) => {
         checkbox.checked = selectAllCheckbox.checked
     })
 }
