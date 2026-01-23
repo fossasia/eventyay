@@ -8,7 +8,7 @@ documentation for a standard installation using ``pip`` on Linux.
 
 If you want a more out-of-the-box way of running eventyay, please consider our
 hosted version at `eventyay.com`_. Other than that, we also have an
-an automation role and a community-provided `docker-compose setup`_. Please
+automation role and a community-provided `docker-compose setup`_. Please
 note that the docker setup is not officially supported.
 
 .. toctree::
