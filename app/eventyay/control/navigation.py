@@ -220,7 +220,7 @@ def get_event_navigation(request: HttpRequest):
             children.extend(
                 [
                     {
-                        'label': _('All vouchers'),
+                        'label': _('Vouchers'),
                         'url': reverse(
                             'control:event.vouchers',
                             kwargs={
@@ -228,19 +228,8 @@ def get_event_navigation(request: HttpRequest):
                                 'organizer': request.event.organizer.slug,
                             },
                         ),
-                        'active': url.url_name != 'event.vouchers.tags' and 'event.vouchers' in url.url_name,
-                    },
-                    {
-                        'label': _('Voucher Tags'),
-                        'url': reverse(
-                            'control:event.vouchers.tags',
-                            kwargs={
-                                'event': request.event.slug,
-                                'organizer': request.event.organizer.slug,
-                            },
-                        ),
-                        'active': 'event.vouchers.tags' in url.url_name,
-                    },
+                        'active': 'event.vouchers' in url.url_name,
+                    }
                 ]
             )
 

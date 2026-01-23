@@ -3,7 +3,7 @@ name = "eventyay-unified"
 version = "0.1.0"
 description = "Platform to manage events (ticketing, talk schedule)."
 readme = "README.rst"
-requires-python = ">=3.11, <3.13"
+requires-python = ">=3.12, <3.13"
 keywords = ["tickets", "events", "web", "shop", "ecommerce"]
 authors = [ {name = "eventyay", email = "info@eventyay.com"}, ]
 maintainers = [ {name = "eventyay", email = "info@eventyay.com"}, ]
@@ -14,7 +14,6 @@ classifiers = [
   "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
   "Environment :: Web Environment",
   "License :: OSI Approved :: Apache License, Version 2.0",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Framework :: Django :: 5.2",
 ]
@@ -140,10 +139,6 @@ dependencies = [
     "pillow>=12.1.0",
     "polib>=1.2.0",
     "potypo>=0.0.2",
-    "pretalx-downstream @ git+https://github.com/fossasia/eventyay-talk-downstream.git@6ad15e7bce1a621cdbf52a3d43c0f0a5e7eca664",
-    "pretalx-pages @ git+https://github.com/fossasia/eventyay-talk-pages.git@a726a10459644f0bfde5019be8abf4f66b77cd27",
-    "pretalx-venueless @ git+https://github.com/fossasia/eventyay-talk-video.git@8c3316a0ee7e801dc9c30b56a3c523c01209bb61",
-    "pretix-pages @ git+https://github.com/fossasia/eventyay-ticket-pages.git@a7c33fd26351d409a752baa6989f24be511b5bdd",
     "protobuf>=6.33.4",
     "psycopg[binary,pool]>=3.3.2",
     "publicsuffixlist>=1.0.2.20260114",
@@ -203,6 +198,7 @@ dependencies = [
     "tzdata>=2025.3",
     "urllib3>=2.6.3",
     "urlman>=2.0.3",
+    # This library prevents us from being compatible with Python v3.13+.
     "vat-moss-forked>=2020.3.20.0.11.0",
     "vine>=5.1.0",
     "vobject>=0.9.9",
@@ -249,6 +245,7 @@ test = [
     "fakeredis>=2.33.0",
     "freezegun>=1.5.5",
     "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
     "pytest-cache>=1.0",
     "pytest-cov>=7.0.0",
     "pytest-django>=4.9.0",
@@ -284,6 +281,14 @@ lines-after-imports = 2
 [tool.setuptools]
 packages = ["eventyay"]
 
+[tool.pytest]
+DJANGO_SETTINGS_MODULE = "eventyay.config.settings"
+testpaths = ["tests"]
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore::PendingDeprecationWarning",
+]
 
 [tool.pytest_env]
 EVY_RUNNING_ENVIRONMENT = "testing"

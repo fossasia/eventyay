@@ -216,6 +216,8 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['locale'].choices = [(a, b) for a, b in settings.LANGUAGES if a in self.locales]
         self.fields['location'].widget.attrs['rows'] = '3'
         self.fields['location'].widget.attrs['placeholder'] = _('Sample Conference Center\nHeidelberg, Germany')
+        self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
+        self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['email'].required = True
         self.fields['email'].label = _('Organizer email address')
@@ -698,7 +700,7 @@ class EventSettingsForm(SettingsForm):
             self.fields[virtual_key] = forms.ChoiceField(
                 label=asked_field.label,
                 help_text=asked_field.help_text,
-                required=True,
+                required=False,
                 widget=forms.RadioSelect,
                 choices=[
                     # default key needs a value other than '' because with '' it would also overwrite

@@ -4,8 +4,13 @@ updates:
   - package-ecosystem: "uv"
     directory: "/app"
     schedule:
-      interval: "weekly"
+      interval: "daily"
     versioning-strategy: increase
+    ignore:
+      - dependency-name: "django"
+        versions: [">=6.0.0"]
+      - dependency-name: "stripe"
+        versions: [">=11.4.0"]
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp"
@@ -23,6 +28,6 @@ updates:
       interval: "daily"
 
   - package-ecosystem: "npm"
-    directory: "/app/eventyay/frontend/webcheckin-bundler"
+    directory: "/app/eventyay/frontend/webcheckin"
     schedule:
       interval: "daily"
