@@ -417,7 +417,7 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                     'pretalx.mail.scheduled',
                     person=self.request.user,
                     orga=True,
-                    data={'scheduled_at': str(scheduled_at)},
+                    data={'scheduled_at': scheduled_at.isoformat()},
                 )
             messages.success(
                 self.request,
