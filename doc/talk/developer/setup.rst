@@ -193,7 +193,7 @@ If you want to translate new strings that are not yet known to the translation s
 first include them in the ``.po`` files. As we share translations between both the JavaScript
 frontend and the Python backend, you’ll need to install the frontend dependencies first::
 
-    (.venv)$ cd app/eventyay/frontend/schedule-editor
+    (.venv)$ cd app/eventyay/webapp/schedule-editor
     (.venv)$ npm ci
 
 Then, use the following command to scan the source code for strings we want to

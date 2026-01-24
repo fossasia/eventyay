@@ -36,7 +36,7 @@ from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFound
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
-from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin
+from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin, EventPlugins as ControlEventPlugins
 from eventyay.control.views.product import MetaDataEditorMixin
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
 from eventyay.eventyay_common.utils import (
@@ -511,6 +511,19 @@ class EventUpdate(
         return tz.localize(dt.replace(tzinfo=None)) if dt is not None else None
 
 
+class EventPlugins(ControlEventPlugins):
+    template_name = 'eventyay_common/event/plugins.html'
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'eventyay_common:event.plugins',
+            kwargs={
+                'organizer': self.get_object().organizer.slug,
+                'event': self.get_object().slug,
+            },
+        )
+
+
 class VideoAccessAuthenticator(View):
     def get(self, request, *args, **kwargs):
         """
@@ -591,7 +604,7 @@ class VideoAccessAuthenticator(View):
         audience = jwt_config["audience"]
         issuer = jwt_config["issuer"]
 
-        # Setup video plugin settings for the webapp
+        # Setup video plugin settings for the video frontend
         # Set each video config setting individually if missing
         if not event.settings.venueless_secret:
             event.settings.venueless_secret = secret
