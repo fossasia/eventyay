@@ -150,7 +150,6 @@ def login(request):
         }
     )
 
-    # LOGIN PROVIDER HANDLING
     gs = GlobalSettingsObject()
     raw_providers = gs.settings.get('login_providers', as_type=dict)
     providers = validate_login_providers(raw_providers)
@@ -158,16 +157,19 @@ def login(request):
     # Get only enabled providers
     enabled_providers = providers.get_enabled_providers()
 
+    # Convert to a dict for iteration / sorting
+    enabled_dict = {name: getattr(enabled_providers, name) for name in enabled_providers.model_fields}
+
     # Sort: preferred providers first, then alphabetically
     def sort_key(name_and_provider):
         name, provider = name_and_provider
         return (not provider.is_preferred, name)
     
-    ordered_providers = dict(sorted(enabled_providers.items(), key=sort_key))
+    ordered_providers = dict(sorted(enabled_dict.items(), key=sort_key))
 
     # Validation: Check for multiple preferred providers (among enabled ones)
     preferred_enabled = [
-        name for name, provider in enabled_providers.items() 
+        name for name, provider in enabled_dict.items() 
         if provider.is_preferred
     ]
 
