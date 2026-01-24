@@ -28,7 +28,7 @@
     "moment-timezone": "^0.6.0",
     "process": "^0.11.10",
     "vue": "^3.5.27",
-    "zod": "^4.0.10"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.23",
@@ -40,17 +40,17 @@
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.39.2",
-    "eslint-plugin-vue": "^9.25.0",
+    "eslint-plugin-vue": "^10.7.0",
     "eslint-plugin-vue-pug": "^0.6.2",
     "i18next-conv": "^16.0.0",
     "i18next-parser": "^9.0.0",
     "pug": "^3.0.3",
-    "stylelint": "^16.26.1",
-    "stylelint-config-standard": "^36.0.0",
+    "stylelint": "^17.0.0",
+    "stylelint-config-standard": "^40.0.0",
     "stylelint-plugin-stylus": "^1.0.0",
     "stylus": "^0.64.0",
     "typescript": "^5.3.3",
-    "vite": "^6.3.5",
+    "vite": "^7.3.1",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-checker": "^0.12.0",
     "vue-tsc": "^3.2.2"
