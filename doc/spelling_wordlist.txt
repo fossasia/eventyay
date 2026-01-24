@@ -9,6 +9,7 @@ autobuild
 availabilities
 backend
 backends
+banktransfer
 barcode
 barcodes
 Bcc
@@ -100,7 +101,6 @@ preprocessor
 presale
 Eventyay
 pretixSCAN
-pretixdroid
 pretixPOS
 pretixpresale
 prometheus
