@@ -142,7 +142,7 @@
 
                         {# Description #}
                         {% with field=sform.cfp_ask_description %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="description">
                             <th>{% translate "Description" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -177,7 +177,7 @@
 
                         {# Notes #}
                         {% with field=sform.cfp_ask_notes %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="notes">
                             <th>{% translate "Notes" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -212,7 +212,7 @@
 
                         {# Track #}
                         {% with field=sform.cfp_ask_track %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="track">
                             <th>{% translate "Track" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -247,7 +247,7 @@
 
                         {# Duration #}
                         {% with field=sform.cfp_ask_duration %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="duration">
                             <th>{% translate "Duration" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -283,7 +283,7 @@
                         {# Content Locale #}
                         {% with field=sform.cfp_ask_content_locale %}
                         {% if field %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="content_locale">
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -320,7 +320,7 @@
 
                         {# Image #}
                         {% with field=sform.cfp_ask_image %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="image">
                             <th>{% translate "Session image" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -355,7 +355,7 @@
 
                         {# Do not record #}
                         {% with field=sform.cfp_ask_do_not_record %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="do_not_record">
                             <th>{% translate "Recording opt-out" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -459,7 +459,7 @@
                 <div class="table-responsive-sm offset-md-3">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
-                        <tr dragsort-id="abstract">
+                        <tr>
                             <th></th>
                             <th class="text-center">{% translate "Active" %}</th>
                             <th class="text-center">{% translate "Required" %}</th>
@@ -470,7 +470,7 @@
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
-                        <tr dragsort-id="abstract">
+                        <tr dragsort-id="biography">
                             <th>{% translate "Biography" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -540,7 +540,7 @@
 
                         {# Avatar Source #}
                         {% with field=sform.cfp_ask_avatar_source %}
-                        <tr dragsort-id="avatar">
+                        <tr dragsort-id="avatar_source">
                             <th>{% translate "Profile picture source" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -575,7 +575,7 @@
 
                         {# Avatar License #}
                         {% with field=sform.cfp_ask_avatar_license %}
-                        <tr dragsort-id="avatar">
+                        <tr dragsort-id="avatar_license">
                             <th>{% translate "Profile picture license" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -740,7 +740,7 @@
                 <div class="table-responsive-sm offset-md-3">
                     <table class="table table-sm table-flip table-sticky cfp-option-table">
                     <thead>
-                        <tr dragsort-id="abstract">
+                        <tr>
                             <th></th>
                             <th class="text-center">{% translate "Active" %}</th>
                             <th class="text-center">{% translate "Required" %}</th>
