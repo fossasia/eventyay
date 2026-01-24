@@ -191,4 +191,3 @@ Then, go to http://localhost:8081 for a version of the documentation that automa
 whenever you change a source file.
 
 .. _Django's documentation: https://docs.djangoproject.com/en/1.11/ref/django-admin/#runserver
-.. _pretixdroid: https://github.com/fossasia/eventyaydroid
