@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0006_remove_landing_page_text'),
+        ('base', '0008_make_custom_field_label_optional'),
     ]
 
     operations = [
