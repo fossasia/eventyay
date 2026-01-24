@@ -158,15 +158,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['can_manage_teams'] = self.can_manage_teams
-        default_section = 'teams' if self.can_manage_teams else 'general'
-        section = self._forced_section or self.request.GET.get('section', default_section)
-        # Normalize 'permissions' to 'teams' (legacy alias)
-        if section == 'permissions':
-            section = 'teams'
-        # Guard against teams section when user cannot manage teams
-        if section == 'teams' and not self.can_manage_teams:
-            section = 'general'
-        ctx['active_section'] = section
+        ctx['active_section'] = 'teams'
         selected_team_id = self._selected_team_override or self.request.GET.get('team')
         selected_panel = self._selected_panel_override or self.request.GET.get('panel')
         if selected_team_id and not selected_panel:
