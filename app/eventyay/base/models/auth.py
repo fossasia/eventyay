@@ -867,31 +867,56 @@ the eventyay team"""
 
     def get_primary_email(self) -> str:
         """
-        Returns the user's primary email address.
+        Returns the user's primary email address with verification-aware fallback.
         
-        Checks django-allauth's EmailAddress model for the email marked as primary.
-        Falls back to the user.email field if no primary email is found.
+        Logic:
+        1. If user has a primary email that is verified, return it
+        2. Else if user has any verified email, return the first one
+        3. Else fall back to user.email field
+        4. Else return empty string
         
-        :return: The primary email address as a string
+        This implementation optimizes for bulk fetching by iterating over 
+        self.emailaddress_set.all(), which allows `prefetch_related` to be effective.
+        
+        :return: The preferred email address as a string
         """
-        try:
-            from allauth.account.models import EmailAddress
-            
-            # Get the primary email from allauth's EmailAddress model
-            primary_email_obj = EmailAddress.objects.filter(
-                user=self, 
-                primary=True
-            ).first()
-            
-            if primary_email_obj:
-                return primary_email_obj.email
-        except (ImportError, Exception):
-            # If allauth is not available or any other error, fall back to user.email
-            pass
-        
-        # Fallback to the user.email field
-        return self.email or ''
+        import logging
+        from django.apps import apps
+        logger = logging.getLogger(__name__)
 
+        if apps.is_installed('allauth.account'):
+            try:
+                from allauth.account.models import EmailAddress
+                
+                # Use all() to leverage prefetch_related if it was used in the queryset
+                emails = list(self.emailaddress_set.all())
+                
+                # 1. Primary + Verified
+                primary_verified = next((e for e in emails if e.primary and e.verified), None)
+                if primary_verified:
+                    return primary_verified.email
+                
+                # 2. Any Verified
+                verified_emails = [e for e in emails if e.verified]
+                if verified_emails:
+                    # Sort by primary desc (True first), then ID asc
+                    verified_emails.sort(key=lambda x: (not x.primary, x.id))
+                    return verified_emails[0].email
+                    
+                # Check for unverified primary (logging only)
+                unverified_primary = next((e for e in emails if e.primary and not e.verified), None)
+                if unverified_primary:
+                    logger.warning(
+                        f'User {self.pk} has unverified primary email {unverified_primary.email}, '
+                        f'falling back to user.email: {self.email}'
+                    )
+            except ImportError:
+                pass
+            # Note: We intentionally let other exceptions (like DB errors) bubble up 
+            # so they are not silently swallowed.
+        
+        # Final fallback to the user.email field
+        return self.email or ''
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""

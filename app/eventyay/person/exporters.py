@@ -22,7 +22,8 @@ class CSVSpeakerExporter(CSVExporterMixin, BaseExporter):
     def get_data(self, **kwargs):
         fieldnames = ['name', 'email', 'confirmed']
         data = []
-        for speaker in self.event.submitters:
+        submitters = self.event.submitters.prefetch_related('emailaddress_set')
+        for speaker in submitters:
             accepted_talks = speaker.submissions.filter(event=self.event, state=SubmissionStates.ACCEPTED).exists()
             confirmed_talks = speaker.submissions.filter(event=self.event, state=SubmissionStates.CONFIRMED).exists()
             if not accepted_talks and not confirmed_talks:

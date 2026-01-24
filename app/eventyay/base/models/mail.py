@@ -408,7 +408,9 @@ class QueuedMail(PretalxModel):
 
         to = self.to.split(',') if self.to else []
         if self.id:
-            to += [user.get_primary_email() for user in self.to_users.all()]
+            # Prefetch email addresses to avoid N+1 queries when getting primary emails
+            users_qs = self.to_users.all().prefetch_related('emailaddress_set')
+            to += [user.get_primary_email() for user in users_qs]
             if has_event:
                 queuedmail_pre_send.send_robust(
                     sender=self.event,
@@ -445,7 +447,7 @@ class QueuedMail(PretalxModel):
                 'pretalx.mail.sent',
                 person=requestor,
                 orga=orga,
-                data={'to_users': [(user.pk, user.get_primary_email()) for user in self.to_users.all()]},
+                data={'to_users': [(user.pk, user.get_primary_email()) for user in self.to_users.all().prefetch_related('emailaddress_set')]},
             )
             self.save()
             queuedmail_post_send.send(

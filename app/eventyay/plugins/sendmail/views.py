@@ -564,10 +564,11 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         recipients_list = []
         for team in form.cleaned_data['teams']:
             for member in team.members.all():
-                if not member.email or member.email in sent_emails:
+                email = member.get_primary_email()
+                if not email or email in sent_emails:
                     continue
                 recipients_list.append({
-                    "email": member.email,
+                    "email": email,
                     "team": team.pk,
                     "orders": [],
                     "positions": [],
@@ -576,7 +577,7 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
                     "error": None
                 })
 
-                sent_emails.add(member.email)
+                sent_emails.add(email)
 
         if not recipients_list:
             messages.error(self.request, _('There are no valid recipients for the selected teams.'))
