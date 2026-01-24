@@ -1,4 +1,5 @@
 import html
+import json
 import urllib.parse
 from copy import copy
 from functools import partial
@@ -191,9 +192,23 @@ md = markdown.Markdown(
 )
 
 
+
+
 def render_markdown(text: str, cleaner=CLEANER) -> str:
     if not text:
         return ''
+    
+    if isinstance(text, str) and text.strip().startswith('{') and text.strip().endswith('}'):
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, dict):
+                text = LazyI18nString(parsed)
+        except json.JSONDecodeError:
+            pass
+
+    if isinstance(text, dict):
+        text = LazyI18nString(text)
+    
     body_md = cleaner.clean(md.reset().convert(str(text)))
     return mark_safe(body_md)
 
