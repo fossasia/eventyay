@@ -153,7 +153,7 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-  docker volume rm eventyay_postgres_data_dev eventyay_static_volume
+      docker volume rm eventyay_postgres_data_dev eventyay_static_volume
 
 4. **Build and run the images**
 
@@ -161,7 +161,14 @@ We assume your current working directory is the checkout of this repo.
 
       docker compose up -d --build
 
-5. **Create a superuser account** (for accessing the admin panel):
+5. **Run database migrations**:
+
+  .. code-block:: bash
+
+      docker exec -ti eventyay-next-web python manage.py makemigrations
+      docker exec -ti eventyay-next-web python manage.py migrate
+
+6. **Create a superuser account** (for accessing the admin panel):
 
    This should be necessary only once, since the database is persisted
    as docker volume. If you see strange behaviour, see the point 3.
@@ -169,26 +176,26 @@ We assume your current working directory is the checkout of this repo.
 
   .. code-block:: bash
 
-  docker exec -ti eventyay-next-web python manage.py createsuperuser
+      docker exec -ti eventyay-next-web python manage.py createsuperuser
 
-6. **Visit the site**
+7. **Visit the site**
 
   Open `http://localhost:8000` in a browser.
 
-7. **Checking the logs**
+8. **Checking the logs**
 
   .. code-block:: bash
 
-  docker compose logs -f
+      docker compose logs -f
 
 
-8. **Shut down**
+9. **Shut down**
 
    To shut down the development docker deployment, run
 
   .. code-block:: bash
 
-  docker compose down
+      docker compose down
 
 The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
 
