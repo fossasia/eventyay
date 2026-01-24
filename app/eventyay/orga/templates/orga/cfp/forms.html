@@ -387,8 +387,7 @@
                             </td>
                         </tr>
                         {% endwith %}
-                    </tbody>
-                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+
                         {% for item in custom_session_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>
@@ -465,6 +464,7 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
@@ -677,8 +677,7 @@
                             </td>
                         </tr>
                         {% endwith %}
-                    </tbody>
-                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+
                         {% for item in custom_speaker_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>
@@ -748,7 +747,7 @@
                             <th>{% translate "Maximum length" %}</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                         {% for item in custom_reviewer_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>
