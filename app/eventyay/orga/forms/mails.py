@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from django import forms
 from django.db import transaction
 from django.db.models import Count, Q
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
@@ -210,7 +211,6 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from django.utils import timezone
             if scheduled_at < timezone.now():
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
@@ -239,7 +239,6 @@ class WriteMailBaseForm(MailTemplateForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from django.utils import timezone
             if scheduled_at < timezone.now():
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
