@@ -5,11 +5,11 @@ from collections import defaultdict
 
 from csp.decorators import csp_update
 from django.contrib import messages
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -232,6 +232,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_fields'] = self.get_unified_fields('session')
         context['speaker_fields'] = self.get_unified_fields('speaker')
         
+        # Pass saved field order to template for JavaScript reordering
+        fields_config = self.request.event.cfp.settings.get('fields_config', {})
+        context['session_field_order'] = json.dumps(fields_config.get('session', []))
+        context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
+        
         questions = TalkQuestion.all_objects.filter(event=self.request.event)
         sform = self.sform
         
@@ -252,12 +257,78 @@ class CfPForms(EventPermissionRequired, TemplateView):
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        # Handle drag-drop reordering (AJAX request with 'order' parameter)
+        order_param = request.POST.get('order')
+        if order_param:
+            self._handle_field_reordering(order_param)
+            return HttpResponse(status=204)  # No content response for AJAX
+        
+        # Handle regular form submission
         if self.sform.is_valid():
             self.sform.save()
             messages.success(request, phrases.base.saved)
             return redirect(request.path)
         messages.error(request, phrases.base.error_saving_changes)
         return self.get(request, *args, **kwargs)
+    
+    def _handle_field_reordering(self, order_str):
+        """
+        Handle field reordering for both default fields and custom questions.
+        Order string contains IDs: default field keys (e.g., 'title', 'abstract')
+        and custom question IDs (e.g., '123', '456').
+        """
+        from eventyay.base.models import TalkQuestion, TalkQuestionTarget
+        
+        order_list = order_str.split(',')
+        event = self.request.event
+        
+        # Update positions for custom questions (for database ordering)
+        custom_question_ids = [int(item) for item in order_list if item.isdigit()]
+        for index, question_id in enumerate(custom_question_ids):
+            try:
+                question = TalkQuestion.objects.get(id=question_id, event=event)
+                question.position = index
+                question.save(update_fields=['position'])
+            except TalkQuestion.DoesNotExist:
+                pass
+        
+        # Save COMPLETE order (default fields + custom question IDs) to settings
+        # This includes both default field keys and custom question IDs in their dragged order
+        fields_config = event.cfp.settings.get('fields_config', {})
+        
+        # Determine which section this is based on field names or question targets
+        session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
+                       'content_locale', 'image', 'do_not_record', 'additional_speaker']
+        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities']
+        
+        # Check if this is a speaker section by looking at default fields or custom question targets
+        has_session_fields = any(item in session_keys for item in order_list)
+        has_speaker_fields = any(item in speaker_keys for item in order_list)
+
+        # If no default fields, check the target of custom questions
+        if not has_session_fields and not has_speaker_fields and custom_question_ids:
+            # Check all custom questions in the order list
+            all_speaker = True
+            all_session = True
+            for qid in custom_question_ids:
+                q = TalkQuestion.objects.filter(id=qid, event=event).first()
+                if not q:
+                    continue
+                if q.target != TalkQuestionTarget.SPEAKER:
+                    all_speaker = False
+                if q.target != TalkQuestionTarget.SUBMISSION:
+                    all_session = False
+            has_speaker_fields = all_speaker and len(custom_question_ids) > 0
+            has_session_fields = all_session and len(custom_question_ids) > 0
+
+        # Always save the order for the correct section
+        if has_session_fields:
+            fields_config['session'] = order_list  # Save complete order including custom IDs
+        if has_speaker_fields:
+            fields_config['speaker'] = order_list  # Save complete order including custom IDs
+
+        event.cfp.settings['fields_config'] = fields_config
+        event.cfp.save(update_fields=['settings'])
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
@@ -396,6 +467,15 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     def form_valid(self, form):
         form.instance.event = self.request.event
         self.instance = form.instance
+        
+        # Set position to the end for new questions
+        if not form.instance.pk:
+            max_position = TalkQuestion.objects.filter(
+                event=self.request.event,
+                target=form.instance.target
+            ).aggregate(models.Max('position'))['position__max']
+            form.instance.position = (max_position or 0) + 1
+        
         if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:

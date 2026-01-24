@@ -147,7 +147,15 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
+        # Preserve fields_config (drag-drop order) before modifying settings
+        fields_config = self.instance.cfp.settings.get('fields_config', {})
+        
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+        
+        # Restore fields_config after setting other values
+        if fields_config:
+            self.instance.cfp.settings['fields_config'] = fields_config
+        
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
