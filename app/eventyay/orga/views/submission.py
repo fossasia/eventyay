@@ -328,11 +328,22 @@ class SubmissionContentReadView(
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         submission = self.object
-        ctx['questions'] = (
+        if submission.is_anonymised and not self.request.user.has_perm(
+            'base.orga_list_speakerprofile', submission
+        ):
+            anonymised_data = submission.anonymised
+            for key, value in anonymised_data.items():
+                if key != '_anonymised':
+                    setattr(submission, key, value)
+        
+        answers_qs = (
             submission.answers.all()
             .select_related('question')
             .order_by('question__position')
         )
+        if self.is_only_reviewer:
+            answers_qs = answers_qs.filter(question__is_visible_to_reviewers=True)
+        ctx['questions'] = answers_qs
         return ctx
 
 
