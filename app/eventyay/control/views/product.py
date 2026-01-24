@@ -1678,11 +1678,13 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
 
         # Include custom fields (questions) for attendee data section
         questions = list(self.request.event.questions.prefetch_related('products').order_by('position'))
-        ctx['questions'] = questions
         
         # Build sorted field order list for template rendering
         system_question_order = self.request.event.settings.system_question_order or {}
         system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'street']
+        
+        # Create questions lookup map for O(1) access
+        questions_by_id = {str(q.id): q for q in questions}
         
         # Create list of (field_id, position) tuples
         field_order = []
@@ -1696,9 +1698,23 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         for q in questions:
             field_order.append((str(q.id), q.position))
         
-        # Sort by position and extract just the field IDs
+        # Sort by position
         field_order.sort(key=lambda x: x[1])
-        ctx['field_order'] = [field_id for field_id, _ in field_order]
+        
+        # Build ordered_fields structure for single-pass template rendering
+        # Each item is a simple object with 'id', 'type', and optionally 'question'
+        OrderedField = namedtuple('OrderedField', ['id', 'type', 'question'])
+        ordered_fields = []
+        
+        for field_id, _ in field_order:
+            if field_id in system_fields:
+                ordered_fields.append(OrderedField(id=field_id, type='system', question=None))
+            else:
+                q = questions_by_id.get(field_id)
+                if q is not None:
+                    ordered_fields.append(OrderedField(id=field_id, type='question', question=q))
+        
+        ctx['ordered_fields'] = ordered_fields
 
         return ctx
 
