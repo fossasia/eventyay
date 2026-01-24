@@ -230,6 +230,17 @@ def get_event_navigation(request: HttpRequest):
     if 'can_view_orders' in request.eventpermset:
         children = [
             {
+                'label': _('Overview'),
+                'url': reverse(
+                    'control:event.orders.overview',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': 'event.orders.overview' in url.url_name,
+            },
+            {
                 'label': _('All orders'),
                 'url': reverse(
                     'control:event.orders',
@@ -242,15 +253,15 @@ def get_event_navigation(request: HttpRequest):
                 or 'event.order.' in url.url_name,
             },
             {
-                'label': _('Overview'),
+                'label': _('Waiting list'),
                 'url': reverse(
-                    'control:event.orders.overview',
+                    'control:event.orders.waitinglist',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.orders.overview' in url.url_name,
+                'active': 'event.orders.waitinglist' in url.url_name,
             },
             {
                 'label': _('Refunds'),
@@ -262,28 +273,6 @@ def get_event_navigation(request: HttpRequest):
                     },
                 ),
                 'active': 'event.orders.refunds' in url.url_name,
-            },
-            {
-                'label': _('Export'),
-                'url': reverse(
-                    'control:event.orders.export',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.export' in url.url_name,
-            },
-            {
-                'label': _('Waiting list'),
-                'url': reverse(
-                    'control:event.orders.waitinglist',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.waitinglist' in url.url_name,
             },
         ]
         if 'can_change_orders' in request.eventpermset:
@@ -300,6 +289,19 @@ def get_event_navigation(request: HttpRequest):
                     'active': 'event.orders.import' in url.url_name,
                 }
             )
+        children.append(
+            {
+                'label': _('Export'),
+                'url': reverse(
+                    'control:event.orders.export',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': 'event.orders.export' in url.url_name,
+            }
+        )
         nav.append(
             {
                 'label': _('Orders'),
@@ -352,6 +354,23 @@ def get_event_navigation(request: HttpRequest):
             key=lambda r: (1 if r.get('parent') else 0, r['label']),
         ),
     )
+
+    # Reposition Statistics to appear after Overview in the Orders submenu
+    for nav_item in nav:
+        if nav_item.get('label') == _('Orders') and 'children' in nav_item:
+            # Find the Statistics item in children
+            stats_index = None
+            for i, child in enumerate(nav_item['children']):
+                if child.get('label') == _('Statistics'):
+                    stats_index = i
+                    break
+            
+            # If Statistics exists and is not already at position 1, move it
+            if stats_index is not None and stats_index != 1:
+                stats_item = nav_item['children'].pop(stats_index)
+                nav_item['children'].insert(1, stats_item)
+            break
+
 
     return nav
 
