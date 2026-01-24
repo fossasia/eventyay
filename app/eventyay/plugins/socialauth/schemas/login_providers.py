@@ -19,29 +19,29 @@ class LoginProviders(BaseModel):
     def _providers(self) -> dict[str, ProviderConfig]:
         """
         Internal helper: Return all provider fields as a name -> ProviderConfig mapping.
-        Used to iterate over all providers regardless of their enabled state.
+        Iterate over all providers regardless of their enabled state.
         """
         return {name: getattr(self, name) for name in self.model_fields}
 
-    def get_enabled_providers(self) -> dict[str, ProviderConfig]:
+    
+    def get_enabled_providers(self) -> "LoginProviders":
         """
-        Get all enabled providers (where state=True).
-        
-        Returns:
-            dict[str, ProviderConfig]: Only enabled providers
+        Get all enabled providers.
         """
-        return {
-            name: provider
-            for name, provider in self._providers().items()
-            if provider.state  # Filter only enabled providers
+        # Build a dict of only enabled providers.
+        enabled_data = {
+            name: getattr(self, name)  # fetch the ProviderConfig
+            for name in self.model_fields
+            if getattr(self, name).state
         }
 
+        # Return a new LoginProviders object
+        return LoginProviders(**enabled_data)
+
+        
     def get_preferred_provider(self) -> tuple[str, ProviderConfig] | None:
         """
         Get the preferred provider if one exists and is enabled.
-        
-        Returns:
-            tuple[str, ProviderConfig] | None: (provider_name, ProviderConfig) or None
         """
         for name, provider in self._providers().items():
             # Return first provider that is both enabled and marked as preferred
