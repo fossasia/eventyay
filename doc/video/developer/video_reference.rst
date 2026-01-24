@@ -3,10 +3,10 @@ Video Component Reference
 
 This section documents all modules related to the Video component (live streaming, rooms, chat, interactive features).
 
-Webapp Module
--------------
+Video Frontend Module
+---------------------
 
-The webapp module contains the Vue.js web application for video streaming and interactive features.
+The video frontend module contains the Vue.js web application for video streaming and interactive features.
 See :doc:`/video/frontend` for detailed frontend documentation.
 
 Live Features
