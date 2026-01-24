@@ -6,6 +6,7 @@
 {% load rich_text %}
 {% load rules %}
 {% load static %}
+{% load i18n_utils %}
 
 {% block submission_title %}{% translate "Reviews" %} :: {% endblock submission_title %}
 
@@ -33,7 +34,7 @@
             {% if request.event.settings.review_help_text %}
                 <div class="alert alert-info">
                     <div>
-                        <p>{{ request.event.settings.review_help_text|rich_text }}</p>
+                        <p>{{ request.event.settings.review_help_text|localize_json|rich_text }}</p>
                     </div>
                 </div>
             {% elif not form.instance.pk and not can_view_other_reviews and request.event.active_review_phase and request.event.active_review_phase.can_see_other_reviews == "after_review" %}
