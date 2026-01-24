@@ -565,6 +565,11 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
@@ -595,6 +600,11 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
@@ -660,7 +670,15 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
+                        {% endwith %}
+                    </tbody>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                         {% for item in custom_speaker_fields %}
                             <tr dragsort-id="{{ item.question.id }}">
                                 <th>
@@ -703,7 +721,6 @@
                                 </td>
                             </tr>
                         {% endfor %}
-                        {% endwith %}
                     </tbody>
                     </table>
                 </div>
