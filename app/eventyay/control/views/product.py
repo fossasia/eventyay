@@ -1691,7 +1691,15 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         
         # Add system fields with their saved positions (or default if not saved)
         for idx, field_name in enumerate(system_fields):
-            position = system_question_order.get(field_name, idx) if system_question_order else idx
+            # Check if field has a valid saved position (>= 0)
+            # Position -1 indicates field wasn't in drag-and-drop list
+            if system_question_order and field_name in system_question_order and system_question_order[field_name] >= 0:
+                position = system_question_order[field_name]
+            else:
+                # Use negative default positions to avoid conflicts with custom fields,
+                # whose positions start at 0. This ensures system fields always appear
+                # before custom questions when no explicit order is configured.
+                position = idx - len(system_fields)
             field_order.append((field_name, position))
         
         # Add custom fields with their positions
