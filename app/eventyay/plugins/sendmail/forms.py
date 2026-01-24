@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_scopes.forms import SafeModelMultipleChoiceField
@@ -119,7 +120,6 @@ class MailForm(forms.Form):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from django.utils import timezone
             if scheduled_at < timezone.now():
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
@@ -539,7 +539,6 @@ class EmailQueueEditForm(forms.ModelForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            from django.utils import timezone
             if scheduled_at < timezone.now():
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
@@ -642,3 +641,12 @@ class TeamMailForm(forms.Form):
             required=False,
             help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
         )
+
+    def clean_scheduled_at(self):
+        scheduled_at = self.cleaned_data.get('scheduled_at')
+        if scheduled_at is not None:
+            if scheduled_at < timezone.now():
+                raise ValidationError(
+                    _('Scheduled time must be in the future.')
+                )
+        return scheduled_at

@@ -72,6 +72,11 @@ def send_periodic_signal():
     Celery task that sends the periodic_task signal.
     This task is scheduled by celery beat and triggers all signal receivers
     listening to the periodic_task signal, including process_scheduled_emails.
+    
+    Note: This task is automatically scheduled by django-celery-beat's DatabaseScheduler
+    when the beat service runs (configured in docker-compose.yml). The beat scheduler
+    discovers and schedules this task to run every 60 seconds without requiring manual
+    PeriodicTask database entries.
     """
     logger.info('Sending periodic_task signal')
     periodic_task.send(sender=None)
