@@ -266,20 +266,10 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     context_object_name = 'question'
     detail_is_update = False
 
-    def get_initial(self):
-        try:
-            initial = super().get_initial()
-        except AttributeError:
-            initial = {}
-        if 'target' in self.request.GET:
-            initial['target'] = self.request.GET['target']
-        return initial
-
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        initial = kwargs.get("initial", {}) or {}
-        initial.update(self.get_initial())
-        kwargs["initial"] = initial
+        if target := self.request.GET.get('target'):
+            kwargs.setdefault('initial', {})['target'] = target
         return kwargs
 
     def get_queryset(self):
@@ -684,8 +674,7 @@ class AccessCodeView(OrderActionMixin, OrgaCRUDView):
         kwargs = super().get_form_kwargs()
         if track := self.request.GET.get('track'):
             if track := self.request.event.tracks.filter(pk=track).first():
-                kwargs['initial'] = kwargs.get('initial', {})
-                kwargs['initial']['track'] = track
+                kwargs.setdefault('initial', {})['track'] = track
         return kwargs
 
     def delete_handler(self, request, *args, **kwargs):
