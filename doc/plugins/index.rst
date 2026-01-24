@@ -10,6 +10,7 @@ If you want to **create** a plugin, please go to the
    :maxdepth: 2
 
    list
+   pretixdroid
    banktransfer
    ticketoutputpdf
    badges
