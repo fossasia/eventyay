@@ -70,13 +70,17 @@ def task_cleanup_file(*, model: str, pk: int, field: str, path: str):
 def send_periodic_signal():
     """
     Celery task that sends the periodic_task signal.
-    This task is scheduled by celery beat and triggers all signal receivers
+    
+    This task is intended to be run periodically by Celery beat (for example,
+    via django-celery-beat's DatabaseScheduler) and triggers all signal receivers
     listening to the periodic_task signal, including process_scheduled_emails.
     
-    Note: This task is automatically scheduled by django-celery-beat's DatabaseScheduler
-    when the beat service runs (configured in docker-compose.yml). The beat scheduler
-    discovers and schedules this task to run every 60 seconds without requiring manual
-    PeriodicTask database entries.
+    Important:
+    - django-celery-beat does NOT automatically create a schedule for this task.
+    - You must ensure a corresponding PeriodicTask entry exists in the database
+      (e.g. via a data migration, a management command, or by creating it
+      manually through the Django admin) with the desired interval (such as
+      every 60 seconds).
     """
     logger.info('Sending periodic_task signal')
     periodic_task.send(sender=None)
