@@ -263,6 +263,17 @@ def get_event_navigation(request: HttpRequest):
     if 'can_view_orders' in request.eventpermset:
         children = [
             {
+                'label': _('Overview'),
+                'url': reverse(
+                    'control:event.orders.overview',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': 'event.orders.overview' in url.url_name,
+            },
+            {
                 'label': _('All orders'),
                 'url': reverse(
                     'control:event.orders',
@@ -275,15 +286,15 @@ def get_event_navigation(request: HttpRequest):
                 or 'event.order.' in url.url_name,
             },
             {
-                'label': _('Overview'),
+                'label': _('Waiting list'),
                 'url': reverse(
-                    'control:event.orders.overview',
+                    'control:event.orders.waitinglist',
                     kwargs={
                         'event': request.event.slug,
                         'organizer': request.event.organizer.slug,
                     },
                 ),
-                'active': 'event.orders.overview' in url.url_name,
+                'active': 'event.orders.waitinglist' in url.url_name,
             },
             {
                 'label': _('Refunds'),
@@ -295,28 +306,6 @@ def get_event_navigation(request: HttpRequest):
                     },
                 ),
                 'active': 'event.orders.refunds' in url.url_name,
-            },
-            {
-                'label': _('Export'),
-                'url': reverse(
-                    'control:event.orders.export',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.export' in url.url_name,
-            },
-            {
-                'label': _('Waiting list'),
-                'url': reverse(
-                    'control:event.orders.waitinglist',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.waitinglist' in url.url_name,
             },
         ]
         if 'can_change_orders' in request.eventpermset:
@@ -333,6 +322,19 @@ def get_event_navigation(request: HttpRequest):
                     'active': 'event.orders.import' in url.url_name,
                 }
             )
+        children.append(
+            {
+                'label': _('Export'),
+                'url': reverse(
+                    'control:event.orders.export',
+                    kwargs={
+                        'event': request.event.slug,
+                        'organizer': request.event.organizer.slug,
+                    },
+                ),
+                'active': 'event.orders.export' in url.url_name,
+            }
+        )
         nav.append(
             {
                 'label': _('Orders'),
@@ -385,6 +387,31 @@ def get_event_navigation(request: HttpRequest):
             key=lambda r: (1 if r.get('parent') else 0, r['label']),
         ),
     )
+
+    # Reorder the "Orders" children to ensure strict ordering:
+    # 1. Overview
+    # 2. Statistics (plugin)
+    # 3. All orders
+    # 4. Waiting list
+    # 5. Refunds
+    # 6. Import
+    # 7. Export
+    for item in nav:
+        if item.get('icon') == 'shopping-cart' and item.get('url') and 'orders' in item['url']:
+            if 'children' in item:
+                def sort_key(child):
+                    label = str(child['label'])
+                    if label == str(_('Overview')): return 1
+                    if label == str(_('Statistics')): return 2
+                    if label == str(_('All orders')): return 3
+                    if label == str(_('Waiting list')): return 4
+                    if label == str(_('Refunds')): return 5
+                    if label == str(_('Import')): return 6
+                    if label == str(_('Export')): return 7
+                    return 99 # Others at the end
+
+                item['children'].sort(key=sort_key)
+            break
 
     return nav
 
