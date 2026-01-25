@@ -221,6 +221,8 @@ class GetPrimaryEmailTestCase(TestCase):
             from allauth.account.models import EmailAddress
             EmailAddress.objects.all().delete()
         except ImportError:
+            # allauth is optional; if it's not installed, there are no EmailAddress
+            # records to clean up and we can safely ignore this.
             pass
         
         User.objects.all().delete()
