@@ -7,7 +7,8 @@ from datetime import timedelta
 from hashlib import md5
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
-from urllib.parse import urlencode, urljoin
+import hashlib
+from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from channels.db import database_sync_to_async
 from django.conf import settings
@@ -846,12 +847,14 @@ the eventyay team"""
     @cached_property
     def avatar_url(self) -> str:
         if self.has_avatar:
-            return self.avatar.url
+            return self.get_avatar_url()
 
     def get_avatar_url(self, event=None, thumbnail=None):
         """Returns the full avatar URL, where user.avatar_url returns the
-        absolute URL."""
-        if not self.avatar_url:
+        absolute URL. Appends a cache-busting query parameter based on the
+        avatar file name and size so browsers re-fetch the image after upload.
+        """
+        if not self.has_avatar:
             return ''
         if not thumbnail:
             image = self.avatar
@@ -861,9 +864,38 @@ the eventyay team"""
                 image = create_thumbnail(self.avatar, thumbnail)
         if not image:
             return
+
+        # Build base URL (may be relative)
+        image_url = image.url
+
+        # Try to compute a stable version/hash from the file name and size.
+        try:
+            name = getattr(image, 'name', '') or ''
+            size = getattr(image, 'size', None)
+            if size is not None:
+                digest = hashlib.md5(f'{name}:{size}'.encode()).hexdigest()[:8]
+                cache_param = {'v': digest}
+            else:
+                # Fallback: if size not available, use the (short) hash of the name.
+                digest = hashlib.md5(name.encode()).hexdigest()[:8] if name else None
+                cache_param = {'v': digest} if digest else {}
+        except Exception:
+            # If anything goes wrong, avoid breaking and produce the plain URL.
+            cache_param = {}
+
+        # Parse existing URL and append/merge query params safely.
+        if cache_param:
+            splitted = urlsplit(image_url)
+            query_params = dict(parse_qsl(splitted.query, keep_blank_values=True))
+            query_params.update(cache_param)
+            new_query = urlencode(query_params, doseq=True)
+            image_url = urlunsplit(
+                (splitted.scheme, splitted.netloc, splitted.path, new_query, splitted.fragment)
+            )
+
         if event and event.custom_domain:
-            return urljoin(event.custom_domain, image.url)
-        return urljoin(settings.SITE_URL, image.url)
+            return urljoin(event.custom_domain, image_url)
+        return urljoin(settings.SITE_URL, image_url)
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""
