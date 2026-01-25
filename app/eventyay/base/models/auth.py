@@ -844,55 +844,68 @@ the eventyay team"""
     def has_avatar(self) -> bool:
         return bool(self.avatar) and self.avatar != 'False'
 
-    @cached_property
     def avatar_url(self) -> str:
+        """Returns avatar URL with cache-busting timestamp parameter.
+        
+        Uses the avatar file's actual modification time for most accurate cache-busting.
+        Falls back to current time if file doesn't exist or can't be accessed.
+        """
         if self.has_avatar:
-            return self.get_avatar_url()
+            import os
+            import time
+            
+            try:
+                # Get the actual file modification time for most accurate cache-busting
+                file_path = self.avatar.path
+                file_mtime = os.path.getmtime(file_path)
+                timestamp = int(file_mtime * 1000)  # milliseconds for precision
+            except (OSError, ValueError, AttributeError):
+                # Fallback to current time if file doesn't exist or can't be accessed
+                timestamp = int(time.time() * 1000)
+            
+            return f"{self.avatar.url}?v={timestamp}"
+        return ''
 
     def get_avatar_url(self, event=None, thumbnail=None):
-        """Returns the full avatar URL, where user.avatar_url returns the
-        absolute URL. Appends a cache-busting query parameter based on the
-        avatar file name and size so browsers re-fetch the image after upload.
+        """Returns the full avatar URL with cache-busting parameter.
+        
+        Args:
+            event: Optional event for custom domain support
+            thumbnail: Optional thumbnail size ('tiny' or 'default')
+        
+        Returns:
+            URL string with cache-busting query parameter
         """
+        # Check if we have an avatar
         if not self.has_avatar:
             return ''
+        
+        # Determine which image to use
         if not thumbnail:
             image = self.avatar
         else:
             image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
             if not image:
                 image = create_thumbnail(self.avatar, thumbnail)
+        
         if not image:
-            return
-
-        # Build base URL (may be relative)
-        image_url = image.url
-
-        # Try to compute a stable version/hash from the file name and size.
+            return ''
+        
+        # Build base URL with cache-busting
+        import os
+        import time
+        
         try:
-            name = getattr(image, 'name', '') or ''
-            size = getattr(image, 'size', None)
-            if size is not None:
-                digest = hashlib.md5(f'{name}:{size}'.encode()).hexdigest()[:8]
-                cache_param = {'v': digest}
-            else:
-                # Fallback: if size not available, use the (short) hash of the name.
-                digest = hashlib.md5(name.encode()).hexdigest()[:8] if name else None
-                cache_param = {'v': digest} if digest else {}
-        except Exception:
-            # If anything goes wrong, avoid breaking and produce the plain URL.
-            cache_param = {}
-
-        # Parse existing URL and append/merge query params safely.
-        if cache_param:
-            splitted = urlsplit(image_url)
-            query_params = dict(parse_qsl(splitted.query, keep_blank_values=True))
-            query_params.update(cache_param)
-            new_query = urlencode(query_params, doseq=True)
-            image_url = urlunsplit(
-                (splitted.scheme, splitted.netloc, splitted.path, new_query, splitted.fragment)
-            )
-
+            # Get the actual file modification time for cache-busting
+            file_path = image.path
+            file_mtime = os.path.getmtime(file_path)
+            timestamp = int(file_mtime * 1000)
+        except (OSError, ValueError, AttributeError):
+            # Fallback to current time if file doesn't exist
+            timestamp = int(time.time() * 1000)
+        
+        image_url = f"{image.url}?v={timestamp}"
+        
         if event and event.custom_domain:
             return urljoin(event.custom_domain, image_url)
         return urljoin(settings.SITE_URL, image_url)

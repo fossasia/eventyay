@@ -314,3 +314,23 @@ class CustomCommonMiddleware(CommonMiddleware):
         if request.method in ('POST', 'PUT', 'PATCH'):
             raise Http404('Please append a / at the end of the URL')
         return new_path
+
+
+class AvatarNoCacheMiddleware:
+    """Prevent caching of avatar images to ensure fresh images are always loaded."""
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Add no-cache headers for avatar URLs
+        if '/media/avatars/' in request.path:
+            from django.utils.cache import add_never_cache_headers
+            add_never_cache_headers(response)
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+        
+        return response
