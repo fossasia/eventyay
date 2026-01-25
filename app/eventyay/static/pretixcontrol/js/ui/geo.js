@@ -91,10 +91,25 @@ $(function () {
         var $grp = $(".geodata-group", this);
         var tiles = $grp.attr("data-tiles");
         var attrib = $grp.attr("data-attrib");
-        if (tiles) {
-            var $map = $("<div>");
+        
+        // Guard: only initialize map once per geodata section
+        if (tiles && !$grp.attr("data-map-initialized")) {
+            $grp.attr("data-map-initialized", "true");
+            var $map = $("<div>").css({
+                'height': '400px',
+                'width': '100%',
+                'margin-top': '10px',
+                'border': '1px solid #ddd',
+                'border-radius': '4px'
+            });
             $grp.append($("<div>").addClass("col-md-9 col-md-offset-3").append($map));
-            var map = L.map($map.get(0));
+            var map = L.map($map.get(0), {
+                zoomControl: false  // Disable default zoom control
+            });
+            // Add zoom control to top-right instead of top-left
+            L.control.zoom({
+                position: 'topright'
+            }).addTo(map);
             L.tileLayer(tiles, {
                 attribution: attrib,
                 maxZoom: 18,
