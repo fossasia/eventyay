@@ -7,6 +7,7 @@
 {% load rich_text %}
 {% load compress %}
 {% load presale_locale %}
+{% load staff_session %}
 
 {% block container_width %} presale-container{% endblock %}
 
@@ -32,13 +33,18 @@
     {{ block.super }}
     {{ request.organizer.slug|json_script:"organizer_name" }}
     {% if not event.live %}
+        {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
         <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
             <div class="container">
                 <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% trans "This shop is currently only visible to you and your team." %}
-                <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                    {% trans "Take it live now" %}
-                </a>
+                {% if is_organiser %}
+                    {% trans "This shop is currently in private test mode. Only organizers can purchase tickets." %}
+                    <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
+                        {% trans "Take it live now" %}
+                    </a>
+                {% else %}
+                    {% trans "This event is currently in private test mode. Ticket sales are not yet available." %}
+                {% endif %}
             </div>
         </div>
     {% endif %}
@@ -58,18 +64,21 @@
 
 {% block alerts %}
     {% if request.event.testmode %}
-        {% if request.sales_channel.testmode_supported %}
-            <div class="alert alert-warning alert-margin">
-                <strong>
-                    {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                </strong>
-            </div>
-        {% else %}
-            <div class="alert alert-danger">
-                <strong>
-                    {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                </strong>
-            </div>
+        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
+        {% if request.event.live or is_organiser %}
+            {% if request.sales_channel.testmode_supported %}
+                <div class="alert alert-warning alert-margin">
+                    <strong>
+                        {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
+                    </strong>
+                </div>
+            {% else %}
+                <div class="alert alert-danger">
+                    <strong>
+                        {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
+                    </strong>
+                </div>
+            {% endif %}
         {% endif %}
     {% endif %}
     {% if messages %}
@@ -97,18 +106,21 @@
         </div>
     {% endif %}
     {% if request.event.testmode %}
-        {% if request.sales_channel.testmode_supported %}
-            <div class="alert alert-testmode alert-warning">
-                <strong>
-                    {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                </strong>
-            </div>
-        {% else %}
-            <div class="alert alert-testmode alert-danger">
-                <strong>
-                    {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                </strong>
-            </div>
+        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
+        {% if request.event.live or is_organiser %}
+            {% if request.sales_channel.testmode_supported %}
+                <div class="alert alert-testmode alert-warning">
+                    <strong>
+                        {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
+                    </strong>
+                </div>
+            {% else %}
+                <div class="alert alert-testmode alert-danger">
+                    <strong>
+                        {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
+                    </strong>
+                </div>
+            {% endif %}
         {% endif %}
     {% endif %}
     {{ block.super }}

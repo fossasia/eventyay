@@ -2,16 +2,20 @@
 {% load bootstrap3 %}
 {% load eventurl %}
 {% load event_tags %}
+{% load staff_session %}
 
 <nav id='header-nav-bar'>
     <div class="navigation">
+        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
         <a href="{% eventurl request.event 'presale:event.index' %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}underline{% endif %}">
             <i class="fa fa-info-circle"></i> {% translate "Info" %}
         </a>
 
-        <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-        </a>
+        {% if request.event.live or is_organiser %}
+            <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
+                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+            </a>
+        {% endif %}
 
         {% if schedule or request.event.has_schedule_content %}
             <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">

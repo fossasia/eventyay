@@ -2,14 +2,18 @@
 {% load safelink %}
 {% load event_tags %}
 {% load eventurl %}
+{% load staff_session %}
 
 {% with current_event=request.event path=request.path_info schedule_label=phrases.schedule.schedule|default:_("Schedule") sessions_label=phrases.schedule.sessions|default:_("Sessions") speakers_label=phrases.schedule.speakers|default:_("Speakers") %}
+    {% has_event_perm "base.orga_access_event" request.user request current_event as is_organiser %}
     <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' and '#tickets' not in request.get_full_path %}active{% endif %}">
         <i class="fa fa-info-circle"></i> {% translate "Info" %}
     </a>
-    <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
-        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-    </a>
+    {% if current_event.live or is_organiser %}
+        <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
+            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+        </a>
+    {% endif %}
     {% if schedule or current_event.has_schedule_content %}
         {% with schedule_url=current_event.talk_schedule_url|default:current_event.urls.schedule %}
             <a href="{{ schedule_url }}" class="header-tab {% if '/schedule/' in path %}active{% endif %}">
