@@ -911,7 +911,11 @@ the eventyay team"""
                         self.pk,
                     )
             except ImportError:
-                pass
+                # django-allauth is not installed; skip EmailAddress handling and
+                # fall back to the user.email field below.
+                logger.debug(
+                    'allauth.account is not installed; using user.email as primary email fallback'
+                )
             # Note: We intentionally let other exceptions (like DB errors) bubble up 
             # so they are not silently swallowed.
         
