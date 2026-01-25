@@ -131,7 +131,7 @@ function initOrderFormToggles() {
             
             try {
                 // Get CSRF token
-                const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
+                const csrfToken = getCookie('eventyay_csrftoken');
                 if (!csrfToken) {
                     throw new Error('CSRF token not found');
                 }
