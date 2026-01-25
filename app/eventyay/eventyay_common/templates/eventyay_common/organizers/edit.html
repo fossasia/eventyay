@@ -105,16 +105,19 @@
                                 </button>
                             </div>
                             <form action="" method="post"
-                                  class="team-delete-form btn-group btn-group-sm"
+                                  id="team-delete-form-{{ panel.team.pk }}"
+                                  class="team-delete-form hidden"
                                   data-confirm="{% translate "Are you sure you want to delete this team?" %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="team_action" value="delete">
                                 <input type="hidden" name="team_id" value="{{ panel.team.pk }}">
-                                <button type="submit" class="btn btn-danger btn-sm"
+                            </form>
+                            <div class="btn-group btn-group-sm">
+                                <button type="submit" form="team-delete-form-{{ panel.team.pk }}" class="btn btn-danger btn-sm"
                                         {% if not panel.can_delete %}disabled{% endif %}>
                                     <i class="fa fa-trash"></i> {% translate "Delete" %}
                                 </button>
-                            </form>
+                            </div>
                         </div>
                     </div>
                     <div id="team-permissions-{{ panel.team.pk }}"
