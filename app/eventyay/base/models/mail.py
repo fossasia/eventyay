@@ -195,10 +195,15 @@ class MailTemplate(PretalxModel):
             if len(subject) > 200:
                 subject = subject[:198] + '…'
 
+            # Determine sender for SMTP context
+            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+            sender = sender or settings.MAIL_FROM
+
             # Use unified Reply-To resolution
             resolved_reply_to = get_reply_to_address(
                 event,
-                template=self
+                template=self,
+                sender_email=sender
             )
 
             mail = QueuedMail(
