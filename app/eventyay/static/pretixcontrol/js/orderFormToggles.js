@@ -8,11 +8,77 @@ const REQUIRED_STATES = {
 
 const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
 
-// Helper function to get cookie value
+/**
+ * Get cookie value by name
+ * @param {string} name - Cookie name
+ * @returns {string|null} Cookie value or null if not found
+ */
 function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+    return parts.length === 2 ? parts.pop().split(';').shift() : null;
+}
+
+/**
+ * Get CSRF token from cookie or hidden input
+ * @returns {string|null} CSRF token or null if not found
+ */
+function getCSRFToken() {
+    // Try cookie first
+    const token = getCookie('pretix_csrftoken') || getCookie('csrftoken');
+    if (token) return token;
+    
+    // Fallback to hidden input field
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return csrfInput?.value ?? null;
+}
+
+/**
+ * Send AJAX request to toggle endpoint with CSRF protection
+ * @param {string} questionId - Question ID
+ * @param {string} field - Field name ('active' or 'required')
+ * @param {boolean} value - New value
+ * @returns {Promise<Response>} Fetch response
+ * @throws {Error} When CSRF token not found or request fails
+ */
+async function updateQuestionField(questionId, field, value) {
+    const csrfToken = getCSRFToken();
+    if (!csrfToken) {
+        throw new Error('CSRF token not found');
+    }
+    
+    const baseUrl = window.location.pathname.replace(/\/orderforms\/?$/, '');
+    const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
+    
+    const response = await fetch(toggleUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ field, value })
+    });
+    
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+    }
+    
+    return response;
+}
+
+/**
+ * Show visual success feedback by briefly flashing background color
+ * @param {HTMLElement} element - Element to flash
+ * @param {string} color - Background color for flash (default: green)
+ * @param {number} duration - Duration in ms (default: 500)
+ */
+function showSuccessFeedback(element, color = '#d4edda', duration = 500) {
+    const originalBg = element.style.backgroundColor;
+    element.style.backgroundColor = color;
+    setTimeout(() => {
+        element.style.backgroundColor = originalBg;
+    }, duration);
 }
 
 if (document.readyState === 'loading') {
@@ -110,80 +176,7 @@ function initOrderFormToggles() {
         }
     });
 
-    // Handle custom field required dropdown changes (AJAX update)
-    document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
-        dropdown.addEventListener('change', async function() {
-            const questionId = this.dataset.questionId;
-            const fieldName = this.getAttribute('aria-label') || 'this field';
-            const newValue = this.value === 'required'; // Convert to boolean
-            const previousValue = this.dataset.current;
-            const wrapper = this.closest('.required-status-wrapper');
-            
-            // Optimistic UI update
-            this.dataset.current = this.value;
-            if (wrapper) {
-                wrapper.dataset.current = this.value;
-            }
-            
-            // Add loading state
-            this.disabled = true;
-            this.classList.add('loading');
-            
-            try {
-                // Get CSRF token
-                const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
-                if (!csrfToken) {
-                    throw new Error('CSRF token not found');
-                }
-                
-                // Build URL for toggle endpoint
-                const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
-                const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
-                
-                // Send AJAX request
-                const response = await fetch(toggleUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken,
-                    },
-                    body: JSON.stringify({
-                        field: 'required',
-                        value: newValue
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
-                }
-                
-                // Success - show brief feedback
-                const originalBg = this.style.backgroundColor;
-                this.style.backgroundColor = '#d4edda';
-                setTimeout(() => {
-                    this.style.backgroundColor = originalBg;
-                }, 500);
-                
-            } catch (error) {
-                // Revert on error
-                console.error('Failed to update required status', {
-                    questionId,
-                    fieldName,
-                    error,
-                });
-                this.dataset.current = previousValue;
-                this.value = previousValue;
-                if (wrapper) {
-                    wrapper.dataset.current = previousValue;
-                }
-                alert(`Failed to update required status for ${fieldName}. Please try again or refresh the page.`);
-            } finally {
-                this.disabled = false;
-                this.classList.remove('loading');
-            }
-        });
-    });
+
 
     // Handle required dropdown changes
     document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
@@ -246,6 +239,69 @@ function initOrderFormToggles() {
                     hiddenInput.value = 'do_not_ask';
                     updateVisualState(fieldId, 'do_not_ask');
                 }
+            }
+        });
+    });
+
+    // Handle custom question active toggle changes (AJAX update)
+    document.querySelectorAll('.question-active-toggle[data-question-id]').forEach(toggle => {
+        toggle.addEventListener('change', async function() {
+            const questionId = this.dataset.questionId;
+            const newValue = this.checked;
+            const previousValue = !newValue;
+            const toggleSwitch = this.closest('.toggle-switch');
+            
+            // Add loading state
+            this.disabled = true;
+            toggleSwitch.classList.add('loading');
+            
+            try {
+                await updateQuestionField(questionId, 'active', newValue);
+                showSuccessFeedback(toggleSwitch);
+            } catch (error) {
+                console.error('Failed to update active status', { questionId, error });
+                this.checked = previousValue;
+                alert('Failed to update active status. Please try again or refresh the page.');
+            } finally {
+                this.disabled = false;
+                toggleSwitch.classList.remove('loading');
+            }
+        });
+    });
+
+    // Handle custom question required dropdown changes (AJAX update)
+    document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
+        dropdown.addEventListener('change', async function() {
+            const questionId = this.dataset.questionId;
+            const newValue = this.value === 'required';
+            const previousValue = this.dataset.current;
+            const wrapper = this.closest('.required-status-wrapper');
+            
+            // Optimistic UI update
+            this.dataset.current = this.value;
+            if (wrapper) {
+                wrapper.dataset.current = this.value;
+            }
+            
+            // Add loading state
+            this.disabled = true;
+            this.classList.add('loading');
+            
+            try {
+                await updateQuestionField(questionId, 'required', newValue);
+                showSuccessFeedback(this);
+            } catch (error) {
+                console.error('Failed to update required status', { questionId, error });
+                // Revert on error
+                this.dataset.current = previousValue;
+                this.value = previousValue;
+                if (wrapper) {
+                    wrapper.dataset.current = previousValue;
+                }
+                alert('Failed to update required status. Please try again or refresh the page.');
+            } finally {
+                this.disabled = false;
+                this.classList.remove('loading');
             }
         });
     });

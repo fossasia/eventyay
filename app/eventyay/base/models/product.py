@@ -1149,6 +1149,10 @@ class Question(LoggedModel):
 
     event = models.ForeignKey(Event, related_name='questions', on_delete=models.CASCADE)
     question = I18nTextField(verbose_name=_('Custom Field'))
+    active = models.BooleanField(
+        default=True,
+        verbose_name=_('Active'),
+    )
     description = I18nTextField(
         verbose_name=_('Description'),
         default='',

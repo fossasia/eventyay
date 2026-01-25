@@ -1370,7 +1370,7 @@ class AbstractPosition(models.Model):
                 questions = list(copy.copy(q) for q in self.product.questions_to_ask)
             else:
                 questions = list(
-                    copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False)
+                    copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
                 )
         else:
             questions = list(copy.copy(q) for q in self.product.questions.all())
