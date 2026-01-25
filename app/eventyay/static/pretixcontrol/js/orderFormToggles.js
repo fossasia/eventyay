@@ -1,313 +1,434 @@
-// Order Form toggle and dropdown handlers
-// Adapted from orga/js/questionToggles.js for pretixcontrol
+/**
+ * Order Form Toggle Handlers
+ */
 
-const REQUIRED_STATES = {
+const FIELD_STATES = {
     OPTIONAL: 'optional',
-    REQUIRED: 'required'
+    REQUIRED: 'required',
+    DO_NOT_ASK: 'do_not_ask'
 };
 
-const REQUIRED_STATES_ARRAY = Object.values(REQUIRED_STATES);
+const VALID_STATES = Object.values(FIELD_STATES);
 
-// Helper function to get cookie value
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
+class CSRFTokenManager {
+    static #cachedToken = null;
+
+    static getToken() {
+        if (this.#cachedToken) {
+            return this.#cachedToken;
+        }
+
+        const cookieNames = ['pretix_csrftoken', 'csrftoken', 'eventyay_csrftoken'];
+        for (const name of cookieNames) {
+            const token = this.#getCookieValue(name);
+            if (token) {
+                this.#cachedToken = token;
+                return token;
+            }
+        }
+
+        const hiddenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (hiddenInput?.value) {
+            this.#cachedToken = hiddenInput.value;
+            return hiddenInput.value;
+        }
+
+        const metaTag = document.querySelector('meta[name="csrf-token"]');
+        if (metaTag?.content) {
+            this.#cachedToken = metaTag.content;
+            return metaTag.content;
+        }
+
+        return null;
+    }
+
+    static #getCookieValue(name) {
+        const cookies = document.cookie.split(';');
+        for (const cookie of cookies) {
+            const [key, value] = cookie.trim().split('=');
+            if (key === name) {
+                return decodeURIComponent(value);
+            }
+        }
+        return null;
+    }
+
+    static clearCache() {
+        this.#cachedToken = null;
+    }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        initOrderFormToggles();
-    });
-} else {
-    initOrderFormToggles();
-}
-
-function initOrderFormToggles() {
-    // Only run if we are on the order forms page
-    if (!document.querySelector('.order-form-option-table')) return;
-
-    function updateVisualState(fieldId, value) {
-        const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
-        const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
-        const toggleInput = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
-
-        if (!toggleInput) return;
-
-        // Handle fields with required dropdown (asked_required pattern)
-        if (requiredDropdown) {
-            const wrapper = requiredDropdown.closest('.required-status-wrapper');
-            
-            if (value === 'do_not_ask') {
-                toggleInput.checked = false;
-                requiredDropdown.disabled = true;
-                
-                // Add .is-disabled class for interaction state
-                // Do NOT modify data-current (semantic state must persist)
-                if (wrapper) {
-                    wrapper.classList.add('is-disabled');
+class QuestionAPI {
+    static async updateField(questionId, field, value, options = {}) {
+        const { retries = 1, timeout = 10000 } = options;
+        
+        let lastError;
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            try {
+                return await this.#makeRequest(questionId, field, value, timeout);
+            } catch (error) {
+                lastError = error;
+                if (attempt < retries) {
+                    await this.#delay(Math.min(1000 * Math.pow(2, attempt), 5000));
                 }
-            } else {
-                toggleInput.checked = true;
-                requiredDropdown.disabled = false;
+            }
+        }
+        
+        throw lastError;
+    }
 
-                // Update dropdown value and data-current attribute for semantic state
-                requiredDropdown.value = value;
-                requiredDropdown.dataset.current = value;
+    static async #makeRequest(questionId, field, value, timeout) {
+        const csrfToken = CSRFTokenManager.getToken();
+        if (!csrfToken) {
+            throw new Error('CSRF token not found. Please refresh the page.');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+        try {
+            const url = this.#buildURL(questionId);
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+                body: JSON.stringify({ field, value }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(
+                    errorData.error || 
+                    `Server error: ${response.status} ${response.statusText}`
+                );
+            }
+
+            return await response.json().catch(() => ({}));
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout. Please try again.');
+            }
+            throw error;
+        }
+    }
+
+    static #buildURL(questionId) {
+        const basePath = window.location.pathname.replace(/\/orderforms\/?$/, '');
+        return `${basePath}/questions/${questionId}/toggle/`;
+    }
+
+    static #delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+class UIFeedback {
+    static showSuccess(element, duration = 600) {
+        const originalBg = element.style.backgroundColor;
+        element.style.transition = 'background-color 0.3s ease';
+        element.style.backgroundColor = '#d4edda';
+        
+        setTimeout(() => {
+            element.style.backgroundColor = originalBg;
+            setTimeout(() => {
+                element.style.transition = '';
+            }, 300);
+        }, duration);
+    }
+
+    static showError(element, duration = 1000) {
+        const originalBg = element.style.backgroundColor;
+        element.style.transition = 'background-color 0.3s ease';
+        element.style.backgroundColor = '#f8d7da';
+        
+        setTimeout(() => {
+            element.style.backgroundColor = originalBg;
+            setTimeout(() => {
+                element.style.transition = '';
+            }, 300);
+        }, duration);
+    }
+
+    static setLoading(element, isLoading) {
+        if (isLoading) {
+            element.classList.add('loading');
+            element.style.opacity = '0.6';
+            element.style.pointerEvents = 'none';
+        } else {
+            element.classList.remove('loading');
+            element.style.opacity = '';
+            element.style.pointerEvents = '';
+        }
+    }
+}
+
+class QuestionToggleHandler {
+    constructor() {
+        this.activeToggles = new Map();
+        this.requiredDropdowns = new Map();
+    }
+
+    initialize() {
+        this.#initActiveToggles();
+        this.#initRequiredDropdowns();
+    }
+
+    #initActiveToggles() {
+        document.querySelectorAll('.question-active-toggle[data-question-id]').forEach(toggle => {
+            const questionId = toggle.dataset.questionId;
+            this.activeToggles.set(questionId, toggle);
+
+            toggle.addEventListener('change', async (e) => {
+                await this.#handleActiveToggle(e.target);
+            });
+        });
+    }
+
+    #initRequiredDropdowns() {
+        document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
+            const questionId = dropdown.dataset.questionId;
+            this.requiredDropdowns.set(questionId, dropdown);
+
+            dropdown.addEventListener('change', async (e) => {
+                await this.#handleRequiredChange(e.target);
+            });
+        });
+    }
+
+    async #handleActiveToggle(toggle) {
+        const questionId = toggle.dataset.questionId;
+        const newValue = toggle.checked;
+        const previousValue = !newValue;
+        const container = toggle.closest('.toggle-switch');
+
+        toggle.disabled = true;
+        UIFeedback.setLoading(container, true);
+
+        try {
+            await QuestionAPI.updateField(questionId, 'active', newValue, { retries: 2 });
+            UIFeedback.showSuccess(container);
+        } catch (error) {
+            console.error('[QuestionToggle] Failed to update active status:', {
+                questionId,
+                error: error.message
+            });
+            
+            toggle.checked = previousValue;
+            UIFeedback.showError(container);
+            
+            this.#showErrorNotification(
+                'Failed to update active status',
+                error.message
+            );
+        } finally {
+            toggle.disabled = false;
+            UIFeedback.setLoading(container, false);
+        }
+    }
+
+    async #handleRequiredChange(dropdown) {
+        const questionId = dropdown.dataset.questionId;
+        const newValue = dropdown.value === 'required';
+        const previousValue = dropdown.dataset.current;
+        const wrapper = dropdown.closest('.required-status-wrapper');
+
+        dropdown.dataset.current = dropdown.value;
+        if (wrapper) {
+            wrapper.dataset.current = dropdown.value;
+        }
+
+        dropdown.disabled = true;
+        UIFeedback.setLoading(dropdown, true);
+
+        try {
+            await QuestionAPI.updateField(questionId, 'required', newValue, { retries: 2 });
+            UIFeedback.showSuccess(dropdown);
+        } catch (error) {
+            console.error('[QuestionToggle] Failed to update required status:', {
+                questionId,
+                error: error.message
+            });
+
+            dropdown.dataset.current = previousValue;
+            dropdown.value = previousValue;
+            if (wrapper) {
+                wrapper.dataset.current = previousValue;
+            }
+            
+            UIFeedback.showError(dropdown);
+            this.#showErrorNotification(
+                'Failed to update required status',
+                error.message
+            );
+        } finally {
+            dropdown.disabled = false;
+            UIFeedback.setLoading(dropdown, false);
+        }
+    }
+
+    #showErrorNotification(title, message) {
+        alert(`${title}\n\n${message}\n\nPlease try again or refresh the page.`);
+    }
+}
+
+class SystemFieldHandler {
+    initialize() {
+        this.#initFromHiddenInputs();
+        this.#attachToggleListeners();
+        this.#attachDropdownListeners();
+        this.#initInfoBoxes();
+    }
+
+    #initFromHiddenInputs() {
+        const hiddenInputs = document.querySelectorAll(
+            'input[type=hidden][name^="settings-order_"], ' +
+            'input[type=hidden][name^="settings-attendee_"]'
+        );
+
+        hiddenInputs.forEach(input => {
+            this.#updateVisualState(input.id, input.value);
+        });
+    }
+
+    #updateVisualState(fieldId, value) {
+        const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+        const dropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
+        const toggle = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
+
+        if (!toggle) return;
+
+        if (dropdown) {
+            const wrapper = dropdown.closest('.required-status-wrapper');
+            
+            if (value === FIELD_STATES.DO_NOT_ASK) {
+                toggle.checked = false;
+                dropdown.disabled = true;
+                wrapper?.classList.add('is-disabled');
+            } else {
+                toggle.checked = true;
+                dropdown.disabled = false;
+                dropdown.value = value;
+                dropdown.dataset.current = value;
                 
-                // Update wrapper data-current for semantic color
                 if (wrapper) {
                     wrapper.dataset.current = value;
                     wrapper.classList.remove('is-disabled');
                 }
             }
         } else {
-            // Handle boolean fields without required dropdown
-            toggleInput.checked = (value === 'True' || value === true || value === 'true');
+            toggle.checked = (value === 'True' || value === true || value === 'true');
         }
     }
 
-    // Init from hidden inputs for order form fields (settings-order_*, settings-attendee_*)
-    document.querySelectorAll('input[type=hidden][name^="settings-order_"], input[type=hidden][name^="settings-attendee_"]').forEach(input => {
-        updateVisualState(input.id, input.value);
-    });
-
-    // Handle info-toggle click for info boxes (CSP-compliant)
-    let currentOpenInfoBox = null;
-    
-    // Use event delegation for efficient event handling
-    document.addEventListener('click', function(e) {
-        const toggle = e.target.closest('.info-toggle[data-toggle="info-box"]');
-        
-        // Handle info-toggle click
-        if (toggle) {
-            const infoBox = toggle.nextElementSibling;
-            if (infoBox?.classList.contains('inline-info-box')) {
-                // Close any other open info boxes
-                if (currentOpenInfoBox && currentOpenInfoBox !== infoBox) {
-                    currentOpenInfoBox.classList.add('d-none');
-                }
-                
-                // Toggle current info box
-                infoBox.classList.toggle('d-none');
-                
-                // Update reference to currently open info box
-                currentOpenInfoBox = infoBox.classList.contains('d-none') ? null : infoBox;
-            }
-            e.stopPropagation();
-            return;
-        }
-        
-        // Close info box when clicking outside (check related elements)
-        if (e.target.closest('.inline-info-box, .info-toggle-wrapper')) {
-            return;
-        }
-        
-        // Close any open info boxes
-        if (currentOpenInfoBox) {
-            currentOpenInfoBox.classList.add('d-none');
-            currentOpenInfoBox = null;
-        }
-    });
-
-    // Handle custom field required dropdown changes (AJAX update)
-    document.querySelectorAll('.question-required-dropdown[data-question-id]').forEach(dropdown => {
-        dropdown.addEventListener('change', async function() {
-            const questionId = this.dataset.questionId;
-            const fieldName = this.getAttribute('aria-label') || 'this field';
-            const newValue = this.value === 'required'; // Convert to boolean
-            const previousValue = this.dataset.current;
-            const wrapper = this.closest('.required-status-wrapper');
-            
-            // Optimistic UI update
-            this.dataset.current = this.value;
-            if (wrapper) {
-                wrapper.dataset.current = this.value;
-            }
-            
-            // Add loading state
-            this.disabled = true;
-            this.classList.add('loading');
-            
-            try {
-                // Get CSRF token
-                const csrfToken = getCookie('eventyay_csrftoken');
-                if (!csrfToken) {
-                    throw new Error('CSRF token not found');
-                }
-                
-                // Build URL for toggle endpoint
-                const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
-                const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
-                
-                // Send AJAX request
-                const response = await fetch(toggleUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken,
-                    },
-                    body: JSON.stringify({
-                        field: 'required',
-                        value: newValue
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
-                }
-                
-                // Success - show brief feedback
-                const originalBg = this.style.backgroundColor;
-                this.style.backgroundColor = '#d4edda';
-                setTimeout(() => {
-                    this.style.backgroundColor = originalBg;
-                }, 500);
-                
-            } catch (error) {
-                // Revert on error
-                console.error('Failed to update required status', {
-                    questionId,
-                    fieldName,
-                    error,
-                });
-                this.dataset.current = previousValue;
-                this.value = previousValue;
-                if (wrapper) {
-                    wrapper.dataset.current = previousValue;
-                }
-                alert(`Failed to update required status for ${fieldName}. Please try again or refresh the page.`);
-            } finally {
-                this.disabled = false;
-                this.classList.remove('loading');
-            }
+    #attachToggleListeners() {
+        document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                this.#handleToggleChange(e.target);
+            });
         });
-    });
+    }
 
-    // Handle custom field active toggle changes (AJAX update)
-    document.querySelectorAll('.question-active-toggle[data-question-id]').forEach(toggle => {
-        toggle.addEventListener('change', async function() {
-            const questionId = this.dataset.questionId;
-            const fieldName = this.closest('label').getAttribute('aria-label') || 'this field';
-            const newValue = this.checked;
-            const previousValue = !newValue;
-            
-            // Add loading state
-            this.disabled = true;
-            this.closest('.toggle-switch').classList.add('loading');
-            
-            try {
-                // Get CSRF token
-                const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
-                if (!csrfToken) {
-                    throw new Error('CSRF token not found');
-                }
-                
-                // Build URL for toggle endpoint
-                const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
-                const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
-                
-                // Send AJAX request
-                const response = await fetch(toggleUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken,
-                    },
-                    body: JSON.stringify({
-                        field: 'active',
-                        value: newValue
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
-                }
-                
-                // Success - show brief feedback if possible
-                const originalBg = this.closest('.toggle-switch').style.backgroundColor;
-                // Simple visual feedback if desired, or let toggle state stand
-                
-            } catch (error) {
-                // Revert on error
-                console.error('Failed to update active status', {
-                    questionId,
-                    fieldName,
-                    error,
-                });
-                this.checked = previousValue;
-                alert(`Failed to update active status for ${fieldName}. Please try again or refresh the page.`);
-            } finally {
-                this.disabled = false;
-                this.closest('.toggle-switch').classList.remove('loading');
-            }
+    #attachDropdownListeners() {
+        document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
+            dropdown.addEventListener('change', (e) => {
+                this.#handleDropdownChange(e.target);
+            });
         });
-    });
+    }
 
-    // Handle required dropdown changes
-    document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
-        dropdown.addEventListener('change', function () {
-            const fieldId = this.dataset.fieldId;
-            const hiddenInput = document.getElementById(fieldId);
-            const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
-            const checkbox = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
+    #handleToggleChange(toggle) {
+        const container = toggle.closest('.toggle-switch');
+        const fieldId = container.dataset.fieldId;
+        const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+        const dropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
+        const hiddenInput = document.getElementById(fieldId);
 
-            if (!hiddenInput || !checkbox || !checkbox.checked) {
-                return; // Can't change if inactive
-            }
+        if (!hiddenInput) return;
 
-            const newValue = this.value;
-
-            // Validate dropdown value before assigning
-            if (!REQUIRED_STATES_ARRAY.includes(newValue)) {
-                return;
-            }
-
-            // Update hidden input
-            hiddenInput.value = newValue;
-            updateVisualState(fieldId, newValue);
-        });
-    });
-
-    // Handle toggle switch changes
-    document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
-        input.addEventListener('change', function () {
-            const toggle = this.closest('.toggle-switch');
-            const fieldId = toggle.dataset.fieldId;
-            const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
-            const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
-            const hiddenInput = document.getElementById(fieldId);
-
-            if (!hiddenInput) return;
-
-            // Check if this is a boolean field (no dropdown) or asked_required field
-            if (!requiredDropdown) {
-                // Boolean field - just toggle True/False
-                hiddenInput.value = this.checked ? 'True' : 'False';
+        if (!dropdown) {
+            hiddenInput.value = toggle.checked ? 'True' : 'False';
+        } else {
+            if (toggle.checked) {
+                let state = hiddenInput.dataset.previousState || dropdown.value;
+                if (!VALID_STATES.includes(state)) {
+                    state = FIELD_STATES.OPTIONAL;
+                }
+                hiddenInput.value = state;
+                this.#updateVisualState(fieldId, state);
+                delete hiddenInput.dataset.previousState;
             } else {
-                // asked_required field
-                if (this.checked) {
-                    // Activate - restore previous state or default to 'optional'
-                    let state = hiddenInput.dataset.previousState || requiredDropdown.value;
-                    if (!REQUIRED_STATES_ARRAY.includes(state)) {
-                        state = REQUIRED_STATES.OPTIONAL;
+                if (hiddenInput.value !== FIELD_STATES.DO_NOT_ASK) {
+                    hiddenInput.dataset.previousState = hiddenInput.value;
+                }
+                hiddenInput.value = FIELD_STATES.DO_NOT_ASK;
+                this.#updateVisualState(fieldId, FIELD_STATES.DO_NOT_ASK);
+            }
+        }
+    }
+
+    #handleDropdownChange(dropdown) {
+        const fieldId = dropdown.dataset.fieldId;
+        const hiddenInput = document.getElementById(fieldId);
+        const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
+        const toggle = document.querySelector(`.toggle-switch[data-field-id="${escapedId}"] input`);
+
+        if (!hiddenInput || !toggle || !toggle.checked) return;
+
+        const newValue = dropdown.value;
+        if (!VALID_STATES.includes(newValue)) return;
+
+        hiddenInput.value = newValue;
+        this.#updateVisualState(fieldId, newValue);
+    }
+
+    #initInfoBoxes() {
+        let currentOpenBox = null;
+
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('.info-toggle[data-toggle="info-box"]');
+            
+            if (trigger) {
+                const box = trigger.nextElementSibling;
+                if (box?.classList.contains('inline-info-box')) {
+                    if (currentOpenBox && currentOpenBox !== box) {
+                        currentOpenBox.classList.add('d-none');
                     }
-                    hiddenInput.value = state;
-                    updateVisualState(fieldId, state);
-                    // Clear stored previous state
-                    delete hiddenInput.dataset.previousState;
-                } else {
-                    // Deactivate - store current state before deactivating
-                    if (hiddenInput.value !== 'do_not_ask') {
-                        hiddenInput.dataset.previousState = hiddenInput.value;
-                    }
-                    // Set hidden input to do_not_ask for backend and update visuals accordingly
-                    hiddenInput.value = 'do_not_ask';
-                    updateVisualState(fieldId, 'do_not_ask');
+                    box.classList.toggle('d-none');
+                    currentOpenBox = box.classList.contains('d-none') ? null : box;
+                }
+                e.stopPropagation();
+            } else if (!e.target.closest('.inline-info-box, .info-toggle-wrapper')) {
+                if (currentOpenBox) {
+                    currentOpenBox.classList.add('d-none');
+                    currentOpenBox = null;
                 }
             }
         });
-    });
+    }
+}
+
+function initOrderFormToggles() {
+    if (!document.querySelector('.order-form-option-table')) {
+        return;
+    }
+
+    const questionHandler = new QuestionToggleHandler();
+    const systemHandler = new SystemFieldHandler();
+
+    questionHandler.initialize();
+    systemHandler.initialize();
+
+    console.log('[OrderFormToggles] Initialized successfully');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOrderFormToggles);
+} else {
+    initOrderFormToggles();
 }
