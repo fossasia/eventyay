@@ -212,15 +212,104 @@ function initOrderFormToggles() {
 
     // Handle toggle switch changes
     document.querySelectorAll('.toggle-switch[data-field-id] input').forEach(input => {
-        input.addEventListener('change', function () {
+        input.addEventListener('change', async function () {
             const toggle = this.closest('.toggle-switch');
             const fieldId = toggle.dataset.fieldId;
+            const questionId = toggle.dataset.questionId;
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
             const hiddenInput = document.getElementById(fieldId);
 
             if (!hiddenInput) return;
 
+            // Check if this is a custom question (has data-question-id)
+            if (questionId) {
+                const newActiveState = this.checked;
+                const previousChecked = !newActiveState;
+                
+                this.checked = newActiveState;
+                
+                toggle.classList.add('loading');
+                this.disabled = true;
+                
+                try {
+                    const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
+                    if (!csrfToken) {
+                        throw new Error('CSRF token not found');
+                    }
+
+                    const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
+                    const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
+                    
+                    const response = await fetch(toggleUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken,
+                        },
+                        body: JSON.stringify({
+                            field: 'active',
+                            value: newActiveState
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                        throw new Error(errorData.error || `HTTP ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    const currentValue = hiddenInput.value;
+                    
+                    if (newActiveState) {
+                        let state = hiddenInput.dataset.previousState || 'optional';
+                        if (!REQUIRED_STATES_ARRAY.includes(state)) {
+                            state = REQUIRED_STATES.OPTIONAL;
+                        }
+                        hiddenInput.value = state;
+                        const questionRequiredDropdown = document.querySelector(`.question-required-dropdown[data-question-id="${questionId}"]`);
+                        if (questionRequiredDropdown) {
+                            const wrapper = questionRequiredDropdown.closest('.required-status-wrapper');
+                            questionRequiredDropdown.disabled = false;
+                            if (wrapper) {
+                                wrapper.classList.remove('is-disabled');
+                            }
+                        }
+                        delete hiddenInput.dataset.previousState;
+                    } else {
+                        if (currentValue !== 'do_not_ask') {
+                            hiddenInput.dataset.previousState = currentValue;
+                        }
+                        hiddenInput.value = 'do_not_ask';
+                        const questionRequiredDropdown = document.querySelector(`.question-required-dropdown[data-question-id="${questionId}"]`);
+                        if (questionRequiredDropdown) {
+                            const wrapper = questionRequiredDropdown.closest('.required-status-wrapper');
+                            questionRequiredDropdown.disabled = true;
+                            if (wrapper) {
+                                wrapper.classList.add('is-disabled');
+                            }
+                        }
+                    }
+                    const originalBg = toggle.style.backgroundColor;
+                    toggle.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        toggle.style.backgroundColor = originalBg;
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('Failed to toggle question active state', {
+                        questionId,
+                        error,
+                    });
+                    this.checked = previousChecked;
+                    alert(`Failed to ${newActiveState ? 'activate' : 'deactivate'} the custom question. Please try again or refresh the page.`);
+                } finally {
+                    toggle.classList.remove('loading');
+                    this.disabled = false;
+                }
+                return;
+            }
             // Check if this is a boolean field (no dropdown) or asked_required field
             if (!requiredDropdown) {
                 // Boolean field - just toggle True/False

@@ -481,6 +481,35 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
                 user=self.request.user,
                 data={'required': value}
             )
+        elif field == 'active':
+            if value is None or not isinstance(value, bool):
+                logger.warning(
+                    'Invalid value for question %s field %s: expected bool, got %s',
+                    question.pk, field, type(value).__name__ if value is not None else 'None'
+                )
+                return JsonResponse({
+                    'error': 'Value must be a boolean for active field',
+                    'received': type(value).__name__ if value is not None else 'None'
+                }, status=400)
+            
+            setting_key = f'question_{question.pk}_asked_required'
+            current_value = request.event.settings.get(setting_key, None)
+            
+            if value:
+                if current_value == 'do_not_ask' or current_value is None:
+                    new_value = 'optional'
+                else:
+                    new_value = current_value
+            else:
+                new_value = 'do_not_ask'
+            
+            request.event.settings.set(setting_key, new_value)
+            request.event.log_action(
+                'eventyay.event.settings',
+                user=request.user,
+                data={setting_key: new_value}
+            )
+            return JsonResponse({'success': True, 'field': field, 'value': value})
         else:
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
@@ -1677,7 +1706,17 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         ctx['sform'] = self.sform()
 
         # Include custom fields (questions) for attendee data section
-        ctx['questions'] = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        questions = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        
+        # Add active state for each question (stored in event settings)
+        for question in questions:
+            setting_key = f'question_{question.pk}_asked_required'
+            asked_required = self.request.event.settings.get(setting_key, None)
+            if asked_required is None:
+                asked_required = 'optional'
+            question.asked_required = asked_required
+        
+        ctx['questions'] = questions
 
         return ctx
 

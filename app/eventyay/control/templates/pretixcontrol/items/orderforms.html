@@ -291,7 +291,7 @@
                         {# Custom fields #}
                         {% for q in questions %}
                         <tr data-dnd-id="{{ q.id }}">
-                            <th>
+                            <th id="question-{{ q.id }}-label">
                                 <strong>
                                     {% if q.type == "DES" %}
                                         <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
@@ -304,26 +304,22 @@
                                 <br><small class="text-muted">{{ q.identifier }}</small>
                             </th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on"
-                                    aria-label="{% translate 'Custom field is always active' %}"
-                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
-                                    <input type="checkbox"
-                                        checked
-                                        disabled
-                                        aria-describedby="custom-field-always-active-{{ q.id }}">
+                                <label class="toggle-switch" data-field-id="question-{{ q.id }}-asked-required" data-question-id="{{ q.id }}"
+                                    aria-labelledby="question-{{ q.id }}-label">
+                                    <input type="checkbox" {% if q.asked_required != 'do_not_ask' %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
-                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
-                                </span>
+                                <input type="hidden" name="question-{{ q.id }}-asked-required" value="{{ q.asked_required }}"
+                                    id="question-{{ q.id }}-asked-required">
                             </td>
                             <td class="text-center">
                                 {% if q.type != "DES" %}
-                                    <div class="required-status-wrapper" data-current="{% if q.required %}required{% else %}optional{% endif %}">
+                                    <div class="required-status-wrapper" data-current="{% if q.required %}required{% else %}optional{% endif %}" {% if q.asked_required == 'do_not_ask' %}class="is-disabled"{% endif %}>
                                         <select class="required-status-dropdown question-required-dropdown" 
                                             data-question-id="{{ q.id }}"
                                             aria-label="{% translate 'Required status for' %} {{ q.question }}" 
-                                            data-current="{% if q.required %}required{% else %}optional{% endif %}">
+                                            data-current="{% if q.required %}required{% else %}optional{% endif %}"
+                                            {% if q.asked_required == 'do_not_ask' %}disabled{% endif %}>
                                             <option value="optional" {% if not q.required %}selected{% endif %}>{% translate "Optional" %}</option>
                                             <option value="required" {% if q.required %}selected{% endif %}>{% translate "Required" %}</option>
                                         </select>
