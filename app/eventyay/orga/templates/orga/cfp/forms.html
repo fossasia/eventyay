@@ -76,6 +76,8 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,6 +100,8 @@
                             </td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.title }}</td>
                         </tr>
 
                         {# Abstract #}
@@ -127,6 +131,8 @@
                             </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.abstract }}</td>
                         </tr>
                         {% endwith %}
 
@@ -157,6 +163,8 @@
                             </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.description }}</td>
                         </tr>
                         {% endwith %}
 
@@ -187,6 +195,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.notes }}</td>
                         </tr>
                         {% endwith %}
 
@@ -217,6 +227,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.track }}</td>
                         </tr>
                         {% endwith %}
 
@@ -247,6 +259,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.duration }}</td>
                         </tr>
                         {% endwith %}
 
@@ -279,6 +293,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.content_locale }}</td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -310,6 +326,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.image }}</td>
                         </tr>
                         {% endwith %}
 
@@ -340,6 +358,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.do_not_record }}</td>
                         </tr>
                         {% endwith %}
                         {% for item in custom_session_fields %}
@@ -371,6 +391,18 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -407,6 +439,8 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -437,6 +471,8 @@
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.biography }}</td>
                         </tr>
                         {% endwith %}
 
@@ -467,6 +503,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar }}</td>
                         </tr>
                         {% endwith %}
 
@@ -497,6 +535,8 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar_source }}</td>
                         </tr>
                         {% endwith %}
 
@@ -527,6 +567,8 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.avatar_license }}</td>
                         </tr>
                         {% endwith %}
 
@@ -557,6 +599,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.availabilities }}</td>
                         </tr>
                         {% endwith %}
 
@@ -587,6 +631,8 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
+                            <td class="text-center">{{ field_counts.additional_speaker }}</td>
                         </tr>
                         {% for item in custom_speaker_fields %}
                             <tr>
@@ -617,6 +663,18 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                             </tr>
                         {% endfor %}
                         {% endwith %}
@@ -645,6 +703,8 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Public" %}</th>
+                            <th class="text-center">{% translate "Answers" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -677,6 +737,18 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
+                                        data-field="is_public"
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </td>
+                                <td class="text-center">
+                                    {{ item.question.answer_count }}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>

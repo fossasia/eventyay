@@ -232,7 +232,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_fields'] = self.get_unified_fields('session')
         context['speaker_fields'] = self.get_unified_fields('speaker')
         
-        questions = TalkQuestion.all_objects.filter(event=self.request.event)
+        questions = TalkQuestion.all_objects.filter(event=self.request.event).annotate(answer_count=Count('answers'))
         sform = self.sform
         
         def get_field_data(targets):
@@ -248,6 +248,26 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
+
+        from eventyay.base.models import SpeakerProfile, Submission, User
+        from eventyay.base.models.availability import Availability
+        event = self.request.event
+        context['field_counts'] = {
+            'title': event.submissions.exclude(title='').count(),
+            'abstract': event.submissions.exclude(abstract='').count(),
+            'description': event.submissions.exclude(description='').count(),
+            'notes': event.submissions.exclude(notes='').count(),
+            'do_not_record': event.submissions.filter(do_not_record=True).count(),
+            'image': event.submissions.exclude(image='').count(),
+            'track': event.submissions.exclude(track__isnull=True).count(),
+            'duration': event.submissions.exclude(duration__isnull=True).count(),
+            'content_locale': event.submissions.exclude(content_locale='').count(),
+            'additional_speaker': event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count(),
+            'biography': SpeakerProfile.objects.filter(event=event).exclude(biography='').exclude(biography__isnull=True).count(),
+            'avatar': User.objects.filter(submissions__event=event).exclude(avatar='').exclude(avatar__isnull=True).distinct().count(),
+            'availabilities': Availability.objects.filter(event=event).values('person').distinct().count(),
+        }
+
         return context
 
     @transaction.atomic
