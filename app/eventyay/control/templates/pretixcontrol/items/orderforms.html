@@ -305,9 +305,9 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch"
-                                    aria-labelledby="question-label-{{ q.id }}"
-                                    aria-label="{% translate 'Active status for' %} {{ q.question }}">
+                                    aria-labelledby="question-label-{{ q.id }}">
                                     <input type="checkbox"
+                                        aria-label="{% translate 'Active status for' %} {{ q.question }}"
                                         class="question-active-toggle"
                                         data-question-id="{{ q.id }}"
                                         {% if q.active %}checked{% endif %}>
