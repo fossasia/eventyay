@@ -42,8 +42,16 @@ class BulkReplyToMixin:
     """Mixin for bulk email views to resolve Reply-To address."""
     
     def _get_reply_to_for_bulk_email(self):
+        from django.conf import settings
+        
+        # Determine sender for SMTP context
+        event = self.request.event
+        sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+        sender = sender or settings.MAIL_FROM
+        
         return get_reply_to_address(
-            self.request.event
+            event,
+            sender_email=sender
         )
 
 

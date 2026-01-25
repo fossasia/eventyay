@@ -13,8 +13,6 @@ from eventyay.common.exceptions import SendMailException
 
 logger = logging.getLogger(__name__)
 
-LEGACY_DEFAULT_EMAIL = 'org@mail.com'
-
 
 class CustomSMTPBackend(EmailBackend):
     def test(self, from_addr):
@@ -86,7 +84,7 @@ def mail_send_task(
 
         # Use unified Reply-To resolution
         if not reply_to:
-            reply_to = get_reply_to_address(event)
+            reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
@@ -143,19 +141,33 @@ def get_reply_to_address(
     event,
     *,
     override=None,
-    template=None
+    template=None,
+    sender_email=None
 ):
     """
     Resolve Reply-To email address with unified precedence.
     
-    Precedence (highest to lowest):
-    1. Explicit override parameter
-    2. Template-level reply_to
-    3. Custom SMTP reply_to (event.mail_settings['reply_to'])
-    4. Event.email (canonical organizer email)
-    5. None (system default)
+    Event.email is REQUIRED during event creation, but Reply-To header is OPTIONAL.
     
-    Note: The placeholder value 'org@mail.com' is excluded from Event.email.
+    Precedence (highest to lowest):
+    1. Explicit override parameter (manual emails)
+    2. Template-level reply_to (talk-specific templates)
+    3. Custom SMTP reply_to (event.mail_settings['reply_to'])
+    4. Event.email (ONLY when using default system sender)
+    5. None (no Reply-To header - acceptable)
+    
+    When custom SMTP sender is configured, Event.email is NOT automatically
+    used as Reply-To. Organizers can explicitly set mail_settings['reply_to']
+    if they want a different Reply-To than their SMTP sender.
+    
+    Args:
+        event: Event instance
+        override: Explicit Reply-To override
+        template: Email template with optional reply_to field
+        sender_email: The actual sender email being used (to determine SMTP context)
+    
+    Returns:
+        Reply-To email address or None
     """
     if override:
         return override
@@ -166,7 +178,9 @@ def get_reply_to_address(
     if event.mail_settings.get('reply_to'):
         return event.mail_settings['reply_to']
     
-    if event.email and event.email != LEGACY_DEFAULT_EMAIL:
+    # Only use Event.email when using default system sender
+    if sender_email == settings.MAIL_FROM and event.email:
         return event.email
     
+    # No Reply-To header - let email client handle it
     return None
