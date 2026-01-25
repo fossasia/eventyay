@@ -143,6 +143,10 @@ jobs:
         working-directory: app
         run: uv run python manage.py migrate --noinput
 
+      - name: Install test dependencies explicitly
+        working-directory: app
+        run: uv run pip install selenium pytest-selenium
+
       - name: Run pytest
         env:
           EVY_POSTGRES_USER: eventyay
