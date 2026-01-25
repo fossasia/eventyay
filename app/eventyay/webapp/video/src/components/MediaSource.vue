@@ -12,6 +12,7 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.join-error(v-if="joinErrorMessage") {{ joinErrorMessage }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -44,6 +45,7 @@ const store = useStore()
 const route = useRoute()
 
 const iframeError = ref(null)
+const joinErrorMessage = ref(null)
 const iframeEl = ref(null)
 const languageIframeUrl = ref(null)
 const isUnmounted = ref(false)
@@ -107,6 +109,8 @@ watch(youtubeTransUrl, (ytUrl) => {
 onMounted(async () => {
 	if (!props.room) return
 	await initializeIframe(false)
+	
+
 })
 
 onBeforeUnmount(() => {
@@ -134,8 +138,30 @@ function unmuteYouTubePlayer() {
 		console.error('Failed to unmute YouTube player:', error)
 	}
 }
+function getJoinErrorMessage(error) {
+	const code =
+		error?.response?.data?.error ||
+		error?.error ||
+		error?.message ||
+		null
+
+	switch (code) {
+		case 'missing_profile':
+			return 'Your profile is incomplete. Please add a display name before joining.'
+
+		case 'bbb.failed':
+			return 'The video server is currently unavailable. Please try again later.'
+
+		case 'no_server_available':
+			return 'No video servers are available at the moment.'
+
+		default:
+			return 'Unable to join the video room.'
+	}
+}
 
 async function initializeIframe(mute) {
+	joinErrorMessage.value = null
 	try {
 		if (!module.value) return
 		let iframeUrl
@@ -224,10 +250,11 @@ async function initializeIframe(mute) {
 			}
 		}
 	} catch (error) {
-		// TODO handle bbb/zoom.join.missing_profile
-		iframeError.value = error
-		console.error(error)
-	}
+	joinErrorMessage.value = getJoinErrorMessage(error)
+	iframeError.value = error
+	console.error('MediaSource join failed:', error)
+}
+
 }
 
 function destroyIframe() {
@@ -395,4 +422,17 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+.join-error
+	position: fixed
+	top: 120px
+	left: 50%
+	transform: translateX(-50%)
+	background: #fdecea
+	color: #611a15
+	padding: 12px 16px
+	border-radius: 4px
+	z-index: 200
+	max-width: 420px
+	text-align: center
+
 </style>
