@@ -359,7 +359,12 @@ class CfPForms(EventPermissionRequired, TemplateView):
                     question.position = index
                     question.save(update_fields=['position'])
                 except TalkQuestion.DoesNotExist:
-                    pass
+                    logger.warning(
+                        'Skipping missing TalkQuestion %s for event %s and target %s',
+                        question_id,
+                        event.id,
+                        target_type,
+                    )
 
         event.cfp.settings['fields_config'] = fields_config
         event.cfp.save(update_fields=['settings'])
