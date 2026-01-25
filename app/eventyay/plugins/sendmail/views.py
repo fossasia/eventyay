@@ -563,7 +563,8 @@ class ComposeTeamsMail(EventPermissionRequiredMixin, CopyDraftMixin, FormView):
         sent_emails = set()
         recipients_list = []
         for team in form.cleaned_data['teams']:
-            for member in team.members.all():
+            members = team.members.all().prefetch_related('emailaddress_set')
+            for member in members:
                 email = member.get_primary_email()
                 if not email or email in sent_emails:
                     continue
