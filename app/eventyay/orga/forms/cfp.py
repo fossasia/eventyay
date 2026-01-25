@@ -32,7 +32,7 @@ from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
 
 
-class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
+class CfPGeneralSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
     use_tracks = forms.BooleanField(
         label=_('Use tracks'),
         required=False,
@@ -69,6 +69,25 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+
+    def save(self, *args, **kwargs):
+        self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+        self.instance.cfp.save()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        # These are JSON fields on event.settings
+        json_fields = {
+            'use_tracks': 'feature_flags',
+            'submission_public_review': 'feature_flags',
+            'present_multiple_times': 'feature_flags',
+            'mail_on_new_submission': 'mail_settings',
+        }
+
+
+class CfPSettingsForm(CfPGeneralSettingsForm):
+    def __init__(self, *args, obj, **kwargs):
+        super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
             'title',
             'abstract',
@@ -147,7 +166,6 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
-        self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
@@ -172,17 +190,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
                         question.question_required = TalkQuestionRequired.OPTIONAL
                 question.save()
 
-        self.instance.cfp.save()
         super().save(*args, **kwargs)
-
-    class Meta:
-        # These are JSON fields on event.settings
-        json_fields = {
-            'use_tracks': 'feature_flags',
-            'submission_public_review': 'feature_flags',
-            'present_multiple_times': 'feature_flags',
-            'mail_on_new_submission': 'mail_settings',
-        }
 
 
 class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):

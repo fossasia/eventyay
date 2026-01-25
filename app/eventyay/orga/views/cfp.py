@@ -39,6 +39,7 @@ from eventyay.orga.forms.cfp import (
     QuestionFilterForm,
     ReminderFilterForm,
     SubmitterAccessCodeForm,
+    CfPGeneralSettingsForm,
 )
 from eventyay.base.models import (
     AnswerOption,
@@ -71,7 +72,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     @cached_property
     def sform(self):
-        return CfPSettingsForm(
+        return CfPGeneralSettingsForm(
             read_only=(self.action == 'view'),
             locales=self.request.event.locales,
             obj=self.request.event,
