@@ -101,7 +101,6 @@ preprocessor
 presale
 Eventyay
 pretixSCAN
-pretixdroid
 pretixPOS
 pretixpresale
 prometheus
