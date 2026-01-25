@@ -304,18 +304,15 @@
                                 <br><small class="text-muted">{{ q.identifier }}</small>
                             </th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on"
-                                    aria-label="{% translate 'Custom field is always active' %}"
-                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
+                                <label class="toggle-switch"
+                                    data-question-id="{{ q.id }}"
+                                    data-toggle-url="{% url 'control:event.products.questions.toggle' organizer=request.event.organizer.slug event=request.event.slug question=q.id %}"
+                                    aria-label="{% translate 'Toggle custom field' %}">
                                     <input type="checkbox"
-                                        checked
-                                        disabled
-                                        aria-describedby="custom-field-always-active-{{ q.id }}">
+                                        {% if q.active %}checked{% endif %}
+                                        class="question-active-toggle">
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
-                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
-                                </span>
                             </td>
                             <td class="text-center">
                                 {% if q.type != "DES" %}

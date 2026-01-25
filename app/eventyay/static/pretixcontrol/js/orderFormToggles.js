@@ -27,6 +27,25 @@ function initOrderFormToggles() {
     // Only run if we are on the order forms page
     if (!document.querySelector('.order-form-option-table')) return;
 
+        function updateQuestionVisualState(questionId, isActive) {
+                const dropdown = document.querySelector(
+                    `.question-required-dropdown[data-question-id="${questionId}"]`
+                );
+
+                if (!dropdown) return;
+
+                const wrapper = dropdown.closest('.required-status-wrapper');
+
+                if (!isActive) {
+                    dropdown.disabled = true;
+                    if (wrapper) wrapper.classList.add('is-disabled');
+                } else {
+                    dropdown.disabled = false;
+                    if (wrapper) wrapper.classList.remove('is-disabled');
+                }
+                }
+
+
     function updateVisualState(fieldId, value) {
         const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
         const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
@@ -115,7 +134,7 @@ function initOrderFormToggles() {
         dropdown.addEventListener('change', async function() {
             const questionId = this.dataset.questionId;
             const fieldName = this.getAttribute('aria-label') || 'this field';
-            const newValue = this.value === 'required'; // Convert to boolean
+            const newValue = this.value === 'required';
             const previousValue = this.dataset.current;
             const wrapper = this.closest('.required-status-wrapper');
             
@@ -247,6 +266,33 @@ function initOrderFormToggles() {
                     updateVisualState(fieldId, 'do_not_ask');
                 }
             }
+        });
+    });
+
+     document.querySelectorAll('.question-active-toggle').forEach(toggle => {
+        toggle.addEventListener('change', function () {
+            const label = this.closest('label');
+            const toggleUrl = label.dataset.toggleUrl;
+            const questionId = label.dataset.questionId;
+            updateQuestionVisualState(questionId, this.checked);
+            const payload = JSON.stringify({
+                field: 'active',
+                value: this.checked
+            });
+
+            fetch(toggleUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: payload
+            }).then(resp => {
+                if (!resp.ok) {
+                    alert('Failed to update custom field state');
+                    this.checked = !this.checked;
+                }
+            });
         });
     });
 }

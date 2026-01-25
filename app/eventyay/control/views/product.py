@@ -466,14 +466,7 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
         if field == 'required':
             # Validate presence and type for boolean fields
             if value is None or not isinstance(value, bool):
-                logger.warning(
-                    'Invalid value for question %s field %s: expected bool, got %s',
-                    question.pk, field, type(value).__name__ if value is not None else 'None'
-                )
-                return JsonResponse({
-                    'error': 'Value must be a boolean for required field',
-                    'received': type(value).__name__ if value is not None else 'None'
-                }, status=400)
+                return JsonResponse({'error': 'Value must be a boolean for required field'}, status=400)
             question.required = value
             question.save(update_fields=['required'])
             question.log_action(
@@ -481,6 +474,18 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
                 user=self.request.user,
                 data={'required': value}
             )
+
+        elif field == 'active':
+            if value is None or not isinstance(value, bool):
+                return JsonResponse({'error': 'Value must be a boolean for active field'}, status=400)
+            question.active = value
+            question.save()
+            question.log_action(
+                'eventyay.event.question.changed',
+                user=self.request.user,
+                data={'active': value}
+            )
+
         else:
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
