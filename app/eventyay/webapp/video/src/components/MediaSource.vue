@@ -158,6 +158,7 @@ function getJoinErrorMessage(error) {
 
 
 async function initializeIframe(mute) {
+	
 	joinErrorMessage.value = null
 	try {
 		if (!module.value) return
