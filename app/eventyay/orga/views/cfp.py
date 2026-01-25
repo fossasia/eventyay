@@ -327,6 +327,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         if not has_session_fields and not has_speaker_fields and custom_question_ids:
             all_speaker = True
             all_session = True
+            all_reviewer = True
             for qid in custom_question_ids:
                 q = TalkQuestion.objects.filter(id=qid, event=event).first()
                 if not q:
@@ -335,8 +336,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
                     all_speaker = False
                 if q.target != TalkQuestionTarget.SUBMISSION:
                     all_session = False
+                if q.target != TalkQuestionTarget.REVIEWER:
+                    all_reviewer = False
             has_speaker_fields = all_speaker and len(custom_question_ids) > 0
             has_session_fields = all_session and len(custom_question_ids) > 0
+            has_reviewer_fields = all_reviewer and len(custom_question_ids) > 0
 
         if has_session_fields:
             fields_config['session'] = order_list
@@ -344,6 +348,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
         elif has_speaker_fields:
             fields_config['speaker'] = order_list
             target_type = TalkQuestionTarget.SPEAKER
+        elif 'has_reviewer_fields' in locals() and has_reviewer_fields:
+            fields_config['reviewer'] = order_list
+            target_type = TalkQuestionTarget.REVIEWER
         
         if target_type:
             for index, question_id in enumerate(custom_question_ids):
@@ -516,8 +523,16 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         if is_new:
             event = self.request.event
             fields_config = event.cfp.settings.get('fields_config', {})
-            config_key = 'session' if form.instance.target == TalkQuestionTarget.SUBMISSION else 'speaker'
-            if config_key in fields_config:
+            if form.instance.target == TalkQuestionTarget.SUBMISSION:
+                config_key = 'session'
+            elif form.instance.target == TalkQuestionTarget.SPEAKER:
+                config_key = 'speaker'
+            elif form.instance.target == TalkQuestionTarget.REVIEWER:
+                config_key = 'reviewer'
+            else:
+                config_key = None
+            
+            if config_key and config_key in fields_config:
                 if str(form.instance.pk) not in fields_config[config_key]:
                     fields_config[config_key].append(str(form.instance.pk))
                     event.cfp.settings['fields_config'] = fields_config
