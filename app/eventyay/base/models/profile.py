@@ -41,6 +41,16 @@ class SpeakerProfile(PretalxModel):
         blank=True,
     )
     has_arrived = models.BooleanField(default=False, verbose_name=_('The speaker has arrived'))
+    is_featured = models.BooleanField(
+        default=False,
+        verbose_name=_('Featured speaker'),
+        help_text=_('Featured speakers will be displayed on the event landing page')
+    )
+    featured_order = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name=_('Display order'),
+        help_text=_('Order in which speakers are displayed (lower numbers appear first)')
+    )
 
     log_prefix = 'eventyay.user.profile'
 
@@ -57,6 +67,9 @@ class SpeakerProfile(PretalxModel):
             'mark_arrived': orga_can_change_submissions & can_mark_speakers_arrived,
             'delete': is_administrator,
         }
+        indexes = [
+            models.Index(fields=['event', 'is_featured', 'featured_order'], name='speaker_featured_order_idx'),
+        ]
 
     class urls(EventUrls):
         """URL patterns for public speaker profile views."""
