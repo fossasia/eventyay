@@ -103,6 +103,15 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+      selenium:
+        image: selenium/standalone-chrome:latest
+        ports:
+          - 4444:4444
+        options: >-
+          --health-cmd="curl -fsS http://localhost:4444/status | grep -q '\"ready\": true'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -147,7 +156,7 @@ jobs:
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
-        run: uv run pytest tests/stable -v --tb=short
+        run: uv run pytest tests/stable -v --tb=short --driver=remote --driver-remote-url=http://selenium:4444/wd/hub
 
   backend-smoke:
     name: Backend smoke test (healthcheck)
