@@ -147,10 +147,11 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         native_session_keys = [
             'title', 'abstract', 'description', 'notes', 'do_not_record', 
-            'image', 'track', 'duration', 'content_locale', 'additional_speaker'
+            'image', 'track', 'duration', 'content_locale'
         ]
         native_speaker_keys = [
-            'biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities'
+            'biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
+            'additional_speaker'
         ]
         
         target_keys = native_session_keys if target == 'session' else native_speaker_keys
@@ -237,13 +238,16 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_field_order'] = json.dumps(fields_config.get('session', []))
         context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
         
-        questions = TalkQuestion.all_objects.filter(event=self.request.event)
         sform = self.sform
         
         def get_field_data(targets):
             data = []
+            questions = TalkQuestion.all_objects.filter(
+                event=self.request.event,
+                target__in=targets
+            ).order_by('position', 'id')
             for q in questions:
-                if q.target in targets and f'question_{q.pk}' in sform.fields:
+                if f'question_{q.pk}' in sform.fields:
                     data.append({
                         'question': q,
                         'field': sform[f'question_{q.pk}']
@@ -272,42 +276,38 @@ class CfPForms(EventPermissionRequired, TemplateView):
         return self.get(request, *args, **kwargs)
     
     def _handle_field_reordering(self, order_str):
-        """
-        Handle field reordering for both default fields and custom questions.
-        Order string contains IDs: default field keys (e.g., 'title', 'abstract')
-        and custom question IDs (e.g., '123', '456').
-        """
-        from eventyay.base.models import TalkQuestion, TalkQuestionTarget
-        
+        """Handle field reordering for both default fields and custom questions."""
         order_list = order_str.split(',')
         event = self.request.event
         
-        # Update positions for custom questions (for database ordering)
-        custom_question_ids = [int(item) for item in order_list if item.isdigit()]
-        for index, question_id in enumerate(custom_question_ids):
-            try:
-                question = TalkQuestion.objects.get(id=question_id, event=event)
-                question.position = index
-                question.save(update_fields=['position'])
-            except TalkQuestion.DoesNotExist:
-                pass
+        custom_question_ids = []
+        for item in order_list:
+            if item.isdigit():
+                try:
+                    custom_question_ids.append(int(item))
+                except ValueError:
+                    logger.warning('Skipping invalid question id in order: %s', item)
         
-        # Save COMPLETE order (default fields + custom question IDs) to settings
-        # This includes both default field keys and custom question IDs in their dragged order
         fields_config = event.cfp.settings.get('fields_config', {})
         
-        # Determine which section this is based on field names or question targets
         session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
-                       'content_locale', 'image', 'do_not_record', 'additional_speaker']
-        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities']
+                       'content_locale', 'image', 'do_not_record']
+        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
+                       'additional_speaker']
         
-        # Check if this is a speaker section by looking at default fields or custom question targets
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)
 
-        # If no default fields, check the target of custom questions
+        if has_session_fields and has_speaker_fields:
+            logger.warning(
+                'Ambiguous field reordering: contains both session and speaker fields. '
+                'Skipping fields_config update for event %s.',
+                event.id
+            )
+            return
+
+        target_type = None
         if not has_session_fields and not has_speaker_fields and custom_question_ids:
-            # Check all custom questions in the order list
             all_speaker = True
             all_session = True
             for qid in custom_question_ids:
@@ -321,11 +321,21 @@ class CfPForms(EventPermissionRequired, TemplateView):
             has_speaker_fields = all_speaker and len(custom_question_ids) > 0
             has_session_fields = all_session and len(custom_question_ids) > 0
 
-        # Always save the order for the correct section
         if has_session_fields:
-            fields_config['session'] = order_list  # Save complete order including custom IDs
-        if has_speaker_fields:
-            fields_config['speaker'] = order_list  # Save complete order including custom IDs
+            fields_config['session'] = order_list
+            target_type = TalkQuestionTarget.SUBMISSION
+        elif has_speaker_fields:
+            fields_config['speaker'] = order_list
+            target_type = TalkQuestionTarget.SPEAKER
+        
+        if target_type:
+            for index, question_id in enumerate(custom_question_ids):
+                try:
+                    question = TalkQuestion.objects.get(id=question_id, event=event, target=target_type)
+                    question.position = index
+                    question.save(update_fields=['position'])
+                except TalkQuestion.DoesNotExist:
+                    pass
 
         event.cfp.settings['fields_config'] = fields_config
         event.cfp.save(update_fields=['settings'])
