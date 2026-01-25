@@ -240,23 +240,40 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         sform = self.sform
         
-        def get_field_data(targets):
-            data = []
+        def get_field_data(targets, config_key):
             questions = TalkQuestion.all_objects.filter(
                 event=self.request.event,
                 target__in=targets
-            ).order_by('position', 'id')
-            for q in questions:
-                if f'question_{q.pk}' in sform.fields:
-                    data.append({
-                        'question': q,
-                        'field': sform[f'question_{q.pk}']
-                    })
+            )
+            
+            question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
+            saved_order = fields_config.get(config_key, [])
+            
+            ordered_questions = []
+            processed_ids = set()
+            
+            for item in saved_order:
+                if item.isdigit() and item in question_map:
+                    ordered_questions.append(question_map[item])
+                    processed_ids.add(item)
+            
+            remaining_questions = sorted(
+                [q for q_id, q in question_map.items() if q_id not in processed_ids],
+                key=lambda x: (x.position, x.id)
+            )
+            ordered_questions.extend(remaining_questions)
+            
+            data = []
+            for q in ordered_questions:
+                data.append({
+                    'question': q,
+                    'field': sform[f'question_{q.pk}']
+                })
             return data
 
-        context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
-        context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
-        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
+        context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION], 'session')
+        context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER], 'speaker')
+        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER], 'reviewer')
         return context
 
     @transaction.atomic
@@ -478,13 +495,13 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
         form.instance.event = self.request.event
         self.instance = form.instance
         
-        # Set position to the end for new questions
-        if not form.instance.pk:
+        is_new = not form.instance.pk
+        if is_new:
             max_position = TalkQuestion.objects.filter(
                 event=self.request.event,
                 target=form.instance.target
             ).aggregate(models.Max('position'))['position__max']
-            form.instance.position = (max_position or 0) + 1
+            form.instance.position = (max_position or -1) + 1
         
         if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
@@ -495,6 +512,17 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 )
                 return self.form_invalid(form)
         result = super().form_valid(form)
+        
+        if is_new:
+            event = self.request.event
+            fields_config = event.cfp.settings.get('fields_config', {})
+            config_key = 'session' if form.instance.target == TalkQuestionTarget.SUBMISSION else 'speaker'
+            if config_key in fields_config:
+                if str(form.instance.pk) not in fields_config[config_key]:
+                    fields_config[config_key].append(str(form.instance.pk))
+                    event.cfp.settings['fields_config'] = fields_config
+                    event.cfp.save(update_fields=['settings'])
+        
         if form.cleaned_data.get('variant') in (
             'choices',
             'multiple_choice',
