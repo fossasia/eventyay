@@ -13,7 +13,7 @@ tuning or customisation options beyond the standard settings.
              you’re not feeling comfortable managing a Linux server, check
              out our hosting and service offers at `eventyay.com`_.
 
-For the more automation-savvy, we also provide an `Ansible role`_ that follows
+For the more automation-savvy, we also provide an automation role that follows
 this guide. If you prefer a docker setup, there is a `docker-compose setup`_.
 Please note that the docker setup is community provided and not officially
 supported.
@@ -288,7 +288,6 @@ Check out :ref:`configure` for details on the available configuration options.
 If you want to read about updates, backups, and monitoring, head over to our
 :ref:`maintenance` documentation!
 
-.. _Ansible role: https://github.com/eventyay/ansible-eventyay
 .. _Let’s Encrypt: https://letsencrypt.org/
 .. _PostgreSQL: https://www.postgresql.org/docs/
 .. _redis: https://redis.io/docs/latest/
