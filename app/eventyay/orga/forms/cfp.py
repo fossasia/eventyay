@@ -75,10 +75,8 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
 
     def save(self, *args, **kwargs):
-        if not hasattr(self, 'instance') or not hasattr(self.instance, 'cfp'):
-            raise AttributeError("CfPGeneralSettingsForm requires an instance with a 'cfp' attribute.")
         current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
-        if 'count_length_in' in self.data:
+        if 'count_length_in' in self.cleaned_data:
             new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
         else:
             new_count_length_in = current_count_length_in
