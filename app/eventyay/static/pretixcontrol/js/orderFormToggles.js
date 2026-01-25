@@ -185,6 +185,67 @@ function initOrderFormToggles() {
         });
     });
 
+    // Handle custom field active toggle changes (AJAX update)
+    document.querySelectorAll('.question-active-toggle[data-question-id]').forEach(toggle => {
+        toggle.addEventListener('change', async function() {
+            const questionId = this.dataset.questionId;
+            const fieldName = this.closest('label').getAttribute('aria-label') || 'this field';
+            const newValue = this.checked;
+            const previousValue = !newValue;
+            
+            // Add loading state
+            this.disabled = true;
+            this.closest('.toggle-switch').classList.add('loading');
+            
+            try {
+                // Get CSRF token
+                const csrfToken = getCookie('pretix_csrftoken') || getCookie('csrftoken');
+                if (!csrfToken) {
+                    throw new Error('CSRF token not found');
+                }
+                
+                // Build URL for toggle endpoint
+                const baseUrl = `${window.location.pathname.replace(/\/orderforms\/?$/, '')}`;
+                const toggleUrl = `${baseUrl}/questions/${questionId}/toggle/`;
+                
+                // Send AJAX request
+                const response = await fetch(toggleUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        field: 'active',
+                        value: newValue
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                // Success - show brief feedback if possible
+                const originalBg = this.closest('.toggle-switch').style.backgroundColor;
+                // Simple visual feedback if desired, or let toggle state stand
+                
+            } catch (error) {
+                // Revert on error
+                console.error('Failed to update active status', {
+                    questionId,
+                    fieldName,
+                    error,
+                });
+                this.checked = previousValue;
+                alert(`Failed to update active status for ${fieldName}. Please try again or refresh the page.`);
+            } finally {
+                this.disabled = false;
+                this.closest('.toggle-switch').classList.remove('loading');
+            }
+        });
+    });
+
     // Handle required dropdown changes
     document.querySelectorAll('.required-status-dropdown[data-field-id]').forEach(dropdown => {
         dropdown.addEventListener('change', function () {
