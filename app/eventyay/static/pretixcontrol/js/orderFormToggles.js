@@ -60,8 +60,10 @@ async function updateQuestionField(questionId, field, value) {
     });
     
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(errorData.error || `HTTP ${response.status}`);
+        const errorData = await response.json().catch(() => ({
+            error: `HTTP ${response.status} ${response.statusText || 'Unknown error'}`
+        }));
+        throw new Error(errorData.error || `HTTP ${response.status} ${response.statusText}`);
     }
     
     return response;

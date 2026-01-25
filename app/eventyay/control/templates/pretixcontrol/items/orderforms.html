@@ -291,7 +291,7 @@
                         {# Custom fields #}
                         {% for q in questions %}
                         <tr data-dnd-id="{{ q.id }}">
-                            <th>
+                            <th id="question-label-{{ q.id }}">
                                 <strong>
                                     {% if q.type == "DES" %}
                                         <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
@@ -305,7 +305,8 @@
                             </th>
                             <td class="text-center">
                                 <label class="toggle-switch"
-                                    aria-label="{% translate 'Active' %}">
+                                    aria-labelledby="question-label-{{ q.id }}"
+                                    aria-label="{% translate 'Active status for' %} {{ q.question }}">
                                     <input type="checkbox"
                                         class="question-active-toggle"
                                         data-question-id="{{ q.id }}"

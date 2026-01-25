@@ -1152,6 +1152,11 @@ class Question(LoggedModel):
     active = models.BooleanField(
         default=True,
         verbose_name=_('Active'),
+        help_text=_(
+            'Inactive questions are not shown to customers during checkout or check-in. '
+            'Unlike hidden questions (which are system-level), active controls visibility '
+            'and can be toggled by event organizers.'
+        )
     )
     description = I18nTextField(
         verbose_name=_('Description'),
