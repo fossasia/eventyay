@@ -188,7 +188,8 @@ def mail(
             if not headers.get('Reply-To'):
                 reply_to = get_reply_to_address(
                     event,
-                    override=event_reply_to if not auto_email else None
+                    override=event_reply_to if not auto_email else None,
+                    sender_email=sender
                 )
                 
                 if reply_to:
