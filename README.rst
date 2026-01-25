@@ -56,7 +56,7 @@ Getting Started
 4. **Install Python packages**
 
 Use ``uv`` to create virtual environment and install Python packages at the same time.
-**Make sure you are in app directory**
+**Make sure you are inside the ``app`` directory before running this command.**
 
 .. code-block:: sh
 
@@ -65,8 +65,7 @@ Use ``uv`` to create virtual environment and install Python packages at the same
 
 5. **Create a PostgreSQL database**
 
-The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way
-to work with database is to use its "peer" mode (no need to remember password).
+The default database name that the project needs is ``eventyay-db``. If you are using Linux, the simplest way is to use PostgreSQL **peer authentication** (no password required).
 
 Create a Postgres user with the same name as your Linux user:
 
@@ -88,7 +87,7 @@ From now on, you can do everything with the database without specifying password
 
   psql eventyay-db
 
-In case you cannot take advantage of PostgreSQL *peer* mode, you need to create a *eventyay.local.toml* file with these values:
+In case you cannot take advantage of PostgreSQL *peer* mode, you need to create an eventyay.local.toml file in the same directory as ``manage.py``
 
 .. code-block:: toml
 
@@ -97,7 +96,7 @@ In case you cannot take advantage of PostgreSQL *peer* mode, you need to create 
   postgres_host = 'localhost'
   postgres_port = 5432
 
-6. **Install and run Redis**
+6. **Install and ensure Redis is running**
 
 7. **Activate virtual environment**
 
@@ -113,7 +112,7 @@ After running ``uv sync```, activate a virtual environment
 
   python manage.py migrate
 
-9. **Create a admin user account** (for accessing the admin panel):
+9. **Create an admin user account** (for accessing the admin panel):
 
 .. code-block:: bash
 
@@ -126,8 +125,7 @@ After running ``uv sync```, activate a virtual environment
   python manage.py runserver
 
 
-Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
-all below it are own by you.
+Notes: If you get permission errors for eventyay/static/CACHE, make sure the directory and all its subdirectories are owned by your user.
 
 Docker based development
 ------------------------
@@ -149,6 +147,7 @@ We assume your current working directory is the checkout of this repo.
 
    This is only necessary the first time, or if you have strange behaviour.
    This removes the database volume and triggers a complete reinitialization.
+   This will delete all existing local data.
    After that, you have to run migrate and createsuperuser again!
 
    .. code-block:: bash
