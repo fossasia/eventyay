@@ -1,6 +1,7 @@
 import logging
 import nh3
 import uuid
+from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Exists, Subquery, OuterRef, Q
@@ -42,8 +43,6 @@ class BulkReplyToMixin:
     """Mixin for bulk email views to resolve Reply-To address."""
     
     def _get_reply_to_for_bulk_email(self):
-        from django.conf import settings
-        
         # Determine sender for SMTP context
         event = self.request.event
         sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
