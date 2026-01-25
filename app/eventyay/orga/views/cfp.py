@@ -72,6 +72,7 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     @cached_property
     def sform(self):
+        # Use simple form as we only edit general settings here, no custom questions
         return CfPGeneralSettingsForm(
             read_only=(self.action == 'view'),
             locales=self.request.event.locales,
@@ -117,6 +118,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def sform(self):
+        # Use full form to include custom questions and field configuration
         return CfPSettingsForm(
             read_only=False,
             locales=self.request.event.locales,

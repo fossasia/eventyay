@@ -33,6 +33,10 @@ from eventyay.base.models.question import TalkQuestionRequired
 
 
 class CfPGeneralSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
+    """
+    Form for general CfP settings stored in event.cfp.settings.
+    requires an 'obj' argument in __init__ which must be an Event instance with a related 'cfp' object.
+    """
     use_tracks = forms.BooleanField(
         label=_('Use tracks'),
         required=False,
@@ -71,6 +75,8 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubf
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
 
     def save(self, *args, **kwargs):
+        if not hasattr(self, 'instance') or not hasattr(self.instance, 'cfp'):
+            raise AttributeError("CfPGeneralSettingsForm requires an instance with a 'cfp' attribute.")
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
         self.instance.cfp.save()
         super().save(*args, **kwargs)
@@ -86,6 +92,9 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubf
 
 
 class CfPSettingsForm(CfPGeneralSettingsForm):
+    """
+    Form for full CfP settings, including specific field requirements and custom questions.
+    """
     def __init__(self, *args, obj, **kwargs):
         super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
