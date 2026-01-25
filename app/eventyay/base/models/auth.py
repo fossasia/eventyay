@@ -907,8 +907,8 @@ the eventyay team"""
                 unverified_primary = next((e for e in emails if e.primary and not e.verified), None)
                 if unverified_primary:
                     logger.warning(
-                        f'User {self.pk} has unverified primary email {unverified_primary.email}, '
-                        f'falling back to user.email: {self.email}'
+                        'User %s has an unverified primary email; falling back to user.email field',
+                        self.pk,
                     )
             except ImportError:
                 pass
