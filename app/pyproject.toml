@@ -254,6 +254,8 @@ test = [
     "pytest-rerunfailures>=16.1",
     "pytest-sugar>=1.1.1",
     "pytest-xdist>=3.6.1",
+    "selenium>=4.0.0",
+    "pytest-selenium>=4.0.0",
 ]
 
 [tool.ruff]

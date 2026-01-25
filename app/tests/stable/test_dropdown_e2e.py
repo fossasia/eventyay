@@ -25,13 +25,35 @@ def open_dropdown_and_get_handle(selenium, wait, dropdown_id):
     assert dropdown.get_attribute("open") is not None, f"Dropdown {dropdown_id} should be open after click"
     return dropdown
 
+@pytest.fixture
+def selenium_logged_in(live_server, selenium, user):
+    """
+    Fixture that logs in the user via Selenium and returns the driver.
+    """
+    selenium.get(live_server.url + "/common/login/")
+    # Wait for login page
+    wait = WebDriverWait(selenium, 10)
+    email_input = wait.until(EC.presence_of_element_located((By.NAME, "login-email")))
+    email_input.clear()
+    email_input.send_keys(user.email)
+    
+    password_input = selenium.find_element(By.NAME, "login-password")
+    password_input.clear()
+    password_input.send_keys("testpass123") # verify password matches fixture
+    
+    selenium.find_element(By.CSS_SELECTOR, "button[type=submit]").click()
+    
+    # Wait for redirect to dashboard/home
+    wait.until(EC.url_changes(live_server.url + "/common/login/"))
+    return selenium
+
 @pytest.mark.django_db
 @pytest.mark.selenium
-def test_dropdown_close_outside_click(live_server, logged_in_client, event):
+def test_dropdown_close_outside_click(live_server, selenium_logged_in, event):
     """
     Test that clicking outside the user dropdown closes it.
     """
-    selenium = logged_in_client
+    selenium = selenium_logged_in
     with scope(event=event):
         selenium.get(live_server.url + f"/orga/event/{event.slug}/")
     
@@ -47,11 +69,11 @@ def test_dropdown_close_outside_click(live_server, logged_in_client, event):
 
 @pytest.mark.django_db
 @pytest.mark.selenium
-def test_dropdown_close_escape_key(live_server, logged_in_client, event):
+def test_dropdown_close_escape_key(live_server, selenium_logged_in, event):
     """
     Test that pressing Escape closes the user dropdown.
     """
-    selenium = logged_in_client
+    selenium = selenium_logged_in
     with scope(event=event):
         selenium.get(live_server.url + f"/orga/event/{event.slug}/")
     
@@ -66,7 +88,7 @@ def test_dropdown_close_escape_key(live_server, logged_in_client, event):
 
 @pytest.mark.django_db
 @pytest.mark.selenium
-def test_language_dropdown_close_outside_click(live_server, logged_in_client, event):
+def test_language_dropdown_close_outside_click(live_server, selenium_logged_in, event):
     """
     Test that clicking outside the language dropdown closes it.
     """
@@ -75,7 +97,7 @@ def test_language_dropdown_close_outside_click(live_server, logged_in_client, ev
         event.locales = ["en", "de"]
         event.save()
     
-    selenium = logged_in_client
+    selenium = selenium_logged_in
     with scope(event=event):
         selenium.get(live_server.url + f"/orga/event/{event.slug}/")
     
@@ -92,11 +114,11 @@ def test_language_dropdown_close_outside_click(live_server, logged_in_client, ev
 
 @pytest.mark.django_db
 @pytest.mark.selenium
-def test_dropdown_stays_open_on_inside_click(live_server, logged_in_client, event):
+def test_dropdown_stays_open_on_inside_click(live_server, selenium_logged_in, event):
     """
     Test that clicking inside the dropdown does NOT close it.
     """
-    selenium = logged_in_client
+    selenium = selenium_logged_in
     with scope(event=event):
         selenium.get(live_server.url + f"/orga/event/{event.slug}/")
     
