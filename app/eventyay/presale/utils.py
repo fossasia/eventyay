@@ -99,18 +99,21 @@ def _detect_event(request, require_live=True, require_plugin=None):
             LocaleMiddleware(NotImplementedError).process_request(request)
 
             if require_live and not request.event.live:
-                can_access = url.url_name == 'event.auth' or (
-                    request.user.is_authenticated
-                    and request.user.has_event_permission(request.organizer, request.event, request=request)
-                )
-                if not can_access and 'eventyay_event_access_{}'.format(request.event.pk) in request.session:
-                    sparent = SessionStore(request.session.get('eventyay_event_access_{}'.format(request.event.pk)))
-                    try:
-                        parentdata = sparent.load()
-                    except:
-                        pass
-                    else:
-                        can_access = 'event_access' in parentdata
+                if url.url_name == 'event.index':
+                    can_access = True
+                else:
+                    can_access = url.url_name == 'event.auth' or (
+                        request.user.is_authenticated
+                        and request.user.has_event_permission(request.organizer, request.event, request=request)
+                    )
+                    if not can_access and 'eventyay_event_access_{}'.format(request.event.pk) in request.session:
+                        sparent = SessionStore(request.session.get('eventyay_event_access_{}'.format(request.event.pk)))
+                        try:
+                            parentdata = sparent.load()
+                        except Exception:
+                            pass
+                        else:
+                            can_access = 'event_access' in parentdata
 
                 if not can_access:
                     return permission_denied(

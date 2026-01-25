@@ -9,6 +9,8 @@
 {% load compress %}
 {% load static %}
 {% load presale_locale %}
+{% load event_tags %}
+{% load staff_session %}
 
 {% block custom_header %}
     {{ block.super }}
@@ -30,8 +32,10 @@
             {{ ev.event_microdata }}
         </script>
     {% endautoescape %}
+    {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
     <main aria-label="{% if show_cart %}{% trans "Your cart, general information, add products to your cart" %}{% else %}{% trans "General information, add products to your cart" %}{% endif %}">
     {% if show_cart %}
+        {% if request.event.live or is_organiser %}
         <details class="panel panel-primary cart" open>
             <summary class="panel-heading">
                 <h3 class="panel-title">
@@ -94,6 +98,7 @@
                 </div>
             </div>
         </details>
+        {% endif %}
     {% endif %}
 
     {% if request.event.has_subevents %}
@@ -271,7 +276,8 @@
 
     {% if subevent or not event.has_subevents %}
         <div id="tickets"></div>
-        {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
+        {% if request.event.live or is_organiser %}
+            {% if ev.presale_is_running or event.settings.show_products_outside_presale_period %}
             <form method="post" data-asynctask
                     data-asynctask-headline="{% trans "We're now trying to reserve this for you!" %}"
                     data-asynctask-text="{% blocktrans with time=event.settings.reservation_time %}Once the items are in your cart, you will have {{ time }} minutes to complete your purchase.{% endblocktrans %}"
@@ -308,10 +314,12 @@
                     </section>
                 {% endif %}
             </form>
+            {% endif %}
         {% endif %}
     {% endif %}
     </main>
     {% if show_vouchers %}
+        {% if request.event.live or is_organiser %}
         <aside class="front-page" aria-labelledby="redeem-a-voucher">
             <h3 id="redeem-a-voucher">{% trans "Redeem a voucher" %}</h3>
             {% if event.settings.voucher_explanation_text %}
@@ -339,6 +347,7 @@
                 </div>
             </form>
         </aside>
+        {% endif %}
     {% endif %}
     {% if guest_checkout_allowed %}
         {% if not cart_namespace %}

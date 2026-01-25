@@ -2,14 +2,18 @@
 {% load safelink %}
 {% load event_tags %}
 {% load eventurl %}
-
+{% load staff_session %}
 {% load presale_locale %}
+
+{% has_event_perm "base.orga_access_event" request.user request request.event as is_, organiser %}
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' %}active{% endif %}">
     <i class="fa fa-info-circle"></i> {% translate "Info" %}
 </a>
-<a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
-    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-</a>
+{% if request.event.live or is_organiser %}
+    <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
+        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+    </a>
+{% endif %}
 {% if schedule or request.event.has_schedule_content %}
     <a href="{{ request.event.urls.schedule }}" class="header-tab {% if '/schedule/' in request.path_info %}active{% endif %}">
         <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
