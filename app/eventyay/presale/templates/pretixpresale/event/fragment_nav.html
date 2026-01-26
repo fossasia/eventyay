@@ -39,11 +39,13 @@
             {% endif %}
         {% endwith %}
 
-        <div class="video-link">
-            <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
-                href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
-                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
-            </a>
-        </div>
+        {% if request.event.settings.venueless_show_public_link %}
+            <div class="video-link">
+                <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
+                    href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
+                    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+                </a>
+            </div>
+        {% endif %}
     </div>
 </nav>

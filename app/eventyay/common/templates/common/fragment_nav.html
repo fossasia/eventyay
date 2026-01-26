@@ -49,7 +49,7 @@
         {% endif %}
     {% endwith %}
 
-    {% if show_online_video_link|default:False %}
+    {% if show_online_video_link|default:False and current_event.settings.venueless_show_public_link %}
         {% if nav_context == "presale" %}
             {% user_has_valid_ticket current_event as can_join_online_video %}
             {% if can_join_online_video %}
