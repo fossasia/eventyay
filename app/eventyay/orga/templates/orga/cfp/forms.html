@@ -21,13 +21,14 @@
         <script defer src="{% static 'orga/js/cfp.js' %}"></script>
         <script defer src="{% static 'orga/js/cfp-field-ordering.js' %}"></script>
     {% endcompress %}
-    <script>
-        window.sessionFieldOrder = {{ session_field_order|safe }};
-        window.speakerFieldOrder = {{ speaker_field_order|safe }};
-    </script>
 {% endblock scripts %}
 
 {% block content %}
+    <div id="cfp-field-order-data" 
+         data-session-field-order='{{ session_field_order|safe }}' 
+         data-speaker-field-order='{{ speaker_field_order|safe }}'
+         data-reviewer-field-order='{{ reviewer_field_order|safe }}'
+         style="display:none;"></div>
     <h2 class="d-flex">
         {{ generic_title }}
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
@@ -750,6 +751,7 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
