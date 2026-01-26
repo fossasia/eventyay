@@ -232,21 +232,22 @@ class CfPForms(EventPermissionRequired, TemplateView):
             all_speaker = True
             all_session = True
             all_reviewer = True
+            valid_question_count = 0
             for qid in custom_question_ids:
                 q = TalkQuestion.objects.filter(id=qid, event=event).first()
                 if not q:
                     continue
+                valid_question_count += 1
                 if q.target != TalkQuestionTarget.SPEAKER:
                     all_speaker = False
                 if q.target != TalkQuestionTarget.SUBMISSION:
                     all_session = False
                 if q.target != TalkQuestionTarget.REVIEWER:
                     all_reviewer = False
-            
-            has_session_fields = all_session and len(custom_question_ids) > 0
-            has_speaker_fields = all_speaker and len(custom_question_ids) > 0
-            has_reviewer_fields = all_reviewer and len(custom_question_ids) > 0
 
+            has_session_fields = all_session and valid_question_count > 0
+            has_speaker_fields = all_speaker and valid_question_count > 0
+            has_reviewer_fields = all_reviewer and valid_question_count > 0
         if has_session_fields:
             fields_config['session'] = order_list
             target_type = TalkQuestionTarget.SUBMISSION
