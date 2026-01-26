@@ -41,8 +41,12 @@ from eventyay.orga.forms.cfp import (
     SubmitterAccessCodeForm,
 )
 from eventyay.base.models import (
+    Answer,
     AnswerOption,
+    Availability,
     CfP,
+    SpeakerProfile,
+    Submission,
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
@@ -249,8 +253,6 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
 
-        from eventyay.base.models import SpeakerProfile, Submission, User
-        from eventyay.base.models.availability import Availability
         event = self.request.event
         context['field_counts'] = {
             'title': event.submissions.exclude(title='').count(),
@@ -264,7 +266,9 @@ class CfPForms(EventPermissionRequired, TemplateView):
             'content_locale': event.submissions.exclude(content_locale='').count(),
             'additional_speaker': event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count(),
             'biography': SpeakerProfile.objects.filter(event=event).exclude(biography='').exclude(biography__isnull=True).count(),
-            'avatar': User.objects.filter(submissions__event=event).exclude(avatar='').exclude(avatar__isnull=True).distinct().count(),
+            'avatar': SpeakerProfile.objects.filter(event=event).exclude(user__avatar='').exclude(user__avatar__isnull=True).count(),
+            'avatar_source': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_source='').exclude(user__avatar_source__isnull=True).count(),
+            'avatar_license': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_license='').exclude(user__avatar_license__isnull=True).count(),
             'availabilities': Availability.objects.filter(event=event).values('person').distinct().count(),
         }
 
