@@ -36,9 +36,15 @@ const ensureGlobalListeners = function() {
 
     const handleOutsideClick = function(event) {
         getOpenDropdowns().forEach(function(dropdown) {
-            if (!dropdown.contains(event.target)) {
-                dropdown.open = false;
-            }
+            // If click is inside the dropdown, do nothing.
+            if (dropdown.contains(event.target)) return;
+
+            // If the user is clicking on a summary element of another dropdown,
+            // we should let that dropdown's native behavior or toggle listener handle it.
+            // This prevents "jumpy" behavior where one closes and another fails to open.
+            if (event.target.closest('summary')) return;
+
+            dropdown.open = false;
         });
     };
 

@@ -45,9 +45,8 @@ details.dropdown .dropdown-content {
 @supports (color: color-contrast(white vs black)) {
   details.dropdown .dropdown-content {
     --dropdown-item-accent-contrast: color-contrast(
-      var(--dropdown-item-accent) vs
-        rgb(13, 15, 16),
-        #fff
+      var(--dropdown-item-accent) vs rgb(13, 15, 16),
+      #fff
     );
   }
   details.dropdown .dropdown-content::before {
@@ -477,8 +476,6 @@ details.dropdown .dropdown-content-se::after {
 
 #locale-dropdown .language-column {
   max-width: 200px;
-  max-height: 350px;
-  overflow-y: auto;
   background: #fff;
   border-right: 1px solid var(--color-border, #ced4da);
 }
@@ -683,7 +680,11 @@ nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover {
 
 .navbar-top-links details.dropdown .dropdown-content .dropdown-item:hover i,
 .navbar-top-links details.dropdown .dropdown-content a.dropdown-item:hover i,
-.navbar-top-links details.dropdown .dropdown-content button.dropdown-item:hover i,
+.navbar-top-links
+  details.dropdown
+  .dropdown-content
+  button.dropdown-item:hover
+  i,
 .navbar-inverse details.dropdown .dropdown-content .dropdown-item:hover i,
 .navbar-inverse details.dropdown .dropdown-content a.dropdown-item:hover i,
 .navbar-inverse details.dropdown .dropdown-content button.dropdown-item:hover i,

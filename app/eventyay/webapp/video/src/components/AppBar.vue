@@ -19,7 +19,7 @@
 		bunt-icon-button settings
 	.user-section(v-if="showUser")
 		.user-menu(ref="userMenuEl")
-			div.user-profile(:class="{open: profileMenuOpen}", @click.stop="toggleProfileMenu")
+			div.user-profile(:class="{open: profileMenuOpen}", @click="toggleProfileMenu")
 				avatar(v-if="!isAnonymous", :user="user", :size="32")
 				span.display-name(v-if="!isAnonymous") {{ user.profile.display_name }}
 				span.display-name(v-else) {{ $t('AppBar:user-anonymous') }}
