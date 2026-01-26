@@ -6,9 +6,16 @@
 
 {% block create_button_label %}{% translate "New type" %}{% endblock create_button_label %}
 
+{% block stylesheets %}
+    {% compress css %}
+        <link rel="stylesheet" href="{% static "orga/css/dragsort.css" %}">
+    {% endcompress %}
+{% endblock stylesheets %}
+
 {% block scripts %}
     {% compress js %}
         <script defer src="{% static "common/js/modalDialog.js" %}"></script>
+        <script defer src="{% static "orga/js/dragsort.js" %}"></script>
     {% endcompress %}
 {% endblock scripts %}
 
@@ -39,9 +46,9 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody dragsort-url="{{ request.event.cfp.urls.types }}">
                 {% for type in submissiontype_list %}
-                    <tr>
+                    <tr dragsort-id="{{ type.id }}">
                         <td>
                             {% if type.requires_access_code %}
                                 <i class="fa fa-lock" title="{% translate "Requires access code" %}"></i>
@@ -53,6 +60,9 @@
                         </td>
                         <td class="numeric">{{ type.default_duration }}</td>
                         <td class="text-right">
+                            <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
+                                <i class="fa fa-arrows"></i>
+                            </button>
                             {% if request.event.cfp.default_type == type %}
                                 <a><i class="fa fa-check"></i> {% translate "Default" %}</a>
                             {% else %}

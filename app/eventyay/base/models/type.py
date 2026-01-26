@@ -8,7 +8,7 @@ from eventyay.talk_rules.agenda import is_agenda_visible
 from eventyay.talk_rules.event import can_change_event_settings
 from eventyay.talk_rules.submission import is_cfp_open, orga_can_change_submissions
 
-from .mixins import PretalxModel
+from .mixins import OrderedModel, PretalxModel
 
 
 def pleasing_number(number):
@@ -17,7 +17,7 @@ def pleasing_number(number):
     return number
 
 
-class SubmissionType(PretalxModel):
+class SubmissionType(OrderedModel, PretalxModel):
     """Each :class:`~pretalx.submission.models.submission.Submission` has one
     SubmissionType.
 
@@ -45,11 +45,16 @@ class SubmissionType(PretalxModel):
         help_text=_('This session type will only be shown to submitters with a matching access code.'),
         default=False,
     )
+    position = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='The position field is used to determine the order that session types are displayed in (lowest first).',
+    )
 
     log_prefix = 'eventyay.submission_type'
 
     class Meta:
-        ordering = ['default_duration']
+        ordering = ('position',)
         rules_permissions = {
             'list': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
             'view': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
@@ -95,6 +100,10 @@ class SubmissionType(PretalxModel):
         optional) form of the submission type name.
         """
         return f'{self.id}-{slugify(self.name)}'
+
+    @staticmethod
+    def get_order_queryset(event):
+        return event.submission_types.all()
 
     def update_duration(self):
         """Updates the duration of all.
