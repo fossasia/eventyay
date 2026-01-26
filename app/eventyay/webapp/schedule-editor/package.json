@@ -53,7 +53,7 @@
     "vite": "^6.3.5",
     "vite-bundle-visualizer": "^1.2.1",
     "vite-plugin-checker": "^0.12.0",
-    "vue-tsc": "^3.2.3"
+    "vue-tsc": "^3.2.4"
   },
   "bugs": {
     "url": "https://github.com/pretalx/schedule-editor/issues"
