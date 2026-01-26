@@ -411,7 +411,15 @@ class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             if 'color' not in initial or not initial.get('color'):
                 # Prefer an existing color on the instance (if provided) before generating a new one
                 instance_color = getattr(instance, 'color', None) if instance is not None else None
-                initial['color'] = instance_color or generate_random_high_contrast_color()
+                if instance_color:
+                    initial['color'] = instance_color
+                elif event:
+                    existing_colors = {
+                        track.color.lower() for track in event.tracks.all() if track.color
+                    }
+                    initial['color'] = generate_random_high_contrast_color(
+                        exclude_colors=existing_colors
+                    )
             kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
         if self.instance.pk:
