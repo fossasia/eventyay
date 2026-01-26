@@ -172,7 +172,17 @@
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
-                                {% if request.event %}
+                                {% if nav_top_context == 'account' %}
+                                    <a href="{% url 'eventyay_common:account' %}" class="dropdown-toggle">
+                                        <span class="fa-stack fa-lg">
+                                          <i class="fa fa-circle fa-stack-2x"></i>
+                                          <i class="fa fa-user fa-stack-1x fa-inverse"></i>
+                                        </span>
+                                        <div class="context-indicator">
+                                            <span class="context-name">{% translate "Account" %}</span>
+                                        </div>
+                                    </a>
+                                {% elif request.event %}
                                     <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
