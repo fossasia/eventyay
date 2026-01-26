@@ -5,9 +5,11 @@
 
 <nav id='header-nav-bar'>
     <div class="navigation">
-        <a href="{% eventurl request.event 'presale:event.index' %}" class="header-tab underline">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-        </a>
+        {% if request.event.live or show_organizer_area or request.user.is_staff %}
+            <a href="{% eventurl request.event 'presale:event.index' %}" class="header-tab underline">
+                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+            </a>
+        {% endif %}
 
         {% if schedule or request.event.has_schedule_content %}
             <a href="{{ request.event.talk_schedule_url }}" class="header-tab ">
