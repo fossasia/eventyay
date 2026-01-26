@@ -87,7 +87,7 @@ function doGet(e) {
 
 /**
  * Extract API key from request headers.
- * Only accepts X-API-Key header for security (no URL parameters).
+ * Only accepts X-API-Key header for security (URL parameters are logged and insecure).
  */
 function getApiKeyFromRequest(e) {
   // Only accept API key via header for security - URL params may be logged
@@ -96,13 +96,6 @@ function getApiKeyFromRequest(e) {
            e.headers['x-api-key'] || 
            e.headers['X-Api-Key'] ||
            null;
-  }
-  
-  // Fallback to URL param only for backwards compatibility during transition
-  // TODO: Remove URL param support in future version
-  if (e.parameter && e.parameter.api_key) {
-    Logger.log('WARNING: API key passed via URL parameter - please use X-API-Key header');
-    return e.parameter.api_key;
   }
   
   return null;
