@@ -243,7 +243,6 @@ urlpatterns = [
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
-                url(r'^live/$', event.EventLive.as_view(), name='event.live'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^delete/$', event.EventDelete.as_view(), name='event.delete'),
                 url(r'^requiredactions/$', event.EventActions.as_view(), name='event.requiredactions'),
