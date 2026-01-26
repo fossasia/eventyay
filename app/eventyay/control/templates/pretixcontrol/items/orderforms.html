@@ -153,7 +153,10 @@
                         </tr>
                     </thead>
                     <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
+                        {% for field in ordered_fields %}
+                        
                         {# Attendee names #}
+                        {% if field.id == "attendee_name_parts" %}
                         {% with field=sform.attendee_names_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="attendee_name_parts">
@@ -181,8 +184,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
                         {# Attendee emails #}
+                        {% if field.id == "attendee_email" %}
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="attendee_email">
@@ -229,8 +234,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
-                        {# Attendee company #}
+                        {# Company #}
+                        {% if field.id == "company" %}
                         {% with field=sform.attendee_company_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="company">
@@ -258,8 +265,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
                         {# Attendee addresses - represents multiple backend fields #}
+                        {% if field.id == "street" %}
                         {% with field=sform.attendee_addresses_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="street">
@@ -287,9 +296,11 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
                         
                         {# Custom fields #}
-                        {% for q in questions %}
+                        {% if field.type == "question" %}
+                        {% with q=field.question %}
                         <tr data-dnd-id="{{ q.id }}">
                             <th>
                                 <strong>
@@ -354,6 +365,9 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        {% endwith %}
+                        {% endif %}
+                        
                         {% endfor %}
                     </tbody>
                 </table>
