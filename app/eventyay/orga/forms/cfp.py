@@ -152,8 +152,8 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
         
-        # Restore fields_config after setting other values
-        if fields_config:
+        # Restore fields_config after setting other values (also when it is an empty dict)
+        if fields_config is not None:
             self.instance.cfp.settings['fields_config'] = fields_config
         
         for key in self.request_require_fields:

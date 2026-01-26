@@ -270,8 +270,10 @@ class CfPForms(EventPermissionRequired, TemplateView):
                         target_type,
                     )
 
-        event.cfp.settings['fields_config'] = fields_config
-        event.cfp.save(update_fields=['settings'])
+        # Only save if changes were actually made
+        if fields_config:
+            event.cfp.settings['fields_config'] = fields_config
+            event.cfp.save(update_fields=['settings'])
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
