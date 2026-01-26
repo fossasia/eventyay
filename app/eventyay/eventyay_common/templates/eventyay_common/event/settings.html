@@ -11,32 +11,30 @@
 {{ sform.media }}
 {% endblock %}
 {% block inside %}
-<nav id="event-nav" class="header-nav">
+<nav id="event-nav" class="header-nav d-md-flex justify-content-between">
+    <div class="navigation-title">
+        <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
+    </div>
     <div class="navigation">
-        <div class="navigation-title">
-            <h1>{{ request.event.name }} {% trans "- Settings" %}</h1>
-        </div>
-        <div class="navigation-button">
-            <a href="#" class="header-nav btn btn-outline-success active">
-                <i class="fa fa-home"></i> {% trans "Home" %}
-            </a>
-            <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
-                class="header-nav btn btn-outline-success">
-                <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-            </a>
-            {% if is_talk_event_created %}
-            <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
-                <i class="fa fa-group"></i> {% trans "Talks" %}
-            </a>
-            {% endif %}
-            {% if is_video_enabled %}
-            <a class="header-nav btn btn-outline-success"
-                href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
-                title="{% trans 'Access videos related to this event' %}">
-                <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-            </a>
-            {% endif %}
-        </div>
+        <a href="#" class="header-nav btn btn-outline-success active">
+            <i class="fa fa-home"></i> {% trans "Home" %}
+        </a>
+        <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+            class="header-nav btn btn-outline-success">
+            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+        </a>
+        {% if is_talk_event_created %}
+        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
+            <i class="fa fa-group"></i> {% trans "Talks" %}
+        </a>
+        {% endif %}
+        {% if is_video_enabled %}
+        <a class="header-nav btn btn-outline-success"
+            href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+            title="{% trans 'Access videos related to this event' %}">
+            <i class="fa fa-video-camera"></i> {% trans "Videos" %}
+        </a>
+        {% endif %}
     </div>
 </nav>
 <form action="" method="post" class="form-horizontal" enctype="multipart/form-data">
