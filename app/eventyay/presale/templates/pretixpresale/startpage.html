@@ -53,29 +53,29 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
-    <body data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+    <body class="startpage-body" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
         {{ html_page_header|safe }}
 
-        <nav class="startpage-navbar" aria-label="{% trans "Main navigation" %}">
-            <div class="startpage-navbar-inner">
-                <a class="startpage-brand" href="{% url "presale:index" %}">
+        <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="{% url "presale:index" %}">
                     <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
-                    <span>{{ site_name }}</span>
+                    {{ site_name }}
                 </a>
-                <ul class="startpage-nav">
-                    {% include "common/fragment_language_switch.html" %}
-                    {% if request.user.is_authenticated %}
-                        {% include "common/fragment_profile_dropdown.html" %}
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="header-nav" href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
-                                <i class="fa fa-sign-in"></i> {% trans "Login" %}
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
             </div>
+            <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% include "common/fragment_language_switch.html" %}
+                {% if request.user.is_authenticated %}
+                    {% include "common/fragment_profile_dropdown.html" %}
+                {% else %}
+                    <li>
+                        <a href="{% url "eventyay_common:auth.login" %}?next={{ request.get_full_path|urlencode }}">
+                            <i class="fa fa-sign-in"></i> {% trans "Login" %}
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
         </nav>
 
         <div id="top-bg" class="header startpage-header">

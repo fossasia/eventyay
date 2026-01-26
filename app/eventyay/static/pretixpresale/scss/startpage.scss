@@ -1,62 +1,79 @@
-.startpage-navbar {
+body.startpage-body {
+  padding-top: var(--navbar-height, 50px);
+}
+
+nav.navbar {
   background: #2185d0;
-  color: #fff;
-  position: sticky;
-  top: 0;
-  z-index: 1200;
-}
-
-.startpage-navbar-inner {
-  align-items: center;
+  border: none;
+  border-radius: 0;
   display: flex;
-  height: 54px;
+  align-items: center;
   justify-content: space-between;
-  margin: 0 auto;
-  max-width: 1200px;
-  padding: 0 1.5rem;
+  font-weight: 500;
+  left: 0;
+  margin: 0;
+  min-height: var(--navbar-height, 50px);
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1100;
 }
 
-.startpage-brand {
+nav.navbar .navbar-header {
+  align-items: center;
+  display: flex;
+  height: var(--navbar-height, 50px);
+  padding: 0 1rem;
+}
+
+nav.navbar .navbar-brand {
   align-items: center;
   color: #fff;
   display: flex;
-  font-size: 1.1rem;
+  font-size: 20px;
   font-weight: 600;
   gap: 0.5rem;
+  line-height: 1;
   text-decoration: none;
 }
 
-.startpage-brand img {
-  height: 24px;
+nav.navbar .navbar-brand img {
+  height: 28px;
   width: auto;
 }
 
-.startpage-nav {
+nav.navbar .navbar-top-links {
   align-items: center;
   display: flex;
-  gap: 1rem;
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1rem;
 }
 
-.startpage-nav .nav-item {
-  list-style: none;
+nav.navbar .navbar-top-links li {
+  align-items: center;
+  display: inline-flex;
 }
 
-.startpage-nav .header-nav,
-.startpage-nav summary,
-.startpage-nav a {
+nav.navbar .navbar-top-links li a,
+nav.navbar .navbar-top-links summary,
+nav.navbar .navbar-top-links .header-nav,
+nav.navbar .navbar-top-links .btn-link {
   color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: var(--navbar-height, 50px);
+  padding: 15px;
 }
 
-.startpage-nav a:hover,
-.startpage-nav summary:hover {
+nav.navbar .navbar-top-links li a:hover,
+nav.navbar .navbar-top-links summary:hover,
+nav.navbar .navbar-top-links .btn-link:hover {
   color: #fff;
   text-decoration: none;
 }
 
-.startpage-nav .dropdown-content {
+nav.navbar .navbar-top-links .dropdown-content {
   color: var(--color-text);
 }
 
@@ -141,12 +158,8 @@ header.startpage-hero-header {
 }
 
 @media (max-width: 767px) {
-  .startpage-navbar-inner {
-    gap: 0.75rem;
-    padding: 0 1rem;
-  }
-
-  .startpage-nav {
-    gap: 0.5rem;
+  nav.navbar .navbar-header,
+  nav.navbar .navbar-top-links {
+    padding: 0 0.75rem;
   }
 }
