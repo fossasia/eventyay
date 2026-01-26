@@ -2,6 +2,7 @@ import binascii
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import timedelta
 from hashlib import md5
@@ -310,6 +311,14 @@ class User(
         if self.email:
             self.email = self.email.lower()
         is_new = not self.pk
+        
+        # Invalidate avatar_url cache if avatar might have changed
+        if not is_new:
+            update_fields = kwargs.get('update_fields')
+            if update_fields is None or 'avatar' in update_fields:
+                if 'avatar_url' in self.__dict__:
+                    del self.__dict__['avatar_url']
+
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not kwargs.get('update_fields') or 'get_gravatar' in kwargs['update_fields']
         super().save(*args, **kwargs)
@@ -843,6 +852,7 @@ the eventyay team"""
     def has_avatar(self) -> bool:
         return bool(self.avatar) and self.avatar != 'False'
 
+    @cached_property
     def avatar_url(self) -> str:
         """Returns avatar URL with cache-busting timestamp parameter.
         
@@ -850,9 +860,6 @@ the eventyay team"""
         Falls back to current time if file doesn't exist or can't be accessed.
         """
         if self.has_avatar:
-            import os
-            import time
-            
             try:
                 # Get the actual file modification time for most accurate cache-busting
                 file_path = self.avatar.path
@@ -891,9 +898,6 @@ the eventyay team"""
             return ''
         
         # Build base URL with cache-busting
-        import os
-        import time
-        
         try:
             # Get the actual file modification time for cache-busting
             file_path = image.path
