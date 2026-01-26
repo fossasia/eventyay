@@ -15,7 +15,7 @@
                     {{ form.get_gravatar.as_field_group }}
                 {% endif %}
             </div>
-            <div class="form-image-preview {% if not user.avatar and (not user.get_gravatar or not request.event.cfp.enable_gravatar) %}d-none{% endif %}">
+            <div class="form-image-preview {% if not user.avatar %}{% if not user.get_gravatar or not request.event.cfp.enable_gravatar %}d-none{% endif %}{% endif %}">
                 <a href="{% if user.avatar %}{{ user.avatar|thumbnail:"default" }}{% endif %}" data-lightbox="{% if user.avatar %}{{ user.avatar.url }}{% endif %}">
                     <img loading="lazy"
                          class="avatar"
