@@ -5,10 +5,7 @@
 {% block extra_title %}{% translate "Send out reminders" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-        <h2>{% translate "Send out reminders" %}</h2>
-        {% include "orga/event/component_link.html" %}
-    </div>
+    {% include "event_header.html" with event_title="Send out reminders"|translate %}
     <div>
         <p>
             {% blocktranslate trimmed %}

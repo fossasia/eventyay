@@ -26,10 +26,7 @@
 {% block extra_title %}{% translate "Call for Papers Editor" %} :: {% endblock extra_title %}
 
 {% block content %}
-    <div id="main-title" class="d-md-flex justify-content-between">
-        <h2>{% translate "Call for Papers Editor" %}</h2>
-        {% include "orga/event/component_link.html" %}
-    </div>
+    {% include "event_header.html" with event_title="Call for Papers Editor"|translate %}
     <p>
         {% blocktranslate trimmed %}
             This is the {{ site_name }} Call for Papers editor. This page allows you to change the

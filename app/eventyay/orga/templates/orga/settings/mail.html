@@ -16,15 +16,7 @@
 {% block settings_content %}
     <form method="post">
         {% csrf_token %}
-        <div id="main-title" class="d-md-flex justify-content-between">
-            <h2>
-            {% translate "Email settings" %}
-            <span data-dialog-target="#info-dialog" data-toggle="dialog">
-                <i class="fa fa-question-circle-o text-info"></i>
-            </span>
-            </h2>
-            {% include "orga/event/component_link.html" %}
-        </div>
+        {% include "event_header.html" with event_title="Email settings"|translate %}
         <dialog id="info-dialog">
             <div class="alert alert-info">
                 {% blocktranslate trimmed %}
