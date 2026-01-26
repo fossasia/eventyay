@@ -13,13 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initToggles() {
-    // Required status dropdowns - change event updates state
-    document.querySelectorAll('.required-status-dropdown:not([data-field-id])').forEach(dropdown => {
+    // Required status dropdowns - change event updates state (only those with data-question-id for AJAX)
+    document.querySelectorAll('.required-status-dropdown[data-question-id]').forEach(dropdown => {
         dropdown.addEventListener('change', handleRequiredDropdownChange);
     });
 
-    // Binary toggles (active, is_public) - select only those without data-field-id (which are for form page)
-    document.querySelectorAll('.toggle-switch:not([data-field-id]) input').forEach(input => {
+    // Binary toggles (active, is_public) - select only those with data-question-id for AJAX
+    document.querySelectorAll('.toggle-switch[data-question-id] input').forEach(input => {
         input.addEventListener('change', handleBinaryToggle);
     });
 }
@@ -179,6 +179,8 @@ function initFormPageToggles() {
             const escapedId = fieldId.replace(/(["\\])/g, '\\$1');
             const requiredDropdown = document.querySelector(`.required-status-dropdown[data-field-id="${escapedId}"]`);
             const hiddenInput = document.getElementById(fieldId);
+
+            if (!hiddenInput || !requiredDropdown) return;
 
             if (this.checked) {
                 // Activate - restore previous state or default to 'optional'
