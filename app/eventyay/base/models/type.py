@@ -101,10 +101,8 @@ class SubmissionType(OrderedModel, PretalxModel):
         """
         return f'{self.id}-{slugify(self.name)}'
 
-    @staticmethod
-    def get_order_queryset(event):
-        return event.submission_types.all()
-
+    def get_order_queryset(self):
+        return self.event.submission_types.all()
     def update_duration(self):
         """Updates the duration of all.
 
