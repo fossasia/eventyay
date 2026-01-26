@@ -49,7 +49,7 @@ class TalkQuestionVariant(Choices):
         (URL, _('URL')),
         (DATE, _('Date')),
         (DATETIME, _('Date and time')),
-        (BOOLEAN, _('Yes/No')),
+        (BOOLEAN, _('Confirmation')),
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
