@@ -7,4 +7,5 @@ class AccountMenuMixIn:
     def get_context_data(self, **kwargs) -> dict[str, Any]:
         ctx = super().get_context_data(**kwargs)
         ctx['nav_items'] = get_account_navigation(self.request)
+        ctx['nav_top_context'] = 'account'
         return ctx

@@ -196,8 +196,6 @@
                         {% endfor %}
                     {% endif %}
 
-                    {% include "common/fragment_language_switch.html" %}
-
                     {% if request.user.is_staff and not staff_session %}
                         <li>
 							<form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -214,6 +212,8 @@
                             </a>
                         </li>
                     {% endif %}
+
+                    {% include "common/fragment_language_switch.html" %}
                     {% if warning_update_available %}
                         <li>
                             <a href="{% url 'eventyay_admin:admin.global.update' %}" class="danger">
