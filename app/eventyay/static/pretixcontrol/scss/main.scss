@@ -1117,7 +1117,19 @@ h1 .label {
     min-width: 0;
 
     h2 {
+        font-size: 30px;
+        font-weight: 500;
+        line-height: 1.1;
+        margin-top: 20px;
+        margin-bottom: 10px;
         word-wrap: break-word;
         overflow-wrap: break-word;
+
+        small {
+            font-size: 65%;
+            font-weight: 400;
+            line-height: 1;
+            display: block;
+        }
     }
 }

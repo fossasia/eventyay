@@ -1,19 +1,5 @@
 {% load i18n %}
 <div class="navigation-button">
-    {% if request.event %}
-        <a href='{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
-            <i class="fa fa-home"></i> {% translate "Home" %}
-        </a>
-        <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
-            <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-        </a>
-        <a href="#" class="header-nav btn btn-success active">
-            <i class="fa fa-group"></i> {% translate "Talk" %}
-        </a>
-        <a class="header-nav btn btn-outline-success"
-           href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
-           title="{% translate 'Access videos related to this event' %}">
-            <i class="fa fa-video-camera"></i> {% translate "Videos" %}
-        </a>
-    {% endif %}
+    {% include "eventyay_common/event/fragment_nav_buttons.html" %}
 </div>
+

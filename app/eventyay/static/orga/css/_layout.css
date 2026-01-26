@@ -1668,3 +1668,77 @@ h2 .user-name-display img {
     }
   }
 }
+/* Unified Event Navigation Styles */
+#event-nav {
+  margin-bottom: 20px;
+  /* Adjust for Orga's #page-content padding (18px 44px) to match Control layout */
+  margin-top: -18px;
+  
+  /* Reset horizontal positioning to ignore #page-content padding */
+  margin-left: -44px;
+  margin-right: -44px;
+  
+  /* Apply padding calculated to match Control layout:
+     Control: 30px (#page-wrapper) + 15px (.container-fluid) = 45px
+     Orga:    45px (explicit)
+  */
+  padding-left: 45px;
+  padding-right: 45px;
+}
+
+#event-nav .navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  font-weight: 200;
+}
+
+#event-nav .navigation .navigation-button {
+  margin-left: auto;
+}
+
+#event-nav .navigation .navigation-title {
+  text-align: left;
+  flex: 0 1 75%;
+  min-width: 0;
+}
+
+#event-nav .navigation .navigation-title h2 {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.1;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+#event-nav .navigation .navigation-title h2 small {
+  font-size: 65%;
+  font-weight: 400;
+  line-height: 1;
+  display: block;
+}
+
+/* Styles for the buttons themselves - matching custom.scss */
+#event-nav .header-nav {
+  border-color: #165a91 !important;
+  border: 1px solid;
+  font-size: 16px;
+  font-weight: normal;
+  border-radius: 0.25rem;
+  padding: 7px 7px;
+}
+
+#event-nav .header-nav.active,
+#event-nav .header-nav:hover,
+#event-nav .header-nav:active {
+  background-color: #2185d0 !important;
+  color: #fff;
+}
+
+@media (min-width: 1200px) {
+  #event-nav .navigation .navigation-button {
+    margin-top: 10px;
+  }
+}
