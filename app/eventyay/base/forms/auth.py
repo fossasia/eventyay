@@ -14,7 +14,9 @@ from eventyay.base.models import User
 from eventyay.helpers.dicts import move_to_end
 from eventyay.helpers.http import get_client_ip
 
-PASSWORD_COMPLEXITY_ERROR = _('Password must be at least 8 characters and include a letter, a number, and a special character.')
+
+PASSWORD_COMPLEXITY_ERROR = _('Password must be at least 8 characters and include a letter, a number, '
+                              'and a special character.')
 
 
 def validate_password_complexity(password):
@@ -47,7 +49,7 @@ class LoginForm(forms.Form):
         'rate_limit': _('For security reasons, please wait 5 minutes before you try again.'),
         'inactive': _('This account is inactive.'),
     }
-    
+
     def __init__(self, backend, request=None, *args, **kwargs):
         """
         The 'request' parameter is set for custom auth use by subclasses.
@@ -83,7 +85,7 @@ class LoginForm(forms.Form):
         if client_ip.is_private:
             # This is the private IP of the server, web server not set up correctly
             return None
-        return 'pretix_login_{}'.format(hashlib.sha1(str(client_ip).encode()).hexdigest())
+        return f'pretix_login_{hashlib.sha1(str(client_ip).encode()).hexdigest()}'
 
     def clean(self):
         if all(k in self.cleaned_data for k, f in self.fields.items() if f.required):
@@ -259,6 +261,7 @@ class ReauthForm(forms.Form):
             self.fields['email'].disabled = True
 
     def clean(self):
+        # For authentication, we don't use primary_email.
         self.cleaned_data['email'] = self.user.email
         user_cache = self.backend.form_authenticate(self.request, self.cleaned_data)
         if user_cache != self.user:

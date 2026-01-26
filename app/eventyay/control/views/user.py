@@ -36,6 +36,7 @@ from eventyay.control.permissions import (
 )
 from eventyay.eventyay_common.views.auth import get_u2f_appid, get_webauthn_rp_id
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -162,6 +163,7 @@ class ReauthView(TemplateView):
             request=self.request,
             data=self.request.POST if self.request.method == 'POST' else None,
             initial={
+                # For authentication, we don't use primary_email.
                 'email': self.request.user.email,
             },
         )

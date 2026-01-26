@@ -1,10 +1,12 @@
 import logging
 
 from django import template
+from django.contrib.auth.models import AnonymousUser
 from django.http import QueryDict
 from django.urls import reverse
 
-from eventyay.base.models import Order, OrderPosition
+from eventyay.base.models import Order, OrderPosition, User
+
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -39,24 +41,20 @@ def cfp_locale_switch_url(context, locale_code):
 
 
 @register.filter
-def short_user_label(user):
+def short_user_label(user: User | AnonymousUser) -> str:
     """
     Compact user display: prefer first name, then name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
-    if not user:
+    if not user.is_authenticated:
         return ''
-    first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None)
-    if not first:
-        fullname = getattr(user, 'fullname', None) or getattr(user, 'name', None)
-        if fullname:
-            parts = fullname.split()
-            first = parts[0] if parts else fullname
-    email = getattr(user, 'email', '') or ''
-    label = (first or '').strip() or (email.split('@')[0] if email else '')
-    if len(label) > 11:
-        label = label[:11] + '…'
-    return label
+    # Try using first part of full name
+    label = user.fullname.split()[0] if user.fullname else ''
+    if not label:
+        # Fall back to first part of primary email
+        label = user.primary_email.split('@')[0]
+    # Truncate to 11 chars with ellipsis
+    return (label[:11] + '…') if len(label) > 11 else label
 
 
 @register.simple_tag(takes_context=True)
@@ -73,7 +71,8 @@ def user_has_valid_ticket(context, event=None):
     if not event:
         return False
 
-    if not request.user.email:
+    user = request.user
+    if not user.primary_email:
         return False
 
     allowed_statuses = [Order.STATUS_PAID]
@@ -83,7 +82,7 @@ def user_has_valid_ticket(context, event=None):
     if event.settings.venueless_all_products:
         return OrderPosition.objects.filter(
             order__event=event,
-            order__email__iexact=request.user.email,
+            order__email__iexact=user.primary_email,
             order__status__in=allowed_statuses,
             product__admission=True,
             canceled=False,
@@ -96,7 +95,7 @@ def user_has_valid_ticket(context, event=None):
 
     return OrderPosition.objects.filter(
         order__event=event,
-        order__email__iexact=request.user.email,
+        order__email__iexact=user.primary_email,
         order__status__in=allowed_statuses,
         product_id__in=allowed_products,
         canceled=False,
