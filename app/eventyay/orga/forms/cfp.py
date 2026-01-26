@@ -154,7 +154,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
 
     def save(self, *args, **kwargs):
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
-        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', True)
+        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
