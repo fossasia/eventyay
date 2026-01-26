@@ -260,23 +260,31 @@ class EventIndexView(TemplateView):
         if not request.user.has_event_permission(
             request.organizer, request.event, 'can_change_event_settings', request=request
         ):
-            raise PermissionDenied(_("You do not have permission to change this setting."))
+            messages.error(request, _("You do not have permission to change event settings."))
+            return redirect(self.get_success_url())
 
         if 'toggle_video_visibility' in request.POST:
-            current_setting = request.event.settings.venueless_show_public_link
-            request.event.settings.set('venueless_show_public_link', not current_setting)
-            messages.success(request, _("Video visibility setting updated successfully."))
-            return redirect(
-                reverse(
-                    'eventyay_common:event.index',
-                    kwargs={
-                        'organizer': request.organizer.slug,
-                        'event': request.event.slug,
-                    },
-                )
-            )
+            current_setting = request.event.settings.get('venueless_show_public_link', False)
+            new_setting = not current_setting
+            request.event.settings.set('venueless_show_public_link', new_setting)
+
+            if new_setting:
+                messages.success(request, _("Video link is now visible on public pages."))
+            else:
+                messages.success(request, _("Video link is now hidden from public pages."))
+
+            return redirect(self.get_success_url())
 
         return self.get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            'eventyay_common:event.index',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
 
 
 class EventWidgetGenerator:

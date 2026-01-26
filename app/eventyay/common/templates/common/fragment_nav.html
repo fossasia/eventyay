@@ -49,14 +49,11 @@
         {% endif %}
     {% endwith %}
 
-    {% if show_online_video_link|default:False and current_event.settings.venueless_show_public_link %}
+    {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
-            {% user_has_valid_ticket current_event as can_join_online_video %}
-            {% if can_join_online_video %}
-                <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
-                </a>
-            {% endif %}
+            <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
+                <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+            </a>
         {% else %}
             <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
                 <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
