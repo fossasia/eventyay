@@ -1,4 +1,5 @@
 import json
+import random
 
 from django import forms
 from django.db.models import Count, Q
@@ -31,6 +32,44 @@ from eventyay.base.models import (
 from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
 
+
+def calculate_luminance(r, g, b):
+    """Calculate relative luminance for a color component (WCAG 2.1)."""
+    def normalize(value):
+        value = value / 255.0
+        if value <= 0.03928:
+            return value / 12.92
+        return ((value + 0.055) / 1.055) ** 2.4
+
+    r = normalize(r)
+    g = normalize(g)
+    b = normalize(b)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def calculate_contrast_ratio(rgb1, rgb2):
+    """Calculate contrast ratio between two RGB colors (WCAG 2.1)."""
+    l1 = calculate_luminance(rgb1[0], rgb1[1], rgb1[2]) + 0.05
+    l2 = calculate_luminance(rgb2[0], rgb2[1], rgb2[2]) + 0.05
+    if l1 > l2:
+        return l1 / l2
+    return l2 / l1
+
+
+def generate_random_high_contrast_color(min_contrast=2.5, max_attempts=100):
+    """Generate a random hex color with sufficient contrast against white background."""
+    white = (255, 255, 255)
+    
+    for _ in range(max_attempts):
+        r = random.randint(30, 220)
+        g = random.randint(30, 220)
+        b = random.randint(30, 220)
+        
+        contrast = calculate_contrast_ratio((r, g, b), white)
+        
+        if contrast >= min_contrast:
+            return f'#{r:02x}{g:02x}{b:02x}'
+    return '#336699'
 
 class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
     use_tracks = forms.BooleanField(
@@ -403,6 +442,13 @@ class SubmissionTypeForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     def __init__(self, *args, event=None, **kwargs):
         self.event = event
+        # Set initial color for new tracks (when creating, not editing)
+        instance = kwargs.get('instance')
+        if not instance or not instance.pk:
+            initial = kwargs.get('initial', {})
+            if 'color' not in initial or not initial.get('color'):
+                initial['color'] = generate_random_high_contrast_color()
+            kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             url = f'{event.cfp.urls.new_access_code}?track={self.instance.pk}'
