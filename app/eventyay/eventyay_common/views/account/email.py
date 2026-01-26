@@ -13,16 +13,6 @@ from .common import AccountMenuMixIn
 class EmailAddressManagementView(LoginRequiredMixin, AccountMenuMixIn, EmailView):
     template_name = 'eventyay_common/account/email-management.html'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        emailaddress_radios = context.get('emailaddress_radios') or ()
-        has_email_param = bool(self.request.POST.get('email'))
-        has_checked_radio = any(
-            getattr(radio, 'checked', False) for radio in emailaddress_radios
-        )
-        context['has_email_selection'] = has_email_param or has_checked_radio
-        return context
-
     def post(self, request, *args, **kwargs):
         if (
             any(
