@@ -30,7 +30,7 @@ export default {
   border-radius: 5px;
   max-width: calc(100% - 40px);
   max-height: 350px;
-  overflow-y: auto;
+  overflow: hidden;
 }
 .dropdown-content .checkbox-line {
   margin: 8px;

@@ -37,6 +37,7 @@ details.dropdown .dropdown-content {
   z-index: 1200;
   box-shadow: var(--shadow-light, 0 0 6px 1px rgb(0 0 0 / 0.1));
   color: var(--color-grey-dark, #495057);
+  overflow: hidden;
 
   /* Dropdown item accent behavior */
   --dropdown-item-accent: var(--color-primary, #2185d0);

@@ -47,6 +47,21 @@
             if (event.key !== 'Escape' && event.key !== 'Esc') return;
             closeAllDropdowns();
         });
+
+        // Special handling for language selector to prevent form submission interference
+        document.addEventListener('click', function(event) {
+            const languageDropdown = event.target.closest('.language-switch details.dropdown');
+            if (languageDropdown) {
+                // Allow clicks on dropdown items to work normally
+                const dropdownItem = event.target.closest('.dropdown-item');
+                if (!dropdownItem) {
+                    // If clicking outside the dropdown content, close it
+                    if (!languageDropdown.contains(event.target)) {
+                        languageDropdown.open = false;
+                    }
+                }
+            }
+        });
     };
 
     const initDropdowns = function() {

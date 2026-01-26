@@ -672,6 +672,7 @@ onUnmounted(() => {
 			z-index: 1000
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5)
 			text-align: left;
+			overflow: hidden;
 			.sort-method
 				padding: 8px 16px
 				display: flex
