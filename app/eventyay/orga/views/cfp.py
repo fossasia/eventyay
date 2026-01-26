@@ -203,10 +203,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         custom_question_ids = []
         for item in order_list:
             if item.isdigit():
-                try:
-                    custom_question_ids.append(int(item))
-                except ValueError:
-                    logger.warning('Skipping invalid question id in order: %s', item)
+                custom_question_ids.append(int(item))
         
         fields_config = event.cfp.settings.get('fields_config', {})
         
