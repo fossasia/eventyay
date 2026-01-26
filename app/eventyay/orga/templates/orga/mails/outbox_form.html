@@ -20,7 +20,14 @@
         </div>
 
         {% if not form.read_only %}
-            {{ form }}
+            {{ form.non_field_errors }}
+            {% for field in form %}
+                {% if field.is_hidden %}
+                    {{ field }}
+                {% else %}
+                    {{ field.as_field_group }}
+                {% endif %}
+            {% endfor %}
         {% else %}
             <div class="d-flex flex-column">
                 <div class="row form-group">
