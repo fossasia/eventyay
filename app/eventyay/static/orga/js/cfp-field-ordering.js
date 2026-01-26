@@ -1,10 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('cfp-field-order-data');
     if (!container) return;
+
+    function parseJsonDataset(value, fieldName) {
+        if (!value) {
+            return [];
+        }
+        try {
+            return JSON.parse(value);
+        } catch (error) {
+            console.error('Failed to parse JSON from dataset field %s: %o', fieldName, value);
+            return [];
+        }
+    }
     
-    const sessionOrder = JSON.parse(container.dataset.sessionFieldOrder || '[]');
-    const speakerOrder = JSON.parse(container.dataset.speakerFieldOrder || '[]');
-    const reviewerOrder = JSON.parse(container.dataset.reviewerFieldOrder || '[]');
+    const sessionOrder = parseJsonDataset(container.dataset.sessionFieldOrder, 'sessionFieldOrder');
+    const speakerOrder = parseJsonDataset(container.dataset.speakerFieldOrder, 'speakerFieldOrder');
+    const reviewerOrder = parseJsonDataset(container.dataset.reviewerFieldOrder, 'reviewerFieldOrder');
     
     function reorderRows(tbody, order) {
         if (!order || order.length === 0) return;
