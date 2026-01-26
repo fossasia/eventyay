@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0008_make_custom_field_label_optional'),
+        ('base', '0009_alter_talkquestion_contains_personal_data'),
     ]
 
     operations = [
