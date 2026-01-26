@@ -19,7 +19,12 @@
         <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
         <script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
         <script defer src="{% static 'orga/js/cfp.js' %}"></script>
+        <script defer src="{% static 'orga/js/cfp-field-ordering.js' %}"></script>
     {% endcompress %}
+    <script>
+        window.sessionFieldOrder = {{ session_field_order|safe }};
+        window.speakerFieldOrder = {{ speaker_field_order|safe }};
+    </script>
 {% endblock scripts %}
 
 {% block content %}
@@ -804,34 +809,4 @@
             </fieldset>
         {% include "orga/includes/submit_row.html" %}
     </form>
-    
-    <script>
-    // Restore saved field order on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const sessionOrder = {{ session_field_order|safe }};
-        const speakerOrder = {{ speaker_field_order|safe }};
-        function reorderRows(tbody, order) {
-            if (!order || order.length === 0) return;
-            const rows = Array.from(tbody.querySelectorAll('tr[dragsort-id]'));
-            const rowMap = {};
-            rows.forEach(row => {
-                const id = row.getAttribute('dragsort-id');
-                if (id) rowMap[id] = row;
-            });
-            order.forEach(id => {
-                if (rowMap[id]) {
-                    tbody.appendChild(rowMap[id]);
-                }
-            });
-        }
-        const proposalTbody = document.querySelector('#proposal-information').closest('fieldset').querySelector('tbody[dragsort-url]');
-        const speakerTbody = document.querySelector('#speaker-information').closest('fieldset').querySelector('tbody[dragsort-url]');
-        if (proposalTbody && sessionOrder) {
-            reorderRows(proposalTbody, sessionOrder);
-        }
-        if (speakerTbody && speakerOrder) {
-            reorderRows(speakerTbody, speakerOrder);
-        }
-    });
-    </script>
 {% endblock %}
