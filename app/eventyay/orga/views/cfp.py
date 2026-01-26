@@ -139,6 +139,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         fields_config = self.request.event.cfp.settings.get('fields_config', {})
         context['session_field_order'] = json.dumps(fields_config.get('session', []))
         context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
+        context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
         
         sform = self.sform
         
