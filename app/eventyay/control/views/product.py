@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.files import File
 from django.db import transaction
-from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, F, Max, OuterRef, Prefetch, Q, Sum
 from django.forms.models import inlineformset_factory
 from django.http import (
     Http404,
@@ -1677,7 +1677,9 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         ctx['sform'] = self.sform()
 
         # Include custom fields (questions) for attendee data section
-        questions = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        questions = list(self.request.event.questions.prefetch_related(
+            Prefetch('products', queryset=self.request.event.products.only('id', 'name', 'internal_name'))
+        ).order_by('position'))
         
         # Build sorted field order list for template rendering
         system_question_order = self.request.event.settings.system_question_order or {}

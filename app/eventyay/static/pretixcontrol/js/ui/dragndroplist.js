@@ -2,11 +2,7 @@
 $(function () {
     $("[data-dnd-url]").each(function(){
         var container = $(this),
-            url = container.data("dnd-url"),
-            handle = $('<span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>');
-
-        console.log(container, container.find(".dnd-container"));
-        container.find(".dnd-container").append(handle);
+            url = container.data("dnd-url");
 
         Sortable.create(container.get(0), {
             handle: ".dnd-sort-handle",

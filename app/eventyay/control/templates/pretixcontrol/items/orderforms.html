@@ -180,7 +180,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="dnd-container text-center text-nowrap"><span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -230,7 +230,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="dnd-container text-center text-nowrap"><span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -261,7 +261,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="dnd-container text-center text-nowrap"><span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -292,7 +292,7 @@
                                 </div>
                             </td>
                             <td class="text-center"><span class="text-muted">—</span></td>
-                            <td class="dnd-container text-center text-nowrap"></td>
+                            <td class="dnd-container text-center text-nowrap"><span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -354,7 +354,7 @@
                                     {% endfor %}
                                 </ul>
                             </td>
-                            <td class="dnd-container text-center text-nowrap">
+                            <td class="dnd-container text-center text-nowrap"><span class="btn btn-default btn-sm dnd-sort-handle"><i class="fa fa-arrows"></i></span>
                                 {% if q.type == "DES" %}
                                     <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-default btn-sm"><i class="fa fa-edit fa-fw"></i></a>
                                     <a href="{% url "control:event.products.descriptions.delete" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}" class="btn btn-delete btn-danger btn-sm"><i class="fa fa-trash fa-fw"></i></a>
