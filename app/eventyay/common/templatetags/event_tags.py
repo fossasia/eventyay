@@ -4,6 +4,8 @@ from django import template
 from django.http import QueryDict
 from django.urls import reverse
 
+from django_scopes import scopes_disabled
+
 from eventyay.base.models import Order, OrderPosition
 
 register = template.Library()
@@ -110,3 +112,21 @@ def startswith(value, arg):
     if isinstance(value, str):
         return value.startswith(arg)
     return False
+
+
+@register.simple_tag(takes_context=True)
+def tickets_tab_visible(context, event=None):
+    productnum = context.get('productnum')
+    if productnum is not None:
+        try:
+            return int(productnum) != 0
+        except (TypeError, ValueError):
+            return bool(productnum)
+
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    channel = getattr(getattr(request, 'sales_channel', None), 'identifier', 'web')
+    with scopes_disabled():
+        return event.products.filter_available(channel=channel).exists()
