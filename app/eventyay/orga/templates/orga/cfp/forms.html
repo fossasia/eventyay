@@ -76,6 +76,7 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,6 +99,7 @@
                             </td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
 
                         {# Abstract #}
@@ -127,6 +129,7 @@
                             </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -157,6 +160,7 @@
                             </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -185,6 +189,7 @@
                                     </select>
                                 </div>
                             </td>
+                            <td></td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -217,6 +222,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -245,6 +251,7 @@
                                     </select>
                                 </div>
                             </td>
+                            <td></td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -279,6 +286,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
                         </tr>
                         {% endif %}
                         {% endwith %}
@@ -308,6 +316,7 @@
                                     </select>
                                 </div>
                             </td>
+                            <td></td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -340,6 +349,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
                         </tr>
                         {% endwith %}
                         {% for item in custom_session_fields %}
@@ -369,6 +379,7 @@
                                         </select>
                                     </div>
                                 </td>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                             </tr>
@@ -407,6 +418,7 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th class="text-center">{% translate "Settings" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -437,6 +449,7 @@
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -467,6 +480,12 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-center">
+                                <label class="toggle-switch" aria-label="Toggle Gravatar for Profile picture">
+                                    {{ sform.cfp_enable_gravatar }}
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
                         </tr>
                         {% endwith %}
 
@@ -497,6 +516,7 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -527,6 +547,7 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td></td>
                         </tr>
                         {% endwith %}
 
@@ -555,6 +576,7 @@
                                     </select>
                                 </div>
                             </td>
+                            <td></td>
                             <td></td>
                             <td></td>
                         </tr>
@@ -587,6 +609,7 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td></td>
                         </tr>
                         {% for item in custom_speaker_fields %}
                             <tr>
@@ -615,6 +638,7 @@
                                         </select>
                                     </div>
                                 </td>
+                                <td></td>
                                 <td></td>
                                 <td></td>
                             </tr>

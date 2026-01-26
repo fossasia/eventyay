@@ -110,9 +110,12 @@ class SpeakerProfileForm(
             self.fields.pop('avatar_source', None)
             self.fields.pop('avatar_license', None)
             self.fields.pop('get_gravatar', None)
-        elif 'avatar' in self.fields:
-            self.fields['avatar'].required = False
-            self.fields['avatar'].widget.is_required = False
+        else:
+            if not self.event.cfp.enable_gravatar:
+                self.fields.pop('get_gravatar', None)
+            if 'avatar' in self.fields:
+                self.fields['avatar'].required = False
+                self.fields['avatar'].widget.is_required = False
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
@@ -151,12 +154,11 @@ class SpeakerProfileForm(
     def clean(self):
         data = super().clean()
         if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
-            self.add_error(
-                'avatar',
-                forms.ValidationError(
-                    _('Please provide a profile picture or allow us to load your picture from gravatar!')
-                ),
-            )
+            if self.event.cfp.enable_gravatar:
+                msg = _('Please provide a profile picture or allow us to load your picture from gravatar!')
+            else:
+                msg = _('Please provide a profile picture!')
+            self.add_error('avatar', forms.ValidationError(msg))
         fullname = self.cleaned_data.get('fullname')
         if (
             self.enforce_account_name_match
