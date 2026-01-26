@@ -1,32 +1,52 @@
 @import "../../fontawesome/scss/font-awesome.scss";
 
 #event-nav {
-    .header-nav {
-        border-color: darken($btn-primary-bg, 10%) !important;
-        border: 1px solid;
-        font-size: 16px;
-        font-weight: normal;
-        border-radius: 0.25rem;
-        padding: 7px 7px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    
+    .navigation-title {
+        text-align: left;
+        flex: 0 1 75%;
+        min-width: 0;
+        h2 {
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0;
+            padding-right: 10px;
+        }
     }
-    .header-nav.active {
-        background-color: $hover-button-color !important;
-        color: #fff;
-    }
+    
     .navigation {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         font-weight: 200;
-        .navigation-button {
-            margin-left: auto;
-        }
-        a {
+        gap: 5px;
+        margin-left: auto;
+        
+        .header-nav {
+            border-color: darken($btn-primary-bg, 10%) !important;
+            border: 1px solid;
+            font-size: 16px;
+            font-weight: normal;
+            border-radius: 0.25rem;
+            padding: 7px 7px;
+            white-space: nowrap;
             pointer-events: auto;
-        }
-        a:hover, a:active {
-            color: #fff;
-            background-color: $hover-button-color !important;
+            
+            &.active {
+                background-color: $hover-button-color !important;
+                color: #fff;
+            }
+            
+            &:hover, &:active {
+                color: #fff;
+                background-color: $hover-button-color !important;
+            }
         }
     }
 }
@@ -152,22 +172,31 @@
         }
     }
 }
-
 @media (min-width: $screen-md-min){
     .panel-body {
         min-height: 90%;
     }
-}
-
-@media (min-width: $screen-lg-min) {
-    #event-nav .navigation .navigation-button {
-        margin-top: 10px;
+    
+    #event-nav {
+        margin-bottom: 15px;
     }
 }
 
 @media (max-width: $screen-sm-max) {
-    #event-nav .navigation {
-        margin-top: 18px;
+    #event-nav {
+        flex-direction: column;
+        align-items: stretch;
+        
+        .navigation {
+            margin-top: 10px;
+            margin-left: 0;
+        }
+        
+        .navigation-title {
+            flex: 1 1 100%;
+        }
+    }
+}
     }
 }
 

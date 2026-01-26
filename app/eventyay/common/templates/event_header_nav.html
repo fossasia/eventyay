@@ -1,0 +1,22 @@
+{% load i18n %}
+<nav id="event-nav" class="header-nav d-md-flex justify-content-between">
+    <div class="navigation-title">
+        {% if event_title %}<h2>{{ event_title }}</h2>{% endif %}
+    </div>
+    <div class="navigation">
+        {% if request.event %}
+            {% if home_url %}<a href="{{ home_url }}" class="header-nav btn btn-outline-success {% if home_active %}active{% endif %}">
+                <i class="fa fa-home"></i> {% translate "Home" %}
+            </a>{% endif %}
+            {% if tickets_url %}<a href="{{ tickets_url }}" class="header-nav btn btn-outline-success {% if tickets_active %}active{% endif %}">
+                <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+            </a>{% endif %}
+            {% if talk_url %}<a href="{{ talk_url }}" class="header-nav btn btn-outline-success {% if talk_active %}active{% endif %}">
+                <i class="fa fa-group"></i> {% translate "Talk" %}
+            </a>{% endif %}
+            {% if videos_url %}<a href="{{ videos_url }}" class="header-nav btn btn-outline-success {% if videos_active %}active{% endif %}" title="{% translate 'Access videos related to this event' %}">
+                <i class="fa fa-video-camera"></i> {% translate "Videos" %}
+            </a>{% endif %}
+        {% endif %}
+    </div>
+</nav>

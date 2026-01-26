@@ -25,7 +25,7 @@
             {% endblocktranslate %}
         </div>
     {% endif %}
-    <div id="main-title" class="d-md-flex justify-content-between">
+    <nav id="event-nav" class="header-nav d-md-flex justify-content-between">
         <div class="navigation-title">
             <h2>
                 {{ request.event.name }}
@@ -34,8 +34,10 @@
                 </small>
             </h2>
         </div>
-        {% include "orga/event/component_link.html" %}
-    </div>
+        <div class="navigation">
+            {% include "orga/event/component_link.html" %}
+        </div>
+    </nav>
     <div id="timeline-steps" class="stages">
         {% for stp in timeline %}
             <div {% if stp.phase == "done" and stp.url %}href="{{ stp.url }}"{% endif %} class="step step-{{ stp.phase }}">
