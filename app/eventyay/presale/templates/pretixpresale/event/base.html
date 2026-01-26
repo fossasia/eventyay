@@ -42,7 +42,7 @@
                 <div class="container">
                     <span class="fa fa-user-secret" aria-hidden="true"></span>
                     {% if can_view_tickets %}
-                        {% trans "This shop is currently in private test mode. Only organizers and system administrators can view or purchase tickets." %}
+                        {% trans "This shop is currently in private test mode. Only event team members and system administrators can view or purchase tickets." %}
                         <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
                             {% trans "Manage shop status" %}
                         </a>
@@ -59,7 +59,7 @@
             <div class="container">
                 <span class="fa fa-user-secret" aria-hidden="true"></span>
                 {% if can_view_tickets %}
-                    {% trans "This shop is currently offline. Only organizers can purchase tickets." %}
+                    {% trans "This shop is currently offline. Only event team members and system administrators can purchase tickets." %}
                     <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
                         {% trans "Take it live now" %}
                     </a>

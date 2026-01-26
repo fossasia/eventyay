@@ -9,6 +9,7 @@ const updateTabActiveState = () => {
         infoTab.classList.remove('active', 'underline')
         ticketsTab.classList.add('active', 'underline')
     } else {
+        infoTab.classList.add('active', 'underline')
         ticketsTab.classList.remove('active', 'underline')
     }
 }

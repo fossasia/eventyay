@@ -118,7 +118,8 @@ class EventPermissionMiddleware:
             and not event.user_can_view_talks(request.user, request=request)
         ):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
-                raise Http404()
+                if url.url_name != 'event.css':
+                    raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)

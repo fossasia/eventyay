@@ -296,7 +296,7 @@ def shop_state_widget(sender, **kwargs):
             'display_size': 'small',
             'priority': 1000,
             'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="fa {icon}"></span> {state}</span>{t2}</div>'.format(
-                t1=_('Ticket shop is'),
+                t1=_('Event is'),
                 t2=_('Click here to change'),
                 state=(
                     _('live (private test mode)')
