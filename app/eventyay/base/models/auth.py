@@ -7,8 +7,7 @@ from datetime import timedelta
 from hashlib import md5
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
-import hashlib
-from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
+from urllib.parse import urlencode, urljoin
 
 from channels.db import database_sync_to_async
 from django.conf import settings
