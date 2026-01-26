@@ -44,6 +44,8 @@
     {% endif %}
 {% endwith %}
 
-<a id="join-event-link" class="header-tab" href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
-    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
-</a>
+{% if show_online_video_link|default:False %}
+    <a id="join-event-link" class="header-tab" href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
+        <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+    </a>
+{% endif %}
