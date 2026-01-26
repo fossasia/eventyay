@@ -653,9 +653,10 @@ class EventSettingsForm(SettingsForm):
                 data[required_key] = True
             # Explicitly check for 'do_not_ask'.
             # Do not overwrite as default-behaviour when no value for virtual field is transmitted!
+            # Note: Only set asked to False, preserve the existing required value
             elif data[virtual_key] == 'do_not_ask':
                 data[asked_key] = False
-                data[required_key] = False
+                # Don't touch required_key - preserve existing required state
 
             # hierarkey.forms cannot handle non-existent keys in cleaned_data => do not delete, but set to None
             data[virtual_key] = None
