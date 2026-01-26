@@ -5,11 +5,11 @@
 {% load staff_session %}
 
 {% with current_event=request.event path=request.path_info schedule_label=phrases.schedule.schedule|default:_("Schedule") sessions_label=phrases.schedule.sessions|default:_("Sessions") speakers_label=phrases.schedule.speakers|default:_("Speakers") %}
-    {% has_event_perm "base.orga_access_event" request.user request current_event as is_organiser %}
+    {% tickets_tab_visible as show_tickets_tab %}
     <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}" id="nav-tab-info" class="header-tab {% if request.resolver_match.url_name == 'event.index' and '#tickets' not in request.get_full_path %}active{% endif %}">
         <i class="fa fa-info-circle"></i> {% translate "Info" %}
     </a>
-    {% if current_event.live or is_organiser %}
+    {% if current_event.live and show_tickets_tab %}
         <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
             <i class="fa fa-ticket"></i> {% translate "Tickets" %}
         </a>
