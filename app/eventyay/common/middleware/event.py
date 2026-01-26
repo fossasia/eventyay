@@ -111,6 +111,14 @@ class EventPermissionMiddleware:
             response = redirect(urljoin(request.event.custom_domain, request.get_full_path()))
             response['Access-Control-Allow-Origin'] = '*'
             return response
+        if (
+            event
+            and event.private_testmode
+            and event.settings.get('private_testmode_talks', False, as_type=bool)
+            and not event.user_can_view_talks(request.user, request=request)
+        ):
+            if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
+                raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)

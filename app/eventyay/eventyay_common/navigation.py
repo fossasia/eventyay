@@ -81,33 +81,36 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     )
     if not has_settings_perm:
         return []
-    nav = [
-        {
-            'label': _('Settings'),
-            'url': reverse(
-                'eventyay_common:event.update',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
+    nav: List[MenuItem] = []
+    if has_settings_perm:
+        nav.extend(
+            [
+                {
+                    'label': _('Settings'),
+                    'url': reverse(
+                        'eventyay_common:event.update',
+                        kwargs={
+                            'event': event.slug,
+                            'organizer': event.organizer.slug,
+                        },
+                    ),
+                    'active': (url.url_name == 'event.update'),
+                    'icon': 'wrench',
                 },
-            ),
-            'active': (url.url_name == 'event.update'),
-            'icon': 'wrench',
-        },
-        {
-            'label': _('Plugins'),
-            'url': reverse(
-                'eventyay_common:event.plugins',
-                kwargs={
-                    'event': event.slug,
-                    'organizer': event.organizer.slug,
+                {
+                    'label': _('Plugins'),
+                    'url': reverse(
+                        'eventyay_common:event.plugins',
+                        kwargs={
+                            'event': event.slug,
+                            'organizer': event.organizer.slug,
+                        },
+                    ),
+                    'active': (url.url_name == 'event.plugins'),
+                    'icon': 'plug',
                 },
-            ),
-            'active': (url.url_name == 'event.plugins'),
-            'icon': 'plug',
-        },
-    ]
-
+            ]
+        )
     return nav
 
 

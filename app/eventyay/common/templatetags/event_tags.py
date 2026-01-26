@@ -116,17 +116,45 @@ def startswith(value, arg):
 
 @register.simple_tag(takes_context=True)
 def tickets_tab_visible(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    if request and not event.user_can_view_tickets(getattr(request, 'user', None), request=request):
+        return False
     productnum = context.get('productnum')
     if productnum is not None:
         try:
             return int(productnum) != 0
         except (TypeError, ValueError):
             return bool(productnum)
+    channel = getattr(getattr(request, 'sales_channel', None), 'identifier', 'web')
+    with scopes_disabled():
+        return event.products.filter_available(channel=channel).exists()
 
+
+@register.simple_tag(takes_context=True)
+def can_view_tickets(context, event=None):
     request = context.get('request')
     event = event or getattr(request, 'event', None)
     if not event:
         return False
-    channel = getattr(getattr(request, 'sales_channel', None), 'identifier', 'web')
-    with scopes_disabled():
-        return event.products.filter_available(channel=channel).exists()
+    return event.user_can_view_tickets(getattr(request, 'user', None), request=request)
+
+
+@register.simple_tag(takes_context=True)
+def can_view_talks(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return event.user_can_view_talks(getattr(request, 'user', None), request=request)
+
+
+@register.simple_tag(takes_context=True)
+def private_testmode_tickets_enabled(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    if not event:
+        return False
+    return event.private_testmode and event.settings.get('private_testmode_tickets', True, as_type=bool)

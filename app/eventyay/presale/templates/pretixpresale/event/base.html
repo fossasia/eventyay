@@ -8,6 +8,7 @@
 {% load compress %}
 {% load presale_locale %}
 {% load staff_session %}
+{% load event_tags %}
 
 {% block container_width %} presale-container{% endblock %}
 
@@ -32,18 +33,38 @@
 {% block site_notice %}
     {{ block.super }}
     {{ request.organizer.slug|json_script:"organizer_name" }}
-    {% if not event.live %}
+    {% private_testmode_tickets_enabled as private_testmode_tickets %}
+    {% if private_testmode_tickets %}
+        {% if request.user.is_authenticated %}
+            {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
+            {% can_view_tickets as can_view_tickets %}
+            <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
+                <div class="container">
+                    <span class="fa fa-user-secret" aria-hidden="true"></span>
+                    {% if can_view_tickets %}
+                        {% trans "This shop is currently in private test mode. Only organizers and system administrators can view or purchase tickets." %}
+                        <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
+                            {% trans "Manage shop status" %}
+                        </a>
+                    {% else %}
+                        {% trans "This event is currently in private test mode. Ticket sales are not available." %}
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    {% elif not event.live %}
         {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
+        {% can_view_tickets as can_view_tickets %}
         <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
             <div class="container">
                 <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% if is_organiser %}
-                    {% trans "This shop is currently in private test mode. Only organizers can purchase tickets." %}
-                    <a href='{% url "control:event.live" event=event.slug organizer=event.organizer.slug %}'>
+                {% if can_view_tickets %}
+                    {% trans "This shop is currently offline. Only organizers can purchase tickets." %}
+                    <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
                         {% trans "Take it live now" %}
                     </a>
                 {% else %}
-                    {% trans "This event is currently in private test mode. Ticket sales are not yet available." %}
+                    {% trans "This event is currently offline. Ticket sales are not yet available." %}
                 {% endif %}
             </div>
         </div>
