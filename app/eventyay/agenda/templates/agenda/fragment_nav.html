@@ -4,9 +4,11 @@
 {% load eventurl %}
 
 {% load presale_locale %}
-<a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
-    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
-</a>
+{% if not request.event.testmode %}
+    <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
+        <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+    </a>
+{% endif %}
 {% if schedule or request.event.has_schedule_content %}
     <a href="{{ request.event.urls.schedule }}" class="header-tab {% if '/schedule/' in request.path_info %}active{% endif %}">
         <i class="fa fa-calendar"></i> {{ phrases.schedule.schedule }}
