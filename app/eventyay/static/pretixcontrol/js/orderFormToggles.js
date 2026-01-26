@@ -139,6 +139,23 @@ function initOrderFormToggles() {
     document.querySelectorAll('input[type=hidden][name^="settings-order_"], input[type=hidden][name^="settings-attendee_"]').forEach(input => {
         updateVisualState(input.id, input.value);
     });
+    
+    // Init disabled state for custom question dropdowns based on active toggle
+    document.querySelectorAll('.question-active-toggle[data-question-id]').forEach(toggle => {
+        const row = toggle.closest('tr');
+        const requiredDropdown = row?.querySelector('.question-required-dropdown');
+        const wrapper = requiredDropdown?.closest('.required-status-wrapper');
+        
+        if (requiredDropdown) {
+            if (toggle.checked) {
+                requiredDropdown.disabled = false;
+                wrapper?.classList.remove('is-disabled');
+            } else {
+                requiredDropdown.disabled = true;
+                wrapper?.classList.add('is-disabled');
+            }
+        }
+    });
 
     // Handle info-toggle click for info boxes (CSP-compliant)
     let currentOpenInfoBox = null;
@@ -253,13 +270,31 @@ function initOrderFormToggles() {
             const previousValue = !newValue;
             const toggleSwitch = this.closest('.toggle-switch');
             
+            // Find the required dropdown for this question
+            const row = this.closest('tr');
+            const requiredDropdown = row?.querySelector('.question-required-dropdown');
+            const wrapper = requiredDropdown?.closest('.required-status-wrapper');
+            
             // Add loading state
             this.disabled = true;
             toggleSwitch.classList.add('loading');
             
             try {
                 await updateQuestionField(questionId, 'active', newValue);
-                showSuccessFeedback(toggleSwitch);
+                
+                // Update dropdown disabled state based on active toggle
+                if (requiredDropdown) {
+                    if (newValue) {
+                        requiredDropdown.disabled = false;
+                        wrapper?.classList.remove('is-disabled');
+                    } else {
+                        requiredDropdown.disabled = true;
+                        wrapper?.classList.add('is-disabled');
+                    }
+                }
+                
+                // Remove focus to prevent green border
+                this.blur();
             } catch (error) {
                 console.error('Failed to update active status', { questionId, error });
                 this.checked = previousValue;
