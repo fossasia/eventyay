@@ -9,27 +9,34 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from lxml import etree
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.event.models import Event, Organiser, Team, TeamInvite
-from pretalx.mail.models import MailTemplate
-from pretalx.person.models import SpeakerInformation, SpeakerProfile, User, UserApiToken
-from pretalx.person.models.auth_token import ENDPOINTS, generate_api_token
-from pretalx.schedule.models import Availability, Room, TalkSlot
-from pretalx.submission.models import (
+from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer as Organiser, Team, TeamInvite
+from eventyay.base.models.mail import MailTemplate
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.auth import User
+from eventyay.base.models.auth_token import UserApiToken, ENDPOINTS, generate_api_token
+from eventyay.base.models.availability import Availability
+from eventyay.base.models.room import Room
+from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.question import (
     Answer,
     AnswerOption,
+    TalkQuestion as Question,
+    TalkQuestionVariant as QuestionVariant,
+    TalkQuestionRequired as QuestionRequired,
+)
+from eventyay.base.models.submission import (
     Feedback,
-    Question,
-    QuestionVariant,
-    Resource,
     Review,
     Submission,
-    SubmissionType,
-    SubmitterAccessCode,
     Tag,
-    Track,
 )
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.resource import Resource
+from eventyay.base.models.type import SubmissionType
+from eventyay.base.models.access_code import SubmitterAccessCode
+from eventyay.base.models.track import Track
 
 
 @pytest.fixture(scope="session", autouse=True)
