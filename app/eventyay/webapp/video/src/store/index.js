@@ -212,9 +212,8 @@ export default new Vuex.Store({
 						}
 					}
 				} catch (error) {
-					console.error('Failed to poll stream:', error)
 				}
-			}, 30000)
+			}, 10000)
 		},
 		stopStreamPolling({state}) {
 			if (state.streamPollInterval) {
@@ -248,8 +247,6 @@ export default new Vuex.Store({
 						state.roomFatalErrors = rest
 					}
 				} catch (error) {
-					// Allow ApiError instances to bubble into the websocket error handler
-					console.error('[store/changeRoom] Failed to enter room', room?.id, error)
 				}
 			}
 			dispatch('question/changeRoom', room)

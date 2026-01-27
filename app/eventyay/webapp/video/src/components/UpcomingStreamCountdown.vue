@@ -1,6 +1,6 @@
 <template lang="pug">
-.upcoming-stream-countdown
-	.content(v-if="shouldShow")
+.upcoming-stream-countdown(v-if="shouldShow")
+	.content
 		.title {{ upcomingStream.title || 'Upcoming Stream' }}
 		.countdown {{ formattedCountdown }}
 		.time {{ formattedStartTime }}
@@ -22,7 +22,8 @@ export default {
 		return {
 			upcomingStream: null,
 			timeUntilStart: 0,
-			countdownInterval: null
+			countdownInterval: null,
+			fetching: false
 		}
 	},
 	computed: {
@@ -52,9 +53,11 @@ export default {
 			immediate: true
 		},
 		'room.upcomingStream'(stream) {
-			if (stream) {
+			if (this.isStreamUpcoming(stream)) {
 				this.upcomingStream = stream
 				this.updateCountdown()
+			} else {
+				this.clearStream()
 			}
 		}
 	},
@@ -69,8 +72,19 @@ export default {
 		}
 	},
 	methods: {
+		isStreamUpcoming(stream) {
+			if (!stream || !stream.start_time) return false
+			const startTime = moment(stream.start_time)
+			return startTime.isAfter(moment())
+		},
+		clearStream() {
+			this.upcomingStream = null
+			this.timeUntilStart = 0
+		},
 		async fetchNextStream() {
-			if (!this.room?.id) return
+			if (!this.room?.id || this.fetching) return
+			
+			this.fetching = true
 			try {
 				const world = this.$store?.state?.world
 				
@@ -85,7 +99,10 @@ export default {
 					}
 				}
 				
-				if (!organizer || !event) return
+				if (!organizer || !event) {
+					this.clearStream()
+					return
+				}
 				
 				const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/next`
 				const authHeader = api._config.token
@@ -98,13 +115,20 @@ export default {
 
 				const response = await fetch(url, { headers, credentials: 'include' })
 				if (response.ok) {
-					this.upcomingStream = await response.json()
-					this.updateCountdown()
-				} else if (response.status === 404) {
-					this.upcomingStream = null
+					const stream = await response.json()
+					if (this.isStreamUpcoming(stream)) {
+						this.upcomingStream = stream
+						this.updateCountdown()
+					} else {
+						this.clearStream()
+					}
+				} else {
+					this.clearStream()
 				}
 			} catch (error) {
-				console.error('[UpcomingStreamCountdown] Failed to fetch next stream:', error)
+				this.clearStream()
+			} finally {
+				this.fetching = false
 			}
 		},
 		updateCountdown() {
@@ -115,9 +139,12 @@ export default {
 			const startTime = moment(this.upcomingStream.start_time)
 			const now = moment()
 			this.timeUntilStart = Math.max(0, startTime.diff(now, 'seconds'))
-			if (this.timeUntilStart === 0) {
-				this.upcomingStream = null
-				this.fetchNextStream()
+			
+			if (this.timeUntilStart === 0 || !this.isStreamUpcoming(this.upcomingStream)) {
+				this.clearStream()
+				if (!this.fetching) {
+					this.fetchNextStream()
+				}
 			}
 		}
 	}
