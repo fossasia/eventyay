@@ -1,12 +1,12 @@
 from django.test import TestCase
 from django_scopes import scope
+from django.utils import timezone
 from eventyay.base.models import Event, SubmissionType, Organizer
 
 class SubmissionTypeOrderingTestCase(TestCase):
     
     def setUp(self):
         self.organizer = Organizer.objects.create(name='Test Org', slug='test-org')
-        from django.utils import timezone
         self.event = Event.objects.create(
             organizer=self.organizer,
             name='Test Event',
