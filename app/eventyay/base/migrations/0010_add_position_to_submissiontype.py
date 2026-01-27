@@ -7,16 +7,15 @@ def populate_position_values(apps, schema_editor):
     SubmissionType = apps.get_model('base', 'SubmissionType')
     
     # Group by event to ensure positions are scoped per event
-    from django.db.models import Q
     events = SubmissionType.objects.values_list('event_id', flat=True).distinct()
     
     for event_id in events:
-        types = SubmissionType.objects.filter(event_id=event_id).order_by('default_duration', 'id')
+        types = list(
+            SubmissionType.objects.filter(event_id=event_id).order_by('default_duration', 'id')
+        )
         for index, submission_type in enumerate(types, start=1):
             submission_type.position = index
-            submission_type.save(update_fields=['position'])
-
-
+        SubmissionType.objects.bulk_update(types, ['position'])
 def reverse_populate(apps, schema_editor):
     SubmissionType = apps.get_model('base', 'SubmissionType')
     SubmissionType.objects.all().update(position=None)
