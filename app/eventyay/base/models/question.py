@@ -181,7 +181,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         help_text=_('Inactive fields will no longer be shown.'),
     )
     contains_personal_data = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_('Responses contain personal data'),
         help_text=_('If a user deletes their account, responses containing personal data will be removed, too.'),
     )
