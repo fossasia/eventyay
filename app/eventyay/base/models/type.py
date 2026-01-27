@@ -100,8 +100,9 @@ class SubmissionType(OrderedModel, PretalxModel):
         """
         return f'{self.id}-{slugify(self.name)}'
 
-    def get_order_queryset(self):
-        return self.event.submission_types.all()
+    @staticmethod
+    def get_order_queryset(event, **kwargs):
+        return event.submission_types.all()
 
     def save(self, *args, **kwargs):
         if self.pk is None and (self.position is None or self.position == 0):
