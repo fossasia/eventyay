@@ -1,0 +1,12 @@
+{% load i18n %}
+<nav id="event-nav" class="header-nav d-md-flex justify-content-between">
+    <div class="navigation-title">
+        <h2>
+            {% if event_title %}{{ event_title }}{% endif %}
+            {% if event_date %}<small class="event-date text-muted">{{ event_date }}</small>{% endif %}
+        </h2>
+    </div>
+    <div class="navigation">
+        {% include "eventyay_common/event/component_link_canonical.html" %}
+    </div>
+</nav>

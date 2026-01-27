@@ -1101,10 +1101,10 @@ h1 .label {
     }
 }
 
-/* Event name in main content - max width and wrap */
-#event-nav .navigation,
-.header-nav .navigation {
-    display: flex;
+/* Unified event navigation - normalized */
+#event-nav,
+.header-nav {
+    display: flex !important;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;

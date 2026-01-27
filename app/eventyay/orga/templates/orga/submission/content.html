@@ -25,10 +25,7 @@
     <form method="post" enctype="multipart/form-data" novalidate>
         <fieldset>
             {% if not submission %}
-                <div id="main-title" class="d-md-flex justify-content-between">
-                    <h2>{% translate "Create proposal" %}</h2>
-                    {% include "orga/event/component_link.html" %}
-                </div>
+                {% include "event_header.html" with event_title="Create proposal"|translate %}
             {% endif %}
 
             {% if submission.access_code %}

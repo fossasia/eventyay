@@ -24,30 +24,34 @@
         {% has_event_perm "base.review_submission" request.user request submission as can_review %}
         {% has_event_perm "base.orga_list_speakerprofile" request.user request request.event as can_view_speakers %}
         {% has_event_perm "base.send_queuedmail" request.user request request.event as can_send_mails %}
-        <div id="main-title" class="d-md-flex justify-content-between">
-            <h2>
-                <span>
-	                {{ quotation_open }}{% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %}{{ quotation_close }}
-	                {% if submission.speakers.exists and can_view_speakers %}
-	                    – {% include "orga/includes/submission_speaker_names.html" with lightbox=True %}
-	                {% endif %}
-                    {% if can_edit_submission %}
-                        {% include "orga/submission/state_dropdown.html" with submission=submission %}
-                        {% if submission.pending_state and can_edit_submission %}
-                            <form action="{{ submission.orga_urls.apply_pending }}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-info" href="{{ request.event.orga_urls.apply_pending }}">
-                                    {% translate "Apply pending changes" %}
-                                </button>
-                            </form>
+        <nav id="event-nav" class="header-nav d-md-flex justify-content-between">
+            <div class="navigation-title">
+                <h2>
+                    <span>
+	                    {{ quotation_open }}{% if can_view_speakers %}{{ submission.title }}{% else %}{{ submission.anonymised.title|default:submission.title }}{% endif %}{{ quotation_close }}
+	                    {% if submission.speakers.exists and can_view_speakers %}
+	                        – {% include "orga/includes/submission_speaker_names.html" with lightbox=True %}
+	                    {% endif %}
+                        {% if can_edit_submission %}
+                            {% include "orga/submission/state_dropdown.html" with submission=submission %}
+                            {% if submission.pending_state and can_edit_submission %}
+                                <form action="{{ submission.orga_urls.apply_pending }}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-info" href="{{ request.event.orga_urls.apply_pending }}">
+                                        {% translate "Apply pending changes" %}
+                                    </button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
                         {% endif %}
-                    {% else %}
-                        {% include "cfp/event/fragment_state.html" with state=submission.state as_badge=True %}
-                    {% endif %}
-                </span>
-            </h2>
-            {% include "orga/event/component_link.html" %}
-        </div>
+                    </span>
+                </h2>
+            </div>
+            <div class="navigation">
+                {% include "eventyay_common/event/component_link_canonical.html" %}
+            </div>
+        </nav>
 
         <div role="tablist" class="mb-4">
             <a role="tab" href="{{ submission.orga_urls.base }}" {% if "submissions.content" in url_name %}aria-selected="true"{% else %}aria-selected="false"{% endif %}>
