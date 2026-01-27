@@ -469,7 +469,6 @@ details.dropdown .dropdown-content-se::after {
 #locale-dropdown .language-columns {
   width: 400px;
   max-height: 350px;
-  overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 1fr));
   border-top: 1px solid var(--color-border, #ced4da);
@@ -478,7 +477,9 @@ details.dropdown .dropdown-content-se::after {
 #locale-dropdown .language-column {
   max-width: 200px;
   max-height: 350px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #fff;
   border-right: 1px solid var(--color-border, #ced4da);
 }
@@ -495,9 +496,12 @@ details.dropdown .dropdown-content-se::after {
   color: var(--color-grey, #6c757d);
   background: var(--color-grey-lightest, #f8f9fa);
   border-bottom: 1px solid var(--color-border, #ced4da);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+}
+
+#locale-dropdown .language-column .language-column-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 #locale-dropdown .language-column .dropdown-item {

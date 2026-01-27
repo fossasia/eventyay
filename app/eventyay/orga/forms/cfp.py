@@ -123,6 +123,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             'track',
             'duration',
             'content_locale',
+            'fullname',
         ]
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'
@@ -141,15 +142,26 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             self.fields[field_name].widget.attrs['placeholder'] = ''
         for attribute in self.request_require_fields:
             field_name = f'cfp_ask_{attribute}'
-            self.fields[field_name] = forms.ChoiceField(
-                required=True,
-                initial=obj.cfp.fields.get(attribute, default_fields()[attribute])['visibility'],
-                choices=[
-                    ('do_not_ask', _('Do not ask')),
-                    ('optional', _('Ask, but do not require input')),
-                    ('required', _('Ask and require input')),
-                ],
-            )
+            # Full Name is always required and always active
+            if attribute == 'fullname':
+                self.fields[field_name] = forms.ChoiceField(
+                    required=True,
+                    initial='required',
+                    choices=[
+                        ('required', _('Ask and require input')),
+                    ],
+                    widget=forms.Select(attrs={'disabled': True, 'aria-readonly': 'true'}),
+                )
+            else:
+                self.fields[field_name] = forms.ChoiceField(
+                    required=True,
+                    initial=obj.cfp.fields.get(attribute, default_fields()[attribute])['visibility'],
+                    choices=[
+                        ('do_not_ask', _('Do not ask')),
+                        ('optional', _('Ask, but do not require input')),
+                        ('required', _('Ask and require input')),
+                    ],
+                )
         
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
@@ -178,10 +190,22 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
+        # Preserve fields_config (drag-drop order) before modifying settings
+        fields_config = self.instance.cfp.settings.get('fields_config')
+
+        self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+
+        # Restore fields_config after setting other values (also when it is an empty dict)
+        if fields_config is not None:
+            self.instance.cfp.settings['fields_config'] = fields_config
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
-            self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
+            # Full Name is always required and cannot be changed
+            if key == 'fullname':
+                self.instance.cfp.fields[key]['visibility'] = 'required'
+            else:
+                self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
         
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
