@@ -1,0 +1,108 @@
+{% load i18n %}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        {% trans "Test mode" %}
+    </div>
+    <div class="panel-body">
+        {% if request.event.testmode %}
+            <form action="" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="testmode" value="false">
+                <p>
+                    {% trans "Your shop is currently in test mode. All orders are not persistent and can be deleted at any point." %}
+                </p>
+                <div class="form-inline">
+                    <label class="checkbox">
+                        <input type="checkbox" name="delete" value="yes" />
+                        {% trans "Permanently delete all orders created in test mode" %}
+                    </label>
+                </div>
+                <div class="text-right">
+                    <button type="submit" class="btn btn-lg btn-primary btn-save">
+                        {% trans "Disable test mode" %}
+                    </button>
+                </div>
+            </form>
+        {% else %}
+            {% if request.event.private_testmode %}
+                <p>
+                    {% trans "Private test mode is currently enabled. Disable it to enable standard test mode." %}
+                </p>
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                        {% trans "Enable test mode" %}
+                    </button>
+                </div>
+            {% else %}
+                <p>
+                    {% trans "Your shop is currently in production mode." %}
+                </p>
+                <p>
+                    {% trans "If you want to do some test orders, you can enable test mode for your shop. As long as the shop is in test mode, all orders that are created are marked as test orders and can be deleted again." %}
+                    <strong>
+                        {% trans "Please note that test orders still count into your quotas, actually use vouchers and might perform actual payments. The only difference is that you can delete test orders. Use at your own risk!" %}
+                    </strong>
+                </p>
+                <p>
+                    {% trans "Also, test mode only covers the main web shop. Orders created through other sales channels such as the box office or resellers module are still created as production orders." %}
+                </p>
+                {% if actual_orders %}
+                    <div class="alert alert-danger">
+                        {% trans "It looks like you already have some real orders in your shop. We do not recommend enabling test mode if your customers already know your shop, as it will confuse them." %}
+                    </div>
+                {% endif %}
+                <form action="" method="post" class="flip text-right">
+                    {% csrf_token %}
+                    <input type="hidden" name="testmode" value="true">
+                    <button type="submit" class="btn btn-lg btn-default btn-save">
+                        {% trans "Enable test mode" %}
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+        <div class="clear"></div>
+    </div>
+</div>
+<div class="panel panel-default">
+    <div class="panel-heading">
+        {% trans "Private test mode" %}
+    </div>
+    <div class="panel-body">
+        {% if private_testmode_tickets %}
+            <p>
+                {% trans "Private test mode is enabled for tickets. Only organizers, reviewers, and system administrators can view or purchase tickets." %}
+            </p>
+            <form action="" method="post" class="text-right">
+                {% csrf_token %}
+                <input type="hidden" name="private_testmode_tickets_action" value="disable">
+                <button type="submit" class="btn btn-lg btn-primary btn-save">
+                    {% trans "Disable private test mode for tickets" %}
+                </button>
+            </form>
+        {% else %}
+            {% if request.event.testmode %}
+                <p>
+                    {% trans "Test mode is currently enabled. Disable it to enable private test mode for tickets." %}
+                </p>
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                        {% trans "Enable private test mode for tickets" %}
+                    </button>
+                </div>
+            {% else %}
+                <p>
+                    {% trans "Private test mode hides tickets from the public. Only organizers, reviewers, and system administrators can view or purchase tickets." %}
+                </p>
+                <form action="" method="post" class="text-right">
+                    {% csrf_token %}
+                    <input type="hidden" name="private_testmode_tickets_action" value="enable">
+                    <button type="submit" class="btn btn-lg btn-default btn-save">
+                        {% trans "Enable private test mode for tickets" %}
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+        <div class="clear"></div>
+    </div>
+</div>

@@ -1,0 +1,17 @@
+{% extends "pretixcontrol/event/settings_base.html" %}
+{% load i18n %}
+
+{% block inside %}
+    <nav id="event-nav" class="header-nav">
+        <div class="navigation">
+            <div class="navigation-title">
+                <h1>{% trans "Ticket shop status" %}</h1>
+            </div>
+            {% include "pretixcontrol/event/component_link.html" %}
+        </div>
+    </nav>
+    <legend>
+        {% trans "Tickets" %}
+    </legend>
+    {% include "eventyay_common/event/fragment_ticket_modes.html" %}
+{% endblock %}

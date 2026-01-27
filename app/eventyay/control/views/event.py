@@ -1098,50 +1098,48 @@ class EventPermissions(EventSettingsViewMixin, EventPermissionRequiredMixin, Tem
 
 class EventLive(EventPermissionRequiredMixin, TemplateView):
     permission = 'can_change_event_settings'
-    template_name = 'eventyay_common/event/live.html'
+    template_name = 'pretixcontrol/event/live.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['issues'] = self.request.event.live_issues
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
+        private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        if not self.request.event.private_testmode:
+            private_tickets = False
+        ctx['private_testmode_tickets'] = private_tickets
         return ctx
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('live') == 'true' and not self.request.event.live_issues:
+        event = request.event
+        if request.POST.get('testmode') == 'true':
             with transaction.atomic():
-                request.event.live = True
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is live now!'))
-        elif request.POST.get('live') == 'false':
-            with transaction.atomic():
-                request.event.live = False
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
-            messages.success(
-                self.request,
-                _("We've taken your shop down. You can re-enable it whenever you want!"),
-            )
-        elif request.POST.get('testmode') == 'true':
-            with transaction.atomic():
-                request.event.testmode = True
-                request.event.save()
+                event.testmode = True
+                if event.private_testmode:
+                    event.private_testmode = False
+                    event.settings.private_testmode_tickets = False
+                    event.settings.private_testmode_talks = False
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                event.save()
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
-                request.event.testmode = False
-                request.event.save()
+                event.testmode = False
+                event.save()
                 self.request.event.log_action(
                     'eventyay.event.testmode.deactivated',
                     user=self.request.user,
                     data={'delete': (request.POST.get('delete') == 'yes')},
                 )
-            request.event.cache.delete('complain_testmode_orders')
+            event.cache.delete('complain_testmode_orders')
             if request.POST.get('delete') == 'yes':
                 try:
                     with transaction.atomic():
-                        for order in request.event.orders.filter(testmode=True):
+                        for order in event.orders.filter(testmode=True):
                             order.gracefully_delete(user=self.request.user)
                 except ProtectedError:
                     messages.error(
@@ -1152,18 +1150,49 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
                         ),
                     )
                 else:
-                    request.event.cache.set('complain_testmode_orders', False, 30)
-            request.event.cartposition_set.filter(addon_to__isnull=False).delete()
-            request.event.cartposition_set.all().delete()
+                    event.cache.set('complain_testmode_orders', False, 30)
+            event.cartposition_set.filter(addon_to__isnull=False).delete()
+            event.cartposition_set.all().delete()
             messages.success(
                 self.request,
                 _("We've disabled test mode for you. Let's sell some real tickets!"),
+            )
+        elif request.POST.get('private_testmode_tickets_action'):
+            enable = request.POST.get('private_testmode_tickets_action') == 'enable'
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_tickets = enable
+                if enable:
+                    event.private_testmode = True
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for tickets.')
+                if enable
+                else _('Private test mode is now disabled for tickets.'),
             )
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_common:event.live',
+            'control:event.live',
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,
