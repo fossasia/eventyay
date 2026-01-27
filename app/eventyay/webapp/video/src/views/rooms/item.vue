@@ -158,6 +158,7 @@ export default {
 					}
 				}
 			} catch (error) {
+				// Stream fetch failures are non-critical
 			}
 		},
 		changedTabContent(tab) {

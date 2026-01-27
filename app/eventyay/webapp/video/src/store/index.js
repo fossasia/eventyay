@@ -212,6 +212,7 @@ export default new Vuex.Store({
 						}
 					}
 				} catch (error) {
+					// Polling failures are non-critical, continue polling
 				}
 			}, 10000)
 		},
@@ -247,6 +248,7 @@ export default new Vuex.Store({
 						state.roomFatalErrors = rest
 					}
 				} catch (error) {
+					// room.enter failures are non-critical, continue with room change
 				}
 			}
 			dispatch('question/changeRoom', room)

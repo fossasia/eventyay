@@ -92,22 +92,32 @@ export default {
 		},
 		plainStartTime: {
 			get() {
-				return this.formData.start_time
-					? this.formData.start_time.format('YYYY-MM-DDTHH:mm')
-					: undefined;
+				if (!this.formData.start_time) return undefined;
+				const tz = this.eventTimezone || 'UTC';
+				return moment.tz(this.formData.start_time, tz).format('YYYY-MM-DDTHH:mm');
 			},
 			set(value) {
-				this.formData.start_time = value ? moment(value) : null;
+				if (!value) {
+					this.formData.start_time = null;
+					return;
+				}
+				const tz = this.eventTimezone || 'UTC';
+				this.formData.start_time = moment.tz(value, tz);
 			},
 		},
 		plainEndTime: {
 			get() {
-				return this.formData.end_time
-					? this.formData.end_time.format('YYYY-MM-DDTHH:mm')
-					: undefined;
+				if (!this.formData.end_time) return undefined;
+				const tz = this.eventTimezone || 'UTC';
+				return moment.tz(this.formData.end_time, tz).format('YYYY-MM-DDTHH:mm');
 			},
 			set(value) {
-				this.formData.end_time = value ? moment(value) : null;
+				if (!value) {
+					this.formData.end_time = null;
+					return;
+				}
+				const tz = this.eventTimezone || 'UTC';
+				this.formData.end_time = moment.tz(value, tz);
 			},
 		},
 	},
@@ -197,11 +207,12 @@ export default {
 		editSchedule(schedule) {
 			this.v$.$reset();
 			this.editingSchedule = schedule;
+			const tz = this.eventTimezone || 'UTC';
 			this.formData = {
 				title: schedule.title || '',
 				url: schedule.url,
-				start_time: moment(schedule.start_time),
-				end_time: moment(schedule.end_time),
+				start_time: moment.tz(schedule.start_time, tz),
+				end_time: moment.tz(schedule.end_time, tz),
 				stream_type: schedule.stream_type,
 			};
 		},
@@ -389,7 +400,9 @@ export default {
 			}
 		},
 		formatDateTime(datetime) {
-			return moment(datetime).format('YYYY-MM-DD HH:mm');
+			if (!datetime) return '';
+			const tz = this.eventTimezone || 'UTC';
+			return moment.tz(datetime, tz).format('YYYY-MM-DD HH:mm');
 		},
 	},
 };
