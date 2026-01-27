@@ -238,8 +238,8 @@ def collect_telemetry_payload() -> dict:
     uptime_seconds = 0
     try:
         import psutil
-        process = psutil.Process(os.getpid())
-        uptime_seconds = int(now().timestamp() - process.create_time())
+        boot_time = psutil.boot_time()
+        uptime_seconds = int(now().timestamp() - boot_time)
     except (ImportError, OSError, AttributeError) as e:
         logger.debug("Could not get uptime: %s", e)
     

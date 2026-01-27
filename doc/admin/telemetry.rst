@@ -30,14 +30,14 @@ What Data is Collected
 
 **Usage Metrics (bucketed ranges, not exact counts):**
 
-* Events: 0, 1-10, 11-50, 51-100, 101-500, 501-1000, 1000+
+* Events: 0, 1-10, 11-50, 51-100, 101-500, 501-1000, 1001-5000, 5000+
 * Live events
 * Organizers
 * Orders (total and paid separately)
 * Tickets issued (total, paid, free separately)
 * Submissions
 * Attendees
-* Uptime (days)
+* Uptime (bucketed: 0-1h, 1-24h, 1-7d, 7-30d, 30d+)
 
 **Enabled Plugins:**
 
