@@ -2,8 +2,8 @@ import json
 from collections import defaultdict
 from decimal import Decimal
 
-import bleach
 import dateutil.parser
+import nh3
 import pytz
 from django.dispatch import receiver
 from django.urls import reverse
@@ -371,6 +371,8 @@ PRETIX_LEGACY_ALIASES = {
     'pretix.event.live.deactivated': 'eventyay.event.live.deactivated',
     'pretix.event.testmode.activated': 'eventyay.event.testmode.activated',
     'pretix.event.testmode.deactivated': 'eventyay.event.testmode.deactivated',
+    'pretix.event.private_testmode.activated': 'eventyay.event.private_testmode.activated',
+    'pretix.event.private_testmode.deactivated': 'eventyay.event.private_testmode.deactivated',
     'pretix.subevent.added': 'eventyay.subevent.added',
     'pretix.subevent.changed': 'eventyay.subevent.changed',
     'pretix.subevent.deleted': 'eventyay.subevent.deleted',
@@ -628,6 +630,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.live.deactivated': _('The shop has been taken offline.'),
         'eventyay.event.testmode.activated': _('The shop has been taken into test mode.'),
         'eventyay.event.testmode.deactivated': _('The test mode has been disabled.'),
+        'eventyay.event.private_testmode.activated': _('Private test mode has been enabled.'),
+        'eventyay.event.private_testmode.deactivated': _('Private test mode has been disabled.'),
         'eventyay.event.added': _('The event has been created.'),
         'eventyay.event.changed': _('The event details have been changed.'),
         'eventyay.event.permissions.added': _('A user has been added to the event team.'),
@@ -716,7 +720,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
 
     if action_type == 'eventyay.event.order.consent':
         return _('The user confirmed the following message: "{}"').format(
-            bleach.clean(logentry.parsed_data.get('msg'), tags=[], strip=True)
+            nh3.clean(logentry.parsed_data.get('msg'), tags=set())
         )
 
     if sender and action_type.startswith('eventyay.event.checkin'):
@@ -805,5 +809,4 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
 
     if action_type == 'eventyay.control.auth.user.impersonate_stopped':
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
-
 

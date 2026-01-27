@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.syndication.views import Feed
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.forms.models import BaseModelFormSet, inlineformset_factory
 from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect
@@ -51,6 +51,7 @@ from eventyay.submission.forms import (
     TagForm,
 )
 from eventyay.base.models import (
+    Answer,
     Feedback,
     Resource,
     Submission,
@@ -58,6 +59,7 @@ from eventyay.base.models import (
     SubmissionStates,
     Tag,
 )
+from eventyay.base.models.profile import SpeakerProfile
 from eventyay.talk_rules.submission import (
     annotate_assigned,
     get_reviewer_tracks,
@@ -238,13 +240,60 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
     @cached_property
     def speakers(self):
         submission = self.object
+        speakers_qs = (
+            submission.speakers.all()
+            .prefetch_related(
+                Prefetch(
+                    'profiles',
+                    queryset=SpeakerProfile.objects.filter(event=submission.event).prefetch_related('availabilities'),
+                    to_attr='_event_profiles',
+                ),
+                Prefetch(
+                    'answers',
+                    queryset=Answer.objects.filter(
+                        question__event=submission.event,
+                        question__is_visible_to_reviewers=True,
+                    ).select_related('question').order_by('question__position'),
+                    to_attr='_reviewer_answers',
+                ),
+                Prefetch(
+                    'submissions',
+                    queryset=Submission.objects.filter(event=submission.event).prefetch_related(
+                        Prefetch(
+                            'answers',
+                            queryset=Answer.objects.filter(
+                                question__event=submission.event,
+                                question__is_visible_to_reviewers=True,
+                            ).select_related('question').order_by('question__position'),
+                            to_attr='_reviewer_answers',
+                        )
+                    ),
+                    to_attr='_event_submissions',
+                ),
+            )
+        )
         return [
             {
                 'user': speaker,
                 'profile': speaker.event_profile(submission.event),
-                'other_submissions': speaker.submissions.filter(event=submission.event).exclude(code=submission.code),
+                'other_submissions': [
+                    s for s in speaker._event_submissions
+                    if s.code != submission.code
+                ],
+                'email': speaker.email,
+                'avatar': speaker.avatar,
+                'avatar_source': speaker.avatar_source,
+                'avatar_license': speaker.avatar_license,
+                'reviewer_answers': sorted(
+                    speaker._reviewer_answers + [
+                        answer
+                        for submission_obj in speaker._event_submissions
+                        for answer in submission_obj._reviewer_answers
+                    ],
+                    key=lambda a: a.question.position,
+                ),
             }
-            for speaker in submission.speakers.all()
+            for speaker in speakers_qs
         ]
 
     def form_valid(self, form):

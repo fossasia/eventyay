@@ -49,7 +49,7 @@ class TalkQuestionVariant(Choices):
         (URL, _('URL')),
         (DATE, _('Date')),
         (DATETIME, _('Date and time')),
-        (BOOLEAN, _('Yes/No')),
+        (BOOLEAN, _('Confirmation')),
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
@@ -165,7 +165,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         verbose_name=_('Session Types'),
         blank=True,
     )
-    question = I18nCharField(max_length=800, verbose_name=_('Label'))
+    question = I18nCharField(max_length=800, verbose_name=_('Label'), null=True, blank=True)
     help_text = I18nCharField(
         null=True,
         blank=True,
@@ -181,7 +181,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         help_text=_('Inactive fields will no longer be shown.'),
     )
     contains_personal_data = models.BooleanField(
-        default=True,
+        default=False,
         verbose_name=_('Responses contain personal data'),
         help_text=_('If a user deletes their account, responses containing personal data will be removed, too.'),
     )

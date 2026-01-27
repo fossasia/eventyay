@@ -124,7 +124,7 @@ def default_grants():
     return {
         "attendee": ["attendee"],
         "admin": ["admin"],
-        "scheduleuser": ["schedule-update"],
+        "scheduleuser": [],
     }
 
 
@@ -348,7 +348,7 @@ class World(VersionedModel):
         sure all personal data is scrubbed, it also clears all uploaded files, which includes things like exhibitor
         logos.
         """
-        
+
         self.audit_logs.all().delete()
         self.world_grants.all().delete()
         self.room_grants.all().delete()

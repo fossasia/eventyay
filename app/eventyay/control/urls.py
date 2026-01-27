@@ -243,7 +243,6 @@ urlpatterns = [
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
-                url(r'^live/$', event.EventLive.as_view(), name='event.live'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
                 url(r'^delete/$', event.EventDelete.as_view(), name='event.delete'),
                 url(r'^requiredactions/$', event.EventActions.as_view(), name='event.requiredactions'),
@@ -255,7 +254,15 @@ urlpatterns = [
                 url(r'^comment/$', event.EventComment.as_view(), name='event.comment'),
                 url(r'^quickstart/$', event.QuickSetupView.as_view(), name='event.quick'),
                 url(r'^settings/$', event.EventUpdate.as_view(), name='event.settings'),
-                url(r'^settings/plugins$', event.EventPlugins.as_view(), name='event.settings.plugins'),
+                url(
+                    r'^settings/plugins$',
+                    RedirectView.as_view(
+                        pattern_name='eventyay_common:event.plugins',
+                        permanent=True,
+                        query_string=True,
+                    ),
+                    name='event.settings.plugins',
+                ),
                 url(
                     r'^settings/payment/(?P<provider>[^/]+)$',
                     event.PaymentProviderSettings.as_view(),
@@ -353,6 +360,11 @@ urlpatterns = [
                     name='event.products.questions.delete',
                 ),
                 url(
+                    r'^questions/(?P<question>\d+)/toggle/$',
+                    product.QuestionToggle.as_view(),
+                    name='event.products.questions.toggle',
+                ),
+                url(
                     r'^questions/(?P<question>\d+)/$',
                     product.QuestionView.as_view(),
                     name='event.products.questions.show',
@@ -388,7 +400,6 @@ urlpatterns = [
                 ),
                 url(r'^quotas/add$', product.QuotaCreate.as_view(), name='event.products.quotas.add'),
                 url(r'^vouchers/$', vouchers.VoucherList.as_view(), name='event.vouchers'),
-                url(r'^vouchers/tags/$', vouchers.VoucherTags.as_view(), name='event.vouchers.tags'),
                 url(r'^vouchers/rng$', vouchers.VoucherRNG.as_view(), name='event.vouchers.rng'),
                 url(
                     r'^vouchers/product_select$',

@@ -88,7 +88,7 @@ class BaseSettings(_BaseSettings):
 
     Priority of settings sources (from highest to lowest):
     1. Secret files in ".secrets/" directory or Docker Secrets.
-    2. Environment variables (with "EVY_" prefix).
+    2. Environment variables (with ``EVY_`` prefix).
     3. ".env" file in the current working directory.
     4. Local TOML configuration file (eventyay.local.toml).
     5. Environment-specific TOML configuration file (eventyay.{active_environment}.toml).
@@ -1445,7 +1445,7 @@ TWITTER_CLIENT_SECRET = conf.twitter_client_secret
 LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
-FRONTEND_DIR = BASE_DIR / 'frontend'
+FRONTEND_DIR = BASE_DIR / 'webapp'
 VITE_DEV_SERVER_PORT = 8080
 VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
 VITE_DEV_MODE = False  # Set to False to use static files instead of dev server

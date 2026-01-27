@@ -51,6 +51,8 @@ urlpatterns = [
                 path('', dashboards.EventIndexView.as_view(), name='event.index'),
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
+                path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
+                path('live/', event.EventLive.as_view(), name='event.live'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),
