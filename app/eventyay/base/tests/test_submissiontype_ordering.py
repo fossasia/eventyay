@@ -91,7 +91,7 @@ class SubmissionTypeOrderingTestCase(TestCase):
             
             type1.save()
             
-            type2 = SubmissionType.objects.create(
+            SubmissionType.objects.create(
                 event=self.event,
                 name='Long',
                 default_duration=60,
