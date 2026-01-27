@@ -14,6 +14,7 @@
                 <div class="language-columns">
                     <div class="language-column">
                         <p class="dropdown-heading">{% translate "Event Language" %}</p>
+                        <div class="language-column-scroll">
                         {% with active_event_lang=request.event_language|default_if_none:current_event.locale|default_if_none:request.LANGUAGE_CODE %}
                         {% for l, name in current_event.named_locales %}
                             <a href="{% url 'presale:locale.event' %}?locale={{ l }}&event={{ current_event.slug }}&organizer={{ current_event.organizer.slug }}&next={{ request.path }}{% if request.META.QUERY_STRING %}%3F{{ request.META.QUERY_STRING|urlencode }}{% endif %}"
@@ -22,21 +23,24 @@
                                tabindex="-1">{{ name }}</a>
                         {% endfor %}
                         {% endwith %}
+                        </div>
                     </div>
                     <div class="language-column">
                         <p class="dropdown-heading">{% translate "UI Language" %}</p>
-                        <form method="post" action="{% url 'eventyay_common:account.locale' %}">
-                            {% csrf_token %}
-                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                            {% for option in language_options %}
-                                <button type="submit"
-                                        name="locale"
-                                        value="{{ option.code }}"
-                                        class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
-                                        role="menuitem"
-                                        tabindex="-1">{{ option.label }}</button>
-                            {% endfor %}
-                        </form>
+                        <div class="language-column-scroll">
+                            <form method="post" action="{% url 'eventyay_common:account.locale' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                {% for option in language_options %}
+                                    <button type="submit"
+                                            name="locale"
+                                            value="{{ option.code }}"
+                                            class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                                            role="menuitem"
+                                            tabindex="-1">{{ option.label }}</button>
+                                {% endfor %}
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
