@@ -475,6 +475,33 @@
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                    <tbody>
+                        {# Full Name #}
+                        {% with field=sform.cfp_ask_fullname %}
+                        <tr>
+                            <th>{% translate "Full Name" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="required"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="required">
+                                    <select class="required-status-dropdown" disabled aria-readonly="true"
+                                        aria-describedby="fullname-required-help" data-current="required">
+                                        <option value="required" selected>Required</option>
+                                    </select>
+                                </div>
+                                <span id="fullname-required-help" class="sr-only">{% translate "Full Name is always required and cannot be changed." %}</span>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endwith %}
+
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
                         <tr dragsort-id="biography">
