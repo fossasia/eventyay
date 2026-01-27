@@ -193,23 +193,23 @@ raw_payload        Full JSON for debugging
 Features Implemented
 --------------------
 
-✅ Daily heartbeat collection
+Daily heartbeat collection
 
-✅ Bucketed metrics (privacy-preserving)
+Bucketed metrics (privacy-preserving)
 
-✅ Google Apps Script receiver
+Google Apps Script receiver
 
-✅ API key authentication
+API key authentication
 
-✅ Rate limiting (23 hours)
+Rate limiting (23 hours)
 
-✅ Celery integration
+Celery integration
 
-✅ Auto-discovery of deployment environment
+Auto-discovery of deployment environment
 
-✅ SHA256 URL hashing
+SHA256 URL hashing
 
-✅ Opt-in (disabled by default)
+Opt-in (disabled by default)
 
 Future Enhancements
 -------------------
