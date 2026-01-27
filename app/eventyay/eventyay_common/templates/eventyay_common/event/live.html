@@ -1,6 +1,11 @@
 {% extends "eventyay_common/event/base.html" %}
 {% load i18n %}
 {% load bootstrap3 %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'eventyay_common/css/event-status.css' %}">
+{% endblock %}
+
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -10,19 +15,33 @@
             {% include "eventyay_common/event/component_link.html" %}
         </div>
     </nav>
+
+    {# Section 1: Event Visibility #}
     <div class="panel panel-default">
         <div class="panel-heading">
-            {% trans "Event visibility" %}
+            <strong>{% trans "1. Event" %}</strong>
+            <span class="pull-right">
+                {% if request.event.live %}
+                    <span class="label label-success">{% trans "Published" %}</span>
+                {% else %}
+                    <span class="label label-default">{% trans "Unpublished" %}</span>
+                {% endif %}
+            </span>
         </div>
         <div class="panel-body">
+            <p>
+                {% trans "This represents the overall event visibility and acts as the primary gate." %}
+                <strong>{% trans "Public facing components depend on the event being published." %}</strong>
+            </p>
+            
             {% if request.event.live %}
                 <p>
-                    {% trans "Your shop is currently live. If you take it down, it will only be visible to you and your team." %}
+                    {% trans "Your event is currently published. If you unpublish it, it will only be visible to you and your team." %}
                 </p>
                 {% if issues|length > 0 %}
                     <div class="alert alert-warning">
                         <p>
-                            {% trans "Your shop is already live, however the following issues would normally prevent your shop to go live:" %}
+                            {% trans "Your event is already published, however the following issues would normally prevent your event from going live:" %}
                         </p>
                         <ul>
                             {% for issue in issues %}
@@ -34,18 +53,18 @@
                 <form action="" method="post" class="text-right flip">
                     {% csrf_token %}
                     <input type="hidden" name="live" value="false">
-                    <button type="submit" class="btn btn-lg btn-danger btn-save">
-                        {% trans "Go offline" %}
+                    <button type="submit" class="btn btn-lg btn-warning btn-save">
+                        {% trans "Unpublish event" %}
                     </button>
                 </form>
             {% else %}
                 {% if issues|length > 0 %}
                     <p>
-                        {% trans "Your ticket shop is currently not live. It is thus only visible to you and your team, not to any visitors." %}
+                        {% trans "Your event is currently not published. It is only visible to you and your team, not to any visitors." %}
                     </p>
                     <div class="alert alert-warning">
                         <p>
-                            {% trans "To publish your ticket shop, you first need to resolve the following issues:" %}
+                            {% trans "To publish your event, you first need to resolve the following issues:" %}
                         </p>
                         <ul>
                             {% for issue in issues %}
@@ -53,176 +72,315 @@
                             {% endfor %}
                         </ul>
                     </div>
-                    <div class="test-right">
+                    <div class="text-right">
                         <button type="submit" class="btn btn-primary btn-lg btn-save" disabled>
-                            {% trans "Go live" %}
+                            {% trans "Publish event" %}
                         </button>
                     </div>
                 {% else %}
                     <p>
-                        {% trans "Your event is currently not live. It is only visible to you and your team, not to any visitors." %}
-                    </p>
-                    <p>
-                        {% trans "The ticket shop is not set up yet, but you can still publish the event now." %}
+                        {% trans "Your event is currently not published. It is only visible to you and your team, not to any visitors." %}
                     </p>
                     <form action="" method="post" class="flip text-right">
                         {% csrf_token %}
                         <input type="hidden" name="live" value="true">
                         <button type="submit" class="btn btn-primary btn-lg btn-save">
-                            {% trans "Go live" %}
+                            {% trans "Publish event" %}
                         </button>
                     </form>
                 {% endif %}
             {% endif %}
-            <div class="clear"></div>
         </div>
     </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            {% trans "Test mode" %}
-        </div>
-        <div class="panel-body">
-            {% if request.event.testmode %}
-                <form action="" method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="testmode" value="false">
-                    <p>
-                        {% trans "Your shop is currently in test mode. All orders are not persistent and can be deleted at any point." %}
-                    </p>
-                    <div class="form-inline">
-                        <label class="checkbox">
-                            <input type="checkbox" name="delete" value="yes" />
-                            {% trans "Permanently delete all orders created in test mode" %}
-                        </label>
-                    </div>
-                    <div class="text-right">
-                        <button type="submit" class="btn btn-lg btn-primary btn-save">
-                            {% trans "Disable test mode" %}
-                        </button>
-                    </div>
-                </form>
-            {% else %}
-                {% if request.event.private_testmode %}
-                    <p>
-                        {% trans "Private test mode is currently enabled. Disable it to enable standard test mode." %}
-                    </p>
-                    <div class="text-right">
-                        <button type="button" class="btn btn-lg btn-default btn-save" disabled>
-                            {% trans "Enable test mode" %}
-                        </button>
-                    </div>
-                {% else %}
-                    <p>
-                        {% trans "Your shop is currently in production mode." %}
-                    </p>
-                    <p>
-                        {% trans "If you want to do some test orders, you can enable test mode for your shop. As long as the shop is in test mode, all orders that are created are marked as test orders and can be deleted again." %}
-                        <strong>
-                            {% trans "Please note that test orders still count into your quotas, actually use vouchers and might perform actual payments. The only difference is that you can delete test orders. Use at your own risk!" %}
-                        </strong>
-                    </p>
-                    <p>
-                        {% trans "Also, test mode only covers the main web shop. Orders created through other sales channels such as the box office or resellers module are still created as production orders." %}
-                    </p>
-                    {% if actual_orders %}
-                        <div class="alert alert-danger">
-                            {% trans "It looks like you already have some real orders in your shop. We do not recommend enabling test mode if your customers already know your shop, as it will confuse them." %}
-                        </div>
-                    {% endif %}
-                    <form action="" method="post" class="flip text-right">
-                        {% csrf_token %}
-                        <input type="hidden" name="testmode" value="true">
-                        <button type="submit" class="btn btn-lg btn-default btn-save">
-                            {% trans "Enable test mode" %}
-                        </button>
-                    </form>
-                {% endif %}
 
-            {% endif %}
-            <div class="clear"></div>
-        </div>
-    </div>
+    {# Section 2: Ticket Shop #}
     <div class="panel panel-default">
         <div class="panel-heading">
-            {% trans "Private test mode" %}
+            <strong>{% trans "2. Ticket shop" %}</strong>
+            <span class="pull-right">
+                {% if request.event.testmode %}
+                    <span class="label label-warning">{% trans "Test Mode" %}</span>
+                {% elif ticket_shop_is_private %}
+                    <span class="label label-info">{% trans "Private" %}</span>
+                {% elif request.event.live %}
+                    <span class="label label-success">{% trans "Live" %}</span>
+                {% else %}
+                    <span class="label label-default">{% trans "Not Live" %}</span>
+                {% endif %}
+            </span>
         </div>
         <div class="panel-body">
-            {% if request.event.private_testmode %}
-                <p>
-                    {% trans "Private test mode lets you hide tickets and/or talks from the public. Only organizers, reviewers, and system administrators can access hidden sections." %}
-                </p>
-                <form action="" method="post">
-                    {% csrf_token %}
-                    <div class="form-inline">
-                        <label class="checkbox">
-                            <input type="checkbox" name="private_testmode_tickets" value="yes"
-                                {% if private_testmode_tickets %}checked{% endif %} />
-                            {% trans "Tickets (including purchases)" %}
-                        </label>
-                    </div>
-                    <div class="form-inline">
-                        <label class="checkbox">
-                            <input type="checkbox" name="private_testmode_talks" value="yes"
-                                {% if private_testmode_talks %}checked{% endif %} />
-                            {% trans "Talks (schedule, sessions, speakers, and call for speakers)" %}
-                        </label>
-                    </div>
-                    <div class="text-right">
-                        <button type="submit" name="private_testmode" value="true" class="btn btn-lg btn-default btn-save">
-                            {% trans "Update private test mode" %}
-                        </button>
-                        <button type="submit" name="private_testmode" value="false" class="btn btn-lg btn-primary btn-save">
-                            {% trans "Disable private test mode" %}
-                        </button>
-                    </div>
-                </form>
-            {% else %}
-                {% if request.event.testmode %}
+            <p>
+                {% trans "This controls ticket sales visibility and operating mode." %}
+            </p>
+
+            {# Private Mode Section #}
+            <div style="margin-bottom: 30px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #5bc0de;">
+                <h4 style="margin-top: 0;">
+                    {% trans "Private Mode" %}
+                    <i class="fa fa-info-circle" data-toggle="tooltip" 
+                       title="{% trans 'Hide tickets from the public. Only organizers, reviewers, and system administrators can view or purchase tickets.' %}"></i>
+                </h4>
+                
+                {% if ticket_shop_is_private %}
                     <p>
-                        {% trans "Test mode is currently enabled. Disable it to enable private test mode." %}
+                        <strong>{% trans "Private mode is currently enabled for tickets." %}</strong>
+                        {% trans "Tickets are hidden from the public and can only be accessed by organizers and administrators." %}
                     </p>
-                    <div class="text-right">
-                        <button type="button" class="btn btn-lg btn-default btn-save" disabled>
-                            {% trans "Enable private test mode" %}
-                        </button>
-                    </div>
-                {% else %}
-                    <p>
-                        {% trans "Private test mode lets you hide tickets and/or talks from the public. Only organizers, reviewers, and system administrators can access hidden sections." %}
-                    </p>
-                    <form action="" method="post" class="flip">
+                    <form action="" method="post">
                         {% csrf_token %}
-                        <input type="hidden" name="private_testmode" value="true">
-                        <div class="form-inline">
-                            <label class="checkbox">
-                                <input type="checkbox" name="private_testmode_tickets" value="yes"
-                                    {% if private_testmode_tickets %}checked{% endif %} />
-                                {% trans "Tickets (including purchases)" %}
-                            </label>
+                        <div class="text-right">
+                            <button type="submit" name="ticket_private_mode" value="false" class="btn btn-lg btn-primary btn-save">
+                                {% trans "Disable private mode for tickets" %}
+                            </button>
                         </div>
-                        <div class="form-inline">
+                    </form>
+                {% else %}
+                    {% if request.event.testmode %}
+                        <p class="text-muted">
+                            {% trans "Test mode is currently enabled. Disable it to enable private mode." %}
+                        </p>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                                {% trans "Enable private mode" %}
+                            </button>
+                        </div>
+                    {% else %}
+                        <p>
+                            {% trans "Enable private mode to hide tickets from public view. Only event team members will be able to access the ticket shop." %}
+                        </p>
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <div class="text-right">
+                                <button type="submit" name="ticket_private_mode" value="true" class="btn btn-lg btn-default btn-save">
+                                    {% trans "Enable private mode for tickets" %}
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {# Test Mode Section #}
+            <div style="margin-bottom: 30px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #f0ad4e;">
+                <h4 style="margin-top: 0;">
+                    {% trans "Test Mode" %}
+                    <i class="fa fa-info-circle" data-toggle="tooltip" 
+                       title="{% trans 'Create test orders that can be deleted later. Test orders still count against quotas and may perform actual payments.' %}"></i>
+                </h4>
+                
+                {% if request.event.testmode %}
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="testmode" value="false">
+                        <p>
+                            <strong>{% trans "Test mode is currently enabled." %}</strong>
+                            {% trans "All orders are marked as test orders and can be deleted." %}
+                        </p>
+                        <div class="alert alert-info">
+                            <p>
+                                <strong>{% trans "Note:" %}</strong>
+                                {% trans "Test orders still count into your quotas, actually use vouchers and might perform actual payments. The only difference is that you can delete them later." %}
+                            </p>
+                        </div>
+                        <div class="form-inline" style="margin-bottom: 15px;">
                             <label class="checkbox">
-                                <input type="checkbox" name="private_testmode_talks" value="yes"
-                                    {% if private_testmode_talks %}checked{% endif %} />
-                                {% trans "Talks (schedule, sessions, speakers, and call for speakers)" %}
+                                <input type="checkbox" name="delete" value="yes" />
+                                {% trans "Permanently delete all orders created in test mode" %}
                             </label>
                         </div>
                         <div class="text-right">
+                            <button type="submit" class="btn btn-lg btn-primary btn-save">
+                                {% trans "Disable test mode (Switch to production)" %}
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    {% if ticket_shop_is_private %}
+                        <p class="text-muted">
+                            {% trans "Private mode is currently enabled. Disable it to enable test mode." %}
+                        </p>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                                {% trans "Enable test mode" %}
+                            </button>
+                        </div>
+                    {% else %}
+                        <p>
+                            <strong>{% trans "Your shop is currently in production mode." %}</strong>
+                        </p>
+                        <p>
+                            {% trans "If you want to do some test orders, you can enable test mode for your shop. As long as the shop is in test mode, all orders that are created are marked as test orders." %}
+                        </p>
+                        <div class="alert alert-warning" style="margin-bottom: 15px;">
+                            <strong>{% trans "Important:" %}</strong>
+                            {% trans "Test mode only covers the main web shop. Orders created through other sales channels such as the box office or resellers module are still created as production orders." %}
+                        </div>
+                        {% if actual_orders %}
+                            <div class="alert alert-danger">
+                                {% trans "It looks like you already have some real orders in your shop. We do not recommend enabling test mode if your customers already know your shop, as it will confuse them." %}
+                            </div>
+                        {% endif %}
+                        <form action="" method="post" class="flip text-right">
+                            {% csrf_token %}
+                            <input type="hidden" name="testmode" value="true">
                             <button type="submit" class="btn btn-lg btn-default btn-save">
-                                {% trans "Enable private test mode" %}
+                                {% trans "Enable test mode" %}
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            {# Status Info #}
+            {% if not request.event.live %}
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    {% trans "To make your ticket shop live, the event needs to be published." %}
+                    {% if not request.event.live %}
+                        <a href="#" onclick="window.scrollTo(0,0); return false;">{% trans "Publish event above" %}</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Section 3: Talks and Speakers #}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>{% trans "3. Talks and speakers" %}</strong>
+            <span class="pull-right">
+                {% if talks_is_draft %}
+                    <span class="label label-default">{% trans "Draft Mode" %}</span>
+                {% else %}
+                    <span class="label label-success">{% trans "Live Mode" %}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="panel-body">
+            <p>
+                {% trans "This controls Call for Papers (CFP) and talk/speaker visibility." %}
+            </p>
+
+            <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #5cb85c;">
+                <h4 style="margin-top: 0;">
+                    {% trans "Draft Mode" %}
+                    <i class="fa fa-info-circle" data-toggle="tooltip" 
+                       title="{% trans 'Hide talks, speakers, schedule, and Call for Papers from the public.' %}"></i>
+                </h4>
+                
+                {% if talks_is_draft %}
+                    <p>
+                        <strong>{% trans "Draft mode is currently enabled." %}</strong>
+                        {% trans "Talks, schedule, sessions, speakers, and Call for Papers are hidden from the public. Only organizers, reviewers, and administrators can access them." %}
+                    </p>
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <div class="text-right">
+                            <button type="submit" name="talks_mode" value="live" class="btn btn-lg btn-primary btn-save">
+                                {% trans "Switch to live mode" %}
+                            </button>
+                        </div>
+                    </form>
+                {% else %}
+                    <p>
+                        <strong>{% trans "Live mode is currently enabled." %}</strong>
+                        {% trans "Talks, speakers, schedule, and Call for Papers are publicly accessible (where applicable)." %}
+                    </p>
+                    <form action="" method="post">
+                        {% csrf_token %}
+                        <div class="text-right">
+                            <button type="submit" name="talks_mode" value="draft" class="btn btn-lg btn-warning btn-save">
+                                {% trans "Switch to draft mode" %}
                             </button>
                         </div>
                     </form>
                 {% endif %}
-            {% endif %}
-            <div class="clear"></div>
+            </div>
+
+            <p>
+                <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="btn btn-default">
+                    <i class="fa fa-external-link"></i> {% trans "Go to Talks Dashboard" %}
+                </a>
+            </p>
         </div>
     </div>
-    <div class="text-right">
+
+    {# Section 4: Video #}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <strong>{% trans "4. Video" %}</strong>
+            <span class="pull-right">
+                {% if video_is_public %}
+                    <span class="label label-success">{% trans "Public" %}</span>
+                {% else %}
+                    <span class="label label-default">{% trans "Hidden" %}</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="panel-body">
+            <p>
+                {% trans "This controls online video visibility for virtual events." %}
+            </p>
+
+            {% if is_video_enabled %}
+                <div style="margin-bottom: 20px; padding: 15px; background-color: #f9f9f9; border-left: 4px solid #9b59b6;">
+                    {% if video_is_public %}
+                        <p>
+                            <strong>{% trans "Video is currently public." %}</strong>
+                            {% trans "Attendees can access virtual event features." %}
+                        </p>
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <div class="text-right">
+                                <button type="submit" name="video_visibility" value="hidden" class="btn btn-lg btn-warning btn-save">
+                                    {% trans "Hide video" %}
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p>
+                            <strong>{% trans "Video is currently hidden." %}</strong>
+                            {% trans "Virtual event features are not publicly accessible." %}
+                        </p>
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            <div class="text-right">
+                                <button type="submit" name="video_visibility" value="public" class="btn btn-lg btn-primary btn-save">
+                                    {% trans "Make video public" %}
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+                <p>
+                    <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}' 
+                       class="btn btn-default" target="_blank">
+                        <i class="fa fa-external-link"></i> {% trans "Go to Video Configuration" %}
+                    </a>
+                </p>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    {% trans "Video component is not configured yet." %}
+                    <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}' 
+                       target="_blank">{% trans "Configure video settings" %}</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-right" style="margin-top: 30px;">
         <a href="{% url "control:event.dangerzone" organizer=request.organizer.slug event=request.event.slug %}"
                 class="btn btn-delete btn-danger btn-default btn-lg">
             <span class="fa fa-trash"></span>
             {% trans "Cancel or delete event" %}
         </a>
     </div>
+
+    <script>
+        $(function() {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+    </script>
 {% endblock %}

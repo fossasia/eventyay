@@ -1,0 +1,52 @@
+/* Event Status Page Styling */
+.panel-heading strong {
+    font-size: 16px;
+}
+
+.panel-heading .label {
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.panel-body h4 {
+    color: #333;
+    font-weight: 600;
+}
+
+.panel-body .alert {
+    margin-top: 15px;
+}
+
+/* Component status cards */
+.panel-default {
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Button styling */
+.btn-save {
+    min-width: 150px;
+}
+
+/* Info tooltips */
+.fa-info-circle {
+    color: #5bc0de;
+    cursor: help;
+}
+
+/* Status badges */
+.label-success {
+    background-color: #5cb85c;
+}
+
+.label-warning {
+    background-color: #f0ad4e;
+}
+
+.label-info {
+    background-color: #5bc0de;
+}
+
+.label-default {
+    background-color: #999;
+}

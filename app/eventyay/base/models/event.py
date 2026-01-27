@@ -1889,6 +1889,54 @@ class Event(
         return self.urls.schedule.full
 
     @property
+    def ticket_shop_status(self):
+        """
+        Returns the current status of the ticket shop.
+        Returns: 'test', 'private', 'live', or 'offline'
+        """
+        if self.testmode:
+            return 'test'
+        if self.private_testmode and self.settings.get('private_testmode_tickets', True, as_type=bool):
+            return 'private'
+        if self.live:
+            return 'live'
+        return 'offline'
+    
+    @property
+    def talks_status(self):
+        """
+        Returns the current status of talks/speakers component.
+        Returns: 'draft' or 'live'
+        """
+        if self.private_testmode and self.settings.get('private_testmode_talks', False, as_type=bool):
+            return 'draft'
+        if self.is_public:
+            return 'live'
+        return 'draft'
+    
+    @property
+    def video_status(self):
+        """
+        Returns the current status of video component.
+        Returns: 'public' or 'hidden'
+        """
+        if self.settings.get('venueless_show_public_link', False, as_type=bool):
+            return 'public'
+        return 'hidden'
+
+    @property
+    def component_statuses(self):
+        """
+        Returns a dictionary with all component statuses for easy access.
+        """
+        return {
+            'event_published': self.live,
+            'ticket_shop': self.ticket_shop_status,
+            'talks': self.talks_status,
+            'video': self.video_status,
+        }
+        
+    @property
     def talk_session_url(self):
         return self.urls.talks.full
 
@@ -1899,7 +1947,6 @@ class Event(
     @property
     def talk_dashboard_url(self):
         return reverse('orga:event.dashboard', kwargs={'event': self.slug})
-
     @property
     def talk_settings_url(self):
         return reverse('orga:settings.event.view', kwargs={'event': self.slug})

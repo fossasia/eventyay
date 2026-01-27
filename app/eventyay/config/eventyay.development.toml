@@ -9,7 +9,14 @@ allowed_hosts = ['*']
 # Can be overridden with EVY_SITE_URL environment variable
 site_url = 'http://localhost:8000'
 
-redis_url = 'redis://localhost/0'
+redis_url = 'redis://redis/0'
+
+# Database configuration for Docker
+postgres_db = 'eventyay'
+postgres_user = 'eventyay'
+postgres_password = 'eventyay'
+postgres_host = 'db'
+postgres_port = 5432
 
 # For local development, use localhost
 # Can be overridden with EVY_SHORT_URL environment variable

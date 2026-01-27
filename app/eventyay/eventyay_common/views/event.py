@@ -542,20 +542,41 @@ class EventLive(TemplateView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
+        from eventyay.helpers.plugin_enable import is_video_enabled
+        
         ctx = super().get_context_data(**kwargs)
         ctx['issues'] = self.request.event.live_issues
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
-        ctx['private_testmode_tickets'] = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
-        ctx['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        
+        # Ticket shop status
+        ticket_private_mode = (
+            self.request.event.private_testmode 
+            and self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        )
+        ctx['ticket_shop_is_private'] = ticket_private_mode
+        
+        # Talks status
+        talks_draft_mode = (
+            self.request.event.private_testmode 
+            and self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        ) or not self.request.event.is_public
+        ctx['talks_is_draft'] = talks_draft_mode
+        
+        # Video status
+        ctx['is_video_enabled'] = is_video_enabled(self.request.event)
+        ctx['video_is_public'] = self.request.event.settings.get('venueless_show_public_link', False, as_type=bool)
+        
         return ctx
 
     def post(self, request, *args, **kwargs):
+        # Section 1: Event visibility
         if request.POST.get('live') == 'true' and not self.request.event.live_issues:
             with transaction.atomic():
                 request.event.live = True
                 request.event.save()
                 self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is live now!'))
+            messages.success(self.request, _('Your event is now published!'))
+            
         elif request.POST.get('live') == 'false':
             with transaction.atomic():
                 request.event.live = False
@@ -563,21 +584,68 @@ class EventLive(TemplateView):
                 self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
             messages.success(
                 self.request,
-                _("We've taken your shop down. You can re-enable it whenever you want!"),
+                _("Your event is now unpublished. You can re-publish it whenever you want!"),
             )
+        
+        # Section 2: Ticket shop - Private mode
+        elif request.POST.get('ticket_private_mode') == 'true':
+            with transaction.atomic():
+                # Ensure test mode is disabled first
+                if request.event.testmode:
+                    request.event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'auto_disabled': True},
+                    )
+                
+                request.event.private_testmode = True
+                request.event.settings.private_testmode_tickets = True
+                # Keep talks setting as is (don't force enable)
+                if not request.event.settings.get('private_testmode_talks'):
+                    request.event.settings.private_testmode_talks = False
+                request.event.save()
+                
+                self.request.event.log_action(
+                    'eventyay.event.ticket_private_mode.activated',
+                    user=self.request.user,
+                    data={},
+                )
+            messages.success(self.request, _('Private mode is now enabled for tickets.'))
+            
+        elif request.POST.get('ticket_private_mode') == 'false':
+            with transaction.atomic():
+                request.event.settings.private_testmode_tickets = False
+                # If talks are also not in private mode, disable private_testmode entirely
+                if not request.event.settings.get('private_testmode_talks', False, as_type=bool):
+                    request.event.private_testmode = False
+                request.event.save()
+                
+                self.request.event.log_action(
+                    'eventyay.event.ticket_private_mode.deactivated',
+                    user=self.request.user,
+                    data={},
+                )
+            messages.success(self.request, _('Private mode is now disabled for tickets.'))
+        
+        # Section 2: Ticket shop - Test mode
         elif request.POST.get('testmode') == 'true':
             with transaction.atomic():
-                request.event.testmode = True
+                # Disable private mode if enabled
                 if request.event.private_testmode:
                     request.event.private_testmode = False
+                    request.event.settings.private_testmode_tickets = False
                     self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
+                        'eventyay.event.ticket_private_mode.deactivated',
                         user=self.request.user,
-                        data={},
+                        data={'auto_disabled': True},
                     )
+                
+                request.event.testmode = True
                 request.event.save()
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is now in test mode!'))
+            messages.success(self.request, _('Test mode is now enabled for your ticket shop!'))
+            
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
                 request.event.testmode = False
@@ -588,6 +656,7 @@ class EventLive(TemplateView):
                     data={'delete': (request.POST.get('delete') == 'yes')},
                 )
             request.event.cache.delete('complain_testmode_orders')
+            
             if request.POST.get('delete') == 'yes':
                 try:
                     with transaction.atomic():
@@ -603,45 +672,66 @@ class EventLive(TemplateView):
                     )
                 else:
                     request.event.cache.set('complain_testmode_orders', False, 30)
+            
             request.event.cartposition_set.filter(addon_to__isnull=False).delete()
             request.event.cartposition_set.all().delete()
             messages.success(
                 self.request,
-                _("We've disabled test mode for you. Let's sell some real tickets!"),
+                _("Test mode is disabled. Your ticket shop is now in production mode!"),
             )
-        elif request.POST.get('private_testmode') == 'true':
-            tickets_enabled = request.POST.get('private_testmode_tickets') == 'yes'
-            talks_enabled = request.POST.get('private_testmode_talks') == 'yes'
-            if not tickets_enabled and not talks_enabled:
-                tickets_enabled = True
+        
+        # Section 3: Talks and speakers
+        elif request.POST.get('talks_mode') == 'draft':
             with transaction.atomic():
+                # Enable private mode for talks
                 request.event.private_testmode = True
-                if request.event.testmode:
-                    request.event.testmode = False
-                    self.request.event.log_action(
-                        'eventyay.event.testmode.deactivated',
-                        user=self.request.user,
-                        data={'delete': False},
-                    )
-                request.event.settings.private_testmode_tickets = tickets_enabled
-                request.event.settings.private_testmode_talks = talks_enabled
+                request.event.settings.private_testmode_talks = True
+                # Keep ticket setting as is
+                if not request.event.settings.get('private_testmode_tickets'):
+                    request.event.settings.private_testmode_tickets = False
                 request.event.save()
+                
                 self.request.event.log_action(
-                    'eventyay.event.private_testmode.activated',
+                    'eventyay.event.talks_draft_mode.activated',
                     user=self.request.user,
                     data={},
                 )
-            messages.success(self.request, _('Private test mode is now enabled.'))
-        elif request.POST.get('private_testmode') == 'false':
+            messages.success(self.request, _('Talks are now in draft mode (hidden from public).'))
+            
+        elif request.POST.get('talks_mode') == 'live':
             with transaction.atomic():
-                request.event.private_testmode = False
+                request.event.settings.private_testmode_talks = False
+                # If tickets are also not in private mode, disable private_testmode entirely
+                if not request.event.settings.get('private_testmode_tickets', True, as_type=bool):
+                    request.event.private_testmode = False
                 request.event.save()
+                
                 self.request.event.log_action(
-                    'eventyay.event.private_testmode.deactivated',
+                    'eventyay.event.talks_draft_mode.deactivated',
                     user=self.request.user,
                     data={},
                 )
-            messages.success(self.request, _('Private test mode has been disabled.'))
+            messages.success(self.request, _('Talks are now in live mode (publicly accessible).'))
+        
+        # Section 4: Video visibility
+        elif request.POST.get('video_visibility') == 'public':
+            request.event.settings.venueless_show_public_link = True
+            self.request.event.log_action(
+                'eventyay.event.video.show',
+                user=self.request.user,
+                data={},
+            )
+            messages.success(self.request, _('Video is now public.'))
+            
+        elif request.POST.get('video_visibility') == 'hidden':
+            request.event.settings.venueless_show_public_link = False
+            self.request.event.log_action(
+                'eventyay.event.video.hide',
+                user=self.request.user,
+                data={},
+            )
+            messages.success(self.request, _('Video is now hidden.'))
+        
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
@@ -653,7 +743,7 @@ class EventLive(TemplateView):
             },
         )
 
-
+        
 class VideoAccessAuthenticator(View):
     def get(self, request, *args, **kwargs):
         """
