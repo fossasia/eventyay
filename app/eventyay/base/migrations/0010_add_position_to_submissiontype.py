@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('base', '0008_make_custom_field_label_optional'),
+        ('base', '0009_event_private_testmode_and_more'),
     ]
 
     operations = [
