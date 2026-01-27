@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
     atomic = False
 
     dependencies = [
-        ('base', '0009_alter_talkquestion_contains_personal_data'),
+        ('base', '0008_make_custom_field_label_optional'),
     ]
 
     operations = [
