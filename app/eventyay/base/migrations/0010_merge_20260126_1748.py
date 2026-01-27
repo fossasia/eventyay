@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("base", "0009_alter_question_hidden_alter_question_question_and_more"),
-        ("base", "0009_alter_talkquestion_contains_personal_data"),
+        ("base", "0009_event_private_testmode_and_more"),
     ]
 
     operations = []
