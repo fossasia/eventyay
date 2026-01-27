@@ -2423,11 +2423,11 @@ wheels = [
 
 [[package]]
 name = "publicsuffixlist"
-version = "1.0.2.20260121"
+version = "1.0.2.20260126"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e6/ca/e3bb9ce1b5b2086b73eff26d060041ea2db2b1439d45cafebfd5dc869d0e/publicsuffixlist-1.0.2.20260121.tar.gz", hash = "sha256:dc28d4d26df7d065ab424b017bb77d5bc3d97c0232cd9f343250cd7b08160bbf", size = 107664, upload-time = "2026-01-21T04:12:23.258Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3a/55/1bfcd7e3ad204907ec538ef6aaf4d21c7d4f87661add16ef74f0c925a5ac/publicsuffixlist-1.0.2.20260126.tar.gz", hash = "sha256:14fb41891db31722045a0cac8d164ce8b901624f4b2af9f4418d4a5b478f6069", size = 107797, upload-time = "2026-01-26T04:22:07.755Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/a2/6d7517f185bd9b97745c15a8d2a423ee90361c45f079ace12590c5bbf4b9/publicsuffixlist-1.0.2.20260121-py2.py3-none-any.whl", hash = "sha256:e195ae177ef95668d13a3d3af00fa6ddff42ff61867c82df75c5f95ec7571297", size = 107463, upload-time = "2026-01-21T04:12:22.04Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/f3/ca33ea7bf868f856a8e8ac34babc447fe7ed5ccb85eeaa9667858c3b4339/publicsuffixlist-1.0.2.20260126-py2.py3-none-any.whl", hash = "sha256:87e9988be52f6289cd75f8bcfd574274ea1967a02bf284a5fea49932a80e63de", size = 107598, upload-time = "2026-01-26T04:22:06.59Z" },
 ]
 
 [[package]]
@@ -2632,11 +2632,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "6.6.1"
+version = "6.6.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/90/da/50a15233ca512dcac68fd6edeabbf1cad5260e7f032f5a24934a7d5662c5/pypdf-6.6.1.tar.gz", hash = "sha256:7ea09ab3748644dacef1a30c475d1edc031656f69c03332c291ebf5b9291a909", size = 5281346, upload-time = "2026-01-25T14:13:36.275Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/bb/a44bab1ac3c54dbcf653d7b8bcdee93dddb2d3bf025a3912cacb8149a2f2/pypdf-6.6.2.tar.gz", hash = "sha256:0a3ea3b3303982333404e22d8f75d7b3144f9cf4b2970b96856391a516f9f016", size = 5281850, upload-time = "2026-01-26T11:57:55.964Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b9/cc/d9fd9f87bec8ebbfde76aaa9e30703e37810118e913538ef6526e94ebe51/pypdf-6.6.1-py3-none-any.whl", hash = "sha256:453354ddb4398319197f4006fbd1b93c4fbc995f15b15c0af88cba99494ce65a", size = 328987, upload-time = "2026-01-25T14:13:34.901Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/be/549aaf1dfa4ab4aed29b09703d2fb02c4366fc1f05e880948c296c5764b9/pypdf-6.6.2-py3-none-any.whl", hash = "sha256:44c0c9811cfb3b83b28f1c3d054531d5b8b81abaedee0d8cb403650d023832ba", size = 329132, upload-time = "2026-01-26T11:57:54.099Z" },
 ]
 
 [[package]]
