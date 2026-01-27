@@ -5,11 +5,11 @@ from collections import defaultdict
 
 from csp.decorators import csp_update
 from django.contrib import messages
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import Count
 from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -124,100 +124,6 @@ class CfPForms(EventPermissionRequired, TemplateView):
             prefix='settings',
         )
 
-    def get_unified_fields(self, target):
-        """
-        Merges/orders fields for target ('session'/'speaker') based on `fields_config`.
-        Prioritizes configured order, then remaining native fields, then custom questions.
-
-        Args:
-            target (str): The target type ('session' or 'speaker').
-
-        Returns:
-            list: Field dicts containing metadata (key, label, visibility), state (is_custom),
-                  objects (TalkQuestion), and bound form fields (e.g., visibility_field).
-        """
-        event = self.request.event
-        fields_config = event.cfp.settings.get('fields_config', {}).get(target, [])
-        sform = self.sform
-        
-        # Native fields
-        native_fields = []
-        from eventyay.base.models.cfp import default_fields
-        all_defaults = default_fields()
-        
-        native_session_keys = [
-            'title', 'abstract', 'description', 'notes', 'do_not_record', 
-            'image', 'track', 'duration', 'content_locale', 'additional_speaker'
-        ]
-        native_speaker_keys = [
-            'biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities'
-        ]
-        
-        target_keys = native_session_keys if target == 'session' else native_speaker_keys
-        
-        for key in target_keys:
-            if key in all_defaults:
-                field_data = event.cfp.fields.get(key, all_defaults[key])
-                data = {
-                    'key': key,
-                    'is_custom': False,
-                    'label': key.replace('_', ' ').capitalize(),
-                    'visibility': field_data['visibility']
-                }
-                # Attach bound fields from sform
-                if f'cfp_ask_{key}' in sform.fields:
-                    data['visibility_field'] = sform[f'cfp_ask_{key}']
-                if f'cfp_{key}_min_length' in sform.fields:
-                    data['min_length_field'] = sform[f'cfp_{key}_min_length']
-                if f'cfp_{key}_max_length' in sform.fields:
-                    data['max_length_field'] = sform[f'cfp_{key}_max_length']
-                
-                native_fields.append(data)
-
-        # Custom questions
-        from eventyay.base.models import TalkQuestionTarget
-        target_enum = TalkQuestionTarget.SUBMISSION if target == 'session' else TalkQuestionTarget.SPEAKER
-        custom_questions = list(event.talkquestions.filter(target=target_enum))
-        
-        custom_field_map = {
-            f'question_{q.pk}': {
-                'key': f'question_{q.pk}',
-                'is_custom': True,
-                'obj': q,
-                'label': q.question,
-                'visibility': 'required' if q.required else 'optional',
-                'edit_url': q.urls.base
-            } for q in custom_questions
-        }
-        
-        # Merge and sort
-        unified_list = []
-        native_map = {f['key']: f for f in native_fields}
-        
-        # First, add fields that are in the config, in order
-        processed_keys = set()
-        for key in fields_config:
-            if key in native_map:
-                unified_list.append(native_map[key])
-                processed_keys.add(key)
-            elif key in custom_field_map:
-                unified_list.append(custom_field_map[key])
-                processed_keys.add(key)
-        
-        # Then add any remaining native fields
-        for key in target_keys:
-            if key not in processed_keys and key in native_map:
-                unified_list.append(native_map[key])
-        
-        # Then add any remaining custom questions (ordered by position)
-        sorted_remaining_custom = sorted(
-            [q for k, q in custom_field_map.items() if k not in processed_keys],
-            key=lambda x: x['obj'].position
-        )
-        unified_list.extend(sorted_remaining_custom)
-        
-        return unified_list
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['generic_title'] = _('Forms')
@@ -229,35 +135,144 @@ class CfPForms(EventPermissionRequired, TemplateView):
         )
         context['create_url'] = reverse('orga:cfp.questions.create', kwargs={'event': self.request.event.slug})
         
-        context['session_fields'] = self.get_unified_fields('session')
-        context['speaker_fields'] = self.get_unified_fields('speaker')
+        # Pass saved field order to template for JavaScript reordering
+        fields_config = self.request.event.cfp.settings.get('fields_config', {})
+        context['session_field_order'] = json.dumps(fields_config.get('session', []))
+        context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
+        context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
         
-        questions = TalkQuestion.all_objects.filter(event=self.request.event)
         sform = self.sform
         
-        def get_field_data(targets):
+        def get_field_data(targets, config_key):
+            questions = TalkQuestion.all_objects.filter(
+                event=self.request.event,
+                target__in=targets
+            )
+            
+            question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
+            saved_order = fields_config.get(config_key, [])
+            
+            ordered_questions = []
+            processed_ids = set()
+            
+            for item in saved_order:
+                if item.isdigit() and item in question_map:
+                    ordered_questions.append(question_map[item])
+                    processed_ids.add(item)
+            
+            remaining_questions = sorted(
+                [q for q_id, q in question_map.items() if q_id not in processed_ids],
+                key=lambda x: (x.position, x.id)
+            )
+            ordered_questions.extend(remaining_questions)
+            
             data = []
-            for q in questions:
-                if q.target in targets and f'question_{q.pk}' in sform.fields:
-                    data.append({
-                        'question': q,
-                        'field': sform[f'question_{q.pk}']
-                    })
+            for q in ordered_questions:
+                data.append({
+                    'question': q,
+                    'field': sform[f'question_{q.pk}']
+                })
             return data
 
-        context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION])
-        context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER])
-        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER])
+        context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION], 'session')
+        context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER], 'speaker')
+        context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER], 'reviewer')
         return context
 
     @transaction.atomic
     def post(self, request, *args, **kwargs):
+        # Handle drag-drop reordering (AJAX request with 'order' parameter)
+        order_param = request.POST.get('order')
+        if order_param:
+            self._handle_field_reordering(order_param)
+            return HttpResponse(status=204)  # No content response for AJAX
+        
+        # Handle regular form submission
         if self.sform.is_valid():
             self.sform.save()
             messages.success(request, phrases.base.saved)
             return redirect(request.path)
         messages.error(request, phrases.base.error_saving_changes)
         return self.get(request, *args, **kwargs)
+    
+    def _handle_field_reordering(self, order_str):
+        """Handle field reordering for both default fields and custom questions."""
+        order_list = order_str.split(',')
+        event = self.request.event
+        
+        custom_question_ids = []
+        for item in order_list:
+            if item.isdigit():
+                custom_question_ids.append(int(item))
+        
+        fields_config = event.cfp.settings.get('fields_config', {})
+        
+        session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
+                       'content_locale', 'image', 'do_not_record']
+        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
+                       'additional_speaker']
+        
+        has_session_fields = any(item in session_keys for item in order_list)
+        has_speaker_fields = any(item in speaker_keys for item in order_list)
+        has_reviewer_fields = False
+
+        if has_session_fields and has_speaker_fields:
+            logger.warning(
+                'Ambiguous field reordering: contains both session and speaker fields. '
+                'Skipping fields_config update for event %s.',
+                event.id
+            )
+            return
+
+        target_type = None
+        if not has_session_fields and not has_speaker_fields and custom_question_ids:
+            all_speaker = True
+            all_session = True
+            all_reviewer = True
+            valid_question_count = 0
+            for qid in custom_question_ids:
+                q = TalkQuestion.objects.filter(id=qid, event=event).first()
+                if not q:
+                    continue
+                valid_question_count += 1
+                if q.target != TalkQuestionTarget.SPEAKER:
+                    all_speaker = False
+                if q.target != TalkQuestionTarget.SUBMISSION:
+                    all_session = False
+                if q.target != TalkQuestionTarget.REVIEWER:
+                    all_reviewer = False
+
+            has_session_fields = all_session and valid_question_count > 0
+            has_speaker_fields = all_speaker and valid_question_count > 0
+            has_reviewer_fields = all_reviewer and valid_question_count > 0
+        if has_session_fields:
+            fields_config['session'] = order_list
+            target_type = TalkQuestionTarget.SUBMISSION
+        elif has_speaker_fields:
+            fields_config['speaker'] = order_list
+            target_type = TalkQuestionTarget.SPEAKER
+        elif has_reviewer_fields:
+            fields_config['reviewer'] = order_list
+            target_type = TalkQuestionTarget.REVIEWER
+        
+        if target_type:
+            for index, question_id in enumerate(custom_question_ids):
+                try:
+                    question = TalkQuestion.objects.get(id=question_id, event=event, target=target_type)
+                    question.position = index
+                    question.save(update_fields=['position'])
+                except TalkQuestion.DoesNotExist:
+                    logger.warning(
+                        'Skipping missing TalkQuestion %s for event %s and target %s',
+                        question_id,
+                        event.id,
+                        target_type,
+                    )
+
+        # Only save if changes were actually made
+        if fields_config:
+            event.cfp.settings['fields_config'] = fields_config
+            event.cfp.save(update_fields=['settings'])
 
 class QuestionView(OrderActionMixin, OrgaCRUDView):
     model = TalkQuestion
@@ -399,6 +414,15 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     def form_valid(self, form):
         form.instance.event = self.request.event
         self.instance = form.instance
+        
+        is_new = not form.instance.pk
+        if is_new:
+            max_position = TalkQuestion.objects.filter(
+                event=self.request.event,
+                target=form.instance.target
+            ).aggregate(models.Max('position'))['position__max']
+            form.instance.position = (max_position or -1) + 1
+        
         if form.cleaned_data.get('variant') in ('choices', 'multiple_choice'):
             changed_options = [form.changed_data for form in self.formset if form.has_changed()]
             if form.cleaned_data.get('options') and changed_options:
@@ -408,6 +432,27 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
                 )
                 return self.form_invalid(form)
         result = super().form_valid(form)
+        
+        if is_new:
+            event = self.request.event
+            fields_config = event.cfp.settings.get('fields_config', {})
+            if form.instance.target == TalkQuestionTarget.SUBMISSION:
+                config_key = 'session'
+            elif form.instance.target == TalkQuestionTarget.SPEAKER:
+                config_key = 'speaker'
+            elif form.instance.target == TalkQuestionTarget.REVIEWER:
+                config_key = 'reviewer'
+            else:
+                config_key = None
+            
+            if config_key:
+                if config_key not in fields_config:
+                    fields_config[config_key] = []
+                if str(form.instance.pk) not in fields_config[config_key]:
+                    fields_config[config_key].append(str(form.instance.pk))
+                    event.cfp.settings['fields_config'] = fields_config
+                    event.cfp.save(update_fields=['settings'])
+        
         if form.cleaned_data.get('variant') in (
             'choices',
             'multiple_choice',
