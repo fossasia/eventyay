@@ -13,8 +13,8 @@
 					.time {{ formatDateTime(schedule.start_time) }} - {{ formatDateTime(schedule.end_time) }} ({{ eventTimezone }})
 					.type {{ schedule.stream_type }}
 				.actions
-					bunt-icon-button(@click="editSchedule(schedule)") edit
-					bunt-icon-button(@click="deleteSchedule(schedule)") delete
+					bunt-icon-button(@click="editSchedule(schedule)") pencil
+					bunt-icon-button(@click="deleteSchedule(schedule)") delete-outline
 		.empty-state(v-else-if="streamSchedules !== null")
 			p No stream schedules configured yet.
 			p Click "Add Stream Schedule" to create one.
@@ -307,7 +307,6 @@ export default {
 								}
 							}
 						} catch (textError) {
-							console.error('Failed to get error response text:', textError);
 						}
 					}
 
@@ -435,6 +434,8 @@ export default {
 			display: flex
 			gap: 8px
 			flex-shrink: 0
+			.bunt-icon-button
+				icon-button-style(style: clear)
 	.loading
 		display: flex
 		justify-content: center

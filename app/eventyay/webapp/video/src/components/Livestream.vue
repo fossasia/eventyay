@@ -140,17 +140,16 @@ export default {
 			return 'quality-high'
 		},
 		hlsUrl() {
-			// Use scheduled stream URL if available, otherwise fall back to module config
 			if (this.room?.currentStream?.url && this.room.currentStream.stream_type === 'hls') {
 				return this.room.currentStream.url
 			}
 			if (this.chosenAlternative) {
 				const alternative = (this.module.config.alternatives || []).find((a) => a.label === this.chosenAlternative)
-				if (alternative) {
+				if (alternative && alternative.hls_url) {
 					return alternative.hls_url
 				}
 			}
-			return this.module.config.hls_url
+			return this.module.config?.hls_url || null
 		},
 		hasAlternativeStreams() {
 			return this.module.config.alternatives?.length > 0
@@ -160,24 +159,31 @@ export default {
 		hlsUrl: 'initializePlayer',
 		'room.currentStream': {
 			handler(newStream, oldStream) {
-				// Reload player when scheduled stream changes
-				if (newStream?.id !== oldStream?.id || newStream?.url !== oldStream?.url) {
-					this.initializePlayer()
+				const newId = newStream?.id ?? null
+				const oldId = oldStream?.id ?? null
+				const newUrl = newStream?.url ?? null
+				const oldUrl = oldStream?.url ?? null
+				if (newId !== oldId || newUrl !== oldUrl) {
+					if (newStream && newStream.stream_type === 'hls') {
+						this.offline = false
+					}
+					this.$nextTick(() => {
+						this.initializePlayer()
+					})
 				}
 			},
-			deep: true
+			deep: true,
+			immediate: false
 		}
 	},
 	created() {
-		// don't start playing when autoplay is disabled
 		this.playing = this.autoplay
 		if (localStorage[`livestream.native.alternative:${this.room.id}`]) {
 			this.chosenAlternative = localStorage[`livestream.native.alternative:${this.room.id}`]
 		}
 	},
-	mounted() {
+	async mounted() {
 		document.addEventListener('fullscreenchange', this.onFullscreenchange)
-		/* loadedmetadata */
 		this.$refs.video.addEventListener('durationchange', this.onDurationchange)
 		this.$refs.video.addEventListener('progress', this.onProgress)
 		this.$refs.video.addEventListener('timeupdate', this.onTimeupdate)
@@ -187,6 +193,7 @@ export default {
 		this.$refs.video.textTracks.addEventListener('addtrack', this.onTextTracksChanged)
 		this.$refs.video.textTracks.addEventListener('change', this.onTextTracksChanged)
 		this.$refs.video.textTracks.addEventListener('removetrack', this.onTextTracksChanged)
+		await this.$nextTick()
 		this.initializePlayer()
 	},
 	beforeUnmount() {
@@ -198,6 +205,12 @@ export default {
 	},
 	methods: {
 		initializePlayer() {
+			const url = this.hlsUrl
+			if (!url || (typeof url === 'string' && url.trim() === '')) {
+				this.offline = true
+				this.buffering = false
+				return
+			}
 			this.player?.destroy()
 			this.buffering = true
 			const video = this.$refs.video
@@ -223,7 +236,9 @@ export default {
 				player.attachMedia(video)
 				this.player = player
 				const load = () => {
-					player.loadSource(this.hlsUrl)
+					if (this.hlsUrl) {
+						player.loadSource(this.hlsUrl)
+					}
 				}
 				player.on(Hls.Events.MEDIA_ATTACHED, () => {
 					load()
@@ -239,7 +254,6 @@ export default {
 				player.on(Hls.Events.LEVEL_LOADED, (event, data) => {
 					this.isLive = data.details.live
 					if (!data.details.live && this.onlyLive) {
-						console.warn('STREAM IS NOT LIVE! Venueless stages will only play livestreams.')
 						this.player?.destroy()
 						this.offline = true
 					}
@@ -251,7 +265,6 @@ export default {
 				})
 
 				player.on(Hls.Events.ERROR, (event, data) => {
-					console.error(event, data)
 					if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
 						this.buffering = true
 					} else if ([Hls.ErrorDetails.MANIFEST_LOAD_ERROR, Hls.ErrorDetails.LEVEL_LOAD_ERROR].includes(data.details)) {
@@ -271,12 +284,12 @@ export default {
 					this.buffering = false
 				})
 			} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-				video.src = this.hlsUrl
-				// TODO probably explodes on re-init
-				// TODO doesn't seem like the buffer ring gets hidden?
-				video.addEventListener('loadedmetadata', function() {
-					start()
-				})
+				if (this.hlsUrl) {
+					video.src = this.hlsUrl
+					video.addEventListener('loadedmetadata', function() {
+						start()
+					})
+				}
 			}
 			if (this.$features.enabled('muxdata') && (this.module.config.mux_env_key || config.mux?.env_key)) {
 				// TODO late load the module

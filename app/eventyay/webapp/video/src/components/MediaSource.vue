@@ -8,7 +8,7 @@
 				.room-name(v-else-if="call") {{ $t('MediaSource:call:label') }}
 			.global-placeholder
 			bunt-icon-button(@click.prevent.stop="$emit('close')") close
-	Livestream(v-if="room && module.type === 'livestream.native'", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
+	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
@@ -71,6 +71,16 @@ const module = computed(() => {
 	);
 });
 
+const shouldUseLivestream = computed(() => {
+	if (!props.room || !module.value) return false;
+	if (module.value.type !== 'livestream.native') return false;
+	const streamType = props.room?.currentStream?.stream_type;
+	if (streamType && streamType !== 'hls') {
+		return false;
+	}
+	return true;
+});
+
 const inRoomManager = computed(() => route.name === 'room:manage');
 
 watch(
@@ -90,14 +100,26 @@ watch(
 watch(module, (value, oldValue) => {
 	if (isEqual(value, oldValue)) return;
 	destroyIframe();
+	if (shouldUseLivestream.value) return;
 	initializeIframe(false);
+});
+
+watch(shouldUseLivestream, (shouldUse, oldShouldUse) => {
+	if (shouldUse === oldShouldUse) return;
+	if (shouldUse) {
+		destroyIframe();
+	} else {
+		initializeIframe(false);
+	}
 });
 
 watch(
 	() => props.room?.currentStream,
 	(newStream, oldStream) => {
-		// Reload iframe when scheduled stream changes
 		if (!isEqual(newStream, oldStream) && module.value) {
+			if (shouldUseLivestream.value) {
+				return;
+			}
 			destroyIframe();
 			initializeIframe(false);
 		}
@@ -107,8 +129,9 @@ watch(
 
 watch(youtubeTransUrl, (ytUrl) => {
 	if (!props.room) return;
-	// Only react for YouTube livestream modules
-	if (module.value?.type !== 'livestream.youtube') return;
+	const streamType = props.room?.currentStream?.stream_type;
+	const isYouTube = streamType === 'youtube' || module.value?.type === 'livestream.youtube';
+	if (!isYouTube) return;
 
 	// Handle translation: mute main player and create translation audio iframe
 	if (ytUrl) {
@@ -130,6 +153,7 @@ watch(youtubeTransUrl, (ytUrl) => {
 
 onMounted(async () => {
 	if (!props.room) return;
+	if (shouldUseLivestream.value) return;
 	await initializeIframe(false);
 });
 
@@ -149,7 +173,6 @@ function muteYouTubePlayer() {
 			'*'
 		);
 	} catch (error) {
-		console.error('Failed to mute YouTube player:', error);
 	}
 }
 
@@ -161,17 +184,25 @@ function unmuteYouTubePlayer() {
 			'*'
 		);
 	} catch (error) {
-		console.error('Failed to unmute YouTube player:', error);
 	}
 }
 
 async function initializeIframe(mute) {
 	try {
 		if (!module.value) return;
+		if (shouldUseLivestream.value) return;
 		let iframeUrl;
 		let hideIfBackground = false;
 		let isYouTube = false;
-		switch (module.value.type) {
+		const streamType = props.room?.currentStream?.stream_type;
+		const effectiveModuleType = streamType === 'youtube' 
+			? 'livestream.youtube' 
+			: streamType === 'vimeo'
+			? 'livestream.vimeo'
+			: streamType === 'iframe'
+			? 'livestream.iframe'
+			: module.value.type;
+		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
 				({ url: iframeUrl } = await api.call('bbb.room_url', {
 					room: props.room.id,
@@ -187,7 +218,6 @@ async function initializeIframe(mute) {
 				break;
 			}
 			case 'livestream.iframe': {
-				// Use scheduled stream URL if available, otherwise fall back to module config
 				if (props.room?.currentStream?.url) {
 					iframeUrl = props.room.currentStream.url;
 				} else {
@@ -195,23 +225,39 @@ async function initializeIframe(mute) {
 				}
 				break;
 			}
+			case 'livestream.vimeo': {
+				if (props.room?.currentStream?.url) {
+					const vimeoMatch = props.room.currentStream.url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
+					if (vimeoMatch) {
+						iframeUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=${autoplay.value ? '1' : '0'}&muted=${mute ? '1' : '0'}`;
+					} else {
+						iframeUrl = props.room.currentStream.url;
+					}
+				} else if (module.value.config?.url) {
+					const vimeoMatch = module.value.config.url.match(/vimeo\.com\/(?:.*\/)?(\d+)/);
+					if (vimeoMatch) {
+						iframeUrl = `https://player.vimeo.com/video/${vimeoMatch[1]}?autoplay=${autoplay.value ? '1' : '0'}&muted=${mute ? '1' : '0'}`;
+					} else {
+						iframeUrl = module.value.config.url;
+					}
+				}
+				break;
+			}
 			case 'livestream.youtube': {
 				isYouTube = true;
-				// Use scheduled stream URL if available, otherwise fall back to module config
 				let ytid;
-				if (props.room?.currentStream?.url) {
-					// Extract YouTube ID from scheduled stream URL
+				if (streamType === 'youtube' && props.room?.currentStream?.url) {
 					ytid = normalizeYoutubeVideoId(props.room.currentStream.url);
-				} else {
-					// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
+				} else if (module.value.type === 'livestream.youtube' && module.value.config?.ytid) {
 					ytid = normalizeYoutubeVideoId(module.value.config.ytid);
+				} else {
+					ytid = null;
 				}
-				// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
 				if (!ytid) {
 					iframeError.value = new Error('Invalid YouTube video ID');
 					break;
 				}
-				const config = module.value.config;
+				const config = module.value.config || {};
 				// Smart muting logic to balance autoplay and user control:
 				// - Always mute if already muted (e.g., for language translation)
 				// - Mute for autoplay ONLY if controls are visible (so user can unmute)
@@ -272,9 +318,7 @@ async function initializeIframe(mute) {
 			};
 		}
 	} catch (error) {
-		// TODO handle bbb/zoom.join.missing_profile
 		iframeError.value = error;
-		console.error(error);
 	}
 }
 
@@ -287,7 +331,7 @@ function isPlaying() {
 	if (props.call) {
 		return janus.value?.roomId;
 	}
-	if (module.value?.type === 'livestream.native') {
+	if (shouldUseLivestream.value) {
 		return livestream.value?.playing && !livestream.value?.offline;
 	}
 	if (module.value?.type === 'call.janus') {
