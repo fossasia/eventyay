@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             return JSON.parse(value);
         } catch (error) {
-            console.error('Failed to parse JSON from dataset field %s: %o', fieldName, value);
+            console.error(`Failed to parse JSON from dataset field ${fieldName}:`, value, error);
             return [];
         }
     }
