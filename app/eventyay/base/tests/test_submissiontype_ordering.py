@@ -44,8 +44,6 @@ class SubmissionTypeOrderingTestCase(TestCase):
         """Test that position is automatically assigned when creating new type"""
         with scope(event=self.event):
             # Default type exists and likely has position 0 or 1
-            initial_count = self.event.submission_types.count()
-            
             type1 = SubmissionType.objects.create(
                 event=self.event,
                 name='New Type 1'
