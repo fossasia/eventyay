@@ -1,6 +1,7 @@
 from django.test import TestCase
-from django_scopes import scope
+from datetime import timedelta
 from django.utils import timezone
+from django_scopes import scope
 from eventyay.base.models import Event, SubmissionType, Organizer
 
 class SubmissionTypeOrderingTestCase(TestCase):
@@ -12,7 +13,7 @@ class SubmissionTypeOrderingTestCase(TestCase):
             name='Test Event',
             slug='test-event',
             date_from=timezone.now(),
-            date_to=timezone.now() + timezone.timedelta(days=1)
+            date_to=timezone.now() + timedelta(days=1)
         )
     
     def test_default_ordering_by_position(self):
