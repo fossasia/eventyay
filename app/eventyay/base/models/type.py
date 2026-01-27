@@ -105,9 +105,9 @@ class SubmissionType(OrderedModel, PretalxModel):
         return event.submission_types.all()
 
     def save(self, *args, **kwargs):
-        if self.pk is None and (self.position is None or self.position == 0):
+        if self.pk is None and self.position is None:
             max_position = self.event.submission_types.aggregate(models.Max('position'))['position__max']
-            self.position = (max_position or 0) + 1
+            self.position = (max_position or -1) + 1
         super().save(*args, **kwargs)
 
     def update_duration(self):

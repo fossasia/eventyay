@@ -1,7 +1,9 @@
-from django.test import TestCase
 from datetime import timedelta
+
+from django.test import TestCase
 from django.utils import timezone
 from django_scopes import scope
+
 from eventyay.base.models import Event, SubmissionType, Organizer
 
 class SubmissionTypeOrderingTestCase(TestCase):
