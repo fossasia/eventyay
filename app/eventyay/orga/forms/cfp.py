@@ -232,7 +232,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def __init__(self, *args, event=None, **kwargs):
         super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
+        instance = getattr(self, 'instance', None)
         if not (instance and instance.pk):
             target = self.initial.get('target')
             if target and 'target' in self.fields:
