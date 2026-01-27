@@ -28,6 +28,9 @@ export default {
 	},
 	computed: {
 		...mapState(['now']),
+		eventTimezone() {
+			return this.$store.state.world?.timezone || 'UTC'
+		},
 		shouldShow() {
 			return this.upcomingStream && this.timeUntilStart > 0
 		},
@@ -44,7 +47,7 @@ export default {
 		},
 		formattedStartTime() {
 			if (!this.upcomingStream) return ''
-			return moment(this.upcomingStream.start_time).format('HH:mm')
+			return moment.tz(this.upcomingStream.start_time, this.eventTimezone).format('HH:mm')
 		}
 	},
 	watch: {
