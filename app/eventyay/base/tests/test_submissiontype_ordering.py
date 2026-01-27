@@ -75,35 +75,30 @@ class SubmissionTypeOrderingTestCase(TestCase):
             names = [t.name for t in types]
             self.assertEqual(names, ['A', 'B', 'C'])
     
-    def test_migration_backfill_preserves_order(self):
-        """Test that migration backfill maintains previous default_duration order"""
+    def test_default_duration_sorting_preserves_order(self):
+        """Test that manual sorting by default_duration preserves expected order"""
         with scope(event=self.event):
             # Reuse default as Short
             type1 = self.event.submission_types.first()
             type1.name = 'Short'
             type1.default_duration = 15
-            type1.position = 0 # reset position to simulate pre-migration state? 
-            # Note: Model now enforces defaults, but we can manually set to 0.
-            # actually we want to test the backfill logic - which runs on existing data.
-            # But we are testing logic manually here? The migration test does the real check.
-            # This test was originally intended to verify the *logic* if we were to run it.
-            # But the logic is in the migration. Let's just simulate the sort.
-            
+            # Reset position to simulate unsorted state
+            type1.position = 0
+
             type1.save()
-            
-            SubmissionType.objects.create(
+
+            type2 = SubmissionType.objects.create(
                 event=self.event,
                 name='Long',
                 default_duration=60,
                 position=0
             )
-            
-            # Simulate logic:
+
+            # Manually apply the same ordering logic used for assigning positions
             types = self.event.submission_types.all().order_by('default_duration', 'id')
             for index, t in enumerate(types, start=1):
                 t.position = index
                 t.save()
-            
             # Verify order
             ordered_types = list(self.event.submission_types.all())
             self.assertEqual(ordered_types[0].name, 'Short')
