@@ -28,7 +28,7 @@ from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
-from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.base.models import Event, EventMetaValue, Organizer, Quota, SponsorGroup
 from eventyay.base.services import tickets
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.presale.style import regenerate_css
@@ -395,6 +395,12 @@ class EventUpdate(
         ):
             # Ignore case Event is created only for Talk as it not enable yet.
             context['is_talk_event_created'] = True
+        
+        # Add sponsor groups for partner management
+        context['sponsor_groups'] = SponsorGroup.objects.filter(
+            event=self.object
+        ).prefetch_related('partners').order_by('order')
+        
         return context
 
     @transaction.atomic

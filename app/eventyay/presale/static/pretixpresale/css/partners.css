@@ -1,0 +1,112 @@
+/* Partner Section - Public Display */
+
+.partner-section {
+    margin: 40px auto !important;
+    padding: 30px 0 !important;
+    border-top: 1px solid #e0e0e0;
+    text-align: center !important;
+    width: 100% !important;
+    display: block !important;
+}
+
+.partner-section-wrapper {
+    width: 100% !important;
+    max-width: 1200px;
+    margin: 0 auto !important;
+    padding: 0 15px;
+    text-align: center !important;
+}
+
+.partner-section h3,
+.partner-section-wrapper h3,
+#partners-heading {
+    text-align: center !important;
+    margin: 0 auto 30px auto !important;
+    font-size: 2em;
+    color: #333;
+    width: 100%;
+    display: block !important;
+}
+
+.sponsor-group {
+    margin: 0 auto 40px auto !important;
+    text-align: center !important;
+    width: 100% !important;
+    display: block !important;
+}
+
+.sponsor-group-title {
+    text-align: center !important;
+    margin: 0 auto 20px auto !important;
+    font-size: 1.3em;
+    color: #666;
+    font-weight: 600;
+    width: 100%;
+    display: block !important;
+}
+
+.partner-logos {
+    display: block !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+    width: 100% !important;
+}
+
+.partner-item {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    margin: 15px !important;
+    text-align: center !important;
+}
+
+.partner-link {
+    display: block;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.partner-link:hover {
+    transform: scale(1.05);
+    opacity: 0.8;
+}
+
+.partner-logo {
+    height: auto;
+    width: auto;
+    object-fit: contain;
+    display: block;
+}
+
+.partner-name-only {
+    display: inline-block;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    font-weight: 500;
+    color: #495057;
+    text-align: center;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .partner-logos {
+        gap: 20px;
+        padding: 15px;
+    }
+    
+    .sponsor-group-title {
+        font-size: 1.1em;
+    }
+    
+    .partner-section h3 {
+        font-size: 1.5em;
+    }
+}
+
+@media (max-width: 480px) {
+    .partner-logos {
+        gap: 15px;
+        padding: 10px;
+    }
+}

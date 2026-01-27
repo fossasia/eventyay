@@ -320,6 +320,7 @@
         {% endif %}
     {% endif %}
     </main>
+    {% include "pretixpresale/event/fragment_partners.html" %}
     {% if show_vouchers %}
         {% if can_view_tickets %}
         {% if request.event.live or is_organiser %}

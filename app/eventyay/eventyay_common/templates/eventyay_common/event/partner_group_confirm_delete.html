@@ -1,0 +1,76 @@
+{% extends "eventyay_common/event/settings_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete Sponsor Group" %}{% endblock %}
+
+{% block inside %}
+<div class="panel panel-danger partner-panel-danger">
+    <div class="panel-heading partner-panel-danger-heading">
+        <h3 class="panel-title partner-panel-danger-title">
+            <i class="fa fa-exclamation-triangle"></i> {% trans "Confirm Deletion" %}
+        </h3>
+    </div>
+    <div class="panel-body partner-panel-danger-body">
+        <div class="alert alert-danger partner-alert-danger-border">
+            <h4><i class="fa fa-warning"></i> <strong>{% trans "Warning!" %}</strong></h4>
+            <p>
+                {% blocktranslate with name=sponsor_group.name count=sponsor_group.partners.count %}
+                    You are about to permanently delete the sponsor group <strong>"{{ name }}"</strong> 
+                    and all <strong>{{ count }}</strong> partner(s) within it.
+                {% endblocktranslate %}
+            </p>
+            <p class="text-danger">
+                <strong>{% trans "This action cannot be undone!" %}</strong>
+            </p>
+        </div>
+
+        <div class="panel panel-default partner-panel-default-spacing">
+            <div class="panel-heading partner-panel-default-heading">
+                <strong>{{ sponsor_group.name }}</strong>
+                <span class="label label-default pull-right">
+                    {{ sponsor_group.partners.count }} partner{{ sponsor_group.partners.count|pluralize }}
+                </span>
+            </div>
+            <div class="panel-body">
+                {% if sponsor_group.partners.exists %}
+                <p><strong>{% trans "Partners that will be deleted:" %}</strong></p>
+                <div class="partners-delete-grid">
+                    {% for partner in sponsor_group.partners.all %}
+                    <div class="partner-delete-card">
+                        {% if partner.logo %}
+                        <div class="partner-delete-logo-container">
+                            <img src="{{ partner.logo.url }}" 
+                                 alt="{{ partner.name }}"
+                                 class="partner-delete-logo"
+                                 style="max-width: {{ partner.logo_width }}px;">
+                        </div>
+                        {% else %}
+                        <div class="partner-delete-placeholder">
+                            <i class="fa fa-image"></i>
+                        </div>
+                        {% endif %}
+                        <div class="partner-delete-name">{{ partner.name }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted"><i class="fa fa-info-circle"></i> {% trans "No partners in this group" %}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <form action="" method="post" class="partner-form-spacing">
+            {% csrf_token %}
+            <div class="form-group">
+                <button type="submit" class="btn btn-danger btn-lg">
+                    <i class="fa fa-trash"></i> {% trans "Yes, Delete This Group and All Partners" %}
+                </button>
+                <a href="{% url 'eventyay_common:event.update' organizer=request.organizer.slug event=request.event.slug %}#partner-tab" 
+                   class="btn btn-default btn-lg">
+                    <i class="fa fa-arrow-left"></i> {% trans "Cancel" %}
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
