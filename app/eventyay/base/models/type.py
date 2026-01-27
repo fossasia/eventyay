@@ -47,7 +47,7 @@ class SubmissionType(OrderedModel, PretalxModel):
     )
     position = models.PositiveIntegerField(
         default=0,
-        help_text='The position field is used to determine the order that session types are displayed in (lowest first).',
+        help_text=_('The position field is used to determine the order that session types are displayed in (lowest first).'),
     )
 
     log_prefix = 'eventyay.submission_type'

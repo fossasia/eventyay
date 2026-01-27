@@ -60,7 +60,7 @@
                         </td>
                         <td class="numeric">{{ type.default_duration }}</td>
                         <td class="text-right">
-                            <button draggable="true" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}">
+                            <button draggable="true" type="button" class="btn btn-sm btn-primary mr-1 dragsort-button" title="{% translate "Move item" %}" aria-label="{% translate "Move item" %}">
                                 <i class="fa fa-arrows"></i>
                             </button>
                             {% if request.event.cfp.default_type == type %}
