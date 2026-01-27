@@ -46,8 +46,7 @@ class SubmissionType(OrderedModel, PretalxModel):
         default=False,
     )
     position = models.PositiveIntegerField(
-        null=True,
-        blank=True,
+        default=0,
         help_text='The position field is used to determine the order that session types are displayed in (lowest first).',
     )
 
@@ -103,6 +102,13 @@ class SubmissionType(OrderedModel, PretalxModel):
 
     def get_order_queryset(self):
         return self.event.submission_types.all()
+
+    def save(self, *args, **kwargs):
+        if self.pk is None and (self.position is None or self.position == 0):
+            max_position = self.event.submission_types.aggregate(models.Max('position'))['position__max']
+            self.position = (max_position or 0) + 1
+        super().save(*args, **kwargs)
+
     def update_duration(self):
         """Updates the duration of all.
 

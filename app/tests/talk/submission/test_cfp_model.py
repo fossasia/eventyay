@@ -3,7 +3,7 @@ import datetime as dt
 import pytest
 from django_scopes import scope
 
-from pretalx.submission.models import SubmissionType
+from eventyay.base.models import SubmissionType
 
 
 @pytest.mark.django_db
@@ -62,9 +62,9 @@ def test_cfp_model_is_open(event, deadline, deadlines, is_open):
 
         assert event.submission_types.count() == 1
 
-        for dline in deadlines:
+        for index, dline in enumerate(deadlines, start=1):
             SubmissionType.objects.create(
-                event=event, name=str(dline), deadline=dline.astimezone(event.tz)
+                event=event, name=str(dline), deadline=dline.astimezone(event.tz), position=index
             )
 
         assert event.cfp.is_open == is_open
