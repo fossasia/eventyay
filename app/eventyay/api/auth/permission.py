@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from rest_framework.permissions import SAFE_METHODS, BasePermission
 
 from eventyay.api.models import OAuthAccessToken
@@ -43,6 +45,44 @@ class EventPermission(BasePermission):
                 .first()
             )
             if not request.event or not perm_holder.has_event_permission(
+                request.event.organizer, request.event, request=request
+            ):
+                return False
+            request.organizer = request.event.organizer
+            if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(request.session.session_key):
+                request.eventpermset = SuperuserPermissionSet()
+            else:
+                request.eventpermset = perm_holder.get_event_permission_set(request.organizer, request.event)
+
+            if isinstance(required_permission, (list, tuple)):
+                if not any(p in request.eventpermset for p in required_permission):
+                    return False
+            else:
+                if required_permission and required_permission not in request.eventpermset:
+                    return False
+
+        elif 'event' in request.resolver_match.kwargs:
+            event_slug = request.resolver_match.kwargs['event']
+            request.event = (
+                Event.objects.filter(
+                    slug=event_slug,
+                )
+                .select_related('organizer')
+                .first()
+            )
+            if not request.event:
+                with suppress(ValueError, TypeError):
+                    event_id = int(event_slug)
+                    request.event = (
+                        Event.objects.filter(
+                            pk=event_id,
+                        )
+                        .select_related('organizer')
+                        .first()
+                    )
+            if not request.event:
+                return False
+            if not perm_holder.has_event_permission(
                 request.event.organizer, request.event, request=request
             ):
                 return False

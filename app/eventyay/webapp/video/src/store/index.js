@@ -34,6 +34,9 @@ export default new Vuex.Store({
 		userTimezone: null,
 		autoplayUserSetting: !localStorage.disableAutoplay ? null : localStorage.disableAutoplay !== 'true',
 		stageStreamCollapsed: false,
+		streamReload: false,
+		streamPollInterval: null,
+		lastKnownStreamId: null,
 		now: moment(),
 		unblockedIframeDomains: new Set(JSON.parse(localStorage.unblockedIframeDomains || '[]')),
 		youtubeTransUrl: null
@@ -85,6 +88,9 @@ export default new Vuex.Store({
 		},
 		updateYoutubeTransAudio(state, youtubeTransUrl) {
 			state.youtubeTransUrl = youtubeTransUrl
+		},
+		setStreamReload(state, value) {
+			state.streamReload = value
 		}
 	},
 	actions: {
@@ -157,6 +163,65 @@ export default new Vuex.Store({
 			}
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
+		startStreamPolling({state, commit, dispatch}, roomId) {
+			if (state.streamPollInterval) {
+				clearInterval(state.streamPollInterval)
+			}
+			state.streamPollInterval = setInterval(async () => {
+				if (!state.activeRoom || state.activeRoom.id !== roomId || !state.connected) {
+					dispatch('stopStreamPolling')
+					return
+				}
+				try {
+					let organizer = state.world?.organizer || state.world?.organizer_slug || 'default'
+					let event = state.world?.slug || state.world?.id || 'default'
+
+					// If not available from world state, try to extract from current URL path
+					if (!organizer || organizer === 'default') {
+						const pathParts = window.location.pathname.split('/').filter(Boolean)
+						if (pathParts.length >= 2) {
+							organizer = pathParts[0]
+							event = pathParts[1]
+						}
+					}
+
+					const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${roomId}/streams/current`
+					const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
+					const headers = { Accept: 'application/json' }
+					if (authHeader) headers.Authorization = authHeader
+
+					const response = await fetch(url, { headers })
+					if (!response.ok && response.status !== 404) {
+						throw new Error(`Failed to fetch: ${response.status}`)
+					}
+					const currentStream = response.status === 404 ? null : await response.json()
+					const streamId = currentStream?.id || null
+					if (state.lastKnownStreamId !== streamId) {
+						const previousStreamId = state.lastKnownStreamId
+						const previousStreamUrl = state.rooms.find(r => r.id === roomId)?.currentStream?.url
+						state.lastKnownStreamId = streamId
+						const room = state.rooms.find(r => r.id === roomId)
+						if (room) {
+							const newStreamUrl = currentStream?.url
+							room.currentStream = currentStream
+							if (previousStreamId !== streamId || previousStreamUrl !== newStreamUrl) {
+								if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+									window.location.reload()
+								}
+							}
+						}
+					}
+				} catch (error) {
+					// Polling failures are non-critical, continue polling
+				}
+			}, 10000)
+		},
+		stopStreamPolling({state}) {
+			if (state.streamPollInterval) {
+				clearInterval(state.streamPollInterval)
+				state.streamPollInterval = null
+			}
+		},
 		async adminUpdateUser({dispatch}, update) {
 			await api.call('user.admin.update', update)
 			const userId = update.id
@@ -183,8 +248,7 @@ export default new Vuex.Store({
 						state.roomFatalErrors = rest
 					}
 				} catch (error) {
-					// Allow ApiError instances to bubble into the websocket error handler
-					console.error('[store/changeRoom] Failed to enter room', room?.id, error)
+					// room.enter failures are non-critical, continue with room change
 				}
 			}
 			dispatch('question/changeRoom', room)
@@ -293,6 +357,31 @@ export default new Vuex.Store({
 			if (index >= 0) {
 				state.roomViewers.splice(index, 1)
 			}
+		},
+		'api::room.stream.change'({state, commit}, {stream, reload}) {
+			if (!state.activeRoom) return
+			const room = state.rooms.find(r => r.id === state.activeRoom.id)
+			if (!room) return
+			const streamId = stream?.id || null
+			const streamUrl = stream?.url || null
+			const previousStreamId = state.lastKnownStreamId
+			const previousStreamUrl = room.currentStream?.url || null
+			if (previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
+				room.currentStream = stream
+				state.lastKnownStreamId = streamId
+				if (reload || previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
+					if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+						window.location.reload()
+					}
+				}
+			}
+		},
+		'api::room.stream.will_change'({state}, {stream, starts_at}) {
+			if (!state.activeRoom) return
+			const room = state.rooms.find(r => r.id === state.activeRoom.id)
+			if (!room) return
+			room.upcomingStream = stream
+			room.upcomingStreamStartsAt = starts_at
 		}
 	},
 	modules: {
