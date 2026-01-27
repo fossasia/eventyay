@@ -100,6 +100,7 @@ def system_information(request):
             context['header_links'] = [
                 {'label': link.label, 'url': link.url} for link in event.extra_links.all() if link.role == 'header'
             ]
+            context['show_online_video_link'] = bool(event.settings.venueless_url) and event.settings.get('venueless_show_public_link', False)
         for __, response in footer_link.send(event, request=request):
             if isinstance(response, list):
                 _footer += response

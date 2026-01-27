@@ -10,6 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models.deletion import ProtectedError
 from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
@@ -18,7 +19,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView
+from django.views.generic import ListView, TemplateView
 from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
@@ -520,6 +521,135 @@ class EventPlugins(ControlEventPlugins):
             kwargs={
                 'organizer': self.get_object().organizer.slug,
                 'event': self.get_object().slug,
+            },
+        )
+
+
+class EventLive(TemplateView):
+    template_name = 'eventyay_common/event/live.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied(_('You do not have permission to view this content.'))
+        can_change = request.user.has_event_permission(
+            request.organizer,
+            request.event,
+            'can_change_event_settings',
+            request=request,
+        )
+        if not (can_change or request.user.is_administrator):
+            raise PermissionDenied(_('You do not have permission to view this content.'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['issues'] = self.request.event.live_issues
+        ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
+        ctx['private_testmode_tickets'] = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        ctx['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get('live') == 'true' and not self.request.event.live_issues:
+            with transaction.atomic():
+                request.event.live = True
+                request.event.save()
+                self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
+            messages.success(self.request, _('Your shop is live now!'))
+        elif request.POST.get('live') == 'false':
+            with transaction.atomic():
+                request.event.live = False
+                request.event.save()
+                self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
+            messages.success(
+                self.request,
+                _("We've taken your shop down. You can re-enable it whenever you want!"),
+            )
+        elif request.POST.get('testmode') == 'true':
+            with transaction.atomic():
+                request.event.testmode = True
+                if request.event.private_testmode:
+                    request.event.private_testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                request.event.save()
+                self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
+            messages.success(self.request, _('Your shop is now in test mode!'))
+        elif request.POST.get('testmode') == 'false':
+            with transaction.atomic():
+                request.event.testmode = False
+                request.event.save()
+                self.request.event.log_action(
+                    'eventyay.event.testmode.deactivated',
+                    user=self.request.user,
+                    data={'delete': (request.POST.get('delete') == 'yes')},
+                )
+            request.event.cache.delete('complain_testmode_orders')
+            if request.POST.get('delete') == 'yes':
+                try:
+                    with transaction.atomic():
+                        for order in request.event.orders.filter(testmode=True):
+                            order.gracefully_delete(user=self.request.user)
+                except ProtectedError:
+                    messages.error(
+                        self.request,
+                        _(
+                            'An order could not be deleted as some constraints (e.g. data '
+                            'created by plug-ins) do not allow it.'
+                        ),
+                    )
+                else:
+                    request.event.cache.set('complain_testmode_orders', False, 30)
+            request.event.cartposition_set.filter(addon_to__isnull=False).delete()
+            request.event.cartposition_set.all().delete()
+            messages.success(
+                self.request,
+                _("We've disabled test mode for you. Let's sell some real tickets!"),
+            )
+        elif request.POST.get('private_testmode') == 'true':
+            tickets_enabled = request.POST.get('private_testmode_tickets') == 'yes'
+            talks_enabled = request.POST.get('private_testmode_talks') == 'yes'
+            if not tickets_enabled and not talks_enabled:
+                tickets_enabled = True
+            with transaction.atomic():
+                request.event.private_testmode = True
+                if request.event.testmode:
+                    request.event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                request.event.settings.private_testmode_tickets = tickets_enabled
+                request.event.settings.private_testmode_talks = talks_enabled
+                request.event.save()
+                self.request.event.log_action(
+                    'eventyay.event.private_testmode.activated',
+                    user=self.request.user,
+                    data={},
+                )
+            messages.success(self.request, _('Private test mode is now enabled.'))
+        elif request.POST.get('private_testmode') == 'false':
+            with transaction.atomic():
+                request.event.private_testmode = False
+                request.event.save()
+                self.request.event.log_action(
+                    'eventyay.event.private_testmode.deactivated',
+                    user=self.request.user,
+                    data={},
+                )
+            messages.success(self.request, _('Private test mode has been disabled.'))
+        return redirect(self.get_success_url())
+
+    def get_success_url(self) -> str:
+        return reverse(
+            'eventyay_common:event.live',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
             },
         )
 

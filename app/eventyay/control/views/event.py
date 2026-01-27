@@ -1098,7 +1098,7 @@ class EventPermissions(EventSettingsViewMixin, EventPermissionRequiredMixin, Tem
 
 class EventLive(EventPermissionRequiredMixin, TemplateView):
     permission = 'can_change_event_settings'
-    template_name = 'pretixcontrol/event/live.html'
+    template_name = 'eventyay_common/event/live.html'
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -1163,7 +1163,7 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'control:event.live',
+            'eventyay_common:event.live',
             kwargs={
                 'organizer': self.request.event.organizer.slug,
                 'event': self.request.event.slug,

@@ -296,24 +296,32 @@ def shop_state_widget(sender, **kwargs):
             'display_size': 'small',
             'priority': 1000,
             'content': '<div class="shopstate">{t1}<br><span class="{cls}"><span class="fa {icon}"></span> {state}</span>{t2}</div>'.format(
-                t1=_('Ticket shop is'),
+                t1=_('Event is'),
                 t2=_('Click here to change'),
-                state=_('live')
-                if sender.live and not sender.testmode
-                else (
-                    _('live and in test mode')
-                    if sender.live
-                    else (_('not yet public') if not sender.testmode else (_('in private test mode')))
+                state=(
+                    _('live (private test mode)')
+                    if sender.live and sender.private_testmode
+                    else (
+                        _('live and in test mode')
+                        if sender.live and sender.testmode
+                        else (
+                            _('live')
+                            if sender.live
+                            else (
+                                _('in private test mode')
+                                if sender.private_testmode
+                                else (_('in test mode') if sender.testmode else _('not yet public'))
+                            )
+                        )
+                    )
                 ),
                 icon='fa-check-circle'
-                if sender.live and not sender.testmode
-                else (
-                    'fa-warning' if sender.live else ('fa-times-circle' if not sender.testmode else ('fa-times-circle'))
-                ),
+                if sender.live and not sender.testmode and not sender.private_testmode
+                else ('fa-warning' if sender.live else 'fa-times-circle'),
                 cls='live' if sender.live else 'off',
             ),
             'url': reverse(
-                'control:event.live',
+                'eventyay_common:event.live',
                 kwargs={'event': sender.slug, 'organizer': sender.organizer.slug},
             ),
         }

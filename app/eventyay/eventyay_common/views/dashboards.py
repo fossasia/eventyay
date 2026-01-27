@@ -3,6 +3,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pytz
 from django.contrib.contenttypes.models import ContentType
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
     Exists,
@@ -16,7 +18,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.html import escape
@@ -229,6 +231,8 @@ class EventIndexView(TemplateView):
                     initial={'comment': request.event.comment},
                     readonly=not permissions['can_change_event_settings'],
                 ),
+                'is_video_enabled': is_video_enabled(request.event),
+                'can_change_event_settings': permissions['can_change_event_settings'],
                 **self._check_event_statuses(permissions['can_view_orders']),
             }
         )
@@ -250,8 +254,37 @@ class EventIndexView(TemplateView):
         context['today'] = now().astimezone(ZoneInfo(request.event.timezone)).date()
         context['nearly_now'] = now().astimezone(ZoneInfo(request.event.timezone)) - timedelta(seconds=20)
         context['organizer_teams'] = request.organizer.teams.values_list('id', 'name')
-
         return context
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.has_event_permission(
+            request.organizer, request.event, 'can_change_event_settings', request=request
+        ):
+            messages.error(request, _("You do not have permission to change event settings."))
+            return redirect(self.get_success_url())
+
+        if 'toggle_video_visibility' in request.POST:
+            current_setting = request.event.settings.get('venueless_show_public_link', False)
+            new_setting = not current_setting
+            request.event.settings.set('venueless_show_public_link', new_setting)
+
+            if new_setting:
+                messages.success(request, _("Video link is now visible on public pages."))
+            else:
+                messages.success(request, _("Video link is now hidden from public pages."))
+
+            return redirect(self.get_success_url())
+
+        return self.get(request, *args, **kwargs)
+
+    def get_success_url(self):
+        return reverse(
+            'eventyay_common:event.index',
+            kwargs={
+                'organizer': self.request.event.organizer.slug,
+                'event': self.request.event.slug,
+            },
+        )
 
 
 class EventWidgetGenerator:

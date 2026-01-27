@@ -63,8 +63,9 @@
         </div>
         <div class="alert alert-info col-md-9 offset-md-3" id="alert-required-boolean">
             {% blocktranslate trimmed %}
-            If you mark a Yes/No field as required, it means that the user has to select Yes and No is not
-            accepted. If you want to allow both options, do not make this field required.
+            If you mark a Confirmation field as required, it means that the user has to explicitly confirm and
+            cannot proceed without doing so. If you want to allow users to leave this unchecked, do not make this
+            field required.
             {% endblocktranslate %}
         </div>
         {{ form.deadline.as_field_group }}

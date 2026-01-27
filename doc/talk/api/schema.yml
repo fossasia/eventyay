@@ -909,7 +909,7 @@ paths:
           * `url` - URL
           * `date` - Date
           * `datetime` - Date and time
-          * `boolean` - Yes/No
+          * `boolean` - Confirmation
           * `file` - File upload
           * `choices` - Choose one from a list
           * `multiple_choice` - Choose multiple from a list
@@ -6408,7 +6408,7 @@ components:
         * `url` - URL
         * `date` - Date
         * `datetime` - Date and time
-        * `boolean` - Yes/No
+        * `boolean` - Confirmation
         * `file` - File upload
         * `choices` - Choose one from a list
         * `multiple_choice` - Choose multiple from a list

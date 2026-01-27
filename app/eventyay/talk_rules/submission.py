@@ -248,6 +248,8 @@ def submissions_for_user(event, user):
 @rules.predicate
 def is_wip(user, obj):
     schedule = getattr(obj, 'schedule', None)
+    if schedule is None and hasattr(obj, 'version') and hasattr(obj, 'event'):
+        schedule = obj
     if schedule is None and hasattr(obj, 'current_schedule'):
         schedule = obj.current_schedule
     if schedule is None:

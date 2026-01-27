@@ -1,3 +1,4 @@
+import logging
 import warnings
 from importlib import import_module
 from urllib.parse import urljoin
@@ -21,6 +22,7 @@ from eventyay.multidomain.urlreverse import (
 from eventyay.presale.signals import process_request, process_response
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
+logger = logging.getLogger(__name__)
 
 
 @scope(organizer=None)
@@ -104,15 +106,37 @@ def _detect_event(request, require_live=True, require_plugin=None):
                     and request.user.has_event_permission(request.organizer, request.event, request=request)
                 )
                 if not can_access and 'eventyay_event_access_{}'.format(request.event.pk) in request.session:
-                    sparent = SessionStore(request.session.get('eventyay_event_access_{}'.format(request.event.pk)))
+                    parent_session_key = request.session.get('eventyay_event_access_{}'.format(request.event.pk))
+                    sparent = SessionStore(parent_session_key)
                     try:
                         parentdata = sparent.load()
-                    except:
-                        pass
+                    except Exception as exc:
+                        logger.debug(
+                            'Failed to load parent session for event access check',
+                            extra={'event': request.event.pk, 'parent_session_key': parent_session_key},
+                            exc_info=exc,
+                        )
                     else:
                         can_access = 'event_access' in parentdata
 
                 if not can_access:
+                    raise Http404(_('The selected ticket shop is currently not available.'))
+
+            if request.event.private_testmode and not request.event.user_can_view_tickets(
+                request.user,
+                request=request,
+            ):
+                blocked_prefixes = (
+                    'event.cart',
+                    'event.checkout',
+                    'event.order',
+                    'event.payment',
+                    'event.redeem',
+                    'event.waitinglist',
+                    'event.seatingplan',
+                    'event.widget',
+                )
+                if url.url_name and url.url_name.startswith(blocked_prefixes):
                     return permission_denied(
                         request,
                         PermissionDenied(_('The selected ticket shop is currently not available.')),
