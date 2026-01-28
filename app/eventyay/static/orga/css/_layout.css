@@ -1,3 +1,8 @@
+:root {
+  --page-content-padding-x: 44px;
+  --page-content-padding-y: 18px;
+}
+
 html {
   overflow-y: scroll;
 }
@@ -30,7 +35,7 @@ body {
   background: var(--color-bg);
   flex-grow: 1;
   max-width: 100%;
-  padding: 18px 44px;
+  padding: var(--page-content-padding-y) var(--page-content-padding-x);
   margin: 0;
   margin-top: 50px;
   height: calc(100vh - 50px);
@@ -1675,16 +1680,15 @@ h2 .user-name-display img {
 /* Unified Event Navigation Styles */
 #event-nav {
   margin-bottom: 20px;
-  /* Adjust for Orga's #page-content padding (18px 44px) to match Control layout */
-  margin-top: -18px;
+  /* Adjust for Orga's #page-content padding to match Control layout */
+  margin-top: calc(var(--page-content-padding-y) * -1);
   
   /* Reset horizontal positioning to ignore #page-content padding */
-  margin-left: -44px;
-  margin-right: -44px;
+  margin-left: calc(var(--page-content-padding-x) * -1);
+  margin-right: calc(var(--page-content-padding-x) * -1);
   
   /* Apply padding calculated to match Control layout:
-     Control: 30px (#page-wrapper) + 15px (.container-fluid) = 45px
-     Orga:    45px (explicit)
+     Orga:    45px (explicit) - to align with content visual hierarchy
   */
   padding-left: 45px;
   padding-right: 45px;

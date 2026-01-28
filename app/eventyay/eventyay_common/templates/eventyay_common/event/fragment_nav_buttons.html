@@ -14,7 +14,7 @@
         <i class="fa fa-ticket"></i> {% trans "Tickets" %}
     </a>
 
-    {% if is_talk_event_created or namespace == 'orga' %}
+    {% if is_talk_event_created %}
     <a href='{% url "orga:event.dashboard" event=request.event.slug %}' 
        class="header-nav btn btn-outline-primary {% if namespace == 'orga' %}active{% endif %}">
         <i class="fa fa-group"></i> {% trans "Talk" %}
