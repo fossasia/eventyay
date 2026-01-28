@@ -1107,6 +1107,7 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
         if not self.request.event.private_testmode:
             private_tickets = False
         ctx['private_testmode_tickets'] = private_tickets
+        ctx['tickets_enabled'] = self.request.event.settings.get('tickets_enabled', True, as_type=bool)
         return ctx
 
     def post(self, request, *args, **kwargs):

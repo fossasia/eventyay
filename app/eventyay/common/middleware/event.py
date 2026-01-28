@@ -120,6 +120,12 @@ class EventPermissionMiddleware:
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
                 if url.url_name != 'event.css':
                     raise Http404()
+        if event and not event.settings.get('talks_enabled', True, as_type=bool):
+            if request.path.startswith('/orga/event/'):
+                raise Http404()
+            if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
+                if url.url_name != 'event.css':
+                    raise Http404()
         if event:
             with scope(event=event):
                 response = self.get_response(request)

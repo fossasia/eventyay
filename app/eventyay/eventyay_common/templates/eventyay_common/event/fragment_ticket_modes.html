@@ -5,7 +5,16 @@
         {% trans "Test mode" %}
     </div>
     <div class="panel-body">
-        {% if request.event.testmode %}
+        {% if not tickets_enabled %}
+            <p>
+                {% trans "Tickets are currently disabled. Enable tickets in Event Status to manage test mode." %}
+            </p>
+            <div class="text-right">
+                <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                    {% trans "Enable test mode" %}
+                </button>
+            </div>
+        {% elif request.event.testmode %}
             <form action="" method="post">
                 {% csrf_token %}
                 <input type="hidden" name="testmode" value="false">
@@ -69,7 +78,16 @@
         {% trans "Private test mode" %}
     </div>
     <div class="panel-body">
-        {% if private_testmode_tickets %}
+        {% if not tickets_enabled %}
+            <p>
+                {% trans "Tickets are currently disabled. Enable tickets in Event Status to manage private test mode." %}
+            </p>
+            <div class="text-right">
+                <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                    {% trans "Enable private test mode for tickets" %}
+                </button>
+            </div>
+        {% elif private_testmode_tickets %}
             <p>
                 {% trans "Private test mode is enabled for tickets. Only organizers, reviewers, and system administrators can view or purchase tickets." %}
             </p>

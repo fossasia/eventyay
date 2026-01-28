@@ -158,6 +158,11 @@ class PermissionMiddleware:
                 request.eventpermset = SuperuserPermissionSet()
             else:
                 request.eventpermset = request.user.get_event_permission_set(event.organizer, event)
+            if (
+                request.path.startswith(get_script_prefix() + 'control/event/')
+                and not event.settings.get('tickets_enabled', True, as_type=bool)
+            ):
+                raise Http404(_('The selected event was not found or you have no permission to administrate it.'))
         elif 'organizer' in url.kwargs:
             organizer = Organizer.objects.filter(
                 slug=url.kwargs['organizer'],

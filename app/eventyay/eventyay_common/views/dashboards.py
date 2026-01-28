@@ -273,18 +273,6 @@ class EventIndexView(TemplateView):
             messages.error(request, _("You do not have permission to change event settings."))
             return redirect(self.get_success_url())
 
-        if 'toggle_video_visibility' in request.POST:
-            current_setting = request.event.settings.get('venueless_show_public_link', False)
-            new_setting = not current_setting
-            request.event.settings.set('venueless_show_public_link', new_setting)
-
-            if new_setting:
-                messages.success(request, _("Video link is now visible on public pages."))
-            else:
-                messages.success(request, _("Video link is now hidden from public pages."))
-
-            return redirect(self.get_success_url())
-
         return self.get(request, *args, **kwargs)
 
     def get_success_url(self):

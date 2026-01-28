@@ -157,4 +157,6 @@ def private_testmode_tickets_enabled(context, event=None):
     event = event or getattr(request, 'event', None)
     if not event:
         return False
+    if not event.settings.get('tickets_enabled', True, as_type=bool):
+        return False
     return event.private_testmode and event.settings.get('private_testmode_tickets', True, as_type=bool)
