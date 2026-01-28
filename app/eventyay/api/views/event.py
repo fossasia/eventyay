@@ -108,18 +108,22 @@ with scopes_disabled():
             return queryset.filter(sales_channels__contains=value)
 
 
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.permissions import AllowAny
+
 from eventyay.base.models.event import Event
 from eventyay.api.serializers.event import EventSerializer
 
-class EventViewSet(viewsets.ModelViewSet):
-    
+
+class EventViewSet(ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]
     serializer_class = EventSerializer
     lookup_field = "slug"
-    
 
     def get_queryset(self):
         organizer_slug = self.kwargs.get("organizer")
         return Event.objects.filter(organizer__slug=organizer_slug)
+
 
 # Original implementation used PretixEventSerializer, EventCRUDPermission,
 # TeamAPIToken, Device and filter_qs_by_attr
