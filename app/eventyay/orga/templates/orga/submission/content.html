@@ -129,94 +129,69 @@
             </div>
         {% endif %}
 
-        <div class="form-group row">
-            <label class="col-md-3 col-form-label">{% translate "Duration" %}</label>
-            <div class="col-md-9 mt-1">
-                {{ submission.get_duration }} {% translate "minutes" %}
-            </div>
-        </div>
+            {% if submission.access_code %}
+                <div class="alert alert-info"><span></span><span>
+                    {% blocktranslate trimmed %}
+                        This proposal was created using an access code:
+                    {% endblocktranslate %} <a href="{{ submission.access_code.urls.edit }}">{{ submission.access_code.code }}</a>
+                </span></div>
+            {% endif %}
+            {% include "common/forms/errors.html" %}
+            {% csrf_token %}
 
-        {% if submission.slot_count > 1 %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{% translate "Slot Count" %}</label>
-                <div class="col-md-9 mt-1">
-                    {{ submission.slot_count }}
+
+
+            {{ form.title.as_field_group }}
+
+            {% if action == "create" %}
+                {{ form.state.as_field_group }}
+                </fieldset>
+                <fieldset>
+                    <legend id="speaker">{% translate "Speaker" %}</legend>
+                    {{ new_speaker_form }}
+                </fieldset>
+                <fieldset>
+                    <legend id="proposal">{% translate "Proposal" %}</legend>
+            {% endif %}
+            {% if form.room %}
+                <div id="show-if-state" {% if action == "create" %}class="d-none"{% endif %}>
+                    {{ form.room.as_field_group }}
+                    {{ form.start.as_field_group }}
+                    {{ form.end.as_field_group }}
                 </div>
-            </div>
-        {% endif %}
-
-        {% if submission.image %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{% translate "Session image" %}</label>
-                <div class="col-md-9 mt-1">
-                    <a href="{{ submission.image.url }}" target="_blank">
-                        <img src="{{ submission.image.url }}" alt="{{ submission.title }}">
-                    </a>
-                </div>
-            </div>
-        {% endif %}
-
-        {% if submission.active_resources %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{% translate "Resources" %}</label>
-                <div class="col-md-9 mt-1">
-                    <ul class="list-unstyled">
-                        {% for resource in submission.active_resources %}
-                            <li class="mb-2">
-                                {% if resource.link %}
-                                    <i class="fa fa-link"></i>
-                                    <a href="{{ resource.link }}" target="_blank">{{ resource.description }}</a>
-                                {% else %}
-                                    <i class="fa fa-paperclip"></i>
-                                    <a href="{{ resource.resource.url }}" target="_blank">{{ resource.description }}</a>
-                                {% endif %}
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-        {% endif %}
-
-        {% if questions_form and questions_form.fields %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{{ phrases.cfp.custom_fields }}</label>
-                <div class="col-md-9">
-                    {% for field in questions_form %}
-                        <div class="mb-3">
-                            <strong>{{ field.label }}</strong>
-                            <div class="mt-1">
-                                {% if field.field.answer %}
-                                    {% if field.field.widget.input_type == 'checkbox' %}
-                                        {% if field.field.answer.boolean_answer %}
-                                            <i class="fa fa-check text-success"></i> {% translate "Yes" %}
-                                        {% else %}
-                                            <i class="fa fa-times text-danger"></i> {% translate "No" %}
-                                        {% endif %}
-                                    {% elif field.field.answer.answer_file %}
-                                        <a href="{{ field.field.answer.answer_file.url }}" target="_blank">
-                                            <i class="fa fa-paperclip"></i> {{ field.field.answer.answer_file.name }}
-                                        </a>
-                                    {% else %}
-                                        {{ field.field.answer.answer|rich_text|default:"-" }}
-                                    {% endif %}
-                                {% else %}
-                                    <em class="text-muted">{% translate "No answer provided" %}</em>
-                                {% endif %}
-                            </div>
+            {% endif %}
+            {% if form.instance.median_score != None and can_view_all_reviews %}
+                <div class="form-group row">
+                    <label class="col-md-3 col-form-label">
+                        {% translate "Reviews" %}
+                    </label>
+                    <div class="col-md-9">
+                        <div class="pt-2">
+                            {{ submission.reviews.count }} {% translate "reviews" %}
                         </div>
-                    {% endfor %}
+                    </div>
                 </div>
-            </div>
-        {% endif %}
-
-        {% if submission.median_score != None and can_view_all_reviews %}
-            <div class="form-group row">
-                <label class="col-md-3 col-form-label">{% translate "Reviews" %}</label>
-                <div class="col-md-9 mt-1">
-                    {{ submission.reviews.count }} {% translate "reviews" %}
-                </div>
-            </div>
-        {% endif %}
+            {% endif %}
+            {{ form.submission_type.as_field_group }}
+            {% if form.track %}{{ form.track.as_field_group }}{% endif %}
+            {% if form.tags %}{{ form.tags.as_field_group }}{% endif %}
+            {% if form.abstract %}{{ form.abstract.as_field_group }}{% endif %}
+            {% if form.description %}{{ form.description.as_field_group }}{% endif %}
+            {% if form.notes %}{{ form.notes.as_field_group }}{% endif %}
+            {{ form.internal_notes.as_field_group }}
+            {% if form.content_locale %}{{ form.content_locale.as_field_group }}{% endif %}
+            {% if form.do_not_record %}{{ form.do_not_record.as_field_group }}{% endif %}
+            {{ form.is_featured.as_field_group }}
+            {{ form.duration.as_field_group }}
+            {% if form.slot_count %}{{ form.slot_count.as_field_group }}{% endif %}
+            {% if form.image %}{{ form.image.as_field_group }}{% endif %}
+            {% if action != "create" %}
+                {% include "cfp/includes/submission_resources_form.html" %}
+            {% endif %}
+            {% if questions_form and questions_form.fields %}
+                <div><legend id="custom">{{ phrases.cfp.custom_fields }}</legend></div>
+                {{ questions_form }}
+            {% endif %}
 
         <div class="submit-group panel">
             <span></span>

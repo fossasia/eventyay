@@ -401,7 +401,7 @@ def test_orga_can_edit_submission(orga_client, event, accepted_submission):
         assert accepted_submission.slots.count() == 1
 
     response = orga_client.post(
-        accepted_submission.orga_urls.base,
+        accepted_submission.orga_urls.edit,
         data={
             "abstract": "abstract",
             "content_locale": "en",
@@ -437,7 +437,7 @@ def test_orga_can_remove_and_add_resources(
 
     f = SimpleUploadedFile("testfile.txt", b"file_content")
     response = orga_client.post(
-        submission.orga_urls.base,
+        submission.orga_urls.edit,
         data={
             "abstract": submission.abstract,
             "content_locale": submission.content_locale,
@@ -483,7 +483,7 @@ def test_orga_edit_submission_with_wrong_resources(
 
     f = SimpleUploadedFile("testfile.txt", b"file_content")
     response = orga_client.post(
-        submission.orga_urls.base,
+        submission.orga_urls.edit,
         data={
             "abstract": submission.abstract,
             "content_locale": submission.content_locale,
@@ -528,7 +528,7 @@ def test_orga_can_edit_submission_wrong_answer(
         assert accepted_submission.slots.count() == 1
 
     response = orga_client.post(
-        accepted_submission.orga_urls.base,
+        accepted_submission.orga_urls.edit,
         data={
             "abstract": "abstract",
             "content_locale": "en",
@@ -562,7 +562,7 @@ def test_orga_can_edit_submission_duration(orga_client, event, accepted_submissi
         assert slot.duration == accepted_submission.get_duration()
 
     response = orga_client.post(
-        accepted_submission.orga_urls.base,
+        accepted_submission.orga_urls.edit,
         data={
             "abstract": "abstract",
             "content_locale": "en",
@@ -629,7 +629,7 @@ def test_orga_can_edit_submission_wrong_datetime_answer(
         value = value.date()
     value = value.isoformat()
     response = orga_client.post(
-        submission.orga_urls.base,
+        submission.orga_urls.edit,
         data={
             "abstract": "abstract",
             "content_locale": "en",

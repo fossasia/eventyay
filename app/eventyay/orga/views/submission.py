@@ -318,6 +318,34 @@ class SubmissionSpeakers(ReviewerSubmissionFilter, SubmissionViewMixin, FormView
         return self.object.orga_urls.speakers
 
 
+
+class SubmissionContentReadView(
+    ReviewerSubmissionFilter, SubmissionViewMixin, TemplateView
+):
+    template_name = 'orga/submission/content_view.html'
+    permission_required = 'base.orga_list_submission'
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        submission = self.object
+        if submission.is_anonymised and not self.request.user.has_perm(
+            'base.orga_list_speakerprofile', submission
+        ):
+            anonymised_data = submission.anonymised
+            for key, value in anonymised_data.items():
+                if key != '_anonymised':
+                    setattr(submission, key, value)
+        answers_qs = (
+            submission.answers.all()
+            .select_related('question')
+            .order_by('question__position')
+        )
+        if self.is_only_reviewer:
+            answers_qs = answers_qs.filter(question__is_visible_to_reviewers=True)
+        ctx['questions'] = answers_qs
+        return ctx
+
+
 class SubmissionContent(ActionFromUrl, ReviewerSubmissionFilter, SubmissionViewMixin, CreateOrUpdateView):
     model = Submission
     form_class = SubmissionForm

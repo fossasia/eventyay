@@ -337,7 +337,7 @@ class Submission(GenerateCode, PretalxModel):
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this submission."""
         base = '{self.event.orga_urls.submissions}{self.code}/'
-        edit = '{base}edit'
+        edit = '{self.event.orga_urls.submissions}{self.code}/edit'
         make_submitted = '{base}submit'
         accept = '{base}accept'
         reject = '{base}reject'
