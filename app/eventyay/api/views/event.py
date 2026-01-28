@@ -107,10 +107,23 @@ with scopes_disabled():
             return queryset.filter(sales_channels__contains=value)
 
 
-# Disabled: Pretix-dependent API viewset
-class EventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix classes/serializers/permissions."""
-    pass
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.permissions import AllowAny
+
+from eventyay.base.models.event import Event
+from eventyay.api.serializers.event import EventSerializer
+
+
+class EventViewSet(ReadOnlyModelViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = EventSerializer
+    lookup_field = "slug"
+
+    def get_queryset(self):
+        organizer_slug = self.kwargs.get("organizer")
+        return Event.objects.filter(organizer__slug=organizer_slug)
+
+
 # Original implementation used PretixEventSerializer, EventCRUDPermission,
 # TeamAPIToken, Device and filter_qs_by_attr
 # class EventViewSet(viewsets.ModelViewSet):
