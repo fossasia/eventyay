@@ -162,6 +162,10 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
+    admins_email: str = ''
+    video_server_hostname: str | None = None
+    cache_tickets_hours: int = Field(24, ge=1)
+    fetch_ecb_rates: bool = False
 
     @classmethod
     def settings_customise_sources(
@@ -1444,6 +1448,10 @@ TWITTER_CLIENT_ID = conf.twitter_client_id
 TWITTER_CLIENT_SECRET = conf.twitter_client_secret
 LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
+ADMINS = [('Admin', conf.admins_email.strip())] if conf.admins_email else []
+VIDEO_SERVER_HOSTNAME = conf.video_server_hostname
+CACHE_TICKETS_HOURS = conf.cache_tickets_hours
+FETCH_ECB_RATES = conf.fetch_ecb_rates
 
 FRONTEND_DIR = BASE_DIR / 'webapp'
 VITE_DEV_SERVER_PORT = 8080
