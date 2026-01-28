@@ -1105,7 +1105,7 @@ h1 .label {
 #event-nav .navigation,
 .header-nav .navigation {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
     align-items: center;
     justify-content: space-between;
 }
@@ -1113,8 +1113,11 @@ h1 .label {
 #event-nav .navigation .navigation-button,
 .header-nav .navigation .navigation-button {
     display: flex;
+    justify-content: flex-end;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+    margin-bottom: 0;
+    order: unset;
 }
 
 #event-nav .header-nav,
@@ -1181,23 +1184,65 @@ h1 .label {
 #event-nav .navigation-title,
 .header-nav .navigation-title {
     text-align: left;
-    flex: 0 1 75%;
+    flex: 1;
     min-width: 0;
+    padding-right: 15px;
+    order: unset;
 
-    h2 {
+    h1, h2 {
         font-size: 30px;
         font-weight: 500;
         line-height: 1.1;
-        margin-top: 20px;
+        margin-top: 10px;
         margin-bottom: 10px;
         word-wrap: break-word;
         overflow-wrap: break-word;
+        hyphens: auto;
 
         small {
             font-size: 65%;
             font-weight: 400;
             line-height: 1;
             display: block;
+            margin-top: 5px;
         }
+    }
+}
+
+/* Responsive styles for event navigation */
+@media (max-width: 767px) {
+    #event-nav .navigation,
+    .header-nav .navigation {
+        flex-direction: column;
+    }
+    
+    #event-nav .navigation .navigation-button,
+    .header-nav .navigation .navigation-button {
+        justify-content: center;
+        gap: 6px;
+        order: 1;
+        margin-bottom: 10px;
+    }
+
+    #event-nav .navigation-title,
+    .header-nav .navigation-title {
+        order: 2;
+        padding-right: 0;
+        text-align: center;
+    }
+    
+    #event-nav .header-nav,
+    .header-nav .header-nav {
+        min-width: 70px;
+        padding: 6px 8px;
+        font-size: 12px;
+    }
+    
+    #event-nav .navigation-title h1,
+    #event-nav .navigation-title h2,
+    .header-nav .navigation-title h1,
+    .header-nav .navigation-title h2 {
+        font-size: 22px;
+        text-align: center;
     }
 }

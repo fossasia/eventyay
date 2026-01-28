@@ -22,6 +22,54 @@ html {
     padding-left: 45px;
     padding-right: 45px;
 
+    .navigation {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        font-weight: 200;
+        
+        .navigation-button {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 0;
+            order: unset;
+        }
+        
+        .navigation-title {
+            text-align: left;
+            flex: 1;
+            min-width: 0;
+            padding-right: 15px;
+            order: unset;
+            
+            h1, h2 {
+                font-size: 30px;
+                font-weight: 500;
+                line-height: 1.1;
+                margin-top: 10px;
+                margin-bottom: 10px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                hyphens: auto;
+            }
+            
+            h1 small, h2 small {
+                font-size: 65%;
+                font-weight: 400;
+                line-height: 1;
+                display: block;
+                margin-top: 5px;
+            }
+        }
+        
+        a {
+            pointer-events: auto;
+        }
+    }
+
     .header-nav {
         border: 1px solid darken($btn-primary-bg, 10%) !important;
         font-size: 14px;
@@ -80,22 +128,6 @@ html {
     .header-nav.active:hover, .header-nav.active:focus {
         background-color: $hover-button-color !important;
         border-color: $hover-button-color !important;
-    }
-    
-    .navigation {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        font-weight: 200;
-        .navigation-button {
-            margin-left: auto;
-            display: flex;
-            gap: 8px;
-            flex-wrap: nowrap;
-        }
-        a {
-            pointer-events: auto;
-        }
     }
 }
 
@@ -227,15 +259,41 @@ html {
     }
 }
 
-@media (min-width: $screen-lg-min) {
-    #event-nav .navigation .navigation-button {
-        margin-top: 10px;
-    }
-}
-
-@media (max-width: $screen-sm-max) {
-    #event-nav .navigation {
-        margin-top: 18px;
+/* Responsive styles for event navigation */
+@media (max-width: $screen-xs-max) {
+    #event-nav {
+        margin-left: -15px;
+        margin-right: -15px;
+        padding-left: 15px;
+        padding-right: 15px;
+        
+        .navigation {
+            flex-direction: column;
+            
+            .navigation-button {
+                justify-content: center;
+                gap: 6px;
+                order: 1;
+                margin-bottom: 10px;
+                
+                .header-nav {
+                    min-width: 70px;
+                    padding: 6px 8px;
+                    font-size: 12px;
+                }
+            }
+            
+            .navigation-title {
+                padding-right: 0;
+                text-align: center;
+                order: 2;
+                
+                h1, h2 {
+                    font-size: 22px;
+                    text-align: center;
+                }
+            }
+        }
     }
 }
 
@@ -247,6 +305,13 @@ html {
 
     .panel-body {
         min-height: 85%;
+    }
+    
+    #event-nav {
+        margin-left: -20px;
+        margin-right: -20px;
+        padding-left: 20px;
+        padding-right: 20px;
     }
 }
 
