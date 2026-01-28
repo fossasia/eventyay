@@ -36,13 +36,13 @@ from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
 from eventyay.base.models import Availability, Room, TalkSlot
 
-SCRIPT_SRC = "'self' 'unsafe-eval'"
+SCRIPT_SRC = "'self'"
 DEFAULT_SRC = "'self'"
 
 
 if settings.VITE_DEV_MODE:
-    SCRIPT_SRC = (f'{SCRIPT_SRC} {settings.VITE_DEV_SERVER}',)
-    DEFAULT_SRC = (f'{DEFAULT_SRC} {settings.VITE_DEV_SERVER} {settings.VITE_DEV_SERVER.replace("http", "ws")}',)
+    SCRIPT_SRC = f'{SCRIPT_SRC} {settings.VITE_DEV_SERVER}'
+    DEFAULT_SRC = f'{DEFAULT_SRC} {settings.VITE_DEV_SERVER} {settings.VITE_DEV_SERVER.replace("http", "ws")}'
 
 
 logger = logging.getLogger(__name__)
