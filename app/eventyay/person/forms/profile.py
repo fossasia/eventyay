@@ -113,12 +113,7 @@ class SpeakerProfileForm(
         elif 'avatar' in self.fields:
             self.fields['avatar'].required = False
             self.fields['avatar'].widget.is_required = False
-        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
-            # Replace self.data with a version that uses initial["availabilities"]
-            # in order to have event and timezone data available
-            data = self.data.copy()
-            data['availabilities'] = initial.get('availabilities', [])
-            self.data = data
+
         self.inject_questions_into_fields(
             target=TalkQuestionTarget.SPEAKER,
             event=self.event,
@@ -128,6 +123,13 @@ class SpeakerProfileForm(
 
         # Reorder fields based on configuration
         self.order_fields_by_config('speaker')
+
+        if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
+            # Replace self.data with a version that uses initial["availabilities"]
+            # in order to have event and timezone data available
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
 
     @cached_property
     def user_fields(self):

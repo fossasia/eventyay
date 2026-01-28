@@ -49,6 +49,8 @@ from eventyay.base.models import (
     SubmissionType,
     SubmitterAccessCode,
     Track,
+    SpeakerProfile,
+    Availability,
 )
 from eventyay.talk_rules.submission import questions_for_user
 
@@ -140,14 +142,14 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_field_order'] = json.dumps(fields_config.get('session', []))
         context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
         context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
-        
+        questions = TalkQuestion.all_objects.filter(event=self.request.event).annotate(answer_count=Count('answers'))
         sform = self.sform
         
         def get_field_data(targets, config_key):
             questions = TalkQuestion.all_objects.filter(
                 event=self.request.event,
                 target__in=targets
-            )
+            ).annotate(answer_count=Count('answers'))
             
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
             saved_order = fields_config.get(config_key, [])
@@ -168,6 +170,10 @@ class CfPForms(EventPermissionRequired, TemplateView):
             
             data = []
             for q in ordered_questions:
+                # Fallback if annotation fails
+                if getattr(q, 'answer_count', 0) == 0:
+                    q.answer_count = q.answers.count()
+                    
                 data.append({
                     'question': q,
                     'field': sform[f'question_{q.pk}']
@@ -177,6 +183,27 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION], 'session')
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER], 'speaker')
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER], 'reviewer')
+
+        event = self.request.event
+        context['field_counts'] = {
+            'name': SpeakerProfile.objects.filter(event=event).exclude(user__fullname='').exclude(user__fullname__isnull=True).count(),
+            'title': event.submissions.exclude(title='').count(),
+            'abstract': event.submissions.exclude(abstract='').count(),
+            'description': event.submissions.exclude(description='').count(),
+            'notes': event.submissions.exclude(notes='').count(),
+            'do_not_record': event.submissions.filter(do_not_record=True).count(),
+            'image': event.submissions.exclude(image='').count(),
+            'track': event.submissions.exclude(track__isnull=True).count(),
+            'duration': event.submissions.exclude(duration__isnull=True).count(),
+            'content_locale': event.submissions.exclude(content_locale='').count(),
+            'additional_speaker': event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count(),
+            'biography': SpeakerProfile.objects.filter(event=event).exclude(biography='').exclude(biography__isnull=True).count(),
+            'avatar': SpeakerProfile.objects.filter(event=event).exclude(user__avatar='').exclude(user__avatar__isnull=True).count(),
+            'avatar_source': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_source='').exclude(user__avatar_source__isnull=True).count(),
+            'avatar_license': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_license='').exclude(user__avatar_license__isnull=True).count(),
+            'availabilities': Availability.objects.filter(event=event).values('person').distinct().count(),
+        }
+
         return context
 
     @transaction.atomic
