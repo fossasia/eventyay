@@ -335,7 +335,6 @@ class SubmissionContentReadView(
             for key, value in anonymised_data.items():
                 if key != '_anonymised':
                     setattr(submission, key, value)
-        
         answers_qs = (
             submission.answers.all()
             .select_related('question')

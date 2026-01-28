@@ -1,5 +1,4 @@
 import pytest
-from django_scopes import scope
 
 @pytest.mark.django_db
 def test_orga_can_view_submission_content_and_questions(orga_client, submission, answer):

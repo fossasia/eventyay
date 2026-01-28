@@ -4,6 +4,7 @@
 {% load static %}
 {% load rules %}
 {% load rich_text %}
+{% load staff_session %}
 {% load thumbnail %}
 
 {% block scripts %}
@@ -11,6 +12,7 @@
 {% endblock scripts %}
 
 {% block submission_content %}
+    {% has_event_perm "base.list_all_review" request.user request request.event as can_view_all_reviews %}
     {% if submission.access_code %}
         <div class="alert alert-info"><span></span><span>
             {% blocktranslate trimmed %}
