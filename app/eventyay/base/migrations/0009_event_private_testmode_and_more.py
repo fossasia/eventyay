@@ -15,6 +15,15 @@ class Migration(migrations.Migration):
             name='private_testmode',
             field=models.BooleanField(default=False),
         ),
+        migrations.AddField(
+            model_name='question',
+            name='active',
+            field=models.BooleanField(
+                default=True,
+                help_text='Inactive questions are not shown to customers during checkout or check-in. Unlike hidden questions (which are system-level), active controls visibility and can be toggled by event organizers.',
+                verbose_name='Active'
+            ),
+        ),
         migrations.AlterField(
             model_name='talkquestion',
             name='contains_personal_data',
