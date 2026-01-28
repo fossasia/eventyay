@@ -23,6 +23,7 @@ def localize_json(value):
             if isinstance(parsed, dict):
                 value = LazyI18nString(parsed)
         except (json.JSONDecodeError, TypeError, ValueError):
+            # If parsing fails, leave value unchanged so it is rendered as the original string.
             pass
 
     # If it's a dict, convert to LazyI18nString
