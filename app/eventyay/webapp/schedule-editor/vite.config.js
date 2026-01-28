@@ -1,7 +1,8 @@
 import path from 'path'
 import vue from '@vitejs/plugin-vue'
 import gettext from './vite-gettext-plugin'
-import BuntpapierStylus from 'buntpapier/stylus.js'
+
+const __dirname = path.dirname(new URL(import.meta.url).pathname)
 
 const stylusOptions = {
 	paths: [
@@ -9,8 +10,9 @@ const stylusOptions = {
 		path.resolve(__dirname, './src/styles'),
 		'node_modules'
 	],
-	use: [BuntpapierStylus({implicit: false})],
-	imports: ['buntpapier/buntpapier/index.styl', `${path.resolve(__dirname, './src/styles/variables.styl')}`]
+	additionalData: `@import 'buntpapier/buntpapier/index.styl'
+		@import '${path.resolve(__dirname, './src/styles/variables.styl')}'
+		`
 }
 
 export default {
