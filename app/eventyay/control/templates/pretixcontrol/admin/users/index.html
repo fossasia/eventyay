@@ -52,7 +52,7 @@
         {% for u in users %}
             <tr>
                 <td><strong>
-                    <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email }}</a>
+                    <a href='{% url "eventyay_admin:admin.users.edit" id=u.pk %}'>{{ u.email|default:"—" }}</a>
                 </strong></td>
                 <td>{{ u.fullname|default_if_none:"" }}</td>
                 <td>{% if u.is_active %}<span class="fa fa-check-circle"></span>{% endif %}</td>
