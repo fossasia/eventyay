@@ -41,12 +41,8 @@ from eventyay.orga.forms.cfp import (
     SubmitterAccessCodeForm,
 )
 from eventyay.base.models import (
-    Answer,
     AnswerOption,
-    Availability,
     CfP,
-    SpeakerProfile,
-    Submission,
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
@@ -151,7 +147,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             questions = TalkQuestion.all_objects.filter(
                 event=self.request.event,
                 target__in=targets
-            )
+            ).annotate(answer_count=Count('answers'))
             
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
             saved_order = fields_config.get(config_key, [])
@@ -184,6 +180,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
 
         event = self.request.event
         context['field_counts'] = {
+            'name': SpeakerProfile.objects.filter(event=event).exclude(user__fullname='').exclude(user__fullname__isnull=True).count(),
             'title': event.submissions.exclude(title='').count(),
             'abstract': event.submissions.exclude(abstract='').count(),
             'description': event.submissions.exclude(description='').count(),
