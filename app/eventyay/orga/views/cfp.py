@@ -170,6 +170,10 @@ class CfPForms(EventPermissionRequired, TemplateView):
             
             data = []
             for q in ordered_questions:
+                # Fallback if annotation fails
+                if getattr(q, 'answer_count', 0) == 0:
+                    q.answer_count = q.answers.count()
+                    
                 data.append({
                     'question': q,
                     'field': sform[f'question_{q.pk}']
