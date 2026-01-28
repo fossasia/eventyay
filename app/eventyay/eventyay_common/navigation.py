@@ -81,7 +81,7 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     )
     if not has_settings_perm:
         return []
-    nav = [
+    return [
         {
             'label': _('Settings'),
             'url': reverse(
@@ -107,8 +107,6 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'icon': 'plug',
         },
     ]
-
-    return nav
 
 
 def get_organizer_navigation(request: HttpRequest) -> List[MenuItem]:

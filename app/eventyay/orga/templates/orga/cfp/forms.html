@@ -19,10 +19,16 @@
         <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
         <script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
         <script defer src="{% static 'orga/js/cfp.js' %}"></script>
+        <script defer src="{% static 'orga/js/cfp-field-ordering.js' %}"></script>
     {% endcompress %}
 {% endblock scripts %}
 
 {% block content %}
+    <div id="cfp-field-order-data" 
+         data-session-field-order='{{ session_field_order|safe }}' 
+         data-speaker-field-order='{{ speaker_field_order|safe }}'
+         data-reviewer-field-order='{{ reviewer_field_order|safe }}'
+         style="display:none;"></div>
     <h2 class="d-flex">
         {{ generic_title }}
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
@@ -76,10 +82,11 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                        <tr dragsort-id="title">
                             <th>{% translate "Title" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
@@ -98,11 +105,16 @@
                             </td>
                             <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
 
                         {# Abstract #}
                         {% with field=sform.cfp_ask_abstract %}
-                        <tr>
+                        <tr dragsort-id="abstract">
                             <th>{% translate "Abstract" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -127,12 +139,17 @@
                             </td>
                             <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Description #}
                         {% with field=sform.cfp_ask_description %}
-                        <tr>
+                        <tr dragsort-id="description">
                             <th>{% translate "Description" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -157,12 +174,17 @@
                             </td>
                             <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Notes #}
                         {% with field=sform.cfp_ask_notes %}
-                        <tr>
+                        <tr dragsort-id="notes">
                             <th>{% translate "Notes" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -187,12 +209,17 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Track #}
                         {% with field=sform.cfp_ask_track %}
-                        <tr>
+                        <tr dragsort-id="track">
                             <th>{% translate "Track" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -217,12 +244,17 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Duration #}
                         {% with field=sform.cfp_ask_duration %}
-                        <tr>
+                        <tr dragsort-id="duration">
                             <th>{% translate "Duration" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -247,13 +279,18 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Content Locale #}
                         {% with field=sform.cfp_ask_content_locale %}
                         {% if field %}
-                        <tr>
+                        <tr dragsort-id="content_locale">
                             <th>{% translate "Content Locale" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -279,13 +316,18 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endif %}
                         {% endwith %}
 
                         {# Image #}
                         {% with field=sform.cfp_ask_image %}
-                        <tr>
+                        <tr dragsort-id="image">
                             <th>{% translate "Session image" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -310,12 +352,17 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Do not record #}
                         {% with field=sform.cfp_ask_do_not_record %}
-                        <tr>
+                        <tr dragsort-id="do_not_record">
                             <th>{% translate "Recording opt-out" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -340,10 +387,16 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
+
                         {% for item in custom_session_fields %}
-                            <tr>
+                            <tr dragsort-id="{{ item.question.id }}">
                                 <th>
                                     <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
                                     <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
@@ -371,6 +424,17 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -407,12 +471,40 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                     <tbody>
+                        {# Full Name #}
+                        {% with field=sform.cfp_ask_fullname %}
+                        <tr>
+                            <th>{% translate "Full Name" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="required"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="required">
+                                    <select class="required-status-dropdown" disabled aria-readonly="true"
+                                        aria-describedby="fullname-required-help" data-current="required">
+                                        <option value="required" selected>Required</option>
+                                    </select>
+                                </div>
+                                <span id="fullname-required-help" class="sr-only">{% translate "Full Name is always required and cannot be changed." %}</span>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        {% endwith %}
+
                         {# Biography #}
                         {% with field=sform.cfp_ask_biography %}
-                        <tr>
+                        <tr dragsort-id="biography">
                             <th>{% translate "Biography" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -437,12 +529,17 @@
                             </td>
                             <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Avatar #}
                         {% with field=sform.cfp_ask_avatar %}
-                        <tr>
+                        <tr dragsort-id="avatar">
                             <th>{% translate "Profile picture" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -467,12 +564,17 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Avatar Source #}
                         {% with field=sform.cfp_ask_avatar_source %}
-                        <tr>
+                        <tr dragsort-id="avatar_source">
                             <th>{% translate "Profile picture source" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -497,12 +599,17 @@
                             </td>
                             <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Avatar License #}
                         {% with field=sform.cfp_ask_avatar_license %}
-                        <tr>
+                        <tr dragsort-id="avatar_license">
                             <th>{% translate "Profile picture license" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -527,12 +634,17 @@
                             </td>
                             <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
                             <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Availability #}
                         {% with field=sform.cfp_ask_availabilities %}
-                        <tr>
+                        <tr dragsort-id="availabilities">
                             <th>{% translate "Availability" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -557,12 +669,17 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
                         {# Additional Speaker #}
                         {% with field=sform.cfp_ask_additional_speaker %}
-                        <tr>
+                        <tr dragsort-id="additional_speaker">
                             <th>{% translate "Additional speakers" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
@@ -587,9 +704,16 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
+                        {% endwith %}
+
                         {% for item in custom_speaker_fields %}
-                            <tr>
+                            <tr dragsort-id="{{ item.question.id }}">
                                 <th>
                                     <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
                                     <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
@@ -617,9 +741,19 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
                             </tr>
                         {% endfor %}
-                        {% endwith %}
                     </tbody>
                     </table>
                 </div>
@@ -645,11 +779,12 @@
                             <th class="text-center">{% translate "Required" %}</th>
                             <th>{% translate "Minimum length" %}</th>
                             <th>{% translate "Maximum length" %}</th>
+                            <th></th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
                         {% for item in custom_reviewer_fields %}
-                            <tr>
+                            <tr dragsort-id="{{ item.question.id }}">
                                 <th>
                                     <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
                                     <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
@@ -677,6 +812,17 @@
                                 </td>
                                 <td></td>
                                 <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
