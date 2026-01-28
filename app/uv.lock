@@ -816,15 +816,15 @@ wheels = [
 
 [[package]]
 name = "django-formset-js-improved"
-version = "0.5.0.4"
+version = "0.5.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
     { name = "django-jquery-js" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/37/da/3d4bcb64784d141ab705cda3f6ba53ad6407636eb19ff9be4149af56b499/django_formset_js_improved-0.5.0.4.tar.gz", hash = "sha256:82130af33b2f4c3514638a442dd5305f08db8016b734573ed16570f0417fabab", size = 11026, upload-time = "2025-09-26T11:58:28.455Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/14/44/96673466ba091aa56c1c2d2d4e9c4c18d73fa3109ac29e207eec671b5b2e/django_formset_js_improved-0.5.0.5.tar.gz", hash = "sha256:374dd339a14321683e6aa9be7098bf56bb4bdeb93bd42ccacc73374c7a055dad", size = 11035, upload-time = "2026-01-26T08:55:10.42Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/42/e50ff2536c0f3f33e757e52ade27362d2d2c873df0016c79e4bac99e6e1c/django_formset_js_improved-0.5.0.4-py3-none-any.whl", hash = "sha256:10767d942901af2a53955c8451b10a657ffd996f83579e78c1ee48b28ab76e32", size = 14423, upload-time = "2025-09-26T11:58:26.919Z" },
+    { url = "https://files.pythonhosted.org/packages/74/dd/6b907481fc9bc0f149f919f2fb39fa1811fc6010bf5c49c210094c13f748/django_formset_js_improved-0.5.0.5-py3-none-any.whl", hash = "sha256:10e91b538fbbfcd4e917050e7b4728723b9a81ff2b592b7705b779175e367ed7", size = 14521, upload-time = "2026-01-26T08:55:08.811Z" },
 ]
 
 [[package]]
@@ -1707,14 +1707,14 @@ wheels = [
 
 [[package]]
 name = "gunicorn"
-version = "23.0.0"
+version = "24.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "packaging" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/72/9614c465dc206155d93eff0ca20d42e1e35afc533971379482de953521a4/gunicorn-23.0.0.tar.gz", hash = "sha256:f014447a0101dc57e294f6c18ca6b40227a4c90e9bdb586042628030cba004ec", size = 375031, upload-time = "2024-08-10T20:25:27.378Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/0a/10739c03537ec5b131a867bf94df2e412b437696c7e5d26970e2198a80d2/gunicorn-24.1.1.tar.gz", hash = "sha256:f006d110e5cb3102859b4f5cd48335dbd9cc28d0d27cd24ddbdafa6c60929408", size = 287567, upload-time = "2026-01-24T01:15:31.359Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/7d/6dac2a6e1eba33ee43f318edbed4ff29151a49b5d37f080aad1e6469bca4/gunicorn-23.0.0-py3-none-any.whl", hash = "sha256:ec400d38950de4dfd418cff8328b2c8faed0edb0d517d3394e457c317908ca4d", size = 85029, upload-time = "2024-08-10T20:25:24.996Z" },
+    { url = "https://files.pythonhosted.org/packages/96/90/cfe637677916fc6f53cd2b05d5746e249f683e1fa14c9e745a88c66f7290/gunicorn-24.1.1-py3-none-any.whl", hash = "sha256:757f6b621fc4f7581a90600b2cd9df593461f06a41d7259cb9b94499dc4095a8", size = 114920, upload-time = "2026-01-24T01:15:29.656Z" },
 ]
 
 [[package]]
