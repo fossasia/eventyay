@@ -1858,6 +1858,8 @@ class Event(
         return result
 
     def user_can_view_tickets(self, user=None, request=None):
+        if not self.settings.get('tickets_enabled', True, as_type=bool):
+            return False
         if not self.private_testmode or not self.settings.get('private_testmode_tickets', True, as_type=bool):
             return True
         if not user or not getattr(user, 'is_authenticated', False):
@@ -1867,6 +1869,8 @@ class Event(
         return user.has_event_permission(self.organizer, self, request=request)
 
     def user_can_view_talks(self, user=None, request=None):
+        if not self.settings.get('talks_enabled', True, as_type=bool):
+            return False
         if not self.private_testmode or not self.settings.get('private_testmode_talks', False, as_type=bool):
             return True
         if not user or not getattr(user, 'is_authenticated', False):

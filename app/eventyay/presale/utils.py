@@ -122,6 +122,21 @@ def _detect_event(request, require_live=True, require_plugin=None):
                 if not can_access:
                     raise Http404(_('The selected ticket shop is currently not available.'))
 
+            if not request.event.settings.get('tickets_enabled', True, as_type=bool):
+                blocked_prefixes = (
+                    'event.cart',
+                    'event.checkout',
+                    'event.order',
+                    'event.payment',
+                    'event.redeem',
+                    'event.waitinglist',
+                    'event.seatingplan',
+                    'event.widget',
+                    'event.invoice',
+                )
+                if url.url_name and url.url_name.startswith(blocked_prefixes):
+                    raise Http404(_('The selected ticket shop is currently not available.'))
+
             if request.event.private_testmode and not request.event.user_can_view_tickets(
                 request.user,
                 request=request,
