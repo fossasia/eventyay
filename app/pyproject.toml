@@ -214,9 +214,10 @@ dependencies = [
 
 [build-system]
 requires = [
-  'setuptools',
+  'setuptools>=80.10.2',
   'setuptools-rust',
 ]
+build-backend = "setuptools.build_meta"
 
 [dependency-groups]
 dev = [
