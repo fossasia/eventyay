@@ -57,7 +57,7 @@
                    class="btn btn-primary btn-lg"><i class="fa fa-plus"></i> {% trans "Create a new check-in list" %}</a>
             {% endif %}
             {% if can_change_organizer_settings %}
-                <a href="{% url "control:organizer.devices" organizer=request.organizer.slug %}"
+                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
                    class="btn btn-default btn-lg"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
             {% endif %}
         </div>
@@ -68,7 +68,7 @@
                    class="btn btn-default"><i class="fa fa-plus"></i> {% trans "Create a new check-in list" %}</a>
             {% endif %}
             {% if can_change_organizer_settings %}
-                <a href="{% url "control:organizer.devices" organizer=request.organizer.slug %}"
+                <a href="{% url "eventyay_common:organizer.devices" organizer=request.organizer.slug %}"
                    class="btn btn-default"><i class="fa fa-tablet"></i> {% trans "Connected devices" %}</a>
             {% endif %}
         </p>

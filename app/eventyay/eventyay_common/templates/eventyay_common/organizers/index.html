@@ -48,16 +48,16 @@
 			{% for organizer in organizers %}
 			<tr>
 				<td><strong>
-                    <a href='{% url "eventyay_common:organizer.update" organizer=organizer.slug %}'>{{ organizer.name }}</a>
+                    <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug %}'>{{ organizer.name }}</a>
                 </strong></td>
                 <td>{{ organizer.slug }}</td>
                 <td class="text-right flip">
-                    <a href='{% url "eventyay_common:organizer.update" organizer=organizer.slug  %}'
+                    <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug  %}'
                             class="btn btn-sm btn-default" title='{% translate "Edit" %}'
                             data-toggle="tooltip">
                         <span class="fa fa-edit"></span>
                     </a>
-                    <a href='{% url "eventyay_common:organizer.update" organizer=organizer.slug  %}?section=permissions'
+                    <a href='{% url "eventyay_common:organizer.edit" organizer=organizer.slug  %}?section=permissions'
                             class="btn btn-sm btn-default" title='{% translate "Manage teams & permissions" %}'
                             data-toggle="tooltip">
                         <span class="fa fa-users"></span>

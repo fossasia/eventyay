@@ -20,7 +20,7 @@
             </summary>
             <div id="{{ e.identifier }}">
                 <div class="panel-body">
-                    <form action="{% url "control:organizer.export.do" organizer=request.organizer.slug %}"
+                    <form action="{% url "eventyay_common:organizer.export.do" organizer=request.organizer.slug %}"
                             method="post" class="form-horizontal" data-asynctask data-asynctask-download
                             data-asynctask-long>
                         {% csrf_token %}
