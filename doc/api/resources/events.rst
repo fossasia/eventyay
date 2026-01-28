@@ -442,7 +442,6 @@ Endpoints
           "eventyay.plugins.banktransfer",
           "eventyay.plugins.stripe",
           "eventyay.plugins.paypal",
-          "eventyay.plugins.pretixdroid"
         ]
       }
 

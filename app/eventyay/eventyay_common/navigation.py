@@ -73,7 +73,15 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
     url = request.resolver_match
     if not url:
         return []
-    nav = [
+    has_settings_perm = request.user.has_event_permission(
+        event.organizer,
+        event,
+        'can_change_event_settings',
+        request=request,
+    )
+    if not has_settings_perm:
+        return []
+    return [
         {
             'label': _('Settings'),
             'url': reverse(
@@ -86,9 +94,19 @@ def get_event_navigation(request: HttpRequest, event: Event) -> List[MenuItem]:
             'active': (url.url_name == 'event.update'),
             'icon': 'wrench',
         },
+        {
+            'label': _('Plugins'),
+            'url': reverse(
+                'eventyay_common:event.plugins',
+                kwargs={
+                    'event': event.slug,
+                    'organizer': event.organizer.slug,
+                },
+            ),
+            'active': (url.url_name == 'event.plugins'),
+            'icon': 'plug',
+        },
     ]
-
-    return nav
 
 
 def get_account_navigation(request: HttpRequest) -> List[MenuItem]:

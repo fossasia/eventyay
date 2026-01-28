@@ -8,14 +8,15 @@ The talk component includes two specialized frontend applications for schedule m
 
 .. note::
    This documentation covers the frontend applications specific to the talk component.
-   For the video webapp, see :doc:`/video/frontend`.
+   For the video frontend, see :doc:`/video/frontend`.
 
 Schedule Editor Application
 ---------------------------
 
 A TypeScript/Vue 3 application for visual schedule editing and management.
 
-**Location**: ``app/eventyay/frontend/schedule-editor/``
+**Location**: ``app/eventyay/webapp/schedule-editor/``
+ 
 
 **Framework**: Vue 3 with TypeScript
 
@@ -186,7 +187,7 @@ Development
 **Setup**:
 .. code-block:: bash
 
-      cd app/eventyay/frontend/schedule-editor
+      cd app/eventyay/webapp/schedule-editor
       npm install
       npm run dev
 
@@ -218,7 +219,7 @@ Local Development
 **2. Start Schedule Editor**:
 .. code-block:: bash
 
-      cd app/eventyay/frontend/schedule-editor
+      cd app/eventyay/webapp/schedule-editor
       npm install
       npm run dev
       # Access: http://localhost:5173
@@ -231,7 +232,7 @@ Testing
 .. code-block:: bash
 
    # Schedule Editor
-   cd app/eventyay/frontend/schedule-editor
+   cd app/eventyay/webapp/schedule-editor
    npm run lint
    
 **Type Checking**:
@@ -247,7 +248,7 @@ Production Build
 .. code-block:: bash
 
    # Schedule Editor
-   cd app/eventyay/frontend/schedule-editor
+   cd app/eventyay/webapp/schedule-editor
    npm run build
    # Output: dist/
    
@@ -334,7 +335,7 @@ See Also
 --------
 
 - :doc:`/development/frontend` - Complete frontend documentation
-- :doc:`/video/frontend` - Video webapp documentation
+- :doc:`/video/frontend` - Video frontend documentation
 - :doc:`/development/api/index` - Backend API reference
 - :doc:`/talk/developer/setup` - Talk development setup
 
