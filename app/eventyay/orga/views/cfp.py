@@ -49,6 +49,8 @@ from eventyay.base.models import (
     SubmissionType,
     SubmitterAccessCode,
     Track,
+    SpeakerProfile,
+    Availability,
 )
 from eventyay.talk_rules.submission import questions_for_user
 
