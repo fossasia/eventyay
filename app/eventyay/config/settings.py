@@ -162,8 +162,10 @@ class BaseSettings(_BaseSettings):
     admin_audit_comments_asked: bool = False
     # To select a variant from CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.
     call_for_speaker_login_button_label: str = 'default'
-    admins_email: str = ''
-    video_server_hostname: str | None = None
+    # List of (name, email) tuples for admin contacts. Django ADMINS setting.
+    admins: list[tuple[str, str]] = Field(default_factory=list)
+    # Video server base URL with scheme (e.g., https://video.example.com)
+    video_server_hostname: HttpUrl | None = None
     cache_tickets_hours: int = Field(24, ge=1)
     fetch_ecb_rates: bool = False
 
@@ -1448,8 +1450,8 @@ TWITTER_CLIENT_ID = conf.twitter_client_id
 TWITTER_CLIENT_SECRET = conf.twitter_client_secret
 LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
-ADMINS = [('Admin', conf.admins_email.strip())] if conf.admins_email else []
-VIDEO_SERVER_HOSTNAME = conf.video_server_hostname
+ADMINS = conf.admins
+VIDEO_SERVER_HOSTNAME = str(conf.video_server_hostname) if conf.video_server_hostname else None
 CACHE_TICKETS_HOURS = conf.cache_tickets_hours
 FETCH_ECB_RATES = conf.fetch_ecb_rates
 
