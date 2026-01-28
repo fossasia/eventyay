@@ -126,6 +126,7 @@
                         </a>
                     </li>
                 {% endif %}
+                {% include "common/fragment_language_switch.html" %}
                 {{ staff_session|json_script:"is_admin_mode" }}
                 {% if warning_update_available %}
                     <li>
@@ -259,7 +260,7 @@
                                         <span>{% translate "Editor" %}</span>
                                     </a>
                                     <a href="{{ request.event.cfp.urls.questions }}" class="nav-link nav-link-second-level{% if "cfp.question" in url_name %} active{% endif %}">
-                                        <span>{{ phrases.cfp.custom_fields }}</span>
+                                        <span>{% translate "Forms" %}</span>
                                     </a>
                                     {% if request.event|get_feature_flag:"use_tracks" %}
                                         <a href="{{ request.event.cfp.urls.tracks }}" class="nav-link nav-link-second-level{% if "cfp.track" in url_name %} active{% endif %}">

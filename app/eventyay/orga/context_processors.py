@@ -51,6 +51,8 @@ def orga_events(request):
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
         return context
 
+    context['staff_session'] = request.user.has_active_staff_session(request.session.session_key)
+
     if not getattr(request, 'event', None):
         context['nav_global'] = [
             entry for entry in collect_signal(nav_global, {'sender': None, 'request': request}) if entry

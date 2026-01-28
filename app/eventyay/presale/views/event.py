@@ -557,8 +557,14 @@ class EventIndex(EventViewMixin, EventListMixin, CartMixin, TemplateView):
         if self.request.event.has_subevents:
             context.update(self._subevent_list_context())
 
-        context['show_cart'] = context['cart']['positions'] and (
-            self.request.event.has_subevents or self.request.event.presale_is_running
+        context['can_view_tickets'] = self.request.event.user_can_view_tickets(
+            self.request.user,
+            request=self.request,
+        )
+        context['show_cart'] = (
+            context['can_view_tickets']
+            and context['cart']['positions']
+            and (self.request.event.has_subevents or self.request.event.presale_is_running)
         )
         if self.request.event.settings.redirect_to_checkout_directly:
             context['cart_redirect'] = eventreverse(
