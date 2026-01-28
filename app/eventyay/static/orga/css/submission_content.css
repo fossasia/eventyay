@@ -1,0 +1,36 @@
+.submission-content-view .form-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center; /* Align label and value vertically */
+    margin-bottom: 1rem;
+}
+
+.submission-content-view .form-group label {
+    font-weight: 600;
+    margin-bottom: 0; /* Remove extra spacing */
+    padding-right: 1rem;
+    text-align: right; /* Align labels to the right */
+}
+
+.submission-content-view .form-group .col-md-9 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center; /* Align inner content vertically */
+}
+
+.submission-content-view .badge {
+    margin-right: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.submission-content-view img {
+    max-width: 300px;
+    max-height: 200px;
+    display: block;
+}
+
+.submission-content-view i.fa {
+    margin-right: 0.25rem;
+}

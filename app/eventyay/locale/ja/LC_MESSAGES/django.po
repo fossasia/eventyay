@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-12-12 12:00+0000\n"
+"PO-Revision-Date: 2026-01-25 06:41+0000\n"
 "Last-Translator: \"Masaki Murakami (VZP)\" <vzp10224@wikiusers.jp>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -21584,7 +21584,7 @@ msgstr "%(weekday)s, %(current_day)s には講演がありません。"
 #: pretalx/agenda/templates/agenda/session_block.html:12
 #, python-format
 msgid "%(minutes)smin"
-msgstr ""
+msgstr "%(minutes)s分"
 
 #: pretalx/agenda/templates/agenda/speaker.html:51
 #: pretalx/agenda/templates/agenda/speakers.html:18
@@ -21608,10 +21608,8 @@ msgid "Favourite this session"
 msgstr "動画や録音など記録を希望しません。"
 
 #: pretalx/agenda/templates/agenda/talk.html:49
-#, fuzzy
-#| msgid "Submit sessions for your speakers"
 msgid "Remove this session from your favourites"
-msgstr "登壇者のために公園を投稿する"
+msgstr "この講演をお気に入りから削除する"
 
 #: pretalx/agenda/templates/agenda/talk.html:100
 msgid "This session’s header image"
@@ -21655,7 +21653,7 @@ msgstr "The eventyay logo"
 #: pretalx/cfp/flow.py:354
 msgid ""
 "Your draft was saved. You can continue to edit it as long as the CfP is open."
-msgstr ""
+msgstr "下書きは保存されました。CfPが募集中の間は、編集を続けることができます。"
 
 #: pretalx/cfp/flow.py:362
 msgid ""
