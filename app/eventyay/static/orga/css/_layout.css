@@ -1,3 +1,7 @@
+html {
+  overflow-y: scroll;
+}
+
 body {
   height: 100vh;
   overflow: hidden;
@@ -31,7 +35,7 @@ body {
   margin-top: 50px;
   height: calc(100vh - 50px);
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   scroll-padding-top: 50px;
   display: flex;
   flex-direction: column;
@@ -1695,6 +1699,9 @@ h2 .user-name-display img {
 
 #event-nav .navigation .navigation-button {
   margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 #event-nav .navigation .navigation-title {
@@ -1720,21 +1727,67 @@ h2 .user-name-display img {
   display: block;
 }
 
-/* Styles for the buttons themselves - matching custom.scss */
+/* Styles for the buttons themselves - matching custom.scss and pretixcontrol */
 #event-nav .header-nav {
-  border-color: #165a91 !important;
-  border: 1px solid;
-  font-size: 16px;
-  font-weight: normal;
-  border-radius: 0.25rem;
-  padding: 7px 7px;
+  border: 1px solid #1a6fb0 !important;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  border-radius: 4px;
+  padding: 6px 12px;
+  min-width: 90px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: #1a6fb0;
+  background-color: transparent;
+  background-image: none;
+  vertical-align: middle;
+  line-height: 1.5;
+  margin: 0;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: normal;
+  text-transform: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
-#event-nav .header-nav.active,
-#event-nav .header-nav:hover,
-#event-nav .header-nav:active {
+#event-nav .header-nav i {
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  width: 1.28571em;
+  text-align: center;
+}
+
+#event-nav .header-nav.active {
   background-color: #2185d0 !important;
-  color: #fff;
+  border-color: #2185d0 !important;
+  color: #fff !important;
+}
+
+#event-nav .header-nav.active:hover,
+#event-nav .header-nav.active:focus {
+  background-color: #1a6fb0 !important;
+  border-color: #1a6fb0 !important;
+}
+
+#event-nav .header-nav:hover,
+#event-nav .header-nav:focus {
+  background-color: #1a6fb0 !important;
+  border-color: #1a6fb0 !important;
+  color: #fff !important;
+  text-decoration: none;
 }
 
 @media (min-width: 1200px) {

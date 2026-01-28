@@ -5,24 +5,24 @@
     {% with url_name=request.resolver_match.url_name namespace=request.resolver_match.namespace %}
     
     <a href='{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' 
-       class="header-nav btn btn-outline-success {% if namespace == 'eventyay_common' and 'video' not in url_name %}active{% endif %}">
-        <i class="fa fa-home"></i> {% trans "Home" %}
+       class="header-nav btn btn-outline-primary {% if namespace == 'eventyay_common' or namespace == 'common' %}{% if 'video' not in url_name %}active{% endif %}{% endif %}">
+        <i class="fa fa-home"></i> {% trans "Start" %}
     </a>
 
     <a href='{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' 
-       class="header-nav btn btn-outline-success {% if namespace == 'control' %}active{% endif %}">
+       class="header-nav btn btn-outline-primary {% if namespace == 'control' %}active{% endif %}">
         <i class="fa fa-ticket"></i> {% trans "Tickets" %}
     </a>
 
     {% if is_talk_event_created or namespace == 'orga' %}
     <a href='{% url "orga:event.dashboard" event=request.event.slug %}' 
-       class="header-nav btn btn-outline-success {% if namespace == 'orga' %}active{% endif %}">
+       class="header-nav btn btn-outline-primary {% if namespace == 'orga' %}active{% endif %}">
         <i class="fa fa-group"></i> {% trans "Talk" %}
     </a>
     {% endif %}
 
     <a href='{% url "eventyay_common:event.create_access_to_video" organizer=request.event.organizer.slug event=request.event.slug %}'
-       class="header-nav btn btn-outline-success {% if 'video' in url_name %}active{% endif %}"
+       class="header-nav btn btn-outline-primary {% if 'video' in url_name %}active{% endif %}"
        title="{% trans 'Access videos related to this event' %}">
         <i class="fa fa-video-camera"></i> {% trans "Videos" %}
     </a>

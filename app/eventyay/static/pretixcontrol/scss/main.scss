@@ -1110,6 +1110,74 @@ h1 .label {
     justify-content: space-between;
 }
 
+#event-nav .navigation .navigation-button,
+.header-nav .navigation .navigation-button {
+    display: flex;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+#event-nav .header-nav,
+.header-nav .header-nav {
+    border: 1px solid darken($brand-primary, 10%) !important;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: inherit;
+    border-radius: 4px;
+    padding: 6px 12px;
+    min-width: 90px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    white-space: nowrap;
+    box-sizing: border-box;
+    text-decoration: none;
+    text-align: center;
+    letter-spacing: normal;
+    text-transform: none;
+    color: darken($brand-primary, 10%);
+    background-color: transparent;
+    background-image: none;
+    vertical-align: middle;
+    line-height: 1.5;
+    margin: 0;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    touch-action: manipulation;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    
+    i {
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
+        width: 1.28571em;
+        text-align: center;
+    }
+    
+    &.active {
+        background-color: $brand-primary !important;
+        border-color: $brand-primary !important;
+        color: #fff !important;
+    }
+    
+    &.active:hover, &.active:focus {
+        background-color: darken($brand-primary, 10%) !important;
+        border-color: darken($brand-primary, 10%) !important;
+    }
+    
+    &:hover, &:focus {
+        background-color: darken($brand-primary, 10%) !important;
+        border-color: darken($brand-primary, 10%) !important;
+        color: #fff !important;
+        text-decoration: none;
+    }
+}
+
 #event-nav .navigation-title,
 .header-nav .navigation-title {
     text-align: left;
