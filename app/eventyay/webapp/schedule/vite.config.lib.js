@@ -2,7 +2,7 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import BuntpapierStylus from 'buntpapier/stylus.js'
+
 // import ReactivityTransform from '@vue-macros/reactivity-transform/vite'
 
 const stylusOptions = {
@@ -10,7 +10,6 @@ const stylusOptions = {
 		path.resolve(__dirname, './src/styles'),
 		'node_modules'
 	],
-	use: [BuntpapierStylus({implicit: false})],
 	imports: [
 		'buntpapier/buntpapier/index.styl',
 		path.resolve(__dirname, 'src/styles/variables.styl')
