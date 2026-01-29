@@ -1,1 +1,61 @@
 {% extends "orga/cfp/track/_form.html" %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script>
+    function luminance(r, g, b) {
+      const a = [r, g, b].map(v => {
+        v /= 255;
+        return v <= 0.03928
+          ? v / 12.92
+          : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+
+    function contrastRatio(rgb) {
+      const L1 = luminance(rgb.r, rgb.g, rgb.b);
+      const L2 = 1.0; // white
+      return (L2 + 0.05) / (L1 + 0.05);
+    }
+
+    function generateAccessibleColor() {
+      const min = 40;
+      const max = 200;
+
+      while (true) {
+        const r = Math.floor(Math.random() * (max - min) + min);
+        const g = Math.floor(Math.random() * (max - min) + min);
+        const b = Math.floor(Math.random() * (max - min) + min);
+
+        if (contrastRatio({ r, g, b }) >= 4.5) {
+          return (
+            "#" +
+            r.toString(16).padStart(2, "0") +
+            g.toString(16).padStart(2, "0") +
+            b.toString(16).padStart(2, "0")
+          );
+        }
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const colorInput = document.getElementById("id_color");
+      if (!colorInput || colorInput.value) return;
+
+      const color = generateAccessibleColor();
+      colorInput.value = color;
+
+      colorInput.dispatchEvent(new Event("input", { bubbles: true }));
+      colorInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+      const warning = colorInput
+        .closest(".form-group")
+        ?.querySelector(".text-danger, .help-block, .invalid-feedback");
+
+      if (warning) {
+        warning.style.display = "none";
+      }
+    });
+  </script>
+{% endblock scripts %}
