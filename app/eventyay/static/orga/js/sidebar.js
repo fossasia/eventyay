@@ -2,14 +2,13 @@ onReady(() => {
     const element = document.querySelector("[data-toggle=sidebar]")
     const sidebar = document.querySelector("aside.sidebar")
     const cls = "sidebar-uncollapsed"
-    const isMobile = () => window.matchMedia("(max-width: 768px)").matches
+    const isMobile = () => window.matchMedia("(max-width: 767px)").matches
 
     if (sidebar && localStorage["sidebarVisible"]) {
         sidebar.classList.add(cls)
     }
     if (sidebar && element) {
-        element.addEventListener("click", (e) => {
-            e.stopPropagation()
+        element.addEventListener("click", () => {
             sidebar.classList.toggle(cls)
             localStorage["sidebarVisible"] = sidebar.classList.contains(cls)
                 ? "1"
