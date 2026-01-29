@@ -169,6 +169,26 @@
     #event-nav .navigation {
         margin-top: 18px;
     }
+
+    #event-nav .navigation .navigation-button {
+        flex: 1 0 100%;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 4px;
+        margin-top: 10px;
+    }
+
+    #event-nav .navigation .navigation-button .header-nav {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        padding-left: 6px;
+        padding-right: 6px; 
+    }
 }
 
 @media (min-width: $screen-sm-min) and (max-width: $screen-sm-max) {

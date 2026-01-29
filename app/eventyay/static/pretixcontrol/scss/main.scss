@@ -1088,6 +1088,11 @@ h1 .label {
         overflow-y: visible;
         box-sizing: border-box;
     }
+
+    #page-wrapper > .container-fluid {
+        padding-left: 1px;
+        padding-right: 1px;
+    }
 }
 
 /* eventyay common organizer settings: align panel/submit greys with sidebar */
