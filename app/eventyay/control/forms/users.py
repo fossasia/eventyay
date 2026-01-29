@@ -4,7 +4,6 @@ from django.contrib.auth.password_validation import (
     password_validators_help_texts,
     validate_password,
 )
-from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from pytz import common_timezones
 
@@ -82,15 +81,17 @@ class UserEditForm(forms.ModelForm):
         # Normalize empty string to None for consistency
         if email == '':
             email = None
-        # Allow None/empty email for existing users without email
+        # Allow None/empty email only for existing users who currently have no email
         if not email:
-            # If user already exists without email, allow keeping it as None
             if self.instance and self.instance.pk and not self.instance.email:
                 return None
-            # For new users, email is required (handled by required=True)
-            return None
-        # Check for duplicate emails only if email is provided
-        if User.objects.filter(Q(email__iexact=email) & ~Q(pk=self.instance.pk if self.instance else None)).exists():
+            # Should not occur: new users have required email; existing users with email keep it
+            return email
+        # Check for duplicate emails only when an email is provided
+        qs = User.objects.filter(email__iexact=email)
+        if self.instance is not None and self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
             raise forms.ValidationError(
                 self.error_messages['duplicate_identifier'],
                 code='duplicate_identifier',
