@@ -481,6 +481,24 @@ class QuestionToggle(EventPermissionRequiredMixin, View):
                 user=self.request.user,
                 data={'required': value}
             )
+        elif field == 'active':
+            # Validate presence and type for boolean fields
+            if value is None or not isinstance(value, bool):
+                logger.warning(
+                    'Invalid value for question %s field %s: expected bool, got %s',
+                    question.pk, field, type(value).__name__ if value is not None else 'None'
+                )
+                return JsonResponse({
+                    'error': 'Value must be a boolean for active field',
+                    'received': type(value).__name__ if value is not None else 'None'
+                }, status=400)
+            question.active = value
+            question.save(update_fields=['active'])
+            question.log_action(
+                'eventyay.event.question.changed',
+                user=self.request.user,
+                data={'active': value}
+            )
         else:
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
@@ -1677,7 +1695,52 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         ctx['sform'] = self.sform()
 
         # Include custom fields (questions) for attendee data section
-        ctx['questions'] = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        questions = list(self.request.event.questions.prefetch_related('products').order_by('position'))
+        
+        # Build sorted field order list for template rendering
+        system_question_order = self.request.event.settings.system_question_order or {}
+        system_fields = ['attendee_name_parts', 'attendee_email', 'company', 'street']
+        
+        # Create questions lookup map for O(1) access
+        questions_by_id = {str(q.id): q for q in questions}
+        
+        # Create list of (field_id, position) tuples
+        field_order = []
+        
+        # Add system fields with their saved positions (or default if not saved)
+        for idx, field_name in enumerate(system_fields):
+            # Check if field has a valid saved position (>= 0)
+            # Position -1 indicates field wasn't in drag-and-drop list
+            if system_question_order and field_name in system_question_order and system_question_order[field_name] >= 0:
+                position = system_question_order[field_name]
+            else:
+                # Use negative default positions to avoid conflicts with custom fields,
+                # whose positions start at 0. This ensures system fields always appear
+                # before custom questions when no explicit order is configured.
+                position = idx - len(system_fields)
+            field_order.append((field_name, position))
+        
+        # Add custom fields with their positions
+        for q in questions:
+            field_order.append((str(q.id), q.position))
+        
+        # Sort by position
+        field_order.sort(key=lambda x: x[1])
+        
+        # Build ordered_fields structure for single-pass template rendering
+        # Each item is a simple object with 'id', 'type', and optionally 'question'
+        OrderedField = namedtuple('OrderedField', ['id', 'type', 'question'])
+        ordered_fields = []
+        
+        for field_id, _ in field_order:
+            if field_id in system_fields:
+                ordered_fields.append(OrderedField(id=field_id, type='system', question=None))
+            else:
+                q = questions_by_id.get(field_id)
+                if q is not None:
+                    ordered_fields.append(OrderedField(id=field_id, type='question', question=q))
+        
+        ctx['ordered_fields'] = ordered_fields
 
         return ctx
 

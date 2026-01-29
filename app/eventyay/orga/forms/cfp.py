@@ -32,7 +32,11 @@ from eventyay.base.models.cfp import CfP, default_fields
 from eventyay.base.models.question import TalkQuestionRequired
 
 
-class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMixin, forms.Form):
+class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nFormMixin, forms.Form):
+    """
+    Form for general CfP settings stored in event.cfp.settings.
+    requires an 'obj' argument in __init__ which must be an Event instance with a related 'cfp' object.
+    """
     use_tracks = forms.BooleanField(
         label=_('Use tracks'),
         required=False,
@@ -69,6 +73,33 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+
+    def save(self, *args, **kwargs):
+        current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
+        if 'count_length_in' in self.cleaned_data:
+            new_count_length_in = self.cleaned_data.get('count_length_in') or current_count_length_in
+        else:
+            new_count_length_in = current_count_length_in
+        self.instance.cfp.settings['count_length_in'] = new_count_length_in
+        self.instance.cfp.save()
+        super().save(*args, **kwargs)
+
+    class Meta:
+        # These are JSON fields on event.settings
+        json_fields = {
+            'use_tracks': 'feature_flags',
+            'submission_public_review': 'feature_flags',
+            'present_multiple_times': 'feature_flags',
+            'mail_on_new_submission': 'mail_settings',
+        }
+
+
+class CfPSettingsForm(CfPGeneralSettingsForm):
+    """
+    Form for full CfP settings, including specific field requirements and custom questions.
+    """
+    def __init__(self, *args, obj, **kwargs):
+        super().__init__(*args, obj=obj, **kwargs)
         self.length_fields = [
             'title',
             'abstract',
@@ -92,6 +123,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             'track',
             'duration',
             'content_locale',
+            'fullname',
         ]
         for attribute in self.length_fields:
             field_name = f'cfp_{attribute}_min_length'
@@ -110,15 +142,26 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.fields[field_name].widget.attrs['placeholder'] = ''
         for attribute in self.request_require_fields:
             field_name = f'cfp_ask_{attribute}'
-            self.fields[field_name] = forms.ChoiceField(
-                required=True,
-                initial=obj.cfp.fields.get(attribute, default_fields()[attribute])['visibility'],
-                choices=[
-                    ('do_not_ask', _('Do not ask')),
-                    ('optional', _('Ask, but do not require input')),
-                    ('required', _('Ask and require input')),
-                ],
-            )
+            # Full Name is always required and always active
+            if attribute == 'fullname':
+                self.fields[field_name] = forms.ChoiceField(
+                    required=True,
+                    initial='required',
+                    choices=[
+                        ('required', _('Ask and require input')),
+                    ],
+                    widget=forms.Select(attrs={'disabled': True, 'aria-readonly': 'true'}),
+                )
+            else:
+                self.fields[field_name] = forms.ChoiceField(
+                    required=True,
+                    initial=obj.cfp.fields.get(attribute, default_fields()[attribute])['visibility'],
+                    choices=[
+                        ('do_not_ask', _('Do not ask')),
+                        ('optional', _('Ask, but do not require input')),
+                        ('required', _('Ask and require input')),
+                    ],
+                )
         
         # Add fields for custom questions
         # We use all_objects because we want to include reviewer questions and inactive questions
@@ -147,11 +190,22 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
             self.fields.pop('cfp_ask_content_locale', None)
 
     def save(self, *args, **kwargs):
+        # Preserve fields_config (drag-drop order) before modifying settings
+        fields_config = self.instance.cfp.settings.get('fields_config')
+
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+
+        # Restore fields_config after setting other values (also when it is an empty dict)
+        if fields_config is not None:
+            self.instance.cfp.settings['fields_config'] = fields_config
         for key in self.request_require_fields:
             if key not in self.instance.cfp.fields:
                 self.instance.cfp.fields[key] = default_fields()[key]
-            self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
+            # Full Name is always required and cannot be changed
+            if key == 'fullname':
+                self.instance.cfp.fields[key]['visibility'] = 'required'
+            else:
+                self.instance.cfp.fields[key]['visibility'] = self.cleaned_data.get(f'cfp_ask_{key}')
         
         for key in self.length_fields:
             self.instance.cfp.fields[key]['min_length'] = self.cleaned_data.get(f'cfp_{key}_min_length')
@@ -172,17 +226,7 @@ class CfPSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMix
                         question.question_required = TalkQuestionRequired.OPTIONAL
                 question.save()
 
-        self.instance.cfp.save()
         super().save(*args, **kwargs)
-
-    class Meta:
-        # These are JSON fields on event.settings
-        json_fields = {
-            'use_tracks': 'feature_flags',
-            'submission_public_review': 'feature_flags',
-            'present_multiple_times': 'feature_flags',
-            'mail_on_new_submission': 'mail_settings',
-        }
 
 
 class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
@@ -232,7 +276,12 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def __init__(self, *args, event=None, **kwargs):
         super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
+        instance = getattr(self, 'instance', None)
+        if not (instance and instance.pk):
+            target = self.initial.get('target')
+            if target and 'target' in self.fields:
+                self.initial['target'] = target
+                self.fields['target'].initial = target
         if not (event.get_feature_flag('use_tracks') and event.tracks.all().count() and event.cfp.request_track):
             self.fields.pop('tracks')
         else:

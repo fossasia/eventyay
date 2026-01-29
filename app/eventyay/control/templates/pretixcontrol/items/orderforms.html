@@ -153,7 +153,10 @@
                         </tr>
                     </thead>
                     <tbody data-dnd-url="{% url "control:event.products.questions.reorder" event=request.event.slug organizer=request.event.organizer.slug %}">
+                        {% for field in ordered_fields %}
+                        
                         {# Attendee names #}
+                        {% if field.id == "attendee_name_parts" %}
                         {% with field=sform.attendee_names_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="attendee_name_parts">
@@ -181,8 +184,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
                         {# Attendee emails #}
+                        {% if field.id == "attendee_email" %}
                         {% with field=sform.attendee_emails_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="attendee_email">
@@ -229,8 +234,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
-                        {# Attendee company #}
+                        {# Company #}
+                        {% if field.id == "company" %}
                         {% with field=sform.attendee_company_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="company">
@@ -258,8 +265,10 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
 
                         {# Attendee addresses - represents multiple backend fields #}
+                        {% if field.id == "street" %}
                         {% with field=sform.attendee_addresses_asked_required %}
                         {% if field %}
                         <tr data-dnd-id="street">
@@ -287,11 +296,13 @@
                         </tr>
                         {% endif %}
                         {% endwith %}
+                        {% endif %}
                         
                         {# Custom fields #}
-                        {% for q in questions %}
+                        {% if field.type == "question" %}
+                        {% with q=field.question %}
                         <tr data-dnd-id="{{ q.id }}">
-                            <th>
+                            <th id="question-label-{{ q.id }}">
                                 <strong>
                                     {% if q.type == "DES" %}
                                         <a href="{% url "control:event.products.descriptions.edit" organizer=request.event.organizer.slug event=request.event.slug question=q.id %}">
@@ -304,18 +315,15 @@
                                 <br><small class="text-muted">{{ q.identifier }}</small>
                             </th>
                             <td class="text-center">
-                                <label class="toggle-switch always-on"
-                                    aria-label="{% translate 'Custom field is always active' %}"
-                                    title="{% translate 'Custom fields cannot be deactivated, unlike system fields.' %}">
+                                <label class="toggle-switch"
+                                    aria-labelledby="question-label-{{ q.id }}">
                                     <input type="checkbox"
-                                        checked
-                                        disabled
-                                        aria-describedby="custom-field-always-active-{{ q.id }}">
+                                        aria-label="{% translate 'Active status for' %} {{ q.question }}"
+                                        class="question-active-toggle"
+                                        data-question-id="{{ q.id }}"
+                                        {% if q.active %}checked{% endif %}>
                                     <span class="toggle-slider"></span>
                                 </label>
-                                <span id="custom-field-always-active-{{ q.id }}" class="sr-only">
-                                    {% translate "This custom field is always active and cannot be deactivated, unlike system fields." %}
-                                </span>
                             </td>
                             <td class="text-center">
                                 {% if q.type != "DES" %}
@@ -354,6 +362,9 @@
                                 {% endif %}
                             </td>
                         </tr>
+                        {% endwith %}
+                        {% endif %}
+                        
                         {% endfor %}
                     </tbody>
                 </table>
