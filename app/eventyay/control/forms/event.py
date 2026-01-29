@@ -225,7 +225,7 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
         self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("Enter an organiser email address to be used as the sender for event-related emails. If left empty, emails will be sent using the platform's default email address.")
+        self.fields['email'].help_text = _("Enter an organiser email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address.")
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -379,7 +379,7 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_('Organizer email address'),
-        help_text=_("Enter an organiser email address to be used as the sender for event-related emails. If left empty, emails will be sent using the platform's default email address."),
+        help_text=_("Enter an organiser email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address."),
         required=False,
     )
 

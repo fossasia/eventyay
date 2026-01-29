@@ -321,7 +321,7 @@ class QueuedMail(PretalxModel):
         null=True,
         blank=True,
         verbose_name=_('Reply-To'),
-        help_text=_('By default, the organiser address is used as Reply-To.'),
+        help_text=_('By default, the organiser email is used as Reply-To when the platform sender is used. With a custom sender, replies go to the sender address unless overridden here.'),
     )
     cc = models.CharField(
         max_length=1000,
