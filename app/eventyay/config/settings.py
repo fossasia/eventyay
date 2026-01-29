@@ -1114,6 +1114,9 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
+if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
+    # Android emulators access the host machine via these addresses.
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)

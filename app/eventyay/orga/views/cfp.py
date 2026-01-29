@@ -284,11 +284,14 @@ class QuestionView(OrderActionMixin, OrgaCRUDView):
     context_object_name = 'question'
     detail_is_update = False
 
-    def get_initial(self):
-        initial = super().get_initial()
-        if 'target' in self.request.GET:
-            initial['target'] = self.request.GET['target']
-        return initial
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['event'] = self.request.event
+        target = self.request.GET.get('target')
+        if target:
+            kwargs.setdefault('initial', {})
+            kwargs['initial']['target'] = target
+        return kwargs
 
     def get_queryset(self):
         return (
