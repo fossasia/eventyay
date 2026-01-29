@@ -147,7 +147,7 @@ def get_reply_to_address(
     """
     Resolve Reply-To email address with unified precedence.
     
-    Event.email is REQUIRED during event creation, but Reply-To header is OPTIONAL.
+    Event.email is OPTIONAL (may be provided during event creation), and the Reply-To header is OPTIONAL.
     
     Precedence (highest to lowest):
     1. Explicit override parameter (manual emails)
