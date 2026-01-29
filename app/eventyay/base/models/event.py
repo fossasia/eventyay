@@ -683,8 +683,9 @@ class Event(
     )
     email = models.EmailField(
         verbose_name=_('Organizer email address'),
-        help_text=_('Will be used as Reply-To in emails.'),
-        default='org@mail.com',
+        help_text=_("Enter an organiser email address to be used as the sender for event-related emails. If left empty, emails will be sent using the platform's default email address."),
+        blank=True,
+        null=True,
     )
     custom_domain = models.URLField(
         verbose_name=_('Custom domain'),

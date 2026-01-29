@@ -223,9 +223,9 @@ class EventWizardBasicsForm(I18nModelForm):
         self.fields['geo_lat'].widget.attrs['placeholder'] = _('Latitude, e.g. 40.7128')
         self.fields['geo_lon'].widget.attrs['placeholder'] = _('Longitude, e.g. -74.0060')
         self.fields['slug'].widget.prefix = build_absolute_uri(self.organizer, 'presale:organizer.index')
-        self.fields['email'].required = True
+        self.fields['email'].required = False
         self.fields['email'].label = _('Organizer email address')
-        self.fields['email'].help_text = _("We'll show this publicly to allow attendees to contact you.")
+        self.fields['email'].help_text = _("Enter an organiser email address to be used as the sender for event-related emails. If left empty, emails will be sent using the platform's default email address.")
 
         # Generate a unique slug if none provided
         if not self.initial.get('slug'):
@@ -287,13 +287,6 @@ class EventWizardBasicsForm(I18nModelForm):
         if Event.objects.filter(slug__iexact=slug, organizer=self.organizer).exists():
             raise forms.ValidationError(self.error_messages['duplicate_slug'], code='duplicate_slug')
         return slug.lower()
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
 
     @staticmethod
     def has_control_rights(user, organizer):
@@ -386,21 +379,14 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_('Organizer email address'),
-        help_text=_("We'll show this publicly to allow attendees to contact you."),
-        required=True,
+        help_text=_("Enter an organiser email address to be used as the sender for event-related emails. If left empty, emails will be sent using the platform's default email address."),
+        required=False,
     )
 
     def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
         super().__init__(*args, **kwargs)
         logo = Event._meta.get_field('logo')
         self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email', '').strip()
-        default_email = Event._meta.get_field('email').default
-        if not email or email == default_email:
-            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
-        return email
 
 
 class EventWizardInitialForm(forms.Form):
