@@ -122,6 +122,10 @@ def create_world(self, is_video_creation: bool, event_data: dict) -> Optional[di
         )
         return None
 
+    if not settings.VIDEO_SERVER_HOSTNAME:
+        logger.warning('VIDEO_SERVER_HOSTNAME not configured, skipping video world creation')
+        return None
+
     event_slug = event_data.get('id', '')
     video_traits = build_video_traits_for_event(event_slug)
     payload = {
