@@ -2,7 +2,7 @@
 
 {% translate "Language" as language_label %}
 
-<li class="nav-item">
+<li class="nav-item nav-lang">
     <form method="post" action="{% url 'eventyay_common:account.locale' %}" class="language-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">

@@ -1121,3 +1121,63 @@ h1 .label {
         overflow-wrap: break-word;
     }
 }
+
+/* Mobile: language switch icon-only */
+@media (max-width: 480px) {
+  #language-dropdown .current-locale,
+  #language-dropdown .fa-caret-down {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-brand .brand-text {
+    display: none;
+  }
+}
+
+/* FORCE SINGLE ROW NAVBAR ON MOBILE */
+@media (max-width: 768px) {
+  .navbar-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100%;
+  }
+
+  .navbar-left-group,
+  .navbar-right-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .navbar-header {
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  .navbar-top-links {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+  }
+
+  /* Prevent text from pushing to next line */
+  .navbar-top-links .sidebar-text,
+  .navbar-brand .brand-text {
+    display: none;
+  }
+
+  /* Tighten spacing so everything fits */
+  .navbar-toggle,
+  .navbar-toggle-sidebar,
+  .navbar-top-links > li > a,
+  .navbar-top-links > li > form > button {
+    padding: 8px 10px !important;
+  }
+}
+
