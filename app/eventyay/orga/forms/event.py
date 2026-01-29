@@ -170,7 +170,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     reply_to = forms.EmailField(
         label=_('Contact address'),
         help_text=_(
-            'Reply-To address for outgoing emails. If empty and the platform sender is used, the event\'s organiser email will be used.'
+            'Reply-To address for outgoing emails. If empty and the platform sender is used, the event\'s organizer email will be used.'
         ),
         required=False,
     )

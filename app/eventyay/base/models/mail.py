@@ -196,7 +196,7 @@ class MailTemplate(PretalxModel):
                 subject = subject[:198] + '…'
 
             # Determine sender for SMTP context
-            sender = event.settings.get('mail_from') if event else settings.MAIL_FROM
+            sender = event.mail_settings.get('mail_from') if event else settings.MAIL_FROM
             sender = sender or settings.MAIL_FROM
 
             # Use unified Reply-To resolution
@@ -321,7 +321,7 @@ class QueuedMail(PretalxModel):
         null=True,
         blank=True,
         verbose_name=_('Reply-To'),
-        help_text=_('By default, the organiser email is used as Reply-To when the platform sender is used. With a custom sender, replies go to the sender address unless overridden here.'),
+        help_text=_('By default, the organizer email is used as Reply-To when the platform sender is used. With a custom sender, replies go to the sender address unless overridden here.'),
     )
     cc = models.CharField(
         max_length=1000,
