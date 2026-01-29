@@ -28,7 +28,7 @@ def generate_random_high_contrast_color(min_contrast=2.5, max_attempts=100, excl
     """Generate a random hex color with sufficient contrast against white background."""
     white = (255, 255, 255)
     exclude_colors = exclude_colors or set()
-    exclude_colors = {color.lower() for color in exclude_colors}
+    exclude_set = {color.lower() for color in exclude_colors}
     
     for _ in range(max_attempts):
         r = random.randint(30, 220)
@@ -38,7 +38,7 @@ def generate_random_high_contrast_color(min_contrast=2.5, max_attempts=100, excl
         color_hex = f'#{r:02x}{g:02x}{b:02x}'
         
         # Skip if color is already used
-        if color_hex.lower() in exclude_colors:
+        if color_hex.lower() in exclude_set:
             continue
         
         contrast = calculate_contrast_ratio((r, g, b), white)
@@ -46,4 +46,10 @@ def generate_random_high_contrast_color(min_contrast=2.5, max_attempts=100, excl
         if contrast >= min_contrast:
             return color_hex
     
-    return '#336699'
+    fallback_colors = ['#336699', '#993333', '#663399', '#1e3a5f', '#4a90a4']
+    for fallback in fallback_colors:
+        if fallback.lower() not in exclude_set:
+            return fallback
+    
+    # If all fallbacks are taken, return the first one
+    return fallback_colors[0]
