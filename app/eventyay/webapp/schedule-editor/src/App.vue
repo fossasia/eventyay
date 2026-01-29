@@ -631,7 +631,7 @@ onUnmounted(() => {
 		> .bunt-scrollbar-rail-y
 			margin: 0
 		> .title
-			padding 4px 0
+			padding: 4px 0
 			font-size: 18px
 			text-align: center
 			background-color: $clr-white
@@ -671,7 +671,7 @@ onUnmounted(() => {
 			cursor: pointer
 			z-index: 1000
 			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5)
-			text-align: left;
+			text-align: left
 			.sort-method
 				padding: 8px 16px
 				display: flex
@@ -682,54 +682,54 @@ onUnmounted(() => {
 	#schedule-wrapper
 		width: 100%
 		margin-right: 40px
-  #session-editor-wrapper
+#session-editor-wrapper
+	position: absolute
+	z-index: 1000
+	top: 0
+	left: 0
+	width: 100%
+	height: 100%
+	background-color: rgba(0, 0, 0, 0.5)
+
+	#session-editor
+		background-color: $clr-white
+		border-radius: 4px
+		padding: 32px 40px
 		position: absolute
-		z-index: 1000
-		top: 0
-		left: 0
-		width: 100%
-		height: 100%
-		background-color: rgba(0, 0, 0, 0.5)
+		top: 50%
+		left: 50%
+		transform: translate(-50%, -50%)
+		width: 680px
 
-		#session-editor
-			background-color: $clr-white
-			border-radius: 4px
-			padding: 32px 40px
-			position: absolute
-			top: 50%
-			left: 50%
-			transform: translate(-50%, -50%)
-			width: 680px
+		.session-editor-title
+			font-size: 22px
+			margin-bottom: 16px
+		.button-row
+			display: flex
+			width: 100%
+			margin-top: 24px
 
-			.session-editor-title
-				font-size: 22px
-				margin-bottom: 16px
-			.button-row
-				display: flex
-				width: 100%
-				margin-top: 24px
-
-				.bunt-button-content
-					font-size: 16px !important
-				#btn-delete
-					button-style(color: $clr-danger, text-color: $clr-white)
-					font-weight: bold;
-				#btn-save
-					margin-left: auto
-					font-weight: bold;
-					button-style(color: #2185d0)
-				[type=submit]
-					display: none
-			.data
-				display: flex
-				flex-direction: column
-				font-size: 16px
-				.data-row
-					.data-value
-						padding-top: 8px
-						ul
-							list-style: none
-							padding: 0
-			.warning
-				color: #b23e65
+			.bunt-button-content
+				font-size: 16px !important
+			#btn-delete
+				button-style(color: $clr-danger, text-color: $clr-white)
+				font-weight: bold
+			#btn-save
+				margin-left: auto
+				font-weight: bold
+				button-style(color: #2185d0)
+			[type="submit"]
+				display: none
+		.data
+			display: flex
+			flex-direction: column
+			font-size: 16px
+			.data-row
+				.data-value
+					padding-top: 8px
+					ul
+						list-style: none
+						padding: 0
+		.warning
+			color: #b23e65
 </style>
