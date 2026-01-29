@@ -170,7 +170,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     reply_to = forms.EmailField(
         label=_('Contact address'),
         help_text=_(
-            'Reply-To address. If this setting is empty and you have no custom sender, your event email address will be used as Reply-To address.'
+            'Reply-To address for outgoing emails. If empty and the platform sender is used, the event\'s organiser email will be used.'
         ),
         required=False,
     )
@@ -194,7 +194,7 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     mail_from = forms.EmailField(
         label=_('Sender address'),
-        help_text=_('Sender address for outgoing emails.'),
+        help_text=_('Sender address for outgoing emails. When using a custom sender, replies go to this address unless a Reply-To is set.'),
         required=False,
     )
     smtp_host = forms.CharField(label=_('Hostname'), required=False)
