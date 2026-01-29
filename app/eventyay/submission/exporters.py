@@ -32,6 +32,7 @@ class SpeakerQuestionData(CSVExporterMixin, BaseExporter):
                 person__isnull=False,
             )
             .select_related('question', 'person')
+            .prefetch_related('person__emailaddress_set')
             .order_by('person__name')
         )
         for answer in qs:
@@ -39,7 +40,7 @@ class SpeakerQuestionData(CSVExporterMixin, BaseExporter):
                 {
                     'code': answer.person.code,
                     'name': answer.person.name,
-                    'email': answer.person.email,
+                    'email': answer.person.get_primary_email(),
                     'question': answer.question.question,
                     'answer': answer.answer_string,
                 }
