@@ -100,6 +100,7 @@ class BaseSettings(_BaseSettings):
         env_file='.env',
         env_file_encoding='utf-8',
         secrets_dir=SECRETS_DIR,
+        extra='ignore',
     )
     # Here, starting our settings fields.
     # The names follow what is in Django and converted to lowercase.

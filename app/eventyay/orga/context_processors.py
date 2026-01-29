@@ -5,6 +5,7 @@ from django.conf import settings
 from django.utils.module_loading import import_string
 
 from eventyay.common.text.phrases import CALL_FOR_SPEAKER_LOGIN_BTN_LABELS
+from eventyay.eventyay_common.utils import EventCreatedFor
 from eventyay.orga.signals import html_head, nav_event, nav_event_settings, nav_global
 
 SessionStore = import_string(f'{settings.SESSION_ENGINE}.SessionStore')
@@ -58,6 +59,13 @@ def orga_events(request):
             entry for entry in collect_signal(nav_global, {'sender': None, 'request': request}) if entry
         ]
         return context
+
+    context['is_talk_event_created'] = False
+    if (
+        request.event.settings.create_for == EventCreatedFor.BOTH.value
+        or request.event.settings.talk_schedule_public is not None
+    ):
+        context['is_talk_event_created'] = True
 
     _nav_event = []
     for _, response in nav_event.send_robust(request.event, request=request):

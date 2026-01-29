@@ -6,23 +6,7 @@
 {% load eventsignal %}
 {% block title %}{{ request.event.name }}{% endblock %}
 {% block content %}
-    <nav id="event-nav" class="header-nav">
-        <div class="navigation">
-            <div class="navigation-title">
-                <h2>
-                    {{ request.event.name }}
-                    <small class="text-muted small">
-                        {% if request.event.has_subevents %}
-                            {% trans "Event series" %}
-                        {% else %}
-                            {{ request.event.get_date_range_display }}
-                        {% endif %}
-                    </small>
-                </h2>
-            </div>
-            {% include "eventyay_common/event/component_link.html" %}
-        </div>
-    </nav>
+    {% include "eventyay_common/event/fragment_nav_header.html" %}
 
     {% eventsignal request.event "eventyay.control.signals.event_dashboard_top" request=request %}
     {% if actions|length > 0 %}

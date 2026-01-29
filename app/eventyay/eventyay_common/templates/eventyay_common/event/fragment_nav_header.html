@@ -1,0 +1,22 @@
+{% load i18n %}
+{% load static %}
+
+<nav id="event-nav" class="header-nav">
+    <div class="navigation">
+        <div class="navigation-title">
+            <h2>
+                {{ request.event.name }}
+                <small class="text-muted small">
+                    {% if request.event.has_subevents %}
+                        {% trans "Event series" %}
+                    {% else %}
+                        {{ request.event.get_date_range_display }}
+                    {% endif %}
+                </small>
+            </h2>
+        </div>
+        <div class="navigation-button">
+            {% include "eventyay_common/event/fragment_nav_buttons.html" %}
+        </div>
+    </div>
+</nav>

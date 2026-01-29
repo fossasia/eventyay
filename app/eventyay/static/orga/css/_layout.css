@@ -1,3 +1,12 @@
+:root {
+  --page-content-padding-x: 44px;
+  --page-content-padding-y: 18px;
+}
+
+html {
+  overflow-y: scroll;
+}
+
 body {
   height: 100vh;
   overflow: hidden;
@@ -26,12 +35,12 @@ body {
   background: var(--color-bg);
   flex-grow: 1;
   max-width: 100%;
-  padding: 18px 44px;
+  padding: var(--page-content-padding-y) var(--page-content-padding-x);
   margin: 0;
   margin-top: 50px;
   height: calc(100vh - 50px);
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: scroll;
   scroll-padding-top: 50px;
   display: flex;
   flex-direction: column;
@@ -1666,5 +1675,178 @@ h2 .user-name-display img {
         padding-bottom: 16px;
       }
     }
+  }
+}
+/* Unified Event Navigation Styles */
+#event-nav {
+  margin-bottom: 20px;
+  /* Adjust for Orga's #page-content padding to match Control layout */
+  margin-top: calc(var(--page-content-padding-y) * -1);
+  
+  /* Reset horizontal positioning to ignore #page-content padding */
+  margin-left: calc(var(--page-content-padding-x) * -1);
+  margin-right: calc(var(--page-content-padding-x) * -1);
+  
+  /* Apply padding calculated to match Control layout:
+     Orga:    45px (explicit) - to align with content visual hierarchy
+  */
+  padding-left: 45px;
+  padding-right: 45px;
+}
+
+#event-nav .navigation {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 200;
+}
+
+#event-nav .navigation .navigation-button {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+  order: unset;
+}
+
+#event-nav .navigation .navigation-title {
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+  padding-right: 15px;
+  order: unset;
+}
+
+#event-nav .navigation .navigation-title h1,
+#event-nav .navigation .navigation-title h2 {
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.1;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+#event-nav .navigation .navigation-title h1 small,
+#event-nav .navigation .navigation-title h2 small {
+  font-size: 65%;
+  font-weight: 400;
+  line-height: 1;
+  display: block;
+  margin-top: 5px;
+}
+
+/* Styles for the buttons themselves - matching custom.scss and pretixcontrol */
+#event-nav .header-nav {
+  border: 1px solid #1a6fb0 !important;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: inherit;
+  border-radius: 4px;
+  padding: 6px 12px;
+  min-width: 90px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+  text-decoration: none;
+  color: #1a6fb0;
+  background-color: transparent;
+  background-image: none;
+  vertical-align: middle;
+  line-height: 1.5;
+  margin: 0;
+  cursor: pointer;
+  text-align: center;
+  letter-spacing: normal;
+  text-transform: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+
+#event-nav .header-nav i {
+  font-size: 14px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  width: 1.28571em;
+  text-align: center;
+}
+
+#event-nav .header-nav.active {
+  background-color: #2185d0 !important;
+  border-color: #2185d0 !important;
+  color: #fff !important;
+}
+
+#event-nav .header-nav.active:hover,
+#event-nav .header-nav.active:focus {
+  background-color: #1a6fb0 !important;
+  border-color: #1a6fb0 !important;
+}
+
+#event-nav .header-nav:hover,
+#event-nav .header-nav:focus {
+  background-color: #1a6fb0 !important;
+  border-color: #1a6fb0 !important;
+  color: #fff !important;
+  text-decoration: none;
+}
+
+/* Responsive styles for event navigation */
+@media (max-width: 767px) {
+  #event-nav {
+    margin-left: -15px;
+    margin-right: -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  #event-nav .navigation {
+    flex-direction: column;
+  }
+  
+  #event-nav .navigation .navigation-button {
+    justify-content: center;
+    gap: 6px;
+    order: 1;
+    margin-bottom: 10px;
+  }
+  
+  #event-nav .header-nav {
+    min-width: 70px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  #event-nav .navigation .navigation-title {
+    order: 2;
+    text-align: center;
+    padding-right: 0;
+  }
+  
+  #event-nav .navigation .navigation-title h1,
+  #event-nav .navigation .navigation-title h2 {
+    font-size: 22px;
+    text-align: center;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  #event-nav {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
 }
