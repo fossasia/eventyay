@@ -195,7 +195,7 @@ def get_grouped_products(
         )
     )
     
-    # When loading add-ons, don't require quotas since they're bundled entitlements
+     # When loading add-on products, don't require quotas for these optional items
     if allow_addons:
         products = products.filter(subevent_disabled=False)
     else:

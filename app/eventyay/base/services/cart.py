@@ -585,8 +585,8 @@ class CartManager:
             else:
                 quotas = []
 
-            # DISCOUNT LOGIC: Bundled items never get vouchers
-            voucher_for_op = None if cp.is_bundled else cp.voucher
+            # DISCOUNT LOGIC: Bundled items only get vouchers if allow_bundled is True
+            voucher_for_op = None if (cp.is_bundled and not cp.voucher.allow_bundled) else cp.voucher
             
             op = self.ExtendOperation(
                 position=cp,
@@ -660,12 +660,13 @@ class CartManager:
             if voucher.subevent_id and voucher.subevent_id != p.subevent_id:
                 continue
 
-            # Calculate bundled sum for pricing (bundled items don't get discounts but affect parent pricing)
+            # Calculate bundled sum for pricing (bundled items = 0, but parent includes their designated price)
             bundled_sum = Decimal('0.00')
             if not p.addon_to_id:
                 for bundledp in p.addons.all():
                     if bundledp.is_bundled:
-                        bundledprice = bundledp.price
+                        # Bundled items have price = 0, but designated_price contributes to bundled_sum
+                        bundledprice = getattr(bundledp, 'designated_price', bundledp.price) or Decimal('0.00')
                         bundled_sum += bundledprice
 
             # Calculate price with voucher discount (only for non-bundled positions)
@@ -712,7 +713,7 @@ class CartManager:
                 positions_to_apply += 1
 
         total_will_have = existing_count + positions_to_apply
-        logger.info(f"apply_voucher: min_usages={voucher.min_usages}, existing={existing_count}, to_apply={positions_to_apply}, total={total_will_have}")
+        logger.info("apply_voucher: min_usages=%s, existing=%s, to_apply=%s, total=%s", voucher.min_usages, existing_count, positions_to_apply, total_will_have)
         if voucher.min_usages > 0 and total_will_have < voucher.min_usages:
             raise CartError(
                 'This voucher requires at least {min_usages} eligible products, but you only have {count}.'.format(
@@ -726,30 +727,45 @@ class CartManager:
         self._voucher_use_diff += voucher_use_diff
         
         # AUTO-ADD FREE ADD-ONS: if voucher.allow_addons, auto-add free add-ons
+        # for positions that already have the voucher or will receive it via pending operations
         if voucher.allow_addons:
-            from eventyay.base.models import InlineAddOn
+            from eventyay.base.models import ProductAddOn
+            # Collect IDs of positions getting voucher: existing + pending operations
+            positions_with_voucher = set()
             for p in self.positions:
                 if p.voucher_id == voucher.pk and not p.addon_to_id and not p.is_bundled:
-                    # This position got the voucher applied, auto-add its free add-ons
-                    for iao in p.product.addons.all():
-                        # Get first product from addon category
-                        addon_product = iao.addon_category.products.filter(active=True).first()
-                        if addon_product:
-                            # Add as free add-on
-                            self._operations.append(
-                                self.AddOperation(
-                                    product=addon_product,
-                                    variation=None,
-                                    voucher=None,
-                                    addon_to=p.pk,
-                                    count=1,
-                                    price=TAXED_ZERO,
-                                    quotas=[],
-                                    subevent=p.subevent,
-                                    seat=None,
-                                    price_before_voucher=TAXED_ZERO,
-                                )
+                    positions_with_voucher.add(p.pk)
+            # Also include positions that will get voucher from pending operations
+            for op in self._operations:
+                if isinstance(op, self.VoucherOperation) and op.voucher_id == voucher.pk:
+                    if not op.position.addon_to_id and not op.position.is_bundled:
+                        positions_with_voucher.add(op.position.pk)
+            
+            # Auto-add free add-ons for all positions with voucher
+            for p_id in positions_with_voucher:
+                try:
+                    p = self.positions.get(pk=p_id)
+                except CartPosition.DoesNotExist:
+                    continue
+                for iao in p.product.addons.all():
+                    # Get first product from addon category
+                    addon_product = iao.addon_category.products.filter(active=True).first()
+                    if addon_product:
+                        # Add as free add-on
+                        self._operations.append(
+                            self.AddOperation(
+                                product=addon_product,
+                                variation=None,
+                                voucher=None,
+                                addon_to=p.pk,
+                                count=1,
+                                price=TAXED_ZERO,
+                                quotas=[],
+                                subevent=p.subevent,
+                                seat=None,
+                                price_before_voucher=TAXED_ZERO,
                             )
+                        )
 
     def add_new_products(self, products: List[dict]):
         # Fetch products from the database
@@ -910,7 +926,7 @@ class CartManager:
                     existing_count += 1
             
             total_will_have = existing_count + new_count
-            logger.info(f"add_new_products: voucher={voucher_obj.code}, min_usages={voucher_obj.min_usages}, existing={existing_count}, new={new_count}, total={total_will_have}")
+            logger.info("add_new_products: voucher=%s, min_usages=%s, existing=%s, new=%s, total=%s", voucher_obj.code, voucher_obj.min_usages, existing_count, new_count, total_will_have)
             if voucher_obj.min_usages > 0 and total_will_have < voucher_obj.min_usages:
                 raise CartError(
                     'This voucher requires at least {min_usages} eligible products, but you only have {count}.'.format(
@@ -1711,14 +1727,14 @@ def apply_voucher(
     :param voucher: A voucher code
     :param session: Session ID of a guest
     """
-    logger.info(f"apply_voucher task started for voucher={voucher}, cart_id={cart_id}")
+    logger.info("apply_voucher task started for voucher=%s, cart_id=%s", voucher, cart_id)
     with language(locale):
         try:
             try:
                 cm = CartManager(event=event, cart_id=cart_id, sales_channel=sales_channel)
-                logger.info(f"CartManager created, positions={cm.positions.count()}")
+                logger.info("CartManager created, positions=%s", cm.positions.count())
                 cm.apply_voucher(voucher)
-                logger.info(f"apply_voucher succeeded")
+                logger.info("apply_voucher succeeded")
                 cm.commit()
             except LockTimeoutException:
                 self.retry()

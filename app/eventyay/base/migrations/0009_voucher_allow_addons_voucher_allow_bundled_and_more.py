@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='voucher',
             name='exhibitor',
-            field=models.ForeignKey(blank=True, help_text="If this voucher is assigned to an exhibitor, they will be able to see it's usages and have access to attendee data according to your settings.", null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vouchers', to='base.exhibitor', verbose_name='Exhibitor'),
+            field=models.ForeignKey(blank=True, help_text="If this voucher is assigned to an exhibitor, they will be able to see its usages and have access to attendee data according to your settings.", null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vouchers', to='base.exhibitor', verbose_name='Exhibitor'),
         ),
         migrations.AddField(
             model_name='voucher',

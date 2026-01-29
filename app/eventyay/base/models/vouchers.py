@@ -229,7 +229,7 @@ class Voucher(LoggedModel):
         blank=True,
         on_delete=models.SET_NULL,
         verbose_name=_('Exhibitor'),
-        help_text=_('If this voucher is assigned to an exhibitor, they will be able to see it\'s usages and have access to attendee data according to your settings.'),
+        help_text=_('If this voucher is assigned to an exhibitor, they will be able to see its usages and have access to attendee data according to your settings.'),
     )
     exhibitor_comment = models.TextField(
         blank=True,
