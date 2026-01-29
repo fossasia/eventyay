@@ -277,7 +277,7 @@ class EventWizardDisplayForm(forms.Form):
     )
     email = forms.EmailField(
         label=_("Organizer email address"),
-        help_text=_("Enter an organiser email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address."),
+        help_text=_("Enter an organizer email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address."),
         required=False,
     )
 

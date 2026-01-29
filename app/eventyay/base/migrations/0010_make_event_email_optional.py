@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
             name='email',
             field=models.EmailField(
                 blank=True,
-                help_text="Enter an organiser email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address.",
+                help_text="Enter an organizer email address for event-related emails. When the platform sender is used, this address will be used as the Reply-To. If left empty, emails will be sent using the platform's default email address.",
                 max_length=254,
                 null=True,
                 verbose_name='Organizer email address'
