@@ -3,6 +3,11 @@
 from django.db import migrations, models
 
 
+def remove_placeholder_emails(apps, schema_editor):
+    Event = apps.get_model('base', 'Event')
+    Event.objects.filter(email='org@mail.com').update(email=None)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -21,4 +26,5 @@ class Migration(migrations.Migration):
                 verbose_name='Organizer email address'
             ),
         ),
+        migrations.RunPython(remove_placeholder_emails, migrations.RunPython.noop),
     ]
