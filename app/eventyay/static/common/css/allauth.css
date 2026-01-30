@@ -1,0 +1,292 @@
+/* Used in customized Jinja templates for django-allauth */
+
+/* Container styles */
+.email-confirm-container,
+.password-reset-container,
+.password-reset-done-container,
+.email-confirm-success-container {
+  max-width: 500px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.password-reset-done-container,
+.email-confirm-success-container {
+  text-align: center;
+}
+
+/* Email confirmation specific */
+.email-confirm-container h1,
+.password-reset-container h1,
+.password-reset-done-container h1 {
+  color: #2185d0;
+  margin-bottom: 1.5rem;
+  font-size: 1.75rem;
+  font-weight: 600;
+}
+
+/* Form styles */
+.password-form {
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-size: 0.95rem;
+}
+
+.email-confirm-container .form-group label,
+.password-reset-container .form-group label,
+.password-reset-done-container .form-group label {
+  text-align: left;
+}
+
+.form-group .required {
+  color: #e74c3c;
+  margin-left: 2px;
+}
+
+.form-group input[type='password'],
+.form-group input[type='text'],
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-group input[type='password']:focus {
+  outline: none;
+  border-color: #2185d0;
+  box-shadow: 0 0 0 3px rgba(33, 133, 208, 0.1);
+}
+
+.form-group input[type='text']:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #2185d0;
+  box-shadow: 0 0 0 3px rgba(33, 133, 208, 0.1);
+}
+
+/* Error and help text */
+.field-error {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #fee;
+  border-left: 3px solid #e74c3c;
+  border-radius: 3px;
+}
+
+.field-error span {
+  display: block;
+  color: #c0392b;
+  font-size: 0.9rem;
+}
+
+.field-help {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #7f8c8d;
+  line-height: 1.4;
+}
+
+/* Description and message text */
+.description,
+.password-reset-done-container p,
+.email-confirm-success-container p {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.password-reset-done-container p,
+.email-confirm-success-container p {
+  text-align: center;
+  font-size: 1rem;
+}
+
+.email-confirm-container p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Alerts */
+.alert {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+  text-align: left;
+  border: 1px solid transparent;
+}
+
+.alert-info {
+  color: #31708f;
+  background-color: #d9edf7;
+  border-color: #bce8f1;
+}
+
+.alert-warning {
+  color: #8a6d3b;
+  background-color: #fcf8e3;
+  border-color: #faebcc;
+}
+
+.alert-danger {
+  background-color: #fee;
+  border: 1px solid #fcc;
+  color: #c0392b;
+}
+
+.alert-success {
+  color: #3c763d;
+  background-color: #dff0d8;
+  border-color: #d6e9c6;
+}
+
+.alert .fa {
+  margin-right: 0.5rem;
+}
+
+.alert p {
+  margin: 0.5rem 0 0 0;
+}
+
+.alert a {
+  color: inherit;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* Success icon */
+.success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background-color: #d4edda;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+}
+
+.success-icon i {
+  font-size: 2.5rem;
+  color: #28a745;
+}
+
+/* Links and separators */
+.additional-links {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+}
+
+/* Button groups */
+.btn-group,
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.action-buttons {
+  justify-content: center;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  text-align: center;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #2185d0;
+  border-color: #2185d0;
+}
+
+.btn-primary:hover {
+  background-color: #1b6ba8;
+  border-color: #1b6ba8;
+}
+
+.btn-default {
+  color: #333;
+  background-color: #fafafa;
+  border-color: #cfd8dc;
+}
+
+.btn-default:hover,
+.btn-default:focus {
+  background-color: #e9ecef;
+  border-color: #b0bec5;
+}
+
+.btn-lg {
+  padding: 0.9rem 2rem;
+  font-size: 1.1rem;
+  width: 100%;
+}
+
+.btn .fa {
+  margin-right: 0.5rem;
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+  .email-confirm-container,
+  .password-reset-container,
+  .password-reset-done-container,
+  .email-confirm-success-container {
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  .form-group input[type='password'] {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    margin-right: 0;
+  }
+
+  .btn-group,
+  .action-buttons {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .btn-group .btn,
+  .action-buttons .btn {
+    margin-bottom: 0.5rem;
+  }
+}
