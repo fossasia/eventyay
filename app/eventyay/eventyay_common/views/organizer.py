@@ -105,7 +105,7 @@ class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     def get_success_url(self) -> str:
         return reverse('eventyay_common:organizers')
 
-class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
+class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     model = Organizer
     form_class = OrganizerUpdateForm
     template_name = 'eventyay_common/organizers/edit.html'
@@ -284,7 +284,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             override['token_form'] = token_form
 
     def _teams_tab_url(self, team_id=None, section='teams', panel=None, anchor='organizer-messages'):
-        base = reverse('eventyay_common:organizer.update', kwargs={'organizer': self.request.organizer.slug})
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.request.organizer.slug})
         query = {'section': section}
         if team_id:
             query['team'] = team_id
