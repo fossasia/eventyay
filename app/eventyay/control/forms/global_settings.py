@@ -291,6 +291,22 @@ class GlobalSettingsForm(SettingsForm):
                         validators=[MinValueValidator(0)],
                     ),
                 ),
+                (
+                    'allow_all_users_create_organizer',
+                    forms.BooleanField(
+                        label=_('All registered users can create organizers'),
+                        help_text=_('If enabled, all registered users will be allowed to create organizers. System admins can always create organizers.'),
+                        required=False,
+                    ),
+                ),
+                (
+                    'allow_payment_users_create_organizer',
+                    forms.BooleanField(
+                        label=_('All accounts with payment information can create organizers'),
+                        help_text=_('If enabled, users with valid payment information on file will be allowed to create organizers. System admins can always create organizers.'),
+                        required=False,
+                    ),
+                ),
             ]
         )
 
@@ -336,6 +352,10 @@ class GlobalSettingsForm(SettingsForm):
             ]),
             ('maps', _('Maps'), [
                 'opencagedata_apikey', 'mapquest_apikey', 'leaflet_tiles', 'leaflet_tiles_attribution',
+            ]),
+            ('organizers', _('Organizers'), [
+                'allow_all_users_create_organizer',
+                'allow_payment_users_create_organizer',
             ]),
         ]
 
