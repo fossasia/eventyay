@@ -145,7 +145,6 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_field_order'] = json.dumps(fields_config.get('session', []))
         context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
         context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
-        questions = TalkQuestion.all_objects.filter(event=self.request.event).annotate(answer_count=Count('answers'))
         sform = self.sform
         
         def get_field_data(targets, config_key):
