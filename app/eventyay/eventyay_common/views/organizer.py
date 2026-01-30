@@ -18,17 +18,20 @@ from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.forms.filter import OrganizerFilterForm
+from eventyay.control.permissions import (
+    OrganizerCreationPermissionMixin,
+    OrganizerPermissionRequiredMixin,
+)
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from ...control.permissions import OrganizerPermissionRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'eventyay_common/organizers/index.html'
@@ -44,6 +47,7 @@ class OrganizerList(PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
     @cached_property
@@ -51,15 +55,16 @@ class OrganizerList(PaginationMixin, ListView):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'eventyay_common/organizers/create.html'
     context_object_name = 'organizer'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_active_staff_session(self.request.session.session_key):
-            raise PermissionDenied()
+        # Check if user has permission to create organizers
+        if not self._can_create_organizer(request.user):
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
