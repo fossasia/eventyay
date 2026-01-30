@@ -1114,6 +1114,9 @@ ROOT_URLCONF = 'eventyay.multidomain.maindomain_urlconf'
 
 INTERNAL_IPS = ('127.0.0.1', '::1')
 ALLOWED_HOSTS = conf.allowed_hosts
+if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
+    # Android emulators access the host machine via these addresses.
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '10.0.2.2', '10.0.3.2']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)
@@ -1445,7 +1448,7 @@ TWITTER_CLIENT_SECRET = conf.twitter_client_secret
 LINKEDIN_CLIENT_ID = conf.linkedin_client_id
 LINKEDIN_CLIENT_SECRET = conf.linkedin_client_secret
 
-FRONTEND_DIR = BASE_DIR / 'frontend'
+FRONTEND_DIR = BASE_DIR / 'webapp'
 VITE_DEV_SERVER_PORT = 8080
 VITE_DEV_SERVER = f'http://localhost:{VITE_DEV_SERVER_PORT}'
 VITE_DEV_MODE = False  # Set to False to use static files instead of dev server

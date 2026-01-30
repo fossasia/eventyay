@@ -110,7 +110,6 @@
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
-                {% include "common/fragment_language_switch.html" %}
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -127,6 +126,7 @@
                         </a>
                     </li>
                 {% endif %}
+                {% include "common/fragment_language_switch.html" %}
                 {{ staff_session|json_script:"is_admin_mode" }}
                 {% if warning_update_available %}
                     <li>
@@ -260,7 +260,7 @@
                                         <span>{% translate "Editor" %}</span>
                                     </a>
                                     <a href="{{ request.event.cfp.urls.questions }}" class="nav-link nav-link-second-level{% if "cfp.question" in url_name %} active{% endif %}">
-                                        <span>{{ phrases.cfp.custom_fields }}</span>
+                                        <span>{% translate "Forms" %}</span>
                                     </a>
                                     {% if request.event|get_feature_flag:"use_tracks" %}
                                         <a href="{{ request.event.cfp.urls.tracks }}" class="nav-link nav-link-second-level{% if "cfp.track" in url_name %} active{% endif %}">

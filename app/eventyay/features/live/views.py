@@ -1,6 +1,8 @@
 import json
 import os
 import re
+from pathlib import Path
+from typing import cast
 from urllib.parse import urljoin, urlparse
 
 from channels.db import database_sync_to_async
@@ -22,13 +24,13 @@ from eventyay.base.models import SystemLog, Event
 from eventyay.base.models.auth import ShortToken
 from eventyay.base.models.room import AnonymousInvite
 
+VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
+
 
 class SourceCache:
     @cached_property
     def source(self):
-        wapath = os.path.normpath(
-            os.path.join(os.path.dirname(__file__), "../../../static/webapp/index.html")
-        )
+        wapath = VIDEO_DIST_DIR / 'index.html'
         try:
             with open(wapath) as f:
                 return f.read()

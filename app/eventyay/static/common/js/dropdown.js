@@ -34,13 +34,14 @@ const ensureGlobalListeners = function() {
     }
     document.documentElement.dataset[GLOBAL_INIT_FLAG] = '1';
 
-    document.addEventListener('click', function(event) {
+    const handlePossibleOutsideInteraction = function(event) {
         getOpenDropdowns().forEach(function(dropdown) {
             if (!dropdown.contains(event.target)) {
                 dropdown.open = false;
             }
         });
-    });
+    };
+    document.addEventListener('pointerdown', handlePossibleOutsideInteraction, true);
 
     document.addEventListener('keydown', function(event) {
         if (event.key !== 'Escape' && event.key !== 'Esc') return;

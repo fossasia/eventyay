@@ -47,6 +47,7 @@ settings_hierarkey.add_default('venueless_secret', '', str)
 settings_hierarkey.add_default('venueless_issuer', '', str)
 settings_hierarkey.add_default('venueless_audience', '', str)
 settings_hierarkey.add_default('venueless_talk_schedule_url', '', str)
+settings_hierarkey.add_default('venueless_show_public_link', False, bool)
 
 
 def i18n_uns(v):
