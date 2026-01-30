@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('base', '0009_event_private_testmode_and_more'),
+        ('base', '0010_question_active'),
     ]
 
     operations = [
