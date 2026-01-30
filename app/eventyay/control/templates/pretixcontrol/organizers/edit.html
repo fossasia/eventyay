@@ -11,7 +11,7 @@
     <h1>
         {% blocktrans with name=organizer.name %}Organizer settings{% endblocktrans %}
         {% if request.user.is_staff and staff_session %}
-            <a href="{% url "control:organizer.delete" organizer=organizer.slug %}"
+            <a href="{% url "eventyay_common:organizer.delete" organizer=organizer.slug %}"
                     class="btn btn-delete btn-danger hidden-print">
                 <span class="fa fa-trash"></span>
             </a>
