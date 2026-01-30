@@ -37,6 +37,7 @@ from eventyay.base.models import Channel, User
 from eventyay.base.services.event import notify_schedule_change, notify_event_change
 
 from eventyay.base.models.event import Event
+from eventyay.api.auth.permission import EventCRUDPermission
 # from pretix.api.auth.permission import EventCRUDPermission  # commented out
 # from pretix.api.serializers.event import (  # commented out
 #     CloneEventSerializer,
@@ -108,9 +109,21 @@ with scopes_disabled():
 
 
 # Disabled: Pretix-dependent API viewset
-class EventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix classes/serializers/permissions."""
-    pass
+class EventViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = EventSerializer
+    queryset = Event.objects.none()
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'event'
+    lookup_value_regex = '[^/]+'
+    permission_classes = (EventCRUDPermission,)
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    ordering = ('slug',)
+    ordering_fields = ('date_from', 'slug')
+    filterset_class = EventFilter
+
+    def get_queryset(self):
+        qs = Event.objects.filter(organizer=self.request.organizer)
+        return qs.prefetch_related('meta_values', 'meta_values__property', 'seat_category_mappings')
 # Original implementation used PretixEventSerializer, EventCRUDPermission,
 # TeamAPIToken, Device and filter_qs_by_attr
 # class EventViewSet(viewsets.ModelViewSet):

@@ -36,7 +36,8 @@ class EventSerializer(serializers.ModelSerializer):
         model = Event
         fields = [
             "id",
-            "title",
+            "name",
+            "slug",
             "config",
             "trait_grants",
             "roles",
