@@ -1,7 +1,7 @@
 import logging
 
 from django.contrib import messages
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files import File
 from django.db import transaction
 from django.db.models import Max, Min, Prefetch, ProtectedError
@@ -33,6 +33,7 @@ from eventyay.control.forms.organizer_forms import (
 )
 from eventyay.control.permissions import (
     AdministratorPermissionRequiredMixin,
+    OrganizerCreationPermissionMixin,
     OrganizerPermissionRequiredMixin,
 )
 from eventyay.control.signals import nav_organizer
@@ -52,13 +53,16 @@ from .organizer_detail_view_mixin import OrganizerDetailViewMixin
 logger = logging.getLogger(__name__)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'pretixcontrol/organizers/create.html'
     context_object_name = 'organizer'
 
     def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to create organizers
+        if not self._can_create_organizer(request.user):
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -367,7 +371,7 @@ class OrganizerDetailViewMixin:
         return self.request.organizer
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'pretixcontrol/organizers/index.html'
@@ -384,6 +388,7 @@ class OrganizerList(PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
     @cached_property

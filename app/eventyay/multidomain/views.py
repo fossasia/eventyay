@@ -20,8 +20,7 @@ from i18nfield.strings import LazyI18nString
 from eventyay.base.models.room import AnonymousInvite
 from eventyay.base.models import Event  # Added for /video event context
 
-_dist_root = getattr(settings, 'COMPILED_FRONTEND_DIR', None) or settings.STATIC_ROOT
-VIDEO_DIST_DIR = cast(Path, _dist_root) / 'video'
+VIDEO_DIST_DIR = cast(Path, settings.STATIC_ROOT) / 'video'
 logger = logging.getLogger(__name__)
 
 
