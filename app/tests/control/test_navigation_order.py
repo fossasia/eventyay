@@ -1,16 +1,13 @@
 import pytest
 from django.urls import reverse
-from django_scopes import scope
 from eventyay.control.navigation import get_event_navigation
 
 @pytest.mark.django_db
-def test_event_navigation_order(orga_client, event, organizer, settings):
-    # Mocking request object is tricky, using orga_client context might be better 
-    # but get_event_navigation requires a request object.
-    # We'll use a request factory or rely on orga_client to set up the request
+def test_event_navigation_order(organizer_client, event, organizer, settings):
+    # Mocking request object for get_event_navigation
     from django.test import RequestFactory
     from eventyay.base.models import User
-    
+
     # Setup user with permissions
     user = User.objects.create_user('test@example.com', 'test')
     # Grant permissions
@@ -24,62 +21,35 @@ def test_event_navigation_order(orga_client, event, organizer, settings):
     request.event = event
     request.organizer = organizer
     
-    # We need to simulate the permission middleware which sets eventpermset
-    # But usually middleware does this.
-    # Let's manually set permissions for the test
+    from django.urls import resolve
+    request.resolver_match = resolve(request.path)
+
+    # Simulate permission middleware sets
     request.eventpermset = {'can_change_event_settings', 'can_change_items', 'can_view_orders', 'can_change_orders'}
     request.orgapermset = {}
 
     nav = get_event_navigation(request)
     
-    # Find Orders menu
+    # Find Orders menu by icon and URL fragment (locale-independent)
     orders_menu = None
     for item in nav:
-        if 'Orders' in str(item['label']):
+        if item.get('icon') == 'shopping-cart' and 'orders' in (item.get('url') or ''):
             orders_menu = item
             break
             
     assert orders_menu is not None
     
-    # Expected order labels substring matching
-    expected_order = [
-        'Overview', 
-        # 'Statistics', # Plugin might not be loaded in this test context
-        'All orders', 
-        'Waiting list', 
-        'Refunds', 
-        'Import', 
-        'Export'
-    ]
+    # Check core items relative order using indices
+    indices = {str(child['label']): i for i, child in enumerate(orders_menu['children'])}
     
-    # Extract labels from children
-    actual_labels = [str(child['label']) for child in orders_menu['children']]
+    # Note: Using gettext to match the actual labels in English (default in tests)
+    from django.utils.translation import gettext as _
     
-    # Verify order
-    # Note: Statistics might be missing if plugin is not active in test env, 
-    # so we filter expected_order to what's actually present if we just want to verify relative order of core items.
+    # Assert relative order for key items
+    assert indices[_('Overview')] < indices[_('All orders')]
+    assert indices[_('All orders')] < indices[_('Waiting list')]
+    assert indices[_('Waiting list')] < indices[_('Refunds')]
+    assert indices[_('Import')] < indices[_('Export')]
     
-    # Check core items relative order
-    filtered_actual = [l for l in actual_labels if l in expected_order]
-    
-    # There might be extra items or missing items (like Statistics)
-    # Let's check indices
-    
-    indices = {label: i for i, label in enumerate(actual_labels)}
-    
-    assert indices['Overview'] < indices['All orders']
-    assert indices['All orders'] < indices['Waiting list']
-    assert indices['Waiting list'] < indices['Refunds']
-    assert indices['Import'] < indices['Export']
-    
-    # Verify exact positions if possible
-    # We moved Overview to 0 (or 1 if something else is there)
-    # In our implementation: 1. Overview
-    
-    assert actual_labels[0] == 'Overview'
-    assert actual_labels[1] == 'All orders' # Statistics is 2, but if missing, All orders becomes 2 (index 1)
-    
-    # Wait, if Statistics is missing, All orders is index 1.
-    # If Statistics is present, All orders is index 2.
-    
-    print("Actual labels:", actual_labels)
+    # Verify exact position of the first item
+    assert str(orders_menu['children'][0]['label']) == _('Overview')

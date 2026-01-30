@@ -399,16 +399,23 @@ def get_event_navigation(request: HttpRequest):
     for item in nav:
         if item.get('icon') == 'shopping-cart' and item.get('url') and 'orders' in item['url']:
             if 'children' in item:
+                # Use stable, non-translated identifiers (URL fragments) for ordering
+                ORDER_BY_URL_KEYWORDS = [
+                    ('orders/overview', 1),
+                    ('orders/statistics', 2),
+                    ('orders/import', 6),
+                    ('orders/export', 7),
+                    ('orders/refunds', 5),
+                    ('waitinglist', 4),
+                    ('orders', 3),  # "All orders" matches this as a fallback
+                ]
+
                 def sort_key(child):
-                    label = str(child['label'])
-                    if label == str(_('Overview')): return 1
-                    if label == str(_('Statistics')): return 2
-                    if label == str(_('All orders')): return 3
-                    if label == str(_('Waiting list')): return 4
-                    if label == str(_('Refunds')): return 5
-                    if label == str(_('Import')): return 6
-                    if label == str(_('Export')): return 7
-                    return 99 # Others at the end
+                    url = str(child.get('url') or '')
+                    for fragment, position in ORDER_BY_URL_KEYWORDS:
+                        if fragment in url:
+                            return position
+                    return 99  # Others at the end
 
                 item['children'].sort(key=sort_key)
             break

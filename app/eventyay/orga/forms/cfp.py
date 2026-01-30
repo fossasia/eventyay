@@ -241,8 +241,6 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
 
-            self.fields['is_public'].disabled = True
-
         self.fields['dependency_question'].queryset = self.instance.event.talkquestions.filter(
             variant__in=[
                 TalkQuestionVariant.BOOLEAN,
@@ -254,8 +252,6 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             self.fields['dependency_question'].queryset = self.fields['dependency_question'].queryset.exclude(
                 pk=self.instance.pk
             )
-        self.fields['dependency_values'].required = False
-
         self.fields['dependency_values'].required = False
 
         dep_q_id = None
@@ -276,7 +272,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                          for o in q.options.all()
                      ]
             except Exception:
-                pass
+                logger.exception('Could not retrieve dependency question options.')
 
         dep_data = {}
         for q in self.fields['dependency_question'].queryset:

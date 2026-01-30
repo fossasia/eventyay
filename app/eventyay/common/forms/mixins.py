@@ -216,12 +216,18 @@ class QuestionFieldsMixin:
         cleaned_data = super().clean()
         question_cache = {f.question.pk: f.question for f in self.fields.values() if getattr(f, 'question', None)}
 
-        def question_is_visible(parentid, qvals):
+        def question_is_visible(parentid, qvals, visited=None):
+            if visited is None:
+                visited = set()
+            if parentid in visited:
+                return False
+            visited.add(parentid)
+
             if parentid not in question_cache:
                 return False
             parentq = question_cache[parentid]
             if parentq.dependency_question_id and not question_is_visible(
-                parentq.dependency_question_id, parentq.dependency_values
+                parentq.dependency_question_id, parentq.dependency_values, visited
             ):
                 return False
             if 'question_%d' % parentid not in cleaned_data:
@@ -231,7 +237,10 @@ class QuestionFieldsMixin:
                 ('True' in qvals and dval)
                 or ('False' in qvals and not dval)
                 or (hasattr(dval, 'identifier') and dval.identifier in qvals)
-                or (isinstance(dval, (list, tuple)) and any(qval in [getattr(o, 'identifier', str(o)) for o in dval] for qval in qvals))
+                or (
+                    isinstance(dval, (list, tuple))
+                    and any(qval in [getattr(o, 'identifier', str(o)) for o in dval] for qval in qvals)
+                )
                 or (isinstance(dval, str) and dval in qvals)
             )
 
