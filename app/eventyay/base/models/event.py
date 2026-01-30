@@ -530,6 +530,8 @@ class Event(
     :type organizer: eventyay.base.models.organizer.Organizer
     :param testmode: This event is in test mode
     :type testmode: bool
+    :param private_testmode: This event hides tickets from non-organizers
+    :type private_testmode: bool
     :param name: This event's full title
     :type name: str
     :param slug: A short, alphanumeric, all-lowercase name for use in URLs. The slug has to
@@ -563,6 +565,7 @@ class Event(
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
+    private_testmode = models.BooleanField(default=False)
     name = I18nCharField(
         max_length=200,
         verbose_name=_('Event name'),
@@ -1106,6 +1109,7 @@ class Event(
         if other.date_admission:
             self.date_admission = self.date_from + (other.date_admission - other.date_from)
         self.testmode = other.testmode
+        self.private_testmode = other.private_testmode
         self.save()
         self.log_action('eventyay.object.cloned', data={'source': other.slug, 'source_id': other.pk})
 
@@ -1853,6 +1857,24 @@ class Event(
                 break
         return result
 
+    def user_can_view_tickets(self, user=None, request=None):
+        if not self.private_testmode or not self.settings.get('private_testmode_tickets', True, as_type=bool):
+            return True
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'is_administrator', False):
+            return True
+        return user.has_event_permission(self.organizer, self, request=request)
+
+    def user_can_view_talks(self, user=None, request=None):
+        if not self.private_testmode or not self.settings.get('private_testmode_talks', False, as_type=bool):
+            return True
+        if not user or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'is_administrator', False):
+            return True
+        return user.has_event_permission(self.organizer, self, request=request)
+
     @property
     def has_paid_things(self):
         from .product import Product, ProductVariation
@@ -1891,7 +1913,7 @@ class Event(
         if self.has_paid_things and not self.has_payment_provider:
             issues.append(_('You have configured at least one paid product but have not enabled any payment methods.'))
 
-        if not self.quotas.exists():
+        if self.products.exists() and not self.quotas.exists():
             issues.append(_('You need to configure at least one quota to sell anything.'))
 
         if self.organizer.has_unpaid_invoice():
@@ -1923,7 +1945,7 @@ class Event(
             billing_obj = OrganizerBillingModel.objects.filter(organizer=self.organizer).first()
             if not billing_obj or not billing_obj.stripe_payment_method_id:
                 url = reverse(
-                    'control:organizer.settings.billing',
+                    'eventyay_common:organizer.billing',
                     kwargs={'organizer': self.organizer.slug},
                 )
                 issue = format_html(
