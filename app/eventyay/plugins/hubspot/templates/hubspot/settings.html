@@ -1,0 +1,22 @@
+{% extends "control/event/settings_base.html" %}
+{% load i18n %}
+{% load bootstrap3 %}
+
+{% block title %}{% trans "HubSpot CRM" %}{% endblock %}
+
+{% block inside %}
+    <form action="" method="post" class="form-horizontal">
+        {% csrf_token %}
+        {% bootstrap_form_errors form %}
+        <fieldset>
+            <legend>{% trans "HubSpot CRM Settings" %}</legend>
+            {% bootstrap_field form.plugin_hubspot_enabled layout="horizontal" %}
+            {% bootstrap_field form.plugin_hubspot_api_key layout="horizontal" %}
+        </fieldset>
+        <div class="form-group submit-group">
+            <button type="submit" class="btn btn-primary btn-save">
+                {% trans "Save" %}
+            </button>
+        </div>
+    </form>
+{% endblock %}
