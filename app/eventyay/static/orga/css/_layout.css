@@ -1644,27 +1644,7 @@ h2 .user-name-display img {
     width: 100%;
     margin-left: 0;
   }
-
-  #main-title .navigation-button {
-    flex: 1 0 100%;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    gap: 4px;
-    margin-left: 0;
-  }
-
-  #main-title .navigation-button .header-nav {
-    flex: 1 1 0;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 13px;
-    padding-left: 6px;
-    padding-right: 6px;
-  }
-
+  
   .col-form-label {
     text-align: left;
     display: flex;

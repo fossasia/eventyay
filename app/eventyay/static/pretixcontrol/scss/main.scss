@@ -1087,11 +1087,12 @@ h1 .label {
         height: auto;
         overflow-y: visible;
         box-sizing: border-box;
+        padding: 0 10px;
     }
 
     #page-wrapper > .container-fluid {
-        padding-left: 0;
-        padding-right: 0;
+        padding-left: 4px;
+        padding-right: 4px;
     }
 }
 
