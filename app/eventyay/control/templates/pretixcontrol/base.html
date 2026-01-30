@@ -15,6 +15,8 @@
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
 		{% endcompress %}
+        <!-- Mobile sidebar fix - loaded separately to avoid SCSS compilation issues -->
+        <link rel="stylesheet" type="text/css" href="{% static "pretixcontrol/css/sidebar-mobile-fix.css" %}" />
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
                     defer></script>

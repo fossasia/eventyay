@@ -168,14 +168,14 @@ body:not(.sidebar-minimized) #page-wrapper {
     height: calc(100vh - var(--navbar-height, 50px));
 
     .nav>li {
-      height: 41px;
+      min-height: 41px;
 
       >a {
         display: flex;
         align-items: center;
         font-size: 14px;
         padding: 10px 15px;
-        height: 41px;
+        min-height: 41px;
 
         span {
           display: inline;
@@ -205,6 +205,25 @@ body:not(.sidebar-minimized) #page-wrapper {
       height: auto !important;
       overflow: visible !important;
       padding-bottom: 0;
+    }
+
+    // Handle collapse state for nested menus on mobile
+    .sidebar-nav .nav-second-level {
+      &.collapse {
+        display: none;
+      }
+
+      &.collapse.in {
+        display: block;
+      }
+
+      li {
+        border-bottom: none;
+
+        a {
+          padding-left: 37px;
+        }
+      }
     }
   }
 

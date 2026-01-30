@@ -1,0 +1,23 @@
+/* Mobile Sidebar Fix - Prevents overlap when menus are expanded */
+
+@media (max-width: 767px) {
+  /* Allow parent menu items to expand vertically */
+  .sidebar .nav>li {
+    min-height: 41px !important;
+    height: auto !important;
+  }
+
+  .sidebar .nav>li>a {
+    min-height: 41px !important;
+    height: auto !important;
+  }
+
+  /* Handle collapse state for nested menus on mobile */
+  .sidebar .sidebar-nav .nav-second-level.collapse {
+    display: none !important;
+  }
+
+  .sidebar .sidebar-nav .nav-second-level.collapse.in {
+    display: block !important;
+  }
+}
