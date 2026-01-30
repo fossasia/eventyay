@@ -98,7 +98,7 @@
             data-select2-locale="{{ select2locale }}" data-longdateformat="{{ js_long_date_format }}" class="nojs sidebar-minimized">
         <div id="wrapper">
             <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
-                <div class="navbar-row">
+                <div class="navbar-row mobile-layout">
                     <div class="navbar-left-group">
                     <button type="button" class="navbar-toggle-sidebar navbar-toggle"
                             id="sidebar-toggle" data-toggle="sidebar">
@@ -117,7 +117,7 @@
                     <div class="navbar-right-group">
                     <ul class="nav navbar-nav navbar-top-links navbar-right flip">
                         {% if request.user.is_staff and not staff_session %}
-                        <li class="nav-item nav-admin">
+                        <li class="nav-item {% if request.user.is_staff %}nav-admin{% endif %}">
                             <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}"
                                 method="post">
                             {% csrf_token %}
@@ -128,7 +128,7 @@
                             </form>
                         </li>
                         {% elif request.user.is_staff and staff_session %}
-                        <li class="nav-item nav-admin">
+                        <li class="nav-item {% if request.user.is_staff %}nav-admin{% endif %}">
                             <a href="{% url 'control:user.sudo.stop' %}" class="danger">
                             <i class="fa fa-id-card"></i>
                             <span class="sidebar-text">{% trans "End admin session" %}</span>
@@ -137,7 +137,7 @@
                         {% endif %}
                         {% include "common/fragment_language_switch.html" %}
                         {% if request.event %}
-                        <li class="nav-item nav-admin">
+                        <li class="nav-item {% if request.user.is_staff %}nav-admin{% endif %}">
                             {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event 'presale:event.auth' %}"
                                     method="post"
@@ -242,7 +242,7 @@
                             {% endif %}
                         {% endif %}
                         {% for nav in nav_items %}
-                            <li class="nav-item nav-admin">
+                            <li class="nav-item {% if nav.admin_only %}nav-admin{% endif %}">
                             <a href="{{ nav.url }}"
                                 {% if nav.active %}class="active"{% endif %}
                                 {% if nav.external %}target="_blank"{% endif %}
@@ -262,7 +262,7 @@
                                 </a>
                                 <ul class="nav nav-second-level">
                                 {% for item in nav.children %}
-                                    <li class="nav-item nav-admin">
+                                    <li class="nav-item {% if nav.admin_only %}nav-admin{% endif %}">
                                     <a href="{{ item.url }}"
                                         {% if item.external %}target="_blank"{% endif %}
                                         {% if item.active %}class="active"{% endif %}>
@@ -401,6 +401,10 @@
                 </div>
             </div>
         </div>
+        {{ 'popover-profile'|json_script:"popover_toggle" }}
+        {{ base_path|json_script:"base_path" }}
+        {{ staff_session|json_script:"is_admin_mode" }}
+        {{ talk_hostname|json_script:"talk_hostname_url" }}
         <span id="user-language-code" data-lang="{{ request.LANGUAGE_CODE|escapejs }}" style="display:none;"></span>
         <script type="module" src="{% static 'common/js/language-storage.js' %}"></script>
 	</body>
