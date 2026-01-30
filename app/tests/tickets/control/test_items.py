@@ -482,6 +482,49 @@ class QuotaTest(ItemFormTest):
             assert not c.close_when_sold_out
 
 
+class OrderFormsTest(ItemFormTest):
+    """Tests for the Order Forms page (tickets component organiser area)."""
+
+    def test_order_forms_page_loads(self):
+        """Test that the Order Forms page loads successfully."""
+        doc = self.get_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug))
+        # Verify page loads with expected content
+        self.assertIn('Order forms', doc.text)
+
+    def test_order_forms_page_with_questions(self):
+        """Test that the Order Forms page displays custom questions."""
+        with scopes_disabled():
+            q = Question.objects.create(
+                event=self.event1,
+                question='What is your T-shirt size?',
+                type='C',
+                required=True,
+                position=0,
+            )
+            q.products.add(self.item1)
+        doc = self.get_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug))
+        # Verify custom question is displayed
+        self.assertIn('T-shirt size', doc.text)
+
+    def test_order_forms_page_with_multiple_questions(self):
+        """Test Order Forms page performance with multiple questions."""
+        with scopes_disabled():
+            # Create multiple questions to test prefetch efficiency
+            for i in range(5):
+                q = Question.objects.create(
+                    event=self.event1,
+                    question=f'Question {i}',
+                    type='S',
+                    required=False,
+                    position=i,
+                )
+                q.products.add(self.item1)
+        doc = self.get_doc('/control/event/%s/%s/orderforms/' % (self.orga1.slug, self.event1.slug))
+        # Verify all questions are displayed
+        for i in range(5):
+            self.assertIn(f'Question {i}', doc.text)
+
+
 class ItemsTest(ItemFormTest):
     @scopes_disabled()
     def setUp(self):

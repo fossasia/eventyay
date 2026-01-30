@@ -1679,6 +1679,7 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
     template_name = 'pretixcontrol/items/orderforms.html'
     permission = 'can_change_items'
 
+    @cached_property
     def sform(self):
         return EventSettingsForm(
             obj=self.request.event,
@@ -1688,11 +1689,11 @@ class OrderFormList(EventPermissionRequiredMixin, FormView):
         )
 
     def get_form(self, form_class=None):
-        return self.sform()
+        return self.sform
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['sform'] = self.sform()
+        ctx['sform'] = self.sform
 
         # Include custom fields (questions) for attendee data section
         questions = list(self.request.event.questions.prefetch_related('products').order_by('position'))
