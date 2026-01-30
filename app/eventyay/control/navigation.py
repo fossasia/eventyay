@@ -289,19 +289,19 @@ def get_event_navigation(request: HttpRequest):
                     'active': 'event.orders.import' in url.url_name,
                 }
             )
-        children.append(
-            {
-                'label': _('Export'),
-                'url': reverse(
-                    'control:event.orders.export',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.orders.export' in url.url_name,
-            }
-        )
+            children.append(
+                {
+                    'label': _('Export'),
+                    'url': reverse(
+                        'control:event.orders.export',
+                        kwargs={
+                            'event': request.event.slug,
+                            'organizer': request.event.organizer.slug,
+                        },
+                    ),
+                    'active': 'event.orders.export' in url.url_name,
+                }
+            )
         nav.append(
             {
                 'label': _('Orders'),
@@ -355,9 +355,9 @@ def get_event_navigation(request: HttpRequest):
         ),
     )
 
-    for item in nav:
-        if item.get('label') == _('Orders') and 'children' in item:
-            children = item['children']
+    for nav_item in nav:
+        if nav_item.get('label') == _('Orders') and 'children' in nav_item:
+            children = nav_item['children']
             stats_idx = next((i for i, c in enumerate(children) if c.get('label') == _('Statistics')), None)
             if stats_idx is not None:
                 children.insert(1, children.pop(stats_idx))
