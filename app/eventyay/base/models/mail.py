@@ -200,10 +200,10 @@ class MailTemplate(PretalxModel):
             sender = sender or settings.MAIL_FROM
 
             # Use unified Reply-To resolution
-            resolved_reply_to = get_reply_to_address(
-                event,
-                template=self,
-                sender_email=sender
+            resolved_reply_to = (
+                get_reply_to_address(event, template=self, sender_email=sender)
+                if event
+                else None
             )
 
             mail = QueuedMail(
