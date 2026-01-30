@@ -59,6 +59,11 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         help_text=_('Allow submitters to share a secret link to their proposal with others.'),
         required=False,
     )
+    allow_gravatar = forms.BooleanField(
+        label=_('Allow Gravatar for speaker profile pictures'),
+        help_text=_('If enabled, speakers can choose to use their Gravatar for profile pictures. If disabled, speakers must upload their own profile pictures.'),
+        required=False,
+    )
     count_length_in = forms.ChoiceField(
         label=_('Count text length in'),
         choices=(('chars', _('Characters')), ('words', _('Words'))),
@@ -73,6 +78,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+        self.initial['allow_gravatar'] = obj.cfp.settings.get('allow_gravatar', True)
 
     def save(self, *args, **kwargs):
         current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
@@ -81,6 +87,8 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         else:
             new_count_length_in = current_count_length_in
         self.instance.cfp.settings['count_length_in'] = new_count_length_in
+        # Save allow_gravatar setting
+        self.instance.cfp.settings['allow_gravatar'] = self.cleaned_data.get('allow_gravatar', True)
         self.instance.cfp.save()
         super().save(*args, **kwargs)
 
