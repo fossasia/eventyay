@@ -1103,6 +1103,16 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
+        ticketing_ready = self.request.event.products.exists() and self.request.event.quotas.exists()
+        billing_issues = self.request.event.billing_issues()
+        billing_issue_texts = {str(issue) for issue in billing_issues}
+        ctx['ticketing_ready'] = ticketing_ready
+        ctx['ticket_issues'] = (
+            [issue for issue in self.request.event.live_issues if str(issue) not in billing_issue_texts]
+            if ticketing_ready
+            else []
+        )
+        ctx['tickets_published'] = self.request.event.tickets_published
         private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
         if not self.request.event.private_testmode:
             private_tickets = False
@@ -1111,7 +1121,54 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         event = request.event
+        ticketing_ready = event.products.exists() and event.quotas.exists()
+        billing_issue_texts = {str(issue) for issue in event.billing_issues()}
+        ticket_issues = [issue for issue in event.live_issues if str(issue) not in billing_issue_texts]
+        if request.POST.get('tickets_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if not ticketing_ready:
+                messages.error(self.request, _('Please set up ticketing before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if ticket_issues:
+                messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                return redirect(self.get_success_url())
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.tickets_published = True
+                if event.settings.get('private_testmode_tickets', True, as_type=bool):
+                    event.settings.private_testmode_tickets = False
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Tickets are now published.'))
+            return redirect(self.get_success_url())
+        elif request.POST.get('tickets_published') == 'false':
+            with transaction.atomic():
+                event.tickets_published = False
+                if event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+            messages.success(self.request, _('Tickets have been unpublished.'))
+            return redirect(self.get_success_url())
         if request.POST.get('testmode') == 'true':
+            if not event.tickets_published or not ticketing_ready:
+                messages.error(
+                    self.request,
+                    _('Tickets must be published and set up before enabling test mode.'),
+                )
+                return redirect(self.get_success_url())
             with transaction.atomic():
                 event.testmode = True
                 if event.private_testmode:

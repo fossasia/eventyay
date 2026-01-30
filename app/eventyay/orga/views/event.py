@@ -12,7 +12,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -41,7 +40,6 @@ from eventyay.orga.forms.event import (
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
-from eventyay.orga.signals import activate_event
 from eventyay.person.forms import UserForm
 from eventyay.base.models import User
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory
@@ -138,51 +136,95 @@ class EventLive(EventSettingsPermission, TemplateView):
             )
         result['warnings'] = warnings
         result['suggestions'] = suggestions
+        result['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        result['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
+        result['talks_published'] = self.request.event.talks_published
         return result
 
     def post(self, request, *args, **kwargs):
         event = request.event
-        action = request.POST.get('action')
-        if action == 'activate':
-            if event.is_public:
-                messages.success(request, _('This event was already live.'))
-            else:
-                responses = activate_event.send_robust(event, request=request)
-                exceptions = [response[1] for response in responses if isinstance(response[1], Exception)]
-                if exceptions:
-                    from eventyay.base.templatetags.rich_text import render_markdown
-
-                    messages.error(
-                        request,
-                        mark_safe('\n'.join(render_markdown(e) for e in exceptions)),
-                    )
-                else:
-                    event.is_public = True
-                    event.save()
-                    event.log_action(
-                        'eventyay.event.activate',
-                        person=self.request.user,
-                        orga=True,
+        if request.POST.get('talks_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing talks.'))
+                return redirect(event.orga_urls.live)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.talks_published = True
+                if event.settings.get('private_testmode_talks', False, as_type=bool):
+                    event.settings.private_testmode_talks = False
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
                         data={},
                     )
-                    messages.success(request, _('This talk component is now public.'))
-                    for response in responses:
-                        if isinstance(response[1], str):
-                            messages.success(request, response[1])
-        else:  # action == 'deactivate'
-            if not event.is_public:
-                messages.success(request, _('This talk component was already hidden.'))
-            else:
-                event.is_public = False
+            messages.success(self.request, _('Talk pages are now published.'))
+        elif request.POST.get('talks_published') == 'false':
+            with transaction.atomic():
+                event.talks_published = False
+                if event.settings.get('talks_testmode', False, as_type=bool):
+                    event.settings.talks_testmode = False
                 event.save()
-                event.log_action(
-                    'eventyay.event.deactivate',
-                    person=self.request.user,
-                    orga=True,
-                    data={},
+            messages.success(self.request, _('Talk pages have been unpublished.'))
+        elif request.POST.get('talk_testmode') == 'true':
+            if not event.talks_published:
+                messages.error(
+                    self.request,
+                    _('Talk pages must be published before enabling talk test mode.'),
                 )
-                messages.success(request, _('This talk component is now hidden.'))
-        return redirect(event.orga_urls.base)
+                return redirect(event.orga_urls.live)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.talks_testmode = True
+                if event.settings.get('private_testmode_talks', False, as_type=bool):
+                    event.settings.private_testmode_talks = False
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private and not event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in test mode!'))
+        elif request.POST.get('talk_testmode') == 'false':
+            with transaction.atomic():
+                event.settings.talks_testmode = False
+                event.save()
+                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in production mode.'))
+        elif request.POST.get('private_testmode_talks_action'):
+            enable = request.POST.get('private_testmode_talks_action') == 'enable'
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_talks = enable
+                if enable:
+                    event.private_testmode = True
+                    event.settings.talks_testmode = False
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
+            )
+        return redirect(event.orga_urls.live)
 
 
 class EventHistory(EventSettingsPermission, ListView):

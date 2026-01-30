@@ -25,7 +25,25 @@
                 </div>
             </form>
         {% else %}
-            {% if request.event.private_testmode %}
+            {% if not ticketing_ready %}
+                <p>
+                    {% trans "Set up ticketing before enabling test mode." %}
+                </p>
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                        {% trans "Enable test mode" %}
+                    </button>
+                </div>
+            {% elif not tickets_published %}
+                <p>
+                    {% trans "Tickets must be published before enabling test mode." %}
+                </p>
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                        {% trans "Enable test mode" %}
+                    </button>
+                </div>
+            {% elif request.event.private_testmode %}
                 <p>
                     {% trans "Private test mode is currently enabled. Disable it to enable standard test mode." %}
                 </p>
