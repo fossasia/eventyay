@@ -114,9 +114,15 @@
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-link" id="button-sudo">
-                                <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
-                            </button>
+                            {% if not request.event and not request.organizer %}
+                                <button type="submit" class="btn btn-link" id="button-sudo">
+                                    <i class="fa fa-id-card"></i>
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-link" id="button-sudo">
+                                    <i class="fa fa-id-card"></i> {% translate "Admin mode" %}
+                                </button>
+                            {% endif %}
                         </form>
                     </li>
                 {% elif request.user.is_staff and request.user|has_active_staff_session:request.session.session_key %}
@@ -465,7 +471,7 @@
                     {% endfor %}
                 {% endif %}  {# if request.event #}
             </aside>{% endif %}  {# if not request.user.is_anonymous #}
-            <div id="page-content">
+            <div id="page-content" class="event-dashboard-wrapper">
                 <main>
                     {% if messages %}
                         {% for message in messages %}

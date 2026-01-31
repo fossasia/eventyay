@@ -348,10 +348,19 @@ footer {
       padding-bottom: 6rem;
     }
 
-    .user-row {
-      flex-direction: column;
-    }
-
+      /* Prevent header right area (user/email) from wrapping on small screens.
+         Keep it on a single line and allow it to overflow to the right instead. */
+      .header-row-right {
+        white-space: nowrap;
+        overflow: visible;
+      }
+      .header-row-right .display-name,
+      .header-row-right summary.header-nav,
+      .header-row-right .current-locale,
+      .header-row-right .locale-link {
+        white-space: nowrap;
+        overflow: visible;
+      }
     .btn-success {
       width: 100%;
     }

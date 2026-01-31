@@ -401,319 +401,330 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   }
 
   /* ============================================
-     Mobile navbar adjustments
+     Mobile navbar adjustments - SCOPED to event dashboard
      Override fixed navbar and other settings
      to make navbar static and inline on small screens
      ============================================ */
-  html body div#wrapper nav.navbar.navbar-inverse,
-  html body nav.navbar.navbar-inverse,
-  body div#wrapper nav.navbar,
-  body nav.navbar,
-  .navbar.navbar-inverse,
-  .navbar {
-    position: static !important;
-    min-height: auto !important;
-    height: auto !important;
-    max-height: none !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    padding: 0 5px !important;
-    width: 100% !important;
-    overflow: visible !important;
+  .event-dashboard-wrapper nav.navbar.navbar-inverse,
+  .event-dashboard-wrapper nav.navbar {
+    position: static;
+    min-height: auto;
+    height: auto;
+    max-height: none;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0 5px;
+    width: 100%;
+    overflow: visible;
   }
 
-  nav.navbar .navbar-header,
-  nav.navbar .navbar-header a.navbar-brand {
-    min-height: 50px !important;
-    height: auto !important;
-    line-height: 28px !important;
+  .event-dashboard-wrapper nav.navbar .navbar-header,
+  .event-dashboard-wrapper nav.navbar .navbar-header a.navbar-brand {
+    min-height: 50px;
+    height: auto;
+    line-height: 28px;
   }
 
-  nav.navbar .navbar-header a.navbar-brand img {
-    max-height: 28px !important;
+  .event-dashboard-wrapper nav.navbar .navbar-header a.navbar-brand img {
+    max-height: 28px;
   }
 
-  nav.navbar .navbar-top-links {
-    min-height: 50px !important;
-    height: auto !important;
+  .event-dashboard-wrapper nav.navbar .navbar-top-links {
+    min-height: 50px;
+    height: auto;
   }
 
-  nav.navbar .navbar-top-links li,
-  nav.navbar .navbar-top-links li a,
-  nav.navbar .navbar-top-links li form button.btn-link {
-    min-height: 50px !important;
-    height: auto !important;
-    line-height: 28px !important;
-    padding: 12px 10px !important;
+  .event-dashboard-wrapper nav.navbar .navbar-top-links li,
+  .event-dashboard-wrapper nav.navbar .navbar-top-links li a,
+  .event-dashboard-wrapper nav.navbar .navbar-top-links li form button.btn-link {
+    min-height: 50px;
+    height: auto;
+    line-height: 28px;
+    padding: 12px 10px;
   }
 
-  nav.navbar #sidebar-toggle,
-  nav.navbar .navbar-toggle-sidebar {
-    min-height: 50px !important;
-    height: auto !important;
-    padding: 12px 10px !important;
+  .event-dashboard-wrapper nav.navbar #sidebar-toggle,
+  .event-dashboard-wrapper nav.navbar .navbar-toggle-sidebar {
+    min-height: 50px;
+    height: auto;
+    padding: 12px 10px;
   }
 
-  nav.navbar .navbar-header {
-    display: flex !important;
-    align-items: center !important;
-    flex-wrap: nowrap !important;
+  .event-dashboard-wrapper nav.navbar .navbar-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse button#sidebar-toggle.navbar-toggle-sidebar,
-  html body div#wrapper nav.navbar button#sidebar-toggle.navbar-toggle-sidebar,
-  body div#wrapper nav.navbar.navbar-inverse button#sidebar-toggle.navbar-toggle-sidebar,
-  body div#wrapper nav.navbar button#sidebar-toggle.navbar-toggle-sidebar,
-  nav.navbar.navbar-inverse button#sidebar-toggle.navbar-toggle-sidebar,
-  nav.navbar button#sidebar-toggle.navbar-toggle-sidebar,
-  #sidebar-toggle.navbar-toggle-sidebar,
-  .navbar-toggle-sidebar {
-    position: relative !important;
-    float: left !important;
-    margin: 8px 5px !important;
-    padding: 8px 10px !important;
-    flex-shrink: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
+  .event-dashboard-wrapper nav.navbar button#sidebar-toggle.navbar-toggle-sidebar,
+  .event-dashboard-wrapper nav.navbar .navbar-toggle-sidebar,
+  .event-dashboard-wrapper .navbar-toggle-sidebar {
+    position: relative;
+    float: left;
+    margin: 8px 5px;
+    padding: 8px 10px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse div.navbar-header,
-  html body div#wrapper nav.navbar div.navbar-header,
-  body div#wrapper nav.navbar.navbar-inverse div.navbar-header,
-  body div#wrapper nav.navbar div.navbar-header,
-  nav.navbar.navbar-inverse div.navbar-header,
-  nav.navbar div.navbar-header,
-  .navbar .navbar-header,
-  .navbar-header {
-    float: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    flex-grow: 1 !important;
-    flex-shrink: 1 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    min-width: 0 !important;
-    width: auto !important;
-    max-width: calc(100% - 200px) !important;
+  .event-dashboard-wrapper nav.navbar div.navbar-header,
+  .event-dashboard-wrapper .navbar-header {
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+    width: auto;
+    max-width: calc(100% - 200px);
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse div.navbar-header a.navbar-brand,
-  html body div#wrapper nav.navbar div.navbar-header a.navbar-brand,
-  body div#wrapper nav.navbar.navbar-inverse div.navbar-header a.navbar-brand,
-  body div#wrapper nav.navbar div.navbar-header a.navbar-brand,
-  nav.navbar.navbar-inverse div.navbar-header a.navbar-brand,
-  nav.navbar div.navbar-header a.navbar-brand,
-  .navbar .navbar-header a.navbar-brand,
-  a.navbar-brand {
-    float: none !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    height: auto !important;
-    min-height: auto !important;
-    padding: 8px 10px !important;
-    margin: 0 !important;
-    font-size: 18px !important;
-    line-height: normal !important;
-    white-space: nowrap !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    width: 100% !important;
+  .event-dashboard-wrapper nav.navbar div.navbar-header a.navbar-brand,
+  .event-dashboard-wrapper a.navbar-brand {
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    height: auto;
+    min-height: auto;
+    padding: 8px 10px;
+    margin: 0;
+    font-size: 18px;
+    line-height: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse div.navbar-header a.navbar-brand img,
-  html body div#wrapper nav.navbar div.navbar-header a.navbar-brand img,
-  body div#wrapper nav.navbar.navbar-inverse div.navbar-header a.navbar-brand img,
-  body div#wrapper nav.navbar div.navbar-header a.navbar-brand img,
-  nav.navbar.navbar-inverse div.navbar-header a.navbar-brand img,
-  nav.navbar div.navbar-header a.navbar-brand img,
-  .navbar .navbar-header a.navbar-brand img,
-  .navbar-brand img {
-    display: inline-block !important;
-    vertical-align: middle !important;
-    max-height: 28px !important;
-    width: auto !important;
-    max-width: 30px !important;
-    height: auto !important;
-    margin-right: 8px !important;
-    margin-top: 0 !important;
+  .event-dashboard-wrapper nav.navbar div.navbar-header a.navbar-brand img,
+  .event-dashboard-wrapper .navbar-brand img {
+    display: inline-block;
+    vertical-align: middle;
+    max-height: 28px;
+    width: auto;
+    max-width: 30px;
+    height: auto;
+    margin-right: 8px;
+    margin-top: 0;
   }
 
-  /* Level 2: Navbar left items (View event) - should be hidden by hidden-xs */
-  html body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  html body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  ul.nav.navbar-nav.navbar-top-links.navbar-left.flip,
-  .navbar-top-links.navbar-left {
-    display: none !important;
-    float: none !important;
+  /* Navbar left items (View event) - hidden by hidden-xs class, also hide in scoped area */
+  .event-dashboard-wrapper .navbar-top-links.navbar-left {
+    display: none;
+    float: none;
   }
 
-  /* Level 3: Navbar right items (Admin, Language, etc.) - inline on same line */
-  html body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  html body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  ul.nav.navbar-nav.navbar-top-links.navbar-right.flip,
-  .navbar-top-links.navbar-right {
-    float: none !important;
-    display: inline-flex !important;
-    flex-wrap: wrap !important;
-    margin: 0 !important;
-    margin-left: auto !important;
-    padding: 0 !important;
-    height: auto !important;
-    min-height: auto !important;
-    width: auto !important;
-    clear: none !important;
-    justify-content: flex-start !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
+  /* Navbar right items (Admin, Language, etc.) - show with proper styling on mobile */
+  .event-dashboard-wrapper nav.navbar .navbar-top-links.navbar-right,
+  .event-dashboard-wrapper .nav.navbar-nav.navbar-top-links.navbar-right {
+    float: none;
+    display: flex;
+    flex-wrap: nowrap;
+    margin: 0;
+    padding: 5px 10px;
+    height: auto;
+    min-height: auto;
+    width: 100%;
+    clear: none;
+    justify-content: flex-end;
+    align-items: center;
+    flex-shrink: 0;
+    background-color: #2185d0 !important;
+    overflow: visible;
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  html body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li,
-  .navbar-top-links.navbar-right li {
-    float: none !important;
-    display: inline-block !important;
-    height: auto !important;
-    min-height: auto !important;
-    margin: 0 !important;
-    padding: 0 !important;
+  .event-dashboard-wrapper .navbar-top-links.navbar-right li {
+    float: none;
+    display: inline-block;
+    height: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
   }
 
-  html body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  html body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li a,
-  .navbar-top-links.navbar-right li a,
-  html body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  html body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  body div#wrapper nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  body div#wrapper nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  nav.navbar.navbar-inverse ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  nav.navbar ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  ul.nav.navbar-nav.navbar-top-links.navbar-right.flip li form button.btn-link,
-  .navbar-top-links.navbar-right li form button.btn-link {
-    display: inline-block !important;
-    padding: 8px 10px !important;
-    min-height: auto !important;
-    height: auto !important;
-    line-height: normal !important;
-    font-size: 14px !important;
-    margin: 0 !important;
+  .event-dashboard-wrapper .navbar-top-links.navbar-right li a,
+  .event-dashboard-wrapper .navbar-top-links.navbar-right li form button.btn-link {
+    display: inline-block;
+    padding: 8px 10px;
+    min-height: auto;
+    height: auto;
+    line-height: normal;
+    font-size: 14px;
+    margin: 0;
+    color: #f8f9fa !important;
+    background: transparent;
   }
 
   /* Ensure page content starts below navbar */
-  html body div#wrapper div#page-wrapper,
-  body div#wrapper div#page-wrapper,
-  #page-wrapper {
-    margin-left: 0 !important;
-    margin-top: 0 !important;
-    padding: 10px 15px !important;
-    clear: both !important;
-    overflow: hidden !important;
-    width: 100% !important;
-    position: static !important;
-    height: auto !important;
-    min-height: auto !important;
+  .event-dashboard-wrapper #page-wrapper {
+    margin-left: 50px;
+    margin-top: 0;
+    padding: 10px 15px;
+    clear: both;
+    overflow: hidden;
+    width: calc(100% - 65px);
+    position: static;
+    height: auto;
+    min-height: auto;
   }
 
-  /* Event header and navigation should not overlap */
-  html body div#wrapper div#page-wrapper main div#main-title,
-  html body div#wrapper div#page-wrapper div#main-title,
-  body div#wrapper div#page-wrapper main div#main-title,
-  body div#wrapper div#page-wrapper div#main-title,
-  #main-title {
-    display: block !important;
-    clear: both !important;
-    margin-top: 18px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    flex: none !important;
-    position: static !important;
+  /* Event header and navigation should not overlap - add margin for navbar items */
+  .event-dashboard-wrapper #main-title {
+    display: block;
+    clear: both;
+    margin-top: 60px;
+    margin-left: 15px;
+    margin-right: 0;
+    padding: 0;
+    width: calc(100% - 15px);
+    flex: none;
+    position: static;
   }
 
-  html body div#wrapper div#page-wrapper main div#main-title div.navigation-button,
-  html body div#wrapper div#page-wrapper div#main-title div.navigation-button,
-  body div#wrapper div#page-wrapper main div#main-title div.navigation-button,
-  body div#wrapper div#page-wrapper div#main-title div.navigation-button,
-  #main-title .navigation-button,
-  .navigation-button {
-    display: block !important;
-    clear: both !important;
-    margin-top: 18px !important;
-    margin-left: 0 !important;
-    width: 100% !important;
-    position: static !important;
+  .event-dashboard-wrapper #main-title .navigation-button {
+    display: block;
+    clear: both;
+    margin-top: 18px;
+    margin-left: 0;
+    width: 100%;
+    position: static;
   }
 
   /* Timeline and dashboard content */
-  html body div#wrapper div#page-wrapper main div#timeline-steps,
-  html body div#wrapper div#page-wrapper div#timeline-steps,
-  body div#wrapper div#page-wrapper main div#timeline-steps,
-  body div#wrapper div#page-wrapper div#timeline-steps,
-  #timeline-steps {
-    clear: both !important;
-    margin-top: 18px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
+  .event-dashboard-wrapper #timeline-steps {
+    clear: both;
+    margin-top: 18px;
+    margin-left: 15px;
+    margin-right: 0;
+    width: calc(100% - 15px);
   }
 
-  html body div#wrapper div#page-wrapper main div.dashboard-list,
-  html body div#wrapper div#page-wrapper div.dashboard-list,
-  body div#wrapper div#page-wrapper main div.dashboard-list,
-  body div#wrapper div#page-wrapper div.dashboard-list,
-  .dashboard-list {
-    clear: both !important;
-    margin-top: 18px !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
+  .event-dashboard-wrapper .dashboard-list {
+    clear: both;
+    margin-top: 18px;
+    margin-left: 15px;
+    margin-right: 0;
+    width: calc(100% - 15px);
   }
 
-  html body div#wrapper div#page-wrapper main,
-  body div#wrapper div#page-wrapper main,
-  main,
-  html body div#wrapper div#page-wrapper,
-  body div#wrapper div#page-wrapper,
-  #page-content {
-    clear: both !important;
-    overflow: hidden !important;
-    position: static !important;
-    width: 100% !important;
+  .event-dashboard-wrapper .dashboard-history {
+    margin-left: 15px;
+    width: calc(100% - 30px);
   }
 
-  #page-content {
-    margin: 0 !important;
-    padding: 0 !important;
+  .event-dashboard-wrapper main,
+  .event-dashboard-wrapper #page-content {
+    clear: both;
+    overflow: hidden;
+    position: static;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  body div#wrapper #page-content {
-    margin: 0 !important;
-    padding: 0 !important;
+  .event-dashboard-wrapper .mobile-navbar-view-form {
+    display: none;
   }
 
-  a.mobile-navbar-view-link,
-  .mobile-navbar-view-form {
-    display: none !important;
+  nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right {
+    background-color: #2185d0 !important;
+    padding: 6px 10px;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow: visible;
+    justify-content: flex-end;
+  }
+
+  /* Override justify-content for flipped navbar-right (RTL support) */
+  nav.navbar .event-dashboard-wrapper .nav.navbar-nav.navbar-top-links.navbar-right.flip,
+  nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip {
+    justify-content: flex-end;
+  }
+
+  nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right li a,
+  nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right li form button.btn-link {
+    color: #f8f9fa !important;
+    white-space: nowrap;
+  }
+
+  nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right li form button.btn-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Hide user name in profile dropdown for talk dashboard, show only icon */
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary .fa-user + .fa-caret-down {
+    margin-left: 4px;
+  }
+
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary .fa-user ~ span:not(.fa-caret-down) {
+    display: none;
+  }
+
+  /* Extra high-specificity rule to ensure blue background on the exact selector requested */
+  @media (max-width: 767px) {
+    .nav.navbar-nav.navbar-top-links.navbar-right.flip {
+      background-color: #2185d0 !important;
+      padding: 6px 10px !important;
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      align-items: center !important;
+      overflow: visible !important;
+      justify-content: flex-end !important;
+    }
+    .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
+    .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
+      color: #ffffff !important;
+    }
+
+    /* Also ensure flip class takes precedence for justify-content */
+    nav.navbar .event-dashboard-wrapper .nav.navbar-nav.navbar-top-links.navbar-right.flip {
+      justify-content: flex-end;
+    }
+
+    /* Hide language label on Talk dashboard mobile: show only globe icon */
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #language-dropdown summary .current-locale {
+      display: none !important;
+    }
+
+    /* Reduce spacing between navbar items to prevent overflow on talk tab admin mode */
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip {
+      gap: 2px;
+      padding: 4px 8px;
+    }
+
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
+      padding: 6px 8px;
+      font-size: 13px;
+    }
+
+    /* Reduce admin mode button spacing */
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-sudo,
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-shop {
+      padding: 6px 8px;
+      min-height: auto;
+      height: auto;
+      margin-left: 2px;
+    }
+
+    /* Reduce profile and language dropdown spacing */
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary,
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #language-dropdown summary {
+      padding: 6px 8px;
+    }
+
+    /* Reduce warning bell spacing */
+    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a.danger {
+      padding: 6px 8px;
+    }
   }
 }
