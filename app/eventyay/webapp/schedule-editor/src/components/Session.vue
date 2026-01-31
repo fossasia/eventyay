@@ -196,7 +196,7 @@ function onPointerDown(event: PointerEvent): void {
 			.duration
 				color: $clr-secondary-text-dark
 		.info
-			border: border-separator()
+			border: 1px solid $clr-dividers-light
 			border-left: none
 			border-radius: 0 6px 6px 0
 			background-color: $clr-white
