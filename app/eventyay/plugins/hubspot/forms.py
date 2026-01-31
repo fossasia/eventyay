@@ -6,12 +6,13 @@ from eventyay.base.forms import SettingsForm
 
 class HubSpotSettingsForm(SettingsForm):
     """
-    Minimal HubSpot plugin settings form.
+    Minimal HubSpot plugin settings form for MVP.
+
+    Includes only an enable toggle and API key. Configurable field mappings
+    between attendee data and HubSpot properties will be added later.
     
-    Allows event organizers to enable the plugin and provide their API key.
-    
-    TODO: In a future PR, add a UI for configuring field mappings between
-    OrderPosition attendee data and HubSpot contact properties.
+    Note: The API key is stored as a plain string (not masked in the database)
+    but rendered with masked input in the form via PasswordInput widget.
     """
     
     plugin_hubspot_enabled = forms.BooleanField(

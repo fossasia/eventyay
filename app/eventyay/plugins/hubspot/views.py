@@ -13,6 +13,10 @@ from .forms import HubSpotSettingsForm
 class HubSpotSettings(EventSettingsViewMixin, EventSettingsFormView):
     """
     Event settings view for configuring HubSpot plugin.
+    
+    Uses EventSettingsViewMixin to handle organizer/event context from URL,
+    and EventSettingsFormView to render and process the settings form.
+    The form saves settings to the Event model's settings store.
     """
     model = Event
     form_class = HubSpotSettingsForm

@@ -16,6 +16,9 @@ class HubSpotApp(AppConfig):
         description = _('Sync attendees to HubSpot when orders are paid.')
 
     def ready(self):
+        # Import signals module to register signal handlers.
+        # Django apps use ready() for initialization work like signal registration.
+        # This is done lazily to avoid circular import issues during startup.
         from . import signals  # NOQA
 
 
