@@ -333,7 +333,15 @@ class SplitDateTimeField(forms.SplitDateTimeField):
             if data_list[1] in self.empty_values:
                 raise ValidationError(self.error_messages['invalid_date'], code='invalid_date')
             result = datetime.datetime.combine(*data_list)
-            return from_current_timezone(result)
+            
+            from django.utils.timezone import get_current_timezone, is_aware
+            if not is_aware(result):
+                current_tz = get_current_timezone()
+                if hasattr(current_tz, 'localize'):
+                    result = current_tz.localize(result, is_dst=None)
+                else:
+                    result = result.replace(tzinfo=current_tz)
+            return result
         return None
 
 

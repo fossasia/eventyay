@@ -109,7 +109,7 @@ class MailForm(forms.Form):
         widget=SplitDateTimePickerWidget(),
         label=_('Send later'),
         required=False,
-        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
+        help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
     )
     browser_timezone = forms.CharField(
         widget=forms.HiddenInput(attrs={'class': 'browser-timezone-field'}),
@@ -120,7 +120,9 @@ class MailForm(forms.Form):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            if scheduled_at < timezone.now():
+            from datetime import timedelta
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
                 )
@@ -539,7 +541,9 @@ class EmailQueueEditForm(forms.ModelForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            if scheduled_at < timezone.now():
+            from datetime import timedelta
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
                 )
@@ -639,13 +643,15 @@ class TeamMailForm(forms.Form):
             widget=SplitDateTimePickerWidget(),
             label=_('Send later'),
             required=False,
-            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time.'),
+            help_text=_('Leave empty to send immediately. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         )
 
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            if scheduled_at < timezone.now():
+            from datetime import timedelta
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
                 raise ValidationError(
                     _('Scheduled time must be in the future.')
                 )
