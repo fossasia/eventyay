@@ -24,7 +24,7 @@
 				@startDragging="startDragging($event)",
 			)
 		.availability(v-for="availability of visibleAvailabilities", :key="`${availability.room.id}-${availability.start.valueOf()}-${availability.end.valueOf()}`", :style="getSessionStyle(availability)", :class="availability.active ? ['active'] : []")
-	#hiddenRooms.no-print(v-if="hiddenRooms.length")
+	#hidden-rooms.no-print(v-if="hiddenRooms.length")
 		h4 {{ $t('Hidden rooms') }} ({{ hiddenRooms.length }})
 		.room-list
 			.room-entry(v-for="room of hiddenRooms", :key="room.id", @click="hiddenRooms.splice(hiddenRooms.indexOf(room), 1)")
@@ -683,7 +683,7 @@ onUnmounted(() => {
 			align-items: center
 			font-size: 18px
 			background-color: $clr-white
-			border-bottom: border-separator()
+		  border-bottom: 1px solid $clr-dividers-light
 			z-index: 20
 			.hide-room
 				color: $clr-secondary-text-light
@@ -737,12 +737,12 @@ onUnmounted(() => {
 	pointer-events: none
 	&.active
 		background-color: rgba(56, 158, 119, 0.1)
-#hiddenRooms
+#hidden-rooms
 	position: fixed
 	z-index: 500
 	bottom: 0
 	right: 0
-	width: 300px;
+	width: 300px
 	background-color: $clr-white
 	padding: 8px 16px
 	box-shadow: 0 0 10px rgba(0, 0, 0, 0.3)
@@ -757,7 +757,7 @@ onUnmounted(() => {
 			display: block
 
 	.room-entry
-		border-bottom: border-separator()
+		border-bottom: 1px solid $clr-dividers-light
 		display: flex
 		justify-content: space-between
 		align-items: center
