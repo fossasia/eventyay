@@ -10,8 +10,7 @@ msgstr ""
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
 "PO-Revision-Date: 2025-11-30 12:02+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
-"Language-Team: Swahili <https://hosted.weblate.org/projects/eventyay/"
-"eventyay/sw/>\n"
+"Language-Team: Swahili <https://hosted.weblate.org/projects/eventyay/eventyay/sw/>\n"
 "Language: sw\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -26,15 +25,12 @@ msgid ""
 msgstr ""
 
 #: eventyay/api/auth/devicesecurity.py:22
+#: eventyay/api/auth/devicesecurity.py:80
 msgid "eventyay"
 msgstr ""
 
 #: eventyay/api/auth/devicesecurity.py:52
 msgid "eventyay (kiosk mode, online only)"
-msgstr ""
-
-#: eventyay/api/auth/devicesecurity.py:80
-msgid "eventyay"
 msgstr ""
 
 #: eventyay/api/models.py:18
@@ -87,7 +83,8 @@ msgstr ""
 
 #: eventyay/api/serializers/cart.py:68 eventyay/api/serializers/order.py:1136
 msgid ""
-"There is not enough quota available on quota \"{}\" to perform the operation."
+"There is not enough quota available on quota \"{}\" to perform the "
+"operation."
 msgstr ""
 
 #: eventyay/api/serializers/cart.py:95 eventyay/api/serializers/order.py:1096
@@ -101,9 +98,10 @@ msgstr ""
 msgid "One or more items do not belong to this event."
 msgstr ""
 
-#: eventyay/api/serializers/checkin.py:51 eventyay/api/serializers/checkin.py:54
-#: eventyay/base/models/items.py:1501 eventyay/base/models/items.py:1504
-#: eventyay/base/models/waitinglist.py:187 eventyay/base/models/waitinglist.py:190
+#: eventyay/api/serializers/checkin.py:51
+#: eventyay/api/serializers/checkin.py:54 eventyay/base/models/items.py:1501
+#: eventyay/base/models/items.py:1504 eventyay/base/models/waitinglist.py:187
+#: eventyay/base/models/waitinglist.py:190
 msgid "The subevent does not belong to this event."
 msgstr ""
 
@@ -179,7 +177,8 @@ msgstr ""
 msgid "This type of question cannot be asked during check-in."
 msgstr ""
 
-#: eventyay/api/serializers/order.py:1109 eventyay/api/serializers/order.py:1116
+#: eventyay/api/serializers/order.py:1109
+#: eventyay/api/serializers/order.py:1116
 msgid "The product \"{}\" is not available on this date."
 msgstr ""
 
@@ -433,8 +432,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:204
 msgid ""
-"Require attendees to enter their primary email address twice to help prevent "
-"errors."
+"Require attendees to enter their primary email address twice to help prevent"
+" errors."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:214
@@ -512,7 +511,8 @@ msgid "Invoice address explanation"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:356
-msgid "This text will be shown above the invoice address form during checkout."
+msgid ""
+"This text will be shown above the invoice address form during checkout."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:366
@@ -521,8 +521,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:368
 msgid ""
-"If an invoice has already been paid partially, this option will add the paid "
-"and pending amount to the invoice."
+"If an invoice has already been paid partially, this option will add the paid"
+" and pending amount to the invoice."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:379
@@ -531,8 +531,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:381
 msgid ""
-"Note that invoices will never be generated for orders that contain only free "
-"products."
+"Note that invoices will never be generated for orders that contain only free"
+" products."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:392
@@ -573,8 +573,8 @@ msgid ""
 "your event slug will be used followed by a dash. Attention: If multiple "
 "events within the same organization use the same value in this field, they "
 "will share their number range, i.e. every full number will be used at most "
-"once over all of your events. This setting only affects future invoices. You "
-"can use %Y (with century) %y (without century) to insert the year of the "
+"once over all of your events. This setting only affects future invoices. You"
+" can use %Y (with century) %y (without century) to insert the year of the "
 "invoice, or %m and %d for the day of month."
 msgstr ""
 
@@ -585,8 +585,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:448
 msgid ""
 "This will be prepended to invoice numbers of cancellations. If you leave "
-"this field empty, the same numbering scheme will be used that you configured "
-"for regular invoices."
+"this field empty, the same numbering scheme will be used that you configured"
+" for regular invoices."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:468
@@ -641,7 +641,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:532
 msgid ""
 "If using days, the order will expire at the end of the last day. Using "
-"minutes is more exact, but should only be used for real-time payment methods."
+"minutes is more exact, but should only be used for real-time payment "
+"methods."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:543
@@ -662,8 +663,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:570
 msgid ""
-"If this is activated and the payment term of any order ends on a Saturday or "
-"Sunday, it will be moved to the next Monday instead. This is required in "
+"If this is activated and the payment term of any order ends on a Saturday or"
+" Sunday, it will be moved to the next Monday instead. This is required in "
 "some countries by civil law. This will not effect the last date of payments "
 "configured below."
 msgstr ""
@@ -674,10 +675,10 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:589
 msgid ""
-"The number of minutes after placing an order the user has to pay to preserve "
-"their reservation. Only use this if you exclusively offer real-time payment "
-"methods. Please note that for technical reasons, the actual time frame might "
-"be a few minutes longer before the order is marked as expired."
+"The number of minutes after placing an order the user has to pay to preserve"
+" their reservation. Only use this if you exclusively offer real-time payment"
+" methods. Please note that for technical reasons, the actual time frame "
+"might be a few minutes longer before the order is marked as expired."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:611
@@ -790,36 +791,41 @@ msgid "Company name"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:756
-#: eventyay/base/exporters/invoices.py:174 eventyay/base/exporters/invoices.py:182
-#: eventyay/base/exporters/invoices.py:301 eventyay/base/exporters/invoices.py:309
+#: eventyay/base/exporters/invoices.py:174
+#: eventyay/base/exporters/invoices.py:182
+#: eventyay/base/exporters/invoices.py:301
+#: eventyay/base/exporters/invoices.py:309
 #: eventyay/base/exporters/orderlist.py:242
 #: eventyay/base/exporters/orderlist.py:418
 #: eventyay/base/exporters/orderlist.py:529
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/forms/questions.py:481
-#: eventyay/base/models/orders.py:1202 eventyay/base/models/orders.py:2304
-#: eventyay/base/orderimport.py:285 eventyay/base/orderimport.py:442
-#: eventyay/control/forms/filter.py:529 eventyay/control/forms/filter.py:560
-#: eventyay/control/views/item.py:354
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/forms/questions.py:481 eventyay/base/models/orders.py:1202
+#: eventyay/base/models/orders.py:2304 eventyay/base/orderimport.py:285
+#: eventyay/base/orderimport.py:442 eventyay/control/forms/filter.py:529
+#: eventyay/control/forms/filter.py:560 eventyay/control/views/item.py:354
 #: eventyay/plugins/checkinlists/exporters.py:441
 #: eventyay/plugins/reports/exporters.py:718
 msgid "ZIP code"
 msgstr ""
 
-#: eventyay/base/configurations/default_setting.py:765 eventyay/base/pdf.py:254
+#: eventyay/base/configurations/default_setting.py:765
+#: eventyay/base/pdf.py:254
 msgid "Random City"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:766
-#: eventyay/base/exporters/invoices.py:175 eventyay/base/exporters/invoices.py:183
-#: eventyay/base/exporters/invoices.py:302 eventyay/base/exporters/invoices.py:310
+#: eventyay/base/exporters/invoices.py:175
+#: eventyay/base/exporters/invoices.py:183
+#: eventyay/base/exporters/invoices.py:302
+#: eventyay/base/exporters/invoices.py:310
 #: eventyay/base/exporters/orderlist.py:242
 #: eventyay/base/exporters/orderlist.py:418
 #: eventyay/base/exporters/orderlist.py:530
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/forms/questions.py:492
-#: eventyay/base/models/orders.py:1203 eventyay/base/models/orders.py:2305
-#: eventyay/base/models/organizer.py:444 eventyay/base/orderimport.py:296
-#: eventyay/base/orderimport.py:453 eventyay/control/forms/filter.py:534
-#: eventyay/control/forms/filter.py:565
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/forms/questions.py:492 eventyay/base/models/orders.py:1203
+#: eventyay/base/models/orders.py:2305 eventyay/base/models/organizer.py:444
+#: eventyay/base/orderimport.py:296 eventyay/base/orderimport.py:453
+#: eventyay/control/forms/filter.py:534 eventyay/control/forms/filter.py:565
 #: eventyay/control/forms/organizer_forms/organizer_form.py:105
 #: eventyay/control/views/item.py:364
 #: eventyay/plugins/checkinlists/exporters.py:442
@@ -828,16 +834,19 @@ msgid "City"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:775
-#: eventyay/base/exporters/invoices.py:176 eventyay/base/exporters/invoices.py:184
-#: eventyay/base/exporters/invoices.py:303 eventyay/base/exporters/invoices.py:311
+#: eventyay/base/exporters/invoices.py:176
+#: eventyay/base/exporters/invoices.py:184
+#: eventyay/base/exporters/invoices.py:303
+#: eventyay/base/exporters/invoices.py:311
 #: eventyay/base/exporters/orderlist.py:242
 #: eventyay/base/exporters/orderlist.py:418
 #: eventyay/base/exporters/orderlist.py:531
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/forms/questions.py:507
-#: eventyay/base/models/orders.py:1204 eventyay/base/models/orders.py:2306
-#: eventyay/base/models/orders.py:2307 eventyay/base/models/organizer.py:454
-#: eventyay/base/orderimport.py:312 eventyay/base/orderimport.py:469
-#: eventyay/control/forms/filter.py:539 eventyay/control/forms/filter.py:570
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/forms/questions.py:507 eventyay/base/models/orders.py:1204
+#: eventyay/base/models/orders.py:2306 eventyay/base/models/orders.py:2307
+#: eventyay/base/models/organizer.py:454 eventyay/base/orderimport.py:312
+#: eventyay/base/orderimport.py:469 eventyay/control/forms/filter.py:539
+#: eventyay/control/forms/filter.py:570
 #: eventyay/control/forms/organizer_forms/organizer_form.py:113
 #: eventyay/control/templates/pretixcontrol/order/index.html:827
 #: eventyay/control/views/item.py:374
@@ -863,7 +872,8 @@ msgid "EU VAT ID"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:807
-msgid "e.g. With this document, we sent you the invoice for your ticket order."
+msgid ""
+"e.g. With this document, we sent you the invoice for your ticket order."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:811
@@ -876,8 +886,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:826
 msgid ""
-"e.g. Thank you for your purchase! You can find more information on the event "
-"at ..."
+"e.g. Thank you for your purchase! You can find more information on the event"
+" at ..."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:830
@@ -911,9 +921,9 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:864
 msgid ""
 "If invoices are automatically generated for all orders, they will be "
-"attached to the order confirmation mail. If they are automatically generated "
-"on payment, they will be attached to the payment confirmation mail. If they "
-"are not automatically generated, they will not be attached to emails."
+"attached to the order confirmation mail. If they are automatically generated"
+" on payment, they will be attached to the payment confirmation mail. If they"
+" are not automatically generated, they will not be attached to emails."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:877
@@ -941,8 +951,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:925
 msgid ""
 "Will be used to determine date and time formatting as well as default "
-"country for attendee addresses and phone numbers. For formatting, this takes "
-"less priority than the language and is therefore mostly relevant for "
+"country for attendee addresses and phone numbers. For formatting, this takes"
+" less priority than the language and is therefore mostly relevant for "
 "languages used in different regions globally (like English)."
 msgstr ""
 
@@ -1029,8 +1039,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:1047
 msgid ""
 "If a ticket voucher is sent to a person on the waiting list, it has to be "
-"redeemed within this number of hours until it expires and can be re-assigned "
-"to the next person on the list."
+"redeemed within this number of hours until it expires and can be re-assigned"
+" to the next person on the list."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1059
@@ -1089,9 +1099,9 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1135
 msgid ""
-"Ticket download will be offered after this date. If you use the event series "
-"feature and an order contains tickets for multiple event dates, download of "
-"all tickets will be available if at least one of the event dates allows it."
+"Ticket download will be offered after this date. If you use the event series"
+" feature and an order contains tickets for multiple event dates, download of"
+" all tickets will be available if at least one of the event dates allows it."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1147
@@ -1101,8 +1111,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:1149
 msgid ""
 "By default, tickets are only issued for products selected individually, not "
-"for add-on products. With this option, a separate ticket is issued for every "
-"add-on product as well."
+"for add-on products. With this option, a separate ticket is issued for every"
+" add-on product as well."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1166
@@ -1148,8 +1158,8 @@ msgstr ""
 #: eventyay/control/forms/event.py:1508
 msgid ""
 "If this option is turned on, only registered accounts will be allowed to "
-"purchase tickets. The 'Continue as a Guest' option will not be available for "
-"attendees."
+"purchase tickets. The 'Continue as a Guest' option will not be available for"
+" attendees."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1231
@@ -1187,8 +1197,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1260
 msgid ""
-"If your event series has more than 50 dates in the future, only the month or "
-"week calendar can be used."
+"If your event series has more than 50 dates in the future, only the month or"
+" week calendar can be used."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1271
@@ -1304,8 +1314,8 @@ msgstr ""
 msgid ""
 "This text will be shown in between the explanation of how the refunds work "
 "and the slider which your attendees can use to choose the amount they would "
-"like to receive. You can use it e.g. to explain choosing a lower refund will "
-"help your organization."
+"like to receive. You can use it e.g. to explain choosing a lower refund will"
+" help your organization."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1485
@@ -1314,8 +1324,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1487
 msgid ""
-"By default, attendees can choose an arbitrary amount for you to keep. If you "
-"set this to e.g. 10, they will only be able to choose values in increments "
+"By default, attendees can choose an arbitrary amount for you to keep. If you"
+" set this to e.g. 10, they will only be able to choose values in increments "
 "of 10."
 msgstr ""
 
@@ -1333,7 +1343,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:1514
 #: eventyay/base/configurations/default_setting.py:1528
 msgid ""
-"Customers can choose between a gift card and a refund to their payment method"
+"Customers can choose between a gift card and a refund to their payment "
+"method"
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1517
@@ -1413,8 +1424,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1635
 msgid ""
-"Sender name used in conjunction with the sender address for outgoing emails. "
-"Defaults to your event name."
+"Sender name used in conjunction with the sender address for outgoing emails."
+" Defaults to your event name."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:1653
@@ -1497,8 +1508,7 @@ msgid ""
 "Hello,\n"
 "\n"
 "we successfully received your order for {event} with a total value\n"
-"of {total_with_currency}. Please complete your payment before "
-"{expire_date}.\n"
+"of {total_with_currency}. Please complete your payment before {expire_date}.\n"
 "\n"
 "{payment_info}\n"
 "\n"
@@ -1774,9 +1784,9 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2171
 msgid ""
-"If you provide a logo image, we will by default not show your event name and "
-"date in the page header. By default, we show your logo with a size of up to "
-"1140x120 pixels. You can increase the size with the setting below. We "
+"If you provide a logo image, we will by default not show your event name and"
+" date in the page header. By default, we show your logo with a size of up to"
+" 1140x120 pixels. You can increase the size with the setting below. We "
 "recommend not using small details on the picture as it will be resized on "
 "smaller screens."
 msgstr ""
@@ -1815,8 +1825,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2243
 msgid ""
-"This picture will be used as a preview if you post links to your ticket shop "
-"on social media. Facebook advises to use a picture size of 1200 x 630 "
+"This picture will be used as a preview if you post links to your ticket shop"
+" on social media. Facebook advises to use a picture size of 1200 x 630 "
 "pixels, however some platforms like WhatsApp and Reddit only show a square "
 "preview, so we recommend to make sure it still looks good only the center "
 "square is shown. If you do not fill this, we will use the logo given above."
@@ -1843,8 +1853,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:2291
 #: eventyay/base/configurations/default_setting.py:2409
 msgid ""
-"Not displayed anywhere by default, but if you want to, you can use this e.g. "
-"in ticket templates."
+"Not displayed anywhere by default, but if you want to, you can use this e.g."
+" in ticket templates."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2301
@@ -1873,8 +1883,8 @@ msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2335
 msgid ""
-"This text will be shown next to the input for a voucher code. You can use it "
-"e.g. to explain how to obtain a voucher code."
+"This text will be shown next to the input for a voucher code. You can use it"
+" e.g. to explain how to obtain a voucher code."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2346
@@ -1919,8 +1929,8 @@ msgstr ""
 msgid ""
 "Users that do not have access to all events under this organizer, must "
 "select one of their teams to have access to the created event. This setting "
-"allows users to create an event-specified team on-the-fly, even when they do "
-"not have \"Can change teams and permissions\" permission."
+"allows users to create an event-specified team on-the-fly, even when they do"
+" not have \"Can change teams and permissions\" permission."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2447
@@ -1939,16 +1949,19 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:2449
 #: eventyay/base/configurations/default_setting.py:2459
 #: eventyay/base/configurations/default_setting.py:2790
-#: eventyay/base/exporters/invoices.py:172 eventyay/base/exporters/invoices.py:180
-#: eventyay/base/exporters/invoices.py:299 eventyay/base/exporters/invoices.py:307
+#: eventyay/base/exporters/invoices.py:172
+#: eventyay/base/exporters/invoices.py:180
+#: eventyay/base/exporters/invoices.py:299
+#: eventyay/base/exporters/invoices.py:307
 #: eventyay/base/exporters/orderlist.py:235
-#: eventyay/base/exporters/waitinglist.py:85 eventyay/base/forms/questions.py:1009
-#: eventyay/base/models/devices.py:45 eventyay/base/models/devices.py:105
-#: eventyay/base/models/event.py:1398 eventyay/base/models/event.py:1692
-#: eventyay/base/models/items.py:1373 eventyay/base/models/items.py:1531
-#: eventyay/base/models/organizer.py:37 eventyay/base/models/seating.py:40
-#: eventyay/base/models/tax.py:107 eventyay/base/models/waitinglist.py:45
-#: eventyay/control/forms/filter.py:521 eventyay/control/forms/item.py:332
+#: eventyay/base/exporters/waitinglist.py:85
+#: eventyay/base/forms/questions.py:1009 eventyay/base/models/devices.py:45
+#: eventyay/base/models/devices.py:105 eventyay/base/models/event.py:1398
+#: eventyay/base/models/event.py:1692 eventyay/base/models/items.py:1373
+#: eventyay/base/models/items.py:1531 eventyay/base/models/organizer.py:37
+#: eventyay/base/models/seating.py:40 eventyay/base/models/tax.py:107
+#: eventyay/base/models/waitinglist.py:45 eventyay/control/forms/filter.py:521
+#: eventyay/control/forms/item.py:332
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:86
 #: eventyay/control/templates/pretixcontrol/event/tax_index.html:33
 #: eventyay/control/templates/pretixcontrol/oauth/app_list.html:12
@@ -2015,8 +2028,8 @@ msgstr ""
 #: eventyay/base/configurations/default_setting.py:2509
 msgid ""
 "If you set a number here, gift cards will by default expire at the end of "
-"the year after this many years. If you keep it empty, gift cards do not have "
-"an explicit expiry date."
+"the year after this many years. If you keep it empty, gift cards do not have"
+" an explicit expiry date."
 msgstr ""
 
 #: eventyay/base/configurations/default_setting.py:2519
@@ -2191,8 +2204,8 @@ msgid "MA"
 msgstr ""
 
 #: eventyay/base/email.py:228 eventyay/control/views/main.py:260
-#: eventyay/eventyay_common/views/event.py:248 eventyay/plugins/badges/apps.py:59
-#: eventyay/plugins/badges/models.py:30
+#: eventyay/eventyay_common/views/event.py:248
+#: eventyay/plugins/badges/apps.py:59 eventyay/plugins/badges/models.py:30
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:42
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:62
 #: eventyay/plugins/ticketoutputpdf/models.py:27
@@ -2205,8 +2218,9 @@ msgstr ""
 msgid "Simple with logo"
 msgstr ""
 
-#: eventyay/base/email.py:516 eventyay/base/email.py:582 eventyay/base/email.py:598
-#: eventyay/base/email.py:603 eventyay/base/pdf.py:121 eventyay/base/pdf.py:269
+#: eventyay/base/email.py:516 eventyay/base/email.py:582
+#: eventyay/base/email.py:598 eventyay/base/email.py:603
+#: eventyay/base/pdf.py:121 eventyay/base/pdf.py:269
 #: eventyay/base/services/invoices.py:365 eventyay/control/views/event.py:710
 msgid "John Doe"
 msgstr ""
@@ -2271,8 +2285,10 @@ msgstr "Maswali"
 msgid "Event ticket {event}-{code}"
 msgstr ""
 
-#: eventyay/base/exporters/dekodi.py:202 eventyay/base/exporters/invoices.py:36
-#: eventyay/base/exporters/orderlist.py:73 eventyay/base/exporters/orderlist.py:510
+#: eventyay/base/exporters/dekodi.py:202
+#: eventyay/base/exporters/invoices.py:36
+#: eventyay/base/exporters/orderlist.py:73
+#: eventyay/base/exporters/orderlist.py:510
 #: eventyay/base/exporters/orderlist.py:791
 #: eventyay/base/exporters/waitinglist.py:93
 #: eventyay/control/forms/subevents.py:386
@@ -2292,14 +2308,17 @@ msgstr ""
 msgid "Start date"
 msgstr ""
 
-#: eventyay/base/exporters/dekodi.py:205 eventyay/base/exporters/invoices.py:39
+#: eventyay/base/exporters/dekodi.py:205
+#: eventyay/base/exporters/invoices.py:39
 msgid ""
 "Only include invoices issued on or after this date. Note that the invoice "
 "date does not always correspond to the order or payment date."
 msgstr ""
 
-#: eventyay/base/exporters/dekodi.py:210 eventyay/base/exporters/invoices.py:44
-#: eventyay/base/exporters/orderlist.py:80 eventyay/base/exporters/orderlist.py:511
+#: eventyay/base/exporters/dekodi.py:210
+#: eventyay/base/exporters/invoices.py:44
+#: eventyay/base/exporters/orderlist.py:80
+#: eventyay/base/exporters/orderlist.py:511
 #: eventyay/base/exporters/orderlist.py:792
 #: eventyay/base/exporters/waitinglist.py:94
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:78
@@ -2315,7 +2334,8 @@ msgstr ""
 msgid "End date"
 msgstr ""
 
-#: eventyay/base/exporters/dekodi.py:213 eventyay/base/exporters/invoices.py:47
+#: eventyay/base/exporters/dekodi.py:213
+#: eventyay/base/exporters/invoices.py:47
 msgid ""
 "Only include invoices issued on or before this date. Note that the invoice "
 "date does not always correspond to the order or payment date."
@@ -2333,16 +2353,18 @@ msgstr ""
 msgid "Payment provider"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:54 eventyay/base/exporters/invoices.py:56
-#: eventyay/control/forms/filter.py:141 eventyay/control/forms/filter.py:1543
+#: eventyay/base/exporters/invoices.py:54
+#: eventyay/base/exporters/invoices.py:56 eventyay/control/forms/filter.py:141
+#: eventyay/control/forms/filter.py:1543
 msgid "All payment providers"
 msgstr ""
 
 #: eventyay/base/exporters/invoices.py:61
 msgid ""
-"Only include invoices for orders that have at least one payment attempt with "
-"this payment provider. Note that this might include some invoices of orders "
-"which in the end have been fully or partially paid with a different provider."
+"Only include invoices for orders that have at least one payment attempt with"
+" this payment provider. Note that this might include some invoices of orders"
+" which in the end have been fully or partially paid with a different "
+"provider."
 msgstr ""
 
 #: eventyay/base/exporters/invoices.py:97
@@ -2365,14 +2387,17 @@ msgstr ""
 msgid "Invoice lines"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:165 eventyay/base/exporters/invoices.py:284
+#: eventyay/base/exporters/invoices.py:165
+#: eventyay/base/exporters/invoices.py:284
 msgid "Invoice number"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:166 eventyay/base/exporters/invoices.py:294
+#: eventyay/base/exporters/invoices.py:166
+#: eventyay/base/exporters/invoices.py:294
 #: eventyay/base/exporters/orderlist.py:850
-#: eventyay/base/exporters/waitinglist.py:84 eventyay/base/models/items.py:1025
-#: eventyay/base/models/orders.py:195 eventyay/base/models/orders.py:2252
+#: eventyay/base/exporters/waitinglist.py:84
+#: eventyay/base/models/items.py:1025 eventyay/base/models/orders.py:195
+#: eventyay/base/models/orders.py:2252
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:63
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:17
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:11
@@ -2381,7 +2406,8 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:167 eventyay/base/exporters/invoices.py:295
+#: eventyay/base/exporters/invoices.py:167
+#: eventyay/base/exporters/invoices.py:295
 #: eventyay/base/exporters/orderlist.py:234
 #: eventyay/base/exporters/orderlist.py:398
 #: eventyay/base/exporters/orderlist.py:500 eventyay/base/models/orders.py:165
@@ -2405,7 +2431,8 @@ msgstr ""
 msgid "Order code"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:168 eventyay/base/exporters/invoices.py:296
+#: eventyay/base/exporters/invoices.py:168
+#: eventyay/base/exporters/invoices.py:296
 #: eventyay/base/models/waitinglist.py:52 eventyay/base/orderimport.py:126
 #: eventyay/control/forms/filter.py:459
 #: eventyay/control/templates/pretixcontrol/admin/users/index.html:37
@@ -2413,38 +2440,50 @@ msgstr ""
 msgid "E-mail address"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:169 eventyay/base/exporters/invoices.py:297
+#: eventyay/base/exporters/invoices.py:169
+#: eventyay/base/exporters/invoices.py:297
 msgid "Invoice type"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:170 eventyay/base/exporters/invoices.py:298
+#: eventyay/base/exporters/invoices.py:170
+#: eventyay/base/exporters/invoices.py:298
 msgid "Cancellation of"
 msgstr ""
 
 #: eventyay/base/exporters/invoices.py:171
 #: eventyay/base/exporters/waitinglist.py:95 eventyay/base/models/auth.py:101
-#: eventyay/control/forms/event.py:1370 eventyay/control/views/waitinglist.py:215
+#: eventyay/control/forms/event.py:1370
+#: eventyay/control/views/waitinglist.py:215
 msgid "Language"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:172 eventyay/base/exporters/invoices.py:173
-#: eventyay/base/exporters/invoices.py:174 eventyay/base/exporters/invoices.py:175
-#: eventyay/base/exporters/invoices.py:176 eventyay/base/exporters/invoices.py:177
-#: eventyay/base/exporters/invoices.py:178 eventyay/base/exporters/invoices.py:299
-#: eventyay/base/exporters/invoices.py:300 eventyay/base/exporters/invoices.py:301
-#: eventyay/base/exporters/invoices.py:302 eventyay/base/exporters/invoices.py:303
-#: eventyay/base/exporters/invoices.py:304 eventyay/base/exporters/invoices.py:305
+#: eventyay/base/exporters/invoices.py:172
+#: eventyay/base/exporters/invoices.py:173
+#: eventyay/base/exporters/invoices.py:174
+#: eventyay/base/exporters/invoices.py:175
+#: eventyay/base/exporters/invoices.py:176
+#: eventyay/base/exporters/invoices.py:177
+#: eventyay/base/exporters/invoices.py:178
+#: eventyay/base/exporters/invoices.py:299
+#: eventyay/base/exporters/invoices.py:300
+#: eventyay/base/exporters/invoices.py:301
+#: eventyay/base/exporters/invoices.py:302
+#: eventyay/base/exporters/invoices.py:303
+#: eventyay/base/exporters/invoices.py:304
+#: eventyay/base/exporters/invoices.py:305
 msgid "Invoice sender:"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:173 eventyay/base/exporters/invoices.py:300
+#: eventyay/base/exporters/invoices.py:173
+#: eventyay/base/exporters/invoices.py:300
 #: eventyay/base/exporters/orderlist.py:242
 #: eventyay/base/exporters/orderlist.py:418
 #: eventyay/base/exporters/orderlist.py:528
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/forms/questions.py:467
-#: eventyay/base/models/orders.py:1201 eventyay/base/models/orders.py:2303
-#: eventyay/base/orderimport.py:274 eventyay/base/orderimport.py:431
-#: eventyay/control/forms/filter.py:525 eventyay/control/forms/filter.py:556
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/forms/questions.py:467 eventyay/base/models/orders.py:1201
+#: eventyay/base/models/orders.py:2303 eventyay/base/orderimport.py:274
+#: eventyay/base/orderimport.py:431 eventyay/control/forms/filter.py:525
+#: eventyay/control/forms/filter.py:556
 #: eventyay/control/templates/pretixcontrol/order/index.html:823
 #: eventyay/plugins/checkinlists/exporters.py:440
 #: eventyay/plugins/reports/exporters.py:717
@@ -2453,17 +2492,20 @@ msgstr ""
 msgid "Address"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:177 eventyay/base/exporters/invoices.py:304
+#: eventyay/base/exporters/invoices.py:177
+#: eventyay/base/exporters/invoices.py:304
 #: eventyay/base/models/organizer.py:464
 msgid "Tax ID"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:178 eventyay/base/exporters/invoices.py:186
-#: eventyay/base/exporters/invoices.py:305 eventyay/base/exporters/invoices.py:313
+#: eventyay/base/exporters/invoices.py:178
+#: eventyay/base/exporters/invoices.py:186
+#: eventyay/base/exporters/invoices.py:305
+#: eventyay/base/exporters/invoices.py:313
 #: eventyay/base/exporters/orderlist.py:243
 #: eventyay/base/exporters/orderlist.py:418
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/models/orders.py:2310
-#: eventyay/base/orderimport.py:356
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/models/orders.py:2310 eventyay/base/orderimport.py:356
 #: eventyay/control/templates/pretixcontrol/order/index.html:834
 #: eventyay/plugins/reports/exporters.py:721
 #: eventyay/plugins/reports/exporters.py:763
@@ -2472,26 +2514,38 @@ msgstr ""
 msgid "VAT ID"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:179 eventyay/base/exporters/invoices.py:180
-#: eventyay/base/exporters/invoices.py:181 eventyay/base/exporters/invoices.py:182
-#: eventyay/base/exporters/invoices.py:183 eventyay/base/exporters/invoices.py:184
-#: eventyay/base/exporters/invoices.py:185 eventyay/base/exporters/invoices.py:186
-#: eventyay/base/exporters/invoices.py:187 eventyay/base/exporters/invoices.py:188
-#: eventyay/base/exporters/invoices.py:306 eventyay/base/exporters/invoices.py:307
-#: eventyay/base/exporters/invoices.py:308 eventyay/base/exporters/invoices.py:309
-#: eventyay/base/exporters/invoices.py:310 eventyay/base/exporters/invoices.py:311
-#: eventyay/base/exporters/invoices.py:312 eventyay/base/exporters/invoices.py:313
-#: eventyay/base/exporters/invoices.py:314 eventyay/base/exporters/invoices.py:315
+#: eventyay/base/exporters/invoices.py:179
+#: eventyay/base/exporters/invoices.py:180
+#: eventyay/base/exporters/invoices.py:181
+#: eventyay/base/exporters/invoices.py:182
+#: eventyay/base/exporters/invoices.py:183
+#: eventyay/base/exporters/invoices.py:184
+#: eventyay/base/exporters/invoices.py:185
+#: eventyay/base/exporters/invoices.py:186
+#: eventyay/base/exporters/invoices.py:187
+#: eventyay/base/exporters/invoices.py:188
+#: eventyay/base/exporters/invoices.py:306
+#: eventyay/base/exporters/invoices.py:307
+#: eventyay/base/exporters/invoices.py:308
+#: eventyay/base/exporters/invoices.py:309
+#: eventyay/base/exporters/invoices.py:310
+#: eventyay/base/exporters/invoices.py:311
+#: eventyay/base/exporters/invoices.py:312
+#: eventyay/base/exporters/invoices.py:313
+#: eventyay/base/exporters/invoices.py:314
+#: eventyay/base/exporters/invoices.py:315
 msgid "Invoice recipient:"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:179 eventyay/base/exporters/invoices.py:306
+#: eventyay/base/exporters/invoices.py:179
+#: eventyay/base/exporters/invoices.py:306
 #: eventyay/base/exporters/orderlist.py:235
 #: eventyay/base/exporters/orderlist.py:410
 #: eventyay/base/exporters/orderlist.py:527
-#: eventyay/base/exporters/orderlist.py:559 eventyay/base/forms/questions.py:458
-#: eventyay/base/orderimport.py:244 eventyay/base/orderimport.py:409
-#: eventyay/control/forms/filter.py:517 eventyay/control/forms/filter.py:552
+#: eventyay/base/exporters/orderlist.py:559
+#: eventyay/base/forms/questions.py:458 eventyay/base/orderimport.py:244
+#: eventyay/base/orderimport.py:409 eventyay/control/forms/filter.py:517
+#: eventyay/control/forms/filter.py:552
 #: eventyay/control/templates/pretixcontrol/order/index.html:819
 #: eventyay/control/views/item.py:332
 #: eventyay/plugins/checkinlists/exporters.py:428
@@ -2502,17 +2556,20 @@ msgstr ""
 msgid "Company"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:181 eventyay/base/exporters/invoices.py:308
+#: eventyay/base/exporters/invoices.py:181
+#: eventyay/base/exporters/invoices.py:308
 msgid "Street address"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:185 eventyay/base/exporters/invoices.py:312
+#: eventyay/base/exporters/invoices.py:185
+#: eventyay/base/exporters/invoices.py:312
 #: eventyay/base/exporters/orderlist.py:242
 #: eventyay/base/exporters/orderlist.py:418
 #: eventyay/base/exporters/orderlist.py:532
-#: eventyay/base/exporters/orderlist.py:566 eventyay/base/forms/questions.py:543
-#: eventyay/base/forms/questions.py:971 eventyay/base/models/orders.py:1205
-#: eventyay/base/models/orders.py:2309 eventyay/base/orderimport.py:331
+#: eventyay/base/exporters/orderlist.py:566
+#: eventyay/base/forms/questions.py:543 eventyay/base/forms/questions.py:971
+#: eventyay/base/models/orders.py:1205 eventyay/base/models/orders.py:2309
+#: eventyay/base/orderimport.py:331
 #: eventyay/control/templates/pretixcontrol/order/index.html:830
 #: eventyay/plugins/checkinlists/exporters.py:444
 #: eventyay/plugins/reports/exporters.py:720
@@ -2522,20 +2579,22 @@ msgctxt "address"
 msgid "State"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:187 eventyay/base/exporters/invoices.py:314
-#: eventyay/base/models/orders.py:2320
+#: eventyay/base/exporters/invoices.py:187
+#: eventyay/base/exporters/invoices.py:314 eventyay/base/models/orders.py:2320
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:114
 msgid "Beneficiary"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:188 eventyay/base/exporters/invoices.py:315
-#: eventyay/base/models/orders.py:2315 eventyay/base/orderimport.py:367
+#: eventyay/base/exporters/invoices.py:188
+#: eventyay/base/exporters/invoices.py:315 eventyay/base/models/orders.py:2315
+#: eventyay/base/orderimport.py:367
 #: eventyay/control/templates/pretixcontrol/order/index.html:854
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:121
 msgid "Internal reference"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:189 eventyay/control/forms/event.py:1323
+#: eventyay/base/exporters/invoices.py:189
+#: eventyay/control/forms/event.py:1323
 msgid "Reverse charge"
 msgstr ""
 
@@ -2559,7 +2618,8 @@ msgstr ""
 msgid "Payment matching IDs"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:195 eventyay/base/exporters/invoices.py:316
+#: eventyay/base/exporters/invoices.py:195
+#: eventyay/base/exporters/invoices.py:316
 #: eventyay/base/exporters/orderlist.py:258
 #: eventyay/base/exporters/orderlist.py:421
 #: eventyay/base/exporters/orderlist.py:570
@@ -2568,23 +2628,26 @@ msgstr ""
 msgid "Payment providers"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:251 eventyay/base/exporters/invoices.py:353
+#: eventyay/base/exporters/invoices.py:251
+#: eventyay/base/exporters/invoices.py:353
 msgid "Cancellation"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:251 eventyay/base/exporters/invoices.py:353
+#: eventyay/base/exporters/invoices.py:251
+#: eventyay/base/exporters/invoices.py:353
 #: eventyay/control/templates/pretixcontrol/order/index.html:223
 #: eventyay/presale/templates/pretixpresale/event/order.html:238
 msgid "Invoice"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:271 eventyay/base/exporters/orderlist.py:359
+#: eventyay/base/exporters/invoices.py:271
+#: eventyay/base/exporters/orderlist.py:359
 #: eventyay/base/exporters/orderlist.py:659
-#: eventyay/base/exporters/orderlist.py:967 eventyay/base/models/orders.py:1069
-#: eventyay/control/forms/filter.py:106 eventyay/control/forms/filter.py:426
-#: eventyay/control/forms/item.py:460 eventyay/control/forms/subevents.py:97
-#: eventyay/control/views/item.py:569 eventyay/control/views/vouchers.py:92
-#: eventyay/control/views/vouchers.py:93
+#: eventyay/base/exporters/orderlist.py:967
+#: eventyay/base/models/orders.py:1069 eventyay/control/forms/filter.py:106
+#: eventyay/control/forms/filter.py:426 eventyay/control/forms/item.py:460
+#: eventyay/control/forms/subevents.py:97 eventyay/control/views/item.py:569
+#: eventyay/control/views/vouchers.py:92 eventyay/control/views/vouchers.py:93
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:147
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:169
 #: eventyay/plugins/checkinlists/exporters.py:492
@@ -2596,13 +2659,14 @@ msgstr ""
 msgid "Yes"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:271 eventyay/base/exporters/orderlist.py:359
+#: eventyay/base/exporters/invoices.py:271
+#: eventyay/base/exporters/orderlist.py:359
 #: eventyay/base/exporters/orderlist.py:659
-#: eventyay/base/exporters/orderlist.py:967 eventyay/base/models/orders.py:1071
-#: eventyay/control/forms/filter.py:106 eventyay/control/forms/filter.py:427
-#: eventyay/control/forms/item.py:461 eventyay/control/forms/subevents.py:98
-#: eventyay/control/views/item.py:569 eventyay/control/views/vouchers.py:92
-#: eventyay/control/views/vouchers.py:93
+#: eventyay/base/exporters/orderlist.py:967
+#: eventyay/base/models/orders.py:1071 eventyay/control/forms/filter.py:106
+#: eventyay/control/forms/filter.py:427 eventyay/control/forms/item.py:461
+#: eventyay/control/forms/subevents.py:98 eventyay/control/views/item.py:569
+#: eventyay/control/views/vouchers.py:92 eventyay/control/views/vouchers.py:93
 #: eventyay/plugins/checkinlists/exporters.py:492
 #: eventyay/plugins/checkinlists/exporters.py:495
 #: eventyay/plugins/checkinlists/exporters.py:532
@@ -2616,16 +2680,17 @@ msgstr "Hapana"
 msgid "Line number"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:286 eventyay/base/exporters/orderlist.py:405
-#: eventyay/base/models/items.py:280 eventyay/base/models/items.py:645
-#: eventyay/base/models/items.py:652 eventyay/base/models/items.py:1044
-#: eventyay/control/forms/item.py:158
+#: eventyay/base/exporters/invoices.py:286
+#: eventyay/base/exporters/orderlist.py:405 eventyay/base/models/items.py:280
+#: eventyay/base/models/items.py:645 eventyay/base/models/items.py:652
+#: eventyay/base/models/items.py:1044 eventyay/control/forms/item.py:158
 #: eventyay/control/templates/pretixcontrol/items/description_edit.html:10
 #: eventyay/control/templates/pretixcontrol/items/description_edit.html:20
 msgid "Description"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:287 eventyay/control/forms/orders.py:262
+#: eventyay/base/exporters/invoices.py:287
+#: eventyay/control/forms/orders.py:262
 msgid "Gross price"
 msgstr ""
 
@@ -2633,16 +2698,18 @@ msgstr ""
 msgid "Net price"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:289 eventyay/base/exporters/orderlist.py:409
-#: eventyay/base/exporters/orderlist.py:518 eventyay/base/models/orders.py:1920
-#: eventyay/base/models/orders.py:2020
+#: eventyay/base/exporters/invoices.py:289
+#: eventyay/base/exporters/orderlist.py:409
+#: eventyay/base/exporters/orderlist.py:518
+#: eventyay/base/models/orders.py:1920 eventyay/base/models/orders.py:2020
 msgid "Tax value"
 msgstr ""
 
-#: eventyay/base/exporters/invoices.py:290 eventyay/base/exporters/orderlist.py:407
-#: eventyay/base/exporters/orderlist.py:516 eventyay/base/models/orders.py:1911
-#: eventyay/base/models/orders.py:2011 eventyay/base/models/tax.py:114
-#: eventyay/plugins/reports/exporters.py:670
+#: eventyay/base/exporters/invoices.py:290
+#: eventyay/base/exporters/orderlist.py:407
+#: eventyay/base/exporters/orderlist.py:516
+#: eventyay/base/models/orders.py:1911 eventyay/base/models/orders.py:2011
+#: eventyay/base/models/tax.py:114 eventyay/plugins/reports/exporters.py:670
 #: eventyay/plugins/reports/exporters.py:715
 msgid "Tax rate"
 msgstr ""
@@ -2659,7 +2726,8 @@ msgstr ""
 msgid "Email addresses (text file)"
 msgstr ""
 
-#: eventyay/base/exporters/mail.py:40 eventyay/plugins/reports/exporters.py:348
+#: eventyay/base/exporters/mail.py:40
+#: eventyay/plugins/reports/exporters.py:348
 #: eventyay/plugins/reports/exporters.py:528
 msgid "Filter by status"
 msgstr ""
@@ -2709,7 +2777,8 @@ msgstr ""
 msgid "Start event date"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:90 eventyay/base/exporters/orderlist.py:98
+#: eventyay/base/exporters/orderlist.py:90
+#: eventyay/base/exporters/orderlist.py:98
 msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
@@ -2724,7 +2793,8 @@ msgstr ""
 #: eventyay/base/exporters/orderlist.py:499
 #: eventyay/base/exporters/orderlist.py:744
 #: eventyay/base/exporters/orderlist.py:850
-#: eventyay/base/exporters/waitinglist.py:90 eventyay/control/forms/event.py:1420
+#: eventyay/base/exporters/waitinglist.py:90
+#: eventyay/control/forms/event.py:1420
 #: eventyay/control/forms/organizer_forms/organizer_delete_form.py:11
 msgid "Event slug"
 msgstr ""
@@ -2743,10 +2813,10 @@ msgstr ""
 #: eventyay/base/exporters/orderlist.py:744
 #: eventyay/base/exporters/orderlist.py:899
 #: eventyay/base/exporters/waitinglist.py:97
-#: eventyay/base/exporters/waitinglist.py:145 eventyay/base/models/orders.py:171
-#: eventyay/control/forms/filter.py:773 eventyay/control/forms/filter.py:1000
-#: eventyay/control/forms/filter.py:1269 eventyay/control/forms/filter.py:1350
-#: eventyay/control/forms/filter.py:1638
+#: eventyay/base/exporters/waitinglist.py:145
+#: eventyay/base/models/orders.py:171 eventyay/control/forms/filter.py:773
+#: eventyay/control/forms/filter.py:1000 eventyay/control/forms/filter.py:1269
+#: eventyay/control/forms/filter.py:1350 eventyay/control/forms/filter.py:1638
 #: eventyay/control/templates/pretixcontrol/admin/events/index.html:86
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:39
 #: eventyay/control/templates/pretixcontrol/checkin/index.html:89
@@ -2779,15 +2849,16 @@ msgstr ""
 #: eventyay/base/exporters/orderlist.py:234
 #: eventyay/base/exporters/orderlist.py:401
 #: eventyay/base/exporters/orderlist.py:504
-#: eventyay/base/exporters/waitinglist.py:87 eventyay/base/models/items.py:1029
-#: eventyay/base/models/orders.py:187 eventyay/base/models/waitinglist.py:56
-#: eventyay/base/pdf.py:258
+#: eventyay/base/exporters/waitinglist.py:87
+#: eventyay/base/models/items.py:1029 eventyay/base/models/orders.py:187
+#: eventyay/base/models/waitinglist.py:56 eventyay/base/pdf.py:258
 #: eventyay/control/templates/pretixcontrol/order/index.html:210
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:147
 #: eventyay/control/views/waitinglist.py:214
 #: eventyay/plugins/checkinlists/exporters.py:418
 #: eventyay/presale/checkoutflowstep/confirm_step.py:70
-#: eventyay/presale/forms/checkout.py:53 eventyay/presale/forms/waitinglist.py:48
+#: eventyay/presale/forms/checkout.py:53
+#: eventyay/presale/forms/waitinglist.py:48
 #: eventyay/presale/templates/pretixpresale/event/order.html:301
 msgid "Phone number"
 msgstr ""
@@ -2820,7 +2891,8 @@ msgstr ""
 msgid "Date of last payment"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:243 eventyay/base/services/stats.py:195
+#: eventyay/base/exporters/orderlist.py:243
+#: eventyay/base/services/stats.py:195
 msgid "Fees"
 msgstr ""
 
@@ -2890,8 +2962,9 @@ msgid "Fee type"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:406
-#: eventyay/base/exporters/orderlist.py:515 eventyay/base/models/orders.py:1169
-#: eventyay/base/orderimport.py:510 eventyay/base/pdf.py:106
+#: eventyay/base/exporters/orderlist.py:515
+#: eventyay/base/models/orders.py:1169 eventyay/base/orderimport.py:510
+#: eventyay/base/pdf.py:106
 #: eventyay/control/templates/pretixcontrol/item/index.html:88
 #: eventyay/control/templates/pretixcontrol/order/change.html:157
 #: eventyay/control/templates/pretixcontrol/order/change.html:307
@@ -2955,7 +3028,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:68
 #: eventyay/control/templates/pretixcontrol/vouchers/index.html:127
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:149
-#: eventyay/control/views/vouchers.py:72 eventyay/control/views/waitinglist.py:214
+#: eventyay/control/views/vouchers.py:72
+#: eventyay/control/views/waitinglist.py:214
 #: eventyay/plugins/checkinlists/exporters.py:297
 #: eventyay/plugins/checkinlists/exporters.py:406
 #: eventyay/plugins/checkinlists/exporters.py:578
@@ -2967,14 +3041,16 @@ msgid "Product"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:514
-#: eventyay/base/exporters/waitinglist.py:89 eventyay/base/models/orders.py:1161
+#: eventyay/base/exporters/waitinglist.py:89
+#: eventyay/base/models/orders.py:1161
 msgid "Variation"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:519
-#: eventyay/base/exporters/orderlist.py:524 eventyay/base/forms/questions.py:437
-#: eventyay/base/models/orders.py:1173 eventyay/base/orderimport.py:381
-#: eventyay/base/pdf.py:120 eventyay/control/forms/filter.py:544
+#: eventyay/base/exporters/orderlist.py:524
+#: eventyay/base/forms/questions.py:437 eventyay/base/models/orders.py:1173
+#: eventyay/base/orderimport.py:381 eventyay/base/pdf.py:120
+#: eventyay/control/forms/filter.py:544
 #: eventyay/control/templates/pretixcontrol/order/index.html:394
 #: eventyay/control/views/item.py:308 eventyay/plugins/badges/exporters.py:259
 #: eventyay/plugins/checkinlists/exporters.py:75
@@ -2986,8 +3062,9 @@ msgstr ""
 msgid "Attendee name"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:526 eventyay/base/forms/questions.py:448
-#: eventyay/base/models/orders.py:1181 eventyay/base/pdf.py:167
+#: eventyay/base/exporters/orderlist.py:526
+#: eventyay/base/forms/questions.py:448 eventyay/base/models/orders.py:1181
+#: eventyay/base/pdf.py:167
 #: eventyay/control/templates/pretixcontrol/order/index.html:399
 #: eventyay/control/views/item.py:320
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:60
@@ -2995,7 +3072,8 @@ msgstr ""
 msgid "Attendee email"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:533 eventyay/base/models/vouchers.py:204
+#: eventyay/base/exporters/orderlist.py:533
+#: eventyay/base/models/vouchers.py:204
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/detail.html:4
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/detail.html:6
 #: eventyay/control/templates/pretixcontrol/vouchers/bulk.html:5
@@ -3082,8 +3160,8 @@ msgid "Status code"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:745
-#: eventyay/base/exporters/orderlist.py:850 eventyay/base/models/orders.py:1378
-#: eventyay/base/models/orders.py:1749
+#: eventyay/base/exporters/orderlist.py:850
+#: eventyay/base/models/orders.py:1378 eventyay/base/models/orders.py:1749
 #: eventyay/control/templates/pretixcontrol/order/index.html:618
 #: eventyay/control/templates/pretixcontrol/order/index.html:714
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:74
@@ -3170,7 +3248,8 @@ msgid "Gift card redemptions"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:850
-#: eventyay/base/exporters/orderlist.py:941 eventyay/base/models/giftcards.py:54
+#: eventyay/base/exporters/orderlist.py:941
+#: eventyay/base/models/giftcards.py:54
 #: eventyay/control/templates/pretixcontrol/giftcards/checkout.html:10
 #: eventyay/control/templates/pretixcontrol/giftcards/payment.html:4
 #: eventyay/control/templates/pretixcontrol/order/index.html:386
@@ -3195,18 +3274,20 @@ msgid "Show value at"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:889
-#: eventyay/base/exporters/orderlist.py:892 eventyay/control/forms/filter.py:173
-#: eventyay/control/forms/filter.py:928 eventyay/control/forms/filter.py:931
+#: eventyay/base/exporters/orderlist.py:892
+#: eventyay/control/forms/filter.py:173 eventyay/control/forms/filter.py:928
+#: eventyay/control/forms/filter.py:931
 #: eventyay/control/templates/pretixcontrol/event/live.html:82
 msgid "Test mode"
 msgstr ""
 
 #: eventyay/base/exporters/orderlist.py:891
-#: eventyay/base/exporters/orderlist.py:901 eventyay/control/forms/filter.py:425
-#: eventyay/control/forms/filter.py:775 eventyay/control/forms/filter.py:930
-#: eventyay/control/forms/filter.py:939 eventyay/control/forms/filter.py:1271
-#: eventyay/control/forms/filter.py:1280 eventyay/control/forms/filter.py:1352
-#: eventyay/control/forms/filter.py:1365 eventyay/control/forms/filter.py:1640
+#: eventyay/base/exporters/orderlist.py:901
+#: eventyay/control/forms/filter.py:425 eventyay/control/forms/filter.py:775
+#: eventyay/control/forms/filter.py:930 eventyay/control/forms/filter.py:939
+#: eventyay/control/forms/filter.py:1271 eventyay/control/forms/filter.py:1280
+#: eventyay/control/forms/filter.py:1352 eventyay/control/forms/filter.py:1365
+#: eventyay/control/forms/filter.py:1640
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:113
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:125
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:75
@@ -3215,26 +3296,30 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:893 eventyay/control/forms/filter.py:932
+#: eventyay/base/exporters/orderlist.py:893
+#: eventyay/control/forms/filter.py:932
 msgid "Live"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:902 eventyay/control/forms/filter.py:937
-#: eventyay/control/forms/filter.py:940
+#: eventyay/base/exporters/orderlist.py:902
+#: eventyay/control/forms/filter.py:937 eventyay/control/forms/filter.py:940
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:351
 msgid "Empty"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:903 eventyay/control/forms/filter.py:941
+#: eventyay/base/exporters/orderlist.py:903
+#: eventyay/control/forms/filter.py:941
 msgid "Valid and with value"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:904 eventyay/control/forms/filter.py:942
+#: eventyay/base/exporters/orderlist.py:904
+#: eventyay/control/forms/filter.py:942
 msgid "Expired and with value"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:905 eventyay/control/forms/filter.py:161
-#: eventyay/control/forms/filter.py:943 eventyay/control/forms/filter.py:1357
+#: eventyay/base/exporters/orderlist.py:905
+#: eventyay/control/forms/filter.py:161 eventyay/control/forms/filter.py:943
+#: eventyay/control/forms/filter.py:1357
 #: eventyay/control/templates/pretixcontrol/items/question.html:25
 #: eventyay/control/templates/pretixcontrol/orders/fragment_order_status.html:31
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:70
@@ -3244,17 +3329,20 @@ msgstr ""
 msgid "Expired"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:942 eventyay/base/models/giftcards.py:63
+#: eventyay/base/exporters/orderlist.py:942
+#: eventyay/base/models/giftcards.py:63
 msgid "Test mode card"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:944 eventyay/base/models/giftcards.py:67
+#: eventyay/base/exporters/orderlist.py:944
+#: eventyay/base/models/giftcards.py:67
 #: eventyay/control/templates/pretixcontrol/order/index.html:182
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:57
 msgid "Expiry date"
 msgstr ""
 
-#: eventyay/base/exporters/orderlist.py:945 eventyay/control/forms/orders.py:661
+#: eventyay/base/exporters/orderlist.py:945
+#: eventyay/control/forms/orders.py:661
 msgid "Special terms and conditions"
 msgstr ""
 
@@ -3348,12 +3436,13 @@ msgstr ""
 msgid "Priority"
 msgstr ""
 
-#: eventyay/base/exporters/waitinglist.py:98 eventyay/base/models/vouchers.py:99
-#: eventyay/base/models/vouchers.py:505
+#: eventyay/base/exporters/waitinglist.py:98
+#: eventyay/base/models/vouchers.py:99 eventyay/base/models/vouchers.py:505
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/index.html:32
 #: eventyay/control/templates/pretixcontrol/vouchers/index.html:26
 #: eventyay/control/templates/pretixcontrol/vouchers/index.html:107
-#: eventyay/control/views/vouchers.py:72 eventyay/control/views/waitinglist.py:214
+#: eventyay/control/views/vouchers.py:72
+#: eventyay/control/views/waitinglist.py:214
 #: eventyay/plugins/checkinlists/exporters.py:429
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:313
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:315
@@ -3472,8 +3561,8 @@ msgstr ""
 
 #: eventyay/base/forms/user.py:19
 msgid ""
-"Please enter your current password if you want to change your e-mail address "
-"or password."
+"Please enter your current password if you want to change your e-mail address"
+" or password."
 msgstr ""
 
 #: eventyay/base/forms/user.py:21
@@ -3498,8 +3587,8 @@ msgstr ""
 
 #: eventyay/base/forms/user.py:41 eventyay/control/forms/users.py:38
 msgid ""
-"Only used for views that are not bound to an event. For all event views, the "
-"event timezone is used instead."
+"Only used for views that are not bound to an event. For all event views, the"
+" event timezone is used instead."
 msgstr ""
 
 #: eventyay/base/forms/user.py:139
@@ -3520,8 +3609,8 @@ msgstr ""
 
 #: eventyay/base/forms/validators.py:28
 msgid ""
-"Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
-"\"."
+"Invalid placeholder syntax: You used a different number of \"{\" than of "
+"\"}\"."
 msgstr ""
 
 #: eventyay/base/forms/validators.py:39
@@ -3941,8 +4030,8 @@ msgstr ""
 #: eventyay/base/models/event.py:428
 msgid ""
 "Should be short, only contain lowercase letters, numbers, dots, and dashes, "
-"and must be unique among your events. We recommend some kind of abbreviation "
-"or a date with less than 10 characters that can be easily remembered, but "
+"and must be unique among your events. We recommend some kind of abbreviation"
+" or a date with less than 10 characters that can be easily remembered, but "
 "you can also choose to use a random value. This will be used in URLs, order "
 "codes, invoice numbers, and bank transfer references."
 msgstr ""
@@ -3985,8 +4074,8 @@ msgstr ""
 
 #: eventyay/base/models/event.py:465
 msgid ""
-"If selected, this event will show up publicly on the list of events for your "
-"organizer account."
+"If selected, this event will show up publicly on the list of events for your"
+" organizer account."
 msgstr ""
 
 #: eventyay/base/models/event.py:471 eventyay/base/models/event.py:1410
@@ -4180,8 +4269,8 @@ msgstr ""
 
 #: eventyay/base/models/event.py:1703
 msgid ""
-"If checked, an event can only be taken live if the property is set. In event "
-"series, its always optional to set a value for individual dates"
+"If checked, an event can only be taken live if the property is set. In event"
+" series, its always optional to set a value for individual dates"
 msgstr ""
 
 #: eventyay/base/models/event.py:1710
@@ -4238,7 +4327,8 @@ msgstr ""
 
 #: eventyay/base/models/items.py:55 eventyay/base/models/items.py:272
 msgid ""
-"If you set this, this will be used instead of the public name in the backend."
+"If you set this, this will be used instead of the public name in the "
+"backend."
 msgstr ""
 
 #: eventyay/base/models/items.py:59
@@ -4433,9 +4523,9 @@ msgstr ""
 
 #: eventyay/base/models/items.py:385
 msgid ""
-"If this is checked, the usual cancellation and order change settings of this "
-"event apply. If this is unchecked, orders containing this product can not be "
-"canceled by users but only by you."
+"If this is checked, the usual cancellation and order change settings of this"
+" event apply. If this is unchecked, orders containing this product can not "
+"be canceled by users but only by you."
 msgstr ""
 
 #: eventyay/base/models/items.py:389
@@ -4455,9 +4545,9 @@ msgstr ""
 
 #: eventyay/base/models/items.py:397
 msgid ""
-"This product can only be bought at most this many times within one order. If "
-"you keep the field empty or set it to 0, there is no special limit for this "
-"product. The limit for the maximum number of items in the whole order "
+"This product can only be bought at most this many times within one order. If"
+" you keep the field empty or set it to 0, there is no special limit for this"
+" product. The limit for the maximum number of items in the whole order "
 "applies regardless."
 msgstr ""
 
@@ -4465,8 +4555,8 @@ msgstr ""
 msgid ""
 "If you set this, the check-in app will show a visible warning that this "
 "ticket requires special attention. You can use this for example for student "
-"tickets to indicate to the person at check-in that the student ID card still "
-"needs to be checked."
+"tickets to indicate to the person at check-in that the student ID card still"
+" needs to be checked."
 msgstr ""
 
 #: eventyay/base/models/items.py:409 eventyay/base/models/items.py:666
@@ -4605,8 +4695,8 @@ msgstr ""
 
 #: eventyay/base/models/items.py:932
 msgid ""
-"If set, it will be shown that this bundled item is responsible for the given "
-"value of the total gross price. This might be important in cases of mixed "
+"If set, it will be shown that this bundled item is responsible for the given"
+" value of the total gross price. This might be important in cases of mixed "
 "taxation, but can be kept blank otherwise. This value will NOT be added to "
 "the base item's price."
 msgstr ""
@@ -4820,8 +4910,8 @@ msgstr ""
 
 #: eventyay/base/models/items.py:1395
 msgid ""
-"If you enable this, when the quota is sold out once, no more tickets will be "
-"sold, even if tickets become available again through cancellations or "
+"If you enable this, when the quota is sold out once, no more tickets will be"
+" sold, even if tickets become available again through cancellations or "
 "expiring orders. Of course, you can always re-open it manually."
 msgstr ""
 
@@ -4831,9 +4921,9 @@ msgstr ""
 
 #: eventyay/base/models/items.py:1404
 msgid ""
-"With this option, quota will be released as soon as people are scanned at an "
-"exit of your event. This will only happen if they have been scanned both at "
-"an entry and at an exit and the exit is the more recent scan. It does not "
+"With this option, quota will be released as soon as people are scanned at an"
+" exit of your event. This will only happen if they have been scanned both at"
+" an entry and at an exit and the exit is the more recent scan. It does not "
 "matter which check-in list either of the scans was on, but check-in lists "
 "are ignored if they are set to \"Allow re-entering after an exit scan\" to "
 "prevent accidental overbooking."
@@ -4933,8 +5023,8 @@ msgstr ""
 msgid ""
 "If you set this, the check-in app will show a visible warning that tickets "
 "of this order require special attention. This will not show any details or "
-"custom message, so you need to brief your check-in staff how to handle these "
-"cases."
+"custom message, so you need to brief your check-in staff how to handle these"
+" cases."
 msgstr ""
 
 #: eventyay/base/models/orders.py:227 eventyay/base/models/orders.py:1192
@@ -5222,8 +5312,8 @@ msgstr ""
 
 #: eventyay/base/models/organizer.py:212
 msgid ""
-"Someone with this setting can get access to most data of all of your events, "
-"i.e. via privacy reports, so be careful who you add to this team!"
+"Someone with this setting can get access to most data of all of your events,"
+" i.e. via privacy reports, so be careful who you add to this team!"
 msgstr ""
 
 #: eventyay/base/models/organizer.py:217
@@ -5443,8 +5533,8 @@ msgstr ""
 #: eventyay/base/models/tax.py:282
 msgctxt "invoice"
 msgid ""
-"Reverse Charge: According to Article 194, 196 of Council Directive 2006/112/"
-"EEC, VAT liability rests with the service recipient."
+"Reverse Charge: According to Article 194, 196 of Council Directive "
+"2006/112/EEC, VAT liability rests with the service recipient."
 msgstr ""
 
 #: eventyay/base/models/tax.py:288
@@ -5473,8 +5563,8 @@ msgstr ""
 #: eventyay/base/models/vouchers.py:115
 msgid ""
 "This is the maximum monetary amount that will be discounted using this "
-"voucher across all usages. If this is sum reached, the voucher can no longer "
-"be used."
+"voucher across all usages. If this is sum reached, the voucher can no longer"
+" be used."
 msgstr ""
 
 #: eventyay/base/models/vouchers.py:122 eventyay/base/models/vouchers.py:529
@@ -5537,9 +5627,9 @@ msgstr ""
 
 #: eventyay/base/models/vouchers.py:188
 msgid ""
-"You can use this field to group multiple vouchers together. If you enter the "
-"same value for multiple vouchers, you can get statistics on how many of them "
-"have been redeemed etc."
+"You can use this field to group multiple vouchers together. If you enter the"
+" same value for multiple vouchers, you can get statistics on how many of "
+"them have been redeemed etc."
 msgstr ""
 
 #: eventyay/base/models/vouchers.py:197
@@ -5596,8 +5686,8 @@ msgstr ""
 #: eventyay/base/models/vouchers.py:258
 #, python-format
 msgid ""
-"This voucher has already been redeemed %(redeemed)s times. You cannot reduce "
-"the maximum number of usages below this number."
+"This voucher has already been redeemed %(redeemed)s times. You cannot reduce"
+" the maximum number of usages below this number."
 msgstr ""
 
 #: eventyay/base/models/vouchers.py:268 eventyay/base/models/vouchers.py:326
@@ -5983,7 +6073,8 @@ msgstr ""
 
 #: eventyay/base/orderimport.py:622 eventyay/base/services/cart.py:109
 msgid ""
-"The seat you selected has already been taken. Please select a different seat."
+"The seat you selected has already been taken. Please select a different "
+"seat."
 msgstr ""
 
 #: eventyay/base/orderimport.py:625 eventyay/base/services/cart.py:106
@@ -6019,8 +6110,8 @@ msgstr ""
 
 #: eventyay/base/payment.py:256
 msgid ""
-"Will be printed just below the payment figures and above the closing text on "
-"invoices. This will only be used if the invoice is generated before the "
+"Will be printed just below the payment figures and above the closing text on"
+" invoices. This will only be used if the invoice is generated before the "
 "order is paid. If the invoice is generated later, it will show a text "
 "stating that it has already been paid."
 msgstr ""
@@ -6085,7 +6176,8 @@ msgstr ""
 
 #: eventyay/base/payment.py:333
 msgid ""
-"Only allow the usage of this payment provider in the selected sales channels."
+"Only allow the usage of this payment provider in the selected sales "
+"channels."
 msgstr ""
 
 #: eventyay/base/payment.py:337
@@ -6094,8 +6186,8 @@ msgstr ""
 
 #: eventyay/base/payment.py:340
 msgid ""
-"The payment method will not be shown by default but only to people who enter "
-"the shop through a special link."
+"The payment method will not be shown by default but only to people who enter"
+" the shop through a special link."
 msgstr ""
 
 #: eventyay/base/payment.py:346
@@ -6232,8 +6324,8 @@ msgstr ""
 
 #: eventyay/base/payment.py:1211
 msgid ""
-"Your gift card has been applied, but {} still need to be paid. Please select "
-"a payment method."
+"Your gift card has been applied, but {} still need to be paid. Please select"
+" a payment method."
 msgstr ""
 
 #: eventyay/base/payment.py:1215
@@ -6589,7 +6681,8 @@ msgstr ""
 msgid "Invoice address name: {part}"
 msgstr ""
 
-#: eventyay/base/pdf.py:715 eventyay/plugins/ticketoutputpdf/ticketoutput.py:78
+#: eventyay/base/pdf.py:715
+#: eventyay/plugins/ticketoutputpdf/ticketoutput.py:78
 msgid "Ticket"
 msgstr ""
 
@@ -6745,8 +6838,8 @@ msgstr ""
 #, python-format
 msgid ""
 "This voucher code is currently locked since it is already contained in a "
-"cart. This might mean that someone else is redeeming this voucher right now, "
-"or that you tried to redeem it before but did not complete the checkout "
+"cart. This might mean that someone else is redeeming this voucher right now,"
+" or that you tried to redeem it before but did not complete the checkout "
 "process. You can try to use it again in %d minutes."
 msgstr ""
 
@@ -6910,7 +7003,8 @@ msgctxt "invoice"
 msgid "Attendee: {name}"
 msgstr ""
 
-#: eventyay/base/services/invoices.py:172 eventyay/plugins/reports/exporters.py:248
+#: eventyay/base/services/invoices.py:172
+#: eventyay/plugins/reports/exporters.py:248
 msgctxt "subevent"
 msgid "Date: {}"
 msgstr ""
@@ -6938,8 +7032,8 @@ msgstr ""
 #: eventyay/base/services/mail.py:179
 #, python-brace-format
 msgid ""
-"You are receiving this email because someone placed an order for {event} for "
-"you."
+"You are receiving this email because someone placed an order for {event} for"
+" you."
 msgstr ""
 
 #: eventyay/base/services/mail.py:183 eventyay/base/services/mail.py:199
@@ -6968,8 +7062,8 @@ msgstr ""
 
 #: eventyay/base/services/orders.py:63
 msgid ""
-"Some of the products you selected were no longer available. Please see below "
-"for details."
+"Some of the products you selected were no longer available. Please see below"
+" for details."
 msgstr ""
 
 #: eventyay/base/services/orders.py:65
@@ -7018,8 +7112,8 @@ msgstr ""
 
 #: eventyay/base/services/orders.py:80
 msgid ""
-"The voucher code used for one of the items in your cart has already been too "
-"often. We adjusted the price of the item in your cart."
+"The voucher code used for one of the items in your cart has already been too"
+" often. We adjusted the price of the item in your cart."
 msgstr ""
 
 #: eventyay/base/services/orders.py:82
@@ -7137,7 +7231,8 @@ msgstr ""
 #: eventyay/base/services/orders.py:1173
 #, python-brace-format
 msgid ""
-"The quota {name} does not have enough capacity left to perform the operation."
+"The quota {name} does not have enough capacity left to perform the "
+"operation."
 msgstr ""
 
 #: eventyay/base/services/orders.py:1174
@@ -7201,8 +7296,8 @@ msgstr ""
 
 #: eventyay/base/services/orders.py:1188
 msgid ""
-"You cannot change the price of a position that has been used to issue a gift "
-"card."
+"You cannot change the price of a position that has been used to issue a gift"
+" card."
 msgstr ""
 
 #: eventyay/base/services/orders.py:1697
@@ -7221,15 +7316,15 @@ msgstr ""
 #: eventyay/base/services/seating.py:35 eventyay/base/services/seating.py:96
 #, python-format
 msgid ""
-"You can not change the plan since seat \"%s\" is not present in the new plan "
-"and is already sold."
+"You can not change the plan since seat \"%s\" is not present in the new plan"
+" and is already sold."
 msgstr ""
 
 #: eventyay/base/services/seating.py:99
 #, python-format
 msgid ""
-"You can not change the plan since seat \"%s\" is not present in the new plan "
-"and is already used in a voucher."
+"You can not change the plan since seat \"%s\" is not present in the new plan"
+" and is already used in a voucher."
 msgstr ""
 
 #: eventyay/base/services/shredder.py:73 eventyay/control/views/shredder.py:51
@@ -7259,6 +7354,7 @@ msgid "Sample workshop"
 msgstr ""
 
 #: eventyay/base/services/update_check.py:92
+#: pretalx/common/update_check.py:100
 msgid "eventyay update available"
 msgstr ""
 
@@ -7267,14 +7363,11 @@ msgstr ""
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for eventyay or for one of the plugins you installed in "
-"your eventyay installation. Please click on the following link for more "
-"information:\n"
+"An update is available for eventyay or for one of the plugins you installed in your eventyay installation. Please click on the following link for more information:\n"
 "\n"
 " {url} \n"
 "\n"
-"You can always find information on the latest updates on the eventyay.com "
-"blog:\n"
+"You can always find information on the latest updates on the eventyay.com blog:\n"
 "\n"
 "https://eventyay.com/about/en/blog/\n"
 "\n"
@@ -7379,13 +7472,14 @@ msgstr ""
 
 #: eventyay/base/shredder.py:325
 msgid ""
-"This will remove all answers to questions, as well as logged changes to them."
+"This will remove all answers to questions, as well as logged changes to "
+"them."
 msgstr ""
 
 #: eventyay/base/shredder.py:359
 msgid ""
-"This will remove all invoice PDFs, as well as any of their text content that "
-"might contain personal data from the database. Invoice numbers and totals "
+"This will remove all invoice PDFs, as well as any of their text content that"
+" might contain personal data from the database. Invoice numbers and totals "
 "will be conserved."
 msgstr ""
 
@@ -7464,14 +7558,15 @@ msgstr ""
 msgid "If you contact us, please send us the following code:"
 msgstr ""
 
-#: eventyay/base/templates/csrffail.html:4 eventyay/base/templates/csrffail.html:8
+#: eventyay/base/templates/csrffail.html:4
+#: eventyay/base/templates/csrffail.html:8
 msgid "Verification failed"
 msgstr ""
 
 #: eventyay/base/templates/csrffail.html:9
 msgid ""
-"We could not verify that this request really was sent from you. For security "
-"reasons, we therefore cannot process it."
+"We could not verify that this request really was sent from you. For security"
+" reasons, we therefore cannot process it."
 msgstr ""
 
 #: eventyay/base/templates/csrffail.html:20
@@ -7486,8 +7581,8 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/cachedfiles/pending.html:23
 msgid ""
-"If this takes longer than a few minutes, please refresh this page or contact "
-"us."
+"If this takes longer than a few minutes, please refresh this page or contact"
+" us."
 msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/email_footer.html:3
@@ -7522,8 +7617,8 @@ msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/order_details.html:6
 msgid ""
-"You are receiving this email because someone signed you up for the following "
-"event:"
+"You are receiving this email because someone signed you up for the following"
+" event:"
 msgstr ""
 
 #: eventyay/base/templates/pretixbase/email/order_details.html:11
@@ -7716,7 +7811,8 @@ msgid "Organizer effect"
 msgstr ""
 
 #: eventyay/control/forms/admin/vouchers.py:25
-msgid "The voucher will be valid for all events under the selected organizers."
+msgid ""
+"The voucher will be valid for all events under the selected organizers."
 msgstr ""
 
 #: eventyay/control/forms/checkin.py:68 eventyay/control/forms/filter.py:334
@@ -7769,8 +7865,8 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:106
 msgid ""
-"Do you need to pay sales tax on your tickets? In this case, please enter the "
-"applicable tax rate here in percent. If you have a more complicated tax "
+"Do you need to pay sales tax on your tickets? In this case, please enter the"
+" applicable tax rate here in percent. If you have a more complicated tax "
 "situation, you can add more tax rates and detailed configuration later."
 msgstr ""
 
@@ -7931,8 +8027,8 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:934
 msgid ""
-"This email will only be send to orders from these sales channels. The online "
-"shop must be enabled."
+"This email will only be send to orders from these sales channels. The online"
+" shop must be enabled."
 msgstr ""
 
 #: eventyay/control/forms/event.py:943
@@ -8011,8 +8107,8 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:1088
 msgid ""
-"This email will be sent out this many days before the order event starts. If "
-"the field is empty, the mail will never be sent."
+"This email will be sent out this many days before the order event starts. If"
+" the field is empty, the mail will never be sent."
 msgstr ""
 
 #: eventyay/control/forms/event.py:1093
@@ -8025,8 +8121,8 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:1102
 msgid ""
-"This will only be sent out for non-free orders. Free orders will receive the "
-"free order template from below instead."
+"This will only be sent out for non-free orders. Free orders will receive the"
+" free order template from below instead."
 msgstr ""
 
 #: eventyay/control/forms/event.py:1107
@@ -8035,8 +8131,8 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:1111
 msgid ""
-"This will only be sent out for free orders. Non-free orders will receive the "
-"non-free order template from above instead."
+"This will only be sent out for free orders. Non-free orders will receive the"
+" non-free order template from above instead."
 msgstr ""
 
 #: eventyay/control/forms/event.py:1116
@@ -8179,8 +8275,8 @@ msgstr ""
 #: eventyay/control/forms/event.py:1376
 msgid ""
 "If set, the widget will show products as if this voucher has been entered "
-"and when a product is bought via the widget, this voucher will be used. This "
-"can for example be used to provide widgets that give discounts or unlock "
+"and when a product is bought via the widget, this voucher will be used. This"
+" can for example be used to provide widgets that give discounts or unlock "
 "secret products."
 msgstr ""
 
@@ -8240,9 +8336,9 @@ msgstr ""
 
 #: eventyay/control/forms/event.py:1500
 msgid ""
-"Your customers will be instructed to wire the money to your account. You can "
-"then import your bank statements to process the payments within eventyay, or "
-"mark them as paid manually."
+"Your customers will be instructed to wire the money to your account. You can"
+" then import your bank statements to process the payments within eventyay, "
+"or mark them as paid manually."
 msgstr ""
 
 #: eventyay/control/forms/event.py:1555
@@ -8355,14 +8451,16 @@ msgid "Approval pending"
 msgstr ""
 
 #: eventyay/control/forms/filter.py:368 eventyay/control/forms/filter.py:1202
-#: eventyay/control/forms/filter.py:1417 eventyay/control/forms/vouchers.py:112
+#: eventyay/control/forms/filter.py:1417
+#: eventyay/control/forms/vouchers.py:112
 #: eventyay/control/templates/pretixcontrol/items/question.html:30
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:111
 msgid "All products"
 msgstr ""
 
 #: eventyay/control/forms/filter.py:372 eventyay/control/forms/filter.py:1421
-#: eventyay/control/forms/vouchers.py:100 eventyay/control/views/typeahead.py:518
+#: eventyay/control/forms/vouchers.py:100
+#: eventyay/control/views/typeahead.py:518
 #, python-brace-format
 msgid "{product} – Any variation"
 msgstr ""
@@ -8444,7 +8542,8 @@ msgstr ""
 msgid "Date until"
 msgstr ""
 
-#: eventyay/control/forms/filter.py:795 eventyay/control/forms/subevents.py:447
+#: eventyay/control/forms/filter.py:795
+#: eventyay/control/forms/subevents.py:447
 #: eventyay/control/forms/subevents.py:486
 msgid "Weekday"
 msgstr ""
@@ -8586,7 +8685,8 @@ msgid "Search voucher"
 msgstr ""
 
 #: eventyay/control/forms/filter.py:1427 eventyay/control/forms/vouchers.py:91
-#: eventyay/control/views/typeahead.py:526 eventyay/control/views/typeahead.py:530
+#: eventyay/control/views/typeahead.py:526
+#: eventyay/control/views/typeahead.py:530
 #: eventyay/control/views/vouchers.py:85
 #, python-brace-format
 msgid "Any product in quota \"{quota}\""
@@ -8604,15 +8704,18 @@ msgstr ""
 msgid "All refunds"
 msgstr ""
 
-#: eventyay/control/forms/filter.py:1591 eventyay/plugins/reports/exporters.py:547
+#: eventyay/control/forms/filter.py:1591
+#: eventyay/plugins/reports/exporters.py:547
 msgid "Date filter"
 msgstr ""
 
-#: eventyay/control/forms/filter.py:1593 eventyay/plugins/reports/exporters.py:549
+#: eventyay/control/forms/filter.py:1593
+#: eventyay/plugins/reports/exporters.py:549
 msgid "Filter by…"
 msgstr ""
 
-#: eventyay/control/forms/filter.py:1595 eventyay/plugins/reports/exporters.py:551
+#: eventyay/control/forms/filter.py:1595
+#: eventyay/plugins/reports/exporters.py:551
 msgid "Date of last successful payment"
 msgstr ""
 
@@ -8737,8 +8840,8 @@ msgstr ""
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of the system and your installed "
-"plugins and the number of active and inactive events in your installation to "
-"servers operated by the eventyay developers. We will only store anonymous "
+"plugins and the number of active and inactive events in your installation to"
+" servers operated by the eventyay developers. We will only store anonymous "
 "data, never any IP addresses and we will not know who you are or where to "
 "find your instance. You can disable this behavior here at any time."
 msgstr ""
@@ -8764,8 +8867,7 @@ msgstr ""
 
 #: eventyay/control/forms/global_settings.py:274
 #, python-format
-msgid ""
-"The provided key does not look valid. It should start with \"%(prefix)s\"."
+msgid "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
 #: eventyay/control/forms/global_settings.py:277
@@ -8982,8 +9084,8 @@ msgid ""
 "If you keep a fee, all positions within this order will be canceled and the "
 "order will be reduced to a paid cancellation fee. Payment and shipping fees "
 "will be canceled as well, so include them in your cancellation fee if you "
-"want to keep them. Please always enter a gross value, tax will be calculated "
-"automatically."
+"want to keep them. Please always enter a gross value, tax will be calculated"
+" automatically."
 msgstr ""
 
 #: eventyay/control/forms/orders.py:129
@@ -9095,13 +9197,14 @@ msgstr ""
 #: eventyay/control/forms/orders.py:477
 msgid ""
 "Regenerates the order and ticket secrets. You will need to re-send the link "
-"to the order page to the user and the user will need to download his tickets "
-"again. The old versions will be invalid."
+"to the order page to the user and the user will need to download his tickets"
+" again. The old versions will be invalid."
 msgstr ""
 
 #: eventyay/control/forms/orders.py:510 eventyay/control/forms/orders.py:727
 #: eventyay/control/forms/orders.py:754 eventyay/control/forms/vouchers.py:228
-#: eventyay/plugins/sendmail/forms.py:24 eventyay/plugins/sendmail/forms.py:119
+#: eventyay/plugins/sendmail/forms.py:24
+#: eventyay/plugins/sendmail/forms.py:119
 msgid "Subject"
 msgstr ""
 
@@ -9111,7 +9214,8 @@ msgstr ""
 
 #: eventyay/control/forms/orders.py:540 eventyay/control/forms/orders.py:554
 #: eventyay/control/forms/orders.py:735 eventyay/control/forms/orders.py:762
-#: eventyay/control/forms/vouchers.py:234 eventyay/plugins/sendmail/forms.py:25
+#: eventyay/control/forms/vouchers.py:234
+#: eventyay/plugins/sendmail/forms.py:25
 #: eventyay/plugins/sendmail/forms.py:124
 msgid "Message"
 msgstr ""
@@ -9149,7 +9253,8 @@ msgstr ""
 
 #: eventyay/control/forms/orders.py:639
 msgid ""
-"Create manual refund if the payment method does not support automatic refunds"
+"Create manual refund if the payment method does not support automatic "
+"refunds"
 msgstr ""
 
 #: eventyay/control/forms/orders.py:643
@@ -9347,8 +9452,8 @@ msgstr ""
 
 #: eventyay/control/forms/organizer_forms/team_form.py:41
 msgid ""
-"The changes could not be saved because there would be no remaining team with "
-"the permission to change teams and permissions."
+"The changes could not be saved because there would be no remaining team with"
+" the permission to change teams and permissions."
 msgstr ""
 
 #: eventyay/control/forms/organizer_forms/web_hook_form.py:13
@@ -9378,7 +9483,8 @@ msgstr ""
 msgid "Keep the current values"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:113 eventyay/control/forms/subevents.py:121
+#: eventyay/control/forms/subevents.py:113
+#: eventyay/control/forms/subevents.py:121
 msgid "Selection contains various values"
 msgstr ""
 
@@ -9414,31 +9520,37 @@ msgstr ""
 msgid "Last date"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:422 eventyay/control/forms/subevents.py:469
+#: eventyay/control/forms/subevents.py:422
+#: eventyay/control/forms/subevents.py:469
 msgctxt "rrule"
 msgid "first"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:423 eventyay/control/forms/subevents.py:470
+#: eventyay/control/forms/subevents.py:423
+#: eventyay/control/forms/subevents.py:470
 msgctxt "rrule"
 msgid "second"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:424 eventyay/control/forms/subevents.py:471
+#: eventyay/control/forms/subevents.py:424
+#: eventyay/control/forms/subevents.py:471
 msgctxt "rrule"
 msgid "third"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:425 eventyay/control/forms/subevents.py:472
+#: eventyay/control/forms/subevents.py:425
+#: eventyay/control/forms/subevents.py:472
 msgctxt "rrule"
 msgid "last"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:446 eventyay/control/forms/subevents.py:485
+#: eventyay/control/forms/subevents.py:446
+#: eventyay/control/forms/subevents.py:485
 msgid "Day"
 msgstr ""
 
-#: eventyay/control/forms/subevents.py:448 eventyay/control/forms/subevents.py:487
+#: eventyay/control/forms/subevents.py:448
+#: eventyay/control/forms/subevents.py:487
 msgid "Weekend day"
 msgstr ""
 
@@ -9538,7 +9650,8 @@ msgstr ""
 msgid "CSV input contains an unknown field with the header \"{header}\"."
 msgstr ""
 
-#: eventyay/control/forms/vouchers.py:325 eventyay/control/forms/vouchers.py:340
+#: eventyay/control/forms/vouchers.py:325
+#: eventyay/control/forms/vouchers.py:340
 #, python-brace-format
 msgid "{value} is not a valid email address."
 msgstr ""
@@ -9554,8 +9667,8 @@ msgstr ""
 
 #: eventyay/control/forms/vouchers.py:355
 msgid ""
-"If vouchers should be sent by email, subject, message and recipients need to "
-"be specified."
+"If vouchers should be sent by email, subject, message and recipients need to"
+" be specified."
 msgstr ""
 
 #: eventyay/control/forms/vouchers.py:362
@@ -9668,8 +9781,7 @@ msgstr ""
 
 #: eventyay/control/logdisplay.py:178
 #, python-brace-format
-msgid ""
-"Unknown scan of code \"{barcode}…\" for list \"{list}\", type \"{type}\"."
+msgid "Unknown scan of code \"{barcode}…\" for list \"{list}\", type \"{type}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:189
@@ -9682,8 +9794,8 @@ msgstr ""
 #: eventyay/control/logdisplay.py:199
 #, python-brace-format
 msgid ""
-"Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
-"uploaded."
+"Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was"
+" uploaded."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:210
@@ -9696,14 +9808,13 @@ msgstr ""
 #: eventyay/control/logdisplay.py:221
 #, python-brace-format
 msgid ""
-"Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
-"code \"{errorcode}\"."
+"Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error"
+" code \"{errorcode}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:231
 #, python-brace-format
-msgid ""
-"Position #{posid} has been checked out at {datetime} for list \"{list}\"."
+msgid "Position #{posid} has been checked out at {datetime} for list \"{list}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:237
@@ -9713,8 +9824,7 @@ msgstr ""
 
 #: eventyay/control/logdisplay.py:243
 #, python-brace-format
-msgid ""
-"Position #{posid} has been checked in at {datetime} for list \"{list}\"."
+msgid "Position #{posid} has been checked in at {datetime} for list \"{list}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:249
@@ -9840,8 +9950,7 @@ msgstr ""
 
 #: eventyay/control/logdisplay.py:300
 #, python-brace-format
-msgid ""
-"The email address has been changed from \"{old_email}\" to \"{new_email}\"."
+msgid "The email address has been changed from \"{old_email}\" to \"{new_email}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:302
@@ -9852,8 +9961,7 @@ msgstr ""
 
 #: eventyay/control/logdisplay.py:304
 #, python-brace-format
-msgid ""
-"The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
+msgid "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:306
@@ -10093,8 +10201,8 @@ msgstr ""
 
 #: eventyay/control/logdisplay.py:367
 msgid ""
-"A repeated password reset has been denied, as the last request was less than "
-"24 hours ago."
+"A repeated password reset has been denied, as the last request was less than"
+" 24 hours ago."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:369
@@ -10438,14 +10546,15 @@ msgstr ""
 #: eventyay/control/logdisplay.py:498
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in manually at {datetime} on list \"{list}"
-"\"."
+"Position #{posid} has been checked in manually at {datetime} on list "
+"\"{list}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:503
 #, python-brace-format
 msgid ""
-"Position #{posid} has been checked in again at {datetime} on list \"{list}\"."
+"Position #{posid} has been checked in again at {datetime} on list "
+"\"{list}\"."
 msgstr ""
 
 #: eventyay/control/logdisplay.py:518
@@ -10662,7 +10771,8 @@ msgstr ""
 msgid "Order search"
 msgstr ""
 
-#: eventyay/control/navigation.py:312 eventyay/eventyay_common/navigation.py:31
+#: eventyay/control/navigation.py:312
+#: eventyay/eventyay_common/navigation.py:31
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/control.html:8
 msgid "Account"
 msgstr "Akaunti"
@@ -11154,8 +11264,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:8
 msgid ""
 "To perform this action, you need to start an administrative session. "
-"Everything you do in that session will be logged and you will later be asked "
-"to fill in a comment on what you did in your session for later reference."
+"Everything you do in that session will be logged and you will later be asked"
+" to fill in a comment on what you did in your session for later reference."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/admin/user/staff_session_start.html:18
@@ -11233,13 +11343,14 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/delete.html:9
 #, python-format
 msgid ""
-"Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
-"strong>?"
+"Are you sure you want to delete the voucher "
+"<strong>%(invoice_voucher)s</strong>?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: eventyay/control/templates/pretixcontrol/vouchers/detail.html:18
-msgid "This voucher already has been used. It is not recommended to modify it."
+msgid ""
+"This voucher already has been used. It is not recommended to modify it."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/admin/vouchers/detail.html:18
@@ -11302,8 +11413,8 @@ msgstr ""
 #, python-format
 msgid ""
 "If you already have an account on this site with a different email address, "
-"you can <a %(login_href)s>log in</a> first and then click this link again to "
-"accept the invitation with your existing account."
+"you can <a %(login_href)s>log in</a> first and then click this link again to"
+" accept the invitation with your existing account."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/auth/invite.html:23
@@ -11390,8 +11501,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:18
 #, python-format
 msgid ""
-"Do you really want to grant the application <strong>%(application)s</strong> "
-"access to your account?"
+"Do you really want to grant the application <strong>%(application)s</strong>"
+" access to your account?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/auth/oauth_authorization.html:24
@@ -11462,7 +11573,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/base.html:324
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:227
 msgid ""
-"Please leave a short comment on what you did in the following admin sessions:"
+"Please leave a short comment on what you did in the following admin "
+"sessions:"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/base.html:355
@@ -11474,8 +11586,8 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:275
 msgid ""
 "Your event contains <strong>test mode orders</strong> even though "
-"<strong>test mode has been disabled</strong>. You should delete those orders "
-"to make sure they do not show up in your reports and statistics and block "
+"<strong>test mode has been disabled</strong>. You should delete those orders"
+" to make sure they do not show up in your reports and statistics and block "
 "people from actually buying tickets."
 msgstr ""
 
@@ -11730,18 +11842,18 @@ msgstr ""
 msgid ""
 "You can create multiple check-in lists to separate multiple parts of your "
 "event, for example if you have separate entries for multiple ticket types. "
-"Different check-in lists are completely independent: If a ticket shows up on "
-"two lists, it is valid once on every list. This might be useful if you run a "
-"festival with festival passes that allow access to every or multiple "
+"Different check-in lists are completely independent: If a ticket shows up on"
+" two lists, it is valid once on every list. This might be useful if you run "
+"a festival with festival passes that allow access to every or multiple "
 "performances as well as tickets only valid for single performances."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:30
 msgid ""
-"If you have the appropriate organizer-level permissions, you can connect new "
-"devices to your account and use them to validate tickets. Since the devices "
-"are connected on the organizer level, you do not have to create a new device "
-"for every event but can reuse them over and over again."
+"If you have the appropriate organizer-level permissions, you can connect new"
+" devices to your account and use them to validate tickets. Since the devices"
+" are connected on the organizer level, you do not have to create a new "
+"device for every event but can reuse them over and over again."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:47
@@ -11821,8 +11933,7 @@ msgstr ""
 msgid ""
 "Hello,\n"
 "\n"
-"you requested a new password. Please go to the following page to reset your "
-"password:\n"
+"you requested a new password. Please go to the following page to reset your password:\n"
 "\n"
 "%(url)s\n"
 "\n"
@@ -11855,8 +11966,7 @@ msgstr ""
 msgid ""
 "Hello,\n"
 "\n"
-"this is to inform you that the account information of your eventyay account "
-"has been\n"
+"this is to inform you that the account information of your eventyay account has been\n"
 "changed. In particular, the following changes have been performed:\n"
 "\n"
 "%(messages)s\n"
@@ -11898,8 +12008,8 @@ msgstr ""
 msgid ""
 "If a user requests cancels a paid order and the money can not be refunded "
 "automatically, e.g. due to the selected payment method, you will need to "
-"take manual action. However, you have currently turned off notifications for "
-"this event."
+"take manual action. However, you have currently turned off notifications for"
+" this event."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/cancel.html:44
@@ -11957,8 +12067,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:13
 msgid ""
-"You can take your event offline. Nobody except your team will be able to see "
-"or access it any more."
+"You can take your event offline. Nobody except your team will be able to see"
+" or access it any more."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:34
@@ -11996,8 +12106,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:80
 msgid ""
-"You can delete your event completely only as long as it does not contain any "
-"undeletable data, such as orders not performed in test mode."
+"You can delete your event completely only as long as it does not contain any"
+" undeletable data, such as orders not performed in test mode."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:9
@@ -12115,8 +12225,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:47
 msgid ""
-"This event contains <strong>requested cancellations</strong> that you should "
-"take care of."
+"This event contains <strong>requested cancellations</strong> that you should"
+" take care of."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:51
@@ -12229,8 +12339,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:20
 msgid ""
-"Your shop is currently live. If you take it down, it will only be visible to "
-"you and your team."
+"Your shop is currently live. If you take it down, it will only be visible to"
+" you and your team."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:25
@@ -12302,8 +12412,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/live.html:119
 msgid ""
 "It looks like you already have some real orders in your shop. We do not "
-"recommend enabling test mode if your customers already know your shop, as it "
-"will confuse them."
+"recommend enabling test mode if your customers already know your shop, as it"
+" will confuse them."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:126
@@ -12462,10 +12572,10 @@ msgstr ""
 #: eventyay/control/views/event.py:620 eventyay/control/views/event.py:823
 #: eventyay/control/views/event.py:1194
 #: eventyay/control/views/global_settings.py:35
-#: eventyay/control/views/global_settings.py:122 eventyay/control/views/item.py:170
-#: eventyay/control/views/item.py:631 eventyay/control/views/item.py:962
-#: eventyay/control/views/item.py:1124 eventyay/control/views/item.py:1253
-#: eventyay/control/views/organizer.py:201
+#: eventyay/control/views/global_settings.py:122
+#: eventyay/control/views/item.py:170 eventyay/control/views/item.py:631
+#: eventyay/control/views/item.py:962 eventyay/control/views/item.py:1124
+#: eventyay/control/views/item.py:1253 eventyay/control/views/organizer.py:201
 #: eventyay/control/views/organizer_views/device_view.py:117
 #: eventyay/control/views/organizer_views/gate_view.py:85
 #: eventyay/control/views/organizer_views/organizer_view.py:131
@@ -12474,9 +12584,10 @@ msgstr ""
 #: eventyay/control/views/organizer_views/team_view.py:323
 #: eventyay/control/views/organizer_views/web_hook_view.py:94
 #: eventyay/control/views/pages.py:42 eventyay/control/views/pages.py:102
-#: eventyay/control/views/subevents.py:433 eventyay/control/views/subevents.py:1448
-#: eventyay/control/views/user.py:200 eventyay/control/views/users.py:90
-#: eventyay/control/views/vouchers.py:215 eventyay/plugins/badges/views.py:110
+#: eventyay/control/views/subevents.py:433
+#: eventyay/control/views/subevents.py:1448 eventyay/control/views/user.py:200
+#: eventyay/control/views/users.py:90 eventyay/control/views/vouchers.py:215
+#: eventyay/plugins/badges/views.py:110
 #: eventyay/plugins/socialauth/templates/socialauth/social_auth_settings.html:20
 #: eventyay/plugins/ticketoutputpdf/views.py:146
 msgid "Your changes have been saved."
@@ -12581,8 +12692,8 @@ msgstr ""
 msgid ""
 "If you want to use more advanced features like non-admission products, "
 "product variations, custom quotas, add-on products or want to modify your "
-"ticket types in more detail, you can later do so in the \"Products\" section "
-"in the navigation. Don't worry, you can change everything you input here."
+"ticket types in more detail, you can later do so in the \"Products\" section"
+" in the navigation. Don't worry, you can change everything you input here."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:132
@@ -12598,8 +12709,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:143
 msgid ""
 "We recommend that you take some time to go through the \"Settings\" part of "
-"your event, but if you're in a hurry and want to get started quickly, here's "
-"a short version:"
+"your event, but if you're in a hurry and want to get started quickly, here's"
+" a short version:"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:162
@@ -12750,8 +12861,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/event/settings_base.html:15
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings_base.html:15
 msgid ""
-"You can now scroll down and modify the settings in more detail, if you want, "
-"or you can create your first product to start selling tickets right away!"
+"You can now scroll down and modify the settings in more detail, if you want,"
+" or you can create your first product to start selling tickets right away!"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/settings_base.html:23
@@ -12772,8 +12883,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tax_delete.html:12
 msgid ""
-"You cannot delete a tax rule that is in use for a product or has been in use "
-"for any existing orders."
+"You cannot delete a tax rule that is in use for a product or has been in use"
+" for any existing orders."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:7
@@ -12787,8 +12898,8 @@ msgstr ""
 msgid ""
 "These settings are intended for advanced users. See the <a "
 "href=\"%(docs)s\">documentation</a> for more information. Note that we are "
-"not responsible for the correct handling of taxes in your ticket shop. If in "
-"doubt, please contact a lawyer or tax consultant."
+"not responsible for the correct handling of taxes in your ticket shop. If in"
+" doubt, please contact a lawyer or tax consultant."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:49
@@ -12800,8 +12911,8 @@ msgid ""
 "These settings are intended for professional users with very specific "
 "taxation situations. If you create any rule here, the reverse charge "
 "settings above will be ignored. The rules will be checked in order and once "
-"the first rule matches the order, it will be used and all further rules will "
-"be ignored. If no rule matches, tax will be charged."
+"the first rule matches the order, it will be used and all further rules will"
+" be ignored. If no rule matches, tax will be charged."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tax_edit.html:57
@@ -12842,8 +12953,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:21
 msgid ""
-"You activated ticket downloads but no output provider is enabled. Be sure to "
-"enable a plugin and activate an output provider."
+"You activated ticket downloads but no output provider is enabled. Be sure to"
+" enable a plugin and activate an output provider."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:35
@@ -12854,8 +12965,8 @@ msgstr ""
 #, python-format
 msgid ""
 "There are no ticket outputs available. Please go to the <a "
-"%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
-"output plugins."
+"%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket"
+" output plugins."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/tickets.html:71
@@ -12875,8 +12986,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:23
 msgid ""
-"To embed the widget onto your website, simply copy the following code to the "
-"<code>&lt;head&gt;</code> section of your website:"
+"To embed the widget onto your website, simply copy the following code to the"
+" <code>&lt;head&gt;</code> section of your website:"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/widget.html:31
@@ -12928,8 +13039,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/events/create_basics.html:18
 msgid ""
 "This is the address users can buy your tickets at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique among your events. "
-"We recommend some kind of abbreviation or a date with less than 10 "
+"contain lowercase letters and numbers, and must be unique among your events."
+" We recommend some kind of abbreviation or a date with less than 10 "
 "characters that can be easily remembered, but you can also choose to use a "
 "random value."
 msgstr ""
@@ -12960,9 +13071,9 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/events/create_copy.html:13
 msgid ""
-"Please make sure to review all settings extensively. You will probably still "
-"need to change some settings manually, e.g. date and time settings and texts "
-"that contain the event name."
+"Please make sure to review all settings extensively. You will probably still"
+" need to change some settings manually, e.g. date and time settings and "
+"texts that contain the event name."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:7
@@ -12978,8 +13089,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:15
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:55
 msgid ""
-"An event with individual configuration. If you create more events later, you "
-"can copy the event to save yourself some work."
+"An event with individual configuration. If you create more events later, you"
+" can copy the event to save yourself some work."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:21
@@ -13038,23 +13149,17 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/giftcards/checkout.html:4
 msgid ""
 "\n"
-"        If you have a gift card, please enter the gift card code here. If "
-"the gift card does not have\n"
-"        enough credit to pay for the full order, you will be shown this page "
-"again and you can either\n"
-"        redeem another gift card or select a different payment method for "
-"the difference.\n"
+"        If you have a gift card, please enter the gift card code here. If the gift card does not have\n"
+"        enough credit to pay for the full order, you will be shown this page again and you can either\n"
+"        redeem another gift card or select a different payment method for the difference.\n"
 "    "
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/giftcards/checkout_confirm.html:4
 msgid ""
 "\n"
-"        Your gift card will be used to pay for this order. If the credit on "
-"the gift card is lower than the order total, you will be able to pay the\n"
-"        difference with a different payment method. If the credit is higher "
-"than the order total, you will be able to re-use the gift card in the "
-"future.\n"
+"        Your gift card will be used to pay for this order. If the credit on the gift card is lower than the order total, you will be able to pay the\n"
+"        difference with a different payment method. If the credit is higher than the order total, you will be able to re-use the gift card in the future.\n"
 "    "
 msgstr ""
 
@@ -13155,8 +13260,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/base.html:36
 msgid ""
-"This product is currently not being shown since you configured below that it "
-"should only be visible if a certain other quota is already sold out."
+"This product is currently not being shown since you configured below that it"
+" should only be visible if a certain other quota is already sold out."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:19
@@ -13171,8 +13276,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:27
 msgid ""
-"Every purchase of this product represents one person who is allowed to enter "
-"your event. By default, the system will request attendee information and "
+"Every purchase of this product represents one person who is allowed to enter"
+" your event. By default, the system will request attendee information and "
 "provide ticket downloads for these products."
 msgstr ""
 
@@ -13199,7 +13304,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:51
 #: eventyay/control/templates/pretixcontrol/item/index.html:54
-msgid "Examples: Merchandise, donations, gift cards, add-ons to a main ticket."
+msgid ""
+"Examples: Merchandise, donations, gift cards, add-ons to a main ticket."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:69
@@ -13320,15 +13426,15 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:29
 msgid ""
-"Every purchase of this product represents one person who is allowed to enter "
-"your event. By default, eventyay will only ask for attendee information and "
-"offer ticket downloads for these products."
+"Every purchase of this product represents one person who is allowed to enter"
+" your event. By default, eventyay will only ask for attendee information and"
+" offer ticket downloads for these products."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:48
 msgid ""
-"A product that does not represent a person. By default, eventyay will not ask "
-"for attendee information or offer ticket downloads."
+"A product that does not represent a person. By default, eventyay will not "
+"ask for attendee information or offer ticket downloads."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:95
@@ -13375,7 +13481,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/category_delete.html:9
 #, python-format
-msgid "Are you sure you want to delete the category <strong>%(name)s</strong>?"
+msgid ""
+"Are you sure you want to delete the category <strong>%(name)s</strong>?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/description_delete.html:4
@@ -13386,14 +13493,14 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/items/description_delete.html:9
 #, python-format
 msgid ""
-"Are you sure you want to delete the description <strong>%(question)s</"
-"strong>?"
+"Are you sure you want to delete the description "
+"<strong>%(question)s</strong>?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/description_delete.html:11
 msgid ""
-"All answers to the description given by the buyers of the following products "
-"will be <strong>lost</strong>."
+"All answers to the description given by the buyers of the following products"
+" will be <strong>lost</strong>."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/description_edit.html:8
@@ -13434,9 +13541,9 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:14
 msgid ""
-"Below, you find a list of all available products. You can click on a product "
-"name to inspect and change product details. You can also use the buttons on "
-"the right to change the order of products within a give category."
+"Below, you find a list of all available products. You can click on a product"
+" name to inspect and change product details. You can also use the buttons on"
+" the right to change the order of products within a give category."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:23
@@ -13450,7 +13557,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:77
 msgid ""
-"Currently unavailable since a limited timeframe for this product has been set"
+"Currently unavailable since a limited timeframe for this product has been "
+"set"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:82
@@ -13703,11 +13811,11 @@ msgstr ""
 msgid ""
 "To ensure your products are available as intended, you need to set quotas. "
 "Quotas determine how many instances of your product can be sold on the "
-"platform. This allows you to configure whether your event can accommodate an "
-"unlimited number of attendees or if the number of attendees is capped. You "
+"platform. This allows you to configure whether your event can accommodate an"
+" unlimited number of attendees or if the number of attendees is capped. You "
 "can assign a product to multiple quotas to meet more complex requirements, "
-"such as limiting the total number of tickets sold while also restricting the "
-"number of specific ticket types simultaneously."
+"such as limiting the total number of tickets sold while also restricting the"
+" number of specific ticket types simultaneously."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/items/quotas.html:28
@@ -13735,8 +13843,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/oauth/app_delete.html:9
 #, python-format
 msgid ""
-"Are you sure you want to disable the application <strong>%(application)s</"
-"strong> permanently?"
+"Are you sure you want to disable the application "
+"<strong>%(application)s</strong> permanently?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/oauth/app_list.html:4
@@ -13853,7 +13961,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/cancel.html:11
 #: eventyay/control/templates/pretixcontrol/order/deny.html:10
-msgid "Do you really want to cancel this order? You cannot revert this action."
+msgid ""
+"Do you really want to cancel this order? You cannot revert this action."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/cancel.html:15
@@ -13874,8 +13983,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/cancellation_request_delete.html:10
 msgid ""
-"Do you really want to remove this cancellation request? The user will not be "
-"informed automatically, but you will have the option to email them "
+"Do you really want to remove this cancellation request? The user will not be"
+" informed automatically, but you will have the option to email them "
 "individually in the next step."
 msgstr ""
 
@@ -13918,8 +14027,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:31
 msgid ""
-"The user will receive a notification about the change but in the case of new "
-"required questions, the user will not be forced to answer them."
+"The user will receive a notification about the change but in the case of new"
+" required questions, the user will not be forced to answer them."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:37
@@ -13937,10 +14046,10 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/order/change.html:48
 msgid ""
 "Please use this tool carefully. Changes you make here are not reversible. "
-"Also, if you change an order manually, not all constraints (e.g. on required "
-"add-ons) will be checked. Therefore, you might construct an order that would "
-"not be able to exist otherwise. In most cases it is easier to cancel the "
-"order completely and create a new one."
+"Also, if you change an order manually, not all constraints (e.g. on required"
+" add-ons) will be checked. Therefore, you might construct an order that "
+"would not be able to exist otherwise. In most cases it is easier to cancel "
+"the order completely and create a new one."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:68
@@ -14106,8 +14215,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:89
 msgid ""
-"The payment for this order is overdue, but you have configured not to expire "
-"orders automatically. To free quota capacity, you can mark it as expired "
+"The payment for this order is overdue, but you have configured not to expire"
+" orders automatically. To free quota capacity, you can mark it as expired "
 "manually."
 msgstr ""
 
@@ -14130,7 +14239,8 @@ msgid "Cancellation request"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:128
-msgid "The customer asked you to cancel the order with the following settings:"
+msgid ""
+"The customer asked you to cancel the order with the following settings:"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:135
@@ -14313,8 +14423,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:628
 msgid ""
-"This payment was created with an older version of eventyay, therefore accurate "
-"data might not be available."
+"This payment was created with an older version of eventyay, therefore "
+"accurate data might not be available."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:629
@@ -14391,8 +14501,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:33
 msgid ""
-"This email has been sent with an older version of eventyay. We are therefore "
-"not able to display it here accurately."
+"This email has been sent with an older version of eventyay. We are therefore"
+" not able to display it here accurately."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/mail_history.html:39
@@ -14633,8 +14743,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:15
 msgid ""
-"After starting this operation, depending on the size of your event, it might "
-"take a few minutes or longer until all orders are processed."
+"After starting this operation, depending on the size of your event, it might"
+" take a few minutes or longer until all orders are processed."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:21
@@ -14854,8 +14964,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:58
 msgctxt "subevent"
 msgid ""
-"If you select a single date, fees will not be listed here as it might not be "
-"clear which date they belong to."
+"If you select a single date, fees will not be listed here as it might not be"
+" clear which date they belong to."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/orders/overview.html:72
@@ -14998,8 +15108,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:15
 msgid ""
-"If data (e.g. POS transactions or check-ins) has been created on this device "
-"and has not been uploaded, you will no longer be able to upload it."
+"If data (e.g. POS transactions or check-ins) has been created on this device"
+" and has not been uploaded, you will no longer be able to upload it."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:16
@@ -15139,8 +15249,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:13
 msgid ""
-"You haven't issued any gift cards yet. You can either set up a product in an "
-"event shop to sell gift cards, or you can manually issue gift cards."
+"You haven't issued any gift cards yet. You can either set up a product in an"
+" event shop to sell gift cards, or you can manually issue gift cards."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:20
@@ -15175,8 +15285,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/organizers/properties.html:7
 msgid ""
 "You can here define a set of metadata properties (i.e. variables) that you "
-"can later set for your events and re-use in places like ticket layouts. This "
-"is an useful timesaver if you create lots and lots of events."
+"can later set for your events and re-use in places like ticket layouts. This"
+" is an useful timesaver if you create lots and lots of events."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/properties.html:15
@@ -15434,9 +15544,9 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:96
 msgid ""
-"This editor allows you to create a design for the PDF tickets of your event. "
-"You can upload a background PDF and then use this tool to place texts and a "
-"QR code on the ticket."
+"This editor allows you to create a design for the PDF tickets of your event."
+" You can upload a background PDF and then use this tool to place texts and a"
+" QR code on the ticket."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:107
@@ -15500,8 +15610,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:201
 msgid ""
 "After you changed the page size, you need to create a new empty background. "
-"If you want to use a custom background, it already needs to have the correct "
-"size."
+"If you want to use a custom background, it already needs to have the correct"
+" size."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:210
@@ -15653,8 +15763,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/shredder/download.html:48
 msgid ""
-"In the downloaded file, there is a text file named \"CONFIRM_CODE.txt\" with "
-"a six-character code. Please enter this code here to confirm that you "
+"In the downloaded file, there is a text file named \"CONFIRM_CODE.txt\" with"
+" a six-character code. Please enter this code here to confirm that you "
 "successfully downloaded the file."
 msgstr ""
 
@@ -15673,21 +15783,22 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:18
 msgid ""
-"Using this will not remove the orders for your event, it just scrubs them of "
-"data that can be linked to individual persons."
+"Using this will not remove the orders for your event, it just scrubs them of"
+" data that can be linked to individual persons."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:26
 msgid ""
 "It is within your own responsibility to check if you are allowed to delete "
-"the affected data in your legislation, e.g. for reasons of taxation. In many "
-"countries, you need to keep some data in the live system in case of an audit."
+"the affected data in your legislation, e.g. for reasons of taxation. In many"
+" countries, you need to keep some data in the live system in case of an "
+"audit."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/shredder/index.html:32
 msgid ""
-"For most categories of data, you will be able to partially download the data "
-"to store it offline. Some kinds of data (such as some payment information) "
+"For most categories of data, you will be able to partially download the data"
+" to store it offline. Some kinds of data (such as some payment information) "
 "as well as historical log data cannot be downloaded at the moment."
 msgstr ""
 
@@ -15826,8 +15937,8 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:171
 msgid ""
 "You selected a set of dates that currently have different quota setups. You "
-"can therefore not change their quotas in bulk. If you want, you can set up a "
-"new set of quotas to <strong>replace</strong> the quota setup of all "
+"can therefore not change their quotas in bulk. If you want, you can set up a"
+" new set of quotas to <strong>replace</strong> the quota setup of all "
 "selected dates."
 msgstr ""
 
@@ -15845,7 +15956,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/subevents/delete.html:9
 #, python-format
-msgid "Are you sure you want to delete the date <strong>%(subevent)s</strong>?"
+msgid ""
+"Are you sure you want to delete the date <strong>%(subevent)s</strong>?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/subevents/delete_bulk.html:4
@@ -16001,8 +16113,7 @@ msgid "copy"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:68
-msgid ""
-"If present, make sure \"Time-based\"/\"TOTP\" and 6 digit codes are selected."
+msgid "If present, make sure \"Time-based\"/\"TOTP\" and 6 digit codes are selected."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_confirm_totp.html:74
@@ -16031,8 +16142,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:9
 #, python-format
-msgid ""
-"Are you sure you want to delete the authentication device \"%(device)s\"?"
+msgid "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_delete.html:12
@@ -16074,8 +16184,8 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_enable.html:14
 msgid ""
-"Please make sure to print out or copy the emergency tokens and store them in "
-"a safe place."
+"Please make sure to print out or copy the emergency tokens and store them in"
+" a safe place."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:4
@@ -16090,7 +16200,8 @@ msgid ""
 "Two-factor authentication is a way to add additional security to your "
 "account. If you enable it, you will not only need your password to log in, "
 "but also an additional token that is generated e.g. by an app on your "
-"smartphone or a hardware token generator and that changes on a regular basis."
+"smartphone or a hardware token generator and that changes on a regular "
+"basis."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:17
@@ -16140,9 +16251,9 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:104
 msgid ""
-"If you lose access to your devices, you can use one of the following keys to "
-"log in. We recommend to store them in a safe place, e.g. printed out or in a "
-"password manager. Every token can be used at most once."
+"If you lose access to your devices, you can use one of the following keys to"
+" log in. We recommend to store them in a safe place, e.g. printed out or in "
+"a password manager. Every token can be used at most once."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/user/2fa_main.html:106
@@ -16419,8 +16530,9 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
-"The waiting list is disabled, so if the event is sold out, people cannot add "
-"themselves to this list. If you want to enable it, go to the event settings."
+"The waiting list is disabled, so if the event is sold out, people cannot add"
+" themselves to this list. If you want to enable it, go to the event "
+"settings."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:28
@@ -16448,7 +16560,8 @@ msgid ""
 "automatically. You can either send them one-by-one in an order of your "
 "choice by clicking the buttons next to a line in this table (if sufficient "
 "quota is available) or you can press the big button below this text to send "
-"out as many vouchers as currently possible to the persons who waited longest."
+"out as many vouchers as currently possible to the persons who waited "
+"longest."
 msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:69
@@ -16554,12 +16667,14 @@ msgid "That page number is less than 1"
 msgstr ""
 
 #: eventyay/control/views/admin.py:198 eventyay/control/views/admin.py:224
-#: eventyay/control/views/vouchers.py:161 eventyay/control/views/vouchers.py:211
+#: eventyay/control/views/vouchers.py:161
+#: eventyay/control/views/vouchers.py:211
 msgid "The requested voucher does not exist."
 msgstr ""
 
 #: eventyay/control/views/admin.py:228 eventyay/control/views/admin.py:237
-#: eventyay/control/views/vouchers.py:165 eventyay/control/views/vouchers.py:175
+#: eventyay/control/views/vouchers.py:165
+#: eventyay/control/views/vouchers.py:175
 msgid "A voucher can not be deleted if it already has been redeemed."
 msgstr ""
 
@@ -16590,15 +16705,15 @@ msgstr ""
 
 #: eventyay/control/views/auth.py:308
 msgid ""
-"If the address is registered to valid account, then we have sent you an e-"
-"mail containing further instructions. Please note that we will send at most "
-"one email every 24 hours."
+"If the address is registered to valid account, then we have sent you an "
+"e-mail containing further instructions. Please note that we will send at "
+"most one email every 24 hours."
 msgstr ""
 
 #: eventyay/control/views/auth.py:311
 msgid ""
-"If the address is registered to valid account, then we have sent you an e-"
-"mail containing further instructions."
+"If the address is registered to valid account, then we have sent you an "
+"e-mail containing further instructions."
 msgstr ""
 
 #: eventyay/control/views/auth.py:331
@@ -16654,8 +16769,9 @@ msgstr ""
 #: eventyay/control/views/organizer_views/organizer_view.py:232
 #: eventyay/control/views/organizer_views/organizer_view.py:379
 #: eventyay/control/views/pages.py:107 eventyay/control/views/subevents.py:412
-#: eventyay/control/views/subevents.py:909 eventyay/control/views/subevents.py:1354
-#: eventyay/control/views/user.py:310 eventyay/eventyay_common/views/event.py:447
+#: eventyay/control/views/subevents.py:909
+#: eventyay/control/views/subevents.py:1354 eventyay/control/views/user.py:310
+#: eventyay/eventyay_common/views/event.py:447
 #: eventyay/plugins/badges/views.py:70
 #: eventyay/plugins/ticketoutputpdf/views.py:106
 msgid "We could not save your changes. See below for details."
@@ -16738,15 +16854,16 @@ msgstr ""
 
 #: eventyay/control/views/dashboards.py:293
 msgid ""
-"To start selling tickets, you need to create products or quotas. The fastest "
-"way to create this is to use our setup tool."
+"To start selling tickets, you need to create products or quotas. The fastest"
+" way to create this is to use our setup tool."
 msgstr ""
 
 #: eventyay/control/views/dashboards.py:295
 msgid "Set up event"
 msgstr ""
 
-#: eventyay/control/views/dashboards.py:481 eventyay/control/views/typeahead.py:52
+#: eventyay/control/views/dashboards.py:481
+#: eventyay/control/views/typeahead.py:52
 msgctxt "subevent"
 msgid "No dates"
 msgstr ""
@@ -16781,8 +16898,8 @@ msgstr[1] ""
 #: eventyay/control/views/event.py:185
 #: eventyay/control/views/organizer_views/organizer_view.py:127
 msgid ""
-"Your changes have been saved. Please note that it can take a short period of "
-"time until your changes become active."
+"Your changes have been saved. Please note that it can take a short period of"
+" time until your changes become active."
 msgstr ""
 
 #: eventyay/control/views/event.py:293
@@ -16823,9 +16940,9 @@ msgstr ""
 
 #: eventyay/control/views/event.py:616
 msgid ""
-"We've been able to contact the SMTP server you configured. Remember to check "
-"the \"use custom SMTP server\" checkbox, otherwise your SMTP server will not "
-"be used."
+"We've been able to contact the SMTP server you configured. Remember to check"
+" the \"use custom SMTP server\" checkbox, otherwise your SMTP server will "
+"not be used."
 msgstr ""
 
 #: eventyay/control/views/event.py:665 eventyay/plugins/sendmail/views.py:143
@@ -16859,8 +16976,8 @@ msgstr ""
 
 #: eventyay/control/views/event.py:917
 msgid ""
-"An order could not be deleted as some constraints (e.g. data created by plug-"
-"ins) do not allow it."
+"An order could not be deleted as some constraints (e.g. data created by "
+"plug-ins) do not allow it."
 msgstr ""
 
 #: eventyay/control/views/event.py:923
@@ -16933,7 +17050,8 @@ msgstr ""
 
 #: eventyay/control/views/global_settings.py:40
 #: eventyay/control/views/global_settings.py:72
-#: eventyay/control/views/global_settings.py:127 eventyay/control/views/pages.py:46
+#: eventyay/control/views/global_settings.py:127
+#: eventyay/control/views/pages.py:46
 msgid "Your changes have not been saved, see below for errors."
 msgstr ""
 
@@ -17158,7 +17276,8 @@ msgid "The refund has been marked as done."
 msgstr ""
 
 #: eventyay/control/views/orders.py:681
-msgid "The request has been removed. If you want, you can now inform the user."
+msgid ""
+"The request has been removed. If you want, you can now inform the user."
 msgstr ""
 
 #: eventyay/control/views/orders.py:688
@@ -17170,8 +17289,7 @@ msgstr ""
 msgid ""
 "Hello,\n"
 "\n"
-"unfortunately, we were unable to accommodate your request and cancel your "
-"order.\n"
+"unfortunately, we were unable to accommodate your request and cancel your order.\n"
 "\n"
 "Your {event} team"
 msgstr ""
@@ -17234,20 +17352,20 @@ msgid ""
 "\n"
 "we have refunded you {amount} for your order.\n"
 "\n"
-"You can use the gift card code {giftcard} to pay for future ticket purchases "
-"in our shop.\n"
+"You can use the gift card code {giftcard} to pay for future ticket purchases in our shop.\n"
 "\n"
 "Your {event} team"
 msgstr ""
 
 #: eventyay/control/views/orders.py:1000
-msgid "The refunds you selected do not match the selected total refund amount."
+msgid ""
+"The refunds you selected do not match the selected total refund amount."
 msgstr ""
 
 #: eventyay/control/views/orders.py:1136
 msgid ""
-"The order has been marked as paid, but we were unable to send a confirmation "
-"mail."
+"The order has been marked as paid, but we were unable to send a confirmation"
+" mail."
 msgstr ""
 
 #: eventyay/control/views/orders.py:1139
@@ -17256,8 +17374,8 @@ msgstr ""
 
 #: eventyay/control/views/orders.py:1151
 msgid ""
-"The order has been canceled. You can now select how you want to transfer the "
-"money back to the user."
+"The order has been canceled. You can now select how you want to transfer the"
+" money back to the user."
 msgstr ""
 
 #: eventyay/control/views/orders.py:1217 eventyay/control/views/orders.py:1221
@@ -17390,12 +17508,15 @@ msgstr ""
 msgid "There is no order with the given order code."
 msgstr ""
 
-#: eventyay/control/views/orders.py:2141 eventyay/control/views/organizer.py:114
+#: eventyay/control/views/orders.py:2141
+#: eventyay/control/views/organizer.py:114
 msgid "The selected exporter was not found."
 msgstr ""
 
-#: eventyay/control/views/orders.py:2148 eventyay/control/views/organizer.py:120
-msgid "There was a problem processing your input. See below for error details."
+#: eventyay/control/views/orders.py:2148
+#: eventyay/control/views/organizer.py:120
+msgid ""
+"There was a problem processing your input. See below for error details."
 msgstr ""
 
 #: eventyay/control/views/orders.py:2233
@@ -17405,8 +17526,8 @@ msgstr ""
 #: eventyay/control/views/orders.py:2235
 #, python-brace-format
 msgid ""
-"The orders have been canceled. An error occurred with {count} orders, please "
-"check all uncanceled orders."
+"The orders have been canceled. An error occurred with {count} orders, please"
+" check all uncanceled orders."
 msgstr ""
 
 #: eventyay/control/views/orders.py:2256
@@ -17421,7 +17542,8 @@ msgstr ""
 msgid "The property has been created."
 msgstr ""
 
-#: eventyay/control/views/organizer.py:176 eventyay/control/views/organizer.py:205
+#: eventyay/control/views/organizer.py:176
+#: eventyay/control/views/organizer.py:205
 #: eventyay/control/views/organizer_views/device_view.py:48
 #: eventyay/control/views/organizer_views/device_view.py:121
 #: eventyay/control/views/organizer_views/gate_view.py:55
@@ -17506,8 +17628,8 @@ msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:189
 msgid ""
-"The organizer could not be deleted as some constraints (e.g. data created by "
-"plug-ins) do not allow it."
+"The organizer could not be deleted as some constraints (e.g. data created by"
+" plug-ins) do not allow it."
 msgstr ""
 
 #: eventyay/control/views/organizer_views/organizer_view.py:383
@@ -17574,8 +17696,7 @@ msgstr ""
 #: eventyay/control/views/organizer_views/team_view.py:281
 msgid ""
 "A new API token has been created with the following secret: {}\n"
-"Please copy this secret to a safe place. You will not be able to view it "
-"again here."
+"Please copy this secret to a safe place. You will not be able to view it again here."
 msgstr ""
 
 #: eventyay/control/views/pages.py:55 eventyay/control/views/pages.py:131
@@ -17602,12 +17723,14 @@ msgstr ""
 msgid "The selected data was deleted successfully."
 msgstr ""
 
-#: eventyay/control/views/subevents.py:126 eventyay/control/views/subevents.py:421
+#: eventyay/control/views/subevents.py:126
+#: eventyay/control/views/subevents.py:421
 msgctxt "subevent"
 msgid "The requested date does not exist."
 msgstr ""
 
-#: eventyay/control/views/subevents.py:130 eventyay/control/views/subevents.py:141
+#: eventyay/control/views/subevents.py:130
+#: eventyay/control/views/subevents.py:141
 msgctxt "subevent"
 msgid "A date can not be deleted if orders already have been placed."
 msgstr ""
@@ -17680,9 +17803,9 @@ msgstr ""
 
 #: eventyay/control/views/user.py:448 eventyay/control/views/user.py:508
 msgid ""
-"Please note that you still need to enable two-factor authentication for your "
-"account using the buttons below to make a second factor required for logging "
-"into your account."
+"Please note that you still need to enable two-factor authentication for your"
+" account using the buttons below to make a second factor required for "
+"logging into your account."
 msgstr ""
 
 #: eventyay/control/views/user.py:451 eventyay/control/views/user.py:511
@@ -17882,8 +18005,8 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:39
 msgid ""
 "Setup and configure content for your event, create calls for proposals and "
-"speakers and build a schedule. Manage the submission and review process, and "
-"select speakers."
+"speakers and build a schedule. Manage the submission and review process, and"
+" select speakers."
 msgstr ""
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:43
@@ -17951,8 +18074,8 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_basics.html:18
 msgid ""
 "This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
+"contain lowercase letters and numbers, and must be unique. We recommend some"
+" kind of abbreviation with less than 30 characters that can be easily "
 "remembered. You cannot change the slug later on!"
 msgstr ""
 
@@ -18169,7 +18292,8 @@ msgstr ""
 #: eventyay/plugins/badges/templates/pretixplugins/badges/delete.html:9
 #, python-format
 msgid ""
-"Are you sure you want to delete the badge layout <strong>%(layout)s</strong>?"
+"Are you sure you want to delete the badge layout "
+"<strong>%(layout)s</strong>?"
 msgstr ""
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:6
@@ -18300,8 +18424,8 @@ msgstr ""
 
 #: eventyay/plugins/banktransfer/payment.py:105
 msgid ""
-"Create an invoice for orders using bank transfer immediately if the event is "
-"otherwise configured to create invoices after payment is completed."
+"Create an invoice for orders using bank transfer immediately if the event is"
+" otherwise configured to create invoices after payment is completed."
 msgstr ""
 
 #: eventyay/plugins/banktransfer/payment.py:115
@@ -18326,8 +18450,8 @@ msgstr ""
 
 #: eventyay/plugins/banktransfer/payment.py:129
 msgid ""
-"This text will be shown on the order confirmation page for pending orders in "
-"addition to the standard text."
+"This text will be shown on the order confirmation page for pending orders in"
+" addition to the standard text."
 msgstr ""
 
 #: eventyay/plugins/banktransfer/payment.py:135
@@ -18339,8 +18463,8 @@ msgid ""
 "Put one IBAN or IBAN prefix per line. The system will not attempt to send "
 "refunds to any of these IBANs. Useful e.g. if you receive a lot of "
 "\"forwarded payments\" by a third-party payment provider. You can also list "
-"country codes such as \"GB\" if you never want to send refunds to IBANs from "
-"a specific country."
+"country codes such as \"GB\" if you never want to send refunds to IBANs from"
+" a specific country."
 msgstr ""
 
 #: eventyay/plugins/banktransfer/payment.py:176
@@ -18419,8 +18543,8 @@ msgstr ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:4
 msgid ""
-"After completing your purchase, we will ask you to transfer the money to the "
-"following bank account, using a personal reference code:"
+"After completing your purchase, we will ask you to transfer the money to the"
+" following bank account, using a personal reference code:"
 msgstr ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:20
@@ -18484,8 +18608,9 @@ msgstr ""
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:8
 #, python-format
 msgid ""
-"In the payment settings of your event, you set the %(date)s as the last date "
-"of any payments. Therefore, you won't be able to mark any order as paid here."
+"In the payment settings of your event, you set the %(date)s as the last date"
+" of any payments. Therefore, you won't be able to mark any order as paid "
+"here."
 msgstr ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:19
@@ -18551,8 +18676,8 @@ msgstr ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:12
 msgid ""
-"The result of your import is in progress. Please be patient while we process "
-"the data …"
+"The result of your import is in progress. Please be patient while we process"
+" the data …"
 msgstr ""
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:18
@@ -18644,10 +18769,8 @@ msgstr ""
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:50
 msgid ""
 "\n"
-"                    Beware that refunds will be marked as done once an "
-"export is created.\n"
-"                    Make sure to download the export and execute the "
-"refunds.\n"
+"                    Beware that refunds will be marked as done once an export is created.\n"
+"                    Make sure to download the export and execute the refunds.\n"
 "                "
 msgstr ""
 
@@ -18916,14 +19039,15 @@ msgstr ""
 msgid "This plugin adds a customizable payment method for manual processing."
 msgstr ""
 
-#: eventyay/plugins/pretixdroid/apps.py:9 eventyay/plugins/pretixdroid/apps.py:12
+#: eventyay/plugins/pretixdroid/apps.py:9
+#: eventyay/plugins/pretixdroid/apps.py:12
 msgid "Old check-in device API"
 msgstr ""
 
 #: eventyay/plugins/pretixdroid/apps.py:17
 msgid ""
-"This plugin allows you to use the eventyaydroid and eventyaydesk apps for your "
-"event."
+"This plugin allows you to use the eventyaydroid and eventyaydesk apps for "
+"your event."
 msgstr ""
 
 #: eventyay/plugins/reports/apps.py:10 eventyay/plugins/reports/apps.py:13
@@ -19022,8 +19146,8 @@ msgstr ""
 
 #: eventyay/plugins/returnurl/apps.py:15
 msgid ""
-"This plugin allows to link to payments and redirect back afterwards. This is "
-"useful in combination with our API."
+"This plugin allows to link to payments and redirect back afterwards. This is"
+" useful in combination with our API."
 msgstr ""
 
 #: eventyay/plugins/returnurl/signals.py:44
@@ -19032,8 +19156,8 @@ msgstr ""
 
 #: eventyay/plugins/returnurl/templates/returnurl/settings.html:14
 msgid ""
-"This feature is useful if you use only the payment component of eventyay but "
-"build your own checkout interface for other steps."
+"This feature is useful if you use only the payment component of eventyay but"
+" build your own checkout interface for other steps."
 msgstr ""
 
 #: eventyay/plugins/returnurl/views.py:14
@@ -19059,8 +19183,8 @@ msgstr ""
 #: eventyay/plugins/sendmail/forms.py:34
 msgid ""
 "Sending an attachment increases the chance of your email not arriving or "
-"being sorted into spam folders. We recommend only using PDFs of no more than "
-"2 MB in size."
+"being sorted into spam folders. We recommend only using PDFs of no more than"
+" 2 MB in size."
 msgstr ""
 
 #: eventyay/plugins/sendmail/forms.py:42
@@ -19113,15 +19237,18 @@ msgstr ""
 msgid "Both (all order contact addresses and all attendee email addresses)"
 msgstr ""
 
-#: eventyay/plugins/sendmail/forms.py:131 eventyay/plugins/sendmail/views.py:220
+#: eventyay/plugins/sendmail/forms.py:131
+#: eventyay/plugins/sendmail/views.py:220
 msgid "payment pending (except unapproved)"
 msgstr ""
 
-#: eventyay/plugins/sendmail/forms.py:132 eventyay/plugins/sendmail/views.py:221
+#: eventyay/plugins/sendmail/forms.py:132
+#: eventyay/plugins/sendmail/views.py:221
 msgid "approval pending"
 msgstr ""
 
-#: eventyay/plugins/sendmail/forms.py:135 eventyay/plugins/sendmail/views.py:219
+#: eventyay/plugins/sendmail/forms.py:135
+#: eventyay/plugins/sendmail/views.py:219
 msgid "pending with payment overdue"
 msgstr ""
 
@@ -19129,7 +19256,8 @@ msgstr ""
 msgid "Send to customers with order status"
 msgstr ""
 
-#: eventyay/plugins/sendmail/forms.py:162 eventyay/plugins/sendmail/forms.py:166
+#: eventyay/plugins/sendmail/forms.py:162
+#: eventyay/plugins/sendmail/forms.py:166
 msgid "Send to customers checked in on list"
 msgstr ""
 
@@ -19180,11 +19308,12 @@ msgstr ""
 #: eventyay/plugins/sendmail/views.py:180
 #, python-format
 msgid ""
-"Your message has been queued and will be sent to the contact addresses of %d "
-"orders in the next few minutes."
+"Your message has been queued and will be sent to the contact addresses of %d"
+" orders in the next few minutes."
 msgstr ""
 
-#: eventyay/plugins/socialauth/apps.py:9 eventyay/plugins/socialauth/apps.py:12
+#: eventyay/plugins/socialauth/apps.py:9
+#: eventyay/plugins/socialauth/apps.py:12
 msgid "SocialAuth"
 msgstr ""
 
@@ -19378,7 +19507,8 @@ msgstr ""
 msgid "Error while authorizing: no email address available."
 msgstr ""
 
-#: eventyay/plugins/statistics/apps.py:9 eventyay/plugins/statistics/apps.py:12
+#: eventyay/plugins/statistics/apps.py:9
+#: eventyay/plugins/statistics/apps.py:12
 #: eventyay/plugins/statistics/signals.py:16
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:8
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:13
@@ -19528,7 +19658,8 @@ msgstr ""
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/delete.html:9
 #, python-format
-msgid "Are you sure you want to delete the layout <strong>%(layout)s</strong>?"
+msgid ""
+"Are you sure you want to delete the layout <strong>%(layout)s</strong>?"
 msgstr ""
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/edit.html:6
@@ -19547,7 +19678,8 @@ msgid ""
 "can upload a PDF file used as a background for the tickets and then place "
 "various texts and QR codes on the background at the positions of your "
 "choice. The editor is easy to use thanks to its drag-and-drop user "
-"interface, but it requires a modern browser and a decent internet connection."
+"interface, but it requires a modern browser and a decent internet "
+"connection."
 msgstr ""
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/form.html:14
@@ -19610,7 +19742,8 @@ msgstr ""
 msgid "Ticket PDF layout: {}"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/apps.py:9 eventyay/plugins/webcheckin/apps.py:12
+#: eventyay/plugins/webcheckin/apps.py:9
+#: eventyay/plugins/webcheckin/apps.py:12
 msgid "Web-based check-in"
 msgstr ""
 
@@ -19680,8 +19813,8 @@ msgstr ""
 #: eventyay/presale/checkoutflowstep/questions_step.py:187
 msgid ""
 "Due to the invoice address you entered, we need to apply a different tax "
-"rate to your purchase and the price of the products in your cart has changed "
-"accordingly."
+"rate to your purchase and the price of the products in your cart has changed"
+" accordingly."
 msgstr ""
 
 #: eventyay/presale/checkoutflowstep/questions_step.py:200
@@ -20052,7 +20185,8 @@ msgid "This sales channel does not provide support for test mode."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:43
-msgid "If you continue, you might pay an actual order with non-existing money!"
+msgid ""
+"If you continue, you might pay an actual order with non-existing money!"
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:49
@@ -20069,7 +20203,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:64
 msgid ""
-"Please go to the payment settings and activate one or more payment providers."
+"Please go to the payment settings and activate one or more payment "
+"providers."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_questions.html:7
@@ -20574,7 +20709,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:135
 #, python-format
-msgid "A refund of %(amount)s will be sent out to you soon, please be patient."
+msgid ""
+"A refund of %(amount)s will be sent out to you soon, please be patient."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:142
@@ -20584,8 +20720,8 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/order.html:144
 #, python-format
 msgid ""
-"We've issued your refund of %(amount)s as a gift card. On your next purchase "
-"with us, you can use the following gift card code during payment:"
+"We've issued your refund of %(amount)s as a gift card. On your next purchase"
+" with us, you can use the following gift card code during payment:"
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:154
@@ -20644,8 +20780,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:351
 msgid ""
-"If you want to make changes to the products you bought, you can click on the "
-"button to change your order."
+"If you want to make changes to the products you bought, you can click on the"
+" button to change your order."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:358
@@ -20705,8 +20841,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:404
 msgid ""
-"You can request to cancel this order. If your request is approved, you get a "
-"full refund."
+"You can request to cancel this order. If your request is approved, you get a"
+" full refund."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:409
@@ -20730,8 +20866,8 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:26
 msgid ""
 "You can request the cancellation of your order on this page. The event "
-"organizer will then decide on your request. If they approve, your order will "
-"be canceled and all tickets will be invalidated."
+"organizer will then decide on your request. If they approve, your order will"
+" be canceled and all tickets will be invalidated."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:33
@@ -20842,8 +20978,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order_pay_change.html:13
 msgid ""
-"Please note: If you change your payment method, your order total will change "
-"by the amount displayed to the right of each method."
+"Please note: If you change your payment method, your order total will change"
+" by the amount displayed to the right of each method."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/order_pay_change.html:46
@@ -20884,9 +21020,9 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/resend_link.html:15
 msgid ""
-"If you lost the link to your order or orders, please enter the email address "
-"you used for your order. We will send you an email with links to all orders "
-"you placed using this email address."
+"If you lost the link to your order or orders, please enter the email address"
+" you used for your order. We will send you an email with links to all orders"
+" you placed using this email address."
 msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/resend_link.html:30
@@ -20949,8 +21085,8 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:22
 msgid ""
-"This is a ticketed event. If you ordered a ticket as a guest user, you don't "
-"have an account but can still access the ticket using the secret link in "
+"This is a ticketed event. If you ordered a ticket as a guest user, you don't"
+" have an account but can still access the ticket using the secret link in "
 "your ticket confirmation email. On the tickets page there is also a link to "
 "join online sessions."
 msgstr ""
@@ -21241,8 +21377,8 @@ msgstr ""
 #: eventyay/presale/views/order.py:1205
 #, python-brace-format
 msgid ""
-"The order has been changed. You can now proceed by paying the open amount of "
-"{amount}."
+"The order has been changed. You can now proceed by paying the open amount of"
+" {amount}."
 msgstr ""
 
 #: eventyay/presale/views/user.py:27
@@ -21268,8 +21404,8 @@ msgstr ""
 
 #: eventyay/presale/views/user.py:60
 msgid ""
-"If there were any orders by this user, they will receive an email with their "
-"order codes."
+"If there were any orders by this user, they will receive an email with their"
+" order codes."
 msgstr ""
 
 #: eventyay/presale/views/waiting.py:77
@@ -21488,8 +21624,8 @@ msgstr ""
 
 #: pretalx/agenda/templates/agenda/featured.html:23
 msgid ""
-"In the near future you will see a curated list of sessions we’d like to show "
-"off here. Right now we are busy reviewing proposals.<br> Check back later!"
+"In the near future you will see a curated list of sessions we’d like to show"
+" off here. Right now we are busy reviewing proposals.<br> Check back later!"
 msgstr ""
 
 #: pretalx/agenda/templates/agenda/feed/description.html:5
@@ -21601,8 +21737,8 @@ msgstr ""
 
 #: pretalx/agenda/views/schedule.py:256
 msgid ""
-"You're currently not logged in, so your favourited talks will only be stored "
-"locally in your browser."
+"You're currently not logged in, so your favourited talks will only be stored"
+" locally in your browser."
 msgstr ""
 
 #: pretalx/agenda/views/schedule.py:259
@@ -21621,7 +21757,8 @@ msgstr ""
 
 #: pretalx/cfp/flow.py:350
 msgid ""
-"Your draft was saved. You can continue to edit it as long as the CfP is open."
+"Your draft was saved. You can continue to edit it as long as the CfP is "
+"open."
 msgstr ""
 "Rasimu yako ilihifadhiwa. Unaweza kuendelea kuihariri kwa kipindi ambacho "
 "CfP imefunguliwa."
@@ -21629,8 +21766,8 @@ msgstr ""
 #: pretalx/cfp/flow.py:358
 msgid ""
 "Congratulations, you’ve submitted your proposal! You can continue to make "
-"changes to it up to the submission deadline, and you will be notified of any "
-"changes or questions."
+"changes to it up to the submission deadline, and you will be notified of any"
+" changes or questions."
 msgstr ""
 "Hongera, umewasilisha pendekezo lako! Unaweza kuendelea kulifanyia "
 "mabadiliko hadi tarehe ya mwisho ya kuwasilisha, na utaarifiwa kuhusu "
@@ -21645,8 +21782,8 @@ msgid ""
 "We’re glad that you want to contribute to our event with your proposal. "
 "Let’s get started, this won’t take long."
 msgstr ""
-"Tunafurahi kuwa ungependa kuchangia katika tukio letu kwa pendekezo lako. Na "
-"tuanze, hii haitachukua muda mrefu."
+"Tunafurahi kuwa ungependa kuchangia katika tukio letu kwa pendekezo lako. Na"
+" tuanze, hii haitachukua muda mrefu."
 
 #: pretalx/cfp/flow.py:452
 msgid "Tell us more!"
@@ -21658,11 +21795,11 @@ msgstr "Kabla ya kuhifadhi pendekezo lako, tuna maswali zaidi kwako."
 
 #: pretalx/cfp/flow.py:481
 msgid ""
-"There was an error when logging in. Please contact the organiser for further "
-"help."
+"There was an error when logging in. Please contact the organiser for further"
+" help."
 msgstr ""
-"Kulikuwa na hitilafu wakati wa kuingia. Tafadhali wasiliana na mwandaaji kwa "
-"usaidizi zaidi."
+"Kulikuwa na hitilafu wakati wa kuingia. Tafadhali wasiliana na mwandaaji kwa"
+" usaidizi zaidi."
 
 #: pretalx/cfp/flow.py:495
 msgid "That’s it about your proposal! We now just need a way to contact you."
@@ -21704,13 +21841,13 @@ msgstr "Nenda kwenye CfP"
 msgid ""
 "If we know a user by this email address (who has not requested a password "
 "reset in the last 24 hours), we will send you an email containing further "
-"instructions. If you don’t see the email within the next minutes, check your "
-"spam inbox!"
+"instructions. If you don’t see the email within the next minutes, check your"
+" spam inbox!"
 msgstr ""
-"Ikiwa tunamjua mtumiaji kwa barua pepe hii "
-"(ambaye hajaomba kuweka upya nenosiri ndani ya saa 24 zilizopita), "
-"tutakutumia barua pepe iliyo na maelekezo zaidi. Ikiwa huoni barua pepe "
-"ndani ya dakika chache zijazo, angalia kisanduku pokezi chako cha barua taka!"
+"Ikiwa tunamjua mtumiaji kwa barua pepe hii (ambaye hajaomba kuweka upya "
+"nenosiri ndani ya saa 24 zilizopita), tutakutumia barua pepe iliyo na "
+"maelekezo zaidi. Ikiwa huoni barua pepe ndani ya dakika chache zijazo, "
+"angalia kisanduku pokezi chako cha barua taka!"
 
 #: pretalx/cfp/phrases.py:14
 msgid ""
@@ -21740,8 +21877,8 @@ msgid ""
 "Your proposal can’t be withdrawn at this time – please contact us if you "
 "need to withdraw your proposal!"
 msgstr ""
-"Pendekezo lako haliwezi kuondolewa kwa wakati huu - tafadhali wasiliana nasi "
-"ikiwa unahitaji kuondoa pendekezo lako!"
+"Pendekezo lako haliwezi kuondolewa kwa wakati huu - tafadhali wasiliana nasi"
+" ikiwa unahitaji kuondoa pendekezo lako!"
 
 #: pretalx/cfp/phrases.py:28
 msgid "Your session has been confirmed – we’re looking forward to seeing you!"
@@ -21823,7 +21960,8 @@ msgstr "Mwaliko umetumwa!"
 #: pretalx/cfp/phrases.py:57
 msgid "You are now part of this proposal! Please fill in your profile below."
 msgstr ""
-"Sasa wewe ni sehemu ya pendekezo hili! Tafadhali jaza wasifu wako hapa chini."
+"Sasa wewe ni sehemu ya pendekezo hili! Tafadhali jaza wasifu wako hapa "
+"chini."
 
 #: pretalx/cfp/phrases.py:61
 msgid ""
@@ -21839,8 +21977,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Unaweza kuweka mapendekezo hadi %(deadline)s (%(timezone)s), %(until_string)"
-"s kuanzia sasa."
+"Unaweza kuweka mapendekezo hadi %(deadline)s (%(timezone)s), "
+"%(until_string)s kuanzia sasa."
 
 #: pretalx/cfp/templates/cfp/event/cfp.html:28
 #, python-format
@@ -21886,8 +22024,8 @@ msgstr "Je, ukubali mwaliko?"
 #: pretalx/cfp/templates/cfp/event/invitation.html:13
 msgid ""
 "Unfortunately, you cannot accept this invitation at the moment. This may be "
-"because the invitation has expired, or because the proposal cannot be edited "
-"any more."
+"because the invitation has expired, or because the proposal cannot be edited"
+" any more."
 msgstr ""
 "Kwa bahati mbaya, huwezi kukubali mwaliko huu kwa sasa. Hii inaweza kuwa ni "
 "kwa sababu muda wa mwaliko umeisha, au kwa sababu pendekezo haliwezi "
@@ -21900,8 +22038,8 @@ msgstr "Tafadhali wasiliana na waandaaji wa mkutano kwa maelezo zaidi."
 #: pretalx/cfp/templates/cfp/event/invitation.html:26
 #, python-format
 msgid ""
-"You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
-"Do you accept the invitation?"
+"You, %(name)s, have been invited to be a speaker for the session “%(talk)s”."
+" Do you accept the invitation?"
 msgstr ""
 "Wewe, %(name)s, umealikwa kuwa mzungumzaji wa kipindi cha \"%(talk)s\". Je, "
 "unakubali mwaliko huo?"
@@ -22011,12 +22149,12 @@ msgstr "Barua pepe zako"
 
 #: pretalx/cfp/templates/cfp/event/user_mails.html:9
 msgid ""
-"These are emails the organisers sent you, so you should be able to find them "
-"in your email inbox, but this page serves as a helper in case your email "
+"These are emails the organisers sent you, so you should be able to find them"
+" in your email inbox, but this page serves as a helper in case your email "
 "address was unavailable or the emails got lost in some way."
 msgstr ""
-"Hizi ni barua pepe ambazo waandaaji walikutumia, kwa hivyo unapaswa kuzipata "
-"kwenye kikasha chako cha barua pepe, lakini ukurasa huu unatumika kama "
+"Hizi ni barua pepe ambazo waandaaji walikutumia, kwa hivyo unapaswa kuzipata"
+" kwenye kikasha chako cha barua pepe, lakini ukurasa huu unatumika kama "
 "msaidizi iwapo barua pepe yako haikupatikana au barua pepe zilipotea kwa "
 "njia fulani."
 
@@ -22052,8 +22190,8 @@ msgstr ""
 #: pretalx/cfp/templates/cfp/event/user_profile.html:95
 msgid ""
 "You can delete your account here – all names, emails, and other personal "
-"information will be overwritten. <strong>This action is irreversible.</"
-"strong>"
+"information will be overwritten. <strong>This action is "
+"irreversible.</strong>"
 msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_profile.html:101
@@ -22072,8 +22210,8 @@ msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_confirm.html:23
 msgid ""
-"Please provide us with your available hours during the event, so that we can "
-"schedule your event accordingly:"
+"Please provide us with your available hours during the event, so that we can"
+" schedule your event accordingly:"
 msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_confirm.html:39
@@ -22103,8 +22241,8 @@ msgstr ""
 #: pretalx/cfp/templates/cfp/event/user_submission_confirm_error.html:13
 msgid ""
 "The proposal you’re trying to confirm either does not exist or does not "
-"belong to the account you’re currently logged in with. Try logging in with a "
-"different account, or contact the event organisers for further information."
+"belong to the account you’re currently logged in with. Try logging in with a"
+" different account, or contact the event organisers for further information."
 msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_discard.html:15
@@ -22151,8 +22289,8 @@ msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:101
 msgid ""
-"If you need a review from a colleague or a friend here’s a link that you can "
-"send out for viewing your proposal:"
+"If you need a review from a colleague or a friend here’s a link that you can"
+" send out for viewing your proposal:"
 msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:109
@@ -22174,8 +22312,8 @@ msgstr ""
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:127
 msgid ""
 "You can discard your draft proposal here. You cannot undo this - if you are "
-"just uncertain if you can or should submit your proposal, please contact the "
-"organiser instead."
+"just uncertain if you can or should submit your proposal, please contact the"
+" organiser instead."
 msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/user_submission_edit.html:141
@@ -22420,7 +22558,8 @@ msgstr ""
 
 #: pretalx/common/forms/widgets.py:48
 msgid ""
-"This password would take <em class=\"password_strength_time\"></em> to crack."
+"This password would take <em class=\"password_strength_time\"></em> to "
+"crack."
 msgstr ""
 
 #: pretalx/common/forms/widgets.py:73
@@ -22915,8 +23054,8 @@ msgstr ""
 
 #: pretalx/common/templates/400.html:18
 msgid ""
-"It looks as if the communication between you and eventyay went wrong in some "
-"way. <br> Please return to the last page and try again!"
+"It looks as if the communication between you and eventyay went wrong in some"
+" way. <br> Please return to the last page and try again!"
 msgstr ""
 
 #: pretalx/common/templates/403_csrf.html:7
@@ -23036,8 +23175,8 @@ msgstr ""
 #: pretalx/common/templates/common/user_api_token.html:11
 #, python-format
 msgid ""
-"This token can be used to access the <a %(apiurl)s>eventyay API</a>. You can "
-"generate a new token, which will invalidate the old one. To find out more, "
+"This token can be used to access the <a %(apiurl)s>eventyay API</a>. You can"
+" generate a new token, which will invalidate the old one. To find out more, "
 "please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
 
@@ -23089,17 +23228,12 @@ msgstr ""
 msgid "Login with MediaWiki SSO or Email"
 msgstr ""
 
-#: pretalx/common/update_check.py:100
-msgid "eventyay update available"
-msgstr ""
-
 #: pretalx/common/update_check.py:104
 #, python-brace-format
 msgid ""
 "Hi!\n"
 "\n"
-"An update is available for eventyay or for one of the plugins you installed "
-"in your eventyay installation at {base_url}.\n"
+"An update is available for eventyay or for one of the plugins you installed in your eventyay installation at {base_url}.\n"
 "Please follow this link for more information:\n"
 "\n"
 " {url} \n"
@@ -23108,8 +23242,7 @@ msgid ""
 "\n"
 "  https://docs.eventyay.org/changelog.html\n"
 "\n"
-"Larger updates are also announced with upgrade notes on the eventyay.com "
-"blog:\n"
+"Larger updates are also announced with upgrade notes on the eventyay.com blog:\n"
 "\n"
 "  https://eventyay.com/p/news\n"
 "\n"
@@ -23168,8 +23301,8 @@ msgstr ""
 #: pretalx/event/forms.py:208
 msgid ""
 "This is the address your event will be available at. Should be short, only "
-"contain lowercase letters and numbers, and must be unique. We recommend some "
-"kind of abbreviation with less than 30 characters that can be easily "
+"contain lowercase letters and numbers, and must be unique. We recommend some"
+" kind of abbreviation with less than 30 characters that can be easily "
 "remembered."
 msgstr ""
 
@@ -23257,9 +23390,9 @@ msgstr ""
 #: pretalx/event/models/event.py:241
 msgid ""
 "If you provide a header image, it will be displayed instead of your event’s "
-"color and/or header pattern at the top of all event pages. It will be center-"
-"aligned, so when the window shrinks, the center parts will continue to be "
-"displayed, and not stretched."
+"color and/or header pattern at the top of all event pages. It will be "
+"center-aligned, so when the window shrinks, the center parts will continue "
+"to be displayed, and not stretched."
 msgstr ""
 
 #: pretalx/event/models/event.py:255
@@ -23268,8 +23401,8 @@ msgstr ""
 
 #: pretalx/event/models/event.py:257
 msgid ""
-"This text will be shown on the landing page, alongside with links to the CfP "
-"and schedule, if appropriate."
+"This text will be shown on the landing page, alongside with links to the CfP"
+" and schedule, if appropriate."
 msgstr ""
 
 #: pretalx/event/models/event.py:265
@@ -23345,7 +23478,8 @@ msgstr ""
 #: pretalx/event/models/organiser.py:35
 msgid ""
 "There must be at least one team with the permission to change teams, as "
-"otherwise nobody can create new teams or grant permissions to existing teams."
+"otherwise nobody can create new teams or grant permissions to existing "
+"teams."
 msgstr ""
 
 #: pretalx/event/models/organiser.py:42
@@ -23430,8 +23564,7 @@ msgstr ""
 #, python-brace-format
 msgid ""
 "Hi!\n"
-"You have been invited to the {name} event organiser team - Please click here "
-"to accept:\n"
+"You have been invited to the {name} event organiser team - Please click here to accept:\n"
 "\n"
 "{invitation_link}\n"
 "\n"
@@ -23674,7 +23807,8 @@ msgstr ""
 
 #: pretalx/mail/context.py:270
 msgid ""
-"A list of all changes to the user’s schedule in the current schedule version."
+"A list of all changes to the user’s schedule in the current schedule "
+"version."
 msgstr ""
 
 #: pretalx/mail/context.py:281
@@ -23718,10 +23852,8 @@ msgid ""
 "\n"
 "    {confirmation_link}\n"
 "\n"
-"We look forward to seeing you at {event_name} - Please contact us if you "
-"have any\n"
-"questions! We will reach out again before the conference to tell you "
-"details\n"
+"We look forward to seeing you at {event_name} - Please contact us if you have any\n"
+"questions! We will reach out again before the conference to tell you details\n"
 "about your slot in the schedule and technical details concerning the room\n"
 "and presentation tech.\n"
 "\n"
@@ -23755,8 +23887,7 @@ msgid ""
 "\n"
 "{speaker_schedule_new}\n"
 "\n"
-"We look forward to seeing you, and please contact us if there is any problem "
-"with your session or assigned slot.\n"
+"We look forward to seeing you, and please contact us if there is any problem with your session or assigned slot.\n"
 "\n"
 "The {event_name} organisers"
 msgstr ""
@@ -23812,15 +23943,12 @@ msgstr ""
 msgid ""
 "Hi!\n"
 "\n"
-"You have been added to a proposal of {event_name}, titled "
-"“{proposal_title}”.\n"
-"An account has been created for you – please follow this link to set your "
-"account password.\n"
+"You have been added to a proposal of {event_name}, titled “{proposal_title}”.\n"
+"An account has been created for you – please follow this link to set your account password.\n"
 "\n"
 "{invitation_link}\n"
 "\n"
-"Afterwards, you can edit your user profile and see the state of your "
-"proposal.\n"
+"Afterwards, you can edit your user profile and see the state of your proposal.\n"
 "\n"
 "The {event} orga crew"
 msgstr ""
@@ -23830,10 +23958,8 @@ msgstr ""
 msgid ""
 "Hi!\n"
 "\n"
-"You have been added to a proposal of {event_name}, titled "
-"“{proposal_title}”.\n"
-"Please follow this link to edit your user profile and see the state of your "
-"proposal:\n"
+"You have been added to a proposal of {event_name}, titled “{proposal_title}”.\n"
+"Please follow this link to edit your user profile and see the state of your proposal:\n"
 "\n"
 "{proposal_url}\n"
 "\n"
@@ -23925,10 +24051,10 @@ msgstr ""
 msgid ""
 "During the update check, eventyay will report an anonymous, unique "
 "installation ID, the current version of eventyay and your installed plugins "
-"and the number of active and inactive events in your installation to servers "
-"operated by the eventyay developers. We will only store anonymous data, never "
-"any IP addresses and we will not know who you are or where to find your "
-"instance. You can disable this behavior here at any time."
+"and the number of active and inactive events in your installation to servers"
+" operated by the eventyay developers. We will only store anonymous data, "
+"never any IP addresses and we will not know who you are or where to find "
+"your instance. You can disable this behavior here at any time."
 msgstr ""
 
 #: pretalx/orga/forms/admin.py:28
@@ -24239,8 +24365,8 @@ msgstr ""
 #: pretalx/orga/forms/event.py:215
 #, python-brace-format
 msgid ""
-"The domain “{domain}” does not have a name server entry at this time. Please "
-"make sure the domain is working before configuring it here."
+"The domain “{domain}” does not have a name server entry at this time. Please"
+" make sure the domain is working before configuring it here."
 msgstr ""
 
 #: pretalx/orga/forms/event.py:252
@@ -24397,8 +24523,8 @@ msgstr ""
 
 #: pretalx/orga/forms/export.py:29
 msgid ""
-"How do you want to separate data within a single cell (for example, multiple "
-"speakers in one session)?"
+"How do you want to separate data within a single cell (for example, multiple"
+" speakers in one session)?"
 msgstr ""
 
 #: pretalx/orga/forms/export.py:32
@@ -24453,8 +24579,8 @@ msgstr ""
 
 #: pretalx/orga/forms/mails.py:265
 msgid ""
-"If you check this, the emails will be sent immediately, instead of being put "
-"in the outbox."
+"If you check this, the emails will be sent immediately, instead of being put"
+" in the outbox."
 msgstr ""
 
 #: pretalx/orga/forms/mails.py:282
@@ -24495,8 +24621,8 @@ msgstr ""
 
 #: pretalx/orga/forms/mails.py:386
 msgid ""
-"If you provide only one language, that language will be used for all emails. "
-"If you provide multiple languages, the best fit for each speaker will be "
+"If you provide only one language, that language will be used for all emails."
+" If you provide multiple languages, the best fit for each speaker will be "
 "used."
 msgstr ""
 
@@ -24630,7 +24756,8 @@ msgid "Average review score, if there have been reviews yet"
 msgstr ""
 
 #: pretalx/orga/forms/schedule.py:161
-msgid "Resources provided by the speaker, either as links or as uploaded files"
+msgid ""
+"Resources provided by the speaker, either as links or as uploaded files"
 msgstr ""
 
 #: pretalx/orga/forms/speaker.py:16
@@ -24797,9 +24924,9 @@ msgstr ""
 #: pretalx/orga/templates/orga/admin/admin.html:22
 #, python-format
 msgid ""
-"You are running %(site_name)s in development mode. Please <strong>STOP</"
-"strong> and set the DEBUG variable to False if this page is in any way "
-"reachable from the internet."
+"You are running %(site_name)s in development mode. Please "
+"<strong>STOP</strong> and set the DEBUG variable to False if this page is in"
+" any way reachable from the internet."
 msgstr ""
 
 #: pretalx/orga/templates/orga/admin/admin.html:32
@@ -24960,8 +25087,8 @@ msgstr ""
 msgid ""
 "Starting with version 1.1.0, eventyay automatically checks for updates in "
 "the background. During this check, anonymous data is transmitted to servers "
-"operated by the eventyay developers. Click on this message to find out more, "
-"disable this feature or enter your email address to get notified via email "
+"operated by the eventyay developers. Click on this message to find out more,"
+" disable this feature or enter your email address to get notified via email "
 "if a new update arrives. This message will disappear once you clicked it."
 msgstr ""
 
@@ -25004,7 +25131,8 @@ msgstr ""
 msgid "Export reviews"
 msgstr ""
 
-#: pretalx/orga/templates/orga/base.html:353 pretalx/schedule/models/room.py:44
+#: pretalx/orga/templates/orga/base.html:353
+#: pretalx/schedule/models/room.py:44
 msgid "Speaker Information"
 msgstr ""
 
@@ -25087,8 +25215,8 @@ msgstr ""
 msgid ""
 "This is the %(site_name)s CfP editor. This page allows you to change the "
 "headline and information text on all of the individual CfP steps. You can "
-"also add a custom help text to individual fields. Just click on the item you "
-"want to change!"
+"also add a custom help text to individual fields. Just click on the item you"
+" want to change!"
 msgstr ""
 
 #: pretalx/orga/templates/orga/cfp/question_detail.html:41
@@ -25104,7 +25232,8 @@ msgstr ""
 #: pretalx/orga/templates/orga/cfp/question_detail.html:44
 #: pretalx/orga/templates/orga/cfp/question_form.html:59
 msgid ""
-"This question is currently inactive, and will not be asked during submission."
+"This question is currently inactive, and will not be asked during "
+"submission."
 msgstr ""
 
 #: pretalx/orga/templates/orga/cfp/question_detail.html:45
@@ -25151,8 +25280,8 @@ msgstr ""
 #: pretalx/orga/templates/orga/cfp/question_form.html:71
 msgid ""
 "If you mark a Yes/No question as required, it means that the user has to "
-"select Yes and No is not accepted. If you want to allow both options, do not "
-"make this field required."
+"select Yes and No is not accepted. If you want to allow both options, do not"
+" make this field required."
 msgstr ""
 
 #: pretalx/orga/templates/orga/cfp/question_form.html:80
@@ -25196,8 +25325,8 @@ msgstr ""
 msgid ""
 "Questions can help you sort out additional details with speakers, such as "
 "clothing sizes, special requirements such as dietary needs, or "
-"accommodation. Questions can be asked either on a per-proposal level, or per "
-"speaker, as you see fit."
+"accommodation. Questions can be asked either on a per-proposal level, or per"
+" speaker, as you see fit."
 msgstr ""
 
 #: pretalx/orga/templates/orga/cfp/question_view.html:45
@@ -25428,8 +25557,8 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/event/live.html:22
 msgid ""
-"Your event is currently only visible to you and your team. By going live, it "
-"will be publicly visible."
+"Your event is currently only visible to you and your team. By going live, it"
+" will be publicly visible."
 msgstr ""
 
 #: pretalx/orga/templates/orga/event/live.html:29
@@ -25546,8 +25675,8 @@ msgstr ""
 #: pretalx/orga/templates/orga/invitation.html:20
 #, python-format
 msgid ""
-"If you already have an account – either as a speaker or an organiser – at <a "
-"href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
+"If you already have an account – either as a speaker or an organiser – at <a"
+" href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
 
@@ -25556,8 +25685,8 @@ msgstr ""
 msgid ""
 "To accept the invitation with the account you’re currently active, please "
 "use the button below. If you want to accept the invitation with a different "
-"account, you can <a href=\"/orga/logout/?next=%(link)s\">log out</a> and log "
-"in with the other account. </p><p> If you believe to have received this "
+"account, you can <a href=\"/orga/logout/?next=%(link)s\">log out</a> and log"
+" in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organiser directly."
 msgstr ""
 
@@ -25637,9 +25766,9 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/mails/compose_reviewer_mail_form.html:11
 msgid ""
-"Emails to reviewers and other team members are always sent out directly, and "
-"are not placed in the outbox first. They also do not show up in the list of "
-"sent mails."
+"Emails to reviewers and other team members are always sent out directly, and"
+" are not placed in the outbox first. They also do not show up in the list of"
+" sent mails."
 msgstr ""
 
 #: pretalx/orga/templates/orga/mails/compose_session_mail_form.html:16
@@ -25876,8 +26005,8 @@ msgstr ""
 #, python-format
 msgid ""
 "Reviewers will be able to see and review <b>only their assigned</b> "
-"proposals. You can change this in your <a href=\"%(href)s\">review settings</"
-"a>."
+"proposals. You can change this in your <a href=\"%(href)s\">review "
+"settings</a>."
 msgstr ""
 
 #: pretalx/orga/templates/orga/review/assignment.html:113
@@ -26114,8 +26243,8 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/export.html:59
 msgid ""
-"You haven’t released a schedule yet – many of these data exporters only work "
-"on a released schedule."
+"You haven’t released a schedule yet – many of these data exporters only work"
+" on a released schedule."
 msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/export.html:86
@@ -26178,8 +26307,8 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/index.html:70
 msgid ""
-"You can start planning your schedule once you have configured some rooms for "
-"sessions to take place in."
+"You can start planning your schedule once you have configured some rooms for"
+" sessions to take place in."
 msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/index.html:71
@@ -26218,8 +26347,8 @@ msgid ""
 "can be generated and placed in the outbox, to tell speakers about their "
 "session slots."
 msgid_plural ""
-"When releasing this new schedule, <strong>%(count)s notifications emails </"
-"strong> can be generated and placed in the outbox, to tell speakers about "
+"When releasing this new schedule, <strong>%(count)s notifications emails "
+"</strong> can be generated and placed in the outbox, to tell speakers about "
 "their session slots."
 msgstr[0] ""
 msgstr[1] ""
@@ -26230,8 +26359,8 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/release.html:53
 msgid ""
-"This schedule release would result in <strong>no notification emails</"
-"strong> for speakers."
+"This schedule release would result in <strong>no notification "
+"emails</strong> for speakers."
 msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/release.html:60
@@ -26252,7 +26381,8 @@ msgstr ""
 #: pretalx/orga/templates/orga/schedule/release.html:69
 #, python-format
 msgid "One session has <strong>not yet been scheduled</strong>."
-msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
+msgid_plural ""
+"%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -26274,8 +26404,8 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/release.html:110
 msgid ""
-"This is how the new schedule version will appear in the public changelog and "
-"in the RSS feed."
+"This is how the new schedule version will appear in the public changelog and"
+" in the RSS feed."
 msgstr ""
 
 #: pretalx/orga/templates/orga/schedule/release.html:111
@@ -26391,8 +26521,8 @@ msgstr ""
 #: pretalx/orga/templates/orga/settings/review.html:186
 msgid ""
 "Review phases allow you to structure your review process. By default, there "
-"are two review phases: The review itself, and the selection process once the "
-"review phase is over. But you could for example add another review and "
+"are two review phases: The review itself, and the selection process once the"
+" review phase is over. But you could for example add another review and "
 "selection phase after that, if you require additional review rounds."
 msgstr ""
 
@@ -26451,9 +26581,10 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/settings/widget.html:44
 msgid ""
-"The eventyay schedule widget is a way to embed your schedule into your event "
-"website. This way, your attendees can see your schedule without leaving your "
-"website, and you can style the schedule to fit right in with your website."
+"The eventyay schedule widget is a way to embed your schedule into your event"
+" website. This way, your attendees can see your schedule without leaving "
+"your website, and you can style the schedule to fit right in with your "
+"website."
 msgstr ""
 
 #: pretalx/orga/templates/orga/settings/widget.html:51
@@ -26523,8 +26654,8 @@ msgstr[1] ""
 
 #: pretalx/orga/templates/orga/speaker/information_list.html:35
 msgid ""
-"Add important messages (e.g. “Please bring an HDMI adapter if required.”) or "
-"files (e.g. a conference styleguide). <br> They are shown to the selected "
+"Add important messages (e.g. “Please bring an HDMI adapter if required.”) or"
+" files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
 
@@ -26953,8 +27084,8 @@ msgstr ""
 
 #: pretalx/orga/views/event.py:179
 msgid ""
-"You want submitters to choose the tracks for their proposals, but you do not "
-"offer tracks for selection. Add at least one track!"
+"You want submitters to choose the tracks for their proposals, but you do not"
+" offer tracks for selection. Add at least one track!"
 msgstr ""
 
 #: pretalx/orga/views/event.py:187
@@ -27004,8 +27135,8 @@ msgstr ""
 
 #: pretalx/orga/views/event.py:474
 msgid ""
-"We’ve been able to contact the SMTP server you configured. Remember to check "
-"the “use custom SMTP server” checkbox, otherwise your SMTP server will not "
+"We’ve been able to contact the SMTP server you configured. Remember to check"
+" the “use custom SMTP server” checkbox, otherwise your SMTP server will not "
 "be used."
 msgstr ""
 
@@ -27037,8 +27168,8 @@ msgstr ""
 
 #: pretalx/orga/views/event.py:735
 msgid ""
-"ALL related data, such as proposals, and speaker profiles, and uploads, will "
-"also be deleted and cannot be restored."
+"ALL related data, such as proposals, and speaker profiles, and uploads, will"
+" also be deleted and cannot be restored."
 msgstr ""
 
 #: pretalx/orga/views/mails.py:136
@@ -27163,8 +27294,8 @@ msgstr ""
 
 #: pretalx/orga/views/organiser.py:255 pretalx/orga/views/speaker.py:226
 msgid ""
-"Do your really want to reset this user’s password? They won’t be able to log "
-"in until they set a new password."
+"Do your really want to reset this user’s password? They won’t be able to log"
+" in until they set a new password."
 msgstr ""
 
 #: pretalx/orga/views/organiser.py:325
@@ -27290,7 +27421,8 @@ msgid "Room deleted. Hopefully nobody was still in there …"
 msgstr ""
 
 #: pretalx/orga/views/schedule.py:591
-msgid "There is or was a session scheduled in this room. It cannot be deleted."
+msgid ""
+"There is or was a session scheduled in this room. It cannot be deleted."
 msgstr ""
 
 #: pretalx/orga/views/schedule.py:631
@@ -27390,8 +27522,8 @@ msgstr ""
 
 #: pretalx/person/forms.py:98
 msgid ""
-"No user account matches the entered credentials. Are you sure that you typed "
-"your password correctly?"
+"No user account matches the entered credentials. Are you sure that you typed"
+" your password correctly?"
 msgstr ""
 
 #: pretalx/person/forms.py:104
@@ -27470,8 +27602,8 @@ msgstr ""
 
 #: pretalx/person/models/user.py:139
 msgid ""
-"If you have registered with an email address that has a gravatar account, we "
-"can retrieve your profile picture from there."
+"If you have registered with an email address that has a gravatar account, we"
+" can retrieve your profile picture from there."
 msgstr ""
 
 #: pretalx/person/models/user.py:145
@@ -27521,8 +27653,7 @@ msgid ""
 "\n"
 "Your eventyay account password was just changed.\n"
 "\n"
-"If you did not change your password, please contact the site administration "
-"immediately.\n"
+"If you did not change your password, please contact the site administration immediately.\n"
 "\n"
 "All the best,\n"
 "the eventyay team"
@@ -27673,8 +27804,8 @@ msgstr ""
 
 #: pretalx/schedule/phrases.py:22
 msgid ""
-"You are currently viewing the editable schedule version, which is unreleased "
-"and may change at any time."
+"You are currently viewing the editable schedule version, which is unreleased"
+" and may change at any time."
 msgstr ""
 
 #: pretalx/schedule/phrases.py:24
@@ -27698,7 +27829,8 @@ msgstr ""
 
 #: pretalx/schedule/templates/schedule/speaker_notification.txt:2
 #, python-format
-msgid "- Your session “%(title)s” will take place at %(start)s in %(location)s"
+msgid ""
+"- Your session “%(title)s” will take place at %(start)s in %(location)s"
 msgstr ""
 
 #: pretalx/schedule/templates/schedule/speaker_notification.txt:3
@@ -27795,8 +27927,8 @@ msgstr ""
 
 #: pretalx/submission/models/access_code.py:30
 msgid ""
-"You can restrict the access code to a single track, or leave it open for all "
-"tracks."
+"You can restrict the access code to a single track, or leave it open for all"
+" tracks."
 msgstr ""
 
 #: pretalx/submission/models/access_code.py:39
@@ -27911,8 +28043,8 @@ msgstr ""
 
 #: pretalx/submission/models/question.py:163
 msgid ""
-"You can limit this question to some session types. Leave this field empty to "
-"apply to all session types."
+"You can limit this question to some session types. Leave this field empty to"
+" apply to all session types."
 msgstr ""
 
 #: pretalx/submission/models/question.py:165
@@ -27945,8 +28077,8 @@ msgstr ""
 
 #: pretalx/submission/models/question.py:191
 msgid ""
-"If a user deletes their account, answers of questions for personal data will "
-"be removed, too."
+"If a user deletes their account, answers of questions for personal data will"
+" be removed, too."
 msgstr ""
 
 #: pretalx/submission/models/question.py:197
@@ -27974,7 +28106,8 @@ msgstr ""
 msgid ""
 "Answers will be shown on session or speaker pages as appropriate. Please "
 "note that you cannot make a question public after the first answers have "
-"been given, to allow speakers explicit consent before publishing information."
+"been given, to allow speakers explicit consent before publishing "
+"information."
 msgstr ""
 
 #: pretalx/submission/models/question.py:251
@@ -28084,8 +28217,10 @@ msgctxt "proposal status"
 msgid "submitted"
 msgstr ""
 
-#. Translators: This string is used to mark anything that has been formally deleted,
-#. and can only be shown to organisers with extended access. It's usually placed
+#. Translators: This string is used to mark anything that has been formally
+#. deleted,
+#. and can only be shown to organisers with extended access. It's usually
+#. placed
 #. after the title/object like [this].
 #: pretalx/submission/models/submission.py:60 pretalx/submission/phrases.py:11
 msgid "deleted"
