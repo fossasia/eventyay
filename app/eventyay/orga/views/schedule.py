@@ -177,10 +177,6 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
                 None,
                 _('Talks must be published or in private test mode to release a schedule.'),
             )
-            messages.error(
-                self.request,
-                _('Talks must be published or in private test mode to release a schedule.'),
-            )
             return self.render_to_response(self.get_context_data(form=form), status=400)
         self.request.event.release_schedule(
             form.cleaned_data['version'],

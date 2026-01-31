@@ -655,9 +655,8 @@ class EventLive(TemplateView):
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.tickets_published = True
-                if event.settings.get('private_testmode_tickets', True, as_type=bool):
-                    event.settings.private_testmode_tickets = False
-                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
                 event.save()
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
@@ -669,6 +668,8 @@ class EventLive(TemplateView):
         elif request.POST.get('tickets_published') == 'false':
             with transaction.atomic():
                 event.tickets_published = False
+                event.settings.private_testmode_tickets = True
+                event.private_testmode = True
                 if event.testmode:
                     event.testmode = False
                     self.request.event.log_action(
@@ -737,9 +738,8 @@ class EventLive(TemplateView):
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.talks_published = True
-                if event.settings.get('private_testmode_talks', False, as_type=bool):
-                    event.settings.private_testmode_talks = False
-                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.settings.private_testmode_talks = False
+                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
                 event.save()
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
@@ -751,6 +751,8 @@ class EventLive(TemplateView):
         elif request.POST.get('talks_published') == 'false':
             with transaction.atomic():
                 event.talks_published = False
+                event.settings.private_testmode_talks = True
+                event.private_testmode = True
                 if event.settings.get('talks_testmode', False, as_type=bool):
                     event.settings.talks_testmode = False
                 event.save()
@@ -785,6 +787,9 @@ class EventLive(TemplateView):
             messages.success(self.request, _('Talk pages are now in production mode.'))
         elif request.POST.get('private_testmode_tickets_action'):
             enable = request.POST.get('private_testmode_tickets_action') == 'enable'
+            if enable and event.tickets_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while tickets are published.'))
+                return redirect(self.request.path)
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.settings.private_testmode_tickets = enable
@@ -812,6 +817,9 @@ class EventLive(TemplateView):
             )
         elif request.POST.get('private_testmode_talks_action'):
             enable = request.POST.get('private_testmode_talks_action') == 'enable'
+            if enable and event.talks_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
+                return redirect(self.request.path)
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.settings.private_testmode_talks = enable

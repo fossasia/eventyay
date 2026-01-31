@@ -132,47 +132,58 @@
             {% trans "Private test mode" %}
         </div>
         <div class="panel-body">
-            {% if private_testmode_talks %}
+            {% if talks_published %}
                 <p>
-                    {% trans "Private test mode is enabled for talks. Only organizers, reviewers, and system administrators can access the schedule, sessions, speakers, and call for speakers." %}
+                    {% trans "Talk pages are published. Private test mode cannot be enabled." %}
                 </p>
-                <form action="" method="post" class="text-right">
-                    {% csrf_token %}
-                    <input type="hidden" name="private_testmode_talks_action" value="disable">
-                    <button type="submit" class="btn btn-lg btn-primary btn-save">
-                        {% trans "Disable private test mode for talks" %}
+                <div class="text-right">
+                    <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                        {% trans "Enable private test mode for talks" %}
                     </button>
-                </form>
+                </div>
             {% else %}
-                {% if request.event.testmode %}
+                {% if private_testmode_talks %}
                     <p>
-                        {% trans "Test mode is currently enabled. Disable it to enable private test mode for talks." %}
-                    </p>
-                    <div class="text-right">
-                        <button type="button" class="btn btn-lg btn-default btn-save" disabled>
-                            {% trans "Enable private test mode for talks" %}
-                        </button>
-                    </div>
-                {% elif talks_testmode %}
-                    <p>
-                        {% trans "Talk test mode is currently enabled. Disable it to enable private test mode for talks." %}
-                    </p>
-                    <div class="text-right">
-                        <button type="button" class="btn btn-lg btn-default btn-save" disabled>
-                            {% trans "Enable private test mode for talks" %}
-                        </button>
-                    </div>
-                {% else %}
-                    <p>
-                        {% trans "Private test mode hides talk pages from the public. Only organizers, reviewers, and system administrators can access them." %}
+                        {% trans "Private test mode is enabled for talks. Only organizers, reviewers, and system administrators can access the schedule, sessions, speakers, and call for speakers." %}
                     </p>
                     <form action="" method="post" class="text-right">
                         {% csrf_token %}
-                        <input type="hidden" name="private_testmode_talks_action" value="enable">
-                        <button type="submit" class="btn btn-lg btn-default btn-save">
-                            {% trans "Enable private test mode for talks" %}
+                        <input type="hidden" name="private_testmode_talks_action" value="disable">
+                        <button type="submit" class="btn btn-lg btn-primary btn-save">
+                            {% trans "Disable private test mode for talks" %}
                         </button>
                     </form>
+                {% else %}
+                    {% if request.event.testmode %}
+                        <p>
+                            {% trans "Test mode is currently enabled. Disable it to enable private test mode for talks." %}
+                        </p>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                                {% trans "Enable private test mode for talks" %}
+                            </button>
+                        </div>
+                    {% elif talks_testmode %}
+                        <p>
+                            {% trans "Talk test mode is currently enabled. Disable it to enable private test mode for talks." %}
+                        </p>
+                        <div class="text-right">
+                            <button type="button" class="btn btn-lg btn-default btn-save" disabled>
+                                {% trans "Enable private test mode for talks" %}
+                            </button>
+                        </div>
+                    {% else %}
+                        <p>
+                            {% trans "Private test mode hides talk pages from the public. Only organizers, reviewers, and system administrators can access them." %}
+                        </p>
+                        <form action="" method="post" class="text-right">
+                            {% csrf_token %}
+                            <input type="hidden" name="private_testmode_talks_action" value="enable">
+                            <button type="submit" class="btn btn-lg btn-default btn-save">
+                                {% trans "Enable private test mode for talks" %}
+                            </button>
+                        </form>
+                    {% endif %}
                 {% endif %}
             {% endif %}
             <div class="clear"></div>
