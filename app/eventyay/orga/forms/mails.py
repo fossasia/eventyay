@@ -207,11 +207,16 @@ class MailDetailForm(ReadOnlyFlag, forms.ModelForm):
             'to_users': EnhancedSelectMultiple,
             'scheduled_at': TalkSplitDateTimePickerWidget(),
         }
+        help_texts = {
+            'scheduled_at': _('If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
+        }
 
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            if scheduled_at < timezone.now():
+            from datetime import timedelta
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
                 )
@@ -227,7 +232,7 @@ class WriteMailBaseForm(MailTemplateForm):
     scheduled_at = forms.SplitDateTimeField(
         label=_('Send later'),
         required=False,
-        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time.'),
+        help_text=_('Leave empty to send immediately or queue to outbox. If set, the email will be sent at this time. Time is interpreted in the event timezone.'),
         widget=TalkSplitDateTimePickerWidget(),
     )
 
@@ -239,7 +244,9 @@ class WriteMailBaseForm(MailTemplateForm):
     def clean_scheduled_at(self):
         scheduled_at = self.cleaned_data.get('scheduled_at')
         if scheduled_at is not None:
-            if scheduled_at < timezone.now():
+            from datetime import timedelta
+            buffer = timedelta(minutes=1)
+            if scheduled_at < timezone.now() - buffer:
                 raise forms.ValidationError(
                     _('Scheduled time must be in the future.')
                 )

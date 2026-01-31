@@ -1,6 +1,7 @@
 {% extends "orga/mails/base.html" %}
 
 {% load i18n %}
+{% load tz %}
 
 {% block mail_content %}
     <div class="d-md-flex justify-content-between">
@@ -81,7 +82,7 @@
                         <td>
                             {% if mail.scheduled_at %}
                                 <span class="badge bg-info text-white">
-                                    {% translate "Scheduled for" %} {{ mail.scheduled_at|date:"Y-m-d H:i" }}
+                                    {% translate "Scheduled for" %} {{ mail.scheduled_at|timezone:request.timezone|date:"Y-m-d H:i" }}
                                 </span>
                             {% else %}
                                 <span class="badge bg-info text-white">{% translate "Immediate" %}</span>
