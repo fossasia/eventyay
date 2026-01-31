@@ -683,8 +683,9 @@ onUnmounted(() => {
 			align-items: center
 			font-size: 18px
 			background-color: $clr-white
-		  border-bottom: 1px solid $clr-dividers-light
+			border-bottom: 1px solid $clr-dividers-light
 			z-index: 20
+
 			.hide-room
 				color: $clr-secondary-text-light
 				font-size: 14px
@@ -692,8 +693,10 @@ onUnmounted(() => {
 				cursor: pointer
 				padding: 4px 8px
 				border-radius: 4px
+
 				&:hover
 					background-color: $clr-grey-200
+
 		.c-linear-schedule-session
 			z-index: 10
 	.timeslice
