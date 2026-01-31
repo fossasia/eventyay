@@ -5,8 +5,8 @@ document.getElementById("back-btn").addEventListener("click", function () {
     const organizerSlug = organizerMatch ? organizerMatch[1] : null;
     if(!organizerSlug) {
         console.error('Organizer slug not found');
-        window.location.href = `${basePath}/control/organizers/`
+        window.location.href = `${basePath}/common/organizers/`;
         return;
     }
-    window.location.href =  `${basePath}/control/organizer/${organizerSlug}/settings/billing`;
+    window.location.href =  `${basePath}/common/organizer/${organizerSlug}/billing`;
 });
