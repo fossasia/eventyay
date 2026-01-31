@@ -142,7 +142,7 @@
                             <form action="{% eventurl request.event 'presale:event.auth' %}"
                                     method="post"
                                     target="_blank"
-                                    style="display:inline;">
+                                    class="inline-form">
                                 {% csrf_token %}
                                 <input type="hidden" value="{{ new_session }}" name="session">
                                 <button type="submit" class="btn btn-link">

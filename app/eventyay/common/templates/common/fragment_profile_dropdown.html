@@ -4,11 +4,11 @@
     <details class="dropdown fix-height" id="profile-dropdown">
         <summary class="header-nav">
             <i class="fa fa-user"></i>
-            <span class="user-name desktop-only">
+            <span class="desktop-only user-name-limit">
             {{ request.user.get_full_name }}
             </span>
-            <span class="user-name mobile-only">
-            {{ request.user.first_name|truncatechars:10 }}
+            <span class="mobile-only user-name-limit">
+            {{ request.user.first_name }}
             </span>
 
             <i class="fa fa-caret-down"></i>

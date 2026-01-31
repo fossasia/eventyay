@@ -1136,47 +1136,99 @@ h1 .label {
   }
 }
 
-
 @media (max-width: 768px) {
-  .navbar-row.mobile-layout {
+  nav.navbar .navbar-top-links {
     display: flex;
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  nav.navbar .navbar-top-links > li,
+  nav.navbar .navbar-top-links > li > a,
+  nav.navbar .navbar-top-links > li > form,
+  nav.navbar .navbar-top-links details {
+    float: none;       
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+li.nav-user summary.header-nav {
+    display: flex;          
+    align-items: center;      
+    list-style: none;        
+    cursor: pointer;
+}
+
+li.nav-user summary.header-nav::-webkit-details-marker {
+    display: none;
+}
+
+li.nav-user summary.header-nav::-webkit-details-marker {
+    display: none;
+}
+
+li.nav-user .user-name-limit {
+    display: block;           
+    max-width: 12ch;          
+    white-space: nowrap;      
+    overflow: hidden;         
+    text-overflow: ellipsis;  
+    margin-left: 8px;
+    margin-right: 0; 
+    line-height: 1; 
+}
+
+@media (max-width: 768px) {
+  /* Control the ROW, not children */
+  .navbar-row.mobile-layout {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     width: 100%;
   }
 
   .navbar-row.mobile-layout .navbar-left-group,
   .navbar-row.mobile-layout .navbar-right-group {
     display: flex;
-    flex-direction: row;
     align-items: center;
     flex-wrap: nowrap;
+    min-width: 0;
   }
 
-  .navbar-row.mobile-layout .navbar-header {
-    display: flex;
-    align-items: center;
+  /* Right side should not collapse or wrap */
+  .navbar-row.mobile-layout .navbar-right-group {
+    flex: 0 0 auto;
   }
 
+  /* Prevent Bootstrap float behavior */
   .navbar-row.mobile-layout .navbar-top-links {
     display: flex;
-    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  .navbar-row.mobile-layout .navbar-top-links > li {
+    float: none;
+    flex-shrink: 0;
+  }
+
+  /* User block stays in one line */
+  .navbar-row.mobile-layout li.nav-user summary.header-nav {
+    display: flex;
     align-items: center;
     flex-wrap: nowrap;
+    min-width: max-content;
   }
+}
 
-  /* Prevent text from pushing to next line */
-  .navbar-row.mobile-layout .navbar-top-links .sidebar-text,
-  .navbar-row.mobile-layout .navbar-brand .brand-text {
+@media (max-width: 768px) {
+  nav.navbar .nav-admin .sidebar-text {
     display: none;
-  }
-
-  /* Tighten spacing so everything fits */
-  .navbar-row.mobile-layout .navbar-toggle,
-  .navbar-row.mobile-layout .navbar-toggle-sidebar,
-  .navbar-row.mobile-layout .navbar-top-links > li > a,
-  .navbar-row.mobile-layout .navbar-top-links > li > form > button {
-    padding: 8px 10px;
   }
 }
