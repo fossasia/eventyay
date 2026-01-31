@@ -69,7 +69,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'startDragging', payload: { session: Session; event: PointerEvent }): void
 }>()
-const isBreak = computed(() => props.session.code === null)
+const isBreak = computed(() => props.session.code == null)
 
 
 const hasSpeakersWithNames = computed(() => {
@@ -86,11 +86,13 @@ const speakerNames = computed(() => {
 
 const classes = computed(() => {
   const cls: string[] = []
+
   if (isBreak.value) {
     cls.push('isbreak')
   } else {
     cls.push('istalk')
-	if (props.session.state === 'pending') {
+
+    if (props.session.state === 'pending') {
       cls.push('pending')
     } else if (
       props.session.state &&
@@ -98,13 +100,18 @@ const classes = computed(() => {
       props.session.state !== 'accepted'
     ) {
       cls.push('unconfirmed')
+    } else if (props.session.state !== 'confirmed') {
+      // covers null / undefined / empty state
+      cls.push('unconfirmed')
     }
-
   }
+
   if (props.isDragged) cls.push('dragging')
   if (props.isDragClone) cls.push('clone')
+
   return cls
 })
+
 
 const style = computed(() => ({
   '--track-color': props.session.track?.color || 'var(--color-primary)'
