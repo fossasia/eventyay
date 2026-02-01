@@ -377,6 +377,27 @@ class EventWidgetGenerator:
             </a>
         """
 
+    @staticmethod
+    def generate_mode_button(event: Event, component: str, request: HttpRequest) -> str:
+        """
+        Generate a mode toggle button if the user has permission.
+        """
+        if not request.user.has_event_permission(event.organizer, event, 'can_change_event_settings', request=request):
+            return ""
+
+        mode = getattr(event, f'{component}_mode')
+        mode_display = dict(Event.ComponentMode.choices).get(mode, mode)
+        return f"""
+            <button class="mode-btn mode-{mode}"
+                    data-component="{component}"
+                    data-mode="{mode}"
+                    data-event-slug="{event.slug}"
+                    data-organizer-slug="{event.organizer.slug}"
+                    title="{_('Click to change mode')}">
+                {mode_display}
+            </button>
+        """
+
     @classmethod
     def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:
         """
@@ -394,9 +415,18 @@ class EventWidgetGenerator:
                 <div class="times">{times}</div>
             </a>
             <div class="bottomrow">
-                <a href="{ticket_url}" class="component">Tickets</a>
-                {talk_button}
-                {video_button}
+                <div class="component-container">
+                    <a href="{ticket_url}" class="component">Tickets</a>
+                    {ticket_mode_button}
+                </div>
+                <div class="component-container">
+                    {talk_button}
+                    {talk_mode_button}
+                </div>
+                <div class="component-container">
+                    {video_button}
+                    {video_mode_button}
+                </div>
             </div>
             """
 
@@ -417,6 +447,9 @@ class EventWidgetGenerator:
                 ),
                 video_button=cls.generate_video_button(event),
                 talk_button=cls.generate_talk_button(event),
+                ticket_mode_button=cls.generate_mode_button(event, 'tickets', request),
+                talk_mode_button=cls.generate_mode_button(event, 'talks', request),
+                video_mode_button=cls.generate_mode_button(event, 'video', request),
             )
 
         return {

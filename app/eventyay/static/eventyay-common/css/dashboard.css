@@ -13,9 +13,11 @@
     align-items: center;
     justify-content: center;
     gap: 10%;
+
     .card {
         cursor: pointer;
         transition: transform 0.2s;
+
         .card-body {
             .card-title {
                 text-align: center;
@@ -27,4 +29,82 @@
     .card:hover {
         transform: scale(1.05);
     }
+}
+
+.bottomrow {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px;
+    border-top: 1px solid #eee;
+}
+
+.component-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+
+.component-container .component,
+.component-container .middle-component {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 6px;
+    padding: 8px 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    color: #28a745;
+    text-decoration: none;
+}
+
+.component-container:has(.mode-btn) .component,
+.component-container:has(.mode-btn) .middle-component {
+    margin-bottom: 0;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.component-container .component:hover,
+.component-container .middle-component:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.mode-btn {
+    width: 100%;
+    padding: 8px 4px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 4px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-align: center;
+    color: white;
+}
+
+.mode-btn.mode-live {
+    background-color: #28a745;
+}
+
+.mode-btn.mode-test {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.mode-btn.mode-offline {
+    background-color: #dc3545;
+}
+
+#mode-modal .modal-dialog {
+    margin-top: 100px;
 }

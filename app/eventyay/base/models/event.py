@@ -670,6 +670,11 @@ class Event(
         default=False,
     )
 
+    class ComponentMode(models.TextChoices):
+        OFFLINE = 'offline', _('Offline')
+        TEST = 'test', _('Test Mode')
+        LIVE = 'live', _('Live')
+
     # Fields for talk
     timezone = models.CharField(
         choices=[(tz, tz) for tz in TIMEZONE_CHOICES],
@@ -884,8 +889,6 @@ class Event(
         base_path = urlparse(_full_base_path).path.rstrip('/')
         base = '{base_path}/control/'
         common = '{base_path}/common/'
-        tickets_home_common = '{common}events/{self.organiser.slug}/{self.slug}/'
-        tickets_dashboard_url = '{base}event/{self.organiser.slug}/{self.slug}/'
         tickets_home_common = '{common}event/{self.organizer.slug}/{self.slug}/'
         tickets_dashboard_url = '{base}event/{self.organizer.slug}/{self.slug}/'
 
@@ -1013,6 +1016,76 @@ class Event(
         from eventyay.base.cache import ObjectRelatedCache
 
         return ObjectRelatedCache(self)
+
+    # Mode properties (using existing fields, no migrations needed)
+    @property
+    def tickets_mode(self):
+        """
+        Returns the current tickets mode based on existing live and testmode fields.
+        """
+        if self.live and not self.testmode:
+            return self.ComponentMode.LIVE
+        elif not self.live and self.testmode:
+            return self.ComponentMode.TEST
+        else:
+            return self.ComponentMode.OFFLINE
+
+    @tickets_mode.setter
+    def tickets_mode(self, value):
+        """
+        Sets the tickets mode by updating live and testmode fields.
+        """
+        if value == self.ComponentMode.LIVE:
+            self.live = True
+            self.testmode = False
+        elif value == self.ComponentMode.TEST:
+            self.live = False
+            self.testmode = True
+        elif value == self.ComponentMode.OFFLINE:
+            self.live = False
+            self.testmode = False
+
+    @property
+    def talks_mode(self):
+        """
+        Returns the current talks mode based on talk_schedule_public setting.
+        """
+        if self.settings.talk_schedule_public:
+            return self.ComponentMode.LIVE
+        else:
+            return self.ComponentMode.OFFLINE
+
+    @talks_mode.setter
+    def talks_mode(self, value):
+        """
+        Sets the talks mode by updating talk_schedule_public setting.
+        """
+        if value == self.ComponentMode.LIVE:
+            if not self.settings.talk_schedule_public:
+                self.settings.set('talk_schedule_public', now())
+        else:
+            if self.settings.talk_schedule_public:
+                self.settings.delete('talk_schedule_public')
+
+    @property
+    def video_mode(self):
+        """
+        Returns the current video mode based on is_video_creation field.
+        """
+        if self.is_video_creation:
+            return self.ComponentMode.LIVE
+        else:
+            return self.ComponentMode.OFFLINE
+
+    @video_mode.setter
+    def video_mode(self, value):
+        """
+        Sets the video mode by updating is_video_creation field.
+        """
+        if value == self.ComponentMode.LIVE:
+            self.is_video_creation = True
+        else:
+            self.is_video_creation = False
 
     def lock(self):
         """

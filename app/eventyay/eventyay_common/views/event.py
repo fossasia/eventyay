@@ -280,8 +280,10 @@ class EventCreateView(SafeSessionWizardView):
             event.plugins = ','.join(all_plugins)
 
             event.has_subevents = foundation_data['has_subevents']
-            event.is_video_creation = final_is_video_creation
-            event.testmode = True
+            # All components start in Offline mode
+            event.tickets_mode = Event.ComponentMode.OFFLINE
+            event.talks_mode = Event.ComponentMode.OFFLINE
+            event.video_mode = Event.ComponentMode.OFFLINE
             form_dict['basics'].save()
 
             with scope(organizer=event.organizer):
@@ -808,3 +810,43 @@ class EventSearchView(views.APIView):
                 results.append({'name': event.name, 'slug': event.slug, 'organizer': event.organizer.slug})
 
         return JsonResponse(results, safe=False)
+
+
+class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
+    permission = 'can_change_event_settings'
+
+    def post(self, request, *args, **kwargs):
+        component = request.POST.get('component')
+        new_mode = request.POST.get('mode')
+        event = self.request.event
+
+        if component == 'tickets':
+            if new_mode in Event.ComponentMode.values:
+                # Validation: Tickets: Offline → Test → Live
+                current_mode = event.tickets_mode
+                if current_mode == Event.ComponentMode.OFFLINE and new_mode == Event.ComponentMode.LIVE:
+                    return JsonResponse({'error': _('Cannot go directly from Offline to Live. Please enable Test Mode first.')}, status=400)
+
+                event.tickets_mode = new_mode
+                event.save()
+            else:
+                return JsonResponse({'error': _('Invalid mode for tickets.')}, status=400)
+
+        elif component == 'talks':
+            if new_mode in [Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE]:
+                event.talks_mode = new_mode
+                event.save()
+            else:
+                return JsonResponse({'error': _('Invalid mode for talks.')}, status=400)
+
+        elif component == 'video':
+            if new_mode in [Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE]:
+                event.video_mode = new_mode
+                event.save()
+            else:
+                return JsonResponse({'error': _('Invalid mode for video.')}, status=400)
+
+        else:
+            return JsonResponse({'error': _('Invalid component.')}, status=400)
+
+        return JsonResponse({'status': 'success', 'new_mode': new_mode})
