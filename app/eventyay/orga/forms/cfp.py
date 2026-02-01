@@ -275,10 +275,10 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
     )
 
     def __init__(self, *args, event=None, **kwargs):
+        instance = kwargs.get('instance')
         super().__init__(*args, **kwargs)
         self.fields['question'].required = True
         self.fields['question'].label = _('Custom question')
-        instance = kwargs.get('instance')
         if not (event.get_feature_flag('use_tracks') and event.tracks.all().count() and event.cfp.request_track):
             self.fields.pop('tracks')
         else:
@@ -329,7 +329,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             return [opt.strip() for opt in options if opt.strip()]
 
     def clean_dependency_values(self):
-        val = self.data.getlist('dependency_values')
+        val = self.cleaned_data.get('dependency_values')
         return val
 
     def clean_dependency_question(self):

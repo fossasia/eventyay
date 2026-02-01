@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from functools import partial
@@ -201,7 +202,6 @@ class QuestionFieldsMixin:
             field.answer = initial_object
 
             if question.dependency_question_id:
-                import json
                 field.widget.attrs['data-question-dependency'] = question.dependency_question_id
                 field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
                 if question.variant != TalkQuestionVariant.MULTIPLE:
@@ -506,20 +506,28 @@ class QuestionFieldsMixin:
             # Check if dependency condition is met
             parent_field_name = f'question_{question.dependency_question_id}'
             parent_value = cleaned_data.get(parent_field_name)
-            if parent_value is None or parent_value == '' or parent_value == False:
+            # Only treat None/empty-string as "no answer"; boolean False is a valid value
+            if parent_value is None or parent_value == '':
                 continue
-            # Normalize parent value for comparison
-            if hasattr(parent_value, 'pk'):
-                parent_value_str = str(parent_value.pk)
-            elif isinstance(parent_value, bool):
-                parent_value_str = str(parent_value)
+            # Normalize parent value(s) for comparison against dependency_values
+            if isinstance(parent_value, (list, tuple, set)):
+                parent_values_iter = list(parent_value)
             else:
-                parent_value_str = str(parent_value)
-            if parent_value_str not in question.dependency_values:
+                parent_values_iter = [parent_value]
+            normalized_parent_values = []
+            for v in parent_values_iter:
+                if hasattr(v, 'pk'):
+                    normalized_parent_values.append(str(v.pk))
+                elif isinstance(v, bool):
+                    normalized_parent_values.append(str(v))
+                else:
+                    normalized_parent_values.append(str(v))
+            if not any(val in question.dependency_values for val in normalized_parent_values):
                 continue
             # Dependency condition is met, check if field is answered
             value = cleaned_data.get(field_name)
-            if value is None or value == '' or value == False:
+            # Only treat None/empty-string as missing; boolean False is a valid answer
+            if value is None or value == '':
                 self.add_error(field_name, forms.ValidationError(_('This field is required.')))
         return cleaned_data
 

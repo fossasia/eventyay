@@ -181,7 +181,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
     @cached_property
     def submission_fields(self):
         return [
-            forms.BoundField(self, field, name)
+            self[name]
             for name, field in self.fields.items()
             if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SUBMISSION
         ]
@@ -189,7 +189,7 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
     @cached_property
     def speaker_fields(self):
         return [
-            forms.BoundField(self, field, name)
+            self[name]
             for name, field in self.fields.items()
             if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SPEAKER
         ]

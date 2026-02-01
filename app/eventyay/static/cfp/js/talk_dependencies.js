@@ -14,7 +14,7 @@ function talkDependenciesToggle(ev) {
         var parentName = 'question_' + dependencyId;
 
         // Check for select (single choice dropdown)
-        var $select = $("select[name=" + parentName + "]");
+        var $select = $('select[name="' + parentName + '"]');
         if ($select.length) {
             if (!$select.closest(".form-group").hasClass("dependency-hidden")) {
                 return shouldBeShown($select) && $.inArray($select.val(), dependencyValues) > -1;
@@ -22,7 +22,7 @@ function talkDependenciesToggle(ev) {
         }
 
         // Check for radio buttons (single choice radio)
-        var $radioGroup = $("input[type=radio][name=" + parentName + "]");
+        var $radioGroup = $('input[type="radio"][name="' + parentName + '"]');
         if ($radioGroup.length) {
             var $checkedRadio = $radioGroup.filter(":checked");
             var $radioContainer = $radioGroup.closest(".form-group").first();
@@ -32,7 +32,7 @@ function talkDependenciesToggle(ev) {
         }
 
         // Check for boolean checkbox (single checkbox without value attribute)
-        var $checkbox = $("input[type=checkbox][name=" + parentName + "]").filter(function() {
+        var $checkbox = $('input[type="checkbox"][name="' + parentName + '"]').filter(function() {
             return !this.value || this.value === 'on';
         });
         if ($checkbox.length && ($.inArray("True", dependencyValues) > -1 || $.inArray("False", dependencyValues) > -1)) {
@@ -45,7 +45,7 @@ function talkDependenciesToggle(ev) {
         }
 
         // Check for multiple checkboxes (multiple choice with value attribute)
-        var $multiCheckboxes = $("input[type=checkbox][name=" + parentName + "]").filter(function() {
+        var $multiCheckboxes = $('input[type="checkbox"][name="' + parentName + '"]').filter(function() {
             return this.value && this.value !== 'on';
         });
         if ($multiCheckboxes.length) {
@@ -53,7 +53,9 @@ function talkDependenciesToggle(ev) {
             var $multiContainer = $multiCheckboxes.closest(".form-group").first();
             if (!$multiContainer.hasClass("dependency-hidden")) {
                 for (var i = 0; i < dependencyValues.length; i++) {
-                    if ($checkedBoxes.filter("[value=" + dependencyValues[i] + "]").length) {
+                    var val = dependencyValues[i];
+                    var escapedVal = val.toString().replace(/'/g, "\\'");
+                    if ($checkedBoxes.filter('[value="' + escapedVal + '"]').length) {
                         return shouldBeShown($multiCheckboxes.first());
                     }
                 }
