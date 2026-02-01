@@ -20,6 +20,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='talkquestion',
             name='dependency_values',
-            field=eventyay.base.models.fields.MultiStringField(default=[], verbose_name='Dependency values'),
+            field=eventyay.base.models.fields.MultiStringField(default=list, verbose_name='Dependency values'),
         ),
     ]

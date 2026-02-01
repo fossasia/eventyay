@@ -3,6 +3,9 @@
  * Mirrors the behavior of pretixpresale/js/ui/questions.js
  */
 
+(function($) {
+    'use strict';
+
 function talkDependenciesToggle(ev) {
     function shouldBeShown($el) {
         if (!$el.attr('data-question-dependency')) {
@@ -101,3 +104,5 @@ $(function () {
     talkDependenciesToggle();
     $(document).on("change", "input[name^='question_'], select[name^='question_']", talkDependenciesToggle);
 });
+
+})(jQuery);

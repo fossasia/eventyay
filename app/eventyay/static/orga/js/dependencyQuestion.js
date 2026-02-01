@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     var depQuestion = document.getElementById('id_dependency_question');
     var depValues = document.getElementById('id_dependency_values');
-    var depContainer = document.querySelector('.form-group[data-options-url-base]');
+    var depContainer = document.querySelector('fieldset[data-options-url-base]');
     var configEl = document.getElementById('dependency-question-config');
     
     if (!depQuestion || !depValues || !depContainer || !configEl) {
@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var savedValues = [];
     try {
         savedValues = JSON.parse(savedValuesEl ? savedValuesEl.textContent : '[]');
-    } catch (e) {
+    } catch (error) {
+        console.error('Failed to parse saved dependency values JSON', error);
         savedValues = [];
     }
     
@@ -38,21 +39,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var selectedValue = depQuestion.value;
         if (!selectedValue) {
-            depValues.style.display = '';
             return;
         }
 
         depValues.required = true;
-        depValues.style.display = 'none';
         showLoadingIndicator();
 
         var optionsUrlTemplate = depContainer.getAttribute('data-options-url-base');
         if (!optionsUrlTemplate) {
             removeLoadingIndicator();
-            depValues.style.display = '';
             return;
         }
-        // Replace the placeholder '/0/' with the actual selected value
         var ajaxUrl = optionsUrlTemplate.replace('/0/', '/' + selectedValue + '/');
         
         fetch(ajaxUrl)
@@ -89,11 +86,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 removeLoadingIndicator();
-                depValues.style.display = '';
             })
             .catch(function(error) {
+                console.error('Failed to load dependency options', error);
                 removeLoadingIndicator();
-                depValues.style.display = '';
             });
     }
 
