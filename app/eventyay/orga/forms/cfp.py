@@ -297,6 +297,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 TalkQuestionVariant.MULTIPLE,
             ),
         )
+        
         if instance and instance.pk:
             self.fields['dependency_question'].queryset = (
                 self.fields['dependency_question'].queryset.exclude(pk=instance.pk)
@@ -305,6 +306,11 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 self.fields['dependency_question'].queryset = (
                     self.fields['dependency_question'].queryset.filter(target=instance.target)
                 )
+        elif 'target' in self.initial:
+            self.fields['dependency_question'].queryset = (
+                self.fields['dependency_question'].queryset.filter(target=self.initial['target'])
+            )
+        
         self.fields['dependency_values'].required = False
 
     def clean_options(self):
@@ -361,8 +367,22 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                 'options_replace',
                 forms.ValidationError(_('You cannot replace options without uploading new ones.')),
             )
-        if d.get('dependency_question') and not d.get('dependency_values'):
+        
+        dependency_question = d.get('dependency_question')
+        dependency_values = d.get('dependency_values')
+        target = d.get('target')
+        
+        if dependency_question and not dependency_values:
             raise forms.ValidationError({'dependency_values': [_('This field is required')]})
+        
+        if dependency_question and target and dependency_question.target != target:
+            self.add_error(
+                'dependency_question',
+                forms.ValidationError(
+                    _('The dependency field must have the same field type (per proposal/per speaker) as this field.')
+                ),
+            )
+        
         return d
 
     def save(self, *args, **kwargs):

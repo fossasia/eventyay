@@ -205,7 +205,10 @@ class QuestionFieldsMixin:
                 field.widget.attrs['data-question-dependency'] = question.dependency_question_id
                 field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
                 if question.variant != TalkQuestionVariant.MULTIPLE:
-                    field.widget.attrs['required'] = question.required
+                    if question.required:
+                        field.widget.attrs['required'] = 'required'
+                    else:
+                        field.widget.attrs.pop('required', None)
                     field._required = question.required
                 field.required = False
 
@@ -503,14 +506,13 @@ class QuestionFieldsMixin:
                 continue
             if not question.required:
                 continue
-            # Check if dependency condition is met
             parent_field_name = f'question_{question.dependency_question_id}'
             parent_value = cleaned_data.get(parent_field_name)
-            # Only treat None/empty-string as "no answer"; boolean False is a valid value
             if parent_value is None or parent_value == '':
                 continue
-            # Normalize parent value(s) for comparison against dependency_values
-            if isinstance(parent_value, (list, tuple, set)):
+            if isinstance(parent_value, str):
+                parent_values_iter = [parent_value]
+            elif hasattr(parent_value, '__iter__'):
                 parent_values_iter = list(parent_value)
             else:
                 parent_values_iter = [parent_value]
@@ -524,9 +526,7 @@ class QuestionFieldsMixin:
                     normalized_parent_values.append(str(v))
             if not any(val in question.dependency_values for val in normalized_parent_values):
                 continue
-            # Dependency condition is met, check if field is answered
             value = cleaned_data.get(field_name)
-            # Only treat None/empty-string as missing; boolean False is a valid answer
             if value is None or value == '':
                 self.add_error(field_name, forms.ValidationError(_('This field is required.')))
         return cleaned_data

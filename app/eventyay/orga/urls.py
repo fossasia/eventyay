@@ -121,11 +121,6 @@ urlpatterns = [
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
                 path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
-                *cfp.QuestionView.get_urls(
-                    url_base='cfp/questions',
-                    url_name='cfp.questions',
-                    namespace='orga',
-                ),
                 path(
                     'cfp/questions/remind/',
                     cfp.CfPQuestionRemind.as_view(),
@@ -138,8 +133,13 @@ urlpatterns = [
                 ),
                 path(
                     'cfp/questions/<int:question>/options/',
-                    cfp.question_options_ajax,
+                    cfp.QuestionOptionsAjax.as_view(),
                     name='cfp.questions.options',
+                ),
+                *cfp.QuestionView.get_urls(
+                    url_base='cfp/questions',
+                    url_name='cfp.questions',
+                    namespace='orga',
                 ),
                 *cfp.TrackView.get_urls(
                     url_base='cfp/tracks',

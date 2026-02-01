@@ -255,7 +255,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         help_text=_('This field will only be shown if the selected field has one of the specified values.'),
     )
     dependency_values = MultiStringField(
-        default=[],
+        default=list,
         verbose_name=_('Dependency values'),
     )
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
