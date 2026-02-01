@@ -13,11 +13,9 @@
     align-items: center;
     justify-content: center;
     gap: 10%;
-
     .card {
         cursor: pointer;
         transition: transform 0.2s;
-
         .card-body {
             .card-title {
                 text-align: center;

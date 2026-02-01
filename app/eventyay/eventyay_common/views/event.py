@@ -853,19 +853,19 @@ class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
                 event.save()
 
             elif component == 'talks':
+                if new_mode not in (Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE):
+                    return JsonResponse({'error': _('Invalid mode for talks component.')}, status=400)
                 event.talks_mode = new_mode
                 event.save()
 
             elif component == 'video':
+                if new_mode not in (Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE):
+                    return JsonResponse({'error': _('Invalid mode for video component.')}, status=400)
                 event.video_mode = new_mode
                 event.save()
         except ValueError as e:
             return JsonResponse({'error': str(e)}, status=400)
         except Exception as e:
-            import traceback
-            logger.error('Error updating component mode: %s\n%s', e, traceback.format_exc())
+            logger.exception('Error updating component mode')
             return JsonResponse({'error': f'Internal Error: {str(e)}'}, status=500)
-
-
-
         return JsonResponse({'status': 'success', 'new_mode': new_mode})
