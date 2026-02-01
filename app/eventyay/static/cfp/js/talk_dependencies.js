@@ -3,8 +3,6 @@
  * Mirrors the behavior of pretixpresale/js/ui/questions.js
  */
 
-/*global $ */
-
 function talkDependenciesToggle(ev) {
     function shouldBeShown($el) {
         if (!$el.attr('data-question-dependency')) {
