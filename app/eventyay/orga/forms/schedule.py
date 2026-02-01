@@ -7,7 +7,7 @@ from i18nfield.forms import I18nModelForm
 
 from eventyay.common.forms.mixins import I18nHelpText
 from eventyay.common.forms.renderers import InlineFormRenderer
-from eventyay.common.forms.widgets import EnhancedSelectMultiple
+from eventyay.common.forms.widgets import EnhancedSelectMultiple, RichTextWidget
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import MailTemplateRoles
 from eventyay.orga.forms.export import ExportForm
@@ -50,6 +50,9 @@ class ScheduleReleaseForm(I18nHelpText, I18nModelForm):
             'version',
             'comment',
         )
+        widgets = {
+            'comment': RichTextWidget,
+        }
 
 
 class ScheduleExportForm(ExportForm):

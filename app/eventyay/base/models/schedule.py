@@ -48,9 +48,7 @@ class Schedule(PretalxModel):
     comment = I18nTextField(
         null=True,
         blank=True,
-        help_text=_('This text will be shown in the public changelog and the RSS feed.')
-        + ' '
-        + phrases.base.use_markdown,
+        help_text=_('Shown publicly in the changelog and RSS feed.'),
     )
 
     class Meta:

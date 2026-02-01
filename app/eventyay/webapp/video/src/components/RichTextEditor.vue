@@ -1,232 +1,138 @@
 <template lang="pug">
 bunt-input-outline-container.c-rich-text-editor(ref="outline", :label="label")
-	.toolbar(ref="toolbar")
-		.buttongroup
-			bunt-icon-button.ql-bold(v-tooltip="$t('RichTextEditor:bold:tooltip')") format-bold
-			bunt-icon-button.ql-italic(v-tooltip="$t('RichTextEditor:italic:tooltip')") format-italic
-			bunt-icon-button.ql-underline(v-tooltip="$t('RichTextEditor:underline:tooltip')") format-underline
-			bunt-icon-button.ql-strike(v-tooltip="$t('RichTextEditor:strike:tooltip')") format-strikethrough-variant
-		.buttongroup
-			bunt-icon-button.ql-header(value="1", v-tooltip="$t('RichTextEditor:h1:tooltip')") format-header-1
-			bunt-icon-button.ql-header(value="2", v-tooltip="$t('RichTextEditor:h2:tooltip')") format-header-2
-			bunt-icon-button.ql-header(value="3", v-tooltip="$t('RichTextEditor:h3:tooltip')") format-header-3
-			bunt-icon-button.ql-header(value="4", v-tooltip="$t('RichTextEditor:h4:tooltip')") format-header-4
-			bunt-icon-button.ql-blockquote(v-tooltip="$t('RichTextEditor:blockquote:tooltip')") format-quote-open
-			bunt-icon-button.ql-code-block(v-tooltip="$t('RichTextEditor:code:tooltip')") code-tags
-		.buttongroup
-			bunt-icon-button.ql-list(value="ordered", v-tooltip="$t('RichTextEditor:list-ordered:tooltip')") format-list-numbered
-			bunt-icon-button.ql-list(value="bullet", v-tooltip="$t('RichTextEditor:list-bullet:tooltip')") format-list-bulleted
-		.buttongroup
-			bunt-icon-button.ql-align(value="", v-tooltip="$t('RichTextEditor:align-left:tooltip')") format-align-left
-			bunt-icon-button.ql-align(value="center", v-tooltip="$t('RichTextEditor:align-center:tooltip')") format-align-center
-			bunt-icon-button.ql-align(value="right", v-tooltip="$t('RichTextEditor:align-right:tooltip')") format-align-right
-			bunt-icon-button.ql-full-width(v-tooltip="$t('RichTextEditor:full-width:tooltip')") arrow-expand-horizontal
-		.buttongroup
-			bunt-icon-button.ql-link(v-tooltip="$t('RichTextEditor:link:tooltip')") link-variant
-			bunt-icon-button.ql-image(v-tooltip="$t('RichTextEditor:image:tooltip')") image
-			bunt-icon-button.ql-video(v-tooltip="$t('RichTextEditor:video:tooltip')") filmstrip-box
-		.buttongroup
-			bunt-icon-button.ql-clean(v-tooltip="$t('RichTextEditor:clean:tooltip')") format-clear
-	.editor.rich-text-content(ref="editor")
-	.uploading(v-if="uploading")
-		bunt-progress-circular(size="huge")
+	.editor
+		editor-tinymce(
+			:model-value="internalValue"
+			@update:modelValue="onInternalChange"
+			:init="tinymceInit"
+		)
 
 </template>
 <script setup>
-/* global ENV_DEVELOPMENT */
-import { ref, markRaw, onMounted, onBeforeUnmount } from 'vue'
-import Quill from 'quill'
-import BuntTheme from 'lib/quill/BuntTheme'
-import VideoResponsive from 'lib/quill/VideoResponsive'
-import fullWidthFormat from 'lib/quill/fullWidthFormat'
-import Emitter from 'quill/core/emitter'
-import api from 'lib/api'
+import { computed, ref, watch } from 'vue'
+import EditorTinymce from '@tinymce/tinymce-vue'
+import 'tinymce/tinymce'
+import 'tinymce/icons/default'
+import 'tinymce/themes/silver'
+import 'tinymce/models/dom'
+import 'tinymce/plugins/codesample'
+import 'tinymce/plugins/link'
+import 'tinymce/plugins/lists'
+import 'tinymce/plugins/table'
+import 'tinymce/skins/ui/oxide/skin.css'
+import 'tinymce/skins/content/default/content.css'
 
-const Delta = Quill.import('delta')
+import { deltaToHtml, looksLikeHtml, sanitizeHtml } from 'lib/richText'
 
 const props = defineProps({
-	modelValue: Object,
+	modelValue: [String, Object, Array],
 	label: String,
 })
 const emit = defineEmits(['update:modelValue'])
 
 const outline = ref(null)
-const toolbar = ref(null)
-const editor = ref(null)
 
-const quill = ref(null)
-const uploading = ref(false)
+const internalValue = ref('')
 
-const onTextchange = (delta, oldContents, source) => {
-	if (quill.value) emit('update:modelValue', quill.value.getContents())
+function normalizeIncoming(value) {
+	if (!value) return ''
+	if (typeof value === 'string') return value
+	return deltaToHtml(value)
 }
 
-const onSelectionchange = (range, oldRange, source) => {
-	if (!outline.value) return
-	if (range === null && oldRange !== null) {
-		outline.value.blur()
-	} else if (range !== null && oldRange === null) {
-		outline.value.focus()
+watch(
+	() => props.modelValue,
+	(value) => {
+		internalValue.value = normalizeIncoming(value)
+	},
+	{ immediate: true, deep: true }
+)
+
+function onInternalChange(nextValue) {
+	const sanitized = sanitizeHtml(nextValue)
+	if (sanitized !== internalValue.value) internalValue.value = sanitized
+	if (sanitized !== normalizeIncoming(props.modelValue)) {
+		emit('update:modelValue', sanitized)
 	}
 }
 
-onMounted(() => {
-	Quill.register('themes/bunt', BuntTheme, false)
-	Quill.register(VideoResponsive)
-	Quill.register(fullWidthFormat)
-
-	const instance = markRaw(new Quill(editor.value, {
-		debug: ENV_DEVELOPMENT ? 'info' : 'warn',
-		theme: 'bunt',
-		modules: {
-			toolbar: {
-				container: toolbar.value,
-				handlers: {
-					image: () => {
-						const fileInput = document.createElement('input')
-						fileInput.setAttribute('type', 'file')
-						fileInput.setAttribute('accept', 'image/png, image/gif, image/jpeg, image/bmp, image/x-icon')
-						fileInput.addEventListener('change', () => {
-							if (fileInput.files != null && fileInput.files[0] != null) {
-								const file = fileInput.files[0]
-
-								uploading.value = true
-								api.uploadFilePromise(file, file.name).then(data => {
-									if (data.error) {
-										alert(`Upload error: ${data.error}`)
-										emit('update:modelValue', '')
-									} else {
-										const range = instance.getSelection(true)
-										instance.updateContents(new Delta()
-											.retain(range.index)
-											.delete(range.length)
-											.insert({ image: data.url }), Emitter.sources.USER)
-										instance.setSelection(range.index + 1, Emitter.sources.SILENT)
-									}
-									uploading.value = false
-								}).catch(error => {
-									// TODO: better error handling
-									console.log(error)
-									alert(`error: ${error}`)
-									uploading.value = false
-								})
-							}
-						})
-						fileInput.click()
-					},
-				}
+const tinymceInit = computed(() => ({
+	menubar: false,
+	branding: false,
+	promotion: false,
+	statusbar: false,
+	height: 320,
+	// We're bundling TinyMCE UI/content CSS via Vite imports above.
+	// Prevent TinyMCE from trying to load its default skin/content CSS via network.
+	skin: false,
+	content_css: false,
+	// TinyMCE runs content inside an iframe, so it won't inherit the app font.
+	// Keep it consistent with the video app `$font-stack`.
+	content_style: (
+		'html, body { '
+		+ 'font-family: "Open Sans", "OpenSans", "Helvetica Neue", Helvetica, Arial, "Microsoft Yahei", "微软雅黑", STXihei, "华文细黑", sans-serif; '
+		+ 'font-size: 14px; line-height: 1.5; '
+		+ '} '
+		+ 'body * { font-family: inherit; }'
+	),
+	plugins: 'lists link table codesample',
+	toolbar: (
+		'undo redo | blocks | '
+		+ 'bold italic underline strikethrough subscript superscript | '
+		+ 'forecolor backcolor | '
+		+ 'bullist numlist | '
+		+ 'link table | codesample | removeformat'
+	),
+	toolbar_mode: 'sliding',
+	block_formats: (
+		'Paragraph=p; '
+		+ 'Heading 1=h1; Heading 2=h2; Heading 3=h3; '
+		+ 'Heading 4=h4; Heading 5=h5; Heading 6=h6'
+	),
+	extended_valid_elements: (
+		'a[href|title|class|rel|target],'
+		+ 'abbr[title],'
+		+ 'acronym[title],'
+		+ 'b,br,code,div[class|style],em,hr,i,sub,sup,'
+		+ 'li,ol,p[class|style],pre[class],code[class],span[class|style|title],strong,'
+		+ 'table[width],thead,tbody,tfoot,tr,td[width|align|colspan|rowspan],th[width|align|colspan|rowspan],'
+		+ 'h1,h2,h3,h4,h5,h6,ul'
+	),
+	convert_urls: false,
+	setup: (editor) => {
+		editor.on('focus', () => outline.value?.focus?.())
+		editor.on('blur', () => outline.value?.blur?.())
+		// If legacy plain text slips through, keep it as text.
+		editor.on('BeforeSetContent', (e) => {
+			if (typeof e.content === 'string' && e.content && !looksLikeHtml(e.content)) {
+				e.content = e.content.replaceAll('\n', '<br>')
 			}
-		},
-		bounds: editor.value,
-	}))
-
-	quill.value = instance
-
-	if (props.modelValue && props.modelValue.ops && props.modelValue.ops.length > 0) {
-		instance.setContents(props.modelValue)
-	}
-
-	instance.on('selection-change', onSelectionchange)
-	instance.on('text-change', onTextchange)
-})
-
-onBeforeUnmount(() => {
-	if (!quill.value) return
-	quill.value.off('selection-change', onSelectionchange)
-	quill.value.off('text-change', onTextchange)
-})
+		})
+	},
+}))
 </script>
 <style lang="stylus">
 .c-rich-text-editor
 	padding-top: 0
 	position: relative
-	height: 30vh
+	height: 320px
 
-	.uploading
-		position: absolute
-		left: 0
-		top: 0
+	.editor
 		width: 100%
 		height: 100%
-		background: rgba(255, 255, 255, 0.7)
-		display: flex
-		align-items: center
-		justify-content: center
+		:deep(.tox)
+			font-family: 'Open Sans', "OpenSans", "Helvetica Neue", Helvetica, Arial, "Microsoft Yahei", "微软雅黑", STXihei, "华文细黑", sans-serif
+			border: 0
+			border-radius: 0
+			box-shadow: none
+			// Keep TinyMCE UI typography consistent with the app.
+			.tox-toolbar, .tox-toolbar__primary, .tox-toolbar__group,
+			.tox-menubar, .tox-menu, .tox-collection, .tox-dialog
+				font-family: inherit
 
-	.toolbar
-		border-bottom: 1px solid #ccc
-		display: flex
-		flex-direction: row
-		flex-wrap: wrap
-		padding: 4px
-		.buttongroup
-			margin-right: 16px
-		.bunt-icon-button
-			border-radius: 8px
-			margin-right: 2px
-			.bunt-icon
-				color: rgba(0, 0, 0, 0.5)
-		.ql-active
-			background: #f0f0f0
-		.ql-active .bunt-icon
-			color: var(--clr-primary)
-	.ql-hidden
-		display: none
-	.ql-tooltip  /* based on https://github.com/quilljs/quill/blob/develop/assets/snow/tooltip.styl */
-		z-index: 1000
-		position: absolute
-		background-color: #fff
-		border: 1px solid #ccc
-		box-shadow: 0px 0px 5px #ddd
-		padding: 5px 12px
-		white-space: nowrap
-
-		&::before
-			content: "Visit URL:"
-			line-height: 26px
-			margin-right: 8px
-
-		input[type=text]
-			display: none
-			border: 1px solid #ccc
-			font-size: 13px
-			height: 26px
-			margin: 0px
-			padding: 3px 5px
-			width: 170px
-
-		a.ql-preview
-			display: inline-block
-			max-width: 200px
-			overflow-x: hidden
-			text-overflow: ellipsis
-			vertical-align: top
-
-		a.ql-action::after
-			border-right: 1px solid #ccc
-			content: 'Edit'
-			margin-left: 16px
-			padding-right: 8px
-
-		a.ql-remove::before
-			content: 'Remove'
-			margin-left: 8px
-
-		a
-			line-height: 26px
-
-	.ql-tooltip.ql-editing
-		a.ql-preview, a.ql-remove
-			display: none
-
-		input[type=text]
-			display: inline-block
-
-		a.ql-action::after
-			border-right: 0px
-			content: 'Save'
-			padding-right: 0px
-
-	.ql-tooltip[data-mode=link]::before
-		content: "Enter link:"
+/* TinyMCE popovers/menus are rendered into `.tox-tinymce-aux` near <body>.
+ * Keep them above content but below fixed nav UI.
+ */
+.tox-tinymce-aux
+	z-index: 1050
 </style>

@@ -3,7 +3,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 
-from eventyay.common.text.phrases import phrases
+from tinymce.models import HTMLField
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.submission import (
     has_reviewer_access,
@@ -23,9 +23,8 @@ class SubmissionComment(PretalxModel):
 
     submission = models.ForeignKey(to='Submission', related_name='comments', on_delete=models.CASCADE)
     user = models.ForeignKey(to='User', related_name='submission_comments', on_delete=models.CASCADE)
-    text = models.TextField(
+    text = HTMLField(
         verbose_name=_('Comment'),
-        help_text=phrases.base.use_markdown,
     )
     reply_to = models.ForeignKey(
         to='SubmissionComment',

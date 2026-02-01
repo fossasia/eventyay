@@ -3,7 +3,7 @@ from i18nfield.forms import I18nModelForm
 
 from eventyay.common.forms.fields import SizeFileField
 from eventyay.common.forms.mixins import I18nHelpText
-from eventyay.common.forms.widgets import EnhancedSelectMultiple
+from eventyay.common.forms.widgets import EnhancedSelectMultiple, RichTextWidget
 from eventyay.base.models.information import SpeakerInformation
 
 
@@ -39,4 +39,5 @@ class SpeakerInformationForm(I18nHelpText, I18nModelForm):
         widgets = {
             'limit_tracks': EnhancedSelectMultiple(color_field='color'),
             'limit_types': EnhancedSelectMultiple,
+            'text': RichTextWidget,
         }
