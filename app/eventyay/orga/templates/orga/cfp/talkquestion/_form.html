@@ -23,8 +23,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     var depQuestion = document.getElementById('id_dependency_question');
     var depValues = document.getElementById('id_dependency_values');
+    var depContainer = document.querySelector('.form-group[data-options-url-base]');
     
-    if (!depQuestion || !depValues) {
+    if (!depQuestion || !depValues || !depContainer) {
         return;
     }
 
@@ -63,8 +64,13 @@ document.addEventListener('DOMContentLoaded', function() {
         depValues.style.display = 'none';
         showLoadingIndicator();
 
-        var eventSlug = window.location.pathname.split('/')[3];
-        var ajaxUrl = '/orga/event/' + eventSlug + '/cfp/questions/' + selectedValue + '/options/';
+        var optionsUrlBase = depContainer.getAttribute('data-options-url-base');
+        if (!optionsUrlBase) {
+            removeLoadingIndicator();
+            depValues.style.display = '';
+            return;
+        }
+        var ajaxUrl = optionsUrlBase + selectedValue + '/options/';
         
         fetch(ajaxUrl)
             .then(function(response) {
@@ -184,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <fieldset>
         <legend id="dependency">{% translate "Field dependency" %}</legend>
-        <div class="form-group">
+        <div class="form-group" data-options-url-base="/orga/event/{{ request.event.slug }}/cfp/questions/">
             <label class="col-md-3 control-label" for="id_dependency_question">
                 {% translate "Custom field dependency" %}
                 <br><span class="optional">{% translate "Optional" context "form" %}</span>
