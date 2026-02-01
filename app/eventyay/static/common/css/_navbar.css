@@ -642,8 +642,6 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     justify-content: flex-end;
   }
 
-  /* Override justify-content for flipped navbar-right (RTL support) */
-  nav.navbar .event-dashboard-wrapper .nav.navbar-nav.navbar-top-links.navbar-right.flip,
   nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip {
     justify-content: flex-end;
   }
@@ -660,7 +658,6 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     gap: 4px;
   }
 
-  /* Hide user name in profile dropdown for talk dashboard, show only icon */
   .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary .fa-user + .fa-caret-down {
     margin-left: 4px;
   }
@@ -669,62 +666,46 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
     display: none;
   }
 
-  /* Extra high-specificity rule to ensure blue background on the exact selector requested */
-  @media (max-width: 767px) {
-    .nav.navbar-nav.navbar-top-links.navbar-right.flip {
-      background-color: #2185d0 !important;
-      padding: 6px 10px !important;
-      display: flex !important;
-      flex-wrap: nowrap !important;
-      align-items: center !important;
-      overflow: visible !important;
-      justify-content: flex-end !important;
-    }
-    .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
-    .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
-      color: #ffffff !important;
-    }
+  .nav.navbar-nav.navbar-top-links.navbar-right.flip {
+    background-color: #2185d0 !important;
+    padding: 6px 10px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    overflow: visible !important;
+    justify-content: flex-end !important;
+  }
+  .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
+  .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
+    color: #f8f9fa !important;
+  }
 
-    /* Also ensure flip class takes precedence for justify-content */
-    nav.navbar .event-dashboard-wrapper .nav.navbar-nav.navbar-top-links.navbar-right.flip {
-      justify-content: flex-end;
-    }
 
-    /* Hide language label on Talk dashboard mobile: show only globe icon */
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #language-dropdown summary .current-locale {
-      display: none !important;
-    }
 
-    /* Reduce spacing between navbar items to prevent overflow on talk tab admin mode */
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip {
-      gap: 2px;
-      padding: 4px 8px;
-    }
+ 
 
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
-      padding: 6px 8px;
-      font-size: 13px;
-    }
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a,
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > form > .btn-link {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
 
-    /* Reduce admin mode button spacing */
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-sudo,
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-shop {
-      padding: 6px 8px;
-      min-height: auto;
-      height: auto;
-      margin-left: 2px;
-    }
+  /* Reduce admin mode button spacing */
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-sudo,
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #button-shop {
+    padding: 6px 8px;
+    min-height: auto;
+    height: auto;
+    margin-left: 2px;
+  }
 
-    /* Reduce profile and language dropdown spacing */
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary,
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #language-dropdown summary {
-      padding: 6px 8px;
-    }
+  /* Reduce profile and language dropdown spacing */
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #profile-dropdown summary,
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip #language-dropdown summary {
+    padding: 6px 8px;
+  }
 
-    /* Reduce warning bell spacing */
-    .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a.danger {
-      padding: 6px 8px;
-    }
+  .event-dashboard-wrapper nav.navbar .nav.navbar-nav.navbar-top-links.navbar-right.flip > li > a.danger {
+    padding: 6px 8px;
   }
 }
