@@ -577,7 +577,7 @@ class QuestionOptionsAjax(EventPermissionRequired, View):
     def get(self, request, *args, **kwargs):
         question_id = kwargs.get('question')
         try:
-            question_obj = request.event.talkquestions.get(id=question_id)
+            question_obj = TalkQuestion.all_objects.get(event=request.event, id=question_id)
             if question_obj.variant == TalkQuestionVariant.BOOLEAN:
                 options = [
                     {'id': 'True', 'answer': str(_('Yes'))},

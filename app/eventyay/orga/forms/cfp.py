@@ -290,7 +290,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         if instance and instance.pk and instance.answers.count() and not instance.is_public:
             self.fields['is_public'].disabled = True
         
-        self.fields['dependency_question'].queryset = event.talkquestions.filter(
+        self.fields['dependency_question'].queryset = TalkQuestion.all_objects.filter(
+            event=event,
             variant__in=(
                 TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.CHOICES,
@@ -335,8 +336,9 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             return [opt.strip() for opt in options if opt.strip()]
 
     def clean_dependency_values(self):
-        val = self.cleaned_data.get('dependency_values')
-        return val
+        if self.is_bound:
+            return self.data.getlist('dependency_values')
+        return self.cleaned_data.get('dependency_values')
 
     def clean_dependency_question(self):
         dep = self.cleaned_data.get('dependency_question')
