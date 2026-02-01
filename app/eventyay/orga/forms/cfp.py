@@ -375,7 +375,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         target = d.get('target')
         
         if dependency_question and not dependency_values:
-            raise forms.ValidationError({'dependency_values': [_('This field is required')]})
+            self.add_error('dependency_values', _('This field is required.'))
         
         if dependency_question and target and dependency_question.target != target:
             self.add_error(

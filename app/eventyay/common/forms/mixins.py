@@ -397,7 +397,10 @@ class QuestionFieldsMixin:
                     if len(choices) < 8
                     else forms.SelectMultiple(attrs={'class': 'enhanced'})
                 ),
-                initial=(list(initial_object.options.all()) if initial_object else []),
+                initial=(
+                    list(initial_object.options.all()) if initial_object
+                    else (question.default_answer if question.default_answer else [])
+                ),
                 disabled=read_only,
                 help_text=help_text,
             )
