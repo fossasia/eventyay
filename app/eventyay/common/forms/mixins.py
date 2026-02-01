@@ -493,6 +493,36 @@ class QuestionFieldsMixin:
             answer.answer = value
         answer.save()
 
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, field in self.fields.items():
+            if not field_name.startswith('question_') or not hasattr(field, 'question'):
+                continue
+            question = field.question
+            if not question.dependency_question_id:
+                continue
+            if not question.required:
+                continue
+            # Check if dependency condition is met
+            parent_field_name = f'question_{question.dependency_question_id}'
+            parent_value = cleaned_data.get(parent_field_name)
+            if parent_value is None or parent_value == '' or parent_value == False:
+                continue
+            # Normalize parent value for comparison
+            if hasattr(parent_value, 'pk'):
+                parent_value_str = str(parent_value.pk)
+            elif isinstance(parent_value, bool):
+                parent_value_str = str(parent_value)
+            else:
+                parent_value_str = str(parent_value)
+            if parent_value_str not in question.dependency_values:
+                continue
+            # Dependency condition is met, check if field is answered
+            value = cleaned_data.get(field_name)
+            if value is None or value == '' or value == False:
+                self.add_error(field_name, forms.ValidationError(_('This field is required.')))
+        return cleaned_data
+
 
 class I18nHelpText:
     def __init__(self, *args, **kwargs):

@@ -589,7 +589,7 @@ def question_options_ajax(request, event, question):
             'options': options
         })
     except TalkQuestion.DoesNotExist:
-        return JsonResponse({'error': 'Question not found'}, status=404)
+        return JsonResponse({'error': str(_('Question not found'))}, status=404)
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):
