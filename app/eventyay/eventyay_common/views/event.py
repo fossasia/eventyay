@@ -820,8 +820,24 @@ class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
         new_mode = request.POST.get('mode')
         event = self.request.event
 
-        if component == 'tickets':
-            try:
+        url_event_slug = kwargs.get('event')
+        url_organizer_slug = kwargs.get('organizer')
+        if (url_event_slug is not None and event.slug != url_event_slug) or (
+            url_organizer_slug is not None and event.organizer.slug != url_organizer_slug):
+            logger.warning(
+                'ComponentModeUpdateView slug mismatch: URL event=%s/org=%s, resolved event=%s/org=%s',
+                url_event_slug,
+                url_organizer_slug,
+                event.slug,
+                event.organizer.slug,
+            )
+            raise PermissionDenied('Invalid event context.')
+
+        if component not in ['tickets', 'talks', 'video']:
+            return JsonResponse({'error': _('Invalid component.')}, status=400)
+
+        try:
+            if component == 'tickets':
                 # Validation: Tickets: Offline → Test → Live
                 current_mode = event.tickets_mode
                 if current_mode == Event.ComponentMode.OFFLINE and new_mode == Event.ComponentMode.LIVE:
@@ -835,24 +851,21 @@ class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
 
                 event.tickets_mode = new_mode
                 event.save()
-            except ValueError:
-                return JsonResponse({'error': _('Invalid mode for tickets.')}, status=400)
 
-        elif component == 'talks':
-            try:
+            elif component == 'talks':
                 event.talks_mode = new_mode
                 event.save()
-            except ValueError:
-                return JsonResponse({'error': _('Invalid mode for talks.')}, status=400)
 
-        elif component == 'video':
-            try:
+            elif component == 'video':
                 event.video_mode = new_mode
                 event.save()
-            except ValueError:
-                return JsonResponse({'error': _('Invalid mode for video.')}, status=400)
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            import traceback
+            logger.error('Error updating component mode: %s\n%s', e, traceback.format_exc())
+            return JsonResponse({'error': f'Internal Error: {str(e)}'}, status=500)
 
-        else:
-            return JsonResponse({'error': _('Invalid component.')}, status=400)
+
 
         return JsonResponse({'status': 'success', 'new_mode': new_mode})

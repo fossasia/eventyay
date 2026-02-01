@@ -77,7 +77,7 @@ $(function () {
     });
 
     function updateMode(organizerSlug, eventSlug, component, mode, btn) {
-        const url = `/common/event/${organizerSlug}/${eventSlug}/component-mode-update/`;
+        const url = `/common/event/${organizerSlug}/${eventSlug}/component-modes/`;
 
         let csrfToken = $('meta[name="csrf-token"]').attr('content');
         if (!csrfToken) {

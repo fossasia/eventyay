@@ -1109,8 +1109,7 @@ class Event(
             if not self.settings.talk_schedule_public:
                 self.settings.set('talk_schedule_public', now())
         elif value == self.ComponentMode.OFFLINE:
-            if self.settings.talk_schedule_public:
-                self.settings.delete('talk_schedule_public')
+            self.settings.set('talk_schedule_public', False)
         else:
             valid_modes = (
                 self.ComponentMode.LIVE,
