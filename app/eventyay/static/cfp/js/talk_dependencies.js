@@ -102,6 +102,7 @@ function talkDependenciesToggle(ev) {
 
 $(function () {
     talkDependenciesToggle();
+    $(document).off("change", "input[name^='question_'], select[name^='question_']", talkDependenciesToggle);
     $(document).on("change", "input[name^='question_'], select[name^='question_']", talkDependenciesToggle);
 });
 

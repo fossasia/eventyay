@@ -352,7 +352,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        if form.is_valid() and self.qform.is_valid():
+        if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
 
@@ -375,7 +375,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def form_valid(self, form):
         if self.can_edit:
             form.save()
-            self.qform.save()
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)

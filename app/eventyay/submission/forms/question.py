@@ -75,7 +75,9 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
                 if question.variant != TalkQuestionVariant.MULTIPLE and question.required:
                     field.widget.attrs['required'] = 'required'
                 field.required = False
-            self.fields[f'question_{question.pk}'] = field
+            field_name = f'question_{question.pk}'
+            if field_name not in self.fields:
+                self.fields[field_name] = field
 
     @cached_property
     def speaker_fields(self):

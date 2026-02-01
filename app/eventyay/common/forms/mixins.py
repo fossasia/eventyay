@@ -212,7 +212,9 @@ class QuestionFieldsMixin:
                     field._required = question.required
                 field.required = False
 
-            self.fields[f'question_{question.pk}'] = field
+            field_name = f'question_{question.pk}'
+            if field_name not in self.fields:
+                self.fields[field_name] = field
 
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.templatetags.rich_text import rich_text
@@ -395,7 +397,7 @@ class QuestionFieldsMixin:
                     if len(choices) < 8
                     else forms.SelectMultiple(attrs={'class': 'enhanced'})
                 ),
-                initial=(initial_object.options.all() if initial_object else question.default_answer),
+                initial=(list(initial_object.options.all()) if initial_object else []),
                 disabled=read_only,
                 help_text=help_text,
             )
