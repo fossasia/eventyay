@@ -46,13 +46,14 @@ document.addEventListener('DOMContentLoaded', function() {
         depValues.style.display = 'none';
         showLoadingIndicator();
 
-        var optionsUrlBase = depContainer.getAttribute('data-options-url-base');
-        if (!optionsUrlBase) {
+        var optionsUrlTemplate = depContainer.getAttribute('data-options-url-base');
+        if (!optionsUrlTemplate) {
             removeLoadingIndicator();
             depValues.style.display = '';
             return;
         }
-        var ajaxUrl = optionsUrlBase + selectedValue + '/options/';
+        // Replace the placeholder '/0/' with the actual selected value
+        var ajaxUrl = optionsUrlTemplate.replace('/0/', '/' + selectedValue + '/');
         
         fetch(ajaxUrl)
             .then(function(response) {

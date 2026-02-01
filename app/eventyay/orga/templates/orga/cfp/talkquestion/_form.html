@@ -92,7 +92,7 @@
 
     <fieldset>
         <legend id="dependency">{% translate "Field dependency" %}</legend>
-        <div class="form-group" data-options-url-base="/orga/event/{{ request.event.slug }}/cfp/questions/">
+        <div class="form-group" data-options-url-base="{% url 'orga:cfp.questions.options' event=request.event.slug question=0 %}">
             <label class="col-md-3 control-label" for="id_dependency_question">
                 {% translate "Custom field dependency" %}
                 <br><span class="optional">{% translate "Optional" context "form" %}</span>
