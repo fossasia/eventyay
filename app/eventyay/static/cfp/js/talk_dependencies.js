@@ -1,6 +1,11 @@
 /**
  * Talk-specific runtime dependency evaluator for custom fields
  * Mirrors the behavior of pretixpresale/js/ui/questions.js
+ * 
+ * Note: Uses jQuery (not vanilla JS) because:
+ * - CFP and orga pages already load jQuery globally
+ * - Maintains consistency with existing codebase patterns
+ * - Rewriting would risk regressions without added value
  */
 
 (function($) {
