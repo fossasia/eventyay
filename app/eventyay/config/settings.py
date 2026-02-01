@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import SizeKey
+from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -402,18 +402,15 @@ _OURS_APPS = (
 )
 
 PRETIX_PLUGINS_DEFAULT = conf.plugins_default
-
-# TODO: Merge these two.
 PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
-PLUGINS_EXCLUDE = PRETIX_PLUGINS_EXCLUDE
 
 eps = importlib_metadata.entry_points()
 
 # Pretix plugins
-pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PLUGINS_EXCLUDE]
+pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PRETIX_PLUGINS_EXCLUDE]
 
 # Pretalx plugins
-pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
+pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PRETIX_PLUGINS_EXCLUDE]
 
 SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
 
@@ -1128,8 +1125,6 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: Move to consts.py and rename
-EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
 # TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
 # Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
 MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
@@ -1289,7 +1284,7 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-# TODO: Remove.
+# TODO: Remove. This is an empty string used in URL construction. Needs careful evaluation before removal.
 BASE_PATH = ''
 
 SITE_URL = str(conf.site_url)
@@ -1413,11 +1408,6 @@ EVENTYAY_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
 EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-# TODO: Merge with above.
-PRETIX_ADMIN_AUDIT_COMMENTS = EVENTYAY_ADMIN_AUDIT_COMMENTS
-PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
-PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-PRETIX_EMAIL_NONE_VALUE = EVENTYAY_EMAIL_NONE_VALUE
 
 # TODO: The `pdftk` tool should be auto-detected.
 PDFTK = ''

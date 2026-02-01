@@ -12,6 +12,9 @@ TIMEZONE_CHOICES = sorted(
 # The directory for frontend development resources (node_modules, build scripts, etc.).
 FRONTEND_DEV_DIR = PROJECT_ROOT / 'eventyay' / 'webapp'
 
+# Email configuration constants
+EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
+
 class SizeKey(StrEnum):
     UPLOAD_SIZE_CSV = "upload_size_csv"
     UPLOAD_SIZE_IMAGE = "upload_size_image"

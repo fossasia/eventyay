@@ -599,7 +599,7 @@ def check_billing_status_for_warning(self):
                     f'- Final Amount Due: {invoice.final_ticket_fee} {invoice.currency}\n\n'
                     f'If you have already made the payment, please disregard this notice. '
                     f'However, if you need additional time or have any questions, '
-                    f'feel free to reach out to us at {settings.PRETIX_EMAIL_NONE_VALUE}.\n\n'
+                    f'feel free to reach out to us at {settings.EVENTYAY_EMAIL_NONE_VALUE}.\n\n'
                     f'Thank you for your attention and for choosing us!\n\n'
                     f'Warm regards,\n'
                     f'EventYay Team'
