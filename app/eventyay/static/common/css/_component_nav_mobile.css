@@ -1,6 +1,6 @@
 /* Shared mobile styles for component nav */
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   #event-nav .navigation .navigation-button,
   #main-title .navigation-button {
     flex: 1 0 100%;
