@@ -20,6 +20,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from django_scopes import scopes_disabled
+from eventyay.models import Event, Organizer
+from eventyay.api.serializers.event import EventSerializer
 from rest_framework import exceptions, filters, serializers, views, viewsets
 from rest_framework.authentication import get_authorization_header
 from rest_framework.decorators import api_view, permission_classes
@@ -106,38 +108,28 @@ with scopes_disabled():
         def sales_channel_qs(self, queryset, name, value):
             return queryset.filter(sales_channels__contains=value)
 
+class EventViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Read-only endpoint for listing events of an organizer.
 
-# Disabled: Pretix-dependent API viewset
-class EventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix classes/serializers/permissions."""
-    pass
-# Original implementation used PretixEventSerializer, EventCRUDPermission,
-# TeamAPIToken, Device and filter_qs_by_attr
-# class EventViewSet(viewsets.ModelViewSet):
-#     serializer_class = PretixEventSerializer
-#     queryset = Event.objects.none()
-#     lookup_field = 'slug'
-#     lookup_url_kwarg = 'event'
-#     lookup_value_regex = '[^/]+'
-#     permission_classes = (EventCRUDPermission,)
-#     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
-#     ordering = ('slug',)
-#     ordering_fields = ('date_from', 'slug')
-#     filterset_class = EventFilter
-#     def get_queryset(self):
-#         if isinstance(self.request.auth, (TeamAPIToken, Device)):
-#             qs = self.request.auth.get_events_with_any_permission()
-#         elif self.request.user.is_authenticated:
-#             qs = self.request.user.get_events_with_any_permission(self.request).filter(organizer=self.request.organizer)
-#         qs = filter_qs_by_attr(qs, self.request)
-#         return qs.prefetch_related('meta_values', 'meta_values__property', 'seat_category_mappings')
-#     def perform_update(self, serializer):
-#         # used merge_dicts from pretix.helpers
-#         pass
-#     def perform_create(self, serializer):
-#         pass
-#     def perform_destroy(self, instance):
-#         pass
+    This replaces the old Pretix-dependent implementation.
+    """
+    serializer_class = EventSerializer
+    permission_classes = (IsAuthenticated,)
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'event'
+
+    def get_queryset(self):
+        organizer = get_object_or_404(
+            Organizer,
+            slug=self.kwargs.get('organizer')
+        )
+
+        # Only return events for this organizer
+        return Event.objects.filter(
+            organizer=organizer
+        ).order_by('slug')
+
 
 
 # Disabled: Pretix-dependent CloneEventViewSet
