@@ -529,7 +529,7 @@ class QuestionFieldsMixin:
             if not any(val in question.dependency_values for val in normalized_parent_values):
                 continue
             value = cleaned_data.get(field_name)
-            if value is None or value == '':
+            if (not value) and value != 0:
                 self.add_error(field_name, forms.ValidationError(_('This field is required.')))
         return cleaned_data
 

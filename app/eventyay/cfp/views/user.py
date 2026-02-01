@@ -334,18 +334,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
         return True
 
-    @context
-    @cached_property
-    def qform(self):
-        return TalkQuestionsForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            submission=self.object,
-            target='submission',
-            event=self.request.event,
-            readonly=not self.can_edit,
-        )
-
     @cached_property
     def object(self):
         return self.get_object()
