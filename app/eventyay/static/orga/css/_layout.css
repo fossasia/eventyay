@@ -465,6 +465,13 @@ aside.sidebar {
   margin-bottom: 20px;
 }
 
+#main-title .navigation {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+}
+
 #main-title .navigation-button {
   margin-left: auto;
 }
@@ -488,6 +495,55 @@ aside.sidebar {
   font-weight: 400;
   line-height: 1;
 }
+
+
+@media (max-width: 768px) {
+  /* Prevent navbar wrapping on Talk pages - keep items in single line */
+  body:has(#main-title) nav.navbar,
+  html:has(#main-title) body nav.navbar {
+    height: auto;
+    min-height: unset;
+    align-items: stretch;
+  }
+
+  body:has(#main-title) nav.navbar .navbar-top-links,
+  html:has(#main-title) body nav.navbar .navbar-top-links {
+    height: auto;
+    min-height: unset;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  body:has(#main-title) nav.navbar .navbar-top-links li,
+  html:has(#main-title) body nav.navbar .navbar-top-links li {
+    height: auto;
+    min-height: unset;
+    display: inline-block;
+    float: none;
+  }
+
+  body:has(#main-title) nav.navbar .navbar-top-links li a,
+  html:has(#main-title) body nav.navbar .navbar-top-links li a {
+    height: auto;
+    min-height: unset;
+    white-space: nowrap;
+  }
+
+  #main-title {
+    padding-top: 56px; /* offsets fixed navbar height */
+  }
+
+  #main-title .navigation {
+    margin-top: 18px;
+  }
+
+  #main-title .navigation .navigation-button {
+    margin-top: 10px;
+  }
+}
+
 
 .speaker-info {
   display: flex;

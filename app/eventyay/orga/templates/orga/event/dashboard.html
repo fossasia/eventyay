@@ -26,15 +26,17 @@
         </div>
     {% endif %}
     <div id="main-title" class="d-md-flex justify-content-between">
-        <div class="navigation-title">
-            <h2>
-                {{ request.event.name }}
-                <small class="event-date text-muted">
-                    {{ request.event.get_date_range_display }}
-                </small>
-            </h2>
+        <div class="navigation">
+            <div class="navigation-title">
+                <h2>
+                    {{ request.event.name }}
+                    <small class="event-date text-muted">
+                        {{ request.event.get_date_range_display }}
+                    </small>
+                </h2>
+            </div>
+            {% include "orga/event/component_link.html" %}
         </div>
-        {% include "orga/event/component_link.html" %}
     </div>
     <div id="timeline-steps" class="stages">
         {% for stp in timeline %}
