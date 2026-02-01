@@ -87,6 +87,7 @@
         <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}">
         <meta name="theme-color" content="#2185d0">
         <meta name="referrer" content="origin">
+        <meta name="csrf-token" content="{{ csrf_token }}">
 
         {% block custom_header %}{% endblock %}
 	</head>
@@ -411,8 +412,8 @@
                 </div>
             </div>
         </div>
-        <div style="display:none">{% csrf_token %}</div>
-        <span id="user-language-code" data-lang="{{ request.LANGUAGE_CODE|escapejs }}" style="display:none;"></span>
+
+        <span id="user-language-code" data-lang="{{ request.LANGUAGE_CODE|escapejs }}" class="sr-only"></span>
         <script type="module" src="{% static 'common/js/language-storage.js' %}"></script>
 	</body>
 </html>

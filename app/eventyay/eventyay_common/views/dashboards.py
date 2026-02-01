@@ -17,6 +17,7 @@ from django.db.models import (
     Subquery,
 )
 from django.db.models.functions import Coalesce, Greatest
+from django.utils.html import format_html
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -387,16 +388,17 @@ class EventWidgetGenerator:
 
         mode = getattr(event, f'{component}_mode')
         mode_display = dict(Event.ComponentMode.choices).get(mode, mode)
-        return f"""
-            <button class="mode-btn mode-{mode}"
-                    data-component="{component}"
-                    data-mode="{mode}"
-                    data-event-slug="{event.slug}"
-                    data-organizer-slug="{event.organizer.slug}"
-                    title="{_('Click to change mode')}">
-                {mode_display}
-            </button>
-        """
+        return format_html(
+            '<button class="mode-btn mode-{}" data-component="{}" data-mode="{}" '
+            'data-event-slug="{}" data-organizer-slug="{}" title="{}">{}</button>',
+            mode,
+            component,
+            mode,
+            event.slug,
+            event.organizer.slug,
+            _('Click to change mode'),
+            mode_display
+        )
 
     @classmethod
     def generate_widget(cls, event: Event, request: HttpRequest, lazy: bool = False) -> Dict[str, Any]:

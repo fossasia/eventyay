@@ -32,7 +32,7 @@
 }
 
 .bottomrow {
-    display: flex !important;
+    display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;

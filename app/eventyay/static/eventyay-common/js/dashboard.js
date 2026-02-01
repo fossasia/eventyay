@@ -1,4 +1,11 @@
 $(function () {
+    // Defensive check for i18n functions
+    if (typeof gettext === 'undefined') {
+        window.gettext = function (msg) { return msg; };
+    }
+    if (typeof interpolate === 'undefined') {
+        window.interpolate = function (msg, params) { return msg; };
+    }
     // Helper to get CSRF token from cookies if not in DOM
     function getCookie(name) {
         let cookieValue = null;
@@ -72,7 +79,7 @@ $(function () {
     function updateMode(organizerSlug, eventSlug, component, mode, btn) {
         const url = `/common/event/${organizerSlug}/${eventSlug}/component-mode-update/`;
 
-        let csrfToken = $('[name=csrfmiddlewaretoken]').val();
+        let csrfToken = $('meta[name="csrf-token"]').attr('content');
         if (!csrfToken) {
             csrfToken = getCookie('csrftoken');
         }
@@ -87,7 +94,25 @@ $(function () {
             },
             success: function (data) {
                 $('#mode-modal').modal('hide');
-                location.reload();
+                if (data.status === 'success') {
+                    const newMode = data.new_mode;
+                    btn.removeClass('mode-offline mode-test mode-live')
+                        .addClass('mode-' + newMode);
+                    btn.data('mode', newMode);
+                    btn.attr('data-mode', newMode);
+                    const modeLabels = {
+                        'offline': gettext('Offline'),
+                        'test': gettext('Test'),
+                        'live': gettext('Live')
+                    };
+                    let label = modeLabels[newMode];
+                    if (!label) {
+                        label = newMode.charAt(0).toUpperCase() + newMode.slice(1);
+                    }
+                    btn.text(label);
+                } else {
+                    location.reload();
+                }
             },
             error: function (xhr) {
                 let msg = gettext('An error occurred.');
@@ -98,7 +123,9 @@ $(function () {
                 } else if (xhr.status && xhr.statusText) {
                     msg += ' (' + xhr.status + ': ' + xhr.statusText + ')';
                 }
-                alert(msg);
+                $('#mode-modal-title').text(gettext('Error'));
+                $('#mode-modal-body').html(msg);
+                $('#mode-modal-footer').find('.action-btn').remove();
             }
         });
     }

@@ -671,6 +671,22 @@ class Event(
     )
 
     class ComponentMode(models.TextChoices):
+        """
+        Defines the possible operation modes for event components (Tickets, Talks, Video).
+
+        Modes:
+        - OFFLINE: Component is disabled or hidden from public view.
+        - TEST: Component is visible/active but in test environment (Tickets only).
+        - LIVE: Component is fully active and public.
+
+        Usage:
+        - Tickets: Supports all three modes (Offline -> Test -> Live).
+          Mapped to `live` (bool) and `testmode` (bool) fields.
+        - Talks: Only Offline and Live.
+          Mapped to `talk_schedule_public` (datetime/null) setting.
+        - Video: Only Offline and Live.
+          Mapped to `is_video_creation` (bool) field.
+        """
         OFFLINE = 'offline', _('Offline')
         TEST = 'test', _('Test Mode')
         LIVE = 'live', _('Live')
@@ -1022,7 +1038,22 @@ class Event(
     def tickets_mode(self):
         """
         Returns the current tickets mode based on existing live and testmode fields.
+        
+        Logic:
+        - LIVE: live=True, testmode=False
+        - TEST: live=False, testmode=True
+        - OFFLINE: live=False, testmode=False
+        
+        Valid Transitions:
+        - Offline -> Test -> Live (Enforced by views)
         """
+        if self.live and self.testmode:
+            logger.warning(
+                'Invalid tickets_mode state for event %s: live and testmode are both True',
+                self.pk
+            )
+            return self.ComponentMode.OFFLINE
+
         if self.live and not self.testmode:
             return self.ComponentMode.LIVE
         elif not self.live and self.testmode:
@@ -1044,11 +1075,25 @@ class Event(
         elif value == self.ComponentMode.OFFLINE:
             self.live = False
             self.testmode = False
+        else:
+            valid_modes = (
+                self.ComponentMode.LIVE,
+                self.ComponentMode.TEST,
+                self.ComponentMode.OFFLINE,
+            )
+            raise ValueError(
+                f"Invalid tickets_mode value: {value!r}. "
+                f"Expected one of: {', '.join(map(str, valid_modes))}."
+            )
 
     @property
     def talks_mode(self):
         """
         Returns the current talks mode based on talk_schedule_public setting.
+        
+        Logic:
+        - LIVE: talk_schedule_public is set (not None)
+        - OFFLINE: talk_schedule_public is None
         """
         if self.settings.talk_schedule_public:
             return self.ComponentMode.LIVE
@@ -1063,14 +1108,27 @@ class Event(
         if value == self.ComponentMode.LIVE:
             if not self.settings.talk_schedule_public:
                 self.settings.set('talk_schedule_public', now())
-        else:
+        elif value == self.ComponentMode.OFFLINE:
             if self.settings.talk_schedule_public:
                 self.settings.delete('talk_schedule_public')
+        else:
+            valid_modes = (
+                self.ComponentMode.LIVE,
+                self.ComponentMode.OFFLINE,
+            )
+            raise ValueError(
+                f"Invalid talks_mode value: {value!r}. "
+                f"Expected one of: {', '.join(map(str, valid_modes))}."
+            )
 
     @property
     def video_mode(self):
         """
         Returns the current video mode based on is_video_creation field.
+        
+        Logic:
+        - LIVE: is_video_creation=True
+        - OFFLINE: is_video_creation=False
         """
         if self.is_video_creation:
             return self.ComponentMode.LIVE
@@ -1084,8 +1142,17 @@ class Event(
         """
         if value == self.ComponentMode.LIVE:
             self.is_video_creation = True
-        else:
+        elif value == self.ComponentMode.OFFLINE:
             self.is_video_creation = False
+        else:
+            valid_modes = (
+                self.ComponentMode.LIVE,
+                self.ComponentMode.OFFLINE,
+            )
+            raise ValueError(
+                f"Invalid video_mode value: {value!r}. "
+                f"Expected one of: {', '.join(map(str, valid_modes))}."
+            )
 
     def lock(self):
         """

@@ -821,29 +821,35 @@ class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
         event = self.request.event
 
         if component == 'tickets':
-            if new_mode in Event.ComponentMode.values:
+            try:
                 # Validation: Tickets: Offline → Test → Live
                 current_mode = event.tickets_mode
                 if current_mode == Event.ComponentMode.OFFLINE and new_mode == Event.ComponentMode.LIVE:
-                    return JsonResponse({'error': _('Cannot go directly from Offline to Live. Please enable Test Mode first.')}, status=400)
+                    return JsonResponse(
+                        {'error': _('Cannot go directly from Offline to Live. Please enable Test Mode first.')},
+                        status=400
+                    )
+
+                if new_mode == Event.ComponentMode.LIVE and event.live_issues:
+                    return JsonResponse({'error': event.live_issues[0]}, status=400)
 
                 event.tickets_mode = new_mode
                 event.save()
-            else:
+            except ValueError:
                 return JsonResponse({'error': _('Invalid mode for tickets.')}, status=400)
 
         elif component == 'talks':
-            if new_mode in [Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE]:
+            try:
                 event.talks_mode = new_mode
                 event.save()
-            else:
+            except ValueError:
                 return JsonResponse({'error': _('Invalid mode for talks.')}, status=400)
 
         elif component == 'video':
-            if new_mode in [Event.ComponentMode.OFFLINE, Event.ComponentMode.LIVE]:
+            try:
                 event.video_mode = new_mode
                 event.save()
-            else:
+            except ValueError:
                 return JsonResponse({'error': _('Invalid mode for video.')}, status=400)
 
         else:
