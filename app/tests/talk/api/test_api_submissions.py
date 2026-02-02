@@ -801,7 +801,7 @@ def test_orga_can_create_submission_types(client, orga_user_write_token, event):
         submission_type = event.submission_types.get(name="newtesttype")
         assert (
             submission_type.logged_actions()
-            .filter(action_type="pretalx.submission_type.create")
+            .filter(action_type="eventyay.submission_type.create")
             .exists()
         )
 
@@ -824,7 +824,7 @@ def test_orga_cannot_create_submission_types_readonly_token(
         assert not event.submission_types.filter(name="newtesttype").exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.submission_type.create")
+            .filter(action_type="eventyay.submission_type.create")
             .exists()
         )
 
@@ -849,7 +849,7 @@ def test_orga_can_update_submission_types(
         assert submission_type.name == "newtesttype"
         assert (
             submission_type.logged_actions()
-            .filter(action_type="pretalx.submission_type.update")
+            .filter(action_type="eventyay.submission_type.update")
             .exists()
         )
 
@@ -873,7 +873,7 @@ def test_orga_cannot_update_submission_types_readonly_token(
         assert submission_type.name != "newtesttype"
         assert (
             not submission_type.logged_actions()
-            .filter(action_type="pretalx.submission_type.update")
+            .filter(action_type="eventyay.submission_type.update")
             .exists()
         )
 
@@ -894,7 +894,7 @@ def test_orga_can_delete_submission_types(
         assert not event.submission_types.filter(pk=submission_type.pk).exists()
         assert (
             event.logged_actions()
-            .filter(action_type="pretalx.submission_type.delete")
+            .filter(action_type="eventyay.submission_type.delete")
             .exists()
         )
 
@@ -927,7 +927,7 @@ def test_orga_can_create_submission(
         assert submission.state == SubmissionStates.SUBMITTED
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.create")
+            .filter(action_type="eventyay.submission.create")
             .exists()
         )
 
@@ -957,7 +957,7 @@ def test_orga_cannot_create_submission_readonly_token(
         assert not event.submissions.filter(title="New Submission").exists()
         assert (
             not event.logged_actions()
-            .filter(action_type="pretalx.submission.create")
+            .filter(action_type="eventyay.submission.create")
             .exists()
         )
 
@@ -980,7 +980,7 @@ def test_orga_can_update_submission(client, orga_user_write_token, submission):
         assert submission.title == "Updated Submission"
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.update")
+            .filter(action_type="eventyay.submission.update")
             .exists()
         )
 
@@ -1020,7 +1020,7 @@ def test_orga_cannot_update_submission_readonly_token(
         assert submission.title != "Updated Submission"
         assert (
             not submission.logged_actions()
-            .filter(action_type="pretalx.submission.update")
+            .filter(action_type="eventyay.submission.update")
             .exists()
         )
 
@@ -1041,7 +1041,7 @@ def test_orga_can_accept_submission(client, orga_user_write_token, submission):
         assert submission.state == SubmissionStates.ACCEPTED
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.accept")
+            .filter(action_type="eventyay.submission.accept")
             .exists()
         )
 
@@ -1063,7 +1063,7 @@ def test_orga_cannot_accept_submission_readonly_token(
         assert submission.state == SubmissionStates.SUBMITTED
         assert (
             not submission.logged_actions()
-            .filter(action_type="pretalx.submission.accept")
+            .filter(action_type="eventyay.submission.accept")
             .exists()
         )
 
@@ -1084,7 +1084,7 @@ def test_orga_can_reject_submission(client, orga_user_write_token, submission):
         assert submission.state == SubmissionStates.REJECTED
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.reject")
+            .filter(action_type="eventyay.submission.reject")
             .exists()
         )
 
@@ -1106,7 +1106,7 @@ def test_orga_cannot_reject_submission_readonly_token(
         assert submission.state == SubmissionStates.SUBMITTED
         assert (
             not submission.logged_actions()
-            .filter(action_type="pretalx.submission.reject")
+            .filter(action_type="eventyay.submission.reject")
             .exists()
         )
 
@@ -1130,7 +1130,7 @@ def test_orga_can_confirm_submission(
         assert accepted_submission.state == SubmissionStates.CONFIRMED
         assert (
             accepted_submission.logged_actions()
-            .filter(action_type="pretalx.submission.confirm")
+            .filter(action_type="eventyay.submission.confirm")
             .exists()
         )
 
@@ -1153,7 +1153,7 @@ def test_orga_cannot_confirm_submission_readonly_token(
         assert accepted_submission.state == SubmissionStates.ACCEPTED
         assert (
             not accepted_submission.logged_actions()
-            .filter(action_type="pretalx.submission.confirm")
+            .filter(action_type="eventyay.submission.confirm")
             .exists()
         )
 
@@ -1175,7 +1175,7 @@ def test_orga_can_cancel_submission(client, orga_user_write_token, accepted_subm
         assert accepted_submission.state == SubmissionStates.CANCELED
         assert (
             accepted_submission.logged_actions()
-            .filter(action_type="pretalx.submission.cancel")
+            .filter(action_type="eventyay.submission.cancel")
             .exists()
         )
 
@@ -1198,7 +1198,7 @@ def test_orga_cannot_cancel_submission_readonly_token(
         assert accepted_submission.state == SubmissionStates.ACCEPTED
         assert (
             not accepted_submission.logged_actions()
-            .filter(action_type="pretalx.submission.cancel")
+            .filter(action_type="eventyay.submission.cancel")
             .exists()
         )
 
@@ -1222,7 +1222,7 @@ def test_orga_can_make_submitted_submission(
         assert rejected_submission.state == SubmissionStates.SUBMITTED
         assert (
             rejected_submission.logged_actions()
-            .filter(action_type="pretalx.submission.make_submitted")
+            .filter(action_type="eventyay.submission.make_submitted")
             .exists()
         )
 
@@ -1245,7 +1245,7 @@ def test_orga_cannot_make_submitted_submission_readonly_token(
         assert rejected_submission.state == SubmissionStates.REJECTED
         assert (
             not rejected_submission.logged_actions()
-            .filter(action_type="pretalx.submission.make_submitted")
+            .filter(action_type="eventyay.submission.make_submitted")
             .exists()
         )
 
@@ -1272,7 +1272,7 @@ def test_orga_can_add_speaker_to_submission(
         assert speaker in submission.speakers.all()
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.speakers.add")
+            .filter(action_type="eventyay.submission.speakers.add")
             .exists()
         )
 
@@ -1299,7 +1299,7 @@ def test_orga_cannot_add_speaker_to_submission_readonly_token(
         assert speaker not in submission.speakers.all()
         assert (
             not submission.logged_actions()
-            .filter(action_type="pretalx.submission.speakers.add")
+            .filter(action_type="eventyay.submission.speakers.add")
             .exists()
         )
 
@@ -1326,7 +1326,7 @@ def test_orga_can_remove_speaker_from_submission(
         assert speaker not in submission.speakers.all()
         assert (
             submission.logged_actions()
-            .filter(action_type="pretalx.submission.speakers.remove")
+            .filter(action_type="eventyay.submission.speakers.remove")
             .exists()
         )
 
@@ -1352,7 +1352,7 @@ def test_orga_cannot_remove_speaker_from_submission_readonly_token(
         assert speaker in submission.speakers.all()
         assert (
             not submission.logged_actions()
-            .filter(action_type="pretalx.submission.speakers.remove")
+            .filter(action_type="eventyay.submission.speakers.remove")
             .exists()
         )
 

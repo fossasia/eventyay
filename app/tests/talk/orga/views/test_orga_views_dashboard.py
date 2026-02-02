@@ -52,7 +52,7 @@ def test_event_dashboard(
         event=event,
         person=speaker,
         content_object=slot.submission,
-        action_type="pretalx.submission.create",
+        action_type="eventyay.submission.create",
     )
     if test_user == "speaker":
         orga_client.force_login(speaker)
