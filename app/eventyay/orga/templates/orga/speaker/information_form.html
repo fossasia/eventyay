@@ -19,3 +19,8 @@
     {% include "orga/includes/base_form.html" %}
 
 {% endblock content %}
+
+{% block scripts %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock scripts %}

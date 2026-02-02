@@ -8,6 +8,9 @@
 {% load static %}
 
 {% block scripts %}
+    {% for row in table %}
+        {% if forloop.first %}{{ row.form.media }}{% endif %}
+    {% endfor %}
     {% compress js %}
         <script src="{% static "orga/js/submission_filter.js" %}"></script>
     {% endcompress %}

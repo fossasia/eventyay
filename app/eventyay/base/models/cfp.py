@@ -100,7 +100,6 @@ class CfP(PretalxModel):
         null=True,
         blank=True,
         verbose_name=_('text'),
-        help_text=phrases.base.use_markdown,
     )
     default_type = models.ForeignKey(
         to='SubmissionType',

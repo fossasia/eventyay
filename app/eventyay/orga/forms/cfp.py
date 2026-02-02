@@ -17,6 +17,7 @@ from eventyay.common.forms.widgets import (
     EnhancedSelectMultiple,
     HtmlDateInput,
     HtmlDateTimeInput,
+    RichTextWidget,
     TextInputWithAddon,
 )
 from eventyay.common.text.phrases import phrases
@@ -244,7 +245,10 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     class Meta:
         model = CfP
         fields = ['headline', 'text', 'deadline']
-        widgets = {'deadline': HtmlDateTimeInput}
+        widgets = {
+            'deadline': HtmlDateTimeInput,
+            'text': RichTextWidget,
+        }
         # These are JSON fields on cfp.settings
         json_fields = {
             'show_deadline': 'settings',
@@ -403,6 +407,7 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
             'max_date': HtmlDateInput,
             'tracks': EnhancedSelectMultiple,
             'submission_types': EnhancedSelectMultiple,
+            'help_text': RichTextWidget,
         }
         field_classes = {
             'variant': SafeModelChoiceField,

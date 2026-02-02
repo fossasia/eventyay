@@ -18,6 +18,7 @@ from django.utils.translation import ngettext_lazy as _n
 from django.utils.translation import override, pgettext_lazy
 from django_scopes import ScopedManager, scopes_disabled
 from rest_framework import serializers
+from tinymce.models import HTMLField
 
 from eventyay.base.models import Choices, User
 from eventyay.common.exceptions import SubmissionError
@@ -213,19 +214,17 @@ class Submission(GenerateCode, PretalxModel):
         default=None,
         verbose_name=_('Pending proposal state'),
     )
-    abstract = models.TextField(
+    abstract = HTMLField(
         null=True,
         blank=True,
         verbose_name=_('Abstract'),
-        help_text=phrases.base.use_markdown,
     )
-    description = models.TextField(
+    description = HTMLField(
         null=True,
         blank=True,
         verbose_name=_('Description'),
-        help_text=phrases.base.use_markdown,
     )
-    notes = models.TextField(
+    notes = HTMLField(
         null=True,
         blank=True,
         verbose_name=_('Notes'),

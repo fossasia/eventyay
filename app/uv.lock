@@ -1042,6 +1042,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-tinymce"
+version = "5.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0a/71/e9556c8bc1d99c0cb4081af0abc6440d7cf53c87b6c7da7b117f2de24881/django_tinymce-5.0.0.tar.gz", hash = "sha256:6257669ed596accf5fa967ff3061276b2c5352baac1bbc658fcd8252b12ca38a", size = 1161002, upload-time = "2025-10-21T19:25:25.831Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/22/b7b9299b40995b524bb2f6d61ae55bd690858630ff5e0ba9a06210313195/django_tinymce-5.0.0-py3-none-any.whl", hash = "sha256:c2e9c5efd2cc6c036f4c57e602b133180433e2bd1513b897089d3c4fb4e20579", size = 1400312, upload-time = "2025-10-21T19:25:24.113Z" },
+]
+
+[[package]]
 name = "djangorestframework"
 version = "3.16.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1208,6 +1220,7 @@ dependencies = [
     { name = "django-sso" },
     { name = "django-statici18n" },
     { name = "django-timezone-field" },
+    { name = "django-tinymce" },
     { name = "djangorestframework" },
     { name = "drf-flex-fields" },
     { name = "drf-spectacular" },
@@ -1306,6 +1319,7 @@ dependencies = [
     { name = "stripe" },
     { name = "text-unidecode" },
     { name = "textile" },
+    { name = "tinycss2" },
     { name = "tlds" },
     { name = "tqdm" },
     { name = "twisted" },
@@ -1439,6 +1453,7 @@ requires-dist = [
     { name = "django-sso", specifier = ">=3.0.2" },
     { name = "django-statici18n", specifier = ">=2.5.0" },
     { name = "django-timezone-field", specifier = ">=7.2.1" },
+    { name = "django-tinymce", specifier = ">=4.1.0" },
     { name = "djangorestframework", specifier = ">=3.15.2" },
     { name = "drf-flex-fields", specifier = ">=1.0.0" },
     { name = "drf-spectacular", specifier = ">=0.28.0" },
@@ -1537,6 +1552,7 @@ requires-dist = [
     { name = "stripe", specifier = ">=11.3.0" },
     { name = "text-unidecode", specifier = ">=1.3" },
     { name = "textile", specifier = ">=4.0.3" },
+    { name = "tinycss2", specifier = ">=1.3.0" },
     { name = "tlds", specifier = ">=2025102200" },
     { name = "tqdm", specifier = ">=4.67.1" },
     { name = "twisted", specifier = ">=25.5.0" },
@@ -3460,6 +3476,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d5/01/4effe1154982f860121e2a1fa3898b2d51c91aa7674f48027ef2d9e8f390/textile-4.0.3.tar.gz", hash = "sha256:f2b0fa67769051a406020d2fa4d247d16967080aae407139f888c196eb23de6b", size = 56908, upload-time = "2024-09-22T19:16:17.799Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0e/e9/9cfe163feb2892b2b79dcb5c0a62673418f4a9c4775c015ac33db09748a0/textile-4.0.3-py3-none-any.whl", hash = "sha256:523fe64cd4d45ea0f7a2f9353d854663b6a932dbcb022f2e976daee921b43e2e", size = 30583, upload-time = "2024-09-22T19:16:16.559Z" },
+]
+
+[[package]]
+name = "tinycss2"
+version = "1.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "webencodings" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a3/ae/2ca4913e5c0f09781d75482874c3a95db9105462a92ddd303c7d285d3df2/tinycss2-1.5.1.tar.gz", hash = "sha256:d339d2b616ba90ccce58da8495a78f46e55d4d25f9fd71dfd526f07e7d53f957", size = 88195, upload-time = "2025-11-23T10:29:10.082Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/45/c7b5c3168458db837e8ceab06dc77824e18202679d0463f0e8f002143a97/tinycss2-1.5.1-py3-none-any.whl", hash = "sha256:3415ba0f5839c062696996998176c4a3751d18b7edaaeeb658c9ce21ec150661", size = 28404, upload-time = "2025-11-23T10:29:08.676Z" },
 ]
 
 [[package]]

@@ -23,6 +23,7 @@ from eventyay.common.forms.widgets import (
     EnhancedSelect,
     EnhancedSelectMultiple,
     HtmlDateTimeInput,
+    RichTextWidget,
 )
 from eventyay.common.text.css import validate_css
 from eventyay.common.text.phrases import phrases
@@ -153,6 +154,9 @@ class EventForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
             'custom_css',
             'featured_sessions_text',
         ]
+        widgets = {
+            'featured_sessions_text': RichTextWidget,
+        }
         json_fields = {
             'imprint_url': 'display_settings',
             'show_schedule': 'feature_flags',
@@ -181,11 +185,9 @@ class MailSettingsForm(ReadOnlyFlag, I18nFormMixin, I18nHelpText, JsonSubfieldMi
     )
     signature = forms.CharField(
         label=_('Mail signature'),
-        help_text=str(_('The signature will be added to outgoing mails, preceded by “-- ”.'))
-        + ' '
-        + phrases.base.use_markdown,
+        help_text=str(_('Added to outgoing emails, preceded by “-- ”.')),
         required=False,
-        widget=forms.Textarea,
+        widget=RichTextWidget,
     )
     smtp_use_custom = forms.BooleanField(
         label=_('Use custom SMTP server'),
@@ -330,13 +332,10 @@ class ReviewSettingsForm(
     )
     review_help_text = I18nFormField(
         label=_('Help text for reviewers'),
-        help_text=_('This text will be shown at the top of every review, as long as reviews can be created or edited.')
-        + ' '
-        + phrases.base.use_markdown,
-        widget=I18nTextarea,
+        help_text=_('Shown at the top of each review while reviews can be created or edited.'),
+        widget=RichTextWidget,
         required=False,
     )
-
     class Meta:
         json_fields = {
             'score_mandatory': 'review_settings',
