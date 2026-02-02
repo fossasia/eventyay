@@ -61,9 +61,10 @@ function talkDependenciesToggle(ev) {
             var $multiContainer = $multiCheckboxes.closest(".form-group").first();
             if (!$multiContainer.hasClass("dependency-hidden")) {
                 for (var i = 0; i < dependencyValues.length; i++) {
-                    var val = dependencyValues[i];
-                    var escapedVal = val.toString().replace(/'/g, "\\'");
-                    if ($checkedBoxes.filter('[value="' + escapedVal + '"]').length) {
+                    var val = dependencyValues[i].toString();
+                    if ($checkedBoxes.filter(function () {
+                        return $(this).val() === val;
+                    }).length) {
                         return shouldBeShown($multiCheckboxes.first());
                     }
                 }
