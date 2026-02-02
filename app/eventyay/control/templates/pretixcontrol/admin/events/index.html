@@ -133,8 +133,10 @@
                         <form action="{% url 'eventyay_admin:admin.events.toggle_frontpage' pk=e.pk %}" method="post" class="form-inline" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit" class="btn btn-link btn-xs" data-toggle="tooltip" style="outline:none; box-shadow:none;"
-                                    title="{% if e.not_on_frontpage %}{% trans "Show on frontpage" %}{% else %}{% trans "Hide from frontpage" %}{% endif %}">
-                                <i class="fa fa-lg {% if e.not_on_frontpage %}fa-toggle-on text-success{% else %}fa-toggle-off text-muted{% endif %}"></i>
+                                    title="{% if e.not_on_frontpage %}{% trans "Show on Front Page" %}{% else %}{% trans "Hide from Front Page" %}{% endif %}"
+                                    aria-pressed="{% if e.not_on_frontpage %}false{% else %}true{% endif %}"
+                                    aria-label="{% if e.not_on_frontpage %}{% trans "Show on Front Page" %}{% else %}{% trans "Hide from Front Page" %}{% endif %}">
+                                <i class="fa fa-lg {% if not e.not_on_frontpage %}fa-toggle-on text-success{% else %}fa-toggle-off text-muted{% endif %}"></i>
                             </button>
                         </form>
                     </td>

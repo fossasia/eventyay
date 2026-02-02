@@ -91,7 +91,7 @@ class AdminEventList(EventList):
     template_name = 'pretixcontrol/admin/events/index.html'
 
 
-class EventFrontpageToggle(AdministratorPermissionRequiredMixin, View):
+class EventFrontpageToggleView(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         pk = kwargs.get('pk')
         if pk is None:
@@ -99,9 +99,6 @@ class EventFrontpageToggle(AdministratorPermissionRequiredMixin, View):
         
         event = get_object_or_404(Event, pk=pk)
 
-        # Ensure the admin has rights to modify this specific event
-        if not (request.user.has_active_staff_session(request.session.session_key) or request.user.teams.filter(organizer=event.organizer).exists()):
-            raise PermissionDenied(_('You do not have permission to modify this event.'))
 
         event.not_on_frontpage = not event.not_on_frontpage
         event.save()
