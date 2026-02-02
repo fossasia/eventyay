@@ -7,6 +7,7 @@ from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
 from eventyay.common.text.path import path_with_hash
+from eventyay.helpers.countries import get_country_name
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.agenda import is_agenda_visible
@@ -41,6 +42,7 @@ class TalkQuestionVariant(Choices):
     FILE = 'file'
     CHOICES = 'choices'
     MULTIPLE = 'multiple_choice'
+    COUNTRY = 'country'
 
     valid_choices = [
         (NUMBER, _('Number')),
@@ -53,6 +55,7 @@ class TalkQuestionVariant(Choices):
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
+        (COUNTRY, _('Country List')),
     ]
 
 
@@ -436,6 +439,8 @@ class Answer(PretalxModel):
             return self.answer_file.url if self.answer_file else ''
         if self.question.variant in ('choices', 'multiple_choice'):
             return ', '.join(str(option.answer) for option in self.options.all())
+        if self.question.variant == TalkQuestionVariant.COUNTRY:
+            return get_country_name(self.answer) or self.answer or ''
 
     @property
     def is_answered(self):

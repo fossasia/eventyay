@@ -4,6 +4,7 @@ from functools import partial
 
 import dateutil.parser
 from django import forms
+from django_countries.fields import Country, CountryField
 from django.core.files import File
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
@@ -22,6 +23,7 @@ from eventyay.common.forms.validators import (
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
+from eventyay.helpers.countries import CachedCountries
 from eventyay.base.models.cfp import default_fields
 from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
 from django.db.models import Q
@@ -431,6 +433,17 @@ class QuestionFieldsMixin:
             if question.max_datetime:
                 field.validators.append(MaxDateTimeValidator(question.max_datetime))
             return field
+        if question.variant == TalkQuestionVariant.COUNTRY:
+            field = CountryField(countries=CachedCountries).formfield(
+                label=label_text,
+                required=question.required,
+                disabled=read_only,
+                help_text=help_text,
+                initial=(initial_object.answer if initial_object else question.default_answer) or None,
+            )
+            field.original_help_text = original_help_text
+            field.widget.attrs['placeholder'] = ''  # XSS
+            return field
         return None
 
     def save_questions(self, key, value):
@@ -479,6 +492,8 @@ class QuestionFieldsMixin:
                 answer.answer_file.save(value.name, value, save=False)
                 answer.answer = 'file://' + value.name
             value = answer.answer
+        elif value is not None and isinstance(value, Country):
+            answer.answer = str(value)
         else:
             answer.answer = value
         answer.save()

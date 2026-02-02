@@ -218,6 +218,7 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                 TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.CHOICES,
                 TalkQuestionVariant.MULTIPLE,
+                TalkQuestionVariant.COUNTRY,
                 TalkQuestionVariant.DATE,
                 TalkQuestionVariant.DATETIME,
                 TalkQuestionVariant.BOOLEAN,
