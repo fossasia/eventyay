@@ -47,6 +47,7 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     SubmissionType,
     SubmitterAccessCode,
     Track,
@@ -566,6 +567,29 @@ class CfPQuestionToggle(PermissionRequired, View):
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
         return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
+
+
+def question_options_ajax(request, event, question):
+    try:
+        question_obj = request.event.talkquestions.get(id=question)
+        if question_obj.variant == TalkQuestionVariant.BOOLEAN:
+            options = [
+                {'id': 'True', 'answer': str(_('Yes'))},
+                {'id': 'False', 'answer': str(_('No'))}
+            ]
+        else:
+            options = []
+            for option in question_obj.options.all():
+                options.append({
+                    'id': str(option.pk),
+                    'answer': str(option.answer)
+                })
+        return JsonResponse({
+            'variant': question_obj.variant,
+            'options': options
+        })
+    except TalkQuestion.DoesNotExist:
+        return JsonResponse({'error': 'Question not found'}, status=404)
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):

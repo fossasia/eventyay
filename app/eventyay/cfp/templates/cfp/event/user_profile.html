@@ -61,3 +61,8 @@
     {% html_signal "eventyay.common.signals.profile_bottom_html" sender=request.event user=user %}
 
 {% endblock content %}
+
+{% block body_bottom %}
+{% load static %}
+<script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+{% endblock %}

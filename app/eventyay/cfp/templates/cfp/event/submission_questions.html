@@ -2,6 +2,7 @@
 
 {% load i18n %}
 {% load orga_edit_link %}
+{% load static %}
 
 {% block orga_edit_link %}
     {% orga_edit_link request.event.cfp.urls.questions %}
@@ -25,3 +26,7 @@
         {% endfor %}
     {% endif %}
 {% endblock inner %}
+
+{% block cfp_submission_header %}
+<script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
+{% endblock %}

@@ -1,6 +1,7 @@
 {% extends "orga/generic/_form.html" %}
 
 {% load compress %}
+{% load escapejson %}
 {% load formset_tags %}
 {% load i18n %}
 {% load static %}
@@ -18,6 +19,99 @@
 <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
 <script defer src="{% static "orga/js/questionForm.js" %}"></script>
 <script defer src="{% static "orga/js/dragsort.js" %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var depQuestion = document.getElementById('id_dependency_question');
+    var depValues = document.getElementById('id_dependency_values');
+    
+    if (!depQuestion || !depValues) {
+        return;
+    }
+
+    var savedValuesEl = document.getElementById('dependency_value_val');
+    var savedValues = [];
+    try {
+        savedValues = JSON.parse(savedValuesEl ? savedValuesEl.textContent : '[]');
+    } catch (e) {
+        savedValues = [];
+    }
+    
+    function removeLoadingIndicator() {
+        var indicators = depValues.parentElement.querySelectorAll('.loading-indicator');
+        indicators.forEach(function(el) { el.remove(); });
+    }
+    
+    function showLoadingIndicator() {
+        var indicator = document.createElement('div');
+        indicator.className = 'help-block loading-indicator';
+        indicator.innerHTML = '<span class="fa fa-cog fa-spin"></span>';
+        depValues.parentElement.appendChild(indicator);
+    }
+    
+    function updateDependencyOptions() {
+        removeLoadingIndicator();
+        depValues.innerHTML = '';
+        depValues.required = false;
+
+        var selectedValue = depQuestion.value;
+        if (!selectedValue) {
+            depValues.style.display = '';
+            return;
+        }
+
+        depValues.required = true;
+        depValues.style.display = 'none';
+        showLoadingIndicator();
+
+        var eventSlug = window.location.pathname.split('/')[3];
+        var ajaxUrl = '/orga/event/' + eventSlug + '/cfp/questions/' + selectedValue + '/options/';
+        
+        fetch(ajaxUrl)
+            .then(function(response) {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(function(data) {
+                if (data.variant === 'boolean') {
+                    var optYes = document.createElement('option');
+                    optYes.value = 'True';
+                    optYes.textContent = "{% trans 'Yes' %}";
+                    depValues.appendChild(optYes);
+                    
+                    var optNo = document.createElement('option');
+                    optNo.value = 'False';
+                    optNo.textContent = "{% trans 'No' %}";
+                    depValues.appendChild(optNo);
+                } else if (data.options) {
+                    data.options.forEach(function(opt) {
+                        var option = document.createElement('option');
+                        option.value = opt.id;
+                        option.textContent = opt.answer;
+                        depValues.appendChild(option);
+                    });
+                }
+                
+                if (savedValues && savedValues.length > 0) {
+                    Array.from(depValues.options).forEach(function(opt) {
+                        if (savedValues.indexOf(opt.value) !== -1) {
+                            opt.selected = true;
+                        }
+                    });
+                }
+                
+                removeLoadingIndicator();
+                depValues.style.display = '';
+            })
+            .catch(function(error) {
+                removeLoadingIndicator();
+                depValues.style.display = '';
+            });
+    }
+
+    updateDependencyOptions();
+    depQuestion.addEventListener('change', updateDependencyOptions);
+});
+</script>
 {% endcompress %}
 {% endblock scripts %}
 
@@ -86,6 +180,29 @@
             {{ form.min_datetime.as_field_group }}
             {{ form.max_datetime.as_field_group }}
         </span>
+    </fieldset>
+
+    <fieldset>
+        <legend id="dependency">{% translate "Field dependency" %}</legend>
+        <div class="form-group">
+            <label class="col-md-3 control-label" for="id_dependency_question">
+                {% translate "Custom field dependency" %}
+                <br><span class="optional">{% translate "Optional" context "form" %}</span>
+            </label>
+            <div class="col-md-4">
+                {{ form.dependency_question.as_field_group }}
+            </div>
+            <div class="col-md-5">
+                <script type="text/plain" id="dependency_value_val">{{ form.instance.dependency_values|escapejson_dumps }}</script>
+                {{ form.dependency_values.as_field_group }}
+            </div>
+        </div>
+        <div class="alert alert-info col-md-9 offset-md-3">
+            {% blocktranslate trimmed %}
+                This field will only be shown if the selected parent field has one of the specified values.
+                Dependencies only work within the same field type (speaker fields can only depend on other speaker fields).
+            {% endblocktranslate %}
+        </div>
     </fieldset>
 
     <fieldset id="answer-options" class="d-none">

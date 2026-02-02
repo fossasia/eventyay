@@ -136,6 +136,11 @@ urlpatterns = [
                     cfp.CfPQuestionToggle.as_view(),
                     name='cfp.question.toggle',
                 ),
+                path(
+                    'cfp/questions/<int:question>/options/',
+                    cfp.question_options_ajax,
+                    name='cfp.questions.options',
+                ),
                 *cfp.TrackView.get_urls(
                     url_base='cfp/tracks',
                     url_name='cfp.tracks',

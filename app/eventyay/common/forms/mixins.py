@@ -199,6 +199,16 @@ class QuestionFieldsMixin:
             )
             field.question = question
             field.answer = initial_object
+
+            if question.dependency_question_id:
+                import json
+                field.widget.attrs['data-question-dependency'] = question.dependency_question_id
+                field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
+                if question.variant != TalkQuestionVariant.MULTIPLE:
+                    field.widget.attrs['required'] = question.required
+                    field._required = question.required
+                field.required = False
+
             self.fields[f'question_{question.pk}'] = field
 
     def get_field(self, *, question, initial, initial_object, readonly):
