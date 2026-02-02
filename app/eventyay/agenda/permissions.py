@@ -7,7 +7,7 @@ from eventyay.person.permissions import can_change_submissions
 def is_agenda_visible(user, event):
     return bool(
         event
-        and event.is_public
+        and event.talks_published
         and event.get_feature_flag("show_schedule")
         and event.current_schedule
     )
@@ -27,7 +27,7 @@ def has_agenda(user, event):
 def are_featured_submissions_visible(user, event):
     if (
         not event
-        or not event.is_public
+        or not event.talks_published
         or event.get_feature_flag("show_featured") == "never"
     ):
         return False
