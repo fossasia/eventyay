@@ -7,6 +7,7 @@
 {% load static %}
 
 {% block scripts %}
+    {{ form.media }}
     {% if form.biography %}
         <script src="{% static "vendored/marked.min.js" %}" defer></script> {# do not compress #}
         <script defer src="{% static "vendored/purify.min.js" %}"></script>

@@ -11,6 +11,7 @@
 
 {% block scripts %}
     {{ block.super }}
+    {{ form.media }}
     <script src="{% static "vendored/marked.min.js" %}" defer></script> {# do not compress #}
     <script defer src="{% static "vendored/purify.min.js" %}"></script>
     <script src="{% static "orga/js/reviewSubmission.js" %}" defer></script>

@@ -9,6 +9,7 @@
         <script defer src="{% static "orga/js/mailSettings.js" %}"></script>
         <script defer src="{% static "common/js/modalDialog.js" %}"></script>
     {% endcompress %}
+    {{ form.media }}
 {% endblock scripts %}
 
 {% block extra_title %}{% translate "Email settings" %} :: {% endblock extra_title %}

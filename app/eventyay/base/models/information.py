@@ -43,7 +43,7 @@ class SpeakerInformation(PretalxModel):
         help_text=_('Leave empty to show this information for all proposal types.'),
     )
     title = I18nCharField(verbose_name=pgettext_lazy('email subject', 'Subject'), max_length=200)
-    text = I18nTextField(verbose_name=_('Text'), help_text=phrases.base.use_markdown)
+    text = I18nTextField(verbose_name=_('Text'))
     resource = models.FileField(
         verbose_name=_('File'),
         null=True,

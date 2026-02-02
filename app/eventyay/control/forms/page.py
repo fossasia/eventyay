@@ -8,6 +8,7 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models.page import Page
+from eventyay.common.forms.widgets import RichTextWidget
 
 
 class PageSettingsForm(forms.ModelForm):
@@ -22,6 +23,9 @@ class PageSettingsForm(forms.ModelForm):
             'confirmation_required',
             'text',
         )
+        widgets = {
+            'text': RichTextWidget,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

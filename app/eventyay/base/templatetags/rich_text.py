@@ -1,4 +1,5 @@
 import html
+import re
 import urllib.parse
 from copy import copy
 from functools import partial
@@ -15,6 +16,11 @@ from django.conf import settings
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.safestring import mark_safe
 from markdownify import markdownify as html_to_markdown
+
+try:
+    from bleach.css_sanitizer import CSSSanitizer
+except ImportError:  # pragma: no cover
+    CSSSanitizer = None
 
 try:
     from publicsuffixlist import PublicSuffixList
@@ -51,8 +57,11 @@ ALLOWED_TAGS = {
     'p',
     'pre',
     'span',
+    'sub',
+    'sup',
     'table',
     'tbody',
+    'tfoot',
     'thead',
     'tr',
     'td',
@@ -66,21 +75,60 @@ ALLOWED_TAGS = {
 }
 
 ALLOWED_ATTRIBUTES = {
-    'a': ['href', 'title', 'class'],
+    'a': ['href', 'title', 'class', 'rel', 'target'],
     'abbr': ['title'],
     'acronym': ['title'],
+    'code': ['class'],
+    'pre': ['class'],
     'table': ['width'],
-    'td': ['width', 'align'],
+    'td': ['width', 'align', 'colspan', 'rowspan'],
+    'th': ['width', 'align', 'colspan', 'rowspan'],
     'div': ['class'],
     'p': ['class'],
     'span': ['class', 'title'],
 }
+
+# TinyMCE uses inline styles for color/background and text decoration.
+_STYLE_TAGS = ('div', 'p', 'span')
+for _tag in _STYLE_TAGS:
+    ALLOWED_ATTRIBUTES.setdefault(_tag, []).append('style')
 
 ALLOWED_PROTOCOLS = {'http', 'https', 'mailto', 'tel'}
 
 # TODO: Remove bleach library
 URL_RE = build_url_re(tlds=TLD_SET)
 EMAIL_RE = build_email_re(tlds=TLD_SET)
+
+
+_HTML_TAG_RE = re.compile(r'<\s*/?\s*[a-z][^>]*>', re.IGNORECASE)
+
+
+def looks_like_html(text: str) -> bool:
+    """Heuristically determine whether the given text should be treated as HTML.
+
+    This check is intentionally conservative to avoid misclassifying plain text
+    (including code snippets) as HTML, which would bypass Markdown processing.
+    """
+    if not text:
+        return False
+
+    matches = list(_HTML_TAG_RE.finditer(text))
+    if not matches:
+        return False
+
+    # Multiple tag-like patterns strongly suggests HTML.
+    if len(matches) > 1:
+        return True
+
+    # With only a single tag, be stricter: require it to be at the start or end
+    # of the non-whitespace content.
+    stripped = text.strip()
+    if not stripped:
+        return False
+    first_content_index = text.find(stripped)
+    last_content_index = first_content_index + len(stripped)
+    match = matches[0]
+    return match.start() == first_content_index or match.end() == last_content_index
 
 
 def link_callback(attrs, is_new, safelink=True):
@@ -102,6 +150,12 @@ safelink_callback = partial(link_callback, safelink=True)
 abslink_callback = partial(link_callback, safelink=False)
 
 # TODO: Implement nh3 equivalent
+CLEANER_KWARGS = {}
+if CSSSanitizer:
+    CLEANER_KWARGS['css_sanitizer'] = CSSSanitizer(
+        allowed_css_properties=['color', 'background-color', 'text-decoration'],
+    )
+
 CLEANER = bleach.Cleaner(
     tags=ALLOWED_TAGS,
     attributes=ALLOWED_ATTRIBUTES,
@@ -116,6 +170,7 @@ CLEANER = bleach.Cleaner(
             callbacks=DEFAULT_CALLBACKS + [safelink_callback],
         )
     ],
+    **CLEANER_KWARGS,
 )
 
 # TODO: Implement nh3 equivalent
@@ -133,6 +188,7 @@ ABSLINK_CLEANER = bleach.Cleaner(
             callbacks=DEFAULT_CALLBACKS + [abslink_callback],
         )
     ],
+    **CLEANER_KWARGS,
 )
 
 # TODO: Implement nh3 equivalent
@@ -141,6 +197,7 @@ NO_LINKS_CLEANER = bleach.Cleaner(
     attributes=ALLOWED_ATTRIBUTES,
     protocols=ALLOWED_PROTOCOLS,
     strip=True,
+    **CLEANER_KWARGS,
 )
 
 STRIKETHROUGH_RE = '(~{2})(.+?)(~{2})'
@@ -194,8 +251,10 @@ md = markdown.Markdown(
 def render_markdown(text: str, cleaner=CLEANER) -> str:
     if not text:
         return ''
-    body_md = cleaner.clean(md.reset().convert(str(text)))
-    return mark_safe(body_md)
+    text = str(text)
+    if looks_like_html(text):
+        return mark_safe(cleaner.clean(text))
+    return mark_safe(cleaner.clean(md.reset().convert(text)))
 
 
 def render_markdown_abslinks(text: str) -> str:

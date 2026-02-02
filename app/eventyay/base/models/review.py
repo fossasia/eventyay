@@ -4,6 +4,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
+from tinymce.models import HTMLField
 
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.person import is_administrator, is_reviewer
@@ -125,7 +126,7 @@ class Review(PretalxModel):
 
     submission = models.ForeignKey(to='Submission', related_name='reviews', on_delete=models.CASCADE)
     user = models.ForeignKey(to='User', related_name='reviews', on_delete=models.CASCADE)
-    text = models.TextField(verbose_name=_('What do you think?'), null=True, blank=True)
+    text = HTMLField(verbose_name=_('What do you think?'), null=True, blank=True)
     score = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('Score'), null=True, blank=True)
     scores = models.ManyToManyField(to=ReviewScore, related_name='reviews')
 

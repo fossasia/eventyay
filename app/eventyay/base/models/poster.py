@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.utils.text import Truncator
 
 
 def default_text():
@@ -46,31 +47,44 @@ class Poster(models.Model):
     )
 
     def serialize(self, user=None, list_format=False):
+        abstract_preview_max_chars = 1000
         abstract = self.abstract
-        if list_format and abstract and "ops" in abstract:
-            max_abstract_length = 1000
+        if list_format and isinstance(abstract, dict) and "ops" in abstract:
             shortened_abstract = {"ops": []}
             char_count = 0
-            for op in self.abstract["ops"]:
-                if not isinstance(op.get("insert"), str):
+            for op in abstract.get("ops") or []:
+                if not isinstance(op, dict) or not isinstance(op.get("insert"), str):
                     continue
 
-                if len(op["insert"]) > max_abstract_length - char_count:
-                    op["insert"] = (
-                        op["insert"][: (max_abstract_length - char_count)] + "…"
-                    )
-                shortened_abstract["ops"].append(op)
+                insert_text = op["insert"]
+                remaining_chars = abstract_preview_max_chars - char_count
+                if remaining_chars <= 0:
+                    break
 
-                char_count += len(op["insert"])
-                if char_count >= max_abstract_length:
+                if len(insert_text) > remaining_chars:
+                    insert_text = insert_text[:remaining_chars] + "…"
+                shortened_abstract["ops"].append({**op, "insert": insert_text})
+
+                char_count += len(insert_text)
+                if char_count >= abstract_preview_max_chars:
                     break
 
             abstract = shortened_abstract
+
+        # New format: TinyMCE HTML stored as a JSON string.
+        if list_format and isinstance(abstract, str):
+            normalized = abstract.strip()
+            abstract = Truncator(normalized).chars(
+                abstract_preview_max_chars,
+                truncate="…",
+                html=True,
+            )
 
         result = dict(
             id=str(self.id),
             title=self.title,
             abstract=abstract,
+            abstract_preview_max_chars=abstract_preview_max_chars,
             authors=self.authors,
             category=self.category,
             tags=self.tags,

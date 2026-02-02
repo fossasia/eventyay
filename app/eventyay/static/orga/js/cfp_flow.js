@@ -338,7 +338,7 @@ const FieldComponent = {
                         disabled: true
                     });
                 case 'Textarea':
-                case 'MarkdownWidget':
+                case 'RichTextWidget':
                     return h('textarea', { 
                         class: 'form-control', 
                         type: 'text', 

@@ -6,6 +6,11 @@
 
 {% block extra_title %}{% translate "Release new schedule" %} :: {% endblock extra_title %}
 
+{% block scripts %}
+    {{ block.super }}
+    {{ form.media }}
+{% endblock scripts %}
+
 {% block schedule_content %}
     <form method="post">
         {% include "common/forms/errors.html" %}
