@@ -284,8 +284,26 @@ header.startpage-hero-header {
   align-items: center;
   border-top: 1px solid var(--color-grey-light);
   display: flex;
-  justify-content: space-between;
+  gap: 0.75rem;
+  justify-content: flex-start;
   padding: 0.85rem 1.4rem;
+}
+
+.startpage-testmode-badge {
+  align-items: center;
+  background: rgba(249, 165, 87, 0.18);
+  border: 1px solid rgba(249, 165, 87, 0.5);
+  border-radius: 999px;
+  color: var(--color-warning-text-dark);
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+}
+
+.startpage-event-share {
+  margin-left: auto;
 }
 
 .startpage-event-share {

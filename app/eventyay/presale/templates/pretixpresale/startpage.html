@@ -163,6 +163,12 @@
                                         <a class="btn btn-primary" href="{{ event_url }}">
                                             {% trans "View event" %}
                                         </a>
+                                        {% if event.testmode %}
+                                            <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
+                                                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                                                {% trans "Test Mode" %}
+                                            </span>
+                                        {% endif %}
                                         <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" aria-label="{% trans "Copy event link" %}" title="{% trans "Copy event link" %}">
                                             <i class="fa fa-share-alt"></i>
                                         </button>

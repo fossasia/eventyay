@@ -30,7 +30,7 @@ class StartPageView(TemplateView):
         with scopes_disabled():
             ctx['events'] = (
                 Event.objects.select_related('organizer')
-                .filter(live=True, testmode=False)
+                .filter(live=True)
                 .order_by('date_from')
             )
         return ctx
