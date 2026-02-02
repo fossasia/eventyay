@@ -825,6 +825,27 @@ class SessionTimeOutTest(TestCase):
         response = self.client.get('/control/')
         self.assertEqual(response.status_code, 302)
 
+    def test_pinned_user_agent_not_enforced_for_long_session(self):
+        # Ensure that "Keep me logged in" sessions are resilient to User-Agent changes
+        # which can be caused by viewport/device hint changes in some browsers.
+        ua1 = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'
+        ua2 = 'Mozilla/5.0 (X11; Linux x86_64) Something else'
+
+        self.client.defaults['HTTP_USER_AGENT'] = ua1
+        response = self.client.get('/control/')
+        self.assertEqual(response.status_code, 200)
+
+        # Mark session as long (Keep me logged in)
+        session = self.client.session
+        session['eventyay_auth_long_session'] = True
+        session.save()
+
+        # Change the User-Agent to simulate viewport/device hint changes
+        self.client.defaults['HTTP_USER_AGENT'] = ua2
+        response = self.client.get('/control/')
+        # Long sessions should NOT be invalidated by UA changes
+        self.assertEqual(response.status_code, 200)
+
 
 @pytest.fixture
 @pytest.mark.django_db

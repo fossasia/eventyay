@@ -28,12 +28,17 @@ def assert_session_valid(request):
         if time.time() - last_used > settings.EVENTYAY_SESSION_TIMEOUT_RELATIVE:
             raise SessionReauthRequired()
 
-    if 'User-Agent' in request.headers:
-        if 'pinned_user_agent' in request.session:
-            if request.session.get('pinned_user_agent') != get_user_agent_hash(request):
-                raise SessionInvalid()
-        else:
-            request.session['pinned_user_agent'] = get_user_agent_hash(request)
+    # Only enforce User-Agent pinning for short sessions. Long ("keep me logged in")
+    # sessions should be resilient to minor changes in the client (e.g., viewport or
+    # device hints that might change the header) and therefore should not be
+    # invalidated by a differing User-Agent header.
+    if not (settings.EVENTYAY_LONG_SESSIONS and request.session.get('eventyay_auth_long_session', False)):
+        if 'User-Agent' in request.headers:
+            if 'pinned_user_agent' in request.session:
+                if request.session.get('pinned_user_agent') != get_user_agent_hash(request):
+                    raise SessionInvalid()
+            else:
+                request.session['pinned_user_agent'] = get_user_agent_hash(request)
 
     request.session['eventyay_auth_last_used'] = int(time.time())
     return True
