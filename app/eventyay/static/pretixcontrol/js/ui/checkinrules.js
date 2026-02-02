@@ -83,7 +83,11 @@ $(function () {
 
     Vue.component("datetimefield", {
         props: ["required", "value"],
-        template: ('<input class="form-control">'),
+        render: function (createElement) {
+            return createElement('input', {
+                class: 'form-control',
+            });
+        },
         mounted: function () {
             var vm = this;
             var multiple = this.multiple;
@@ -134,9 +138,9 @@ $(function () {
 
     Vue.component("lookup-select2", {
         props: ["required", "value", "placeholder", "url", "multiple"],
-        template: ('<select>\n' +
-            '        <slot></slot>\n' +
-            '      </select>'),
+        render: function (createElement) {
+            return createElement('select', this.$slots.default);
+        },
         mounted: function () {
             var vm = this;
             var multiple = this.multiple;
@@ -208,41 +212,174 @@ $(function () {
     });
 
     Vue.component('checkin-rule', {
-        template: ('<div v-bind:class="classObject">'
-            + '<div class="btn-group pull-right">'
-            + '<button type="button" class="checkin-rule-remove btn btn-xs btn-default" @click.prevent="wrapWithOR">OR</button>'
-            + '<button type="button" class="checkin-rule-remove btn btn-xs btn-default" @click.prevent="wrapWithAND">AND</button> '
-            + '<button type="button" class="checkin-rule-remove btn btn-xs btn-default" @click.prevent="cutOut" v-if="operands && operands.length == 1 && (operator === \'or\' || operator == \'and\')"><span class="fa fa-cut"></span></button>'
-            + '<button type="button" class="checkin-rule-remove btn btn-xs btn-default" @click.prevent="remove" v-if="level > 0"><span class="fa fa-trash"></span></button>'
-            + '</div>'
-            + '<select v-bind:value="variable" v-on:input="setVariable" required class="form-control">'
-            + '<option value="and">' + gettext('All of the conditions below (AND)') + '</option>'
-            + '<option value="or">' + gettext('At least one of the conditions below (OR)') + '</option>'
-            + '<option v-for="(v, name) in vars" :value="name">{{ v.label }}</option>'
-            + '</select> '
-            + '<select v-bind:value="operator" v-on:input="setOperator" required class="form-control" v-if="operator !== \'or\' && operator !== \'and\'">'
-            + '<option></option>'
-            + '<option v-for="(v, name) in operators" :value="name">{{ v.label }}</option>'
-            + '</select> '
-            + '<select v-bind:value="timeType" v-on:input="setTimeType" required class="form-control" v-if="vartype == \'datetime\'">'
-            + '<option value="date_from">' + gettext('Event start') + '</option>'
-            + '<option value="date_to">' + gettext('Event end') + '</option>'
-            + '<option value="date_admission">' + gettext('Event admission') + '</option>'
-            + '<option value="custom">' + gettext('custom time') + '</option>'
-            + '</select> '
-            + '<datetimefield v-if="vartype == \'datetime\' && timeType == \'custom\'" :value="timeValue" v-on:input="setTimeValue"></datetimefield>'
-            + '<input class="form-control" required type="number" v-if="vartype == \'datetime\' && timeType && timeType != \'custom\'" v-bind:value="timeTolerance" v-on:input="setTimeTolerance" placeholder="' + gettext('Tolerance (minutes)') + '">'
-            + '<input class="form-control" required type="number" v-if="vartype == \'int\' && cardinality > 1" v-bind:value="rightoperand" v-on:input="setRightOperandNumber">'
-            + '<lookup-select2 required v-if="vartype == \'product\' && operator == \'inList\'" :multiple="true" :value="rightoperand" v-on:input="setRightOperandProductList" :url="productSelectURL"></lookup-select2>'
-            + '<lookup-select2 required v-if="vartype == \'variation\' && operator == \'inList\'" :multiple="true" :value="rightoperand" v-on:input="setRightOperandVariationList" :url="variationSelectURL"></lookup-select2>'
-            + '<div class="checkin-rule-childrules" v-if="operator === \'or\' || operator === \'and\'">'
-            + '<div v-for="(op, opi) in operands">'
-            + '<checkin-rule :rule="op" :index="opi" :level="level + 1" v-if="typeof op === \'object\'"></checkin-rule>'
-            + '</div>'
-            + '<button type="button" class="checkin-rule-addchild btn btn-xs btn-default" @click.prevent="addOperand"><span class="fa fa-plus-circle"></span> ' + gettext('Add condition') + '</button>'
-            + '</div>'
-            + '</div>'
-        ),
+        render: function (createElement) {
+            var children = [];
+
+            // Button group
+            var buttons = [];
+            buttons.push(createElement('button', {
+                attrs: { type: 'button' },
+                class: 'checkin-rule-remove btn btn-xs btn-default',
+                on: { click: function(e) { e.preventDefault(); this.wrapWithOR(); }.bind(this) }
+            }, 'OR'));
+            buttons.push(createElement('button', {
+                attrs: { type: 'button' },
+                class: 'checkin-rule-remove btn btn-xs btn-default',
+                on: { click: function(e) { e.preventDefault(); this.wrapWithAND(); }.bind(this) }
+            }, 'AND'));
+            if (this.operands && this.operands.length == 1 && (this.operator === 'or' || this.operator == 'and')) {
+                buttons.push(createElement('button', {
+                    attrs: { type: 'button' },
+                    class: 'checkin-rule-remove btn btn-xs btn-default',
+                    on: { click: function(e) { e.preventDefault(); this.cutOut(); }.bind(this) }
+                }, [createElement('span', { class: 'fa fa-cut' })]));
+            }
+            if (this.level > 0) {
+                buttons.push(createElement('button', {
+                    attrs: { type: 'button' },
+                    class: 'checkin-rule-remove btn btn-xs btn-default',
+                    on: { click: function(e) { e.preventDefault(); this.remove(); }.bind(this) }
+                }, [createElement('span', { class: 'fa fa-trash' })]));
+            }
+            children.push(createElement('div', { class: 'btn-group pull-right' }, buttons));
+
+            // Variable select
+            var varOptions = [
+                createElement('option', { domProps: { value: 'and' } }, gettext('All of the conditions below (AND)')),
+                createElement('option', { domProps: { value: 'or' } }, gettext('At least one of the conditions below (OR)'))
+            ];
+            for (var name in this.vars) {
+                var v = this.vars[name];
+                varOptions.push(createElement('option', { domProps: { value: name } }, v.label));
+            }
+            children.push(createElement('select', {
+                class: 'form-control',
+                attrs: { required: true },
+                domProps: { value: this.variable },
+                on: { input: this.setVariable }
+            }, varOptions));
+            children.push(' ');
+
+            // Operator select
+            if (this.operator !== 'or' && this.operator !== 'and') {
+                var opOptions = [createElement('option')];
+                for (var name in this.operators) {
+                    var v = this.operators[name];
+                    opOptions.push(createElement('option', { domProps: { value: name } }, v.label));
+                }
+                children.push(createElement('select', {
+                    class: 'form-control',
+                    attrs: { required: true },
+                    domProps: { value: this.operator },
+                    on: { input: this.setOperator }
+                }, opOptions));
+                children.push(' ');
+            }
+
+            // Time type select
+            if (this.vartype == 'datetime') {
+                var timeOptions = [
+                    createElement('option', { domProps: { value: 'date_from' } }, gettext('Event start')),
+                    createElement('option', { domProps: { value: 'date_to' } }, gettext('Event end')),
+                    createElement('option', { domProps: { value: 'date_admission' } }, gettext('Event admission')),
+                    createElement('option', { domProps: { value: 'custom' } }, gettext('custom time'))
+                ];
+                children.push(createElement('select', {
+                    class: 'form-control',
+                    attrs: { required: true },
+                    domProps: { value: this.timeType },
+                    on: { input: this.setTimeType }
+                }, timeOptions));
+                children.push(' ');
+            }
+
+            // DateTime field
+            if (this.vartype == 'datetime' && this.timeType == 'custom') {
+                children.push(createElement('datetimefield', {
+                    props: { value: this.timeValue },
+                    on: { input: this.setTimeValue }
+                }));
+            }
+
+            // Tolerance input
+            if (this.vartype == 'datetime' && this.timeType && this.timeType != 'custom') {
+                children.push(createElement('input', {
+                    class: 'form-control',
+                    attrs: { required: true, type: 'number', placeholder: gettext('Tolerance (minutes)') },
+                    domProps: { value: this.timeTolerance },
+                    on: { input: this.setTimeTolerance }
+                }));
+            }
+
+            // Int input
+            if (this.vartype == 'int' && this.cardinality > 1) {
+                children.push(createElement('input', {
+                    class: 'form-control',
+                    attrs: { required: true, type: 'number' },
+                    domProps: { value: this.rightoperand },
+                    on: { input: this.setRightOperandNumber }
+                }));
+            }
+
+            // Product Select
+            if (this.vartype == 'product' && this.operator == 'inList') {
+                children.push(createElement('lookup-select2', {
+                    attrs: { required: true },
+                    props: {
+                        multiple: true,
+                        value: this.rightoperand,
+                        url: this.productSelectURL
+                    },
+                    on: { input: this.setRightOperandProductList }
+                }));
+            }
+
+            // Variation Select
+            if (this.vartype == 'variation' && this.operator == 'inList') {
+                children.push(createElement('lookup-select2', {
+                    attrs: { required: true },
+                    props: {
+                        multiple: true,
+                        value: this.rightoperand,
+                        url: this.variationSelectURL
+                    },
+                    on: { input: this.setRightOperandVariationList }
+                }));
+            }
+
+            // Child rules (recursive)
+            if (this.operator === 'or' || this.operator === 'and') {
+                var childRulesNodes = [];
+                if (this.operands) {
+                    this.operands.forEach(function(op, opi) {
+                        if (typeof op === 'object') {
+                            childRulesNodes.push(createElement('div', [
+                                createElement('checkin-rule', {
+                                    props: {
+                                        rule: op,
+                                        index: opi,
+                                        level: this.level + 1
+                                    }
+                                })
+                            ]));
+                        }
+                    }.bind(this));
+                }
+                
+                childRulesNodes.push(createElement('button', {
+                    attrs: { type: 'button' },
+                    class: 'checkin-rule-addchild btn btn-xs btn-default',
+                    on: { click: function(e) { e.preventDefault(); this.addOperand(); }.bind(this) }
+                }, [
+                    createElement('span', { class: 'fa fa-plus-circle' }),
+                    ' ' + gettext('Add condition')
+                ]));
+
+                children.push(createElement('div', { class: 'checkin-rule-childrules' }, childRulesNodes));
+            }
+
+            return createElement('div', { class: this.classObject }, children);
+        },
         computed: {
             variable: function () {
                 var op = this.operator;
@@ -444,11 +581,36 @@ $(function () {
     });
 
     Vue.component('checkin-rules-editor', {
-        template: ('<div class="checkin-rules-editor">'
-            + '<checkin-rule :rule="this.$root.rules" :level="0" :index="0" v-if="hasRules"></checkin-rule>'
-            + '<button type="button" class="checkin-rule-addchild btn btn-xs btn-default" v-if="!hasRules" @click.prevent="addRule"><span class="fa fa-plus-circle"></span> ' + gettext('Add condition') + '</button>'
-            + '</div>'
-        ),
+        render: function (createElement) {
+            var children = [];
+            if (this.hasRules) {
+                children.push(createElement('checkin-rule', {
+                    props: {
+                        rule: this.$root.rules,
+                        level: 0,
+                        index: 0
+                    }
+                }));
+            }
+            if (!this.hasRules) {
+                children.push(createElement('button', {
+                    attrs: {
+                        type: 'button'
+                    },
+                    class: 'checkin-rule-addchild btn btn-xs btn-default',
+                    on: {
+                        click: function (event) {
+                            event.preventDefault();
+                            this.addRule();
+                        }.bind(this)
+                    }
+                }, [
+                    createElement('span', { class: 'fa fa-plus-circle' }),
+                    ' ' + gettext('Add condition')
+                ]));
+            }
+            return createElement('div', { class: 'checkin-rules-editor' }, children);
+        },
         computed: {
             hasRules: function () {
                 return hasRules = !!Object.keys(this.$root.rules).length;
