@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from tinymce.models import HTMLField
 
+from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
 from eventyay.talk_rules.agenda import can_view_schedule, is_speaker_viewable
 from eventyay.talk_rules.orga import can_view_speaker_names
@@ -34,8 +34,9 @@ class SpeakerProfile(PretalxModel):
         blank=True,
     )
     event = models.ForeignKey(to='Event', related_name='+', on_delete=models.CASCADE)
-    biography = HTMLField(
+    biography = models.TextField(
         verbose_name=_('Biography'),
+        help_text=phrases.base.use_markdown,
         null=True,
         blank=True,
     )

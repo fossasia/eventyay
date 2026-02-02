@@ -123,7 +123,7 @@ Content Display
 - ``components/MarkdownContent.js`` - Markdown renderer
 - ``components/MarkdownPage.vue`` - Full markdown page
 - ``components/RichTextContent.vue`` - Rich text display
-- ``components/RichTextEditor.vue`` - TinyMCE-based rich text editor
+- ``components/RichTextEditor.vue`` - Quill-based rich text editor
 - ``components/StaticPage.vue`` - Static content pages
 - ``components/IframePage.vue`` - Embedded iframe pages
 

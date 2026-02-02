@@ -204,7 +204,6 @@
   "poster-manager/poster:input-parent-room:label": "Кімната",
   "poster-manager/poster:input-title:label": "Заголовок",
   "poster-manager/poster:input-abstract:label": "Анотація",
-  "poster-manager/poster:input-abstract:hint": "Максимум {maxChars} символів.",
   "poster-manager/poster:input-category:label": "Категорія",
   "poster-manager/poster:input-tags:label": "Теги",
   "poster-manager/poster:input-poster-pdf:label": "PDF постера",

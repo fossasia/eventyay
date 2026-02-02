@@ -149,9 +149,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       outDir: env.OUT_DIR ? `${env.OUT_DIR}/video` : 'dist',
-      // OUT_DIR points to a dedicated per-app folder (e.g. compiled-frontend/video),
-      // so it's safe and desirable to clean stale hashed assets on each build.
-      emptyOutDir: true,
+      emptyOutDir: false,
       target: 'esnext',
       sourcemap: true, // Added for debugging vendor-webrtc issue
       chunkSizeWarningLimit: 1250,
@@ -172,12 +170,11 @@ export default defineConfig(({ mode }) => {
             if (id.includes('node_modules')) {
               // Consolidate WebRTC libs to a single chunk to avoid evaluation order races
               if (id.includes('janus-gateway') || id.includes('webrtc-adapter')) return 'vendor-rtc'
-              // TinyMCE is large; keep it isolated so it doesn't bloat the generic vendor chunk.
-              if (id.includes('/node_modules/tinymce/') || id.includes('/node_modules/@tinymce/')) return 'vendor-tinymce'
               if (id.includes('materialdesignicons-webfont') || id.match(/materialdesignicons/)) return 'vendor-mdi'
               if (id.includes('pdfjs-dist')) return 'vendor-pdfjs'
               if (id.includes('moment') || id.includes('moment-timezone')) return 'vendor-moment'
               if (id.includes('lodash') || id.includes('lodash-es')) return 'vendor-lodash'
+              if (id.includes('quill')) return 'vendor-quill'
               if (id.includes('markdown-it')) return 'vendor-markdown'
               if (id.includes('i18next')) return 'vendor-i18n'
               if (id.includes('buntpapier')) return 'vendor-buntpapier'

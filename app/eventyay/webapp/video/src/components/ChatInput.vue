@@ -1,14 +1,6 @@
 <template lang="pug">
 bunt-input-outline-container.c-chat-input
-	textarea.editor(
-		ref="editor"
-		v-model="body"
-		:placeholder="$t('ChatInput:input:placeholder')"
-		@input="onInput"
-		@keyup="onInput"
-		@click="onInput"
-		@keydown="onKeydown"
-	)
+	.editor(ref="editor")
 	emoji-picker-button(@selected="addEmoji")
 	upload-button#btn-file(accept="image/png, image/jpg, image/gif, application/pdf, .png, .jpg, .gif, .jpeg, .pdf", icon="paperclip", multiple=true, :tooltip="$t('ChatInput:btn-file:tooltip')", @change="attachFiles")
 	bunt-icon-button#btn-send(:tooltip="$t('ChatInput:btn-send:tooltip')", tooltip-placement="top-end", @click="send") send
@@ -42,11 +34,17 @@ bunt-input-outline-container.c-chat-input
 // - parse ascii emoticons ;)
 // - parse colon emoji :+1:
 // - add scrollbar when overflowing parent
-import { nextTick } from 'vue'
+import { markRaw } from 'vue'
 import api from 'lib/api'
+import Quill from 'quill'
+import 'lib/quill/emoji'
+import 'lib/quill/mention'
 import Avatar from 'components/Avatar'
 import EmojiPickerButton from 'components/EmojiPickerButton'
 import UploadButton from 'components/UploadButton'
+import { nativeToOps } from 'lib/emoji'
+
+const Delta = Quill.import('delta')
 
 export default {
 	components: { Avatar, EmojiPickerButton, UploadButton },
@@ -56,7 +54,6 @@ export default {
 	},
 	data() {
 		return {
-			body: '',
 			files: [],
 			uploading: false,
 			autocomplete: null
@@ -66,11 +63,11 @@ export default {
 		autocompleteCoordinates() {
 			// TODO bound to right edge
 			if (!this.autocomplete?.range) return null
+			const bounds = this.quill.getBounds(this.autocomplete.range.index, this.autocomplete.range.length)
 			const editorRect = this.$refs.editor.getBoundingClientRect()
-			const bounds = { left: 0, top: 0 }
 			return {
-				left: editorRect.x + 8 - Math.max(0, 240 - (editorRect.width + 60)) + 'px',
-				bottom: window.innerHeight - editorRect.y + 8 + 'px'
+				left: editorRect.x + bounds.left - Math.max(0, 240 - (editorRect.width + 60 - bounds.left)) + 'px',
+				bottom: window.innerHeight - editorRect.y - bounds.top + 8 + 'px'
 			}
 		}
 	},
@@ -89,52 +86,56 @@ export default {
 		}
 	},
 	mounted() {
+		this.quill = markRaw(new Quill(this.$refs.editor, {
+			debug: ENV_DEVELOPMENT ? 'info' : 'warn',
+			placeholder: this.$t('ChatInput:input:placeholder'),
+			formats: ['emoji', 'mention'],
+			modules: {
+				keyboard: {
+					bindings: {
+						enter: {
+							key: 'Enter',
+							handler: this.handleEnter
+						},
+						tab: {
+							key: 'Tab',
+							handler: this.handleTab
+						},
+						up: {
+							key: 38,
+							handler: this.handleArrayUp
+						},
+						down: {
+							key: 40,
+							handler: this.handleArrayDown
+						},
+						escape: {
+							key: 27,
+							handler: this.handleEscape
+						},
+					}
+				}
+			}
+		}))
+		this.quill.on('text-change', this.onTextChange)
+		this.quill.on('selection-change', this.onSelectionChange)
+		// TODO paste
 		if (this.message) {
-			this.body = this.message.content?.body || ''
+			this.quill.setContents(nativeToOps(this.message.content?.body))
 			if (this.message.content?.files?.length > 0) {
 				this.files = this.message.content.files
 			}
 		}
 	},
 	methods: {
-		onInput() {
-			this.updateAutocomplete()
-		},
-		onKeydown(event) {
-			if (event.key === 'Enter' && !event.shiftKey) {
-				event.preventDefault()
-				if (this.autocomplete) return this.handleMention()
-				return this.send()
-			}
-			if (event.key === 'Tab') {
-				if (!this.autocomplete) return true
-				event.preventDefault()
-				return this.handleMention()
-			}
-			if (event.key === 'ArrowUp') {
-				if (!this.autocomplete) return true
-				event.preventDefault()
-				return this.handleArrayUp()
-			}
-			if (event.key === 'ArrowDown') {
-				if (!this.autocomplete) return true
-				event.preventDefault()
-				return this.handleArrayDown()
-			}
-			if (event.key === 'Escape') {
-				if (!this.autocomplete) return true
-				event.preventDefault()
-				return this.closeAutocomplete()
-			}
-			return true
-		},
-		updateAutocomplete() {
-			const editor = this.$refs.editor
-			if (!editor) return
-			const caretPos = editor.selectionStart ?? 0
+		onTextChange(delta, oldDelta, source) {
+			if (source !== 'user') return
+			const selection = this.quill.getSelection()
+			if (selection === null) return
+			const caretPos = selection.index
 			const lookbackLength = Math.min(32, caretPos)
 			const lookbackOffset = caretPos - lookbackLength
-			const lookback = this.body.slice(lookbackOffset, caretPos)
+			const lookback = this.quill.getText(lookbackOffset, lookbackLength)
 			// only trigger when there is a space before @, except at the beginning of the message
 			const startsWithMention = lookbackOffset === 0 && lookback.startsWith('@')
 			const autocompleteCharIndex =
@@ -142,22 +143,31 @@ export default {
 					? 0
 					: lookback.lastIndexOf(' @') // TODO any whitespace
 			if (autocompleteCharIndex > -1) {
-				const startIndex = autocompleteCharIndex + lookbackOffset + (startsWithMention ? 0 : 1)
 				this.autocomplete = {
 					type: 'mention',
-					search: lookback.slice(autocompleteCharIndex + 1 + (startsWithMention ? 0 : 1)),
+					search: lookback.slice(autocompleteCharIndex + 1 + !startsWithMention),
+					selection,
 					range: {
-						start: startIndex,
-						end: caretPos
+						index: autocompleteCharIndex + lookbackOffset + !startsWithMention,
+						length: lookback.length
 					},
-					selectionStart: editor.selectionStart,
-					selectionEnd: editor.selectionEnd,
 					options: null,
 					selected: 0
 				}
 			} else {
 				this.autocomplete = null
 			}
+		},
+		onSelectionChange(range, oldRange, source) {
+			// TODO check mentions
+		},
+		handleEnter() {
+			if (this.autocomplete) return this.handleMention()
+			return this.send()
+		},
+		handleTab() {
+			if (this.autocomplete) return this.handleMention()
+			return true
 		},
 		handleArrayUp() {
 			if (!this.autocomplete) return true
@@ -167,12 +177,12 @@ export default {
 			if (!this.autocomplete) return true
 			this.autocomplete.selected = Math.min(this.autocomplete.options.length - 1, this.autocomplete.selected + 1)
 		},
+		handleEscape() {
+			if (!this.autocomplete) return true
+			this.closeAutocomplete()
+		},
 		closeAutocomplete() {
-			const editor = this.$refs.editor
-			if (editor && this.autocomplete) {
-				editor.focus()
-				editor.setSelectionRange(this.autocomplete.selectionStart ?? 0, this.autocomplete.selectionEnd ?? 0)
-			}
+			this.quill.setSelection(this.autocomplete.selection)
 			this.autocomplete = null
 		},
 		selectMention(index) {
@@ -182,20 +192,28 @@ export default {
 			if (!this.autocomplete) return true
 			const user = this.autocomplete.options[this.autocomplete.selected]
 			if (!user) return true
-			const { start, end } = this.autocomplete.range
-			const insertValue = '@' + user.id + ' '
-			this.body = this.body.slice(0, start) + insertValue + this.body.slice(end)
-			nextTick(() => {
-				const editor = this.$refs.editor
-				if (!editor) return
-				editor.focus()
-				const caret = start + insertValue.length
-				editor.setSelectionRange(caret, caret)
+			this.quill.setSelection(this.autocomplete.range.index, 0)
+			this.quill.deleteText(this.autocomplete.range.index, this.autocomplete.range.length)
+			this.quill.insertEmbed(this.autocomplete.range.index, 'mention', {
+				id: user.id,
+				name: user.profile.display_name
 			})
+			this.quill.setSelection(this.autocomplete.range.index + 1, 0)
 			this.autocomplete = null
 		},
 		send() {
-			const text = (this.body || '').trim()
+			const contents = this.quill.getContents()
+			let text = ''
+			for (const op of contents.ops) {
+				if (typeof op.insert === 'string') {
+					text += op.insert
+				} else if (op.insert.emoji) {
+					text += op.insert.emoji
+				} else if (op.insert.mention) {
+					text += '@' + op.insert.mention.id
+				}
+			}
+			text = text.trim()
 			if (this.files.length > 0) {
 				this.$emit('send', {
 					type: 'files',
@@ -209,7 +227,7 @@ export default {
 					body: text
 				})
 			}
-			this.body = ''
+			this.quill.setContents([{insert: '\n'}])
 		},
 		async attachFiles(event) {
 			const files = Array.from(event.target.files)
@@ -234,17 +252,10 @@ export default {
 			this.uploading = false
 		},
 		addEmoji(emoji) {
-			const editor = this.$refs.editor
-			if (!editor) return
-			const start = editor.selectionStart ?? 0
-			const end = editor.selectionEnd ?? start
-			this.body = this.body.slice(0, start) + emoji.native + this.body.slice(end)
-			nextTick(() => {
-				editor.focus()
-				const caret = start + emoji.native.length
-				editor.setSelectionRange(caret, caret)
-				this.updateAutocomplete()
-			})
+			// TODO skin color
+			const selection = this.quill.getSelection(true)
+			this.quill.updateContents(new Delta().retain(selection.index).delete(selection.length).insert({emoji: emoji.native}), 'user')
+			this.quill.setSelection(selection.index + 1, 0)
 		},
 		removeFile(file) {
 			const index = this.files.indexOf(file)
@@ -264,15 +275,32 @@ export default {
 	box-sizing: border-box
 	&.bunt-input-outline-container
 		padding: 8px 60px 6px 36px
-	textarea.editor
-		width: 100%
-		border: 0
-		outline: 0
-		background: transparent
-		resize: none
+	.ql-editor
 		font-size: 16px
-		line-height: 22px
-		overflow-wrap: break-word
+		&.ql-blank::before
+			font-style: normal
+			color: var(--clr-text-secondary)
+			line-height: 22px
+			left: 0
+		p
+			font-size: 16px
+			line-height: 22px
+			overflow-wrap: break-word
+		.emoji
+			margin: 0 2px
+			line-height: 22px
+			width: 20px
+			height: 20px
+			vertical-align: middle
+			display: inline-block
+		.mention span
+			display: inline-block
+			background-color: var(--clr-input-primary-bg)
+			color: var(--clr-input-primary-fg)
+			font-weight: 500
+			border-radius: 4px
+			padding: 0 2px
+			margin: 0 2px
 	.bunt-input
 		input-style(size: compact)
 		padding: 0

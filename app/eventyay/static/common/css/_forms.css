@@ -180,18 +180,6 @@ textarea {
   }
 }
 
-/* Reduce layout shift while TinyMCE initializes by reserving space early. */
-textarea.tinymce {
-  min-height: 320px;
-}
-
-/* TinyMCE renders menus/popovers into `.tox-tinymce-aux` at the end of <body>.
- * Keep them above page content but below our fixed navbar (z-index: 1100).
- */
-.tox-tinymce-aux {
-  z-index: 1050;
-}
-
 input[type="file"] {
   overflow: hidden;
   &:not(:disabled):not([readonly]) {

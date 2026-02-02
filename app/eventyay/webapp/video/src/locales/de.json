@@ -202,7 +202,6 @@
   "poster-manager/poster:input-parent-room:label": "Raum",
   "poster-manager/poster:input-title:label": "Titel",
   "poster-manager/poster:input-abstract:label": "Zusammenfassung",
-  "poster-manager/poster:input-abstract:hint": "Max. {maxChars} Zeichen.",
   "poster-manager/poster:input-category:label": "Kategorie",
   "poster-manager/poster:input-tags:label": "Schlagwörter",
   "poster-manager/poster:input-poster-pdf:label": "Plakat-PDF",

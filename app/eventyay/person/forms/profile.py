@@ -27,7 +27,7 @@ from eventyay.common.forms.widgets import (
     ClearableBasenameFileInput,
     EnhancedSelect,
     EnhancedSelectMultiple,
-    RichTextWidget,
+    MarkdownWidget,
 )
 from eventyay.common.text.phrases import phrases
 from eventyay.base.models import Event
@@ -217,10 +217,10 @@ class SpeakerProfileForm(
         fields = ('biography',)
         public_fields = ['fullname', 'biography', 'avatar']
         widgets = {
-            'biography': RichTextWidget,
+            'biography': MarkdownWidget,
             'avatar': ClearableBasenameFileInput,
-            'avatar_source': RichTextWidget,
-            'avatar_license': RichTextWidget,
+            'avatar_source': MarkdownWidget,
+            'avatar_license': MarkdownWidget,
         }
         field_classes = {
             'avatar': ImageField,
@@ -313,7 +313,6 @@ class SpeakerInformationForm(I18nHelpText, I18nModelForm):
         widgets = {
             'limit_tracks': EnhancedSelectMultiple(color_field='color'),
             'limit_types': EnhancedSelectMultiple,
-            'text': RichTextWidget,
         }
 
 

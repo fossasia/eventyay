@@ -33,7 +33,6 @@ from django_scopes import scopes_disabled
 from rest_framework.authtoken.models import Token
 from rules.contrib.models import RulesModelBase, RulesModelMixin
 from webauthn.helpers.structs import PublicKeyCredentialDescriptor
-from tinymce.models import HTMLField
 
 from eventyay.base.i18n import language
 from eventyay.base.models.cache import VersionedModel
@@ -258,13 +257,13 @@ class User(
             'we can retrieve your profile picture from there.'
         ),
     )
-    avatar_source = HTMLField(
+    avatar_source = models.TextField(
         null=True,
         blank=True,
         verbose_name=_('Profile Picture Source'),
         help_text=_('Please enter the name of the author or source of image and a link if applicable.'),
     )
-    avatar_license = HTMLField(
+    avatar_license = models.TextField(
         null=True,
         blank=True,
         verbose_name=_('Profile Picture License'),

@@ -57,7 +57,7 @@ name               string               The human-readable name of your plugin
 author             string               Your name
 version            string               A human-readable version code of your plugin. If you publish your
                                         plugin on PyPI, this should match the package version.
-description        string               A more verbose description of what your plugin does.
+description        string               A more verbose description of what your plugin does. You can use Markdown here.
 category           string               A category for your plugin, used to group it in the plugin list.
                                         Supported categories are ``FEATURE``, ``INTEGRATION``, ``CUSTOMIZATION``,
                                         ``EXPORTER``, ``RECORDING``, ``LANGUAGE``, ``OTHER`` (default).
