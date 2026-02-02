@@ -1,32 +1,20 @@
 <template lang="pug">
 .rich-text-content(@click="handleClick")
+	.rich-text-inner(v-html="renderedHtml")
 </template>
 <script>
-import Quill from 'quill'
 import router from 'router'
-import VideoResponsive from 'lib/quill/VideoResponsive'
-import fullWidthFormat from 'lib/quill/fullWidthFormat'
+import { richTextToHtml, sanitizeHtml } from 'lib/richText'
 
 export default {
 	props: {
-		content: [Array, Object],
+		content: [String, Array, Object],
 	},
-	watch: {
-		content: {
-			handler(val) {
-				this.quill.setContents(val)
-			},
-			deep: true
-		},
-	},
-	mounted() {
-		Quill.register(VideoResponsive)
-		Quill.register(fullWidthFormat)
-		const quill = new Quill(this.$el, {
-			readOnly: true
-		})
-		quill.setContents(this.content)
-		this.quill = quill
+	computed: {
+		renderedHtml() {
+			const html = richTextToHtml(this.content)
+			return sanitizeHtml(html)
+		}
 	},
 	methods: {
 		handleClick(event) {

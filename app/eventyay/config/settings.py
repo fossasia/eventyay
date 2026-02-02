@@ -364,6 +364,9 @@ if DEBUG and importlib.util.find_spec('django_extensions'):
 if DEBUG and importlib.util.find_spec('debug_toolbar'):
     _LIBRARY_APPS += ('debug_toolbar',)
 
+if importlib.util.find_spec('tinymce'):
+    _LIBRARY_APPS += ('tinymce',)
+
 _OURS_APPS = (
     'eventyay.agenda',
     'eventyay.common',
@@ -1315,6 +1318,45 @@ MAX_SIZE_CONFIG = {
 }
 
 FORM_RENDERER = 'eventyay.common.forms.renderers.TabularFormRenderer'
+
+# --- Rich text editor (django-tinymce) ---
+# Assets are loaded through Django form media, so no inline JS is needed.
+TINYMCE_DEFAULT_CONFIG = {
+    'menubar': False,
+    'branding': False,
+    'promotion': False,
+    'statusbar': False,
+    # Reserve space early to avoid layout shift when the editor initializes.
+    'height': 320,
+    # Keep a small, safe feature set that matches our sanitizer.
+    'plugins': 'lists link table codesample',
+    # TinyMCE 6 uses the `blocks` control for heading selection.
+    'toolbar': (
+        'undo redo | blocks | '
+        'bold italic underline strikethrough subscript superscript | '
+        'forecolor backcolor | '
+        'bullist numlist | '
+        'link table | codesample | removeformat'
+    ),
+    'toolbar_mode': 'sliding',
+    'block_formats': (
+        'Paragraph=p; '
+        'Heading 1=h1; Heading 2=h2; Heading 3=h3; '
+        'Heading 4=h4; Heading 5=h5; Heading 6=h6'
+    ),
+    # Ensure the requested HTML tags/attrs are preserved.
+    # This extends TinyMCE defaults instead of replacing them.
+    'extended_valid_elements': (
+        'a[href|title|class|rel|target],'
+        'abbr[title],'
+        'acronym[title],'
+        'b,br,code,div[class|style],em,hr,i,sub,sup,'
+        'li,ol,p[class|style],pre[class],code[class],span[class|style|title],strong,'
+        'table[width],thead,tbody,tfoot,tr,td[width|align|colspan|rowspan],th[width|align|colspan|rowspan],'
+        'h1,h2,h3,h4,h5,h6,ul'
+    ),
+    'convert_urls': False,
+}
 
 # TODO: Move to consts.py. It should not be dynamic, or it will cause generating DB migrations.
 DEFAULT_CURRENCY = 'USD'

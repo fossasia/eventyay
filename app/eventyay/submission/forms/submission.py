@@ -10,7 +10,7 @@ from eventyay.common.forms.mixins import ConfiguredFieldOrderMixin, PublicConten
 from eventyay.common.forms.renderers import InlineFormRenderer
 from eventyay.common.forms.widgets import (
     EnhancedSelect,
-    MarkdownWidget,
+    RichTextWidget,
     SearchInput,
     SelectMultipleWithCount,
 )
@@ -206,9 +206,9 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
         ]
         public_fields = ['title', 'abstract', 'description', 'image']
         widgets = {
-            'abstract': MarkdownWidget,
-            'description': MarkdownWidget,
-            'notes': MarkdownWidget,
+            'abstract': RichTextWidget,
+            'description': RichTextWidget,
+            'notes': RichTextWidget,
             'track': EnhancedSelect(description_field='description', color_field='color'),
         }
         field_classes = {
