@@ -15,6 +15,10 @@ class StartPageView(TemplateView):
         ctx = super().get_context_data(**kwargs)
         settings_obj = GlobalSettingsObject().settings
         header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
+        if header_image.startswith('file://'):
+            header_image = header_image[7:]
+        elif header_image.startswith('public:'):
+            header_image = header_image[7:]
         ctx['startpage_header_image_url'] = default_storage.url(header_image) if header_image else ''
         header_text = settings_obj.get(
             'startpage_header_text',
@@ -26,7 +30,7 @@ class StartPageView(TemplateView):
         with scopes_disabled():
             ctx['events'] = (
                 Event.objects.select_related('organizer')
-                .filter(is_public=True, live=True, testmode=False)
+                .filter(live=True, testmode=False)
                 .order_by('date_from')
             )
         return ctx
