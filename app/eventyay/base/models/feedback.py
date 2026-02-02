@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy as _n
 from django_scopes import ScopedManager
 
-from tinymce.models import HTMLField
+from eventyay.common.text.phrases import phrases
 
 from .mixins import PretalxModel
 
@@ -33,7 +33,7 @@ class Feedback(PretalxModel):
         verbose_name=_n('Speaker', 'Speakers', 1),
     )
     rating = models.IntegerField(null=True, blank=True, verbose_name=_('Rating'))
-    review = HTMLField(verbose_name=_('Feedback'))
+    review = models.TextField(verbose_name=_('Feedback'), help_text=phrases.base.use_markdown)
 
     objects = ScopedManager(event='talk__event')
 

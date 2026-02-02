@@ -204,7 +204,6 @@
   "poster-manager/poster:input-parent-room:label": "Room",
   "poster-manager/poster:input-title:label": "Title",
   "poster-manager/poster:input-abstract:label": "Abstract",
-  "poster-manager/poster:input-abstract:hint": "Max {maxChars} characters.",
   "poster-manager/poster:input-category:label": "Category",
   "poster-manager/poster:input-tags:label": "Tags",
   "poster-manager/poster:input-poster-pdf:label": "Poster PDF",

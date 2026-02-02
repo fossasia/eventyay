@@ -436,7 +436,7 @@ RichTextEditor & RichTextContent
 
 **Files**: ``components/RichTextEditor.vue``, ``components/RichTextContent.vue``
 
-Rich text editing with TinyMCE:
+Rich text editing with Quill:
 - Bold, italic, underline
 - Lists and headings
 - Links and images
@@ -945,6 +945,11 @@ Stylus Files
   - Responsive breakpoints
   - Mobile-first approach
   - Tablet and desktop rules
+
+**quill.styl**
+  - Quill editor theming
+  - Toolbar styling
+  - Content area styles
 
 **browser-block.styl**
   - Unsupported browser warning
