@@ -3,11 +3,6 @@
 {% load i18n %}
 {% load static %}
 
-{% block scripts %}
-    {{ block.super }}
-    {{ form.media }}
-{% endblock scripts %}
-
 {% block extra_title %}{% translate "Email editor" %} :: {% endblock extra_title %}
 
 {% block mail_content %}

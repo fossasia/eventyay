@@ -15,8 +15,3 @@
     <script defer src="{% static "vendored/purify.min.js" %}"></script> {# required by formtools.js #}
     <script defer src="{% static "common/js/formTools.js" %}"></script>
 {% endcompress %}
-
-{# TinyMCE assets are supplied by the widget via Django form media. #}
-{{ form.media }}
-{{ qform.media }}
-{{ wizard.form.media }}
