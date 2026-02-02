@@ -272,7 +272,7 @@
                             {% if request.event %}
                                 {% if request.event.testmode or request.event.private_testmode %}
                                 <li class="testmode">
-                                    <a href="{% url "eventyay_common:event.live" event=request.event.slug organizer=request.organizer.slug %}">
+                                    <a href="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}">
                                         <i class="fa fa-warning fa-fw"></i>
                                         <span class="sidebar-text">
                                             {% if request.event.private_testmode %}
