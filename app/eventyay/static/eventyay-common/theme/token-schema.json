@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Eventyay Theme Token Schema",
+  "description": "Schema for validating Eventyay theme tokens and overrides",
+  "type": "object",
+  "required": ["themeVersion", "tokens"],
+  "properties": {
+    "themeVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the theme definition"
+    },
+    "tokens": {
+      "type": "object",
+      "properties": {
+        "color": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+          }
+        },
+        "font": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "space": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9]+(px|rem|em|%)$"
+          }
+        },
+        "radius": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[0-9]+(px|rem|em|%)$"
+          }
+        },
+        "border": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "shadow": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "semantic": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "component": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
