@@ -606,7 +606,12 @@ class Event(
     is_public = models.BooleanField(
         default=True,
         verbose_name=_('Show in lists'),
-        help_text='If selected, this event will show up publicly on the list of events for your organizer account.',
+        help_text=_('If selected, this event will show up publicly on the list of events for your organizer account.'),
+    )
+    not_on_frontpage = models.BooleanField(
+        default=False,
+        verbose_name=_('Not on Front Page'),
+        help_text=_('If selected, this event will not be listed on the public frontpage.'),
     )
     presale_end = models.DateTimeField(
         null=True,

@@ -19,6 +19,7 @@ urlpatterns = [
     url(r'^$', admin.AdminDashboard.as_view(), name='admin.dashboard'),
     url(r'^organizers/$', admin.OrganizerList.as_view(), name='admin.organizers'),
     url(r'^events/$', admin.AdminEventList.as_view(), name='admin.events'),
+    url(r'^events/(?P<pk>\d+)/toggle_frontpage/$', admin.EventFrontpageToggle.as_view(), name='admin.events.toggle_frontpage'),
     path('attendees/', admin.AttendeeListView.as_view(), name='admin.attendees'),
     path('submissions/', admin.SubmissionListView.as_view(), name='admin.submissions'),
     url(r'^task_management', admin.TaskList.as_view(), name='admin.task_management'),

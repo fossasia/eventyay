@@ -6,6 +6,7 @@ import dateutil.parser
 from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -32,6 +33,8 @@ from eventyay.celery_app import app
 from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
+from django.views import View
+from eventyay.base.models.event import Event
 from eventyay.base.models.checkin import Checkin
 from eventyay.base.models.orders import OrderPosition
 from eventyay.base.models.organizer import Organizer
@@ -87,6 +90,23 @@ class AdminEventList(EventList):
 
     template_name = 'pretixcontrol/admin/events/index.html'
 
+
+class EventFrontpageToggle(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        pk = kwargs.get('pk')
+        if pk is None:
+            raise Http404(_("Event primary key not provided."))
+        
+        event = get_object_or_404(Event, pk=pk)
+
+        # Ensure the admin has rights to modify this specific event
+        if not (request.user.has_active_staff_session(request.session.session_key) or request.user.teams.filter(organizer=event.organizer).exists()):
+            raise PermissionDenied(_('You do not have permission to modify this event.'))
+
+        event.not_on_frontpage = not event.not_on_frontpage
+        event.save()
+        messages.success(request, _('The event visibility has been updated.'))
+        return redirect('eventyay_admin:admin.events')
 
 class AttendeeListView(ListView):
     template_name = 'pretixcontrol/admin/attendees/index.html'

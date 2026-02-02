@@ -130,11 +130,13 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <a href="{% url 'eventyay_admin:admin.events.toggle_frontpage' pk=e.pk %}"
-                           data-toggle="tooltip"
-                           title="{% if not e.show_on_frontpage %}{% trans "Show on frontpage" %}{% else %}{% trans "Hide from frontpage" %}{% endif %}">
-                            <i class="fa fa-lg {% if not e.show_on_frontpage %}fa-toggle-on text-danger{% else %}fa-toggle-off text-muted{% endif %}"></i>
-                        </a>
+                        <form action="{% url 'eventyay_admin:admin.events.toggle_frontpage' pk=e.pk %}" method="post" class="form-inline" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link btn-xs" data-toggle="tooltip" style="outline:none; box-shadow:none;"
+                                    title="{% if e.not_on_frontpage %}{% trans "Show on frontpage" %}{% else %}{% trans "Hide from frontpage" %}{% endif %}">
+                                <i class="fa fa-lg {% if e.not_on_frontpage %}fa-toggle-on text-success{% else %}fa-toggle-off text-muted{% endif %}"></i>
+                            </button>
+                        </form>
                     </td>
                     <td>
                         {% if not e.live %}

@@ -95,7 +95,7 @@ def filter_qs_by_attr(qs, request):
 
 class EventListMixin:
     def _get_event_queryset(self):
-        query = Q(is_public=True) & Q(live=True)
+        query = Q(is_public=True) & Q(live=True) & Q(not_on_frontpage=False)
         qs = self.request.organizer.events.using(settings.DATABASE_REPLICA).filter(query)
         qs = qs.filter(sales_channels__contains=self.request.sales_channel.identifier)
         qs = qs.annotate(
@@ -161,6 +161,7 @@ class EventListMixin:
                     organizer=self.request.organizer,
                     live=True,
                     is_public=True,
+                    not_on_frontpage=False,
                     date_from__gte=now(),
                     has_subevents=False,
                 ),
@@ -175,6 +176,7 @@ class EventListMixin:
                     event__organizer=self.request.organizer,
                     event__is_public=True,
                     event__live=True,
+                    event__not_on_frontpage=False,
                     active=True,
                     is_public=True,
                     date_from__gte=now(),
@@ -244,6 +246,7 @@ class EventListMixin:
                     organizer=self.request.organizer,
                     live=True,
                     is_public=True,
+                    not_on_frontpage=False,
                     date_from__gte=now(),
                     has_subevents=False,
                 ),
@@ -258,6 +261,7 @@ class EventListMixin:
                     event__organizer=self.request.organizer,
                     event__is_public=True,
                     event__live=True,
+                    event__not_on_frontpage=False,
                     active=True,
                     is_public=True,
                     date_from__gte=now(),
@@ -338,7 +342,7 @@ class OrganizerIndex(OrganizerViewMixin, EventListMixin, ListView):
 
 
 def has_before_after(eventqs, subeventqs, before, after):
-    eqs = eventqs.filter(is_public=True, live=True, has_subevents=False)
+    eqs = eventqs.filter(is_public=True, live=True, not_on_frontpage=False, has_subevents=False)
     sqs = subeventqs.filter(active=True, is_public=True)
     return (
         eqs.filter(Q(date_from__lte=before)).exists() or sqs.filter(Q(date_from__lte=before)).exists(),
@@ -349,7 +353,7 @@ def has_before_after(eventqs, subeventqs, before, after):
 
 def add_events_for_days(request, baseqs, before, after, ebd, timezones):
     qs = (
-        baseqs.filter(is_public=True, live=True, has_subevents=False)
+        baseqs.filter(is_public=True, live=True, not_on_frontpage=False, has_subevents=False)
         .filter(
             Q(Q(date_to__gte=before) & Q(date_from__lte=after))
             | Q(Q(date_from__lte=after) & Q(date_to__gte=before))
@@ -583,6 +587,7 @@ class CalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
                 event__organizer=self.request.organizer,
                 event__is_public=True,
                 event__live=True,
+                event__not_on_frontpage=False,
                 event__sales_channels__contains=self.request.sales_channel.identifier,
             ),
             before,
@@ -616,6 +621,7 @@ class CalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
                         event__organizer=self.request.organizer,
                         event__is_public=True,
                         event__live=True,
+                        event__not_on_frontpage=False,
                         event__sales_channels__contains=self.request.sales_channel.identifier,
                     ).prefetch_related(
                         'event___settings_objects',
@@ -675,6 +681,7 @@ class WeekCalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
                 event__organizer=self.request.organizer,
                 event__is_public=True,
                 event__live=True,
+                event__not_on_frontpage=False,
                 event__sales_channels__contains=self.request.sales_channel.identifier,
             ),
             before,
@@ -717,6 +724,7 @@ class WeekCalendarView(OrganizerViewMixin, EventListMixin, TemplateView):
                         event__organizer=self.request.organizer,
                         event__is_public=True,
                         event__live=True,
+                        event__not_on_frontpage=False,
                         event__sales_channels__contains=self.request.sales_channel.identifier,
                     ).prefetch_related(
                         'event___settings_objects',
@@ -742,6 +750,7 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
                 self.request.organizer.events.filter(
                     is_public=True,
                     live=True,
+                    not_on_frontpage=False,
                     has_subevents=False,
                     sales_channels__contains=self.request.sales_channel.identifier,
                 ),
@@ -756,6 +765,7 @@ class OrganizerIcalDownload(OrganizerViewMixin, View):
                     event__organizer=self.request.organizer,
                     event__is_public=True,
                     event__live=True,
+                    event__not_on_frontpage=False,
                     is_public=True,
                     active=True,
                     event__sales_channels__contains=self.request.sales_channel.identifier,
