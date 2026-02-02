@@ -64,10 +64,6 @@ header .header-row-right {
     margin: 0 auto;
 }
 
-.alert {
-    margin: 16px;
-}
-
 .btn-primary {
     --highlight-color: var(--color-primary);
     --highlight-color-text: var(--color-primary-text-dark);

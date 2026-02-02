@@ -286,6 +286,9 @@ a {
 .alert.alert-danger:before {
   content: "";
 }
+.alert-margin {
+  margin-top: 20px;
+}
 
 .btn-outline-success {
   --highlight-color: var(--color-success);
@@ -304,7 +307,7 @@ a {
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: var(--size-spacer);
+  margin: 16px;
   padding: 16px;
   border: 2px solid var(--highlight-color);
   color: var(--highlight-color-text);

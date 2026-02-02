@@ -1,4 +1,5 @@
 {% extends "common/base_public.html" %}
+{% load i18n %}
 
 {% block custom_header %}
     {% block cfp_header %}{% endblock cfp_header %}
@@ -9,3 +10,14 @@
 {% endblock header_tabs %}
 
 {% block nav_link %}{{ request.event.urls.base }}{% endblock nav_link %}
+
+{% block alerts %}
+    {{ block.super }}
+    {% if request.event.settings.talks_testmode %}
+        <div class="alert alert-warning alert-margin">
+            <strong>
+                {% trans "Talk pages are currently in test mode. Please do not treat schedules or submissions as final, as they may change or be removed without notice." %}
+            </strong>
+        </div>
+    {% endif %}
+{% endblock alerts %}

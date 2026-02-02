@@ -59,7 +59,12 @@ def event_index_widgets_lazy(request: HttpRequest, **kwargs) -> JsonResponse:
     subevent = get_subevent(request)
 
     widgets = []
-    for r, result in event_dashboard_widgets.send(sender=request.event, subevent=subevent, lazy=False):
+    for r, result in event_dashboard_widgets.send(
+        sender=request.event,
+        subevent=subevent,
+        lazy=False,
+        request=request,
+    ):
         widgets.extend(result)
 
     return JsonResponse({'widgets': widgets})
@@ -126,7 +131,12 @@ class EventIndexView(TemplateView):
 
         request = self.request
         widgets = []
-        for caller, result in event_dashboard_widgets.send(sender=request.event, subevent=subevent, lazy=True):
+        for caller, result in event_dashboard_widgets.send(
+            sender=request.event,
+            subevent=subevent,
+            lazy=True,
+            request=request,
+        ):
             widgets.extend(result)
         return self.rearrange(widgets)
 

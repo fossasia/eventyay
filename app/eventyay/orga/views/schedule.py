@@ -168,6 +168,16 @@ class ScheduleReleaseView(EventPermissionRequired, FormView):
         return super().form_invalid(form)
 
     def form_valid(self, form):
+        private_talks = (
+            self.request.event.private_testmode
+            and self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        )
+        if not self.request.event.talks_published and not private_talks:
+            form.add_error(
+                None,
+                _('Talks must be published or in private test mode to release a schedule.'),
+            )
+            return self.render_to_response(self.get_context_data(form=form), status=400)
         self.request.event.release_schedule(
             form.cleaned_data['version'],
             user=self.request.user,

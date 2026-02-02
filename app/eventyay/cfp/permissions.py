@@ -7,7 +7,7 @@ from eventyay.submission.permissions import can_be_edited
 
 @rules.predicate
 def is_event_visible(user, event):
-    return event and event.is_public
+    return event and event.talks_published
 
 
 @rules.predicate

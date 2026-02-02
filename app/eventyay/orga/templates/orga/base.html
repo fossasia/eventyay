@@ -92,7 +92,6 @@
                                   target="_blank"
                                   class="mobile-navbar-view-form">
                                 <input type="hidden" value="{{ new_session }}" name="session">
-                                <input type="hidden" value="{{ go_to_target }}" name="target">
                                 <button type="submit" class="btn btn-link">
                                     <i class="fa fa-eye"></i>
                                     {% translate "View event" %}
@@ -101,7 +100,7 @@
                         {% else %}
                             <a target="_blank"
                                rel="noopener"
-                               href="{% if go_to_target == "schedule" %}{{ request.event.urls.schedule }}{% else %}{{ request.event.cfp.urls.public }}{% endif %}">
+                               href="{{ request.event.urls.base }}">
                                 <i class="fa fa-eye"></i>
                                 {% translate "View event" %}
                             </a>
