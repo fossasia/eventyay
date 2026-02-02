@@ -70,19 +70,6 @@
                 {% trans "Go to" %}
                 <a href="{% url 'eventyay_common:event.create_access_to_video' organizer=request.organizer.slug event=request.event.slug %}" target="_blank" rel="noopener noreferrer">{% trans "Video Configuration" %}</a>
             </p>
-            {% if can_change_event_settings and is_video_enabled %}
-                <form action="" method="post" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" name="toggle_video_visibility" class="btn btn-sm {% if request.event.settings.venueless_show_public_link %}btn-warning{% else %}btn-success{% endif %}"
-                            title="{% if request.event.settings.venueless_show_public_link %}{% trans 'Hide Video' %}{% else %}{% trans 'Unhide Video' %}{% endif %}">
-                        {% if request.event.settings.venueless_show_public_link %}
-                            <i class="fa fa-eye-slash"></i> {% trans "Hide Video" %}
-                        {% else %}
-                            <i class="fa fa-eye"></i> {% trans "Unhide Video" %}
-                        {% endif %}
-                    </button>
-                </form>
-            {% endif %}
         </div>
     </div>
 
