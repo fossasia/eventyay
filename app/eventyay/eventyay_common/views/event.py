@@ -1095,5 +1095,5 @@ class ComponentModeUpdateView(EventPermissionRequiredMixin, View):
             return JsonResponse({'error': str(e)}, status=400)
         except Exception as e:
             logger.exception('Error updating component mode')
-            return JsonResponse({'error': f'Internal Error: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'Internal Error: {e}'}, status=500)
         return JsonResponse({'status': 'success', 'new_mode': new_mode})

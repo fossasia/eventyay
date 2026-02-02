@@ -124,7 +124,7 @@ const updateMode = function (organizerSlug, eventSlug, component, mode, btn) {
             const footerEl = document.getElementById('mode-modal-footer');
 
             titleEl.textContent = gettext('Error');
-            bodyEl.innerHTML = error.message || gettext('An error occurred.');
+            bodyEl.textContent = error.message || gettext('An error occurred.');
 
             // Remove action buttons on error
             footerEl.querySelectorAll('.action-btn').forEach(function (el) {
