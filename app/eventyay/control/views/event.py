@@ -1225,6 +1225,13 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
                 event.settings.private_testmode_tickets = enable
                 if enable:
                     event.private_testmode = True
+                    if event.testmode:
+                        event.testmode = False
+                        self.request.event.log_action(
+                            'eventyay.event.testmode.deactivated',
+                            user=self.request.user,
+                            data={'delete': False},
+                        )
                 else:
                     event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
                 if event.private_testmode and event.testmode:

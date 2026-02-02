@@ -162,12 +162,19 @@ class EventLive(EventSettingsPermission, TemplateView):
             messages.success(self.request, _('Talk pages are now published.'))
         elif request.POST.get('talks_published') == 'false':
             with transaction.atomic():
+                previous_private = event.private_testmode
                 event.talks_published = False
                 event.settings.private_testmode_talks = True
                 event.private_testmode = True
                 if event.settings.get('talks_testmode', False, as_type=bool):
                     event.settings.talks_testmode = False
                 event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated',
+                        user=self.request.user,
+                        data={},
+                    )
             messages.success(self.request, _('Talk pages have been unpublished.'))
         elif request.POST.get('talk_testmode') == 'true':
             if not event.talks_published:

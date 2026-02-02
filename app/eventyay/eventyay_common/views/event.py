@@ -287,6 +287,7 @@ class EventCreateView(SafeSessionWizardView):
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
+            # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
@@ -566,6 +567,7 @@ class EventLive(TemplateView):
         ctx['private_testmode_tickets'] = private_tickets
         ctx['private_testmode_talks'] = private_talks
         ctx['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
+        ctx['is_video_enabled'] = is_video_enabled(self.request.event)
         public_pages = []
         if self.request.event.live:
             public_pages.append(_('Info'))
@@ -750,12 +752,20 @@ class EventLive(TemplateView):
             messages.success(self.request, _('Talk pages are now published.'))
         elif request.POST.get('talks_published') == 'false':
             with transaction.atomic():
+                previous_private = event.private_testmode
                 event.talks_published = False
                 event.settings.private_testmode_talks = True
                 event.private_testmode = True
+                # Leave ticket test mode untouched when unpublishing talks.
                 if event.settings.get('talks_testmode', False, as_type=bool):
                     event.settings.talks_testmode = False
                 event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated',
+                        user=self.request.user,
+                        data={},
+                    )
             messages.success(self.request, _('Talk pages have been unpublished.'))
         elif request.POST.get('talk_testmode') == 'true':
             if not event.talks_published:
@@ -795,6 +805,13 @@ class EventLive(TemplateView):
                 event.settings.private_testmode_tickets = enable
                 if enable:
                     event.private_testmode = True
+                    if event.testmode:
+                        event.testmode = False
+                        self.request.event.log_action(
+                            'eventyay.event.testmode.deactivated',
+                            user=self.request.user,
+                            data={'delete': False},
+                        )
                 else:
                     event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
                 if event.private_testmode and event.testmode:
