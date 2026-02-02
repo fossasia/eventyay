@@ -493,7 +493,7 @@ class QuestionFieldsMixin:
                 answer.answer = 'file://' + value.name
             value = answer.answer
         elif value is not None and isinstance(value, Country):
-            answer.answer = str(value)
+            answer.answer = value.code
         else:
             answer.answer = value
         answer.save()

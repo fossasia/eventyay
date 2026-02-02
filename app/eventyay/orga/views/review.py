@@ -221,7 +221,6 @@ class ReviewDashboard(EventPermissionRequired, BaseSubmissionList):
                 TalkQuestionVariant.COUNTRY,
                 TalkQuestionVariant.DATE,
                 TalkQuestionVariant.DATETIME,
-                TalkQuestionVariant.BOOLEAN,
                 TalkQuestionVariant.NUMBER,
             ],
         )
