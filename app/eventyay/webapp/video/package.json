@@ -62,7 +62,7 @@
     "@babel/eslint-parser": "^7.28.6",
     "@rollup/plugin-commonjs": "^29.0.0",
     "@rollup/plugin-inject": "^5.0.5",
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@vitejs/plugin-vue": "^6.0.4",
     "@vue-macros/reactivity-transform": "^0.4.3",
     "@vue/eslint-config-standard": "^9.0.1",
     "@vue/language-plugin-pug": "^3.2.4",
