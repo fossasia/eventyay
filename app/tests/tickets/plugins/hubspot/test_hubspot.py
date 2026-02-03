@@ -97,7 +97,7 @@ class TestHubSpotSignals:
         event.settings.set('plugin_hubspot_api_key', 'test-token')
 
         # Activate the HubSpot plugin for the event
-        event.plugins = 'hubspot'
+        event.plugins = 'eventyay.plugins.hubspot'
         event.save()
 
         # Patch the task.delay method directly to verify signal → task wiring
@@ -194,12 +194,21 @@ class TestHubSpotPayloadMapping:
         assert contact['properties']['lastname'] == 'Doe'
 
     def test_hubspot_skips_positions_without_email(self, event, order, mocker):
-        """Test that positions without attendee email are skipped."""
+        """Test that positions without attendee email are skipped.
+
+        This test ensures that positions without attendee_email AND with no
+        order.email fallback do not generate any contacts, so the HubSpot API
+        is not called.
+        """
         # Arrange
         from eventyay.plugins.hubspot.tasks import sync_attendees_to_hubspot
 
         event.settings.set('plugin_hubspot_enabled', True)
         event.settings.set('plugin_hubspot_api_key', 'test-token')
+
+        # Remove all possible email sources to ensure no contacts are generated
+        order.email = None
+        order.save()
 
         # Create a position without attendee email
         with scope(organizer=event.organizer):
@@ -226,8 +235,12 @@ class TestHubSpotPayloadMapping:
         # Should not call the API if there are no contacts to sync
         assert not mock_post.called
 
-    def test_hubspot_handles_api_errors(self, event, order, position_with_attendee, mocker):
-        """Test that API errors are surfaced to the caller."""
+    def test_hubspot_raises_exception_on_api_error_sync_execution(self, event, order, position_with_attendee, mocker):
+        """Test that API errors raise exceptions during synchronous task execution.
+
+        In production, this task runs via Celery with automatic retry (3 retries).
+        In tests, we run synchronously to verify exception handling behavior.
+        """
         # Arrange
         from eventyay.plugins.hubspot.tasks import sync_attendees_to_hubspot
 

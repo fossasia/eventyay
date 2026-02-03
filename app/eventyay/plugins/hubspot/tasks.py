@@ -16,8 +16,8 @@ from eventyay.celery_app import app
 
 logger = logging.getLogger(__name__)
 
-# HubSpot API endpoint for upserting contacts
-HUBSPOT_CONTACTS_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert'
+# HubSpot API endpoint for creating contacts (batch endpoint)
+HUBSPOT_CONTACTS_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts/batch/create'
 
 
 # TODO: In a future PR, add a mapping UI that allows configuring field mappings
@@ -26,23 +26,31 @@ HUBSPOT_CONTACTS_API_URL = 'https://api.hubapi.com/crm/v3/objects/contacts/batch
 #   attendee_email -> hs_email (identifier)
 #   attendee first/last name -> firstname / lastname
 
-def map_position_to_contact_properties(position):
+def map_position_to_contact_properties(position, order_email=None):
     """
     Extract contact information from an attendee position for HubSpot.
 
     Takes an OrderPosition with attendee details and converts it to a format
-    suitable for HubSpot contacts. Only includes attendees with a valid email.
+    suitable for HubSpot contacts. Falls back to order email if position
+    attendee email is empty.
 
     Args:
         position: OrderPosition instance containing attendee name and email
+        order_email: Order contact email (used as fallback if position has no attendee_email)
 
     Returns:
         dict with keys 'email', 'firstname', 'lastname' suitable for HubSpot,
-        or None if the position has no email address
+        or None if no email address is available
     """
-    # HubSpot requires email as the unique identifier for upsert operations.
-    # Positions without email cannot be synced and are safely skipped.
-    if not position.attendee_email:
+    # First try to get email from position attendee_email
+    email = position.attendee_email
+    
+    # Fall back to order email if position attendee_email is empty
+    if not email and order_email:
+        email = order_email
+    
+    # If still no email, we cannot sync this contact
+    if not email:
         return None
 
     first_name = ''
@@ -50,17 +58,21 @@ def map_position_to_contact_properties(position):
 
     # Name parts come as a dictionary from the frontend. We extract individual
     # components to map to HubSpot's firstname/lastname properties.
-    # Empty strings are used when name parts are missing to avoid None values
-    # in the HubSpot payload.
+    # Eventyay uses 'given_name' and 'family_name' keys.
+    # Only use non-empty values
     if position.attendee_name_parts:
         parts = position.attendee_name_parts
-        if 'first_name' in parts:
+        if 'given_name' in parts and parts['given_name']:
+            first_name = parts['given_name']
+        elif 'first_name' in parts and parts['first_name']:
             first_name = parts['first_name']
-        if 'last_name' in parts:
+        if 'family_name' in parts and parts['family_name']:
+            last_name = parts['family_name']
+        elif 'last_name' in parts and parts['last_name']:
             last_name = parts['last_name']
 
     return {
-        'email': position.attendee_email.lower(),
+        'email': email.lower(),
         'firstname': first_name,
         'lastname': last_name,
     }
@@ -68,10 +80,10 @@ def map_position_to_contact_properties(position):
 
 def send_contacts_to_hubspot(contacts, api_key):
     """
-    Send a batch of contacts to HubSpot via their upsert API.
+    Send a batch of contacts to HubSpot via their batch create API.
 
-    Makes an HTTP POST request to HubSpot's batch upsert endpoint.
-    Contacts are created or updated based on their email address.
+    Makes an HTTP POST request to HubSpot's batch create endpoint.
+    HubSpot internally deduplicates contacts based on the email property.
 
     Args:
         contacts: list of dicts, each with 'email', 'firstname', 'lastname' keys
@@ -88,21 +100,26 @@ def send_contacts_to_hubspot(contacts, api_key):
     if not contacts:
         return 0, []
     
-    # HubSpot batch upsert endpoint expects contacts with:
-    # - id: the unique identifier (email) used for upsert matching
-    # - properties: the contact fields to create/update
+    # HubSpot batch create endpoint expects a list of contacts with properties.
+    # HubSpot internally deduplicates contacts based on the email property.
+    # If a contact with the same email already exists, it will be skipped/ignored.
+    # We only include non-empty fields to avoid HubSpot rejecting the request.
+    inputs = []
+    for contact in contacts:
+        properties = {
+            'email': contact['email'],
+        }
+        if contact.get('firstname'):
+            properties['firstname'] = contact['firstname']
+        if contact.get('lastname'):
+            properties['lastname'] = contact['lastname']
+        
+        inputs.append({
+            'properties': properties,
+        })
+    
     payload = {
-        'inputs': [
-            {
-                'id': contact['email'],  # Email is HubSpot's primary identifier
-                'properties': {
-                    'email': contact['email'],
-                    'firstname': contact['firstname'],
-                    'lastname': contact['lastname'],
-                },
-            }
-            for contact in contacts
-        ]
+        'inputs': inputs,
     }
     
     headers = {
@@ -124,8 +141,9 @@ def send_contacts_to_hubspot(contacts, api_key):
         # Success count is based on results array returned by HubSpot
         success_count = len(result.get('results', []))
         
-        # Errors array contains failed contacts. The 'id' field holds the email
-        # that failed to upsert. We track these for logging purposes.
+        # Errors array contains failed contacts. The 'id' field in the error
+        # holds the email address that failed to create.
+        # We track these for logging purposes.
         failed_emails = []
         for error in result.get('errors', []):
             if 'id' in error:
@@ -134,7 +152,13 @@ def send_contacts_to_hubspot(contacts, api_key):
         return success_count, failed_emails
         
     except requests.RequestException as e:
+        # Log the full request details for debugging
         logger.exception('HubSpot API request failed')
+        logger.error('HubSpot Request URL: %s', HUBSPOT_CONTACTS_API_URL)
+        logger.error('HubSpot Request Headers: %s', headers)
+        logger.error('HubSpot Request Payload: %s', payload)
+        logger.error('HubSpot Response Status: %s', e.response.status_code if e.response else 'No response')
+        logger.error('HubSpot Response Body: %s', e.response.text if e.response else 'No response')
         raise
 
 
@@ -195,7 +219,8 @@ def sync_attendees_to_hubspot(self, order_pk, event_pk):
         with scope(organizer=event.organizer):
             for position in order.positions.all():
                 # Returns None for positions without email, which we count as skipped
-                contact = map_position_to_contact_properties(position)
+                # Pass order_email as fallback if position attendee_email is empty
+                contact = map_position_to_contact_properties(position, order.email)
                 if contact:
                     contacts.append(contact)
                 else:

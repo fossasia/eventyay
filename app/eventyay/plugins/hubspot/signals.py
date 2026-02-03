@@ -27,6 +27,9 @@ def on_order_paid(sender, order=None, **kwargs):
     # Early exit checks at signal level avoid queuing unnecessary tasks.
     # This is a performance optimization - queued tasks would just return early.
     # We check both plugin enabled state and API key presence.
+    if 'eventyay.plugins.hubspot' not in event.plugins:
+        return
+
     if not event.settings.get('plugin_hubspot_enabled', as_type=bool):
         return
     

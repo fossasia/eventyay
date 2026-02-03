@@ -232,10 +232,10 @@ Test your token directly:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_TOKEN" \
-  https://api.hubapi.com/crm/v3/objects/contacts/batch/upsert \
+  https://api.hubapi.com/crm/v3/objects/contacts/batch/create \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"inputs": [{"id": "test@example.com", "properties": {"email": "test@example.com"}}]}'
+  -d '{"inputs": [{"properties": {"email": "test@example.com"}}]}'
 ```
 
 ---
