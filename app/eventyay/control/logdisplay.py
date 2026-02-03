@@ -626,8 +626,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.tickets.settings': _('The ticket download settings have been changed.'),
         'eventyay.event.plugins.enabled': _('A plugin has been enabled.'),
         'eventyay.event.plugins.disabled': _('A plugin has been disabled.'),
-        'eventyay.event.live.activated': _('The shop has been taken live.'),
-        'eventyay.event.live.deactivated': _('The shop has been taken offline.'),
+        'eventyay.event.live.activated': _('The event has been published.'),
+        'eventyay.event.live.deactivated': _('The event has been unpublished.'),
         'eventyay.event.testmode.activated': _('The shop has been taken into test mode.'),
         'eventyay.event.testmode.deactivated': _('The test mode has been disabled.'),
         'eventyay.event.private_testmode.activated': _('Private test mode has been enabled.'),
@@ -809,4 +809,3 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
 
     if action_type == 'eventyay.control.auth.user.impersonate_stopped':
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
-

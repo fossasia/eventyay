@@ -484,6 +484,14 @@ class SSOConfigForm(SettingsForm):
         super().__init__(*args, obj=self.obj, **kwargs)
 
 
+class StartPageSettingsForm(SettingsForm):
+    auto_fields = ['startpage_header_image', 'startpage_header_text']
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+
 class StripeKeyValidator:
     """
     Validates that a given Stripe key starts with the expected prefix(es).
