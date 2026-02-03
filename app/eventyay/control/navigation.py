@@ -452,6 +452,12 @@ def get_admin_navigation(request):
             'icon': 'file-text',
         },
         {
+            'label': _('Start page'),
+            'url': reverse('eventyay_admin:admin.startpage'),
+            'active': (url.url_name == 'admin.startpage'),
+            'icon': 'home',
+        },
+        {
             'label': _('Users'),
             'url': reverse('eventyay_admin:admin.users'),
             'active': False,
