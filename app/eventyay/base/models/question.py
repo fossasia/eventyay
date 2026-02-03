@@ -171,7 +171,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         blank=True,
         max_length=800,
         verbose_name=_('help text'),
-        help_text=_('Shown below the input field as guidance.'),
+        help_text=_('Will appear just like this text below the custom input field.') + ' ' + phrases.base.use_markdown,
     )
     default_answer = models.TextField(null=True, blank=True, verbose_name=_('default answer'))
     position = models.IntegerField(default=0)

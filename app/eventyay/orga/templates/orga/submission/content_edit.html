@@ -10,7 +10,6 @@
 
 {% block scripts %}
     {{ block.super }}
-    {{ form.media }}
     {% compress js %}
         <script defer src="{% static "js/jquery.js" %}"></script>
         <script defer src="{% static "js/jquery.formset.js" %}"></script>
