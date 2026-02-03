@@ -122,7 +122,7 @@ def _detect_event(request, require_live=True, require_plugin=None):
                 if not can_access:
                     raise Http404(_('The selected ticket shop is currently not available.'))
 
-            if request.event.private_testmode and not request.event.user_can_view_tickets(
+            if not request.event.user_can_view_tickets(
                 request.user,
                 request=request,
             ):
