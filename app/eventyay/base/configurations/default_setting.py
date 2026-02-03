@@ -2529,6 +2529,33 @@ Your {event} team"""
             label=_('Show button to copy user input from other products'),
         ),
     },
+    'startpage_header_image': {
+        'default': None,
+        'type': File,
+        'form_class': ExtFileField,
+        'form_kwargs': dict(
+            label=_('Start page header background image'),
+            ext_whitelist=('.png', '.jpg', '.gif', '.jpeg'),
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+            help_text=_('Displayed as the background image on the public start page.'),
+        ),
+        'serializer_class': UploadedFileField,
+        'serializer_kwargs': dict(
+            allowed_types=['image/png', 'image/jpeg', 'image/gif'],
+            max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
+        ),
+    },
+    'startpage_header_text': {
+        'default': '',
+        'type': LazyI18nString,
+        'serializer_class': I18nField,
+        'form_class': I18nFormField,
+        'form_kwargs': dict(
+            label=_('Start page header text'),
+            widget=I18nTextInput,
+            help_text=_('Short text displayed on the public start page banner.'),
+        ),
+    },
 }
 
 CSS_SETTINGS = {
