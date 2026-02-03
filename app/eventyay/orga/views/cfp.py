@@ -212,8 +212,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
                        'content_locale', 'image', 'do_not_record']
-        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
-                       'additional_speaker']
+        speaker_keys = ['fullname', 'biography', 'avatar', 'avatar_source', 'avatar_license',
+                       'availabilities', 'additional_speaker']
         
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)
