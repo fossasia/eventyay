@@ -8,6 +8,7 @@
  * - Rewriting would risk regressions without added value
  */
 
+/* global jQuery */
 (function($) {
     'use strict';
 
