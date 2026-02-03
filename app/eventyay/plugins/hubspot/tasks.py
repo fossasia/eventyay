@@ -152,13 +152,17 @@ def send_contacts_to_hubspot(contacts, api_key):
         return success_count, failed_emails
         
     except requests.RequestException as e:
-        # Log the full request details for debugging
+        # Log the request details for debugging - NEVER log sensitive data
         logger.exception('HubSpot API request failed')
         logger.error('HubSpot Request URL: %s', HUBSPOT_CONTACTS_API_URL)
-        logger.error('HubSpot Request Headers: %s', headers)
-        logger.error('HubSpot Request Payload: %s', payload)
+        # Redact Authorization header - never log API keys or tokens
+        redacted_headers = headers.copy()
+        redacted_headers['Authorization'] = 'Bearer ***REDACTED***'
+        logger.error('HubSpot Request Headers: %s', redacted_headers)
+        # Don't log full payload - contains attendee PII (emails)
+        logger.error('HubSpot Request Payload Size: %d contacts', len(contacts))
         logger.error('HubSpot Response Status: %s', e.response.status_code if e.response else 'No response')
-        logger.error('HubSpot Response Body: %s', e.response.text if e.response else 'No response')
+        # Never log raw response body from external API - may contain sensitive data
         raise
 
 
@@ -239,15 +243,14 @@ def sync_attendees_to_hubspot(self, order_pk, event_pk):
         # Sync to HubSpot - this is the actual API call that may retry on failure
         success_count, failed_emails = send_contacts_to_hubspot(contacts, api_key)
         
-        # Log outcome - failed emails are a partial success case (some synced, some failed)
+        # Log outcome - don't log failed_emails as it contains attendee PII (email addresses)
         if failed_emails:
             logger.warning(
-                'HubSpot sync completed for order %s: synced %d, failed %d, skipped %d. Failed emails: %s',
+                'HubSpot sync completed for order %s: synced %d, failed %d, skipped %d',
                 order.code,
                 success_count,
                 len(failed_emails),
                 skipped_count,
-                failed_emails,
             )
         else:
             logger.info(

@@ -231,7 +231,7 @@ celery -A eventyay worker -l debug
 Test your token directly:
 
 ```bash
-curl -H "Authorization: Bearer YOUR_TOKEN" \
+curl -H "Authorization: Bearer ${HUBSPOT_ACCESS_TOKEN}" \
   https://api.hubapi.com/crm/v3/objects/contacts/batch/create \
   -X POST \
   -H "Content-Type: application/json" \
