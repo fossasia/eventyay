@@ -94,14 +94,7 @@ export default {
 			return this.schedule?.speakers.slice().sort((a, b) => a.name.split(' ').at(-1).localeCompare(b.name.split(' ').at(-1)))
 		},
 		hasMainContent() {
-			const content = this.module?.config?.main_content
-			if (!content) return false
-			if (typeof content === 'string') {
-				return content.replace(/<[^>]*>/g, '').trim().length > 0
-			}
-			const ops = Array.isArray(content) ? content : content.ops
-			if (!Array.isArray(ops)) return false
-			return ops.some(op => typeof op?.insert === 'string' && op.insert.trim() !== '')
+			return this.module.config.main_content?.ops?.some(op => op.insert.trim() !== '')
 		},
 	},
 	async mounted() {

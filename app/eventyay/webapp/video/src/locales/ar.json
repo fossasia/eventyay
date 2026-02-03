@@ -204,7 +204,6 @@
   "poster-manager/poster:input-parent-room:label": "الغرفة",
   "poster-manager/poster:input-title:label": "العنوان",
   "poster-manager/poster:input-abstract:label": "الملخص",
-  "poster-manager/poster:input-abstract:hint": "الحد الأقصى {maxChars} حرفًا.",
   "poster-manager/poster:input-category:label": "الفئة",
   "poster-manager/poster:input-tags:label": "العلامات",
   "poster-manager/poster:input-poster-pdf:label": "ملصق PDF",

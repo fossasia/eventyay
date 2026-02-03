@@ -322,7 +322,7 @@ $logo-height-large = 427px
 				margin-top: 12px
 				color: $clr-primary-text-light
 				overflow: hidden
-				.rich-text-inner
+				.ql-editor
 					display: -webkit-box
 					-webkit-line-clamp: var(--dynamic-line-clamp)
 					-webkit-box-orient: vertical

@@ -16,11 +16,6 @@ from django.forms import (
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-try:
-    from tinymce.widgets import TinyMCE
-except ImportError:  # pragma: no cover
-    TinyMCE = None
-
 
 def add_class(attrs, css_class):
     attrs = attrs or {}
@@ -102,24 +97,8 @@ class ImageInput(ClearableBasenameFileInput):
     template_name = 'common/widgets/image_input.html'
 
 
-if TinyMCE:
-
-    class RichTextWidget(TinyMCE):
-        """Rich text widget."""
-
-        def __init__(self, attrs=None, locales=None, **kwargs):
-            # Some i18n-aware form fields (e.g. django-i18nfield) instantiate
-            # widgets with a `locales` keyword argument. TinyMCE does not use it.
-            kwargs.pop('locales', None)
-            attrs = add_class(attrs, 'tinymce')
-            super().__init__(mce_attrs=None, attrs=attrs)
-
-else:
-
-    class RichTextWidget(Textarea):
-        def __init__(self, attrs=None, locales=None, **kwargs):
-            kwargs.pop('locales', None)
-            super().__init__(attrs=attrs)
+class MarkdownWidget(Textarea):
+    template_name = 'common/widgets/markdown.html'
 
 
 class EnhancedSelectMixin(Select):
