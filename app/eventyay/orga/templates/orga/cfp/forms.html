@@ -475,10 +475,9 @@
                         </tr>
                     </thead>
                     <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
-                    <tbody>
                         {# Full Name #}
                         {% with field=sform.cfp_ask_fullname %}
-                        <tr>
+                        <tr dragsort-id="fullname">
                             <th>{% translate "Full Name" %}</th>
                             <td class="text-center">
                                 <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
@@ -499,6 +498,11 @@
                             </td>
                             <td></td>
                             <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% endwith %}
 
