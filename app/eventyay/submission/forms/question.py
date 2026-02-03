@@ -72,9 +72,9 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
             if question.dependency_question_id:
                 field.widget.attrs['data-question-dependency'] = question.dependency_question_id
                 field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
-                if question.variant != TalkQuestionVariant.MULTIPLE and question.required:
-                    field.widget.attrs['required'] = 'required'
+                field._required = field.required
                 field.required = False
+                field.widget.attrs.pop('required', None)
             field_name = f'question_{question.pk}'
             if field_name not in self.fields:
                 self.fields[field_name] = field
