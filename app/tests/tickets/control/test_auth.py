@@ -846,6 +846,29 @@ class SessionTimeOutTest(TestCase):
         # Long sessions should NOT be invalidated by UA changes
         self.assertEqual(response.status_code, 200)
 
+    @override_settings(EVENTYAY_LONG_SESSIONS=False)
+    def test_long_session_flag_does_not_bypass_when_feature_disabled(self):
+        # When the global feature is disabled, the per-session flag must not bypass
+        # the UA pinning enforcement. This prevents malicious clients from enabling
+        # a long-session flag locally to evade UA pinning.
+        ua1 = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36'
+        ua2 = 'Mozilla/5.0 (X11; Linux x86_64) Something else'
+
+        # First request establishes pinned_user_agent
+        self.client.defaults['HTTP_USER_AGENT'] = ua1
+        response = self.client.get('/control/')
+        self.assertEqual(response.status_code, 200)
+
+        # Pretend the session has the long-session flag (but feature is disabled)
+        session = self.client.session
+        session['eventyay_auth_long_session'] = True
+        session.save()
+
+        # Change User-Agent: enforcement should still apply and reject the request
+        self.client.defaults['HTTP_USER_AGENT'] = ua2
+        response = self.client.get('/control/')
+        self.assertEqual(response.status_code, 302)
+
 
 @pytest.fixture
 @pytest.mark.django_db
