@@ -320,7 +320,7 @@ class WidgetAPIProductList(EventListMixin, View):
         if not hasattr(request, 'event'):
             return self._get_event_list(request, **kwargs)
 
-        if not request.event.live:
+        if not request.event.live or not request.event.user_can_view_tickets(request.user, request=request):
             return self.response({'error': gettext('This ticket shop is currently disabled.')})
 
         if request.sales_channel.identifier not in request.event.sales_channels:
