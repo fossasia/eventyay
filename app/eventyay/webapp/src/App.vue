@@ -24,7 +24,13 @@
 			.sidebar-backdrop(v-if="showSidebar", @click="showSidebar = false")
 		.app-content(:class="{'sidebar-open': showSidebar}", role="main", tabindex="-1")
 			// router-view no longer carries role=main; main landmark is the scroll container
-			router-view(:key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
+			transition(name="page", mode="out-in")
+				// Loading overlay for smooth transitions
+				.page-loading(v-if="isRouteLoading", key="loading")
+					bunt-progress-circular(size="huge")
+					.loading-text {{ $t('App:loading-page') }}
+				// Main content with proper key management
+				router-view(v-else, :key="!$route.path.startsWith('/admin') ? $route.fullPath : null")
 			//- defining keys like this keeps the playing dom element alive for uninterupted transitions
 			//- Single MediaSource for room streaming (persists across navigation to prevent stream restart)
 			media-source(v-if="streamingRoom && user.profile.greeted && !hasFatalError(streamingRoom)", ref="mediaSource", :room="streamingRoom", :background="isStreamInBackground", :key="streamingRoom.id", :role="isStreamInBackground ? null : 'main'", @close="backgroundRoom = null")
@@ -67,6 +73,11 @@ export default {
 		...mapState(['fatalConnectionError', 'fatalError', 'connected', 'socketCloseCode', 'world', 'rooms', 'user', 'mediaSourcePlaceholderRect', 'userLocale', 'userTimezone', 'roomFatalErrors']),
 		...mapState('notifications', ['askingPermission']),
 		...mapState('chat', ['call']),
+		// Track route loading state to prevent flickering during navigation
+		isRouteLoading() {
+			// Show loading state during route transitions to prevent asset flickering
+			return this.$route.meta?.loading || false
+		},
 		currentFatalError() {
 			if (this.room && this.roomFatalErrors?.[this.room.id]) {
 				return this.roomFatalErrors[this.room.id]
@@ -396,4 +407,27 @@ export default {
 		position: absolute
 		width: 0
 		height: 0
+	// Page transition styles to prevent flickering
+	.page-loading
+		position: fixed
+		top: 0
+		left: 0
+		right: 0
+		bottom: 0
+		display: flex
+		flex-direction: column
+		justify-content: center
+		align-items: center
+		background-color: var(--clr-white)
+		z-index: 9999
+		.loading-text
+			margin-top: 16px
+			color: var(--clr-text-secondary)
+			font-size: 14px
+			letter-spacing: 0.5px
+	// Smooth page transitions to prevent flickering
+	.page-enter-active, .page-leave-active
+		transition: opacity 200ms ease-in-out
+	.page-enter-from, .page-leave-to
+		opacity: 0
 </style>

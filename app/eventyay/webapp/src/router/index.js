@@ -286,4 +286,23 @@ const router = createRouter({
 	routes
 })
 
+// Add navigation guards to manage loading states and prevent flickering
+router.beforeEach((to, from, next) => {
+	// Set loading state to show transition overlay
+	if (to.name !== from.name) {
+		to.meta.loading = true
+	}
+	next()
+})
+
+router.afterEach((to, from) => {
+	// Clear loading state after route is fully loaded
+	if (to.meta.loading) {
+		// Small delay to ensure smooth transition
+		setTimeout(() => {
+			to.meta.loading = false
+		}, 100)
+	}
+})
+
 export default router

@@ -17,6 +17,7 @@
   "App:fatal-connection-error:connection.replaced:headline": "You opened this event on a new device or tab.",
   "App:fatal-connection-error:else:headline": "Connection refused",
   "App:fatal-connection-error:world.unknown_world:headline": "Event not found",
+  "App:loading-page": "Loading page...",
   "AppBar:user-anonymous": "anonymous",
   "AVDevice:error:notfound": "No camera or microphone found.",
   "AVDevice:error:notreadable": "Your camera or microphone is not available, maybe another program uses it right now?",
