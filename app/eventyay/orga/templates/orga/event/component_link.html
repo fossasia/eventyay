@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="navigation-button">
+<div class="navigation-button event-header-nav">
     {% if request.event %}
         <a href='{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-home"></i> {% translate "Home" %}

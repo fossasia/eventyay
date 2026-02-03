@@ -641,6 +641,54 @@ footer {
   }
 }
 
+@media (max-width: 768px) {
+  .event-header,
+  .event-header-meta,
+  .event-header-nav {
+    position: relative;
+    z-index: 2;
+  }
+
+  .navigation-button {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .event-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+} 
+
+  @media (max-width: 768px) {
+    #timeline-steps {
+      margin-top: 1rem;
+      clear: both;
+    }
+  }
+  
+
+@media (max-width: 768px) {
+  .navigation-button .header-nav {
+    flex: 1 1 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-top-links,
+  .navbar-top-links a,
+  .navbar-top-links span,
+  .navbar-top-links .dropdown-toggle {
+    color: #ffffff !important;
+  }
+}
+
+
 td.reviewer {
   display: flex;
   flex-direction: row;
