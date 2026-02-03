@@ -736,7 +736,7 @@ def test_submission_statistics(use_tracks, slot, other_slot, orga_client):
         logs = []
         subs = [slot.submission, other_slot.submission]
         for i in range(2):
-            logs.append(subs[i].log_action("pretalx.submission.create"))
+            logs.append(subs[i].log_action("eventyay.submission.create"))
         ActivityLog.objects.filter(pk=logs[0].pk).update(
             timestamp=logs[0].timestamp - dt.timedelta(days=2)
         )
