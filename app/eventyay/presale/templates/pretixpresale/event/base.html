@@ -38,36 +38,7 @@
         {% if request.user.is_authenticated %}
             {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
             {% can_view_tickets as can_view_tickets %}
-            <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-                <div class="container">
-                    <span class="fa fa-user-secret" aria-hidden="true"></span>
-                    {% if can_view_tickets %}
-                        {% trans "This shop is currently in private test mode. Only event team members and system administrators can view or purchase tickets." %}
-                        <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                            {% trans "Manage shop status" %}
-                        </a>
-                    {% else %}
-                        {% trans "This event is currently in private test mode. Ticket sales are not available." %}
-                    {% endif %}
-                </div>
-            </div>
         {% endif %}
-    {% elif not event.live %}
-        {% has_event_perm "base.orga_access_event" request.user request event as is_organiser %}
-        {% can_view_tickets as can_view_tickets %}
-        <div class="offline-banner {% if event.settings.logo_image %}offline-banner-absolute{% endif %}">
-            <div class="container">
-                <span class="fa fa-user-secret" aria-hidden="true"></span>
-                {% if can_view_tickets %}
-                    {% trans "This shop is currently offline. Only event team members and system administrators can purchase tickets." %}
-                    <a href='{% url "eventyay_common:event.live" event=event.slug organizer=event.organizer.slug %}'>
-                        {% trans "Take it live now" %}
-                    </a>
-                {% else %}
-                    {% trans "This event is currently offline. Ticket sales are not yet available." %}
-                {% endif %}
-            </div>
-        </div>
     {% endif %}
 {% endblock %}
 
