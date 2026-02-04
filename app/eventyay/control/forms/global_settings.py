@@ -206,78 +206,152 @@ class GlobalSettingsForm(SettingsForm):
         self.fields = OrderedDict(
             list(self.fields.items())
             + [
-                (
-                    'payment_stripe_secret_key',
-                    SecretKeySettingsField(
-                        label=_('Stripe Connect: Secret key'),
-                        required=False,
-                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
-                    ),
-                ),
+                # Stripe for organizer billing
                 (
                     'payment_stripe_publishable_key',
                     forms.CharField(
-                        label=_('Stripe Connect: Publishable key'),
+                        label=_('Publishable key (Live)'),
                         required=False,
                         validators=(StripeKeyValidator('pk_live_'),),
+                        help_text=_('Live publishable key for organizer billing and platform fees.'),
                     ),
                 ),
                 (
-                    'payment_stripe_test_secret_key',
+                    'payment_stripe_secret_key',
                     SecretKeySettingsField(
-                        label=_('Stripe Connect: Secret key (test)'),
+                        label=_('Secret key (Live)'),
                         required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
+                        help_text=_('Live secret key for organizer billing and platform fees.'),
                     ),
                 ),
                 (
                     'payment_stripe_test_publishable_key',
                     forms.CharField(
-                        label=_('Stripe Connect: Publishable key (test)'),
+                        label=_('Publishable key (Test)'),
                         required=False,
                         validators=(StripeKeyValidator('pk_test_'),),
+                        help_text=_('Test publishable key for organizer billing and platform fees.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_test_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        help_text=_('Test secret key for organizer billing and platform fees.'),
                     ),
                 ),
                 (
                     'stripe_webhook_secret_key',
                     SecretKeySettingsField(
-                        label=_('Stripe Webhook: Secret key'),
+                        label=_('Webhook secret key'),
                         required=False,
+                        help_text=_('Configure this endpoint in your Stripe dashboard to receive billing events.'),
                     ),
                 ),
+                # Stripe for ticket payments
                 (
-                    'ticket_fee_percentage',
-                    forms.DecimalField(
-                        label=_('Ticket fee percentage'),
+                    'payment_stripe_connect_client_id',
+                    forms.CharField(
+                        label=_('Client ID'),
                         required=False,
-                        decimal_places=2,
-                        max_digits=10,
-                        help_text=_('A percentage fee will be charged for each ticket sold.'),
-                        validators=[MinValueValidator(0)],
-                    )
+                        help_text=_('Stripe Connect client ID for ticket payments via the Stripe plugin.'),
+                    ),
                 ),
                 (
                     'payment_stripe_connect_publishable_key',
                     forms.CharField(
-                        label=_('Stripe Connect: Publishable key'),
+                        label=_('Publishable key (Live)'),
                         required=False,
                         validators=(StripeKeyValidator('pk_live_'),),
+                        help_text=_('Live publishable key for ticket payments via the Stripe plugin.'),
                     ),
                 ),
                 (
-                    'payment_stripe_connect_test_secret_key',
+                    'payment_stripe_connect_secret_key',
                     SecretKeySettingsField(
-                        label=_('Stripe Connect: Secret key (test)'),
+                        label=_('Secret key (Live)'),
                         required=False,
-                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        validators=(StripeKeyValidator(['sk_live_', 'rk_live_']),),
+                        help_text=_('Live secret key for ticket payments via the Stripe plugin.'),
                     ),
                 ),
                 (
                     'payment_stripe_connect_test_publishable_key',
                     forms.CharField(
-                        label=_('Stripe Connect: Publishable key (test)'),
+                        label=_('Publishable key (Test)'),
                         required=False,
                         validators=(StripeKeyValidator('pk_test_'),),
+                        help_text=_('Test publishable key for ticket payments via the Stripe plugin.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_connect_test_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key (Test)'),
+                        required=False,
+                        validators=(StripeKeyValidator(['sk_test_', 'rk_test_']),),
+                        help_text=_('Test secret key for ticket payments via the Stripe plugin.'),
+                    ),
+                ),
+                (
+                    'payment_stripe_connect_app_fee_percent',
+                    forms.DecimalField(
+                        label=_('App fee percentage'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=10,
+                        help_text=_('Percentage fee charged on ticket payments.'),
+                        validators=[MinValueValidator(0)],
+                    ),
+                ),
+                (
+                    'payment_stripe_connect_app_fee_min',
+                    forms.DecimalField(
+                        label=_('App fee minimum'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=10,
+                        help_text=_('Minimum fee amount charged on ticket payments.'),
+                        validators=[MinValueValidator(0)],
+                    ),
+                ),
+                (
+                    'payment_stripe_connect_app_fee_max',
+                    forms.DecimalField(
+                        label=_('App fee maximum'),
+                        required=False,
+                        decimal_places=2,
+                        max_digits=10,
+                        help_text=_('Maximum fee amount charged on ticket payments.'),
+                        validators=[MinValueValidator(0)],
+                    ),
+                ),
+                # PayPal
+                (
+                    'payment_paypal_connect_client_id',
+                    forms.CharField(
+                        label=_('Client ID'),
+                        required=False,
+                        help_text=_('PayPal Connect client ID for payment processing.'),
+                    ),
+                ),
+                (
+                    'payment_paypal_connect_secret_key',
+                    SecretKeySettingsField(
+                        label=_('Secret key'),
+                        required=False,
+                        help_text=_('PayPal Connect secret key for payment processing.'),
+                    ),
+                ),
+                (
+                    'payment_paypal_connect_endpoint',
+                    forms.CharField(
+                        label=_('API Endpoint'),
+                        required=False,
+                        help_text=_('PayPal API endpoint (e.g., https://api.paypal.com or https://api.sandbox.paypal.com).'),
                     ),
                 ),
                 (
@@ -323,26 +397,27 @@ class GlobalSettingsForm(SettingsForm):
                 'smtp_use_tls', 'smtp_use_ssl',
             ]),
             ('payment_gateways', _('Payment Gateways'), [
+                # Stripe for Organizer Billing
+                'payment_stripe_publishable_key',
+                'payment_stripe_secret_key',
+                'payment_stripe_test_publishable_key',
+                'payment_stripe_test_secret_key',
+                'stripe_webhook_secret_key',
+
+                # Stripe for Ticket Payments
+                'payment_stripe_connect_client_id',
+                'payment_stripe_connect_publishable_key',
+                'payment_stripe_connect_secret_key',
+                'payment_stripe_connect_test_publishable_key',
+                'payment_stripe_connect_test_secret_key',
+                'payment_stripe_connect_app_fee_percent',
+                'payment_stripe_connect_app_fee_min',
+                'payment_stripe_connect_app_fee_max',
+
                 # PayPal
                 'payment_paypal_connect_client_id',
                 'payment_paypal_connect_secret_key',
                 'payment_paypal_connect_endpoint',
-
-                # Stripe
-                'payment_stripe_connect_client_id',
-                'payment_stripe_connect_secret_key',
-                'payment_stripe_connect_publishable_key',
-                'payment_stripe_connect_test_secret_key',
-                'payment_stripe_connect_test_publishable_key',
-                'payment_stripe_connect_app_fee_percent',
-                'payment_stripe_connect_app_fee_max',
-                'payment_stripe_connect_app_fee_min',
-
-                'payment_stripe_secret_key',
-                'payment_stripe_publishable_key',
-                'payment_stripe_test_secret_key',
-                'payment_stripe_test_publishable_key',
-                'stripe_webhook_secret_key',
             ]),
             ('ticket_fee', _('Ticket fee'), [
                 'ticket_fee_percentage',
@@ -403,6 +478,14 @@ class SSOConfigForm(SettingsForm):
         label=_('Redirect URL'),
         help_text=_('e.g. {sample}').format(sample='https://app-test.eventyay.com/talk/oauth2/callback/'),
     )
+
+    def __init__(self, *args, **kwargs):
+        self.obj = GlobalSettingsObject()
+        super().__init__(*args, obj=self.obj, **kwargs)
+
+
+class StartPageSettingsForm(SettingsForm):
+    auto_fields = ['startpage_header_image', 'startpage_header_text']
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
