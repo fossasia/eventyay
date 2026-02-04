@@ -43,11 +43,11 @@ body {
   }
 }
 
-@media (max-width: 767.98px) {
-  #page-content {
-    padding: 16px;
-  }
+.cfp-forms-actions {
+  margin-left: auto;
+}
 
+@media (max-width: 767.98px) {
   .table-responsive-sm {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -58,12 +58,12 @@ body {
     row-gap: 8px;
   }
 
-  .cfp-forms-header > .ml-auto {
+  .cfp-forms-header > .cfp-forms-actions {
     margin-left: 0;
     width: 100%;
   }
 
-  .cfp-forms-header > .ml-auto .btn {
+  .cfp-forms-header > .cfp-forms-actions .btn {
     width: 100%;
     white-space: normal;
   }

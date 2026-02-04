@@ -35,7 +35,7 @@
         <span data-dialog-target="#info-dialog" data-toggle="dialog">
             <i class="fa fa-question-circle-o text-info ml-2"></i>
         </span>
-        <div class="ml-auto mb-3">
+        <div class="cfp-forms-actions mb-3">
             {% if question_list %}
                 <a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
             {% endif %}
