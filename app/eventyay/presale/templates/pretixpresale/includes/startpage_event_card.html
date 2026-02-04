@@ -1,0 +1,55 @@
+{% load eventurl %}
+{% load presale_locale %}
+{% load i18n %}
+
+{% eventurl event "presale:event.index" as event_url %}
+{% abseventurl event "presale:event.index" as event_url_abs %}
+{% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+<article
+    class="startpage-event-card"
+    data-event-name="{{ event.name|event_localize|escape }}"
+    data-event-date="{{ event.get_date_range_display|escape }}"
+    data-event-url="{{ event_url }}"
+    data-event-image="{{ event_image_url|default:''|escape }}"
+>
+    <a class="startpage-event-media" href="{{ event_url }}">
+        {% if event.visible_header_image_url %}
+            <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
+        {% else %}
+            <div class="startpage-event-media-placeholder">
+                <i class="fa fa-calendar"></i>
+            </div>
+        {% endif %}
+    </a>
+    <div class="startpage-event-body">
+        <h3 class="startpage-event-title">
+            <a href="{{ event_url }}">{{ event.name|event_localize }}</a>
+        </h3>
+        <div class="startpage-event-meta">
+            <span class="startpage-event-date">
+                {{ event.get_date_range_display }}
+            </span>
+            {% if event.location %}
+                <span class="startpage-event-location">
+                    <i class="fa fa-map-marker"></i>
+                    {{ event.location|event_localize }}
+                </span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="startpage-event-footer">
+        <a class="btn btn-primary" href="{{ event_url }}">
+            {% trans "View event" %}
+        </a>
+        {% if event.testmode %}
+            <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
+                {% trans "Test Mode" %}
+            </span>
+        {% endif %}
+        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" aria-label="{% trans "Copy event link" %}" title="{% trans "Copy event link" %}">
+            <i class="fa fa-share-alt"></i>
+        </button>
+    </div>
+</article>
+{% endwith %}
