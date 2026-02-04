@@ -182,7 +182,7 @@
   summary.header-nav,
   summary.header-nav span,
   summary.header-nav i {
-    color: #ffffff !important;
+    color: var(--navbar-link-color);
   }
 
 }
