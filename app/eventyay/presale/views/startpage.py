@@ -2,6 +2,9 @@ from django.conf import settings
 from django.core.files.storage import default_storage
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
+from django.utils.timezone import now
+from django.db.models import Q
+
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import Event
@@ -28,9 +31,33 @@ class StartPageView(TemplateView):
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
         with scopes_disabled():
+            current_time = now()
+
             ctx['events'] = (
                 Event.objects.select_related('organizer')
-                .filter(live=True)
+                .filter(
+                    live=True,
+                    date_to__gte=current_time  # Exclude past events
+                )
+                .filter(
+                    (
+                        # Tickets live
+                        Q(
+                            tickets_published=True
+                        ) &
+                        (
+                            Q(presale_start__isnull=True) |
+                            Q(presale_start__lte=current_time)
+                        ) &
+                        (
+                            Q(presale_end__isnull=True) |
+                            Q(presale_end__gte=current_time)
+                        )
+                    )
+                    |
+                    # OR Talks live
+                    Q(talks_published=True)
+                )
                 .order_by('date_from')
             )
         return ctx
