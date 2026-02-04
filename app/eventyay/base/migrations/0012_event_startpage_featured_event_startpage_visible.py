@@ -2,11 +2,6 @@
 
 from django.db import migrations, models
 
-#maintain consistency with existing events visiblity in the start page
-def set_startpage_defaults(apps, schema_editor):
-    Event = apps.get_model('base', 'Event')
-    Event.objects.all().update(startpage_visible=True, startpage_featured=False)
-
 
 class Migration(migrations.Migration):
 

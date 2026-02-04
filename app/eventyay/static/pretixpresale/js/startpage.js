@@ -55,6 +55,25 @@
       return;
     }
 
+    function normalizeUrl(value) {
+      if (!value) {
+        return '';
+      }
+      var trimmed = value.trim();
+      if (!trimmed) {
+        return '';
+      }
+      try {
+        var parsed = new URL(trimmed, window.location.origin);
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+          return parsed.href;
+        }
+      } catch (error) {
+        // ignore invalid URLs
+      }
+      return '';
+    }
+
     var emptyText = resultsContainer.dataset.emptyText || 'No matching events';
     var events = Array.from(document.querySelectorAll('.startpage-event-card')).map(function (card) {
       var link = card.querySelector('.startpage-event-title a');
@@ -68,31 +87,69 @@
       };
     });
 
+    function clearResults() {
+      while (resultsContainer.firstChild) {
+        resultsContainer.removeChild(resultsContainer.firstChild);
+      }
+    }
+
     function renderResults(items, query) {
       if (!query) {
-        resultsContainer.innerHTML = '';
+        clearResults();
         resultsContainer.classList.remove('is-open');
         return;
       }
       var limited = items.slice(0, 6);
-      resultsContainer.innerHTML = limited
-        .map(function (item) {
-          return (
-            '<a class="startpage-search-item" href="' + item.url + '" role="option">' +
-            (item.image
-              ? '<img src="' + item.image + '" alt="" aria-hidden="true" />'
-              : '<span class="startpage-search-placeholder"><i class="fa fa-calendar"></i></span>') +
-            '<span class="startpage-search-text">' +
-            '<span class="startpage-search-title">' + item.name + '</span>' +
-            '<span class="startpage-search-date">' + item.date + '</span>' +
-            '</span>' +
-            '</a>'
-          );
-        })
-        .join('');
+      clearResults();
+      limited.forEach(function (item) {
+        var safeUrl = normalizeUrl(item.url);
+        var safeImage = normalizeUrl(item.image);
+        var link = document.createElement('a');
+        link.className = 'startpage-search-item';
+        link.href = safeUrl || '#';
+        link.setAttribute('role', 'option');
+        if (!safeUrl) {
+          link.setAttribute('aria-disabled', 'true');
+          link.tabIndex = -1;
+        }
+
+        if (safeImage) {
+          var img = document.createElement('img');
+          img.src = safeImage;
+          img.alt = '';
+          img.setAttribute('aria-hidden', 'true');
+          link.appendChild(img);
+        } else {
+          var placeholder = document.createElement('span');
+          placeholder.className = 'startpage-search-placeholder';
+          var icon = document.createElement('i');
+          icon.className = 'fa fa-calendar';
+          placeholder.appendChild(icon);
+          link.appendChild(placeholder);
+        }
+
+        var textWrap = document.createElement('span');
+        textWrap.className = 'startpage-search-text';
+
+        var title = document.createElement('span');
+        title.className = 'startpage-search-title';
+        title.textContent = item.name;
+        textWrap.appendChild(title);
+
+        var dateText = document.createElement('span');
+        dateText.className = 'startpage-search-date';
+        dateText.textContent = item.date;
+        textWrap.appendChild(dateText);
+
+        link.appendChild(textWrap);
+        resultsContainer.appendChild(link);
+      });
 
       if (!limited.length) {
-        resultsContainer.innerHTML = '<div class="startpage-search-empty">' + emptyText + '</div>';
+        var empty = document.createElement('div');
+        empty.className = 'startpage-search-empty';
+        empty.textContent = emptyText;
+        resultsContainer.appendChild(empty);
       }
       resultsContainer.classList.add('is-open');
     }
