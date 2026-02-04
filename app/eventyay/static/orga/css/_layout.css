@@ -46,7 +46,6 @@ body {
 @media (max-width: 767.98px) {
   #page-content {
     padding: 16px;
-    overflow-x: hidden;
   }
 
   .table-responsive-sm {
@@ -74,18 +73,23 @@ body {
     margin-right: 0;
   }
 
+  .cfp-forms-page {
+    overflow-x: hidden;
+  }
+
   .cfp-new-field-row > .cfp-new-field-col {
     flex: 0 0 100%;
     max-width: 100%;
-    padding-right: 95px;
-  }
-
-  .cfp-new-field-row > .cfp-new-field-col.offset-md-3 {
-    margin-left: 0;
   }
 
   .cfp-new-field-row .btn {
     max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .cfp-new-field-row > .cfp-new-field-col {
+    margin-left: 25%;
   }
 }
 
