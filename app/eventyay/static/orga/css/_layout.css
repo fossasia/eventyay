@@ -649,7 +649,7 @@ footer {
     z-index: 2;
   }
 
-  .navigation-button {
+  .navigation-button:not(.event-header-nav) {
     position: relative;
     z-index: 1;
   }
