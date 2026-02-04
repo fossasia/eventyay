@@ -515,6 +515,45 @@ class EventMixin:
         return qs.filter(q)
 
 
+class EventQuerySet(models.QuerySet):
+    """
+    Custom queryset for Event model.
+
+    Provides reusable filtering logic for events that should be visible
+    on the start page. This includes:
+
+    - Events that are ongoing or upcoming
+    - Excludes past events
+    - Includes open-ended events (date_to is null)
+    - Requires at least one public component to be active:
+        - Tickets published and within presale window
+        - OR Talks (CFP) published
+    """
+    def visible_on_startpage(self):
+        current_time = now()
+
+        time_filter = (
+            Q(date_to__gte=current_time) |
+            Q(date_to__isnull=True)
+        )
+
+        tickets_live = (
+            Q(tickets_published=True) &
+            (Q(presale_start__isnull=True) | Q(presale_start__lte=current_time)) &
+            (Q(presale_end__isnull=True) | Q(presale_end__gte=current_time))
+        )
+
+        talks_live = Q(talks_published=True)
+
+        return self.filter(
+            live=True
+        ).filter(
+            time_filter
+        ).filter(
+            tickets_live | talks_live
+        )
+
+
 # We don't subclass PretalxModel because:
 # - We want to avoid the `objects = ScopedManager()` (we may use it later, after the making "enext" stable enough).
 # - We don't want to inherit the LogMixin (already have LoggedModel).
@@ -563,6 +602,7 @@ class Event(
     settings_namespace = 'event'
     _event_id = 'pk'
     CURRENCY_CHOICES = [(c.alpha_3, c.alpha_3 + ' - ' + c.name) for c in settings.CURRENCIES]
+    objects = EventQuerySet.as_manager()
     organizer = models.ForeignKey(Organizer, related_name='events', on_delete=models.PROTECT)
     testmode = models.BooleanField(default=False)
     private_testmode = models.BooleanField(default=True)
