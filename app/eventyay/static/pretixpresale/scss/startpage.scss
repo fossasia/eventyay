@@ -82,31 +82,83 @@ nav.navbar .navbar-top-links .dropdown-content {
   align-items: center;
 }
 
+.startpage-search-form {
+  display: flex;
+}
+
 .startpage-search {
   align-items: center;
   display: flex;
   position: relative;
 }
 
-.startpage-search i {
+.startpage-search-icon-btn {
+  background: transparent;
+  border: none;
   color: rgba(255, 255, 255, 0.8);
-  left: 12px;
+  cursor: pointer;
+  left: 10px;
+  padding: 8px;
   position: absolute;
-  pointer-events: none;
+  z-index: 1;
+}
+
+.startpage-search-icon-btn:hover {
+  color: #fff;
+}
+
+.startpage-search-icon-btn:focus {
+  outline: none;
 }
 
 .startpage-search input {
   background: rgba(255, 255, 255, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
+  border-radius: 12px;
   color: #fff;
   font-size: 14px;
+  outline: none;
   padding: 8px 14px 8px 34px;
+  transition: width 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   width: 220px;
+}
+
+.startpage-search input:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.startpage-search input:focus {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+  outline: none;
+  width: 330px;
 }
 
 .startpage-search input::placeholder {
   color: rgba(255, 255, 255, 0.75);
+}
+
+body.startpage-search-results-page .startpage-search input {
+  background: #fff;
+  border: 1px solid var(--color-grey-light, #e0e0e0);
+  color: var(--color-text, #333);
+}
+
+body.startpage-search-results-page .startpage-search input::placeholder {
+  color: var(--color-grey-dark, #757575);
+}
+
+body.startpage-search-results-page .startpage-search input:focus {
+  border-color: var(--color-primary, #2185d0);
+  box-shadow: 0 0 0 1px var(--color-primary, #2185d0);
+}
+
+body.startpage-search-results-page .startpage-search-icon-btn {
+  color: var(--color-grey-dark, #757575);
+}
+
+body.startpage-search-results-page .startpage-search-icon-btn:hover {
+  color: var(--color-primary, #2185d0);
 }
 
 .startpage-search-results {
@@ -361,8 +413,12 @@ header.startpage-hero-header {
     padding: 0 0.75rem;
   }
 
-  .startpage-search-nav {
-    display: none;
+  .startpage-search input {
+    width: 160px;
+  }
+
+  .startpage-search input:focus {
+    width: 220px;
   }
 
   .startpage-event-media {

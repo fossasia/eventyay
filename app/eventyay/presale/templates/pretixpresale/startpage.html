@@ -55,7 +55,7 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
-    <body class="startpage-body" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
         {{ html_page_header|safe }}
 
@@ -68,22 +68,28 @@
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
                 <li class="startpage-search-nav">
-                    <div class="startpage-search" role="search">
-                        <i class="fa fa-search" aria-hidden="true"></i>
-                        <input
-                            id="startpage-search-input"
-                            type="search"
-                            autocomplete="off"
-                            placeholder="{% trans "Search events" %}"
-                            aria-label="{% trans "Search events" %}"
-                        />
-                        <div
-                            class="startpage-search-results"
-                            id="startpage-search-results"
-                            role="listbox"
-                            data-empty-text="{% trans "No matching events" %}"
-                        ></div>
-                    </div>
+                    <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                        <div class="startpage-search">
+                            <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                            <input
+                                id="startpage-search-input"
+                                name="q"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="{% trans "Search events" %}"
+                                aria-label="{% trans "Search events" %}"
+                                value="{{ search_query|default:'' }}"
+                            />
+                            <div
+                                class="startpage-search-results"
+                                id="startpage-search-results"
+                                role="listbox"
+                                data-empty-text="{% trans "No matching events" %}"
+                            ></div>
+                        </div>
+                    </form>
                 </li>
                 {% include "common/fragment_language_switch_public.html" %}
                 {% if request.user.is_authenticated %}
@@ -126,35 +132,74 @@
                     {% endfor %}
                 {% endif %}
                 <main>
-                    {% if featured_events %}
-                        <section class="startpage-events" aria-label="{% trans "Featured events" %}">
-                            <h2>{% trans "Featured events" %}</h2>
+                    {% if search_query %}
+                        <section class="startpage-events" aria-label="{% trans "Live events" %}">
+                            <h2>{% blocktrans with query=search_query %}Search results: "{{ query }}"{% endblocktrans %}</h2>
                             <div class="startpage-event-list">
-                                {% for event in featured_events %}
-                                    {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% for event in events %}
+                                    {% eventurl event "presale:event.index" as event_url %}
+                                    {% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
+                                    <article
+                                        class="startpage-event-card startpage-event-card--search"
+                                        data-event-name="{{ event.name|event_localize|escape }}"
+                                        data-event-date="{{ event.get_date_range_display|escape }}"
+                                        data-event-url="{{ event_url }}"
+                                        data-event-image="{{ event_image_url|default:''|escape }}"
+                                    >
+                                        <div class="startpage-event-body">
+                                            <h3 class="startpage-event-title">
+                                                <a href="{{ event_url }}">{{ event.name|event_localize }}</a>
+                                            </h3>
+                                            <div class="startpage-event-meta">
+                                                <span class="startpage-event-date">
+                                                    {{ event.get_date_range_display }}
+                                                </span>
+                                                {% if event.location %}
+                                                    <span class="startpage-event-location">
+                                                        <i class="fa fa-map-marker"></i>
+                                                        {{ event.location|event_localize }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </article>
+                                    {% endwith %}
+                                {% empty %}
+                                    <p class="startpage-empty">{% trans "No matching events. Try a different search term." %}</p>
                                 {% endfor %}
                             </div>
                         </section>
-                    {% endif %}
-                    <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
-                        <h2>{% trans "Upcoming events" %}</h2>
-                        <div class="startpage-event-list">
-                            {% for event in upcoming_events %}
-                                {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
-                            {% empty %}
-                                <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% if past_events %}
-                        <section class="startpage-events" aria-label="{% trans "Past events" %}">
-                            <h2>{% trans "Past events" %}</h2>
+                    {% else %}
+                        {% if featured_events %}
+                            <section class="startpage-events" aria-label="{% trans "Featured events" %}">
+                                <h2>{% trans "Featured events" %}</h2>
+                                <div class="startpage-event-list">
+                                    {% for event in featured_events %}
+                                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endif %}
+                        <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
+                            <h2>{% trans "Upcoming events" %}</h2>
                             <div class="startpage-event-list">
-                                {% for event in past_events %}
+                                {% for event in upcoming_events %}
                                     {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% empty %}
+                                    <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
                                 {% endfor %}
                             </div>
                         </section>
+                        {% if past_events %}
+                            <section class="startpage-events" aria-label="{% trans "Past events" %}">
+                                <h2>{% trans "Past events" %}</h2>
+                                <div class="startpage-event-list">
+                                    {% for event in past_events %}
+                                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endif %}
                     {% endif %}
                 </main>
             </div>
