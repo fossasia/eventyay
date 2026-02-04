@@ -29,7 +29,7 @@ def gravatar_cache(person_id: int):
         timeout=10,
     )
 
-    logger.info(f'gravatar returned http {response.status_code} when getting avatar for user {user.name}')
+    logger.info(f'gravatar returned http {response.status_code} when getting avatar for user {user.fullname}')
 
     if 400 <= response.status_code <= 499:
         # avatar not found.
@@ -56,7 +56,7 @@ def gravatar_cache(person_id: int):
         user.save()
         user.avatar.save(f'{user.gravatar_parameter}.{extension}', File(tmp_img))
 
-        logger.info(f'set avatar for user {user.name} to {user.avatar.url}')
+        logger.info(f'set avatar for user {user.fullname} to {user.avatar.url}')
 
     user.process_image('avatar', generate_thumbnail=True)
 

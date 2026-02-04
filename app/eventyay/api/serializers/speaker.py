@@ -25,7 +25,7 @@ from eventyay.base.models.question import TalkQuestionTarget
 @register_serializer(versions=CURRENT_VERSIONS)
 class SpeakerSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
     code = CharField(source="user.code", read_only=True)
-    name = CharField(source="user.name")
+    name = CharField(source="user.fullname")
     avatar_url = URLField(read_only=True)
     avatar_source = SerializerMethodField()
     avatar_license = SerializerMethodField()
