@@ -31,33 +31,10 @@ class StartPageView(TemplateView):
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
         with scopes_disabled():
-            current_time = now()
-
             ctx['events'] = (
-                Event.objects.select_related('organizer')
-                .filter(
-                    live=True,
-                    date_to__gte=current_time  # Exclude past events
-                )
-                .filter(
-                    (
-                        # Tickets live
-                        Q(
-                            tickets_published=True
-                        ) &
-                        (
-                            Q(presale_start__isnull=True) |
-                            Q(presale_start__lte=current_time)
-                        ) &
-                        (
-                            Q(presale_end__isnull=True) |
-                            Q(presale_end__gte=current_time)
-                        )
-                    )
-                    |
-                    # OR Talks live
-                    Q(talks_published=True)
-                )
+                Event.objects
+                .select_related('organizer')
+                .visible_on_startpage()
                 .order_by('date_from')
             )
         return ctx
