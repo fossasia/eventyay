@@ -126,13 +126,6 @@
   margin-top: 12px;
 }
 
-.navigation-button {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-
 @media (max-width: 768px) {
   .navigation-button {
     margin-top: 1rem;
