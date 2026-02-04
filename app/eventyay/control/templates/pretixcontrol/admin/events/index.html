@@ -1,8 +1,14 @@
 {% extends "pretixcontrol/admin/base.html" %}
 {% load i18n %}
+{% load static %}
 {% load urlreplace %}
 {% load bootstrap3 %}
 {% block title %}{% trans "Events" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'pretixcontrol/css/order-form-toggles.css' %}">
+    <script defer src="{% static 'pretixcontrol/js/admin-events-startpage-toggle.js' %}"></script>
+{% endblock %}
 {% block content %}
     <h1>{% trans "Events" %}</h1>
     <p>{% trans "The list below shows all events you have administrative access to. Click on the event name to access event details." %}</p>
@@ -46,7 +52,9 @@
                 </form>
             </div>
         </div>
-        <table class="table table-condensed table-hover">
+        <table class="table table-condensed table-hover"
+               data-startpage-toggle-url="{% url 'eventyay_admin:admin.events.startpage.toggle' %}"
+               data-startpage-csrf="{{ csrf_token }}">
             <thead>
             <tr>
                 <th>
@@ -75,6 +83,12 @@
                     {% trans "Status" %}
                     <a href="?{% url_replace request 'ordering' '-live' %}"><i class="fa fa-caret-down"></i></a>
                     <a href="?{% url_replace request 'ordering' 'live' %}"><i class="fa fa-caret-up"></i></a>
+                </th>
+                <th class="text-center">
+                    {% trans "Start page" %}
+                </th>
+                <th class="text-center">
+                    {% trans "Featured" %}
                 </th>
                 <th class="text-right flip">
                 </th>
@@ -136,6 +150,28 @@
                         {% else %}
                             <span class="label label-success">{% trans "On sale" %}</span>
                         {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <label class="toggle-switch">
+                            <input type="checkbox"
+                                   class="js-startpage-toggle"
+                                   id="startpage-visible-{{ e.pk }}"
+                                   data-event-id="{{ e.pk }}"
+                                   data-field="startpage_visible"
+                                   {% if e.startpage_visible %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </td>
+                    <td class="text-center">
+                        <label class="toggle-switch">
+                            <input type="checkbox"
+                                   class="js-startpage-toggle"
+                                   id="startpage-featured-{{ e.pk }}"
+                                   data-event-id="{{ e.pk }}"
+                                   data-field="startpage_featured"
+                                   {% if e.startpage_featured %}checked{% endif %}>
+                            <span class="toggle-slider"></span>
+                        </label>
                     </td>
                     <td class="text-right flip">
                         <a href='{% url "control:event.index" organizer=e.organizer.slug event=e.slug %}'

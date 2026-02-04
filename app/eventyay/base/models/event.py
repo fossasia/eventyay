@@ -592,6 +592,8 @@ class Event(
         verbose_name=_('Short form'),
     )
     live = models.BooleanField(default=False, verbose_name=_('Shop is live'))
+    startpage_visible = models.BooleanField(default=True, verbose_name=_('Visible on start page'))
+    startpage_featured = models.BooleanField(default=False, verbose_name=_('Featured on start page'))
     tickets_published = models.BooleanField(default=False, verbose_name=_('Tickets are published'))
     talks_published = models.BooleanField(default=False, verbose_name=_('Talk pages are published'))
     currency = models.CharField(
@@ -741,7 +743,9 @@ class Event(
     )
     featured_sessions_text = I18nTextField(
         verbose_name=_('Featured sessions text'),
-        help_text=_('Shown at the top of the featured sessions page.'),
+        help_text=_('This text will be shown at the top of the featured sessions page instead of the default text.')
+        + ' '
+        + phrases.base.use_markdown,
         null=True,
         blank=True,
     )

@@ -8,6 +8,9 @@
     {% compress css %}
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/auth.scss" %}"/>
         <link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
+        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill.snow.css" %}">
+        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill-show.css" %}">
+        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill-edit.css" %}">
     {% endcompress %}
     {% if development_warning or debug_warning %}
         <link rel="shortcut icon" href="{% static "common/img/icons/favicon_debug.ico" %}">

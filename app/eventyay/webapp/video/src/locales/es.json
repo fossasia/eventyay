@@ -204,7 +204,6 @@
   "poster-manager/poster:input-parent-room:label": "Sala",
   "poster-manager/poster:input-title:label": "Título",
   "poster-manager/poster:input-abstract:label": "Resumen",
-  "poster-manager/poster:input-abstract:hint": "Máximo {maxChars} caracteres.",
   "poster-manager/poster:input-category:label": "Categoría",
   "poster-manager/poster:input-tags:label": "Etiquetas",
   "poster-manager/poster:input-poster-pdf:label": "Póster PDF",
