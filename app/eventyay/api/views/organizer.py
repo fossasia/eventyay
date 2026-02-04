@@ -14,6 +14,7 @@ from rest_framework import (
     views,
     viewsets,
 )
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
@@ -49,9 +50,16 @@ from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_organizer_css
 
 
+class OrganizerPagination(PageNumberPagination):
+    page_size = 25
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrganizerSerializer
     queryset = Organizer.objects.none()
+    pagination_class = OrganizerPagination
     lookup_field = 'slug'
     lookup_url_kwarg = 'organizer'
     lookup_value_regex = '[^/]+'
