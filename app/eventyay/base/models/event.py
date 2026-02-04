@@ -532,29 +532,22 @@ class EventQuerySet(models.QuerySet):
     def visible_on_startpage(self):
         current_time = now()
 
-        time_filter = (
-            Q(date_to__gte=current_time) |
-            Q(date_to__isnull=True)
-        )
+        time_filter = Q(date_to__gte=current_time) | Q(date_to__isnull=True)
 
         tickets_live = (
-            Q(tickets_published=True) &
-            (Q(presale_start__isnull=True) | Q(presale_start__lte=current_time)) &
-            (Q(presale_end__isnull=True) | Q(presale_end__gte=current_time))
+            Q(tickets_published=True)
+            & (Q(presale_start__isnull=True) | Q(presale_start__lte=current_time))
+            & (Q(presale_end__isnull=True) | Q(presale_end__gte=current_time))
         )
 
-        talks_live = Q(
-            talks_published=True,
-            cfp__is_open=True
-       )
+        talks_live = Q(talks_published=True) & Q(cfp__isnull=False, cfp__is_open=True)
 
-
-        return self.filter(
-            live=True
-        ).filter(
-            time_filter
-        ).filter(
-            tickets_live | talks_live
+        return (
+            self.select_related("cfp")
+            .filter(live=True)
+            .filter(time_filter)
+            .filter(tickets_live | talks_live)
+            .order_by("date_from")
         )
 
 
