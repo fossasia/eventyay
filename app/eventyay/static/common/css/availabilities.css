@@ -25,7 +25,7 @@ input.availabilities-editor-data {
   border-color: var(--color-danger) !important;
   &:before,
   &::before {
-    font-family: ForkAwesome;
+    font-family: FontAwesome;
     content: "\f014";
     position: absolute;
     top: calc(50% - 1ex);

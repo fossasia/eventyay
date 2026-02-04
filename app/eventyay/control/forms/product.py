@@ -48,7 +48,7 @@ class CategoryForm(I18nModelForm):
 
 
 class QuestionForm(I18nModelForm):
-    question = I18nFormField(label=_('Question'), widget_kwargs={'attrs': {'rows': 2}}, widget=I18nTextarea)
+    question = I18nFormField(label=_('Custom Field'), widget_kwargs={'attrs': {'rows': 2}}, widget=I18nTextarea)
 
     def removeDesOption(self):
         choices = list(self.fields['type'].choices)
@@ -78,6 +78,8 @@ class QuestionForm(I18nModelForm):
         self.fields['identifier'].required = False
         self.fields['dependency_values'].required = False
         self.fields['help_text'].widget.attrs['rows'] = 3
+        self.fields['type'].label = _('Type')
+        self.fields['hidden'].label = _('Hidden field')
 
     def clean_dependency_values(self):
         val = self.data.getlist('dependency_values')

@@ -26,7 +26,6 @@ details.dropdown[open]:not(.details-open) .dropdown-content {
 details.dropdown .dropdown-content {
   position: absolute;
   top: 100%;
-  min-width: 160px;
   max-width: 400px;
   padding: 0;
   margin-top: 8px;
@@ -51,6 +50,174 @@ details.dropdown .dropdown-content {
         rgb(13, 15, 16),
         #fff
     );
+  }
+  details.dropdown .dropdown-content::before {
+    border: 8px solid transparent;
+    border-bottom-color: rgb(27 31 35 / 0.15);
+  }
+  details.dropdown .dropdown-content::after {
+    border: 7px solid transparent;
+    border-bottom-color: white;
+  }
+  details.dropdown .dropdown-content .dropdown-item,
+  details.dropdown .dropdown-content a.dropdown-item,
+  details.dropdown .dropdown-content button.dropdown-item {
+    display: block;
+    padding: 4px 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-grey-dark);
+    text-decoration: none;
+    transition:
+      color 0.15s ease-in-out,
+      background-color 0.15s ease-in-out,
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+  }
+  details.dropdown .dropdown-content .dropdown-item i,
+  details.dropdown .dropdown-content a.dropdown-item i,
+  details.dropdown .dropdown-content button.dropdown-item i {
+    margin-right: 8px;
+  }
+  details.dropdown .dropdown-content .dropdown-item:hover,
+  details.dropdown .dropdown-content a.dropdown-item:hover,
+  details.dropdown .dropdown-content button.dropdown-item:hover {
+    background-color: var(--color-primary-lighter);
+    text-decoration: none;
+  }
+  details.dropdown .dropdown-content .dropdown-item:first-child,
+  details.dropdown .dropdown-content a.dropdown-item:first-child,
+  details.dropdown .dropdown-content button.dropdown-item:first-child {
+    border-top-left-radius: var(--size-border-radius);
+    border-top-right-radius: var(--size-border-radius);
+  }
+  details.dropdown .dropdown-content .dropdown-item:last-child,
+  details.dropdown .dropdown-content a.dropdown-item:last-child,
+  details.dropdown .dropdown-content button.dropdown-item:last-child {
+    border-bottom-left-radius: var(--size-border-radius);
+    border-bottom-right-radius: var(--size-border-radius);
+  }
+  details.dropdown .dropdown-content button.dropdown-item {
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-family);
+    font-weight: normal;
+    border-radius: 0;
+  }
+  details.dropdown .dropdown-content hr {
+    width: 100%;
+    margin-top: 4px;
+    margin-bottom: 0;
+    padding-bottom: 4px;
+    border: none;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .dropdown-content-w {
+    top: 0;
+    right: 100%;
+    left: auto;
+    width: auto;
+    margin-top: 0;
+    margin-right: 8px;
+  }
+  .dropdown-content-w::before {
+    top: 10px;
+    right: -16px;
+    left: auto;
+    border-color: transparent;
+    border-left-color: rgb(27 31 35 / 0.15);
+  }
+  .dropdown-content-w::after {
+    top: 11px;
+    right: -14px;
+    left: auto;
+    border-color: transparent;
+    border-left-color: #fff;
+  }
+  .dropdown-content-e {
+    top: 0;
+    left: 100%;
+    width: auto;
+    margin-top: 0;
+    margin-left: 8px;
+  }
+  .dropdown-content-e::before {
+    top: 8px;
+    left: -16px;
+    border-color: transparent;
+    border-right-color: rgb(27 31 35 / 0.15);
+  }
+  .dropdown-content-e::after {
+    top: 11px;
+    left: -14px;
+    border-color: transparent;
+    border-right-color: #fff;
+  }
+  .dropdown-content-ne {
+    top: auto;
+    bottom: 100%;
+    left: 0;
+    margin-bottom: 3px;
+  }
+  .dropdown-content-ne::before,
+  .dropdown-content-ne::after {
+    top: auto;
+    right: auto;
+  }
+  .dropdown-content-ne::before {
+    bottom: -8px;
+    left: 9px;
+    border-top: 8px solid rgb(27 31 35 / 0.15);
+    border-right: 8px solid transparent;
+    border-bottom: 0;
+    border-left: 8px solid transparent;
+  }
+  .dropdown-content-ne::after {
+    bottom: -7px;
+    left: 10px;
+    border-top: 7px solid #fff;
+    border-right: 7px solid transparent;
+    border-bottom: 0;
+    border-left: 7px solid transparent;
+  }
+  .dropdown-content-s {
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+  }
+  .dropdown-content-s::before {
+    top: -16px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+  .dropdown-content-s::after {
+    top: -14px;
+    right: 50%;
+    transform: translateX(50%);
+  }
+  .dropdown-content-sw {
+    right: 0;
+    left: auto;
+  }
+  .dropdown-content-sw::before {
+    top: -16px;
+    right: 9px;
+    left: auto;
+  }
+  .dropdown-content-sw::after {
+    top: -14px;
+    right: 10px;
+    left: auto;
+  }
+  .dropdown-content-se::before {
+    top: -16px;
+    left: 9px;
+  }
+  .dropdown-content-se::after {
+    top: -14px;
+    left: 10px;
   }
 }
 
@@ -298,6 +465,55 @@ details.dropdown .dropdown-content-se::before {
 details.dropdown .dropdown-content-se::after {
   top: -14px;
   left: 10px;
+}
+
+#locale-dropdown .language-columns {
+  width: 400px;
+  max-height: 350px;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(160px, 1fr));
+  border-top: 1px solid var(--color-border, #ced4da);
+}
+
+#locale-dropdown .language-column {
+  max-width: 200px;
+  max-height: 350px;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid var(--color-border, #ced4da);
+}
+
+#locale-dropdown .language-column:last-child {
+  border-right: none;
+}
+
+#locale-dropdown .language-column .dropdown-heading {
+  margin: 0;
+  padding: 6px 12px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-grey, #6c757d);
+  background: var(--color-grey-lightest, #f8f9fa);
+  border-bottom: 1px solid var(--color-border, #ced4da);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#locale-dropdown .language-column .dropdown-item {
+  background: #fff;
+  color: var(--color-grey-dark, #495057);
+  border-radius: 0;
+}
+
+#locale-dropdown .language-column .dropdown-item.active {
+  background: var(--color-primary, #2185d0);
+  color: #fff;
+}
+
+#locale-dropdown .language-column .dropdown-item:hover {
+  background: var(--color-primary-lighter, #d9ebf9);
 }
 
 .navbar-top-links #profile-dropdown,

@@ -18,20 +18,15 @@ import sys
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
+# The eventyay project should be installed to virtual env (default behavior of `uv`)
 
-sys.path.insert(0, os.path.abspath('../app'))
+# Set minimal config file for documentation builds
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
+# Use 'testing' environment to turn off rich logging.
+os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'testing')
 
 import django
 
-# Set minimal config file for documentation builds
-os.environ.setdefault('EVENTYAY_CONFIG_FILE', os.path.join(os.path.dirname(__file__), 'eventyay-docs.cfg'))
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
-os.environ.setdefault('DATABASE_URL', 'sqlite:///:memory:')
-os.environ.setdefault('REDIS_URL', 'redis://localhost:6379/0')
-
-# Configure minimal logging before Django loads to prevent rich handler errors
-import logging
-logging.basicConfig(level=logging.WARNING, format='[%(levelname)s] %(message)s')
 
 # Patch urlman to handle documentation builds gracefully
 try:
@@ -56,46 +51,9 @@ except Exception:
 # This must be done AFTER django.setup() to avoid triggering early settings initialization
 try:
     django.setup()
-    
-    # Override Django logging configuration after setup to use simple console logging
-    # This prevents complex handlers (like 'rich') from being used during docs build
-    import logging.config
-    
-    SIMPLE_LOGGING = {
-        'version': 1,
-        'disable_existing_loggers': False,
-        'formatters': {
-            'simple': {
-                'format': '[{levelname}] {message}',
-                'style': '{',
-            },
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'formatter': 'simple',
-                'level': 'WARNING',
-            },
-        },
-        'loggers': {
-            'django': {
-                'handlers': ['console'],
-                'level': 'WARNING',
-                'propagate': False,
-            },
-        },
-        'root': {
-            'handlers': ['console'],
-            'level': 'WARNING',
-        },
-    }
-    
-    # Reconfigure logging after Django setup
-    logging.config.dictConfig(SIMPLE_LOGGING)
-    
 except Exception as e:
     # Documentation build can continue even if Django setup fails
-    print(f"Warning: Django setup failed: {e}")
+    print(f"Warning: Django setup failed: {e}", file=sys.stderr)
 
 
 try:

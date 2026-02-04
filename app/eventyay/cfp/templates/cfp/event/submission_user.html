@@ -3,11 +3,12 @@
 {% load i18n %}
 {% load rich_text %}
 
+{% load presale_locale %}
 {% block submission_step_title %}
     {% if request.GET.draft == "1" %}
         {% translate "Sign in or register to save your draft" %}
     {% else %}
-        {{ title }}
+        {{ title|event_localize }}
     {% endif %}
 {% endblock submission_step_title %}
 
@@ -18,7 +19,7 @@
                 Organisers will not be able to see your draft or your email address. They will be able to send you reminders about your pending proposal draft closer to the deadline.
             {% endblocktranslate %}
         {% else %}
-            {{ text|rich_text }}
+            {{ text|event_localize|rich_text }}
         {% endif %}
     </p>
 {% endblock submission_step_text %}

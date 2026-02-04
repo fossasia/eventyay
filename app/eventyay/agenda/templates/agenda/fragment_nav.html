@@ -3,6 +3,7 @@
 {% load event_tags %}
 {% load eventurl %}
 
+{% load presale_locale %}
 <a href="{% url 'presale:event.index' event=request.event.slug organizer=request.event.organizer.slug %}" class="header-tab">
     <i class="fa fa-ticket"></i> {% translate "Tickets" %}
 </a>
@@ -25,7 +26,7 @@
 {% endif %}
 {% for link in header_links %}
     <a href="{% safelink link.url %}" target="_blank" rel="noopener" class="header-tab">
-        <i class="fa fa-link"></i> {{ link.label }}
+        <i class="fa fa-link"></i> {{ link.label|event_localize }}
     </a>
 {% endfor %}
 
