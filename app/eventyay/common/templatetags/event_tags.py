@@ -50,7 +50,7 @@ def short_user_label(user):
         return ''
     first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None)
     if not first:
-        fullname = getattr(user, 'fullname', None)
+        fullname = getattr(user, 'fullname', None) or getattr(user, 'name', None)
         if fullname:
             parts = fullname.split()
             first = parts[0] if parts else fullname

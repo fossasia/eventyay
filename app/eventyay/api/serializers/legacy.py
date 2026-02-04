@@ -27,7 +27,7 @@ from eventyay.base.models.tag import Tag
 
 
 class LegacySubmitterSerializer(ModelSerializer):
-    name = CharField(source="fullname")
+    name = CharField(source="fullname", read_only=True)
     biography = SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
