@@ -682,7 +682,7 @@ footer {
   .navbar-top-links a,
   .navbar-top-links span,
   .navbar-top-links .dropdown-toggle {
-    color: #ffffff !important;
+    color: var(--navbar-link-color);
   }
 }
 
