@@ -513,7 +513,13 @@ aside.sidebar {
     flex-wrap: nowrap;
     white-space: nowrap;
     overflow-x: auto;
-    overflow-y: hidden;
+    overflow-y: visible;
+    position: relative;
+  }
+
+  body:has(#main-title) nav.navbar .navbar-top-links.navbar-right,
+  html:has(#main-title) body nav.navbar .navbar-top-links.navbar-right {
+    overflow: visible;
   }
 
   body:has(#main-title) nav.navbar .navbar-top-links li,
