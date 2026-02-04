@@ -553,6 +553,8 @@ TEMPLATES = (
     },
 )
 
+# TODO: Align with django-allauth, because we are using multi-email addresses.
+# See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',

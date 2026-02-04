@@ -1,6 +1,5 @@
 import calendar
 import datetime as dt
-import importlib.util
 import logging
 import sys
 from collections import defaultdict
@@ -8,12 +7,12 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
 from urllib.parse import urlparse, urlunparse
+from typing import cast
 
 import isoweek
 import jwt
 import pytz
 from django.conf import settings
-from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
@@ -24,7 +23,8 @@ from django.db.models import (
     Q,
     Value,
 )
-from django.http import Http404, HttpResponse, JsonResponse
+from django.contrib.auth.models import AnonymousUser
+from django.http import HttpRequest, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -38,8 +38,9 @@ from django.views.generic import TemplateView
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
-    ProductVariation,
+    User,
     Order,
+    ProductVariation,
     Quota,
     SeatCategoryMapping,
     Voucher,
@@ -73,6 +74,7 @@ from . import (
     get_cart,
     iframe_entry_view_wrapper,
 )
+
 
 SessionStore = import_module(settings.SESSION_ENGINE).SessionStore
 
@@ -830,7 +832,7 @@ class EventAuth(View):
         except:
             raise PermissionDenied(_('Please go back and try again.'))
 
-        parent = data.get('pretix_event_access_{}'.format(request.event.pk))
+        parent = data.get(f'pretix_event_access_{request.event.pk}')
 
         sparent = SessionStore(parent)
         try:
@@ -841,7 +843,7 @@ class EventAuth(View):
             if 'event_access' not in parentdata:
                 raise PermissionDenied(_('Please go back and try again.'))
 
-        request.session['pretix_event_access_{}'.format(request.event.pk)] = parent
+        request.session[f'pretix_event_access_{request.event.pk}'] = parent
         redirect_url = eventreverse(request.event, 'presale:event.index')
         logger.info('Redirecting to %s...', redirect_url)
         return redirect(redirect_url)
@@ -879,11 +881,9 @@ class JoinOnlineVideoView(EventViewMixin, View):
             logger.info('Redirecting to %s...', redirect_url)
             return redirect(redirect_url)
 
-    def validate_access(self, request, *args, **kwargs):
-        if not hasattr(self.request, 'user'):
-            # Customer not logged in yet
-            return False, None, None
-        if not self.request.user.is_authenticated:
+    def validate_access(self, request: HttpRequest, *args, **kwargs):
+        user = cast(User | AnonymousUser, self.request.user)
+        if not user.is_authenticated:
             # Customer not logged in yet
             return False, None, None
         # Get all PAID orders of customer which belong to this event
@@ -891,7 +891,7 @@ class JoinOnlineVideoView(EventViewMixin, View):
         order_list = (
             Order.objects.filter(
                 Q(event=self.request.event)
-                & Q(email__iexact=self.request.user.email)
+                & Q(email__iexact=user.primary_email)
                 & Q(status=Order.STATUS_PAID)  # Only paid orders
             )
             .select_related('event')
@@ -948,20 +948,20 @@ class JoinOnlineVideoView(EventViewMixin, View):
                     # Without this, users with valid tickets received auth.denied because
                     # none of the event trait_grants matched the token traits.
                     'attendee',
-                    'eventyay-video-event-{}'.format(request.event.slug),
-                    'eventyay-video-subevent-{}'.format(order_position.subevent_id),
-                    'eventyay-video-product-{}'.format(order_position.product_id),
-                    'eventyay-video-variation-{}'.format(order_position.variation_id),
-                    'eventyay-video-category-{}'.format(order_position.product.category_id),
+                    f'eventyay-video-event-{request.event.slug}',
+                    f'eventyay-video-subevent-{order_position.subevent_id}',
+                    f'eventyay-video-product-{order_position.product_id}',
+                    f'eventyay-video-variation-{order_position.variation_id}',
+                    f'eventyay-video-category-{order_position.product.category_id}',
                 }
-                | {'eventyay-video-product-{}'.format(p.product_id) for p in order_position.addons.all()}
+                | {f'eventyay-video-product-{p.product_id}' for p in order_position.addons.all()}
                 | {
-                    'eventyay-video-variation-{}'.format(p.variation_id)
+                    f'eventyay-video-variation-{p.variation_id}'
                     for p in order_position.addons.all()
                     if p.variation_id
                 }
                 | {
-                    'eventyay-video-category-{}'.format(p.product.category_id)
+                    f'eventyay-video-category-{p.product.category_id}'
                     for p in order_position.addons.all()
                     if p.product.category_id
                 }
@@ -985,4 +985,4 @@ class JoinOnlineVideoView(EventViewMixin, View):
         # Reconstruct the full URL with the proper path from reverse()
         baseurl = urlunparse((parsed.scheme, parsed.netloc, video_path, '', '', ''))
 
-        return '{}/#token={}'.format(baseurl, token).replace('//#', '/#')
+        return f'{baseurl}/#token={token}'.replace('//#', '/#')

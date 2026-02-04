@@ -1,11 +1,13 @@
 from logging import getLogger
+from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
+from django_scopes import scopes_disabled
 
-from eventyay.base.models import Submission
+from eventyay.base.models import Submission, User
+
 from ..forms.filters import SessionsFilterForm
 
 
@@ -17,12 +19,11 @@ class MySessionsView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        from django_scopes import scopes_disabled
-        user = self.request.user
+        user = cast(User, self.request.user)
         with scopes_disabled():
             qs = (
                 Submission.objects
-                .filter(speakers__email__iexact=user.email)
+                .filter(speakers__email__iexact=user.primary_email)
                 .select_related('event', 'event__organizer', 'submission_type')
                 .order_by('-event__date_from')
             )

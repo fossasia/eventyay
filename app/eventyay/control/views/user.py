@@ -2,11 +2,13 @@ import base64
 import json
 import logging
 import time
+from typing import cast
 from urllib.parse import quote
 
 import webauthn
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -23,6 +25,7 @@ from eventyay.base.forms.auth import ReauthForm
 from eventyay.base.models import (
     Order,
     U2FDevice,
+    User,
     WebAuthnDevice,
 )
 from eventyay.base.models.auth import StaffSession
@@ -237,8 +240,11 @@ class UserOrdersView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        user = cast(User | AnonymousUser, self.request.user)
+        if not user.is_authenticated:
+            return Order.objects.none()
         qs = (
-            Order.objects.filter(Q(email__iexact=self.request.user.email)).select_related('event').order_by('-datetime')
+            Order.objects.filter(Q(email__iexact=user.primary_email)).select_related('event').order_by('-datetime')
         )
 
         # Filter by event if provided

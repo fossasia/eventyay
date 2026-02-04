@@ -1,9 +1,9 @@
-from enum import StrEnum
-import logging
 import datetime as dt
+import logging
+from enum import StrEnum
 from http import HTTPStatus
-from urllib.parse import unquote, urlparse, urljoin
 from typing import TypeVar
+from urllib.parse import unquote, urljoin, urlparse
 
 import jwt
 import requests
@@ -20,6 +20,7 @@ from django_context_decorator import context
 
 from eventyay.agenda.signals import register_recording_provider
 from eventyay.agenda.views.utils import encode_email
+from eventyay.base.models import Event, Submission, SubmissionStates, TalkSlot, User
 from eventyay.cfp.views.event import EventPageMixin
 from eventyay.common.text.phrases import phrases
 from eventyay.common.utils.language import localize_event_text
@@ -28,9 +29,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.base.models import Event, TalkSlot, User
 from eventyay.submission.forms import FeedbackForm
-from eventyay.base.models import Submission, SubmissionStates
 
 
 logger = logging.getLogger(__name__)
@@ -322,6 +321,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
             "aud": venueless_settings.audience,
             "exp": exp,
             "iat": iat,
+            # TODO: Use primary_email when we enable allauth backend
             "uid": encode_email(request.user.email),
             "profile": profile,
             "traits": list(
@@ -371,7 +371,7 @@ def check_user_owning_ticket(user: User, event: Event) -> TicketCheckResult:
         base_url = f'{base_url}/'
     organizer_slug = event.organizer.slug
     event_slug = event.slug
-    check_payload = {'user_email': user.email}
+    check_payload = {'user_email': user.primary_email}
     # call to ticket to check if user order ticket yet or not
     api_url = urljoin(base_url, f'api/v1/{organizer_slug}/{event_slug}/ticket-check')
     logger.info('To call API %s', api_url)

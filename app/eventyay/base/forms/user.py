@@ -78,8 +78,8 @@ class UserSettingsForm(forms.ModelForm):
             from django_redis import get_redis_connection
 
             rc = get_redis_connection('redis')
-            cnt = rc.incr('pretix_pwchange_%s' % self.user.pk)
-            rc.expire('pretix_pwchange_%s' % self.user.pk, 300)
+            cnt = rc.incr(f'pretix_pwchange_{self.user.pk}')
+            rc.expire(f'pretix_pwchange_{self.user.pk}', 300)
             if cnt > 10:
                 raise forms.ValidationError(
                     self.error_messages['rate_limit'],

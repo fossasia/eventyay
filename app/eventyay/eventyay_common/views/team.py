@@ -1,6 +1,5 @@
 from urllib.parse import urlencode
 
-from django.conf import settings
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import ManyToManyField
@@ -13,8 +12,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from django_scopes import scopes_disabled
 
 from eventyay.base.auth import get_auth_backends
-from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.models.auth import User
+from eventyay.base.models.organizer import Team, TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
 from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.views.organizer import OrganizerDetailViewMixin
@@ -89,14 +88,14 @@ class TeamMemberView(
         ctx['add_token_form'] = self.add_token_form
         return ctx
 
-    def _send_invite(self, instance):
+    def _send_invite(self, instance: TeamInvite):
         try:
             mail(
                 instance.email,
                 _('eventyay account invitation'),
                 'pretixcontrol/email/invitation.txt',
                 {
-                    'user': self,
+                    'user': self.request.user,
                     'organizer': self.request.organizer.name,
                     'team': instance.team.name,
                     'url': build_global_uri('eventyay_common:auth.invite', kwargs={'token': instance.token}),
@@ -136,7 +135,7 @@ class TeamMemberView(
                     self.object.log_action(
                         'eventyay.team.member.removed',
                         user=self.request.user,
-                        data={'email': user.email, 'user': user.pk},
+                        data={'email': user.primary_email, 'user': user.pk},
                     )
                     messages.success(self.request, _('The member has been removed from the team.'))
                     return redirect(self.get_success_url())
@@ -230,7 +229,7 @@ class TeamMemberView(
                     'eventyay.team.member.added',
                     user=self.request.user,
                     data={
-                        'email': user.email,
+                        'email': user.primary_email,
                         'user': user.pk,
                     },
                 )
