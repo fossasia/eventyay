@@ -1172,6 +1172,9 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
                 return redirect(self.get_success_url())
             with transaction.atomic():
                 event.testmode = True
+                if event.startpage_featured:
+                    event.startpage_featured = False
+                    event.startpage_visible = True
                 if event.private_testmode:
                     event.private_testmode = False
                     event.settings.private_testmode_tickets = False
