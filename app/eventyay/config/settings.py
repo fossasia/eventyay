@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE, SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, EVENTYAY_EMAIL_NONE_VALUE, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -70,12 +70,6 @@ IS_TESTING = active_environment == RunningEnvironment.TESTING
 IS_PRODUCTION = active_environment == RunningEnvironment.PRODUCTION
 
 DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
-DEFAULT_PLUGINS = (
-    'eventyay.plugins.sendmail',
-    'eventyay.plugins.statistics',
-    'eventyay.plugins.checkinlists',
-    'eventyay.plugins.autocheckin',
-)
 
 
 class BaseSettings(_BaseSettings):
@@ -401,23 +395,23 @@ _OURS_APPS = (
     'eventyay.submission',
 )
 
-PRETIX_PLUGINS_DEFAULT = conf.plugins_default
-PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
+EVENTYAY_PLUGINS_DEFAULT = conf.plugins_default
+EVENTYAY_PLUGINS_EXCLUDE = conf.plugins_exclude
 
 eps = importlib_metadata.entry_points()
 
-# Pretix plugins
-pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PRETIX_PLUGINS_EXCLUDE]
+# Ticket plugins (from legacy Pretix)
+ticket_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-# Pretalx plugins
-pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PRETIX_PLUGINS_EXCLUDE]
+# Talk plugins (from legacy Pretalx)
+talk_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
+SAFE_TICKET_PLUGINS = tuple(m for m in ticket_plugins if m not in {'pretix_pages'})
 
-INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
+INSTALLED_APPS = _LIBRARY_APPS + SAFE_TICKET_PLUGINS + _OURS_APPS
 
 # TODO: What is it for?
-ALL_PLUGINS = sorted(pretix_plugins + pretalx_plugins)
+ALL_PLUGINS = sorted(ticket_plugins + talk_plugins)
 
 # For "Talk" (pretalx).
 # TODO: May rename, because it is extended from something, not only "core" modules.

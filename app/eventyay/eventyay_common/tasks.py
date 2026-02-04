@@ -27,6 +27,7 @@ from ..base.models import BillingInvoice, Event, Order, Organizer
 from ..base.models.organizer import OrganizerBillingModel
 from ..base.services.mail import mail_send_task
 from ..base.settings import GlobalSettingsObject
+from ..consts import EVENTYAY_EMAIL_NONE_VALUE
 from ..helpers.jwt_generate import generate_sso_token
 from .base_tasks import CreateWorldTask, SendEventTask
 from .billing_invoice import InvoicePDFGenerator
@@ -219,8 +220,8 @@ def collect_billing_invoice(
         voucher_value=invoice_voucher.value if invoice_voucher else 0,
         monthly_bill=last_month_date,
         reminder_schedule=settings.BILLING_REMINDER_SCHEDULE,
-        created_by=settings.EVENTYAY_EMAIL_NONE_VALUE,
-        updated_by=settings.EVENTYAY_EMAIL_NONE_VALUE,
+        created_by=EVENTYAY_EMAIL_NONE_VALUE,
+        updated_by=EVENTYAY_EMAIL_NONE_VALUE,
     )
     billing_invoice.next_reminder_datetime = get_next_reminder_datetime(settings.BILLING_REMINDER_SCHEDULE)
     billing_invoice.save()
@@ -599,7 +600,7 @@ def check_billing_status_for_warning(self):
                     f'- Final Amount Due: {invoice.final_ticket_fee} {invoice.currency}\n\n'
                     f'If you have already made the payment, please disregard this notice. '
                     f'However, if you need additional time or have any questions, '
-                    f'feel free to reach out to us at {settings.EVENTYAY_EMAIL_NONE_VALUE}.\n\n'
+                    f'feel free to reach out to us at {EVENTYAY_EMAIL_NONE_VALUE}.\n\n'
                     f'Thank you for your attention and for choosing us!\n\n'
                     f'Warm regards,\n'
                     f'EventYay Team'
@@ -625,7 +626,7 @@ def billing_invoice_send_email(subject, content, invoice, organizer_billing):
         kwargs={
             'subject': subject,
             'body': content,
-            'sender': settings.EVENTYAY_EMAIL_NONE_VALUE,
+            'sender': EVENTYAY_EMAIL_NONE_VALUE,
             'to': organizer_billing_contact,
             'html': None,
             'attach_file_base64': pdf_base64,

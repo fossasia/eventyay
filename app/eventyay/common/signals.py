@@ -37,12 +37,9 @@ class EventPluginSignal(django.dispatch.Signal):
         app = resolve_app_for_module(module_path)
         
         # Get excluded plugins list (preserve original list type from settings)
-        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
+        excluded = getattr(settings, 'EVENTYAY_PLUGINS_EXCLUDE', [])
         
         return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.plugin_list)
-        
-        # Use shared helper with sender.plugin_list accessor
-        return check_plugin_active(sender, app, core_module, excluded, lambda s: s.plugin_list)
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """Send signal from sender to all connected receivers that belong to

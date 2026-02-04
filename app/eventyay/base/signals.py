@@ -139,7 +139,7 @@ class EventPluginSignal(django.dispatch.Signal):
         app = resolve_app_for_module(module_path)
 
         # Get excluded plugins list (preserve original list type from settings)
-        excluded = getattr(settings, 'PRETIX_PLUGINS_EXCLUDE', [])
+        excluded = getattr(settings, 'EVENTYAY_PLUGINS_EXCLUDE', [])
 
         # Use shared helper to check if receiver should be active
         return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.get_plugins())
