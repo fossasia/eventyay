@@ -1121,12 +1121,12 @@ wheels = [
 [[package]]
 name = "eventyay-paypal"
 version = "1.0.0"
-source = { git = "https://github.com/fossasia/eventyay-tickets-paypal.git?rev=1765e5b1aa31da570e16a09a076e96ab623436d1#1765e5b1aa31da570e16a09a076e96ab623436d1" }
+source = { git = "https://github.com/fossasia/eventyay-paypal.git?rev=1765e5b1aa31da570e16a09a076e96ab623436d1#1765e5b1aa31da570e16a09a076e96ab623436d1" }
 
 [[package]]
 name = "eventyay-stripe"
 version = "1.0.1"
-source = { git = "https://github.com/fossasia/eventyay-tickets-stripe.git?rev=a76e42f537666a19ac57072ffd32cd44353b8032#a76e42f537666a19ac57072ffd32cd44353b8032" }
+source = { git = "https://github.com/fossasia/eventyay-stripe.git?rev=a76e42f537666a19ac57072ffd32cd44353b8032#a76e42f537666a19ac57072ffd32cd44353b8032" }
 dependencies = [
     { name = "stripe" },
 ]
@@ -1445,8 +1445,8 @@ requires-dist = [
     { name = "elementpath", specifier = ">=5.1.0" },
     { name = "emoji", specifier = ">=2.15.0" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
-    { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-tickets-paypal.git?rev=1765e5b1aa31da570e16a09a076e96ab623436d1" },
-    { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-tickets-stripe.git?rev=a76e42f537666a19ac57072ffd32cd44353b8032" },
+    { name = "eventyay-paypal", git = "https://github.com/fossasia/eventyay-paypal.git?rev=1765e5b1aa31da570e16a09a076e96ab623436d1" },
+    { name = "eventyay-stripe", git = "https://github.com/fossasia/eventyay-stripe.git?rev=a76e42f537666a19ac57072ffd32cd44353b8032" },
     { name = "execnet", specifier = ">=2.1.2" },
     { name = "fido2", specifier = ">=2.1.0" },
     { name = "fonttools", specifier = ">=4.61.1" },
