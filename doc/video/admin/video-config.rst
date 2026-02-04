@@ -1,7 +1,7 @@
-Webapp Configuration
-====================
+Video Configuration
+===================
 
-The webapp can be statically configured by defining :code:`window.Eventyay` before startup.
+The video frontend can be statically configured by defining :code:`window.Eventyay` before startup.
 For example, add the following to the :code:`index.html` you are serving:
 
 .. code-block:: html
@@ -39,7 +39,7 @@ Full configuration
 			},
 			"streamOfflineImage": "/some-large-image.svg", // image shown instead of "Stream offline"
 			// override texts in the ui
-			// see webapp/app/locales for full list of keys
+			// see video/src/locales for full list of keys
 			// DO NOT use this to completely translate the ui
 			"textOverwrites": {
 				"ProfilePrompt:headline:text": "’ello Guv!"

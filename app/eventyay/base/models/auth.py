@@ -2,6 +2,7 @@ import binascii
 import json
 import logging
 import os
+import time
 import uuid
 from datetime import timedelta
 from hashlib import md5
@@ -330,11 +331,6 @@ class User(
         return bool(self.avatar) and self.avatar != 'False'
 
     @cached_property
-    def avatar_url(self) -> str:
-        if self.has_avatar:
-            return self.avatar.url
-
-    @cached_property
     def primary_email(self) -> str:
         """
         Get the primary email address for sending emails to this user.
@@ -361,6 +357,14 @@ class User(
         if self.email:
             self.email = self.email.lower()
         is_new = not self.pk
+
+        # Invalidate avatar_url cache if avatar might have changed
+        if not is_new:
+            update_fields = kwargs.get('update_fields')
+            if update_fields is None or 'avatar' in update_fields:
+                if 'avatar_url' in self.__dict__:
+                    del self.__dict__['avatar_url']
+
         # Check if we need to get the profile picture from gravatar
         update_gravatar = not kwargs.get('update_fields') or 'get_gravatar' in kwargs['update_fields']
         super().save(*args, **kwargs)
@@ -867,22 +871,66 @@ the eventyay team"""
 
     # shred.alters_data = True
 
+    @cached_property
+    def avatar_url(self) -> str:
+        """Returns avatar URL with cache-busting timestamp parameter.
+
+        Uses the avatar file's actual modification time for most accurate cache-busting.
+        Falls back to current time if file doesn't exist or can't be accessed.
+        """
+        if self.has_avatar:
+            try:
+                # Get the actual file modification time for most accurate cache-busting
+                file_path = self.avatar.path
+                file_mtime = os.path.getmtime(file_path)
+                timestamp = int(file_mtime * 1000)  # milliseconds for precision
+            except (OSError, ValueError, AttributeError):
+                # Fallback to current time if file doesn't exist or can't be accessed
+                timestamp = int(time.time() * 1000)
+
+            return f'{self.avatar.url}?v={timestamp}'
+        return ''
+
     def get_avatar_url(self, event=None, thumbnail=None):
-        """Returns the full avatar URL, where user.avatar_url returns the
-        absolute URL."""
-        if not self.avatar_url:
+        """Returns the full avatar URL with cache-busting parameter.
+
+        Args:
+            event: Optional event for custom domain support
+            thumbnail: Optional thumbnail size ('tiny' or 'default')
+
+        Returns:
+            URL string with cache-busting query parameter
+        """
+        # Check if we have an avatar
+        if not self.has_avatar:
             return ''
+
+        # Determine which image to use
         if not thumbnail:
             image = self.avatar
         else:
             image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
             if not image:
                 image = create_thumbnail(self.avatar, thumbnail)
+
         if not image:
-            return
+            return ''
+
+        # Build base URL with cache-busting
+        try:
+            # Get the actual file modification time for cache-busting
+            file_path = image.path
+            file_mtime = os.path.getmtime(file_path)
+            timestamp = int(file_mtime * 1000)
+        except (OSError, ValueError, AttributeError):
+            # Fallback to current time if file doesn't exist
+            timestamp = int(time.time() * 1000)
+
+        image_url = f'{image.url}?v={timestamp}'
+
         if event and event.custom_domain:
-            return urljoin(event.custom_domain, image.url)
-        return urljoin(settings.SITE_URL, image.url)
+            return urljoin(event.custom_domain, image_url)
+        return urljoin(settings.SITE_URL, image_url)
 
     def regenerate_token(self) -> Token:
         """Generates a new API access token, deleting the old one."""

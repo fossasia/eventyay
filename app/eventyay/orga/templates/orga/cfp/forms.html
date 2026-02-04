@@ -1,0 +1,846 @@
+{% extends "orga/base.html" %}
+
+{% load compress %}
+{% load i18n %}
+{% load static %}
+
+{% block extra_title %}{{ generic_title }} :: {% endblock extra_title %}
+
+{% block stylesheets %}
+    {% compress css %}
+        <link rel="stylesheet" href="{% static 'orga/css/dragsort.css' %}">
+        <link rel="stylesheet" href="{% static 'orga/css/question-toggles.css' %}">
+    {% endcompress %}
+{% endblock stylesheets %}
+
+{% block scripts %}
+    {% compress js %}
+        <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+        <script defer src="{% static 'orga/js/dragsort.js' %}"></script>
+        <script defer src="{% static 'orga/js/questionToggles.js' %}"></script>
+        <script defer src="{% static 'orga/js/cfp.js' %}"></script>
+        <script defer src="{% static 'orga/js/cfp-field-ordering.js' %}"></script>
+    {% endcompress %}
+{% endblock scripts %}
+
+{% block content %}
+    <div id="cfp-field-order-data" 
+         data-session-field-order='{{ session_field_order|safe }}' 
+         data-speaker-field-order='{{ speaker_field_order|safe }}'
+         data-reviewer-field-order='{{ reviewer_field_order|safe }}'
+         style="display:none;"></div>
+    <h2 class="d-flex">
+        {{ generic_title }}
+        <span data-dialog-target="#info-dialog" data-toggle="dialog">
+            <i class="fa fa-question-circle-o text-info ml-2"></i>
+        </span>
+        <div class="ml-auto mb-3">
+            {% if question_list %}
+                <a href="{{ request.event.cfp.urls.remind_questions }}" class="btn btn-info">{% translate "Send out reminders for custom fields without responses" %}</a>
+            {% endif %}
+        </div>
+    </h2>
+
+
+    <dialog id="info-dialog">
+        <div class="alert alert-info">
+            {% blocktranslate trimmed %}
+                Custom fields can help you sort out additional details with speakers, such as
+                clothing sizes, special requirements such as dietary needs, or accommodation.
+                Custom fields can be configured either on a per-proposal level, or per speaker, as
+                you see fit.
+            {% endblocktranslate %}
+        </div>
+    </dialog>
+    <form method="post">
+        {% csrf_token %}
+
+        {% include "common/forms/errors.html" %}
+        {% include "common/forms/errors.html" with form=sform %}
+        {{ sform.count_length_in.as_field_group }}
+        <fieldset>
+                <legend id="proposal-information">
+                    <div>
+                        {% translate "Proposal information" %}
+                        <span data-dialog-target="#proposal-info-dialog" data-toggle="dialog">
+                            <i class="fa fa-question-circle-o text-info"></i>
+                        </span>
+                    </div>
+                </legend>
+                <dialog class="info-dialog" id="proposal-info-dialog">
+                    <div class="alert alert-info"><span>
+                        {% translate "Select which information should be requested and/or required during CfP proposal." %}
+                        <a href="{{ request.event.cfp.urls.editor }}">{% translate "Click here to view the proposal form." %}</a>
+                    </span></div>
+                </dialog>
+                <div class="table-responsive-sm offset-md-3">
+                    <table class="table table-sm table-flip table-sticky cfp-option-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th>{% translate "Minimum length" %}</th>
+                            <th>{% translate "Maximum length" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                        <tr dragsort-id="title">
+                            <th>{% translate "Title" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Title is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Title always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="required">
+                                    <select class="required-status-dropdown" disabled aria-readonly="true"
+                                        aria-describedby="title-required-help" data-current="required">
+                                        <option value="required" selected>Required</option>
+                                    </select>
+                                </div>
+                                <span id="title-required-help" class="sr-only">{% translate "The title is always required and cannot be changed." %}</span>
+                            </td>
+                            <td>{{ sform.cfp_title_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_title_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        {# Abstract #}
+                        {% with field=sform.cfp_ask_abstract %}
+                        <tr dragsort-id="abstract">
+                            <th>{% translate "Abstract" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Abstract">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Abstract">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Abstract">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>{{ sform.cfp_abstract_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_abstract_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Description #}
+                        {% with field=sform.cfp_ask_description %}
+                        <tr dragsort-id="description">
+                            <th>{% translate "Description" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Description">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Description">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Description">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>{{ sform.cfp_description_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_description_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Notes #}
+                        {% with field=sform.cfp_ask_notes %}
+                        <tr dragsort-id="notes">
+                            <th>{% translate "Notes" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Notes">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Notes">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Notes">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Track #}
+                        {% with field=sform.cfp_ask_track %}
+                        <tr dragsort-id="track">
+                            <th>{% translate "Track" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Track">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Track">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Track">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Duration #}
+                        {% with field=sform.cfp_ask_duration %}
+                        <tr dragsort-id="duration">
+                            <th>{% translate "Duration" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Duration">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Duration">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Duration">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Content Locale #}
+                        {% with field=sform.cfp_ask_content_locale %}
+                        {% if field %}
+                        <tr dragsort-id="content_locale">
+                            <th>{% translate "Content Locale" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Content Locale">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Content Locale">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        {% if field.value == 'do_not_ask' %}disabled{% endif %}
+                                        aria-label="Required status for Content Locale">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endwith %}
+
+                        {# Image #}
+                        {% with field=sform.cfp_ask_image %}
+                        <tr dragsort-id="image">
+                            <th>{% translate "Session image" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Session image">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Session image">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Session image">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Do not record #}
+                        {% with field=sform.cfp_ask_do_not_record %}
+                        <tr dragsort-id="do_not_record">
+                            <th>{% translate "Recording opt-out" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Recording opt-out">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Recording opt-out">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Recording opt-out">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {% for item in custom_session_fields %}
+                            <tr dragsort-id="{{ item.question.id }}">
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
+                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
+                                            aria-label="Active toggle for {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
+                                        id="{{ item.field.auto_id }}" data-is-question-field="true">
+                                </td>
+                                <td class="text-center">
+                                    <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
+                                        <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
+                                            data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
+                                            aria-label="Required status for {{ item.question.question }}">
+                                            <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                            <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
+                                                Required</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                        <a href="{{ create_url }}?target=submission" class="btn btn-success btn-sm">
+                            <i class="fa fa-plus"></i> {% translate "New custom field" %}
+                        </a>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend id="speaker-information">
+                    <div>
+                        {% translate "Speaker Information" %}
+                        <span data-dialog-target="#speaker-info-dialog" data-toggle="dialog">
+                            <i class="fa fa-question-circle-o text-info"></i>
+                        </span>
+                    </div>
+                </legend>
+                <dialog class="info-dialog" id="speaker-info-dialog">
+                    <div class="alert alert-info"><span>
+                        {% translate "Select which information should be requested and/or required from speakers." %}
+                    </span></div>
+                </dialog>
+                <div class="table-responsive-sm offset-md-3">
+                    <table class="table table-sm table-flip table-sticky cfp-option-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th>{% translate "Minimum length" %}</th>
+                            <th>{% translate "Maximum length" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                        {# Full Name #}
+                        {% with field=sform.cfp_ask_fullname %}
+                        <tr dragsort-id="fullname">
+                            <th>{% translate "Full Name" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch always-on" aria-label="{% translate 'Full Name is always active' %}">
+                                    <input type="checkbox" checked disabled aria-label="{% translate 'Full Name always active' %}">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="required"
+                                    id="{{ field.auto_id }}">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="required">
+                                    <select class="required-status-dropdown" disabled aria-readonly="true"
+                                        aria-describedby="fullname-required-help" data-current="required">
+                                        <option value="required" selected>Required</option>
+                                    </select>
+                                </div>
+                                <span id="fullname-required-help" class="sr-only">{% translate "Full Name is always required and cannot be changed." %}</span>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Biography #}
+                        {% with field=sform.cfp_ask_biography %}
+                        <tr dragsort-id="biography">
+                            <th>{% translate "Biography" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Biography">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Biography">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Biography">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>{{ sform.cfp_biography_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_biography_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Avatar #}
+                        {% with field=sform.cfp_ask_avatar %}
+                        <tr dragsort-id="avatar">
+                            <th>{% translate "Profile picture" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Profile picture">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Profile picture">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Profile picture">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Avatar Source #}
+                        {% with field=sform.cfp_ask_avatar_source %}
+                        <tr dragsort-id="avatar_source">
+                            <th>{% translate "Profile picture source" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Profile picture source">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Profile picture source">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Profile picture source">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>{{ sform.cfp_avatar_source_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_avatar_source_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Avatar License #}
+                        {% with field=sform.cfp_ask_avatar_license %}
+                        <tr dragsort-id="avatar_license">
+                            <th>{% translate "Profile picture license" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Profile picture license">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Profile picture license">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Profile picture license">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td>{{ sform.cfp_avatar_license_min_length.as_field_group }}</td>
+                            <td>{{ sform.cfp_avatar_license_max_length.as_field_group }}</td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Availability #}
+                        {% with field=sform.cfp_ask_availabilities %}
+                        <tr dragsort-id="availabilities">
+                            <th>{% translate "Availability" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Availability">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Availability">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Availability">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {# Additional Speaker #}
+                        {% with field=sform.cfp_ask_additional_speaker %}
+                        <tr dragsort-id="additional_speaker">
+                            <th>{% translate "Additional speakers" %}</th>
+                            <td class="text-center">
+                                <label class="toggle-switch" data-field-id="{{ field.auto_id }}"
+                                    aria-label="Toggle active state for Additional speakers">
+                                    <input type="checkbox" {% if field.value != 'do_not_ask' %}checked{% endif %}
+                                        aria-label="Active toggle for Additional speakers">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <input type="hidden" name="{{ field.html_name }}" value="{{ field.value }}"
+                                    id="{{ field.auto_id }}" data-is-question-field="true">
+                            </td>
+                            <td class="text-center">
+                                <div class="required-status-wrapper" data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}">
+                                    <select class="required-status-dropdown" data-field-id="{{ field.auto_id }}"
+                                        data-current="{% if field.value == 'required' %}required{% else %}optional{% endif %}"
+                                        aria-label="Required status for Additional speakers">
+                                        <option value="optional" {% if field.value == 'optional' or field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                        <option value="required" {% if field.value == 'required' %}selected{% endif %}>
+                                            Required</option>
+                                    </select>
+                                </div>
+                            </td>
+                            <td></td>
+                            <td></td>
+                            <td class="text-right">
+                                <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                    <i class="fa fa-arrows"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endwith %}
+
+                        {% for item in custom_speaker_fields %}
+                            <tr dragsort-id="{{ item.question.id }}">
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
+                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
+                                            aria-label="Active toggle for {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
+                                        id="{{ item.field.auto_id }}" data-is-question-field="true">
+                                </td>
+                                <td class="text-center">
+                                    <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
+                                        <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
+                                            data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
+                                            aria-label="Required status for {{ item.question.question }}">
+                                            <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                            <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
+                                                Required</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+                <div class="row">
+                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                        <a href="{{ create_url }}?target=speaker" class="btn btn-success btn-sm">
+                            <i class="fa fa-plus"></i> {% translate "New custom field" %}
+                        </a>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend id="reviewer-information"><div>
+                    {% translate "Reviewer Information" %}
+                </div></legend>
+                {% if custom_reviewer_fields %}
+                <div class="table-responsive-sm offset-md-3">
+                    <table class="table table-sm table-flip table-sticky cfp-option-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th class="text-center">{% translate "Active" %}</th>
+                            <th class="text-center">{% translate "Required" %}</th>
+                            <th>{% translate "Minimum length" %}</th>
+                            <th>{% translate "Maximum length" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody dragsort-url="{% url 'orga:cfp.questions.list' event=request.event.slug %}">
+                        {% for item in custom_reviewer_fields %}
+                            <tr dragsort-id="{{ item.question.id }}">
+                                <th>
+                                    <a href="{{ item.question.urls.edit }}">{{ item.question.question }}</a>
+                                    <span class="badge badge-info text-dark">{% translate "Custom" %}</span>
+                                </th>
+                                <td class="text-center">
+                                    <label class="toggle-switch" data-field-id="{{ item.field.auto_id }}"
+                                        aria-label="Toggle active state for {{ item.question.question }}">
+                                        <input type="checkbox" {% if item.field.value != 'do_not_ask' %}checked{% endif %}
+                                            aria-label="Active toggle for {{ item.question.question }}">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <input type="hidden" name="{{ item.field.html_name }}" value="{{ item.field.value }}"
+                                        id="{{ item.field.auto_id }}" data-is-question-field="true">
+                                </td>
+                                <td class="text-center">
+                                    <div class="required-status-wrapper" data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}">
+                                        <select class="required-status-dropdown" data-field-id="{{ item.field.auto_id }}"
+                                            data-current="{% if item.field.value == 'required' %}required{% else %}optional{% endif %}"
+                                            aria-label="Required status for {{ item.question.question }}">
+                                            <option value="optional" {% if item.field.value == 'optional' or item.field.value == 'do_not_ask' %}selected{% endif %}>Optional</option>
+                                            <option value="required" {% if item.field.value == 'required' %}selected{% endif %}>
+                                                Required</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td></td>
+                                <td></td>
+                                <td class="text-right">
+                                    <button type="button" draggable="true" class="btn btn-sm btn-primary dragsort-button" title="{% translate 'Move item' %}">
+                                        <i class="fa fa-arrows"></i>
+                                    </button>
+                                    <a href="{{ item.question.urls.edit }}" class="btn btn-sm btn-info" title="{% translate 'Edit' %}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                    <a href="{{ item.question.urls.delete }}" class="btn btn-sm btn-danger" title="{% translate 'Delete' %}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                <div class="row mb-3">
+                    <div class="col-md-9 offset-md-3 d-flex justify-content-end">
+                        <a href="{{ create_url }}?target=reviewer" class="btn btn-success btn-sm">
+                            <i class="fa fa-plus"></i> {% translate "New custom field" %}
+                        </a>
+                    </div>
+                </div>
+            </fieldset>
+        {% include "orga/includes/submit_row.html" %}
+    </form>
+{% endblock %}

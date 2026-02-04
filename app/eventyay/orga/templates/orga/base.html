@@ -92,7 +92,6 @@
                                   target="_blank"
                                   class="mobile-navbar-view-form">
                                 <input type="hidden" value="{{ new_session }}" name="session">
-                                <input type="hidden" value="{{ go_to_target }}" name="target">
                                 <button type="submit" class="btn btn-link">
                                     <i class="fa fa-eye"></i>
                                     {% translate "View event" %}
@@ -101,7 +100,7 @@
                         {% else %}
                             <a target="_blank"
                                rel="noopener"
-                               href="{% if go_to_target == "schedule" %}{{ request.event.urls.schedule }}{% else %}{{ request.event.cfp.urls.public }}{% endif %}">
+                               href="{{ request.event.urls.base }}">
                                 <i class="fa fa-eye"></i>
                                 {% translate "View event" %}
                             </a>
@@ -110,7 +109,6 @@
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
-                {% include "common/fragment_language_switch.html" %}
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -127,6 +125,7 @@
                         </a>
                     </li>
                 {% endif %}
+                {% include "common/fragment_language_switch.html" %}
                 {{ staff_session|json_script:"is_admin_mode" }}
                 {% if warning_update_available %}
                     <li>
@@ -260,7 +259,7 @@
                                         <span>{% translate "Editor" %}</span>
                                     </a>
                                     <a href="{{ request.event.cfp.urls.questions }}" class="nav-link nav-link-second-level{% if "cfp.question" in url_name %} active{% endif %}">
-                                        <span>{{ phrases.cfp.custom_fields }}</span>
+                                        <span>{% translate "Forms" %}</span>
                                     </a>
                                     {% if request.event|get_feature_flag:"use_tracks" %}
                                         <a href="{{ request.event.cfp.urls.tracks }}" class="nav-link nav-link-second-level{% if "cfp.track" in url_name %} active{% endif %}">
@@ -427,11 +426,18 @@
                         {% endfor %}
                     {% endif %}
                 {% elif request.organizer %}  {# if request.event #}
+                    {% has_event_perm "base.update_team" request.user request request.organizer as can_change_teams %}
                     <a class="nav-link {% if "/settings/" in request.path %} active{% endif %}" href="{{ request.organizer.orga_urls.settings }}">
                         <i class="fa fa-cog"></i>
                         <span>{% translate "Settings" %}</span>
                     </a>
                     {% has_event_perm "base.view_organizer" request.user request request.organizer as can_view_speakers %}
+                    {% if can_change_teams %}
+                        <a class="nav-link" href="{% url "eventyay_common:organizer.teams" organizer=request.organizer.slug %}?section=permissions">
+                            <i class="fa fa-users"></i>
+                            <span>{% translate "Teams" %}</span>
+                        </a>
+                    {% endif %}
                     {% if can_view_speakers %}
                         <a class="nav-link {% if "/speakers/" in request.path %} active{% endif %}" href="{% url "orga:organizer.speakers" organizer=request.organizer.slug %}">
                             <i class="fa fa-address-card-o"></i>

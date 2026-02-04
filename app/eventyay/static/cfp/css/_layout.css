@@ -238,6 +238,19 @@ header {
   }
 }
 
+#event-testmode {
+  background: var(--color-warning);
+  padding: 5px 20px;
+  color: var(--color-warning-text-dark);
+  text-align: center;
+
+  a {
+    color: var(--color-warning-text-dark);
+    font-weight: bold;
+  }
+}
+
+
 footer {
   padding: 20px 0;
   text-align: center;

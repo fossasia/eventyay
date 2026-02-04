@@ -120,6 +120,7 @@ urlpatterns = [
                 ),
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
+                path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
                 *cfp.QuestionView.get_urls(
                     url_base='cfp/questions',
                     url_name='cfp.questions',
@@ -206,8 +207,13 @@ urlpatterns = [
                         [
                             path(
                                 '',
-                                submission.SubmissionContent.as_view(),
-                                name='submissions.content.view',
+                                submission.SubmissionContentView.as_view(),  # Read-only view
+                                name="submissions.content",
+                            ),
+                            path(
+                                'edit',
+                                submission.SubmissionContent.as_view(),  # Edit view
+                                name="submissions.content.edit",
                             ),
                             path(
                                 'submit',

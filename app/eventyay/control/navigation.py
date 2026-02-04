@@ -41,17 +41,6 @@ def get_event_navigation(request: HttpRequest):
                 'active': url.url_name == 'event.settings.payment',
             },
             {
-                'label': _('Plugins'),
-                'url': reverse(
-                    'control:event.settings.plugins',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': url.url_name == 'event.settings.plugins',
-            },
-            {
                 'label': _('Tickets'),
                 'url': reverse(
                     'control:event.settings.tickets',
@@ -203,24 +192,13 @@ def get_event_navigation(request: HttpRequest):
                 ),
                 'active': 'event.products.orderforms' in url.url_name,
             },
-            {
-                'label': _('Custom fields'),
-                'url': reverse(
-                    'control:event.products.questions',
-                    kwargs={
-                        'event': request.event.slug,
-                        'organizer': request.event.organizer.slug,
-                    },
-                ),
-                'active': 'event.products.questions' in url.url_name,
-            },
         ]
 
         if 'can_view_vouchers' in request.eventpermset:
             children.extend(
                 [
                     {
-                        'label': _('All vouchers'),
+                        'label': _('Vouchers'),
                         'url': reverse(
                             'control:event.vouchers',
                             kwargs={
@@ -228,19 +206,8 @@ def get_event_navigation(request: HttpRequest):
                                 'organizer': request.event.organizer.slug,
                             },
                         ),
-                        'active': url.url_name != 'event.vouchers.tags' and 'event.vouchers' in url.url_name,
-                    },
-                    {
-                        'label': _('Voucher Tags'),
-                        'url': reverse(
-                            'control:event.vouchers.tags',
-                            kwargs={
-                                'event': request.event.slug,
-                                'organizer': request.event.organizer.slug,
-                            },
-                        ),
-                        'active': 'event.vouchers.tags' in url.url_name,
-                    },
+                        'active': 'event.vouchers' in url.url_name,
+                    }
                 ]
             )
 
@@ -424,146 +391,6 @@ def get_global_navigation(request):
     return nav
 
 
-def get_organizer_navigation(request):
-    url = request.resolver_match
-    if not url:
-        return []
-    nav = [
-        {
-            'label': _('My events'),
-            'url': reverse('control:organizer', kwargs={'organizer': request.organizer.slug}),
-            'active': url.url_name == 'organizer',
-            'icon': 'calendar',
-        },
-    ]
-    if 'can_change_organizer_settings' in request.orgapermset:
-        nav.append(
-            {
-                'label': _('Settings'),
-                'url': reverse(
-                    'control:organizer.edit',
-                    kwargs={'organizer': request.organizer.slug},
-                ),
-                'icon': 'wrench',
-                'children': [
-                    {
-                        'label': _('General'),
-                        'url': reverse(
-                            'control:organizer.edit',
-                            kwargs={'organizer': request.organizer.slug},
-                        ),
-                        'active': url.url_name == 'organizer.edit',
-                    },
-                    # Temporary disabled
-                    # {
-                    #     'label': _('Event metadata'),
-                    #     'url': reverse('control:organizer.properties', kwargs={
-                    #         'organizer': request.organizer.slug
-                    #     }),
-                    #     'active': url.url_name.startswith('organizer.propert'),
-                    # },
-                    # {
-                    #     'label': _('Webhooks'),
-                    #     'url': reverse('control:organizer.webhooks', kwargs={
-                    #         'organizer': request.organizer.slug
-                    #     }),
-                    #     'active': 'organizer.webhook' in url.url_name,
-                    #     'icon': 'bolt',
-                    # },
-                    {
-                        'label': _('Billing settings'),
-                        'url': reverse(
-                            'control:organizer.settings.billing',
-                            kwargs={'organizer': request.organizer.slug},
-                        ),
-                        'active': url.url_name == 'organizer.settings.billing',
-                    },
-                ],
-            }
-        )
-    if 'can_change_teams' in request.orgapermset:
-        nav.append(
-            {
-                'label': _('Teams'),
-                'url': reverse(
-                    'eventyay_common:organizer.update',
-                    kwargs={'organizer': request.organizer.slug},
-                )
-                + '?section=permissions',
-                'active': False,
-                'icon': 'group',
-            }
-        )
-
-    # if 'can_manage_gift_cards' in request.orgapermset:
-    #     nav.append({
-    #         'label': _('Gift cards'),
-    #         'url': reverse('control:organizer.giftcards', kwargs={
-    #             'organizer': request.organizer.slug
-    #         }),
-    #         'active': 'organizer.giftcard' in url.url_name,
-    #         'icon': 'credit-card',
-    #     })
-    if 'can_change_organizer_settings' in request.orgapermset:
-        nav.append(
-            {
-                'label': _('Devices'),
-                'url': reverse(
-                    'control:organizer.devices',
-                    kwargs={'organizer': request.organizer.slug},
-                ),
-                'icon': 'tablet',
-                'children': [
-                    {
-                        'label': _('Devices'),
-                        'url': reverse(
-                            'control:organizer.devices',
-                            kwargs={'organizer': request.organizer.slug},
-                        ),
-                        'active': 'organizer.device' in url.url_name,
-                    },
-                    {
-                        'label': _('Gates'),
-                        'url': reverse(
-                            'control:organizer.gates',
-                            kwargs={'organizer': request.organizer.slug},
-                        ),
-                        'active': 'organizer.gate' in url.url_name,
-                    },
-                ],
-            }
-        )
-
-    nav.append(
-        {
-            'label': _('Export'),
-            'url': reverse(
-                'control:organizer.export',
-                kwargs={
-                    'organizer': request.organizer.slug,
-                },
-            ),
-            'active': 'organizer.export' in url.url_name,
-            'icon': 'download',
-        }
-    )
-
-    merge_in(
-        nav,
-        sorted(
-            sum(
-                (
-                    list(a[1])
-                    for a in nav_organizer.send(request.organizer, request=request, organizer=request.organizer)
-                ),
-                [],
-            ),
-            key=lambda r: (1 if r.get('parent') else 0, r['label']),
-        ),
-    )
-    return nav
-
-
 def merge_in(nav, newnav):
     for product in newnav:
         if 'parent' in product:
@@ -623,6 +450,12 @@ def get_admin_navigation(request):
             'url': reverse('eventyay_admin:admin.pages'),
             'active': 'pages' in url.url_name,
             'icon': 'file-text',
+        },
+        {
+            'label': _('Start page'),
+            'url': reverse('eventyay_admin:admin.startpage'),
+            'active': (url.url_name == 'admin.startpage'),
+            'icon': 'home',
         },
         {
             'label': _('Users'),

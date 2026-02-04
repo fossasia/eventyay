@@ -336,7 +336,8 @@ class Submission(GenerateCode, PretalxModel):
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views of this submission."""
-        base = edit = '{self.event.orga_urls.submissions}{self.code}/'
+        base = '{self.event.orga_urls.submissions}{self.code}/'
+        edit = '{base}edit'
         make_submitted = '{base}submit'
         accept = '{base}accept'
         reject = '{base}reject'
@@ -618,7 +619,7 @@ class Submission(GenerateCode, PretalxModel):
             self.send_initial_mails(person=person)
         else:
             self.log_action(
-                'pretalx.submission.make_submitted',
+                'eventyay.submission.make_submitted',
                 person=person,
                 orga=orga,
                 data={'previous': previous, 'from_pending': from_pending},
@@ -637,7 +638,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.CONFIRMED, force, person=person)
         self.log_action(
-            'pretalx.submission.confirm',
+            'eventyay.submission.confirm',
             person=person,
             orga=orga,
             data={'previous': previous, 'from_pending': from_pending},
@@ -660,7 +661,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.ACCEPTED, force, person=person)
         self.log_action(
-            'pretalx.submission.accept',
+            'eventyay.submission.accept',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},
@@ -685,7 +686,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.REJECTED, force, person=person)
         self.log_action(
-            'pretalx.submission.reject',
+            'eventyay.submission.reject',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},
@@ -750,7 +751,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.CANCELED, force, person=person)
         self.log_action(
-            'pretalx.submission.cancel',
+            'eventyay.submission.cancel',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},
@@ -769,7 +770,7 @@ class Submission(GenerateCode, PretalxModel):
         previous = self.state
         self._set_state(SubmissionStates.WITHDRAWN, force, person=person)
         self.log_action(
-            'pretalx.submission.withdraw',
+            'eventyay.submission.withdraw',
             person=person,
             orga=orga,
             data={'previous': previous, 'from_pending': from_pending},
@@ -790,7 +791,7 @@ class Submission(GenerateCode, PretalxModel):
         for answer in self.answers.all():
             answer.remove(person=person, force=force)
         self.log_action(
-            'pretalx.submission.deleted',
+            'eventyay.submission.deleted',
             person=person,
             orga=True,
             data={'previous': previous, 'from_pending': from_pending},

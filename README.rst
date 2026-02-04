@@ -125,6 +125,9 @@ After running ``uv sync```, activate a virtual environment
 
   python manage.py runserver
 
+Mobile testing note: If you want to test the site from an **Android emulator**, use
+``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
+
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
 all below it are own by you.
@@ -153,7 +156,7 @@ We assume your current working directory is the checkout of this repo.
 
    .. code-block:: bash
 
-  docker volume rm eventyay_postgres_data_dev eventyay_static_volume
+      docker volume rm eventyay_postgres_data_dev eventyay_static_volume
 
 4. **Build and run the images**
 
@@ -161,7 +164,14 @@ We assume your current working directory is the checkout of this repo.
 
       docker compose up -d --build
 
-5. **Create a superuser account** (for accessing the admin panel):
+5. **Run database migrations**:
+
+  .. code-block:: bash
+
+      docker exec -ti eventyay-next-web python manage.py makemigrations
+      docker exec -ti eventyay-next-web python manage.py migrate
+
+6. **Create a superuser account** (for accessing the admin panel):
 
    This should be necessary only once, since the database is persisted
    as docker volume. If you see strange behaviour, see the point 3.
@@ -169,26 +179,51 @@ We assume your current working directory is the checkout of this repo.
 
   .. code-block:: bash
 
-  docker exec -ti eventyay-next-web python manage.py createsuperuser
+      docker exec -ti eventyay-next-web python manage.py createsuperuser
 
-6. **Visit the site**
+7. **Visit the site**
 
   Open `http://localhost:8000` in a browser.
 
-7. **Checking the logs**
+8. **Troubleshooting: CSS not loading / MIME type errors**
+
+   In some environments (e.g. Docker with WSL), you may encounter cases where
+   pages load without CSS or only some pages load correctly.
+
+   Browser console errors may look like:
+
+   ::
+
+     Refused to apply style because its MIME type is 'text/html'
+
+   This usually means a static asset was requested but an HTML response
+   (e.g. a 404 page) was returned instead.
+
+   To rebuild static assets, run:
+
+   .. code-block:: bash
+
+      docker exec -ti eventyay-next-web python manage.py collectstatic --noinput
+      docker exec -ti eventyay-next-web python manage.py compress --force
+      docker restart eventyay-next-web
+
+   After this, hard-refresh the browser (Ctrl + Shift + R).
+
+
+9. **Checking the logs**
 
   .. code-block:: bash
 
-  docker compose logs -f
+      docker compose logs -f
 
 
-8. **Shut down**
+10. **Shut down**
 
    To shut down the development docker deployment, run
 
   .. code-block:: bash
 
-  docker compose down
+      docker compose down
 
 The directory `app/eventyay` is mounted into the docker, thus live editing is supported.
 
