@@ -543,7 +543,11 @@ class EventQuerySet(models.QuerySet):
             (Q(presale_end__isnull=True) | Q(presale_end__gte=current_time))
         )
 
-        talks_live = Q(talks_published=True)
+        talks_live = Q(
+            talks_published=True,
+            cfp__is_open=True
+       )
+
 
         return self.filter(
             live=True
