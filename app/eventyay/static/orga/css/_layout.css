@@ -662,16 +662,14 @@ footer {
     flex-direction: column;
     gap: 0.75rem;
   }
-} 
+}
 
-  @media (max-width: 768px) {
-    #timeline-steps {
-      margin-top: 1rem;
-      clear: both;
-    }
+@media (max-width: 768px) {
+  #timeline-steps {
+    margin-top: 1rem;
+    clear: both;
   }
-  
-
+}
 @media (max-width: 768px) {
   .navigation-button .header-nav {
     flex: 1 1 auto;
