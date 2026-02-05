@@ -233,7 +233,7 @@ def test_can_only_see_public_talks(
     assert content["results"][0]["title"] == slot.submission.title
     with scope(event=event):
         speaker_user = slot.submission.speakers.first()
-        assert content["results"][0]["speakers"][0]["name"] == speaker_user.name
+        assert content["results"][0]["speakers"][0]["name"] == speaker_user.fullname
         assert (
             content["results"][0]["speakers"][0]["biography"]
             == speaker_user.event_profile(event).biography
@@ -1406,7 +1406,7 @@ def test_public_submission_expandable_fields(
             submission_data["submission_type"]["name"]["en"]
             == slot.submission.submission_type.name
         )
-        assert submission_data["speakers"][0]["name"] == speaker_user.name
+        assert submission_data["speakers"][0]["name"] == speaker_user.fullname
         assert len(submission_data["speakers"][0]["answers"]) == 1
         assert (
             submission_data["speakers"][0]["answers"][0]["question"]["id"]

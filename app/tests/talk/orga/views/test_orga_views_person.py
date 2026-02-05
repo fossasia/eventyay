@@ -97,4 +97,4 @@ def test_orga_update_profile_info(orga_client, orga_user):
     assert response.status_code == 200
     assert "have been saved" in response.text
     orga_user.refresh_from_db()
-    assert orga_user.name == "New name"
+    assert orga_user.fullname == "New name"
