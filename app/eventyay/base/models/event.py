@@ -530,6 +530,7 @@ class EventQuerySet(models.QuerySet):
         - OR Talks (CFP) published
     """
     def visible_on_startpage(self):
+        
         current_time = now()
 
         time_filter = Q(date_to__gte=current_time) | Q(date_to__isnull=True)
@@ -540,13 +541,22 @@ class EventQuerySet(models.QuerySet):
             & (Q(presale_end__isnull=True) | Q(presale_end__gte=current_time))
         )
 
-        talks_live = Q(talks_published=True) & Q(cfp__isnull=False, cfp__is_open=True)
+        talks_live = (
+            Q(talks_published=True) 
+            & Q(cfp__isnull=False)
+            & (
+                Q(cfp__deadline__isnull=True)  # No deadline = always open
+                | Q(cfp__deadline__gte=current_time)  # CfP deadline not passed
+                | Q(cfp__event__submission_types__deadline__gte=current_time)  # Any submission type deadline not passed
+            )
+        )
 
         return (
             self.select_related("cfp")
             .filter(live=True)
             .filter(time_filter)
             .filter(tickets_live | talks_live)
+            .distinct()  # Important! Because submission_types creates duplicates
             .order_by("date_from")
         )
 
