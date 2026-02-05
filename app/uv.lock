@@ -1146,7 +1146,7 @@ wheels = [
 [[package]]
 name = "eventyay-bitpay"
 version = "1.5.2"
-source = { git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main#335d676dae6da8da82ae96812be4876d85b5ab16" }
+source = { git = "https://github.com/fossasia/eventyay-bitpay.git?rev=main#a1f21696546c09cec59287957b719ae37704f16e" }
 dependencies = [
     { name = "btcpay-python" },
 ]
