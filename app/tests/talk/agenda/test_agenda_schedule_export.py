@@ -544,7 +544,7 @@ def test_html_export_full(
     xcal_path = settings.HTMLEXPORT_ROOT / "test/test/schedule/export/schedule.xcal"
     schedule_xcal = xcal_path.read_text()
     assert event.slug in schedule_xcal
-    assert speaker.name in schedule_xcal
+    assert speaker.fullname in schedule_xcal
 
     xml_path = settings.HTMLEXPORT_ROOT / "test/test/schedule/export/schedule.xml"
     schedule_xml = xml_path.read_text()
