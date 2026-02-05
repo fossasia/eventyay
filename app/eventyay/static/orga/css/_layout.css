@@ -639,9 +639,7 @@ footer {
       }
     }
   }
-}
-
-@media (max-width: 768px) {
+}@media (max-width: 768px) {
   .event-header,
   .event-header-meta,
   .event-header-nav {
@@ -653,31 +651,23 @@ footer {
     position: relative;
     z-index: 1;
   }
-}
 
-
-@media (max-width: 768px) {
   .event-header {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
-}
 
-@media (max-width: 768px) {
-  #timeline-steps {
-    margin-top: 1rem;
-    clear: both;
-  }
-}
-@media (max-width: 768px) {
   .navigation-button .header-nav {
     flex: 1 1 auto;
     white-space: nowrap;
   }
-}
 
-@media (max-width: 768px) {
+  #timeline-steps {
+    margin-top: 1rem;
+    clear: both;
+  }
+
   .navbar-top-links,
   .navbar-top-links a,
   .navbar-top-links span,
