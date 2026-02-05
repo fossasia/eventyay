@@ -1,4 +1,5 @@
 import sys
+import json
 from datetime import UTC
 from zoneinfo import ZoneInfo
 import dateutil.parser
@@ -7,12 +8,13 @@ from cron_descriptor import Options, get_description
 from django.conf import settings
 from django.contrib import messages
 from django.db.models import Q
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django.views import View
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -33,6 +35,7 @@ from eventyay.control.forms.filter import AttendeeFilterForm
 from eventyay.control.forms.admin.admin import UpdateSettingsForm
 
 from eventyay.base.models.checkin import Checkin
+from eventyay.base.models.event import Event
 from eventyay.base.models.orders import OrderPosition
 from eventyay.base.models.organizer import Organizer
 from eventyay.base.models.settings import GlobalSettings
@@ -86,6 +89,53 @@ class AdminEventList(EventList):
     """Inherit from EventList to add a custom template for the admin event list."""
 
     template_name = 'pretixcontrol/admin/events/index.html'
+
+
+class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
+    def post(self, request, *args, **kwargs):
+        data = request.POST
+        if not data:
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except (ValueError, AttributeError):
+                data = {}
+
+        event_id = data.get('event_id')
+        field = data.get('field')
+        value = data.get('value')
+
+        if field not in {'startpage_visible', 'startpage_featured'}:
+            return JsonResponse({'ok': False, 'error': _('Invalid field.')}, status=400)
+        if event_id is None:
+            return JsonResponse({'ok': False, 'error': _('Event not found.')}, status=404)
+
+        event = get_object_or_404(Event, pk=event_id)
+        enable = str(value).lower() in {'true', '1', 'yes', 'on'}
+
+        if field == 'startpage_featured' and enable and event.testmode:
+            return JsonResponse(
+                {'ok': False, 'error': _('Test mode events cannot be featured.')},
+                status=400,
+            )
+
+        if field == 'startpage_featured':
+            event.startpage_featured = enable
+            if enable:
+                event.startpage_visible = True
+            event.save(update_fields=['startpage_featured', 'startpage_visible'])
+        else:
+            event.startpage_visible = enable
+            if not enable and event.startpage_featured:
+                event.startpage_featured = False
+            event.save(update_fields=['startpage_visible', 'startpage_featured'])
+
+        return JsonResponse(
+            {
+                'ok': True,
+                'startpage_visible': event.startpage_visible,
+                'startpage_featured': event.startpage_featured,
+            }
+        )
 
 
 class AttendeeListView(ListView):

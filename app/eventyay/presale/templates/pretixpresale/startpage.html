@@ -47,6 +47,7 @@
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script defer src="{% static 'common/js/dropdown.js' %}"></script>
+            <script defer src="{% static 'pretixpresale/js/startpage.js' %}"></script>
         {% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}" async></script>
@@ -76,7 +77,12 @@
                             placeholder="{% trans "Search events" %}"
                             aria-label="{% trans "Search events" %}"
                         />
-                        <div class="startpage-search-results" id="startpage-search-results" role="listbox"></div>
+                        <div
+                            class="startpage-search-results"
+                            id="startpage-search-results"
+                            role="listbox"
+                            data-empty-text="{% trans "No matching events" %}"
+                        ></div>
                     </div>
                 </li>
                 {% include "common/fragment_language_switch_public.html" %}
@@ -120,66 +126,36 @@
                     {% endfor %}
                 {% endif %}
                 <main>
-                    <section class="startpage-events" aria-label="{% trans "Live events" %}">
-                        <h2>{% trans "Live events" %}</h2>
+                    {% if featured_events %}
+                        <section class="startpage-events" aria-label="{% trans "Featured events" %}">
+                            <h2>{% trans "Featured events" %}</h2>
+                            <div class="startpage-event-list">
+                                {% for event in featured_events %}
+                                    {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endif %}
+                    <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
+                        <h2>{% trans "Upcoming events" %}</h2>
                         <div class="startpage-event-list">
-                            {% for event in events %}
-                                {% eventurl event "presale:event.index" as event_url %}
-                                {% abseventurl event "presale:event.index" as event_url_abs %}
-                                {% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
-                                <article
-                                    class="startpage-event-card"
-                                    data-event-name="{{ event.name|event_localize|escape }}"
-                                    data-event-date="{{ event.get_date_range_display|escape }}"
-                                    data-event-url="{{ event_url }}"
-                                    data-event-image="{{ event_image_url|default:''|escape }}"
-                                >
-                                    <a class="startpage-event-media" href="{{ event_url }}">
-                                        {% if event.visible_header_image_url %}
-                                            <img src="{{ event.visible_header_image_url }}" alt="{{ event.name|event_localize }}">
-                                        {% else %}
-                                            <div class="startpage-event-media-placeholder">
-                                                <i class="fa fa-calendar"></i>
-                                            </div>
-                                        {% endif %}
-                                    </a>
-                                    <div class="startpage-event-body">
-                                        <h3 class="startpage-event-title">
-                                            <a href="{{ event_url }}">{{ event.name|event_localize }}</a>
-                                        </h3>
-                                        <div class="startpage-event-meta">
-                                            <span class="startpage-event-date">
-                                                {{ event.get_date_range_display }}
-                                            </span>
-                                            {% if event.location %}
-                                                <span class="startpage-event-location">
-                                                    <i class="fa fa-map-marker"></i>
-                                                    {{ event.location|event_localize }}
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="startpage-event-footer">
-                                        <a class="btn btn-primary" href="{{ event_url }}">
-                                            {% trans "View event" %}
-                                        </a>
-                                        {% if event.testmode %}
-                                            <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
-                                                <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
-                                                {% trans "Test Mode" %}
-                                            </span>
-                                        {% endif %}
-                                        <button class="startpage-event-share" type="button" data-url="{{ event_url_abs }}" aria-label="{% trans "Copy event link" %}" title="{% trans "Copy event link" %}">
-                                            <i class="fa fa-share-alt"></i>
-                                        </button>
-                                    </div>
-                                </article>
-                                {% endwith %}
+                            {% for event in upcoming_events %}
+                                {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
                             {% empty %}
-                                <p class="startpage-empty">{% trans "No live events available yet." %}</p>
+                                <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
                             {% endfor %}
                         </div>
                     </section>
+                    {% if past_events %}
+                        <section class="startpage-events" aria-label="{% trans "Past events" %}">
+                            <h2>{% trans "Past events" %}</h2>
+                            <div class="startpage-event-list">
+                                {% for event in past_events %}
+                                    {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% endfor %}
+                            </div>
+                        </section>
+                    {% endif %}
                 </main>
             </div>
             <footer>
@@ -194,116 +170,5 @@
         </div>
         {% include "common/includes/modals.html" %}
         {{ html_foot|safe }}
-        <script>
-            (() => {
-                const buttons = document.querySelectorAll('.startpage-event-share');
-                if (!buttons.length) {
-                    return;
-                }
-
-                const copyText = async (text) => {
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        await navigator.clipboard.writeText(text);
-                        return true;
-                    }
-                    const helper = document.createElement('textarea');
-                    helper.value = text;
-                    helper.setAttribute('readonly', '');
-                    helper.style.position = 'absolute';
-                    helper.style.left = '-9999px';
-                    document.body.appendChild(helper);
-                    helper.select();
-                    const successful = document.execCommand('copy');
-                    document.body.removeChild(helper);
-                    return successful;
-                };
-
-                buttons.forEach((button) => {
-                    button.addEventListener('click', async () => {
-                        const url = button.dataset.url;
-                        if (!url) {
-                            return;
-                        }
-                        try {
-                            const ok = await copyText(url);
-                            if (ok) {
-                                button.classList.add('is-copied');
-                                window.setTimeout(() => button.classList.remove('is-copied'), 1600);
-                            }
-                        } catch (error) {
-                            console.error(error);
-                        }
-                    });
-                });
-
-                const searchInput = document.getElementById('startpage-search-input');
-                const resultsContainer = document.getElementById('startpage-search-results');
-                if (!searchInput || !resultsContainer) {
-                    return;
-                }
-
-                const events = Array.from(document.querySelectorAll('.startpage-event-card')).map((card) => {
-                    const link = card.querySelector('.startpage-event-title a');
-                    const date = card.querySelector('.startpage-event-date');
-                    const image = card.querySelector('.startpage-event-media img');
-                    return {
-                        name: (link ? link.textContent.trim() : '') || (card.dataset.eventName || ''),
-                        date: date ? date.textContent.trim() : '',
-                        url: (link ? link.href : '') || (card.dataset.eventUrl || ''),
-                        image: (image ? image.src : '') || (card.dataset.eventImage || ''),
-                    };
-                });
-
-                const renderResults = (items, query) => {
-                    if (!query) {
-                        resultsContainer.innerHTML = '';
-                        resultsContainer.classList.remove('is-open');
-                        return;
-                    }
-                    const limited = items.slice(0, 6);
-                    resultsContainer.innerHTML = limited
-                        .map(
-                            (item) => `
-                                <a class="startpage-search-item" href="${item.url}" role="option">
-                                    ${
-                                        item.image
-                                            ? `<img src="${item.image}" alt="" aria-hidden="true" />`
-                                            : `<span class="startpage-search-placeholder"><i class="fa fa-calendar"></i></span>`
-                                    }
-                                    <span class="startpage-search-text">
-                                        <span class="startpage-search-title">${item.name}</span>
-                                        <span class="startpage-search-date">${item.date}</span>
-                                    </span>
-                                </a>
-                            `
-                        )
-                        .join('');
-                    if (!limited.length) {
-                        resultsContainer.innerHTML = `<div class="startpage-search-empty">{% trans "No matching events" %}</div>`;
-                    }
-                    resultsContainer.classList.add('is-open');
-                };
-
-                const filterEvents = (query) => {
-                    const needle = query.trim().toLowerCase();
-                    if (!needle) {
-                        renderResults([], '');
-                        return;
-                    }
-                    const matches = events.filter((eventItem) => eventItem.name.toLowerCase().includes(needle));
-                    renderResults(matches, needle);
-                };
-
-                searchInput.addEventListener('input', (event) => {
-                    filterEvents(event.target.value);
-                });
-
-                document.addEventListener('click', (event) => {
-                    if (!event.target.closest('.startpage-search')) {
-                        resultsContainer.classList.remove('is-open');
-                    }
-                });
-            })();
-        </script>
     </body>
 </html>
