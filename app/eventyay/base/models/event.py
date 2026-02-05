@@ -639,6 +639,8 @@ class Event(
         verbose_name=_('Short form'),
     )
     live = models.BooleanField(default=False, verbose_name=_('Shop is live'))
+    startpage_visible = models.BooleanField(default=True, verbose_name=_('Visible on start page'))
+    startpage_featured = models.BooleanField(default=False, verbose_name=_('Featured on start page'))
     tickets_published = models.BooleanField(default=False, verbose_name=_('Tickets are published'))
     talks_published = models.BooleanField(default=False, verbose_name=_('Talk pages are published'))
     currency = models.CharField(
