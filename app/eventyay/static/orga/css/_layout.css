@@ -499,15 +499,13 @@ aside.sidebar {
 
 @media (max-width: 768px) {
   /* Prevent navbar wrapping on Talk pages - keep items in single line */
-  body:has(#main-title) nav.navbar,
-  html:has(#main-title) body nav.navbar {
+  body:has(#main-title) nav.navbar {
     height: auto;
     min-height: unset;
     align-items: stretch;
   }
 
-  body:has(#main-title) nav.navbar .navbar-top-links,
-  html:has(#main-title) body nav.navbar .navbar-top-links {
+  body:has(#main-title) nav.navbar .navbar-top-links {
     height: auto;
     min-height: unset;
     flex-wrap: nowrap;
@@ -517,21 +515,18 @@ aside.sidebar {
     position: relative;
   }
 
-  body:has(#main-title) nav.navbar .navbar-top-links.navbar-right,
-  html:has(#main-title) body nav.navbar .navbar-top-links.navbar-right {
+  body:has(#main-title) nav.navbar .navbar-top-links.navbar-right {
     overflow: visible;
   }
 
-  body:has(#main-title) nav.navbar .navbar-top-links li,
-  html:has(#main-title) body nav.navbar .navbar-top-links li {
+  body:has(#main-title) nav.navbar .navbar-top-links li {
     height: auto;
     min-height: unset;
     display: inline-block;
     float: none;
   }
 
-  body:has(#main-title) nav.navbar .navbar-top-links li a,
-  html:has(#main-title) body nav.navbar .navbar-top-links li a {
+  body:has(#main-title) nav.navbar .navbar-top-links li a {
     height: auto;
     min-height: unset;
     white-space: nowrap;
