@@ -1,3 +1,4 @@
+from sys import exc_info
 import pytest
 import datetime
 from django.core.exceptions import ValidationError
@@ -47,7 +48,9 @@ def test_invalid_variant_is_rejected(event):
         with pytest.raises(ValidationError) as exc_info:
             question.full_clean()
         assert "variant" in exc_info.value.message_dict
-        assert "wrong_variant" in str(exc_info.value)
+        messages = exc_info.value.message_dict["variant"]
+        assert any("wrong_variant" in message for message in messages)
+
 
 
 @pytest.mark.django_db
