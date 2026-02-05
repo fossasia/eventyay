@@ -259,10 +259,8 @@ class EventCreateView(SafeSessionWizardView):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
 
-            plugins_default = getattr(settings, 'EVENTYAY_PLUGINS_DEFAULT', None)
-            if plugins_default is None:
-                default_plugins = list(DEFAULT_PLUGINS)
-            elif isinstance(plugins_default, str):
+            plugins_default = settings.EVENTYAY_PLUGINS_DEFAULT
+            if isinstance(plugins_default, str):
                 default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
             else:
                 default_plugins = list(plugins_default)
