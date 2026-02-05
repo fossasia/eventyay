@@ -1,1 +1,64 @@
 {% extends "orga/cfp/track/_form.html" %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script>
+    function luminance(r, g, b) {
+      const a = [r, g, b].map(v => {
+        v /= 255;
+        return v <= 0.03928
+          ? v / 12.92
+          : Math.pow((v + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+    }
+
+    function contrastRatioAgainstWhite(rgb) {
+      const L1 = luminance(rgb.r, rgb.g, rgb.b);
+      const L2 = 1.0;
+      return (L2 + 0.05) / (L1 + 0.05);
+    }
+
+    function generateAccessibleColor() {
+      const min = 40;
+      const max = 200;
+      const maxAttempts = 20;
+
+      for (let i = 0; i < maxAttempts; i++) {
+        const r = Math.floor(Math.random() * (max - min) + min);
+        const g = Math.floor(Math.random() * (max - min) + min);
+        const b = Math.floor(Math.random() * (max - min) + min);
+
+        if (contrastRatioAgainstWhite({ r, g, b }) >= 4.5) {
+          return (
+            "#" +
+            r.toString(16).padStart(2, "0") +
+            g.toString(16).padStart(2, "0") +
+            b.toString(16).padStart(2, "0")
+          );
+        }
+      }
+
+      return "#1976d2";
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const colorInput = document.getElementById("id_color");
+      if (!colorInput || colorInput.value) return;
+
+      colorInput.value = generateAccessibleColor();
+      colorInput.dispatchEvent(new Event("input", { bubbles: true }));
+      colorInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+      const formGroup = colorInput.closest(".form-group");
+      if (!formGroup) return;
+
+      const warnings = formGroup.querySelectorAll(".text-danger");
+      warnings.forEach(el => {
+        if (el.textContent.toLowerCase().includes("contrast")) {
+          el.style.display = "none";
+        }
+      });
+    });
+  </script>
+{% endblock scripts %}
