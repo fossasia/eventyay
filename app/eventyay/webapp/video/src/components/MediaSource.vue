@@ -139,26 +139,31 @@ function unmuteYouTubePlayer() {
 }
 function getJoinErrorMessage(error) {
 	const code =
+		error?.apiError?.code ||
 		error?.response?.data?.error ||
 		error?.error ||
 		error?.message ||
 		null
 
+
 	switch (code) {
-		case 'missing_profile':
+		case 'bbb.join.missing_profile':
 			return 'MediaSource:join-error:missing-profile:text'
+
 		case 'bbb.failed':
 			return 'MediaSource:join-error:bbb-failed:text'
-		case 'no_server_available':
-			return 'MediaSource:join-error:no-server:text'
+
+		case 'zoom.no_meeting_id':
+			return 'MediaSource:join-error:zoom-no-meeting-id:text'
+
 		default:
 			return 'MediaSource:join-error:default:text'
-	}
+}
+
 }
 
 
 async function initializeIframe(mute) {
-	
 	joinErrorMessage.value = null
 	try {
 		if (!module.value) return
@@ -249,7 +254,13 @@ async function initializeIframe(mute) {
 		}
 	} catch (error) {
 	joinErrorMessage.value = getJoinErrorMessage(error)
+
+	if (joinErrorMessage.value) {
+	iframeError.value = null
+	} else {
 	iframeError.value = error
+	}
+
 	console.error('MediaSource join failed:', error)
 }
 }
@@ -424,8 +435,8 @@ iframe.iframe-media-source
 	top: 120px
 	left: 50%
 	transform: translateX(-50%)
-	background: #fdecea
-	color: #611a15
+	background: rgba($clr-danger, 0.12)
+	color: $clr-danger
 	padding: 12px 16px
 	border-radius: 4px
 	z-index: 200
