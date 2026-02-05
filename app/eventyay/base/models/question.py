@@ -4,6 +4,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
+from django.core.exceptions import ValidationError
 
 from eventyay.base.models import Choices
 from eventyay.common.text.path import path_with_hash
@@ -249,6 +250,33 @@ class TalkQuestion(OrderedModel, PretalxModel):
 
     log_prefix = 'eventyay.question'
 
+    def clean(self):
+        """Ensure variant is one of the supported TalkQuestion variants.
+
+        Django's `choices=` does not enforce validation at the model/database level.
+        This prevents unsupported variants from being persisted and causing runtime
+        errors during form rendering.
+        """
+        super().clean()
+
+        if not self.variant:
+            return
+
+        valid_variants = dict(
+            self._meta.get_field("variant").choices
+        ).keys()
+
+        if self.variant not in valid_variants:
+            raise ValidationError({
+                'variant': _(
+                    "Invalid question variant '%(variant)s'. Allowed variants are: %(allowed)s."
+                ) % {
+                    'variant': self.variant,
+                    'allowed': ', '.join(valid_variants),
+                }
+            })
+
+    
     class Meta:
         ordering = ('position', 'id')
         rules_permissions = QUESTION_PERMISSIONS
