@@ -46,6 +46,13 @@ hierarkey.add_default('update_check_result_warning', 'False', bool)
 hierarkey.add_default('update_check_last', None, dt.datetime)
 hierarkey.add_default('update_check_id', None, str)
 
+# Telemetry settings for anonymous usage data collection
+hierarkey.add_default('telemetry_enabled', False, bool)
+hierarkey.add_default('telemetry_last_sent', None, dt.datetime)
+hierarkey.add_default('telemetry_endpoint', '', str)
+hierarkey.add_default('telemetry_api_key', '', str)
+hierarkey.add_default('telemetry_contact_email', '', str)
+
 hierarkey.add_default('sent_mail_event_created', 'False', bool)
 hierarkey.add_default('sent_mail_cfp_closed', 'False', bool)
 hierarkey.add_default('sent_mail_event_over', 'False', bool)
