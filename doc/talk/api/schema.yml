@@ -1115,7 +1115,7 @@ paths:
         name: q
         schema:
           type: string
-        description: A search term, searching in `"submission.title"`,`"user.name"`.
+        description: A search term, searching in `"submission.title"`,`"user.fullname"`.
       - in: query
         name: speaker
         schema:
@@ -2415,7 +2415,7 @@ paths:
         name: q
         schema:
           type: string
-        description: A search term, searching in `"title"`,`"speaker.name"`.
+        description: A search term, searching in `"title"`,`"speaker.fullname"`.
       - in: query
         name: state
         schema:

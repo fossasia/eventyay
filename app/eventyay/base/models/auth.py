@@ -301,10 +301,6 @@ class User(
             'administrator': is_administrator,
         }
 
-    @property
-    def name(self):
-        return self.fullname
-
     def save(self, *args, **kwargs):
         # In some flows (e.g., anonymous/kiosk or external auth), users can be created
         # without an email. Guard against calling lower() on None.

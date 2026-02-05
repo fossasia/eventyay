@@ -43,7 +43,7 @@ def cfp_locale_switch_url(context, locale_code):
 @register.filter
 def short_user_label(user):
     """
-    Compact user display: prefer first name, then name, then email local part.
+    Compact user display: prefer first name, then full name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
     if not user:
