@@ -67,6 +67,7 @@
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% if not search_query %}
                 <li class="startpage-search-nav">
                     <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
                         <div class="startpage-search">
@@ -91,6 +92,7 @@
                         </div>
                     </form>
                 </li>
+                {% endif %}
                 {% include "common/fragment_language_switch_public.html" %}
                 {% if request.user.is_authenticated %}
                     {% include "common/fragment_profile_dropdown.html" %}
@@ -134,13 +136,30 @@
                 <main>
                     {% if search_query %}
                         <section class="startpage-events" aria-label="{% trans "Live events" %}">
-                            <h2>{% blocktrans with query=search_query %}Search results: "{{ query }}"{% endblocktrans %}</h2>
+                            <div class="startpage-search-content-bar">
+                                <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                                    <div class="startpage-search startpage-search-content">
+                                        <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
+                                            <i class="fa fa-search" aria-hidden="true"></i>
+                                        </button>
+                                        <input
+                                            id="startpage-search-content-input"
+                                            name="q"
+                                            type="search"
+                                            autocomplete="off"
+                                            placeholder="{% trans "Search events" %}"
+                                            aria-label="{% trans "Search events" %}"
+                                            value="{{ search_query|default:'' }}"
+                                        />
+                                    </div>
+                                </form>
+                            </div>
                             <div class="startpage-event-list">
                                 {% for event in events %}
                                     {% eventurl event "presale:event.index" as event_url %}
                                     {% with event.visible_logo_url|default:event.visible_header_image_url as event_image_url %}
                                     <article
-                                        class="startpage-event-card startpage-event-card--search"
+                                        class="startpage-event-card startpage-event-card-search"
                                         data-event-name="{{ event.name|event_localize|escape }}"
                                         data-event-date="{{ event.get_date_range_display|escape }}"
                                         data-event-url="{{ event_url }}"
