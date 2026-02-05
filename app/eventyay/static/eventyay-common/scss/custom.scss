@@ -24,8 +24,10 @@
         a {
             pointer-events: auto;
         }
-        a:hover, a:active {
-            color: #fff;
+        a:hover,
+        a:active,
+        a:focus {
+            color: #fff !important;
             background-color: $hover-button-color !important;
         }
     }
