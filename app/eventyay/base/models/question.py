@@ -262,9 +262,8 @@ class TalkQuestion(OrderedModel, PretalxModel):
         if not self.variant:
             return
 
-        valid_variants = dict(
-            self._meta.get_field("variant").choices
-        ).keys()
+        valid_variants = {value for value, _ in TalkQuestionVariant.valid_choices}
+
 
         if self.variant not in valid_variants:
             raise ValidationError({

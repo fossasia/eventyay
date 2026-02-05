@@ -60,7 +60,7 @@ def test_invalid_variant_update_rejected(event):
         question = TalkQuestion.objects.create(
             event=event,
             question="Test question",
-            variant="string",
+            variant=TalkQuestionVariant.valid_choices[0][0],
             target="submission",
         )
         question.variant = "wrong_variant"
