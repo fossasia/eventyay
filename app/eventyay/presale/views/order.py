@@ -346,6 +346,7 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        user = cast(User | AnonymousUser, self.request.user)
         ctx['cart'] = self.get_cart(
             answers=True,
             downloads=ctx['can_download'],
@@ -422,8 +423,9 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
                 r.giftcard = gc
 
-        ctx['viewer_email'] = self.request.user.email if self.request.user.is_authenticated else ''
-        ctx['can_modify_order'] = self.order.is_modification_allowed_by(ctx.get('viewer_email'))
+        viewer_email = user.primary_email if user.is_authenticated else ''
+        ctx['viewer_email'] = viewer_email
+        ctx['can_modify_order'] = self.order.is_modification_allowed_by(viewer_email)
 
         return ctx
 

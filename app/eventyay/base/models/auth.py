@@ -350,6 +350,21 @@ class User(
             return email_address.email
         return self.email or ''
 
+    @cached_property
+    def email_addresses(self) -> tuple[str, ...]:
+        """
+        Return a tuple of all unique email addresses associated with this user.
+
+        This includes the primary email address and any additional email addresses
+        linked to the user via the EmailAddress model. The result is used for filtering
+        Event, Order, and Submission objects based on the user's email addresses.
+
+        Returns:
+            tuple[str, ...]: A tuple containing all unique email addresses as strings.
+        """
+        addrs = frozenset([self.email]) if self.email else frozenset()
+        return tuple(addrs | frozenset(EmailAddress.objects.filter(user=self).values_list('email', flat=True)))
+
     # Methods
     def save(self, *args, **kwargs):
         # In some flows (e.g., anonymous/kiosk or external auth), users can be created

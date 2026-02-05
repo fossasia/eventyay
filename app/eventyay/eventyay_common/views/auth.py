@@ -35,11 +35,11 @@ from webauthn.helpers import generate_challenge
 
 from eventyay.base.auth import get_auth_backends
 from eventyay.base.forms.auth import (
+    PASSWORD_COMPLEXITY_ERROR,
     LoginForm,
     PasswordForgotForm,
     PasswordRecoverForm,
     RegistrationForm,
-    PASSWORD_COMPLEXITY_ERROR,
 )
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
 from eventyay.base.models.page import Page
@@ -48,6 +48,7 @@ from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.cookies import set_cookie_without_samesite
 from eventyay.helpers.jwt_generate import generate_sso_token
 from eventyay.multidomain.middlewares import get_cookie_domain
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +67,12 @@ def process_login(request, user, keep_logged_in):
     :return: This method returns a ``HttpResponse``.
     """
     request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and keep_logged_in
-    
+
     # Check for socialauth_next_url (from OAuth flows) first, then fall back to backend's get_next_url
     next_url = request.session.pop('socialauth_next_url', None)
     if not next_url:
         next_url = get_auth_backends()[user.auth_backend].get_next_url(request)
-    
+
     if user.require_2fa:
         request.session['eventyay_auth_2fa_user'] = user.pk
         request.session['eventyay_auth_2fa_time'] = str(int(time.time()))
@@ -192,6 +193,7 @@ def register(request):
             )
             user = authenticate(
                 request=request,
+                # TODO: Use primary_email when django-allauth backend is enabled.
                 email=user.email,
                 password=form.cleaned_data['password'],
             )
@@ -251,7 +253,7 @@ def invite(request, token):
                 inv.team.log_action(
                     'eventyay.team.member.joined',
                     data={
-                        'email': request.user.email,
+                        'email': request.user.primary_email,
                         'invite_email': inv.email,
                         'user': request.user.pk,
                     },
@@ -273,6 +275,7 @@ def invite(request, token):
                 )
                 user = authenticate(
                     request=request,
+                    # TODO: Use primary_email when django-allauth backend is enabled.
                     email=user.email,
                     password=form.cleaned_data['password'],
                 )
@@ -287,7 +290,7 @@ def invite(request, token):
                 inv.team.log_action(
                     'eventyay.team.member.joined',
                     data={
-                        'email': user.email,
+                        'email': user.primary_email,
                         'invite_email': inv.email,
                         'user': user.pk,
                     },
