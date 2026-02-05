@@ -41,6 +41,8 @@ class TalkQuestionVariant(Choices):
     FILE = 'file'
     CHOICES = 'choices'
     MULTIPLE = 'multiple_choice'
+    TYPE_COUNTRY = 'country'
+
 
     valid_choices = [
         (NUMBER, _('Number')),
@@ -53,6 +55,7 @@ class TalkQuestionVariant(Choices):
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
+        (TYPE_COUNTRY, _('Country list')),
     ]
 
 

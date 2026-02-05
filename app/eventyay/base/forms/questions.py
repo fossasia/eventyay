@@ -594,6 +594,13 @@ class BaseQuestionsForm(forms.Form):
                     empty_label='',
                     initial=initial.options.first() if initial else None,
                 )
+            elif q.type == Question.TYPE_COUNTRY:
+                field = forms.ChoiceField(
+                    choices=list(countries),
+                    required=q.required,
+                    label=q.question,
+                    help_text=q.help_text,
+                )
             elif q.type == Question.TYPE_CHOICE_MULTIPLE:
                 field = forms.ModelMultipleChoiceField(
                     queryset=q.options,

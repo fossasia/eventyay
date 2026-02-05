@@ -706,19 +706,26 @@ class OrderListExporter(MultiSheetListExporter):
 
         questions = list(Question.objects.filter(event__in=self.events))
         options = {}
+
         for q in questions:
             if q.type == Question.TYPE_CHOICE_MULTIPLE:
                 options[q.pk] = []
+
                 if form_data.get('group_multiple_choice', False):
                     for o in q.options.all():
                         options[q.pk].append(o)
                     headers.append(str(q.question))
                 else:
                     for o in q.options.all():
-                        headers.append(str(q.question) + ' – ' + str(o.answer))
+                        headers.append(f"{q.question} – {o.answer}")
                         options[q.pk].append(o)
+
+            elif q.type == Question.TYPE_COUNTRY:
+                headers.append(str(q.question))
+
             else:
                 headers.append(str(q.question))
+
         headers += [
             _('Company'),
             _('Invoice address name'),

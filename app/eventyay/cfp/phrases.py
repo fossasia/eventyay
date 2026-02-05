@@ -67,3 +67,4 @@ I’m looking forward to it!
 {speaker}"""
     )
     custom_fields = _('Custom fields')
+    country = _('Country list')
