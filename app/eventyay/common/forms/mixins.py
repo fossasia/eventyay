@@ -182,7 +182,7 @@ class QuestionFieldsMixin:
         for question in questions.prefetch_related('options'):
             initial_object = None
             initial = question.default_answer
-            
+
             if target_object:
                 answer = answers_by_question.get(question.id)
                 if answer:
@@ -197,6 +197,13 @@ class QuestionFieldsMixin:
                 initial_object=initial_object,
                 readonly=readonly,
             )
+            if field is None:
+                logger.warning(
+                    "Could not create form field for question %s (variant: %s). Skipping.",
+                    question.pk,
+                    question.variant,
+                )
+                continue
             field.question = question
             field.answer = initial_object
             self.fields[f'question_{question.pk}'] = field
