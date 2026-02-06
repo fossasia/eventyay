@@ -8,7 +8,12 @@ html.rtl {
     text-align: right;
   }
 
-  /* Navbar RTL layout - make navbar a flex container with proper RTL alignment */
+  /*
+   * Navbar RTL Layout - Flexbox Order System
+   * =========================================
+   * In RTL mode with flex-direction: row, items flow right-to-left.
+   * Lower order values appear on the RIGHT (start), higher on the LEFT (end).
+   */
   @media (min-width: 992px) {
     .navbar.navbar-inverse {
       display: flex;

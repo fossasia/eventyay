@@ -224,3 +224,29 @@ def get_moment_locale(locale=None):
 
 def i18ncomp(query):
     return json.dumps(str(query))[1:-1]
+
+
+def is_rtl(locale: str | None = None) -> bool:
+    """
+    Check if the given locale (or current language) is a Right-to-Left language.
+
+    Args:
+        locale: Language code to check. If None, uses the current active language.
+
+    Returns:
+        True if the language is RTL (e.g., Arabic, Hebrew), False otherwise.
+
+    Examples:
+        is_rtl('ar')     # True
+        is_rtl('en')     # False
+        is_rtl()         # Checks current language
+    """
+    if locale is None:
+        locale = translation.get_language() or settings.LANGUAGE_CODE
+
+    # Check both full locale (e.g., 'ar-SA') and base language (e.g., 'ar')
+    if locale in settings.LANGUAGES_RTL:
+        return True
+
+    base_lang = locale.split('-')[0].split('_')[0]
+    return base_lang in settings.LANGUAGES_RTL
