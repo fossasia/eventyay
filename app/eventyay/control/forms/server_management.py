@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.forms import inlineformset_factory
+from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import (
     BBBServer,
@@ -228,24 +229,24 @@ class StreamingServerForm(HasSecretsMixin, forms.ModelForm):
 
 class StreamKeyGeneratorForm(forms.Form):
     server = forms.ModelChoiceField(
-        label="Server", queryset=StreamingServer.objects.all()
+        label=_('Server'), queryset=StreamingServer.objects.all()
     )
-    name = forms.CharField(label="Name", validators=[RegexValidator("^[a-z0-9A-Z]+$")])
-    days = forms.IntegerField(label="Validity in days", initial=180)
+    name = forms.CharField(label=_('Name'), validators=[RegexValidator("^[a-z0-9A-Z]+$")])
+    days = forms.IntegerField(label=_('Validity in days'), initial=180)
 
 
 class BBBMoveRoomForm(forms.Form):
     room = forms.ModelChoiceField(
-        label="Room ID", queryset=Room.objects.all(), widget=forms.TextInput
+        label=_('Room ID'), queryset=Room.objects.all(), widget=forms.TextInput
     )
     server = forms.ModelChoiceField(
-        label="Target Server",
+        label=_('Target Server'),
         queryset=BBBServer.objects.filter(active=True).order_by("url"),
     )
 
 
 class ConftoolSyncPostersForm(forms.Form):
     event = forms.ModelChoiceField(
-        label="Event ID",
+        label=_('Event ID'),
         queryset=Event.objects.filter(config__conftool_password__isnull=False),
     )

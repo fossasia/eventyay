@@ -53,28 +53,23 @@ html.rtl {
       margin-right: 0;
     }
   }
-
   .sidebar-text {
     margin-right: 8px;
   }
-
   .offset-md-3 {
     margin-left: inherit !important;
     margin-right: 25%;
   }
-
   .offset-md-9 {
     margin-left: inherit !important;
     margin-right: 75%;
   }
-
   .dropdown-menu {
     right: 0;
     left: auto;
     float: left;
     text-align: right;
   }
-
   [role="tab"] {
     float: right;
     margin-left: auto;
