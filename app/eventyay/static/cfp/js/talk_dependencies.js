@@ -1,72 +1,65 @@
 /**
  * Talk-specific runtime dependency evaluator for custom fields
- * Mirrors the behavior of pretixpresale/js/ui/questions.js
- * 
- * Note: Uses jQuery (not vanilla JS) because:
- * - CFP and orga pages already load jQuery globally
- * - Maintains consistency with existing codebase patterns
- * - Rewriting would risk regressions without added value
+ * Rewritten in vanilla JavaScript
  */
 
-/* global jQuery */
-(function($) {
+(function() {
     'use strict';
 
 function talkDependenciesToggle(ev) {
-    function shouldBeShown($el) {
-        if (!$el.attr('data-question-dependency')) {
+    function shouldBeShown(el) {
+        if (!el.dataset.questionDependency) {
             return true;
         }
 
-        var dependencyId = $el.attr('data-question-dependency');
-        var dependencyValues = JSON.parse($el.attr('data-question-dependency-values'));
+        var dependencyId = el.dataset.questionDependency;
+        var dependencyValues = JSON.parse(el.dataset.questionDependencyValues);
         var parentName = 'question_' + dependencyId;
 
         // Check for select (single choice dropdown)
-        var $select = $('select[name="' + parentName + '"]');
-        if ($select.length) {
-            if (!$select.closest(".form-group").hasClass("dependency-hidden")) {
-                return shouldBeShown($select) && $.inArray($select.val(), dependencyValues) > -1;
+        var select = document.querySelector('select[name="' + parentName + '"]');
+        if (select) {
+            var selectContainer = select.closest(".form-group");
+            if (selectContainer && !selectContainer.classList.contains("dependency-hidden")) {
+                return shouldBeShown(select) && dependencyValues.indexOf(select.value) > -1;
             }
         }
 
         // Check for radio buttons (single choice radio)
-        var $radioGroup = $('input[type="radio"][name="' + parentName + '"]');
-        if ($radioGroup.length) {
-            var $checkedRadio = $radioGroup.filter(":checked");
-            var $radioContainer = $radioGroup.closest(".form-group").first();
-            if (!$radioContainer.hasClass("dependency-hidden")) {
-                return shouldBeShown($radioGroup.first()) && $checkedRadio.length && $.inArray($checkedRadio.val(), dependencyValues) > -1;
+        var radioGroup = document.querySelectorAll('input[type="radio"][name="' + parentName + '"]');
+        if (radioGroup.length) {
+            var checkedRadio = Array.from(radioGroup).find(function(r) { return r.checked; });
+            var radioContainer = radioGroup[0].closest(".form-group");
+            if (radioContainer && !radioContainer.classList.contains("dependency-hidden")) {
+                return shouldBeShown(radioGroup[0]) && checkedRadio && dependencyValues.indexOf(checkedRadio.value) > -1;
             }
         }
 
         // Check for boolean checkbox (single checkbox without value attribute)
-        var $checkbox = $('input[type="checkbox"][name="' + parentName + '"]').filter(function() {
-            return !this.value || this.value === 'on';
-        });
-        if ($checkbox.length && ($.inArray("True", dependencyValues) > -1 || $.inArray("False", dependencyValues) > -1)) {
-            if (!$checkbox.closest(".form-group").hasClass("dependency-hidden")) {
-                return shouldBeShown($checkbox) && (
-                    ($.inArray("True", dependencyValues) > -1 && $checkbox.prop('checked'))
-                    || ($.inArray("False", dependencyValues) > -1 && !$checkbox.prop('checked'))
+        var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]'));
+        var checkbox = checkboxes.find(function(cb) { return !cb.value || cb.value === 'on'; });
+        if (checkbox && (dependencyValues.indexOf("True") > -1 || dependencyValues.indexOf("False") > -1)) {
+            var checkboxContainer = checkbox.closest(".form-group");
+            if (checkboxContainer && !checkboxContainer.classList.contains("dependency-hidden")) {
+                return shouldBeShown(checkbox) && (
+                    (dependencyValues.indexOf("True") > -1 && checkbox.checked)
+                    || (dependencyValues.indexOf("False") > -1 && !checkbox.checked)
                 );
             }
         }
 
         // Check for multiple checkboxes (multiple choice with value attribute)
-        var $multiCheckboxes = $('input[type="checkbox"][name="' + parentName + '"]').filter(function() {
-            return this.value && this.value !== 'on';
+        var multiCheckboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="' + parentName + '"]')).filter(function(cb) {
+            return cb.value && cb.value !== 'on';
         });
-        if ($multiCheckboxes.length) {
-            var $checkedBoxes = $multiCheckboxes.filter(":checked");
-            var $multiContainer = $multiCheckboxes.closest(".form-group").first();
-            if (!$multiContainer.hasClass("dependency-hidden")) {
+        if (multiCheckboxes.length) {
+            var checkedBoxes = multiCheckboxes.filter(function(cb) { return cb.checked; });
+            var multiContainer = multiCheckboxes[0].closest(".form-group");
+            if (multiContainer && !multiContainer.classList.contains("dependency-hidden")) {
                 for (var i = 0; i < dependencyValues.length; i++) {
                     var val = dependencyValues[i].toString();
-                    if ($checkedBoxes.filter(function () {
-                        return $(this).val() === val;
-                    }).length) {
-                        return shouldBeShown($multiCheckboxes.first());
+                    if (checkedBoxes.some(function(cb) { return cb.value === val; })) {
+                        return shouldBeShown(multiCheckboxes[0]);
                     }
                 }
             }
@@ -75,42 +68,42 @@ function talkDependenciesToggle(ev) {
         return false;
     }
 
-    $("[data-question-dependency]").each(function () {
-        var $dependent = $(this).closest(".form-group");
-        var isShown = !$dependent.hasClass("dependency-hidden");
-        var shouldShow = shouldBeShown($(this));
+    document.querySelectorAll("[data-question-dependency]").forEach(function(el) {
+        var dependent = el.closest(".form-group");
+        if (!dependent) return;
+        
+        var isShown = !dependent.classList.contains("dependency-hidden");
+        var shouldShow = shouldBeShown(el);
 
         if (shouldShow && !isShown) {
-            $dependent.stop().removeClass("dependency-hidden");
-            if (!ev) {
-                $dependent.show();
-            } else {
-                $dependent.slideDown();
-            }
-            $dependent.find("input.required-hidden, select.required-hidden, textarea.required-hidden").each(function () {
-                $(this).prop("required", true).removeClass("required-hidden");
+            dependent.classList.remove("dependency-hidden");
+            dependent.querySelectorAll("input.required-hidden, select.required-hidden, textarea.required-hidden").forEach(function(field) {
+                field.required = true;
+                field.classList.remove("required-hidden");
             });
         } else if (!shouldShow && isShown) {
-            if ($dependent.hasClass("has-error") || $dependent.find(".has-error").length) {
+            if (dependent.classList.contains("has-error") || dependent.querySelector(".has-error")) {
                 return;
             }
-            $dependent.stop().addClass("dependency-hidden");
-            if (!ev) {
-                $dependent.hide();
-            } else {
-                $dependent.slideUp();
-            }
-            $dependent.find("input[required], select[required], textarea[required]").each(function () {
-                $(this).prop("required", false).addClass("required-hidden");
+            dependent.classList.add("dependency-hidden");
+            dependent.querySelectorAll("input[required], select[required], textarea[required]").forEach(function(field) {
+                field.required = false;
+                field.classList.add("required-hidden");
             });
         }
     });
 }
 
-$(function () {
+document.addEventListener('DOMContentLoaded', function() {
     talkDependenciesToggle();
-    $(document).off("change", "input[name^='question_'], select[name^='question_']", talkDependenciesToggle);
-    $(document).on("change", "input[name^='question_'], select[name^='question_']", talkDependenciesToggle);
+    
+    document.addEventListener('change', function(e) {
+        var target = e.target;
+        if ((target.tagName === 'INPUT' || target.tagName === 'SELECT') && 
+            target.name && target.name.startsWith('question_')) {
+            talkDependenciesToggle(e);
+        }
+    });
 });
 
-})(jQuery);
+})();
