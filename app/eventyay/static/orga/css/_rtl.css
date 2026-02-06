@@ -3,29 +3,71 @@ html.rtl {
     margin-right: 250px;
     margin-left: 0;
   }
+
   .event-logo-form-fields {
     text-align: right;
   }
-  .navbar-nav.flip {
-    flex-direction: row-reverse;
+
+  /* Navbar RTL layout - make navbar a flex container with proper RTL alignment */
+  .navbar.navbar-inverse {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    /* In RTL, flex-start is the RIGHT side */
+    align-items: center;
   }
+
+  /* Toggle button goes to the far left (end in RTL) */
+  .navbar-toggle-sidebar {
+    order: 10;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Logo/header stays on the right (start in RTL) */
+  .navbar-header {
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  /* View event link right next to logo */
+  .navbar .navbar-top-links.navbar-left {
+    order: 2;
+    margin-left: auto;
+    /* This pushes everything after it to the left */
+    margin-right: 15px;
+  }
+
+  /* Profile/admin items pushed toward toggle */
+  .navbar .navbar-top-links.navbar-right {
+    order: 9;
+    display: flex;
+    flex-direction: row;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .sidebar-text {
     margin-right: 8px;
   }
+
   .offset-md-3 {
     margin-left: inherit !important;
     margin-right: 25%;
   }
+
   .offset-md-9 {
     margin-left: inherit !important;
     margin-right: 75%;
   }
+
   .dropdown-menu {
     right: 0;
     left: auto;
     float: left;
     text-align: right;
   }
+
   [role="tab"] {
     float: right;
     margin-left: auto;
