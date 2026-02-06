@@ -380,6 +380,8 @@ def send_telemetry(self):
         endpoint = getattr(settings, 'TELEMETRY_DEFAULT_ENDPOINT', None)
     
     if not endpoint:
+        # No endpoint configured - update last_sent to prevent queue spam
+        gs.settings.set('telemetry_last_sent', now())
         return {'status': 'no_endpoint'}
     
     # Skip in development mode
@@ -418,11 +420,23 @@ def send_telemetry(self):
         )
         
         if response.status_code == 200:
-            # Only update timestamp on successful response
-            gs.settings.set('telemetry_last_sent', now())
-            return {'status': 'success'}
+            # Google Apps Script always returns 200, so parse JSON body for actual status
+            try:
+                response_data = response.json()
+                if response_data.get('ok', False):
+                    # Only update timestamp on actual success
+                    gs.settings.set('telemetry_last_sent', now())
+                    return {'status': 'success'}
+                else:
+                    # Server returned error in JSON body (auth failed, rate limited, etc)
+                    error_type = response_data.get('error', 'unknown')
+                    return {'status': 'error', 'error_type': error_type}
+            except ValueError:
+                # Non-JSON response - treat as error
+                logger.warning('Telemetry response is not valid JSON')
+                return {'status': 'error', 'error_type': 'invalid_json'}
         else:
-            # Don't update timestamp on error - allow retry
+            # Non-200 status code - don't update timestamp, allow retry
             return {'status': 'error', 'code': response.status_code}
             
     except requests.RequestException as e:

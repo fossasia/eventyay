@@ -106,7 +106,7 @@ How It Works
 * Google Apps Script receiver validates API key
 * Checks rate limit (max 1 per 23 hours per instance)
 * Appends row to Google Sheet
-* Returns 200 OK response
+* Returns HTTP 200 with JSON body (status encoded in ``ok`` field)
 
 Privacy & Compliance
 --------------------
@@ -115,7 +115,7 @@ Privacy & Compliance
 
 * All numeric metrics are bucketed (e.g., "11-50" not "37")
 * Base URLs are SHA256 hashed and truncated
-* No timestamps except server-side ``received_at_utc``
+* Client sends ``timestamp_utc``; server adds ``received_at_utc``
 * No database queries, payload inspection, or IP logging on server side
 
 **Transparency:**

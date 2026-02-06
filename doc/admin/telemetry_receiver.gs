@@ -44,6 +44,11 @@ function doPost(e) {
     }
     
     // 3. Parse JSON payload
+    // Check for missing or empty body first
+    if (!e.postData || !e.postData.contents) {
+      return jsonResponse({ok: false, error: 'missing_body'}, 400);
+    }
+    
     let payload;
     try {
       payload = JSON.parse(e.postData.contents);
