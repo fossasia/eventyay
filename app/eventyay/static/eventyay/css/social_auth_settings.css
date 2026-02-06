@@ -1,0 +1,14 @@
+.no-preferred-section {
+    background-color: #f9f9f9;  /* Light gray background to distinguish from other rows */
+    padding: 15px;               /* Inner spacing for better readability */
+    border-top: 2px solid #ddd;  /* Separator line to visually divide from provider list */
+}
+
+.no-preferred-form-group {
+    margin-bottom: 0;  /* Remove bottom margin to prevent extra spacing in the section */
+}
+
+.no-preferred-help-text {
+    margin-top: 10px;    /* Space between radio button and help text */
+    margin-bottom: 0;    /* Remove bottom margin for consistent section padding */
+}
