@@ -57,4 +57,4 @@ applyTo: 'app/**/*.js'
 
 ## Comments
 
-- Do not add comment when the code is already obvious and the comment is almost the same as the code.
+- Do not add a comment when the code is already obvious and the comment is almost the same as the code.
