@@ -139,29 +139,29 @@ function unmuteYouTubePlayer() {
 }
 
 function getJoinErrorMessage(error) {
-  const code =
-    error?.apiError?.code ||
-    error?.response?.data?.error ||
-    error?.error ||
-    error?.message ||
-    null
+	const code =
+		error?.apiError?.code ||
+		error?.response?.data?.error ||
+		error?.error ||
+		error?.message ||
+		null
 
-  switch (code) {
-    case 'bbb.join.missing_profile':
-      return 'MediaSource:join-error:missing-profile:text'
+	switch (code) {
+		case 'bbb.join.missing_profile':
+			return 'MediaSource:join-error:missing-profile:text'
 
-    case 'bbb.failed':
-      return 'MediaSource:join-error:bbb-failed:text'
+		case 'bbb.failed':
+			return 'MediaSource:join-error:bbb-failed:text'
 
-    case 'bbb.no_server':
-      return 'MediaSource:join-error:no-server:text'
+		case 'bbb.no_server':
+			return 'MediaSource:join-error:no-server:text'
 
-    case 'zoom.no_meeting_id':
-      return 'MediaSource:join-error:zoom-no-meeting-id:text'
+		case 'zoom.no_meeting_id':
+			return 'MediaSource:join-error:zoom-no-meeting-id:text'
 
-    default:
-      return 'MediaSource:join-error:default:text'
-  }
+		default:
+			return 'MediaSource:join-error:default:text'
+	}
 }
 
 async function initializeIframe(mute) {
@@ -186,59 +186,59 @@ async function initializeIframe(mute) {
 				iframeUrl = module.value.config.url
 				break
 			}
-		case 'livestream.youtube': {
-			isYouTube = true
-			// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
-			const ytid = normalizeYoutubeVideoId(module.value.config.ytid)
-			// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
-			if (!ytid) {
-				iframeError.value = new Error('Invalid YouTube video ID')
+			case 'livestream.youtube': {
+				isYouTube = true
+				// Accept either a raw ID or a share URL (admin UI normalizes, but this is a safety net).
+				const ytid = normalizeYoutubeVideoId(module.value.config.ytid)
+				// If we can't extract a valid 11-char YouTube ID, don't construct an invalid embed URL.
+				if (!ytid) {
+					iframeError.value = new Error('Invalid YouTube video ID')
+					break
+				}
+				const config = module.value.config
+				// Smart muting logic to balance autoplay and user control:
+				// - Always mute if already muted (e.g., for language translation)
+				// - Mute for autoplay ONLY if controls are visible (so user can unmute)
+				// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
+				const shouldMute = mute || (autoplay.value && !config.hideControls)
+				iframeUrl = getYoutubeUrl(
+					ytid,
+					autoplay.value,
+					shouldMute,
+					config.hideControls,
+					config.noRelated,
+					config.showinfo,
+					config.disableKb,
+					config.loop,
+					config.modestBranding,
+					config.enablePrivacyEnhancedMode
+				)
 				break
 			}
-			const config = module.value.config
-			// Smart muting logic to balance autoplay and user control:
-			// - Always mute if already muted (e.g., for language translation)
-			// - Mute for autoplay ONLY if controls are visible (so user can unmute)
-			// - If controls are hidden, don't force mute (autoplay may fail, but user gets audio when they click)
-			const shouldMute = mute || (autoplay.value && !config.hideControls)
-			iframeUrl = getYoutubeUrl(
-				ytid,
-				autoplay.value,
-				shouldMute,
-				config.hideControls,
-				config.noRelated,
-				config.showinfo,
-				config.disableKb,
-				config.loop,
-				config.modestBranding,
-				config.enablePrivacyEnhancedMode
-			)
-			break
 		}
-	}
-	if (!iframeUrl || isUnmounted.value) return
-	const iframe = document.createElement('iframe')
-	iframe.src = iframeUrl
-	iframe.classList.add('iframe-media-source')
-	if (hideIfBackground) {
-		iframe.classList.add('hide-if-background')
-	}
-	// Add background and size-tiny classes if in background mode
-	if (props.background) {
-		iframe.classList.add('background')
-		iframe.classList.add('size-tiny')
-	}
-	// Set iframe permissions and attributes
-	iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
-	iframe.allowFullscreen = true
-	iframe.setAttribute('allowusermedia', 'true')
-	iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
-	// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
-	// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
-	if (isYouTube) {
-		iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
-		iframe.id = `youtube-player-${Date.now()}`
-	}
+		if (!iframeUrl || isUnmounted.value) return
+		const iframe = document.createElement('iframe')
+		iframe.src = iframeUrl
+		iframe.classList.add('iframe-media-source')
+		if (hideIfBackground) {
+			iframe.classList.add('hide-if-background')
+		}
+		// Add background and size-tiny classes if in background mode
+		if (props.background) {
+			iframe.classList.add('background')
+			iframe.classList.add('size-tiny')
+		}
+		// Set iframe permissions and attributes
+		iframe.allow = 'screen-wake-lock *; camera *; microphone *; fullscreen *; display-capture *' + (autoplay.value ? '; autoplay *' : '')
+		iframe.allowFullscreen = true
+		iframe.setAttribute('allowusermedia', 'true')
+		iframe.setAttribute('allowfullscreen', '') // iframe.allowfullscreen is not enough in firefox
+		// Set referrerpolicy for YouTube embed compatibility (fixes Error 153)
+		// https://developers.google.com/youtube/terms/required-minimum-functionality#embedded-player-api-client-identity
+		if (isYouTube) {
+			iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin')
+			iframe.id = `youtube-player-${Date.now()}`
+		}
 		const container = document.querySelector('#media-source-iframes')
 		if (!container) return
 		container.appendChild(iframe)
@@ -254,16 +254,10 @@ async function initializeIframe(mute) {
 			}
 		}
 	} catch (error) {
-	joinErrorMessage.value = getJoinErrorMessage(error)
-
-	if (joinErrorMessage.value) {
-	iframeError.value = null
-	} else {
-	iframeError.value = error
+		joinErrorMessage.value = getJoinErrorMessage(error)
+		iframeError.value = null
+		console.error('MediaSource join failed:', error)
 	}
-
-	console.error('MediaSource join failed:', error)
-}
 }
 
 function destroyIframe() {
