@@ -117,6 +117,10 @@ export default {
 		...mapGetters(['hasPermission']),
 		...mapGetters('chat', ['hasUnreadMessages', 'notificationCount']),
 		...mapGetters('schedule', ['sessions', 'currentSessionPerRoom']),
+		isRtl() {
+			if (typeof document === 'undefined') return false
+			return document.documentElement?.dir === 'rtl'
+		},
 		// showAdminConfigLink no longer needed; link is always visible and backend will enforce access
 		style() {
 			if (this.pointerMovementX === 0) return
@@ -202,12 +206,17 @@ export default {
 		onPointermove(event) {
 			if (this.lastPointer !== event.pointerId) return
 			this.pointerMovementX += event.movementX / window.devicePixelRatio
-			if (this.pointerMovementX > 0) this.pointerMovementX = 0
+			if (this.isRtl) {
+				if (this.pointerMovementX < 0) this.pointerMovementX = 0
+			} else if (this.pointerMovementX > 0) {
+				this.pointerMovementX = 0
+			}
 		},
 		async onPointerup(event) {
 			if (this.lastPointer !== event.pointerId) return
 			this.lastPointer = null
-			if (this.pointerMovementX < -80) this.$emit('close')
+			const swipeDistance = this.isRtl ? this.pointerMovementX : -this.pointerMovementX
+			if (swipeDistance > 80) this.$emit('close')
 			this.pointerMovementX = 0
 			// TODO not the cleanest, control transition completely ourselves
 			this.snapBack = true
@@ -239,6 +248,11 @@ export default {
 		transition: transform .2s ease
 	&.sidebar-enter-from, &.sidebar-leave-to
 		transform: translateX(calc(-1 * var(--sidebar-width)))
+	html[dir='rtl'] &
+		left: auto
+		right: 0
+		&.sidebar-enter-from, &.sidebar-leave-to
+			transform: translateX(var(--sidebar-width))
 	#btn-close-sidebar
 		margin: 8px
 		icon-button-style(color: var(--clr-sidebar-text-primary), style: clear)

@@ -20,6 +20,14 @@ npm run build
 npm run lint
 ```
 
+### Manual test: sidebar swipe behavior (LTR + RTL)
+1. Start the app with `npm start`.
+2. Open the app in a narrow/mobile viewport and open the rooms sidebar.
+3. In normal LTR mode (`<html dir="ltr">`): swipe left on the sidebar; it should close. Swiping right should not close it.
+4. Switch to RTL mode (for example set Arabic and ensure `<html dir="rtl">`).
+5. Open the rooms sidebar again: it should appear on the right side.
+6. In RTL mode: swipe right on the sidebar; it should close. Swiping left should not close it.
+
 ### Find missing i18n entries
 ```
 npm run i18n:report
