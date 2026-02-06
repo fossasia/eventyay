@@ -2,8 +2,18 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load rich_text %}
+{% load static %}
+{% load compress %}
 
 {% block title %}{% translate "Social login settings" %}{% endblock %}
+
+{% block custom_header %}
+    {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'eventyay/css/social_auth_settings.css' %}">
+    {% endcompress %}
+{% endblock %}
+
 {% block content %}
     <nav id="event-nav" class="header-nav">
         <div class="navigation">
@@ -36,6 +46,7 @@
                                         {% endwith %}
                                     </td>
                                     <td class="text-right flip" width="20%">
+                                        {# Enable/Disable button for each provider #}
                                         {% if settings.state %}
                                             <button class="btn btn-default btn-block" name="{{ provider }}_login" value="disabled">
                                                 {% translate "Disable" %}
@@ -47,11 +58,14 @@
                                         {% endif %}
                                     </td>
                                 </tr>
+                                {# Configuration fields shown only when provider is enabled #}
                                 {% if settings.state %}
                                     <tr>
                                         <td colspan="2">
+                                            {# Client ID / Application Key field #}
                                             <div class="form-group">
                                                 <label class="col-sm-3 control-label">
+                                                    {# MediaWiki uses different terminology for OAuth credentials #}
                                                     {% if provider == "mediawiki" %}
                                                         {% translate "Client Application Key" %}
                                                     {% else %}
@@ -62,6 +76,7 @@
                                                     <input type="text" class="form-control" name="{{ provider }}_client_id" value="{{ settings.client_id }}">
                                                 </div>
                                             </div>
+                                            {# Client Secret field #}
                                             <div class="form-group">
                                                 <label class="col-sm-3 control-label">
                                                     {% if provider == "mediawiki" %}
@@ -74,10 +89,12 @@
                                                     <input type="password" class="form-control" name="{{ provider }}_secret" value="{{ settings.secret }}">
                                                 </div>
                                             </div>
+                                            {# Preferred provider selection radio button #}
                                             <div class="form-group">
                                                 <div class="col-sm-offset-3 col-sm-9">
                                                     <div class="radio">
                                                         <label>
+                                                            {# Radio button to mark this provider as preferred - checked if is_preferred is true #}
                                                             <input type="radio"
                                                                    name="preferred_provider"
                                                                    value="{{ provider }}"
@@ -85,6 +102,7 @@
                                                             {% translate "Make this login the preferred login method" %}
                                                         </label>
                                                     </div>
+                                                    {# Help text explaining what preferred provider means #}
                                                     <p class="help-block">
                                                         {% translate "The preferred login method will appear first in the login UI and 'Keep me logged in' will be pre-selected by default." %}
                                                     </p>
@@ -97,10 +115,11 @@
 
                             {# Option to clear preferred provider selection - moved to bottom for better UX #}
                             <tr>
-                                <td colspan="2" style="background-color: #f9f9f9; padding: 15px; border-top: 2px solid #ddd;">
-                                    <div class="form-group" style="margin-bottom: 0;">
+                                <td colspan="2" class="no-preferred-section">
+                                    <div class="form-group no-preferred-form-group">
                                         <div class="radio">
                                             <label>
+                                                {# Radio button to clear preferred provider - checked if no provider is preferred #}
                                                 <input type="radio"
                                                        name="preferred_provider"
                                                        value=""
@@ -108,7 +127,8 @@
                                                 {% translate "No preferred provider (all providers shown equally)" %}
                                             </label>
                                         </div>
-                                        <p class="help-block" style="margin-top: 10px; margin-bottom: 0;">
+                                        {# Help text explaining the no-preference option #}
+                                        <p class="help-block no-preferred-help-text">
                                             {% translate "Select this option if you want all enabled login providers to be displayed equally, without any provider being highlighted or pre-selected." %}
                                         </p>
                                     </div>
