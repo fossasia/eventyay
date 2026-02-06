@@ -28,6 +28,17 @@
     {% include "common/fragment_nav.html" with nav_context="agenda" %}
 {% endblock header_tabs %}
 
+{% block alerts %}
+    {{ block.super }}
+    {% if request.event.settings.talks_testmode %}
+        <div class="alert alert-warning alert-margin">
+            <strong>
+                {% trans "Talk pages are currently in test mode. Please do not treat schedules or submissions as final, as they may change or be removed without notice." %}
+            </strong>
+        </div>
+    {% endif %}
+{% endblock alerts %}
+
 {% block content %}
     {% if not request.event|get_feature_flag:"show_schedule" and not request.user.is_anonymous and not hide_visibility_warning %}
         <div id="event-nonpublic" class="d-print-none">

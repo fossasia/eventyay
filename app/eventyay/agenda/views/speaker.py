@@ -134,7 +134,7 @@ class SpeakerTalksIcalView(PermissionRequired, DetailView):
             slot.build_ical(cal)
 
         try:
-            speaker_name = Storage().get_valid_name(name=speaker.user.name or speaker.user.code)
+            speaker_name = Storage().get_valid_name(name=speaker.user.fullname or speaker.user.code)
         except SuspiciousFileOperation:
             speaker_name = Storage().get_valid_name(name=speaker.user.code)
         return HttpResponse(
