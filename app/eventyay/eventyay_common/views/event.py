@@ -259,11 +259,7 @@ class EventCreateView(SafeSessionWizardView):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
 
-            plugins_default = settings.EVENTYAY_PLUGINS_DEFAULT
-            if isinstance(plugins_default, str):
-                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
-            else:
-                default_plugins = list(plugins_default)
+            default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
                 'eventyay.plugins.ticketoutputpdf',

@@ -138,11 +138,9 @@ class EventPluginSignal(django.dispatch.Signal):
         # Resolve the app using thread-safe cached function
         app = resolve_app_for_module(module_path)
 
-        # Get excluded plugins list (preserve original list type from settings)
-        excluded = getattr(settings, 'EVENTYAY_PLUGINS_EXCLUDE', [])
-
         # Use shared helper to check if receiver should be active
-        return check_plugin_active(sender, app, is_core_module, excluded, lambda s: s.get_plugins())
+        # EVENTYAY_PLUGINS_EXCLUDE is always a tuple, guaranteed by Pydantic
+        return check_plugin_active(sender, app, is_core_module, settings.EVENTYAY_PLUGINS_EXCLUDE, lambda s: s.get_plugins())
 
     def send(self, sender: Event, **named) -> list[tuple[Callable, Any]]:
         """
