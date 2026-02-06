@@ -3,7 +3,7 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.mail import MailTemplateSerializer
+from eventyay.api.serializers.mail import MailTemplateSerializer
 
 
 @pytest.mark.django_db
@@ -79,7 +79,7 @@ def test_orga_can_see_single_mail_template_locale_override(
 
 @pytest.mark.django_db
 def test_no_legacy_mail_template_api(client, orga_user_token, mail_template):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         mail_template.event.api_urls.mail_templates + f"{mail_template.pk}/",

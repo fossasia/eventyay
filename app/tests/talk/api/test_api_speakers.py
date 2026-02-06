@@ -3,17 +3,23 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.person.models import SpeakerProfile, UserApiToken
-from pretalx.submission.models import Answer, Question, QuestionTarget, Submission
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.auth_token import UserApiToken
+from eventyay.base.models.question import (
+    Answer, 
+    TalkQuestion, 
+    TalkQuestionTarget
+)
+from eventyay.base.models.submission import Submission
 
 
 @pytest.fixture
 def personal_answer(event, speaker):
     with scope(event=event):
-        question = Question.objects.create(
+        question = TalkQuestion.objects.create(
             event=event,
             question="Personal question?",
-            target=QuestionTarget.SPEAKER,
+            target=TalkQuestionTarget.SPEAKER,
             active=True,
         )
         return Answer.objects.create(
@@ -575,10 +581,10 @@ def test_speaker_retrieve_answers_scoped_to_event(
         sub2.speakers.add(speaker)
         sub2.save()
         SpeakerProfile.objects.create(user=speaker, event=other_event)
-        question2 = Question.objects.create(
+        question2 = TalkQuestion.objects.create(
             event=other_event,
             question="Question for Event 2?",
-            target=QuestionTarget.SPEAKER,
+            target=TalkQuestionTarget.SPEAKER,
             active=True,
         )
         answer2 = Answer.objects.create(

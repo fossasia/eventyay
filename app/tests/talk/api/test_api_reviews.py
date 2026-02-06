@@ -4,8 +4,9 @@ from decimal import Decimal
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.review import ReviewSerializer
-from pretalx.submission.models import Answer, Review, ReviewScore, ReviewScoreCategory
+from eventyay.api.serializers.review import ReviewSerializer
+from eventyay.base.models.question import Answer
+from eventyay.base.models.review import Review, ReviewScore, ReviewScoreCategory
 
 
 @pytest.fixture

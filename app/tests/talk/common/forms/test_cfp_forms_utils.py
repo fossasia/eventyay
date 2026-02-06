@@ -1,6 +1,6 @@
 import pytest
 
-from pretalx.common.forms.mixins import RequestRequire
+from eventyay.common.forms.mixins import RequestRequire
 
 
 @pytest.mark.parametrize(

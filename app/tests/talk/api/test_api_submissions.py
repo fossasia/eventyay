@@ -3,14 +3,14 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.submission import (
+from eventyay.api.serializers.submission import (
     SubmissionOrgaSerializer,
     SubmissionSerializer,
     SubmissionTypeSerializer,
     TagSerializer,
     TrackSerializer,
 )
-from pretalx.submission.models import SubmissionStates
+from eventyay.base.models.submission import SubmissionStates
 
 
 @pytest.mark.django_db
@@ -353,7 +353,7 @@ def test_orga_can_see_single_tag_locale_override(client, orga_user_token, tag):
 
 @pytest.mark.django_db
 def test_orga_can_see_single_legacy_tag(client, orga_user_token, tag):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         tag.event.api_urls.tags + f"{tag.pk}/",
@@ -565,7 +565,7 @@ def test_orga_can_see_single_track_locale_override(client, orga_user_token, trac
 
 @pytest.mark.django_db
 def test_no_legacy_track_api(client, orga_user_token, track):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         track.event.api_urls.tracks + f"{track.pk}/",
@@ -771,7 +771,7 @@ def test_orga_can_see_single_submission_type_locale_override(
 
 @pytest.mark.django_db
 def test_no_legacy_submission_type_api(client, orga_user_token, submission_type):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     response = client.get(
         submission_type.event.api_urls.submission_types + f"{submission_type.pk}/",

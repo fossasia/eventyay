@@ -3,9 +3,9 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.question import AnswerOptionSerializer, QuestionSerializer
-from pretalx.api.versions import LEGACY
-from pretalx.submission.models import AnswerOption, QuestionVariant
+from eventyay.api.serializers.question import AnswerOptionSerializer, QuestionSerializer
+from eventyay.api.versions import LEGACY
+from eventyay.base.models.question import AnswerOption, TalkQuestionVariant 
 
 
 @pytest.mark.django_db
@@ -630,7 +630,7 @@ def test_organiser_can_filter_question_options_by_question(
 ):
     with scope(event=event):
         other_question = event.questions.create(
-            question="Another choice question", variant=QuestionVariant.CHOICES
+            question="Another choice question", variant=TalkQuestionVariant.CHOICES
         )
         other_question.options.create(answer="Other Option")
         option_count = choice_question.options.count()
@@ -707,7 +707,7 @@ def test_organiser_cannot_create_option_for_wrong_question_type(
 ):
     with scope(event=event):
         initial_count = question.options.count()
-        assert question.variant == QuestionVariant.NUMBER
+        assert question.variant == TalkQuestionVariant.NUMBER
 
     response = client.post(
         event.api_urls.question_options,

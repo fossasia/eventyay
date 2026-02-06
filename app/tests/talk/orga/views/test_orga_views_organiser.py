@@ -6,12 +6,12 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretalx.event.models import Event, Organiser
-
+from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer
 
 @pytest.mark.django_db
 def test_orga_create_organiser(administrator_client):
-    assert len(Organiser.objects.all()) == 0
+    assert len(Organizer.objects.all()) == 0
     response = administrator_client.post(
         "/orga/organiser/new",
         data={
@@ -22,8 +22,8 @@ def test_orga_create_organiser(administrator_client):
         follow=True,
     )
     assert response.status_code == 200, response.text
-    assert len(Organiser.objects.all()) == 1
-    organiser = Organiser.objects.all().first()
+    assert len(Organizer.objects.all()) == 1
+    organiser = Organizer.objects.all().first()
     assert str(organiser.name) == "The bestest organiser", response.text
     assert str(organiser) == str(organiser.name)
 
@@ -282,20 +282,20 @@ def test_remove_other_team_member_but_not_last_member(
 @pytest.mark.django_db
 def test_organiser_cannot_delete_organiser(event, orga_client, submission):
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
+    assert Organizer.objects.count() == 1
     response = orga_client.post(event.organiser.orga_urls.delete, follow=True)
     assert response.status_code == 404
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
+    assert Organizer.objects.count() == 1
 
 
 @pytest.mark.django_db
 def test_administrator_can_delete_organiser(event, administrator_client, submission):
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
+    assert Organizer.objects.count() == 1
     response = administrator_client.get(event.organiser.orga_urls.delete, follow=True)
     assert response.status_code == 200
     response = administrator_client.post(event.organiser.orga_urls.delete, follow=True)
     assert response.status_code == 200
     assert Event.objects.count() == 0
-    assert Organiser.objects.count() == 0
+    assert Organizer.objects.count() == 0

@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from django_scopes import scope
 
-from pretalx.submission.models import SubmissionStates
+from eventyay.base.models.submission import SubmissionStates
 
 
 @pytest.mark.django_db

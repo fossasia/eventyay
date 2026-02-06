@@ -1,7 +1,7 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.submission.models import SubmissionType
+from eventyay.base.models.type import SubmissionType
 
 
 @pytest.mark.parametrize(

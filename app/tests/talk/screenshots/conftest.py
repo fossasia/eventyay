@@ -29,11 +29,15 @@ def fix_settings(live_server):
 
 @pytest.fixture(autouse=True)
 def event():
-    from pretalx.common.models.settings import GlobalSettings
-    from pretalx.event.models import Event
-    from pretalx.person.models import User
-    from pretalx.schedule.models import TalkSlot
-    from pretalx.submission.models import AnswerOption, Question, QuestionVariant
+    from eventyay.base.models.settings import GlobalSettings
+    from eventyay.base.models.event import Event
+    from eventyay.base.models.auth import User
+    from eventyay.base.models.slot import TalkSlot
+    from eventyay.base.models.question import (
+        AnswerOption,
+        TalkQuestion, 
+        TalkQuestionVariant 
+    )
 
     gs = GlobalSettings()
     gs.settings.update_check_result_warning = False
@@ -56,10 +60,10 @@ def event():
         assert event.submissions.count()
         assert event.slug == "democon"
 
-        question = Question.objects.create(
+        question = TalkQuestion.objects.create(
             event=event,
             question="Which of these will you require for your presentation?",
-            variant=QuestionVariant.MULTIPLE,
+            variant=TalkQuestionVariant.MULTIPLE,
             target="submission",
         )
         AnswerOption.objects.create(answer="Projector", question=question)
@@ -68,10 +72,10 @@ def event():
         AnswerOption.objects.create(answer="Laser pointer", question=question)
         AnswerOption.objects.create(answer="Assistant", question=question)
 
-        Question.objects.create(
+        TalkQuestion.objects.create(
             event=event,
             question="Do you have dietary requirements?",
-            variant=QuestionVariant.STRING,
+            variant=TalkQuestionVariant.STRING,
             target="speaker",
         )
         event.cfp.deadline = now() + dt.timedelta(days=1, hours=8)
@@ -88,8 +92,8 @@ def event():
 
 @pytest.fixture
 def user(event):
-    from pretalx.event.models import Team
-    from pretalx.person.models import User
+    from eventyay.base.models.organizer import Team
+    from eventyay.base.models.auth import User
 
     team = Team.objects.create(
         name=_("Organisers"),

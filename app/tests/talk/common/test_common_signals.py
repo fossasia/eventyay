@@ -1,7 +1,8 @@
 import pytest
 
-from pretalx.common.signals import EventPluginSignal, _populate_app_cache
-from tests.dummy_signals import footer_link, footer_link_test
+from eventyay.common.signals import EventPluginSignal 
+from eventyay.base.signals import _populate_app_cache
+from talk.dummy_signals import footer_link, footer_link_test
 
 
 @pytest.mark.django_db

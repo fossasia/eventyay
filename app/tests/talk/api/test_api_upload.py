@@ -3,7 +3,7 @@ import tempfile
 import pytest
 from django.core.files.base import ContentFile
 
-from pretalx.common.models.file import CachedFile
+from eventyay.base.models.base import CachedFile
 
 
 @pytest.mark.django_db

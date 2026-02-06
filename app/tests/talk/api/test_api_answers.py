@@ -3,8 +3,8 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.question import AnswerSerializer
-from pretalx.submission.models import Answer
+from eventyay.api.serializers.question import AnswerSerializer
+from eventyay.base.models.question import Answer
 
 
 @pytest.mark.django_db

@@ -1,7 +1,7 @@
 import pytest
 
 from pretalx.person import tasks
-from pretalx.person.models import User
+from eventyay.base.models.auth import User
 
 
 def mock_get_404(*args, **kwargs):

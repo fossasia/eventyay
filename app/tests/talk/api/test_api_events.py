@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from pretalx.api.serializers.event import EventListSerializer, EventSerializer
+from pretalx.api.serializers.event import EventListSerializer
+from eventyay.api.serializers.event import EventSerializer
 
 
 @pytest.mark.django_db

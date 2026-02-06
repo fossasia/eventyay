@@ -7,7 +7,7 @@ from django.core import mail as djmail
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.event.models import Event
+from eventyay.base.models.event import Event
 
 
 def get_settings_form_data(event):

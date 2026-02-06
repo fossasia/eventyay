@@ -6,9 +6,9 @@ from django.test import TestCase, override_settings
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretalx.common.cache import ObjectRelatedCache
-from pretalx.event.models import Event, Organiser
-
+from eventyay.base.cache import ObjectRelatedCache
+from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer
 
 @override_settings(
     CACHES={

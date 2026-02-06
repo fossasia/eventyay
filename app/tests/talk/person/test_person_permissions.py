@@ -1,7 +1,7 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.person.rules import can_view_information
+from eventyay.talk_rules.person import can_view_information
 
 
 @pytest.mark.django_db

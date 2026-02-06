@@ -1,7 +1,7 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.agenda.rules import is_agenda_visible, is_speaker_viewable
+from eventyay.agenda.permissions import is_agenda_visible, is_speaker_viewable
 
 
 @pytest.mark.django_db

@@ -6,13 +6,14 @@ import responses
 from django.core import mail as djmail
 from django.utils.timezone import now
 
-from pretalx import __version__
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.common.update_check import (
-    check_result_table,
+from eventyay import __version__
+from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.services.update_check import (
+    check_result_table, 
     run_update_check,
     update_check,
 )
+
 
 
 def request_callback_updatable(request):

@@ -3,7 +3,7 @@ import datetime as dt
 import pytest
 from django_scopes import scope
 
-from pretalx.schedule.exporters import ScheduleData
+from eventyay.schedule.exporters import ScheduleData
 
 
 def test_schedule_data_empty_methods():

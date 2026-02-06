@@ -1,7 +1,7 @@
 import pytest
 
-from pretalx.common.plugins import get_all_plugins
-from tests.dummy_app import PluginApp
+from eventyay.common.plugins import get_all_plugins
+from talk.dummy_app import PluginApp
 
 
 @pytest.mark.django_db

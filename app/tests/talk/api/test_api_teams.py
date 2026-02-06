@@ -3,7 +3,7 @@ import json
 import pytest
 from django_scopes import scopes_disabled
 
-from pretalx.api.serializers.team import TeamSerializer
+from eventyay.api.serializers.team import TeamSerializer
 
 
 @pytest.fixture

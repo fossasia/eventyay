@@ -1,8 +1,8 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.orga.templatetags.orga_edit_link import orga_edit_link
-from pretalx.orga.templatetags.review_score import _review_score_number, review_score
+from eventyay.orga.templatetags.orga_edit_link import orga_edit_link
+from eventyay.orga.templatetags.review_score import _review_score_number, review_score
 
 
 @pytest.mark.parametrize(
