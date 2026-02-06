@@ -1,6 +1,5 @@
-
 ---
-description: 'JavaScript (directly run, non-build) development standards and best practices with Composition API and TypeScript'
+description: 'JavaScript (directly run, without a build step) development standards and best practices with Composition API and TypeScript'
 applyTo: 'app/**/*.js'
 ---
 
@@ -8,14 +7,14 @@ applyTo: 'app/**/*.js'
 
 ### Modernization
 
-- Don't use jQuery
-- Use module type, not IIFE.
-- Implemented as external script, don't use inline script, because it is blocked by CSP.
+- Do not use jQuery
+- Use ES modules, not IIFEs.
+- Implement as external scripts; do not use inline scripts, because they are blocked by CSP.
 
 ### Error handling
 
-- Always log errors with contextual information, can skip it when you let the error bubble up and handled in higher component / function.
-- Use `try/catch` blocks in async functions to handle exceptions gracefully, can skip it when you let the error bubble up and handled in higher component / function, but you need to add a comment to inform possible error throwing. For example:
+- Always log errors with contextual information. You may skip this when you let the error bubble up and be handled in a higher-level component or function.
+- Use `try/catch` blocks in async functions to handle exceptions gracefully. You may skip this when you let the error bubble up and be handled in a higher-level component or function, but you need to add a comment to document possible error throwing. For example:
 
   ```ts
   /**
@@ -27,7 +26,7 @@ applyTo: 'app/**/*.js'
   }
   ```
 
-- When you work with a library that comes with its own error types (like `ky` with `HTTPError`), don't replace this specific error type with a generic one. For example, don't do this:
+- When you work with a library that comes with its own error types (like `ky` with `HTTPError`), do not replace this specific error type with a generic one. For example, do not do this:
   ```ts
   try {
     await ky.get('/some-endpoint')
@@ -36,7 +35,7 @@ applyTo: 'app/**/*.js'
   }
   ```
 
-  Instead, just let error bubble up (with a comment), or do this:
+  Instead, just let the error bubble up (with a comment), or do this:
 
   ```ts
   try {
