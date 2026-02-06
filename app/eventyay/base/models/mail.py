@@ -203,7 +203,7 @@ class MailTemplate(PretalxModel):
             resolved_reply_to = (
                 get_reply_to_address(event, template=self, sender_email=sender)
                 if event
-                else None
+                else self.reply_to
             )
 
             mail = QueuedMail(
