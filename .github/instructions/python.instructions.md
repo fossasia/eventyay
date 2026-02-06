@@ -144,6 +144,11 @@ def some_view(request: HttpRequest) -> HttpResponse:
 
 ```
 
+## Data validation
+
+When working with objects that are loaded from external sources (like HTTP API responses, files read from disk, Redis cache, or data from `JSONField`), validate them before use, because there is no guarantee that the objects have the shape or type that we expect. You can use DjangoRestFramework (DRF) serializers or Pydantic models to validate.
+Pydantic models have the benefit of providing type information (enabling IDE autocomplete), while DRF serializers are more relevant in the context of DRF-based views.
+
 ## Backward compatibility
 
 - Our Python version policy follows Ubuntu Server LTS. Currently, this is Python 3.12 (which comes with Ubuntu 24.04). Do not attempt to maintain compatibility with older Python versions.
@@ -153,7 +158,7 @@ def some_view(request: HttpRequest) -> HttpResponse:
 
 ## Comments
 
-- Do not add comment when the code is already obvious and the comment is almost the same as the code. For example, this comment is redundant:
+- Do not add a comment when the code is already obvious and the comment is almost the same as the code. For example, this comment is redundant:
 
   ```py
   # Topological sort using graphlib.TopologicalSorter
