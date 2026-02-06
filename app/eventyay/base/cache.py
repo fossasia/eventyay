@@ -1,6 +1,6 @@
 import hashlib
 import time
-from typing import Callable, Dict, List
+from typing import Any, Callable, Dict, List
 
 from django.core.cache import caches
 from django.db.models import Model
@@ -46,12 +46,22 @@ class NamespacedCache:
     def get(self, key: str) -> str:
         return self.cache.get(self._prefix_key(key, known_prefix=self._last_prefix))
 
-    def get_or_set(self, key: str, default: Callable, timeout=300) -> str:
-        return self.cache.get_or_set(
-            self._prefix_key(key, known_prefix=self._last_prefix),
-            default=default,
-            timeout=timeout,
-        )
+    def get_or_set(self, key: str, default: Any | Callable, timeout=300) -> str:
+        """
+        Resolve callable defaults outside backend-level ``get_or_set``.
+
+        Some callers use defaults that themselves access cached settings. Doing this
+        inside backend ``get_or_set`` can create deep nested cache calls when cache
+        instrumentation is active. By splitting this into explicit get/set calls, we
+        preserve behavior while avoiding nested backend ``get_or_set`` recursion.
+        """
+        prefixed_key = self._prefix_key(key, known_prefix=self._last_prefix)
+        missing = object()
+        current = self.cache.get(prefixed_key, missing)
+        if current is missing:
+            current = default() if callable(default) else default
+            self.cache.set(prefixed_key, current, timeout=timeout)
+        return current
 
     def get_many(self, keys: List[str]) -> Dict[str, str]:
         values = self.cache.get_many([self._prefix_key(key) for key in keys])

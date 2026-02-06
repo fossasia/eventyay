@@ -87,12 +87,14 @@ class PluginsField(Field):
 
 class TimeZoneField(ChoiceField):
     def get_attribute(self, instance):
-        return instance.cache.get_or_set('timezone_name', lambda: instance.settings.timezone, 3600)
+        timezone_name = instance.settings.timezone
+        return instance.cache.get_or_set('timezone_name', timezone_name, 3600)
 
 
 class ValidKeysField(Field):
     def to_representation(self, value):
-        return value.cache.get_or_set('ticket_secret_valid_keys', lambda: self._get(value), 120)
+        valid_keys = self._get(value)
+        return value.cache.get_or_set('ticket_secret_valid_keys', valid_keys, 120)
 
     def _get(self, value):
         return {
