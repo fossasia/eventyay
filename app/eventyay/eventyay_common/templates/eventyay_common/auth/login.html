@@ -2,8 +2,16 @@
 {% load bootstrap3 %}
 {% load i18n %}
 {% load static %}
+{% load compress %}
 {% load urlreplace %}
 {% load append_next_url %}
+
+{% block custom_header %}
+    {{ block.super }}
+    {% compress css %}
+        <link rel="stylesheet" type="text/css" href="{% static 'eventyay-common/css/auth_login.css' %}">
+    {% endcompress %}
+{% endblock %}
 
 {% block content %}
     <link rel="stylesheet" href="{% static 'eventyay-common/css/auth_login.css' %}">
