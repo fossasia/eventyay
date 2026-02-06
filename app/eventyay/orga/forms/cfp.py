@@ -279,6 +279,11 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
         super().__init__(*args, **kwargs)
         self.fields['question'].required = True
         self.fields['question'].label = _('Custom question')
+        if not (instance and instance.pk):
+            target = self.initial.get('target')
+            if target and 'target' in self.fields:
+                self.initial['target'] = target
+                self.fields['target'].initial = target
         if not (event.get_feature_flag('use_tracks') and event.tracks.all().count() and event.cfp.request_track):
             self.fields.pop('tracks')
         else:
