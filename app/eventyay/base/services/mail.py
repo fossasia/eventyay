@@ -159,6 +159,7 @@ def mail(
         content_plain = body_plain = render_mail(template, context)
         subject = str(subject).format_map(TolerantDict(context))
         sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
+        sender_email_raw = sender
         if event:
             sender_name = str(event.name)
             if len(sender_name) > 75:
@@ -189,7 +190,7 @@ def mail(
                 reply_to = get_reply_to_address(
                     event,
                     override=event_reply_to if not auto_email else None,
-                    sender_email=sender
+                    sender_email=sender_email_raw
                 )
                 
                 if reply_to:
