@@ -63,7 +63,7 @@ def get_count_bucket(count: int) -> str:
     return "5000+"
 
 
-def get_database_info() -> tuple:
+def get_database_info() -> tuple[str, str]:
     """
     Get database type and major version.
     
