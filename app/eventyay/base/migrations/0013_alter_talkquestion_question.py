@@ -3,6 +3,14 @@
 import i18nfield.fields
 from django.db import migrations
 
+def backfill_question(apps, schema_editor):
+    """
+    Backfill NULL `question` values to empty strings before altering the field,
+    ensuring existing rows comply with the new default/non-null semantics.
+    """
+    TalkQuestion = apps.get_model('base', 'TalkQuestion')
+    TalkQuestion.objects.filter(question__isnull=True).update(question='')
+
 
 class Migration(migrations.Migration):
 
@@ -11,6 +19,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(backfill_question, migrations.RunPython.noop),
         migrations.AlterField(
             model_name='talkquestion',
             name='question',
