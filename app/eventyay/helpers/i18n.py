@@ -244,9 +244,13 @@ def is_rtl(locale: str | None = None) -> bool:
     if locale is None:
         locale = translation.get_language() or settings.LANGUAGE_CODE
 
-    # Check both full locale (e.g., 'ar-SA') and base language (e.g., 'ar')
+    # Normalize: trim whitespace and lowercase for consistent matching
+    locale = locale.strip().lower()
+
+    # Check both full locale (e.g., 'ar-sa') and base language (e.g., 'ar')
     if locale in settings.LANGUAGES_RTL:
         return True
 
     base_lang = locale.split('-')[0].split('_')[0]
     return base_lang in settings.LANGUAGES_RTL
+
