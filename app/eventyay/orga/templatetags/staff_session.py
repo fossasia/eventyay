@@ -22,7 +22,7 @@ def has_active_staff_session(user, session_key):
 
 @register.simple_tag
 def staff_need_to_explain(user):
-    if user.is_staff and settings.PRETIX_ADMIN_AUDIT_COMMENTS:
+    if user.is_staff and settings.EVENTYAY_ADMIN_AUDIT_COMMENTS:
         return StaffSession.objects.filter(
             user=user, date_end__isnull=False
         ).filter(Q(comment__isnull=True) | Q(comment=''))

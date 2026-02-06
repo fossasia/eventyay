@@ -59,7 +59,7 @@ def _default_context(request: HttpRequest):
         StaffSession.objects.filter(user=request.user, date_end__isnull=False).filter(
             Q(comment__isnull=True) | Q(comment='')
         )
-        if request.user.is_staff and settings.PRETIX_ADMIN_AUDIT_COMMENTS
+        if request.user.is_staff and settings.EVENTYAY_ADMIN_AUDIT_COMMENTS
         else StaffSession.objects.none()
     )
 

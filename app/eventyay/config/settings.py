@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, EVENTYAY_EMAIL_NONE_VALUE, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -70,12 +70,6 @@ IS_TESTING = active_environment == RunningEnvironment.TESTING
 IS_PRODUCTION = active_environment == RunningEnvironment.PRODUCTION
 
 DEFAULT_AUTH_BACKENDS = ('eventyay.base.auth.NativeAuthBackend',)
-DEFAULT_PLUGINS = (
-    'eventyay.plugins.sendmail',
-    'eventyay.plugins.statistics',
-    'eventyay.plugins.checkinlists',
-    'eventyay.plugins.autocheckin',
-)
 
 
 class BaseSettings(_BaseSettings):
@@ -401,26 +395,23 @@ _OURS_APPS = (
     'eventyay.submission',
 )
 
-PRETIX_PLUGINS_DEFAULT = conf.plugins_default
-
-# TODO: Merge these two.
-PRETIX_PLUGINS_EXCLUDE = conf.plugins_exclude
-PLUGINS_EXCLUDE = PRETIX_PLUGINS_EXCLUDE
+EVENTYAY_PLUGINS_DEFAULT = conf.plugins_default
+EVENTYAY_PLUGINS_EXCLUDE = conf.plugins_exclude
 
 eps = importlib_metadata.entry_points()
 
-# Pretix plugins
-pretix_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in PLUGINS_EXCLUDE]
+# Ticket plugins (from legacy Pretix)
+ticket_plugins = [ep.module for ep in eps.select(group='pretix.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-# Pretalx plugins
-pretalx_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in PLUGINS_EXCLUDE]
+# Talk plugins (from legacy Pretalx)
+talk_plugins = [ep.module for ep in eps.select(group='pretalx.plugin') if ep.module not in EVENTYAY_PLUGINS_EXCLUDE]
 
-SAFE_PRETIX_PLUGINS = tuple(m for m in pretix_plugins if m not in {'pretix_pages'})
+SAFE_TICKET_PLUGINS = tuple(m for m in ticket_plugins if m not in {'pretix_pages'})
 
-INSTALLED_APPS = _LIBRARY_APPS + SAFE_PRETIX_PLUGINS + _OURS_APPS
+INSTALLED_APPS = _LIBRARY_APPS + SAFE_TICKET_PLUGINS + _OURS_APPS
 
 # TODO: What is it for?
-ALL_PLUGINS = sorted(pretix_plugins + pretalx_plugins)
+ALL_PLUGINS = sorted(ticket_plugins + talk_plugins)
 
 # For "Talk" (pretalx).
 # TODO: May rename, because it is extended from something, not only "core" modules.
@@ -1128,8 +1119,6 @@ EMAIL_HOST_PASSWORD = conf.email_host_password
 EMAIL_USE_TLS = conf.email_use_tls
 # Ref: https://docs.djangoproject.com/en/5.2/ref/settings/#email-use-ssl
 EMAIL_USE_SSL = not conf.email_use_tls
-# TODO: Move to consts.py and rename
-EVENTYAY_EMAIL_NONE_VALUE = 'info@eventyay.com'
 # TODO: `MAIL_FROM` is not a Django setting and seems to be duplicated with `DEFAULT_FROM_EMAIL`.
 # Also, DEFAULT_FROM_EMAIL and SERVER_EMAIL are for different purposes. They should not be the same.
 MAIL_FROM = SERVER_EMAIL = DEFAULT_FROM_EMAIL = conf.default_from_email
@@ -1289,7 +1278,7 @@ REST_FRAMEWORK = {
 
 STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
-# TODO: Remove.
+# TODO: Remove. This is an empty string used in URL construction. Needs careful evaluation before removal.
 BASE_PATH = ''
 
 SITE_URL = str(conf.site_url)
@@ -1413,11 +1402,6 @@ EVENTYAY_ADMIN_AUDIT_COMMENTS = conf.admin_audit_comments_asked
 EVENTYAY_OBLIGATORY_2FA = conf.obligatory_2fa
 EVENTYAY_SESSION_TIMEOUT_RELATIVE = 3600 * 3
 EVENTYAY_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-# TODO: Merge with above.
-PRETIX_ADMIN_AUDIT_COMMENTS = EVENTYAY_ADMIN_AUDIT_COMMENTS
-PRETIX_SESSION_TIMEOUT_RELATIVE = 3600 * 3
-PRETIX_SESSION_TIMEOUT_ABSOLUTE = 3600 * 12
-PRETIX_EMAIL_NONE_VALUE = EVENTYAY_EMAIL_NONE_VALUE
 
 # TODO: The `pdftk` tool should be auto-detected.
 PDFTK = ''

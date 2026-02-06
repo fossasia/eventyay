@@ -39,7 +39,7 @@ def get_all_plugins(event=None) -> List[type]:
             meta = app.EventyayPluginMeta
             meta.module = app.name
             meta.app = app
-            if app.name in settings.PRETIX_PLUGINS_EXCLUDE:
+            if app.name in settings.EVENTYAY_PLUGINS_EXCLUDE:
                 continue
 
             if hasattr(app, 'is_available') and event:
