@@ -1127,14 +1127,13 @@ h1 .label {
   .navbar-row.mobile-layout {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     width: 100%;
   }
 
   .navbar-row.mobile-layout .navbar-left-group {
     display: flex;
     align-items: center;
-    flex: 1 1 auto;
+    flex: 1;
     min-width: 0;
   }
 
@@ -1142,17 +1141,31 @@ h1 .label {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
+    margin-left: auto;
+  }
+
+  .navbar-row.mobile-layout .nav-logo {
+    flex-shrink: 0;
+  }
+
+  nav.navbar .navbar-top-links > li.nav-admin:first-of-type {
+    margin-left: -22px;
+  }
+
+  nav.navbar .navbar-top-links > li.nav-admin:first-of-type {
+    margin-left: -22px;
   }
 
   nav.navbar .navbar-top-links {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
+    margin-left: auto;
+    gap: 8px;
   }
 
-  nav.navbar .navbar-top-links > li,
-  nav.navbar .navbar-top-links details {
-    float: none;
+  nav.navbar .navbar-top-links > li {
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
   }
@@ -1164,59 +1177,16 @@ h1 .label {
     display: none;
   }
 
-  .navbar-row.mobile-layout .navbar-toggle,
-  .navbar-row.mobile-layout .navbar-toggle-sidebar,
-  .navbar-row.mobile-layout .navbar-top-links > li > a,
-  .navbar-row.mobile-layout .navbar-top-links > li > form > button {
-    padding: 8px 10px;
-  }
-
-  li.nav-user summary.header-nav {
-    display: flex;
-    align-items: center;
-    list-style: none;
-    cursor: pointer;
-  }
-
-  li.nav-user summary.header-nav::-webkit-details-marker {
-    display: none;
-  }
-
-  li.nav-user .user-name-limit {
-    display: block;
-    max-width: 12ch;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-left: 0.5rem;
-    line-height: 1;
-  }
-
   nav.navbar .nav-admin .sidebar-text {
-    display: none;
-  }
-
-  li.nav-user summary.header-nav .user-name-limit {
     display: inline-block;
-    max-width: 12ch;
+    margin-left: 6px;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-  }
-  nav.navbar .mobile-only {
-    display: inline;
-  }
-
-  nav.navbar .desktop-only {
-    display: none;
-  }
 }
+  nav.navbar .navbar-top-links > li.nav-admin:nth-of-type(3) { order: 2; }
+  nav.navbar .navbar-top-links > li.nav-admin:nth-of-type(1) { order: 3; }
+  nav.navbar .navbar-top-links > li.nav-lang { order: 4; }
+  nav.navbar .navbar-top-links > li.nav-user { order: 5; }
 
-nav.navbar .mobile-only {
-  display: none;
-}
-
-nav.navbar .desktop-only {
-  display: inline;
+  nav.navbar .mobile-only { display: inline; }
+  nav.navbar .desktop-only { display: none; }
 }
