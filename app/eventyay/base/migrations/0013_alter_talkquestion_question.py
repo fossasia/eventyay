@@ -9,7 +9,8 @@ def backfill_question(apps, schema_editor):
     ensuring existing rows comply with the new default/non-null semantics.
     """
     TalkQuestion = apps.get_model('base', 'TalkQuestion')
-    TalkQuestion.objects.filter(question__isnull=True).update(question='')
+    db_alias = schema_editor.connection.alias
+    TalkQuestion.objects.using(db_alias).filter(question__isnull=True).update(question='')
 
 
 class Migration(migrations.Migration):
