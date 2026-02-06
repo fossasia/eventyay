@@ -1,6 +1,8 @@
 /* This script will be included on all pages with forms.
  * (And on all pages on the backend in general). */
 
+let eventyayToastuiIdSeq = 0
+
 const createEventyayUnderlinePlugin = () => {
     const convertUnderlineSyntax = (src) => {
         const input = String(src || "")
@@ -241,8 +243,9 @@ const initToastUiMarkdownTextarea = (textarea) => {
             urlInput.placeholder = 'https://example.com'
 
             const okButton = popupEl.querySelector('button.toastui-editor-ok-button')
-            const helpId = `eventyay-toastui-link-help-${Math.random().toString(36).slice(2)}`
-            const errorId = `eventyay-toastui-link-error-${Math.random().toString(36).slice(2)}`
+            const idSeq = ++eventyayToastuiIdSeq
+            const helpId = `eventyay-toastui-link-help-${idSeq}`
+            const errorId = `eventyay-toastui-link-error-${idSeq}`
 
             const helpText = document.createElement('div')
             helpText.className = 'eventyay-toastui-link-help'
@@ -282,7 +285,7 @@ const initToastUiMarkdownTextarea = (textarea) => {
                 }
 
                 errorText.hidden = !shouldShowError
-                urlInput.classList.toggle('wrong', !valid)
+                urlInput.classList.toggle('wrong', shouldShowError)
             }
 
             urlInput.addEventListener('input', updateState)
@@ -405,21 +408,16 @@ const initToastUiMarkdownTextarea = (textarea) => {
 
 const upgradeMarkdownEditors = (root) => {
     const searchRoot = root || document
-    try {
-        searchRoot
-            .querySelectorAll('textarea[data-markdown-field="true"], .markdown-wrapper textarea')
-            .forEach((element) => initToastUiMarkdownTextarea(element))
-    } catch {
-        // Best-effort.
-    }
+    if (!searchRoot?.querySelectorAll) return
+    searchRoot
+        .querySelectorAll('textarea[data-markdown-field="true"], .markdown-wrapper textarea')
+        .forEach((element) => initToastUiMarkdownTextarea(element))
 }
 
 const startMarkdownEditorObserver = () => {
     if (typeof window === 'undefined') return
     if (window.__eventyayMarkdownEditorObserverStarted) return
     if (!window.MutationObserver) return
-
-    window.__eventyayMarkdownEditorObserverStarted = true
 
     const selector = 'textarea[data-markdown-field="true"], .markdown-wrapper textarea'
     const isInsideToastUiEditor = (element) =>
@@ -431,6 +429,7 @@ const startMarkdownEditorObserver = () => {
             if (mutation.target instanceof Element && isInsideToastUiEditor(mutation.target)) {
                 continue
             }
+            if (!mutation.addedNodes || mutation.addedNodes.length === 0) continue
             for (const node of mutation.addedNodes || []) {
                 if (!(node instanceof Element)) continue
                 if (isInsideToastUiEditor(node)) continue
@@ -448,11 +447,10 @@ const startMarkdownEditorObserver = () => {
         }
     })
 
-    try {
-        observer.observe(document.documentElement, { childList: true, subtree: true })
-    } catch {
-        // Best-effort.
-    }
+    const observeRoot = document.body || document.documentElement
+    if (!observeRoot) return
+    observer.observe(observeRoot, { childList: true, subtree: true })
+    window.__eventyayMarkdownEditorObserverStarted = true
 }
 
 const warnFileSize = (element) => {
@@ -692,6 +690,17 @@ const initDateFields = () => {
             if (element.dataset.dateAfter)
                 addDateLimit(element, element.dataset.dateAfter, "min")
         })
+}
+
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('eventyay:toastui-ready', () => {
+        upgradeMarkdownEditors(document)
+        startMarkdownEditorObserver()
+    })
+    if (window.__eventyayToastUiLoaded) {
+        upgradeMarkdownEditors(document)
+        startMarkdownEditorObserver()
+    }
 }
 
 /* Register handlers */

@@ -714,8 +714,13 @@ input.password_strength {
   background-position-y: -23px;
 }
 
-.ProseMirrortoastui-editor-contents {
-  height: 100%;
+/* Toast UI defaults have fairly large padding; keep it tighter in our forms. */
+.markdown-toastui .toastui-editor-defaultUI .ProseMirror {
+  padding: 8px;
+}
+
+.markdown-toastui .toastui-editor-ww-container .toastui-editor-contents {
+  padding: 8px 8px 0;
 }
 
 .markdown-toastui .ProseMirror-focused,
