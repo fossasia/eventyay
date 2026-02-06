@@ -137,31 +137,32 @@ function unmuteYouTubePlayer() {
 		console.error('Failed to unmute YouTube player:', error)
 	}
 }
+
 function getJoinErrorMessage(error) {
-	const code =
-		error?.apiError?.code ||
-		error?.response?.data?.error ||
-		error?.error ||
-		error?.message ||
-		null
+  const code =
+    error?.apiError?.code ||
+    error?.response?.data?.error ||
+    error?.error ||
+    error?.message ||
+    null
 
+  switch (code) {
+    case 'bbb.join.missing_profile':
+      return 'MediaSource:join-error:missing-profile:text'
 
-	switch (code) {
-		case 'bbb.join.missing_profile':
-			return 'MediaSource:join-error:missing-profile:text'
+    case 'bbb.failed':
+      return 'MediaSource:join-error:bbb-failed:text'
 
-		case 'bbb.failed':
-			return 'MediaSource:join-error:bbb-failed:text'
+    case 'bbb.no_server':
+      return 'MediaSource:join-error:no-server:text'
 
-		case 'zoom.no_meeting_id':
-			return 'MediaSource:join-error:zoom-no-meeting-id:text'
+    case 'zoom.no_meeting_id':
+      return 'MediaSource:join-error:zoom-no-meeting-id:text'
 
-		default:
-			return 'MediaSource:join-error:default:text'
+    default:
+      return 'MediaSource:join-error:default:text'
+  }
 }
-
-}
-
 
 async function initializeIframe(mute) {
 	joinErrorMessage.value = null
