@@ -26,7 +26,7 @@ applyTo: "app/eventyay/**/templates/**/*.html"
 
 ## Business code
 
-- Don't do complex code in templates because it is difficult to review; move it to Python files.
+- Do not do complex code in templates because it is difficult to review; move it to Python files.
 
 - Avoid complex code (like `if` chains) inside HTML attributes (like inside `href` of `<a>` elements),
 because that code cannot be highlighted and is difficult to review.
