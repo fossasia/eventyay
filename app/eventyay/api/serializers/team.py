@@ -58,7 +58,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "limit_tracks",
             "can_create_events",
             "can_change_teams",
-            "can_change_organiser_settings",
+            "can_change_organizer_settings",
             "can_change_event_settings",
             "can_change_submissions",
             "is_reviewer",
@@ -100,7 +100,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         permissions = (
             "can_create_events",
             "can_change_teams",
-            "can_change_organiser_settings",
+            "can_change_organizer_settings",
             "can_change_event_settings",
             "can_change_submissions",
             "is_reviewer",

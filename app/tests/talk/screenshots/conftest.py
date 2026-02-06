@@ -97,10 +97,10 @@ def user(event):
 
     team = Team.objects.create(
         name=_("Organisers"),
-        organiser=event.organiser,
+        organizer=event.organizer,
         can_create_events=True,
         can_change_teams=True,
-        can_change_organiser_settings=True,
+        can_change_organizer_settings=True,
         can_change_event_settings=True,
         can_change_submissions=True,
         is_reviewer=True,

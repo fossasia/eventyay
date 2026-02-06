@@ -9,7 +9,7 @@ from eventyay.api.serializers.team import TeamSerializer
 @pytest.fixture
 def other_team(other_organiser):
     team = other_organiser.teams.create(
-        name="Other Test Team", organiser=other_organiser, can_change_submissions=True
+        name="Other Test Team", organizer=other_organiser, can_change_submissions=True
     )
     return team
 
@@ -23,7 +23,7 @@ def test_team_serializer(team):
             "name",
             "can_create_events",
             "can_change_teams",
-            "can_change_organiser_settings",
+            "can_change_organizer_settings",
             "can_change_event_settings",
             "can_change_submissions",
             "is_reviewer",
@@ -39,14 +39,14 @@ def test_team_serializer(team):
 
 @pytest.mark.django_db
 def test_cannot_see_teams_unauthenticated(client, organiser):
-    response = client.get(f"/api/organisers/{organiser.slug}/teams/", follow=True)
+    response = client.get(f"/api/organizers/{organiser.slug}/teams/", follow=True)
     assert response.status_code == 401
 
 
 @pytest.mark.django_db
 def test_orga_can_see_teams(client, orga_user_token, organiser, team):
     response = client.get(
-        f"/api/organisers/{organiser.slug}/teams/",
+        f"/api/organizers/{organiser.slug}/teams/",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
     )
@@ -60,7 +60,7 @@ def test_orga_can_see_teams(client, orga_user_token, organiser, team):
 @pytest.mark.django_db
 def test_orga_can_see_single_team(client, orga_user_token, organiser, team):
     response = client.get(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
     )
@@ -75,7 +75,7 @@ def test_orga_cannot_see_other_organiser_team(
     client, orga_user_token, organiser, other_team
 ):
     response = client.get(
-        f"/api/organisers/{organiser.slug}/teams/{other_team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{other_team.pk}/",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
     )
@@ -86,7 +86,7 @@ def test_orga_cannot_see_other_organiser_team(
 def test_orga_can_create_teams(client, orga_user_write_token, organiser):
     team_count = organiser.teams.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/",
+        f"/api/organizers/{organiser.slug}/teams/",
         follow=True,
         data={
             "name": "New API Team",
@@ -115,7 +115,7 @@ def test_orga_cannot_create_team_without_events(
 ):
     team_count = organiser.teams.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/",
+        f"/api/organizers/{organiser.slug}/teams/",
         follow=True,
         data={
             "name": "New API Team",
@@ -140,7 +140,7 @@ def test_orga_cannot_create_team_without_permissions(
 ):
     team_count = organiser.teams.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/",
+        f"/api/organizers/{organiser.slug}/teams/",
         follow=True,
         data={
             "name": "New API Team",
@@ -163,7 +163,7 @@ def test_orga_cannot_create_team_without_permissions(
 def test_orga_cannot_create_teams_readonly_token(client, orga_user_token, organiser):
     team_count = organiser.teams.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/",
+        f"/api/organizers/{organiser.slug}/teams/",
         follow=True,
         data={"name": "New API Team Fail", "can_change_submissions": True},
         content_type="application/json",
@@ -178,7 +178,7 @@ def test_orga_cannot_create_teams_readonly_token(client, orga_user_token, organi
 @pytest.mark.django_db
 def test_orga_can_update_teams(client, orga_user_write_token, organiser, team):
     response = client.patch(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         data=json.dumps({"name": "Updated Team Name", "is_reviewer": True}),
         headers={
@@ -197,14 +197,14 @@ def test_orga_cannot_update_teams_remove_last_permission(
     client, orga_user_write_token, organiser, team
 ):
     response = client.patch(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         data=json.dumps(
             {
                 "is_reviewer": False,
                 "can_create_events": False,
                 "can_change_teams": False,
-                "can_change_organiser_settings": False,
+                "can_change_organizer_settings": False,
                 "can_change_event_settings": False,
                 "can_change_submissions": False,
             }
@@ -225,7 +225,7 @@ def test_orga_cannot_update_teams_readonly_token(
 ):
     original_name = team.name
     response = client.patch(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         data=json.dumps({"name": "Updated Team Name Fail"}),
         headers={
@@ -247,11 +247,11 @@ def test_orga_can_delete_teams(
         team.pk = None
         team.all_events = True
         team.save()
-        other_team = team.organiser.teams.get(pk=team.pk)
+        other_team = team.organizer.teams.get(pk=team.pk)
         other_team.members.add(orga_user)
     team_count = organiser.teams.count()
     response = client.delete(
-        f"/api/organisers/{organiser.slug}/teams/{team_pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team_pk}/",
         follow=True,
         headers={
             "Authorization": f"Token {orga_user_write_token.token}",
@@ -266,7 +266,7 @@ def test_orga_can_delete_teams(
 def test_orga_cannot_delete_last_team(client, orga_user_write_token, organiser, team):
     team_count = organiser.teams.count()
     response = client.delete(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         headers={
             "Authorization": f"Token {orga_user_write_token.token}",
@@ -283,7 +283,7 @@ def test_orga_cannot_delete_teams_readonly_token(
 ):
     team_count = organiser.teams.count()
     response = client.delete(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/",
         follow=True,
         headers={
             "Authorization": f"Token {orga_user_token.token}",
@@ -301,7 +301,7 @@ def test_orga_can_expand_related_fields(
     team.save()
 
     response = client.get(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/?expand=members,invites,limit_tracks",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/?expand=members,invites,limit_tracks",
         follow=True,
         headers={"Authorization": f"Token {orga_user_token.token}"},
     )
@@ -323,7 +323,7 @@ def test_orga_can_invite_member(client, orga_user_write_token, organiser, team):
     member_count = team.members.count()
     invite_email = "new.invite@example.com"
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invite/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invite/",
         follow=True,
         data={"email": invite_email},
         content_type="application/json",
@@ -345,7 +345,7 @@ def test_orga_cannot_invite_existing_member(
 ):
     invite_count = team.invites.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invite/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invite/",
         follow=True,
         data={"email": orga_user.email},
         content_type="application/json",
@@ -364,7 +364,7 @@ def test_orga_cannot_invite_already_invited(
 ):
     invite_count = team.invites.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invite/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invite/",
         follow=True,
         data={"email": invitation.email},
         content_type="application/json",
@@ -381,7 +381,7 @@ def test_orga_cannot_invite_already_invited(
 def test_orga_cannot_invite_readonly_token(client, orga_user_token, organiser, team):
     invite_count = team.invites.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invite/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invite/",
         follow=True,
         data={"email": "fail.invite@example.com"},
         content_type="application/json",
@@ -399,7 +399,7 @@ def test_orga_can_delete_invite(
 ):
     invite_count = team.invites.count()
     response = client.delete(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invites/{invitation.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invites/{invitation.pk}/",
         follow=True,
         headers={
             "Authorization": f"Token {orga_user_write_token.token}",
@@ -422,7 +422,7 @@ def test_orga_cannot_delete_invite_readonly_token(
 ):
     invite_count = team.invites.count()
     response = client.delete(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/invites/{invitation.pk}/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/invites/{invitation.pk}/",
         follow=True,
         headers={
             "Authorization": f"Token {orga_user_token.token}",
@@ -441,7 +441,7 @@ def test_orga_can_remove_member(
 
     member_count = team.members.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/remove_member/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/remove_member/",
         follow=True,
         data={"user_code": orga_user.code},
         content_type="application/json",
@@ -467,7 +467,7 @@ def test_orga_cannot_remove_member_readonly_token(
 ):
     member_count = team.members.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/remove_member/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/remove_member/",
         follow=True,
         data={"user_code": orga_user.code},
         content_type="application/json",
@@ -488,7 +488,7 @@ def test_orga_cannot_remove_non_member(
         team.members.remove(other_orga_user)
         member_count = team.members.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/remove_member/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/remove_member/",
         follow=True,
         data={"user_code": other_orga_user.code},
         content_type="application/json",
@@ -507,7 +507,7 @@ def test_orga_cannot_remove_nonexistent_user(
 ):
     member_count = team.members.count()
     response = client.post(
-        f"/api/organisers/{organiser.slug}/teams/{team.pk}/remove_member/",
+        f"/api/organizers/{organiser.slug}/teams/{team.pk}/remove_member/",
         follow=True,
         data={"user_code": "NONEXISTENTCODE"},
         content_type="application/json",

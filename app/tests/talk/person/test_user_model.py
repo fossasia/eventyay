@@ -24,7 +24,7 @@ def test_user_deactivate(speaker, personal_answer, impersonal_answer, other_spea
         count = speaker.own_actions().count()
         name = speaker.fullname
         email = speaker.email
-        organiser = speaker.submissions.first().event.organiser
+        organiser = speaker.submissions.first().event.organizer
         team = organiser.teams.first()
         team.members.add(speaker)
         team.save()
@@ -48,7 +48,7 @@ def test_administrator_permissions(event):
     permission_set = {
         "can_create_events",
         "can_change_teams",
-        "can_change_organiser_settings",
+        "can_change_organizer_settings",
         "can_change_event_settings",
         "can_change_submissions",
         "is_reviewer",
@@ -67,7 +67,7 @@ def test_organizer_permissions(event, orga_user):
     permission_set = {
         "can_create_events",
         "can_change_teams",
-        "can_change_organiser_settings",
+        "can_change_organizer_settings",
         "can_change_event_settings",
         "can_change_submissions",
     }

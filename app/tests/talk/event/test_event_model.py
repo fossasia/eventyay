@@ -138,7 +138,7 @@ def test_event_copy_settings(event, submission_type, choice_question, track):
         assert event.submission_types.count() == 2
     with scopes_disabled():
         new_event = Event.objects.create(
-            organiser=event.organiser,
+            organizer=event.organizer,
             locale_array="de,en",
             name="Teh Name",
             slug="tn",
@@ -172,7 +172,7 @@ def test_event_copy_settings_with_exceptions(event):
         event.cfp.save()
     with scopes_disabled():
         new_event = Event.objects.create(
-            organiser=event.organiser,
+            organizer=event.organizer,
             locale_array="de,en",
             name="Teh Name",
             slug="tn",

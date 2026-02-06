@@ -24,9 +24,9 @@ class CacheTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         with scopes_disabled():
-            o = Organiser.objects.create(name="Dummy", slug="dummy")
+            o = Organizer.objects.create(name="Dummy", slug="dummy")
             cls.event = Event.objects.create(
-                organiser=o,
+                organizer=o,
                 name="Dummy",
                 slug="dummy",
                 date_from=now().date(),
