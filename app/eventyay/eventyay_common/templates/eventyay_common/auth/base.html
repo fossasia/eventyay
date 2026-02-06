@@ -31,6 +31,8 @@
     <meta name="msapplication-TileColor" content="#2185d0">
     {% comment %} <meta name="msapplication-config" content="{% url "presale:browserconfig.xml" %}"> {% endcomment %}
     <meta name="theme-color" content="#2185d0">
+    {# Custom header block for child templates to add CSS/JS #}
+    {% block custom_header %}{% endblock %}
 </head>
 <body>
     <div id="wrapper">
