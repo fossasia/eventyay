@@ -140,10 +140,9 @@ function unmuteYouTubePlayer() {
 
 function getJoinErrorMessage(error) {
 	const code =
-		error?.apiError?.code ||
-		error?.response?.data?.error ||
-		error?.error ||
-		error?.message ||
+		error?.apiError?.code ??
+		error?.error ??
+		error?.message ??
 		null
 
 	switch (code) {
