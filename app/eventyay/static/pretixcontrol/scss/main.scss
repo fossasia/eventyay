@@ -1122,114 +1122,101 @@ h1 .label {
         overflow-wrap: break-word;
     }
 }
+@media (max-width: $screen-xs-max) {
 
-/* Mobile: language switch icon-only */
-@media (max-width: 480px) {
+  .navbar-row.mobile-layout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .navbar-row.mobile-layout .navbar-left-group {
+    display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .navbar-row.mobile-layout .navbar-right-group {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+  }
+
+  nav.navbar .navbar-top-links {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+  }
+
+  nav.navbar .navbar-top-links > li,
+  nav.navbar .navbar-top-links details {
+    float: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .navbar-row.mobile-layout .sidebar-text,
+  .navbar-row.mobile-layout .navbar-brand .brand-text,
   #language-dropdown .current-locale,
   #language-dropdown .fa-caret-down {
     display: none;
   }
-}
 
-@media (max-width: 480px) {
-  .navbar-brand .brand-text {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  nav.navbar .navbar-top-links {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    flex-wrap: nowrap;
-    min-width: 0;
+  .navbar-row.mobile-layout .navbar-toggle,
+  .navbar-row.mobile-layout .navbar-toggle-sidebar,
+  .navbar-row.mobile-layout .navbar-top-links > li > a,
+  .navbar-row.mobile-layout .navbar-top-links > li > form > button {
+    padding: 8px 10px;
   }
 
-  nav.navbar .navbar-top-links > li,
-  nav.navbar .navbar-top-links > li > a,
-  nav.navbar .navbar-top-links > li > form,
-  nav.navbar .navbar-top-links details {
-    float: none;       
+  li.nav-user summary.header-nav {
     display: flex;
     align-items: center;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-}
-
-li.nav-user summary.header-nav {
-    display: flex;          
-    align-items: center;      
-    list-style: none;        
+    list-style: none;
     cursor: pointer;
-}
+  }
 
-li.nav-user summary.header-nav::-webkit-details-marker {
+  li.nav-user summary.header-nav::-webkit-details-marker {
     display: none;
-}
-
-li.nav-user summary.header-nav::-webkit-details-marker {
-    display: none;
-}
-
-li.nav-user .user-name-limit {
-    display: block;           
-    max-width: 12ch;          
-    white-space: nowrap;      
-    overflow: hidden;         
-    text-overflow: ellipsis;  
-    margin-left: 8px;
-    margin-right: 0; 
-    line-height: 1; 
-}
-
-@media (max-width: 768px) {
-  /* Control the ROW, not children */
-  .navbar-row.mobile-layout {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    width: 100%;
   }
 
-  .navbar-row.mobile-layout .navbar-left-group,
-  .navbar-row.mobile-layout .navbar-right-group {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    min-width: 0;
+  li.nav-user .user-name-limit {
+    display: block;
+    max-width: 12ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: 0.5rem;
+    line-height: 1;
   }
 
-  /* Right side should not collapse or wrap */
-  .navbar-row.mobile-layout .navbar-right-group {
-    flex: 0 0 auto;
-  }
-
-  /* Prevent Bootstrap float behavior */
-  .navbar-row.mobile-layout .navbar-top-links {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-  }
-
-  .navbar-row.mobile-layout .navbar-top-links > li {
-    float: none;
-    flex-shrink: 0;
-  }
-
-  /* User block stays in one line */
-  .navbar-row.mobile-layout li.nav-user summary.header-nav {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    min-width: max-content;
-  }
-}
-
-@media (max-width: 768px) {
   nav.navbar .nav-admin .sidebar-text {
     display: none;
   }
+
+  li.nav-user summary.header-nav .user-name-limit {
+    display: inline-block;
+    max-width: 12ch;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+  nav.navbar .mobile-only {
+    display: inline;
+  }
+
+  nav.navbar .desktop-only {
+    display: none;
+  }
+}
+
+nav.navbar .mobile-only {
+  display: none;
+}
+
+nav.navbar .desktop-only {
+  display: inline;
 }

@@ -142,7 +142,7 @@
                             <form action="{% eventurl request.event 'presale:event.auth' %}"
                                     method="post"
                                     target="_blank"
-                                    class="inline-form">
+                                    class="form-inline">
                                 {% csrf_token %}
                                 <input type="hidden" value="{{ new_session }}" name="session">
                                 <button type="submit" class="btn btn-link">
@@ -152,6 +152,7 @@
                             {% else %}
                             <a href="{% eventurl request.event 'presale:event.index' %}"
                                 title="{% translate 'View event' %}"
+                                aria-label="{% translate 'View event' %}"
                                 target="_blank">
                                 <i class="fa fa-eye"></i>
                             </a>
@@ -164,17 +165,17 @@
                 </div>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
-                    <div class="dropdown context-selector">
-                        {% block nav_top_header %}
-                        {% if nav_top_context == 'account' %}
+                        <div class="dropdown context-selector">
+                            {% block nav_top_header %}
+                            {% if nav_top_context == 'account' %}
                             <a href="{% url 'eventyay_common:account' %}" class="dropdown-toggle">
                             <span class="fa-stack fa-lg">
                                 <i class="fa fa-circle fa-stack-2x"></i>
                                 <i class="fa fa-user fa-stack-1x fa-inverse"></i>
                             </span>
-                            <div class="context-indicator">
-                                <span class="context-name">{% translate "Account" %}</span>
-                            </div>
+                        <div class="context-indicator">
+                            <span class="context-name">{% translate "Account" %}</span>
+                        </div>
                             </a>
                         {% elif request.event %}
                             <a href="{% url 'eventyay_common:event.index'
@@ -220,7 +221,7 @@
                             </a>
                         {% endif %}
                         {% endblock %}
-                    </div>
+                </div>
                     <ul class="nav" id="side-menu">
                         {% block nav %}
                         {% if request.event %}

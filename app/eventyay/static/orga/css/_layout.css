@@ -1690,14 +1690,3 @@ h2 .user-name-display img {
   }
 }
 
-@media (max-width: 480px) {
-  .topbar-right .language-form .current-locale,
-  .topbar-right .language-form .fa-caret-down {
-    display: none;
-  }
-
-  .topbar-right .language-form summary {
-    min-width: auto;
-    padding: 8px 10px;
-  }
-}
