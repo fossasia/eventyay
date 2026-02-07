@@ -1,5 +1,9 @@
+###########
+# BUILDER #
+###########
+
 # pull official base image
-FROM python:3.12-slim-trixie
+FROM python:3.12-slim-trixie AS builder
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # set work directory
@@ -9,37 +13,82 @@ WORKDIR /usr/src/app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# install system dependencies
+# install system dependencies (build tools needed here)
 RUN apt-get update && apt-get install -y wget gnupg
+
 # Repo for newer NodeJS
 RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
     echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
-RUN apt-get update && apt-get install --no-install-recommends -y netcat-traditional git build-essential gettext make nodejs
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    netcat-traditional \
+    git \
+    build-essential \
+    gettext \
+    make \
+    nodejs
 
 # copy project files
 COPY . .
 
-# install dependencies
+# install dependencies (using build tools)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --all-extras --all-groups
+
+# Run npm stuff (needs nodejs)
+RUN make npminstall
+
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
+
+
+###########
+# RUNTIME #
+###########
+
+# pull official base image
+FROM python:3.12-slim-trixie
+
+# set work directory
+WORKDIR /usr/src/app
+
+# set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+# Install ONLY runtime dependencies (no build tools!)
+RUN apt-get update && apt-get install -y wget gnupg
+
+# NodeJS runtime (without build tools)
+RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
+
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    netcat-traditional \
+    nodejs \
+    && rm -rf /var/lib/apt/lists/*
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh .
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
+# Copy Python virtual environment from builder
+COPY --from=builder /usr/src/app/.venv /usr/src/app/.venv
+
+# Copy application code
+COPY --from=builder /usr/src/app /usr/src/app
+
+# Copy node_modules from builder
+COPY --from=builder /usr/local/lib/node_modules/esbuild /usr/local/lib/node_modules/esbuild
+COPY --from=builder /usr/local/bin/esbuild /usr/local/bin/esbuild
+
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv
 ENV PATH="/usr/src/app/.venv/bin:$PATH"
 
-# Run npm stuff
-RUN make npminstall
-
-# esbuild needed by Django-Compressor
-RUN npm install -g esbuild
-
 # Create .secrets to suppress warnings about missing directory
-RUN mkdir -p $APP_HOME/.secrets
+RUN mkdir -p /usr/src/app/.secrets
 
 # run entrypoint.sh
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
