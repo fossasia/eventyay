@@ -48,13 +48,14 @@ class SubmissionType(OrderedModel, PretalxModel):
     position = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text='The position field is used to determine the order that session types are displayed in (lowest first).',
+        verbose_name=_('position'),
+        help_text=_('The position field is used to determine the order that session types are displayed in (lowest first).'),
     )
 
     log_prefix = 'eventyay.submission_type'
 
     class Meta:
-        ordering = ('position',)
+        ordering = ('position', 'pk')
         rules_permissions = {
             'list': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
             'view': is_cfp_open | is_agenda_visible | orga_can_change_submissions,
@@ -101,9 +102,8 @@ class SubmissionType(OrderedModel, PretalxModel):
         """
         return f'{self.id}-{slugify(self.name)}'
 
-    @staticmethod
-    def get_order_queryset(event):
-        return event.submission_types.all()
+    def get_order_queryset(self):
+        return self.event.submission_types.all()
 
     def update_duration(self):
         """Updates the duration of all.

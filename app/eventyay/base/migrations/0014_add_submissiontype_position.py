@@ -8,14 +8,11 @@ def set_initial_positions(apps, schema_editor):
     Event = apps.get_model('base', 'Event')
     
     for event in Event.objects.all():
-        types = SubmissionType.objects.filter(event=event).order_by('default_duration')
+        types = list(SubmissionType.objects.filter(event=event).order_by('default_duration', 'pk'))
         for index, submission_type in enumerate(types):
             submission_type.position = index
-            submission_type.save(update_fields=['position'])
-
-
-def reverse_positions(apps, schema_editor):
-    pass
+        if types:
+            SubmissionType.objects.bulk_update(types, ['position'])
 
 
 class Migration(migrations.Migration):
@@ -34,5 +31,5 @@ class Migration(migrations.Migration):
             name='position',
             field=models.PositiveIntegerField(blank=True, help_text='The position field is used to determine the order that session types are displayed in (lowest first).', null=True),
         ),
-        migrations.RunPython(set_initial_positions, reverse_positions),
+        migrations.RunPython(set_initial_positions, migrations.RunPython.noop),
     ]

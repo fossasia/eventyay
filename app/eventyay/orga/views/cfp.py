@@ -631,7 +631,10 @@ class SubmissionTypeView(OrderActionMixin, OrgaCRUDView):
     template_namespace = 'orga/cfp'
 
     def get_queryset(self):
-        return self.request.event.submission_types.all().order_by('position')
+        return self.request.event.submission_types.all().order_by(
+            models.F('position').asc(nulls_last=True),
+            'pk',
+        )
 
     def get_permission_required(self):
         permission_map = {'list': 'orga_list', 'detail': 'orga_detail'}
