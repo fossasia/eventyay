@@ -411,6 +411,12 @@ class ComposeMailBaseView(EventPermissionRequired, FormView):
                 _('{count} emails have been sent.').format(count=len(result)),
             )
         elif scheduled_at:
+            if not result:
+                messages.error(
+                    self.request,
+                    _('No emails could be created. Please check your recipient selection.')
+                )
+                return redirect(self.request.event.orga_urls.compose_mails_sessions)
             self.success_url = self.request.event.orga_urls.outbox
             for mail in result:
                 mail.log_action(
