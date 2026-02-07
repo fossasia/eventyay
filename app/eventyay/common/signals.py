@@ -242,6 +242,7 @@ events with your plugin activated.
 
 @receiver(periodic_task, dispatch_uid="process_scheduled_emails")
 @scopes_disabled()
+@minimum_interval(minutes_after_success=1, minutes_running_timeout=5)
 def process_scheduled_emails(sender, **kwargs):
     """
     Periodic task to process scheduled emails for both Talk and Tickets components.

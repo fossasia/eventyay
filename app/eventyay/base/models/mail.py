@@ -412,7 +412,7 @@ class QueuedMail(PretalxModel):
             raise Exception(_('This mail has been sent already. It cannot be sent again.'))
 
         if self.scheduled_at and self.scheduled_at > now():
-            return
+            raise SendMailException(_('This mail is scheduled for the future and cannot be sent yet.'))
 
         has_event = getattr(self, 'event', None)
 
