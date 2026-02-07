@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='submissiontype',
-            options={'ordering': ('position',)},
+            options={'ordering': ('position', 'pk')},
         ),
         migrations.AddField(
             model_name='submissiontype',

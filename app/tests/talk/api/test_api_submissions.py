@@ -708,6 +708,36 @@ def test_submission_type_serializer(submission_type):
 
 
 @pytest.mark.django_db
+def test_submission_types_ordered_by_position(submission_type):
+    from pretalx.submission.models import SubmissionType
+    
+    with scope(event=submission_type.event):
+        type1 = SubmissionType.objects.create(
+            event=submission_type.event,
+            name='Type A',
+            default_duration=30,
+            position=2
+        )
+        type2 = SubmissionType.objects.create(
+            event=submission_type.event,
+            name='Type B',
+            default_duration=60,
+            position=0
+        )
+        type3 = SubmissionType.objects.create(
+            event=submission_type.event,
+            name='Type C',
+            default_duration=45,
+            position=1
+        )
+        
+        types = list(submission_type.event.submission_types.all())
+        assert types[0].name == 'Type B'
+        assert types[1].name == 'Type C'
+        assert types[2].name == 'Type A'
+
+
+@pytest.mark.django_db
 def test_cannot_see_submission_types(client, submission_type):
     with scope(event=submission_type.event):
         submission_type.event.is_public = False
