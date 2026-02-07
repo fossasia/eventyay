@@ -60,6 +60,7 @@ class SubmissionTypeSerializer(PretalxSerializer):
             "default_duration",
             "deadline",
             "requires_access_code",
+            "position",
         )
 
     def create(self, validated_data):
