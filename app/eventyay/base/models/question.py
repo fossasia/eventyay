@@ -55,7 +55,6 @@ class TalkQuestionVariant(Choices):
         (FILE, _('File upload')),
         (CHOICES, _('Radio button (Choose one option)')),
         (MULTIPLE, _('Checkbox (Choose one or several options)')),
-        (TYPE_COUNTRY, _('Country list')),
     ]
 
 
