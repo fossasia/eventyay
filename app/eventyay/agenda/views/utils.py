@@ -3,6 +3,7 @@ import random
 import string
 import logging
 from contextlib import suppress
+from datetime import timezone as dt_timezone
 
 from django.contrib import messages
 from django.core import signing
@@ -17,22 +18,43 @@ from eventyay.base.models.submission import SubmissionFavourite
 
 logger = logging.getLogger(__name__)
 
+def load_starred_ics_token(token: str):
+    """Validate and decode a starred-ICS token.
 
-def parse_ics_token(token):
-    """Parse and validate the signed token used for tokenized starred-session exports."""
+    Returns a tuple of (user_id, expiry_datetime_utc) on success, otherwise (None, None).
+    Validation is centralized here so export + redirect flows share identical semantics.
+
+    Note: Token lifetime is defined at issuance time (see ScheduleMixin.generate_ics_token):
+    typically valid until event end + 24h, with a short-lived fallback after that point.
+    Expiry is enforced via the embedded signed 'exp' timestamp.
+    """
+
     try:
-        value = signing.loads(token, salt="my-starred-ics", max_age=15 * 24 * 60 * 60)
-        if value.get("exp") and value["exp"] < int(timezone.now().timestamp()):
-            raise ValueError("Token expired")
-        return value["user_id"]
+        value = signing.loads(
+            token,
+            salt='my-starred-ics',
+        )
+        user_id = value['user_id']
+        exp_ts = int(value['exp'])
+        expiry_dt = timezone.datetime.fromtimestamp(exp_ts, tz=dt_timezone.utc)
+        if expiry_dt <= timezone.now():
+            return None, None
+        return user_id, expiry_dt
     except (
         signing.BadSignature,
-        signing.SignatureExpired,
         KeyError,
+        TypeError,
         ValueError,
+        OSError,
+        OverflowError,
     ) as e:
         logger.warning('Failed to parse ICS token: %s', e)
-        return None
+        return None, None
+
+
+def parse_ics_token(token: str):
+    user_id, _expiry_dt = load_starred_ics_token(token)
+    return user_id
 
 
 def redirect_to_presale_with_warning(request, message):
@@ -129,18 +151,28 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         user_id = parse_ics_token(token)
         if not user_id:
             return
-        favs_talks = SubmissionFavourite.objects.filter(user_id=user_id, submission__event=request.event)
-        if favs_talks.exists():
-            exporter.talk_ids = list(favs_talks.values_list('submission__code', flat=True))
+        talk_ids = list(
+            SubmissionFavourite.objects.filter(
+                user_id=user_id,
+                submission__event=request.event,
+            ).values_list('submission__code', flat=True)
+        )
+        if talk_ids:
+            exporter.talk_ids = talk_ids
     elif "-my" in exporter.identifier and request.user.id is None:
         if request.GET.get('talks'):
             exporter.talk_ids = request.GET.get('talks').split(',')
         else:
             return HttpResponseRedirect(request.event.urls.login)
     elif "-my" in exporter.identifier:
-        favs_talks = SubmissionFavourite.objects.filter(user_id=request.user.id, submission__event=request.event)
-        if favs_talks.exists():
-            exporter.talk_ids = list(favs_talks.values_list('submission__code', flat=True))
+        talk_ids = list(
+            SubmissionFavourite.objects.filter(
+                user_id=request.user.id,
+                submission__event=request.event,
+            ).values_list('submission__code', flat=True)
+        )
+        if talk_ids:
+            exporter.talk_ids = talk_ids
     try:
         file_name, file_type, data = exporter.render(request=request)
         etag = hashlib.sha1(str(data).encode()).hexdigest()

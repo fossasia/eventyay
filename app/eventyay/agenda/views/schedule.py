@@ -1,8 +1,7 @@
 import json
-import logging
 import textwrap
 from contextlib import suppress
-from datetime import datetime, timedelta, timezone as dt_timezone
+from datetime import timedelta
 from urllib.parse import unquote, urlparse, urlunparse
 
 from django.contrib import messages
@@ -26,15 +25,13 @@ from eventyay.agenda.views.utils import (
     get_schedule_exporter_content,
     get_schedule_exporters,
     is_public_schedule_empty,
+    load_starred_ics_token,
     redirect_to_presale_with_warning,
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
-
-
-logger = logging.getLogger(__name__)
 
 
 class ScheduleMixin:
@@ -48,58 +45,49 @@ class ScheduleMixin:
 
     @staticmethod
     def generate_ics_token(request, user_id):
-        """Generate a signed token with user ID and 15-day expiry, invalidating previous tokens."""
+        """Generate a signed token for the starred-sessions ICS export.
+
+        Expiry policy:
+        - If the event has not yet ended (plus a 24h grace), expire at event end + 24h.
+        - Otherwise (event end + 24h already passed), fall back to a short-lived token.
+
+        Any previously issued token stored in the user's session is invalidated.
+        """
         key = ScheduleMixin.MY_STARRED_ICS_TOKEN_SESSION_KEY
         if key in request.session:
             del request.session[key]
 
-        expiry = timezone.now() + timedelta(days=15)
+        expiry_fallback = timezone.now() + timedelta(seconds=30)
+        expiry = expiry_fallback
+        event = getattr(request, 'event', None)
+        event_end = getattr(event, 'date_to', None)
+        if event_end:
+            expiry_event = event_end + timedelta(hours=24)
+            if timezone.is_naive(expiry_event):
+                expiry_event = timezone.make_aware(expiry_event, timezone=timezone.get_current_timezone())
+            if expiry_event > timezone.now():
+                expiry = expiry_event
+
         value = {"user_id": user_id, "exp": int(expiry.timestamp())}
-        token = signing.dumps(value, salt="my-starred-ics")
+        token = signing.dumps(value, salt='my-starred-ics')
 
         request.session[key] = token
         return token
 
     @staticmethod
-    def parse_ics_token(token):
-        """Parse and validate the token, return user_id if valid."""
-        try:
-            value = signing.loads(token, salt="my-starred-ics", max_age=15 * 24 * 60 * 60)
-            return value["user_id"]
-        except (
-            signing.BadSignature,
-            signing.SignatureExpired,
-            KeyError,
-            ValueError,
-        ) as e:
-            logger.warning('Failed to parse ICS token: %s', e)
-            return None
-
-    @staticmethod
     def check_token_expiry(token):
-        """Check if a token exists and has more than 4 days until expiry.
+        """Check if a token exists and has enough time until expiry.
 
         Returns:
         - None if token is invalid
-        - False if token is valid but expiring soon (< 4 days)
-        - True if token is valid and not expiring soon (>= 4 days)
+        - False if token is valid but expiring soon
+        - True if token is valid and not expiring soon
         """
-        try:
-            value = signing.loads(token, salt="my-starred-ics", max_age=15 * 24 * 60 * 60)
-            expiry_date = datetime.fromtimestamp(value["exp"], tz=dt_timezone.utc)
-            time_until_expiry = expiry_date - timezone.now()
-            return time_until_expiry >= timedelta(days=4)
-        except (
-            signing.BadSignature,
-            signing.SignatureExpired,
-            KeyError,
-            TypeError,
-            ValueError,
-            OSError,
-            OverflowError,
-        ) as e:
-            logger.warning('Failed to check token expiry: %s', e)
+        _user_id, expiry_dt = load_starred_ics_token(token)
+        if not expiry_dt:
             return None
+        time_until_expiry = expiry_dt - timezone.now()
+        return time_until_expiry >= timedelta(seconds=10)
 
     def get_object(self):
         schedule = None
@@ -230,7 +218,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return schedule
 
     def get_permission_object(self):
-        return self.object
+        return self.request.event
 
     @context
     def exporters(self):
@@ -334,8 +322,8 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
     def get(self, request, *args, **kwargs):
         url_name = request.resolver_match.url_name if request.resolver_match else ''
-        is_google = 'google' in url_name
-        is_my = 'my' in url_name
+        is_google = url_name.endswith('export.google-calendar') or url_name.endswith('export.my-google-calendar')
+        is_my = url_name.endswith('export.my-google-calendar') or url_name.endswith('export.my-webcal')
 
         if is_my:
             if not request.user.is_authenticated:
@@ -347,7 +335,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
             if existing_token:
                 token_status = self.check_token_expiry(existing_token)
-                if token_status is True:  # Token is valid and has at least 4 days left
+                if token_status is True:  # Token is valid and not expiring imminently
                     token = existing_token
                     generate_new_token = False
 

@@ -8,6 +8,7 @@ class AgendaConfig(AppConfig):
 
     def ready(self):
         from .phrases import AgendaPhrases  # noqa
+        from . import permissions  # noqa
 
 
 with suppress(ImportError):
