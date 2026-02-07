@@ -322,7 +322,7 @@ class ICalExporter(BaseExporter):
     identifier = 'schedule.ics'
     verbose_name = _('iCal (full event)')
     public = True
-    show_public = False
+    show_public = True
     show_qrcode = True
     favs_retrieve = False
     talk_ids = []
@@ -346,7 +346,7 @@ class ICalExporter(BaseExporter):
             .order_by('start')
         )
         for talk in talks:
-            if talk.submission and talk.submission.code not in self.talk_ids:
+            if self.favs_retrieve and talk.submission and talk.submission.code not in self.talk_ids:
                 continue
             talk.build_ical(cal, creation_time=creation_time, netloc=netloc)
 
@@ -387,3 +387,39 @@ class FavedICalExporter(BaseExporter):
         for slot in slots:
             slot.build_ical(cal)
         return f'{self.event.slug}-favs.ics', 'text/calendar', cal.serialize()
+
+
+class BaseCalendarExporter(BaseExporter):
+    public = True
+    show_qrcode = False
+    icon = 'fa-calendar'
+
+    @property
+    def show_public(self):
+        return self.ical_exporter_cls(self.event).show_public
+
+
+class GoogleCalendarExporter(BaseCalendarExporter):
+    identifier = 'google-calendar'
+    verbose_name = 'Add to Google Calendar'
+    icon = 'fa-google'
+    ical_exporter_cls = ICalExporter
+
+
+class MyGoogleCalendarExporter(BaseCalendarExporter):
+    identifier = 'my-google-calendar'
+    verbose_name = 'Add My ⭐ Sessions to Google Calendar'
+    icon = 'fa-google'
+    ical_exporter_cls = MyICalExporter
+
+
+class WebcalExporter(BaseCalendarExporter):
+    identifier = 'webcal'
+    verbose_name = 'Add to Other Calendar'
+    ical_exporter_cls = ICalExporter
+
+
+class MyWebcalExporter(BaseCalendarExporter):
+    identifier = 'my-webcal'
+    verbose_name = 'Add My ⭐ Sessions to Other Calendar'
+    ical_exporter_cls = MyICalExporter

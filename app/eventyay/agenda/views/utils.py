@@ -5,15 +5,34 @@ import logging
 from contextlib import suppress
 
 from django.contrib import messages
+from django.core import signing
 from django.http import HttpResponse, HttpResponseNotModified, HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import activate
+from django.utils import timezone
 
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.text.path import safe_filename
-from eventyay.base.models.submission import SubmissionFavouriteDeprecated
+from eventyay.base.models.submission import SubmissionFavourite
 
 logger = logging.getLogger(__name__)
+
+
+def parse_ics_token(token):
+    """Parse and validate the signed token used for tokenized starred-session exports."""
+    try:
+        value = signing.loads(token, salt="my-starred-ics", max_age=15 * 24 * 60 * 60)
+        if value.get("exp") and value["exp"] < int(timezone.now().timestamp()):
+            raise ValueError("Token expired")
+        return value["user_id"]
+    except (
+        signing.BadSignature,
+        signing.SignatureExpired,
+        KeyError,
+        ValueError,
+    ) as e:
+        logger.warning('Failed to parse ICS token: %s', e)
+        return None
 
 
 def redirect_to_presale_with_warning(request, message):
@@ -44,9 +63,17 @@ def is_public_speakers_empty(request):
 
 def is_visible(exporter, request, public=False):
     if not public:
+        return request.user.has_perm('base.orga_view_schedule', request.event)
+
+    identifier = getattr(exporter, 'identifier', '')
+    if identifier.startswith('my-') or '-my' in identifier:
+        if (
+            getattr(getattr(request, 'resolver_match', None), 'url_name', None) == 'export-tokenized'
+            and getattr(getattr(request, 'resolver_match', None), 'kwargs', {}).get('token')
+        ):
+            return True
         return request.user.is_authenticated
-    if not request.user.has_perm('base.list_schedule', request.event):
-        return False
+
     if hasattr(exporter, 'is_public'):
         with suppress(Exception):
             return exporter.is_public(request=request)
@@ -86,7 +113,7 @@ def encode_email(email):
     return final_result.upper()
 
 
-def get_schedule_exporter_content(request, exporter_name, schedule):
+def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
     is_organizer = request.user.has_perm('base.orga_view_schedule', request.event)
     exporter = find_schedule_exporter(request, exporter_name, public=not is_organizer)
     if not exporter:
@@ -98,15 +125,22 @@ def get_schedule_exporter_content(request, exporter_name, schedule):
         activate(lang_code)
     elif 'lang' in request.GET:
         activate(request.event.locale)
-    exporter.schedule = schedule
-    if '-my' in exporter.identifier and request.user.id is None:
+    if token and "-my" in exporter.identifier:
+        user_id = parse_ics_token(token)
+        if not user_id:
+            return
+        favs_talks = SubmissionFavourite.objects.filter(user_id=user_id, submission__event=request.event)
+        if favs_talks.exists():
+            exporter.talk_ids = list(favs_talks.values_list('submission__code', flat=True))
+    elif "-my" in exporter.identifier and request.user.id is None:
         if request.GET.get('talks'):
             exporter.talk_ids = request.GET.get('talks').split(',')
         else:
             return HttpResponseRedirect(request.event.urls.login)
-    favs_talks = SubmissionFavouriteDeprecated.objects.filter(user=request.user.id)
-    if favs_talks.exists():
-        exporter.talk_ids = favs_talks[0].talk_list
+    elif "-my" in exporter.identifier:
+        favs_talks = SubmissionFavourite.objects.filter(user_id=request.user.id, submission__event=request.event)
+        if favs_talks.exists():
+            exporter.talk_ids = list(favs_talks.values_list('submission__code', flat=True))
     try:
         file_name, file_type, data = exporter.render(request=request)
         etag = hashlib.sha1(str(data).encode()).hexdigest()
