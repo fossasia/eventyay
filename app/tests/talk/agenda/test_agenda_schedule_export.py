@@ -430,7 +430,7 @@ def test_schedule_orga_trigger_export_without_celery(
 def test_schedule_orga_trigger_export_with_celery(
     mocker, orga_client, django_assert_max_num_queries, event
 ):
-    mocker.patch("pretalx.agenda.tasks.export_schedule_html.apply_async")
+    mocker.patch("eventyay.agenda.tasks.export_schedule_html.apply_async")
     from eventyay.agenda.tasks import export_schedule_html
 
     with django_assert_max_num_queries(39):

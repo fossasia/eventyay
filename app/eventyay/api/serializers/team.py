@@ -3,7 +3,7 @@ from rest_framework import exceptions, serializers
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
-from eventyay.base.models.event import Event, Team
+from eventyay.base.models.event import Event
 from eventyay.base.models.organizer import Team, TeamInvite
 from eventyay.base.models.auth import User
 from eventyay.base.models.track import Track

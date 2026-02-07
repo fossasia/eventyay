@@ -52,7 +52,7 @@ def test_daterange(locale, start, end, result):
 )
 def test_path_with_hash(path, expected, monkeypatch):
     monkeypatch.setattr(
-        "pretalx.common.text.path.get_random_string", lambda x: "aaaaaaa"
+        "eventyay.common.text.path.get_random_string", lambda x: "aaaaaaa"
     )
     from eventyay.common.text.path import path_with_hash
 

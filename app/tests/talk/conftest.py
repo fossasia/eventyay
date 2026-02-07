@@ -890,7 +890,7 @@ def deleted_submission(event, submission_data, other_speaker):
 @pytest.fixture
 def invitation(event):
     with scope(event=event):
-        team = event.organiser.teams.filter(
+        team = event.organizer.teams.filter(
             can_change_organizer_settings=True, is_reviewer=False
         ).first()
         return TeamInvite.objects.create(

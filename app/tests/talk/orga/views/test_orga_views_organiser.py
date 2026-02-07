@@ -13,7 +13,7 @@ from eventyay.base.models.organizer import Organizer
 def test_orga_create_organiser(administrator_client):
     assert len(Organizer.objects.all()) == 0
     response = administrator_client.post(
-        "/orga/organiser/new",
+        "/orga/organizer/new",
         data={
             "name_0": "The bestest organiser",
             "name_1": "The bestest organiser",

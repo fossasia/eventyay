@@ -1,6 +1,6 @@
 import pytest
 
-from pretalx.person import tasks
+from eventyay.person import tasks
 from eventyay.base.models.auth import User
 
 
@@ -18,7 +18,7 @@ def test_gravatar_refetch_called(user, caplog, mocker, event):
     User.objects.filter(pk=user.pk).update(get_gravatar=True)
 
     # patch requests.get to return a 404
-    mocker.patch("pretalx.person.tasks.get", mock_get_404)
+    mocker.patch("eventyay.person.tasks.get", mock_get_404)
     mocker.patch("requests.get", mock_get_404)
 
     tasks.refetch_gravatars(sender=event)
@@ -34,7 +34,7 @@ def test_gravatar_refetch_called(user, caplog, mocker, event):
 @pytest.mark.django_db
 def test_gravatar_refetch_called_on_save(user, caplog, mocker):
     # patch requests.get to return a 404
-    mocker.patch("pretalx.person.tasks.get", mock_get_404)
+    mocker.patch("eventyay.person.tasks.get", mock_get_404)
     mocker.patch("requests.get", mock_get_404)
 
     user.get_gravatar = True
