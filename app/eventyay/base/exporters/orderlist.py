@@ -720,9 +720,6 @@ class OrderListExporter(MultiSheetListExporter):
                         headers.append(f"{q.question} – {o.answer}")
                         options[q.pk].append(o)
 
-            elif q.type == Question.TYPE_COUNTRY:
-                headers.append(str(q.question))
-
             else:
                 headers.append(str(q.question))
 
