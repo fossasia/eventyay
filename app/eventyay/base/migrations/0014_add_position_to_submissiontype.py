@@ -3,6 +3,25 @@
 from django.db import migrations, models
 
 
+def backfill_positions(apps, _schema_editor):
+    """Backfill position values for existing SubmissionType instances.
+
+    Sets position based on current default_duration ordering to maintain
+    stable order and prevent NULL-related ordering issues.
+    """
+    SubmissionType = apps.get_model('base', 'SubmissionType')
+    Event = apps.get_model('base', 'Event')
+
+    for event in Event.objects.all():
+        # Get all submission types for this event, ordered by default_duration
+        types = SubmissionType.objects.filter(event=event).order_by('default_duration', 'id')
+
+        # Assign positions starting from 1
+        for position, submission_type in enumerate(types, start=1):
+            submission_type.position = position
+            submission_type.save(update_fields=['position'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,4 +43,5 @@ class Migration(migrations.Migration):
                 verbose_name="position",
             ),
         ),
+        migrations.RunPython(backfill_positions, reverse_code=migrations.RunPython.noop),
     ]

@@ -117,6 +117,16 @@ class SubmissionType(OrderedModel, PretalxModel):
 
     update_duration.alters_data = True
 
+    def save(self, *args, **kwargs):
+        """Auto-assign position for new instances."""
+        if self.position is None and self.event_id:
+            # Get the max position for this event, default to 0 if no types exist
+            max_position = self.event.submission_types.aggregate(
+                models.Max('position')
+            )['position__max']
+            self.position = (max_position or 0) + 1
+        super().save(*args, **kwargs)
+
     @staticmethod
     def get_order_queryset(event):
         """Return the queryset used for ordering."""
