@@ -68,14 +68,14 @@ class ScheduleMixin:
             if expiry_event > timezone.now():
                 expiry = expiry_event
 
-        value = {"user_id": user_id, "exp": int(expiry.timestamp())}
+        value = {"user_id": user_id, "exp": int(expiry.timestamp()), "event_id": getattr(event, "pk", None),}
         token = signing.dumps(value, salt='my-starred-ics')
 
         request.session[key] = token
         return token
 
     @staticmethod
-    def check_token_expiry(token):
+    def check_token_expiry(token, *, event=None):
         """Check if a token exists and has enough time until expiry.
 
         Returns:
@@ -83,7 +83,7 @@ class ScheduleMixin:
         - False if token is valid but expiring soon
         - True if token is valid and not expiring soon
         """
-        _user_id, expiry_dt = load_starred_ics_token(token)
+        _user_id, expiry_dt = load_starred_ics_token(token, event=event)
         if not expiry_dt:
             return None
         time_until_expiry = expiry_dt - timezone.now()
@@ -133,6 +133,9 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
             name = url.kwargs.get('name') or unquote(self.request.GET.get('exporter'))
         else:
             name = url.url_name
+
+        if url.url_name == 'export-tokenized' and name != 'schedule-my.ics':
+            raise Http404()
 
         if name.startswith('export.'):
             name = name[len('export.') :]
@@ -334,7 +337,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             generate_new_token = True
 
             if existing_token:
-                token_status = self.check_token_expiry(existing_token)
+                token_status = self.check_token_expiry(existing_token, event=request.event)
                 if token_status is True:  # Token is valid and not expiring imminently
                     token = existing_token
                     generate_new_token = False

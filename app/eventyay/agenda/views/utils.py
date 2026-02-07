@@ -18,7 +18,7 @@ from eventyay.base.models.submission import SubmissionFavourite
 
 logger = logging.getLogger(__name__)
 
-def load_starred_ics_token(token: str):
+def load_starred_ics_token(token: str, *, event=None):
     """Validate and decode a starred-ICS token.
 
     Returns a tuple of (user_id, expiry_datetime_utc) on success, otherwise (None, None).
@@ -27,6 +27,7 @@ def load_starred_ics_token(token: str):
     Note: Token lifetime is defined at issuance time (see ScheduleMixin.generate_ics_token):
     typically valid until event end + 24h, with a short-lived fallback after that point.
     Expiry is enforced via the embedded signed 'exp' timestamp.
+    The token is also bound to the issuing event via a signed event identifier.
     """
 
     try:
@@ -34,6 +35,10 @@ def load_starred_ics_token(token: str):
             token,
             salt='my-starred-ics',
         )
+        if event is not None:
+            token_event_id = value.get('event_id')
+            if not token_event_id or int(token_event_id) != int(event.pk):
+                return None, None
         user_id = value['user_id']
         exp_ts = int(value['exp'])
         expiry_dt = timezone.datetime.fromtimestamp(exp_ts, tz=dt_timezone.utc)
@@ -48,12 +53,12 @@ def load_starred_ics_token(token: str):
         OSError,
         OverflowError,
     ) as e:
-        logger.warning('Failed to parse ICS token: %s', e)
+        logger.debug('Failed to parse ICS token: %s', e)
         return None, None
 
 
-def parse_ics_token(token: str):
-    user_id, _expiry_dt = load_starred_ics_token(token)
+def parse_ics_token(token: str, *, event=None):
+    user_id, _expiry_dt = load_starred_ics_token(token, event=event)
     return user_id
 
 
@@ -93,7 +98,7 @@ def is_visible(exporter, request, public=False):
             getattr(getattr(request, 'resolver_match', None), 'url_name', None) == 'export-tokenized'
             and getattr(getattr(request, 'resolver_match', None), 'kwargs', {}).get('token')
         ):
-            return True
+            return identifier == 'schedule-my.ics'
         return request.user.is_authenticated
 
     if hasattr(exporter, 'is_public'):
@@ -148,7 +153,7 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
     elif 'lang' in request.GET:
         activate(request.event.locale)
     if token and "-my" in exporter.identifier:
-        user_id = parse_ics_token(token)
+        user_id = parse_ics_token(token, event=request.event)
         if not user_id:
             return
         talk_ids = list(
