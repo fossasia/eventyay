@@ -15,6 +15,11 @@ class StartPageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        request = self.request
+        ctx['staff_session'] = (
+            request.user.is_authenticated
+            and request.user.has_active_staff_session(request.session.session_key)
+        )
         settings_obj = GlobalSettingsObject().settings
         header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
         if header_image.startswith('file://'):
