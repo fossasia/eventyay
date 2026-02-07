@@ -703,6 +703,7 @@ def test_submission_type_serializer(submission_type):
             "default_duration",
             "deadline",
             "requires_access_code",
+            "position",
         }
 
 
