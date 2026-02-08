@@ -138,6 +138,15 @@
                         {% include "common/fragment_language_switch.html" %}
                         {% if request.event %}
                         <li class="nav-item {% if request.user.is_staff %}nav-admin{% endif %}">
+                    {% endif %}
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
+                        <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
+                        {{ settings.INSTANCE_NAME }}
+                    </a>
+                </div>
+                <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
+                    {% if request.event %}
+                        <li>
                             {% if has_domain and not request.event.live %}
                             <form action="{% eventurl request.event 'presale:event.auth' %}"
                                     method="post"
