@@ -22,7 +22,7 @@ def test_user_deactivate(speaker, personal_answer, impersonal_answer, other_spea
     with scopes_disabled():
         assert Answer.objects.count() == 2
         count = speaker.own_actions().count()
-        name = speaker.name
+        name = speaker.fullname
         email = speaker.email
         organiser = speaker.submissions.first().event.organiser
         team = organiser.teams.first()
@@ -33,7 +33,7 @@ def test_user_deactivate(speaker, personal_answer, impersonal_answer, other_spea
         speaker.refresh_from_db()
         assert speaker.own_actions().count() == count
         assert speaker.profiles.first().biography == ""
-        assert speaker.name != name
+        assert speaker.fullname != name
         assert speaker.email != email
         assert Answer.objects.count() == 1
         assert Answer.objects.first().question.contains_personal_data is False

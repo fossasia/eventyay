@@ -29,6 +29,7 @@ from django.apps import apps
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.presale.style import regenerate_css
@@ -258,11 +259,7 @@ class EventCreateView(SafeSessionWizardView):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
 
-            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
-            if isinstance(plugins_default, str):
-                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
-            else:
-                default_plugins = list(plugins_default or [])
+            default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
                 'eventyay.plugins.ticketoutputpdf',
@@ -281,11 +278,13 @@ class EventCreateView(SafeSessionWizardView):
 
             event.has_subevents = foundation_data['has_subevents']
             event.is_video_creation = final_is_video_creation
-            event.testmode = True
+            event.testmode = False
+            event.private_testmode = True
             form_dict['basics'].save()
 
             with scope(organizer=event.organizer):
                 event.checkin_lists.create(name=_('Default'), all_products=True)
+            # New events start unpublished; set_defaults enables private test mode for tickets/talks by default.
             event.set_defaults()
             event.settings.set('timezone', basics_data['timezone'])
             event.settings.set('locale', basics_data['locale'])
@@ -543,55 +542,180 @@ class EventLive(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['issues'] = self.request.event.live_issues
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
-        ctx['private_testmode_tickets'] = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
-        ctx['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        ticketing_ready = self.request.event.products.exists() and self.request.event.quotas.exists()
+        billing_issues = self.request.event.billing_issues()
+        billing_issue_texts = {str(issue) for issue in billing_issues}
+        ctx['ticketing_ready'] = ticketing_ready
+        ctx['ticket_issues'] = (
+            [issue for issue in self.request.event.live_issues if str(issue) not in billing_issue_texts]
+            if ticketing_ready
+            else []
+        )
+        ctx['info_publish_issues'] = billing_issues
+        ctx['tickets_published'] = self.request.event.tickets_published
+        ctx['talks_published'] = self.request.event.talks_published
+        ctx['schedule_released'] = bool(self.request.event.current_schedule)
+        private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        private_talks = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        if not self.request.event.private_testmode:
+            private_tickets = False
+            private_talks = False
+        ctx['private_testmode_tickets'] = private_tickets
+        ctx['private_testmode_talks'] = private_talks
+        ctx['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
+        ctx['is_video_enabled'] = is_video_enabled(self.request.event)
+        public_pages = []
+        if self.request.event.live:
+            public_pages.append(_('Info'))
+            if self.request.event.tickets_published:
+                public_pages.append(_('Tickets'))
+            if self.request.event.talks_published:
+                public_pages.append(_('CFP'))
+            if ctx['schedule_released'] and self.request.event.talks_published:
+                public_pages.append(_('Schedule / Sessions / Speakers'))
+        ctx['public_pages'] = public_pages
+        warnings = []
+        suggestions = []
+        if not self.request.event.cfp.text or len(str(self.request.event.cfp.text)) < 50:
+            warnings.append(
+                {
+                    'text': _('The CfP doesn’t have a full text yet.'),
+                    'url': self.request.event.cfp.urls.text,
+                }
+            )
+        if (
+            self.request.event.get_feature_flag('use_tracks')
+            and self.request.event.cfp.request_track
+            and self.request.event.tracks.count() < 2
+        ):
+            suggestions.append(
+                {
+                    'text': _(
+                        'You want submitters to choose the tracks for their proposals, but you do not offer tracks for selection. Add at least one track!'
+                    ),
+                    'url': self.request.event.cfp.urls.tracks,
+                }
+            )
+        if self.request.event.submission_types.count() == 1:
+            suggestions.append(
+                {
+                    'text': _('You have configured only one session type so far.'),
+                    'url': self.request.event.cfp.urls.types,
+                }
+            )
+        if not self.request.event.talkquestions.exists():
+            suggestions.append(
+                {
+                    'text': _('You have configured no custom fields yet.'),
+                    'url': self.request.event.cfp.urls.new_question,
+                }
+            )
+        ctx['warnings'] = warnings
+        ctx['suggestions'] = suggestions
         return ctx
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('live') == 'true' and not self.request.event.live_issues:
+        event = request.event
+        ticketing_ready = event.products.exists() and event.quotas.exists()
+        billing_issue_texts = {str(issue) for issue in event.billing_issues()}
+        ticket_issues = [issue for issue in event.live_issues if str(issue) not in billing_issue_texts]
+        if request.POST.get('live') == 'true':
+            if event.billing_issues():
+                messages.error(
+                    self.request,
+                    _('Please resolve the billing information before publishing the event.'),
+                )
+                return redirect(self.request.path)
             with transaction.atomic():
-                request.event.live = True
-                request.event.save()
+                event.live = True
+                event.save()
                 self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is live now!'))
+            messages.success(self.request, _('Your event is now online.'))
         elif request.POST.get('live') == 'false':
             with transaction.atomic():
-                request.event.live = False
-                request.event.save()
+                event.live = False
+                event.save()
                 self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
             messages.success(
                 self.request,
-                _("We've taken your shop down. You can re-enable it whenever you want!"),
+                _('Your event has been unpublished.'),
             )
-        elif request.POST.get('testmode') == 'true':
+        elif request.POST.get('tickets_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing tickets.'))
+                return redirect(self.request.path)
+            if not ticketing_ready:
+                messages.error(self.request, _('Please set up ticketing before publishing tickets.'))
+                return redirect(self.request.path)
+            if ticket_issues:
+                messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                return redirect(self.request.path)
             with transaction.atomic():
-                request.event.testmode = True
-                if request.event.private_testmode:
-                    request.event.private_testmode = False
+                previous_private = event.private_testmode
+                event.tickets_published = True
+                event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
                     self.request.event.log_action(
                         'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
-                request.event.save()
+            messages.success(self.request, _('Tickets are now published.'))
+        elif request.POST.get('tickets_published') == 'false':
+            with transaction.atomic():
+                event.tickets_published = False
+                event.settings.private_testmode_tickets = True
+                event.private_testmode = True
+                if event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+            messages.success(self.request, _('Tickets have been unpublished.'))
+        elif request.POST.get('testmode') == 'true':
+            if not event.tickets_published or not ticketing_ready:
+                messages.error(
+                    self.request,
+                    _('Tickets must be published and set up before enabling test mode.'),
+                )
+                return redirect(self.request.path)
+            with transaction.atomic():
+                event.testmode = True
+                if event.startpage_featured:
+                    event.startpage_featured = False
+                    event.startpage_visible = True
+                if event.private_testmode:
+                    event.private_testmode = False
+                    event.settings.private_testmode_tickets = False
+                    event.settings.private_testmode_talks = False
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                event.save()
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
-                request.event.testmode = False
-                request.event.save()
+                event.testmode = False
+                event.save()
                 self.request.event.log_action(
                     'eventyay.event.testmode.deactivated',
                     user=self.request.user,
                     data={'delete': (request.POST.get('delete') == 'yes')},
                 )
-            request.event.cache.delete('complain_testmode_orders')
+            event.cache.delete('complain_testmode_orders')
             if request.POST.get('delete') == 'yes':
                 try:
                     with transaction.atomic():
-                        for order in request.event.orders.filter(testmode=True):
+                        for order in event.orders.filter(testmode=True):
                             order.gracefully_delete(user=self.request.user)
                 except ProtectedError:
                     messages.error(
@@ -602,46 +726,151 @@ class EventLive(TemplateView):
                         ),
                     )
                 else:
-                    request.event.cache.set('complain_testmode_orders', False, 30)
-            request.event.cartposition_set.filter(addon_to__isnull=False).delete()
-            request.event.cartposition_set.all().delete()
+                    event.cache.set('complain_testmode_orders', False, 30)
+            event.cartposition_set.filter(addon_to__isnull=False).delete()
+            event.cartposition_set.all().delete()
             messages.success(
                 self.request,
                 _("We've disabled test mode for you. Let's sell some real tickets!"),
             )
-        elif request.POST.get('private_testmode') == 'true':
-            tickets_enabled = request.POST.get('private_testmode_tickets') == 'yes'
-            talks_enabled = request.POST.get('private_testmode_talks') == 'yes'
-            if not tickets_enabled and not talks_enabled:
-                tickets_enabled = True
+        elif request.POST.get('talks_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing talks.'))
+                return redirect(self.request.path)
             with transaction.atomic():
-                request.event.private_testmode = True
-                if request.event.testmode:
-                    request.event.testmode = False
+                previous_private = event.private_testmode
+                event.talks_published = True
+                event.settings.private_testmode_talks = False
+                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Talk pages are now published.'))
+        elif request.POST.get('talks_published') == 'false':
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.talks_published = False
+                event.settings.private_testmode_talks = True
+                event.private_testmode = True
+                # Leave ticket test mode untouched when unpublishing talks.
+                if event.settings.get('talks_testmode', False, as_type=bool):
+                    event.settings.talks_testmode = False
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Talk pages have been unpublished.'))
+        elif request.POST.get('talk_testmode') == 'true':
+            if not event.talks_published:
+                messages.error(
+                    self.request,
+                    _('Talk pages must be published before enabling talk test mode.'),
+                )
+                return redirect(self.request.path)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.talks_testmode = True
+                if event.settings.get('private_testmode_talks', False, as_type=bool):
+                    event.settings.private_testmode_talks = False
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private and not event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in test mode!'))
+        elif request.POST.get('talk_testmode') == 'false':
+            with transaction.atomic():
+                event.settings.talks_testmode = False
+                event.save()
+                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in production mode.'))
+        elif request.POST.get('private_testmode_tickets_action'):
+            enable = request.POST.get('private_testmode_tickets_action') == 'enable'
+            if enable and event.tickets_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while tickets are published.'))
+                return redirect(self.request.path)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_tickets = enable
+                if enable:
+                    event.private_testmode = True
+                    if event.testmode:
+                        event.testmode = False
+                        self.request.event.log_action(
+                            'eventyay.event.testmode.deactivated',
+                            user=self.request.user,
+                            data={'delete': False},
+                        )
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
                     self.request.event.log_action(
                         'eventyay.event.testmode.deactivated',
                         user=self.request.user,
                         data={'delete': False},
                     )
-                request.event.settings.private_testmode_tickets = tickets_enabled
-                request.event.settings.private_testmode_talks = talks_enabled
-                request.event.save()
-                self.request.event.log_action(
-                    'eventyay.event.private_testmode.activated',
-                    user=self.request.user,
-                    data={},
-                )
-            messages.success(self.request, _('Private test mode is now enabled.'))
-        elif request.POST.get('private_testmode') == 'false':
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for tickets.') if enable else _('Private test mode is now disabled for tickets.'),
+            )
+        elif request.POST.get('private_testmode_talks_action'):
+            enable = request.POST.get('private_testmode_talks_action') == 'enable'
+            if enable and event.talks_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
+                return redirect(self.request.path)
             with transaction.atomic():
-                request.event.private_testmode = False
-                request.event.save()
-                self.request.event.log_action(
-                    'eventyay.event.private_testmode.deactivated',
-                    user=self.request.user,
-                    data={},
-                )
-            messages.success(self.request, _('Private test mode has been disabled.'))
+                previous_private = event.private_testmode
+                event.settings.private_testmode_talks = enable
+                if enable:
+                    event.private_testmode = True
+                    event.settings.talks_testmode = False
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
+            )
+        elif request.POST.get('toggle_video_visibility') is not None:
+            current_setting = event.settings.get('venueless_show_public_link', False)
+            new_setting = not current_setting
+            event.settings.set('venueless_show_public_link', new_setting)
+            if new_setting:
+                messages.success(self.request, _('Video link is now visible on public pages.'))
+            else:
+                messages.success(self.request, _('Video link is now hidden from public pages.'))
         return redirect(self.get_success_url())
 
     def get_success_url(self) -> str:
