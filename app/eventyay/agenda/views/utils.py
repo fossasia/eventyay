@@ -95,7 +95,7 @@ def is_visible(exporter, request, public=False):
     identifier = exporter.identifier
     if identifier.startswith('my-') or '-my' in identifier:
         resolver_match = request.resolver_match
-        if resolver_match and resolver_match.url_name == 'export-tokenized' and resolver_match.kwargs.get('token'):
+        if resolver_match and resolver_match.kwargs.get('token'):
             return identifier == 'schedule-my.ics'
         return request.user.is_authenticated
 

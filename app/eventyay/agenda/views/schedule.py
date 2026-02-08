@@ -58,7 +58,10 @@ class ScheduleMixin:
         - If the event has not yet ended (plus a 24h grace), expire at event end + 24h.
         - Otherwise (event end + 24h already passed), fall back to a short-lived token.
 
-        Any previously issued token stored in the user's session is invalidated.
+        Note:
+        The session key is rotated (so the *session-stored* token is replaced), but there is
+        no server-side revocation list. Previously issued tokens remain valid until their
+        embedded expiry time.
         """
         key = ScheduleMixin.MY_STARRED_ICS_TOKEN_SESSION_KEY
         if key in request.session:
@@ -138,12 +141,18 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         url = resolve(self.request.path_info)
-        if url.url_name in ['export', 'export-tokenized']:
-            name = url.kwargs.get('name') or unquote(self.request.GET.get('exporter'))
-        else:
-            name = url.url_name
+        url_name = url.url_name or ''
+        base_url_name = url_name[len('versioned-') :] if url_name.startswith('versioned-') else url_name
 
-        if url.url_name == 'export-tokenized' and name != 'schedule-my.ics':
+        if 'name' in url.kwargs and url.kwargs.get('name') is not None:
+            name = url.kwargs['name']
+        elif base_url_name in ['export', 'export-tokenized']:
+            exporter_param = self.request.GET.get('exporter')
+            name = unquote(exporter_param) if exporter_param else ''
+        else:
+            name = base_url_name
+
+        if base_url_name == 'export-tokenized' and name != 'schedule-my.ics':
             raise Http404()
 
         if name.startswith('export.'):
@@ -262,6 +271,24 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             return (bucket, exporter.verbose_name, identifier)
 
         exporters.sort(key=sort_key)
+
+        export_view_name = 'agenda:export'
+        export_reverse_kwargs = {
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        }
+        if self.version is not None:
+            export_view_name = 'agenda:versioned-export'
+            export_reverse_kwargs['version'] = self.version
+
+        for exporter in exporters:
+            exporter.export_url = reverse(
+                export_view_name,
+                kwargs={
+                    **export_reverse_kwargs,
+                    'name': exporter.identifier,
+                },
+            )
         return exporters
 
     @context
@@ -337,6 +364,17 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
         is_google = url_name.endswith('export.google-calendar') or url_name.endswith('export.my-google-calendar')
         is_my = url_name.endswith('export.my-google-calendar') or url_name.endswith('export.my-webcal')
 
+        ics_view_name = 'agenda:export'
+        ics_tokenized_view_name = 'agenda:export-tokenized'
+        reverse_kwargs = {
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        }
+        if self.version is not None:
+            ics_view_name = 'agenda:versioned-export'
+            ics_tokenized_view_name = 'agenda:versioned-export-tokenized'
+            reverse_kwargs['version'] = self.version
+
         if is_my:
             if not request.user.is_authenticated:
                 login_url = f"{self.request.event.urls.login}?{urlencode({'next': request.get_full_path()})}"
@@ -356,10 +394,9 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
             ics_url = request.build_absolute_uri(
                 reverse(
-                    'agenda:export-tokenized',
+                    ics_tokenized_view_name,
                     kwargs={
-                        'organizer': self.request.event.organizer.slug,
-                        'event': self.request.event.slug,
+                        **reverse_kwargs,
                         'name': 'schedule-my.ics',
                         'token': token,
                     },
@@ -368,20 +405,19 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
         else:
             ics_url = request.build_absolute_uri(
                 reverse(
-                    'agenda:export',
+                    ics_view_name,
                     kwargs={
-                        'organizer': self.request.event.organizer.slug,
-                        'event': self.request.event.slug,
+                        **reverse_kwargs,
                         'name': 'schedule.ics',
                     },
                 )
             )
 
         if is_google:
-            google_url = f"https://calendar.google.com/calendar/render?{urlencode({'cid': ics_url})}"
+            google_url = f"https://calendar.google.com/calendar/r?{urlencode({'cid': ics_url})}"
             response = HttpResponse(
                 f'<html><head><meta http-equiv="refresh" content="0;url={google_url}"></head>'
-                f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Redirecting to Google Calendar: '
+                f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Opening Google Calendar subscription: '
                 f'<a href="{google_url}">{google_url}</a></p><script>window.location.href="{google_url}";</script></body></html>',
                 content_type='text/html',
             )
@@ -391,7 +427,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
         webcal_url = urlunparse(('webcal',) + parsed[1:])
         response = HttpResponse(
             f'<html><head><meta http-equiv="refresh" content="0;url={webcal_url}"></head>'
-            f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Redirecting to: '
+            f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Opening calendar subscription: '
             f'<a href="{webcal_url}">{webcal_url}</a></p><script>window.location.href="{webcal_url}";</script></body></html>',
             content_type='text/html',
         )
