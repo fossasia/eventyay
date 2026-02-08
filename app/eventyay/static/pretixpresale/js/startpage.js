@@ -177,9 +177,29 @@
     });
   }
 
+  function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function (event) {
+      if (event.target.matches('input, textarea, [contenteditable]')) {
+        return;
+      }
+      if (
+        !event.repeat &&
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === 'k'
+      ) {
+        var searchInput = document.getElementById('startpage-search-input');
+        if (searchInput) {
+          event.preventDefault();
+          searchInput.focus();
+        }
+      }
+    });
+  }
+
   function init() {
     initShareButtons();
     initSearch();
+    initKeyboardShortcuts();
   }
 
   if (document.readyState === 'loading') {
