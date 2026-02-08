@@ -14,7 +14,6 @@ from rest_framework import (
     views,
     viewsets,
 )
-from eventyay.api.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
@@ -22,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from eventyay.api.models import OAuthAccessToken
+from eventyay.api.pagination import PageNumberPagination
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
     GiftCardSerializer,
