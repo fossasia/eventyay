@@ -9,22 +9,19 @@ def backfill_question(apps, schema_editor):
     ensuring existing rows comply with the new default/non-null semantics.
     """
     TalkQuestion = apps.get_model('base', 'TalkQuestion')
-    queryset = TalkQuestion.objects.filter(question__isnull=True)
-    for talk_question in queryset.iterator():
-        talk_question.question = ''
-        talk_question.save(update_fields=['question'])
+    TalkQuestion.objects.filter(question__isnull=True).update(question='')
 
 
 def reverse_backfill_question(apps, schema_editor):
     """
-    Reverse the backfill by setting empty question values back to NULL.
-    This allows safer rollback during deployment if issues are discovered.
+    Intentionally a no-op.
+
+    The forward migration converted existing NULL values to empty strings, but
+    we cannot reliably distinguish those rows from legitimately empty-string
+    questions or rows edited after the migration. Setting all empty strings
+    back to NULL on rollback would risk corrupting valid data.
     """
-    TalkQuestion = apps.get_model('base', 'TalkQuestion')
-    queryset = TalkQuestion.objects.filter(question='')
-    for talk_question in queryset.iterator():
-        talk_question.question = None
-        talk_question.save(update_fields=['question'])
+    pass
 
 
 class Migration(migrations.Migration):
