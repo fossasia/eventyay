@@ -1037,7 +1037,7 @@ class Submission(GenerateCode, PretalxModel):
                 data={
                     'code': speaker.code,
                     'email': speaker.email,
-                    'name': speaker.name,
+                    'name': speaker.fullname,
                 },
             )
 

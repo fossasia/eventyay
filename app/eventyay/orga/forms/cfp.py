@@ -284,6 +284,8 @@ class TalkQuestionForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
 
     def __init__(self, *args, event=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['question'].required = True
+        self.fields['question'].label = _('Custom question')
         instance = getattr(self, 'instance', None)
         if not (instance and instance.pk):
             target = self.initial.get('target')
