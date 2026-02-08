@@ -377,8 +377,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
         if is_my:
             if not request.user.is_authenticated:
-                login_url = f"{self.request.event.urls.login}?{urlencode({'next': request.get_full_path()})}"
-                return HttpResponseRedirect(login_url)
+                return HttpResponseRedirect(self.request.event.urls.login)
 
             existing_token = request.session.get(self.MY_STARRED_ICS_TOKEN_SESSION_KEY)
             generate_new_token = True
@@ -415,20 +414,10 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
 
         if is_google:
             google_url = f"https://calendar.google.com/calendar/r?{urlencode({'cid': ics_url})}"
-            response = HttpResponse(
-                f'<html><head><meta http-equiv="refresh" content="0;url={google_url}"></head>'
-                f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Opening Google Calendar subscription: '
-                f'<a href="{google_url}">{google_url}</a></p><script>window.location.href="{google_url}";</script></body></html>',
-                content_type='text/html',
-            )
-            return response
+            return HttpResponseRedirect(google_url)
 
         parsed = urlparse(ics_url)
         webcal_url = urlunparse(('webcal',) + parsed[1:])
-        response = HttpResponse(
-            f'<html><head><meta http-equiv="refresh" content="0;url={webcal_url}"></head>'
-            f'<body><p style="text-align: center; padding:2vw; font-family: Roboto,Helvetica Neue,HelveticaNeue,Helvetica,Arial,sans-serif;">Opening calendar subscription: '
-            f'<a href="{webcal_url}">{webcal_url}</a></p><script>window.location.href="{webcal_url}";</script></body></html>',
-            content_type='text/html',
-        )
+        response = HttpResponse(status=302)
+        response['Location'] = webcal_url
         return response

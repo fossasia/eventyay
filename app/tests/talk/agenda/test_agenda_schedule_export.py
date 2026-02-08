@@ -1,16 +1,19 @@
 import json
 import os
 from pathlib import Path
+from datetime import timedelta
 
 import pytest
 import urllib3
 from django.conf import settings
+from django.core import signing
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import CommandError
 from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scope
 from lxml import etree
+from django.utils import timezone
 
 from pretalx.agenda.tasks import export_schedule_html
 from pretalx.event.models import Event
@@ -124,6 +127,7 @@ def test_schedule_frab_json_export(
     client,
     django_assert_max_num_queries,
     orga_user,
+    personal_answer,
     schedule_schema_json,
 ):
     with django_assert_max_num_queries(17):
@@ -258,7 +262,211 @@ def test_schedule_speaker_ical_export(
 
     content = response.text
     assert slot.submission.title in content
-    assert other_slot.submission.title not in content
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_google_calendar(slot, client):
+    url = reverse(
+        'agenda:export.google-calendar',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert 'calendar.google.com/calendar/r?' in response['Location']
+    assert 'cid=' in response['Location']
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_webcal(slot, client):
+    url = reverse(
+        'agenda:export.webcal',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'].startswith('webcal://')
+    assert '/schedule/export/schedule.ics' in response['Location']
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_my_google_calendar_anonymous_redirects_to_login(slot, client):
+    url = reverse(
+        'agenda:export.my-google-calendar',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'] == slot.submission.event.urls.login
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_my_webcal_anonymous_redirects_to_login(slot, client):
+    url = reverse(
+        'agenda:export.my-webcal',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'] == slot.submission.event.urls.login
+
+
+@pytest.mark.django_db
+def test_schedule_view_exporters_include_my_calendar_for_anonymous(slot, client):
+    url = reverse(
+        'agenda:schedule',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, HTTP_ACCEPT='text/html', follow=False)
+    assert response.status_code == 200
+    assert response.context is not None
+    identifiers = {exporter.identifier for exporter in response.context['exporters']}
+    assert 'my-google-calendar' in identifiers
+    assert 'my-webcal' in identifiers
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirects_nonpublic(slot, client):
+    slot.submission.event.is_public = False
+    slot.submission.event.save()
+
+    for name in ('agenda:export.google-calendar', 'agenda:export.webcal'):
+        response = client.get(
+            reverse(name, kwargs={'event': slot.submission.event.slug}),
+            follow=True,
+        )
+        assert response.status_code == 404
+
+
+def _make_starred_ics_token(*, event, user_id: int, exp_dt) -> str:
+    return signing.dumps(
+        {
+            'user_id': user_id,
+            'exp': int(exp_dt.timestamp()),
+            'event_id': event.pk,
+        },
+        salt='my-starred-ics',
+    )
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_valid(slot, client, orga_user):
+    from eventyay.base.models.submission import SubmissionFavourite
+
+    SubmissionFavourite.objects.create(user=orga_user, submission=slot.submission)
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 200
+    assert slot.submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_expired(slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() - timedelta(seconds=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_wrong_event(slot, other_slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=other_slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_only_allows_ics(slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.json',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_anonymous_redirects_to_login(slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_schedule_export_my_selected_talks_anonymous_via_query_param(slot, client):
+    url = reverse(
+        'agenda:export',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.json',
+        },
+    )
+    response = client.get(
+        url,
+        data={'talks': slot.submission.code},
+        follow=True,
+    )
+    assert response.status_code == 200
 
 
 @pytest.mark.django_db

@@ -89,16 +89,21 @@ def is_public_speakers_empty(request):
 
 def is_visible(exporter, request, public=False):
     if not public:
-        return request.user.has_perm('base.orga_view_schedule', request.event)
-
-    identifier = exporter.identifier
-    if identifier.startswith('my-') or '-my' in identifier:
-        resolver_match = request.resolver_match
-        if resolver_match and resolver_match.kwargs.get('token'):
-            return identifier == 'schedule-my.ics'
         return request.user.is_authenticated
 
-    return exporter.is_public(request=request)
+    if not request.user.has_perm('base.list_schedule', request.event):
+        return False
+
+    try:
+        is_public = exporter.is_public
+    except AttributeError:
+        return exporter.public
+
+    try:
+        return is_public(request=request)
+    except Exception:
+        logger.exception('Failed to use %s.is_public() for %s', exporter.identifier, request.event.slug)
+        return exporter.public
 
 
 def get_schedule_exporters(request, public=False):
@@ -146,9 +151,16 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         activate(lang_code)
     elif 'lang' in request.GET:
         activate(request.event.locale)
+    if '-my' in exporter.identifier and request.user.id is None and not token:
+        if request.GET.get('talks'):
+            exporter.talk_ids = request.GET.get('talks').split(',')
+        else:
+            return HttpResponseRedirect(request.event.urls.login)
     if token and "-my" in exporter.identifier:
+        if not request.user.is_authenticated:
+            return HttpResponseRedirect(request.event.urls.login)
         user_id = parse_ics_token(token, event=request.event)
-        if not user_id:
+        if not user_id or int(user_id) != int(request.user.id):
             return
         talk_ids = list(
             SubmissionFavourite.objects.filter(
@@ -158,11 +170,6 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         )
         if talk_ids:
             exporter.talk_ids = talk_ids
-    elif "-my" in exporter.identifier and request.user.id is None:
-        if request.GET.get('talks'):
-            exporter.talk_ids = request.GET.get('talks').split(',')
-        else:
-            return HttpResponseRedirect(request.event.urls.login)
     elif "-my" in exporter.identifier:
         talk_ids = list(
             SubmissionFavourite.objects.filter(
