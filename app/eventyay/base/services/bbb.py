@@ -15,8 +15,8 @@ from django.urls import reverse
 from django.utils.html import escape
 from lxml import etree
 from yarl import URL
-from eventyay.features.live.exceptions import ConsumerException
 
+from eventyay.features.live.exceptions import ConsumerException
 from eventyay.base.models import BBBServer, BBBCall
 
 logger = logging.getLogger(__name__)
