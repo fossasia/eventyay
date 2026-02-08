@@ -87,7 +87,8 @@ class PluginsField(Field):
 
 class TimeZoneField(ChoiceField):
     def get_attribute(self, instance):
-        return instance.cache.get_or_set('timezone_name', lambda: instance.settings.timezone, 3600)
+        timezone_name = instance.settings.timezone
+        return instance.cache.get_or_set('timezone_name', timezone_name, 3600)
 
 
 class ValidKeysField(Field):
