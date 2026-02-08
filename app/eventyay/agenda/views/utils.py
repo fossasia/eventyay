@@ -92,18 +92,17 @@ def is_visible(exporter, request, public=False):
     if not public:
         return request.user.has_perm('base.orga_view_schedule', request.event)
 
-    identifier = getattr(exporter, 'identifier', '')
+    identifier = exporter.identifier
     if identifier.startswith('my-') or '-my' in identifier:
-        if (
-            getattr(getattr(request, 'resolver_match', None), 'url_name', None) == 'export-tokenized'
-            and getattr(getattr(request, 'resolver_match', None), 'kwargs', {}).get('token')
-        ):
+        resolver_match = request.resolver_match
+        if resolver_match and resolver_match.url_name == 'export-tokenized' and resolver_match.kwargs.get('token'):
             return identifier == 'schedule-my.ics'
         return request.user.is_authenticated
 
-    if hasattr(exporter, 'is_public'):
+    exporter_is_public = getattr(exporter, 'is_public', None)
+    if callable(exporter_is_public):
         with suppress(Exception):
-            return exporter.is_public(request=request)
+            return exporter_is_public(request=request)
     return exporter.public
 
 

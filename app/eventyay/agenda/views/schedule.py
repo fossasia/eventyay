@@ -35,7 +35,14 @@ from eventyay.schedule.exporters import ScheduleData
 
 
 class ScheduleMixin:
+    # Starred-sessions calendar token timing knobs:
+    # - GRACE_PERIOD: token stays valid until event end + this grace window.
+    # - FALLBACK_LIFETIME: used only after event end + grace has already passed.
+    # - MIN_VALIDITY: refresh buffer; don't reuse a token if it will expire too soon.
     MY_STARRED_ICS_TOKEN_SESSION_KEY = 'my_starred_ics_token'
+    MY_STARRED_ICS_TOKEN_GRACE_PERIOD = timedelta(hours=24)
+    MY_STARRED_ICS_TOKEN_FALLBACK_LIFETIME = timedelta(seconds=30)
+    MY_STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
 
     @cached_property
     def version(self):
@@ -57,18 +64,20 @@ class ScheduleMixin:
         if key in request.session:
             del request.session[key]
 
-        expiry_fallback = timezone.now() + timedelta(seconds=30)
+        expiry_fallback = timezone.now() + ScheduleMixin.MY_STARRED_ICS_TOKEN_FALLBACK_LIFETIME
         expiry = expiry_fallback
-        event = getattr(request, 'event', None)
-        event_end = getattr(event, 'date_to', None)
-        if event_end:
-            expiry_event = event_end + timedelta(hours=24)
-            if timezone.is_naive(expiry_event):
-                expiry_event = timezone.make_aware(expiry_event, timezone=timezone.get_current_timezone())
-            if expiry_event > timezone.now():
-                expiry = expiry_event
+        event = request.event
+        expiry_event = event.date_to + ScheduleMixin.MY_STARRED_ICS_TOKEN_GRACE_PERIOD
+        if timezone.is_naive(expiry_event):
+            expiry_event = timezone.make_aware(expiry_event, timezone=timezone.get_current_timezone())
+        if expiry_event > timezone.now():
+            expiry = expiry_event
 
-        value = {"user_id": user_id, "exp": int(expiry.timestamp()), "event_id": getattr(event, "pk", None),}
+        value = {
+            "user_id": user_id,
+            "exp": int(expiry.timestamp()),
+            "event_id": event.pk,
+        }
         token = signing.dumps(value, salt='my-starred-ics')
 
         request.session[key] = token
@@ -87,7 +96,7 @@ class ScheduleMixin:
         if not expiry_dt:
             return None
         time_until_expiry = expiry_dt - timezone.now()
-        return time_until_expiry >= timedelta(seconds=10)
+        return time_until_expiry >= ScheduleMixin.MY_STARRED_ICS_TOKEN_MIN_VALIDITY
 
     def get_object(self):
         schedule = None
@@ -244,13 +253,13 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         }
 
         def sort_key(exporter):
-            identifier = getattr(exporter, 'identifier', '')
+            identifier = exporter.identifier
             if identifier in order:
-                return (order[identifier], getattr(exporter, 'verbose_name', ''), identifier)
+                return (order[identifier], exporter.verbose_name, identifier)
 
             is_my = identifier.startswith('my-') or '-my' in identifier
             bucket = 50 if not is_my else 150
-            return (bucket, getattr(exporter, 'verbose_name', ''), identifier)
+            return (bucket, exporter.verbose_name, identifier)
 
         exporters.sort(key=sort_key)
         return exporters
