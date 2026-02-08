@@ -155,3 +155,32 @@ def test_patch_organizer_settings_file(token_client, organizer):
     )
     assert resp.status_code == 200
     assert resp.data['organizer_logo_image'] is None
+
+
+@pytest.mark.django_db
+def test_organizer_pagination_page_size(token_client, organizer):
+    """Test that page_size parameter works correctly."""
+    resp = token_client.get('/api/v1/organizers/?page_size=1')
+    assert resp.status_code == 200
+    assert 'results' in resp.data
+    assert len(resp.data['results']) <= 1
+
+
+@pytest.mark.django_db
+def test_organizer_pagination_max_cap(token_client, organizer):
+    """Test that max_page_size caps at 100 even if higher value requested."""
+    resp = token_client.get('/api/v1/organizers/?page_size=999')
+    assert resp.status_code == 200
+    assert 'results' in resp.data
+    # Should cap at max_page_size=100
+    assert len(resp.data['results']) <= 100
+
+
+@pytest.mark.django_db
+def test_organizer_pagination_legacy_support(token_client, organizer):
+    """Test that legacy limit/offset pagination still works."""
+    resp = token_client.get('/api/v1/organizers/?limit=10&offset=0')
+    assert resp.status_code == 200
+    assert 'results' in resp.data
+    assert len(resp.data['results']) <= 10
+

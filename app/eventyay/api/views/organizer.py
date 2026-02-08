@@ -14,7 +14,7 @@ from rest_framework import (
     views,
     viewsets,
 )
-from rest_framework.pagination import PageNumberPagination
+from eventyay.api.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied
 from rest_framework.mixins import CreateModelMixin, DestroyModelMixin
@@ -52,7 +52,6 @@ from eventyay.presale.style import regenerate_organizer_css
 
 class OrganizerPagination(PageNumberPagination):
     page_size = 25
-    page_size_query_param = 'page_size'
     max_page_size = 100
 
 
