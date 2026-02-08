@@ -125,6 +125,9 @@ After running ``uv sync```, activate a virtual environment
 
   python manage.py runserver
 
+Mobile testing note: If you want to test the site from an **Android emulator**, use
+``http://10.0.2.2:8000/`` (Android's alias for the host machine's localhost).
+
 
 Notes: If you get permission errors for eventyay/static/CACHE, make sure that the directory and
 all below it are own by you.

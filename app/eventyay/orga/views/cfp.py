@@ -39,6 +39,7 @@ from eventyay.orga.forms.cfp import (
     QuestionFilterForm,
     ReminderFilterForm,
     SubmitterAccessCodeForm,
+    CfPGeneralSettingsForm,
 )
 from eventyay.base.models import (
     AnswerOption,
@@ -71,7 +72,8 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     @cached_property
     def sform(self):
-        return CfPSettingsForm(
+        # Use simple form as we only edit general settings here, no custom questions
+        return CfPGeneralSettingsForm(
             read_only=(self.action == 'view'),
             locales=self.request.event.locales,
             obj=self.request.event,
@@ -116,6 +118,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def sform(self):
+        # Use full form to include custom questions and field configuration
         return CfPSettingsForm(
             read_only=False,
             locales=self.request.event.locales,
@@ -209,8 +212,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
                        'content_locale', 'image', 'do_not_record']
-        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
-                       'additional_speaker']
+        speaker_keys = ['fullname', 'biography', 'avatar', 'avatar_source', 'avatar_license',
+                       'availabilities', 'additional_speaker']
         
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)
