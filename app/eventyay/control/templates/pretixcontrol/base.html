@@ -51,6 +51,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quicksetup.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/dashboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
+            <script type="module" src="{% static "pretixcontrol/js/ui/secret-toggle.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
@@ -196,8 +197,6 @@
                         {% endfor %}
                     {% endif %}
 
-                    {% include "common/fragment_language_switch.html" %}
-
                     {% if request.user.is_staff and not staff_session %}
                         <li>
 							<form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -214,6 +213,8 @@
                             </a>
                         </li>
                     {% endif %}
+
+                    {% include "common/fragment_language_switch.html" %}
                     {% if warning_update_available %}
                         <li>
                             <a href="{% url 'eventyay_admin:admin.global.update' %}" class="danger">
@@ -230,7 +231,11 @@
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
                                 {% if request.event %}
-                                    <a href="{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
+                                    {% if request.resolver_match and request.resolver_match.namespace == "eventyay_common" %}
+                                        <a href="{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
+                                    {% else %}
+                                        <a href="{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
+                                    {% endif %}
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
@@ -265,13 +270,21 @@
                             {% endblock %}
                         </div>
                         <ul class="nav" id="side-menu">
-                            {% if request.event and request.event.testmode %}
+                            {% if request.event %}
+                                {% if request.event.testmode or request.event.private_testmode %}
                                 <li class="testmode">
                                     <a href="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}">
                                         <i class="fa fa-warning fa-fw"></i>
-                                        <span class="sidebar-text">{% trans "TEST MODE" %}</span>
+                                        <span class="sidebar-text">
+                                            {% if request.event.private_testmode %}
+                                                {% trans "PRIVATE TEST MODE" %}
+                                            {% else %}
+                                                {% trans "TEST MODE" %}
+                                            {% endif %}
+                                        </span>
                                     </a>
                                 </li>
+                                {% endif %}
                             {% endif %}
                             {% block nav %}
                                 {% for nav in nav_items %}

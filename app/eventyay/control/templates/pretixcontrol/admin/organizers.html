@@ -47,7 +47,7 @@
 			{% for o in organizers %}
 			<tr>
 				<td><strong>
-                    <a href="{% url "control:organizer" organizer=o.slug %}">{{ o.name }}</a>
+                    <a href="{% url "eventyay_common:organizer.events" organizer=o.slug %}">{{ o.name }}</a>
                 </strong></td>
                 <td>{{ o.slug }}</td>
 			</tr>

@@ -69,24 +69,9 @@ urlpatterns = [
         name='organizer',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/edit$',
-        organizer_views.organizer_view.OrganizerUpdate.as_view(),
-        name='organizer.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/delete$',
-        organizer_views.organizer_view.OrganizerDelete.as_view(),
-        name='organizer.delete',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/settings/display$',
         organizer_views.organizer_view.OrganizerDisplaySettings.as_view(),
         name='organizer.display',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/settings/billing$',
-        organizer_views.organizer_view.BillingSettings.as_view(),
-        name='organizer.settings.billing',
     ),
     url(
         r'^organizer/(?P<organizer>[^/]+)/setup_intent$',
@@ -159,56 +144,6 @@ urlpatterns = [
         name='organizer.webhook.logs',
     ),
     url(
-        r'^organizer/(?P<organizer>[^/]+)/devices$',
-        organizer_views.device_view.DeviceListView.as_view(),
-        name='organizer.devices',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/add$',
-        organizer_views.device_view.DeviceCreateView.as_view(),
-        name='organizer.device.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/edit$',
-        organizer_views.device_view.DeviceUpdateView.as_view(),
-        name='organizer.device.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/connect$',
-        organizer_views.device_view.DeviceConnectView.as_view(),
-        name='organizer.device.connect',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/revoke$',
-        organizer_views.device_view.DeviceRevokeView.as_view(),
-        name='organizer.device.revoke',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/device/(?P<device>[^/]+)/logs$',
-        organizer_views.device_view.DeviceLogView.as_view(),
-        name='organizer.device.logs',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gates$',
-        organizer_views.gate_view.GateListView.as_view(),
-        name='organizer.gates',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/add$',
-        organizer_views.gate_view.GateCreateView.as_view(),
-        name='organizer.gate.add',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/edit$',
-        organizer_views.gate_view.GateUpdateView.as_view(),
-        name='organizer.gate.edit',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/gate/(?P<gate>[^/]+)/delete$',
-        organizer_views.gate_view.GateDeleteView.as_view(),
-        name='organizer.gate.delete',
-    ),
-    url(
         r'^organizer/(?P<organizer>[^/]+)/slugrng',
         main.SlugRNG.as_view(),
         name='events.add.slugrng',
@@ -217,16 +152,6 @@ urlpatterns = [
         r'^organizer/(?P<organizer>[^/]+)/logs',
         organizer.LogView.as_view(),
         name='organizer.log',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/export/$',
-        organizer.ExportView.as_view(),
-        name='organizer.export',
-    ),
-    url(
-        r'^organizer/(?P<organizer>[^/]+)/export/do$',
-        organizer.ExportDoView.as_view(),
-        name='organizer.export.do',
     ),
     url(r'^nav/typeahead/$', typeahead.nav_context_list, name='nav.typeahead'),
     url(
@@ -243,8 +168,8 @@ urlpatterns = [
             [
                 url(r'^$', dashboards.event_index, name='event.index'),
                 url(r'^widgets.json$', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
-                url(r'^live/$', event.EventLive.as_view(), name='event.live'),
                 url(r'^logs/$', event.EventLog.as_view(), name='event.log'),
+                url(r'^live/$', event.EventLive.as_view(), name='event.live'),
                 url(r'^delete/$', event.EventDelete.as_view(), name='event.delete'),
                 url(r'^requiredactions/$', event.EventActions.as_view(), name='event.requiredactions'),
                 url(
