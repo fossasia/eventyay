@@ -103,7 +103,7 @@ def test_speaker_list(client, django_assert_num_queries, event, speaker):
     with django_assert_num_queries(9):
         response = client.get(url, follow=True)
     assert response.status_code == 200
-    assert speaker.name in response.text
+    assert speaker.fullname in response.text
 
 
 @pytest.mark.django_db
