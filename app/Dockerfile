@@ -73,10 +73,7 @@ COPY ./entrypoint.sh .
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
 RUN chmod +x /usr/src/app/entrypoint.sh
 
-# Copy Python virtual environment from builder
-COPY --from=builder /usr/src/app/.venv /usr/src/app/.venv
-
-# Copy application code
+# Copy application code from builder (includes .venv)
 COPY --from=builder /usr/src/app /usr/src/app
 
 # Copy node_modules from builder
