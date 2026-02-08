@@ -169,7 +169,6 @@ body:not(.sidebar-minimized) #page-wrapper {
 
     .nav>li {
       min-height: 41px;
-      height: auto;
 
       >a {
         display: flex;
@@ -177,7 +176,6 @@ body:not(.sidebar-minimized) #page-wrapper {
         font-size: 14px;
         padding: 10px 15px;
         min-height: 41px;
-        height: auto;
 
         span {
           display: inline;
@@ -217,14 +215,6 @@ body:not(.sidebar-minimized) #page-wrapper {
 
       &.collapse.in {
         display: block;
-      }
-
-      li {
-        border-bottom: none;
-
-        a {
-          padding-left: 37px;
-        }
       }
     }
   }
