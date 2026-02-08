@@ -25,6 +25,7 @@ When joining a BBB room or call, the following errors may occur:
 
 **bbb.join.missing_profile**
   The user has not set a display name in their profile. The UI should prompt the user to:
+
   1. Navigate to their profile settings
   2. Set a display name
   3. Retry joining the video conference
@@ -56,7 +57,7 @@ If a private conversation includes a chat message referring to a call ID, you ca
 
 The response will contain a URL for the video chat. See the Error Handling section above for possible errors when joining.
 
-In a private meeting, everyone has moderator rights.
+In private meetings, all participants have moderator rights.
 
 Recordings
 ----------
