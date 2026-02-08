@@ -9,8 +9,22 @@ def backfill_question(apps, schema_editor):
     ensuring existing rows comply with the new default/non-null semantics.
     """
     TalkQuestion = apps.get_model('base', 'TalkQuestion')
-    db_alias = schema_editor.connection.alias
-    TalkQuestion.objects.using(db_alias).filter(question__isnull=True).update(question='')
+    queryset = TalkQuestion.objects.filter(question__isnull=True)
+    for talk_question in queryset.iterator():
+        talk_question.question = ''
+        talk_question.save(update_fields=['question'])
+
+
+def reverse_backfill_question(apps, schema_editor):
+    """
+    Reverse the backfill by setting empty question values back to NULL.
+    This allows safer rollback during deployment if issues are discovered.
+    """
+    TalkQuestion = apps.get_model('base', 'TalkQuestion')
+    queryset = TalkQuestion.objects.filter(question='')
+    for talk_question in queryset.iterator():
+        talk_question.question = None
+        talk_question.save(update_fields=['question'])
 
 
 class Migration(migrations.Migration):
@@ -20,7 +34,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(backfill_question, migrations.RunPython.noop),
+        migrations.RunPython(backfill_question, reverse_backfill_question),
         migrations.AlterField(
             model_name='talkquestion',
             name='question',
