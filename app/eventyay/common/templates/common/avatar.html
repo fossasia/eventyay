@@ -16,13 +16,13 @@
                 {% endif %}
             </div>
             <div class="form-image-preview {% if not user.avatar %}{% if not user.get_gravatar or not request.event.cfp.enable_gravatar %}d-none{% endif %}{% endif %}">
-                <a href="{% if user.avatar %}{{ user.avatar|thumbnail:"default" }}{% endif %}" data-lightbox="{% if user.avatar %}{{ user.avatar.url }}{% endif %}">
+                <a href="{% if user.avatar %}{{ user.avatar|thumbnail:"default" }}{% endif %}" data-lightbox="{% if user.avatar %}{{ user.avatar_url }}{% endif %}">
                     <img loading="lazy"
                          class="avatar"
                          data-gravatar="{{ user.gravatar_parameter }}"
-                         data-avatar="{% if user.avatar %}{{ user.avatar.url }}{% endif %}"
+                         data-avatar="{% if user.avatar %}{{ user.avatar_url }}{% endif %}"
                          alt="{% translate "Your avatar" %}"
-                         {% if user.avatar %}src="{{ user.avatar.url }}"{% endif %}
+                         {% if user.avatar %}src="{{ user.avatar_url }}"{% endif %}
                          {% if not user.avatar and user.get_gravatar and request.event.cfp.enable_gravatar %}src="https://www.gravatar.com/avatar/{{ user.gravatar_parameter }}?s=140&d=identicon"{% endif %} />
                 </a>
             </div>
