@@ -208,7 +208,7 @@ urlpatterns = [
                             path(
                                 '',
                                 submission.SubmissionContentReadView.as_view(),
-                                name='submissions.content.view',
+                                name='submissions.content',
                             ),
                             path(
                                 'edit',

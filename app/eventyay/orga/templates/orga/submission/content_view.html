@@ -98,7 +98,7 @@
                     <ul>
                         {% for resource in submission.resources.all %}
                             <li>
-                                <a href="{{ resource.resource.url }}">{{ resource.description|default:resource.filename }}</a>
+                                <a href="{{ resource.url }}">{{ resource.description|default:resource.filename }}</a>
                             </li>
                         {% endfor %}
                     </ul>
