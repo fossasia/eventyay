@@ -165,6 +165,7 @@ function getJoinErrorMessage(error) {
 
 async function initializeIframe(mute) {
 	joinErrorMessage.value = null
+	iframeError.value = null
 	try {
 		if (!module.value) return
 		let iframeUrl
