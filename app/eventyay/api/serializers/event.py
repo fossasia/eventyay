@@ -93,8 +93,7 @@ class TimeZoneField(ChoiceField):
 
 class ValidKeysField(Field):
     def to_representation(self, value):
-        valid_keys = self._get(value)
-        return value.cache.get_or_set('ticket_secret_valid_keys', valid_keys, 120)
+        return value.cache.get_or_set('ticket_secret_valid_keys', lambda: self._get(value), 120)
 
     def _get(self, value):
         return {

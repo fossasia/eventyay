@@ -32,7 +32,7 @@ from eventyay.api.auth.api_auth import (
     UserDeletePermissions,
     EventPermissions,
 )
-from eventyay.api.auth.permission import EventCRUDPermission
+from eventyay.api.auth.permission import CloneEventPermission, EventCRUDPermission, EventPermission
 from eventyay.api.serializers.event import (
     CloneEventSerializer,
     EventSerializer as ApiEventSerializer,
@@ -117,9 +117,11 @@ class EventViewSet(viewsets.ModelViewSet):
         else:
             qs = Event.objects.none()
 
-        if getattr(self.request, 'organizer', None):
-            qs = qs.filter(organizer=self.request.organizer)
-            qs = filter_qs_by_attr(qs, self.request)
+        organizer = getattr(self.request, 'organizer', None)
+        if organizer:
+            qs = qs.filter(organizer=organizer)
+
+        qs = filter_qs_by_attr(qs, self.request)
 
         return qs.prefetch_related('meta_values', 'meta_values__property', 'seat_category_mappings')
 
@@ -177,7 +179,7 @@ class CloneEventViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     lookup_url_kwarg = 'event'
     http_method_names = ['post']
-    write_permission = 'can_create_events'
+    permission_classes = (CloneEventPermission,)
 
     def get_serializer_context(self):
         ctx = super().get_serializer_context()
@@ -333,6 +335,7 @@ class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
 
 class EventSettingsView(views.APIView):
     permission = 'can_change_event_settings'
+    permission_classes = (EventPermission,)
 
     def get(self, request, *args, **kwargs):
         s = EventSettingsSerializer(
