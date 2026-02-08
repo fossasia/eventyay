@@ -1,4 +1,5 @@
 import json
+
 from django import template
 from i18nfield.strings import LazyI18nString
 
