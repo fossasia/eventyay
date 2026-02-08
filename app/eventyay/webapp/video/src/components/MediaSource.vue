@@ -256,30 +256,8 @@ function handleBBBError(error) {
 	const errorCode = error.apiError?.code
 	console.error('[BBB Error]', errorCode, error)
 	
-	switch (errorCode) {
-		case 'bbb.join.missing_profile':
-			iframeError.value = {
-				code: 'bbb.join.missing_profile',
-				title: 'Profile incomplete',
-				message: 'Please set a display name in your profile to join the video conference.',
-				action: 'Go to profile settings'
-			}
-			break
-		case 'bbb.failed':
-			iframeError.value = {
-				code: 'bbb.failed',
-				title: 'Video conference unavailable',
-				message: 'The video conference server is currently unavailable. Please try again later.',
-				action: 'Try again'
-			}
-			break
-		default:
-			iframeError.value = {
-				code: errorCode || 'bbb.unknown',
-				title: 'Video conference error',
-				message: error.message || 'An error occurred while connecting to the video conference.',
-				action: 'Try again'
-			}
+	iframeError.value = {
+		code: errorCode || 'bbb.unknown'
 	}
 }
 
@@ -287,30 +265,8 @@ function handleZoomError(error) {
 	const errorCode = error.apiError?.code
 	console.error('[Zoom Error]', errorCode, error)
 	
-	switch (errorCode) {
-		case 'zoom.join.missing_profile':
-			iframeError.value = {
-				code: 'zoom.join.missing_profile',
-				title: 'Profile incomplete',
-				message: 'Please set a display name in your profile to join the video call.',
-				action: 'Go to profile settings'
-			}
-			break
-		case 'zoom.failed':
-			iframeError.value = {
-				code: 'zoom.failed',
-				title: 'Video call unavailable',
-				message: 'The video call service is currently unavailable. Please try again later.',
-				action: 'Try again'
-			}
-			break
-		default:
-			iframeError.value = {
-				code: errorCode || 'zoom.unknown',
-				title: 'Video call error',
-				message: error.message || 'An error occurred while connecting to the video call.',
-				action: 'Try again'
-			}
+	iframeError.value = {
+		code: errorCode || 'zoom.unknown'
 	}
 }
 
