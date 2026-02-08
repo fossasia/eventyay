@@ -38,7 +38,6 @@ def escape_name(name):
 
 def choose_server(event, room=None, prefer_server=None):
     servers = BBBServer.objects.filter(active=True)
-    
 
     # If we're looking for a server to put a direct message on (no room), we'll take a server with
     # the lowest 'cost', which means it is least used *right now*.
