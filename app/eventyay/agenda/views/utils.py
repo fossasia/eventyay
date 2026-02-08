@@ -2,7 +2,6 @@ import hashlib
 import random
 import string
 import logging
-from contextlib import suppress
 from datetime import timezone as dt_timezone
 
 from django.contrib import messages
@@ -99,11 +98,7 @@ def is_visible(exporter, request, public=False):
             return identifier == 'schedule-my.ics'
         return request.user.is_authenticated
 
-    exporter_is_public = getattr(exporter, 'is_public', None)
-    if callable(exporter_is_public):
-        with suppress(Exception):
-            return exporter_is_public(request=request)
-    return exporter.public
+    return exporter.is_public(request=request)
 
 
 def get_schedule_exporters(request, public=False):

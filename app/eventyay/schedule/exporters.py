@@ -366,6 +366,7 @@ class FavedICalExporter(BaseExporter):
     icon = 'fa-calendar'
     show_public = True
     cors = '*'
+    schedule = None
 
     def is_public(self, request, **kwargs):
         return (
@@ -379,7 +380,7 @@ class FavedICalExporter(BaseExporter):
             return None
 
         netloc = urlparse(settings.SITE_URL).netloc
-        schedule = getattr(self, 'schedule', None) or request.event.current_schedule
+        schedule = self.schedule or request.event.current_schedule
         if not schedule:
             return None
         slots = schedule.scheduled_talks.filter(submission__favourites__user__in=[request.user])
