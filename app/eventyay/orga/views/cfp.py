@@ -6,7 +6,7 @@ from collections import defaultdict
 from csp.decorators import csp_update
 from django.contrib import messages
 from django.db import models, transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, JsonResponse
@@ -172,8 +172,6 @@ class CfPForms(EventPermissionRequired, TemplateView):
             
             data = []
             for q in ordered_questions:
-                if not hasattr(q, 'answer_count'):
-                    q.answer_count = q.answers.count()
                 data.append({
                     'question': q,
                     'field': sform[f'question_{q.pk}']
@@ -185,23 +183,34 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER], 'reviewer')
 
         event = self.request.event
+        submission_counts = event.submissions.aggregate(
+            title=Count('id', filter=~Q(title='')),
+            abstract=Count('id', filter=~Q(abstract='')),
+            description=Count('id', filter=~Q(description='')),
+            notes=Count('id', filter=~Q(notes='')),
+            do_not_record=Count('id', filter=Q(do_not_record=True)),
+            image=Count('id', filter=~Q(image='')),
+            track=Count('id', filter=Q(track__isnull=False)),
+            duration=Count('id', filter=Q(duration__isnull=False)),
+            content_locale=Count('id', filter=~Q(content_locale='')),
+        )
+        
+        speaker_counts = SpeakerProfile.objects.filter(event=event).aggregate(
+            name=Count('id', filter=~Q(user__fullname='') & Q(user__fullname__isnull=False)),
+            biography=Count('id', filter=~Q(biography='') & Q(biography__isnull=False)),
+            avatar=Count('id', filter=~Q(user__avatar='') & Q(user__avatar__isnull=False)),
+            avatar_source=Count('id', filter=~Q(user__avatar_source='') & Q(user__avatar_source__isnull=False)),
+            avatar_license=Count('id', filter=~Q(user__avatar_license='') & Q(user__avatar_license__isnull=False)),
+        )
+
+        additional_speaker_count = event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count()
+        availabilities_count = Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
+
         context['field_counts'] = {
-            'name': SpeakerProfile.objects.filter(event=event).exclude(user__fullname='').exclude(user__fullname__isnull=True).count(),
-            'title': event.submissions.exclude(title='').count(),
-            'abstract': event.submissions.exclude(abstract='').count(),
-            'description': event.submissions.exclude(description='').count(),
-            'notes': event.submissions.exclude(notes='').count(),
-            'do_not_record': event.submissions.filter(do_not_record=True).count(),
-            'image': event.submissions.exclude(image='').count(),
-            'track': event.submissions.exclude(track__isnull=True).count(),
-            'duration': event.submissions.exclude(duration__isnull=True).count(),
-            'content_locale': event.submissions.exclude(content_locale='').count(),
-            'additional_speaker': event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count(),
-            'biography': SpeakerProfile.objects.filter(event=event).exclude(biography='').exclude(biography__isnull=True).count(),
-            'avatar': SpeakerProfile.objects.filter(event=event).exclude(user__avatar='').exclude(user__avatar__isnull=True).count(),
-            'avatar_source': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_source='').exclude(user__avatar_source__isnull=True).count(),
-            'avatar_license': SpeakerProfile.objects.filter(event=event).exclude(user__avatar_license='').exclude(user__avatar_license__isnull=True).count(),
-            'availabilities': Availability.objects.filter(event=event).values('person').distinct().count(),
+            **submission_counts,
+            **speaker_counts,
+            'additional_speaker': additional_speaker_count,
+            'availabilities': availabilities_count,
         }
 
         return context

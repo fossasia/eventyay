@@ -447,8 +447,12 @@
                                 <td class="text-center">
                                     <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
                                         data-field="is_public"
-                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
                                         <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
                                             aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>
@@ -795,8 +799,12 @@
                                 <td class="text-center">
                                     <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
                                         data-field="is_public"
-                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
                                         <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
                                             aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>
@@ -880,8 +888,12 @@
                                 <td class="text-center">
                                     <label class="toggle-switch" data-question-id="{{ item.question.pk }}"
                                         data-field="is_public"
-                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}">
+                                        aria-label="{% translate 'Toggle public state for' %} {{ item.question.question }}"
+                                        {% if item.question.answer_count > 0 and not item.question.is_public %}
+                                            title="{% translate 'You cannot make this field public because answers already exist.' %}"
+                                        {% endif %}>
                                         <input type="checkbox" {% if item.question.is_public %}checked{% endif %}
+                                            {% if item.question.answer_count > 0 and not item.question.is_public %}disabled{% endif %}
                                             aria-label="{% translate 'Public toggle for' %} {{ item.question.question }}">
                                         <span class="toggle-slider"></span>
                                     </label>

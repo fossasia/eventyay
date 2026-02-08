@@ -13,7 +13,7 @@ from eventyay.common.forms.widgets import HtmlDateInput, HtmlTimeInput
 from eventyay.base.models import Availability, Room, TalkSlot
 
 
-class AvailabilitiesFormMixin:
+class AvailabilitiesFormMixin(forms.Form):
     availabilities = forms.CharField(
         label=_('Availability'),
         help_text=_(
