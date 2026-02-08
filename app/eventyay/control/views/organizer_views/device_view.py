@@ -31,7 +31,7 @@ class DeviceCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.device.connect',
+            'eventyay_common:organizer.devices.connect',
             kwargs={'organizer': self.request.organizer.slug, 'device': self.object.pk},
         )
 
@@ -111,7 +111,7 @@ class DeviceUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.devices',
+            'eventyay_common:organizer.devices',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
@@ -152,7 +152,7 @@ class DeviceConnectView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMix
             messages.success(request, _('This device has been set up successfully.'))
             return redirect(
                 reverse(
-                    'control:organizer.devices',
+                    'eventyay_common:organizer.devices',
                     kwargs={
                         'organizer': self.request.organizer.slug,
                     },
@@ -187,7 +187,7 @@ class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
             messages.success(request, _('This device currently does not have access.'))
             return redirect(
                 reverse(
-                    'control:organizer.devices',
+                    'eventyay_common:organizer.devices',
                     kwargs={
                         'organizer': self.request.organizer.slug,
                     },
@@ -203,7 +203,7 @@ class DeviceRevokeView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixi
         messages.success(request, _('Access for this device has been revoked.'))
         return redirect(
             reverse(
-                'control:organizer.devices',
+                'eventyay_common:organizer.devices',
                 kwargs={
                     'organizer': self.request.organizer.slug,
                 },

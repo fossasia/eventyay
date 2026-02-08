@@ -120,7 +120,7 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    <a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
                         {{ settings.INSTANCE_NAME }}
                     </a>
@@ -219,6 +219,22 @@
                         </div>
                         <ul class="nav" id="side-menu">
                             {% block nav %}
+                                {% if request.event %}
+                                    {% if request.event.testmode or request.event.private_testmode %}
+                                        <li class="testmode">
+                                            <a href="{% url "eventyay_common:event.live" event=request.event.slug organizer=request.organizer.slug %}">
+                                                <i class="fa fa-warning fa-fw"></i>
+                                                <span class="sidebar-text">
+                                                    {% if request.event.private_testmode %}
+                                                        {% trans "PRIVATE TEST MODE" %}
+                                                    {% else %}
+                                                        {% trans "TEST MODE" %}
+                                                    {% endif %}
+                                                </span>
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                {% endif %}
                                 {% for nav in nav_items %}
                                     <li>
                                         <a href="{{ nav.url }}" {% if nav.active %}class="active"{% endif %}

@@ -80,7 +80,15 @@ const updateGravatarInput = async (ev) => {
 
 const initFileInput = function () {
     document.querySelectorAll(".avatar-form").forEach(form => {
-        form.querySelector(".form-image-preview").remove() // remove default preview
+        const preview = form.querySelector(".form-image-preview");
+        // Don't remove the preview element - it needs to persist
+        if (preview) {
+            const img = preview.querySelector('img');
+            if (img && !img.src) {
+                preview.classList.add('d-none');
+            }
+        }
+        
         document.querySelectorAll('.avatar-upload input[type=file]').forEach((element) => {
             element.addEventListener('change', updateFileInput)
         })

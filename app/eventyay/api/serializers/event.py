@@ -252,7 +252,7 @@ class EventSerializer(I18nAwareModelSerializer):
         meta_data = validated_data.pop('meta_data', None)
         product_meta_properties = validated_data.pop('product_meta_properties', None)
         validated_data.pop('seat_category_mapping', None)
-        plugins = validated_data.pop('plugins', settings.PRETIX_PLUGINS_DEFAULT.split(','))
+        plugins = validated_data.pop('plugins', list(settings.EVENTYAY_PLUGINS_DEFAULT))
         tz = validated_data.pop('timezone', None)
         event = super().create(validated_data)
 
