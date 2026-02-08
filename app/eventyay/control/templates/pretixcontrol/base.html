@@ -51,6 +51,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quicksetup.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/dashboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
+            <script type="module" src="{% static "pretixcontrol/js/ui/secret-toggle.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
@@ -123,7 +124,7 @@
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
-					<a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
+					<a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
                         {{ django_settings.INSTANCE_NAME }}
                     </a>
@@ -272,7 +273,7 @@
                             {% if request.event %}
                                 {% if request.event.testmode or request.event.private_testmode %}
                                 <li class="testmode">
-                                    <a href="{% url "eventyay_common:event.live" event=request.event.slug organizer=request.organizer.slug %}">
+                                    <a href="{% url "control:event.live" event=request.event.slug organizer=request.organizer.slug %}">
                                         <i class="fa fa-warning fa-fw"></i>
                                         <span class="sidebar-text">
                                             {% if request.event.private_testmode %}
