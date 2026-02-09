@@ -270,12 +270,13 @@ function onPointerDown(event: PointerEvent): void {
 		position: absolute
 		top: 0
 		right: 0
-		padding: 4px 4px
+		padding: 4px
 		margin: 4px
 		color: #b23e65
 		font-size: 16px
 		.warning-icon span
 			padding-right: 4px
+
 @media print
 	.c-linear-schedule-session.isbreak
 		border: 2px solid $clr-grey-300 !important

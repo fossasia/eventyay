@@ -451,12 +451,12 @@ const stopDragging = (event: PointerEvent) => {
       ...props.draggedSession,
       start: moment(start.format()),
       end: moment(end.format()),
-      room: { 
+      room: {
         id: hoverSlice.value.room.id,
         name: hoverSlice.value.room.name
       }
     }
-    
+
     emit('createSession', { session: newSessionData })
   } else {
     emit('rescheduleSession', {
@@ -632,7 +632,7 @@ watch(() => props.currentDay, (day) => changeDay(day))
 
 onMounted(async () => {
   await nextTick()
-  
+
   if (grid.value) {
     gridOffset.value = grid.value.getBoundingClientRect().left
   }
@@ -701,7 +701,7 @@ onUnmounted(() => {
 			z-index: 10
 	.timeslice
 		color: $clr-secondary-text-light
-		padding: 8px 10px 0 10px
+		padding: 8px 10px 0
 		white-space: nowrap
 		position: sticky
 		left: 0

@@ -1,27 +1,26 @@
 <template lang="pug">
-.c-emoji-picker
+.c-emoji-picker(ref="container")
 </template>
 <script>
-import { h, render } from 'preact'
-import 'emoji-mart/css/emoji-mart.css'
-import data from 'emoji-mart/data/twitter.json'
-import { NimblePicker } from 'emoji-mart'
-import emojiSheet from 'emoji-datasource-twitter/img/twitter/sheets-256/64.png'
+import data from '@emoji-mart/data'
+import { Picker } from 'emoji-mart'
 
 export default {
 	emits: ['selected'],
 	mounted() {
-		const picker = h(NimblePicker, {
-			set: 'twitter',
+		const container = this.$refs.container
+		const picker = new Picker({
 			data,
-			onSelect: this.$emit.bind(this, 'selected'),
-			title: 'Emoji',
-			showPreview: true,
-			backgroundImageFn(set, sheetSize) {
-				return emojiSheet
-			}
+			onEmojiSelect: (emoji) => {
+				this.$emit('selected', emoji)
+			},
+			theme: 'light',
+			previewPosition: 'none',
+			skinTonePosition: 'none'
 		})
-		render(picker, this.$el)
+		if (picker) {
+			container.appendChild(picker)
+		}
 	},
 	methods: {}
 }
