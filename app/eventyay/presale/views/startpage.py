@@ -3,9 +3,6 @@ from django.core.files.storage import default_storage
 from django.db import models
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
-from django.utils.timezone import now
-from django.db.models import Q
-
 from i18nfield.strings import LazyI18nString
 from django.utils import timezone
 

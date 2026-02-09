@@ -1,11 +1,12 @@
 from django.test import TestCase
-from django.utils.timezone import now, timedelta
+from django.utils import timezone
+from datetime import timedelta
 
 from eventyay.base.models.event import Event
 from eventyay.base.models.organizer import Organizer
-from eventyay.base.models.cfp import CfP
 from eventyay.base.models.type import SubmissionType
 
+now = timezone.now
 
 class EventQuerySetTest(TestCase):
     """
@@ -328,7 +329,6 @@ class EventQuerySetTest(TestCase):
 
     def test_event_ending_today_is_visible(self):
         """Event ending today should still be visible"""
-        from django.utils import timezone
         
         today = timezone.localdate()
         current_time = timezone.now()
@@ -338,7 +338,7 @@ class EventQuerySetTest(TestCase):
             presale_start=current_time - timedelta(days=2),
             presale_end=current_time + timedelta(hours=2),
             date_from=current_time - timedelta(days=2),
-            date_to=timezone.datetime.combine(today, timezone.datetime.max.time())  # End of today
+            date_to=current_time.replace(hour=23, minute=59, second=59, microsecond=999999)  # End of today
         )
 
         qs = Event.objects.visible_on_startpage()
