@@ -33,7 +33,7 @@ class UnifiedTeamManagementRedirectMixin:
         if team_id:
             query_params['team'] = team_id
         target = reverse(
-            'eventyay_common:organizer.update',
+            'eventyay_common:organizer.teams',
             kwargs={'organizer': request.organizer.slug},
         )
         messages.info(
@@ -343,7 +343,7 @@ class TeamCreateView(
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()}):
             return next_url
         return reverse(
-            'eventyay_common:organizer.update',
+            'eventyay_common:organizer.teams',
             kwargs={'organizer': self.request.organizer.slug},
         )
 
@@ -377,7 +377,7 @@ class TeamUpdateView(
 
     def get_success_url(self):
         return reverse(
-            'eventyay_common:organizer.update',
+            'eventyay_common:organizer.edit',
             kwargs={'organizer': self.request.organizer.slug},
         )
 
@@ -460,7 +460,7 @@ class TeamDeleteView(
 
     def get_success_url(self):
         return reverse(
-            'eventyay_common:organizer.update',
+            'eventyay_common:organizer.edit',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },

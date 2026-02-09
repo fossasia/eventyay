@@ -469,7 +469,6 @@ details.dropdown .dropdown-content-se::after {
 #locale-dropdown .language-columns {
   width: 400px;
   max-height: 350px;
-  overflow-y: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 1fr));
   border-top: 1px solid var(--color-border, #ced4da);
@@ -478,7 +477,9 @@ details.dropdown .dropdown-content-se::after {
 #locale-dropdown .language-column {
   max-width: 200px;
   max-height: 350px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: #fff;
   border-right: 1px solid var(--color-border, #ced4da);
 }
@@ -495,9 +496,12 @@ details.dropdown .dropdown-content-se::after {
   color: var(--color-grey, #6c757d);
   background: var(--color-grey-lightest, #f8f9fa);
   border-bottom: 1px solid var(--color-border, #ced4da);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+}
+
+#locale-dropdown .language-column .language-column-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 #locale-dropdown .language-column .dropdown-item {
@@ -691,4 +695,26 @@ nav.navbar details.dropdown .dropdown-content .dropdown-item:hover i,
 nav.navbar details.dropdown .dropdown-content a.dropdown-item:hover i,
 nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
   color: #fff;
+}
+
+.dashboard-dropdown {
+  position: relative;
+}
+
+.dashboard-dropdown > .dropdown-content {
+  display: none;
+}
+
+/* Show submenu on hover for devices that support it */
+@media (hover: hover) {
+  .dashboard-dropdown:hover > .dropdown-content {
+    display: block;
+    animation: dropdown-reveal 120ms ease-out;
+  }
+}
+
+/* Show submenu when active class is added (for touch/keyboard) */
+.dashboard-dropdown.active > .dropdown-content {
+  display: block;
+  animation: dropdown-reveal 120ms ease-out;
 }
