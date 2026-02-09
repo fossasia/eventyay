@@ -48,6 +48,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_pretalx.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_flags.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_layout.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_rtl.css' %}" />
         {% endcompress %}
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?target=orga&c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
@@ -78,7 +79,7 @@
                 <i class="fa fa-bars fa-lg"></i>
             </button>
             <div class="navbar-header">
-                <a class="navbar-brand" href="{{ tickets_common }}">
+                <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     {{ site_name }}
                 </a>
@@ -92,7 +93,6 @@
                                   target="_blank"
                                   class="mobile-navbar-view-form">
                                 <input type="hidden" value="{{ new_session }}" name="session">
-                                <input type="hidden" value="{{ go_to_target }}" name="target">
                                 <button type="submit" class="btn btn-link">
                                     <i class="fa fa-eye"></i>
                                     {% translate "View event" %}
@@ -101,7 +101,7 @@
                         {% else %}
                             <a target="_blank"
                                rel="noopener"
-                               href="{% if go_to_target == "schedule" %}{{ request.event.urls.schedule }}{% else %}{{ request.event.cfp.urls.public }}{% endif %}">
+                               href="{{ request.event.urls.base }}">
                                 <i class="fa fa-eye"></i>
                                 {% translate "View event" %}
                             </a>
@@ -427,11 +427,18 @@
                         {% endfor %}
                     {% endif %}
                 {% elif request.organizer %}  {# if request.event #}
+                    {% has_event_perm "base.update_team" request.user request request.organizer as can_change_teams %}
                     <a class="nav-link {% if "/settings/" in request.path %} active{% endif %}" href="{{ request.organizer.orga_urls.settings }}">
                         <i class="fa fa-cog"></i>
                         <span>{% translate "Settings" %}</span>
                     </a>
                     {% has_event_perm "base.view_organizer" request.user request request.organizer as can_view_speakers %}
+                    {% if can_change_teams %}
+                        <a class="nav-link" href="{% url "eventyay_common:organizer.teams" organizer=request.organizer.slug %}?section=permissions">
+                            <i class="fa fa-users"></i>
+                            <span>{% translate "Teams" %}</span>
+                        </a>
+                    {% endif %}
                     {% if can_view_speakers %}
                         <a class="nav-link {% if "/speakers/" in request.path %} active{% endif %}" href="{% url "orga:organizer.speakers" organizer=request.organizer.slug %}">
                             <i class="fa fa-address-card-o"></i>
