@@ -112,6 +112,12 @@ html.rtl {
       margin: 0 $sidebar-minimized-width 0 0;
   }
 }
+
+@media (hover: hover) and (pointer: fine) {
+  html.rtl body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
+      margin: 0 $sidebar-width 0 0;
+  }
+}
 @media(max-width: $screen-sm-max) {
   html.rtl .timeline {
     .col-date {
