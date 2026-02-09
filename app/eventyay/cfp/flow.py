@@ -422,7 +422,19 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         self.request = request
         form = self.get_form(from_storage=True, not_strict=draft)
         # Ensure the instance is updated with data from session
-        form.is_valid()
+        is_valid = form.is_valid()
+        if not is_valid:
+            if draft:
+                logger.warning('Invalid data when trying to save draft submission: %s', form.errors)
+                messages.error(
+                    self.request,
+                    _(
+                        'We could not save your draft because some fields contain invalid data. '
+                        'Please review your proposal and try again.'
+                    ),
+                )
+                return
+            raise ValidationError(form.errors.as_json())
 
         if draft and not form.instance.title:
             form.instance.title = _('Draft Proposal')
