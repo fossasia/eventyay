@@ -267,7 +267,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             all_reviewer = True
             valid_question_count = 0
             for qid in custom_question_ids:
-                q = TalkQuestion.objects.filter(id=qid, event=event).first()
+                q = TalkQuestion.all_objects.filter(id=qid, event=event).first()
                 if not q:
                     continue
                 valid_question_count += 1
@@ -294,7 +294,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         if target_type:
             for index, question_id in enumerate(custom_question_ids):
                 try:
-                    question = TalkQuestion.objects.get(id=question_id, event=event, target=target_type)
+                    question = TalkQuestion.all_objects.get(id=question_id, event=event, target=target_type)
                     question.position = index
                     question.save(update_fields=['position'])
                 except TalkQuestion.DoesNotExist:
