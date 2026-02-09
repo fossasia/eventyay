@@ -9,7 +9,7 @@ def backfill_question(apps, schema_editor):
     ensuring existing rows comply with the new default/non-null semantics.
     """
     TalkQuestion = apps.get_model('base', 'TalkQuestion')
-    TalkQuestion.objects.filter(question__isnull=True).update(question='')
+    TalkQuestion.objects.filter(question=None).update(question='')
 
 
 def reverse_backfill_question(apps, schema_editor):
