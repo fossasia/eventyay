@@ -19,6 +19,7 @@
         <script defer src="{% static "js/jquery.formset.js" %}"></script>
         <script defer src="{% static "cfp/js/animateFormset.js" %}"></script>
     {% endcompress %}
+    <script defer src="{% static 'cfp/js/talk_dependencies.js' %}"></script>
 {% endblock cfp_header %}
 
 {% block content %}
@@ -66,10 +67,8 @@
         </h5>
         <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}
-            {% include "common/forms/errors.html" with form=qform %}
             {% csrf_token %}
             {{ form }}
-            {{ qform }}
             {% if can_edit or form.instance.resources.count %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}

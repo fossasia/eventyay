@@ -47,6 +47,7 @@ from eventyay.base.models import (
     TalkQuestion,
     TalkQuestionRequired,
     TalkQuestionTarget,
+    TalkQuestionVariant,
     SubmissionType,
     SubmitterAccessCode,
     Track,
@@ -566,6 +567,35 @@ class CfPQuestionToggle(PermissionRequired, View):
             return JsonResponse({'error': f'Invalid field: {field}'}, status=400)
 
         return JsonResponse({'success': True, 'field': field, 'value': getattr(question, field)})
+
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class QuestionOptionsAjax(EventPermissionRequired, View):
+    """AJAX endpoint to fetch question options for dependency configuration."""
+    permission_required = 'base.orga_view_talkquestion'
+
+    def get(self, request, *args, **kwargs):
+        question_id = kwargs.get('question')
+        try:
+            question_obj = TalkQuestion.all_objects.get(event=request.event, id=question_id)
+            if question_obj.variant == TalkQuestionVariant.BOOLEAN:
+                options = [
+                    {'id': 'True', 'answer': str(_('Yes'))},
+                    {'id': 'False', 'answer': str(_('No'))}
+                ]
+            else:
+                options = []
+                for option in question_obj.options.all():
+                    options.append({
+                        'id': str(option.pk),
+                        'answer': str(option.answer)
+                    })
+            return JsonResponse({
+                'variant': question_obj.variant,
+                'options': options
+            })
+        except TalkQuestion.DoesNotExist:
+            return JsonResponse({'error': str(_('Question not found'))}, status=404)
 
 
 class CfPQuestionRemind(EventPermissionRequired, FormView):

@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 from functools import partial
@@ -199,7 +200,21 @@ class QuestionFieldsMixin:
             )
             field.question = question
             field.answer = initial_object
-            self.fields[f'question_{question.pk}'] = field
+
+            if question.dependency_question_id:
+                field.widget.attrs['data-question-dependency'] = question.dependency_question_id
+                field.widget.attrs['data-question-dependency-values'] = json.dumps(question.dependency_values)
+                if question.variant != TalkQuestionVariant.MULTIPLE:
+                    if question.required:
+                        field.widget.attrs['required'] = 'required'
+                    else:
+                        field.widget.attrs.pop('required', None)
+                    field._required = question.required
+                field.required = False
+
+            field_name = f'question_{question.pk}'
+            if field_name not in self.fields:
+                self.fields[field_name] = field
 
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.templatetags.rich_text import rich_text
@@ -382,7 +397,10 @@ class QuestionFieldsMixin:
                     if len(choices) < 8
                     else forms.SelectMultiple(attrs={'class': 'enhanced'})
                 ),
-                initial=(initial_object.options.all() if initial_object else question.default_answer),
+                initial=(
+                    list(initial_object.options.all()) if initial_object
+                    else (question.default_answer if question.default_answer else [])
+                ),
                 disabled=read_only,
                 help_text=help_text,
             )
@@ -482,6 +500,45 @@ class QuestionFieldsMixin:
         else:
             answer.answer = value
         answer.save()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        for field_name, field in self.fields.items():
+            if not field_name.startswith('question_') or not hasattr(field, 'question'):
+                continue
+            question = field.question
+            if not question.dependency_question_id:
+                continue
+            if not question.required:
+                continue
+            parent_field_name = f'question_{question.dependency_question_id}'
+            parent_value = cleaned_data.get(parent_field_name)
+            if parent_value is None or parent_value == '':
+                continue
+            if isinstance(parent_value, str):
+                parent_values_iter = [parent_value]
+            elif hasattr(parent_value, '__iter__'):
+                parent_values_iter = list(parent_value)
+            else:
+                parent_values_iter = [parent_value]
+            normalized_parent_values = []
+            for v in parent_values_iter:
+                if hasattr(v, 'pk'):
+                    normalized_parent_values.append(str(v.pk))
+                elif isinstance(v, bool):
+                    normalized_parent_values.append(str(v))
+                else:
+                    normalized_parent_values.append(str(v))
+            if not any(val in question.dependency_values for val in normalized_parent_values):
+                continue
+            value = cleaned_data.get(field_name)
+            if (
+                value is None
+                or value == ''
+                or (hasattr(value, '__len__') and len(value) == 0)
+            ):
+                self.add_error(field_name, forms.ValidationError(_('This field is required.')))
+        return cleaned_data
 
 
 class I18nHelpText:

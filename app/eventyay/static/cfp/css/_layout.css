@@ -424,3 +424,18 @@ footer {
     }
   }
 }
+
+/* Dependent field transitions */
+.form-group.dependency-hidden {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.3s ease, margin-bottom 0.3s ease;
+}
+
+.form-group:not(.dependency-hidden) {
+  max-height: 1000px;
+  opacity: 1;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease, margin-bottom 0.3s ease;
+}

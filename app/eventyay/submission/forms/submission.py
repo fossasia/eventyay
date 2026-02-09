@@ -1,5 +1,6 @@
 from django import forms
 from django.db.models import Count, Exists, OuterRef, Q
+from django.utils.functional import cached_property
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django_scopes.forms import SafeModelChoiceField
@@ -176,6 +177,22 @@ class InfoForm(CfPFormMixin, ConfiguredFieldOrderMixin, QuestionFieldsMixin, Req
             if key.startswith('question_'):
                 self.save_questions(key, value)
         return result
+
+    @cached_property
+    def submission_fields(self):
+        return [
+            self[name]
+            for name, field in self.fields.items()
+            if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SUBMISSION
+        ]
+
+    @cached_property
+    def speaker_fields(self):
+        return [
+            self[name]
+            for name, field in self.fields.items()
+            if getattr(field, 'question', None) and field.question.target == TalkQuestionTarget.SPEAKER
+        ]
 
     class Meta:
         model = Submission

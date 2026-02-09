@@ -6,6 +6,7 @@ from django_scopes import ScopedManager
 from i18nfield.fields import I18nCharField
 
 from eventyay.base.models import Choices
+from eventyay.base.models.fields import MultiStringField
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -243,6 +244,19 @@ class TalkQuestion(OrderedModel, PretalxModel):
             'Should responses to this field be shown to reviewers? This is helpful if you want to collect '
             'personal information, but use anonymous reviews.'
         ),
+    )
+    dependency_question = models.ForeignKey(
+        'TalkQuestion',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='dependent_questions',
+        verbose_name=_('Custom field dependency'),
+        help_text=_('This field will only be shown if the selected field has one of the specified values.'),
+    )
+    dependency_values = MultiStringField(
+        default=list,
+        verbose_name=_('Dependency values'),
     )
     objects = ScopedManager(event='event', _manager_class=TalkQuestionManager)
     all_objects = ScopedManager(event='event', _manager_class=AllTalkQuestionManager)
