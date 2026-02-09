@@ -319,8 +319,14 @@ class FormFlowStep(TemplateFlowStep):
             )
             if error_message:
                 if action == 'draft':
-                    messages.warning(self.request, _('Your draft was saved, but some fields are still missing.'))
-                    self.set_data(form.data)  # Save even if invalid
+                    messages.error(
+                        self.request,
+                        _(
+                            'Your draft could not be saved as a submission because some fields are still missing. '
+                            'Your current inputs on this step have been kept, but please fix the errors below.'
+                        ),
+                    )
+                    self.set_data(form.data)  # Keep current input in the session even if invalid
                     if form.files:
                         self.set_files(form.files)
                     return self.get(request)
