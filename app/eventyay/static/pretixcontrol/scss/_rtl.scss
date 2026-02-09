@@ -108,6 +108,9 @@ html.rtl {
   html.rtl #page-wrapper {
     margin: 0 250px 0 0;
   }
+  html.rtl body.sidebar-minimized #page-wrapper {
+      margin: 0 45px 0 0;
+  }
 }
 @media(max-width: $screen-sm-max) {
   html.rtl .timeline {
