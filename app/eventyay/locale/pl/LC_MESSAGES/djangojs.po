@@ -10,8 +10,8 @@ msgstr ""
 "POT-Creation-Date: 2024-06-22 12:21+0000\n"
 "PO-Revision-Date: 2019-09-24 19:00+0000\n"
 "Last-Translator: Serge Bazanski <q3k@hackerspace.pl>\n"
-"Language-Team: Polish <https://translate.eventyay.com/projects/eventyay/eventyay-js/"
-"pl/>\n"
+"Language-Team: Polish <https://translate.eventyay.com/projects/eventyay/"
+"eventyay-js/pl/>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -20,200 +20,140 @@ msgstr ""
 "|| n%100>=20) ? 1 : 2;\n"
 "X-Generator: Weblate 3.5.1\n"
 
-#: eventyay/plugins/banktransfer/static/pretixplugins/banktransfer/ui.js:56
-#: eventyay/plugins/banktransfer/static/pretixplugins/banktransfer/ui.js:62
-#: eventyay/plugins/banktransfer/static/pretixplugins/banktransfer/ui.js:68
 msgid "Marked as paid"
 msgstr "Oznaczono jako zapłacone"
 
-#: eventyay/plugins/banktransfer/static/pretixplugins/banktransfer/ui.js:76
 msgid "Comment:"
 msgstr "Komentarz:"
 
-#: eventyay/plugins/statistics/static/pretixplugins/statistics/statistics.js:15
-#: eventyay/plugins/statistics/static/pretixplugins/statistics/statistics.js:39
 msgid "Placed orders"
 msgstr "Złożone zamówienia"
 
-#: eventyay/plugins/statistics/static/pretixplugins/statistics/statistics.js:15
-#: eventyay/plugins/statistics/static/pretixplugins/statistics/statistics.js:39
 msgid "Paid orders"
 msgstr "Zapłacone zamówienia"
 
-#: eventyay/plugins/statistics/static/pretixplugins/statistics/statistics.js:27
 msgid "Total revenue"
 msgstr "Całkowity dochód"
 
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:15
 msgid "Contacting Stripe …"
 msgstr "Kontaktowanie Stripe…"
 
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:72
 msgid "Total"
 msgstr "Razem"
 
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:242
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:265
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:282
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:315
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:339
 msgid "Confirming your payment …"
 msgstr "Potwierdzanie płatności…"
 
-#: eventyay/plugins/stripe/static/plugins/stripe/eventyay-stripe.js:289
 msgid "Contacting your bank …"
 msgstr "Łączenie z bankiem…"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:30
 msgid "Select a check-in list"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:31
 msgid "No active check-in lists found."
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:32
 msgid "Switch check-in list"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:33
 msgid "Search results"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:34
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "Close ticket shop"
 msgid "No tickets found"
 msgstr "Zamknięcie sklepu biletowego"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:35
-#, fuzzy
 #| msgid "Check-in QR"
 msgid "Check-in result"
 msgstr "QR zameldowania"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:36
 msgid "This ticket requires special attention"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:37
 msgid "Switch direction"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:38
 msgid "Entry"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:39
 msgid "Exit"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:40
 msgid "Scan a ticket or search and press return…"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:41
 msgid "Load more"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:42
 msgid "Valid"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:43
 msgid "Unpaid"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:44
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:45
 msgid "Canceled"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:46
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "Redeem"
 msgid "Redeemed"
 msgstr "Użyj"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:47
 msgid "Cancel"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:48
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "Continue"
 msgid "Continue"
 msgstr "Dalej"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:49
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:58
 msgid "Ticket not paid"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:50
 msgid "This ticket is not yet paid. Do you want to continue anyways?"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:51
 msgid "Additional information required"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:52
 msgid "Valid ticket"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:53
 msgid "Exit recorded"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:54
 msgid "Ticket already used"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:55
 msgid "Information required"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:56
 msgid "Invalid ticket"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:57
 msgid "Invalid product"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:59
 msgid "Entry not allowed"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:60
 msgid "Ticket code revoked/changed"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:61
 msgid "Order canceled"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:62
-#, fuzzy
 #| msgid "Check-in QR"
 msgid "Checked-in Tickets"
 msgstr "QR zameldowania"
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:63
 msgid "Valid Tickets"
 msgstr ""
 
-#: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:64
 msgid "Currently inside"
 msgstr ""
 
-#: eventyay/static/pretixbase/js/asynctask.js:43
-#: eventyay/static/pretixbase/js/asynctask.js:117
-#, fuzzy
 #| msgid ""
 #| "Your request has been queued on the server and will now be processed. "
 #| "Depending on the size of your event, this might take up to a few minutes."
@@ -225,9 +165,6 @@ msgstr ""
 "przetwarzanie. W zależności od wielkości wydarzenia, może to potrwać do "
 "kilku minut."
 
-#: eventyay/static/pretixbase/js/asynctask.js:48
-#: eventyay/static/pretixbase/js/asynctask.js:122
-#, fuzzy
 #| msgid ""
 #| "Your request has been queued on the server and will now be processed. "
 #| "Depending on the size of your event, this might take up to a few minutes."
@@ -237,8 +174,6 @@ msgstr ""
 "przetwarzanie. W zależności od wielkości wydarzenia, może to potrwać do "
 "kilku minut."
 
-#: eventyay/static/pretixbase/js/asynctask.js:54
-#: eventyay/static/pretixbase/js/asynctask.js:128
 msgid ""
 "Your request arrived on the server but we still wait for it to be processed. "
 "If this takes longer than two minutes, please contact us or go back in your "
@@ -248,14 +183,9 @@ msgstr ""
 "przypadku czasu oczekiwania dłuższego niż dwie minuty prosimy o kontakt lub "
 "o cofnięcie się w przeglądarce i ponowienie próby."
 
-#: eventyay/static/pretixbase/js/asynctask.js:87
-#: eventyay/static/pretixbase/js/asynctask.js:169
-#: eventyay/static/pretixbase/js/asynctask.js:174
-#: eventyay/static/pretixcontrol/js/ui/mail.js:24
 msgid "An error of type {code} occurred."
 msgstr "Wystąpił błąd typu {code}."
 
-#: eventyay/static/pretixbase/js/asynctask.js:90
 msgid ""
 "We currently cannot reach the server, but we keep trying. Last error code: "
 "{code}"
@@ -263,25 +193,18 @@ msgstr ""
 "Błąd komunikacji z serwerem, aplikacja ponowi próbę. Ostatni kod błędu: "
 "{code}"
 
-#: eventyay/static/pretixbase/js/asynctask.js:142
-#: eventyay/static/pretixcontrol/js/ui/mail.js:21
-#, fuzzy
 #| msgid "The request took to long. Please try again."
 msgid "The request took too long. Please try again."
 msgstr "Zapytanie trwało zbyt długo. Prosimy spróbować ponownie."
 
-#: eventyay/static/pretixbase/js/asynctask.js:177
-#: eventyay/static/pretixcontrol/js/ui/mail.js:26
 msgid ""
 "We currently cannot reach the server. Please try again. Error code: {code}"
 msgstr ""
 "Błąd komunikacji z serwerem. Prosimy spróbować ponownie. Kod błędu: {code}"
 
-#: eventyay/static/pretixbase/js/asynctask.js:199
 msgid "We are processing your request …"
 msgstr "Zapytanie jest przetwarzane…"
 
-#: eventyay/static/pretixbase/js/asynctask.js:207
 msgid ""
 "We are currently sending your request to the server. If this takes longer "
 "than one minute, please check your internet connection and then reload this "
@@ -291,169 +214,124 @@ msgstr ""
 "dłuższego niż minuta prosimy o sprawdzenie łączności z Internetem a "
 "następnie o przeładowanie strony i ponowienie próby."
 
-#: eventyay/static/pretixbase/js/asynctask.js:245
-#: eventyay/static/pretixcontrol/js/ui/main.js:34
 msgid "Close message"
 msgstr "Zamknięcie wiadomości"
 
-#: eventyay/static/pretixcontrol/js/clipboard.js:23
 msgid "Copied!"
 msgstr "Skopiowano!"
 
-#: eventyay/static/pretixcontrol/js/clipboard.js:29
 msgid "Press Ctrl-C to copy!"
 msgstr "Wciśnij Ctrl-C żeby skopiować!"
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:10
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:16
 msgid "is one of"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:22
 msgid "is before"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:26
 msgid "is after"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:59
 msgid "Product"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:63
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "See variations"
 msgid "Product variation"
 msgstr "Możliwe warianty"
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:67
 msgid "Current date and time"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:71
 msgid "Number of previous entries"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:75
 msgid "Number of previous entries since midnight"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:79
 msgid "Number of days with a previous entry"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:219
 msgid "All of the conditions below (AND)"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:220
 msgid "At least one of the conditions below (OR)"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:228
 msgid "Event start"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:229
 msgid "Event end"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:230
 msgid "Event admission"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:231
 msgid "custom time"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:234
 msgid "Tolerance (minutes)"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:242
-#: eventyay/static/pretixcontrol/js/ui/checkinrules.js:449
 msgid "Add condition"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:69
 msgid "Lead Scan QR"
 msgstr "QR kod pozyskania lead'u"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:71
 msgid "Check-in QR"
 msgstr "QR zameldowania"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:311
 msgid "The PDF background file could not be loaded for the following reason:"
 msgstr "Błąd ładowania pliku PDF tła:"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:517
 msgid "Group of objects"
 msgstr "Grupa obiektów"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:523
 msgid "Text object"
 msgstr "Obiekt tekstowy"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:525
 msgid "Barcode area"
 msgstr "Miejsce na kod kreskowy"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:527
-#, fuzzy
 #| msgid "Barcode area"
 msgid "Image area"
 msgstr "Miejsce na kod kreskowy"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:529
 msgid "Powered by eventyay"
 msgstr "Wygenerowane przez eventyay"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:531
 msgid "Object"
 msgstr "Obiekt"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:535
 msgid "Ticket design"
 msgstr "Projekt biletu"
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:808
 msgid "Saving failed."
 msgstr "Błąd zapisu."
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:857
-#: eventyay/static/pretixcontrol/js/ui/editor.js:896
 msgid "Error while uploading your PDF file, please try again."
 msgstr "Błąd uploadu pliku PDF, prosimy spróbować ponownie."
 
-#: eventyay/static/pretixcontrol/js/ui/editor.js:881
 msgid "Do you really want to leave the editor without saving your changes?"
 msgstr "Czy na pewno opuścić edytor bez zapisania zmian?"
 
-#: eventyay/static/pretixcontrol/js/ui/mail.js:19
 msgid "An error has occurred."
 msgstr "Wystąpił błąd."
 
-#: eventyay/static/pretixcontrol/js/ui/mail.js:54
 msgid "Generating messages …"
 msgstr "Generowanie wiadomości…"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:70
 msgid "Unknown error."
 msgstr "Nieznany błąd."
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:241
 msgid "Your color has great contrast and is very easy to read!"
 msgstr "Wybrany kolor ma wysoki kontrast i zapewnia doskonałą czytelność!"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:245
 msgid "Your color has decent contrast and is probably good-enough to read!"
 msgstr ""
 "Wybrany kolor ma odpowiedni kontrast i zapewnia wystarczającą czytelność!"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:249
 msgid ""
 "Your color has bad contrast for text on white background, please choose a "
 "darker shade."
@@ -461,193 +339,150 @@ msgstr ""
 "Wybrany kolor ma za słaby kontrast dla tekstu na białym tle, prosimy wybrać "
 "ciemniejszy odcień."
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:384
 msgid "All"
 msgstr "Zaznacz wszystko"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:385
 msgid "None"
 msgstr "Odznacz wszystko"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:801
 msgid "Use a different name internally"
 msgstr "Użyj innej nazwy wewnętrznie"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:858
 msgid "Click to close"
 msgstr "Zamknij"
 
-#: eventyay/static/pretixcontrol/js/ui/main.js:873
 msgid "You have unsaved changes!"
 msgstr ""
 
-#: eventyay/static/pretixcontrol/js/ui/orderchange.js:25
 msgid "Calculating default price…"
 msgstr "Liczenie domyślnej ceny…"
 
-#: eventyay/static/pretixcontrol/js/ui/question.js:42
 msgid "Others"
 msgstr "Inne"
 
-#: eventyay/static/pretixcontrol/js/ui/question.js:82
 msgid "Count"
 msgstr "Ilość"
 
-#: eventyay/static/pretixcontrol/js/ui/question.js:135
 msgid "Yes"
 msgstr "Tak"
 
-#: eventyay/static/pretixcontrol/js/ui/question.js:136
 msgid "No"
 msgstr "Nie"
 
-#: eventyay/static/pretixcontrol/js/ui/subevent.js:111
 msgid "(one more date)"
 msgid_plural "({num} more dates)"
 msgstr[0] "(jedna data więcej)"
 msgstr[1] "({num} daty więcej)"
 msgstr[2] "({num} dat więcej)"
 
-#: eventyay/static/pretixpresale/js/ui/cart.js:39
 msgid "The items in your cart are no longer reserved for you."
 msgstr "Przedmioty w koszyku nie są już zarezerwowane."
 
-#: eventyay/static/pretixpresale/js/ui/cart.js:41
 msgid "Cart expired"
 msgstr "Koszyk wygasł"
 
-#: eventyay/static/pretixpresale/js/ui/cart.js:46
 msgid "The items in your cart are reserved for you for one minute."
 msgid_plural "The items in your cart are reserved for you for {num} minutes."
 msgstr[0] "Przedmioty w koszyku są zarezerwowane na jedną minutę."
 msgstr[1] "Przedmioty w koszyku są zarezerwowane na {num} minuty."
 msgstr[2] "Przedmioty w koszyku są zarezerwowane na {num} minut."
 
-#: eventyay/static/pretixpresale/js/ui/main.js:268
 msgid "Please enter a quantity for one of the ticket types."
 msgstr "Proszę wybrać liczbę dla jednego z typów biletów."
 
-#: eventyay/static/pretixpresale/js/ui/main.js:304
-#, fuzzy
 #| msgid "Cart expired"
 msgid "required"
 msgstr "Koszyk wygasł"
 
-#: eventyay/static/pretixpresale/js/ui/main.js:401
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "from %(currency)s %(price)s"
 msgid "The organizer keeps %(currency)s %(amount)s"
 msgstr "od %(currency)s %(price)s"
 
-#: eventyay/static/pretixpresale/js/ui/main.js:409
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "from %(currency)s %(price)s"
 msgid "You get %(currency)s %(amount)s back"
 msgstr "od %(currency)s %(price)s"
 
-#: eventyay/static/pretixpresale/js/ui/main.js:425
 msgid "Please enter the amount the organizer can keep."
 msgstr ""
 
-#: eventyay/static/pretixpresale/js/ui/main.js:439
-#: eventyay/static/pretixpresale/js/ui/main.js:457
 msgid "Time zone:"
 msgstr ""
 
-#: eventyay/static/pretixpresale/js/ui/main.js:448
 msgid "Your local time:"
 msgstr ""
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:17
 msgctxt "widget"
 msgid "Sold out"
 msgstr "Wyprzedane"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:18
 msgctxt "widget"
 msgid "Buy"
 msgstr "Kup"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:19
 msgctxt "widget"
 msgid "Register"
 msgstr "Rejestracja"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:20
 msgctxt "widget"
 msgid "Reserved"
 msgstr "Zarezerwowane"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:21
 msgctxt "widget"
 msgid "FREE"
 msgstr "DARMOWE"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:22
 msgctxt "widget"
 msgid "from %(currency)s %(price)s"
 msgstr "od %(currency)s %(price)s"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:23
 msgctxt "widget"
 msgid "incl. %(rate)s% %(taxname)s"
 msgstr "w tym %(rate)s% %(taxname)s"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:24
 msgctxt "widget"
 msgid "plus %(rate)s% %(taxname)s"
 msgstr "plus %(rate)s% %(taxname)s"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:25
 msgctxt "widget"
 msgid "incl. taxes"
 msgstr "Brutto"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:26
 msgctxt "widget"
 msgid "plus taxes"
 msgstr "netto"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:27
 #, javascript-format
 msgctxt "widget"
 msgid "currently available: %s"
 msgstr "obecnie dostępne: %s"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:28
 msgctxt "widget"
 msgid "Only available with a voucher"
 msgstr "Dostępne tylko z voucherem"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:29
 #, javascript-format
 msgctxt "widget"
 msgid "minimum amount to order: %s"
 msgstr "minimalna ilość zamówienia: %s"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:30
 msgctxt "widget"
 msgid "Close ticket shop"
 msgstr "Zamknięcie sklepu biletowego"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:31
 msgctxt "widget"
 msgid "The ticket shop could not be loaded."
 msgstr "Błąd łądowania sklepu biletowego."
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:32
 msgctxt "widget"
 msgid "The cart could not be created. Please try again later"
 msgstr "Błąd tworzenia koszyka. Prosimy spróbować ponownie później"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:33
 msgctxt "widget"
 msgid "Waiting list"
 msgstr "Lista oczekiwania"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:34
 msgctxt "widget"
 msgid ""
 "You currently have an active cart for this event. If you select more "
@@ -656,188 +491,159 @@ msgstr ""
 "Istnieje aktywny wózek dla tego wydarzenia. Wybór kolejnych produktów "
 "spowoduje dodanie ich do istniejącego wózka."
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:36
 msgctxt "widget"
 msgid "Resume checkout"
 msgstr "Powrót do kasy"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:37
 msgctxt "widget"
 msgid "Redeem a voucher"
 msgstr "Użyj vouchera"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:38
 msgctxt "widget"
 msgid "Redeem"
 msgstr "Użyj"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:39
 msgctxt "widget"
 msgid "Voucher code"
 msgstr "Kod vouchera"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:40
 msgctxt "widget"
 msgid "Close"
 msgstr "Zamknąć"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:41
 msgctxt "widget"
 msgid "Continue"
 msgstr "Dalej"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:42
 msgctxt "widget"
 msgid "See variations"
 msgstr "Możliwe warianty"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:43
 msgctxt "widget"
 msgid "Choose a different event"
 msgstr "Wybierz inne wydarzenie"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:44
 msgctxt "widget"
 msgid "Choose a different date"
 msgstr "Wybierz inną datę"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:45
 msgctxt "widget"
 msgid "Back"
 msgstr "Wstecz"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:46
 msgctxt "widget"
 msgid "Next month"
 msgstr "Przyszły miesiąc"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:47
 msgctxt "widget"
 msgid "Previous month"
 msgstr "Zeszły miesiąc"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:48
 msgctxt "widget"
 msgid "Next week"
 msgstr ""
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:49
-#, fuzzy
 #| msgctxt "widget"
 #| msgid "Previous month"
 msgctxt "widget"
 msgid "Previous week"
 msgstr "Zeszły miesiąc"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:50
 msgctxt "widget"
 msgid "Open seat selection"
 msgstr "Otwórz wybór miejsca"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:52
 msgid "Mo"
 msgstr "Pn"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:53
 msgid "Tu"
 msgstr "Wt"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:54
 msgid "We"
 msgstr "Śr"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:55
 msgid "Th"
 msgstr "Cz"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:56
 msgid "Fr"
 msgstr "Pt"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:57
 msgid "Sa"
 msgstr "So"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:58
 msgid "Su"
 msgstr "Nd"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:61
 msgid "January"
 msgstr "Styczeń"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:62
 msgid "February"
 msgstr "Luty"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:63
 msgid "March"
 msgstr "Marzec"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:64
 msgid "April"
 msgstr "Kwiecień"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:65
 msgid "May"
 msgstr "Maj"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:66
 msgid "June"
 msgstr "Czerwiec"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:67
 msgid "July"
 msgstr "Lipiec"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:68
 msgid "August"
 msgstr "Sierpień"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:69
 msgid "September"
 msgstr "Wrzesień"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:70
 msgid "October"
 msgstr "Październik"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:71
 msgid "November"
 msgstr "Listopad"
 
-#: eventyay/static/pretixpresale/js/widget/widget.js:72
 msgid "December"
 msgstr "Grudzień"
 
-#, fuzzy
+msgid "Tickets"
+msgstr "Bilety"
+
+msgid "My Orders"
+msgstr "Moje zamówienia"
+
+msgid "Account"
+msgstr "Konto"
+
+msgid "Logout"
+msgstr "Wyloguj się"
+
 #~| msgid "May"
 #~ msgid "day"
 #~ msgstr "Maj"
 
-#, fuzzy
 #~| msgid "Nein"
 #~ msgid "in"
 #~ msgstr "Nie"
 
-#, fuzzy
 #~| msgid "None"
 #~ msgid "on"
 #~ msgstr "Odznacz wszystko"
 
-#, fuzzy
 #~| msgctxt "widget"
 #~| msgid "Next month"
 #~ msgid "months"
 #~ msgstr "Przyszły miesiąc"
 
-#, fuzzy
 #~| msgctxt "widget"
 #~| msgid "Next month"
 #~ msgid "month"
 #~ msgstr "Przyszły miesiąc"
 
-#, fuzzy
 #~| msgid "Others"
 #~ msgid "the"
 #~ msgstr "Inne"
@@ -852,15 +658,3 @@ msgstr "Grudzień"
 
 #~ msgid "Ja"
 #~ msgstr "Tak"
-
-msgid "Tickets"
-msgstr "Bilety"
-
-msgid "My Orders"
-msgstr "Moje zamówienia"
-
-msgid "Account"
-msgstr "Konto"
-
-msgid "Logout"
-msgstr "Wyloguj się"
