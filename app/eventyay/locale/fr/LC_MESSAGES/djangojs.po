@@ -535,7 +535,7 @@ msgstr "Vous récupérez %(currency)s %(amount)s"
 
 #: eventyay/static/pretixpresale/js/ui/main.js:425
 msgid "Please enter the amount the organizer can keep."
-msgstr "Veuillez enter le montant le organisateur can keep."
+msgstr "Veuillez saisir le montant que l'organisateur peut conserver."
 
 #: eventyay/static/pretixpresale/js/ui/main.js:439
 #: eventyay/static/pretixpresale/js/ui/main.js:457
