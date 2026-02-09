@@ -3,6 +3,26 @@
 import i18nfield.fields
 from django.db import migrations
 
+def backfill_question(apps, schema_editor):
+    """
+    Backfill NULL `question` values to empty strings before altering the field,
+    ensuring existing rows comply with the new default/non-null semantics.
+    """
+    TalkQuestion = apps.get_model('base', 'TalkQuestion')
+    TalkQuestion.objects.filter(question=None).update(question='')
+
+
+def reverse_backfill_question(apps, schema_editor):
+    """
+    Intentionally a no-op.
+
+    The forward migration converted existing NULL values to empty strings, but
+    we cannot reliably distinguish those rows from legitimately empty-string
+    questions or rows edited after the migration. Setting all empty strings
+    back to NULL on rollback would risk corrupting valid data.
+    """
+    pass
+
 
 class Migration(migrations.Migration):
 
@@ -11,6 +31,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(backfill_question, reverse_backfill_question),
         migrations.AlterField(
             model_name='talkquestion',
             name='question',
