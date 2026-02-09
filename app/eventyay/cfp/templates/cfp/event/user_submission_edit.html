@@ -66,10 +66,10 @@
         </h5>
         <form method="post" enctype="multipart/form-data" novalidate>
             {% include "common/forms/errors.html" %}
-            {% include "common/forms/errors.html" with form=qform %}
+
             {% csrf_token %}
             {{ form }}
-            {{ qform }}
+
             {% if can_edit or form.instance.resources.count %}
                 {% include "cfp/includes/submission_resources_form.html" %}
             {% endif %}
