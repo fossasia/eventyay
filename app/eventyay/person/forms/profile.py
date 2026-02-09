@@ -71,11 +71,12 @@ class SpeakerProfileForm(
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
+        self.not_strict = kwargs.pop('not_strict', False)
         self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
-        super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
+        super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True, not_strict=self.not_strict)
         self.speaker = self.user
         read_only = kwargs.get('read_only', False)
         initial = kwargs.get('initial', {})
@@ -101,9 +102,9 @@ class SpeakerProfileForm(
 
         for field_name in ('fullname', 'email'):
             if field_name in self.fields:
-                self.fields[field_name].required = True
+                self.fields[field_name].required = not self.not_strict
                 if hasattr(self.fields[field_name].widget, 'is_required'):
-                    self.fields[field_name].widget.is_required = True
+                    self.fields[field_name].widget.is_required = not self.not_strict
 
         if not self.event.cfp.request_avatar:
             self.fields.pop('avatar', None)
@@ -124,6 +125,7 @@ class SpeakerProfileForm(
             event=self.event,
             speaker=self.user,
             readonly=read_only,
+            not_strict=self.not_strict,
         )
 
         # Reorder fields based on configuration
@@ -157,6 +159,8 @@ class SpeakerProfileForm(
                     _('Please provide a profile picture or allow us to load your picture from gravatar!')
                 ),
             )
+        if self.not_strict:
+            return data
         fullname = self.cleaned_data.get('fullname')
         if (
             self.enforce_account_name_match

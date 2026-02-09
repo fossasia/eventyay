@@ -71,6 +71,7 @@ class PublicContent:
 
 class RequestRequire:
     def __init__(self, *args, **kwargs):
+        not_strict = kwargs.get('not_strict', False)
         super().__init__(*args, **kwargs)
         count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
         for key in self.Meta.request_require:
@@ -78,7 +79,7 @@ class RequestRequire:
             if visibility == 'do_not_ask':
                 self.fields.pop(key, None)
             elif field := self.fields.get(key):
-                field.required = visibility == 'required'
+                field.required = False if not_strict else (visibility == 'required')
                 min_value = self.event.cfp.fields.get(key, {}).get('min_length')
                 max_value = self.event.cfp.fields.get(key, {}).get('max_length')
                 if min_value or max_value:
@@ -86,14 +87,15 @@ class RequestRequire:
                         field.widget.attrs['minlength'] = min_value
                     if max_value and count_chars:
                         field.widget.attrs['maxlength'] = max_value
-                    field.validators.append(
-                        partial(
-                            self.validate_field_length,
-                            min_length=min_value,
-                            max_length=max_value,
-                            count_in=self.event.cfp.settings['count_length_in'],
+                    if not not_strict:
+                        field.validators.append(
+                            partial(
+                                self.validate_field_length,
+                                min_length=min_value,
+                                max_length=max_value,
+                                count_in=self.event.cfp.settings['count_length_in'],
+                            )
                         )
-                    )
                     field.original_help_text = getattr(field, 'original_help_text', '')
                     field.added_help_text = self.get_help_text(
                         '',
@@ -145,7 +147,7 @@ class QuestionFieldsMixin:
         qs = TalkQuestion.all_objects.filter(event=event, active=True, target=target)
         return qs.order_by('position')
 
-    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
+    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False, not_strict=False):
         """
         Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
 
@@ -155,6 +157,7 @@ class QuestionFieldsMixin:
             submission, speaker, review: Answer contexts.
             track, submission_type: Visibility filters.
             readonly (bool): If True, fields are disabled.
+            not_strict (bool): If True, fields are not required.
         """
         questions = self.get_question_queryset(target, event)
         # Apply filters based on submission context
@@ -196,12 +199,13 @@ class QuestionFieldsMixin:
                 initial=initial,
                 initial_object=initial_object,
                 readonly=readonly,
+                not_strict=not_strict,
             )
             field.question = question
             field.answer = initial_object
             self.fields[f'question_{question.pk}'] = field
 
-    def get_field(self, *, question, initial, initial_object, readonly):
+    def get_field(self, *, question, initial, initial_object, readonly, not_strict=False):
         from eventyay.base.templatetags.rich_text import rich_text
         from eventyay.base.models import TalkQuestionVariant
 
@@ -225,7 +229,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 widget=widget,
                 initial=((initial == 'True') if initial else bool(question.default_answer)),
             )
@@ -236,7 +240,7 @@ class QuestionFieldsMixin:
                 disabled=read_only,
                 help_text=help_text,
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 min_value=question.min_number,
                 max_value=question.max_number,
                 initial=initial,
@@ -254,26 +258,27 @@ class QuestionFieldsMixin:
                     self.event.cfp.settings['count_length_in'],
                 ),
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 initial=initial,
-                min_length=question.min_length if count_chars else None,
+                min_length=question.min_length if count_chars and not not_strict else None,
                 max_length=question.max_length if count_chars else None,
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
-            field.validators.append(
-                partial(
-                    RequestRequire.validate_field_length,
-                    min_length=question.min_length,
-                    max_length=question.max_length,
-                    count_in=self.event.cfp.settings['count_length_in'],
+            if not not_strict:
+                field.validators.append(
+                    partial(
+                        RequestRequire.validate_field_length,
+                        min_length=question.min_length,
+                        max_length=question.max_length,
+                        count_in=self.event.cfp.settings['count_length_in'],
+                    )
                 )
-            )
             return field
         if question.variant == TalkQuestionVariant.URL:
             field = forms.URLField(
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 disabled=read_only,
                 help_text=original_help_text,
                 initial=initial,
@@ -284,7 +289,7 @@ class QuestionFieldsMixin:
         if question.variant == TalkQuestionVariant.TEXT:
             field = forms.CharField(
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 widget=forms.Textarea,
                 disabled=read_only,
                 help_text=RequestRequire.get_help_text(
@@ -294,24 +299,25 @@ class QuestionFieldsMixin:
                     self.event.cfp.settings['count_length_in'],
                 ),
                 initial=initial,
-                min_length=question.min_length if count_chars else None,
+                min_length=question.min_length if count_chars and not not_strict else None,
                 max_length=question.max_length if count_chars else None,
             )
-            field.validators.append(
-                partial(
-                    RequestRequire.validate_field_length,
-                    min_length=question.min_length,
-                    max_length=question.max_length,
-                    count_in=self.event.cfp.settings['count_length_in'],
+            if not not_strict:
+                field.validators.append(
+                    partial(
+                        RequestRequire.validate_field_length,
+                        min_length=question.min_length,
+                        max_length=question.max_length,
+                        count_in=self.event.cfp.settings['count_length_in'],
+                    )
                 )
-            )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
             return field
         if question.variant == TalkQuestionVariant.FILE:
             field = ExtensionFileField(
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=initial,
@@ -361,7 +367,7 @@ class QuestionFieldsMixin:
             field = EventLocalizedModelChoiceField(
                 queryset=choices,
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 empty_label=None,
                 initial=(initial_object.options.first() if initial_object else question.default_answer),
                 disabled=read_only,
@@ -376,7 +382,7 @@ class QuestionFieldsMixin:
             field = EventLocalizedModelMultipleChoiceField(
                 queryset=choices,
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 widget=(
                     forms.CheckboxSelectMultiple
                     if len(choices) < 8
@@ -397,7 +403,7 @@ class QuestionFieldsMixin:
                 attrs['data-date-end-date'] = question.max_date.isoformat()
             field = forms.DateField(
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=dateutil.parser.parse(initial).date() if initial else None,
@@ -405,10 +411,11 @@ class QuestionFieldsMixin:
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
-            if question.min_date:
-                field.validators.append(MinDateValidator(question.min_date))
-            if question.max_date:
-                field.validators.append(MaxDateValidator(question.max_date))
+            if not not_strict:
+                if question.min_date:
+                    field.validators.append(MinDateValidator(question.min_date))
+                if question.max_date:
+                    field.validators.append(MaxDateValidator(question.max_date))
             return field
         elif question.variant == TalkQuestionVariant.DATETIME:
             attrs = {}
@@ -418,7 +425,7 @@ class QuestionFieldsMixin:
                 attrs['max'] = question.max_datetime.isoformat()
             field = forms.DateTimeField(
                 label=label_text,
-                required=question.required,
+                required=False if not_strict else question.required,
                 disabled=read_only,
                 help_text=help_text,
                 initial=(dateutil.parser.parse(initial).astimezone(self.event.tz) if initial else None),
@@ -426,10 +433,11 @@ class QuestionFieldsMixin:
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
-            if question.min_datetime:
-                field.validators.append(MinDateTimeValidator(question.min_datetime))
-            if question.max_datetime:
-                field.validators.append(MaxDateTimeValidator(question.max_datetime))
+            if not not_strict:
+                if question.min_datetime:
+                    field.validators.append(MinDateTimeValidator(question.min_datetime))
+                if question.max_datetime:
+                    field.validators.append(MaxDateTimeValidator(question.max_datetime))
             return field
         return None
 
