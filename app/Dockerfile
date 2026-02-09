@@ -38,9 +38,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Run npm stuff (needs nodejs)
 RUN make npminstall
 
-# esbuild needed by Django-Compressor
-RUN npm install -g esbuild
-
 
 ###########
 # RUNTIME #
@@ -68,6 +65,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     nodejs \
     && rm -rf /var/lib/apt/lists/*
 
+# esbuild needed by Django-Compressor
+RUN npm install -g esbuild
+
 # copy entrypoint.sh
 COPY ./entrypoint.sh .
 RUN sed -i 's/\r$//g' /usr/src/app/entrypoint.sh
@@ -75,10 +75,6 @@ RUN chmod +x /usr/src/app/entrypoint.sh
 
 # Copy application code from builder (includes .venv)
 COPY --from=builder /usr/src/app /usr/src/app
-
-# Copy node_modules from builder
-COPY --from=builder /usr/local/lib/node_modules/esbuild /usr/local/lib/node_modules/esbuild
-COPY --from=builder /usr/local/bin/esbuild /usr/local/bin/esbuild
 
 # Expose virtual env
 ENV VIRTUAL_ENV=/usr/src/app/.venv
