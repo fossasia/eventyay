@@ -164,7 +164,7 @@ msgstr "Sortie enregistrée"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:54
 msgid "Ticket already used"
-msgstr "billet already used"
+msgstr "billet déjà utilisé"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:55
 msgid "Information required"
@@ -294,7 +294,7 @@ msgstr "Appuyez sur Ctrl-C pour copier !"
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:10
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:16
 msgid "is one of"
-msgstr "is one de"
+msgstr "est l'un de"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:22
 msgid "is before"
