@@ -180,7 +180,7 @@ msgstr "invalide produit"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:59
 msgid "Entry not allowed"
-msgstr "entrée not allowed"
+msgstr "Entrée non autorisée"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:60
 msgid "Ticket code revoked/changed"
@@ -324,7 +324,7 @@ msgstr "numéro de précédent entrées"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:75
 msgid "Number of previous entries since midnight"
-msgstr "numéro de précédent entrées since midnight"
+msgstr "Nombre d'entrées précédentes depuis minuit"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:79
 msgid "Number of days with a previous entry"
@@ -332,7 +332,7 @@ msgstr "numéro de jours avec un précédent entrée"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:219
 msgid "All of the conditions below (AND)"
-msgstr "tous de le conditions below (et)"
+msgstr "Toutes les conditions ci-dessous (ET)"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:220
 msgid "At least one of the conditions below (OR)"
@@ -348,7 +348,7 @@ msgstr "événement end"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:230
 msgid "Event admission"
-msgstr "événement admission"
+msgstr "Admission à l'événement"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:231
 msgid "custom time"
