@@ -184,11 +184,11 @@ msgstr "Entrée non autorisée"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:60
 msgid "Ticket code revoked/changed"
-msgstr "billet code revoked/changed"
+msgstr "Code du billet révoqué/modifié"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:61
 msgid "Order canceled"
-msgstr "commande annulé"
+msgstr "commande annulée"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:62
 #| msgid "Check-in QR"
@@ -336,7 +336,7 @@ msgstr "Toutes les conditions ci-dessous (ET)"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:220
 msgid "At least one of the conditions below (OR)"
-msgstr "à least one de le conditions below (ou)"
+msgstr "Au moins une des conditions ci-dessous (OU)"
 
 #: eventyay/static/pretixcontrol/js/ui/checkinrules.js:228
 msgid "Event start"
@@ -540,7 +540,7 @@ msgstr "Veuillez saisir le montant que l'organisateur peut conserver."
 #: eventyay/static/pretixpresale/js/ui/main.js:439
 #: eventyay/static/pretixpresale/js/ui/main.js:457
 msgid "Time zone:"
-msgstr "heure zone:"
+msgstr "Fuseau horaire:"
 
 #: eventyay/static/pretixpresale/js/ui/main.js:448
 msgid "Your local time:"
@@ -705,7 +705,7 @@ msgstr "Moins précédent"
 #: eventyay/static/pretixpresale/js/widget/widget.js:48
 msgctxt "widget"
 msgid "Next week"
-msgstr "suivant semaine"
+msgstr "Semaine suivante"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:49
 #| msgctxt "widget"
