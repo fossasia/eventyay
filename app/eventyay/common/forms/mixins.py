@@ -71,7 +71,8 @@ class PublicContent:
 
 class RequestRequire:
     def __init__(self, *args, **kwargs):
-        not_strict = kwargs.pop('not_strict', False)
+        not_strict = getattr(self, 'not_strict', kwargs.pop('not_strict', False))
+        self.not_strict = not_strict
         super().__init__(*args, **kwargs)
         count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
         for key in self.Meta.request_require:
