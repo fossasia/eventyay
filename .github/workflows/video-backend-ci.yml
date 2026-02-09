@@ -45,6 +45,7 @@ jobs:
       - name: Django system checks
         env:
           EVY_SECRET_KEY: ci-test-secret-key
+          EVY_POSTGRES_HOST: localhost
         working-directory: app
         run: uv run python manage.py check
 
@@ -107,6 +108,7 @@ jobs:
       - name: Run database migrations
         env:
           EVY_SECRET_KEY: ci-test-secret-key
+          EVY_POSTGRES_HOST: localhost
         working-directory: app
         run: uv run python manage.py migrate --noinput
 
@@ -162,6 +164,7 @@ jobs:
       - name: Run migrations
         env:
           EVY_SECRET_KEY: ci-test-secret-key
+          EVY_POSTGRES_HOST: localhost
         run: |
           cd app
           uv run python manage.py migrate --noinput
@@ -169,6 +172,7 @@ jobs:
       - name: Start development server
         env:
           EVY_SECRET_KEY: ci-test-secret-key
+          EVY_POSTGRES_HOST: localhost
         run: |
           set -e
           cd app
