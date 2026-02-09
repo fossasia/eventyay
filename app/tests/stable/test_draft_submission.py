@@ -1,7 +1,6 @@
 import pytest
-import datetime as dt
 from django_scopes import scope
-from eventyay.base.models import Submission, SubmissionType, TalkQuestion, TalkQuestionVariant, TalkQuestionRequired, CfP, TalkQuestionTarget, SubmissionStates
+from eventyay.base.models import Submission, SubmissionType, CfP, SubmissionStates
 
 class TestDraftSubmission:
 
