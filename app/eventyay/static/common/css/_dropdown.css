@@ -492,11 +492,22 @@ details.dropdown .dropdown-content-se::after {
   color: var(--color-grey-dark, #495057);
 }
 
+#locale-dropdown .language-enforce-form {
+  margin: 0;
+  line-height: 0;
+}
+
 #locale-dropdown .language-enforce-toggle {
   position: relative;
+  display: block;
+  flex-shrink: 0;
   width: 34px;
   height: 20px;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
+  text-decoration: none;
+  cursor: pointer;
   background: var(--color-grey-light, #adb5bd);
   transition: background-color 0.15s ease-in-out;
 }
@@ -535,7 +546,8 @@ details.dropdown .dropdown-content-se::after {
 }
 
 #locale-dropdown .language-enforce-help:focus {
-  outline: none;
+  outline: 2px solid var(--color-primary, #2185d0);
+  outline-offset: 2px;
 }
 
 #locale-dropdown .language-enforce-help .fa-info-circle {

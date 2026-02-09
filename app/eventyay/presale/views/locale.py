@@ -12,12 +12,27 @@ from eventyay.common.utils.language import (
     strict_match_language,
     validate_language,
 )
+from eventyay.helpers.cookies import set_cookie_without_samesite
 
 from .robots import NoSearchIndexViewMixin
 
 
 def _cookie_expires(max_age: int) -> str:
-    return (datetime.now(timezone.utc) + timedelta(seconds=max_age)).strftime('%a, %d-%b-%Y %H:%M:%S GMT')
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=max_age)
+    return f"{expires_at:%a, %d %b %Y %H:%M:%S GMT}"
+
+
+def _set_event_cookie(request, response, key, value, max_age):
+    set_cookie_without_samesite(
+        request,
+        response,
+        key,
+        value,
+        max_age=max_age,
+        expires=_cookie_expires(max_age),
+        domain=settings.SESSION_COOKIE_DOMAIN,
+        path='/',
+    )
 
 
 class LocaleSet(NoSearchIndexViewMixin, View):
@@ -72,44 +87,31 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
 
             if enforce_ui_language is not None:
                 enforce_enabled = enforce_ui_language == '1'
-                resp.set_cookie(
+                _set_event_cookie(
+                    request,
+                    resp,
                     enforce_cookie_name,
                     '1' if enforce_enabled else '0',
-                    max_age=max_age,
-                    expires=_cookie_expires(max_age),
-                    domain=settings.SESSION_COOKIE_DOMAIN,
-                    path='/',
+                    max_age,
                 )
 
                 if enforce_enabled and strict_ui_language:
-                    resp.set_cookie(
+                    _set_event_cookie(
+                        request,
+                        resp,
                         event_cookie_name,
                         strict_ui_language,
-                        max_age=max_age,
-                        expires=_cookie_expires(max_age),
-                        domain=settings.SESSION_COOKIE_DOMAIN,
-                        path='/',
-                    )
-                elif not enforce_enabled and not locale and getattr(request, 'event_language', None):
-                    # Persist the currently displayed event language when turning sync off.
-                    resp.set_cookie(
-                        event_cookie_name,
-                        request.event_language,
-                        max_age=max_age,
-                        expires=_cookie_expires(max_age),
-                        domain=settings.SESSION_COOKIE_DOMAIN,
-                        path='/',
+                        max_age,
                     )
 
             locale = validate_language(locale, supported)
             if locale:
-                resp.set_cookie(
+                _set_event_cookie(
+                    request,
+                    resp,
                     event_cookie_name,
                     locale,
-                    max_age=max_age,
-                    expires=_cookie_expires(max_age),
-                    domain=settings.SESSION_COOKIE_DOMAIN,
-                    path='/',
+                    max_age,
                 )
 
                 enforce_active = (
@@ -118,13 +120,12 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                     else request.COOKIES.get(enforce_cookie_name, '0') == '1'
                 )
                 if enforce_active and locale.lower() != ui_language.lower():
-                    resp.set_cookie(
+                    _set_event_cookie(
+                        request,
+                        resp,
                         enforce_cookie_name,
                         '0',
-                        max_age=max_age,
-                        expires=_cookie_expires(max_age),
-                        domain=settings.SESSION_COOKIE_DOMAIN,
-                        path='/',
+                        max_age,
                     )
 
         return resp
