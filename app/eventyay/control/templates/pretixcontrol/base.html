@@ -232,11 +232,7 @@
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
                                 {% if request.event %}
-                                    {% if request.resolver_match and request.resolver_match.namespace == "eventyay_common" %}
-                                        <a href="{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
-                                    {% else %}
-                                        <a href="{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
-                                    {% endif %}
+                                    <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>
