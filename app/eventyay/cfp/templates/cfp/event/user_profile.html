@@ -32,31 +32,23 @@
             {% include "common/availabilities.html" %}
             {{ profile_form.availabilities.as_field_group }}
         {% endif %}
+        {% if questions_exist %}
+            <h2>{% translate "We have some questions" %}</h2>
+            {% for field in profile_form %}
+                {% if field.name|slice:":9" == "question_" %}
+                    {{ field.as_field_group }}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
         <div class="row">
             <div class="col-md-4 flip ml-auto">
-                <input type="hidden" name="form" value="profile">
                 <button type="submit" class="btn btn-block btn-success btn-lg">
                     {{ phrases.base.save }}
                 </button>
             </div>
         </div>
     </form>
-
-    {% if questions_exist %}
-        <h2>{% translate "We have some questions" %}</h2>
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ questions_form }}
-            <div class="row">
-                <div class="col-md-4 flip ml-auto">
-                    <input type="hidden" name="form" value="questions">
-                    <button type="submit" class="btn btn-block btn-success btn-lg">
-                        {{ phrases.base.save }}
-                    </button>
-                </div>
-            </div>
-        </form>
-    {% endif %}
 
     {% html_signal "eventyay.common.signals.profile_bottom_html" sender=request.event user=user %}
 

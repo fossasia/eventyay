@@ -47,7 +47,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
     @context
     @cached_property
     def profile_form(self):
-        bind = is_form_bound(self.request, 'profile')
+        bind = self.request.method == 'POST'
         cfp_flow_config = self.request.event.cfp_flow.config
         try:
             # TODO: There may be a mismatch somewhere else between how the config was saved and how it is loaded.
@@ -69,14 +69,11 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
     @context
     @cached_property
     def questions_form(self):
-        bind = is_form_bound(self.request, 'questions')
-        return TalkQuestionsForm(
-            data=self.request.POST if bind else None,
-            files=self.request.FILES if bind else None,
-            speaker=self.request.user,
-            event=self.request.event,
-            target='speaker',
-        )
+        # We keep this for now if needed for other purposes, but the main logic moved to profile_form
+        # actually, if we remove the second form from template, this might not be needed at all
+        # except if 'questions_form' variable is used in template elsewhere.
+        # It was used as {{ questions_form }}, we will replace it.
+        pass
 
     @context
     def questions_exist(self):
@@ -88,10 +85,6 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
             profile.log_action('eventyay.user.profile.update', person=request.user)
             if self.profile_form.has_changed():
-                self.request.event.cache.set('rebuild_schedule_export', True, None)
-        elif self.questions_form.is_bound and self.questions_form.is_valid():
-            self.questions_form.save()
-            if self.questions_form.has_changed():
                 self.request.event.cache.set('rebuild_schedule_export', True, None)
         else:
             return super().get(request, *args, **kwargs)
