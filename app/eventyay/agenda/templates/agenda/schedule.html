@@ -23,8 +23,17 @@
             {% translate "Changelog" %}
         </a>
         <hr>
+        {% if schedule.version and schedule != schedule.event.current_schedule %}
+        <div class="dropdown-item text-muted" role="note" aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;">
+            <small>
+                {% blocktranslate trimmed with version=schedule.version %}
+                Exports and subscriptions below are for version {{ version }}.
+                {% endblocktranslate %}
+            </small>
+        </div>
+        {% endif %}
         {% for exporter in exporters %}
-        <a class="dropdown-item" href="{{ exporter.urls.base }}" role="menuitem" tabindex="-1" target="_blank">
+        <a class="dropdown-item" href="{{ exporter.export_url|default:exporter.urls.base }}" role="menuitem" tabindex="-1" target="_blank">
             {% if exporter.icon|slice:":3" == "fa-" %}
             <span class="fa {{ exporter.icon }} export-icon"></span>
             {% else %}

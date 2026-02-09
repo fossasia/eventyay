@@ -1,4 +1,5 @@
-{% load xmlescape %}<?xml version='1.0' encoding='utf-8' ?>
+<?xml version='1.0' encoding='utf-8' ?>
+{% load xmlescape %}
 {% load presale_locale %}
 <!-- Made with love by eventyay v{{ version }}. -->
 <schedule>
