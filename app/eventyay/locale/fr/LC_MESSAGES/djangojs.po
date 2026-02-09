@@ -544,7 +544,7 @@ msgstr "heure zone:"
 
 #: eventyay/static/pretixpresale/js/ui/main.js:448
 msgid "Your local time:"
-msgstr "Your local heure:"
+msgstr "Votre heure locale:"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:17
 msgctxt "widget"
