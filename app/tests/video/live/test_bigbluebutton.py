@@ -1,13 +1,13 @@
 import re
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse, parse_qs
 
 import pytest
 from aiohttp.http_exceptions import HttpProcessingError
 from aioresponses import aioresponses
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
-from urllib.parse import urlparse, parse_qs
 
 from venueless.core.models import User
 from venueless.routing import application
@@ -274,9 +274,17 @@ This conference was already in existence and may currently be in progress.
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_bbb_auto_mute_enabled(bbb_room):
+@pytest.mark.parametrize(
+    "config_key,expected_param",
+    (
+        ("bbb_mute_on_start", "muteOnStart"),
+        ("bbb_disable_cam", "lockSettingsDisableCam"),
+        ("bbb_disable_chat", "lockSettingsDisablePublicChat"),
+    ),
+)
+async def test_bbb_create_params_enabled(bbb_room, config_key, expected_param):
     module = bbb_room.module_config[0]
-    module["config"]["bbb_mute_on_start"] = True
+    module["config"][config_key] = True
     await database_sync_to_async(bbb_room.save)()
 
     with aioresponses() as m:
@@ -286,7 +294,8 @@ async def test_bbb_auto_mute_enabled(bbb_room):
                 parsed = urlparse(str(url))
                 params = parse_qs(parsed.query)
 
-                assert params.get("muteOnStart") == ["true"]
+                assert params.get(expected_param) == ["true"]
+
                 return {
                     "status": 200,
                     "body": """<response>
@@ -301,12 +310,9 @@ async def test_bbb_auto_mute_enabled(bbb_room):
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/create.*$"),
                 callback=create_request_callback,
             )
-
             m.get(
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/join.*$"),
-                body="""<response>
-<returncode>SUCCESS</returncode>
-</response>""",
+                body="""<response><returncode>SUCCESS</returncode></response>""",
             )
 
             await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
@@ -316,9 +322,9 @@ async def test_bbb_auto_mute_enabled(bbb_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_bbb_disable_camera_enabled(bbb_room):
+async def test_bbb_waiting_room_sets_guest_policy_and_guest_flag(bbb_room):
     module = bbb_room.module_config[0]
-    module["config"]["bbb_disable_cam"] = True
+    module["config"]["waiting_room"] = True
     await database_sync_to_async(bbb_room.save)()
 
     with aioresponses() as m:
@@ -328,7 +334,7 @@ async def test_bbb_disable_camera_enabled(bbb_room):
                 parsed = urlparse(str(url))
                 params = parse_qs(parsed.query)
 
-                assert params.get("lockSettingsDisableCam") == ["true"]
+                assert params.get("guestPolicy") == ["ASK_MODERATOR"]
 
                 return {
                     "status": 200,
@@ -340,16 +346,24 @@ async def test_bbb_disable_camera_enabled(bbb_room):
 </response>""",
                 }
 
+            def join_request_callback(url, **kwargs):
+                parsed = urlparse(str(url))
+                params = parse_qs(parsed.query)
+
+                assert params.get("guest") == ["true"]
+
+                return {
+                    "status": 200,
+                    "body": "<response><returncode>SUCCESS</returncode></response>",
+                }
+
             m.get(
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/create.*$"),
                 callback=create_request_callback,
             )
-
             m.get(
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/join.*$"),
-                body="""<response>
-<returncode>SUCCESS</returncode>
-</response>""",
+                callback=join_request_callback,
             )
 
             await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
@@ -359,9 +373,74 @@ async def test_bbb_disable_camera_enabled(bbb_room):
 
 @pytest.mark.asyncio
 @pytest.mark.django_db
-async def test_bbb_disable_public_chat_enabled(bbb_room):
+@pytest.mark.parametrize(
+    "config_key,expected_params",
+    (
+        (
+            "auto_microphone",
+            {
+                "userdata-bbb_listen_only_mode": ["false"],
+            },
+        ),
+        (
+            "auto_camera",
+            {
+                "userdata-bbb_auto_share_webcam": ["true"],
+                "userdata-bbb_skip_video_preview": ["true"],
+            },
+        ),
+        (
+            "hide_presentation",
+            {
+                "userdata-bbb_auto_swap_layout": ["true"],
+            },
+        ),
+    ),
+)
+async def test_bbb_join_userdata_flags(bbb_room, config_key, expected_params):
     module = bbb_room.module_config[0]
-    module["config"]["bbb_disable_chat"] = True
+    module["config"][config_key] = True
+    await database_sync_to_async(bbb_room.save)()
+
+    with aioresponses() as m:
+        async with world_communicator(named=True) as c:
+
+            def join_request_callback(url, **kwargs):
+                parsed = urlparse(str(url))
+                params = parse_qs(parsed.query)
+
+                for param, expected_value in expected_params.items():
+                    assert params.get(param) == expected_value
+
+                return {
+                    "status": 200,
+                    "body": "<response><returncode>SUCCESS</returncode></response>",
+                }
+
+            m.get(
+                re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/create.*$"),
+                body="""<response>
+<returncode>SUCCESS</returncode>
+<meetingID>dummy-meeting</meetingID>
+<attendeePW>dummy-attendee</attendeePW>
+<moderatorPW>dummy-moderator</moderatorPW>
+</response>""",
+            )
+            m.get(
+                re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/join.*$"),
+                callback=join_request_callback,
+            )
+
+            await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
+            response = await c.receive_json_from()
+
+            assert response[0] == "success"
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_bbb_recording_enabled_sets_record_true(bbb_room):
+    module = bbb_room.module_config[0]
+    module["config"]["record"] = True
     await database_sync_to_async(bbb_room.save)()
 
     with aioresponses() as m:
@@ -371,7 +450,7 @@ async def test_bbb_disable_public_chat_enabled(bbb_room):
                 parsed = urlparse(str(url))
                 params = parse_qs(parsed.query)
 
-                assert params.get("lockSettingsDisablePublicChat") == ["true"]
+                assert params.get("record") == ["true"]
 
                 return {
                     "status": 200,
@@ -387,12 +466,48 @@ async def test_bbb_disable_public_chat_enabled(bbb_room):
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/create.*$"),
                 callback=create_request_callback,
             )
-
             m.get(
                 re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/join.*$"),
-                body="""<response>
+                body="<response><returncode>SUCCESS</returncode></response>",
+            )
+
+            await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
+            response = await c.receive_json_from()
+
+            assert response[0] == "success"
+
+@pytest.mark.asyncio
+@pytest.mark.django_db
+async def test_bbb_disable_privatechat_enabled(bbb_room):
+    bbb_room.event.config["bbb_disable_privatechat"] = True
+    await database_sync_to_async(bbb_room.event.save)()
+
+    with aioresponses() as m:
+        async with world_communicator(named=True) as c:
+
+            def create_request_callback(url, **kwargs):
+                parsed = urlparse(str(url))
+                params = parse_qs(parsed.query)
+
+                assert params.get("lockSettingsDisablePrivateChat") == ["true"]
+
+                return {
+                    "status": 200,
+                    "body": """<response>
 <returncode>SUCCESS</returncode>
+<meetingID>dummy-meeting</meetingID>
+<attendeePW>dummy-attendee</attendeePW>
+<moderatorPW>dummy-moderator</moderatorPW>
 </response>""",
+                }
+
+            m.get(
+                re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/create.*$"),
+                callback=create_request_callback,
+            )
+            m.get(
+                re.compile(r"^https://video1\.pretix\.eu/bigbluebutton/api/join.*$"),
+                body="<response><returncode>SUCCESS</returncode></response>",
             )
 
             await c.send_json_to(["bbb.room_url", 123, {"room": str(bbb_room.pk)}])
