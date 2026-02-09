@@ -696,3 +696,25 @@ nav.navbar details.dropdown .dropdown-content a.dropdown-item:hover i,
 nav.navbar details.dropdown .dropdown-content button.dropdown-item:hover i {
   color: #fff;
 }
+
+.dashboard-dropdown {
+  position: relative;
+}
+
+.dashboard-dropdown > .dropdown-content {
+  display: none;
+}
+
+/* Show submenu on hover for devices that support it */
+@media (hover: hover) {
+  .dashboard-dropdown:hover > .dropdown-content {
+    display: block;
+    animation: dropdown-reveal 120ms ease-out;
+  }
+}
+
+/* Show submenu when active class is added (for touch/keyboard) */
+.dashboard-dropdown.active > .dropdown-content {
+  display: block;
+  animation: dropdown-reveal 120ms ease-out;
+}
