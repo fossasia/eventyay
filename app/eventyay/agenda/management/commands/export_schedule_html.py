@@ -14,7 +14,6 @@ from django_scopes import scope, scopes_disabled
 
 from eventyay.base.models.transaction import rolledback_transaction
 from eventyay.common.signals import register_data_exporters
-from eventyay.common.exporter import BaseExporter
 from eventyay.base.models import Event
 
 SERVER_NAME = settings.SITE_URL.split('://')[1]
@@ -89,7 +88,7 @@ def event_exporter_urls(event):
         # that dynamically determine if they are public, as we won't
         # be able to serve dynamic content, and the risk of data leakage
         # is too high.
-        if exporter.is_public is BaseExporter.is_public and exporter.public:
+        if not hasattr(exporter, 'is_public') and exporter.public:
             yield exporter(event).urls.base
 
 

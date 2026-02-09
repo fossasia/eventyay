@@ -48,13 +48,11 @@ class BaseExporter:
         """Return True if the exported data should be publicly available once
         the event is public, False otherwise.
 
-        If you need additional data to decide, override the
-        ``is_public(self, request, **kwargs)`` method.
+        If you need additional data to decide, you can instead implement the
+        ``is_public(self, request, **kwargs)`` method, which overrides this
+        property.
         """
         raise NotImplementedError()  # NOQA
-
-    def is_public(self, request, **kwargs) -> bool:
-        return bool(self.public)
 
     @property
     def show_public(self) -> bool:

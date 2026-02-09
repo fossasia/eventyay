@@ -398,9 +398,6 @@ class BaseCalendarExporter(BaseExporter):
     show_qrcode = False
     icon = 'fa-calendar'
 
-    def is_public(self, request, **kwargs):
-        return bool(self.public)
-
     @property
     def show_public(self):
         return self.ical_exporter_cls(self.event).show_public

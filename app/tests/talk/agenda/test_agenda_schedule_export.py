@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import pytest
 import urllib3
+import django.core.management
 from django.conf import settings
 from django.core import signing
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -15,6 +16,7 @@ from django_scopes import scope
 from lxml import etree
 from django.utils import timezone
 
+from eventyay.base.models.submission import SubmissionFavourite
 from pretalx.agenda.tasks import export_schedule_html
 from pretalx.event.models import Event
 from pretalx.submission.models import Resource
@@ -262,6 +264,7 @@ def test_schedule_speaker_ical_export(
 
     content = response.text
     assert slot.submission.title in content
+    assert other_slot.submission.title not in content
 
 
 @pytest.mark.django_db
@@ -350,8 +353,6 @@ def _make_starred_ics_token(*, event, user_id: int, exp_dt) -> str:
 
 @pytest.mark.django_db
 def test_schedule_export_tokenized_starred_ics_valid(slot, client, orga_user):
-    from eventyay.base.models.submission import SubmissionFavourite
-
     SubmissionFavourite.objects.create(user=orga_user, submission=slot.submission)
     token = _make_starred_ics_token(
         event=slot.submission.event,
@@ -434,7 +435,8 @@ def test_schedule_export_tokenized_only_allows_ics(slot, client, orga_user):
 
 
 @pytest.mark.django_db
-def test_schedule_export_tokenized_starred_ics_anonymous_redirects_to_login(slot, client, orga_user):
+def test_schedule_export_tokenized_starred_ics_anonymous_succeeds(slot, client, orga_user):
+    SubmissionFavourite.objects.create(user=orga_user, submission=slot.submission)
     token = _make_starred_ics_token(
         event=slot.submission.event,
         user_id=orga_user.id,
@@ -448,8 +450,10 @@ def test_schedule_export_tokenized_starred_ics_anonymous_redirects_to_login(slot
             'token': token,
         },
     )
-    response = client.get(url, follow=False)
-    assert response.status_code == 302
+    response = client.get(url, follow=True)
+    assert response.status_code == 200
+    assert response['Content-Type'].startswith('text/calendar')
+    assert slot.submission.title in response.text
 
 
 @pytest.mark.django_db
@@ -479,24 +483,16 @@ def test_feed_view(slot, client, django_assert_max_num_queries, schedule):
 
 @pytest.mark.django_db
 def test_html_export_event_required():
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with pytest.raises(CommandError) as excinfo:
-        call_command("export_schedule_html")
+        django.core.management.call_command("export_schedule_html")
 
     assert "the following arguments are required: event" in str(excinfo.value)
 
 
 @pytest.mark.django_db
 def test_html_export_event_unknown(event):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with pytest.raises(CommandError) as excinfo:
-        call_command("export_schedule_html", "foobar222")
+        django.core.management.call_command("export_schedule_html", "foobar222")
     assert 'Could not find event with slug "foobar222"' in str(excinfo.value)
     export_schedule_html(event_id=22222)
     export_schedule_html(event_id=event.pk)
@@ -551,31 +547,23 @@ def test_html_export_release_with_celery(mocker, event):
 def test_html_export_release_disabled(mocker, event):
     mocker.patch("django.core.management.call_command")
 
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with scope(event=event):
         event.feature_flags["export_html_on_release"] = False
         event.save()
         event.wip_schedule.freeze(name="ohaio means hello")
 
-    call_command.assert_not_called()
+    django.core.management.call_command.assert_not_called()
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot")
 def test_html_export_language(event):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     event.locale = "de"
     event.locale_array = "de,en"
     event.save()
     with override_settings(COMPRESS_ENABLED=True, COMPRESS_OFFLINE=True):
-        call_command("rebuild")
-        call_command("export_schedule_html", event.slug)
+        django.core.management.call_command("rebuild")
+        django.core.management.call_command("export_schedule_html", event.slug)
 
     export_path = settings.HTMLEXPORT_ROOT / "test" / "test/schedule/index.html"
     schedule_html = export_path.read_text()
@@ -587,27 +575,21 @@ def test_html_export_language(event):
 @pytest.mark.usefixtures("slot")
 def test_schedule_export_schedule_html_task(mocker, event):
     mocker.patch("django.core.management.call_command")
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
 
     export_schedule_html.apply_async(kwargs={"event_id": event.id}, ignore_result=True)
 
-    call_command.assert_called_with("export_schedule_html", event.slug, "--zip")
+    django.core.management.call_command.assert_called_with("export_schedule_html", event.slug, "--zip")
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot")
 def test_schedule_export_schedule_html_task_nozip(mocker, event):
     mocker.patch("django.core.management.call_command")
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
 
     export_schedule_html.apply_async(
         kwargs={"event_id": event.id, "make_zip": False}, ignore_result=True
     )
-    call_command.assert_called_with("export_schedule_html", event.slug)
+    django.core.management.call_command.assert_called_with("export_schedule_html", event.slug)
 
 
 @override_settings(
@@ -639,7 +621,6 @@ def test_schedule_orga_trigger_export_with_celery(
     mocker, orga_client, django_assert_max_num_queries, event
 ):
     mocker.patch("pretalx.agenda.tasks.export_schedule_html.apply_async")
-    from pretalx.agenda.tasks import export_schedule_html
 
     with django_assert_max_num_queries(39):
         response = orga_client.post(
@@ -664,10 +645,6 @@ def test_html_export_full(
     django_assert_max_num_queries,
     zip,
 ):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     event.primary_color = "#111111"
     event.is_public = False
     event.save()
@@ -690,12 +667,12 @@ def test_html_export_full(
         image_filename = slot.submission.image.name.split("/")[-1]
 
     with override_settings(COMPRESS_ENABLED=True, COMPRESS_OFFLINE=True):
-        call_command("rebuild")
+        django.core.management.call_command("rebuild")
         event = Event.objects.get(slug=event.slug)
         args = ["export_schedule_html", event.slug]
         if zip:
             args.append("--zip")
-        call_command(*args)
+        django.core.management.call_command(*args)
 
     if zip:
         full_path = settings.HTMLEXPORT_ROOT / "test.zip"

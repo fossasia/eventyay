@@ -111,7 +111,7 @@ class TalkView(TalkMixin, TemplateView):
 
         ctx = super().get_context_data(**kwargs)
         schedule = self.request.event.current_schedule or self.request.event.wip_schedule
-        if not self.request.user.has_perm('agenda.view_schedule', self.request.event):
+        if not self.request.user.has_perm('base.view_schedule', schedule):
             return ctx
         qs = schedule.talks.filter(room__isnull=False).select_related('room') if schedule else TalkSlot.objects.none()
         ctx['talk_slots'] = qs.filter(submission=self.submission).order_by('start').select_related('room')
@@ -274,7 +274,7 @@ class TalkSocialMediaCard(SocialMediaCardMixin, TalkView):
 
 
 class OnlineVideoJoin(EventPermissionRequired, View):
-    permission_required = 'agenda.view_schedule'
+    permission_required = 'base.view_schedule'
 
     def get(self, request, *args, **kwargs):
         if not request.user.is_authenticated:

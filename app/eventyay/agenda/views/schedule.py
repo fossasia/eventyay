@@ -34,16 +34,14 @@ from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
 
 
-class ScheduleMixin:
-    # Starred-sessions calendar token timing knobs:
-    # - GRACE_PERIOD: token stays valid until event end + this grace window.
-    # - FALLBACK_LIFETIME: used only after event end + grace has already passed.
-    # - MIN_VALIDITY: refresh buffer; don't reuse a token if it will expire too soon.
-    MY_STARRED_ICS_TOKEN_SESSION_KEY = 'my_starred_ics_token'
-    MY_STARRED_ICS_TOKEN_GRACE_PERIOD = timedelta(hours=24)
-    MY_STARRED_ICS_TOKEN_FALLBACK_LIFETIME = timedelta(seconds=30)
-    MY_STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
+# Starred-ICS token timing: grace, fallback, refresh buffer.
+STARRED_ICS_TOKEN_SESSION_KEY = 'my_starred_ics_token'
+STARRED_ICS_TOKEN_GRACE_PERIOD = timedelta(hours=24)
+STARRED_ICS_TOKEN_FALLBACK_LIFETIME = timedelta(seconds=30)
+STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
 
+
+class ScheduleMixin:
     @cached_property
     def version(self):
         if version := self.kwargs.get('version'):
@@ -63,14 +61,14 @@ class ScheduleMixin:
         no server-side revocation list. Previously issued tokens remain valid until their
         embedded expiry time.
         """
-        key = ScheduleMixin.MY_STARRED_ICS_TOKEN_SESSION_KEY
+        key = STARRED_ICS_TOKEN_SESSION_KEY
         if key in request.session:
             del request.session[key]
 
-        expiry_fallback = timezone.now() + ScheduleMixin.MY_STARRED_ICS_TOKEN_FALLBACK_LIFETIME
+        expiry_fallback = timezone.now() + STARRED_ICS_TOKEN_FALLBACK_LIFETIME
         expiry = expiry_fallback
         event = request.event
-        expiry_event = event.date_to + ScheduleMixin.MY_STARRED_ICS_TOKEN_GRACE_PERIOD
+        expiry_event = event.date_to + STARRED_ICS_TOKEN_GRACE_PERIOD
         if timezone.is_naive(expiry_event):
             expiry_event = timezone.make_aware(expiry_event, timezone=timezone.get_current_timezone())
         if expiry_event > timezone.now():
@@ -99,11 +97,13 @@ class ScheduleMixin:
         if not expiry_dt:
             return None
         time_until_expiry = expiry_dt - timezone.now()
-        return time_until_expiry >= ScheduleMixin.MY_STARRED_ICS_TOKEN_MIN_VALIDITY
+        return time_until_expiry >= STARRED_ICS_TOKEN_MIN_VALIDITY
 
     def get_object(self):
         schedule = None
-        if self.version:
+        if self.version == 'wip':
+            schedule = self.request.event.wip_schedule
+        elif self.version:
             with suppress(Exception):
                 schedule = (
                     self.request.event.schedules.filter(version__iexact=self.version).select_related('event', 'event__organizer').first()
@@ -137,7 +137,7 @@ class ScheduleMixin:
 
 
 class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
-    permission_required = 'agenda.view_schedule'
+    permission_required = 'base.list_schedule'
 
     def get(self, request, *args, **kwargs):
         url = resolve(self.request.path_info)
@@ -165,7 +165,7 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
 
 class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     template_name = 'agenda/schedule.html'
-    permission_required = 'agenda.view_schedule'
+    permission_required = 'base.view_schedule'
 
     def get_text(self, request, **kwargs):
         data = ScheduleData(
@@ -239,7 +239,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return schedule
 
     def get_permission_object(self):
-        return self.request.event
+        return self.object
 
     @context
     def exporters(self):
@@ -347,7 +347,7 @@ class ScheduleNoJsView(ScheduleView):
 
 class ChangelogView(EventPermissionRequired, TemplateView):
     template_name = 'agenda/changelog.html'
-    permission_required = 'agenda.view_schedule'
+    permission_required = 'base.list_schedule'
 
     @context
     def schedules(self):
@@ -357,7 +357,7 @@ class ChangelogView(EventPermissionRequired, TemplateView):
 class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView):
     """Handles redirects for both Google Calendar and other calendar applications."""
 
-    permission_required = 'agenda.view_schedule'
+    permission_required = 'base.list_schedule'
 
     def get(self, request, *args, **kwargs):
         url_name = request.resolver_match.url_name if request.resolver_match else ''
@@ -379,7 +379,7 @@ class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView)
             if not request.user.is_authenticated:
                 return HttpResponseRedirect(self.request.event.urls.login)
 
-            existing_token = request.session.get(self.MY_STARRED_ICS_TOKEN_SESSION_KEY)
+            existing_token = request.session.get(STARRED_ICS_TOKEN_SESSION_KEY)
             generate_new_token = True
 
             if existing_token:

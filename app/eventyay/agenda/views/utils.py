@@ -2,18 +2,20 @@ import hashlib
 import random
 import string
 import logging
-from datetime import timezone as dt_timezone
+from datetime import datetime, timezone as dt_timezone
 
 from django.contrib import messages
 from django.core import signing
-from django.http import HttpResponse, HttpResponseNotModified, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseNotModified, HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import activate
 from django.utils import timezone
 
+from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
 from eventyay.common.text.path import safe_filename
 from eventyay.base.models.submission import SubmissionFavourite
+from eventyay.schedule.exporters import FavedICalExporter
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +38,11 @@ def load_starred_ics_token(token: str, *, event=None):
         )
         if event is not None:
             token_event_id = value.get('event_id')
-            if not token_event_id or int(token_event_id) != int(event.pk):
+            if not token_event_id or int(token_event_id) != event.pk:
                 return None, None
         user_id = value['user_id']
         exp_ts = int(value['exp'])
-        expiry_dt = timezone.datetime.fromtimestamp(exp_ts, tz=dt_timezone.utc)
+        expiry_dt = datetime.fromtimestamp(exp_ts, tz=dt_timezone.utc)
         if expiry_dt <= timezone.now():
             return None, None
         return user_id, expiry_dt
@@ -87,23 +89,16 @@ def is_public_speakers_empty(request):
     )
 
 
-def is_visible(exporter, request, public=False):
+def is_visible(exporter: BaseExporter, request: HttpRequest, public: bool = False) -> bool:
     if not public:
         return request.user.is_authenticated
 
     if not request.user.has_perm('base.list_schedule', request.event):
         return False
 
-    try:
-        is_public = exporter.is_public
-    except AttributeError:
-        return exporter.public
-
-    try:
-        return is_public(request=request)
-    except Exception:
-        logger.exception('Failed to use %s.is_public() for %s', exporter.identifier, request.event.slug)
-        return exporter.public
+    if isinstance(exporter, FavedICalExporter):
+        return exporter.is_public(request=request)
+    return bool(exporter.public)
 
 
 def get_schedule_exporters(request, public=False):
@@ -157,10 +152,8 @@ def get_schedule_exporter_content(request, exporter_name, schedule, token=None):
         else:
             return HttpResponseRedirect(request.event.urls.login)
     if token and "-my" in exporter.identifier:
-        if not request.user.is_authenticated:
-            return HttpResponseRedirect(request.event.urls.login)
         user_id = parse_ics_token(token, event=request.event)
-        if not user_id or int(user_id) != int(request.user.id):
+        if not user_id:
             return
         talk_ids = list(
             SubmissionFavourite.objects.filter(
