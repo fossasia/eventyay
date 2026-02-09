@@ -27,6 +27,7 @@ from rest_framework import views
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
@@ -259,11 +260,7 @@ class EventCreateView(SafeSessionWizardView):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
 
-            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
-            if isinstance(plugins_default, str):
-                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
-            else:
-                default_plugins = list(plugins_default or [])
+            default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
                 'eventyay.plugins.ticketoutputpdf',
@@ -690,6 +687,9 @@ class EventLive(TemplateView):
                 return redirect(self.request.path)
             with transaction.atomic():
                 event.testmode = True
+                if event.startpage_featured:
+                    event.startpage_featured = False
+                    event.startpage_visible = True
                 if event.private_testmode:
                     event.private_testmode = False
                     event.settings.private_testmode_tickets = False

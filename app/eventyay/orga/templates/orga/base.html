@@ -48,6 +48,7 @@
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_pretalx.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_flags.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_layout.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_rtl.css' %}" />
         {% endcompress %}
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?target=orga&c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
@@ -78,7 +79,7 @@
                 <i class="fa fa-bars fa-lg"></i>
             </button>
             <div class="navbar-header">
-                <a class="navbar-brand" href="{{ tickets_common }}">
+                <a class="navbar-brand" href="{% url 'presale:index' %}">
                     <img loading="lazy" src="{% static 'pretixbase/img/eventyay-icon.svg' %}" alt="{{ site_name }}" />
                     {{ site_name }}
                 </a>
