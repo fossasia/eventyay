@@ -69,11 +69,7 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
     @context
     @cached_property
     def questions_form(self):
-        # We keep this for now if needed for other purposes, but the main logic moved to profile_form
-        # actually, if we remove the second form from template, this might not be needed at all
-        # except if 'questions_form' variable is used in template elsewhere.
-        # It was used as {{ questions_form }}, we will replace it.
-        pass
+        raise NotImplementedError("questions_form is deprecated and should not be used.")
 
     @context
     def questions_exist(self):
