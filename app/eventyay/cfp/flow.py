@@ -421,6 +421,9 @@ class InfoStep(GenericFlowStep, FormFlowStep):
     def done(self, request, draft=False):
         self.request = request
         form = self.get_form(from_storage=True, not_strict=draft)
+        # Ensure the instance is updated with data from session
+        form.is_valid()
+
         if draft and not form.instance.title:
             form.instance.title = _('Draft Proposal')
         form.instance.event = self.event
