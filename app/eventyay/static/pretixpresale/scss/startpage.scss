@@ -354,52 +354,6 @@ body.startpage-search-results-page #main-card {
   overflow: hidden;
 }
 
-body.startpage-search-results-page .startpage-event-list {
-  display: block;
-}
-
-.startpage-event-card-search {
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  display: block;
-  padding: 0.75rem 0;
-}
-
-.startpage-event-card-search + .startpage-event-card-search {
-  border-top: 1px solid var(--color-grey-light);
-}
-
-body.startpage-search-results-page .startpage-event-body {
-  padding: 0;
-}
-
-body.startpage-search-results-page .startpage-event-title {
-  font-size: 1.1rem;
-  margin-bottom: 0.15rem;
-}
-
-body.startpage-search-results-page .startpage-event-title a {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-body.startpage-search-results-page .startpage-event-title a:hover {
-  text-decoration: underline;
-}
-
-body.startpage-search-results-page .startpage-event-meta {
-  font-size: 0.9rem;
-  color: var(--color-grey-dark);
-}
-
-body.startpage-search-results-page .startpage-event-footer,
-body.startpage-search-results-page .startpage-event-media,
-body.startpage-search-results-page .startpage-testmode-badge,
-body.startpage-search-results-page .startpage-event-share {
-  display: none;
-}
 
 .startpage-event-media {
   display: block;
