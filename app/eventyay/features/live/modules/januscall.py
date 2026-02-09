@@ -106,7 +106,10 @@ class JanusCallModule(BaseModule):
 
                 if not room_data:
                     # no room exists
-                    janus_server, turn_server = await self._servers()
+                    try:
+                        janus_server, turn_server = await self._servers()
+                    except ValueError:
+                        raise ConsumerException("janus.failed")
                     try:
                         room_data = await create_videoroom(
                             janus_server,
