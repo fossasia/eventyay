@@ -1192,3 +1192,11 @@ h1 .label {
   nav.navbar .mobile-only { display: inline; }
   nav.navbar .desktop-only { display: none; }
 }
+
+nav.navbar .mobile-only {
+    display: none;
+}
+
+nav.navbar .desktop-only {
+    display: inline;
+}
