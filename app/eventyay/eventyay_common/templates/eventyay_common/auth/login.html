@@ -14,7 +14,6 @@
 {% endblock %}
 
 {% block content %}
-    <link rel="stylesheet" href="{% static 'eventyay-common/css/auth_login.css' %}">
     <form class="form-signin" action="" method="post">
         {% csrf_token %}
 
@@ -104,7 +103,7 @@
             {% if backend.login_form_fields %}
                 <button type="button"
                         id="toggle-login"
-                        class="btn btn-default btn-block"
+                        class="btn {% if login_providers and any_preferred %}btn-default{% else %}btn-primary{% endif %} btn-block"
                         data-toggle="collapse"
                         data-target="#login-form">
                     {% translate "Login with Email" %}
@@ -116,7 +115,7 @@
                     {% if settings.state and not settings.is_preferred %}
                         <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
                            data-method="post"
-                           class="btn btn-default btn-block">
+                           class="btn {% if any_preferred %}btn-default{% else %}btn-primary{% endif %} btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}
                             {% endwith %}
