@@ -99,40 +99,6 @@ your {event_name} CfP system.
 """
     )
 )
-UPDATE_SUBJECT = LazyI18nString.from_gettext(
-    _("[{event_name}] A talk has been modified: {submission_title}")
-)
-UPDATE_TEXT = LazyI18nString.from_gettext(
-    _(
-        """Hi,
-
-the proposal "{submission_title}" for your event {event_name} has been modified.
-You can see details at
-
-{event_url}
-
-All the best,
-your {event_name} CfP system.
-"""
-    )
-)
-UPDATE_SUBJECT = LazyI18nString.from_gettext(
-    _("[{event_name}] A talk has been modified: {submission_title}")
-)
-UPDATE_TEXT = LazyI18nString.from_gettext(
-    _(
-        """Hi,
-
-the proposal "{submission_title}" for your event {event_name} has been modified.
-You can see details at
-
-{event_url}
-
-All the best,
-your {event_name} CfP system.
-"""
-    )
-)
 
 SPEAKER_INVITE_SUBJECT = LazyI18nString.from_gettext(_('You have been added to a proposal for {event_name}'))
 
