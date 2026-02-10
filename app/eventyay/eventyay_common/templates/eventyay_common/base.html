@@ -13,6 +13,7 @@
     		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
+            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
 		{% endcompress %}
@@ -120,7 +121,7 @@
                             </a>
                         {% endif %}
                     {% endif %}
-                    <a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
+                    <a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
                         {{ settings.INSTANCE_NAME }}
                     </a>
