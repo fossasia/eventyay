@@ -29,13 +29,17 @@ class StartPageView(TemplateView):
         )
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
+        search_query = self.request.GET.get('q', '').strip()
+        ctx['search_query'] = search_query
         with scopes_disabled():
             qs = (
                 Event.objects
                 .select_related('organizer')
                 .visible_on_startpage()
                 .order_by('date_from')
-            )  
+            )
+            if search_query:
+                ctx['events'] = qs.filter(name__icontains=search_query).order_by('date_from')
             today = timezone.localdate()
             ctx['featured_events'] = (
                 qs.filter(startpage_featured=True, testmode=False, date_to__date__gte=today)
