@@ -419,7 +419,6 @@ var editor = {
             if ($colorInput.data('colorpicker')) {
                 $colorInput.colorpicker('setValue', hexColor);
             }
-            $("#toolbox-col").val("#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2]).toString(16).slice(1));
             $("#toolbox-fontsize").val(editor._px2pt(o.fontSize).toFixed(1));
             //$("#toolbox-lineheight").val(o.lineHeight);
             $("#toolbox-fontfamily").val(o.fontFamily);
