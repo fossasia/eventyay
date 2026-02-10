@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
-      EVY_RUNNING_ENVIRONMENT: ci
+      EVY_RUNNING_ENVIRONMENT: testing
     services:
       redis:
         image: redis:7
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
-      EVY_RUNNING_ENVIRONMENT: ci
+      EVY_RUNNING_ENVIRONMENT: testing
     needs: python-uv-check
     services:
       postgres:
@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
-      EVY_RUNNING_ENVIRONMENT: ci
+      EVY_RUNNING_ENVIRONMENT: testing
     needs: python-uv-check
     services:
       postgres:
