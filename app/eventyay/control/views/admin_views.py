@@ -1,10 +1,13 @@
 import copy
 import datetime
 import json
+import logging
 
 import icalendar
 import jwt
 import requests
+from lxml import etree
+from lxml.etree import XMLSyntaxError
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib import messages
@@ -58,6 +61,8 @@ from eventyay.control.forms.server_management import (
 )
 from eventyay.base.models.log import LogEntry
 from eventyay.control.tasks import clear_event_data
+
+logger = logging.getLogger(__name__)
 
 
 class SuperuserBase(UserPassesTestMixin):
@@ -752,8 +757,9 @@ class BBBMoveRoom(AdminBase, FormView):
     template_name = "control/bbb_moveroom.html"
     form_class = BBBMoveRoomForm
 
+    @transaction.atomic()
     def form_valid(self, form):
-        server = form.cleaned_data["server"]
+        target_server = form.cleaned_data["server"]
         room = form.cleaned_data["room"]
 
         try:
@@ -761,20 +767,49 @@ class BBBMoveRoom(AdminBase, FormView):
         except BBBCall.DoesNotExist:
             messages.error(self.request, _("No BBB session found for this room."))
             return HttpResponseRedirect(self.request.path)
+
+        if c.server_id == target_server.id:
+            messages.warning(self.request, _("Room is already on this server."))
+            return HttpResponseRedirect(self.request.path)
+
         try:
             u = get_url(
                 "end",
                 {"meetingID": c.meeting_id, "password": c.moderator_pw},
-                server.url,
-                server.secret,
+                c.server.url,
+                c.server.secret,
             )
             r = requests.get(u, timeout=15)
             r.raise_for_status()
-        except Exception:
+            body = r.text
+            root = etree.fromstring(body)
+            if root.xpath("returncode")[0].text != "SUCCESS":
+                logger.warning("BBB end meeting failed for meeting %s. Response: %s", c.meeting_id, body)
+                messages.warning(self.request, _("Kicking all attendees did not work."))
+                return HttpResponseRedirect(self.request.path)
+        except requests.RequestException:
+            logger.exception("Failed to contact BBB server when ending meeting %s", c.meeting_id)
             messages.warning(self.request, _("Kicking all attendees did not work."))
+            return HttpResponseRedirect(self.request.path)
+        except (XMLSyntaxError, IndexError, AttributeError):
+            logger.exception("Invalid BBB XML response while ending meeting %s", c.meeting_id)
+            messages.warning(self.request, _("Kicking all attendees did not work."))
+            return HttpResponseRedirect(self.request.path)
+        
+        old_server_id = c.server_id
 
-        c.server = server
+        c.server = target_server
         c.save()
+        LogEntry.objects.create(
+            content_object=c,
+            user=self.request.user,
+            action_type="bbbcall.moved",
+            data={
+                "room": str(room.id),
+                "from_server": str(old_server_id),
+                "to_server": str(target_server.id),
+            },
+        )
         messages.success(self.request, _("Moved."))
         return HttpResponseRedirect(self.request.path)
 
