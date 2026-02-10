@@ -190,6 +190,9 @@ def login(request):
         for provider in ctx['login_providers'].values()
     )
 
+    # Compute button classes for template - secondary style if preferred provider exists
+    ctx['secondary_btn_class'] = 'btn-default' if ctx['any_preferred'] else 'btn-primary'
+
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 
