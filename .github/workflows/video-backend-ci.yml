@@ -24,11 +24,6 @@ jobs:
         image: redis:7
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -49,9 +44,7 @@ jobs:
 
       - name: Django system checks
         env:
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
-          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         working-directory: app
         run: uv run python manage.py check
 
@@ -89,20 +82,10 @@ jobs:
           POSTGRES_DB: eventyay-db
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U eventyay -d eventyay-db"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
       redis:
         image: redis:7
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -123,27 +106,13 @@ jobs:
 
       - name: Run database migrations
         env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
+          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         working-directory: app
         run: uv run python manage.py migrate --noinput
 
       - name: Run pytest
         env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
+          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
@@ -162,20 +131,10 @@ jobs:
           POSTGRES_DB: eventyay-db
         ports:
           - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U eventyay -d eventyay-db"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
       redis:
         image: redis:7
         ports:
           - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
     steps:
       - uses: actions/checkout@v4
 
@@ -184,7 +143,7 @@ jobs:
           sudo apt-get update
           # redis-cli is provided by redis-tools; curl is needed for the HTTP healthcheck.
           # postgresql-client provides pg_isready on ubuntu-latest (often already present, but keep it explicit).
-          sudo apt-get install -y gettext redis-tools curl postgresql-client
+          sudo apt-get install -y gettext curl
 
       - uses: actions/setup-python@v5
         with:
@@ -195,51 +154,16 @@ jobs:
 
       - name: Sync dependencies
         run: uv sync --directory app
-
-      - name: Wait for services and run migrations
+      - name: Run migrations
         env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
+          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         run: |
-          # Wait for Postgres
-          for _ in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db >/dev/null 2>&1; then
-              echo "Postgres is up"
-              break
-            fi
-            sleep 2
-          done
-          pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db
-
-          # Wait for Redis
-          for _ in {1..30}; do
-            if redis-cli -h localhost -p 6379 ping >/dev/null 2>&1; then
-              echo "Redis is up"
-              break
-            fi
-            sleep 2
-          done
-          redis-cli -h localhost -p 6379 ping
-
           cd app
           uv run python manage.py migrate --noinput
-
+            
       - name: Start development server
         env:
-          EVY_POSTGRES_USER: eventyay
-          EVY_POSTGRES_PASSWORD: eventyay
-          EVY_POSTGRES_DB: eventyay-db
-          EVY_POSTGRES_HOST: localhost
-          EVY_POSTGRES_PORT: "5432"
-          EVY_REDIS_URL: redis://localhost:6379/0
-          EVY_SECRET_KEY: ci-test-secret-key
-          EVY_DEBUG: "true"
+          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         run: |
           set -e
           cd app
