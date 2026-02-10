@@ -155,7 +155,8 @@
                                    id="startpage-visible-{{ e.pk }}"
                                    data-event-id="{{ e.pk }}"
                                    data-field="startpage_visible"
-                                   {% if e.startpage_visible %}checked{% endif %}>
+                                   {% if e.startpage_visible %}checked{% endif %}
+                                   {% if e.has_component_testmode %}disabled{% endif %}>
                             <span class="toggle-slider"></span>
                         </label>
                     </td>
@@ -166,7 +167,8 @@
                                    id="startpage-featured-{{ e.pk }}"
                                    data-event-id="{{ e.pk }}"
                                    data-field="startpage_featured"
-                                   {% if e.startpage_featured %}checked{% endif %}>
+                                   {% if e.startpage_featured %}checked{% endif %}
+                                   {% if e.has_component_testmode %}disabled{% endif %}>
                             <span class="toggle-slider"></span>
                         </label>
                     </td>
