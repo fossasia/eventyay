@@ -40,6 +40,7 @@ from eventyay.base.signals import (
     register_mail_placeholders,
 )
 from eventyay.base.templatetags.rich_text import markdown_compile_email
+from eventyay.helpers.i18n import is_rtl
 
 logger = logging.getLogger(__name__)
 
@@ -260,7 +261,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
             'body': body_md,
             'subject': str(subject),
             'color': settings.EVENTYAY_PRIMARY_COLOR,
-            'rtl': get_language() in settings.LANGUAGES_RTL or get_language().split('-')[0] in settings.LANGUAGES_RTL,
+            'rtl': is_rtl(),  # Uses current language automatically
         }
         if self.organizer:
             htmlctx['organizer'] = self.organizer
