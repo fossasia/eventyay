@@ -20,7 +20,7 @@ jobs:
     name: Backend validation (uv + Django checks)
     runs-on: ubuntu-latest
     env:
-      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_CONFIG_FILE: eventyay/config/eventyay.testing.toml
       EVY_RUNNING_ENVIRONMENT: testing
     services:
       redis:
@@ -74,7 +74,7 @@ jobs:
     name: Integration tests (pytest)
     runs-on: ubuntu-latest
     env:
-      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_CONFIG_FILE: eventyay/config/eventyay.testing.toml
       EVY_RUNNING_ENVIRONMENT: testing
     needs: python-uv-check
     services:
@@ -123,7 +123,7 @@ jobs:
     name: Backend smoke test (healthcheck)
     runs-on: ubuntu-latest
     env:
-      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_CONFIG_FILE: eventyay/config/eventyay.testing.toml
       EVY_RUNNING_ENVIRONMENT: testing
     needs: python-uv-check
     services:
