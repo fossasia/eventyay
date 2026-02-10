@@ -111,8 +111,10 @@ class OAuthReturnView(View):
                     # Clean up socialauth_next_url to prevent it from being used later
                     request.session.pop('socialauth_next_url', None)
                     # Process login and set cookie, then redirect to auth URL
-                    process_login_and_set_cookie(request, user, keep_logged_in)
-                    return redirect(f'{auth_url}?{query_string}')
+                    response = process_login_and_set_cookie(request, user, keep_logged_in)
+                    response['Location'] = f'{auth_url}?{query_string}'
+                    response.status_code = 302
+                    return response
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
 
@@ -204,10 +206,11 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         raw_providers = self.gs.settings.get('login_providers', as_type=dict)
         providers = validate_login_providers(raw_providers)
 
-        # Calculate any_preferred using typed objects
+        # Calculate any_preferred considering only enabled providers
         context['any_preferred'] = any(
-            provider.is_preferred
-            for provider in providers._providers().values()
+            # Only check ENABLED providers
+            provider.state and provider.is_preferred
+            for provider in providers.providers().values()
         )
 
         # Convert to dict for template
