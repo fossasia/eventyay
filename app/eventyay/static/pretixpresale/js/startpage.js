@@ -184,8 +184,11 @@
       }
       if (
         !event.repeat &&
+        event.key.toLowerCase() === 'k' &&
         (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === 'k'
+        !(event.ctrlKey && event.metaKey) &&
+        !event.shiftKey &&
+        !event.altKey
       ) {
         var searchInput = document.getElementById('startpage-search-input');
         if (searchInput) {
