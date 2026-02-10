@@ -1,27 +1,19 @@
-# CI configuration
-# Extends testing behavior with explicit service configuration
+# CI-specific configuration
 
-# --- Testing behavior ---
+# Django
+debug = true
+secret_key = "ci-test-secret-key"
+
+# Database (Postgres service from GitHub Actions)
+postgres_host = "localhost"
+postgres_port = 5432
+postgres_user = "eventyay"
+postgres_password = "eventyay"
+postgres_db = "eventyay-db"
+
+# Redis
+redis_url = "redis://localhost:6379/0"
+
+# Email / Celery (safe defaults for CI)
 email_backend = "django.core.mail.backends.locmem.EmailBackend"
 celery_always_eager = true
-
-# --- General ---
-secret_key = "ci-test-secret-key"
-debug = true
-
-# --- Database ---
-[database]
-engine = "django.db.backends.postgresql"
-name = "eventyay-db"
-user = "eventyay"
-password = "eventyay"
-host = "localhost"
-port = 5432
-
-# --- Redis ---
-[redis]
-url = "redis://localhost:6379/0"
-
-# --- Environment ---
-[environment]
-name = "ci"
