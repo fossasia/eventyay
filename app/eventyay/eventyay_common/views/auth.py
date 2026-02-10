@@ -196,6 +196,12 @@ def login(request):
         for name, provider in ordered_providers.items()
     }
 
+    # Calculate any_preferred for conditional styling in template
+    ctx['any_preferred'] = any(
+        provider.get('is_preferred', False) and provider.get('state', False)
+        for provider in ctx['login_providers'].values()
+    )
+
     return render(request, 'eventyay_common/auth/login.html', ctx)
 
 
