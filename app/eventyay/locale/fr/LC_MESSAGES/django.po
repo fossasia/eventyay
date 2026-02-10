@@ -16992,7 +16992,7 @@ msgid ""
 "Manually modifying payment fees is discouraged since they might "
 "automatically be on subsequent order changes or when choosing a different "
 "payment method."
-msgstr ""
+msgstr "La modification manuelle des frais de paiement est déconseillée, car ils peuvent être automatiquement ajustés lors de changements ultérieurs de commande ou lors du choix d'un autre moyen de paiement."
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:339
 #: eventyay/control/templates/pretixcontrol/order/change_questions.html:65
@@ -17077,7 +17077,7 @@ msgstr "Informer l'utilisateur par e-mail"
 
 #: eventyay/control/templates/pretixcontrol/order/deny.html:23
 msgid "Comment (will be sent to the user)"
-msgstr ""
+msgstr "Commentaire (sera envoyé à l'utilisateur)"
 
 #: eventyay/control/templates/pretixcontrol/order/deny.html:35
 #, fuzzy
@@ -17104,11 +17104,11 @@ msgstr "impôts"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:44
 msgid "Approve"
-msgstr ""
+msgstr "Approuver"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:49
 msgid "Deny"
-msgstr ""
+msgstr "Refuser"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:55
 #: eventyay/control/templates/pretixcontrol/order/pay_complete.html:31
@@ -17160,7 +17160,7 @@ msgstr "Ce quota est actuellement overbooké par %(num)s billets."
 #: eventyay/control/templates/pretixcontrol/order/index.html:110
 #, python-format
 msgid "Initiate a refund of %(amount)s"
-msgstr ""
+msgstr "Initier un remboursement de %(amount)s"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:124
 #, fuzzy
@@ -17203,11 +17203,11 @@ msgstr "Date d'annulation"
 msgid ""
 "We know that this email address works because the user clicked a link we "
 "sent them."
-msgstr ""
+msgstr "Nous savons que cette adresse e-mail fonctionne car l'utilisateur a cliqué sur un lien que nous lui avons envoyé."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:230
 msgid "Rebuild the invoice with updated data but the same invoice number."
-msgstr ""
+msgstr "Reconstruire la facture avec des données mises à jour mais le même numéro de facture."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:231
 #: eventyay/control/templates/pretixcontrol/user/2fa_regenemergency.html:20
@@ -17218,7 +17218,7 @@ msgstr "Régénérer"
 msgid ""
 "Generate a cancellation document for this invoice and create a new invoice "
 "with a new invoice number."
-msgstr ""
+msgstr "Générer un document d'annulation pour cette facture et créer une nouvelle facture avec un nouveau numéro de facture."
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:244
 msgid "Generate cancellation"
@@ -17392,7 +17392,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:629
 msgid "MIGRATED"
-msgstr ""
+msgstr "MIGRÉ"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:641
 #: eventyay/control/templates/pretixcontrol/order/pay_cancel.html:4
@@ -17418,7 +17418,7 @@ msgstr "Créer une date"
 #: eventyay/control/templates/pretixcontrol/order/index.html:710
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:64
 msgid "Source"
-msgstr ""
+msgstr "Source"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:743
 #, fuzzy
@@ -17436,7 +17436,7 @@ msgstr "Confirmations"
 #: eventyay/control/templates/pretixcontrol/order/index.html:755
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:122
 msgid "Ignore"
-msgstr ""
+msgstr "Ignorer"
 
 #: eventyay/control/templates/pretixcontrol/order/index.html:761
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:58
@@ -17549,7 +17549,7 @@ msgid ""
 "back into a pending or paid order. This is only possible as long as all "
 "products in the order are still available. If the order is pending payment, "
 "the expiry date will be reset."
-msgstr ""
+msgstr "En réactivant la commande, vous annulez son annulation et la transformez à nouveau en commande en attente ou payée. Ceci n'est possible que tant que tous les produits de la commande sont encore disponibles. Si la commande est en attente de paiement, la date d'expiration sera réinitialisée."
 
 #: eventyay/control/templates/pretixcontrol/order/reactivate.html:34
 #, fuzzy
@@ -17579,7 +17579,7 @@ msgid ""
 "If the money is already on the way back, this will not stop the money, it "
 "will just mark this transfer as aborted in eventyay. This will also not "
 "reactivate the order, it will just allow you to choose a new refund method."
-msgstr ""
+msgstr "Si l'argent est déjà en cours de retour, cela ne l'arrêtera pas ; cela marquera simplement ce transfert comme annulé dans eventyay. Cela ne réactivera pas non plus la commande ; cela vous permettra seulement de choisir une nouvelle méthode de remboursement."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_cancel.html:32
 #, fuzzy
@@ -17596,7 +17596,7 @@ msgstr "Demande de remboursement"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:22
 msgid "How should the refund be sent?"
-msgstr ""
+msgstr "Comment le remboursement doit-il être envoyé ?"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:24
 msgid ""
@@ -17604,7 +17604,7 @@ msgid ""
 "communicate the refund request to the respective payment provider. Manual "
 "refunds will be created as pending refunds, you can then later mark them as "
 "done once you actually transferred the money back to the customer."
-msgstr ""
+msgstr "Tous les paiements que vous avez sélectionnés pour des remboursements automatiques communiqueront immédiatement la demande de remboursement au fournisseur de paiement concerné. Les remboursements manuels seront créés comme remboursements en attente ; vous pourrez ensuite les marquer comme effectués une fois l'argent effectivement renvoyé au client."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:31
 #, fuzzy
@@ -17684,7 +17684,7 @@ msgstr "Paiements non valables"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:158
 msgid "Keep transfer as to do"
-msgstr ""
+msgstr "Conserver le virement comme à faire"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:162
 #: eventyay/control/templates/pretixcontrol/order/refund_done.html:5
@@ -17724,33 +17724,33 @@ msgid ""
 "<strong>%(method)s</strong>. If this refund is processed, the order will be "
 "underpaid by <strong>%(pending)s</strong>. The order total is "
 "<strong>%(total)s</strong>."
-msgstr ""
+msgstr "Nous avons reçu l'avis que <strong>%(amount)s</strong> ont été remboursés via <strong>%(method)s</strong>. Si ce remboursement est traité, la commande sera impayée de <strong>%(pending)s</strong>. Le total de la commande est de <strong>%(total)s</strong>."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
-msgstr ""
+msgstr "La commande étant déjà annulée, cela n'affectera pas son état."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:36
 msgid "What should happen to the ticket order?"
-msgstr ""
+msgstr "Que doit-il arriver à la commande de billets ?"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:43
 msgid ""
 "Mark the order as unpaid and allow the customer to pay again with another "
 "payment method."
-msgstr ""
+msgstr "Marquer la commande comme impayée et permettre au client de payer à nouveau avec un autre moyen de paiement."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_process.html:48
 msgid "Cancel the order irrevocably."
-msgstr ""
+msgstr "Annuler la commande de façon irrévocable."
 
 #: eventyay/control/templates/pretixcontrol/order/refund_start.html:20
 msgid "How much do you want to refund?"
-msgstr ""
+msgstr "Quel montant souhaitez-vous rembourser ?"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_start.html:25
 msgid "Refund full paid amount"
-msgstr ""
+msgstr "Rembourser le montant total payé"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_start.html:32
 #, fuzzy
@@ -17760,7 +17760,7 @@ msgstr "Demande de remboursement"
 
 #: eventyay/control/templates/pretixcontrol/order/refund_start.html:40
 msgid "What should happen to the order?"
-msgstr ""
+msgstr "Que doit-il arriver à la commande ?"
 
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:4
 #: eventyay/control/templates/pretixcontrol/order/sendmail.html:7
@@ -17789,19 +17789,19 @@ msgid ""
 "need to call of your event. This will also disable all products so no new "
 "orders can be created. Make sure that you check afterwards for any overpaid "
 "orders or pending refunds that you need to take care of manually."
-msgstr ""
+msgstr "Vous pouvez utiliser cette page pour annuler et rembourser toutes les commandes en une fois si vous devez annuler votre événement. Cela désactivera également tous les produits afin qu'aucune nouvelle commande ne puisse être créée. Assurez-vous ensuite de vérifier s'il existe des commandes surpayées ou des remboursements en attente que vous devrez traiter manuellement."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:15
 msgid ""
 "After starting this operation, depending on the size of your event, it might "
 "take a few minutes or longer until all orders are processed."
-msgstr ""
+msgstr "Après avoir démarré cette opération, selon la taille de votre événement, il peut s'écouler quelques minutes ou plus avant que toutes les commandes soient traitées."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:21
 msgid ""
 "All actions performed on this page are irreversible. If in doubt, please "
 "contact support before using it."
-msgstr ""
+msgstr "Toutes les actions effectuées sur cette page sont irréversibles. En cas de doute, veuillez contacter le support avant de l'utiliser."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:29
 #, fuzzy
@@ -17832,20 +17832,20 @@ msgid ""
 "explain to them how to access their gift cards. The easiest way to do this, "
 "is to include an explanation and a link to their order using the here "
 "provided email functionality."
-msgstr ""
+msgstr "Puisque vous remboursez les commandes de vos clients sous forme de cartes-cadeaux, vous devriez leur expliquer comment accéder à leurs cartes-cadeaux. Le moyen le plus simple est d'inclure une explication et un lien vers leur commande via la fonctionnalité d'e-mail fournie ici."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:64
 msgid ""
 "Your waiting list will not be deleted automatically, but it will receive no "
 "new tickets due to the products being disabled. You can choose to inform "
 "people on the waiting list by using this option."
-msgstr ""
+msgstr "Votre liste d'attente ne sera pas supprimée automatiquement, mais elle ne recevra plus de nouveaux billets puisque les produits sont désactivés. Vous pouvez choisir d'informer les personnes sur la liste d'attente en utilisant cette option."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:71
 msgid ""
 "You should not execute this function multiple times for the same event, or "
 "everyone on the waiting list will get multiple emails."
-msgstr ""
+msgstr "Vous ne devriez pas exécuter cette fonction plusieurs fois pour le même événement, sinon toutes les personnes sur la liste d'attente recevront plusieurs e-mails."
 
 #: eventyay/control/templates/pretixcontrol/orders/cancel.html:83
 #, fuzzy
@@ -17902,7 +17902,7 @@ msgstr "Paramètres des quotas"
 msgid ""
 "The import will be performed regardless of your quotas, so it will be "
 "possible to overbook your event using this option."
-msgstr ""
+msgstr "L'importation sera effectuée quelle que soit votre limite de quotas, il sera donc possible de surbooker votre événement en utilisant cette option."
 
 #: eventyay/control/templates/pretixcontrol/orders/import_process.html:57
 #, fuzzy
@@ -17919,7 +17919,7 @@ msgstr "Charger un nouveau fichier"
 msgid ""
 "The uploaded file should be a CSV file with a header row. You will be able "
 "to assign the meanings of the different columns in the next step."
-msgstr ""
+msgstr "Le fichier téléversé doit être un fichier CSV avec une ligne d'en-tête. Vous pourrez attribuer la signification des différentes colonnes à l'étape suivante."
 
 #: eventyay/control/templates/pretixcontrol/orders/import_start.html:29
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:35
@@ -17982,37 +17982,37 @@ msgstr "Total de la commande"
 #: eventyay/control/templates/pretixcontrol/orders/index.html:158
 #: eventyay/control/templates/pretixcontrol/search/orders.html:83
 msgid "CANCELLATION REQUESTED"
-msgstr ""
+msgstr "ANNULATION DEMANDÉE"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:161
 #: eventyay/control/templates/pretixcontrol/orders/index.html:163
 #: eventyay/control/templates/pretixcontrol/search/orders.html:86
 #: eventyay/control/templates/pretixcontrol/search/orders.html:88
 msgid "REFUND PENDING"
-msgstr ""
+msgstr "REMBOURSEMENT EN ATTENTE"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:166
 #: eventyay/control/templates/pretixcontrol/search/orders.html:91
 msgid "OVERPAID"
-msgstr ""
+msgstr "SURPAYÉ"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:168
 #: eventyay/control/templates/pretixcontrol/search/orders.html:93
 msgid "UNDERPAID"
-msgstr ""
+msgstr "SOUS-PAYÉ"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:170
 #: eventyay/control/templates/pretixcontrol/search/orders.html:95
 msgid "FULLY PAID"
-msgstr ""
+msgstr "ENTIÈREMENT PAYÉ"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:182
 msgid "INVOICE NOT CANCELED"
-msgstr ""
+msgstr "FACTURE NON ANNULÉE"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:193
 msgid "Sum over all pages"
-msgstr ""
+msgstr "Somme sur toutes les pages"
 
 #: eventyay/control/templates/pretixcontrol/orders/index.html:196
 #, fuzzy, python-format
@@ -18063,11 +18063,11 @@ msgid ""
 "If you click links in this column, you will only find orders that are "
 "canceled completely, while the numbers also include single canceled "
 "positions within valid orders."
-msgstr ""
+msgstr "Si vous cliquez sur les liens de cette colonne, vous ne trouverez que les commandes entièrement annulées, alors que les nombres incluent également des positions annulées individuellement au sein de commandes valides."
 
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:38
 msgid "No refunds are currently open."
-msgstr ""
+msgstr "Aucun remboursement n'est actuellement en cours."
 
 #: eventyay/control/templates/pretixcontrol/orders/refunds.html:78
 #: eventyay/eventyay_common/templates/eventyay_common/events/index.html:75
@@ -18142,7 +18142,7 @@ msgstr "2. Connecter l'appareil"
 msgid ""
 "Download an app that is compatible with eventyay. For example, our check-in "
 "app <strong>eventyay</strong> is available on all major platforms."
-msgstr ""
+msgstr "Téléchargez une application compatible avec eventyay. Par exemple, notre application de pointage <strong>eventyay</strong> est disponible sur toutes les principales plateformes."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:14
 #, fuzzy
@@ -18154,21 +18154,21 @@ msgstr "1. Télécharger eventyaydesk"
 msgid ""
 "Open the app that you want to connect and optionally reset it to the "
 "original state."
-msgstr ""
+msgstr "Ouvrez l'application que vous souhaitez connecter et, si nécessaire, réinitialisez-la à son état d'origine."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:20
 msgid "Scan the following configuration code:"
-msgstr ""
+msgstr "Scannez le code de configuration suivant :"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:22
 msgid ""
 "If your app/device does not support scanning a QR code, you can also enter "
 "the following information:"
-msgstr ""
+msgstr "Si votre application/appareil ne prend pas en charge le scan d'un code QR, vous pouvez également saisir les informations suivantes :"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:24
 msgid "System URL:"
-msgstr ""
+msgstr "URL du système :"
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_connect.html:25
 #, fuzzy
@@ -18230,17 +18230,17 @@ msgstr "Vous êtes sûr de vouloir supprimer l'équipe?"
 msgid ""
 "All data of this device will stay available, but you can't use the device "
 "any more."
-msgstr ""
+msgstr "Toutes les données de cet appareil resteront disponibles, mais vous ne pourrez plus utiliser l'appareil."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:14
 msgid "All data uploaded by this device will stay available online."
-msgstr ""
+msgstr "Toutes les données téléchargées par cet appareil resteront disponibles en ligne."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:15
 msgid ""
 "If data (e.g. POS transactions or check-ins) has been created on this device "
 "and has not been uploaded, you will no longer be able to upload it."
-msgstr ""
+msgstr "Si des données (p. ex. des transactions PDV ou des pointages) ont été créées sur cet appareil et n'ont pas été téléchargées, vous ne pourrez plus les télécharger."
 
 #: eventyay/control/templates/pretixcontrol/organizers/device_revoke.html:16
 msgid ""
@@ -18248,13 +18248,13 @@ msgid ""
 "deleted from the device on the next synchronization attempt. Non-personal "
 "data such as event metadata and POS transactions will persist until you "
 "uninstall or reset the software manually."
-msgstr ""
+msgstr "Si le logiciel de l'appareil le permet, les données personnelles telles que les commandes seront supprimées de l'appareil lors de la prochaine tentative de synchronisation. Les données non personnelles, comme les métadonnées de l'événement et les transactions PDV, persisteront jusqu'à ce que vous désinstalliez ou réinitialisiez le logiciel manuellement."
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:9
 msgid ""
 "This menu allows you to connect hardware devices such as box office "
 "terminals or scanning terminals to your account."
-msgstr ""
+msgstr "Ce menu vous permet de connecter des appareils matériels, tels que des terminaux de caisse ou des terminaux de scan, à votre compte."
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:17
 #, fuzzy
@@ -18271,7 +18271,7 @@ msgstr "2. Connecter l'appareil"
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:36
 msgid "Hardware model"
-msgstr ""
+msgstr "Modèle matériel"
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:37
 #, fuzzy
@@ -18293,12 +18293,12 @@ msgstr "Révoquer"
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:92
 msgid "Connect"
-msgstr ""
+msgstr "Connecter"
 
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:101
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:70
 msgid "Logs"
-msgstr ""
+msgstr "Journaux"
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:12
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/edit.html:4
@@ -18323,7 +18323,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/organizers/edit.html:77
 msgid "Privacy"
-msgstr ""
+msgstr "Confidentialité"
 
 #: eventyay/control/templates/pretixcontrol/organizers/gate_delete.html:5
 #, fuzzy
@@ -18384,7 +18384,7 @@ msgstr "Date d'expiration"
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:43
 msgid "Issued through sale"
-msgstr ""
+msgstr "Émis via la vente"
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:55
 #, fuzzy
@@ -18397,11 +18397,11 @@ msgstr "Créer une date"
 msgid ""
 "Create a payment on the respective order that cancels out with this "
 "transaction. The order will then likely be overpaid."
-msgstr ""
+msgstr "Créez un paiement sur la commande concernée qui compensera cette transaction. La commande sera alors probablement surpayée."
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:82
 msgid "Revert"
-msgstr ""
+msgstr "Rétablir"
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:86
 #, fuzzy
@@ -18425,27 +18425,27 @@ msgstr "Carte de crédit"
 msgid ""
 "You haven't issued any gift cards yet. You can either set up a product in an "
 "event shop to sell gift cards, or you can manually issue gift cards."
-msgstr ""
+msgstr "Vous n'avez pas encore émis de cartes-cadeaux. Vous pouvez soit configurer un produit dans une boutique d'événement pour vendre des cartes-cadeaux, soit émettre des cartes-cadeaux manuellement."
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:20
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:45
 msgid "Manually issue a gift card"
-msgstr ""
+msgstr "Émettre une carte-cadeau manuellement"
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:101
 msgid "Accepted gift cards of other organizers"
-msgstr ""
+msgstr "Cartes-cadeaux acceptées d'autres organisateurs"
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:103
 msgid ""
 "If you have access to multiple organizer accounts, you can configure that "
 "ticket shops in this account will also accept gift codes issued through a "
 "different organizer account, and vice versa."
-msgstr ""
+msgstr "Si vous avez accès à plusieurs comptes d'organisateur, vous pouvez configurer le fait que les boutiques de billets de ce compte acceptent également les codes de cartes-cadeaux émis par un autre compte d'organisateur, et inversement."
 
 #: eventyay/control/templates/pretixcontrol/organizers/giftcards.html:119
 msgid "You are currently not accepting gift cards from other organizers."
-msgstr ""
+msgstr "Vous n'acceptez actuellement pas les cartes-cadeaux d'autres organisateurs."
 
 #: eventyay/control/templates/pretixcontrol/organizers/logs.html:4
 #: eventyay/control/templates/pretixcontrol/organizers/logs.html:6
@@ -18638,19 +18638,19 @@ msgstr "Créer une nouvelle équipe"
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:5
 #, python-format
 msgid "Logs for webhook %(url)s"
-msgstr ""
+msgstr "Journaux pour le webhook %(url)s"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:7
 msgid "This page shows all calls to your webhook in the past 30 days."
-msgstr ""
+msgstr "Cette page affiche tous les appels à votre webhook au cours des 30 derniers jours."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:15
 msgid "This webhook was retried since it previously failed."
-msgstr ""
+msgstr "Ce webhook a été réessayé puisqu'il avait échoué précédemment."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:44
 msgid "Failed"
-msgstr ""
+msgstr "Échoué"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:54
 #, fuzzy
@@ -18660,29 +18660,29 @@ msgstr "Mauvaise demande"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:56
 msgid "Request POST body"
-msgstr ""
+msgstr "Corps POST de la requête"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:58
 msgid "Response body"
-msgstr ""
+msgstr "Corps de la réponse"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhook_logs.html:64
 msgid "This webhook did not receive any events in the last 30 days."
-msgstr ""
+msgstr "Ce webhook n'a reçu aucun événement au cours des 30 derniers jours."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:6
 msgid "Webhooks"
-msgstr ""
+msgstr "Webhooks"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:9
 msgid ""
 "This menu allows you to create webhooks to connect eventyay to other online "
 "services."
-msgstr ""
+msgstr "Ce menu vous permet de créer des webhooks pour connecter eventyay à d'autres services en ligne."
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:13
 msgid "Read documentation"
-msgstr ""
+msgstr "Lire la documentation"
 
 #: eventyay/control/templates/pretixcontrol/organizers/webhooks.html:19
 #, fuzzy
@@ -18854,7 +18854,7 @@ msgid ""
 "After you changed the page size, you need to create a new empty background. "
 "If you want to use a custom background, it already needs to have the correct "
 "size."
-msgstr ""
+msgstr "Après avoir changé la taille de la page, vous devez créer un nouveau fond vide. Si vous souhaitez utiliser un fond personnalisé, il doit déjà avoir la taille correcte."
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:210
 #, fuzzy
@@ -18888,7 +18888,7 @@ msgstr "Taille de police (pt)"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:281
 msgid "Flow multiple lines downward from specified position"
-msgstr ""
+msgstr "Dérouler plusieurs lignes vers le bas à partir de la position spécifiée"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:290
 msgid "Text color"
@@ -18896,19 +18896,19 @@ msgstr "Couleur du texte"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:333
 msgid "Rotation (°)"
-msgstr ""
+msgstr "Rotation (°)"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:340
 msgid "Style"
-msgstr ""
+msgstr "Style"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:342
 msgid "Dark"
-msgstr ""
+msgstr "Sombre"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:343
 msgid "Light"
-msgstr ""
+msgstr "Clair"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:349
 #, fuzzy
@@ -18956,7 +18956,7 @@ msgstr "Journaux de l'événement"
 
 #: eventyay/control/templates/pretixcontrol/pdf/index.html:410
 msgid "Dynamic image"
-msgstr ""
+msgstr "Image dynamique"
 
 #: eventyay/control/templates/pretixcontrol/search/orders.html:104
 msgid ""
@@ -19216,7 +19216,7 @@ msgstr "jours avant"
 
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:360
 msgid "Break between slots"
-msgstr ""
+msgstr "Pause entre les créneaux"
 
 #: eventyay/control/templates/pretixcontrol/subevents/bulk.html:370
 #, fuzzy
@@ -19275,13 +19275,13 @@ msgid ""
 "can therefore not change their quotas in bulk. If you want, you can set up a "
 "new set of quotas to <strong>replace</strong> the quota setup of all "
 "selected dates."
-msgstr ""
+msgstr "Vous avez sélectionné un ensemble de dates qui ont actuellement des configurations de quotas différentes. Vous ne pouvez donc pas modifier leurs quotas en masse. Si vous le souhaitez, vous pouvez configurer un nouvel ensemble de quotas pour <strong>remplacer</strong> la configuration de quotas de toutes les dates sélectionnées."
 
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:257
 msgid ""
 "You selected a set of dates that currently have different check-in list "
 "setups. You can therefore not change their check-in lists in bulk."
-msgstr ""
+msgstr "Vous avez sélectionné un ensemble de dates qui ont actuellement des configurations de listes de pointage différentes. Vous ne pouvez donc pas modifier leurs listes de pointage en masse."
 
 #: eventyay/control/templates/pretixcontrol/subevents/delete.html:4
 #: eventyay/control/templates/pretixcontrol/subevents/delete.html:6
@@ -19349,7 +19349,7 @@ msgstr "Créer un nouveau rendez-vous"
 
 #: eventyay/control/templates/pretixcontrol/subevents/index.html:70
 msgid "select all rows for batch-operation"
-msgstr ""
+msgstr "sélectionner toutes les lignes pour l'opération par lot"
 
 #: eventyay/control/templates/pretixcontrol/subevents/index.html:77
 msgid "Begin"
@@ -19357,11 +19357,11 @@ msgstr "Commencer"
 
 #: eventyay/control/templates/pretixcontrol/subevents/index.html:98
 msgid "Select all results on other pages as well"
-msgstr ""
+msgstr "Sélectionner également tous les résultats des autres pages"
 
 #: eventyay/control/templates/pretixcontrol/subevents/index.html:109
 msgid "select row for batch-operation"
-msgstr ""
+msgstr "sélectionner la ligne pour l'opération par lot"
 
 #: eventyay/control/templates/pretixcontrol/subevents/index.html:150
 #, fuzzy
@@ -19408,7 +19408,7 @@ msgstr "Supprimer la date"
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:11
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:25
 msgid "Enable or disable billing validation"
-msgstr ""
+msgstr "Activer ou désactiver la validation de la facturation"
 
 #: eventyay/control/templates/pretixcontrol/toggle_billing_validation.html:30
 #, fuzzy
@@ -20017,7 +20017,7 @@ msgstr ""
 msgid ""
 "Currently, no vouchers will be sent since your event is not live or is not "
 "selling tickets."
-msgstr ""
+msgstr "Actuellement, aucun bon ne sera envoyé puisque votre événement n'est pas en ligne ou ne vend pas de billets."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:48
 msgid ""
@@ -20067,7 +20067,7 @@ msgstr "Sur la liste depuis"
 msgid ""
 "This entry has a modified priority. The higher this number is, the earlier "
 "this person will be assigned a voucher."
-msgstr ""
+msgstr "Cette entrée a une priorité modifiée. Plus ce nombre est élevé, plus tôt cette personne recevra un bon."
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:198
 #, python-format
@@ -20096,7 +20096,7 @@ msgstr "Ajoutez-moi à la liste"
 
 #: eventyay/control/templates/pretixcontrol/waitinglist/index.html:224
 msgid "Move to the end of the list"
-msgstr ""
+msgstr "Déplacer à la fin de la liste"
 
 #: eventyay/control/templatetags/hierarkey_form.py:44
 msgid "Organizer-level settings"
@@ -20214,7 +20214,7 @@ msgid ""
 "If the address is registered to valid account, then we have sent you an e-"
 "mail containing further instructions. Please note that we will send at most "
 "one email every 24 hours."
-msgstr ""
+msgstr "Si l'adresse est associée à un compte valide, nous vous avons envoyé un e-mail contenant des instructions supplémentaires. Veuillez noter que nous enverrons au maximum un e-mail toutes les 24 heures."
 
 #: eventyay/control/views/auth.py:311
 #, fuzzy
@@ -20348,7 +20348,7 @@ msgstr "en ligne"
 
 #: eventyay/control/views/dashboards.py:238
 msgid "live and in test mode"
-msgstr ""
+msgstr "en direct et en mode test"
 
 #: eventyay/control/views/dashboards.py:239
 msgid "not yet public"
@@ -20467,7 +20467,7 @@ msgstr "Autres"
 #: eventyay/control/views/event.py:397
 msgid ""
 "This payment provider does not exist or the respective plugin is disabled."
-msgstr ""
+msgstr "Ce prestataire de paiement n'existe pas ou le plugin correspondant est désactivé."
 
 #: eventyay/control/views/event.py:610
 #, python-format
@@ -20540,7 +20540,7 @@ msgstr ""
 
 #: eventyay/control/views/event.py:923
 msgid "We've disabled test mode for you. Let's sell some real tickets!"
-msgstr ""
+msgstr "Nous avons désactivé le mode test pour vous. Vendons de vrais billets !"
 
 #: eventyay/control/views/event.py:940
 msgid "This event can not be deleted."
@@ -20625,7 +20625,7 @@ msgstr ""
 
 #: eventyay/control/views/global_settings.py:187
 msgid "Invalid value for billing validation!"
-msgstr ""
+msgstr "Valeur invalide pour la validation de la facturation !"
 
 #: eventyay/control/views/item.py:87 eventyay/control/views/item.py:1381
 msgid "The requested product does not exist."
@@ -20660,7 +20660,7 @@ msgstr "rue"
 
 #: eventyay/control/views/item.py:397
 msgid "Some of the provided question ids are invalid."
-msgstr ""
+msgstr "Certains des identifiants de question fournis sont invalides."
 
 #: eventyay/control/views/item.py:400
 #, fuzzy
@@ -20767,7 +20767,7 @@ msgid ""
 "You disabled this item, but it is still part of a product bundle. Your "
 "participants won't be able to buy the bundle unless you remove this item "
 "from it."
-msgstr ""
+msgstr "Vous avez désactivé cet article, mais il fait toujours partie d'un lot de produits. Vos participants ne pourront pas acheter le lot tant que vous n'aurez pas retiré cet article."
 
 #: eventyay/control/views/item.py:1393
 msgid "The selected product has been deleted."
@@ -20818,7 +20818,7 @@ msgstr "Le dernier contrôle de mise à jour a échoué."
 
 #: eventyay/control/views/orderimport.py:106
 msgid "We've been unable to parse the uploaded file as a CSV file."
-msgstr ""
+msgstr "Nous n'avons pas pu analyser le fichier téléversé comme un fichier CSV."
 
 #: eventyay/control/views/orders.py:385 eventyay/presale/views/order.py:122
 #: eventyay/presale/views/order.py:168 eventyay/presale/views/order.py:268
@@ -20979,13 +20979,13 @@ msgstr "Cet événement ne peut pas être supprimé."
 msgid ""
 "You can not refund more than the amount of a payment that is not yet "
 "refunded."
-msgstr ""
+msgstr "Vous ne pouvez pas rembourser plus que le montant d'un paiement qui n'a pas encore été remboursé."
 
 #: eventyay/control/views/orders.py:917
 msgid ""
 "You selected a partial refund for a payment method that only supports full "
 "refunds."
-msgstr ""
+msgstr "Vous avez sélectionné un remboursement partiel pour un moyen de paiement qui ne prend en charge que les remboursements complets."
 
 #: eventyay/control/views/orders.py:947
 msgid ""
