@@ -76,9 +76,10 @@ from eventyay.talk_rules.event import (
 from ..settings import settings_hierarkey
 from .auth import User
 from .mixins import OrderedModel, PretalxModel
-from .organizer import Organizer, OrganizerBillingModel, Team
+from .organizer import Organizer, Team
 from .roomquestion import RoomQuestion
 from .systemlog import SystemLog
+
 
 TALK_HOSTNAME = settings.TALK_HOSTNAME
 logger = logging.getLogger(__name__)
@@ -1966,7 +1967,6 @@ class Event(
         return issues
 
     def billing_issues(self):
-        from django.utils.html import format_html
         from django.utils.translation import gettext
 
         from eventyay.base.models.organizer import OrganizerBillingModel

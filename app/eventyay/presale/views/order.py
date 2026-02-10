@@ -6,6 +6,7 @@ import mimetypes
 import os
 import re
 from collections import OrderedDict
+from datetime import UTC
 from decimal import Decimal
 from typing import cast
 from urllib.parse import urlparse, urlunparse
@@ -101,19 +102,13 @@ logger = logging.getLogger(__name__)
 
 class OrderDetailMixin(NoSearchIndexViewMixin):
     @cached_property
-    def order(self):
+    def order(self) -> Order | None:
         order = self.request.event.orders.filter(code=self.kwargs['order']).select_related('event').first()
-        if order:
-            if order.secret.lower() == self.kwargs['secret'].lower():
-                return order
-            else:
-                return None
-        else:
-            # Do a comparison as well to harden timing attacks
-            if 'abcdefghijklmnopq'.lower() == self.kwargs['secret'].lower():
-                return None
-            else:
-                return None
+        if not order:
+            return None
+        if order.secret.lower() == self.kwargs['secret'].lower():
+            return order
+        return None
 
     def get_order_url(self):
         return eventreverse(
@@ -167,7 +162,7 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         ) > now():
             raise PermissionDenied()
 
-        iat = datetime.datetime.utcnow()
+        iat = datetime.datetime.now(UTC)
         exp = iat + datetime.timedelta(days=30)
         profile = {'fields': {}}
         if self.position.attendee_name:
@@ -317,7 +312,6 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
     template_name = 'pretixpresale/event/order.html'
 
     def get(self, request, *args, **kwargs):
-        self.kwargs = kwargs
         if not self.order:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
         return super().get(request, *args, **kwargs)
@@ -424,7 +418,6 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
                 r.giftcard = gc
 
         viewer_email = user.primary_email if user.is_authenticated else ''
-        ctx['viewer_email'] = viewer_email
         ctx['can_modify_order'] = self.order.is_modification_allowed_by(viewer_email)
 
         return ctx

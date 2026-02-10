@@ -2,6 +2,10 @@ import zoneinfo
 from enum import StrEnum
 from pathlib import Path
 
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+
 # The root directory of the project, where "./manage.py" file is located.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -34,3 +38,9 @@ class SizeKey(StrEnum):
     UPLOAD_SIZE_OTHER = "upload_size_other"
 
     RESPONSE_SIZE_WEBHOOK = "response_size_webhook"
+
+
+class AllowModifications(models.TextChoices):
+    NO = 'no', _('No modifications after order was submitted')
+    ORDER = 'order', _('Only the person who ordered can make changes')
+    ATTENDEE = 'attendee', _('Both the attendee and the person who ordered can make changes')

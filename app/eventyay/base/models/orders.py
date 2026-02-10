@@ -8,7 +8,7 @@ import string
 from collections import Counter
 from datetime import datetime, time, timedelta
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import dateutil
 import pycountry
@@ -41,6 +41,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django_countries.fields import Country
 from django_scopes import ScopedManager, scopes_disabled
+from hierarkey.proxy import HierarkeyProxy
 from i18nfield.strings import LazyI18nString
 from phonenumber_field.modelfields import PhoneNumberField
 from phonenumber_field.phonenumber import PhoneNumber
@@ -55,6 +56,7 @@ from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.services.locking import NoLockManager
 from eventyay.base.settings import PERSON_NAME_SCHEMES
 from eventyay.base.signals import order_gracefully_delete
+from eventyay.consts import AllowModifications
 
 from ...helpers.countries import CachedCountries, FastCountryField
 from .base import LockModel, LoggedModel
@@ -775,7 +777,8 @@ class Order(LockModel, LoggedModel):
         ):
             return False
 
-        if self.event.settings.allow_modifications not in ("order", "attendee"):
+        esettings = cast(HierarkeyProxy, self.event.settings)
+        if esettings.allow_modifications not in (AllowModifications.ORDER, AllowModifications.ATTENDEE):
             return False
 
         update_deadline = self.modify_deadline()
@@ -789,14 +792,14 @@ class Order(LockModel, LoggedModel):
             .select_related('product')
             .prefetch_related('product__questions')
         )
-        if not self.event.settings.allow_modifications_after_checkin:
+        if not esettings.allow_modifications_after_checkin:
             for cp in positions:
                 if cp.has_checkin:
                     return False
 
-        if self.event.settings.get('invoice_address_asked', as_type=bool):
+        if esettings.get('invoice_address_asked', as_type=bool):
             return True
-        ask_names = self.event.settings.get('attendee_names_asked', as_type=bool)
+        ask_names = esettings.get('attendee_names_asked', as_type=bool)
         for cp in positions:
             if (cp.product.admission and ask_names) or cp.product.questions.all():
                 return True
@@ -811,12 +814,13 @@ class Order(LockModel, LoggedModel):
         if not self.can_modify_answers or not email:
             return False
 
-        setting = self.event.settings.allow_modifications
+        esettings = cast(HierarkeyProxy, self.event.settings)
+        setting = esettings.allow_modifications
 
-        if setting == 'order':
+        if setting == AllowModifications.ORDER:
             return self.email and self.email.lower() == email.lower()
 
-        elif setting == 'attendee':
+        elif setting == AllowModifications.ATTENDEE:
             return (
                 self.email and self.email.lower() == email.lower()
             ) or self.positions.filter(attendee_email__iexact=email).exists()
@@ -851,13 +855,14 @@ class Order(LockModel, LoggedModel):
 
     @property
     def ticket_download_available(self):
+        esettings = cast(HierarkeyProxy, self.event.settings)
         return (
-            self.event.settings.ticket_download
-            and (self.event.settings.ticket_download_date is None or now() > self.ticket_download_date)
+            esettings.ticket_download
+            and (esettings.ticket_download_date is None or now() > self.ticket_download_date)
             and (
                 self.status == Order.STATUS_PAID
                 or (
-                    (self.event.settings.ticket_download_pending or self.total == Decimal('0.00'))
+                    (esettings.ticket_download_pending or self.total == Decimal('0.00'))
                     and self.status == Order.STATUS_PENDING
                     and not self.require_approval
                 )
