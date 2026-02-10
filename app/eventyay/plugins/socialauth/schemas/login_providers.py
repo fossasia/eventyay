@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class ProviderConfig(BaseModel):
@@ -16,35 +16,38 @@ class LoginProviders(BaseModel):
     class Config:
         extra = "forbid"
 
-    def _providers(self) -> dict[str, ProviderConfig]:
+    def providers(self) -> dict[str, ProviderConfig]:
         """
-        Internal helper: Return all provider fields as a name -> ProviderConfig mapping.
+        Return all provider fields as a name -> ProviderConfig mapping.
         Iterate over all providers regardless of their enabled state.
         """
         return {name: getattr(self, name) for name in self.model_fields}
 
-    
-    def get_enabled_providers(self) -> "LoginProviders":
+    @model_validator(mode="after")
+    def ensure_single_preferred(self) -> "LoginProviders":
         """
-        Get all enabled providers.
+        Ensure that at most one enabled provider has is_preferred=True.
+        If multiple are marked preferred, keep the first one enabled and clear the others.
         """
-        # Build a dict of only enabled providers.
-        enabled_data = {
-            name: getattr(self, name)  # fetch the ProviderConfig
-            for name in self.model_fields
-            if getattr(self, name).state
-        }
-
-        # Return a new LoginProviders object
-        return LoginProviders(**enabled_data)
-
-        
-    def get_preferred_provider(self) -> tuple[str, ProviderConfig] | None:
-        """
-        Get the preferred provider if one exists and is enabled.
-        """
-        for name, provider in self._providers().items():
-            # Return first provider that is both enabled and marked as preferred
+        preferred_found = False
+        updates = {}
+   
+        for name, provider in self.providers().items():
             if provider.state and provider.is_preferred:
-                return name, provider
-        return None  # No preferred provider found
+                if not preferred_found:
+                    preferred_found = True  # keep the first one
+                else:
+                    # Clear extra preferred flags by creating updated config
+                    updates[name] = ProviderConfig(
+                        state=provider.state,
+                        client_id=provider.client_id,
+                        secret=provider.secret,
+                        is_preferred=False  # Clear the preference
+                    )
+
+        # Apply updates if any
+        if updates:
+            for name, updated_provider in updates.items():
+                setattr(self, name, updated_provider)
+
+        return self
