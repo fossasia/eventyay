@@ -23611,17 +23611,17 @@ msgstr ""
 msgid ""
 "In the section \"Applicable grants\" select \"Basic Rights\" and \"Access "
 "private information\""
-msgstr ""
+msgstr "Dans la section « Applicable grants », sélectionnez « Basic Rights » et « Access private information »"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:86
 msgid "Finally tick the box to accept the terms and submit."
-msgstr ""
+msgstr "Enfin, cochez la case pour accepter les conditions et validez."
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:89
 msgid ""
 "On the next page copy the registered application will return the OAuth "
 "access information:"
-msgstr ""
+msgstr "Sur la page suivante, copiez les informations d'accès OAuth renvoyées par l'application enregistrée :"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:91
 #, fuzzy
@@ -23639,21 +23639,21 @@ msgstr "Générer un nouveau secret d'application"
 msgid ""
 "Add the client application key and client application secret to your "
 "Eventyay social auth settings"
-msgstr ""
+msgstr "Ajoutez la clé d'application cliente et le secret d'application cliente à vos paramètres d'authentification sociale eventyay."
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:98
 msgid "After Approval"
-msgstr ""
+msgstr "Après approbation"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:100
 msgid ""
 "Once approved, other users can log in to your Eventyay instance using their "
 "MediaWiki account."
-msgstr ""
+msgstr "Une fois approuvé, d'autres utilisateurs peuvent se connecter à votre instance eventyay avec leur compte MediaWiki."
 
 #: eventyay/plugins/socialauth/views.py:97
 msgid "Error while authorizing: no email address available."
-msgstr ""
+msgstr "Erreur lors de l'autorisation : aucune adresse e-mail disponible."
 
 #: eventyay/plugins/statistics/apps.py:9 eventyay/plugins/statistics/apps.py:12
 #: eventyay/plugins/statistics/signals.py:16
@@ -23674,7 +23674,7 @@ msgstr "Commandes par jour"
 msgid ""
 "Orders paid in multiple payments are shown with the date of their last "
 "payment."
-msgstr ""
+msgstr "Les commandes payées en plusieurs fois sont affichées avec la date de leur dernier paiement."
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:41
 msgid "Revenue over time"
@@ -23693,7 +23693,7 @@ msgstr ""
 msgid ""
 "Only fully paid orders are counted. Orders paid in multiple payments are "
 "shown with the date of their last payment."
-msgstr ""
+msgstr "Seules les commandes entièrement payées sont comptabilisées. Les commandes payées en plusieurs fois sont affichées avec la date de leur dernier paiement."
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:74
 #, fuzzy
@@ -23709,7 +23709,7 @@ msgstr "Épuisé"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:87
 msgid "Blocked Seats"
-msgstr ""
+msgstr "Places bloquées"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:93
 #, fuzzy
@@ -23725,11 +23725,11 @@ msgstr "Entrées de liste d'attente"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:109
 msgid "Unsold Seats"
-msgstr ""
+msgstr "Places invendues"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:110
 msgid "Potential Profits"
-msgstr ""
+msgstr "Profits potentiels"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:114
 #, fuzzy
@@ -23740,7 +23740,7 @@ msgstr "Nombre minimum"
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:115
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:117
 msgid "Blocked"
-msgstr ""
+msgstr "Bloquées"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:116
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:118
@@ -23763,7 +23763,7 @@ msgstr "Pas encore en vente"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:153
 msgid "Seats not attributed to any specific product"
-msgstr ""
+msgstr "Places non attribuées à un produit spécifique"
 
 #: eventyay/plugins/statistics/templates/pretixplugins/statistics/index.html:179
 msgid ""
@@ -23796,7 +23796,7 @@ msgstr "Sortie du ticket PDF"
 
 #: eventyay/plugins/ticketoutputpdf/forms.py:28
 msgid "(Same as above)"
-msgstr ""
+msgstr "(Comme ci-dessus)"
 
 #: eventyay/plugins/ticketoutputpdf/forms.py:30
 #, fuzzy
@@ -23873,11 +23873,11 @@ msgstr ""
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/form.html:14
 msgid "Open Layout Designer"
-msgstr ""
+msgstr "Ouvrir le concepteur de mise en page"
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/form.html:18
 msgid "Advanced mode (multiple layouts)"
-msgstr ""
+msgstr "Mode avancé (mises en page multiples)"
 
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/index.html:4
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/index.html:9
@@ -23948,7 +23948,7 @@ msgstr "Fuseau horaire par défaut"
 
 #: eventyay/plugins/ticketoutputpdf/views.py:224
 msgid "Ticket PDF layout: {}"
-msgstr ""
+msgstr "Mise en page PDF du billet : {}"
 
 #: eventyay/plugins/webcheckin/apps.py:9 eventyay/plugins/webcheckin/apps.py:12
 #, fuzzy
@@ -24026,14 +24026,14 @@ msgstr "Vos informations"
 msgid ""
 "Unfortunately, based on the invoice address you entered, we're not able to "
 "sell you the selected products for tax-related legal reasons."
-msgstr ""
+msgstr "Malheureusement, en raison de l'adresse de facturation que vous avez saisie, nous ne pouvons pas vous vendre les produits sélectionnés pour des raisons légales liées à la fiscalité."
 
 #: eventyay/presale/checkoutflowstep/questions_step.py:187
 msgid ""
 "Due to the invoice address you entered, we need to apply a different tax "
 "rate to your purchase and the price of the products in your cart has changed "
 "accordingly."
-msgstr ""
+msgstr "En raison de l'adresse de facturation que vous avez saisie, nous devons appliquer un taux de taxe différent à votre achat et le prix des produits dans votre panier a été modifié en conséquence."
 
 #: eventyay/presale/checkoutflowstep/questions_step.py:200
 #: eventyay/presale/checkoutflowstep/questions_step.py:206
@@ -24110,7 +24110,7 @@ msgstr "Valable"
 #: eventyay/presale/forms/renderers.py:31
 msgctxt "form"
 msgid "has errors"
-msgstr ""
+msgstr "comporte des erreurs"
 
 #: eventyay/presale/forms/renderers.py:43
 #, fuzzy
@@ -24132,7 +24132,7 @@ msgstr "Admission: {datetime}"
 #: eventyay/presale/ical.py:61
 #, python-brace-format
 msgid "Organizer: {organizer}"
-msgstr ""
+msgstr "Organisateur : {organizer}"
 
 #: eventyay/presale/templates/pretixpresale/base.html:69
 #, fuzzy
@@ -24143,7 +24143,7 @@ msgstr "Basculer la navigation"
 #: eventyay/presale/templates/pretixpresale/base_footer.html:13
 #, python-format
 msgid "<a %(a_attr)s>event ticketing powered by eventyay</a>"
-msgstr ""
+msgstr "<a %(a_attr)s>billetterie d'événements propulsée par eventyay</a>"
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:31
 msgid "This shop is currently only visible to you and your team."
@@ -24171,14 +24171,14 @@ msgstr "Exemple de nom de l'événement"
 msgid ""
 "This ticket shop is currently in test mode. Please do not perform any real "
 "purchases as your order might be deleted without notice."
-msgstr ""
+msgstr "Cette billetterie est actuellement en mode test. Veuillez ne pas effectuer d'achats réels, car votre commande pourrait être supprimée sans préavis."
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:90
 #: eventyay/presale/templates/pretixpresale/event/base.html:126
 msgid ""
 "Orders made through this sales channel cannot be deleted - even if the "
 "ticket shop is in test mode!"
-msgstr ""
+msgstr "Les commandes passées via ce canal de vente ne peuvent pas être supprimées - même si la billetterie est en mode test !"
 
 #: eventyay/presale/templates/pretixpresale/event/base.html:134
 #: eventyay/presale/templates/pretixpresale/organizers/base.html:74
@@ -24200,7 +24200,7 @@ msgstr ""
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_addons.html:13
 msgid "We're now trying to book these add-ons for you!"
-msgstr ""
+msgstr "Nous essayons maintenant de réserver ces options complémentaires pour vous !"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_addons.html:46
 #, python-format
@@ -24299,7 +24299,7 @@ msgstr "incl. %(rate)s%% %(name)s"
 #: eventyay/presale/templates/pretixpresale/event/voucher.html:216
 #, python-format
 msgid "Amount of %(item)s – %(var)s to order"
-msgstr ""
+msgstr "Quantité de %(item)s – %(var)s à commander"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_addons.html:312
 #: eventyay/presale/templates/pretixpresale/event/fragment_product_list.html:286
@@ -24324,7 +24324,7 @@ msgstr "Revenir en arrière"
 #: eventyay/presale/templates/pretixpresale/event/checkout_base.html:7
 #, python-format
 msgid "Step %(current)s of %(total)s: %(label)s"
-msgstr ""
+msgstr "Étape %(current)s sur %(total)s : %(label)s"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_base.html:12
 #: eventyay/presale/templates/pretixpresale/event/checkout_base.html:57
@@ -24378,7 +24378,7 @@ msgstr "Veuillez vérifier les détails ci-dessous et valider votre commande."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:13
 msgid "Please hang tight, we're finalizing your order!"
-msgstr ""
+msgstr "Merci de patienter, nous finalisons votre commande !"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:28
 #, fuzzy
@@ -24424,14 +24424,14 @@ msgstr "Confirmations"
 msgid ""
 "Your order requires approval by the event organizer before it can be "
 "confirmed and forms a valid contract."
-msgstr ""
+msgstr "Votre commande nécessite l'approbation de l'organisateur de l'événement avant de pouvoir être confirmée et de former un contrat valide."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:182
 msgid ""
 "We will sent you an email as soon as the event organizer approved or "
 "rejected your order. If your order was approved, we will send you a link "
 "that you can use to pay."
-msgstr ""
+msgstr "Nous vous enverrons un e-mail dès que l'organisateur de l'événement aura approuvé ou rejeté votre commande. Si votre commande est approuvée, nous vous enverrons un lien que vous pourrez utiliser pour payer."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_confirm.html:198
 #, fuzzy
@@ -24455,7 +24455,7 @@ msgstr "Le mode de paiement de cet ordre ne peut pas être modifié."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:43
 msgid "If you continue, you might pay an actual order with non-existing money!"
-msgstr ""
+msgstr "Si vous continuez, vous risquez de payer une vraie commande avec de l'argent inexistant !"
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:49
 #, fuzzy
@@ -24465,7 +24465,7 @@ msgstr "Le mode de paiement de cet ordre ne peut pas être modifié."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:51
 msgid "If you continue, actual money might be transferred."
-msgstr ""
+msgstr "Si vous continuez, de l'argent réel pourrait être transféré."
 
 #: eventyay/presale/templates/pretixpresale/event/checkout_payment.html:62
 msgid "There are no payment providers enabled."
@@ -24507,7 +24507,7 @@ msgstr "Modifier les réponses"
 
 #: eventyay/presale/templates/pretixpresale/event/cookies.html:8
 msgid "Please continue in a new tab"
-msgstr ""
+msgstr "Veuillez continuer dans un nouvel onglet"
 
 #: eventyay/presale/templates/pretixpresale/event/cookies.html:10
 msgid ""
@@ -24515,11 +24515,11 @@ msgid ""
 "elements. Unfortunately, this means we cannot show you this ticket shop "
 "embedded into the website. Please try to open the ticket shop in a new tab "
 "or change your browser settings."
-msgstr ""
+msgstr "Votre navigateur est configuré pour bloquer les cookies provenant d'éléments tiers du site. Malheureusement, cela signifie que nous ne pouvons pas afficher cette billetterie intégrée au site. Veuillez essayer d'ouvrir la billetterie dans un nouvel onglet ou modifier les paramètres de votre navigateur."
 
 #: eventyay/presale/templates/pretixpresale/event/cookies.html:17
 msgid "We apologize for the inconvenience!"
-msgstr ""
+msgstr "Nous sommes désolés pour la gêne occasionnée !"
 
 #: eventyay/presale/templates/pretixpresale/event/cookies.html:24
 #, fuzzy
@@ -24538,11 +24538,11 @@ msgid ""
 "Your browser does not accept cookies from us. However, we need to set a "
 "cookie to remember who you are and what is in your cart. Please change your "
 "browser settings accordingly."
-msgstr ""
+msgstr "Votre navigateur n'accepte pas nos cookies. Or nous devons définir un cookie pour nous souvenir de qui vous êtes et de ce qu'il y a dans votre panier. Veuillez modifier les paramètres de votre navigateur en conséquence."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_availability.html:6
 msgid "FULLY BOOKED"
-msgstr ""
+msgstr "COMPLET"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_availability.html:8
 msgid "SOLD OUT"
@@ -24578,7 +24578,7 @@ msgstr "Modifier l'ordre: %(code)s"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:154
 msgid "Okay, we're removing that…"
-msgstr ""
+msgstr "D'accord, nous retirons cela…"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:158
 #, fuzzy
@@ -24588,11 +24588,11 @@ msgstr "Retirer"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:167
 msgid "quantity"
-msgstr ""
+msgstr "quantité"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:171
 msgid "We're trying to reserve another one for you!"
-msgstr ""
+msgstr "Nous essayons de vous en réserver un autre !"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:172
 #: eventyay/presale/templates/pretixpresale/event/index.html:307
@@ -24602,7 +24602,7 @@ msgstr ""
 msgid ""
 "Once the items are in your cart, you will have %(time)s minutes to complete "
 "your purchase."
-msgstr ""
+msgstr "Une fois les articles dans votre panier, vous aurez %(time)s minutes pour finaliser votre achat."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:187
 #, fuzzy
@@ -24637,7 +24637,7 @@ msgstr "Échangez un bon d'achat"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:310
 msgid "We're applying this voucher to your cart..."
-msgstr ""
+msgstr "Nous appliquons ce bon à votre panier..."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_cart.html:318
 #: eventyay/presale/templates/pretixpresale/event/index.html:365
@@ -24663,7 +24663,7 @@ msgstr "Commande validée"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:14
 msgid "Please check your email account, we've sent you your tickets."
-msgstr ""
+msgstr "Veuillez vérifier votre boîte e-mail, nous vous avons envoyé vos billets."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:16
 #, fuzzy
@@ -24676,7 +24676,7 @@ msgid ""
 "You can download your tickets right here as soon as the person who placed "
 "the order clicked the link in the email they received to confirm the email "
 "address is valid."
-msgstr ""
+msgstr "Vous pouvez télécharger vos billets ici dès que la personne qui a passé la commande aura cliqué sur le lien de l'e-mail reçu pour confirmer que l'adresse e-mail est valide."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:26
 #, fuzzy
@@ -24690,7 +24690,7 @@ msgstr "Vous pourrez télécharger vos billets ici à partir de %(date)s."
 msgid ""
 "If the email has no attachment, click the link in our email and you will be "
 "able to download them from here."
-msgstr ""
+msgstr "Si l'e-mail ne contient pas de pièce jointe, cliquez sur le lien dans notre e-mail et vous pourrez les télécharger ici."
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:41
 #: eventyay/presale/templates/pretixpresale/event/fragment_downloads.html:63
@@ -24793,7 +24793,7 @@ msgstr "Go"
 #: eventyay/presale/templates/pretixpresale/event/fragment_subevent_calendar_week.html:21
 #: eventyay/presale/templates/pretixpresale/organizers/calendar_week.html:51
 msgid "W"
-msgstr ""
+msgstr "S"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_subevent_list.html:23
 #: eventyay/presale/templates/pretixpresale/event/fragment_subevent_list.html:36
@@ -24805,7 +24805,7 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/organizers/index.html:118
 #: eventyay/presale/views/widget.py:318 eventyay/presale/views/widget.py:341
 msgid "Book now"
-msgstr ""
+msgstr "Réserver maintenant"
 
 #: eventyay/presale/templates/pretixpresale/event/fragment_subevent_list.html:32
 #: eventyay/presale/templates/pretixpresale/fragment_calendar.html:83
@@ -24830,11 +24830,11 @@ msgstr "Pas encore en vente"
 
 #: eventyay/presale/templates/pretixpresale/event/index.html:32
 msgid "Your cart, general information, add products to your cart"
-msgstr ""
+msgstr "Votre panier, informations générales, ajouter des produits à votre panier"
 
 #: eventyay/presale/templates/pretixpresale/event/index.html:32
 msgid "General information, add products to your cart"
-msgstr ""
+msgstr "Informations générales, ajouter des produits à votre panier"
 
 #: eventyay/presale/templates/pretixpresale/event/index.html:38
 msgid "Schedule"
@@ -25035,12 +25035,12 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/order.html:71
 #: eventyay/presale/templates/pretixpresale/event/position.html:18
 msgid "View in backend"
-msgstr ""
+msgstr "Voir dans le back-end"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:85
 #, python-format
 msgid "A payment of %(total)s is still pending for this order."
-msgstr ""
+msgstr "Un paiement de %(total)s est encore en attente pour cette commande."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:88
 #, python-format
@@ -25049,7 +25049,7 @@ msgstr "Veuillez compléter votre paiement avant %(date)s"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:97
 msgid "Re-try payment or choose another payment method"
-msgstr ""
+msgstr "Réessayer le paiement ou choisir un autre moyen de paiement"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:105
 #: eventyay/presale/templates/pretixpresale/event/order_pay_confirm.html:45
@@ -25060,12 +25060,12 @@ msgstr "Payez maintenant"
 msgid ""
 "We've received your request to cancel this order. Please stay patient while "
 "the event organizer decides on the cancellation."
-msgstr ""
+msgstr "Nous avons reçu votre demande d'annulation de cette commande. Veuillez patienter pendant que l'organisateur de l'événement décide de l'annulation."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:135
 #, python-format
 msgid "A refund of %(amount)s will be sent out to you soon, please be patient."
-msgstr ""
+msgstr "Un remboursement de %(amount)s vous sera envoyé prochainement, veuillez patienter."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:142
 #, fuzzy
@@ -25078,12 +25078,12 @@ msgstr "Mentions légales"
 msgid ""
 "We've issued your refund of %(amount)s as a gift card. On your next purchase "
 "with us, you can use the following gift card code during payment:"
-msgstr ""
+msgstr "Nous avons émis votre remboursement de %(amount)s sous forme de carte-cadeau. Lors de votre prochain achat chez nous, vous pourrez utiliser le code de carte-cadeau suivant lors du paiement :"
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:154
 #, python-format
 msgid "The current value of your gift card is %(value)s."
-msgstr ""
+msgstr "La valeur actuelle de votre carte-cadeau est %(value)s."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:161
 #, fuzzy, python-format
@@ -25096,7 +25096,7 @@ msgstr "Cette fonction n'est pas activée."
 msgid ""
 "A refund of %(amount)s has been sent to you. Depending on the payment "
 "method, please allow for up to 14 days until it shows up on your statement."
-msgstr ""
+msgstr "Un remboursement de %(amount)s vous a été envoyé. Selon le moyen de paiement, veuillez compter jusqu'à 14 jours avant qu'il apparaisse sur votre relevé."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:189
 #, fuzzy
@@ -25112,7 +25112,7 @@ msgstr "Modifier les détails"
 #: eventyay/presale/templates/pretixpresale/event/order.html:257
 msgid ""
 "You need to select a payment method above before you can request an invoice."
-msgstr ""
+msgstr "Vous devez sélectionner un moyen de paiement ci-dessus avant de pouvoir demander une facture."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:262
 #: eventyay/presale/templates/pretixpresale/event/order.html:269
@@ -25148,7 +25148,7 @@ msgstr "Changement pour tous les événements"
 msgid ""
 "If you want to make changes to the products you bought, you can click on the "
 "button to change your order."
-msgstr ""
+msgstr "Si vous souhaitez modifier les produits que vous avez achetés, vous pouvez cliquer sur le bouton pour modifier votre commande."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:358
 #, fuzzy
@@ -25184,7 +25184,7 @@ msgid ""
 "You can request to cancel this order. If your request is approved, a "
 "cancellation fee of <strong>%(fee)s</strong> will be kept and you will "
 "receive a refund of the remainder."
-msgstr ""
+msgstr "Vous pouvez demander l'annulation de cette commande. Si votre demande est approuvée, des frais d'annulation de <strong>%(fee)s</strong> seront conservés et vous recevrez le remboursement du reste."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:387
 #, python-format
@@ -25192,7 +25192,7 @@ msgid ""
 "You can cancel this order. In this case, a cancellation fee of "
 "<strong>%(fee)s</strong> will be kept and you will receive a refund of the "
 "remainder."
-msgstr ""
+msgstr "Vous pouvez annuler cette commande. Dans ce cas, des frais d'annulation de <strong>%(fee)s</strong> seront conservés et vous recevrez le remboursement du reste."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:393
 #: eventyay/presale/templates/pretixpresale/event/order.html:414
@@ -25200,24 +25200,24 @@ msgstr ""
 msgid ""
 "The refund will be issued in form of a gift card that you can use for "
 "further purchases."
-msgstr ""
+msgstr "Le remboursement sera émis sous forme de carte-cadeau que vous pourrez utiliser pour de futurs achats."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:395
 #: eventyay/presale/templates/pretixpresale/event/order.html:416
 msgid ""
 "The refund can be issued to your original payment method or as a gift card."
-msgstr ""
+msgstr "Le remboursement peut être effectué sur votre moyen de paiement d'origine ou sous forme de carte-cadeau."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:397
 #: eventyay/presale/templates/pretixpresale/event/order.html:418
 msgid "The refund will be issued to your original payment method."
-msgstr ""
+msgstr "Le remboursement sera effectué sur votre moyen de paiement d'origine."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:404
 msgid ""
 "You can request to cancel this order. If your request is approved, you get a "
 "full refund."
-msgstr ""
+msgstr "Vous pouvez demander l'annulation de cette commande. Si votre demande est approuvée, vous obtiendrez un remboursement intégral."
 
 #: eventyay/presale/templates/pretixpresale/event/order.html:409
 #, fuzzy
@@ -25247,20 +25247,20 @@ msgid ""
 "You can request the cancellation of your order on this page. The event "
 "organizer will then decide on your request. If they approve, your order will "
 "be canceled and all tickets will be invalidated."
-msgstr ""
+msgstr "Vous pouvez demander l'annulation de votre commande sur cette page. L'organisateur de l'événement décidera ensuite de votre demande. S'il l'approuve, votre commande sera annulée et tous les billets seront invalidés."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:33
 msgid ""
 "If you cancel this order, all tickets will be invalidated and you can no "
 "longer use them. You cannot revert this action."
-msgstr ""
+msgstr "Si vous annulez cette commande, tous les billets seront invalidés et vous ne pourrez plus les utiliser. Vous ne pouvez pas revenir sur cette action."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:43
 #, python-format
 msgid ""
 "If you want, you can request a refund for the full amount minus a "
 "cancellation fee of %(fee)s."
-msgstr ""
+msgstr "Si vous le souhaitez, vous pouvez demander un remboursement du montant total moins des frais d'annulation de %(fee)s."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:48
 #, fuzzy
@@ -25290,11 +25290,11 @@ msgstr "Votre panier a été mis à jour."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:102
 msgid "I want the refund as a gift card for later purchases"
-msgstr ""
+msgstr "Je souhaite le remboursement sous forme de carte-cadeau pour des achats ultérieurs"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:108
 msgid "I want the refund to be sent to my original payment method"
-msgstr ""
+msgstr "Je souhaite que le remboursement soit envoyé sur mon moyen de paiement d'origine"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:123
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:153
@@ -25302,12 +25302,12 @@ msgid ""
 "The refund amount will automatically be sent back to your original payment "
 "method. Depending on the payment method, please allow for up to two weeks "
 "before this appears on your statement."
-msgstr ""
+msgstr "Le montant du remboursement sera automatiquement renvoyé sur votre moyen de paiement d'origine. Selon le moyen de paiement, veuillez compter jusqu'à deux semaines avant qu'il apparaisse sur votre relevé."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:130
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:161
 msgid "The following payment methods will be used to refund the money to you:"
-msgstr ""
+msgstr "Les moyens de paiement suivants seront utilisés pour vous rembourser :"
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:141
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:172
@@ -25316,7 +25316,7 @@ msgid ""
 "back to you automatically</strong>. Instead, the event organizer will need "
 "to initiate the transfer manually. Please be patient as this might take a "
 "bit longer."
-msgstr ""
+msgstr "Avec le moyen de paiement que vous avez utilisé, le montant du remboursement <strong>ne peut pas vous être renvoyé automatiquement</strong>. L'organisateur de l'événement devra initier le virement manuellement. Veuillez patienter, cela peut prendre un peu plus de temps."
 
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:194
 #, fuzzy
@@ -25391,7 +25391,7 @@ msgstr "Veuillez confirmer les détails de paiement suivants."
 #: eventyay/presale/templates/pretixpresale/event/order_pay_confirm.html:22
 #, python-format
 msgid "Total: %(total)s"
-msgstr ""
+msgstr "Total : %(total)s"
 
 #: eventyay/presale/templates/pretixpresale/event/position.html:7
 #, fuzzy
@@ -25422,7 +25422,7 @@ msgstr "Meta information"
 msgid ""
 "This order is managed for you by %(email)s. Please contact them for any "
 "questions regarding payment, cancellation or changes to this order."
-msgstr ""
+msgstr "Cette commande est gérée pour vous par %(email)s. Veuillez les contacter pour toute question concernant le paiement, l'annulation ou les modifications de cette commande."
 
 #: eventyay/presale/templates/pretixpresale/event/resend_link.html:15
 msgid ""
@@ -25462,7 +25462,7 @@ msgstr ""
 #: eventyay/presale/templates/pretixpresale/event/voucher.html:123
 #, python-format
 msgid "from %(minprice)s"
-msgstr ""
+msgstr "à partir de %(minprice)s"
 
 #: eventyay/presale/templates/pretixpresale/event/waitinglist.html:5
 msgid "Add me to the waiting list"
@@ -25505,7 +25505,7 @@ msgstr "Montant"
 msgid ""
 "If the process continues for an extended period, feel free to reach out to "
 "us."
-msgstr ""
+msgstr "Si le processus se prolonge, n'hésitez pas à nous contacter."
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:22
 msgid ""
@@ -25513,17 +25513,17 @@ msgid ""
 "have an account but can still access the ticket using the secret link in "
 "your ticket confirmation email. On the tickets page there is also a link to "
 "join online sessions."
-msgstr ""
+msgstr "Il s'agit d'un événement avec billetterie. Si vous avez commandé un billet en tant qu'invité, vous n'avez pas de compte mais vous pouvez tout de même accéder au billet via le lien secret dans l'e-mail de confirmation de votre billet. Sur la page des billets, il y a aussi un lien pour rejoindre les sessions en ligne."
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:25
 msgid ""
 "As a ticket holder please also check your email for the unique link to join "
 "online sessions."
-msgstr ""
+msgstr "En tant que détenteur de billet, veuillez également vérifier votre e-mail pour le lien unique permettant de rejoindre les sessions en ligne."
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:29
 msgid "Can't find your ticket?"
-msgstr ""
+msgstr "Vous ne trouvez pas votre billet ?"
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:31
 #, fuzzy
@@ -25533,7 +25533,7 @@ msgstr "Envoyer des emails"
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:33
 msgid "to receive it."
-msgstr ""
+msgstr "pour le recevoir."
 
 #: eventyay/presale/templates/pretixpresale/fragment_modals.html:36
 #, fuzzy
@@ -25606,24 +25606,24 @@ msgstr "Bonjour !"
 msgid ""
 "This is a self-hosted installation of <a %(a_attr)s>eventyay, your open "
 "source event solution.</a>."
-msgstr ""
+msgstr "Ceci est une installation auto-hébergée de <a %(a_attr)s>eventyay, votre solution open source pour les événements.</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:14
 msgid ""
 "If you're looking to buy a ticket, you need to follow a direct link to an "
 "event or organizer profile."
-msgstr ""
+msgstr "Si vous souhaitez acheter un billet, vous devez suivre un lien direct vers un événement ou le profil d'un organisateur."
 
 #: eventyay/presale/templates/pretixpresale/index.html:20
 #, python-format
 msgid ""
 "If you're looking to configure this installation, please <a %(a_attr)s>head "
 "over here</a>."
-msgstr ""
+msgstr "Si vous souhaitez configurer cette installation, veuillez <a %(a_attr)s>cliquer ici</a>."
 
 #: eventyay/presale/templates/pretixpresale/index.html:24
 msgid "Enjoy!"
-msgstr ""
+msgstr "Profitez-en !"
 
 #: eventyay/presale/templates/pretixpresale/organizers/calendar.html:6
 #: eventyay/presale/templates/pretixpresale/organizers/calendar_week.html:6
@@ -25728,7 +25728,7 @@ msgstr "Veuillez entrer les chiffres positifs uniquement."
 
 #: eventyay/presale/views/cart.py:360
 msgid "We applied the voucher to as many products in your cart as we could."
-msgstr ""
+msgstr "Nous avons appliqué le bon à autant de produits de votre panier que possible."
 
 #: eventyay/presale/views/cart.py:382
 msgid "Your cart has been updated."
@@ -25745,7 +25745,7 @@ msgstr "Les produits ont été ajoutés à votre panier."
 #: eventyay/presale/views/cart.py:447 eventyay/presale/views/event.py:371
 #: eventyay/presale/views/widget.py:285
 msgid "Tickets for this event cannot be purchased on this sales channel."
-msgstr ""
+msgstr "Les billets de cet événement ne peuvent pas être achetés via ce canal de vente."
 
 #: eventyay/presale/views/checkout.py:34
 msgid "Your cart is empty"
@@ -25758,7 +25758,7 @@ msgstr "La prévente de cet événement est terminée ou n' a pas encore commenc
 #: eventyay/presale/views/event.py:475
 msgid ""
 "This event only available for registered users. Please login to continue."
-msgstr ""
+msgstr "Cet événement est disponible uniquement pour les utilisateurs enregistrés. Veuillez vous connecter pour continuer."
 
 #: eventyay/presale/views/event.py:616
 msgid "Unknown event code or not authorized to access this event."
@@ -25836,7 +25836,7 @@ msgstr "Le téléchargement des billets n'est pas (encore) activé."
 
 #: eventyay/presale/views/order.py:943
 msgid "Please click the link we sent you via email to download your tickets."
-msgstr ""
+msgstr "Veuillez cliquer sur le lien que nous vous avons envoyé par e-mail pour télécharger vos billets."
 
 #: eventyay/presale/views/order.py:1102
 #, fuzzy
@@ -25867,7 +25867,7 @@ msgid ""
 "have already sent you an email with a link to your ticket in the past "
 "{number} hours. If the email did not arrive, please your check spam folder "
 "and also double check that you used the correct email address."
-msgstr ""
+msgstr "Si l'adresse e-mail que vous avez saisie est valide et associée à un billet, nous vous avons déjà envoyé un e-mail avec un lien vers votre billet au cours des {number} dernières heures. Si l'e-mail n'est pas arrivé, veuillez vérifier votre dossier spam et vous assurer que vous avez utilisé la bonne adresse e-mail."
 
 #: eventyay/presale/views/user.py:49
 msgid "Your orders for {}"
@@ -25920,7 +25920,7 @@ msgstr ""
 #: eventyay/presale/views/widget.py:265
 msgctxt "widget"
 msgid "event ticketing powered by eventyay"
-msgstr ""
+msgstr "billetterie d'événements propulsée par eventyay"
 
 #: eventyay/presale/views/widget.py:280
 #, fuzzy
@@ -25958,11 +25958,11 @@ msgstr "Arabe"
 
 #: eventyay/settings.py:467
 msgid "Chinese (simplified)"
-msgstr ""
+msgstr "Chinois (simplifié)"
 
 #: eventyay/settings.py:468
 msgid "Danish"
-msgstr ""
+msgstr "Danois"
 
 #: eventyay/settings.py:469
 msgid "Dutch"
@@ -25980,7 +25980,7 @@ msgstr "Français"
 
 #: eventyay/settings.py:472
 msgid "Finnish"
-msgstr ""
+msgstr "Finnois"
 
 #: eventyay/settings.py:473
 msgid "Greek"
@@ -25992,7 +25992,7 @@ msgstr "Italien"
 
 #: eventyay/settings.py:475
 msgid "Latvian"
-msgstr ""
+msgstr "Letton"
 
 #: eventyay/settings.py:476
 #, fuzzy
@@ -26002,15 +26002,15 @@ msgstr "Anglais"
 
 #: eventyay/settings.py:477
 msgid "Portuguese (Portugal)"
-msgstr ""
+msgstr "Portugais (Portugal)"
 
 #: eventyay/settings.py:478
 msgid "Portuguese (Brazil)"
-msgstr ""
+msgstr "Portugais (Brésil)"
 
 #: eventyay/settings.py:479
 msgid "Russian"
-msgstr ""
+msgstr "Russe"
 
 #: eventyay/settings.py:480
 msgid "Spanish"
@@ -26018,7 +26018,7 @@ msgstr "Espagnol"
 
 #: eventyay/settings.py:481 eventyay/settings.py:537
 msgid "Swahili"
-msgstr ""
+msgstr "Swahili"
 
 #: eventyay/settings.py:482
 msgid "Turkish"
