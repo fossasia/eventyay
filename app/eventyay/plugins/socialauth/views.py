@@ -42,7 +42,18 @@ class OAuthLoginView(View):
         raw_providers = gs.settings.get('login_providers', as_type=dict)
         providers = validate_login_providers(raw_providers)
 
-        # Get provider configuration safely
+        # Validate provider against allowlist before accessing attributes
+        # This prevents accessing unintended attributes/methods like 'providers', 'model_dump'
+        if provider not in LoginProviders.model_fields:
+            logger.warning(
+                "Unknown provider '%s' requested. Valid providers: %s",
+                provider,
+                list(LoginProviders.model_fields.keys())
+            )
+            messages.error(request, _('Invalid login provider.'))
+            return redirect('eventyay_common:auth.login')
+
+        # Get provider configuration safely (now guaranteed to be a valid provider)
         provider_config = getattr(providers, provider, None)
 
         # Check if this provider is the preferred one.
@@ -136,7 +147,7 @@ class OAuthReturnView(View):
             messages.error(request, _('Error while authorizing: no email address available.'))
             logger.error('Error while authorizing: %s', e)
             return redirect('eventyay_common:auth.login')
-    
+
     @staticmethod
     def get_or_create_user(request: HttpRequest) -> User:
         """
@@ -269,7 +280,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         except ValidationError as e:
             logger.error('Error while validating updated login providers: %s', e)
             messages.error(request, _('Invalid provider configuration. Please check your settings.'))
-        
+    
         return redirect(self.get_success_url())
 
     def update_credentials(self, request, provider, login_providers):
@@ -292,7 +303,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
     def update_provider_state(self, request, provider, login_providers):
         """
         Update the state (enabled/disabled) of a login provider.
-        
+    
         When a provider is disabled, this method automatically removes its preferred status
         to prevent stale preferred_provider values. This handles the edge case where:
         1. A provider is marked as preferred and enabled
@@ -312,6 +323,6 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             # when the provider's radio button is no longer in the DOM
             if was_enabled and not is_now_enabled and login_providers[provider].get('is_preferred', False):
                 login_providers[provider]['is_preferred'] = False
-    
+
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
