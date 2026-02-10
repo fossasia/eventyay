@@ -54,11 +54,21 @@
                 {{ request.user|short_user_label }} <i class="fa fa-caret-down ml-1"></i>
             </summary>
             <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-                <a href="{% url "eventyay_common:orders"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                <a href="{% url 'presale:index' %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-home"></i>
+                    {% translate "Home" %}
+                </a>
+                <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                    <i class="fa fa-tachometer"></i>
+                    {% translate "Dashboard" %}
+                </a>
+                <a href="{% url 'eventyay_common:orders' %}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-shopping-cart"></i>
                     {% translate "My orders" %}
                 </a>
-                <a href="{% url "cfp:event.user.submissions"  organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                {% user_has_submissions current_event as has_submissions %}
+                {% if has_submissions and current_event.talks_published %}
+                <a href="{% url 'cfp:event.user.submissions'  organizer=current_event.organizer.slug event=current_event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-sticky-note-o"></i>
                     {% translate "My proposals" %}
                 </a>
@@ -70,8 +80,9 @@
                     <i class="fa fa-envelope"></i>
                     {% translate "Speaker Emails" %}
                 </a>
+                {% endif %}
                 <hr>
-                <a href="{% url "eventyay_common:account.general"%}" class="dropdown-item" role="menuitem" tabindex="-1">
+                <a href="{% url 'eventyay_common:account.general' %}" class="dropdown-item" role="menuitem" tabindex="-1">
                     <i class="fa fa-user"></i>
                     {% translate "Account" %}
                 </a>
@@ -96,7 +107,7 @@
         {% if current_event %}
             <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
         {% else %}
-			<a href="{% url "orga:login" %}">{% translate "Login" %}</a>
+			<a href="{% url 'orga:login' %}">{% translate "Login" %}</a>
         {% endif %}
     {% endif %}
 {% endwith %}
