@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from eventyay.base.models import Event
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.permissions import is_admin_mode_active
 
 
 class StartPageView(TemplateView):
@@ -15,6 +16,7 @@ class StartPageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx['staff_session'] = is_admin_mode_active(self.request)
         settings_obj = GlobalSettingsObject().settings
         header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
         if header_image.startswith('file://'):
@@ -29,8 +31,12 @@ class StartPageView(TemplateView):
         )
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
+        search_query = self.request.GET.get('q', '').strip()
+        ctx['search_query'] = search_query
         with scopes_disabled():
             qs = Event.objects.select_related('organizer').filter(live=True)
+            if search_query:
+                ctx['events'] = qs.filter(name__icontains=search_query).order_by('date_from')
             today = timezone.localdate()
             ctx['featured_events'] = (
                 qs.filter(startpage_featured=True, testmode=False, date_to__date__gte=today)

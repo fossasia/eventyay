@@ -55,8 +55,9 @@
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
     </head>
-    <body class="startpage-body" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
+    <body class="startpage-body {% if search_query %}startpage-search-results-page{% endif %}" data-datetimeformat="{{ js_datetime_format }}" data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}">
         {{ base_path|json_script:"base_path" }}
+        {{ staff_session|json_script:"is_admin_mode" }}
         {{ html_page_header|safe }}
 
         <nav class="navbar navbar-inverse navbar-static-top" role="navigation">
@@ -67,24 +68,48 @@
                 </a>
             </div>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% if not search_query %}
                 <li class="startpage-search-nav">
-                    <div class="startpage-search" role="search">
-                        <i class="fa fa-search" aria-hidden="true"></i>
-                        <input
-                            id="startpage-search-input"
-                            type="search"
-                            autocomplete="off"
-                            placeholder="{% trans "Search events" %}"
-                            aria-label="{% trans "Search events" %}"
-                        />
-                        <div
-                            class="startpage-search-results"
-                            id="startpage-search-results"
-                            role="listbox"
-                            data-empty-text="{% trans "No matching events" %}"
-                        ></div>
-                    </div>
+                    <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                        <div class="startpage-search">
+                            <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
+                                <i class="fa fa-search" aria-hidden="true"></i>
+                            </button>
+                            <input
+                                id="startpage-search-input"
+                                name="q"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="{% trans "Search events" %}"
+                                aria-label="{% trans "Search events" %}"
+                                value="{{ search_query|default:'' }}"
+                            />
+                            <div
+                                class="startpage-search-results"
+                                id="startpage-search-results"
+                                role="listbox"
+                                data-empty-text="{% trans "No matching events" %}"
+                            ></div>
+                        </div>
+                    </form>
                 </li>
+				{% endif %}
+                {% if request.user.is_staff and not staff_session %}
+                    <li>
+                        <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-link" id="button-sudo">
+                                <i class="fa fa-id-card"></i> {% trans "Admin mode" %}
+                            </button>
+                        </form>
+                    </li>
+                {% elif request.user.is_staff and staff_session %}
+                    <li>
+                        <a href="{% url 'control:user.sudo.stop' %}" class="danger">
+                            <i class="fa fa-id-card"></i> {% trans "End admin session" %}
+                        </a>
+                    </li>
+                {% endif %}
                 {% include "common/fragment_language_switch_public.html" %}
                 {% if request.user.is_authenticated %}
                     {% include "common/fragment_profile_dropdown.html" %}
@@ -126,35 +151,65 @@
                     {% endfor %}
                 {% endif %}
                 <main>
-                    {% if featured_events %}
-                        <section class="startpage-events" aria-label="{% trans "Featured events" %}">
-                            <h2>{% trans "Featured events" %}</h2>
+                    {% if search_query %}
+                        <section class="startpage-events" aria-label="{% trans "Live events" %}">
+                            <div class="startpage-search-content-bar">
+                                <form class="startpage-search-form" action="{% url "presale:index" %}" method="get" role="search">
+                                    <div class="startpage-search startpage-search-content">
+                                        <button type="submit" class="startpage-search-icon-btn" aria-label="{% trans "Search" %}">
+                                            <i class="fa fa-search" aria-hidden="true"></i>
+                                        </button>
+                                        <input
+                                            id="startpage-search-content-input"
+                                            name="q"
+                                            type="search"
+                                            autocomplete="off"
+                                            placeholder="{% trans "Search events" %}"
+                                            aria-label="{% trans "Search events" %}"
+                                            value="{{ search_query|default:'' }}"
+                                        />
+                                    </div>
+                                </form>
+                            </div>
                             <div class="startpage-event-list">
-                                {% for event in featured_events %}
+                                {% for event in events %}
                                     {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% empty %}
+                                    <p class="startpage-empty">{% trans "No matching events. Try a different search term." %}</p>
                                 {% endfor %}
                             </div>
                         </section>
-                    {% endif %}
-                    <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
-                        <h2>{% trans "Upcoming events" %}</h2>
-                        <div class="startpage-event-list">
-                            {% for event in upcoming_events %}
-                                {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
-                            {% empty %}
-                                <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
-                            {% endfor %}
-                        </div>
-                    </section>
-                    {% if past_events %}
-                        <section class="startpage-events" aria-label="{% trans "Past events" %}">
-                            <h2>{% trans "Past events" %}</h2>
+                    {% else %}
+                        {% if featured_events %}
+                            <section class="startpage-events" aria-label="{% trans "Featured events" %}">
+                                <h2>{% trans "Featured events" %}</h2>
+                                <div class="startpage-event-list">
+                                    {% for event in featured_events %}
+                                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endif %}
+                        <section class="startpage-events" aria-label="{% trans "Upcoming events" %}">
+                            <h2>{% trans "Upcoming events" %}</h2>
                             <div class="startpage-event-list">
-                                {% for event in past_events %}
+                                {% for event in upcoming_events %}
                                     {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                {% empty %}
+                                    <p class="startpage-empty">{% trans "No upcoming events available yet." %}</p>
                                 {% endfor %}
                             </div>
                         </section>
+                        {% if past_events %}
+                            <section class="startpage-events" aria-label="{% trans "Past events" %}">
+                                <h2>{% trans "Past events" %}</h2>
+                                <div class="startpage-event-list">
+                                    {% for event in past_events %}
+                                        {% include "pretixpresale/includes/startpage_event_card.html" with event=event %}
+                                    {% endfor %}
+                                </div>
+                            </section>
+                        {% endif %}
                     {% endif %}
                 </main>
             </div>
