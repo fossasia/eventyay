@@ -93,6 +93,7 @@
                         </div>
                     </form>
                 </li>
+				{% endif %}
                 {% if request.user.is_staff and not staff_session %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.get_full_path|urlencode }}" method="post">
