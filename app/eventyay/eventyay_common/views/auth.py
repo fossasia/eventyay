@@ -4,7 +4,6 @@ import logging
 import time
 from typing import cast
 from urllib.parse import quote, urlparse
-from pydantic import ValidationError
 
 import webauthn
 from django.conf import settings
@@ -155,10 +154,14 @@ def login(request):
     providers = validate_login_providers(raw_providers)
 
     # Get only enabled providers
-    enabled_providers = providers.get_enabled_providers()
+    all_providers = providers.providers()
 
     # Convert to a dict for iteration / sorting
-    enabled_dict = {name: getattr(enabled_providers, name) for name in enabled_providers.model_fields}
+    enabled_dict = {
+        name: provider
+        for name, provider in all_providers.items()
+        if provider.state
+    }
 
     # Sort: preferred providers first, then alphabetically
     def sort_key(name_and_provider):
@@ -180,7 +183,6 @@ def login(request):
         )
 
     # Validation: Check for preferred providers that are disabled
-    all_providers = providers._providers()
     for name, provider in all_providers.items():
         if provider.is_preferred and not provider.state:
             logger.warning(
