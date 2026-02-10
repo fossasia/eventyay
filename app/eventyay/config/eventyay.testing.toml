@@ -3,6 +3,7 @@
 # Django
 debug = true
 secret_key = "ci-test-secret-key"
+allowed_hosts = ["127.0.0.1", "localhost", "testserver"]  # Add this line
 
 # Database (Postgres service from GitHub Actions)
 postgres_host = "127.0.0.1"
