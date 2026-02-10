@@ -757,7 +757,6 @@ class BBBMoveRoom(AdminBase, FormView):
     template_name = "control/bbb_moveroom.html"
     form_class = BBBMoveRoomForm
 
-    @transaction.atomic()
     def form_valid(self, form):
         target_server = form.cleaned_data["server"]
         room = form.cleaned_data["room"]
@@ -783,8 +782,20 @@ class BBBMoveRoom(AdminBase, FormView):
             r.raise_for_status()
             body = r.text
             root = etree.fromstring(body)
-            if root.xpath("returncode")[0].text != "SUCCESS":
-                logger.warning("BBB end meeting failed for meeting %s. Response: %s", c.meeting_id, body)
+            returncode_nodes = root.xpath("returncode")
+            returncode = returncode_nodes[0].text if returncode_nodes else None
+            if returncode != "SUCCESS":
+                message_key_nodes = root.xpath("messageKey")
+                message_nodes = root.xpath("message")
+                message_key = message_key_nodes[0].text if message_key_nodes else None
+                message = message_nodes[0].text if message_nodes else None
+                logger.warning(
+                    "BBB end meeting failed for meeting %s. returncode=%s, messageKey=%s, message=%s",
+                    c.meeting_id,
+                    returncode,
+                    message_key,
+                    message,
+                )
                 messages.warning(self.request, _("Kicking all attendees did not work."))
                 return HttpResponseRedirect(self.request.path)
         except requests.RequestException:
@@ -795,21 +806,20 @@ class BBBMoveRoom(AdminBase, FormView):
             logger.exception("Invalid BBB XML response while ending meeting %s", c.meeting_id)
             messages.warning(self.request, _("Kicking all attendees did not work."))
             return HttpResponseRedirect(self.request.path)
-        
         old_server_id = c.server_id
-
-        c.server = target_server
-        c.save()
-        LogEntry.objects.create(
-            content_object=c,
-            user=self.request.user,
-            action_type="bbbcall.moved",
-            data={
-                "room": str(room.id),
-                "from_server": str(old_server_id),
-                "to_server": str(target_server.id),
-            },
-        )
+        with transaction.atomic():
+            c.server = target_server
+            c.save()
+            LogEntry.objects.create(
+                content_object=c,
+                user=self.request.user,
+                action_type="bbbcall.moved",
+                data=json.dumps({
+                    "room": str(room.id),
+                    "from_server": str(old_server_id),
+                    "to_server": str(target_server.id),
+                }),
+            )
         messages.success(self.request, _("Moved."))
         return HttpResponseRedirect(self.request.path)
 
