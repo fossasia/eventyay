@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from eventyay.base.models import Event
 from eventyay.base.settings import GlobalSettingsObject
+from eventyay.common.permissions import is_admin_mode_active
 
 
 class StartPageView(TemplateView):
@@ -15,6 +16,7 @@ class StartPageView(TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx['staff_session'] = is_admin_mode_active(self.request)
         settings_obj = GlobalSettingsObject().settings
         header_image = settings_obj.get('startpage_header_image', as_type=str, default='')
         if header_image.startswith('file://'):
