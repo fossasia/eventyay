@@ -21,10 +21,14 @@ def validate_login_providers(raw_providers: dict | None) -> LoginProviders:
     try:
         return LoginProviders.model_validate(raw_providers)
     except ValidationError as e:
+        sanitized_errors = []
+        for error in e.errors():
+            sanitized_error = {key: value for key, value in error.items() if key != 'input'}
+            sanitized_errors.append(sanitized_error)
         logger.warning(
             "Invalid login provider configuration: %d validation error(s). "
-            "Falling back to defaults. Details: %s",
+            "Falling back to defaults. Details (sanitized): %s",
             e.error_count(),
-            e.errors()
+            sanitized_errors
         )
         return LoginProviders()
