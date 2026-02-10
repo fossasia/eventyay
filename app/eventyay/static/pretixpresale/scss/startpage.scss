@@ -31,7 +31,6 @@ nav.navbar .navbar-brand {
   color: #fff;
   display: flex;
   font-size: 20px;
-  font-weight: 600;
   gap: 0.5rem;
   line-height: 1;
   text-decoration: none;
@@ -73,6 +72,13 @@ nav.navbar .navbar-top-links .btn-link:hover {
   text-decoration: none;
 }
 
+nav.navbar .danger,
+nav.navbar .danger:hover,
+nav.navbar .danger:active {
+  background: #db2828;
+  font-size: 14px;
+}
+
 nav.navbar .navbar-top-links .dropdown-content {
   color: var(--color-text);
 }
@@ -80,6 +86,7 @@ nav.navbar .navbar-top-links .dropdown-content {
 .startpage-search-nav {
   display: flex;
   align-items: center;
+  margin-right: 10px;
 }
 
 .startpage-search-form {
