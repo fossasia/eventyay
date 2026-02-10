@@ -167,20 +167,8 @@ def login(request):
     def sort_key(name_and_provider):
         name, provider = name_and_provider
         return (not provider.is_preferred, name)
-    
+  
     ordered_providers = dict(sorted(enabled_dict.items(), key=sort_key))
-
-    # Validation: Check for multiple preferred providers (among enabled ones)
-    preferred_enabled = [
-        name for name, provider in enabled_dict.items() 
-        if provider.is_preferred
-    ]
-
-    if len(preferred_enabled) > 1:
-        logger.warning(
-            "Multiple login providers are marked as preferred. Providers: %s",
-            preferred_enabled,
-        )
 
     # Validation: Check for preferred providers that are disabled
     for name, provider in all_providers.items():
