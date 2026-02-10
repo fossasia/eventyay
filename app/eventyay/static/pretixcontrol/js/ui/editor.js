@@ -409,13 +409,13 @@ var editor = {
                 "#" + ((1 << 24) + (col[0] << 16) + (col[1] << 8) + col[2])
                     .toString(16)
                     .slice(1);
-            
+        
             var $colorInput = $("#toolbox-col");
-            
+        
             // update input value
             $colorInput.val(hexColor);
-            
-            // ✅ sync colorpicker UI (preview + hue bar)
+        
+            // sync colorpicker UI (preview + hue bar)
             if ($colorInput.data('colorpicker')) {
                 $colorInput.colorpicker('setValue', hexColor);
             }
@@ -430,6 +430,7 @@ var editor = {
             $("#toolbox").find("button[data-action=right]").toggleClass('active', o.textAlign === 'right');
             $("#toolbox-textwidth").val(editor._px2mm(o.width).toFixed(2));
             $("#toolbox-textrotation").val((o.angle || 0.0).toFixed(1));
+        
             if (o.type === "textarea") {
                 $("#toolbox-content").val(o.content);
                 $("#toolbox-content-other").toggle($("#toolbox-content").val() === "other");
@@ -439,7 +440,7 @@ var editor = {
                     $("#toolbox-content-other").val("");
                 }
             }
-        }
+        }        
     },
 
     _update_values_from_toolbox: function () {
