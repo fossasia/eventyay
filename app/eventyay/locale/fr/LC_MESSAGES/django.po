@@ -3448,7 +3448,7 @@ msgstr "Date de début"
 msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
-msgstr ""
+msgstr "Inclure uniquement les commandes contenant au moins un billet pour une date à partir de celle-ci. Inclura également d'autres dates en cas de commandes mixtes !"
 
 #: eventyay/base/exporters/orderlist.py:95
 #, fuzzy
@@ -3987,7 +3987,7 @@ msgstr "Tous"
 
 #: eventyay/base/exporters/orderlist.py:893 eventyay/control/forms/filter.py:932
 msgid "Live"
-msgstr ""
+msgstr "En direct"
 
 #: eventyay/base/exporters/orderlist.py:902 eventyay/control/forms/filter.py:937
 #: eventyay/control/forms/filter.py:940
@@ -3999,11 +3999,11 @@ msgstr "Vider le panier"
 
 #: eventyay/base/exporters/orderlist.py:903 eventyay/control/forms/filter.py:941
 msgid "Valid and with value"
-msgstr ""
+msgstr "Valide et avec valeur"
 
 #: eventyay/base/exporters/orderlist.py:904 eventyay/control/forms/filter.py:942
 msgid "Expired and with value"
-msgstr ""
+msgstr "Expiré et avec valeur"
 
 #: eventyay/base/exporters/orderlist.py:905 eventyay/control/forms/filter.py:161
 #: eventyay/control/forms/filter.py:943 eventyay/control/forms/filter.py:1357
@@ -4030,7 +4030,7 @@ msgstr "Date d'expiration"
 
 #: eventyay/base/exporters/orderlist.py:945 eventyay/control/forms/orders.py:661
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "Conditions particulières"
 
 #: eventyay/base/exporters/orderlist.py:946
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:37
@@ -4138,7 +4138,7 @@ msgstr "Date"
 #: eventyay/base/exporters/waitinglist.py:96
 #: eventyay/control/views/waitinglist.py:215
 msgid "Priority"
-msgstr ""
+msgstr "Priorité"
 
 #: eventyay/base/exporters/waitinglist.py:98 eventyay/base/models/vouchers.py:99
 #: eventyay/base/models/vouchers.py:505
@@ -4157,7 +4157,7 @@ msgstr "code de réduction"
 #: eventyay/base/forms/__init__.py:162
 #, python-brace-format
 msgid "You can use {name} in this field."
-msgstr ""
+msgstr "Vous pouvez utiliser {name} dans ce champ."
 
 #: eventyay/base/forms/auth.py:22 eventyay/base/forms/auth.py:131
 msgid "Keep me logged in"
@@ -4169,7 +4169,7 @@ msgstr "Cette combinaison d'identifiants n'est pas connue dans notre système."
 
 #: eventyay/base/forms/auth.py:26 eventyay/base/forms/user.py:23
 msgid "For security reasons, please wait 5 minutes before you try again."
-msgstr ""
+msgstr "Pour des raisons de sécurité, veuillez attendre 5 minutes avant de réessayer."
 
 #: eventyay/base/forms/auth.py:27 eventyay/base/forms/auth.py:223
 msgid "This account is inactive."
@@ -4211,7 +4211,7 @@ msgstr "Référence interne"
 #: eventyay/base/forms/questions.py:287
 msgctxt "phonenumber"
 msgid "Phone number (without international area code)"
-msgstr ""
+msgstr "Numéro de téléphone (sans indicatif international)"
 
 #: eventyay/base/forms/questions.py:471 eventyay/base/forms/questions.py:897
 msgid "Street and Number"
@@ -4693,11 +4693,11 @@ msgstr "Dates"
 msgid ""
 "Does not have any effect for the validation of tickets, only for the "
 "automatic configuration of check-in devices."
-msgstr ""
+msgstr "N'a aucun effet sur la validation des billets, seulement sur la configuration automatique des appareils de pointage."
 
 #: eventyay/base/models/checkin.py:30
 msgid "Allow re-entering after an exit scan"
-msgstr ""
+msgstr "Autoriser la réentrée après un scan de sortie"
 
 #: eventyay/base/models/checkin.py:34
 #, fuzzy
@@ -4708,7 +4708,7 @@ msgstr "Demander des adresses e-mail par ticket"
 #: eventyay/base/models/checkin.py:35
 msgid ""
 "Use this option to turn off warnings if a ticket is scanned a second time."
-msgstr ""
+msgstr "Utilisez cette option pour désactiver les avertissements lorsqu'un billet est scanné une seconde fois."
 
 #: eventyay/base/models/checkin.py:39
 #, fuzzy
@@ -4718,7 +4718,7 @@ msgstr "Automatiquement sur paiement"
 
 #: eventyay/base/models/checkin.py:45
 msgid "Sales channels to automatically check in"
-msgstr ""
+msgstr "Canaux de vente à pointage automatique"
 
 #: eventyay/base/models/checkin.py:46
 msgid ""
@@ -4726,7 +4726,7 @@ msgid ""
 "when purchased through any of the selected sales channels. This option can "
 "be useful when tickets sold at the box office are not checked again before "
 "entry and should be considered validated directly upon purchase."
-msgstr ""
+msgstr "Tous les articles de cette liste de pointage seront automatiquement marqués comme pointés lorsqu'ils sont achetés via l'un des canaux de vente sélectionnés. Cette option peut être utile lorsque les billets vendus au guichet ne sont pas contrôlés à l'entrée et doivent être considérés comme validés dès l'achat."
 
 #: eventyay/base/models/checkin.py:201
 #, fuzzy
@@ -4736,7 +4736,7 @@ msgstr "Pays"
 
 #: eventyay/base/models/checkin.py:202
 msgid "Exit"
-msgstr ""
+msgstr "Sortie"
 
 #: eventyay/base/models/choices.py:6
 msgid "No effect"
@@ -4774,7 +4774,7 @@ msgstr "Cet identificateur est déjà utilisé pour une autre question."
 #: eventyay/base/models/devices.py:91
 #: eventyay/control/templates/pretixcontrol/organizers/gates.html:16
 msgid "Gate"
-msgstr ""
+msgstr "Porte"
 
 #: eventyay/base/models/devices.py:109
 #: eventyay/control/templates/pretixcontrol/organizers/devices.html:38
@@ -4896,11 +4896,11 @@ msgstr "Emplacement"
 
 #: eventyay/base/models/event.py:490 eventyay/base/models/event.py:1429
 msgid "Latitude"
-msgstr ""
+msgstr "Latitude"
 
 #: eventyay/base/models/event.py:499 eventyay/base/models/event.py:1438
 msgid "Longitude"
-msgstr ""
+msgstr "Longitude"
 
 #: eventyay/base/models/event.py:510 eventyay/control/navigation.py:34
 msgid "Plugins"
@@ -4925,7 +4925,7 @@ msgstr "Série d'événements"
 
 #: eventyay/base/models/event.py:524 eventyay/base/payment.py:325
 msgid "Restrict to specific sales channels"
-msgstr ""
+msgstr "Limiter à des canaux de vente spécifiques"
 
 #: eventyay/base/models/event.py:526
 #, fuzzy
@@ -4941,7 +4941,7 @@ msgstr "Ajouter au panier"
 
 #: eventyay/base/models/event.py:532
 msgid "Create Video platform for Event."
-msgstr ""
+msgstr "Créer une plateforme vidéo pour l'événement."
 
 #: eventyay/base/models/event.py:538 eventyay/base/models/items.py:256
 #: eventyay/base/models/items.py:1362 eventyay/base/models/orders.py:177
@@ -4979,16 +4979,16 @@ msgstr "Vous devez configurer au moins un quota pour vendre quelque chose."
 
 #: eventyay/base/models/event.py:1183
 msgid "You have unpaid invoices, please pay them before going live."
-msgstr ""
+msgstr "Vous avez des factures impayées, veuillez les payer avant la mise en ligne."
 
 #: eventyay/base/models/event.py:1191
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
-msgstr ""
+msgstr "Vous devez renseigner le paramètre méta « {property} »."
 
 #: eventyay/base/models/event.py:1220
 msgid "You need to fill the billing information."
-msgstr ""
+msgstr "Vous devez renseigner les informations de facturation."
 
 #: eventyay/base/models/event.py:1324
 msgid ""
@@ -5086,7 +5086,7 @@ msgstr "Recherche d'événements"
 msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
-msgstr ""
+msgstr "Si coché, un événement ne peut être mis en ligne que si la propriété est définie. Dans les séries d'événements, il est toujours facultatif de définir une valeur pour des dates individuelles."
 
 #: eventyay/base/models/event.py:1710
 #, fuzzy
@@ -5098,11 +5098,11 @@ msgstr "Valeur totale"
 msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
-msgstr ""
+msgstr "Si vous laissez ce champ vide, toute valeur est autorisée. Sinon, saisissez une valeur possible par ligne."
 
 #: eventyay/base/models/event.py:1721
 msgid "A property can either be required or have a default value, not both."
-msgstr ""
+msgstr "Une propriété peut être requise ou avoir une valeur par défaut, pas les deux."
 
 #: eventyay/base/models/event.py:1730
 #, fuzzy
@@ -5114,7 +5114,7 @@ msgstr ""
 
 #: eventyay/base/models/fields.py:12
 msgid "No value can contain the delimiter character."
-msgstr ""
+msgstr "Aucune valeur ne peut contenir le caractère séparateur."
 
 #: eventyay/base/models/giftcards.py:58
 #, fuzzy
@@ -5128,7 +5128,7 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/organizers/giftcard.html:39
 msgctxt "giftcard"
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "Conditions particulières"
 
 #: eventyay/base/models/invoices.py:129
 #, fuzzy, python-format
@@ -5318,7 +5318,7 @@ msgstr "Ce produit ne sera pas vendu après la date indiquée."
 
 #: eventyay/base/models/items.py:349
 msgid "Only show after sellout of"
-msgstr ""
+msgstr "N'afficher qu'après épuisement de"
 
 #: eventyay/base/models/items.py:350
 msgid ""
@@ -5327,7 +5327,7 @@ msgid ""
 "allows you to swap out products for more expensive ones once they are sold "
 "out. There might be a short period in which both products are visible while "
 "all tickets in the referenced quota are reserved, but not yet sold."
-msgstr ""
+msgstr "Si vous sélectionnez un quota ici, ce produit ne sera affiché que lorsque ce quota sera indisponible. Combiné avec l'option de masquer les produits épuisés, cela vous permet de remplacer des produits par des plus chers une fois qu'ils sont épuisés. Il peut y avoir une courte période durant laquelle les deux produits sont visibles pendant que tous les billets du quota référencé sont réservés mais pas encore vendus."
 
 #: eventyay/base/models/items.py:357
 msgid "This product can only be bought using a voucher."
@@ -5343,7 +5343,7 @@ msgstr ""
 
 #: eventyay/base/models/items.py:363
 msgid "Buying this product requires approval"
-msgstr ""
+msgstr "L'achat de ce produit nécessite une approbation"
 
 #: eventyay/base/models/items.py:365
 msgid ""
@@ -5351,7 +5351,7 @@ msgid ""
 "\"approval\" state and will need to be confirmed by you before it can be "
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
-msgstr ""
+msgstr "Si ce produit fait partie d'une commande, la commande passera à l'état « approbation » et devra être confirmée par vous avant de pouvoir être payée et finalisée. Vous pouvez utiliser cela, par exemple, pour des billets à tarif réduit réservés à des groupes spécifiques."
 
 #: eventyay/base/models/items.py:370
 msgid ""
@@ -5377,14 +5377,14 @@ msgstr ""
 
 #: eventyay/base/models/items.py:376
 msgid "Only sell this product as part of a bundle"
-msgstr ""
+msgstr "Vendre ce produit uniquement dans le cadre d'un lot"
 
 #: eventyay/base/models/items.py:378
 msgid ""
 "If this option is set, the product will only be sold as part of bundle "
 "products. Do <strong>not</strong> check this option if you want to use this "
 "product as an add-on product, but only for fixed bundles!"
-msgstr ""
+msgstr "Si cette option est activée, le produit ne sera vendu que dans le cadre de produits en lot. Ne cochez <strong>pas</strong> cette option si vous souhaitez utiliser ce produit comme option complémentaire, mais uniquement pour des lots fixes !"
 
 #: eventyay/base/models/items.py:383
 #, fuzzy
@@ -5397,7 +5397,7 @@ msgid ""
 "If this is checked, the usual cancellation and order change settings of this "
 "event apply. If this is unchecked, orders containing this product can not be "
 "canceled by users but only by you."
-msgstr ""
+msgstr "Si cette option est cochée, les paramètres habituels d'annulation et de modification des commandes de cet événement s'appliquent. Si elle ne l'est pas, les commandes contenant ce produit ne peuvent pas être annulées par les utilisateurs, uniquement par vous."
 
 #: eventyay/base/models/items.py:389
 msgid "Minimum amount per order"
@@ -5473,7 +5473,7 @@ msgstr "Le produit que l'utilisateur attend."
 msgid ""
 "When a customer buys this product, they will get a gift card with a value "
 "corresponding to the product price."
-msgstr ""
+msgstr "Lorsqu'un client achète ce produit, il recevra une carte-cadeau d'une valeur correspondant au prix du produit."
 
 #: eventyay/base/models/items.py:431 eventyay/base/models/items.py:1072
 #: eventyay/control/forms/filter.py:327 eventyay/control/forms/filter.py:1199
@@ -5597,7 +5597,7 @@ msgstr "Nombre"
 
 #: eventyay/base/models/items.py:931
 msgid "Designated price part"
-msgstr ""
+msgstr "Part de prix désignée"
 
 #: eventyay/base/models/items.py:932
 msgid ""
@@ -5605,7 +5605,7 @@ msgid ""
 "value of the total gross price. This might be important in cases of mixed "
 "taxation, but can be kept blank otherwise. This value will NOT be added to "
 "the base item's price."
-msgstr ""
+msgstr "Si défini, il sera indiqué que cet article groupé correspond à la valeur donnée du prix brut total. Cela peut être important en cas de taxation mixte, mais peut être laissé vide sinon. Cette valeur NE sera PAS ajoutée au prix de l'article de base."
 
 #: eventyay/base/models/items.py:955
 #, fuzzy
@@ -5670,7 +5670,7 @@ msgstr "Date et heure"
 
 #: eventyay/base/models/items.py:1028
 msgid "Country code (ISO 3166-1 alpha-2)"
-msgstr ""
+msgstr "Code pays (ISO 3166-1 alpha-2)"
 
 #: eventyay/base/models/items.py:1030
 #, fuzzy
@@ -5715,7 +5715,7 @@ msgstr ""
 
 #: eventyay/base/models/items.py:1082
 msgid "Not supported by all check-in apps for all question types."
-msgstr ""
+msgstr "Non pris en charge par toutes les applications de pointage pour tous les types de questions."
 
 #: eventyay/base/models/items.py:1086
 #: eventyay/control/templates/pretixcontrol/items/questions.html:79
@@ -5852,18 +5852,18 @@ msgstr "Variantes"
 
 #: eventyay/base/models/items.py:1394
 msgid "Close this quota permanently once it is sold out"
-msgstr ""
+msgstr "Fermer définitivement ce quota une fois épuisé"
 
 #: eventyay/base/models/items.py:1395
 msgid ""
 "If you enable this, when the quota is sold out once, no more tickets will be "
 "sold, even if tickets become available again through cancellations or "
 "expiring orders. Of course, you can always re-open it manually."
-msgstr ""
+msgstr "Si vous activez cette option, une fois le quota épuisé, aucun autre billet ne sera vendu, même si des billets redeviennent disponibles via des annulations ou des commandes expirées. Bien sûr, vous pouvez toujours le rouvrir manuellement."
 
 #: eventyay/base/models/items.py:1403
 msgid "Allow to sell more tickets once people have checked out"
-msgstr ""
+msgstr "Autoriser la vente de billets supplémentaires après le pointage de sortie"
 
 #: eventyay/base/models/items.py:1404
 msgid ""
@@ -5873,7 +5873,7 @@ msgid ""
 "matter which check-in list either of the scans was on, but check-in lists "
 "are ignored if they are set to \"Allow re-entering after an exit scan\" to "
 "prevent accidental overbooking."
-msgstr ""
+msgstr "Avec cette option, le quota sera libéré dès que les personnes seront scannées à une sortie de votre événement. Cela ne se produira que si elles ont été scannées à l'entrée et à la sortie et que le scan de sortie est le plus récent. Peu importe sur quelle liste de pointage se trouvent les scans, mais les listes de pointage sont ignorées si elles sont réglées sur « Autoriser la réentrée après un scan de sortie » afin d'éviter un surbooking accidentel."
 
 #: eventyay/base/models/items.py:1415 eventyay/base/models/vouchers.py:172
 #: eventyay/control/templates/pretixcontrol/items/quota_edit.html:8
@@ -6037,7 +6037,7 @@ msgstr "Le produit commandé \"{item}\" n'est plus disponible."
 #: eventyay/base/models/orders.py:830
 #, python-brace-format
 msgid "The voucher \"{voucher}\" no longer has sufficient budget."
-msgstr ""
+msgstr "Le bon « {voucher} » n'a plus un budget suffisant."
 
 #: eventyay/base/models/orders.py:831
 #, fuzzy, python-brace-format
@@ -6062,7 +6062,7 @@ msgstr "Vide, si ce produit n'est pas un billet d'entrée"
 
 #: eventyay/base/models/orders.py:1200 eventyay/base/orderimport.py:420
 msgid "Job Title"
-msgstr ""
+msgstr "Intitulé de poste"
 
 #: eventyay/base/models/orders.py:1365
 #, fuzzy
@@ -6096,7 +6096,7 @@ msgstr "annulé"
 #: eventyay/base/models/orders.py:1369
 msgctxt "payment_state"
 msgid "failed"
-msgstr ""
+msgstr "échoué"
 
 #: eventyay/base/models/orders.py:1370
 #, fuzzy
@@ -6125,7 +6125,7 @@ msgstr "Paiement reçu pour votre commande: %(code)s"
 #: eventyay/base/models/orders.py:1721
 msgctxt "refund_state"
 msgid "started externally"
-msgstr ""
+msgstr "démarré en externe"
 
 #: eventyay/base/models/orders.py:1722
 #, fuzzy
@@ -6144,12 +6144,12 @@ msgstr "Virement bancaire"
 #: eventyay/base/models/orders.py:1724
 msgctxt "refund_state"
 msgid "done"
-msgstr ""
+msgstr "effectué"
 
 #: eventyay/base/models/orders.py:1725
 msgctxt "refund_state"
 msgid "failed"
-msgstr ""
+msgstr "échoué"
 
 #: eventyay/base/models/orders.py:1727
 #, fuzzy
@@ -6175,7 +6175,7 @@ msgstr "Tout client"
 #: eventyay/base/models/orders.py:1737
 msgctxt "refund_source"
 msgid "External"
-msgstr ""
+msgstr "Externe"
 
 #: eventyay/base/models/orders.py:1775
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:192
@@ -6189,7 +6189,7 @@ msgstr "Demande de remboursement"
 #: eventyay/control/templates/pretixcontrol/order/refund_choose.html:195
 msgid ""
 "May be shown to the end user or used e.g. as part of a payment reference."
-msgstr ""
+msgstr "Peut être affiché à l'utilisateur final ou utilisé par exemple comme partie d'une référence de paiement."
 
 #: eventyay/base/models/orders.py:1886
 msgid "Payment fee"
@@ -6357,7 +6357,7 @@ msgid ""
 "This includes searching for attendees, which can be used to obtain personal "
 "information about attendees. Users with \"can change orders\" can also "
 "perform check-ins."
-msgstr ""
+msgstr "Cela inclut la recherche de participants, qui peut être utilisée pour obtenir des informations personnelles sur les participants. Les utilisateurs ayant « peut modifier les commandes » peuvent également effectuer des pointages."
 
 #: eventyay/base/models/organizer.py:244
 msgid "Can view vouchers"
@@ -6393,12 +6393,12 @@ msgstr "Inviter dans l'équipe '{team}' pour '{email}'"
 #: eventyay/base/models/organizer.py:419
 #: eventyay/control/forms/organizer_forms/organizer_form.py:52
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "Nom du contact principal"
 
 #: eventyay/base/models/organizer.py:424
 #: eventyay/control/forms/organizer_forms/organizer_form.py:62
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "E-mail du contact principal"
 
 #: eventyay/base/models/organizer.py:429
 #: eventyay/control/forms/organizer_forms/organizer_form.py:73
@@ -6455,35 +6455,35 @@ msgstr "Date de début"
 #: eventyay/base/models/page.py:10
 #: eventyay/control/templates/pretixcontrol/admin/pages/index.html:29
 msgid "Page title"
-msgstr ""
+msgstr "Titre de la page"
 
 #: eventyay/base/models/page.py:15 eventyay/control/views/pages.py:64
 msgid "URL form"
-msgstr ""
+msgstr "Format d'URL"
 
 #: eventyay/base/models/page.py:17
 msgid ""
 "This will be used to generate the URL of the page. Please only use latin "
 "letters, numbers, dots and dashes. You cannot change this afterwards."
-msgstr ""
+msgstr "Cela sera utilisé pour générer l'URL de la page. Veuillez n'utiliser que des lettres latines, des chiffres, des points et des tirets. Vous ne pourrez pas le modifier ensuite."
 
 #: eventyay/base/models/page.py:23
 msgid "Show link on the website start page"
-msgstr ""
+msgstr "Afficher le lien sur la page d'accueil du site"
 
 #: eventyay/base/models/page.py:27
 msgid "Show in header menu on all pages"
-msgstr ""
+msgstr "Afficher dans le menu d'en-tête sur toutes les pages"
 
 #: eventyay/base/models/page.py:31
 msgid "Show in website footer menu on all pages"
-msgstr ""
+msgstr "Afficher dans le menu de pied de page sur toutes les pages"
 
 #: eventyay/base/models/page.py:36
 msgid ""
 "Require the user to acknowledge this page before the sign up is created "
 "(e.g. for terms of service)."
-msgstr ""
+msgstr "Exiger que l'utilisateur reconnaisse cette page avant que l'inscription ne soit créée (p. ex. pour les conditions d'utilisation)."
 
 #: eventyay/base/models/page.py:40
 #: eventyay/control/templates/pretixcontrol/admin/pages/form.html:48
@@ -6494,11 +6494,11 @@ msgstr "Contenu de l' e-mail"
 
 #: eventyay/base/models/seating.py:24
 msgid "Your layout file is not a valid JSON file."
-msgstr ""
+msgstr "Votre fichier de mise en page n'est pas un fichier JSON valide."
 
 #: eventyay/base/models/seating.py:33
 msgid "Your layout file is not a valid seating plan. Error message: {}"
-msgstr ""
+msgstr "Votre fichier de mise en page n'est pas un plan de salle valide. Message d'erreur : {}"
 
 #: eventyay/base/models/seating.py:154
 #, fuzzy, python-brace-format
@@ -6588,7 +6588,7 @@ msgstr ""
 #: eventyay/base/models/tax.py:288
 msgctxt "invoice"
 msgid "VAT liability rests with the service recipient."
-msgstr ""
+msgstr "La responsabilité de la TVA incombe au destinataire du service."
 
 #: eventyay/base/models/vouchers.py:105 eventyay/base/models/vouchers.py:512
 #: eventyay/control/views/vouchers.py:73
@@ -6615,7 +6615,7 @@ msgid ""
 "This is the maximum monetary amount that will be discounted using this "
 "voucher across all usages. If this is sum reached, the voucher can no longer "
 "be used."
-msgstr ""
+msgstr "C'est le montant monétaire maximal qui sera remisé avec ce bon pour l'ensemble des utilisations. Lorsque ce montant est atteint, le bon ne peut plus être utilisé."
 
 #: eventyay/base/models/vouchers.py:122 eventyay/base/models/vouchers.py:529
 #: eventyay/control/views/vouchers.py:72
@@ -6671,7 +6671,7 @@ msgstr "Si activé, le bon est valable pour tout produit concerné par ce quota.
 
 #: eventyay/base/models/vouchers.py:181
 msgid "Specific seat"
-msgstr ""
+msgstr "Place spécifique"
 
 #: eventyay/base/models/vouchers.py:185
 #: eventyay/control/templates/pretixcontrol/vouchers/index.html:122
@@ -6692,7 +6692,7 @@ msgstr ""
 
 #: eventyay/base/models/vouchers.py:197
 msgid "Shows hidden products that match this voucher"
-msgstr ""
+msgstr "Affiche les produits masqués qui correspondent à ce bon"
 
 #: eventyay/base/models/vouchers.py:205 eventyay/control/navigation.py:226
 #: eventyay/control/navigation.py:538
@@ -6808,7 +6808,7 @@ msgstr "L'élément sélectionné n'appartient pas à cet événement."
 msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
-msgstr ""
+msgstr "La place « {id} » est actuellement indisponible (bloquée, déjà vendue ou associée à un autre bon)."
 
 #: eventyay/base/models/vouchers.py:376
 #, fuzzy
@@ -6840,7 +6840,7 @@ msgstr "L'identificateur \"{}\" est déjà utilisé pour une autre option."
 msgid ""
 "This is the maximum monetary amount that will be discounted using this "
 "voucher across all usages."
-msgstr ""
+msgstr "C'est le montant monétaire maximal qui sera remisé avec ce bon pour l'ensemble des utilisations."
 
 #: eventyay/base/models/vouchers.py:551
 #, fuzzy
@@ -7065,12 +7065,12 @@ msgstr "Le bon a été utilisé dans la commande {order_code}."
 
 #: eventyay/base/orderimport.py:66
 msgid "Keep empty"
-msgstr ""
+msgstr "Laisser vide"
 
 #: eventyay/base/orderimport.py:93
 #, python-brace-format
 msgid "Invalid setting for column \"{header}\"."
-msgstr ""
+msgstr "Paramètre invalide pour la colonne « {header} »."
 
 #: eventyay/base/orderimport.py:153 eventyay/presale/views/waiting.py:94
 msgctxt "subevent"
@@ -7214,7 +7214,7 @@ msgstr "Remboursement automatique ?"
 
 #: eventyay/base/orderimport.py:547
 msgid "You cannot assign a position secret that already exists."
-msgstr ""
+msgstr "Vous ne pouvez pas attribuer un secret de position qui existe déjà."
 
 #: eventyay/base/orderimport.py:576
 #, fuzzy
@@ -7335,7 +7335,7 @@ msgstr "Valeur absolue"
 
 #: eventyay/base/payment.py:297
 msgid "Percentage of the order total."
-msgstr ""
+msgstr "Pourcentage du total de la commande."
 
 #: eventyay/base/payment.py:303
 msgid "Calculate the fee from the total value including the fee."
@@ -7357,14 +7357,14 @@ msgstr ""
 
 #: eventyay/base/payment.py:312
 msgid "Restrict to countries"
-msgstr ""
+msgstr "Limiter aux pays"
 
 #: eventyay/base/payment.py:314
 msgid ""
 "Only allow choosing this payment provider for invoice addresses in the "
 "selected countries. If you don't select any country, all countries are "
 "allowed. This is only enabled if the invoice address is required."
-msgstr ""
+msgstr "Autoriser ce prestataire de paiement uniquement pour les adresses de facturation situées dans les pays sélectionnés. Si vous ne sélectionnez aucun pays, tous les pays sont autorisés. Ceci n'est activé que si l'adresse de facturation est obligatoire."
 
 #: eventyay/base/payment.py:333
 #, fuzzy
@@ -7383,7 +7383,7 @@ msgstr "Activer le mode de paiement"
 msgid ""
 "The payment method will not be shown by default but only to people who enter "
 "the shop through a special link."
-msgstr ""
+msgstr "Le moyen de paiement ne sera pas affiché par défaut mais uniquement aux personnes qui accèdent à la boutique via un lien spécial."
 
 #: eventyay/base/payment.py:346
 #, fuzzy
@@ -7393,7 +7393,7 @@ msgstr "Activer le mode de paiement"
 
 #: eventyay/base/payment.py:355
 msgid "Share this link with customers who should use this payment method."
-msgstr ""
+msgstr "Partagez ce lien avec les clients qui doivent utiliser ce moyen de paiement."
 
 #: eventyay/base/payment.py:388
 msgctxt "invoice"
@@ -7402,7 +7402,7 @@ msgstr "Le paiement de cette facture a déjà été reçu."
 
 #: eventyay/base/payment.py:799
 msgid "Automatic refunds are not supported by this payment provider."
-msgstr ""
+msgstr "Les remboursements automatiques ne sont pas pris en charge par ce prestataire de paiement."
 
 #: eventyay/base/payment.py:870
 msgid ""
@@ -7432,7 +7432,7 @@ msgstr "Paiements non valables"
 msgid ""
 "In test mode, you can just manually mark this order as paid in the backend "
 "after it has been created."
-msgstr ""
+msgstr "En mode test, vous pouvez simplement marquer cette commande comme payée manuellement dans le back-end après sa création."
 
 #: eventyay/base/payment.py:973 eventyay/plugins/banktransfer/payment.py:110
 #, fuzzy
@@ -7442,17 +7442,17 @@ msgstr "Mode de paiement"
 
 #: eventyay/base/payment.py:977
 msgid "Payment process description during checkout"
-msgstr ""
+msgstr "Description du processus de paiement lors du passage en caisse"
 
 #: eventyay/base/payment.py:978
 msgid ""
 "This text will be shown during checkout when the user selects this payment "
 "method. It should give a short explanation on this payment method."
-msgstr ""
+msgstr "Ce texte sera affiché lors du passage en caisse lorsque l'utilisateur sélectionne ce moyen de paiement. Il doit fournir une brève explication sur ce moyen de paiement."
 
 #: eventyay/base/payment.py:983
 msgid "Payment process description in order confirmation emails"
-msgstr ""
+msgstr "Description du processus de paiement dans les e-mails de confirmation de commande"
 
 #: eventyay/base/payment.py:984
 #, python-brace-format
@@ -7461,11 +7461,11 @@ msgid ""
 "confirmation mails. It should instruct the user on how to proceed with the "
 "payment. You can use the placeholders {order}, {amount}, {currency} and "
 "{amount_with_currency}."
-msgstr ""
+msgstr "Ce texte sera inclus pour l'espace réservé {payment_info} dans les e-mails de confirmation de commande. Il doit indiquer à l'utilisateur comment procéder au paiement. Vous pouvez utiliser les espaces réservés {order}, {amount}, {currency} et {amount_with_currency}."
 
 #: eventyay/base/payment.py:991
 msgid "Payment process description for pending orders"
-msgstr ""
+msgstr "Description du processus de paiement pour les commandes en attente"
 
 #: eventyay/base/payment.py:992
 #, python-brace-format
@@ -7473,7 +7473,7 @@ msgid ""
 "This text will be shown on the order confirmation page for pending orders. "
 "It should instruct the user on how to proceed with the payment. You can use "
 "the placeholders {order}, {amount}, {currency} and {amount_with_currency}."
-msgstr ""
+msgstr "Ce texte sera affiché sur la page de confirmation de commande pour les commandes en attente. Il doit indiquer à l'utilisateur comment procéder au paiement. Vous pouvez utiliser les espaces réservés {order}, {amount}, {currency} et {amount_with_currency}."
 
 #: eventyay/base/payment.py:1041
 #, fuzzy
@@ -7490,16 +7490,16 @@ msgstr "Vos modifications n'ont pas pu être sauvegardées."
 #: eventyay/base/payment.py:1084
 #, python-format
 msgid "Balanced against orders: %s"
-msgstr ""
+msgstr "Compensé avec les commandes : %s"
 
 #: eventyay/base/payment.py:1105
 msgid "In test mode, only test cards will work."
-msgstr ""
+msgstr "En mode test, seules les cartes de test fonctionneront."
 
 #: eventyay/base/payment.py:1170 eventyay/base/payment.py:1233
 #: eventyay/base/payment.py:1277 eventyay/base/services/orders.py:773
 msgid "You cannot pay with gift cards when buying a gift card."
-msgstr ""
+msgstr "Vous ne pouvez pas payer avec des cartes-cadeaux lors de l'achat d'une carte-cadeau."
 
 #: eventyay/base/payment.py:1179 eventyay/base/payment.py:1241
 #: eventyay/base/payment.py:1285 eventyay/base/services/orders.py:764
@@ -7518,7 +7518,7 @@ msgstr "Cet événement ne peut pas être supprimé."
 #: eventyay/base/payment.py:1185 eventyay/base/payment.py:1247
 #: eventyay/base/services/orders.py:768
 msgid "Only test gift cards can be used in test mode."
-msgstr ""
+msgstr "Seules les cartes-cadeaux de test peuvent être utilisées en mode test."
 
 #: eventyay/base/payment.py:1188 eventyay/base/payment.py:1250
 #: eventyay/base/payment.py:1291
@@ -7543,7 +7543,7 @@ msgstr "Cet identificateur est déjà utilisé pour une autre question."
 msgid ""
 "Your gift card has been applied, but {} still need to be paid. Please select "
 "a payment method."
-msgstr ""
+msgstr "Votre carte-cadeau a été appliquée, mais il reste {} à payer. Veuillez sélectionner un moyen de paiement."
 
 #: eventyay/base/payment.py:1215
 #, fuzzy
@@ -7555,7 +7555,7 @@ msgstr "Votre panier a été mis à jour."
 msgid ""
 "You entered a voucher instead of a gift card. Vouchers can only be entered "
 "on the first page of the shop below the product selection."
-msgstr ""
+msgstr "Vous avez saisi un bon au lieu d'une carte-cadeau. Les bons ne peuvent être saisis que sur la première page de la boutique, sous la sélection des produits."
 
 #: eventyay/base/payment.py:1226 eventyay/base/payment.py:1268
 #, fuzzy
@@ -7567,7 +7567,7 @@ msgstr "Cette fonction n'est pas activée."
 msgid ""
 "This gift card can not be redeemed since its code is not unique. Please "
 "contact the organizer of this event."
-msgstr ""
+msgstr "Cette carte-cadeau ne peut pas être utilisée car son code n'est pas unique. Veuillez contacter l'organisateur de cet événement."
 
 #: eventyay/base/payment.py:1287 eventyay/base/services/orders.py:770
 #, fuzzy
@@ -7644,7 +7644,7 @@ msgstr "123,45 EUR"
 
 #: eventyay/base/pdf.py:111
 msgid "Price including add-ons"
-msgstr ""
+msgstr "Prix incluant les options complémentaires"
 
 #: eventyay/base/pdf.py:125
 #, fuzzy
@@ -7679,7 +7679,7 @@ msgid ""
 "Sesame Street 42\n"
 "12345 Any City\n"
 "Atlantis"
-msgstr ""
+msgstr "Jean Dupont\\nSociété exemple\\nSesame Street 42\\n12345 Ville quelconque\\nAtlantis"
 
 #: eventyay/base/pdf.py:140
 #, fuzzy
@@ -7807,7 +7807,7 @@ msgstr "Adresses de facturation"
 
 #: eventyay/base/pdf.py:279
 msgid "Sesame Street 42"
-msgstr ""
+msgstr "Sesame Street 42"
 
 #: eventyay/base/pdf.py:283
 #, fuzzy
@@ -7817,7 +7817,7 @@ msgstr "Adresses de facturation"
 
 #: eventyay/base/pdf.py:284
 msgid "12345"
-msgstr ""
+msgstr "12345"
 
 #: eventyay/base/pdf.py:288
 #, fuzzy
@@ -7851,7 +7851,7 @@ msgstr "Adresse de facturation: société"
 
 #: eventyay/base/pdf.py:299
 msgid "Atlantis"
-msgstr ""
+msgstr "Atlantis"
 
 #: eventyay/base/pdf.py:303
 msgid "List of Add-Ons"
@@ -7917,7 +7917,7 @@ msgstr "Nom complet"
 
 #: eventyay/base/pdf.py:355
 msgid "Ground floor, Row 3, Seat 4"
-msgstr ""
+msgstr "Rez-de-chaussée, rangée 3, place 4"
 
 #: eventyay/base/pdf.py:357 eventyay/base/pdf.py:363
 #: eventyay/control/forms/orders.py:255
@@ -7934,7 +7934,7 @@ msgstr "Nom de l'équipe"
 
 #: eventyay/base/pdf.py:361
 msgid "Ground floor"
-msgstr ""
+msgstr "Rez-de-chaussée"
 
 #: eventyay/base/pdf.py:366
 msgid "Seat: row"
@@ -11586,17 +11586,17 @@ msgstr ""
 
 #: eventyay/control/forms/vouchers.py:313
 msgid "CSV input needs to contain a header row in the first line."
-msgstr ""
+msgstr "La saisie CSV doit contenir une ligne d'en-tête à la première ligne."
 
 #: eventyay/control/forms/vouchers.py:317
 #, python-brace-format
 msgid "CSV input needs to contain a field with the header \"{header}\"."
-msgstr ""
+msgstr "La saisie CSV doit contenir un champ avec l'en-tête « {header} »."
 
 #: eventyay/control/forms/vouchers.py:320
 #, python-brace-format
 msgid "CSV input contains an unknown field with the header \"{header}\"."
-msgstr ""
+msgstr "La saisie CSV contient un champ inconnu avec l'en-tête « {header} »."
 
 #: eventyay/control/forms/vouchers.py:325 eventyay/control/forms/vouchers.py:340
 #, fuzzy, python-brace-format
@@ -11618,13 +11618,13 @@ msgstr "Un bon de réduction avec un de ces codes existe déjà."
 msgid ""
 "If vouchers should be sent by email, subject, message and recipients need to "
 "be specified."
-msgstr ""
+msgstr "Si des bons doivent être envoyés par e-mail, l'objet, le message et les destinataires doivent être précisés."
 
 #: eventyay/control/forms/vouchers.py:362
 #, python-brace-format
 msgid ""
 "You generated {codes} vouchers, but entered recipients for {recp} vouchers."
-msgstr ""
+msgstr "Vous avez généré {codes} bons, mais saisi des destinataires pour {recp} bons."
 
 #: eventyay/control/forms/vouchers.py:367
 #, fuzzy
@@ -11700,7 +11700,7 @@ msgstr ""
 #: eventyay/control/logdisplay.py:92
 #, python-brace-format
 msgid "A fee of {old_price} was removed."
-msgstr ""
+msgstr "Des frais de {old_price} ont été supprimés."
 
 #: eventyay/control/logdisplay.py:99
 #, fuzzy, python-brace-format
@@ -11973,7 +11973,7 @@ msgstr "La commande a été créée."
 
 #: eventyay/control/logdisplay.py:297
 msgid "The order requires approval before it can continue to be processed."
-msgstr ""
+msgstr "La commande nécessite une approbation avant de pouvoir continuer à être traitée."
 
 #: eventyay/control/logdisplay.py:298 eventyay/control/views/orders.py:478
 #, fuzzy
@@ -11997,7 +11997,7 @@ msgstr "L'adresse e-mail a été changée de \"{old_email}\" en \"{new_email}\".
 msgid ""
 "The email address has been confirmed to be working (the user clicked on a "
 "link in the email for the first time)."
-msgstr ""
+msgstr "L'adresse e-mail a été confirmée comme fonctionnelle (l'utilisateur a cliqué pour la première fois sur un lien dans l'e-mail)."
 
 #: eventyay/control/logdisplay.py:304
 #, fuzzy, python-brace-format
@@ -12039,7 +12039,7 @@ msgstr ""
 #: eventyay/control/logdisplay.py:313
 #, python-brace-format
 msgid "A new payment {local_id} has been started instead of the previous one."
-msgstr ""
+msgstr "Un nouveau paiement {local_id} a été initié à la place du précédent."
 
 #: eventyay/control/logdisplay.py:314
 msgid "An unidentified type email has been sent."
@@ -12047,7 +12047,7 @@ msgstr "Un mail de type non identifié a été envoyé."
 
 #: eventyay/control/logdisplay.py:315
 msgid "Sending of an email has failed."
-msgstr ""
+msgstr "L'envoi d'un e-mail a échoué."
 
 #: eventyay/control/logdisplay.py:316
 #, fuzzy
@@ -12224,11 +12224,11 @@ msgstr "La commande a été créée."
 #: eventyay/control/logdisplay.py:346
 #, python-brace-format
 msgid "Refund {local_id} has been created by an external entity."
-msgstr ""
+msgstr "Le remboursement {local_id} a été créé par une entité externe."
 
 #: eventyay/control/logdisplay.py:347
 msgid "The customer requested you to issue a refund."
-msgstr ""
+msgstr "Le client a demandé un remboursement."
 
 #: eventyay/control/logdisplay.py:348
 #, fuzzy, python-brace-format
@@ -12314,7 +12314,7 @@ msgstr "Le mot de passe a été réinitialisé."
 msgid ""
 "A repeated password reset has been denied, as the last request was less than "
 "24 hours ago."
-msgstr ""
+msgstr "Une demande répétée de réinitialisation de mot de passe a été refusée, car la dernière demande date de moins de 24 heures."
 
 #: eventyay/control/logdisplay.py:369
 #, fuzzy, python-brace-format
@@ -12664,7 +12664,7 @@ msgstr "La facture a été régénérée."
 
 #: eventyay/control/logdisplay.py:444
 msgid "The device has notified the server of an hardware or software update."
-msgstr ""
+msgstr "L'appareil a informé le serveur d'une mise à jour matérielle ou logicielle."
 
 #: eventyay/control/logdisplay.py:445
 #, fuzzy
@@ -12961,7 +12961,7 @@ msgstr "Notifications"
 
 #: eventyay/control/navigation.py:328
 msgid "2FA"
-msgstr ""
+msgstr "2FA"
 
 #: eventyay/control/navigation.py:333
 #, fuzzy
@@ -13014,7 +13014,7 @@ msgstr "Tous les organisateurs"
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:7
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:10
 msgid "Task management"
-msgstr ""
+msgstr "Gestion des tâches"
 
 #: eventyay/control/navigation.py:514
 #, fuzzy
@@ -13062,7 +13062,7 @@ msgstr "Paramètres de connexion"
 
 #: eventyay/control/navigation.py:570
 msgid "Billing Validation"
-msgstr ""
+msgstr "Validation de la facturation"
 
 #: eventyay/control/permissions.py:37 eventyay/control/permissions.py:74
 #: eventyay/control/permissions.py:105 eventyay/control/permissions.py:122
@@ -13431,12 +13431,12 @@ msgstr "Créer un nouveau rendez-vous"
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:43
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:55
 msgid "Id"
-msgstr ""
+msgstr "Id"
 
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:45
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:59
 msgid "Run at"
-msgstr ""
+msgstr "Exécuter à"
 
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:46
 #: eventyay/control/templates/pretixcontrol/admin/task_management/task_management.html:60
@@ -13509,11 +13509,11 @@ msgstr "Démarrer l'édition"
 #: eventyay/control/templates/pretixcontrol/admin/users/anonymize.html:4
 #: eventyay/control/templates/pretixcontrol/admin/users/anonymize.html:6
 msgid "Anonymize user"
-msgstr ""
+msgstr "Anonymiser l'utilisateur"
 
 #: eventyay/control/templates/pretixcontrol/admin/users/anonymize.html:11
 msgid "Disable and anonymize user"
-msgstr ""
+msgstr "Désactiver et anonymiser l'utilisateur"
 
 #: eventyay/control/templates/pretixcontrol/admin/users/create.html:4
 #: eventyay/control/templates/pretixcontrol/admin/users/create.html:6
@@ -13540,7 +13540,7 @@ msgstr "Utilisateur usurpé"
 
 #: eventyay/control/templates/pretixcontrol/admin/users/form.html:18
 msgid "Anonymize"
-msgstr ""
+msgstr "Anonymiser"
 
 #: eventyay/control/templates/pretixcontrol/admin/users/form.html:36
 #, fuzzy
@@ -13827,7 +13827,7 @@ msgstr "voir l'événement"
 #: eventyay/control/templates/pretixcontrol/base.html:150
 #: eventyay/control/templates/pretixcontrol/base.html:151
 msgid "Public profile"
-msgstr ""
+msgstr "Profil public"
 
 #: eventyay/control/templates/pretixcontrol/base.html:212
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:124
@@ -13868,7 +13868,7 @@ msgid ""
 "<strong>test mode has been disabled</strong>. You should delete those orders "
 "to make sure they do not show up in your reports and statistics and block "
 "people from actually buying tickets."
-msgstr ""
+msgstr "Votre événement contient des <strong>commandes en mode test</strong> alors que le <strong>mode test a été désactivé</strong>. Vous devriez supprimer ces commandes afin qu'elles n'apparaissent pas dans vos rapports et statistiques et afin d'empêcher les personnes d'acheter réellement des billets."
 
 #: eventyay/control/templates/pretixcontrol/base.html:379
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:282
@@ -13880,7 +13880,7 @@ msgstr "Seulement les ordres payés"
 #: eventyay/control/templates/pretixcontrol/base.html:387
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:290
 msgid "The system automatically checks for updates in the background."
-msgstr ""
+msgstr "Le système vérifie automatiquement les mises à jour en arrière-plan."
 
 #: eventyay/control/templates/pretixcontrol/base.html:396
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:299
@@ -13899,7 +13899,7 @@ msgstr ""
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:308
 #, python-format
 msgid "Times displayed in %(tz)s"
-msgstr ""
+msgstr "Heures affichées en %(tz)s"
 
 #: eventyay/control/templates/pretixcontrol/base.html:415
 #: eventyay/eventyay_common/templates/eventyay_common/base.html:318
@@ -13921,7 +13921,7 @@ msgstr "Nom de l'appareil"
 
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:6
 msgid "Receipt ID"
-msgstr ""
+msgstr "ID de reçu"
 
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:11
 msgid "ID"
@@ -13929,7 +13929,7 @@ msgstr "ID"
 
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:15
 msgid "ZVT Terminal"
-msgstr ""
+msgstr "Terminal ZVT"
 
 #: eventyay/control/templates/pretixcontrol/boxoffice/payment.html:16
 #, fuzzy
@@ -14149,20 +14149,20 @@ msgid ""
 "These settings on this page are intended for professional users with very "
 "specific check-in situations. Please reach out to support if you have "
 "questions about setting this up."
-msgstr ""
+msgstr "Ces paramètres sur cette page sont destinés aux utilisateurs professionnels avec des situations de pointage très spécifiques. Veuillez contacter le support si vous avez des questions sur cette configuration."
 
 #: eventyay/control/templates/pretixcontrol/checkin/list_edit.html:54
 msgid ""
 "Make sure to always use the latest version of our scanning apps for these "
 "options to work."
-msgstr ""
+msgstr "Assurez-vous d'utiliser toujours la dernière version de nos applications de scan pour que ces options fonctionnent."
 
 #: eventyay/control/templates/pretixcontrol/checkin/list_edit.html:59
 msgid ""
 "If you make use of these advanced options, we recommend using our Android "
 "and Desktop apps. Custom check-in rules do not work offline with our iOS "
 "scanning app."
-msgstr ""
+msgstr "Si vous utilisez ces options avancées, nous recommandons d'utiliser nos applications Android et Desktop. Les règles de pointage personnalisées ne fonctionnent pas hors ligne avec notre application de scan iOS."
 
 #: eventyay/control/templates/pretixcontrol/checkin/list_edit.html:74
 #, fuzzy
@@ -14208,7 +14208,7 @@ msgid ""
 "devices to your account and use them to validate tickets. Since the devices "
 "are connected on the organizer level, you do not have to create a new device "
 "for every event but can reuse them over and over again."
-msgstr ""
+msgstr "Si vous disposez des autorisations d'organisateur appropriées, vous pouvez connecter de nouveaux appareils à votre compte et les utiliser pour valider les billets. Comme les appareils sont connectés au niveau de l'organisateur, vous n'avez pas à créer un nouvel appareil pour chaque événement et pouvez les réutiliser."
 
 #: eventyay/control/templates/pretixcontrol/checkin/lists.html:47
 msgid "Your search did not match any check-in lists."
@@ -14464,7 +14464,7 @@ msgid ""
 "automatically, e.g. due to the selected payment method, you will need to "
 "take manual action. However, you have currently turned off notifications for "
 "this event."
-msgstr ""
+msgstr "Si un utilisateur demande l'annulation d'une commande payée et que l'argent ne peut pas être remboursé automatiquement, par exemple en raison du moyen de paiement sélectionné, vous devrez agir manuellement. Toutefois, vous avez actuellement désactivé les notifications pour cet événement."
 
 #: eventyay/control/templates/pretixcontrol/event/cancel.html:44
 #: eventyay/control/templates/pretixcontrol/user/settings.html:30
@@ -14483,30 +14483,30 @@ msgid ""
 "Allowing users to change their order is a feature under development. "
 "Therefore, currently only specific changes (such as changing the variation "
 "of a product) are possible. More options might be added later."
-msgstr ""
+msgstr "Permettre aux utilisateurs de modifier leur commande est une fonctionnalité en cours de développement. Par conséquent, seules certaines modifications (comme changer la variation d'un produit) sont possibles pour le moment. D'autres options pourront être ajoutées ultérieurement."
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:5
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:5
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:20
 msgid "Home"
-msgstr ""
+msgstr "Accueil"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:12
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:12
 msgid "Talk"
-msgstr ""
+msgstr "Intervention"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:18
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:18
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:34
 msgid "Access videos related to this event"
-msgstr ""
+msgstr "Accéder aux vidéos liées à cet événement"
 
 #: eventyay/control/templates/pretixcontrol/event/component_link.html:19
 #: eventyay/eventyay_common/templates/eventyay_common/event/component_link.html:19
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:35
 msgid "Videos"
-msgstr ""
+msgstr "Vidéos"
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:5
 #: eventyay/control/templates/pretixcontrol/event/live.html:138
@@ -14527,7 +14527,7 @@ msgstr "Hors ligne"
 msgid ""
 "You can take your event offline. Nobody except your team will be able to see "
 "or access it any more."
-msgstr ""
+msgstr "Vous pouvez mettre votre événement hors ligne. Plus personne, sauf votre équipe, ne pourra le voir ni y accéder."
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:34
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:47
@@ -14542,7 +14542,7 @@ msgstr "Choisir un événement"
 msgid ""
 "If you need to call off your event you want to cancel and refund all "
 "tickets, you can do so through this option."
-msgstr ""
+msgstr "Si vous devez annuler votre événement et rembourser tous les billets, vous pouvez le faire via cette option."
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:55
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:68
@@ -14556,7 +14556,7 @@ msgid ""
 "You can remove personal data such as names and email addresses from your "
 "event and only retain the financial information such as the number and type "
 "of tickets sold."
-msgstr ""
+msgstr "Vous pouvez supprimer les données personnelles telles que les noms et les adresses e-mail de votre événement et ne conserver que les informations financières telles que le nombre et le type de billets vendus."
 
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:76
 #: eventyay/control/templates/pretixcontrol/event/dangerzone.html:89
@@ -14568,7 +14568,7 @@ msgstr "Supprimer l'événement"
 msgid ""
 "You can delete your event completely only as long as it does not contain any "
 "undeletable data, such as orders not performed in test mode."
-msgstr ""
+msgstr "Vous pouvez supprimer complètement votre événement uniquement tant qu'il ne contient aucune donnée non supprimable, comme des commandes non effectuées en mode test."
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:9
 msgid ""
@@ -14604,7 +14604,7 @@ msgstr ""
 msgid ""
 "To ensure audit compliance and maintain trust with financial authorities, "
 "deleting orders once they have been placed is not permitted."
-msgstr ""
+msgstr "Pour assurer la conformité d'audit et maintenir la confiance des autorités fiscales, la suppression des commandes une fois passées n'est pas autorisée."
 
 #: eventyay/control/templates/pretixcontrol/event/delete.html:45
 msgid ""
@@ -14646,11 +14646,11 @@ msgstr "Optionnel"
 #: eventyay/control/templates/pretixcontrol/event/fragment_geodata.html:22
 #: eventyay/control/templates/pretixcontrol/subevents/bulk_edit.html:57
 msgid "Geocoding data © OpenStreetMap"
-msgstr ""
+msgstr "Données de géocodage © OpenStreetMap"
 
 #: eventyay/control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:4
 msgid "Failed to retrieve geo coordinates"
-msgstr ""
+msgstr "Échec de récupération des coordonnées géographiques"
 
 #: eventyay/control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:5
 #, fuzzy
@@ -14701,7 +14701,7 @@ msgid ""
 "This event contains <strong>overpaid orders</strong>, for example due to "
 "duplicate payment attempts. You should review the cases and consider "
 "refunding the overpaid amount to the user."
-msgstr ""
+msgstr "Cet événement contient des <strong>commandes surpayées</strong>, par exemple en raison de tentatives de paiement en double. Vous devriez examiner les cas et envisager de rembourser le montant surpayé à l'utilisateur."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:33
 #, fuzzy
@@ -14713,7 +14713,7 @@ msgstr "Seulement les ordres payés"
 msgid ""
 "This event contains <strong>pending refunds</strong> that you should take "
 "care of."
-msgstr ""
+msgstr "Cet événement contient des <strong>remboursements en attente</strong> dont vous devriez vous occuper."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:42
 #, fuzzy
@@ -14725,7 +14725,7 @@ msgstr "Épuisé (commandes en cours)"
 msgid ""
 "This event contains <strong>requested cancellations</strong> that you should "
 "take care of."
-msgstr ""
+msgstr "Cet événement contient des <strong>annulations demandées</strong> dont vous devriez vous occuper."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:51
 #, fuzzy
@@ -14737,11 +14737,11 @@ msgstr "La commande a été annulée."
 msgid ""
 "This event contains <strong>pending approvals</strong> that you should take "
 "care of."
-msgstr ""
+msgstr "Cet événement contient des <strong>approbations en attente</strong> dont vous devriez vous occuper."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:60
 msgid "Show orders pending approval"
-msgstr ""
+msgstr "Afficher les commandes en attente d'approbation"
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:65
 msgid ""
@@ -14749,7 +14749,7 @@ msgid ""
 "as paid, probably because no quota was left at the time their payment "
 "arrived. You should review the cases and consider either refunding the "
 "customer or creating more space."
-msgstr ""
+msgstr "Cet événement contient des <strong>commandes entièrement payées</strong> qui ne sont pas marquées comme payées, probablement parce qu'il ne restait plus de quota au moment où leur paiement est arrivé. Vous devriez examiner les cas et envisager soit de rembourser le client, soit de créer plus de capacité."
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:71
 #, fuzzy
@@ -14803,7 +14803,7 @@ msgstr "Ce changement a été effectué par un administrateur eventyay."
 #: eventyay/control/templates/pretixcontrol/organizers/device_logs.html:42
 #: eventyay/control/templates/pretixcontrol/organizers/logs.html:72
 msgid "Inspect"
-msgstr ""
+msgstr "Inspecter"
 
 #: eventyay/control/templates/pretixcontrol/event/index.html:236
 msgid "Show more logs"
@@ -14865,7 +14865,7 @@ msgstr ""
 msgid ""
 "Your shop is already live, however the following issues would normally "
 "prevent your shop to go live:"
-msgstr ""
+msgstr "Votre boutique est déjà en ligne, cependant les problèmes suivants empêcheraient normalement la mise en ligne de votre boutique :"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:44
 #: eventyay/control/templates/pretixcontrol/event/live.html:63
@@ -14897,11 +14897,11 @@ msgstr ""
 msgid ""
 "Your shop is currently in test mode. All orders are not persistent and can "
 "be deleted at any point."
-msgstr ""
+msgstr "Votre boutique est actuellement en mode test. Toutes les commandes ne sont pas persistantes et peuvent être supprimées à tout moment."
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:95
 msgid "Permanently delete all orders created in test mode"
-msgstr ""
+msgstr "Supprimer définitivement toutes les commandes créées en mode test"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:100
 #, fuzzy
@@ -14920,28 +14920,28 @@ msgid ""
 "If you want to do some test orders, you can enable test mode for your shop. "
 "As long as the shop is in test mode, all orders that are created are marked "
 "as test orders and can be deleted again."
-msgstr ""
+msgstr "Si vous souhaitez faire des commandes de test, vous pouvez activer le mode test pour votre boutique. Tant que la boutique est en mode test, toutes les commandes créées sont marquées comme commandes de test et peuvent être supprimées."
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:111
 msgid ""
 "Please note that test orders still count into your quotas, actually use "
 "vouchers and might perform actual payments. The only difference is that you "
 "can delete test orders. Use at your own risk!"
-msgstr ""
+msgstr "Veuillez noter que les commandes de test comptent toujours dans vos quotas, utilisent réellement des bons et peuvent effectuer de vrais paiements. La seule différence est que vous pouvez supprimer les commandes de test. Utilisez à vos risques et périls !"
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:115
 msgid ""
 "Also, test mode only covers the main web shop. Orders created through other "
 "sales channels such as the box office or resellers module are still created "
 "as production orders."
-msgstr ""
+msgstr "De plus, le mode test ne couvre que la boutique web principale. Les commandes créées via d'autres canaux de vente, tels que le guichet ou le module revendeurs, sont toujours créées comme des commandes de production."
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:119
 msgid ""
 "It looks like you already have some real orders in your shop. We do not "
 "recommend enabling test mode if your customers already know your shop, as it "
 "will confuse them."
-msgstr ""
+msgstr "Il semble que vous ayez déjà des commandes réelles dans votre boutique. Nous ne recommandons pas d'activer le mode test si vos clients connaissent déjà votre boutique, car cela les perturbera."
 
 #: eventyay/control/templates/pretixcontrol/event/live.html:126
 #, fuzzy
@@ -15031,7 +15031,7 @@ msgstr "Rappel pour télécharger les billets"
 
 #: eventyay/control/templates/pretixcontrol/event/mail.html:85
 msgid "Order approval process"
-msgstr ""
+msgstr "Processus d'approbation des commandes"
 
 #: eventyay/control/templates/pretixcontrol/event/mail.html:90
 #, fuzzy
@@ -15077,7 +15077,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/event/payment.html:67
 msgid "Deadlines"
-msgstr ""
+msgstr "Échéances"
 
 #: eventyay/control/templates/pretixcontrol/event/payment_provider.html:15
 msgid "Payment provider:"
@@ -15304,7 +15304,7 @@ msgstr ""
 msgid ""
 "After the setup, please go to the Payment area and set up the Stripe "
 "connection."
-msgstr ""
+msgstr "Après la configuration, veuillez aller dans la section Paiement et configurer la connexion Stripe."
 
 #: eventyay/control/templates/pretixcontrol/event/quick_setup.html:198
 msgid "Getting in touch with you"
@@ -15330,7 +15330,7 @@ msgstr "Paramètres généraux"
 #: eventyay/control/templates/pretixcontrol/event/settings.html:26
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:46
 msgid "Basics"
-msgstr ""
+msgstr "Bases"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:44
 #: eventyay/control/templates/pretixcontrol/item/index.html:69
@@ -15449,7 +15449,7 @@ msgstr "Affichage"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:253
 msgid "Cart"
-msgstr ""
+msgstr "Panier"
 
 #: eventyay/control/templates/pretixcontrol/event/settings.html:268
 #, fuzzy
@@ -15788,33 +15788,33 @@ msgstr "Date de l'événement"
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:13
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:53
 msgid "Singular event or non-event shop"
-msgstr ""
+msgstr "Événement unique ou boutique hors événement"
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:15
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:55
 msgid ""
 "An event with individual configuration. If you create more events later, you "
 "can copy the event to save yourself some work."
-msgstr ""
+msgstr "Un événement avec une configuration individuelle. Si vous créez d'autres événements plus tard, vous pouvez copier l'événement pour vous épargner du travail."
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:21
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:61
 msgid ""
 "Examples: Conferences, workshops, trade fairs, one-off concerts, sale of "
 "digital content, multi-day events with combination tickets."
-msgstr ""
+msgstr "Exemples : conférences, ateliers, salons professionnels, concerts ponctuels, vente de contenu numérique, événements de plusieurs jours avec billets combinés."
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:32
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:72
 msgid "Event series or time slot booking"
-msgstr ""
+msgstr "Série d'événements ou réservation de créneaux"
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:34
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:74
 msgid ""
 "A series of events that share the same configuration. They can still be "
 "different in their dates, locations, prices, and capacities."
-msgstr ""
+msgstr "Une série d'événements qui partagent la même configuration. Ils peuvent néanmoins différer par leurs dates, lieux, prix et capacités."
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:40
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:80
@@ -15822,7 +15822,7 @@ msgid ""
 "Examples: Multiple presentations of the same show, same concert in multiple "
 "locations, museums, libraries, or swimming pools, events that need to be "
 "booked together in one cart."
-msgstr ""
+msgstr "Exemples : plusieurs représentations du même spectacle, même concert dans plusieurs lieux, musées, bibliothèques ou piscines, événements qui doivent être réservés ensemble dans un même panier."
 
 #: eventyay/control/templates/pretixcontrol/events/create_foundation.html:53
 msgid ""
@@ -15835,7 +15835,7 @@ msgstr ""
 #: eventyay/control/templates/pretixcontrol/font_option.html:2
 msgctxt "typography"
 msgid "The quick brown fox jumps over the lazy dog."
-msgstr ""
+msgstr "Portez ce vieux whisky au juge blond qui fume."
 
 #: eventyay/control/templates/pretixcontrol/fragment_quota_box.html:3
 #: eventyay/control/templates/pretixcontrol/fragment_quota_box_paid.html:3
@@ -15862,7 +15862,7 @@ msgid ""
 "        redeem another gift card or select a different payment method for "
 "the difference.\n"
 "    "
-msgstr ""
+msgstr "\\n        Si vous avez une carte-cadeau, veuillez saisir ici le code de la carte-cadeau. Si la carte-cadeau n'a pas\\n        suffisamment de crédit pour payer la commande entière, cette page vous sera affichée à nouveau et vous pourrez\\n        soit utiliser une autre carte-cadeau, soit sélectionner un autre moyen de paiement pour la différence.\\n    "
 
 #: eventyay/control/templates/pretixcontrol/giftcards/checkout_confirm.html:4
 msgid ""
@@ -15873,7 +15873,7 @@ msgid ""
 "than the order total, you will be able to re-use the gift card in the "
 "future.\n"
 "    "
-msgstr ""
+msgstr "\\n        Votre carte-cadeau sera utilisée pour payer cette commande. Si le crédit de la carte-cadeau est inférieur au total de la commande, vous pourrez payer la\\n        différence avec un autre moyen de paiement. Si le crédit est supérieur au total de la commande, vous pourrez réutiliser la carte-cadeau à l'avenir.\\n    "
 
 #: eventyay/control/templates/pretixcontrol/global_message.html:5
 #: eventyay/control/templates/pretixcontrol/global_message.html:7
@@ -15882,7 +15882,7 @@ msgstr "Message système"
 
 #: eventyay/control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Soumettre"
 
 #: eventyay/control/templates/pretixcontrol/global_update.html:7
 msgid "Update check results"
@@ -15951,7 +15951,7 @@ msgstr "Mettre à jour les paramètres de contrôle"
 
 #: eventyay/control/templates/pretixcontrol/includes/logs.html:51
 msgid "View full log"
-msgstr ""
+msgstr "Voir le journal complet"
 
 #: eventyay/control/templates/pretixcontrol/item/base.html:9
 msgid "Modify product:"
@@ -15978,13 +15978,13 @@ msgstr ""
 msgid ""
 "This product is currently not being sold since you configured below that it "
 "should only be available in a certain timeframe."
-msgstr ""
+msgstr "Ce produit n'est actuellement pas vendu car vous avez configuré ci-dessous qu'il ne doit être disponible que pendant une certaine période."
 
 #: eventyay/control/templates/pretixcontrol/item/base.html:36
 msgid ""
 "This product is currently not being shown since you configured below that it "
 "should only be visible if a certain other quota is already sold out."
-msgstr ""
+msgstr "Ce produit n'est actuellement pas affiché car vous avez configuré ci-dessous qu'il ne doit être visible que si un autre quota spécifique est déjà épuisé."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:19
 #: eventyay/control/templates/pretixcontrol/item/index.html:21
@@ -16005,7 +16005,7 @@ msgid ""
 "Every purchase of this product represents one person who is allowed to enter "
 "your event. By default, the system will request attendee information and "
 "provide ticket downloads for these products."
-msgstr ""
+msgstr "Chaque achat de ce produit représente une personne autorisée à entrer à votre événement. Par défaut, le système demandera les informations des participants et fournira le téléchargement des billets pour ces produits."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:33
 #: eventyay/control/templates/pretixcontrol/item/index.html:35
@@ -16014,7 +16014,7 @@ msgid ""
 "For product add-ons or bundles, this should be set on the main ticket, "
 "except if the add-on products or bundled products represent additional "
 "people (e.g. group bundles)."
-msgstr ""
+msgstr "Cette option doit être activée pour la plupart des choses que vous appelleriez un « billet ». Pour les options complémentaires ou les lots, elle doit être définie sur le billet principal, sauf si les options ou produits groupés représentent des personnes supplémentaires (p. ex. lots de groupe)."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:44
 #: eventyay/control/templates/pretixcontrol/item/index.html:46
@@ -16028,12 +16028,12 @@ msgid ""
 "For products that do not require a person to be present, such as a T-shirt, "
 "the system will, by default, not request attendee information or provide "
 "ticket downloads."
-msgstr ""
+msgstr "Pour les produits qui ne nécessitent pas la présence d'une personne, comme un T-shirt, le système, par défaut, ne demandera pas d'informations sur les participants ni ne fournira de téléchargements de billets."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:51
 #: eventyay/control/templates/pretixcontrol/item/index.html:54
 msgid "Examples: Merchandise, donations, gift cards, add-ons to a main ticket."
-msgstr ""
+msgstr "Exemples : merchandising, dons, cartes-cadeaux, options complémentaires à un billet principal."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:69
 #, fuzzy
@@ -16052,14 +16052,14 @@ msgid ""
 "This product exists in multiple variations which are different in either "
 "their name, price, quota, or description. All other settings need to be the "
 "same."
-msgstr ""
+msgstr "Ce produit existe en plusieurs variations qui diffèrent par leur nom, prix, quota ou description. Tous les autres paramètres doivent être identiques."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:84
 msgid ""
 "Examples: Ticket category with variations for \"full price\" and "
 "\"reduced\", merchandise with variations for different sizes, workshop add-"
 "on with variations for simultaneous workshops."
-msgstr ""
+msgstr "Exemples : catégorie de billets avec variations « plein tarif » et « réduit », merchandising avec variations de tailles, option d'atelier avec variations pour des ateliers simultanés."
 
 #: eventyay/control/templates/pretixcontrol/item/create.html:97
 msgid "Quota settings"
@@ -16098,8 +16098,8 @@ msgstr ""
 #, python-format
 msgid "That will cause %(count)s voucher to be unusable."
 msgid_plural "That will cause %(count)s voucher to be unusable."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Cela rendra %(count)s bon inutilisable."
+msgstr[1] "Cela rendra %(count)s bons inutilisables."
 
 #: eventyay/control/templates/pretixcontrol/item/delete.html:29
 #: eventyay/control/templates/pretixcontrol/items/quota_delete.html:31
@@ -16170,7 +16170,7 @@ msgstr "Ajouter un nouvel add-on"
 msgid ""
 "With bundles, you can specify products that are always automatically added "
 "as add-ons in the cart for this product."
-msgstr ""
+msgstr "Avec les lots, vous pouvez spécifier des produits qui sont toujours ajoutés automatiquement comme options complémentaires dans le panier pour ce produit."
 
 #: eventyay/control/templates/pretixcontrol/item/include_bundles.html:68
 #, fuzzy
@@ -16200,13 +16200,13 @@ msgid ""
 "Every purchase of this product represents one person who is allowed to enter "
 "your event. By default, eventyay will only ask for attendee information and "
 "offer ticket downloads for these products."
-msgstr ""
+msgstr "Chaque achat de ce produit représente une personne autorisée à entrer à votre événement. Par défaut, eventyay ne demandera que les informations des participants et proposera le téléchargement des billets pour ces produits."
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:48
 msgid ""
 "A product that does not represent a person. By default, eventyay will not ask "
 "for attendee information or offer ticket downloads."
-msgstr ""
+msgstr "Un produit qui ne représente pas une personne. Par défaut, eventyay ne demandera pas d'informations sur les participants ni ne proposera de téléchargements de billets."
 
 #: eventyay/control/templates/pretixcontrol/item/index.html:95
 msgid "Availability"
@@ -16299,7 +16299,7 @@ msgstr "Question: %(name)s"
 
 #: eventyay/control/templates/pretixcontrol/items/fragment_quota_availability.html:3
 msgid "Closed"
-msgstr ""
+msgstr "Fermé"
 
 #: eventyay/control/templates/pretixcontrol/items/fragment_quota_availability.html:5
 msgid "Sold out (pending orders)"
@@ -16368,7 +16368,7 @@ msgstr "Produit avec des variantes"
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:102
 msgid "Only available as an add-on product"
-msgstr ""
+msgstr "Disponible uniquement en tant que produit complémentaire"
 
 #: eventyay/control/templates/pretixcontrol/items/index.html:105
 #, fuzzy
@@ -16431,7 +16431,7 @@ msgstr "Compter"
 
 #: eventyay/control/templates/pretixcontrol/items/question.html:71
 msgid "Percentage"
-msgstr ""
+msgstr "Pourcentage"
 
 #: eventyay/control/templates/pretixcontrol/items/question.html:94
 msgid "Question history"
@@ -16462,7 +16462,7 @@ msgid ""
 "If a Confirm Checkbox is marked as required, the user must check it to "
 "proceed. To allow the user to leave it unchecked, do not set the field as "
 "required."
-msgstr ""
+msgstr "Si une case de confirmation est marquée comme obligatoire, l'utilisateur doit la cocher pour continuer. Pour permettre à l'utilisateur de la laisser décochée, ne rendez pas le champ obligatoire."
 
 #: eventyay/control/templates/pretixcontrol/items/question_edit.html:55
 msgid "Answer options"
@@ -16522,7 +16522,7 @@ msgstr "Supprimer la question"
 
 #: eventyay/control/templates/pretixcontrol/items/questions.html:73
 msgid "Ask during check-in"
-msgstr ""
+msgstr "Demander lors du pointage"
 
 #: eventyay/control/templates/pretixcontrol/items/questions.html:92
 #, fuzzy
@@ -16544,14 +16544,14 @@ msgstr "Modifier le quota"
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:37
 msgid "Open quota and disable closing"
-msgstr ""
+msgstr "Ouvrir le quota et désactiver la fermeture"
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:39
 msgid ""
 "This quota is sold out and closed. Even if tickets become available e.g. "
 "through cancellations, they will not become available again unless you "
 "manually re-open the quota on this page."
-msgstr ""
+msgstr "Ce quota est épuisé et fermé. Même si des billets redeviennent disponibles, par exemple via des annulations, ils ne redeviendront pas disponibles à moins que vous ne rouvriez manuellement le quota sur cette page."
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:45
 #, fuzzy
@@ -16564,7 +16564,7 @@ msgid ""
 "This quota is closed since it has been sold out before. Tickets are "
 "theoretically available, but will not be sold unless you manually re-open "
 "the quota."
-msgstr ""
+msgstr "Ce quota est fermé car il a déjà été épuisé. Des billets sont théoriquement disponibles, mais ne seront pas vendus à moins que vous ne rouvriez manuellement le quota."
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:54
 msgid "Usage overview"
@@ -16578,7 +16578,7 @@ msgstr "Calcul de disponibilité"
 msgid ""
 "A plugin is active that might modify the actual result of this quota from "
 "what you see here."
-msgstr ""
+msgstr "Un plugin est actif et peut modifier le résultat réel de ce quota par rapport à ce que vous voyez ici."
 
 #: eventyay/control/templates/pretixcontrol/items/quota.html:93
 #, python-format
@@ -16730,7 +16730,7 @@ msgstr ""
 
 #: eventyay/control/templates/pretixcontrol/oauth/app_rollkeys.html:15
 msgid "Roll secret"
-msgstr ""
+msgstr "Renouveler le secret"
 
 #: eventyay/control/templates/pretixcontrol/oauth/app_update.html:4
 #: eventyay/control/templates/pretixcontrol/oauth/app_update.html:6
@@ -16839,7 +16839,7 @@ msgstr ""
 msgid ""
 "This will <strong>not</strong> automatically transfer the money back, but "
 "you will be offered options to refund the payment afterwards."
-msgstr ""
+msgstr "Cela ne transférera <strong>pas</strong> automatiquement l'argent, mais des options de remboursement vous seront proposées ensuite."
 
 #: eventyay/control/templates/pretixcontrol/order/cancel.html:41
 #: eventyay/presale/templates/pretixpresale/event/order_cancel.html:196
@@ -16858,7 +16858,7 @@ msgid ""
 "Do you really want to remove this cancellation request? The user will not be "
 "informed automatically, but you will have the option to email them "
 "individually in the next step."
-msgstr ""
+msgstr "Voulez-vous vraiment supprimer cette demande d'annulation ? L'utilisateur ne sera pas informé automatiquement, mais vous aurez la possibilité de lui envoyer un e-mail individuellement à l'étape suivante."
 
 #: eventyay/control/templates/pretixcontrol/order/cancellation_request_delete.html:26
 #, fuzzy
@@ -16955,7 +16955,7 @@ msgid ""
 "This position has been created with a voucher with a limited budget. If you "
 "change the price or item, the discount will still be calculated from the "
 "original price at the time of purchase."
-msgstr ""
+msgstr "Cette position a été créée avec un bon à budget limité. Si vous modifiez le prix ou l'article, la remise sera toujours calculée à partir du prix d'origine au moment de l'achat."
 
 #: eventyay/control/templates/pretixcontrol/order/change.html:97
 #: eventyay/control/templates/pretixcontrol/order/change.html:302
@@ -20991,7 +20991,7 @@ msgstr ""
 msgid ""
 "One of the refunds failed to be processed. You should retry to refund in a "
 "different way. The error message was: {}"
-msgstr ""
+msgstr "L'un des remboursements n'a pas pu être traité. Vous devriez réessayer de rembourser d'une autre manière. Le message d'erreur était : {}"
 
 #: eventyay/control/views/orders.py:953
 #, fuzzy
@@ -21003,7 +21003,7 @@ msgstr "La facture a été réémise."
 msgid ""
 "A refund of {} has been saved, but not yet fully executed. You can mark it "
 "as complete below."
-msgstr ""
+msgstr "Un remboursement de {} a été enregistré, mais pas encore entièrement exécuté. Vous pouvez le marquer comme terminé ci-dessous."
 
 #: eventyay/control/views/orders.py:979
 #, fuzzy
@@ -21029,11 +21029,11 @@ msgid ""
 "in our shop.\n"
 "\n"
 "Your {event} team"
-msgstr ""
+msgstr "Bonjour,\\n\\nnous vous avons remboursé {amount} pour votre commande.\\n\\nVous pouvez utiliser le code de carte-cadeau {giftcard} pour payer de futurs achats de billets dans notre boutique.\\n\\nVotre équipe {event}"
 
 #: eventyay/control/views/orders.py:1000
 msgid "The refunds you selected do not match the selected total refund amount."
-msgstr ""
+msgstr "Les remboursements que vous avez sélectionnés ne correspondent pas au montant total de remboursement sélectionné."
 
 #: eventyay/control/views/orders.py:1136
 msgid ""
@@ -21230,7 +21230,7 @@ msgstr "La commande a été annulée."
 msgid ""
 "The orders have been canceled. An error occurred with {count} orders, please "
 "check all uncanceled orders."
-msgstr ""
+msgstr "Les commandes ont été annulées. Une erreur s'est produite avec {count} commandes, veuillez vérifier toutes les commandes non annulées."
 
 #: eventyay/control/views/orders.py:2256
 #, fuzzy
@@ -21308,7 +21308,7 @@ msgstr "La règle fiscale sélectionnée a été supprimée."
 #: eventyay/control/views/organizer_views/gift_card_view.py:114
 #: eventyay/control/views/organizer_views/gift_card_view.py:147
 msgid "Gift cards are not allowed to have negative values."
-msgstr ""
+msgstr "Les cartes-cadeaux ne peuvent pas avoir de valeurs négatives."
 
 #: eventyay/control/views/organizer_views/gift_card_view.py:137
 #, fuzzy
@@ -21435,7 +21435,7 @@ msgstr "Le token a été révoqué."
 
 #: eventyay/control/views/organizer_views/team_view.py:245
 msgid "Users need to have a eventyay account before they can be invited."
-msgstr ""
+msgstr "Les utilisateurs doivent avoir un compte eventyay avant de pouvoir être invités."
 
 #: eventyay/control/views/organizer_views/team_view.py:255
 msgid "The new member has been invited to the team."
@@ -21791,7 +21791,7 @@ msgstr "Vous devez sélectionner une date."
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:190
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:6
 #, fuzzy
@@ -21806,14 +21806,14 @@ msgid ""
 "registration management, Talks and Speakers for organizing content and "
 "creating schedules, and Video for hosting engaging and interactive virtual "
 "events with live interpretation."
-msgstr ""
+msgstr "Le tableau de bord de votre événement offre un aperçu de trois composants intégrés de manière fluide, chacun personnalisable selon vos besoins : Billetterie pour la gestion des ventes et des inscriptions, Conférences et Intervenants pour l'organisation du contenu et la création des plannings, et Vidéo pour l'hébergement d'événements virtuels engageants et interactifs avec interprétation en direct."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:24
 msgid ""
 "Set up and configure ticketing for your event and sell add-ons such as "
 "premium access or Swag. Manage attendees and exhibitors, design custom "
 "badges, and streamline your event marketing by sending targeted emails."
-msgstr ""
+msgstr "Configurez la billetterie de votre événement et vendez des options complémentaires telles que l'accès premium ou des goodies. Gérez les participants et les exposants, concevez des badges personnalisés et optimisez le marketing de votre événement en envoyant des e-mails ciblés."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:27
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:43
@@ -21842,7 +21842,7 @@ msgid ""
 "Setup and configure content for your event, create calls for proposals and "
 "speakers and build a schedule. Manage the submission and review process, and "
 "select speakers."
-msgstr ""
+msgstr "Configurez le contenu de votre événement, créez des appels à propositions et à intervenants et construisez un programme. Gérez le processus de soumission et de revue, et sélectionnez les intervenants."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:43
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:47
@@ -21853,14 +21853,14 @@ msgstr "Tableau de bord"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:55
 msgid "Video"
-msgstr ""
+msgstr "Vidéo"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:60
 msgid ""
 "Setup and configure live video streams, online workshops with live-audio "
 "interpretation and chats. Offer virtual exhibitor booths with rich content "
 "and social media integration."
-msgstr ""
+msgstr "Configurez des flux vidéo en direct, des ateliers en ligne avec interprétation audio en direct et des chats. Proposez des stands d'exposants virtuels avec du contenu riche et une intégration aux réseaux sociaux."
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:64
 #: eventyay/eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:68
@@ -21878,7 +21878,7 @@ msgstr "Réglages"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:28
 msgid "Talks"
-msgstr ""
+msgstr "Interventions"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:55
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:16
@@ -21895,11 +21895,11 @@ msgstr "Réglages"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:74
 msgid "Talks system"
-msgstr ""
+msgstr "Système de conférences"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:100
 msgid "Video system"
-msgstr ""
+msgstr "Système vidéo"
 
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:145
 #: eventyay/eventyay_common/templates/eventyay_common/event/settings.html:167
@@ -21918,7 +21918,7 @@ msgstr "Composante"
 msgid ""
 "The feature cannot be disabled, but if you do not publish it, it will not "
 "show up publicly."
-msgstr ""
+msgstr "La fonctionnalité ne peut pas être désactivée, mais si vous ne la publiez pas, elle ne s'affichera pas publiquement."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_basics.html:18
 #, fuzzy
@@ -21949,15 +21949,15 @@ msgstr "Créer un nouvel événement"
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:25
 msgid "Talk system"
-msgstr ""
+msgstr "Système de conférences"
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:27
 msgid "Create event for Talk system only not ready yet."
-msgstr ""
+msgstr "La création d'événement uniquement pour le système de conférences n'est pas encore prête."
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/create_foundation.html:39
 msgid "Both tickets and talk system"
-msgstr ""
+msgstr "Billetterie et système de conférences"
 
 #: eventyay/eventyay_common/templates/eventyay_common/events/index.html:5
 #, fuzzy
@@ -21979,19 +21979,19 @@ msgstr "Nom de l'organisateur"
 
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/edit.html:16
 msgid "Setting for Tickets system"
-msgstr ""
+msgstr "Paramètres du système de billetterie"
 
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/edit.html:25
 msgid "Setting for Talk system"
-msgstr ""
+msgstr "Paramètres du système de conférences"
 
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:36
 msgid "Invite team member and specific team settings for Ticket system"
-msgstr ""
+msgstr "Inviter un membre de l'équipe et paramètres spécifiques de l'équipe pour le système de billetterie"
 
 #: eventyay/eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:45
 msgid "Invite team member and specific team settings for Talk system"
-msgstr ""
+msgstr "Inviter un membre de l'équipe et paramètres spécifiques de l'équipe pour le système de conférences"
 
 #: eventyay/eventyay_common/views/dashboards.py:282
 #, fuzzy
@@ -22002,7 +22002,7 @@ msgstr "Nouvelle date"
 
 #: eventyay/eventyay_common/views/event.py:479
 msgid "Event information is not available or the video plugin is turned off."
-msgstr ""
+msgstr "Les informations de l'événement ne sont pas disponibles ou le plugin vidéo est désactivé."
 
 #: eventyay/eventyay_common/views/event.py:487
 #, fuzzy
@@ -22071,23 +22071,23 @@ msgstr ""
 
 #: eventyay/plugins/badges/exporters.py:46
 msgid "One badge per page"
-msgstr ""
+msgstr "Un badge par page"
 
 #: eventyay/plugins/badges/exporters.py:54
 msgid "4 landscape A6 pages on one A4 page"
-msgstr ""
+msgstr "4 pages A6 paysage sur une page A4"
 
 #: eventyay/plugins/badges/exporters.py:62
 msgid "4 portrait A6 pages on one A4 page"
-msgstr ""
+msgstr "4 pages A6 portrait sur une page A4"
 
 #: eventyay/plugins/badges/exporters.py:70
 msgid "8 landscape A7 pages on one A4 page"
-msgstr ""
+msgstr "8 pages A7 paysage sur une page A4"
 
 #: eventyay/plugins/badges/exporters.py:78
 msgid "8 portrait A7 pages on one A4 page"
-msgstr ""
+msgstr "8 pages A7 portrait sur une page A4"
 
 #: eventyay/plugins/badges/exporters.py:196
 #, fuzzy
@@ -22126,19 +22126,19 @@ msgid ""
 "you want to print to a sheet of stickers with a regular office printer. "
 "Please note that your individual badge layouts must already be in the "
 "correct size."
-msgstr ""
+msgstr "Cette option permet d'aligner plusieurs badges sur une page, par exemple si vous souhaitez imprimer sur une feuille d'étiquettes avec une imprimante de bureau. Veuillez noter que vos mises en page de badges individuelles doivent déjà être à la bonne taille."
 
 #: eventyay/plugins/badges/exporters.py:246
 #: eventyay/plugins/checkinlists/exporters.py:51
 #: eventyay/plugins/ticketoutputpdf/exporters.py:44
 msgid "Only include tickets for dates on or after this date."
-msgstr ""
+msgstr "Inclure uniquement les billets pour des dates à partir de celle-ci."
 
 #: eventyay/plugins/badges/exporters.py:253
 #: eventyay/plugins/checkinlists/exporters.py:58
 #: eventyay/plugins/ticketoutputpdf/exporters.py:51
 msgid "Only include tickets for dates on or before this date."
-msgstr ""
+msgstr "Inclure uniquement les billets pour des dates au plus tard à celle-ci."
 
 #: eventyay/plugins/badges/exporters.py:257
 #: eventyay/plugins/checkinlists/exporters.py:72
@@ -22150,7 +22150,7 @@ msgstr "Trier par"
 
 #: eventyay/plugins/badges/forms.py:21
 msgid "(Do not print badges)"
-msgstr ""
+msgstr "(Ne pas imprimer les badges)"
 
 #: eventyay/plugins/badges/forms.py:53
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:8
@@ -22188,12 +22188,12 @@ msgstr "La disposition des badges a changé."
 #: eventyay/plugins/badges/signals.py:174
 #, python-brace-format
 msgid "Badge layout {val}"
-msgstr ""
+msgstr "Mise en page du badge {val}"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/control_order_info.html:16
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:34
 msgid "Print badges"
-msgstr ""
+msgstr "Imprimer les badges"
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/delete.html:9
 #, fuzzy, python-format
@@ -22220,7 +22220,7 @@ msgstr "Conception des billets"
 #: eventyay/plugins/badges/templates/pretixplugins/badges/edit.html:34
 #: eventyay/plugins/ticketoutputpdf/templates/pretixplugins/ticketoutputpdf/edit.html:34
 msgid "You can modify the design after you saved this page."
-msgstr ""
+msgstr "Vous pouvez modifier le design après avoir enregistré cette page."
 
 #: eventyay/plugins/badges/templates/pretixplugins/badges/index.html:17
 #, fuzzy
@@ -22267,7 +22267,7 @@ msgstr "La date sélectionnée a été supprimée."
 
 #: eventyay/plugins/badges/views.py:170
 msgid "Badge layout: {}"
-msgstr ""
+msgstr "Mise en page du badge : {}"
 
 #: eventyay/plugins/banktransfer/apps.py:10
 #: eventyay/plugins/banktransfer/apps.py:13
@@ -22296,7 +22296,7 @@ msgid ""
 "Therefore, I will either mark payments as complete manually, or regularly "
 "import a digital bank statement in order to give eventyay the required "
 "information."
-msgstr ""
+msgstr "J'ai compris que les personnes paieront le prix du billet directement sur mon compte bancaire et qu'eventyay ne peut pas savoir automatiquement quels paiements sont arrivés. Par conséquent, je marquerai soit les paiements comme terminés manuellement, soit j'importerai régulièrement un relevé bancaire numérique afin de fournir à eventyay les informations requises."
 
 #: eventyay/plugins/banktransfer/payment.py:38
 #, fuzzy
@@ -22306,7 +22306,7 @@ msgstr "Coordonnées bancaires"
 
 #: eventyay/plugins/banktransfer/payment.py:41
 msgid "SEPA bank account"
-msgstr ""
+msgstr "Compte bancaire SEPA"
 
 #: eventyay/plugins/banktransfer/payment.py:42
 #, fuzzy
@@ -22327,7 +22327,7 @@ msgstr "Titulaire du compte"
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:50
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:22
 msgid "IBAN"
-msgstr ""
+msgstr "IBAN"
 
 #: eventyay/plugins/banktransfer/payment.py:67
 #: eventyay/plugins/banktransfer/payment.py:213
@@ -22335,7 +22335,7 @@ msgstr ""
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:66
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:23
 msgid "BIC"
-msgstr ""
+msgstr "BIC"
 
 #: eventyay/plugins/banktransfer/payment.py:77
 #, fuzzy
@@ -22370,13 +22370,13 @@ msgid ""
 "For SEPA accounts, you can leave this empty. Otherwise, please add "
 "everything that your customers need to transfer the money, e.g. account "
 "numbers, routing numbers, addresses, etc."
-msgstr ""
+msgstr "Pour les comptes SEPA, vous pouvez laisser ceci vide. Sinon, veuillez ajouter toutes les informations dont vos clients ont besoin pour effectuer le virement, p. ex. numéros de compte, numéros d'acheminement, adresses, etc."
 
 #: eventyay/plugins/banktransfer/payment.py:105
 msgid ""
 "Create an invoice for orders using bank transfer immediately if the event is "
 "otherwise configured to create invoices after payment is completed."
-msgstr ""
+msgstr "Créer immédiatement une facture pour les commandes payées par virement bancaire si l'événement est autrement configuré pour créer des factures après que le paiement est terminé."
 
 #: eventyay/plugins/banktransfer/payment.py:115
 #, fuzzy
@@ -22412,7 +22412,7 @@ msgstr "Cette action n'est autorisée que pour les commandes en attente."
 msgid ""
 "This text will be shown on the order confirmation page for pending orders in "
 "addition to the standard text."
-msgstr ""
+msgstr "Ce texte sera affiché sur la page de confirmation de commande pour les commandes en attente, en plus du texte standard."
 
 #: eventyay/plugins/banktransfer/payment.py:135
 #, fuzzy
@@ -22427,7 +22427,7 @@ msgid ""
 "\"forwarded payments\" by a third-party payment provider. You can also list "
 "country codes such as \"GB\" if you never want to send refunds to IBANs from "
 "a specific country."
-msgstr ""
+msgstr "Mettez un IBAN ou un préfixe d'IBAN par ligne. Le système n'essaiera pas d'envoyer des remboursements à ces IBAN. Utile par exemple si vous recevez beaucoup de « paiements transférés » via un prestataire de paiement tiers. Vous pouvez aussi lister des codes pays tels que « GB » si vous ne voulez jamais envoyer de remboursements vers des IBAN d'un pays spécifique."
 
 #: eventyay/plugins/banktransfer/payment.py:176
 #, fuzzy
@@ -22457,7 +22457,7 @@ msgstr "Banque"
 
 #: eventyay/plugins/banktransfer/payment.py:244
 msgid "Invalid IBAN/BIC"
-msgstr ""
+msgstr "IBAN/BIC invalide"
 
 #: eventyay/plugins/banktransfer/payment.py:313
 #, fuzzy, python-brace-format
@@ -22467,7 +22467,7 @@ msgstr "Coordonnées bancaires"
 
 #: eventyay/plugins/banktransfer/payment.py:329
 msgid "Can only create a bank transfer refund from an existing payment."
-msgstr ""
+msgstr "Un remboursement par virement bancaire ne peut être créé qu'à partir d'un paiement existant."
 
 #: eventyay/plugins/banktransfer/payment.py:349
 #, fuzzy
@@ -22513,7 +22513,7 @@ msgstr "L'ordre a déjà été annulé."
 
 #: eventyay/plugins/banktransfer/tasks.py:122
 msgid "Automatic split to multiple orders not possible."
-msgstr ""
+msgstr "La répartition automatique en plusieurs commandes n'est pas possible."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:4
 msgid ""
@@ -22560,7 +22560,7 @@ msgid ""
 "    Reference: %(code)s\n"
 "    Amount: %(total)s\n"
 "%(bank)s\n"
-msgstr ""
+msgstr "\\nVeuillez transférer le montant total sur le compte bancaire suivant.\\n\\n    Référence : %(code)s\\n    Montant : %(total)s\\n%(bank)s\\n"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:4
 msgid ""
