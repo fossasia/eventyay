@@ -19,6 +19,9 @@ jobs:
   python-uv-check:
     name: Backend validation (uv + Django checks)
     runs-on: ubuntu-latest
+    env:
+      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_RUNNING_ENVIRONMENT: ci
     services:
       redis:
         image: redis:7
@@ -43,8 +46,6 @@ jobs:
         run: uv sync --directory app
 
       - name: Django system checks
-        env:
-          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         working-directory: app
         run: uv run python manage.py check
 
@@ -72,6 +73,9 @@ jobs:
   pytest-integration:
     name: Integration tests (pytest)
     runs-on: ubuntu-latest
+    env:
+      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_RUNNING_ENVIRONMENT: ci
     needs: python-uv-check
     services:
       postgres:
@@ -105,14 +109,11 @@ jobs:
         run: uv sync --directory app --group test
 
       - name: Run database migrations
-        env:
-          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         working-directory: app
         run: uv run python manage.py migrate --noinput
 
       - name: Run pytest
         env:
-          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
           EVY_RUNNING_ENVIRONMENT: testing
           DJANGO_SETTINGS_MODULE: eventyay.config.settings
         working-directory: app
@@ -121,6 +122,9 @@ jobs:
   backend-smoke:
     name: Backend smoke test (healthcheck)
     runs-on: ubuntu-latest
+    env:
+      EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
+      EVY_RUNNING_ENVIRONMENT: ci
     needs: python-uv-check
     services:
       postgres:
@@ -155,15 +159,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --directory app
       - name: Run migrations
-        env:
-          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         run: |
           cd app
           uv run python manage.py migrate --noinput
             
       - name: Start development server
-        env:
-          EVY_CONFIG_FILE: eventyay/config/eventyay.ci.toml
         run: |
           set -e
           cd app
