@@ -1,5 +1,19 @@
-# In testing, we use the in-memory email backend,
-# because we do assertions on sent emails and we want to throw away emails after tests.
-email_backend = 'django.core.mail.backends.locmem.EmailBackend'
+# CI-specific configuration
 
+# Django
+debug = true
+secret_key = "ci-test-secret-key"
+
+# Database (Postgres service from GitHub Actions)
+postgres_host = "127.0.0.1"
+postgres_port = 5432
+postgres_user = "eventyay"
+postgres_password = "eventyay"
+postgres_db = "eventyay-db"
+
+# Redis
+redis_url = "redis://localhost:6379/0"
+
+# Email / Celery (safe defaults for CI)
+email_backend = "django.core.mail.backends.locmem.EmailBackend"
 celery_always_eager = true
