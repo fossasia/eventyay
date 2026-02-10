@@ -41,13 +41,19 @@ class OAuthLoginView(View):
         gs = GlobalSettingsObject()
         raw_providers = gs.settings.get('login_providers', as_type=dict)
         providers = validate_login_providers(raw_providers)
-        
+
         # Get provider configuration safely
         provider_config = getattr(providers, provider, None)
-        
-        # Check if this provider is the preferred one
-        is_preferred = provider_config.is_preferred if provider_config else False
-        
+
+        # Check if this provider is the preferred one.
+        # A provider is considered preferred only when it exists, is enabled (state),
+        # and is explicitly marked as preferred.
+        is_preferred = (
+            bool(provider_config)
+            and getattr(provider_config, 'state', False)
+            and getattr(provider_config, 'is_preferred', False)
+        )
+
         # Get client_id for the provider
         client_id = provider_config.client_id if provider_config else None
 
@@ -183,9 +189,10 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         """
         Set the initial state of the login providers.
         If the login providers are not valid, set them to the default.
+        Persist normalized/validated config to ensure invariants are enforced at rest.
         """
         raw_providers = self.gs.settings.get('login_providers', as_type=dict)
-        
+
         # Validate login providers
         if raw_providers is None:
             # No providers set - initialize with defaults
@@ -193,7 +200,11 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         else:
             # Validate existing providers
             try:
-                LoginProviders.model_validate(raw_providers)
+                validated_providers = LoginProviders.model_validate(raw_providers)
+                # Persist the validated/normalized result to keep invariants enforced
+                normalized = validated_providers.model_dump()
+                if normalized != raw_providers:
+                    self.gs.settings.set('login_providers', normalized)
             except ValidationError as e:
                 logger.error('Error while validating login providers: %s', e)
                 # Invalid providers - reset to defaults
