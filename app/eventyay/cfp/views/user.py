@@ -45,7 +45,6 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
     template_name = 'cfp/event/user_profile.html'
 
     @context
-    @context
     @cached_property
     def profile_form(self):
         bind = is_form_bound(self.request, 'profile')
@@ -81,8 +80,8 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
         )
 
     @context
-    def questions_exist(self):
-        return self.request.event.talkquestions.filter(target='speaker').exists()
+    def profile_question_fields(self):
+        return [field for field in self.profile_form if field.name.startswith('question_')]
 
     def post(self, request, *args, **kwargs):
         if self.profile_form.is_bound and self.profile_form.is_valid():

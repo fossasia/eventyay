@@ -32,12 +32,10 @@
             {% include "common/availabilities.html" %}
             {{ profile_form.availabilities.as_field_group }}
         {% endif %}
-        {% if questions_exist %}
+        {% if profile_question_fields %}
             <h2>{% translate "We have some questions" %}</h2>
-            {% for field in profile_form %}
-                {% if field.name|slice:":9" == "question_" %}
-                    {{ field.as_field_group }}
-                {% endif %}
+            {% for field in profile_question_fields %}
+                {{ field.as_field_group }}
             {% endfor %}
         {% endif %}
 
