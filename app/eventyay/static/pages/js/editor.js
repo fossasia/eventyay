@@ -1,40 +1,56 @@
-/*global $, Quill*/
-$(function () {
-    var page_name = $('#content').data('page-name');
+/* global Quill */
+'use strict'
 
-    var slug_generated = !$("form[data-id]").attr("data-id");
-    $('#id_slug').on("keydown keyup keypress", function () {
-        slug_generated = false;
-    });
-    $('input[id^=id_title_]').on("keydown keyup keypress change", function () {
-        if (slug_generated) {
-            var title = $('input[id^=id_title_]').filter(function () {
-                return !!this.value;
-            }).first().val();  // First non-empty language
-            if (typeof title === "undefined") {
-                return;
-            }
-            var slug = title.toLowerCase()
+const form = document.querySelector('.tabbed-form form')
+if (form) {
+    initSlugGeneration(form)
+    initQuillEditors(form)
+}
+
+function initSlugGeneration(form) {
+    const slugInput = document.getElementById('id_slug')
+    if (!slugInput) return
+
+    let slugGenerated = !form.dataset.id
+
+    slugInput.addEventListener('input', function () {
+        slugGenerated = false
+    })
+
+    document.querySelectorAll('input[id^=id_title_]').forEach(function (input) {
+        input.addEventListener('input', function () {
+            if (!slugGenerated) return
+
+            const firstNonEmpty = Array.from(document.querySelectorAll('input[id^=id_title_]'))
+                .find(function (el) { return el.value })
+            if (!firstNonEmpty) return
+
+            slugInput.value = firstNonEmpty.value
+                .toLowerCase()
                 .replace(/\s+/g, '-')
-                .replace(/[^\w\-]+/g, '')
-                .replace(/\-\-+/g, '-')
+                .replace(/[^\w-]+/g, '')
+                .replace(/--+/g, '-')
                 .replace(/^-+/, '')
                 .replace(/-+$/, '')
-                .substr(0, 150);
-            $('#id_slug').val(slug);
-        }
-    });
+                .substring(0, 150)
+        })
+    })
+}
 
-    $('#content ul.nav-tabs a').click(function (e) {
-        e.preventDefault();
-        $(this).tab('show');
-    });
+function initQuillEditors(form) {
+    const srOnly = form.querySelector('.sr-only')
+    if (!srOnly) return
 
+    const editors = document.querySelectorAll('.editor[data-lng]')
+    if (!editors.length) return
 
-    var quills = {};
-    $('.editor').each(function () {
-        const a = $(this).html($("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val());
-        quills[$(this).attr("data-lng")] = new Quill($(this).get(0), {
+    editors.forEach(function (editorEl) {
+        const lng = editorEl.dataset.lng
+        const textarea = srOnly.querySelector('textarea[lang="' + lng + '"]')
+
+        editorEl.innerHTML = textarea && textarea.value ? textarea.value : ''
+
+        new Quill(editorEl, {
             theme: 'snow',
             formats: [
                 'bold', 'italic', 'link', 'strike', 'code', 'underline', 'script',
@@ -42,23 +58,27 @@ $(function () {
             ],
             modules: {
                 toolbar: [
-                    [{'header': [3, 4, 5, false]}],
+                    [{ header: [3, 4, 5, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     ['link'],
                     ['image'],
-                    [{'align': []}],
-                    [{'list': 'ordered'}, {'list': 'bullet'}],
-                    [{'script': 'sub'}, {'script': 'super'}],
+                    [{ align: [] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ script: 'sub' }, { script: 'super' }],
                     ['clean']
                 ]
             }
-        });
-    });
+        })
+    })
 
-    $('.editor').closest('form').submit(function () {
-        $('.editor').each(function () {
-            var val = $(this).find('.ql-editor').html();
-            $("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val(val);
-        });
-    });
-});
+    form.addEventListener('submit', function () {
+        editors.forEach(function (editorEl) {
+            const lng = editorEl.dataset.lng
+            const textarea = srOnly.querySelector('textarea[lang="' + lng + '"]')
+            if (textarea) {
+                const qlEditor = editorEl.querySelector('.ql-editor')
+                textarea.value = qlEditor ? qlEditor.innerHTML : ''
+            }
+        })
+    })
+}

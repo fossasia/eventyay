@@ -64,9 +64,7 @@
                                 <div class="tab-content">
                                     {% for lng, text in locales %}
                                         <div class="tab-pane {% if forloop.first %}active{% endif %}" id="editor-{{ lng }}">
-                                            <div class="editor" data-lng="{{ lng }}">
-                                                {{ text|safe }}
-                                            </div>
+                                            <div class="editor" data-lng="{{ lng }}"></div>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -87,6 +85,6 @@
                     </div>
         </form>
     </div>
-    <script type="application/javascript" src="{% static "pretix_pages/quill/quill.js" %}"></script>
-    <script type="application/javascript" src="{% static "pretix_pages/editor.js" %}"></script>
+    <script type="application/javascript" src="{% static 'pages/js/quill.js' %}"></script>
+    <script type="module" src="{% static 'pages/js/editor.js' %}"></script>
 {% endblock %}
