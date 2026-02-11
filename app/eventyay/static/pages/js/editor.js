@@ -54,7 +54,7 @@ $(function () {
             }
         });
 
-        quill.root.innerHTML = $textarea.val();
+        quill.clipboard.dangerouslyPasteHTML($textarea.val() || '');
 
         quills[index] = {
             quill: quill,
