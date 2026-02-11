@@ -47,6 +47,7 @@ ALLOWED_TAGS = {
     'li',
     'ol',
     'strong',
+    'u',
     'ul',
     'p',
     'pre',
