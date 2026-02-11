@@ -686,20 +686,23 @@ class EventLive(TemplateView):
                 )
                 return redirect(self.request.path)
             with transaction.atomic():
+                previous_private = event.private_testmode
                 event.testmode = True
-                if event.startpage_featured:
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
                     event.startpage_featured = False
-                    event.startpage_visible = True
-                if event.private_testmode:
-                    event.private_testmode = False
+                if event.settings.get('private_testmode_tickets', True, as_type=bool):
                     event.settings.private_testmode_tickets = False
-                    event.settings.private_testmode_talks = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
                     self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
-                event.save()
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
@@ -777,6 +780,9 @@ class EventLive(TemplateView):
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.settings.talks_testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
                 if event.settings.get('private_testmode_talks', False, as_type=bool):
                     event.settings.private_testmode_talks = False
                     event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)

@@ -186,6 +186,9 @@ class EventLive(EventSettingsPermission, TemplateView):
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.settings.talks_testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
                 if event.settings.get('private_testmode_talks', False, as_type=bool):
                     event.settings.private_testmode_talks = False
                     event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)

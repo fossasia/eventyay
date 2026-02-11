@@ -43,7 +43,7 @@
                         {% trans "Enable test mode" %}
                     </button>
                 </div>
-            {% elif request.event.private_testmode %}
+            {% elif private_testmode_tickets %}
                 <p>
                     {% trans "Private test mode is currently enabled. Disable it to enable standard test mode." %}
                 </p>
