@@ -5,6 +5,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.utils.crypto import get_random_string
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models.page import Page
@@ -26,6 +27,12 @@ class PageSettingsForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['link_on_website_start_page'].widget = forms.HiddenInput()
+        # Allow backend fallback generation from title when JS slug generation is unavailable.
+        self.fields['slug'].required = False
+        # Keep server-side form submission usable even if the rich-text editor JS fails to load.
+        self.fields['text'].required = False
+        if hasattr(self.fields['text'], 'one_required'):
+            self.fields['text'].one_required = False
 
     mimes = {
         'image/gif': 'gif',
@@ -35,8 +42,29 @@ class PageSettingsForm(forms.ModelForm):
     }
 
     def clean_slug(self):
-        slug = self.cleaned_data['slug']
-        if Page.objects.filter(slug__iexact=slug).exists():
+        slug = (self.cleaned_data.get('slug') or '').strip()
+
+        if not slug:
+            title = self.cleaned_data.get('title')
+            title_values = []
+            if hasattr(title, 'data') and isinstance(title.data, dict):
+                title_values = [v for v in title.data.values() if v]
+            elif title:
+                title_values = [str(title)]
+
+            if title_values:
+                slug = slugify(title_values[0])[:150]
+
+        if not slug:
+            raise forms.ValidationError(
+                _('This field is required.'),
+                code='required',
+            )
+
+        slug_conflict = Page.objects.filter(slug__iexact=slug)
+        if self.instance and self.instance.pk:
+            slug_conflict = slug_conflict.exclude(pk=self.instance.pk)
+        if slug_conflict.exists():
             raise forms.ValidationError(
                 _('You already have a page on that URL.'),
                 code='duplicate_slug',
@@ -44,14 +72,18 @@ class PageSettingsForm(forms.ModelForm):
         return slug
 
     def clean_text(self):
-        t = self.cleaned_data['text']
+        t = self.cleaned_data.get('text')
+        if not t or not hasattr(t, 'data'):
+            return t
         for locale, html in t.data.items():
-            t.data[locale] = process_data_images(html, self.mimes)
+            t.data[locale] = process_data_images(html or '', self.mimes)
         return t
 
     def save(self, commit=True):
-        for locale, html in self.cleaned_data['text'].data.items():
-            self.cleaned_data['text'].data[locale] = process_data_images(html, self.mimes)
+        t = self.cleaned_data.get('text')
+        if t and hasattr(t, 'data'):
+            for locale, html in t.data.items():
+                t.data[locale] = process_data_images(html or '', self.mimes)
         return super().save(commit)
 
 

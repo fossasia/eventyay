@@ -1,6 +1,25 @@
 /*global $, Quill*/
 $(function () {
     var page_name = $('#content').data('page-name');
+    var getContentTextarea = function (lang) {
+        // Current page form uses text_<index> fields with language metadata.
+        var currentSelector = 'textarea[name^="text_"][lang="' + lang + '"]';
+        var $current = $(currentSelector);
+        if ($current.length) {
+            return $current.first();
+        }
+
+        // Fallback for legacy markup still using <page_name>_content_<index>.
+        if (page_name) {
+            var legacySelector = 'textarea[name^="' + page_name + '_content_"][lang="' + lang + '"]';
+            var $legacy = $(legacySelector);
+            if ($legacy.length) {
+                return $legacy.first();
+            }
+        }
+
+        return $();
+    };
 
     var slug_generated = !$("form[data-id]").attr("data-id");
     $('#id_slug').on("keydown keyup keypress", function () {
@@ -33,8 +52,10 @@ $(function () {
 
     var quills = {};
     $('.editor').each(function () {
-        const a = $(this).html($("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val());
-        quills[$(this).attr("data-lng")] = new Quill($(this).get(0), {
+        var language = $(this).attr("data-lng");
+        var $contentInput = getContentTextarea(language);
+        $(this).html($contentInput.length ? $contentInput.val() : "");
+        quills[language] = new Quill($(this).get(0), {
             theme: 'snow',
             formats: [
                 'bold', 'italic', 'link', 'strike', 'code', 'underline', 'script',
@@ -57,8 +78,12 @@ $(function () {
 
     $('.editor').closest('form').submit(function () {
         $('.editor').each(function () {
+            var language = $(this).attr("data-lng");
             var val = $(this).find('.ql-editor').html();
-            $("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val(val);
+            var $contentInput = getContentTextarea(language);
+            if ($contentInput.length) {
+                $contentInput.val(val);
+            }
         });
     });
 });
