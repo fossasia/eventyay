@@ -9,14 +9,14 @@ Video Component Frontend - Web Application
 The video component features a comprehensive Vue.js web application for virtual events, live streaming, and interactive online experiences.
 
 .. note::
-   This documentation covers the video webapp (``app/eventyay/webapp/``).
+  This documentation covers the video frontend (``app/eventyay/webapp/video/``).
    
    For talk component frontend apps (schedule editor, global nav), see :doc:`/talk/developer/frontend`.
 
 Overview
 --------
 
-The video webapp is a full-featured virtual event platform built with Vue 3, providing:
+The video frontend is a full-featured virtual event platform built with Vue 3, providing:
 
 - **Live Video Streaming**: HLS/RTMP streams and WebRTC calls
 - **Interactive Chat**: Real-time messaging with channels and DMs
@@ -26,7 +26,7 @@ The video webapp is a full-featured virtual event platform built with Vue 3, pro
 - **Posters**: Academic poster sessions with Q&A
 - **Recordings**: On-demand video playback
 
-**Location**: ``app/eventyay/webapp/``
+**Location**: ``app/eventyay/webapp/video/``
 
 **Framework**: Vue 3
 
@@ -1020,7 +1020,7 @@ Setup
 **Installation**:
 .. code-block:: bash
 
-      cd app/eventyay/webapp
+      cd app/eventyay/webapp/video
       npm install
 
 **Environment**:
@@ -1044,7 +1044,7 @@ Running Development Server
    make run
    
    # In another terminal, start frontend
-   cd app/eventyay/webapp
+  cd app/eventyay/webapp/video
    npm run dev
    
    # Access: http://localhost:8880

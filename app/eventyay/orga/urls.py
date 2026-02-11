@@ -10,7 +10,6 @@ from eventyay.orga.views import (
     mails,
     organizer,
     person,
-    plugins,
     review,
     schedule,
     speaker,
@@ -62,21 +61,7 @@ urlpatterns = [
                     organizer.OrganizerSpeakerList.as_view(),
                     name="organizer.speakers",
                 ),
-                path(
-                    "teams/",
-                    organizer.redirect_team_management,
-                    name="organizer.teams.redirect",
-                ),
-                path(
-                    "teams/<int:team_pk>/",
-                    organizer.redirect_team_management,
-                    name="organizer.teams.team.redirect",
-                ),
-                path(
-                    "teams/<int:team_pk>/<path:rest>/",
-                    organizer.redirect_team_management,
-                    name="organizer.teams.team.extra.redirect",
-                ),
+
             ]
         ),
     ),
@@ -127,11 +112,7 @@ urlpatterns = [
                     event.WidgetSettings.as_view(),
                     name='settings.widget',
                 ),
-                path(
-                    'settings/plugins',
-                    plugins.EventPluginsView.as_view(),
-                    name='settings.plugins.select',
-                ),
+
                 path(
                     'cfp/',
                     RedirectView.as_view(pattern_name='orga:cfp.text.view'),
@@ -139,6 +120,7 @@ urlpatterns = [
                 ),
                 path('cfp/text/', cfp.CfPTextDetail.as_view(), name='cfp.text.view'),
                 path('cfp/flow/', cfp.CfPFlowEditor.as_view(), name='cfp.flow'),
+                path('cfp/questions/', cfp.CfPForms.as_view(), name='cfp.questions.view'),
                 *cfp.QuestionView.get_urls(
                     url_base='cfp/questions',
                     url_name='cfp.questions',
@@ -225,8 +207,13 @@ urlpatterns = [
                         [
                             path(
                                 '',
-                                submission.SubmissionContent.as_view(),
-                                name='submissions.content.view',
+                                submission.SubmissionContentView.as_view(),  # Read-only view
+                                name="submissions.content",
+                            ),
+                            path(
+                                'edit',
+                                submission.SubmissionContent.as_view(),  # Edit view
+                                name="submissions.content.edit",
                             ),
                             path(
                                 'submit',

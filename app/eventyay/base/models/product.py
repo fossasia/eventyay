@@ -230,9 +230,9 @@ class Product(LoggedModel):
     :param picture: A product picture to be shown next to the product description
     :type picture: File
     :param available_from: The date this product goes on sale
-    :type available_from: datetime
+    :type available_from: datetime.datetime
     :param available_until: The date until when the product is on sale
-    :type available_until: datetime
+    :type available_until: datetime.datetime
     :param require_voucher: If set to ``True``, this product can only be bought using a voucher.
     :type require_voucher: bool
     :param hide_without_voucher: If set to ``True``, this product is only visible and available when a voucher is used.
@@ -1105,6 +1105,11 @@ class Question(LoggedModel):
     :param products: A set of ``Products`` objects that this question should be applied to
     :param ask_during_checkin: Whether to ask this question during check-in instead of during check-out.
     :type ask_during_checkin: bool
+    :param active: Whether this question is active. Inactive questions are not shown to customers
+                   during checkout or check-in. Unlike ``hidden`` (which is system-level and hides
+                   questions completely from the public interface), ``active`` is an organizer-controlled
+                   toggle for temporarily disabling questions without deleting them.
+    :type active: bool
     :param hidden: Whether to only show the question in the backend
     :type hidden: bool
     :param identifier: An arbitrary, internal identifier
@@ -1148,7 +1153,16 @@ class Question(LoggedModel):
     ASK_DURING_CHECKIN_UNSUPPORTED = [TYPE_PHONENUMBER]
 
     event = models.ForeignKey(Event, related_name='questions', on_delete=models.CASCADE)
-    question = I18nTextField(verbose_name=_('Question'))
+    question = I18nTextField(verbose_name=_('Custom Field'))
+    active = models.BooleanField(
+        default=True,
+        verbose_name=_('Active'),
+        help_text=_(
+            'Inactive questions are not shown to customers during checkout or check-in. '
+            'Unlike hidden questions (which are system-level), active controls visibility '
+            'and can be toggled by event organizers.'
+        )
+    )
     description = I18nTextField(
         verbose_name=_('Description'),
         default='',
@@ -1169,8 +1183,8 @@ class Question(LoggedModel):
         null=True,
         blank=True,
     )
-    type = models.CharField(max_length=5, choices=TYPE_CHOICES, verbose_name=_('Question type'))
-    required = models.BooleanField(default=False, verbose_name=_('Required question'))
+    type = models.CharField(max_length=5, choices=TYPE_CHOICES, verbose_name=_('Type'))
+    required = models.BooleanField(default=False, verbose_name=_('Required field'))
     products = models.ManyToManyField(
         Product,
         related_name='questions',
@@ -1185,8 +1199,13 @@ class Question(LoggedModel):
         default=False,
     )
     hidden = models.BooleanField(
-        verbose_name=_('Hidden question'),
-        help_text=_('This question will only show up in the backend.'),
+        verbose_name=_('Hidden field'),
+        help_text=_(
+            'This field and its input field are invisible to customers in the public ticket shop. '
+            'This feature is intended for internal use. Only staff members logged into the control panel '
+            'can see and fill out this field. The purpose is for internal note taking or tracking information '
+            'that the customer does not need to see, such as internal seat assignment, VIP status, or internal notes.'
+        ),
         default=False,
     )
     print_on_invoice = models.BooleanField(verbose_name=_('Print answer on invoices'), default=False)

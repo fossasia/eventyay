@@ -34,8 +34,9 @@
         {{ form.help_text.as_field_group }}
         <div class="alert alert-info col-md-9 offset-md-3" id="alert-required-boolean">
             {% blocktranslate trimmed %}
-                If you mark a Yes/No field as required, it means that the user has to select Yes and No is not
-                accepted. If you want to allow both options, do not make this field required.
+                If you mark a Confirmation field as required, it means that the user has to explicitly confirm and
+                cannot proceed without doing so. If you want to allow users to leave this unchecked, do not make this
+                field required.
             {% endblocktranslate %}
         </div>
         {{ form.is_public.as_field_group }}
@@ -52,7 +53,22 @@
         </fieldset>
         <fieldset>
             <legend id="validation">{% translate "Input validation" %}</legend>
-            {{ form.question_required.as_field_group }}
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label text-md-right">
+                    {{ form.question_required.label }}
+                    {% if form.question_required.field.required %}*{% endif %}
+                </label>
+                <div class="col-md-9">
+                    {% for radio in form.question_required %}
+                    <div class="form-check mb-2">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">
+                            {{ radio.choice_label }}
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
             {{ form.deadline.as_field_group }}
             {{ form.freeze_after.as_field_group }}
             <span id="limit-length">
