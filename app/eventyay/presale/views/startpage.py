@@ -13,14 +13,6 @@ from eventyay.common.permissions import is_admin_mode_active
 class StartPageView(TemplateView):
     template_name = 'pretixpresale/startpage.html'
 
-    def _can_view_testmode_event(self, event):
-        user = getattr(self.request, 'user', None)
-        if not user or not user.is_authenticated:
-            return False
-        if getattr(user, 'is_administrator', False):
-            return True
-        return user.has_event_permission(event.organizer, event, request=self.request)
-
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['staff_session'] = is_admin_mode_active(self.request)
@@ -46,11 +38,7 @@ class StartPageView(TemplateView):
                 qs = qs.filter(name__icontains=search_query)
 
             events = list(qs.order_by('date_from'))
-            visible_events = [
-                event
-                for event in events
-                if not event.has_component_testmode or self._can_view_testmode_event(event)
-            ]
+            visible_events = [ event for event in events if not event.has_component_testmode ]
 
             if search_query:
                 ctx['events'] = visible_events
@@ -67,10 +55,10 @@ class StartPageView(TemplateView):
                 else:
                     event_end_date = event.date_to.date()
                 in_future = event_end_date >= today
-                if in_future and event.startpage_featured and not event.has_component_testmode:
+                if in_future and event.startpage_featured:
                     featured_events.append(event)
                 if in_future:
-                    if (event.startpage_visible and not event.startpage_featured) or event.has_component_testmode:
+                    if event.startpage_visible and not event.startpage_featured:
                         upcoming_events.append(event)
                 elif event.startpage_visible or event.has_component_testmode:
                     past_events.append(event)

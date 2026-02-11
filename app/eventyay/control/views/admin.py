@@ -112,9 +112,12 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
         event = get_object_or_404(Event, pk=event_id)
         enable = str(value).lower() in {'true', '1', 'yes', 'on'}
 
-        if event.has_component_testmode:
+        if event.has_component_testmode or not event.live:
             return JsonResponse(
-                {'ok': False, 'error': _('Events in test mode cannot be shown on the start page.')},
+                {
+                    'ok': False,
+                    'error': _('Only published events without test mode can be shown on the start page.'),
+                },
                 status=400,
             )
 
@@ -134,7 +137,7 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
                 'ok': True,
                 'startpage_visible': event.startpage_visible,
                 'startpage_featured': event.startpage_featured,
-                'startpage_locked': event.has_component_testmode,
+                'startpage_locked': bool(event.has_component_testmode or not event.live),
             }
         )
 
