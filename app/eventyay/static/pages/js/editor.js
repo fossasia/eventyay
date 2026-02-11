@@ -38,15 +38,15 @@ function initSlugGeneration(form) {
 }
 
 function initQuillEditors(form) {
-    const srOnly = form.querySelector('.sr-only')
-    if (!srOnly) return
+    const textFields = document.getElementById('page-text-fields')
+    if (!textFields) return
 
     const editors = document.querySelectorAll('.editor[data-lng]')
     if (!editors.length) return
 
     editors.forEach(function (editorEl) {
         const lng = editorEl.dataset.lng
-        const textarea = srOnly.querySelector('textarea[lang="' + lng + '"]')
+        const textarea = textFields.querySelector('textarea[lang="' + lng + '"]')
 
         editorEl.innerHTML = textarea && textarea.value ? textarea.value : ''
 
@@ -74,10 +74,12 @@ function initQuillEditors(form) {
     form.addEventListener('submit', function () {
         editors.forEach(function (editorEl) {
             const lng = editorEl.dataset.lng
-            const textarea = srOnly.querySelector('textarea[lang="' + lng + '"]')
+            const textarea = textFields.querySelector('textarea[lang="' + lng + '"]')
             if (textarea) {
                 const qlEditor = editorEl.querySelector('.ql-editor')
-                textarea.value = qlEditor ? qlEditor.innerHTML : ''
+                const html = qlEditor ? qlEditor.innerHTML : ''
+                // Normalize empty Quill content to empty string
+                textarea.value = html.replace(/<p><br><\/p>/g, '').trim() ? html : ''
             }
         })
     })
