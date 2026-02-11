@@ -17,6 +17,7 @@ from eventyay.orga.views import (
     typeahead,
 )
 
+
 app_name = 'orga'
 urlpatterns = [
     path("", RedirectView.as_view(url="event", permanent=False), name="base"),

@@ -261,7 +261,7 @@ class ReauthForm(forms.Form):
             self.fields['email'].disabled = True
 
     def clean(self):
-        # For authentication, we don't use primary_email.
+        # TODO: Use primary_email after enabling django-allauth authentication backend.
         self.cleaned_data['email'] = self.user.email
         user_cache = self.backend.form_authenticate(self.request, self.cleaned_data)
         if user_cache != self.user:

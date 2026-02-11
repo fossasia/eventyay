@@ -145,7 +145,7 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
     This used to live in the old ticket-video plugin; video is now integrated.
     """
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request: HttpRequest, *args, **kwargs):
         if not self.position:
             raise Http404(_('Unknown order code or not authorized to access this order.'))
 
@@ -417,8 +417,13 @@ class OrderDetails(EventViewMixin, OrderDetailMixin, CartMixin, TicketPageMixin,
                 gc = GiftCard.objects.get(pk=r.info_data.get('gift_card'))
                 r.giftcard = gc
 
-        viewer_email = user.primary_email if user.is_authenticated else ''
-        ctx['can_modify_order'] = self.order.is_modification_allowed_by(viewer_email)
+        if not user.is_authenticated:
+            can_modify_order = False
+        else:
+            # The Order is bound to email addresses instead of users, and user can
+            # change his primary email address, so we need to check with all email addresses of the user.
+            can_modify_order = any(self.order.is_modification_allowed_by(addr) for addr in user.email_addresses)
+        ctx['can_modify_order'] = can_modify_order
 
         return ctx
 

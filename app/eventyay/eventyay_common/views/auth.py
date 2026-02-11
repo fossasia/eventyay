@@ -217,7 +217,7 @@ def register(request):
     return render(request, 'eventyay_common/auth/register.html', ctx)
 
 
-def invite(request, token):
+def invite(request: HttpRequest, token):
     """
     Registration form in case of an invite
     """

@@ -77,6 +77,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         return super().post(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
+        # TODO: Drop the feature of password changing, email changing and use django-allauth flows instead.
         self._old_email = self.request.user.email
         return self.request.user
 

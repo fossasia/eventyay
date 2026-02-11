@@ -144,7 +144,7 @@ class LoggedModel(models.Model, LoggingMixin):
                 'event': event.slug,
                 'organizer': event.organizer.slug,
             },
-        ) + '?content_type={}&object={}'.format(self.logs_content_type.pk, self.pk)
+        ) + f'?content_type={self.logs_content_type.pk}&object={self.pk}'
 
     def top_logentries(self):
         qs = self.all_logentries()
@@ -179,7 +179,7 @@ class LockModel:
                 return
             if any(LOOKUP_SEP in f for f in fields):
                 raise ValueError(
-                    'Found "%s" in fields argument. Relations and transforms are not allowed in fields.' % LOOKUP_SEP
+                    f'Found "{LOOKUP_SEP}" in fields argument. Relations and transforms are not allowed in fields.'
                 )
 
         hints = {'instance': self}

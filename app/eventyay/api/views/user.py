@@ -1,5 +1,6 @@
 from oauth2_provider.contrib.rest_framework import OAuth2Authentication
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -10,7 +11,7 @@ class MeView(APIView):
     authentication_classes = (SessionAuthentication, OAuth2Authentication)
     permission_classes = (ProfilePermission,)
 
-    def get(self, request, format=None):
+    def get(self, request: Request, format=None):
         return Response(
             {
                 'email': request.user.email,

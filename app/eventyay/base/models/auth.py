@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 import json
 import logging
@@ -81,13 +83,13 @@ class UserManager(BaseUserManager):
     model documentation to see what's so special about our user model.
     """
 
-    def create_user(self, email: str, password: str = None, **kwargs):
+    def create_user(self, email: str, password: str = None, **kwargs) -> User:
         user = self.model(email=email, **kwargs)
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email: str, password: str = None):  # NOQA
+    def create_superuser(self, email: str, password: str = None) -> User:
         # Not used in the software but required by Django
         if password is None:
             raise Exception('You must provide a password')
@@ -99,7 +101,7 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_adminuser(self, email: str, password: str = None):
+    def create_adminuser(self, email: str, password: str = None) -> User:
         """
         Command: python manage.py create_admin_user
         Create an admin user without setting is_superuser to True.

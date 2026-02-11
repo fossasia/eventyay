@@ -120,6 +120,7 @@ class UserSettingsForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         old_pw = self.cleaned_data.get('old_pw')
 
+        # TODO: We should use django-allauth to respect user primary email changes
         if not self.requires_password_reset and (password1 or email != self.user.email) and not old_pw:
             raise forms.ValidationError(self.error_messages['pw_current'], code='pw_current')
 
