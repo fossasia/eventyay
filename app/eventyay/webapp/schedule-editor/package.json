@@ -34,7 +34,7 @@
     "@types/lodash": "^4.17.23",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.2.2",
-    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
     "@typescript-eslint/parser": "^8.53.0",
     "@vitejs/plugin-vue": "^6.0.4",
     "@vue/eslint-config-typescript": "^14.6.0",
