@@ -28,7 +28,7 @@
     "emoji-regex": "^10.6.0",
     "events": "^3.3.0",
     "hls.js": "^1.6.15",
-    "i18next": "^25.8.4",
+    "i18next": "^25.8.5",
     "iso-639-1": "^3.1.5",
     "janus-gateway": "git+https://wtf-npm@github.com/meetecho/janus-gateway.git#7b010cd265991132158541ea80afcaa14bf4eb42",
     "js-md5": "^0.8.3",
