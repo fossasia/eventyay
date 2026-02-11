@@ -18,6 +18,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import ListView, TemplateView, UpdateView
+from django.db.models.functions import Lower
 from webauthn.helpers import generate_challenge
 
 from eventyay.base.auth import get_auth_backends
@@ -243,16 +244,19 @@ class UserOrdersView(ListView):
         user = cast(User | AnonymousUser, self.request.user)
         if not user.is_authenticated:
             return Order.objects.none()
-        qs = (
-            Order.objects.filter(Q(email__iexact=user.primary_email)).select_related('event').order_by('-datetime')
+        queryset = Order.objects.select_related('event').annotate(email_lower=Lower('email'))
+        # django-allauth already makes email addresses lowercase in its model.
+        queryset = (
+            queryset.filter(Q(email_lower__in=user.email_addresses)).order_by('-datetime')
         )
 
         # Filter by event if provided
+        # TODO: Use django-filters here
         event_id = self.request.GET.get('event')
         if event_id:
-            qs = qs.filter(event_id=event_id)
+            queryset = queryset.filter(event_id=event_id)
 
-        return qs
+        return queryset
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

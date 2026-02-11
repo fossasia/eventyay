@@ -364,7 +364,8 @@ class User(
         Returns:
             tuple[str, ...]: A tuple containing all unique email addresses as strings.
         """
-        addrs = frozenset([self.email]) if self.email else frozenset()
+        addrs = frozenset([self.email.lower()]) if self.email else frozenset()
+        # django-allauth already make email addresses lowercase in its model.
         return tuple(addrs | frozenset(EmailAddress.objects.filter(user=self).values_list('email', flat=True)))
 
     # Methods
@@ -660,8 +661,9 @@ class User(
 
     # From talk
     def get_display_name(self) -> str:
-        """Returns a user's name or 'Unnamed user'."""
-        return self.fullname or 'Unnamed user'
+        """Returns a user's fullname, nickname, email or 'Unnamed user'."""
+        display_name = ((self.fullname or self.nick or self.email) or '').strip()
+        return display_name if display_name else 'Unnamed user'
 
     # Override to add caching.
     def has_perm(self, perm: str, obj: Self | None = None) -> bool:

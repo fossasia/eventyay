@@ -6,13 +6,14 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from importlib import import_module
-from urllib.parse import urlparse, urlunparse
 from typing import cast
+from urllib.parse import urlparse, urlunparse
 
 import isoweek
 import jwt
 import pytz
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.db.models import (
     Count,
@@ -23,8 +24,8 @@ from django.db.models import (
     Q,
     Value,
 )
-from django.contrib.auth.models import AnonymousUser
-from django.http import HttpRequest, Http404, HttpResponse, JsonResponse
+from django.db.models.functions import Lower
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -38,11 +39,11 @@ from django.views.generic import TemplateView
 
 from eventyay.base.channels import get_all_sales_channels
 from eventyay.base.models import (
-    User,
     Order,
     ProductVariation,
     Quota,
     SeatCategoryMapping,
+    User,
     Voucher,
 )
 from eventyay.base.models.event import SubEvent
@@ -887,11 +888,14 @@ class JoinOnlineVideoView(EventViewMixin, View):
             # Customer not logged in yet
             return False, None, None
         # Get all PAID orders of customer which belong to this event
-        # CRITICAL FIX: Only paid orders should grant video access
+        # CRITICAL FIX: Only paid orders should grant video access.
+        queryset = Order.objects.annotate(email_lower=Lower('email'))
+        # django-allauth already stores email addresses in lowercase,
+        # we only need to lowercase the order emails for comparison.
         order_list = (
-            Order.objects.filter(
+            queryset.filter(
                 Q(event=self.request.event)
-                & Q(email__iexact=user.primary_email)
+                & Q(email_lower__in=user.email_addresses)
                 & Q(status=Order.STATUS_PAID)  # Only paid orders
             )
             .select_related('event')

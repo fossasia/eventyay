@@ -6,7 +6,7 @@ from django.http import QueryDict
 from django.urls import reverse
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Order, OrderPosition, User
+from eventyay.base.models import User
 
 
 register = template.Library()
@@ -42,12 +42,12 @@ def cfp_locale_switch_url(context, locale_code):
 
 
 @register.filter
-def short_user_label(user: User | AnonymousUser) -> str:
+def short_user_label(user: User | AnonymousUser | None) -> str:
     """
     Compact user display: prefer first name, then full name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
-    if not user.is_authenticated:
+    if not user or not user.is_authenticated:
         return ''
     # Try using first part of full name
     label = user.fullname.split()[0] if user.fullname else ''
@@ -56,52 +56,6 @@ def short_user_label(user: User | AnonymousUser) -> str:
         label = user.primary_email.split('@')[0]
     # Truncate to 11 chars with ellipsis
     return (label[:11] + '…') if len(label) > 11 else label
-
-
-@register.simple_tag(takes_context=True)
-def user_has_valid_ticket(context, event=None):
-    """Return True if the current authenticated user has a valid order/ticket granting video access.
-
-    Mirrors the access rules used by the presale online video join flow.
-    """
-    request = context.get('request')
-    if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
-        return False
-
-    event = event or getattr(request, 'event', None)
-    if not event:
-        return False
-
-    user = request.user
-    if not user.primary_email:
-        return False
-
-    allowed_statuses = [Order.STATUS_PAID]
-    if event.settings.venueless_allow_pending:
-        allowed_statuses.append(Order.STATUS_PENDING)
-
-    if event.settings.venueless_all_products:
-        return OrderPosition.objects.filter(
-            order__event=event,
-            order__email__iexact=user.primary_email,
-            order__status__in=allowed_statuses,
-            product__admission=True,
-            canceled=False,
-            addon_to__isnull=True,
-        ).exists()
-
-    allowed_products = event.settings.venueless_products or []
-    if not allowed_products:
-        return False
-
-    return OrderPosition.objects.filter(
-        order__event=event,
-        order__email__iexact=user.primary_email,
-        order__status__in=allowed_statuses,
-        product_id__in=allowed_products,
-        canceled=False,
-        addon_to__isnull=True,
-    ).exists()
 
 
 @register.filter

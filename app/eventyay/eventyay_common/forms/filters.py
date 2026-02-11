@@ -1,6 +1,7 @@
 from typing import cast
 
 from django import forms
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models import Event, User
@@ -20,9 +21,10 @@ class UserOrderFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
 
         if user:
-            # Query distinct events based on the user's orders
-            events = Event.objects.filter(orders__email__in=user.email_addresses).distinct()
-            self.fields['event'].queryset = events
+            # Query distinct events based on the user's orders.
+            # user.email_addresses already provides lowercase emails.
+            events = Event.objects.annotate(email=Lower('orders__email')).filter(email__in=user.email_addresses)
+            self.fields['event'].queryset = events.distinct()
 
 
 class SessionsFilterForm(forms.Form):
@@ -46,5 +48,7 @@ class SessionsFilterForm(forms.Form):
 
         if user:
             # Query distinct events based on the user's proposals
-            events = Event.objects.filter(submissions__speakers__email__in=user.email_addresses).distinct()
-            self.fields['event'].queryset = events
+            # user.email_addresses already provides lowercase emails.
+            events = Event.objects.annotate(email=Lower('submissions__speakers__email'))
+            events = events.filter(email__in=user.email_addresses)
+            self.fields['event'].queryset = events.distinct()

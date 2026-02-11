@@ -2,6 +2,7 @@ from logging import getLogger
 from typing import cast
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models.functions import Lower
 from django.shortcuts import redirect
 from django.views.generic.list import ListView
 from django_scopes import scopes_disabled
@@ -22,8 +23,8 @@ class MySessionsView(LoginRequiredMixin, ListView):
         user = cast(User, self.request.user)
         with scopes_disabled():
             qs = (
-                Submission.objects
-                .filter(speakers__email__iexact=user.primary_email)
+                Submission.objects.annotate(lower_email=Lower('speakers__email'))
+                .filter(lower_email__in=user.email_addresses)
                 .select_related('event', 'event__organizer', 'submission_type')
                 .order_by('-event__date_from')
             )

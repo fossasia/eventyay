@@ -1,12 +1,12 @@
-import datetime
 import inspect
 import json
 import logging
 import mimetypes
 import os
 import re
+import secrets
 from collections import OrderedDict
-from datetime import UTC
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import cast
 from urllib.parse import urlparse, urlunparse
@@ -103,10 +103,14 @@ logger = logging.getLogger(__name__)
 class OrderDetailMixin(NoSearchIndexViewMixin):
     @cached_property
     def order(self) -> Order | None:
-        order = self.request.event.orders.filter(code=self.kwargs['order']).select_related('event').first()
+        queryset = Order.objects.filter(event=self.request.event, code=self.kwargs['order'])
+        order = queryset.select_related('event').first()
         if not order:
             return None
-        if order.secret.lower() == self.kwargs['secret'].lower():
+        order_secret = order.secret.lower()
+        passed_secret = self.kwargs['secret'].lower()
+        # This comparison method is to reduce risk of timing attacks
+        if secrets.compare_digest(order_secret, passed_secret):
             return order
         return None
 
@@ -162,8 +166,8 @@ class OrderPositionJoin(EventViewMixin, OrderPositionDetailMixin, View):
         ) > now():
             raise PermissionDenied()
 
-        iat = datetime.datetime.now(UTC)
-        exp = iat + datetime.timedelta(days=30)
+        iat = datetime.now(UTC)
+        exp = iat + timedelta(days=30)
         profile = {'fields': {}}
         if self.position.attendee_name:
             profile['display_name'] = self.position.attendee_name

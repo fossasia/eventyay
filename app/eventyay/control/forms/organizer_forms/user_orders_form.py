@@ -1,7 +1,9 @@
 from django import forms
+from django.contrib.auth.models import AnonymousUser
+from django.db.models.functions import Lower
 from django.utils.translation import gettext_lazy as _
 
-from eventyay.base.models import Event
+from eventyay.base.models import Event, User
 
 
 class UserOrderFilterForm(forms.Form):
@@ -13,11 +15,11 @@ class UserOrderFilterForm(forms.Form):
         empty_label=_('Select an Event'),
     )
 
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # Get the user from the kwargs
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, files=None, user: AnonymousUser | User | None = None, **kwargs):
+        super().__init__(data, files, **kwargs)
 
-        if user:
+        if user and user.is_authenticated:
             # Query distinct events based on the user's orders
-            events = Event.objects.filter(orders__email__iexact=user.primary_email).distinct()
+            queryset = Event.objects.annotate(lower_email=Lower('orders__email'))
+            events = queryset.filter(lower_email__in=user.email_addresses).distinct()
             self.fields['event'].queryset = events
