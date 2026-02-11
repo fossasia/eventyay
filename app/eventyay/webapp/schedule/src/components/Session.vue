@@ -7,7 +7,7 @@ a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @cli
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
 		.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer
-		.is-live(v-if="isLive") live
+		.is-live(v-if="showLiveBadge && isLive") live
 	.info
 		.title {{ getLocalizedString(session.title) }}
 		.speakers(v-if="session.speakers")
@@ -68,6 +68,10 @@ export default {
 		showFavCount: {
 			type: Boolean,
 			default: false
+		},
+		showLiveBadge: {
+			type: Boolean,
+			default: true
 		},
 		faved: {
 			type: Boolean,

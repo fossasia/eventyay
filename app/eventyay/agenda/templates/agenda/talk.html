@@ -25,9 +25,9 @@
 {% endblock alternate_link %}
 
 {% block agenda_custom_header %}
-    <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
+    <script id="pretalx-messages" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
     {% compress js %}
-        <script defer src="{% static "agenda/js/favourite.js" %}"></script>
+        <script defer src="{% static "agenda/js/fav-button.js" %}"></script>
     {% endcompress %}
 {% endblock agenda_custom_header %}
 
@@ -38,10 +38,7 @@
             <div class="heading-with-buttons">
                 <span>
                     {{ submission.title|event_localize }}
-                    <button class="btn btn-xs btn-link d-none" id="fav-button">
-                        <i class="fa fa-star-o d-none" title="{% translate "Favourite this session" %}"></i>
-                        <i class="fa fa-star d-none" title="{% translate "Remove this session from your favourites" %}"></i>
-                    </button>
+                    <pretalx-fav-button submission-id="{{ submission.code }}" logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}"></pretalx-fav-button>
                 </span>
                 <div class="buttons d-flex justify-content-end" id="talk-buttons">
                     {% if submission.state == "confirmed" and request.event.current_schedule %}

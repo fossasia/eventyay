@@ -1,4 +1,5 @@
 import io
+import json
 from collections import defaultdict
 from urllib.parse import urlparse
 
@@ -54,6 +55,24 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
             profile.talks = speaker_mapping[profile.user.code]
         return qs
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        speakers_data = []
+        for profile in ctx.get('speakers', []):
+            speakers_data.append({
+                'code': profile.user.code,
+                'name': profile.user.get_display_name(),
+                'biography': str(profile.biography or ''),
+                'avatar_url': profile.user.avatar_url or '',
+                'talks': [
+                    {'title': str(t.title), 'url': str(t.urls.public)}
+                    for t in getattr(profile, 'talks', [])
+                ],
+                'url': str(profile.urls.public),
+            })
+        ctx['speakers_data_json'] = json.dumps(speakers_data)
+        return ctx
+
 
 class SpeakerView(PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
@@ -97,6 +116,38 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__event=self.request.event,
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
+
+    @context
+    def speaker_data_json(self):
+        """Serialize speaker data as JSON for progressive enhancement."""
+        profile = self.profile
+        if not profile:
+            return '{}'
+        talks_data = []
+        for slot in self.talks:
+            sub = slot.submission
+            talks_data.append({
+                'id': sub.code,
+                'title': str(sub.title),
+                'start': f'{slot.start:%Y-%m-%dT%H:%M:%S%z}' if slot.start else None,
+                'end': f'{slot.end:%Y-%m-%dT%H:%M:%S%z}' if slot.end else None,
+                'duration': slot.duration,
+                'room': str(slot.room.name) if slot.room else None,
+                'url': str(sub.urls.public),
+            })
+        answers_data = [
+            {'question': str(a.question.question), 'answer': str(a)}
+            for a in self.answers()
+        ]
+        data = {
+            'code': profile.user.code,
+            'name': profile.user.get_display_name(),
+            'biography': str(profile.biography or ''),
+            'avatar_url': profile.user.avatar_url or '',
+            'talks': talks_data,
+            'answers': answers_data,
+        }
+        return json.dumps(data)
 
 
 class SpeakerRedirect(DetailView):

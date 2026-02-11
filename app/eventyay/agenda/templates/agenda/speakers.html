@@ -6,6 +6,11 @@
 {% load thumbnail %}
 
 {% load presale_locale %}
+
+{% block agenda_custom_header %}
+    <script>window.__SPEAKERS_DATA__ = {{ speakers_data_json|safe }};</script>
+{% endblock agenda_custom_header %}
+
 {% block agenda_content %}
     <p></p>
     <article>

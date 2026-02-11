@@ -20,6 +20,10 @@
     <link rel="alternate" type="application/json" title="{{ request.event.name|event_localize }} API" href="{{ request.event.api_urls.speakers.full }}{{ profile.code }}" />
 {% endblock alternate_link %}
 
+{% block agenda_custom_header %}
+    <script>window.__SPEAKER_DATA__ = {{ speaker_data_json|safe }};</script>
+{% endblock agenda_custom_header %}
+
 {% block agenda_content %}
     <article>
         <div class="d-flex mb-2">
