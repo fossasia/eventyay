@@ -7,7 +7,10 @@ import FavButton from '~/components/FavButton'
 import ScheduleSettings from '~/components/ScheduleSettings'
 import FilterModal from '~/components/FilterModal'
 import MarkdownContent from '~/components/MarkdownContent'
-export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor } from '~/utils'
+import SpeakersList from '~/components/SpeakersList'
+import SpeakerDetail from '~/components/SpeakerDetail'
+import TalkDetail from '~/components/TalkDetail'
+export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor, getIconByFileEnding } from '~/utils'
 
 export {
 	LinearSchedule,
@@ -18,5 +21,8 @@ export {
 	FavButton,
 	ScheduleSettings,
 	FilterModal,
-	MarkdownContent
+	MarkdownContent,
+	SpeakersList,
+	SpeakerDetail,
+	TalkDetail
 }
