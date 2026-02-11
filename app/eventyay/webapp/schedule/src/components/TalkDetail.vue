@@ -1,22 +1,22 @@
 <template lang="pug">
 .c-talk-detail(v-scrollbar.y="")
-	.talk-wrapper(v-if="talk")
+	.talk-wrapper(v-if="resolvedTalk")
 		.talk
-			h1 {{ getLocalizedString(talk.title) }}
+			h1 {{ getLocalizedString(resolvedTalk.title) }}
 			.info {{ datetime }} {{ roomName }}
-			markdown-content.abstract(v-if="talk.abstract", :markdown="talk.abstract")
-			markdown-content.description(v-if="talk.description", :markdown="talk.description")
-			.downloads(v-if="talk.resources && talk.resources.length > 0")
+			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
+			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
+			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 Downloads
-				a.download(v-for="{resource, description} of talk.resources", :href="getAbsoluteResourceUrl(resource)", target="_blank")
+				a.download(v-for="{resource, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource)", target="_blank")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
 					.filename {{ description }}
 			slot(name="actions")
 				a.join-room-btn(v-if="showJoinRoom && joinRoomLink", :href="joinRoomLink", @click="onJoinRoomClick") Join room
-		.speakers(v-if="talk.speakers && talk.speakers.length > 0")
-			.header Speakers ({{ talk.speakers.length }})
+		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
+			.header Speakers ({{ resolvedTalk.speakers.length }})
 			.speakers-list
-				.speaker(v-for="speaker of talk.speakers", :key="speaker.code")
+				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
 						img.avatar-circle(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url")
 						.avatar-placeholder.avatar-circle(v-else)
@@ -36,6 +36,7 @@ export default {
 	name: 'TalkDetail',
 	components: { MarkdownContent },
 	inject: {
+		scheduleData: { default: null },
 		generateSpeakerLinkUrl: {
 			default() {
 				return ({speaker}) => `#speaker/${speaker.code}`
@@ -49,6 +50,7 @@ export default {
 	},
 	props: {
 		talk: Object,
+		talkId: String,
 		baseUrl: {
 			type: String,
 			default: ''
@@ -70,13 +72,21 @@ export default {
 		}
 	},
 	computed: {
+		resolvedTalk() {
+			if (this.talk) return this.talk
+			if (this.talkId && this.scheduleData) {
+				const sessions = this.scheduleData.sessions || []
+				return sessions.find(s => s.id === this.talkId) || null
+			}
+			return null
+		},
 		datetime() {
-			if (!this.talk) return ''
-			return moment(this.talk.start).format('L LT') + ' - ' + moment(this.talk.end).format('LT')
+			if (!this.resolvedTalk) return ''
+			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
 		},
 		roomName() {
-			if (!this.talk) return ''
-			const room = this.talk.room
+			if (!this.resolvedTalk) return ''
+			const room = this.resolvedTalk.room
 			if (!room) return ''
 			if (typeof room === 'string') return room
 			return getLocalizedString(room.name || room)

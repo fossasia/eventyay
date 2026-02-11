@@ -44,6 +44,11 @@
 </template>
 <script>
 import { mapState } from 'vuex'
+import { computed, reactive } from 'vue'
+import moment from 'lib/timetravelMoment'
+import api from 'lib/api'
+import config from 'config'
+import QRCode from 'qrcode'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -56,6 +61,44 @@ const chatbarModules = ['chat.native', 'question', 'poll']
 
 export default {
 	components: { AppBar, RoomsSidebar, MediaSource, GreetingPrompt, Notifications },
+	provide() {
+		return {
+			scheduleData: reactive({
+				schedule: computed(() => this.$store.state.schedule?.schedule),
+				sessions: computed(() => this.$store.getters['schedule/sessions']),
+				rooms: computed(() => this.$store.getters['schedule/rooms']),
+				days: computed(() => this.$store.getters['schedule/days']),
+				favs: computed(() => this.$store.getters['schedule/favs'] || []),
+				now: computed(() => this.$store.state.now),
+				timezone: localStorage.getItem('userTimezone') || moment.tz.guess(),
+				hasAmPm: new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12,
+				errorLoading: computed(() => this.$store.state.schedule?.errorLoading),
+			}),
+			scheduleFav: (id) => this.$store.dispatch('schedule/fav', id),
+			scheduleUnfav: (id) => this.$store.dispatch('schedule/unfav', id),
+			scheduleDoExport: (option) => this.doScheduleExport(option),
+			exportBaseUrl: config.api.base + 'export-talk?export_type=',
+			qrCodeModule: QRCode,
+			linkTarget: '_blank',
+			generateSessionLinkUrl: ({session}) => {
+				if (session.url) return session.url
+				return this.$router.resolve(this.getSessionRoute(session)).href
+			},
+			onSessionLinkClick: async (event, session) => {
+				if (!session.url) {
+					event.preventDefault()
+					await this.$router.push(this.getSessionRoute(session))
+				}
+			},
+			generateSpeakerLinkUrl: ({speaker}) => {
+				return this.$router.resolve({name: 'schedule:speaker', params: {speakerId: speaker.code}}).href
+			},
+			onSpeakerLinkClick: async (event, speaker) => {
+				event.preventDefault()
+				await this.$router.push({name: 'schedule:speaker', params: {speakerId: speaker.code}})
+			}
+		}
+	},
 	data() {
 		return {
 			backgroundRoom: null,
@@ -187,6 +230,36 @@ export default {
 		window.removeEventListener('keydown', this.onKeydown, true)
 	},
 	methods: {
+		getSessionRoute(session) {
+			if (session.room?.modules) {
+				return {name: 'room', params: {roomId: session.room.id}}
+			}
+			return {name: 'schedule:talk', params: {talkId: session.id}}
+		},
+		async doScheduleExport(option) {
+			try {
+				const url = config.api.base + 'export-talk?export_type=' + option.id
+				const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
+				const result = await fetch(url, {
+					method: 'GET',
+					headers: {
+						Accept: 'application/json',
+						...(authHeader ? { Authorization: authHeader } : {})
+					}
+				}).then(r => r.json())
+				const a = document.createElement('a')
+				document.body.appendChild(a)
+				const blob = new Blob([result], {type: 'octet/stream'})
+				const downloadUrl = window.URL.createObjectURL(blob)
+				a.href = downloadUrl
+				a.download = 'schedule-' + option.id + '.' + option.id.replace('my', '')
+				a.click()
+				window.URL.revokeObjectURL(downloadUrl)
+				a.remove()
+			} catch (error) {
+				console.error('Export failed:', error)
+			}
+		},
 		hasFatalError(room) {
 			return !!(room && this.roomFatalErrors?.[room.id])
 		},

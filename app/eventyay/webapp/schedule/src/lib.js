@@ -10,6 +10,8 @@ import MarkdownContent from '~/components/MarkdownContent'
 import SpeakersList from '~/components/SpeakersList'
 import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
+import ScheduleView from '~/components/ScheduleView'
+import ExportDropdown from '~/components/ExportDropdown'
 export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor, getIconByFileEnding } from '~/utils'
 
 export {
@@ -24,5 +26,7 @@ export {
 	MarkdownContent,
 	SpeakersList,
 	SpeakerDetail,
-	TalkDetail
+	TalkDetail,
+	ScheduleView,
+	ExportDropdown
 }

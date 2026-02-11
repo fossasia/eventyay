@@ -39,6 +39,13 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? 'Yes' : 'No' }}
 									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
 									span.answer(v-else) No response
+						.downloads(v-if="modalContent.contentObject.resources && modalContent.contentObject.resources.length > 0")
+							hr
+							h4 Downloads
+							a.download(v-for="{resource, description} of modalContent.contentObject.resources", :href="resource", target="_blank")
+								.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
+								.filename {{ description }}
+						a.join-room-btn(v-if="showJoinRoom && joinRoomLink", :href="joinRoomLink", @click="$emit('joinRoom', $event)") Join room
 			.speakers(v-if="modalContent.contentObject.speakers")
 				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
@@ -103,7 +110,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 
 <script>
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getSessionTime } from '../utils'
+import { getLocalizedString, getSessionTime, getIconByFileEnding } from '../utils'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
 
@@ -124,14 +131,23 @@ export default {
 		locale: String,
 		hasAmPm: Boolean,
 		now: Object,
-		onHomeServer: Boolean
+		onHomeServer: Boolean,
+		showJoinRoom: {
+			type: Boolean,
+			default: false
+		},
+		joinRoomLink: {
+			type: String,
+			default: ''
+		}
 	},
-	emits: ['toggleFav', 'showSpeaker', 'fav', 'unfav'],
+	emits: ['toggleFav', 'showSpeaker', 'fav', 'unfav', 'joinRoom'],
 	data () {
 		return {
 			markdownIt,
 			getLocalizedString,
-			getSessionTime
+			getSessionTime,
+			getIconByFileEnding
 		}
 	},
 	computed: {
@@ -219,6 +235,38 @@ export default {
 	.card-content
 			display: flex
 			flex-direction: column
+
+			.downloads
+				margin-top: 8px
+				h4
+					margin: 4px 0
+				.download
+					display: flex
+					align-items: center
+					height: 40px
+					font-weight: 600
+					font-size: 14px
+					text-decoration: none
+					color: var(--pretalx-clr-text)
+					&:hover
+						text-decoration: underline
+					.mdi
+						font-size: 24px
+						margin-right: 4px
+					.filename
+						flex: 1
+			.join-room-btn
+				display: inline-block
+				margin-top: 12px
+				padding: 8px 24px
+				border-radius: 4px
+				font-weight: 600
+				text-decoration: none
+				color: $clr-white
+				background-color: var(--pretalx-clr-primary, var(--clr-primary))
+				width: fit-content
+				&:hover
+					opacity: 0.9
 
 	.text-content
 			margin-bottom: 8px

@@ -29,6 +29,7 @@ import { getLocalizedString } from '../utils'
 export default {
 	name: 'SpeakersList',
 	inject: {
+		scheduleData: { default: null },
 		generateSpeakerLinkUrl: {
 			default() {
 				return ({speaker}) => `#speaker/${speaker.code}`
@@ -52,8 +53,22 @@ export default {
 		}
 	},
 	computed: {
+		resolvedSpeakers() {
+			if (this.speakers?.length) return this.speakers
+			if (this.scheduleData) {
+				const schedule = this.scheduleData.schedule
+				const sessions = this.scheduleData.sessions || []
+				return (schedule?.speakers || []).map(speaker => ({
+					...speaker,
+					sessions: sessions.filter(s =>
+						s.speakers?.some(sp => sp.code === speaker.code)
+					)
+				}))
+			}
+			return []
+		},
 		sortedSpeakers() {
-			return [...this.speakers].sort((a, b) =>
+			return [...this.resolvedSpeakers].sort((a, b) =>
 				(a.name || '').localeCompare(b.name || '')
 			)
 		}

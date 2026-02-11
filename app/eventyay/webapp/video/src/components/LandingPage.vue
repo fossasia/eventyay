@@ -55,12 +55,10 @@ import api from 'lib/api'
 import moment from 'lib/timetravelMoment'
 import Identicon from 'components/Identicon'
 import MarkdownContent from 'components/MarkdownContent'
-import scheduleProvidesMixin from 'components/mixins/schedule-provides'
 import RichTextContent from 'components/RichTextContent'
 
 export default {
 	components: { Identicon, MarkdownContent, Session, RichTextContent },
-	mixins: [scheduleProvidesMixin],
 	props: {
 		module: Object
 	},

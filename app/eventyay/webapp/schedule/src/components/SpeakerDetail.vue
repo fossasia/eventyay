@@ -1,42 +1,59 @@
 <template lang="pug">
 .c-speaker-detail(v-scrollbar.y="")
-	.speaker-wrapper(v-if="speaker")
+	.speaker-wrapper(v-if="resolvedSpeaker")
 		.speaker-header
 			.speaker-avatar
-				img(v-if="speaker.avatar || speaker.avatar_url", :src="speaker.avatar || speaker.avatar_url", :alt="speaker.name")
+				img(v-if="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :src="resolvedSpeaker.avatar || resolvedSpeaker.avatar_url", :alt="resolvedSpeaker.name")
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-			h2 {{ speaker.name || 'Speaker' }}
-		markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
-		.speaker-sessions(v-if="sessions && sessions.length")
+			h2 {{ resolvedSpeaker.name || 'Speaker' }}
+		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
+		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 Sessions
 			session(
-				v-for="s in sessions",
+				v-for="s in resolvedSessions",
 				:key="s.id",
 				:session="s",
 				:showDate="true",
-				:now="now",
-				:timezone="timezone",
+				:now="resolvedNow",
+				:timezone="resolvedTimezone",
 				:locale="locale",
-				:hasAmPm="hasAmPm",
-				:faved="s.id && favs.includes(s.id)",
+				:hasAmPm="resolvedHasAmPm",
+				:faved="s.id && resolvedFavs.includes(s.id)",
 				:onHomeServer="onHomeServer",
-				@fav="$emit('fav', s.id)",
-				@unfav="$emit('unfav', s.id)"
+				@fav="onFav(s.id)",
+				@unfav="onUnfav(s.id)"
 			)
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
 
 <script>
+import moment from 'moment-timezone'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
 
 export default {
 	name: 'SpeakerDetail',
 	components: { MarkdownContent, Session },
+	inject: {
+		scheduleData: { default: null },
+		scheduleFav: { default: null },
+		scheduleUnfav: { default: null },
+		generateSessionLinkUrl: {
+			default() {
+				return ({session}) => `#talk/${session.id}`
+			}
+		},
+		onSessionLinkClick: {
+			default() {
+				return () => {}
+			}
+		}
+	},
 	props: {
 		speaker: Object,
+		speakerId: String,
 		sessions: {
 			type: Array,
 			default: () => []
@@ -54,7 +71,60 @@ export default {
 		},
 		onHomeServer: Boolean
 	},
-	emits: ['fav', 'unfav']
+	emits: ['fav', 'unfav'],
+	computed: {
+		resolvedSpeaker() {
+			if (this.speaker) return this.speaker
+			if (this.speakerId && this.scheduleData) {
+				const schedule = this.scheduleData.schedule
+				if (schedule?.speakers) {
+					return schedule.speakers.find(s => s.code === this.speakerId) || null
+				}
+				const sessions = this.scheduleData.sessions || []
+				for (const session of sessions) {
+					if (!session.speakers) continue
+					const found = session.speakers.find(s => s.code === this.speakerId)
+					if (found) return found
+				}
+			}
+			return null
+		},
+		resolvedSessions() {
+			if (this.sessions?.length) return this.sessions
+			const id = this.speakerId || this.speaker?.code
+			if (id && this.scheduleData) {
+				return (this.scheduleData.sessions || []).filter(s =>
+					s.speakers?.some(sp => sp.code === id)
+				)
+			}
+			return []
+		},
+		resolvedFavs() {
+			if (this.favs?.length) return this.favs
+			return this.scheduleData?.favs || []
+		},
+		resolvedNow() {
+			return this.now || this.scheduleData?.now || moment()
+		},
+		resolvedTimezone() {
+			return this.timezone || this.scheduleData?.timezone || moment.tz.guess()
+		},
+		resolvedHasAmPm() {
+			if (this.hasAmPm !== undefined && this.hasAmPm !== false) return this.hasAmPm
+			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
+			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
+		}
+	},
+	methods: {
+		onFav(id) {
+			if (this.scheduleFav) this.scheduleFav(id)
+			this.$emit('fav', id)
+		},
+		onUnfav(id) {
+			if (this.scheduleUnfav) this.scheduleUnfav(id)
+			this.$emit('unfav', id)
+		}
+	}
 }
 </script>
 

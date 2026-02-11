@@ -43,7 +43,12 @@ export default {
 		now: Object,
 		scrollParent: Element,
 		onHomeServer: Boolean,
-		disableAutoScroll: Boolean
+		disableAutoScroll: Boolean,
+		sortBy: {
+			type: String,
+			default: 'room',
+			validator: v => ['room', 'title', 'popularity'].includes(v)
+		}
 	},
 	data () {
 		return {
@@ -69,8 +74,7 @@ export default {
 			}
 			return Object.entries(buckets).map(([date, sessions]) => ({
 				date: sessions[0].start,
-				// sort by room for stable sort across time buckets
-				sessions: sessions.sort((a, b) => this.rooms.findIndex(room => room.id === a.room.id) - this.rooms.findIndex(room => room.id === b.room.id))
+				sessions: this.sortBucketSessions(sessions)
 			}))
 		}
 	},
@@ -118,6 +122,24 @@ export default {
 		}
 	},
 	methods: {
+		sortBucketSessions (sessions) {
+			return sessions.sort((a, b) => {
+				if (!a.id && b.id) return 1
+				if (a.id && !b.id) return -1
+				if (!a.id && !b.id) return 0
+				switch (this.sortBy) {
+					case 'title': {
+						const titleA = getLocalizedString(a.title) || ''
+						const titleB = getLocalizedString(b.title) || ''
+						return titleA.localeCompare(titleB)
+					}
+					case 'popularity':
+						return (b.fav_count || 0) - (a.fav_count || 0)
+					default:
+						return this.rooms.findIndex(room => room.id === a.room?.id) - this.rooms.findIndex(room => room.id === b.room?.id)
+				}
+			})
+		},
 		isProperSession (session) {
 			// breaks and such don't have ids
 			return !!session.id
