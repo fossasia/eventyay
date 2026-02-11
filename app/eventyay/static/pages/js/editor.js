@@ -41,16 +41,17 @@ function initQuillEditors(form) {
     const textFields = document.getElementById('page-text-fields')
     if (!textFields) return
 
-    const editors = document.querySelectorAll('.editor[data-lng]')
+    const editors = form.querySelectorAll('.editor[data-lng]')
     if (!editors.length) return
 
     editors.forEach(function (editorEl) {
         const lng = editorEl.dataset.lng
         const textarea = textFields.querySelector('textarea[lang="' + lng + '"]')
 
-        editorEl.innerHTML = textarea && textarea.value ? textarea.value : ''
+        // Content is sanitized server-side with nh3 before storage
+        const initialContent = textarea && textarea.value ? textarea.value : ''
 
-        new Quill(editorEl, {
+        const quill = new Quill(editorEl, {
             theme: 'snow',
             formats: [
                 'bold', 'italic', 'link', 'strike', 'code', 'underline', 'script',
@@ -69,6 +70,10 @@ function initQuillEditors(form) {
                 ]
             }
         })
+
+        if (initialContent) {
+            quill.clipboard.dangerouslyPasteHTML(initialContent)
+        }
     })
 
     form.addEventListener('submit', function () {
@@ -77,7 +82,8 @@ function initQuillEditors(form) {
             const textarea = textFields.querySelector('textarea[lang="' + lng + '"]')
             if (textarea) {
                 const qlEditor = editorEl.querySelector('.ql-editor')
-                const html = qlEditor ? qlEditor.innerHTML : ''
+                if (!qlEditor) return
+                const html = qlEditor.innerHTML
                 // Normalize empty Quill content to empty string
                 textarea.value = html.replace(/<p><br><\/p>/g, '').trim() ? html : ''
             }
