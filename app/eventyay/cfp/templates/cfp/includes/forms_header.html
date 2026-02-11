@@ -9,9 +9,8 @@
     <link rel="stylesheet" type="text/css" href="{% static "common/css/availabilities.css" %}" />
     <link rel="stylesheet" type="text/css" href="{% static "common/css/avatar.css" %}" />
 {% endcompress %}
+<script defer src="{% static "common/js/toastuiLoader.js" %}" data-toastui-css="{% static "vendored/toastui-editor/toastui-editor.min.css" %}" data-toastui-js="{% static "vendored/toastui-editor/toastui-editor.min.js" %}"></script>
 {% compress js %}
     <script defer src="{% static "vendored/choices/choices.min.js" %}"></script>
-    <script defer src="{% static "vendored/marked.min.js" %}"></script> {# required by formtools.js #}
-    <script defer src="{% static "vendored/purify.min.js" %}"></script> {# required by formtools.js #}
     <script defer src="{% static "common/js/formTools.js" %}"></script>
 {% endcompress %}

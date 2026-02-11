@@ -185,12 +185,10 @@ class SecretKeySettingsField(forms.CharField):
 
 
 class I18nMarkdownTextarea(i18nfield.forms.I18nTextarea):
-    def format_output(self, rendered_widgets, id_) -> str:
-        markdown_note = _('You can use {name} in this field.').format(
-            name='<a href="https://en.wikipedia.org/wiki/Markdown" target="_blank">Markdown</a>'
-        )
-        rendered_widgets.append(f'<div class="i18n-field-markdown-note">{markdown_note}</div>')
-        return super().format_output(rendered_widgets, id_)
+    def __init__(self, attrs=None, **kwargs):
+        attrs = attrs.copy() if attrs is not None else {}
+        attrs.setdefault('data-markdown-field', 'true')
+        super().__init__(attrs=attrs, **kwargs)
 
 
 class I18nAutoExpandingTextarea(i18nfield.forms.I18nTextarea):
