@@ -3,6 +3,7 @@ from django.core.files.storage import default_storage
 from django.views.generic import TemplateView
 from django_scopes import scopes_disabled
 from i18nfield.strings import LazyI18nString
+from django.db.models import Q
 from django.utils import timezone
 
 from eventyay.base.models import Event
@@ -36,9 +37,11 @@ class StartPageView(TemplateView):
             qs = Event.objects.select_related('organizer').prefetch_related('_settings_objects').filter(live=True)
             if search_query:
                 qs = qs.filter(name__icontains=search_query)
+            else:
+                qs = qs.filter(Q(startpage_visible=True) | Q(startpage_featured=True))
 
             events = list(qs.order_by('date_from'))
-            visible_events = [ event for event in events if not event.has_component_testmode ]
+            visible_events = [event for event in events if not event.has_component_testmode]
 
             if search_query:
                 ctx['events'] = visible_events
@@ -50,17 +53,18 @@ class StartPageView(TemplateView):
             past_events = []
 
             for event in visible_events:
-                if timezone.is_aware(event.date_to):
-                    event_end_date = timezone.localtime(event.date_to).date()
+                event_end = event.date_to or event.date_from
+                if timezone.is_aware(event_end):
+                    event_end_date = timezone.localtime(event_end).date()
                 else:
-                    event_end_date = event.date_to.date()
+                    event_end_date = event_end.date()
                 in_future = event_end_date >= today
                 if in_future and event.startpage_featured:
                     featured_events.append(event)
                 if in_future:
                     if event.startpage_visible and not event.startpage_featured:
                         upcoming_events.append(event)
-                elif event.startpage_visible or event.has_component_testmode:
+                elif event.startpage_visible:
                     past_events.append(event)
 
             ctx['featured_events'] = featured_events

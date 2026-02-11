@@ -140,7 +140,7 @@
                     <td>
                         {% if not e.live %}
                             <span class="label label-danger">{% trans "Shop disabled" %}</span>
-                        {% elif e.has_component_testmode %}
+                        {% elif e.component_testmode %}
                             <span class="label label-warning">{% trans "Test mode" %}</span>
                         {% elif e.presale_has_ended %}
                             <span class="label label-warning">{% trans "Presale over" %}</span>
@@ -151,7 +151,7 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        {% if e.live and not e.has_component_testmode %}
+                        {% if not e.startpage_toggle_locked %}
                             <label class="toggle-switch">
                                 <input type="checkbox"
                                        class="js-startpage-toggle"
@@ -166,7 +166,7 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        {% if e.live and not e.has_component_testmode %}
+                        {% if not e.startpage_toggle_locked %}
                             <label class="toggle-switch">
                                 <input type="checkbox"
                                        class="js-startpage-toggle"

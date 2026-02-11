@@ -90,6 +90,17 @@ class AdminEventList(EventList):
 
     template_name = 'pretixcontrol/admin/events/index.html'
 
+    def get_queryset(self):
+        # Keep settings prefetched for component test-mode state checks in the list.
+        return super().get_queryset().prefetch_related('_settings_objects')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        for event in ctx.get('events', []):
+            event.component_testmode = event.has_component_testmode
+            event.startpage_toggle_locked = bool(event.component_testmode or not event.live)
+        return ctx
+
 
 class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
