@@ -441,6 +441,14 @@ class BBBService:
                     participants = safe_xpath_text(rec, "participants")
                     state = safe_xpath_text(rec, "state")
                     
+                    if not participants or not state:
+                        logger.warning(
+                            "Skipping recording with missing participants/state from BBB server %s for meeting %s",
+                            server.url,
+                            call.meeting_id,
+                        )
+                        continue
+
                     if not start_time or not end_time:
                         continue
                     

@@ -1,4 +1,3 @@
-import asyncio
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -35,6 +34,30 @@ async def test_get_recordings_no_call(event):
 
     with patch("eventyay.base.services.bbb.get_call_for_room", new_callable=AsyncMock) as mock_get_call:
         mock_get_call.return_value = None
+        result = await service.get_recordings_for_room(room)
+
+    assert result == {"recordings": [], "error_type": "NO_RECORDINGS"}
+
+
+@pytest.mark.django_db
+@pytest.mark.asyncio
+async def test_get_recordings_no_servers_available(event):
+    room = Mock(event=event, id="room-123")
+    call = Mock(meeting_id="meeting-123")
+
+    service = BBBService(event)
+
+    with patch(
+        "eventyay.base.services.bbb.get_call_for_room",
+        new_callable=AsyncMock,
+    ) as mock_get_call, patch.object(
+        service,
+        "_get_possible_servers",
+        new_callable=AsyncMock,
+    ) as mock_servers:
+        mock_get_call.return_value = call
+        mock_servers.return_value = []
+
         result = await service.get_recordings_for_room(room)
 
     assert result == {"recordings": [], "error_type": "NO_RECORDINGS"}
