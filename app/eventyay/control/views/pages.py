@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
 from eventyay.base.models.page import Page
+from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.helpers.compat import CompatDeleteView
@@ -144,7 +145,7 @@ class ShowPageView(TemplateView):
         url_schemes = set(getattr(nh3, 'DEFAULT_URL_SCHEMES', nh3.ALLOWED_URL_SCHEMES)) | {'data'}
 
         ctx['content'] = nh3.clean(
-            str(page.text),
+            compile_markdown(str(page.text)),
             tags=tags,
             attributes=attributes,
             url_schemes=url_schemes,

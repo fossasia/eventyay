@@ -1,6 +1,7 @@
 from urllib.request import urlopen
 
 import lxml.html
+from lxml import etree
 from django import forms
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -9,6 +10,7 @@ from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
 from eventyay.base.models.page import Page
+from eventyay.base.forms import I18nMarkdownTextarea
 
 
 class PageSettingsForm(forms.ModelForm):
@@ -23,6 +25,9 @@ class PageSettingsForm(forms.ModelForm):
             'confirmation_required',
             'text',
         )
+        widgets = {
+            'text': I18nMarkdownTextarea,
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -87,11 +92,26 @@ class PageSettingsForm(forms.ModelForm):
         return super().save(commit)
 
 
-def process_data_images(html, allowed_mimes):
-    processed_html = ''
-    etrees = lxml.html.fragments_fromstring(html)
-    for etree in etrees:
-        for image in etree.xpath('//img'):
+def process_data_images(content, allowed_mimes):
+    if not content:
+        return ''
+
+    try:
+        fragments = lxml.html.fragments_fromstring(content)
+    except (etree.ParserError, TypeError, ValueError):
+        return content
+
+    processed_fragments = []
+    for fragment in fragments:
+        if isinstance(fragment, str):
+            processed_fragments.append(fragment)
+            continue
+
+        if not hasattr(fragment, 'xpath'):
+            processed_fragments.append(str(fragment))
+            continue
+
+        for image in fragment.xpath('.//img[@src]'):
             original_image_src = image.attrib['src']
             if original_image_src.startswith('data:'):
                 ftype = original_image_src.split(';')[0][5:]
@@ -103,5 +123,6 @@ def process_data_images(html, allowed_mimes):
                         stored_name = default_storage.save(name, cfile)
                         stored_url = default_storage.url(stored_name)
                         image.attrib['src'] = stored_url
-        processed_html += lxml.html.tostring(etree).decode()
-    return processed_html
+        processed_fragments.append(lxml.html.tostring(fragment, encoding='unicode'))
+
+    return ''.join(processed_fragments)

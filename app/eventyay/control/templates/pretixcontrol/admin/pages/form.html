@@ -2,13 +2,20 @@
 {% load i18n %}
 {% load bootstrap3 %}
 {% load static %}
-{% load compress %}
 {% block title %}{% trans "Page settings" %}{% endblock %}
+{% block custom_header %}
+    {{ block.super }}
+    <link rel="stylesheet" type="text/css" href="{% static 'control/css/admin-pages-toastui.css' %}" />
+    <link rel="stylesheet" type="text/css" href="{% static 'orga/css/_flags.css' %}" />
+    <script defer src="{% static 'common/js/base.js' %}"></script>
+    <script defer src="{% static 'vendored/marked.min.js' %}"></script>
+    <script defer src="{% static 'vendored/purify.min.js' %}"></script>
+    <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}"></script>
+    <script defer src="{% static 'common/js/formTools.js' %}"></script>
+    <script defer src="{% static 'control/js/admin-pages-language-manager.js' %}"></script>
+    <script defer src="{% static 'common/js/modalDialog.js' %}"></script>
+{% endblock custom_header %}
 {% block content %}
-    {% compress css %}
-        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill.snow.css" %}">
-        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill-edit.css" %}">
-    {% endcompress %}
     <h1>{% trans "Page settings" %}</h1>
     <form action="" method="post" class="form-horizontal" data-id="{{ page.id }}">
         {% csrf_token %}
@@ -41,39 +48,7 @@
             {% bootstrap_field form.link_in_header layout="horizontal" %}
             {% bootstrap_field form.link_in_footer layout="horizontal" %}
             {% bootstrap_field form.confirmation_required layout="horizontal" %}
-
-            <div class="form-group">
-                <label class="col-md-3 control-label">{% trans "Page content" %}</label>
-                <div class="col-md-9">
-                    <noscript>
-                        <div class="alert alert-danger">
-                            {% trans "Please enable JavaScript" %}
-                        </div>
-                    </noscript>
-
-                    <ul class="nav nav-tabs">
-                        {% for lng, text in locales %}
-                            <li role="presentation" {% if forloop.first %}class="active"{% endif %}>
-                                <a href="#editor-{{ lng }}" data-toggle="tab">{{ text }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-
-                    <div class="tab-content">
-                        {% for lng, text in locales %}
-                            <div class="tab-pane {% if forloop.first %}active{% endif %}" id="editor-{{ lng }}">
-                                <div class="editor" data-lng="{{ lng }}">
-                                    {{ text|safe }}
-                                </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-
-                    <div class="sr-only">
-                        {{ form.text }}
-                    </div>
-                </div>
-            </div>
+            {% bootstrap_field form.text layout="horizontal" %}
         </fieldset>
         <div class="form-group submit-group">
             <a href="{% url 'eventyay_admin:admin.pages' %}" class="btn btn-default btn-lg pull-left flip">
@@ -84,6 +59,4 @@
             </button>
         </div>
     </form>
-    <script type="application/javascript" src="{% static "pages/js/quill.js" %}"></script>
-    <script type="application/javascript" src="{% static "pages/js/editor.js" %}"></script>
 {% endblock %}
