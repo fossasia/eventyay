@@ -4,8 +4,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2025-11-30 09:02+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-02-11 21:42+0000\n"
+"Last-Translator: Arnav Angarkar <arnav.angarkar20@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
 "Language: fr\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: eventyay/api/auth/devicesecurity.py:6
 msgid ""
@@ -34,10 +34,8 @@ msgid "eventyay (kiosk mode, online only)"
 msgstr "eventyay (mode kiosque, en ligne uniquement)"
 
 #: eventyay/api/auth/devicesecurity.py:80
-#, fuzzy
-#| msgid "pretix User"
 msgid "eventyay"
-msgstr "utilisateur eventyay"
+msgstr "1. Télécharger eventyaydesk"
 
 #: eventyay/api/models.py:18
 msgid "Application name"
@@ -9051,11 +9049,11 @@ msgid ""
 "\n"
 "your eventyay developers"
 msgstr ""
-"Salutations !\n"
+"Salutations !\n"
 "\n"
-"Une mise à jour est disponible pour eventyay ou pour l'un des plugins que vous "
-"avez installé dans votre installation eventyay. Veuillez cliquer sur le lien "
-"suivant pour plus d'informations:\n"
+"Une mise à jour est disponible pour eventyay ou pour l'un des plugins que "
+"vous avez installé dans votre installation eventyay. Veuillez cliquer sur le "
+"lien suivant pour plus d'informations:\n"
 "\n"
 " {url} \n"
 "\n"
@@ -9070,7 +9068,7 @@ msgstr ""
 #: eventyay/base/services/update_check.py:126
 #, python-format
 msgid "Plugin: %s"
-msgstr "Plugin: %s"
+msgstr "Plugin : %s"
 
 #: eventyay/base/services/vouchers.py:35 eventyay/control/logdisplay.py:371
 #, fuzzy, python-brace-format
