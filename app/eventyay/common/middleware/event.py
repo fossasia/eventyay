@@ -19,8 +19,10 @@ from eventyay.base.models import Event, Organizer
 from eventyay.base.models import User
 from eventyay.base.models import Schedule
 from eventyay.common.utils.language import (
+    get_event_enforce_ui_language_cookie_name,
     get_event_language_cookie_name,
     set_current_event_language,
+    strict_match_language,
     validate_language,
 )
 
@@ -111,12 +113,7 @@ class EventPermissionMiddleware:
             response = redirect(urljoin(request.event.custom_domain, request.get_full_path()))
             response['Access-Control-Allow-Origin'] = '*'
             return response
-        if (
-            event
-            and event.private_testmode
-            and event.settings.get('private_testmode_talks', False, as_type=bool)
-            and not event.user_can_view_talks(request.user, request=request)
-        ):
+        if event and not event.user_can_view_talks(request.user, request=request):
             if 'agenda' in url.namespaces or 'cfp' in url.namespaces:
                 if url.url_name != 'event.css':
                     raise Http404()
@@ -133,6 +130,7 @@ class EventPermissionMiddleware:
     def _select_locale(self, request):
         # Clear previous event language for this thread
         set_current_event_language(None)
+        request.event_language_enforce_ui = False
 
         # UI language: use full platform languages and keep existing precedence
         ui_supported = list(settings.LANGUAGES_INFORMATION)
@@ -151,8 +149,20 @@ class EventPermissionMiddleware:
         event_language = None
         if hasattr(request, 'event') and request.event:
             event_supported = request.event.locales
+            enforce_cookie_name = get_event_enforce_ui_language_cookie_name(
+                request.event.slug,
+                request.event.organizer.slug,
+            )
+            request.event_language_enforce_ui = request.COOKIES.get(enforce_cookie_name, '0') == '1'
+
+            if request.event_language_enforce_ui:
+                strict_ui_language = strict_match_language(ui_language, event_supported)
+                if strict_ui_language:
+                    event_language = strict_ui_language
+
             cookie_name = get_event_language_cookie_name(request.event.slug, request.event.organizer.slug)
-            event_language = self._language_from_cookie(request, event_supported, cookie_name)
+            if not event_language:
+                event_language = self._language_from_cookie(request, event_supported, cookie_name)
             if not event_language:
                 event_language = self._language_from_event(request, event_supported)
             if not event_language and event_supported:

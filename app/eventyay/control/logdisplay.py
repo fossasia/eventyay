@@ -12,6 +12,7 @@ from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from django_scopes import ScopeError, scopes_disabled
 from i18nfield.strings import LazyI18nString
 
 from eventyay.base.models import (
@@ -27,6 +28,17 @@ from eventyay.base.signals import logentry_display
 from eventyay.base.templatetags.money import money_filter
 
 OVERVIEW_BANLIST = ['eventyay.plugins.sendmail.order.email.sent']
+
+
+def _get_checkin_list_name(event: Event, list_id):
+    if not list_id:
+        return _('(unknown)')
+
+    try:
+        with scopes_disabled():
+            return event.checkin_lists.get(pk=list_id).name
+    except (CheckinList.DoesNotExist, ScopeError):
+        return _('(unknown)')
 
 
 def _display_order_changed(event: Event, logentry: LogEntry, action_type: str):
@@ -212,13 +224,7 @@ def _display_checkin(event, logentry, action_type: str):
         tz = pytz.timezone(event.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
 
-    if 'list' in data:
-        try:
-            checkin_list = event.checkin_lists.get(pk=data.get('list')).name
-        except CheckinList.DoesNotExist:
-            checkin_list = _('(unknown)')
-    else:
-        checkin_list = _('(unknown)')
+    checkin_list = _get_checkin_list_name(event, data.get('list'))
 
     if action_type == 'eventyay.event.checkin.unknown':
         if show_dt:
@@ -626,8 +632,8 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.event.tickets.settings': _('The ticket download settings have been changed.'),
         'eventyay.event.plugins.enabled': _('A plugin has been enabled.'),
         'eventyay.event.plugins.disabled': _('A plugin has been disabled.'),
-        'eventyay.event.live.activated': _('The shop has been taken live.'),
-        'eventyay.event.live.deactivated': _('The shop has been taken offline.'),
+        'eventyay.event.live.activated': _('The event has been published.'),
+        'eventyay.event.live.deactivated': _('The event has been unpublished.'),
         'eventyay.event.testmode.activated': _('The shop has been taken into test mode.'),
         'eventyay.event.testmode.deactivated': _('The test mode has been disabled.'),
         'eventyay.event.private_testmode.activated': _('Private test mode has been enabled.'),
@@ -731,13 +737,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         dt = dateutil.parser.parse(data.get('datetime'))
         tz = pytz.timezone(sender.settings.timezone)
         dt_formatted = date_format(dt.astimezone(tz), 'SHORT_DATETIME_FORMAT')
-        if 'list' in data:
-            try:
-                checkin_list = sender.checkin_lists.get(pk=data.get('list')).name
-            except CheckinList.DoesNotExist:
-                checkin_list = _('(unknown)')
-        else:
-            checkin_list = _('(unknown)')
+        checkin_list = _get_checkin_list_name(sender, data.get('list'))
 
         if data.get('first'):
             return _('Position #{posid} has been checked in manually at {datetime} on list "{list}".').format(
@@ -753,13 +753,7 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
         'eventyay.control.views.checkin.reverted',
         'eventyay.event.checkin.reverted',
     ):
-        if 'list' in data:
-            try:
-                checkin_list = sender.checkin_lists.get(pk=data.get('list')).name
-            except CheckinList.DoesNotExist:
-                checkin_list = _('(unknown)')
-        else:
-            checkin_list = _('(unknown)')
+        checkin_list = _get_checkin_list_name(sender, data.get('list'))
 
         return _('The check-in of position #{posid} on list "{list}" has been reverted.').format(
             posid=data.get('positionid'),
@@ -809,4 +803,3 @@ def eventyaycontrol_logentry_display(sender: Event, logentry: LogEntry, **kwargs
 
     if action_type == 'eventyay.control.auth.user.impersonate_stopped':
         return str(_('You stopped impersonating {}.')).format(data['other_email'])
-

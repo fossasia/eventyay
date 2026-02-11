@@ -6,7 +6,7 @@ from collections import defaultdict
 from csp.decorators import csp_update
 from django.contrib import messages
 from django.db import models, transaction
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.forms.models import inlineformset_factory
 from django.http import HttpResponse, JsonResponse
@@ -39,6 +39,7 @@ from eventyay.orga.forms.cfp import (
     QuestionFilterForm,
     ReminderFilterForm,
     SubmitterAccessCodeForm,
+    CfPGeneralSettingsForm,
 )
 from eventyay.base.models import (
     AnswerOption,
@@ -49,6 +50,8 @@ from eventyay.base.models import (
     SubmissionType,
     SubmitterAccessCode,
     Track,
+    SpeakerProfile,
+    Availability,
 )
 from eventyay.talk_rules.submission import questions_for_user
 
@@ -71,7 +74,8 @@ class CfPTextDetail(PermissionRequired, ActionFromUrl, UpdateView):
     @context
     @cached_property
     def sform(self):
-        return CfPSettingsForm(
+        # Use simple form as we only edit general settings here, no custom questions
+        return CfPGeneralSettingsForm(
             read_only=(self.action == 'view'),
             locales=self.request.event.locales,
             obj=self.request.event,
@@ -116,6 +120,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
     @context
     @cached_property
     def sform(self):
+        # Use full form to include custom questions and field configuration
         return CfPSettingsForm(
             read_only=False,
             locales=self.request.event.locales,
@@ -140,14 +145,13 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['session_field_order'] = json.dumps(fields_config.get('session', []))
         context['speaker_field_order'] = json.dumps(fields_config.get('speaker', []))
         context['reviewer_field_order'] = json.dumps(fields_config.get('reviewer', []))
-        
         sform = self.sform
         
         def get_field_data(targets, config_key):
             questions = TalkQuestion.all_objects.filter(
                 event=self.request.event,
                 target__in=targets
-            )
+            ).annotate(answer_count=Count('answers'))
             
             question_map = {str(q.id): q for q in questions if f'question_{q.pk}' in sform.fields}
             saved_order = fields_config.get(config_key, [])
@@ -177,6 +181,38 @@ class CfPForms(EventPermissionRequired, TemplateView):
         context['custom_session_fields'] = get_field_data([TalkQuestionTarget.SUBMISSION], 'session')
         context['custom_speaker_fields'] = get_field_data([TalkQuestionTarget.SPEAKER], 'speaker')
         context['custom_reviewer_fields'] = get_field_data([TalkQuestionTarget.REVIEWER], 'reviewer')
+
+        event = self.request.event
+        submission_counts = event.submissions.aggregate(
+            title=Count('id', filter=~Q(title='')),
+            abstract=Count('id', filter=~Q(abstract='')),
+            description=Count('id', filter=~Q(description='')),
+            notes=Count('id', filter=~Q(notes='')),
+            do_not_record=Count('id', filter=Q(do_not_record=True)),
+            image=Count('id', filter=~Q(image='')),
+            track=Count('id', filter=Q(track__isnull=False)),
+            duration=Count('id', filter=Q(duration__isnull=False)),
+            content_locale=Count('id', filter=~Q(content_locale='')),
+        )
+        
+        speaker_counts = SpeakerProfile.objects.filter(event=event).aggregate(
+            name=Count('id', filter=~Q(user__fullname='') & Q(user__fullname__isnull=False)),
+            biography=Count('id', filter=~Q(biography='') & Q(biography__isnull=False)),
+            avatar=Count('id', filter=~Q(user__avatar='') & Q(user__avatar__isnull=False)),
+            avatar_source=Count('id', filter=~Q(user__avatar_source='') & Q(user__avatar_source__isnull=False)),
+            avatar_license=Count('id', filter=~Q(user__avatar_license='') & Q(user__avatar_license__isnull=False)),
+        )
+
+        additional_speaker_count = event.submissions.annotate(sc=Count('speakers')).filter(sc__gt=1).count()
+        availabilities_count = Availability.objects.filter(event=event, person__isnull=False).values('person').distinct().count()
+
+        context['field_counts'] = {
+            **submission_counts,
+            **speaker_counts,
+            'additional_speaker': additional_speaker_count,
+            'availabilities': availabilities_count,
+        }
+
         return context
 
     @transaction.atomic
@@ -209,8 +245,8 @@ class CfPForms(EventPermissionRequired, TemplateView):
         
         session_keys = ['title', 'abstract', 'description', 'notes', 'track', 'duration', 
                        'content_locale', 'image', 'do_not_record']
-        speaker_keys = ['biography', 'avatar', 'avatar_source', 'avatar_license', 'availabilities',
-                       'additional_speaker']
+        speaker_keys = ['fullname', 'biography', 'avatar', 'avatar_source', 'avatar_license',
+                       'availabilities', 'additional_speaker']
         
         has_session_fields = any(item in session_keys for item in order_list)
         has_speaker_fields = any(item in speaker_keys for item in order_list)
@@ -231,7 +267,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
             all_reviewer = True
             valid_question_count = 0
             for qid in custom_question_ids:
-                q = TalkQuestion.objects.filter(id=qid, event=event).first()
+                q = TalkQuestion.all_objects.filter(id=qid, event=event).first()
                 if not q:
                     continue
                 valid_question_count += 1
@@ -258,7 +294,7 @@ class CfPForms(EventPermissionRequired, TemplateView):
         if target_type:
             for index, question_id in enumerate(custom_question_ids):
                 try:
-                    question = TalkQuestion.objects.get(id=question_id, event=event, target=target_type)
+                    question = TalkQuestion.all_objects.get(id=question_id, event=event, target=target_type)
                     question.position = index
                     question.save(update_fields=['position'])
                 except TalkQuestion.DoesNotExist:
