@@ -181,6 +181,16 @@ def get_create_params_for_room(
     return create_params, call.server
 
 
+def safe_xpath_text(element, xpath, default=None):
+    try:
+        nodes = element.xpath(xpath)
+        if nodes and nodes[0].text:
+            return nodes[0].text
+        return default
+    except (IndexError, AttributeError, TypeError):
+        return default
+
+
 class BBBService:
     def __init__(self, event):
         self.event = event
@@ -364,10 +374,23 @@ class BBBService:
         )
 
     async def get_recordings_for_room(self, room):
+        call = await get_call_for_room(room)
+        if not call:
+            logger.warning(
+                "No BBB call found for room %s in event %s",
+                room.id,
+                self.event.slug,
+            )
+            return {"recordings": [], "error_type": "NO_RECORDINGS"}
+
         recordings = []
+        error_type = None
+        servers_checked = 0
+        servers_unavailable = 0
+
         for server in await self._get_possible_servers():
+            servers_checked += 1
             try:
-                call = await get_call_for_room(room)
                 recordings_url = get_url(
                     "getRecordings",
                     {"meetingID": call.meeting_id, "state": "any"},
@@ -375,43 +398,59 @@ class BBBService:
                     server.secret,
                 )
                 root = await self._get(recordings_url, timeout=10)
+                
                 if root is False:
-                    return []
+                    logger.warning(
+                        "Could not fetch recordings from BBB server %s for meeting %s",
+                        server.url,
+                        call.meeting_id,
+                    )
+                    servers_unavailable += 1
+                    continue
 
                 tz = pytz.timezone(self.event.timezone)
                 for rec in root.xpath("recordings/recording"):
                     url_presentation = url_screenshare = url_video = url_notes = None
                     for f in rec.xpath("playback/format"):
-                        if f.xpath("type")[0].text == "presentation":
-                            url_presentation = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "screenshare":
-                            url_screenshare = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "video":
-                            url_video = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "notes":
-                            url_notes = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "Video":
-                            url_video = f.xpath("url")[0].text
+                        format_type = safe_xpath_text(f, "type")
+                        format_url = safe_xpath_text(f, "url")
+                        
+                        if not format_type or not format_url:
+                            continue
+                            
+                        if format_type == "presentation":
+                            url_presentation = format_url
+                        elif format_type == "screenshare":
+                            url_screenshare = format_url
+                        elif format_type in ("video", "Video"):
+                            url_video = format_url
                             # Work around an upstream bug
                             if "///" in url_video:
                                 url_video = url_video.replace(
                                     "///",
-                                    f"//{urlparse(recordings_url).hostname}/",
+                                    "//%s/" % urlparse(recordings_url).hostname,
                                 )
-                        if (
-                            not url_presentation
-                            and not url_screenshare
-                            and not url_video
-                            and not url_notes
-                        ):
-                            continue
+                        elif format_type == "notes":
+                            url_notes = format_url
+                    
+                    if not any([url_presentation, url_screenshare, url_video, url_notes]):
+                        continue
+                    
+                    start_time = safe_xpath_text(rec, "startTime")
+                    end_time = safe_xpath_text(rec, "endTime")
+                    participants = safe_xpath_text(rec, "participants")
+                    state = safe_xpath_text(rec, "state")
+                    
+                    if not start_time or not end_time:
+                        continue
+                    
                     recordings.append(
                         {
                             "start": (
                                 # BBB outputs timestamps in server time, not UTC :( Let's assume the BBB server time
                                 # is the same as ours…
                                 datetime.fromtimestamp(
-                                    int(rec.xpath("startTime")[0].text) / 1000,
+                                    int(start_time) / 1000,
                                     pytz.timezone(settings.TIME_ZONE),
                                 )
                             )
@@ -419,14 +458,14 @@ class BBBService:
                             .isoformat(),
                             "end": (
                                 datetime.fromtimestamp(
-                                    int(rec.xpath("endTime")[0].text) / 1000,
+                                    int(end_time) / 1000,
                                     pytz.timezone(settings.TIME_ZONE),
                                 )
                             )
                             .astimezone(tz)
                             .isoformat(),
-                            "participants": rec.xpath("participants")[0].text,
-                            "state": rec.xpath("state")[0].text,
+                            "participants": participants,
+                            "state": state,
                             "url": url_presentation,
                             "url_video": url_video,
                             "url_screenshare": url_screenshare,
@@ -434,5 +473,22 @@ class BBBService:
                         }
                     )
             except Exception:
-                logger.exception(f"Could not fetch recordings from server {server}")
-        return recordings
+                logger.exception(
+                    "Error processing recordings from BBB server %s for meeting %s",
+                    server.url,
+                    call.meeting_id,
+                )
+                servers_unavailable += 1
+
+        # Determine error_type based on precedence rules
+        if recordings:
+            # Success: we found recordings
+            error_type = None
+        elif servers_unavailable == servers_checked and servers_checked > 0:
+            # All servers were unavailable
+            error_type = "BBB_UNAVAILABLE"
+        else:
+            # No recordings found (either no servers or all returned empty)
+            error_type = "NO_RECORDINGS"
+
+        return {"recordings": recordings, "error_type": error_type}

@@ -55,7 +55,10 @@ class BBBModule(BaseModule):
     )
     async def recordings(self, body):
         service = BBBService(self.consumer.event)
-        recordings = await service.get_recordings_for_room(
+        result = await service.get_recordings_for_room(
             self.room,
         )
-        await self.consumer.send_success({"results": recordings})
+        await self.consumer.send_success({
+            "results": result["recordings"],
+            "error": result["error_type"],
+        })
