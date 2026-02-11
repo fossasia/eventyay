@@ -1,11 +1,26 @@
-{% load i18n %}{% blocktrans with url=url|safe %}Hello,
+{% load i18n %}{% if is_registered_user|default:False %}{% blocktrans with url=url|safe organizer=organizer team=team %}Hello,
 
-you have been invited to the following event team
+You have been added to the following event team:
+
+Organizer: {{ organizer }}
+Team: {{ team }}
+
+Click the following link to view your team dashboard:
+
+{{ url }}
+
+Best regards,
+
+Your event team
+{% endblocktrans %}{% else %}{% blocktrans with url=url|safe organizer=organizer team=team %}Hello,
+
+You have been invited to the following event team:
 
 Organizer: {{ organizer }}
 Team: {{ team }}
 
 If you want to join that team, just click on the following link:
+
 {{ url }}
 
 If you do not want to join, you can safely ignore or delete this email.
@@ -13,4 +28,4 @@ If you do not want to join, you can safely ignore or delete this email.
 Best regards,
 
 Your event team
-{% endblocktrans %}
+{% endblocktrans %}{% endif %}

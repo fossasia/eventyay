@@ -87,7 +87,8 @@ class PluginsField(Field):
 
 class TimeZoneField(ChoiceField):
     def get_attribute(self, instance):
-        return instance.cache.get_or_set('timezone_name', lambda: instance.settings.timezone, 3600)
+        timezone_name = instance.settings.timezone
+        return instance.cache.get_or_set('timezone_name', timezone_name, 3600)
 
 
 class ValidKeysField(Field):
@@ -252,7 +253,7 @@ class EventSerializer(I18nAwareModelSerializer):
         meta_data = validated_data.pop('meta_data', None)
         product_meta_properties = validated_data.pop('product_meta_properties', None)
         validated_data.pop('seat_category_mapping', None)
-        plugins = validated_data.pop('plugins', settings.PRETIX_PLUGINS_DEFAULT.split(','))
+        plugins = validated_data.pop('plugins', list(settings.EVENTYAY_PLUGINS_DEFAULT))
         tz = validated_data.pop('timezone', None)
         event = super().create(validated_data)
 
