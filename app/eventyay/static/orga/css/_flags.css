@@ -160,9 +160,9 @@ input[lang="bo"],
 textarea[lang="bo"] {
   background-image: url("/static/vendored/flags/bo.png");
 }
-div[lang="pt-BR"],
-input[lang="pt-BR"],
-textarea[lang="pt-BR"] {
+div[lang="pt-br"],
+input[lang="pt-br"],
+textarea[lang="pt-br"] {
   background-image: url("/static/vendored/flags/br.png");
 }
 div[lang="bs"],
@@ -293,6 +293,7 @@ textarea[lang="cy"] {
 div[lang="de"],
 input[lang="de"],
 textarea[lang="de"],
+div[lang="de-formal"],
 input[lang="de-formal"],
 textarea[lang="de-formal"] {
   background-image: url("/static/vendored/flags/de.png");
@@ -565,6 +566,7 @@ textarea[lang="jo"] {
 div[lang="jp"],
 input[lang="jp"],
 textarea[lang="jp"],
+div[lang="ja-jp"],
 input[lang="ja-jp"],
 textarea[lang="ja-jp"] {
   background-image: url("/static/vendored/flags/jp.png");
@@ -1127,6 +1129,7 @@ textarea[lang="tv"] {
 div[lang="tw"],
 input[lang="tw"],
 textarea[lang="tw"],
+div[lang="zh-hant"],
 input[lang="zh-hant"],
 textarea[lang="zh-hant"] {
   background-image: url("/static/vendored/flags/tw.png");
@@ -1240,4 +1243,69 @@ div[lang="en"],
 input[lang="en"],
 textarea[lang="en"] {
   background-image: url("/static/vendored/flags/gb.png");
+}
+div[lang="en-us"],
+input[lang="en-us"],
+textarea[lang="en-us"] {
+  background-image: url("/static/vendored/flags/us.png");
+}
+div[lang="en-gb"],
+input[lang="en-gb"],
+textarea[lang="en-gb"] {
+  background-image: url("/static/vendored/flags/gb.png");
+}
+div[lang="en-au"],
+input[lang="en-au"],
+textarea[lang="en-au"] {
+  background-image: url("/static/vendored/flags/au.png");
+}
+div[lang="en-ca"],
+input[lang="en-ca"],
+textarea[lang="en-ca"] {
+  background-image: url("/static/vendored/flags/ca.png");
+}
+div[lang="da"],
+input[lang="da"],
+textarea[lang="da"] {
+  background-image: url("/static/vendored/flags/dk.png");
+}
+div[lang="fa-ir"],
+input[lang="fa-ir"],
+textarea[lang="fa-ir"] {
+  background-image: url("/static/vendored/flags/ir.png");
+}
+div[lang="ko"],
+input[lang="ko"],
+textarea[lang="ko"] {
+  background-image: url("/static/vendored/flags/kr.png");
+}
+div[lang="nb-no"],
+input[lang="nb-no"],
+textarea[lang="nb-no"] {
+  background-image: url("/static/vendored/flags/no.png");
+}
+div[lang="nl-informal"],
+input[lang="nl-informal"],
+textarea[lang="nl-informal"] {
+  background-image: url("/static/vendored/flags/nl.png");
+}
+div[lang="pl-informal"],
+input[lang="pl-informal"],
+textarea[lang="pl-informal"] {
+  background-image: url("/static/vendored/flags/pl.png");
+}
+div[lang="pt-br"],
+input[lang="pt-br"],
+textarea[lang="pt-br"] {
+  background-image: url("/static/vendored/flags/br.png");
+}
+div[lang="sw"],
+input[lang="sw"],
+textarea[lang="sw"] {
+  background-image: url("/static/vendored/flags/tz.png");
+}
+div[lang="uk"],
+input[lang="uk"],
+textarea[lang="uk"] {
+  background-image: url("/static/vendored/flags/ua.png");
 }
