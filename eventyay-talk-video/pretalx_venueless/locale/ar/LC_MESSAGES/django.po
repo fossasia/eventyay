@@ -20,111 +20,111 @@ msgstr ""
 
 #: local/pretalx-venueless/pretalx_venueless/apps.py:12
 msgid "Venueless integration"
-msgstr ""
+msgstr "تكامل Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/apps.py:15
 msgid ""
 "Venueless integration in pretalx: Notify venueless about new schedule "
 "releases!"
-msgstr ""
+msgstr "تكامل Venueless في pretalx: إخطار Venueless بإصدارات الجدول الجديدة!"
 
 #: local/pretalx-venueless/pretalx_venueless/forms.py:12
 #: local/pretalx-venueless/pretalx_venueless/models.py:16
 msgid ""
 "Generate a token with the trait 'world:api' in the Config -> Token Generator"
 " menu in Venueless. Leave empty to leave unchanged."
-msgstr ""
+msgstr "أنشئ رمزًا مميزًا يحمل السمة 'world:api' في قائمة Config -> Token Generator في Venueless. اتركه فارغًا لعدم التغيير."
 
 #: local/pretalx-venueless/pretalx_venueless/forms.py:14
 #: local/pretalx-venueless/pretalx_venueless/models.py:18
 msgid "Venueless Token"
-msgstr ""
+msgstr "رمز Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/forms.py:18
 #: local/pretalx-venueless/pretalx_venueless/models.py:23
 msgid "URL of your Venueless event"
-msgstr ""
+msgstr "عنوان URL لفعالية Venueless الخاصة بك"
 
 #: local/pretalx-venueless/pretalx_venueless/forms.py:19
 #: local/pretalx-venueless/pretalx_venueless/models.py:24
 #: local/pretalx-venueless/pretalx_venueless/models.py:40
 msgid "Venueless URL"
-msgstr ""
+msgstr "عنوان URL لـ Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/forms.py:58
 msgid ""
 "This field is required if you want to show a join button to your speakers."
-msgstr ""
+msgstr "هذا الحقل مطلوب إذا كنت تريد إظهار زر الانضمام للمتحدثين لديك."
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:33
 msgid ""
 "If you enable this feature, speakers will find a venueless join button on "
 "their profile pages."
-msgstr ""
+msgstr "إذا فعّلت هذه الميزة، سيجد المتحدثون زر الانضمام إلى Venueless في صفحات ملفاتهم الشخصية."
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:35
 msgid "Show join button"
-msgstr ""
+msgstr "إظهار زر الانضمام"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:39
 msgid "URL used for sign-up links"
-msgstr ""
+msgstr "عنوان URL المستخدم لروابط التسجيل"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:45
 msgid "Venueless secret"
-msgstr ""
+msgstr "سر Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:50
 msgid "Venueless issuer"
-msgstr ""
+msgstr "جهة إصدار Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:55
 msgid "Venueless audience"
-msgstr ""
+msgstr "جمهور Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:60
 msgid "Do not allow access before"
-msgstr ""
+msgstr "عدم السماح بالوصول قبل"
 
 #: local/pretalx-venueless/pretalx_venueless/models.py:63
 msgid "Introductory text"
-msgstr ""
+msgstr "نص تمهيدي"
 
 #: local/pretalx-venueless/pretalx_venueless/signals.py:35
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:23
 msgid "Venueless"
-msgstr ""
+msgstr "Venueless"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/join_link.html:9
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/join_link.html:27
 msgid "Join online event"
-msgstr ""
+msgstr "الانضمام إلى الفعالية عبر الإنترنت"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/join_link.html:18
 msgid "You can now join the event using the following button:"
-msgstr ""
+msgstr "يمكنك الآن الانضمام إلى الفعالية باستخدام الزر التالي:"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/join_link.html:33
 msgid ""
 "You will be able to join this event with your browser right here when it "
 "starts."
-msgstr ""
+msgstr "ستتمكن من الانضمام إلى هذه الفعالية عبر متصفحك هنا عندما تبدأ."
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:13
 msgid "Confirm your Venueless connection"
-msgstr ""
+msgstr "تأكيد اتصال Venueless الخاص بك"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:16
 msgid ""
 "<b>Venueless</b> is asking to connect to your pretalx event. If you confirm "
 "this connection, pretalx will notify Venueless about all schedule changes."
-msgstr ""
+msgstr "<b>Venueless</b> يطلب الاتصال بفعاليتك على pretalx. إذا أكدت هذا الاتصال، فسيقوم pretalx بإخطار Venueless بجميع تغييرات الجدول."
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:27
 #, python-format
 msgid ""
 "Successfully connected to venueless. Data was last pushed on %(last_push)s."
-msgstr ""
+msgstr "تم الاتصال بـ Venueless بنجاح. تم آخر إرسال للبيانات في %(last_push)s."
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:34
 msgid ""
@@ -133,44 +133,44 @@ msgid ""
 "users. Please use Venueless to begin this process. Go to <b>Config → "
 "Event</b> in Venueless, and enter the following settings to create the "
 "connection:"
-msgstr ""
+msgstr "إعداد الاتصال بـ Venueless سيكوّن إعدادات pretalx في Venueless، وسيقوم تلقائيًا بدفع تغييرات الجدول لمستخدمي Venueless. يرجى استخدام Venueless لبدء هذه العملية. اذهب إلى <b>Config → Event</b> في Venueless، وأدخل الإعدادات التالية لإنشاء الاتصال:"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:53
 msgid "Main settings"
-msgstr ""
+msgstr "الإعدادات الرئيسية"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:55
 msgid ""
 "These settings will get filled in automatically when you set up your event "
 "with venueless. Please follow the instructions at the top of this page!"
-msgstr ""
+msgstr "سيتم تعبئة هذه الإعدادات تلقائيًا عند إعداد فعاليتك مع Venueless. يرجى اتباع التعليمات أعلى هذه الصفحة!"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:68
 msgid "Join link settings"
-msgstr ""
+msgstr "إعدادات رابط الانضمام"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:70
 msgid ""
 "These settings are only required if you want to distribute the sign-up links"
 " to venueless for your speakers by way of pretalx."
-msgstr ""
+msgstr "هذه الإعدادات مطلوبة فقط إذا كنت تريد توزيع روابط التسجيل إلى Venueless للمتحدثين لديك عبر pretalx."
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:95
 msgid "Connect"
-msgstr ""
+msgstr "اتصال"
 
 #: local/pretalx-venueless/pretalx_venueless/templates/pretalx_venueless/settings.html:97
 msgid "Save"
-msgstr ""
+msgstr "حفظ"
 
 #: local/pretalx-venueless/pretalx_venueless/views.py:66
 msgid "Yay! We saved your changes."
-msgstr ""
+msgstr "تم حفظ تغييراتك."
 
 #: local/pretalx-venueless/pretalx_venueless/views.py:74
 msgid "Unable to reach Venueless:"
-msgstr ""
+msgstr "تعذر الوصول إلى Venueless:"
 
 #: local/pretalx-venueless/pretalx_venueless/views.py:93
 msgid "Unknown user or not authorized to access venueless."
-msgstr ""
+msgstr "مستخدم غير معروف أو غير مخوّل للوصول إلى Venueless."
