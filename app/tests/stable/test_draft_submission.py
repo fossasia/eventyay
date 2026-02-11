@@ -16,18 +16,18 @@ class TestDraftSubmission:
             if not st:
                 st = SubmissionType.objects.create(event=event, name="Talk")
             
-            # Configure a required field in CfP
+            # Ensure talks are accessible
+            event.talks_published = True
             event.cfp.fields["abstract"]["visibility"] = "required"
             event.cfp.save()
+            event.save()
             return st
 
     def perform_init_wizard(self, client, event=None):
         url = f"/{event.organizer.slug}/{event.slug}/submit/"
         response = client.get(url, follow=True)
-        print(f"\nDEBUG: init wizard GET status: {response.status_code}")
         # Check if it redirected to the first step (info)
         current_url = response.redirect_chain[-1][0] if response.redirect_chain else response.request.get('PATH_INFO', url)
-        print(f"DEBUG: current url after init: {current_url}")
         return response, current_url
 
     @pytest.mark.django_db
@@ -47,16 +47,12 @@ class TestDraftSubmission:
             "submission_type": submission_type,
         }
         response = client.post(current_url, data=data, follow=True)
-        print(f"DEBUG: draft post status: {response.status_code}")
-        print(f"DEBUG: final path info: {response.request.get('PATH_INFO')}")
         
         # Should redirect to submissions list (me/submissions)
         assert "/me/submissions/" in response.request.get("PATH_INFO", ""), f"Did not reach submissions list. Final URL: {response.request.get('PATH_INFO')}"
         
         # Verify submission exists in DRAFT state
         with scope(event=event):
-            submissions = list(Submission.all_objects.all())
-            print(f"DEBUG: Submissions in DB titles: {[s.title for s in submissions]}")
             submission = Submission.all_objects.filter(title="Minimal Draft Title").first()
             assert submission is not None, "Submission was not created"
             assert submission.state == SubmissionStates.DRAFT
