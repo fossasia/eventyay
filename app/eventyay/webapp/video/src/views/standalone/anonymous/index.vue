@@ -32,7 +32,7 @@
 // - reactions?
 import { mapState, mapGetters } from 'vuex'
 // Replace '@pretalx/schedule' Session import with local implementation
-import Session from 'views/schedule/schedule-components/Session.vue'
+import Session from '@schedule/components/Session.vue'
 import AppBar from 'components/AppBar'
 import Polls from 'components/Polls'
 import Questions from 'components/Questions'

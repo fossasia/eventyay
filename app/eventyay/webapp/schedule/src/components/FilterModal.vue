@@ -9,7 +9,7 @@ dialog.pretalx-modal#filter-modal(ref="modal", @click.stop="close()")
 </template>
 
 <script>
-import { getLocalizedString } from '~/utils'
+import { getLocalizedString } from '../utils'
 
 export default {
 	name: 'FilterModal',

@@ -29,13 +29,15 @@
 					label="Add to Calendar"
 					@input="makeExport")
 
-		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay.toISOString()", ref="tabs", v-scrollbar.x="")
-			bunt-tab(v-for="day in days", :key="day.toISOString()", :id="day.toISOString()", :header="moment(day).format('dddd DD. MMMM')", @selected="changeDay(day)")
+		bunt-tabs.days(v-if="days && days.length > 1", :active-tab="currentDay", ref="tabs", v-scrollbar.x="")
+			bunt-tab(v-for="day in days", :key="day.format('YYYY-MM-DD')", :id="day.format('YYYY-MM-DD')", :header="day.format('dddd DD. MMMM')", @selected="changeDay(day)")
 		.scroll-parent(ref="scrollParent", v-scrollbar.x.y="")
 			linear-schedule(:sessions="sessions",
 				:rooms="rooms",
 				:currentDay="currentDay",
 				:now="now",
+				:timezone="currentTimezone",
+				:hasAmPm="hasAmPm",
 				:scrollParent="$refs.scrollParent",
 				:favs="favs",
 				@changeDay="changeDayByScroll",
@@ -50,8 +52,8 @@
 <script>
 import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
-import LinearSchedule from 'views/schedule/schedule-components/LinearSchedule'
-import GridSchedule from 'views/schedule/schedule-components/GridSchedule'
+import LinearSchedule from '@schedule/components/LinearSchedule'
+import GridSchedule from '@schedule/components/GridSchedule'
 import moment from 'lib/timetravelMoment'
 import TimezoneChanger from 'components/TimezoneChanger'
 import scheduleProvidesMixin from 'components/mixins/schedule-provides'
@@ -123,7 +125,7 @@ export default {
 		return {
 			tracksFilter: {},
 			moment,
-			currentDay: moment().startOf('day'),
+			currentDay: moment().startOf('day').format('YYYY-MM-DD'),
 			selectedExporter: null,
 			exportOptions: [],
 			isExporting: false,
@@ -196,6 +198,9 @@ export default {
 			const example = this.schedule.talks[0].start
 			return moment.tz(example, this.userTimezone).format('Z') === moment.tz(example, this.schedule.timezone).format('Z')
 		},
+		hasAmPm () {
+			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
+		},
 	},
 	async created () {
 		this.userTimezone = moment.tz.guess()
@@ -213,13 +218,14 @@ export default {
 	},
 	methods: {
 		changeDay(day) {
-			if (day.isSame(this.currentDay)) return
-			this.currentDay = day
+			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
+			if (dayStr === this.currentDay) return
+			this.currentDay = dayStr
 		},
 		changeDayByScroll(day) {
-			this.currentDay = day
-			const tabEl = this.$refs.tabs.$refs.tabElements.find(el => el.id === day.toISOString())
-			// TODO smooth scroll, seems to not work with chrome {behavior: 'smooth', block: 'center', inline: 'center'}
+			const dayStr = day.format ? day.format('YYYY-MM-DD') : day
+			this.currentDay = dayStr
+			const tabEl = this.$refs.tabs.$refs.tabElements.find(el => el.id === dayStr)
 			tabEl?.$el.scrollIntoView()
 		},
 		getTrackName(track) {

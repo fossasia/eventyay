@@ -63,8 +63,8 @@
 import _ from 'lodash'
 import { mapState, mapGetters } from 'vuex'
 // Replaced external '@pretalx/schedule' imports with local components to avoid TDZ runtime error in pretalx bundle
-import LinearSchedule from './schedule-components/LinearSchedule.vue'
-import GridSchedule from './schedule-components/GridSchedule.vue'
+import LinearSchedule from '@schedule/components/LinearSchedule'
+import GridSchedule from '@schedule/components/GridSchedule'
 import moment from 'lib/timetravelMoment'
 import TimezoneChanger from 'components/TimezoneChanger'
 import scheduleProvidesMixin from 'components/mixins/schedule-provides'

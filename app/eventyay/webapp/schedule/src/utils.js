@@ -1,5 +1,3 @@
-// import i18n from 'i18n'
-
 export function getLocalizedString (string) {
 	if (!string) return ''
 	if (typeof string === 'string') return string
@@ -15,7 +13,7 @@ export function findScrollParent (node) {
 	return findScrollParent(node.parentNode)
 }
 export function getPrettyDuration (start, end) {
-	let minutes = end.diff(start).shiftTo('minutes').minutes
+	let minutes = end.diff(start, 'minutes')
 	if (minutes <= 60) {
 		return `${minutes}min`
 	}
@@ -27,25 +25,30 @@ export function getPrettyDuration (start, end) {
 	return `${hours}h`
 }
 
-export function timeWithoutAmPm (time, locale) {
-	const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: time.zoneName }).formatToParts(time)
-	return parts.filter(part => part.type !== 'dayPeriod').map(part => part.value).join('')
-}
-
-export function timeAmPm (time, locale) {
-	const parts = new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: 'numeric', timeZone: time.zoneName }).formatToParts(time)
-	return parts.filter(part => part.type === 'dayPeriod')[0].value
-}
-
 export function getSessionTime(session, timezone, locale, hasAmPm) {
+	const startInZone = session.start.clone().tz(timezone)
 	if (hasAmPm) {
 		return {
-			time: timeWithoutAmPm(session.start.setZone(timezone), locale),
-			ampm: timeAmPm(session.start.setZone(timezone), locale)
+			time: startInZone.format('h:mm'),
+			ampm: startInZone.format('A')
 		}
 	} else {
 		return {
-			time: session.start.setZone(timezone).toLocaleString({ hour: 'numeric', 'minute': 'numeric' })
+			time: startInZone.format('LT')
 		}
 	}
+}
+
+export function isProperSession(session) {
+	return !!session.id
+}
+
+export function getContrastColor(bgColor) {
+	if (!bgColor) return ''
+	bgColor = bgColor.replace('#', '')
+	const r = parseInt(bgColor.slice(0, 2), 16)
+	const g = parseInt(bgColor.slice(2, 4), 16)
+	const b = parseInt(bgColor.slice(4, 6), 16)
+	const brightness = (r * 299 + g * 587 + b * 114) / 1000
+	return brightness > 128 ? 'black' : 'white'
 }

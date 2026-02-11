@@ -10,7 +10,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 			.card-content
 				.facts
 					.time
-						span {{ modalContent.contentObject.start.toLocaleString({ weekday: 'long', day: 'numeric', month: 'long' }) }}, {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).time }}
+						span {{ modalContent.contentObject.start.clone().tz(currentTimezone).format('dddd, D MMMM') }}, {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).time }}
 						span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
 					.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
 					.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
@@ -103,9 +103,9 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 
 <script>
 import MarkdownIt from 'markdown-it'
-import { getLocalizedString, getSessionTime } from '~/utils'
-import FavButton from '~/components/FavButton.vue'
-import Session from '~/components/Session.vue'
+import { getLocalizedString, getSessionTime } from '../utils'
+import FavButton from './FavButton.vue'
+import Session from './Session.vue'
 
 const markdownIt = MarkdownIt({
 	linkify: false,

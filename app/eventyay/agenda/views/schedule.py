@@ -299,6 +299,15 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
     def show_talk_list(self):
         return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
 
+    @context
+    def schedule_json(self):
+        """Build enriched schedule data for inline embedding, avoiding extra API calls."""
+        if not self.schedule:
+            return '{}'
+        from i18nfield.utils import I18nJSONEncoder
+        data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
+        return json.dumps(data, cls=I18nJSONEncoder)
+
 
 @cache_page(60 * 60 * 24)
 def schedule_messages(request, **kwargs):

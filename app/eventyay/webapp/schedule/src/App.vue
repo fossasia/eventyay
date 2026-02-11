@@ -18,7 +18,7 @@
 			@saveTimezone="saveTimezone"
 		)
 		bunt-tabs.days(v-if="days && days.length > 1", v-model="currentDay", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
-			bunt-tab(v-for="day in days", :id="day.toISODate()", :header="day.toLocaleString(dateFormat)", @selected="changeDay(day)")
+			bunt-tab(v-for="day in days", :id="day.format('YYYY-MM-DD')", :header="day.format(dateFormat)", @selected="changeDay(day)")
 		grid-schedule-wrapper(v-if="showGrid",
 			:sessions="sessions",
 			:rooms="rooms",
@@ -77,7 +77,7 @@
 </template>
 <script>
 import { computed } from 'vue'
-import { DateTime, Settings } from 'luxon'
+import moment from 'moment-timezone'
 import MarkdownIt from 'markdown-it'
 import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
@@ -141,7 +141,7 @@ export default {
 			scrollParentWidth: Infinity,
 			schedule: null,
 			userTimezone: null,
-			now: DateTime.now(),
+			now: moment(),
 			currentDay: null,
 			currentTimezone: null,
 			favs: [],
@@ -186,18 +186,24 @@ export default {
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
 				if (this.filteredTracks && this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
-				const start = DateTime.fromISO(session.start)
-				if (this.displayDates.length && !this.displayDates.includes(start.setZone(this.schedule.timezone).toISODate())) continue
+				const start = moment.tz(session.start, this.currentTimezone)
+				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
 					id: session.code,
 					title: session.title,
 					abstract: session.abstract,
+					description: session.description,
 					do_not_record: session.do_not_record,
 					start: start,
-					end: DateTime.fromISO(session.end),
+					end: moment.tz(session.end, this.currentTimezone),
 					speakers: session.speakers?.map(s => this.speakersLookup[s]),
 					track: this.tracksLookup[session.track],
-					room: this.roomsLookup[session.room]
+					room: this.roomsLookup[session.room],
+					fav_count: session.fav_count,
+					tags: session.tags,
+					session_type: session.session_type,
+					resources: session.resources,
+					answers: session.answers,
 				})
 			}
 			sessions.sort((a, b) => a.start.diff(b.start))
@@ -210,32 +216,31 @@ export default {
 			if (!this.sessions) return
 			let days = []
 			for (const session of this.sessions) {
-				const day = session.start.setZone(this.currentTimezone).startOf('day')
-				if (!days.find(d => d.ts === day.ts)) days.push(day)
+				const day = session.start.clone().tz(this.currentTimezone).startOf('day')
+				if (!days.find(d => d.valueOf() === day.valueOf())) days.push(day)
 			}
 			days.sort((a, b) => a.diff(b))
 			return days
 		},
 		inEventTimezone () {
 			if (!this.schedule?.talks?.length) return false
-			return DateTime.local().offset === DateTime.local({ zone: this.schedule.timezone }).offset
+			return moment().utcOffset() === moment.tz(this.schedule.timezone).utcOffset()
 		},
 		dateFormat () {
-			const format = { day: 'numeric', month: 'short' }
+			// Return a moment format string for day tab headers
+			let weekday = ''
 			if (this.showGrid) {
-				// Mobile schedules always omit the weekday to preserve space, for others, we start
-				// shortening the weekday if the schedule gets unwieldy (but we shorten the month name first)
 				if (this.days && (!this.days.length || this.days.length <= 7)) {
-					format.weekday = 'long'
+					weekday = 'dddd '
 				} else {
-					format.weekday = 'short'
+					weekday = 'ddd '
 				}
 			}
+			let month = 'MMM'
 			if ((this.days && this.days.length <= 5) || (this.showGrid && this.schedule && this.schedule.rooms.length > 2)) {
-				// If we have fewer than five days or if we're on a sizeable grid schedule, we can show the long month name
-				format.month = 'long'
+				month = 'MMMM'
 			}
-			return format
+			return `${weekday}D ${month}`
 		},
 		hasAmPm () {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
@@ -258,22 +263,29 @@ export default {
 	async created () {
 		// Gotta get the fragment early, before anything else sneakily modifies it
 		const fragment = window.location.hash.slice(1)
-		Settings.defaultLocale = this.locale
-		this.userTimezone = DateTime.local().zoneName
-		let version = ''
-		if (this.version)
-			version = `v/${this.version}/`
-		const url = `${this.eventUrl}schedule/${version}widgets/schedule.json`
-		const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json`
-		// fetch from url, but fall back to legacyUrl if url fails
-		try {
-			this.schedule = await (await fetch(url)).json()
-		} catch (e) {
+		moment.locale(this.locale)
+		this.userTimezone = moment.tz.guess()
+
+		// Use inline data if available (on-site), otherwise fetch (external embed)
+		if (window.__SCHEDULE_DATA__) {
+			this.schedule = window.__SCHEDULE_DATA__
+			this.onHomeServer = true
+		} else {
+			let version = ''
+			if (this.version)
+				version = `v/${this.version}/`
+			const url = `${this.eventUrl}schedule/${version}widgets/schedule.json`
+			const legacyUrl = `${this.eventUrl}schedule/${version}widget/v2.json`
+			// fetch from url, but fall back to legacyUrl if url fails
 			try {
-				this.schedule = await (await fetch(legacyUrl)).json()
+				this.schedule = await (await fetch(url)).json()
 			} catch (e) {
-				this.scheduleError = true
-				return
+				try {
+					this.schedule = await (await fetch(legacyUrl)).json()
+				} catch (e) {
+					this.scheduleError = true
+					return
+				}
 			}
 		}
 		if (!this.schedule.talks.length) {
@@ -282,9 +294,9 @@ export default {
 		}
 		this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
 		this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
-		this.currentDay = this.days[0].toISODate()
-		this.now = DateTime.local({ zone: this.currentTimezone })
-		setInterval(() => this.now = DateTime.local({ zone: this.currentTimezone }), 30000)
+		this.currentDay = this.days[0].format('YYYY-MM-DD')
+		this.now = moment.tz(this.currentTimezone)
+		setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
 		if (!this.scrollParentResizeObserver) {
 			await this.$nextTick()
 			this.onWindowResize()
@@ -296,10 +308,10 @@ export default {
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
 		if (fragment && fragment.length === 10) {
-			const initialDay = DateTime.fromISO(fragment, { zone: this.currentTimezone })
-			const filteredDays = this.days.filter(d => d.setZone(this.timezone).toISODate() === initialDay.toISODate())
+			const initialDay = moment.tz(fragment, this.currentTimezone)
+			const filteredDays = this.days.filter(d => d.clone().tz(this.currentTimezone).format('YYYY-MM-DD') === initialDay.format('YYYY-MM-DD'))
 			if (filteredDays.length) {
-				this.currentDay = filteredDays[0].toISODate()
+				this.currentDay = filteredDays[0].format('YYYY-MM-DD')
 			}
 		}
 	},
@@ -337,15 +349,15 @@ export default {
 	methods: {
 		setCurrentDay (day) {
 			// Find best match among days, because timezones can muddle this
-			const matchingDays = this.days.filter(d => d.toISODate() === day.toISODate())
+			const matchingDays = this.days.filter(d => d.format('YYYY-MM-DD') === day.format('YYYY-MM-DD'))
 			if (matchingDays.length) {
-				this.currentDay = matchingDays[0].toISODate()
+				this.currentDay = matchingDays[0].format('YYYY-MM-DD')
 			}
 		},
 		changeDay (day) {
-			if (day.startOf('day').toISODate() === this.currentDay) return
-			this.currentDay = day.startOf('day').toISODate()
-			window.location.hash = day.toISODate()
+			if (day.clone().startOf('day').format('YYYY-MM-DD') === this.currentDay) return
+			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
+			window.location.hash = day.format('YYYY-MM-DD')
 		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth

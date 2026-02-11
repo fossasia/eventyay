@@ -587,7 +587,7 @@ class Schedule(PretalxModel):
 
         return self != self.event.current_schedule
 
-    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False):
+    def build_data(self, all_talks=False, filter_updated=None, all_rooms=False, enrich=False):
         talks = self.talks.all()
         if not all_talks:
             talks = self.talks.filter(is_visible=True)
@@ -600,6 +600,12 @@ class Schedule(PretalxModel):
             'submission__event',
             'submission__submission_type',
         ).prefetch_related('submission__speakers')
+        if enrich:
+            talks = talks.prefetch_related(
+                'submission__resources',
+                'submission__answers',
+                'submission__answers__question',
+            )
         talks = talks.order_by('start')
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
         tracks = set()
@@ -619,29 +625,47 @@ class Schedule(PretalxModel):
             if talk.submission:
                 tracks.add(talk.submission.track)
                 speakers |= set(talk.submission.speakers.all())
-                result['talks'].append(
-                    {
-                        'code': talk.submission.code if talk.submission else None,
-                        'id': talk.id,
-                        'title': (talk.submission.title if talk.submission else talk.description),
-                        'abstract': (talk.submission.abstract if talk.submission else None),
-                        'description': (talk.submission.description if talk.submission else None),
-                        'speakers': (
-                            [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
-                        ),
-                        'track': talk.submission.track_id if talk.submission else None,
-                        'start': talk.local_start,
-                        'end': talk.local_end,
-                        'room': talk.room_id,
-                        'duration': talk.submission.get_duration(),
-                        'updated': talk.updated.isoformat(),
-                        'state': talk.submission.state if all_talks else None,
-                        'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
-                        'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
-                        'tags': talk.submission.get_tag(),
-                        'session_type': talk.submission.submission_type.name,
-                    }
-                )
+                talk_data = {
+                    'code': talk.submission.code if talk.submission else None,
+                    'id': talk.id,
+                    'title': (talk.submission.title if talk.submission else talk.description),
+                    'abstract': (talk.submission.abstract if talk.submission else None),
+                    'description': (talk.submission.description if talk.submission else None),
+                    'speakers': (
+                        [speaker.code for speaker in talk.submission.speakers.all()] if talk.submission else None
+                    ),
+                    'track': talk.submission.track_id if talk.submission else None,
+                    'start': talk.local_start,
+                    'end': talk.local_end,
+                    'room': talk.room_id,
+                    'duration': talk.submission.get_duration(),
+                    'updated': talk.updated.isoformat(),
+                    'state': talk.submission.state if all_talks else None,
+                    'fav_count': (count_fav_talk(talk.submission.code) if talk.submission else 0),
+                    'do_not_record': (talk.submission.do_not_record if show_do_not_record else None),
+                    'tags': talk.submission.get_tag(),
+                    'session_type': talk.submission.submission_type.name,
+                }
+                if enrich:
+                    talk_data['resources'] = [
+                        {
+                            'resource': resource.resource.url if resource.resource else None,
+                            'description': str(resource.description),
+                            'link': resource.link,
+                        }
+                        for resource in talk.submission.resources.all()
+                    ]
+                    talk_data['answers'] = [
+                        {
+                            'question': str(answer.question.question),
+                            'answer': str(answer.answer),
+                            'question_id': answer.question_id,
+                            'options': list(answer.options.values_list('answer', flat=True)) if hasattr(answer, 'options') else [],
+                        }
+                        for answer in talk.submission.answers.all()
+                        if answer.question and answer.question.is_public
+                    ]
+                result['talks'].append(talk_data)
             else:
                 result['talks'].append(
                     {
