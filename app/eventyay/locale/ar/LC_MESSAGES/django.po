@@ -7293,7 +7293,7 @@ msgid ""
 "Sesame Street 42\n"
 "12345 Any City\n"
 "Atlantis"
-msgstr "جون دو\\nشركة نموذجية\\nشارع سمسم 42\\n12345 أي مدينة\\nأتلانتس"
+msgstr "جون دو\nشركة نموذجية\nشارع سمسم 42\n12345 أي مدينة\nأتلانتس"
 
 #: eventyay/base/pdf.py:140
 #, fuzzy
@@ -10923,7 +10923,7 @@ msgid ""
 "Best regards,\n"
 "\n"
 "Your {event} team"
-msgstr "مرحبًا،\\n\\nنرسل لك عبر هذا البريد قسيمة أو أكثر لحدث {event}:\\n\\n{voucher_list}\\n\\nيمكنك استردادها هنا في متجر التذاكر لدينا:\\n\\n{url}\\n\\nمع أطيب التحيات،\\n\\nفريق {event}"
+msgstr "مرحبًا،\n\nنرسل لك عبر هذا البريد قسيمة أو أكثر لحدث {event}:\n\n{voucher_list}\n\nيمكنك استردادها هنا في متجر التذاكر لدينا:\n\n{url}\n\nمع أطيب التحيات،\n\nفريق {event}"
 
 #: eventyay/control/forms/vouchers.py:243
 msgid "Recipients"
@@ -19747,7 +19747,7 @@ msgid ""
 "in our shop.\n"
 "\n"
 "Your {event} team"
-msgstr "مرحبًا،\\n\\nلقد قمنا برد مبلغ {amount} لطلبك.\\n\\nيمكنك استخدام رمز بطاقة الهدية {giftcard} للدفع مقابل مشتريات التذاكر المستقبلية في متجرنا.\\n\\nفريق {event}"
+msgstr "مرحبًا،\n\nلقد قمنا برد مبلغ {amount} لطلبك.\n\nيمكنك استخدام رمز بطاقة الهدية {giftcard} للدفع مقابل مشتريات التذاكر المستقبلية في متجرنا.\n\nفريق {event}"
 
 #: eventyay/control/views/orders.py:1000
 msgid "The refunds you selected do not match the selected total refund amount."
@@ -21343,7 +21343,7 @@ msgid ""
 "                    Make sure to download the export and execute the "
 "refunds.\n"
 "                "
-msgstr "\\n                    احذر أن الاستردادات ستُعلَّم كمنجزة بمجرد إنشاء عملية التصدير.\\n                    تأكد من تنزيل التصدير وتنفيذ الاستردادات.\\n                "
+msgstr "\n                    احذر أن الاستردادات ستُعلَّم كمنجزة بمجرد إنشاء عملية التصدير.\n                    تأكد من تنزيل التصدير وتنفيذ الاستردادات.\n                "
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:57
 #, fuzzy
