@@ -1294,11 +1294,6 @@ input[lang="pl-informal"],
 textarea[lang="pl-informal"] {
   background-image: url("/static/vendored/flags/pl.png");
 }
-div[lang="pt-br"],
-input[lang="pt-br"],
-textarea[lang="pt-br"] {
-  background-image: url("/static/vendored/flags/br.png");
-}
 div[lang="sw"],
 input[lang="sw"],
 textarea[lang="sw"] {
