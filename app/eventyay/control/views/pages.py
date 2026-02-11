@@ -33,7 +33,7 @@ class PageCreate(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
     def form_valid(self, form):
@@ -55,7 +55,7 @@ class PageDetailMixin:
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
 
@@ -74,7 +74,7 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages.edit',
+            'eventyay_admin:admin.pages.edit',
             kwargs={
                 'id': self.object.pk,
             },
@@ -88,11 +88,12 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
         ctx['locales'] = []
-        ctx['url'] = f'{settings.SITE_URL}/{settings.BASE_PATH}page/{self.object.slug}'
+        ctx['url'] = self.request.build_absolute_uri(
+            reverse('page', kwargs={'slug': self.object.slug})
+        )
 
         for lng_code, lng_name in settings.LANGUAGES:
             ctx['locales'].append((lng_code, lng_name))
-            ctx[f'text_{lng_code}'] = self.get_text_for_language(lng_code)
         return ctx
 
     def form_valid(self, form):
@@ -141,7 +142,14 @@ class ShowPageView(TemplateView):
 
         tags = nh3.ALLOWED_TAGS
 
-        url_schemes = nh3.DEFAULT_URL_SCHEMES | {'data'}
+        url_schemes = {
+            'http',
+            'https',
+            'mailto',
+            'tel',
+            'data',
+        }
+
 
         ctx['content'] = nh3.clean(
             str(page.text),

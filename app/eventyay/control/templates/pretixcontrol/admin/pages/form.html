@@ -6,8 +6,8 @@
 {% block title %}{% trans "Page settings" %}{% endblock %}
 {% block content %}
     {% compress css %}
-        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill.snow.css" %}">
-        <link type="text/css" rel="stylesheet" href="{% static "pages/css/quill-edit.css" %}">
+        <link type="text/css" rel="stylesheet" href="{% static 'pages/css/quill.snow.css' %}">
+        <link type="text/css" rel="stylesheet" href="{% static 'pages/css/quill-edit.css' %}">
     {% endcompress %}
     <h1>{% trans "Page settings" %}</h1>
     <div class="tabbed-form">
@@ -54,24 +54,22 @@
                                 </noscript>
 
                                 <ul class="nav nav-tabs">
-                                    {% for lng, text in locales %}
+                                    {% for lng_code, lng_name in locales %}
                                         <li role="presentation" {% if forloop.first %}class="active"{% endif %}>
-                                            <a href="#editor-{{ lng }}" data-toggle="tab">{{ text }}</a>
+                                            <a href="#editor-{{ lng_code }}" data-toggle="tab">{{ lng_name }}</a>
                                         </li>
                                     {% endfor %}
                                 </ul>
 
-                                <div class="tab-content">
-                                    {% for lng, text in locales %}
-                                        <div class="tab-pane {% if forloop.first %}active{% endif %}" id="editor-{{ lng }}">
-                                            <div class="editor" data-lng="{{ lng }}">
-                                                {{ text|safe }}
-                                            </div>
+                                <div class="tab-content" id="text-editor-tabs">
+                                    {% for lng_code, lng_name in locales %}
+                                        <div class="tab-pane {% if forloop.first %}active{% endif %}" id="editor-{{ lng_code }}">
+                                            <div class="editor" data-lng="{{ lng_code }}"></div>
                                         </div>
                                     {% endfor %}
                                 </div>
 
-                                <div class="sr-only">
+                                <div id="form-text-container" class="quill-textarea-container">
                                     {{ form.text }}
                                 </div>
                             </div>
@@ -87,6 +85,6 @@
                     </div>
         </form>
     </div>
-    <script type="application/javascript" src="{% static "pretix_pages/quill/quill.js" %}"></script>
-    <script type="application/javascript" src="{% static "pretix_pages/editor.js" %}"></script>
+    <script type="application/javascript" src="{% static 'pages/js/quill.js' %}"></script>
+    <script type="application/javascript" src="{% static 'pages/js/editor.js' %}"></script>
 {% endblock %}

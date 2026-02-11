@@ -1,7 +1,5 @@
 /*global $, Quill*/
 $(function () {
-    var page_name = $('#content').data('page-name');
-
     var slug_generated = !$("form[data-id]").attr("data-id");
     $('#id_slug').on("keydown keyup keypress", function () {
         slug_generated = false;
@@ -25,16 +23,18 @@ $(function () {
         }
     });
 
-    $('#content ul.nav-tabs a').click(function (e) {
-        e.preventDefault();
-        $(this).tab('show');
-    });
 
-
+    var textareas = $('#form-text-container').find('textarea');
     var quills = {};
-    $('.editor').each(function () {
-        const a = $(this).html($("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val());
-        quills[$(this).attr("data-lng")] = new Quill($(this).get(0), {
+    $('.editor').each(function (index) {
+        var $editor = $(this);
+        var $textarea = textareas.eq(index);
+
+        if ($textarea.length === 0) {
+            return;
+        }
+
+        var quill = new Quill($editor.get(0), {
             theme: 'snow',
             formats: [
                 'bold', 'italic', 'link', 'strike', 'code', 'underline', 'script',
@@ -42,23 +42,29 @@ $(function () {
             ],
             modules: {
                 toolbar: [
-                    [{'header': [3, 4, 5, false]}],
+                    [{ header: [3, 4, 5, false] }],
                     ['bold', 'italic', 'underline', 'strike'],
                     ['link'],
                     ['image'],
-                    [{'align': []}],
-                    [{'list': 'ordered'}, {'list': 'bullet'}],
-                    [{'script': 'sub'}, {'script': 'super'}],
+                    [{ align: [] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ script: 'sub' }, { script: 'super' }],
                     ['clean']
                 ]
             }
         });
+
+        quill.root.innerHTML = $textarea.val();
+
+        quills[index] = {
+            quill: quill,
+            textarea: $textarea
+        };
     });
 
-    $('.editor').closest('form').submit(function () {
-        $('.editor').each(function () {
-            var val = $(this).find('.ql-editor').html();
-            $("textarea[name^=" + page_name + "_content_][lang=" + $(this).attr("data-lng") + "]").val(val);
+    $('form').on('submit', function () {
+        Object.values(quills).forEach(function (item) {
+            item.textarea.val(item.quill.root.innerHTML);
         });
     });
 });

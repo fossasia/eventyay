@@ -9,3 +9,6 @@
     height: auto;
     max-width: 100%;
 }
+.quill-textarea-container textarea {
+    display: none;
+}

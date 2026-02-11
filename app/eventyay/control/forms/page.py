@@ -44,14 +44,43 @@ class PageSettingsForm(forms.ModelForm):
         return slug
 
     def clean_text(self):
-        t = self.cleaned_data['text']
-        for locale, html in t.data.items():
-            t.data[locale] = process_data_images(html, self.mimes)
-        return t
+        text = self.cleaned_data['text']
+        data = getattr(text, 'data', None)
+        if not isinstance(data, dict):
+            return text
+
+        cleaned_data = {}
+        for locale, html in data.items():
+            if html is None:
+                continue
+            if isinstance(html, str) and not html.strip():
+                continue
+            cleaned_data[locale] = process_data_images(html, self.mimes)
+
+        text.data = cleaned_data
+        return text
 
     def save(self, commit=True):
-        for locale, html in self.cleaned_data['text'].data.items():
-            self.cleaned_data['text'].data[locale] = process_data_images(html, self.mimes)
+        text = self.cleaned_data.get('text')
+        data = getattr(text, 'data', None)
+        if not isinstance(data, dict):
+            return super().save(commit)
+
+        merged_data = {}
+        existing_text = getattr(self.instance, 'text', None)
+        existing_data = getattr(existing_text, 'data', None)
+        if isinstance(existing_data, dict):
+            merged_data.update(existing_data)
+
+        for locale, html in data.items():
+            if html is None:
+                continue
+            if isinstance(html, str) and not html.strip():
+                continue
+            merged_data[locale] = html
+
+        text.data = merged_data
+        self.cleaned_data['text'] = text
         return super().save(commit)
 
 
