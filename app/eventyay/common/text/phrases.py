@@ -3,6 +3,7 @@ from abc import ABCMeta
 
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import pgettext_lazy
+from django.utils.html import format_html
 
 _phrase_book = {}
 
@@ -91,9 +92,9 @@ class BasePhrases(Phrases, app='base'):
     password_reset_nearly_done = _('Now you just need to choose your new password and you are ready to go.')
     password_reset_success = _('The password was reset.')
 
-    use_markdown = _('You can use {link_start}Markdown{link_end} here.').format(
-        link_start='<a href="https://docs.pretalx.org/user/markdown/" target="_blank" rel="noopener">',
-        link_end='</a>',
+    use_markdown = format_html(
+        '<span class="markdown-hint">{}</span>',
+        _('You can use Markdown in this field.'),
     )
     public_content = _('This content will be shown publicly.')
 
