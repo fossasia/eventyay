@@ -18,6 +18,7 @@
 					session(
 						v-for="session of featuredSessions",
 						:session="session",
+						:now="now",
 						:faved="favs.includes(session.id)",
 						@fav="$store.dispatch('schedule/fav', $event)",
 						@unfav="$store.dispatch('schedule/unfav', $event)"

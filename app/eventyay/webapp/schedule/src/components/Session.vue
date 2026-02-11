@@ -88,6 +88,7 @@ export default {
 	inject: {
 		eventUrl: { default: null },
 		linkTarget: { default: '_self' },
+		scheduleData: { default: null },
 		generateSessionLinkUrl: {
 			default () {
 				return ({eventUrl, session}) => {
@@ -114,6 +115,17 @@ export default {
 		}
 	},
 	computed: {
+		effectiveNow () {
+			return this.now ?? this.scheduleData?.now
+		},
+		effectiveTimezone () {
+			return this.timezone ?? this.scheduleData?.timezone
+		},
+		effectiveHasAmPm () {
+			// When timezone prop is explicitly passed, hasAmPm was also intentionally set
+			if (this.timezone != null) return this.hasAmPm
+			return this.scheduleData?.hasAmPm ?? this.hasAmPm
+		},
 		link () {
 			return this.generateSessionLinkUrl({eventUrl: this.eventUrl, session: this.session})
 		},
@@ -123,13 +135,14 @@ export default {
 			}
 		},
 		startTime () {
-			return getSessionTime(this.session, this.timezone, this.locale, this.hasAmPm)
+			return getSessionTime(this.session, this.effectiveTimezone, this.locale, this.effectiveHasAmPm)
 		},
 		shortDate () {
-			return this.session.start.clone().tz(this.timezone).format('MMM D')
+			return this.session.start.clone().tz(this.effectiveTimezone).format('MMM D')
 		},
 		isLive () {
-			return this.session.start < this.now && this.session.end > this.now
+			const now = this.effectiveNow
+			return now && this.session.start < now && this.session.end > now
 		},
 		abstractText () {
 			try {
