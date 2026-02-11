@@ -12,6 +12,7 @@ import SpeakerDetail from '~/components/SpeakerDetail'
 import TalkDetail from '~/components/TalkDetail'
 import ScheduleView from '~/components/ScheduleView'
 import ExportDropdown from '~/components/ExportDropdown'
+import ScheduleToolbar from '~/components/ScheduleToolbar'
 export { getLocalizedString, getPrettyDuration, getSessionTime, isProperSession, getContrastColor, getIconByFileEnding } from '~/utils'
 
 export {
@@ -28,5 +29,6 @@ export {
 	SpeakerDetail,
 	TalkDetail,
 	ScheduleView,
-	ExportDropdown
+	ExportDropdown,
+	ScheduleToolbar
 }

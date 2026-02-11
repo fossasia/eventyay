@@ -4,6 +4,12 @@
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
 	template(v-else-if="schedule && sessions.length")
+		schedule-toolbar(v-if="scheduleMeta",
+			:version="scheduleMeta.version",
+			:isCurrent="scheduleMeta.is_current",
+			:changelogUrl="scheduleMeta.changelog_url",
+			:exporters="scheduleMeta.exporters",
+			:fullscreenTarget="$el")
 		schedule-settings(
 			:tracks="schedule.tracks",
 			:filteredTracksCount="filteredTracks.length",
@@ -79,6 +85,7 @@
 import { computed } from 'vue'
 import moment from 'moment-timezone'
 import MarkdownIt from 'markdown-it'
+import ScheduleToolbar from '~/components/ScheduleToolbar'
 import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
@@ -97,7 +104,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, ScheduleSettings, SessionModal, FilterModal },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, ScheduleSettings, SessionModal, FilterModal, ScheduleToolbar },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -155,6 +162,7 @@ export default {
 			errorMessages: [],
 			displayDates: this.dateFilter?.split(',').filter(d => d.length === 10) || [],
 			modalContent: null,
+			scheduleMeta: null,
 		}
 	},
 	computed: {
@@ -287,6 +295,10 @@ export default {
 					return
 				}
 			}
+		}
+		// Read toolbar metadata (version, exporters) injected by Django
+		if (window.__SCHEDULE_META__) {
+			this.scheduleMeta = window.__SCHEDULE_META__
 		}
 		if (!this.schedule.talks.length) {
 			this.scheduleError = true

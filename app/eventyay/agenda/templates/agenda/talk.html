@@ -28,9 +28,6 @@
     <script id="pretalx-messages" data-logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}" src="{{ request.event.urls.schedule }}widget/messages.js"></script>
     {% compress js %}
         <script defer src="{% static "agenda/js/favourite.js" %}"></script>
-        <script defer src="{% static "vendored/moment-with-locales.js" %}"></script>
-        <script defer src="{% static "vendored/moment-timezone-with-data-10-year-range.js" %}"></script>
-        <script defer src="{% static "agenda/js/datetime-local.js" %}"></script>
     {% endcompress %}
 {% endblock agenda_custom_header %}
 

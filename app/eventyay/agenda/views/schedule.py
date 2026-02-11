@@ -308,6 +308,28 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
         return json.dumps(data, cls=I18nJSONEncoder)
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        exporters_list = ctx.get('exporters', [])
+        schedule = ctx.get('schedule')
+        meta = {
+            'version': schedule.version if schedule else '',
+            'is_current': schedule == self.request.event.current_schedule if schedule else False,
+            'changelog_url': str(self.request.event.urls.changelog),
+            'exporters': [
+                {
+                    'identifier': e.identifier,
+                    'verbose_name': str(e.verbose_name),
+                    'icon': e.icon,
+                    'export_url': e.export_url,
+                    'qrcode_svg': str(e.get_qrcode()) if getattr(e, 'show_qrcode', False) else '',
+                }
+                for e in exporters_list
+            ],
+        }
+        ctx['schedule_meta_json'] = json.dumps(meta)
+        return ctx
+
 
 @cache_page(60 * 60 * 24)
 def schedule_messages(request, **kwargs):

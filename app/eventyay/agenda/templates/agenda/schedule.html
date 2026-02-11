@@ -12,44 +12,6 @@
 {% endblock agenda_custom_header %}
 
 {% block header_right %}
-<details class="dropdown mr-2" aria-haspopup="menu" role="menu">
-    <summary>
-        <span>{{ phrases.schedule.version }} {{ schedule.version|default:'-' }}</span>
-        <i class="fa fa-caret-down ml-1"></i>
-    </summary>
-    <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
-        <a class="dropdown-item" href="{{ request.event.urls.changelog }}" role="menuitem" tabindex="-1">
-            <i class="fa fa-book"></i>
-            {% translate "Changelog" %}
-        </a>
-        <hr>
-        {% if schedule.version and schedule != schedule.event.current_schedule %}
-        <div class="dropdown-item text-muted" role="note" aria-disabled="true" tabindex="-1" style="pointer-events: none; cursor: default;">
-            <small>
-                {% blocktranslate trimmed with version=schedule.version %}
-                Exports and subscriptions below are for version {{ version }}.
-                {% endblocktranslate %}
-            </small>
-        </div>
-        {% endif %}
-        {% for exporter in exporters %}
-        <a class="dropdown-item" href="{{ exporter.export_url|default:exporter.urls.base }}" role="menuitem" tabindex="-1" target="_blank">
-            {% if exporter.icon|slice:":3" == "fa-" %}
-            <span class="fa {{ exporter.icon }} export-icon"></span>
-            {% else %}
-            <span class="export-icon">{{ exporter.icon }}</span>
-            {% endif %}
-            {{ exporter.verbose_name }}
-            {% if exporter.show_qrcode %}
-            <span class="export-qrcode">
-                <i class="fa fa-qrcode"></i>
-                <div class="export-qrcode-image">{{ exporter.get_qrcode }}</div>
-            </span>
-            {% endif %}
-        </a>
-        {% endfor %}
-    </div>
-</details>
 {% include "common/fragment_header_user.html" with current_event=request.event nav_context="agenda" %}
 {% endblock header_right %}
 
@@ -70,7 +32,10 @@
     </div>
     {% endif %}
 
-    <script>window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};</script>
+    <script>
+    window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
+    window.__SCHEDULE_META__ = {{ schedule_meta_json|safe }};
+    </script>
     <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
