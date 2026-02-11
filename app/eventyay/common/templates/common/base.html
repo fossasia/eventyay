@@ -129,12 +129,20 @@
                                     {{ request.user.get_display_name }} <i class="fa fa-caret-down ml-1"></i>
                                 </summary>
                                 <div id="user-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
+                                    <a href="{% url 'presale:index' %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-home mr-2 mb-1"></i>
+                                        {% translate "Home" %}
+                                    </a>
+                                    <a href="{% url 'eventyay_common:dashboard' %}" class="dropdown-item" role="menuitem" tabindex="-1">
+                                        <i class="fa fa-tachometer mr-2 mb-1"></i>
+                                        {% translate "Dashboard" %}
+                                    </a>
                                     <a href="{% url 'eventyay_common:orders' %}" class="dropdown-item" role="menuitem" tabindex="-1">
                                         <i class="fa fa-shopping-cart mr-2 mb-1"></i>
                                         {% translate "My orders" %}
                                     </a>
                                     {% user_has_submissions as has_submissions %}
-                                    {% if has_submissions and request.event and request.event.talks_published %}
+                                    {% if has_submissions and request.event.talks_published %}
                                     <a href="{% url 'cfp:event.user.submissions'  organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-item" role="menuitem" tabindex="-1">
                                         <i class="fa fa-sticky-note-o mr-2 mb-1"></i>
                                         {% translate "My proposals" %}

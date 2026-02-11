@@ -194,6 +194,3 @@ def user_has_submissions(context, event=None):
     if request is not None:
         setattr(request, cache_attr, has_submissions)
     return has_submissions
-    if submissions is None:
-        return False
-    return submissions.filter(event=event).exists()
