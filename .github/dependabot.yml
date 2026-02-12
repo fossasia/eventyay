@@ -4,7 +4,8 @@ updates:
   - package-ecosystem: "uv"
     directory: "/app"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
     versioning-strategy: increase
     ignore:
       - dependency-name: "django"
@@ -15,19 +16,23 @@ updates:
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/video"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/schedule-editor"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
 
   - package-ecosystem: "npm"
     directory: "/app/eventyay/webapp/webcheckin"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
