@@ -7,6 +7,8 @@ from django.utils import translation
 from django.utils.translation import get_language_info
 from django_scopes import get_scope
 from i18nfield.strings import LazyI18nString
+from django.core.exceptions import ObjectDoesNotExist
+
 
 from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
@@ -54,6 +56,7 @@ def _default_context(request):
         'css_file': None,
         'DEBUG': settings.DEBUG,
     }
+
     _html_head = []
     _html_page_header = []
     _html_foot = []
@@ -100,52 +103,19 @@ def _default_context(request):
             else:
                 _footer.append(response)
 
-        if not request.event.settings.get('presale_css_file'):
-            lock_key = f'presale:regenerate_css:{request.event.pk}'
-            if cache.add(lock_key, True, 60):
-                try:
-                    from eventyay.presale.style import regenerate_css
-                    regenerate_css.apply_async(args=(request.event.pk,))
-                except Exception:
-                    cache.delete(lock_key)
-                    logger.warning(
-                        'Could not enqueue presale CSS regeneration for %s/%s',
-                        request.event.organizer.slug,
-                        request.event.slug,
-                        exc_info=True,
-                    )
-
         if request.event.settings.presale_css_file:
             ctx['css_file'] = default_storage.url(request.event.settings.presale_css_file)
-
-        # FIXME: We should avoid hardcoding truncate length here.
-        # It is not flexible because it requires the media folder to be at "/data/media/".
-        ctx['event_logo'] = request.event.settings.get('logo_image', as_type=str, default='')[7:]
-        ctx['event_logo_image'] = request.event.settings.get('event_logo_image', as_type=str, default='')[7:]
-        try:
-            ctx['social_image'] = request.event.cache.get_or_set('social_image_url', request.event.social_image, 60)
-        except (ValueError, OSError) as e:
-            logger.error('Could not generate social image. Error: %s', e)
 
         ctx['event'] = request.event
         ctx['languages'] = [_safe_language_info(code) for code in request.event.settings.locales]
 
-        if request.resolver_match:
-            ctx['cart_namespace'] = request.resolver_match.kwargs.get('cart_namespace', '')
     elif hasattr(request, 'organizer'):
         ctx['languages'] = [_safe_language_info(code) for code in request.organizer.settings.locales]
 
     if hasattr(request, 'organizer'):
-        if request.organizer.settings.presale_css_file and not hasattr(request, 'event'):
-            ctx['css_file'] = default_storage.url(request.organizer.settings.presale_css_file)
-        ctx['organizer_logo'] = request.organizer.settings.get('organizer_logo_image', as_type=str, default='')[7:]
-        ctx['organizer_homepage_text'] = request.organizer.settings.get(
-            'organizer_homepage_text', as_type=LazyI18nString
-        )
         ctx['organizer'] = request.organizer
 
     ctx['base_path'] = settings.BASE_PATH
-
     ctx['html_head'] = ''.join(h for h in _html_head if h)
     ctx['html_foot'] = ''.join(h for h in _html_foot if h)
     ctx['html_page_header'] = ''.join(h for h in _html_page_header if h)
@@ -156,16 +126,23 @@ def _default_context(request):
     ctx['js_date_format'] = get_javascript_format_without_seconds('DATE_INPUT_FORMATS')
     ctx['js_time_format'] = get_javascript_format_without_seconds('TIME_INPUT_FORMATS')
     ctx['js_locale'] = get_moment_locale()
+
     lang = get_language_without_region()
     try:
-        ctx['html_locale'] = translation.get_language_info(lang).get('public_code', translation.get_language())
+        ctx['html_locale'] = translation.get_language_info(lang).get(
+            'public_code', translation.get_language()
+        )
     except KeyError:
         ctx['html_locale'] = translation.get_language()
+
     ctx['settings'] = eventyay_settings
     ctx['django_settings'] = settings
 
-    # Check to show organizer area
+    # ------------------------------------
+    # Organizer area visibility
+    # ------------------------------------
     ctx['show_organizer_area'] = False
+
     if (
         request.user
         and request.user.is_authenticated
@@ -181,7 +158,35 @@ def _default_context(request):
             request=request,
         )
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
+    # ------------------------------------
+    # CFP visibility logic
+    # ------------------------------------
+    ctx['has_submissions'] = False
+    ctx['talk_component_published'] = False
+
+    if (
+        request.user
+        and request.user.is_authenticated
+        and hasattr(request, 'event')
+        and request.event
+    ):
+        try:
+            from eventyay.cfp.models import Submission
+
+            ctx['has_submissions'] = Submission.objects.filter(
+                event=request.event,
+                speakers__user=request.user
+            ).exists()
+        except (ImportError, ObjectDoesNotExist):
+            ctx['has_submissions'] = False
+
+        try:
+            cfp = request.event.cfp
+            ctx['talk_component_published'] = bool(cfp.is_public)
+        except (AttributeError, ObjectDoesNotExist):
+            ctx['talk_component_published'] = False
+
+    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
+    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
 
     return ctx
