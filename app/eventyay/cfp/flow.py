@@ -107,7 +107,7 @@ class BaseCfPStep:
     def is_applicable(self, request):
         return True
 
-    def is_completed(self, request):
+    def is_completed(self, request, not_strict=False):
         raise NotImplementedError()
 
     @cached_property
@@ -447,7 +447,8 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         form.instance.event = self.event
         form.save()
         submission = form.instance
-        submission.speakers.add(request.user)
+        if request.user.is_authenticated:
+            submission.speakers.add(request.user)
         if draft:
             submission.state = SubmissionStates.DRAFT
             submission.save()
@@ -520,6 +521,8 @@ class UserStep(GenericFlowStep, FormFlowStep):
         if not getattr(request.user, 'is_authenticated', False):
             form = self.get_form(from_storage=True, not_strict=draft)
             if not form.is_valid():
+                if draft:
+                    return # Allow draft even if account info is missing for now (it won't be saved to DB anyway)
                 return
             uid = form.save()
             request.user = User.objects.filter(pk=uid).first()

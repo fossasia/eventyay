@@ -154,7 +154,7 @@ class SpeakerProfileForm(
 
     def clean(self):
         data = super().clean()
-        if self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
+        if not self.not_strict and self.event.cfp.require_avatar and not data.get('avatar') and not data.get('get_gravatar'):
             self.add_error(
                 'avatar',
                 forms.ValidationError(

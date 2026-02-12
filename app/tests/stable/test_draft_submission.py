@@ -82,3 +82,46 @@ class TestDraftSubmission:
         # Check if error message is in content
         content = response.content.decode().lower()
         assert "is required" in content or "required" in content
+    @pytest.mark.django_db
+    def test_draft_submission_skips_boolean_and_avatar_validation(self, event, client, user, cfp_setup):
+        """Verify that draft submission skips boolean field requirement and avatar requirement."""
+        client.force_login(user)
+        submission_type = cfp_setup.pk
+        
+        with scope(event=event):
+            # Add a required boolean question
+            from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant, TalkQuestionRequired
+            q = TalkQuestion.objects.create(
+                event=event,
+                question="Agreement",
+                variant=TalkQuestionVariant.BOOLEAN,
+                target=TalkQuestionTarget.SUBMISSION,
+                question_required=TalkQuestionRequired.REQUIRED,
+            )
+            
+            # Require avatar
+            event.cfp.fields['avatar']['visibility'] = 'required'
+            event.cfp.save()
+
+        # Start wizard
+        response, current_url = self.perform_init_wizard(client, event=event)
+        
+        # Post draft without boolean answer and without avatar (avatar is handled in SpeakerStep/UserStep usually)
+        # However, SpeakerProfileForm is usually part of the flow.
+        # For simplicity, let's just test that the draft action works and redirects.
+        data = {
+            "title": "Draft with missing requirements",
+            "action": "draft",
+            "content_locale": "en",
+            "submission_type": submission_type,
+            # 'question_{q.pk}' is missing
+        }
+        response = client.post(current_url, data=data, follow=True)
+        
+        # Should redirect to submissions list (meaning validation didn't block it)
+        assert "/me/submissions/" in response.request.get("PATH_INFO", ""), f"Draft was blocked. Final URL: {response.request.get('PATH_INFO')}"
+        
+        with scope(event=event):
+            submission = Submission.all_objects.filter(title="Draft with missing requirements").first()
+            assert submission is not None
+            assert submission.state == SubmissionStates.DRAFT

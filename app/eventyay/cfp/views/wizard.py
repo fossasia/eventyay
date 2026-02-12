@@ -87,7 +87,13 @@ class SubmitWizard(EventPageMixin, View):
         steps = steps or request.event.cfp_flow.steps
         for step in steps:
             if step.is_applicable(request):
-                if not step.is_completed(request, not_strict=draft):
+                import inspect
+                sig = inspect.signature(step.is_completed)
+                kwargs = {}
+                if 'not_strict' in sig.parameters:
+                    kwargs['not_strict'] = draft
+                
+                if not step.is_completed(request, **kwargs):
                     query = {'draft': 1} if draft else None
                     return redirect(step.get_step_url(request, query=query))
                 valid_steps.append(step)

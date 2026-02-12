@@ -222,7 +222,7 @@ class QuestionFieldsMixin:
             # itself.
             widget = (
                 forms.CheckboxInput(attrs={'required': 'required', 'placeholder': ''})
-                if question.required
+                if question.required and not not_strict
                 else forms.CheckboxInput()
             )
 
