@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import logging
 import random
@@ -191,17 +192,27 @@ class BBBService:
                 async with session.get(URL(url, encoded=True), timeout=timeout) as resp:
                     if resp.status != 200:
                         logger.error(
-                            f"Could not contact BBB. Return code: {resp.status}"
+                            "Could not contact BBB. Return code: %s",
+                            resp.status,
                         )
                         return False
 
                     body = await resp.text()
 
-                root = etree.fromstring(body)
-                if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body}")
+                try:
+                    root = etree.fromstring(body)
+                except etree.XMLSyntaxError:
+                    logger.warning(
+                        "BBB response contained malformed XML",
+                        extra={"url": url},
+                    )
                     return False
-        except Exception:
+
+                returncode_nodes = root.xpath("returncode")
+                if not returncode_nodes or returncode_nodes[0].text != "SUCCESS":
+                    logger.error("Could not contact BBB. Response: %s", body)
+                    return False
+        except (aiohttp.ClientError, asyncio.TimeoutError):
             logger.exception("Could not contact BBB.")
             return False
         return root
@@ -216,17 +227,27 @@ class BBBService:
                 ) as resp:
                     if resp.status != 200:
                         logger.error(
-                            f"Could not contact BBB. Return code: {resp.status}"
+                            "Could not contact BBB. Return code: %s",
+                            resp.status,
                         )
                         return False
 
                     body = await resp.text()
 
-                root = etree.fromstring(body)
-                if root.xpath("returncode")[0].text != "SUCCESS":
-                    logger.error(f"Could not contact BBB. Response: {body}")
+                try:
+                    root = etree.fromstring(body)
+                except etree.XMLSyntaxError:
+                    logger.warning(
+                        "BBB response contained malformed XML",
+                        extra={"url": url},
+                    )
                     return False
-        except Exception:
+
+                returncode_nodes = root.xpath("returncode")
+                if not returncode_nodes or returncode_nodes[0].text != "SUCCESS":
+                    logger.error("Could not contact BBB. Response: %s", body)
+                    return False
+        except (aiohttp.ClientError, asyncio.TimeoutError):
             logger.exception("Could not contact BBB.")
             return False
         return root
@@ -363,55 +384,102 @@ class BBBService:
             )
         )
 
+    def _is_recording_published(self, state):
+        if not state:
+            return False
+        return state.lower() == "published"
+
     async def get_recordings_for_room(self, room):
+        def get_node_text(node, path):
+            nodes = node.xpath(path)
+            if not nodes:
+                return None
+            return nodes[0].text
+
+        def parse_int(value):
+            if value is None:
+                return None
+            return int(value)
+
         recordings = []
         for server in await self._get_possible_servers():
-            try:
-                call = await get_call_for_room(room)
-                recordings_url = get_url(
-                    "getRecordings",
-                    {"meetingID": call.meeting_id, "state": "any"},
-                    server.url,
-                    server.secret,
+            call = await get_call_for_room(room)
+            if not call:
+                continue
+            recordings_url = get_url(
+                "getRecordings",
+                {"meetingID": call.meeting_id, "state": "any"},
+                server.url,
+                server.secret,
+            )
+            root = await self._get(recordings_url, timeout=10)
+            if root is False:
+                logger.warning(
+                    "BBB recordings request failed",
+                    extra={
+                        "server_url": server.url,
+                        "event_id": self.event.id,
+                        "room_id": room.id,
+                    },
                 )
-                root = await self._get(recordings_url, timeout=10)
-                if root is False:
-                    return []
+                continue
 
-                tz = pytz.timezone(self.event.timezone)
-                for rec in root.xpath("recordings/recording"):
-                    url_presentation = url_screenshare = url_video = url_notes = None
+            tz = pytz.timezone(self.event.timezone)
+            for rec in root.xpath("recordings/recording"):
+                try:
+                    state = get_node_text(rec, "state")
+                    if not self._is_recording_published(state):
+                        continue
+
+                    start_time = parse_int(get_node_text(rec, "startTime"))
+                    end_time = parse_int(get_node_text(rec, "endTime"))
+                    participants = parse_int(get_node_text(rec, "participants"))
+                    if start_time is None or end_time is None or participants is None:
+                        continue
+
+                    url_presentation = None
+                    url_screenshare = None
+                    url_video = None
+                    url_notes = None
                     for f in rec.xpath("playback/format"):
-                        if f.xpath("type")[0].text == "presentation":
-                            url_presentation = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "screenshare":
-                            url_screenshare = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "video":
-                            url_video = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "notes":
-                            url_notes = f.xpath("url")[0].text
-                        if f.xpath("type")[0].text == "Video":
-                            url_video = f.xpath("url")[0].text
+                        format_type = get_node_text(f, "type")
+                        format_url = get_node_text(f, "url")
+                        if not format_type or not format_url:
+                            continue
+                        if format_type == "presentation":
+                            url_presentation = format_url
+                        elif format_type == "screenshare":
+                            url_screenshare = format_url
+                        elif format_type == "video":
+                            url_video = format_url
+                        elif format_type == "notes":
+                            url_notes = format_url
+                        elif format_type == "Video":
+                            url_video = format_url
                             # Work around an upstream bug
                             if "///" in url_video:
                                 url_video = url_video.replace(
                                     "///",
-                                    f"//{urlparse(recordings_url).hostname}/",
+                                    "//{}/".format(
+                                        urlparse(recordings_url).hostname
+                                    ),
                                 )
-                        if (
-                            not url_presentation
-                            and not url_screenshare
-                            and not url_video
-                            and not url_notes
-                        ):
-                            continue
+
+                    if (
+                        not url_presentation
+                        and not url_screenshare
+                        and not url_video
+                        and not url_notes
+                    ):
+                        continue
+
                     recordings.append(
                         {
                             "start": (
                                 # BBB outputs timestamps in server time, not UTC :( Let's assume the BBB server time
                                 # is the same as ours…
                                 datetime.fromtimestamp(
-                                    int(rec.xpath("startTime")[0].text) / 1000,
+                                    start_time / 1000,
                                     pytz.timezone(settings.TIME_ZONE),
                                 )
                             )
@@ -419,20 +487,28 @@ class BBBService:
                             .isoformat(),
                             "end": (
                                 datetime.fromtimestamp(
-                                    int(rec.xpath("endTime")[0].text) / 1000,
+                                    end_time / 1000,
                                     pytz.timezone(settings.TIME_ZONE),
                                 )
                             )
                             .astimezone(tz)
                             .isoformat(),
-                            "participants": rec.xpath("participants")[0].text,
-                            "state": rec.xpath("state")[0].text,
+                            "participants": participants,
+                            "state": state,
                             "url": url_presentation,
                             "url_video": url_video,
                             "url_screenshare": url_screenshare,
                             "url_notes": url_notes,
                         }
                     )
-            except Exception:
-                logger.exception(f"Could not fetch recordings from server {server}")
+                except (TypeError, ValueError, IndexError):
+                    logger.warning(
+                        "BBB recording entry malformed",
+                        extra={
+                            "server_url": server.url,
+                            "event_id": self.event.id,
+                            "room_id": room.id,
+                        },
+                    )
+                    continue
         return recordings
