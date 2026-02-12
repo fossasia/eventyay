@@ -254,7 +254,7 @@ async function initializeIframe(mute) {
 			}
 		}
 	} catch (error) {
-		joinErrorMessage.value = getJoinErrorMessage(error)
+		getJoinErrorKey.value = getJoinErrorKey(error)
 		iframeError.value = null
 		console.error('MediaSource join failed:', error)
 	}
