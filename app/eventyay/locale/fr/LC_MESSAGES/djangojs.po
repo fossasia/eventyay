@@ -717,7 +717,7 @@ msgstr "Moins précédent"
 #: eventyay/static/pretixpresale/js/widget/widget.js:48
 msgctxt "widget"
 msgid "Next week"
-msgstr "Semaine prochaine"
+msgstr "Moins précédent"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:49
 #, fuzzy
