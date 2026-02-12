@@ -6,24 +6,23 @@
 {% load eventurl %}
 <!DOCTYPE html>
 <html{% if rtl %} dir="rtl" class="rtl"{% endif %}>
-	<head>
-		<title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
+    <head>
+        <title>{% block title %}{% endblock %}{% if url_name != "index" %} :: {% endif %}
             {{ settings.INSTANCE_NAME }}</title>
-		{% compress css %}
-    		<link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
+        {% compress css %}
+            <link rel="stylesheet" type="text/x-scss" href="{% static 'pretixcontrol/scss/main.scss' %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static 'lightbox/css/lightbox.scss' %}" />
             <link rel="stylesheet" type="text/css" href="{% static 'common/css/_dropdown.css' %}" />
-            <link rel="stylesheet" type="text/css" href="{% static 'common/css/_component_nav_mobile.css' %}" />
             <link rel="stylesheet" href="{% static 'eventyay-common/css/dashboard.css' %}">
             <link rel="stylesheet" href="{% static 'eventyay-common/css/settings.css' %}" />
-		{% endcompress %}
+        {% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
                     defer></script>
         {% else %}
             <script src="{% statici18n request.LANGUAGE_CODE %}" async></script>
         {% endif %}
-		{% compress js %}
+        {% compress js %}
             <script type="text/javascript" src="{% static "jquery/js/jquery-2.1.1.min.js" %}"></script>
             <script type="text/javascript" src="{% static "js/jquery.formset.js" %}"></script>
             <script type="text/javascript" src="{% static "typeahead/typeahead.bundle.js" %}"></script>
@@ -42,7 +41,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/clipboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/menu.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/sb-admin-2.js" %}"></script>
-		    <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
+            <script type="text/javascript" src="{% static "pretixcontrol/js/ui/main.js" %}"></script>
             <script type="text/javascript" src="{% static 'pretixcontrol/js/ui/geo.js' %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quota.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/subevent.js" %}"></script>
@@ -66,8 +65,8 @@
             <script type="text/javascript" src="{% static 'eventyay-common/js/ui/popover.js' %}"></script>
             <script type="text/javascript" src="{% static 'utils/js/utils.js' %}"></script>
             <script type="text/javascript" src="{% static 'eventyay-common/js/ui/team.js' %}"></script>
-			<script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
-		{% endcompress %}
+            <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
+        {% endcompress %}
         {{ html_head|safe }}
 
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -89,8 +88,8 @@
         <meta name="referrer" content="origin">
 
         {% block custom_header %}{% endblock %}
-	</head>
-	<body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
+    </head>
+    <body data-datetimeformat="{{ js_datetime_format }}" data-timeformat="{{ js_time_format }}"
             data-dateformat="{{ js_date_format }}" data-datetimelocale="{{ js_locale }}"
             data-pretixlocale="{{ request.LANGUAGE_CODE }}"
             data-payment-weekdays-disabled="{{ js_payment_weekdays_disabled }}"
@@ -106,15 +105,43 @@
                         <span class="sr-only">{% trans "Toggle sidebar" %}</span>
                         <i class="fa fa-bars fa-lg"></i>
                     </button>
-                    <div class="navbar-header">
+                    <div class="navbar-header" style="display: flex; align-items: center;">
                         <div class="nav-item nav-logo">
                         <a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
                             <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
                             <span class="brand-text">{{ settings.INSTANCE_NAME }}</span>
                         </a>
                         </div>
+                        
+                        {% if request.event %}
+                            <div class="nav-item">
+                                {% if has_domain and not request.event.live %}
+                                <form action="{% eventurl request.event 'presale:event.auth' %}"
+                                        method="post"
+                                        target="_blank"
+                                        class="form-inline helper-display-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" value="{{ new_session }}" name="session">
+                                    <button type="submit" class="btn btn-link" style="padding: 0 10px; color: white;">
+                                        <i class="fa fa-eye"></i>
+                                        <span class="hidden-xs" style="margin-left: 5px;">{% trans "View event" %}</span>
+                                    </button>
+                                </form>
+                                {% else %}
+                                <a href="{% eventurl request.event 'presale:event.index' %}"
+                                    title="{% translate 'View event' %}"
+                                    aria-label="{% translate 'View event' %}"
+                                    style="margin-left: 10px; color: white; text-decoration: none; display: flex; align-items: center;"
+                                    target="_blank">
+                                    <i class="fa fa-eye"></i>
+                                    <span class="hidden-xs" style="margin-left: 5px;">{% trans "View event" %}</span>
+                                </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
                     </div>
                     </div>
+
                     <div class="navbar-right-group">
                     <ul class="nav navbar-nav navbar-top-links navbar-right flip">
                         {% if request.user.is_staff and not staff_session %}
@@ -137,38 +164,7 @@
                         </li>
                         {% endif %}
                         {% include "common/fragment_language_switch.html" %}
-                        {% if request.event %}
-                        <li class="nav-item {% if request.user.is_staff %}nav-admin{% endif %}">
-                    {% endif %}
-                    <a class="navbar-brand" href="{% url 'presale:index' %}">
-                        <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
-                        {{ settings.INSTANCE_NAME }}
-                    </a>
-                </div>
-                <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
-                    {% if request.event %}
-                        <li>
-                            {% if has_domain and not request.event.live %}
-                            <form action="{% eventurl request.event 'presale:event.auth' %}"
-                                    method="post"
-                                    target="_blank"
-                                    class="form-inline">
-                                {% csrf_token %}
-                                <input type="hidden" value="{{ new_session }}" name="session">
-                                <button type="submit" class="btn btn-link">
-                                <i class="fa fa-eye"></i>
-                                </button>
-                            </form>
-                            {% else %}
-                            <a href="{% eventurl request.event 'presale:event.index' %}"
-                                title="{% translate 'View event' %}"
-                                aria-label="{% translate 'View event' %}"
-                                target="_blank">
-                                <i class="fa fa-eye"></i>
-                            </a>
-                            {% endif %}
-                        </li>
-                        {% endif %}
+                        
                         {% include "common/fragment_profile_dropdown.html" %}
                     </ul>
                     </div>
@@ -255,8 +251,9 @@
                         {% for nav in nav_items %}
                             <li class="nav-item {% if nav.admin_only %}nav-admin{% endif %}">
                             <a href="{{ nav.url }}"
-                                class="{% if nav.active %}active {% endif %}{% if nav.children %}has-children{% endif %}"
-                                {% if nav.external %}target="_blank"{% endif %}>
+                                {% if nav.active %}class="active"{% endif %}
+                                {% if nav.external %}target="_blank"{% endif %}
+                                {% if nav.children %}class="has-children"{% endif %}>
                                 {% if nav.icon %}
                                 {% if "<svg" in nav.icon %}
                                     {{ nav.icon|safe }}
@@ -417,5 +414,5 @@
         {{ talk_hostname|json_script:"talk_hostname_url" }}
         <span id="user-language-code" data-lang="{{ request.LANGUAGE_CODE|escapejs }}" style="display:none;"></span>
         <script type="module" src="{% static 'common/js/language-storage.js' %}"></script>
-	</body>
+    </body>
 </html>

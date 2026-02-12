@@ -1088,12 +1088,6 @@ h1 .label {
         height: auto;
         overflow-y: visible;
         box-sizing: border-box;
-        padding: 0 10px;
-    }
-
-    #page-wrapper > .container-fluid {
-        padding-left: 4px;
-        padding-right: 4px;
     }
 }
 
@@ -1158,12 +1152,16 @@ h1 .label {
     margin-left: -22px;
   }
 
+  nav.navbar .navbar-top-links > li.nav-admin:first-of-type {
+    margin-left: -22px;
+  }
+
   nav.navbar .navbar-top-links {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
     margin-left: auto;
-    gap: 8px;
+    gap: 0px;
   }
 
   nav.navbar .navbar-top-links > li {
@@ -1181,7 +1179,7 @@ h1 .label {
 
   nav.navbar .nav-admin .sidebar-text {
     display: inline-block;
-    margin-left: 6px;
+    margin-left: 2px;
     white-space: nowrap;
 }
   nav.navbar .navbar-top-links > li.nav-admin:nth-of-type(3) { order: 2; }
@@ -1193,10 +1191,4 @@ h1 .label {
   nav.navbar .desktop-only { display: none; }
 }
 
-nav.navbar .mobile-only {
-    display: none;
-}
 
-nav.navbar .desktop-only {
-    display: inline;
-}
