@@ -153,7 +153,7 @@ msgstr "Billet non payé"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:50
 msgid "This ticket is not yet paid. Do you want to continue anyways?"
-msgstr "Ce billet n'est pas encore payé. Voulez-vous quand même continuer?"
+msgstr "Ce billet n'est pas encore payé. Voulez-vous quand même continuer ?"
 
 #: eventyay/plugins/webcheckin/static/pretixplugins/webcheckin/main.js:51
 msgid "Additional information required"
