@@ -50,14 +50,11 @@
 
 nav.navbar {
   margin: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   z-index: 1100;
   font-weight: 500;
   min-height: 50px;
-  height: 50px;
+  height: auto;
 }
 
 /* ============================================
@@ -69,7 +66,7 @@ nav.navbar {
 
 nav.navbar.navbar-inverse {
   background-color: #2185d0;
-  border-color: transparent;
+  border-bottom: 1px solid #1a69a4;
 }
 
 nav.navbar.navbar-inverse .navbar-top-links a,
@@ -230,11 +227,14 @@ nav.navbar.navbar-inverse .navbar-brand:focus,
   margin: 0;
   padding: 0;
   list-style: none;
-  height: 50px;
+  height: auto;
+  min-height: 50px;
+  flex-wrap: wrap;
 }
 
 .navbar-top-links.navbar-right {
   float: right !important;
+  margin: 7.5px 0;
 }
 
 .navbar-top-links.navbar-left {
@@ -399,4 +399,28 @@ nav.navbar.navbar-inverse #button-sudo:focus i,
   .hidden-xs {
     display: none !important;
   }
+}
+
+.mobile-navbar-view-form {
+  float: right;
+}
+
+.mobile-navbar-view-form button {
+  position: relative;
+  margin-right: 15px;
+  padding: 6px 10px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  background-color: transparent;
+  background-image: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-weight: normal;
+  color: white !important;
+}
+
+.mobile-navbar-view-link {
+  padding: 6px 10px;
+  color: white !important;
+  font-weight: normal;
 }
