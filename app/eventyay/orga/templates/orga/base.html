@@ -54,7 +54,7 @@
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?target=orga&c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% compress js %}
-        	<script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}"></script>
+            <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}"></script>
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/collapse.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
