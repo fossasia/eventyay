@@ -138,7 +138,7 @@ function unmuteYouTubePlayer() {
 	}
 }
 
-function getJoinErrorMessage(error) {
+function getJoinErrorKey(error) {
 	const code =
 		error?.apiError?.code ??
 		error?.error ??
