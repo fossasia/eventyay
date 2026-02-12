@@ -23161,7 +23161,7 @@ msgstr ""
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base.html:12
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base_organizer.html:9
 msgid "Import currently running…"
-msgstr ""
+msgstr "Import en cours…"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base.html:14
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base_organizer.html:11
@@ -23234,11 +23234,11 @@ msgstr "Montant"
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:69
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:75
 msgid "up to"
-msgstr ""
+msgstr "jusqu'à"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:81
 msgid "Clear"
-msgstr ""
+msgstr "Effacer"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:90
 msgid "Discard all"
@@ -23266,7 +23266,7 @@ msgstr "Une erreur interne s'est produite lors du traitement de vos données."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:19
 msgid "Some transactions might be missing, please try to re-import the file."
-msgstr ""
+msgstr "Certaines transactions peuvent manquer, veuillez essayer de réimporter le fichier."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:23
 msgid ""
@@ -23304,20 +23304,22 @@ msgid ""
 "After you sent the bank transfer, you can close this window. We will send "
 "you an email as soon as we received your payment."
 msgstr ""
+"Après avoir envoyé le virement bancaire, vous pouvez fermer cette fenêtre. Nous enverrons "
+"un e-mail dès que nous aurons reçu votre paiement."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:63
 msgid "Open banking app"
-msgstr ""
+msgstr "Ouvrir l'application bancaire"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:65
 msgid "Requires that the app supports BezahlCode"
-msgstr ""
+msgstr "Nécessite que l'application prenne en charge BezahlCode"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:5
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:10
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:7
 msgid "Export bank transfer refunds"
-msgstr ""
+msgstr "Exporter les remboursements par virement bancaire"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:16
 #, python-format
@@ -23325,16 +23327,20 @@ msgid ""
 "<strong>%(num_new)s</strong> Bank transfer refunds have been placed and are "
 "not yet part of an export."
 msgstr ""
+"<strong>%(num_new)s</strong> remboursements par virement bancaire ont été effectués et "
+"ne font pas encore partie d'un export."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:22
 msgid "In test mode, your exports will only contain test mode orders."
-msgstr ""
+msgstr "En mode test, vos exports ne contiendront que des commandes en mode test."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:26
 msgid ""
 "If you want, you can now also create these exports for multiple events "
 "combined."
 msgstr ""
+"Si vous le souhaitez, vous pouvez maintenant aussi créer ces exports pour plusieurs événements "
+"combinés."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:29
 #, fuzzy
@@ -23363,6 +23369,12 @@ msgid ""
 "refunds.\n"
 "                "
 msgstr ""
+"\n"
+"                    Veuillez noter que les remboursements seront marqués comme effectués dès qu'un "
+"export est créé.\n"
+"                    Assurez-vous de télécharger l'export et d'exécuter les "
+"remboursements.\n"
+"                "
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:57
 #, fuzzy
@@ -23398,7 +23410,7 @@ msgstr "Date de téléchargement"
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:93
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:104
 msgid "SEPA XML"
-msgstr ""
+msgstr "XML SEPA"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/refund_export.html:113
 #, fuzzy
@@ -23409,7 +23421,7 @@ msgstr "La nouvelle date a été créée."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:10
 msgid "Export SEPA xml"
-msgstr ""
+msgstr "Exporter le XML SEPA"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:13
 #, python-format
@@ -23420,12 +23432,17 @@ msgid_plural ""
 "You are trying to download a refund export from %(date)s with %(cnt)s order "
 "and a total of %(sum)s."
 msgstr[0] ""
+"Vous essayez de télécharger un export de remboursements daté du %(date)s avec une commande et "
+"un total de %(sum)s."
 msgstr[1] ""
+"Vous essayez de télécharger un export de remboursements daté du %(date)s avec %(cnt)s commandes et "
+"un total de %(sum)s."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
 "Please state from which bank account the refunds should be transferred from."
 msgstr ""
+"Veuillez indiquer depuis quel compte bancaire les remboursements doivent être transférés."
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:34
 #, fuzzy
@@ -23488,6 +23505,8 @@ msgid ""
 "Negative amount but refund can't be logged, please create manual refund "
 "first."
 msgstr ""
+"Montant négatif mais le remboursement ne peut pas être enregistré, veuillez créer un remboursement manuel "
+"d'abord."
 
 #: eventyay/plugins/banktransfer/views.py:126
 msgid "Problem sending email."
@@ -23580,6 +23599,8 @@ msgid ""
 "We could not find bank account information for the refund {refund_id}. It "
 "was marked as failed."
 msgstr ""
+"Nous n'avons pas pu trouver les informations de compte bancaire pour le remboursement {refund_id}. Il "
+"a été marqué comme échoué."
 
 #: eventyay/plugins/banktransfer/views.py:668
 #, fuzzy
@@ -23654,7 +23675,7 @@ msgstr "Secret"
 
 #: eventyay/plugins/checkinlists/exporters.py:563
 msgid "Check-in log (all successful scans)"
-msgstr ""
+msgstr "Journal d'enregistrement (tous les scans réussis)"
 
 #: eventyay/plugins/checkinlists/exporters.py:574
 #, fuzzy
@@ -23682,7 +23703,7 @@ msgstr "Listes d'enregistrement"
 
 #: eventyay/plugins/manualpayment/apps.py:15
 msgid "This plugin adds a customizable payment method for manual processing."
-msgstr ""
+msgstr "Ce plugin ajoute un moyen de paiement personnalisable pour un traitement manuel."
 
 #: eventyay/plugins/pretixdroid/apps.py:9 eventyay/plugins/pretixdroid/apps.py:12
 #, fuzzy
@@ -23743,7 +23764,7 @@ msgstr "Taxes incluses"
 #: eventyay/plugins/reports/exporters.py:235
 #, python-brace-format
 msgid "{axis} between {start} and {end}"
-msgstr ""
+msgstr "{axis} entre {start} et {end}"
 
 #: eventyay/plugins/reports/exporters.py:267
 #: eventyay/plugins/reports/exporters.py:268
@@ -23814,6 +23835,8 @@ msgid ""
 "This plugin allows to link to payments and redirect back afterwards. This is "
 "useful in combination with our API."
 msgstr ""
+"Ce plugin permet de lier aux paiements et de rediriger ensuite. Ceci est "
+"utile en combinaison avec notre API."
 
 #: eventyay/plugins/returnurl/signals.py:44
 #, fuzzy
@@ -23826,6 +23849,8 @@ msgid ""
 "This feature is useful if you use only the payment component of eventyay but "
 "build your own checkout interface for other steps."
 msgstr ""
+"Cette fonctionnalité est utile si vous utilisez uniquement le composant de paiement d'eventyay mais "
+"construisez votre propre interface de paiement pour les autres étapes."
 
 #: eventyay/plugins/returnurl/views.py:14
 #, fuzzy
@@ -23835,7 +23860,7 @@ msgstr "URI de redirection"
 
 #: eventyay/plugins/returnurl/views.py:15
 msgid "Redirection will only be allowed to URLs that start with this prefix."
-msgstr ""
+msgstr "La redirection ne sera autorisée que vers des URL qui commencent par ce préfixe."
 
 #: eventyay/plugins/sendmail/apps.py:16
 msgid "This plugin allows you to send out emails to all your customers."
@@ -23847,7 +23872,7 @@ msgstr "Envoyer un email à"
 
 #: eventyay/plugins/sendmail/forms.py:27
 msgid "Attachment"
-msgstr ""
+msgstr "Pièce jointe"
 
 #: eventyay/plugins/sendmail/forms.py:34
 msgid ""
@@ -23855,6 +23880,9 @@ msgid ""
 "being sorted into spam folders. We recommend only using PDFs of no more than "
 "2 MB in size."
 msgstr ""
+"Envoyer une pièce jointe augmente le risque que votre e-mail n'arrive pas ou "
+"soit classé dans les dossiers spam. Nous recommandons d'utiliser uniquement des PDF d'une taille maximale de "
+"2 MB."
 
 #: eventyay/plugins/sendmail/forms.py:42
 msgid "Only send to people who bought"
@@ -23906,21 +23934,23 @@ msgstr "Envoyer uniquement aux clients de"
 
 #: eventyay/plugins/sendmail/forms.py:108
 msgid "Everyone who created a ticket order"
-msgstr ""
+msgstr "Toute personne qui a créé une commande de billets"
 
 #: eventyay/plugins/sendmail/forms.py:112
 msgid ""
 "Every attendee (falling back to the order contact when no attendee email "
 "address is given)"
 msgstr ""
+"Chaque participant (en utilisant le contact de commande lorsqu'aucune adresse e-mail de participant "
+"n'est fournie)"
 
 #: eventyay/plugins/sendmail/forms.py:114
 msgid "Both (all order contact addresses and all attendee email addresses)"
-msgstr ""
+msgstr "Les deux (toutes les adresses de contact de commande et toutes les adresses e-mail des participants)"
 
 #: eventyay/plugins/sendmail/forms.py:131 eventyay/plugins/sendmail/views.py:220
 msgid "payment pending (except unapproved)"
-msgstr ""
+msgstr "paiement en attente (sauf non approuvé)"
 
 #: eventyay/plugins/sendmail/forms.py:132 eventyay/plugins/sendmail/views.py:221
 #, fuzzy
@@ -24007,7 +24037,7 @@ msgstr ""
 
 #: eventyay/plugins/socialauth/apps.py:9 eventyay/plugins/socialauth/apps.py:12
 msgid "SocialAuth"
-msgstr ""
+msgstr "SocialAuth"
 
 #: eventyay/plugins/socialauth/apps.py:13
 #, fuzzy
@@ -24041,27 +24071,31 @@ msgstr "Générer un nouveau secret d'application"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:3
 msgid "Social Login Setup"
-msgstr ""
+msgstr "Configuration de la connexion sociale"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:4
 msgid ""
 "To enable social login for providers, you first need to create an OAuth "
 "application on the provider's website."
 msgstr ""
+"Pour activer la connexion sociale pour les fournisseurs, vous devez d'abord créer une application OAuth "
+"sur le site web du fournisseur."
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:6
 msgid ""
 "Note: When running tests on the server, the tickets component URL is "
 "typically"
 msgstr ""
+"Remarque: Lors de l'exécution des tests sur le serveur, l'URL du composant des billets est "
+"généralement"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:9
 msgid "Therefore, the complete callback URL should be"
-msgstr ""
+msgstr "Par conséquent, l'URL de rappel complète doit être"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:12
 msgid "If you are running on localhost, the callback URL is"
-msgstr ""
+msgstr "Si vous exécutez sur localhost, l'URL de rappel est"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:17
 #, fuzzy
@@ -24085,31 +24119,33 @@ msgstr "Facturation"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:23
 msgid "Follow the setup guide:"
-msgstr ""
+msgstr "Suivez le guide de configuration:"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:26
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:42
 msgid "Set the callback URL to:"
-msgstr ""
+msgstr "Définissez l'URL de rappel sur:"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:31
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:47
 msgid "Add the client ID and client secret to admin settings"
-msgstr ""
+msgstr "Ajoutez l'ID client et le secret client aux paramètres d'administration"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:36
 msgid "II. GitHub OAuth Application"
-msgstr ""
+msgstr "II. Application OAuth GitHub"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:52
 msgid "III. MediaWiki OAuth Application"
-msgstr ""
+msgstr "III. Application OAuth MediaWiki"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:54
 msgid ""
 "To enable MediaWiki social login for your Eventyay instance, you need to "
 "register an OAuth application with MediaWiki."
 msgstr ""
+"Pour activer la connexion sociale MediaWiki pour votre instance Eventyay, vous devez "
+"enregistrer une application OAuth auprès de MediaWiki."
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:57
 #, fuzzy
@@ -24119,11 +24155,11 @@ msgstr "Tous les participants"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:59
 msgid "The OAuth application must be approved by a MediaWiki administrator"
-msgstr ""
+msgstr "L'application OAuth doit être approuvée par un administrateur MediaWiki"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:60
 msgid "Until approved, only the application owner can log in"
-msgstr ""
+msgstr "Tant qu'elle n'est pas approuvée, seul le propriétaire de l'application peut se connecter"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:63
 #, fuzzy
@@ -24139,11 +24175,11 @@ msgstr "Enregistrer une nouvelle application"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:68
 msgid "Click \"Propose new OAuth 2.0 client\""
-msgstr ""
+msgstr "Cliquez sur \"Propose new OAuth 2.0 client\""
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:70
 msgid "On the form enter"
-msgstr ""
+msgstr "Dans le formulaire, saisissez"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:72
 #, fuzzy
@@ -24159,7 +24195,7 @@ msgstr "Description du produit"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:75
 msgid "Set Oauth \"callback\" URL to:"
-msgstr ""
+msgstr "Définissez l'URL \"callback\" Oauth sur:"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:80
 #, fuzzy
@@ -24169,7 +24205,7 @@ msgstr "Adresse de contact"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:81
 msgid "Tick \"Client is confidential\""
-msgstr ""
+msgstr "Cochez \"Client is confidential\""
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:82
 #, fuzzy
@@ -24180,11 +24216,11 @@ msgstr "Créer une date"
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:83
 msgid "Tick \"Refresh token\""
-msgstr ""
+msgstr "Cochez \"Refresh token\""
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:84
 msgid "Choose \"Request authorization for specific permissions.\""
-msgstr ""
+msgstr "Choisissez \"Request authorization for specific permissions.\""
 
 #: eventyay/plugins/socialauth/templates/socialauth/social_setup.html:85
 msgid ""
@@ -26695,19 +26731,19 @@ msgstr "Swahili"
 
 #: eventyay/settings.py:482
 msgid "Turkish"
-msgstr ""
+msgstr "Turc"
 
 #: eventyay/settings.py:483
 msgid "Ukrainian"
-msgstr ""
+msgstr "Ukrainien"
 
 #: eventyay/settings.py:809
 msgid "User profile only"
-msgstr ""
+msgstr "Profil utilisateur uniquement"
 
 #: eventyay/settings.py:810
 msgid "Read access"
-msgstr ""
+msgstr "Accès en lecture"
 
 #: eventyay/settings.py:811
 msgid "Write access"
@@ -26715,7 +26751,7 @@ msgstr "Accès en écriture"
 
 #: eventyay/settings.py:822
 msgid "Kosovo"
-msgstr ""
+msgstr "Kosovo"
 
 #: pretalx/agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -27257,7 +27293,7 @@ msgstr ""
 
 #: pretalx/cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
-msgstr ""
+msgstr "Définissez votre mot de passe pour accéder à votre profil et à vos propositions"
 
 #: pretalx/cfp/templates/cfp/event/submission_base.html:10
 #: pretalx/orga/templates/orga/submission/content.html:27
@@ -27785,6 +27821,8 @@ msgid ""
 "The file you uploaded has a very large number of pixels, please upload a "
 "picture with smaller dimensions."
 msgstr ""
+"Le fichier que vous avez téléversé contient un très grand nombre de pixels, veuillez téléverser une "
+"image avec des dimensions plus petites."
 
 #: pretalx/common/image.py:54
 msgid ""
@@ -28165,7 +28203,7 @@ msgstr "Courriel personnalisé"
 
 #: pretalx/common/log_display.py:196
 msgid "Response to custom field"
-msgstr ""
+msgstr "Réponse au champ personnalisé"
 
 #: pretalx/common/log_display.py:199 pretalx/orga/templates/orga/base.html:246
 #: pretalx/orga/templates/orga/cfp/text.html:20
@@ -28435,12 +28473,12 @@ msgstr "Aucun fichier"
 
 #: pretalx/common/templates/common/question_answer.html:16
 msgid "No response"
-msgstr ""
+msgstr "Aucune réponse"
 
 #: pretalx/common/templates/common/redirect.html:7
 #: pretalx/common/templates/common/redirect.html:13
 msgid "Redirect"
-msgstr ""
+msgstr "Redirection"
 
 #: pretalx/common/templates/common/redirect.html:15
 #, python-format
@@ -28448,15 +28486,17 @@ msgid ""
 "The link you clicked on wants to redirect you to a destination on the "
 "website %(host)s."
 msgstr ""
+"Le lien sur lequel vous avez cliqué souhaite vous rediriger vers une destination sur le "
+"site web %(host)s."
 
 #: pretalx/common/templates/common/redirect.html:18
 msgid "Please only proceed if you trust this website to be safe."
-msgstr ""
+msgstr "Veuillez continuer uniquement si vous pensez que ce site web est sûr."
 
 #: pretalx/common/templates/common/redirect.html:24
 #, python-format
 msgid "Proceed to %(host)s"
-msgstr ""
+msgstr "Continuer vers %(host)s"
 
 #: pretalx/common/templatetags/times.py:14
 msgid "once"
@@ -29587,7 +29627,7 @@ msgstr "Votre proposition : {submission_title}"
 
 #: pretalx/mail/models.py:35
 msgid "New proposal (organiser notification)"
-msgstr ""
+msgstr "Nouvelle proposition (notification de l'organisateur)"
 
 #: pretalx/mail/models.py:37
 #, fuzzy
@@ -29603,11 +29643,11 @@ msgstr "Flux des propositions"
 
 #: pretalx/mail/models.py:40
 msgid "Add a speaker to a proposal (new account)"
-msgstr ""
+msgstr "Ajouter un intervenant à une proposition (nouveau compte)"
 
 #: pretalx/mail/models.py:43
 msgid "Add a speaker to a proposal (existing account)"
-msgstr ""
+msgstr "Ajouter un intervenant à une proposition (compte existant)"
 
 #: pretalx/mail/models.py:45
 #: pretalx/orga/templates/orga/cfp/question/remind.html:18
@@ -29768,7 +29808,7 @@ msgstr ""
 
 #: pretalx/orga/forms/cfp.py:58
 msgid "Allow submitters to share a secret link to their proposal with others."
-msgstr ""
+msgstr "Autoriser les soumetteurs à partager un lien secret vers leur proposition avec d'autres."
 
 #: pretalx/orga/forms/cfp.py:148
 msgid "Display deadline publicly"
@@ -30148,6 +30188,8 @@ msgid ""
 "The password contains unsupported letters. Please only use characters A-Z, a-"
 "z, 0-9, and common special characters ({characters})."
 msgstr ""
+"Le mot de passe contient des lettres non prises en charge. Veuillez utiliser uniquement les caractères A-Z, a-"
+"z, 0-9, et les caractères spéciaux courants ({characters})."
 
 #: pretalx/orga/forms/event.py:467
 msgid "You have to provide a sender address if you use a custom SMTP server."
@@ -30179,6 +30221,8 @@ msgid ""
 "Allow organisers and reviewers to comment on submissions, separate from "
 "reviews."
 msgstr ""
+"Autoriser les organisateurs et les relecteurs à commenter les soumissions, séparément des "
+"évaluations."
 
 #: pretalx/orga/forms/event.py:531
 msgid "Require a review score"
@@ -30524,11 +30568,11 @@ msgstr "Noms des intervenants"
 
 #: pretalx/orga/forms/schedule.py:121 pretalx/orga/forms/schedule.py:140
 msgid "date"
-msgstr ""
+msgstr "date"
 
 #: pretalx/orga/forms/schedule.py:129 pretalx/orga/forms/schedule.py:145
 msgid "time"
-msgstr ""
+msgstr "heure"
 
 #: pretalx/orga/forms/schedule.py:150
 msgid "Median score"
@@ -30639,7 +30683,7 @@ msgstr "Langues de contenu"
 
 #: pretalx/orga/forms/submission.py:296
 msgid "The language in which the speaker will receive their invitation email."
-msgstr ""
+msgstr "La langue dans laquelle l'intervenant recevra son e-mail d'invitation."
 
 #: pretalx/orga/forms/submission.py:312
 #, fuzzy
@@ -31134,7 +31178,7 @@ msgstr ""
 #: pretalx/orga/templates/orga/cfp/question/detail.html:76
 #: pretalx/submission/models/question.py:358
 msgid "Response"
-msgstr ""
+msgstr "Réponse"
 
 #: pretalx/orga/templates/orga/cfp/question/detail.html:78
 #, python-format
@@ -31187,7 +31231,7 @@ msgstr "actif"
 
 #: pretalx/orga/templates/orga/cfp/question/list.html:56
 msgid "Responses"
-msgstr ""
+msgstr "Réponses"
 
 #: pretalx/orga/templates/orga/cfp/question/list.html:71
 #, fuzzy
@@ -31522,6 +31566,8 @@ msgid ""
 "You are currently in the organiser area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
 msgstr ""
+"Vous êtes actuellement dans l'espace organisateur d'eventyay. Pour voir vos propositions soumises, veuillez aller directement à la "
+"page de l'événement:"
 
 #: pretalx/orga/templates/orga/includes/dashboard_block_event.html:13
 #: pretalx/orga/templates/orga/speaker/form.html:38
@@ -31541,7 +31587,7 @@ msgstr "Non public"
 
 #: pretalx/orga/templates/orga/includes/event_links_formset.html:47
 msgid "Add link"
-msgstr ""
+msgstr "Ajouter un lien"
 
 #: pretalx/orga/templates/orga/includes/mail_template_role.html:3
 msgid "Accept email"
@@ -31818,7 +31864,7 @@ msgstr "Tout envoyer"
 
 #: pretalx/orga/templates/orga/mails/outbox_list.html:38
 msgid "The current filters will be used when sending/discarding emails."
-msgstr ""
+msgstr "Les filtres actuels seront utilisés lors de l'envoi/de la suppression des e-mails."
 
 #: pretalx/orga/templates/orga/mails/outbox_list.html:50
 #: pretalx/orga/templates/orga/mails/outbox_list.html:55
@@ -32505,7 +32551,7 @@ msgstr ""
 
 #: pretalx/orga/templates/orga/settings/form.html:59
 msgid "Design"
-msgstr ""
+msgstr "Conception"
 
 #: pretalx/orga/templates/orga/settings/form.html:90
 #, fuzzy
@@ -32520,16 +32566,22 @@ msgid ""
 "example link to your home page, your registration page, or your livestream "
 "here."
 msgstr ""
+"Ces liens seront affichés en haut de toutes vos pages liées au planning, "
+"par ex. le planning lui-même, les pages des intervenants, les pages de sessions, etc. Vous pourriez par "
+"exemple créer un lien vers votre page d'accueil, votre page d'inscription, ou votre diffusion en direct "
+"ici."
 
 #: pretalx/orga/templates/orga/settings/form.html:108
 msgid "Footer links"
-msgstr ""
+msgstr "Liens de pied de page"
 
 #: pretalx/orga/templates/orga/settings/form.html:113
 msgid ""
 "These links will be shown in the footer of all your public pages. You could "
 "for example link your terms of service, imprint, or privacy policy here."
 msgstr ""
+"Ces liens seront affichés dans le pied de page de toutes vos pages publiques. Vous pourriez "
+"par exemple y lier vos conditions d'utilisation, mentions légales, ou politique de confidentialité."
 
 #: pretalx/orga/templates/orga/settings/mail.html:33
 msgid ""
@@ -33087,15 +33139,15 @@ msgstr "Version"
 
 #: pretalx/orga/templates/orga/user.html:50
 msgid "Last used"
-msgstr ""
+msgstr "Dernière utilisation"
 
 #: pretalx/orga/templates/orga/user.html:51
 msgid "Created"
-msgstr ""
+msgstr "Créé"
 
 #: pretalx/orga/templates/orga/user.html:68
 msgid "Updgrade"
-msgstr ""
+msgstr "Mise à niveau"
 
 #: pretalx/orga/templates/orga/user.html:97
 #, fuzzy
@@ -33138,7 +33190,7 @@ msgstr "{} minutes, #{}, {}, {}"
 
 #: pretalx/orga/views/cfp.py:62
 msgid "Fields"
-msgstr ""
+msgstr "Champs"
 
 #: pretalx/orga/views/cfp.py:258
 #, fuzzy
@@ -33334,7 +33386,7 @@ msgstr "Seule la dernière phase d'évaluation peut être ouverte/fermée."
 
 #: pretalx/orga/views/event.py:356
 msgid "All review phases except for the first one need a start date."
-msgstr ""
+msgstr "Toutes les phases d'évaluation sauf la première nécessitent une date de début."
 
 #: pretalx/orga/views/event.py:362
 #, python-brace-format
@@ -33485,6 +33537,8 @@ msgid ""
 "The template has been saved - note that already pending emails that are "
 "based on this template will not be changed!"
 msgstr ""
+"Le modèle a été enregistré - notez que les e-mails déjà en attente qui sont "
+"basés sur ce modèle ne seront pas modifiés !"
 
 #: pretalx/orga/views/mails.py:516
 #, fuzzy
@@ -33783,7 +33837,7 @@ msgstr "Date butoir"
 #: pretalx/orga/views/submission.py:1010
 #, python-brace-format
 msgid "Your comment on “{title}”"
-msgstr ""
+msgstr "Votre commentaire sur “{title}”"
 
 #: pretalx/orga/views/submission.py:1025
 #, fuzzy
@@ -33816,7 +33870,7 @@ msgstr "Tout envoyer"
 
 #: pretalx/person/forms/auth_token.py:24
 msgid "Read and write all endpoints"
-msgstr ""
+msgstr "Lire et écrire tous les points de terminaison"
 
 #: pretalx/person/forms/auth_token.py:25
 #, fuzzy
@@ -33826,16 +33880,16 @@ msgstr "Permissions"
 
 #: pretalx/person/forms/auth_token.py:27
 msgid "Choose a preset or configure detailed permissions below."
-msgstr ""
+msgstr "Choisissez un préréglage ou configurez des autorisations détaillées ci-dessous."
 
 #: pretalx/person/forms/auth_token.py:83
 #, python-brace-format
 msgid "Invalid permissions selected: {perms}"
-msgstr ""
+msgstr "Autorisations invalides sélectionnées: {perms}"
 
 #: pretalx/person/forms/profile.py:39
 msgid "There already exists an account for this email address."
-msgstr ""
+msgstr "Un compte existe déjà pour cette adresse e-mail."
 
 #: pretalx/person/forms/profile.py:132
 msgid ""
@@ -33862,7 +33916,7 @@ msgstr "Pas arrivé"
 
 #: pretalx/person/forms/user.py:29
 msgid "display name"
-msgstr ""
+msgstr "nom d'affichage"
 
 #: pretalx/person/forms/user.py:43
 msgid "Password (again)"
@@ -33925,7 +33979,7 @@ msgstr "L'intervenant est arrivé"
 
 #: pretalx/person/models/user.py:86
 msgid "Your username must not contain HTML or other markup."
-msgstr ""
+msgstr "Votre nom d'utilisateur ne doit pas contenir de HTML ou d'autres balises."
 
 #: pretalx/person/models/user.py:125
 msgid ""
@@ -33948,6 +34002,8 @@ msgid ""
 "We recommend uploading an image at least 400px wide. A square image works "
 "best, as we display it in a circle in several places."
 msgstr ""
+"Nous recommandons de téléverser une image d'au moins 400px de large. Une image carrée fonctionne "
+"le mieux, car nous l'affichons dans un cercle à plusieurs endroits."
 
 #: pretalx/person/models/user.py:177
 msgid "Retrieve profile picture via gravatar"
@@ -34007,10 +34063,19 @@ msgid ""
 "All the best,\n"
 "the eventyay team"
 msgstr ""
+"Bonjour {name},\n"
+"\n"
+"Le mot de passe de votre compte eventyay vient d'être modifié.\n"
+"\n"
+"Si vous n'avez pas changé votre mot de passe, veuillez contacter l'administration du site "
+"immédiatement.\n"
+"\n"
+"Cordialement,\n"
+"l'équipe eventyay"
 
 #: pretalx/person/models/user.py:548
 msgid "[eventyay] Password changed"
-msgstr ""
+msgstr "[eventyay] Mot de passe modifié"
 
 #: pretalx/schedule/ascii.py:24
 msgid "No speakers"
@@ -34233,7 +34298,7 @@ msgstr "Portugais"
 
 #: pretalx/settings.py:435
 msgid "Vietnamese"
-msgstr ""
+msgstr "Vietnamien"
 
 #: pretalx/settings.py:441
 msgid "Traditional Chinese (Taiwan)"
@@ -34478,7 +34543,7 @@ msgstr "Types de proposition"
 
 #: pretalx/submission/models/question.py:184
 msgid "Label"
-msgstr ""
+msgstr "Étiquette"
 
 #: pretalx/submission/models/question.py:189
 msgid "help text"
@@ -34848,16 +34913,16 @@ msgid "not accepted"
 msgstr "rejeté"
 
 msgid "Availabilities"
-msgstr ""
+msgstr "Disponibilités"
 
 msgid "Filter sessions"
-msgstr ""
+msgstr "Filtrer les sessions"
 
 msgid "New break"
-msgstr ""
+msgstr "Nouvelle pause"
 
 msgid "Drag the box to the schedule to create a new break"
-msgstr ""
+msgstr "Faites glisser la zone vers le planning pour créer une nouvelle pause"
 
 #~ msgid "Yes/No"
 #~ msgstr "Oui/Non"
