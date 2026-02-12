@@ -74,10 +74,11 @@ class PageSettingsForm(forms.ModelForm):
 
         for locale, html in data.items():
             if html is None:
-                continue
+                continue   
             if isinstance(html, str) and not html.strip():
-                continue
-            merged_data[locale] = html
+                merged_data.pop(locale, None)
+            else:
+                merged_data[locale] = html
 
         text.data = merged_data
         self.cleaned_data['text'] = text

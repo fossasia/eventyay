@@ -53,7 +53,7 @@ $(function () {
                 ]
             }
         });
-
+        document.documentElement.classList.add('js-quill-enabled');
         quill.clipboard.dangerouslyPasteHTML($textarea.val() || '');
 
         quills[index] = {

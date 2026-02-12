@@ -10,5 +10,14 @@
     max-width: 100%;
 }
 .quill-textarea-container textarea {
-    display: none;
+    width: 100%;
+    min-height: 200px;
+}
+
+.js-quill-enabled .quill-textarea-container textarea {
+    position: absolute;
+    left: -9999px;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
 }
