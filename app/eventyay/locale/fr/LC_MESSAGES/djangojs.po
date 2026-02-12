@@ -712,20 +712,17 @@ msgstr "Mois suivant"
 #: eventyay/static/pretixpresale/js/widget/widget.js:47
 msgctxt "widget"
 msgid "Previous month"
-msgstr "Moins précédent"
+msgstr "Mois précédent"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:48
 msgctxt "widget"
 msgid "Next week"
-msgstr "Moins précédent"
+msgstr "Semaine prochaine"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:49
-#, fuzzy
-#| msgctxt "widget"
-#| msgid "Previous month"
 msgctxt "widget"
 msgid "Previous week"
-msgstr "Moins précédent"
+msgstr "Semaine précédente"
 
 #: eventyay/static/pretixpresale/js/widget/widget.js:50
 msgctxt "widget"
