@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-05-06 10:28+0000\n"
-"PO-Revision-Date: 2026-02-11 21:42+0000\n"
+"PO-Revision-Date: 2026-02-12 12:09+0000\n"
 "Last-Translator: Arnav Angarkar <arnav.angarkar20@gmail.com>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -35,7 +35,7 @@ msgstr "eventyay (mode kiosque, en ligne uniquement)"
 
 #: eventyay/api/auth/devicesecurity.py:80
 msgid "eventyay"
-msgstr "1. Télécharger eventyaydesk"
+msgstr "eventyay"
 
 #: eventyay/api/models.py:18
 msgid "Application name"
@@ -23159,7 +23159,7 @@ msgstr ""
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base.html:12
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base_organizer.html:9
 msgid "Import currently running…"
-msgstr ""
+msgstr "Importation en cours…"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base.html:14
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_base_organizer.html:11
@@ -23232,11 +23232,12 @@ msgstr "Montant"
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:69
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:75
 msgid "up to"
-msgstr ""
+msgstr "jusqu’à"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:81
+#, fuzzy
 msgid "Clear"
-msgstr ""
+msgstr "Effacer"
 
 #: eventyay/plugins/banktransfer/templates/pretixplugins/banktransfer/import_form.html:90
 msgid "Discard all"
