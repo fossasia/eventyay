@@ -45,7 +45,7 @@ const store = useStore()
 const route = useRoute()
 
 const iframeError = ref(null)
-const joinErrorMessage = ref(null)
+const joinErrorKey = ref(null)
 const iframeEl = ref(null)
 const languageIframeUrl = ref(null)
 const isUnmounted = ref(false)
