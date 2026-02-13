@@ -1866,6 +1866,14 @@ class Event(
                 break
         return result
 
+    @property
+    def talks_testmode(self):
+        return self.settings.get('talks_testmode', False, as_type=bool)
+
+    @property
+    def has_component_testmode(self):
+        return bool(self.testmode or self.talks_testmode)
+
     def user_can_view_tickets(self, user=None, request=None):
         private_tickets = self.private_testmode and self.settings.get(
             'private_testmode_tickets', True, as_type=bool

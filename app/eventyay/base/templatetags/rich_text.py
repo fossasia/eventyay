@@ -47,6 +47,7 @@ ALLOWED_TAGS = {
     'li',
     'ol',
     'strong',
+    'u',
     'ul',
     'p',
     'pre',
@@ -191,10 +192,16 @@ md = markdown.Markdown(
 )
 
 
+def compile_markdown(text: str) -> str:
+    if not text:
+        return ''
+    return md.reset().convert(str(text))
+
+
 def render_markdown(text: str, cleaner=CLEANER) -> str:
     if not text:
         return ''
-    body_md = cleaner.clean(md.reset().convert(str(text)))
+    body_md = cleaner.clean(compile_markdown(text))
     return mark_safe(body_md)
 
 
