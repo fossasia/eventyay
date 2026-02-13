@@ -20,6 +20,6 @@ class UserOrderFilterForm(forms.Form):
 
         if user and user.is_authenticated:
             # Query distinct events based on the user's orders
-            queryset = Event.objects.annotate(lower_email=Lower('orders__email'))
-            events = queryset.filter(lower_email__in=user.email_addresses).distinct()
+            queryset = Event.objects.annotate(order_email=Lower('orders__email'))
+            events = queryset.filter(order_email__in=user.email_addresses).distinct()
             self.fields['event'].queryset = events

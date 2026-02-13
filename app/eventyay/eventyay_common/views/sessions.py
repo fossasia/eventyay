@@ -23,8 +23,8 @@ class MySessionsView(LoginRequiredMixin, ListView):
         user = cast(User, self.request.user)
         with scopes_disabled():
             qs = (
-                Submission.objects.annotate(lower_email=Lower('speakers__email'))
-                .filter(lower_email__in=user.email_addresses)
+                Submission.objects.annotate(speaker_email=Lower('speakers__email'))
+                .filter(speaker_email__in=user.email_addresses)
                 .select_related('event', 'event__organizer', 'submission_type')
                 .order_by('-event__date_from')
             )

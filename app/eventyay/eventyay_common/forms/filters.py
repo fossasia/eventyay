@@ -23,7 +23,7 @@ class UserOrderFilterForm(forms.Form):
         if user:
             # Query distinct events based on the user's orders.
             # user.email_addresses already provides lowercase emails.
-            events = Event.objects.annotate(email=Lower('orders__email')).filter(email__in=user.email_addresses)
+            events = Event.objects.annotate(order_email=Lower('orders__email')).filter(order_email__in=user.email_addresses)
             self.fields['event'].queryset = events.distinct()
 
 
@@ -49,6 +49,6 @@ class SessionsFilterForm(forms.Form):
         if user:
             # Query distinct events based on the user's proposals
             # user.email_addresses already provides lowercase emails.
-            events = Event.objects.annotate(email=Lower('submissions__speakers__email'))
-            events = events.filter(email__in=user.email_addresses)
+            events = Event.objects.annotate(speaker_email=Lower('submissions__speakers__email'))
+            events = events.filter(speaker_email__in=user.email_addresses)
             self.fields['event'].queryset = events.distinct()

@@ -21,9 +21,9 @@ class MyOrdersView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user = cast(User, self.request.user)
-        queryset = Order.objects.annotate(lower_email=Lower('email')).select_related('event')
+        queryset = Order.objects.annotate(email_lower=Lower('email')).select_related('event')
         # The user.email_addresses already contains lowercased emails
-        queryset = queryset.filter(Q(lower_email__in=user.email_addresses)).order_by('-datetime')
+        queryset = queryset.filter(Q(email_lower__in=user.email_addresses)).order_by('-datetime')
 
         # Filter by event if provided
         filter_form = UserOrderFilterForm(self.request.GET, user=user)

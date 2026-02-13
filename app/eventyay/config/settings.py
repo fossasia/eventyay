@@ -21,7 +21,7 @@ from redis.backoff import ExponentialBackoff
 from rich import print
 
 from eventyay import __version__
-from eventyay.consts import DEFAULT_PLUGINS, EVENTYAY_EMAIL_NONE_VALUE, SizeKey
+from eventyay.consts import DEFAULT_PLUGINS, SizeKey
 
 
 # To avoid loading unnecessary environment variables
@@ -544,11 +544,12 @@ TEMPLATES = (
     },
 )
 
-# TODO: Align with django-allauth, because we are using multi-email addresses.
 # See: https://django-allauth.readthedocs.io/en/latest/configuration.html
 AUTHENTICATION_BACKENDS = (
     'rules.permissions.ObjectPermissionBackend',
     'django.contrib.auth.backends.ModelBackend',
+    # To support multiple email addresses per user, we use django-allauth's authentication backend.
+    'allauth.account.auth_backends.AuthenticationBackend',
 )
 
 # Password validation

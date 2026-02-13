@@ -27,7 +27,6 @@ from rest_framework import views
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
-from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.services.quotas import QuotaAvailability
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
