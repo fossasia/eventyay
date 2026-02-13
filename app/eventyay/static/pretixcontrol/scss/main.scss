@@ -1148,10 +1148,6 @@ h1 .label {
     flex-shrink: 0;
   }
 
-  nav.navbar .navbar-top-links > li.nav-admin:first-of-type {
-    margin-left: -22px;
-  }
-
   nav.navbar .navbar-top-links {
     display: flex;
     align-items: center;
@@ -1178,8 +1174,8 @@ h1 .label {
     margin-left: 2px;
     white-space: nowrap;
 }
-  nav.navbar .navbar-top-links > li.nav-admin:nth-of-type(3) { order: 2; }
-  nav.navbar .navbar-top-links > li.nav-admin:nth-of-type(1) { order: 3; }
+  nav.navbar .navbar-top-links > li.nav-admin:nth-child(3) { order: 2; }
+  nav.navbar .navbar-top-links > li.nav-admin:nth-child(1) { order: 3; }
   nav.navbar .navbar-top-links > li.nav-lang { order: 4; }
   nav.navbar .navbar-top-links > li.nav-user { order: 5; }
 
