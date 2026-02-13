@@ -26,7 +26,6 @@ class TalkQuestionsForm(CfPFormMixin, QuestionFieldsMixin, forms.Form):
         else:
             target_object = self.speaker
         readonly = kwargs.pop('readonly', False)
-        self.not_strict = kwargs.pop('not_strict', False)
 
         super().__init__(*args, **kwargs)
 
