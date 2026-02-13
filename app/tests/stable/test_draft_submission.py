@@ -1,6 +1,9 @@
 import pytest
 from django_scopes import scope
-from eventyay.base.models import Submission, SubmissionType, CfP, SubmissionStates
+from eventyay.base.models import (
+    Submission, SubmissionType, CfP, SubmissionStates,
+    TalkQuestion, TalkQuestionTarget, TalkQuestionVariant, TalkQuestionRequired,
+)
 
 class TestDraftSubmission:
 
@@ -86,7 +89,7 @@ class TestDraftSubmission:
         
         with scope(event=event):
             # Add a required boolean question
-            from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant, TalkQuestionRequired
+            # Add a required boolean question
             TalkQuestion.objects.create(
                 event=event,
                 question="Agreement",

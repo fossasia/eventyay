@@ -427,6 +427,11 @@ class InfoStep(GenericFlowStep, FormFlowStep):
     def done(self, request, draft=False):
         self.request = request
         form = self.get_form(from_storage=True, not_strict=draft)
+        
+        # Inject default title for drafts if missing, so validation passes
+        if draft and not form.data.get('title'):
+            form.data['title'] = str(_('Draft Proposal'))
+
         # Ensure the instance is updated with data from session
         is_valid = form.is_valid()
         if not is_valid:
@@ -442,8 +447,6 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                 return
             raise ValidationError(form.errors.as_json())
 
-        if draft and not form.instance.title:
-            form.instance.title = _('Draft Proposal')
         form.instance.event = self.event
         form.save()
         submission = form.instance
@@ -521,8 +524,6 @@ class UserStep(GenericFlowStep, FormFlowStep):
         if not getattr(request.user, 'is_authenticated', False):
             form = self.get_form(from_storage=True, not_strict=draft)
             if not form.is_valid():
-                if draft:
-                    return # Allow draft even if account info is missing for now (it won't be saved to DB anyway)
                 return
             uid = form.save()
             request.user = User.objects.filter(pk=uid).first()

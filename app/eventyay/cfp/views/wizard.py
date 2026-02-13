@@ -1,3 +1,4 @@
+import inspect
 import logging
 
 from django.contrib import messages
@@ -87,7 +88,6 @@ class SubmitWizard(EventPageMixin, View):
         steps = steps or request.event.cfp_flow.steps
         for step in steps:
             if step.is_applicable(request):
-                import inspect
                 sig = inspect.signature(step.is_completed)
                 kwargs = {}
                 if 'not_strict' in sig.parameters:
