@@ -50,7 +50,8 @@ def short_user_label(user: User | AnonymousUser | None) -> str:
     if not user or not user.is_authenticated:
         return ''
     # Try using first part of full name
-    label = user.fullname.split()[0] if user.fullname else ''
+    name_parts = user.fullname.split() if user.fullname else []
+    label = name_parts[0] if name_parts else ''
     if not label:
         # Fall back to first part of primary email
         label = user.primary_email.split('@')[0]
