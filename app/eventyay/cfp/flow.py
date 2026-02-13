@@ -322,8 +322,8 @@ class FormFlowStep(TemplateFlowStep):
                     messages.error(
                         self.request,
                         _(
-                            'Your draft could not be saved as a submission because some fields are still missing. '
-                            'Your current inputs on this step have been kept, but please fix the errors below.'
+                            'Your draft could not be saved because there are errors in your submission. '
+                            'Your current inputs on this step have been kept; please review and fix the errors below.'
                         ),
                     )
                     self.set_data(form.data)  # Keep current input in the session even if invalid
