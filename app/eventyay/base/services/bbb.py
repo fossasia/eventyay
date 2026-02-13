@@ -215,6 +215,9 @@ class BBBService:
         except (aiohttp.ClientError, asyncio.TimeoutError):
             logger.exception("Could not contact BBB.")
             return False
+        except Exception:
+            logger.exception("Unexpected error while contacting BBB")
+            return False
         return root
 
     async def _post(self, url, xmldata):
@@ -249,6 +252,9 @@ class BBBService:
                     return False
         except (aiohttp.ClientError, asyncio.TimeoutError):
             logger.exception("Could not contact BBB.")
+            return False
+        except Exception:
+            logger.exception("Unexpected error while contacting BBB")
             return False
         return root
 
@@ -495,7 +501,7 @@ class BBBService:
                             .astimezone(tz)
                             .isoformat(),
                             "participants": participants,
-                            "state": state,
+                            "state": state.lower() if state else state,
                             "url": url_presentation,
                             "url_video": url_video,
                             "url_screenshare": url_screenshare,

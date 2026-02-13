@@ -1,4 +1,3 @@
-
 import re
 import uuid
 from contextlib import asynccontextmanager
@@ -8,7 +7,7 @@ from aioresponses import aioresponses
 from channels.db import database_sync_to_async
 from channels.testing import WebsocketCommunicator
 
-from venueless.core.models import BBBServer, User
+from venueless.core.models import BBBServer
 from venueless.routing import application
 
 
@@ -290,7 +289,7 @@ async def test_recordings_case_insensitive_state_check(bbb_room):
             assert response[0] == "success"
             # Should handle PUBLISHED and Published as valid, unpublished as invalid
             assert len(response[2]["results"]) == 2
-            assert all(rec["state"] in ("PUBLISHED", "Published") for rec in response[2]["results"])
+            assert all(rec["state"] == "published" for rec in response[2]["results"])
 
 
 @pytest.mark.asyncio
