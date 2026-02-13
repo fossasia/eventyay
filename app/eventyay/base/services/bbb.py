@@ -402,10 +402,11 @@ class BBBService:
             return int(value)
 
         recordings = []
+        call = await get_call_for_room(room)
+        if not call:
+            return []
+
         for server in await self._get_possible_servers():
-            call = await get_call_for_room(room)
-            if not call:
-                continue
             recordings_url = get_url(
                 "getRecordings",
                 {"meetingID": call.meeting_id, "state": "any"},
