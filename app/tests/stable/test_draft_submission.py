@@ -7,10 +7,6 @@ class TestDraftSubmission:
     @pytest.fixture
     def cfp_setup(self, event):
         with scope(event=event):
-            # Ensure CfP object exists
-            if not hasattr(event, 'cfp'):
-                CfP.objects.create(event=event)
-            
             # Ensure at least one submission type exists
             st = SubmissionType.objects.filter(event=event).first()
             if not st:
