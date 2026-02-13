@@ -91,7 +91,7 @@ class TestDraftSubmission:
         with scope(event=event):
             # Add a required boolean question
             from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant, TalkQuestionRequired
-            q = TalkQuestion.objects.create(
+            TalkQuestion.objects.create(
                 event=event,
                 question="Agreement",
                 variant=TalkQuestionVariant.BOOLEAN,
