@@ -74,7 +74,7 @@ header {
     padding-bottom: 4px;
     color: var(--color-primary);
     margin-left: auto;
-	  margin-right: 10px;
+	margin-right: 10px;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
