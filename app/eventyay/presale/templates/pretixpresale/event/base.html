@@ -56,24 +56,7 @@
 
 {% block alerts %}
     {% block testmode_alert %}
-    {% if request.event.testmode %}
-        {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
-        {% if request.event.live or is_organiser %}
-            {% if request.sales_channel.testmode_supported %}
-                <div class="alert alert-warning alert-margin">
-                    <strong>
-                        {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                    </strong>
-                </div>
-            {% else %}
-                <div class="alert alert-danger">
-                    <strong>
-                        {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                    </strong>
-                </div>
-            {% endif %}
-        {% endif %}
-    {% endif %}
+        {% include "pretixpresale/event/fragment_testmode_alert.html" %}
     {% endblock testmode_alert %}
     {% if messages %}
         {% for message in messages %}

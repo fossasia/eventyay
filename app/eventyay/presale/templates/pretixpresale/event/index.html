@@ -25,7 +25,7 @@
         <script type="text/javascript" src="{% static "pretixpresale/js/ui/join-video-event.js" %}"></script>
     {% endcompress %}
 {% endblock %}
-{% block testmode_alert %}{% endblock %}
+{% block testmode_alert %}{% endblock testmode_alert %}
 {% block content %}
 
     {% autoescape off %}
@@ -276,23 +276,7 @@
     {% endif %}
 
     {% if subevent or not event.has_subevents %}
-        {% if request.event.testmode %}
-            {% if request.event.live or is_organiser %}
-                {% if request.sales_channel.testmode_supported %}
-                    <div class="alert alert-warning alert-margin">
-                        <strong>
-                            {% trans "This ticket shop is currently in test mode. Please do not perform any real purchases as your order might be deleted without notice." %}
-                        </strong>
-                    </div>
-                {% else %}
-                    <div class="alert alert-danger">
-                        <strong>
-                            {% trans "Orders made through this sales channel cannot be deleted - even if the ticket shop is in test mode!" %}
-                        </strong>
-                    </div>
-                {% endif %}
-            {% endif %}
-        {% endif %}
+        {% include "pretixpresale/event/fragment_testmode_alert.html" %}
         <div id="tickets"></div>
         {% if can_view_tickets %}
             {% if request.event.live or is_organiser %}
