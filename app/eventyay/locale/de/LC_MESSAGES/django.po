@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 14:29+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-02-14 14:32+0000\n"
+"Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -118,8 +118,8 @@ msgid ""
 "off here. Right now we are busy reviewing proposals.<br> Check back later!"
 msgstr ""
 "Hier wird demnächst eine Liste von Einreichungen erscheinen, die wir gerne "
-"präsentieren wollen. Gerade sind wir noch mit der Auswahl beschäftigt."
-"<br>Bitte versuch es später noch einmal!"
+"präsentieren wollen. Gerade sind wir noch mit der Auswahl beschäftigt.<br>"
+"Bitte versuch es später noch einmal!"
 
 #: agenda/templates/agenda/feed/description.html:6
 #, python-format
@@ -1230,8 +1230,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:708
 msgid "Automatically cancel and reissue invoice on address changes"
-msgstr ""
-"Bei Adressänderungen automatisch Rechnung stornieren und neu ausstellen"
+msgstr "Bei Adressänderungen automatisch Rechnung stornieren und neu ausstellen"
 
 #: base/configurations/default_setting.py:710
 #, fuzzy
@@ -1491,8 +1490,8 @@ msgid ""
 "If disabled, the event's start and end date will be displayed without the "
 "time of day."
 msgstr ""
-"Wenn diese Einstellung deaktiviert ist, werden Veranstaltungsbeginn und "
-"-ende ohne Uhrzeit angezeigt."
+"Wenn diese Einstellung deaktiviert ist, werden Veranstaltungsbeginn und -"
+"ende ohne Uhrzeit angezeigt."
 
 #: base/configurations/default_setting.py:974
 msgid "Hide all products that are sold out"
@@ -2051,8 +2050,8 @@ msgid ""
 "If enabled, we will attach an .ics calendar file to order confirmation "
 "emails."
 msgstr ""
-"Wenn diese Option aktiviert ist, hängen wir Bestellbestätigungs-E-Mails "
-"eine .ics-Kalenderdatei an."
+"Wenn diese Option aktiviert ist, hängen wir Bestellbestätigungs-E-Mails eine "
+".ics-Kalenderdatei an."
 
 #: base/configurations/default_setting.py:1590
 msgid "Subject prefix"
@@ -5352,8 +5351,7 @@ msgstr "Auf bestimmte Verkaufskanäle einschränken"
 
 #: base/models/event.py:668
 msgid "Only sell tickets for this event on the following sales channels."
-msgstr ""
-"Tickets für diese Veranstaltung nur über die folgenden Kanäle verkaufen"
+msgstr "Tickets für diese Veranstaltung nur über die folgenden Kanäle verkaufen"
 
 #: base/models/event.py:672
 #, fuzzy
@@ -5390,8 +5388,7 @@ msgstr "Eigene Domain"
 
 #: base/models/event.py:691
 msgid "Enter a custom domain, such as https://my.event.example.org"
-msgstr ""
-"Gib eine eigene Domain ein, zum Beispiel https://mein.event.example.org"
+msgstr "Gib eine eigene Domain ein, zum Beispiel https://mein.event.example.org"
 
 #: base/models/event.py:705
 msgid "Main event colour"
@@ -5528,8 +5525,7 @@ msgstr "Die Kurzform einer Veranstaltung kann nicht geändert werden."
 
 #: base/models/event.py:2096
 msgid "This slug has already been used for a different event."
-msgstr ""
-"Diese Kurzform ist bereits in Verwendung, bitte wählen Sie eine andere."
+msgstr "Diese Kurzform ist bereits in Verwendung, bitte wählen Sie eine andere."
 
 #: base/models/event.py:2102
 msgid "The event cannot end before it starts."
@@ -7478,8 +7474,7 @@ msgstr "Feldtyp"
 
 #: base/models/question.py:134
 msgid "Do you require an answer from every speaker or for every session?"
-msgstr ""
-"Brauchst du eine Antwort von jeder Vortragenden oder für jeden Beitrag?"
+msgstr "Brauchst du eine Antwort von jeder Vortragenden oder für jeden Beitrag?"
 
 #: base/models/question.py:140
 msgid "Set a deadline to make this field required after the given date."
@@ -7783,8 +7778,7 @@ msgstr "Der Raum {room_name} steht zur gewählten Zeit nicht zur Verfügung."
 
 #: base/models/schedule.py:377
 msgid "Another session in the same room overlaps with this one."
-msgstr ""
-"Ein anderer Programmpunkt überschneidet sich mit diesem im selben Raum."
+msgstr "Ein anderer Programmpunkt überschneidet sich mit diesem im selben Raum."
 
 #: base/models/schedule.py:403
 #, python-brace-format
@@ -8423,8 +8417,7 @@ msgstr ""
 
 #: base/models/vouchers.py:241
 msgid "You cannot select a quota and a specific product at the same time."
-msgstr ""
-"Sie können nicht gleichzeitig ein Kontingent und ein Produkt auswählen."
+msgstr "Sie können nicht gleichzeitig ein Kontingent und ein Produkt auswählen."
 
 #: base/models/vouchers.py:244
 #, fuzzy
@@ -8606,8 +8599,7 @@ msgstr "An diese Person wurde bereits ein Gutschein gesendet."
 
 #: base/models/waitinglist.py:125
 msgid "This entry is anonymized and can no longer be used."
-msgstr ""
-"Dieser Eintrag wurde anonymisiert und kann nicht mehr verwendet werden."
+msgstr "Dieser Eintrag wurde anonymisiert und kann nicht mehr verwendet werden."
 
 #: base/models/waitinglist.py:135
 #, python-brace-format
@@ -9231,8 +9223,7 @@ msgstr ""
 
 #: base/payment.py:1405 base/services/orders.py:966
 msgid "This gift card is not accepted by this event organizer."
-msgstr ""
-"Dieser Geschenkgutschein wird von diesem Veranstalter nicht akzeptiert."
+msgstr "Dieser Geschenkgutschein wird von diesem Veranstalter nicht akzeptiert."
 
 #: base/payment.py:1407
 msgid "This gift card was used in the meantime. Please try again."
@@ -9894,8 +9885,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Sie können jedes Zusatzprodukte aus der Kategorie %(cat)s für das Produkt "
-"%(base)s höchstens ein mal auswählen."
+"Sie können jedes Zusatzprodukte aus der Kategorie %(cat)s für das Produkt %"
+"(base)s höchstens ein mal auswählen."
 
 #: base/services/cart.py:127
 msgid ""
@@ -10030,8 +10021,7 @@ msgstr "Termin: {}"
 
 #: base/services/invoices.py:388
 msgid "A payment provider specific text might appear here."
-msgstr ""
-"Hier kann ein spezifischer Text über einen Zahlungsanbieter erscheinen."
+msgstr "Hier kann ein spezifischer Text über einen Zahlungsanbieter erscheinen."
 
 #: base/services/invoices.py:395
 msgid "214th Example Street"
@@ -10081,8 +10071,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
-"Fehler beim Import des Wertes \"{value}\" für Spalte \"{column}\" in Zeile "
-"\"{line}\": {message}"
+"Fehler beim Import des Wertes \"{value}\" für Spalte \"{column}\" in Zeile \""
+"{line}\": {message}"
 
 #: base/services/orderimport.py:126
 #, python-brace-format
@@ -11218,14 +11208,13 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Du kannst Einreichungen bis %(deadline)s (%(timezone)s) abschicken – noch "
-"%(until_string)s."
+"Du kannst Einreichungen bis %(deadline)s (%(timezone)s) abschicken – noch %"
+"(until_string)s."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
 msgid "This Call for Papers closed on %(deadline)s (%(timezone)s)."
-msgstr ""
-"Einreichungen konnten bis %(deadline)s (%(timezone)s) abgegeben werden."
+msgstr "Einreichungen konnten bis %(deadline)s (%(timezone)s) abgegeben werden."
 
 #: cfp/templates/cfp/event/cfp.html:60
 #, fuzzy
@@ -12978,8 +12967,7 @@ msgstr "Lasst mich ein neues setzen!"
 
 #: common/text/phrases.py:92
 msgid "Now you just need to choose your new password and you are ready to go."
-msgstr ""
-"Jetzt brauchst du nur noch ein neues Passwort und wir sind hier fertig."
+msgstr "Jetzt brauchst du nur noch ein neues Passwort und wir sind hier fertig."
 
 #: common/text/phrases.py:93
 msgid "The password was reset."
@@ -13868,8 +13856,7 @@ msgstr "Ticket-Downloads"
 
 #: control/forms/event.py:1461
 msgid "Your customers will be able to download their tickets in PDF format."
-msgstr ""
-"Ihre Teilnehmer werden ihre Tickets im PDF-Format herunterladen können."
+msgstr "Ihre Teilnehmer werden ihre Tickets im PDF-Format herunterladen können."
 
 #: control/forms/event.py:1465
 msgid "Require all attendees to fill in their names"
@@ -15207,8 +15194,7 @@ msgstr "Wert des Geschenkgutscheins"
 
 #: control/forms/organizer_forms/organizer_form.py:18
 msgid "This slug is already in use. Please choose a different one."
-msgstr ""
-"Diese Kurzform ist bereits in Verwendung. Bitte wählen Sie eine andere."
+msgstr "Diese Kurzform ist bereits in Verwendung. Bitte wählen Sie eine andere."
 
 #: control/forms/organizer_forms/organizer_form.py:55
 msgid ""
@@ -15714,8 +15700,8 @@ msgid ""
 msgstr ""
 "Hallo,\n"
 "\n"
-"mit dieser E-Mail senden wir Ihnen einen oder mehrere Gutscheine für "
-"{event}:\n"
+"mit dieser E-Mail senden wir Ihnen einen oder mehrere Gutscheine für {event}"
+":\n"
 "\n"
 "{voucher_list}\n"
 "\n"
@@ -15837,8 +15823,7 @@ msgstr ""
 #: control/logdisplay.py:70
 #, python-brace-format
 msgid "Position #{posid}: Seat \"{old_seat}\" changed to \"{new_seat}\"."
-msgstr ""
-"Position #{posid}: Sitzplatz \"{old_seat}\" geändert zu \"{new_seat}\"."
+msgstr "Position #{posid}: Sitzplatz \"{old_seat}\" geändert zu \"{new_seat}\"."
 
 #: control/logdisplay.py:83
 #, python-brace-format
@@ -15846,8 +15831,8 @@ msgid ""
 "Position #{posid}: Event date \"{old_event}\" ({old_price}) changed to "
 "\"{new_event}\" ({new_price})."
 msgstr ""
-"Position #{posid}: Termin \"{old_event}\" ({old_price}) geändert zu "
-"\"{new_event}\" ({new_price})."
+"Position #{posid}: Termin \"{old_event}\" ({old_price}) geändert zu \""
+"{new_event}\" ({new_price})."
 
 #: control/logdisplay.py:96
 #, python-brace-format
@@ -15938,8 +15923,8 @@ msgstr ""
 msgid ""
 "Unknown scan of code \"{barcode}…\" for list \"{list}\", type \"{type}\"."
 msgstr ""
-"Unbekannter Scan von Code \"{barcode}…\" für die Liste \"{list}\" (Typ "
-"\"{type}\")."
+"Unbekannter Scan von Code \"{barcode}…\" für die Liste \"{list}\" (Typ \""
+"{type}\")."
 
 #: control/logdisplay.py:249
 #, python-brace-format
@@ -15956,8 +15941,8 @@ msgid ""
 "Scan of revoked code \"{barcode}\" for list \"{list}\", type \"{type}\", was "
 "uploaded."
 msgstr ""
-"Unbekannter Scan von Code \"{barcode}…\" für die Liste \"{list}\" (Typ "
-"\"{type}\")."
+"Unbekannter Scan von Code \"{barcode}…\" für die Liste \"{list}\" (Typ \""
+"{type}\")."
 
 #: control/logdisplay.py:268
 #, python-brace-format
@@ -15965,8 +15950,8 @@ msgid ""
 "Denied scan of position #{posid} at {datetime} for list \"{list}\", type "
 "\"{type}\", error code \"{errorcode}\"."
 msgstr ""
-"Ein Scan für Ticket #{posid} am {datetime} für die Liste \"{list}\" (Typ: "
-"\"{type}\") wurde abgelehnt. Fehlercode: \"{errorcode}\"."
+"Ein Scan für Ticket #{posid} am {datetime} für die Liste \"{list}\" (Typ: \""
+"{type}\") wurde abgelehnt. Fehlercode: \"{errorcode}\"."
 
 #: control/logdisplay.py:279
 #, python-brace-format
@@ -16863,8 +16848,7 @@ msgstr ""
 #: control/logdisplay.py:758
 #, python-brace-format
 msgid "The check-in of position #{posid} on list \"{list}\" has been reverted."
-msgstr ""
-"Der Check-in von Position #{posid} auf Liste \"{list}\" wurde gelöscht."
+msgstr "Der Check-in von Position #{posid} auf Liste \"{list}\" wurde gelöscht."
 
 #: control/logdisplay.py:764
 #, python-brace-format
@@ -19482,8 +19466,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Es sind keine Zahlungsmethoden verfügbar. Bitte gehen Sie in die <a "
-"%(plugin_settings_href)s>Erweiterungs-Einstellungen</a> und aktivieren Sie "
+"Es sind keine Zahlungsmethoden verfügbar. Bitte gehen Sie in die <a %"
+"(plugin_settings_href)s>Erweiterungs-Einstellungen</a> und aktivieren Sie "
 "eins oder mehrere Zahlungsplugins."
 
 #: control/templates/pretixcontrol/event/payment.html:67
@@ -19907,8 +19891,8 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Es sind keine Ausgabemethoden verfügbar. Bitte gehen Sie in die <a "
-"%(plugin_settings_href)s>Erweiterungs-Einstellungen</a> und aktivieren Sie "
+"Es sind keine Ausgabemethoden verfügbar. Bitte gehen Sie in die <a %"
+"(plugin_settings_href)s>Erweiterungs-Einstellungen</a> und aktivieren Sie "
 "eins oder mehrere Ticketausgabe-Erweiterungen."
 
 #: control/templates/pretixcontrol/event/tickets.html:71
@@ -20940,8 +20924,7 @@ msgstr "Kontingent löschen"
 #: control/templates/pretixcontrol/items/quota_delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
-msgstr ""
-"Möchten Sie das Kontingent <strong>%(quota)s</strong> wirklich löschen?"
+msgstr "Möchten Sie das Kontingent <strong>%(quota)s</strong> wirklich löschen?"
 
 #: control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
@@ -21850,11 +21833,10 @@ msgid ""
 "underpaid by <strong>%(pending)s</strong>. The order total is "
 "<strong>%(total)s</strong>."
 msgstr ""
-"Uns wurde mitgeteilt, dass <strong>%(amount)s</strong> über "
-"<strong>%(method)s</strong> erstattet wurden. Wenn diese Erstattung "
-"verarbeitet wird, wird die Bestellung einen ausstehenden Betrag von "
-"<strong>%(pending)s</strong> haben. Der Gesamtbetrag der Bestellung ist "
-"<strong>%(total)s</strong>."
+"Uns wurde mitgeteilt, dass <strong>%(amount)s</strong> über <strong>%(method)"
+"s</strong> erstattet wurden. Wenn diese Erstattung verarbeitet wird, wird "
+"die Bestellung einen ausstehenden Betrag von <strong>%(pending)s</strong> "
+"haben. Der Gesamtbetrag der Bestellung ist <strong>%(total)s</strong>."
 
 #: control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -22332,8 +22314,7 @@ msgstr "Gerätezugriff entziehen:"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:9
 msgid "Are you sure you want remove access for this device?"
-msgstr ""
-"Möchten Sie diesem Gerät wirklich den Zugriff auf das System entziehen?"
+msgstr "Möchten Sie diesem Gerät wirklich den Zugriff auf das System entziehen?"
 
 #: control/templates/pretixcontrol/organizers/device_revoke.html:10
 msgid ""
@@ -22603,8 +22584,7 @@ msgstr "Protokolle für Webhook %(url)s"
 
 #: control/templates/pretixcontrol/organizers/webhook_logs.html:7
 msgid "This page shows all calls to your webhook in the past 30 days."
-msgstr ""
-"Diese Seite zeigt alle Aufrufe des Webhooks in den letzten 30 Tagen an."
+msgstr "Diese Seite zeigt alle Aufrufe des Webhooks in den letzten 30 Tagen an."
 
 #: control/templates/pretixcontrol/organizers/webhook_logs.html:15
 msgid "This webhook was retried since it previously failed."
@@ -22968,8 +22948,8 @@ msgid ""
 msgstr ""
 "Bitte prüfen Sie erneut, dass Sie wirklich die ausgewählten Daten von der "
 "Veranstaltung <strong>%(event)s</strong> entfernen wollen. Wenn dies der "
-"Fall ist, geben Sie bitte hier den Kurznamen der Veranstaltung "
-"(\"%(slug)s\") ein:"
+"Fall ist, geben Sie bitte hier den Kurznamen der Veranstaltung (\"%(slug)"
+"s\") ein:"
 
 #: control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -23558,8 +23538,8 @@ msgid ""
 "<strong>%(amount)s</strong>."
 msgstr ""
 "Wenn Sie Ihre Veranstaltung so vergrößern können, dass Sie allen Personen "
-"auf dieser Liste Tickets verkaufen könnten, würden Sie zusätzliche "
-"<strong>%(amount)s</strong> einnehmen."
+"auf dieser Liste Tickets verkaufen könnten, würden Sie zusätzliche <strong>%"
+"(amount)s</strong> einnehmen."
 
 #: control/templates/pretixcontrol/waitinglist/index.html:105
 msgid "Successfully redeemed"
@@ -24455,8 +24435,7 @@ msgstr ""
 
 #: control/views/orders.py:2032 presale/views/order.py:1434
 msgid "An error occurred. Please see the details below."
-msgstr ""
-"Ein Fehler ist aufgetreten, bitte schauen Sie weiter unten für Details."
+msgstr "Ein Fehler ist aufgetreten, bitte schauen Sie weiter unten für Details."
 
 #: control/views/orders.py:2042
 msgid "The order has been changed and the user has been notified."
@@ -26697,8 +26676,8 @@ msgid ""
 "Are you sure you want to generate a new client secret for the application "
 "{code}?"
 msgstr ""
-"Möchten Sie wirklich einen neuen Schlüssel für die App <strong>%"
-"(application)s</strong> generieren?"
+"Möchten Sie wirklich einen neuen Schlüssel für die App <strong>%(application)"
+"s</strong> generieren?"
 
 #: eventyay_common/views/account/oauth.py:130
 msgid "A new client secret has been generated and is now effective."
@@ -27492,8 +27471,8 @@ msgid ""
 msgstr ""
 "Hi!\n"
 "\n"
-"wir freuen uns dir mitzuteilen, dass wir deine Einreichung "
-"“{submission_title}” für\n"
+"wir freuen uns dir mitzuteilen, dass wir deine Einreichung “"
+"{submission_title}” für\n"
 "{event_name} akzeptiert haben. Bitte klicke auf den folgenden Link um zu "
 "bestätigen, dass\n"
 "du kommst und deinen Programmpunkt beisteuerst:\n"
@@ -28206,8 +28185,8 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"Ungültiges E-Mail-Template! Bitte stell sicher, dass du keine einzelnen "
-"{ oder } irgendwo stehen hast, und dass innerhalb der {}-Blöcke keine "
+"Ungültiges E-Mail-Template! Bitte stell sicher, dass du keine einzelnen { "
+"oder } irgendwo stehen hast, und dass innerhalb der {}-Blöcke keine "
 "Leerzeichen sind."
 
 #: orga/forms/mails.py:76 orga/forms/mails.py:93
@@ -29028,9 +29007,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Dieses Feld wurde <strong>%(count)s</strong> mal ausgefüllt, "
-"<strong>%(missing)s</strong> Antworten <a "
-"href=\"%(base_search_url)sunanswered=1\">fehlen noch</a>."
+"Dieses Feld wurde <strong>%(count)s</strong> mal ausgefüllt, <strong>%"
+"(missing)s</strong> Antworten <a href=\"%(base_search_url)sunanswered=1\">"
+"fehlen noch</a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, python-format
@@ -29394,8 +29373,8 @@ msgid ""
 "tab."
 msgstr ""
 "Du kannst die Standardvorlagen und eigene Vorlagen hier editieren. Wenn du "
-"Mails zu allen oder manchen der Vortragenden schicken möchtest, klicke auf "
-"„E-Mails verschicken“. Noch nicht verschickte Mails sind im „Postausgang“."
+"Mails zu allen oder manchen der Vortragenden schicken möchtest, klicke auf „"
+"E-Mails verschicken“. Noch nicht verschickte Mails sind im „Postausgang“."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:32
 msgid ""
@@ -29631,8 +29610,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Reviewer werden <strong>nur die ihnen zugeteilten</strong> Einreichungen "
-"sehen und bewerten können. Du kannst das in deinen <a "
-"href=\"%(href)s\">Review-Einstellungen</a> anpassen."
+"sehen und bewerten können. Du kannst das in deinen <a href=\"%(href)s\">"
+"Review-Einstellungen</a> anpassen."
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -30061,8 +30040,7 @@ msgstr "Alle noch nicht bestätigten Vorträge sehen."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] "Ein Programmpunkt wurde <strong>noch nicht geplant</strong>."
-msgstr[1] ""
-"%(count)s Programmpunkte wurden <strong>noch nicht geplant</strong>."
+msgstr[1] "%(count)s Programmpunkte wurden <strong>noch nicht geplant</strong>."
 
 #: orga/templates/orga/schedule/release.html:76
 #, python-format
@@ -30151,8 +30129,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Wenn weder eine Wertung noch ein Text verpflichtend für Reviewer ist, wird "
-"beim Reviewen ein zusätzlicher "
-"%(quotation_open)sEnthalten%(quotation_close)s-Knopf angeboten."
+"beim Reviewen ein zusätzlicher %(quotation_open)sEnthalten%(quotation_close)"
+"s-Knopf angeboten."
 
 #: orga/templates/orga/settings/review.html:84
 msgid ""
@@ -30270,8 +30248,8 @@ msgid ""
 "Please look at <a href=\"%(link)s\">our documentation</a> for more "
 "information."
 msgstr ""
-"Für weitere Informationen kannst du auch einen Blick auf <a "
-"href=\"%(link)s\">unsere Dokumentation</a> werfen."
+"Für weitere Informationen kannst du auch einen Blick auf <a href=\"%(link)"
+"s\">unsere Dokumentation</a> werfen."
 
 #: orga/templates/orga/settings/widget.html:96
 msgid "Widget preview"
@@ -30299,8 +30277,8 @@ msgid ""
 "You can either create exactly the export you need in the “Custom” tab, or "
 "use these pre-built exports:"
 msgstr ""
-"Du kannst entweder genau den Export erstellen, den du brauchst (im "
-"„Konfigurierbar“-Tab), oder einen dieser vorgefertigten Exporte verwenden:"
+"Du kannst entweder genau den Export erstellen, den du brauchst (im „"
+"Konfigurierbar“-Tab), oder einen dieser vorgefertigten Exporte verwenden:"
 
 #: orga/templates/orga/speaker/form.html:94
 msgid "Emails"
@@ -30898,9 +30876,8 @@ msgid ""
 "the “use custom SMTP server” checkbox, otherwise your SMTP server will not "
 "be used."
 msgstr ""
-"Wir haben den SMTP-Server erreichen können. Denke daran, den Haken bei "
-"„Eigenen SMTP-Server verwenden“ zu setzen, damit der Server auch benutzt "
-"wird."
+"Wir haben den SMTP-Server erreichen können. Denke daran, den Haken bei „"
+"Eigenen SMTP-Server verwenden“ zu setzen, damit der Server auch benutzt wird."
 
 #: orga/views/event.py:492
 #, fuzzy
@@ -32837,8 +32814,7 @@ msgstr ""
 
 #: plugins/sendmail/views.py:114
 msgid "There are no orders matching this selection."
-msgstr ""
-"Es existiert keine Bestellung, die zu den eingegebenen Kriterien passt."
+msgstr "Es existiert keine Bestellung, die zu den eingegebenen Kriterien passt."
 
 #: plugins/sendmail/views.py:174 plugins/sendmail/views.py:630
 #, fuzzy
@@ -33629,8 +33605,7 @@ msgstr "Wir versuchen nun, diese Zusatzprodukte für Sie zu buchen!"
 msgid "You need to choose exactly one option from this category."
 msgid_plural "You need to choose %(min_count)s options from this category."
 msgstr[0] "Sie müssen genau eine Option aus dieser Kategorie auswählen."
-msgstr[1] ""
-"Sie müssen genau %(min_count)s Optionen aus dieser Kategorie auswählen."
+msgstr[1] "Sie müssen genau %(min_count)s Optionen aus dieser Kategorie auswählen."
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:54
 #, python-format
@@ -34879,9 +34854,9 @@ msgid ""
 "ticket until we assign it to the next person on the list."
 msgstr ""
 "Wenn wieder Tickets verfügbar sind, werden wir die ersten Leute auf der "
-"Warteliste benachrichtigen. Wenn wir Sie benachrichtigen, haben Sie "
-"%(hours)s Stunden Zeit, ein Ticket zu erwerben, bevor wir es an die nächste "
-"Person auf der Liste weitergeben."
+"Warteliste benachrichtigen. Wenn wir Sie benachrichtigen, haben Sie %(hours)"
+"s Stunden Zeit, ein Ticket zu erwerben, bevor wir es an die nächste Person "
+"auf der Liste weitergeben."
 
 #: presale/templates/pretixpresale/event/waitinglist.html:35
 msgid "Add me to the list"
