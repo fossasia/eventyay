@@ -1,0 +1,70 @@
+{% load i18n %}
+{% load eventurl %}
+{% load money %}
+
+<div id="orders-table-container">
+    <div class="table-responsive">
+        <table class="table table-condensed table-hover table-quotas">
+            <thead>
+                <tr>
+                    <th>{{ _('Order code') }}</th>
+                    <th>{{ _('Event') }}</th>
+                    <th>{{ _('Order Date') }}</th>
+                    <th>{{ _('Order total') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in order_list %}
+                <tr>
+                    <td>
+                        <a
+                            href="{% abseventurl order.event 'presale:event.order' order=order.code secret=order.secret %}">
+                            {{ order.code }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% eventurl order.event 'presale:event.index' %}">{{ order.event.name }}</a>
+                    </td>
+                    <td>{{ order.datetime|date:"SHORT_DATETIME_FORMAT" }}</td>
+                    <td>
+                        {{ order.total|money:order.event.currency }}
+                    </td>
+                    <td>
+                        {% include "eventyay_common/orders/fragment_order_status.html" with order=order
+                        event=order.event %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">{{ _('You have no orders.') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+            <a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+                hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
+                hx-target="#orders-table-container" hx-swap="outerHTML" hx-push-url="true">&laquo;</a>
+            {% endif %}
+
+            <span class="current">
+                {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}
+                Page {{ current }} of {{ total }}.
+                {% endblocktrans %}
+            </span>
+
+            {% if page_obj.has_next %}
+            <a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+                hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
+                hx-target="#orders-table-container" hx-swap="outerHTML" hx-push-url="true">&raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+    {% endif %}
+</div>

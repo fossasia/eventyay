@@ -42,4 +42,8 @@ class MyOrdersView(ListView):
             new_url = request.path + '?' + new_url_query.urlencode()
             logger.info('To redirect to "%s" because the filter values are invalid.', new_url)
             return redirect(new_url)
+            
+        if request.headers.get('HX-Request', '').lower() == 'true':
+            self.template_name = 'eventyay_common/orders/fragment_orders_list.html'
+            
         return super().get(request, *args, **kwargs)
