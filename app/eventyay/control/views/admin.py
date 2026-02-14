@@ -90,6 +90,17 @@ class AdminEventList(EventList):
 
     template_name = 'pretixcontrol/admin/events/index.html'
 
+    def get_queryset(self):
+        # Keep settings prefetched for component test-mode state checks in the list.
+        return super().get_queryset().prefetch_related('_settings_objects')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        for event in ctx.get('events', []):
+            event.component_testmode = event.has_component_testmode
+            event.startpage_toggle_locked = bool(event.component_testmode or not event.live)
+        return ctx
+
 
 class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
     def post(self, request, *args, **kwargs):
@@ -112,9 +123,12 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
         event = get_object_or_404(Event, pk=event_id)
         enable = str(value).lower() in {'true', '1', 'yes', 'on'}
 
-        if field == 'startpage_featured' and enable and event.testmode:
+        if event.has_component_testmode or not event.live:
             return JsonResponse(
-                {'ok': False, 'error': _('Test mode events cannot be featured.')},
+                {
+                    'ok': False,
+                    'error': _('Only published events without test mode can be shown on the start page.'),
+                },
                 status=400,
             )
 
@@ -134,6 +148,7 @@ class AdminEventStartpageToggle(AdministratorPermissionRequiredMixin, View):
                 'ok': True,
                 'startpage_visible': event.startpage_visible,
                 'startpage_featured': event.startpage_featured,
+                'startpage_locked': bool(event.has_component_testmode or not event.live),
             }
         )
 

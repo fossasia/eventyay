@@ -301,10 +301,6 @@ class User(
             'administrator': is_administrator,
         }
 
-    @property
-    def name(self):
-        return self.fullname
-
     def save(self, *args, **kwargs):
         # In some flows (e.g., anonymous/kiosk or external auth), users can be created
         # without an email. Guard against calling lower() on None.
@@ -589,7 +585,7 @@ class User(
                 qs = qs.filter(session_key=session_key)
             sess = qs.first()
             if sess:
-                if sess.date_start < now() - timedelta(seconds=settings.PRETIX_SESSION_TIMEOUT_ABSOLUTE):
+                if sess.date_start < now() - timedelta(seconds=settings.EVENTYAY_SESSION_TIMEOUT_ABSOLUTE):
                     sess.date_end = now()
                     sess.save()
                     sess = None

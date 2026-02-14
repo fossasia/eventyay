@@ -41,7 +41,7 @@
         <a class="btn btn-primary" href="{{ event_url }}">
             {% trans "View event" %}
         </a>
-        {% if event.testmode %}
+        {% if event.has_component_testmode %}
             <span class="startpage-testmode-badge" title="{% trans "Test mode enabled" %}">
                 <i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
                 {% trans "Test Mode" %}
