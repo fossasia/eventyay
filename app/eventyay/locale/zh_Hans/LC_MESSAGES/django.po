@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
 "PO-Revision-Date: 2025-11-30 14:19+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Chinese (Simplified Han script) <https://hosted.weblate.org/"
@@ -10169,34 +10169,34 @@ msgstr "插件：%s"
 msgid "The voucher has been sent to {recipient}."
 msgstr "优惠券已创建。"
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr "您的默认语言环境也必须为您的活动启用（参见上面的方框）。"
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "你的默认语言必须是你的活跃语言之一。"
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr "如果您不要求，则不能要求指定观众姓名。"
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr "如果想使它成为必需的，您必须向观众索要电子邮件。"
 
-#: base/settings.py:154
+#: base/settings.py:163
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
 msgid "You have to ask for order email if you want to make it required."
 msgstr "如果想使它成为必需的，您必须向观众索要电子邮件。"
 
-#: base/settings.py:158
+#: base/settings.py:167
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10204,13 +10204,13 @@ msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr "如果想使它成为必需的，您必须向观众索要电子邮件。"
 
-#: base/settings.py:164
+#: base/settings.py:173
 #, fuzzy
 #| msgid "This will require users to enter a company name."
 msgid "You have to require invoice addresses to require for company names."
 msgstr "这将要求用户输入公司名称。"
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr "最后付款日期不能在预售结束之前。"
 
@@ -14119,7 +14119,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -14362,19 +14362,62 @@ msgstr ""
 "如果我们检测到有新的更新，我们将通过此地址通知您。此地址不会传输到"
 "eventyay.com，电子邮件将由本地服务器发送。"
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable test mode"
+msgid "Enable telemetry"
+msgstr "启用测试模式"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Send all"
+msgid "Telemetry endpoint"
+msgstr "发送全部"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+#, fuzzy
+#| msgid "Bancontact"
+msgid "Maintainer contact"
+msgstr "Bancontact"
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "重定向 URIs"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 #, fuzzy
 #| msgid "The selected team cannot be deleted."
 msgid "The Stripe key cannot be empty."
 msgstr "无法删除所选团队。"
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -14383,7 +14426,7 @@ msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr "提供的密钥\"%(value)s\"看起来无效。它应该以\"%(prefix)s\"开头。"
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -36287,9 +36330,6 @@ msgstr "未接受"
 
 #~ msgid "Alipay"
 #~ msgstr "支付宝"
-
-#~ msgid "Bancontact"
-#~ msgstr "Bancontact"
 
 #~ msgid "SOFORT"
 #~ msgstr "Sofort"
