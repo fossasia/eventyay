@@ -47,7 +47,7 @@ def test_speaker_list_anonymous_public(
     assert len(content["results"]) == 1
     result = content["results"][0]
     assert result["code"] == speaker.code
-    assert result["name"] == speaker.name
+    assert result["name"] == speaker.fullname
     assert result["biography"] == profile.biography
     assert accepted_submission.code not in result["submissions"]
     assert rejected_submission.code not in result["submissions"]
@@ -194,7 +194,7 @@ def test_speaker_list_search_by_name(
 ):
     with scope(event=event):
         other_slot.submission.speakers.add(other_speaker)
-    name_to_find = speaker.name
+    name_to_find = speaker.fullname
     response = client.get(
         event.api_urls.speakers + f"?q={name_to_find}",
         follow=True,
@@ -354,7 +354,7 @@ def test_speaker_retrieve_anonymous_public(
     assert response.status_code == 200
     content = json.loads(response.text)
     assert content["code"] == speaker.code
-    assert content["name"] == speaker.name
+    assert content["name"] == speaker.fullname
     assert content["biography"] == profile.biography
     assert accepted_submission.code not in content["submissions"]
     assert submission.code in content["submissions"]
@@ -373,7 +373,7 @@ def test_speaker_retrieve_orga(
     assert response.status_code == 200
     content = json.loads(response.text)
     assert content["code"] == speaker.code
-    assert content["name"] == speaker.name
+    assert content["name"] == speaker.fullname
     assert "email" in content
 
 
@@ -530,7 +530,7 @@ def test_speaker_update_change_name_email(
 
     with scope(event=event):
         speaker.refresh_from_db()
-        assert speaker.name == new_name
+        assert speaker.fullname == new_name
         assert speaker.email == new_email
         assert (
             profile.logged_actions()

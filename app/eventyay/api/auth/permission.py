@@ -99,6 +99,23 @@ class EventCRUDPermission(EventPermission):
         return True
 
 
+class CloneEventPermission(EventPermission):
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+
+        if request.method in SAFE_METHODS:
+            return True
+
+        perm_holder = request.auth if isinstance(request.auth, (Device, TeamAPIToken)) else request.user
+        if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(request.session.session_key):
+            request.orgapermset = SuperuserPermissionSet()
+        else:
+            request.orgapermset = perm_holder.get_organizer_permission_set(request.organizer)
+
+        return 'can_create_events' in request.orgapermset
+
+
 class ProfilePermission(BasePermission):
     def has_permission(self, request, view):
         if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
