@@ -55,6 +55,7 @@
 
 
 {% block alerts %}
+    {% block testmode_alert %}
     {% if request.event.testmode %}
         {% has_event_perm "base.orga_access_event" request.user request request.event as is_organiser %}
         {% if request.event.live or is_organiser %}
@@ -73,6 +74,7 @@
             {% endif %}
         {% endif %}
     {% endif %}
+    {% endblock testmode_alert %}
     {% if messages %}
         {% for message in messages %}
             <div class="alert {{ message.tags }}">
