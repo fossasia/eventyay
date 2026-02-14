@@ -41,7 +41,7 @@
                         </a>
                     {% endif %}
                     {% if can_register %}
-                        <a href='{% url "eventyay_common:auth.register" %}{% append_next request.GET.next %}' class="btn btn-link btn-block">
+                        <a href='{% url "account_signup" %}{% append_next request.GET.next %}' class="btn btn-link btn-block">
                             {% translate "Register" %}
                         </a>
                     {% endif %}
@@ -55,7 +55,7 @@
             {% if login_providers %}
                 {% for provider, settings in login_providers.items %}
                     {% if settings.state %}
-                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}' 
+                        <a href='{% url "plugins:socialauth:social.oauth.login" provider %}{% append_next request.GET.next %}'
                            data-method="post" class="btn btn-primary btn-block">
                             {% with provider|capfirst as provider_capitalized %}
                                 {% blocktranslate %}Login with {{ provider_capitalized }}{% endblocktranslate %}

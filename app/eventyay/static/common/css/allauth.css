@@ -4,7 +4,8 @@
 .email-confirm-container,
 .password-reset-container,
 .password-reset-done-container,
-.email-confirm-success-container {
+.email-confirm-success-container,
+.signup-container {
   max-width: 500px;
   margin: 2rem auto;
   padding: 1.5rem;
@@ -21,7 +22,8 @@
 /* Email confirmation specific */
 .email-confirm-container h1,
 .password-reset-container h1,
-.password-reset-done-container h1 {
+.password-reset-done-container h1,
+.signup-container h1 {
   color: #2185d0;
   margin-bottom: 1.5rem;
   font-size: 1.75rem;
@@ -51,7 +53,8 @@
 
 .email-confirm-container .form-group label,
 .password-reset-container .form-group label,
-.password-reset-done-container .form-group label {
+.password-reset-done-container .form-group label,
+.signup-container .form-group label {
   text-align: left;
 }
 
@@ -277,7 +280,8 @@
   .email-confirm-container,
   .password-reset-container,
   .password-reset-done-container,
-  .email-confirm-success-container {
+  .email-confirm-success-container,
+  .signup-container {
     margin: 1rem auto;
     padding: 1rem;
   }

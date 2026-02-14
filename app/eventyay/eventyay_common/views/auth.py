@@ -42,7 +42,6 @@ from eventyay.base.forms.auth import (
     RegistrationForm,
 )
 from eventyay.base.models import TeamInvite, U2FDevice, User, WebAuthnDevice
-from eventyay.base.models.page import Page
 from eventyay.base.services.mail import SendMailException
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.helpers.cookies import set_cookie_without_samesite
@@ -173,48 +172,7 @@ def logout(request):
     return redirect(next)
 
 
-def register(request):
-    """
-    Render and process a basic registration form.
-    """
-    if not settings.EVENTYAY_REGISTRATION or 'native' not in get_auth_backends():
-        raise PermissionDenied('Registration is disabled')
-    ctx = {}
-    if request.user.is_authenticated:
-        return redirect(request.GET.get('next', 'eventyay_common:dashboard'))
-    if request.method == 'POST':
-        form = RegistrationForm(data=request.POST)
-        if form.is_valid():
-            user = User.objects.create_user(
-                form.cleaned_data['email'],
-                form.cleaned_data['password'],
-                locale=request.LANGUAGE_CODE,
-                timezone=request.timezone if hasattr(request, 'timezone') else settings.TIME_ZONE,
-            )
-            user = authenticate(
-                request=request,
-                # TODO: Use primary_email when django-allauth backend is enabled.
-                email=user.email,
-                password=form.cleaned_data['password'],
-            )
-            user.log_action('eventyay.eventyay_common.auth.user.created', user=user)
-            auth_login(request, user)
-            request.session['eventyay_auth_login_time'] = int(time.time())
-            request.session['eventyay_auth_long_session'] = settings.EVENTYAY_LONG_SESSIONS and form.cleaned_data.get(
-                'keep_logged_in', False
-            )
-            response = redirect(request.GET.get('next', 'eventyay_common:dashboard'))
-            set_cookie_after_logged_in(request, response)
-            return response
-    else:
-        form = RegistrationForm()
-    ctx['form'] = form
-    ctx['password_requirement'] = PASSWORD_COMPLEXITY_ERROR
-    # Hide help if the exact requirement message is already present as a password error
-    pw_errors = form.errors.get('password', []) if hasattr(form, 'errors') else []
-    ctx['show_password_requirement_help'] = not any(str(e) == str(PASSWORD_COMPLEXITY_ERROR) for e in pw_errors)
-    ctx['confirmation_required'] = Page.objects.filter(confirmation_required=True)
-    return render(request, 'eventyay_common/auth/register.html', ctx)
+
 
 
 def invite(request: HttpRequest, token):
