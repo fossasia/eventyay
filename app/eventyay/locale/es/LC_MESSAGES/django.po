@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 10:06+0000\n"
+"PO-Revision-Date: 2026-02-14 14:50+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -180,8 +180,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Para ver nuestra agenda, favor de activar JavaScript o de ir <a "
-"href=\"%(href)s\">aquí</a> para nuestra versión sín JavaScript (NoJS)."
+"Para ver nuestra agenda, favor de activar JavaScript o de ir <a href=\"%"
+"(href)s\">aquí</a> para nuestra versión sín JavaScript (NoJS)."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -677,8 +677,8 @@ msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
 msgstr ""
-"Mostrar precios netos en lugar de precios brutos en la lista de productos "
-"(¡no recomendado!)"
+"Mostrar precios netos en lugar de precios brutos en la lista de productos (¡"
+"no recomendado!)"
 
 #: base/configurations/default_setting.py:85
 #, fuzzy
@@ -1276,8 +1276,7 @@ msgstr "Generar facturas"
 
 #: base/configurations/default_setting.py:699
 msgid "Invoices will never be automatically generated for free orders."
-msgstr ""
-"Las facturas nunca se generarán automáticamente para pedidos gratuitos."
+msgstr "Las facturas nunca se generarán automáticamente para pedidos gratuitos."
 
 #: base/configurations/default_setting.py:708
 msgid "Automatically cancel and reissue invoice on address changes"
@@ -2238,8 +2237,8 @@ msgstr ""
 "Hola, \n"
 "\n"
 "hemos recibido con éxito su pedido para {event} con un valor total\n"
-"de {total_with_currency}. Por favor, complete su pago antes de "
-"{expire_date}. \n"
+"de {total_with_currency}. Por favor, complete su pago antes de {expire_date}"
+". \n"
 "\n"
 "{payment_info} \n"
 "\n"
@@ -2413,8 +2412,8 @@ msgstr ""
 "\n"
 "Ahora tenemos un ticket listo para usted! Puede canjearlo en nuestra "
 "taquilla\n"
-"en las próximas {hours} horas introduciendo el siguiente código del "
-"recibo: \n"
+"en las próximas {hours} horas introduciendo el siguiente código del recibo: "
+"\n"
 "\n"
 "{code} \n"
 "\n"
@@ -4599,8 +4598,8 @@ msgid ""
 "Invalid placeholder syntax: You used a different number of \"{\" than of \"}"
 "\"."
 msgstr ""
-"Sintaxis de marcador de posición no válida: Usaste un número diferente de "
-"\"{\" que de \"}\"."
+"Sintaxis de marcador de posición no válida: Usaste un número diferente de \""
+"{\" que de \"}\"."
 
 #: base/forms/validators.py:39
 #, python-format
@@ -5276,8 +5275,7 @@ msgstr ""
 
 #: base/models/event.py:588 base/models/organizer.py:124
 msgid "The slug may only contain letters, numbers, dots and dashes."
-msgstr ""
-"La URL semántica solo puede contener letras, números, puntos y guiones."
+msgstr "La URL semántica solo puede contener letras, números, puntos y guiones."
 
 #: base/models/event.py:592 base/models/organizer.py:128
 #: control/templates/pretixcontrol/admin/organizers.html:35
@@ -5711,8 +5709,7 @@ msgstr ""
 #, fuzzy
 #| msgid "You cannot select a quota that belongs to a different event."
 msgid "You cannot set a default value that is not a valid value."
-msgstr ""
-"No se puede seleccionar una cuota que pertenezca a un evento diferente."
+msgstr "No se puede seleccionar una cuota que pertenezca a un evento diferente."
 
 #: base/models/feedback.py:35
 msgid "Rating"
@@ -5726,8 +5723,7 @@ msgstr "Ningún valor debe contener el carácter delimitador."
 #, fuzzy
 #| msgid "The slug may only contain letters, numbers, dots and dashes."
 msgid "The gift card code may only contain letters, numbers, dots and dashes."
-msgstr ""
-"La URL semántica solo puede contener letras, números, puntos y guiones."
+msgstr "La URL semántica solo puede contener letras, números, puntos y guiones."
 
 #: base/models/giftcards.py:69
 #: control/templates/pretixcontrol/organizers/giftcard.html:39
@@ -7041,8 +7037,7 @@ msgstr ""
 #, fuzzy
 #| msgid "The item's availability cannot end before it starts."
 msgid "The product's availability cannot end before it starts."
-msgstr ""
-"La disponibilidad del artículo no puede terminar antes de que comience."
+msgstr "La disponibilidad del artículo no puede terminar antes de que comience."
 
 #: base/models/product.py:735
 msgid "This is shown below the variation name in lists."
@@ -8476,8 +8471,7 @@ msgstr "Valor del recibo"
 
 #: base/models/vouchers.py:158 control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Este producto se añade al carrito del usuario si el recibo es canjeado."
+msgstr "Este producto se añade al carrito del usuario si el recibo es canjeado."
 
 #: base/models/vouchers.py:169
 msgid "This variation of the product select above is being used."
@@ -8528,8 +8522,7 @@ msgstr "Vales"
 
 #: base/models/vouchers.py:239
 msgid "You cannot select a quota that belongs to a different event."
-msgstr ""
-"No se puede seleccionar una cuota que pertenezca a un evento diferente."
+msgstr "No se puede seleccionar una cuota que pertenezca a un evento diferente."
 
 #: base/models/vouchers.py:241
 msgid "You cannot select a quota and a specific product at the same time."
@@ -9946,8 +9939,7 @@ msgstr "No se pueden seleccionar más de %s posiciones por pedido."
 #| "You cannot select more than %(max)s items of the product %(product)s."
 msgid ""
 "You cannot select more than %(max)s products of the product %(product)s."
-msgstr ""
-"No puede seleccionar más de %(max)s elementos del producto %(product)s."
+msgstr "No puede seleccionar más de %(max)s elementos del producto %(product)s."
 
 #: base/services/cart.py:77
 #, fuzzy, python-format
@@ -9963,8 +9955,8 @@ msgid ""
 "We removed %(product)s from your cart as you can not buy less than %(min)s "
 "items of it."
 msgstr ""
-"Hemos quitado %(product)s de su carrito ya que no puede comprar menos de "
-"%(min)s artículos de él."
+"Hemos quitado %(product)s de su carrito ya que no puede comprar menos de %"
+"(min)s artículos de él."
 
 #: base/services/cart.py:81 base/services/orders.py:113
 msgid "The presale period for this event has not yet started."
@@ -11071,8 +11063,7 @@ msgstr "Haga clic aquí para ver y cambiar su configuración de notificación"
 
 #: base/templates/pretixbase/email/notification.html:60
 msgid "Click here disable all notifications immediately."
-msgstr ""
-"Haga clic aquí para desactivar todas las notificaciones inmediatamente."
+msgstr "Haga clic aquí para desactivar todas las notificaciones inmediatamente."
 
 #: base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
@@ -11080,8 +11071,7 @@ msgstr "Haga clic aquí para ver y cambiar su configuración de notificación:"
 
 #: base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
-msgstr ""
-"Haga clic aquí para desactivar todas las notificaciones inmediatamente:"
+msgstr "Haga clic aquí para desactivar todas las notificaciones inmediatamente:"
 
 #: base/templates/pretixbase/email/order_details.html:7
 msgid ""
@@ -11599,8 +11589,8 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
-"Usted, %(name)s, ha sido invitado a ser un ponente de la sesión “%(talk)s”. "
-"¿Aceptas la invitación?"
+"Usted, %(name)s, ha sido invitado a ser un ponente de la sesión “%(talk)s”. ¿"
+"Aceptas la invitación?"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -12050,8 +12040,8 @@ msgid ""
 "If you did not, why not go ahead and create a proposal now? We’d love to "
 "hear from you!"
 msgstr ""
-"Si no lo hiciste, ¿por qué no seguir adelante y crear una propuesta ahora? "
-"¡Nos encantaría saber de ti!"
+"Si no lo hiciste, ¿por qué no seguir adelante y crear una propuesta ahora? ¡"
+"Nos encantaría saber de ti!"
 
 #: cfp/templates/cfp/event/user_submissions.html:163
 msgid "Submit something now!"
@@ -12661,8 +12651,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Parece que la comunicación entre usted y eventyay salió mal de alguna manera."
-"<br> ¡Regrese a la última página y vuelva a intentarlo!"
+"Parece que la comunicación entre usted y eventyay salió mal de alguna "
+"manera.<br> ¡Regrese a la última página y vuelva a intentarlo!"
 
 #: common/templates/403_csrf.html:7 common/templates/403_csrf.html:11
 msgid "Verification failed."
@@ -12967,8 +12957,7 @@ msgstr "Cerrado"
 #, fuzzy
 #| msgid "This change was performed by a member of the event orga."
 msgid "This change was performed by an event organiser."
-msgstr ""
-"Este cambio fue realizado por un miembro de la organización del evento."
+msgstr "Este cambio fue realizado por un miembro de la organización del evento."
 
 #: common/templates/common/question_answer.html:9
 msgid "No file provided"
@@ -14912,8 +14901,7 @@ msgstr "Texto de pie de página adicional"
 
 #: control/forms/global_settings.py:67
 msgid "Will be included as additional text in the footer, site-wide."
-msgstr ""
-"Se incluirá como texto adicional en el pie de página, en todo el sitio."
+msgstr "Se incluirá como texto adicional en el pie de página, en todo el sitio."
 
 #: control/forms/global_settings.py:75
 msgid "Additional footer link"
@@ -16325,8 +16313,7 @@ msgstr ""
 #: control/forms/vouchers.py:353
 #, python-brace-format
 msgid "CSV input needs to contain a field with the header \"{header}\"."
-msgstr ""
-"El CSV de entrada ha de contener un campo con la cabecera \"{header}\"."
+msgstr "El CSV de entrada ha de contener un campo con la cabecera \"{header}\"."
 
 #: control/forms/vouchers.py:358
 #, python-brace-format
@@ -16389,8 +16376,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Posición #{posid}: {old_item} ({old_price}) cambiado a {new_item}. "
-"({new_price})."
+"Posición #{posid}: {old_item} ({old_price}) cambiado a {new_item}. ("
+"{new_price})."
 
 #: control/logdisplay.py:70
 #, fuzzy, python-brace-format
@@ -16460,8 +16447,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Posición #{posid} creada: {item}({price}) como un complemento a la posición "
-"#{addon_to}."
+"Posición #{posid} creada: {item}({price}) como un complemento a la posición #"
+"{addon_to}."
 
 #: control/logdisplay.py:175
 #, fuzzy, python-brace-format
@@ -16712,8 +16699,7 @@ msgstr "Se ha creado la orden."
 
 #: control/logdisplay.py:495
 msgid "The order requires approval before it can continue to be processed."
-msgstr ""
-"La orden requiere aprobación antes que pueda continuar a ser procesada."
+msgstr "La orden requiere aprobación antes que pueda continuar a ser procesada."
 
 #: control/logdisplay.py:497 control/views/orders.py:589
 msgid "The order has been approved."
@@ -16728,8 +16714,8 @@ msgstr "La orden ha sido denegada."
 msgid ""
 "The email address has been changed from \"{old_email}\" to \"{new_email}\"."
 msgstr ""
-"La dirección de correo electrónico se ha cambiado de \"{old_email}\" a "
-"\"{new_email}\"."
+"La dirección de correo electrónico se ha cambiado de \"{old_email}\" a \""
+"{new_email}\"."
 
 #: control/logdisplay.py:503
 msgid ""
@@ -16745,8 +16731,8 @@ msgstr ""
 msgid ""
 "The phone number has been changed from \"{old_phone}\" to \"{new_phone}\"."
 msgstr ""
-"La dirección de correo electrónico se ha cambiado de \"{old_email}\" a "
-"\"{new_email}\"."
+"La dirección de correo electrónico se ha cambiado de \"{old_email}\" a \""
+"{new_email}\"."
 
 #: control/logdisplay.py:509
 msgid "The order locale has been changed."
@@ -17489,16 +17475,16 @@ msgid ""
 "Position #{posid} has been checked in manually at {datetime} on list \"{list}"
 "\"."
 msgstr ""
-"La posición #{posid} se ha registrado manualmente a {datetime} en la lista "
-"\"{list}\"."
+"La posición #{posid} se ha registrado manualmente a {datetime} en la lista \""
+"{list}\"."
 
 #: control/logdisplay.py:748
 #, python-brace-format
 msgid ""
 "Position #{posid} has been checked in again at {datetime} on list \"{list}\"."
 msgstr ""
-"La posición #{posid} ha sido comprobada de nuevo a {datetime} en la lista "
-"\"{list}\"."
+"La posición #{posid} ha sido comprobada de nuevo a {datetime} en la lista \""
+"{list}\"."
 
 #: control/logdisplay.py:758
 #, python-brace-format
@@ -18489,9 +18475,9 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"Está utilizando una versión de desarollo de eventyay. Favor de "
-"<strong>PARAR</strong> y de atribuir el valor \"Falso\" a la variable DEBUG "
-"si esta página se puede alcanzar de cualquier manera en el internet."
+"Está utilizando una versión de desarollo de eventyay. Favor de <strong>"
+"PARAR</strong> y de atribuir el valor \"Falso\" a la variable DEBUG si esta "
+"página se puede alcanzar de cualquier manera en el internet."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -19487,8 +19473,8 @@ msgid ""
 msgstr ""
 "Hola, \n"
 "\n"
-"usted ha sido invitado a un equipo en eventyay, una plataforma para "
-"realizar \n"
+"usted ha sido invitado a un equipo en eventyay, una plataforma para realizar "
+"\n"
 "ventas de entradas de eventos. \n"
 "\n"
 "Organizador: %(organizer)s\n"
@@ -19542,8 +19528,8 @@ msgid ""
 msgstr ""
 "Hola, \n"
 "\n"
-"usted ha sido invitado a un equipo en eventyay, una plataforma para "
-"realizar \n"
+"usted ha sido invitado a un equipo en eventyay, una plataforma para realizar "
+"\n"
 "ventas de entradas de eventos. \n"
 "\n"
 "Organizador: %(organizer)s\n"
@@ -20488,8 +20474,8 @@ msgstr "Borrar regla fiscal"
 msgid ""
 "Are you sure you want to delete the tax rule <strong>%(taxrule)s</strong>?"
 msgstr ""
-"¿Está seguro de que desea eliminar la regla de impuestos "
-"<strong>%(taxrule)s</strong>?"
+"¿Está seguro de que desea eliminar la regla de impuestos <strong>%(taxrule)"
+"s</strong>?"
 
 #: control/templates/pretixcontrol/event/tax_delete.html:12
 msgid ""
@@ -20513,11 +20499,10 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Esta configuración está pensada para usuarios avanzados. Ver la <a "
-"href=\"%(docs)s\">documentación</a> para más información. Tenga en cuenta "
-"que no nos hacemos responsables de la correcta gestión de los impuestos en "
-"su taquilla. En caso de duda, póngase en contacto con un abogado o asesor "
-"fiscal."
+"Esta configuración está pensada para usuarios avanzados. Ver la <a href=\"%"
+"(docs)s\">documentación</a> para más información. Tenga en cuenta que no nos "
+"hacemos responsables de la correcta gestión de los impuestos en su taquilla. "
+"En caso de duda, póngase en contacto con un abogado o asesor fiscal."
 
 #: control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -21419,8 +21404,7 @@ msgstr "No se encontraron respuestas coincidentes."
 
 #: control/templates/pretixcontrol/items/question.html:51
 msgid "You need to assign the question to a product to collect answers."
-msgstr ""
-"Es necesario asignar la pregunta a un producto para obtener respuestas."
+msgstr "Es necesario asignar la pregunta a un producto para obtener respuestas."
 
 #: control/templates/pretixcontrol/items/question.html:70
 #: orga/templates/orga/cfp/talkquestion/detail.html:77
@@ -21634,8 +21618,7 @@ msgstr "Borrar cuota"
 #: control/templates/pretixcontrol/items/quota_delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
-msgstr ""
-"¿Está seguro de que desea eliminar la cuota <strong>%(quota)s</strong>?"
+msgstr "¿Está seguro de que desea eliminar la cuota <strong>%(quota)s</strong>?"
 
 #: control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
@@ -21853,9 +21836,9 @@ msgid ""
 msgstr ""
 "Por favor, utilice esta herramienta con cuidado. Los cambios que realice "
 "aquí no son reversibles. Además, si se modifica una orden manualmente, no se "
-"verificarán todas las restricciones (por ejemplo, en los add-ons "
-"necesarios). Por lo tanto, puede construir una orden que no podría existir "
-"de otra manera. En la mayoría de los casos es más fácil cancelar la orden "
+"verificarán todas las restricciones (por ejemplo, en los add-ons necesarios)"
+". Por lo tanto, puede construir una orden que no podría existir de otra "
+"manera. En la mayoría de los casos es más fácil cancelar la orden "
 "completamente y crear una nueva."
 
 #: control/templates/pretixcontrol/order/change.html:68
@@ -26142,8 +26125,8 @@ msgstr "Eliminar un dispositivo de autenticación de dos factores"
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"¿Está seguro de que desea eliminar el dispositivo de autenticación "
-"\"%(device)s\"?"
+"¿Está seguro de que desea eliminar el dispositivo de autenticación \"%"
+"(device)s\"?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
@@ -27609,8 +27592,7 @@ msgstr "La autenticación de dos factores ahora está habilitada para su cuenta.
 
 #: eventyay_common/views/account/two_factor_auth.py:125
 msgid "Two-factor authentication is now disabled for your account."
-msgstr ""
-"La autenticación de dos factores ahora está desactivada para su cuenta."
+msgstr "La autenticación de dos factores ahora está desactivada para su cuenta."
 
 #: eventyay_common/views/account/two_factor_auth.py:143
 #, fuzzy
@@ -30013,9 +29995,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Esta pregunta ha sido respondida <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> respuestas <a "
-"href=\"%(base_search_url)sunanswered=1\">todavía faltan</a>."
+"Esta pregunta ha sido respondida <strong>%(count)s</strong>, <strong>%"
+"(missing)s</strong> respuestas <a href=\"%(base_search_url)sunanswered=1\">"
+"todavía faltan</a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, fuzzy, python-format
@@ -31764,9 +31746,9 @@ msgid ""
 "API tokens can be used to access the <a %(apiurl)s>eventyay API</a>. To find "
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
-"Este token se puede utilizar para acceder a la <a %(apiurl)s>API eventyay</"
-"a>. Puede generar un nuevo token, que invalidará el anterior. Para obtener "
-"más información, consulte la <a %(docurl)s> documentación de la API</a>."
+"Este token se puede utilizar para acceder a la <a %(apiurl)s>API eventyay</a>"
+". Puede generar un nuevo token, que invalidará el anterior. Para obtener más "
+"información, consulte la <a %(docurl)s> documentación de la API</a>."
 
 #: orga/templates/orga/user.html:69
 #, fuzzy
@@ -32285,8 +32267,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"No se pudo encontrar la exportación actual, por favor intente regenerarla. "
-"({error})"
+"No se pudo encontrar la exportación actual, por favor intente regenerarla. ("
+"{error})"
 
 #: orga/views/schedule.py:167
 msgid "You have to provide a new, unique schedule version!"
@@ -33103,8 +33085,7 @@ msgstr ""
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:18
 msgid "An internal error occurred during processing your data."
-msgstr ""
-"Se ha producido un error interno durante el procesamiento de los datos."
+msgstr "Se ha producido un error interno durante el procesamiento de los datos."
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/job_detail.html:19
 msgid "Some transactions might be missing, please try to re-import the file."
@@ -36471,8 +36452,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Si estas buscando configurar esta instalación, por favor "
-"<%(a_attr)s>dirigirte acá</a>."
+"Si estas buscando configurar esta instalación, por favor <%(a_attr)s>"
+"dirigirte acá</a>."
 
 #: presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"
@@ -36864,8 +36845,8 @@ msgstr ""
 #, python-brace-format
 msgid "Please note that all times are in the event timezone, {tz}."
 msgstr ""
-"Tenga en cuenta que todas las horas están en la zona horaria del evento, "
-"{tz}."
+"Tenga en cuenta que todas las horas están en la zona horaria del evento, {tz}"
+"."
 
 #: schedule/forms.py:80
 msgid ""
@@ -36948,8 +36929,8 @@ msgstr "- Su sesión “%(title)s” tendrá lugar a las %(start)s en %(location
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
-"- Su sesión “%(title)s” ha sido desplazada para tener lugar a la(s) "
-"%(start)s en %(location)s"
+"- Su sesión “%(title)s” ha sido desplazada para tener lugar a la(s) %(start)"
+"s en %(location)s"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 #, fuzzy
