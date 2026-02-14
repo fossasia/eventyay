@@ -3,7 +3,7 @@
 {% load event_tags %}
 {% load staff_session %}
 
-{% with current_event=current_event|default:request.event nav_context=nav_context|default:"agenda" %}
+{% with nav_context=nav_context|default:"agenda" %}
     {% if current_event and current_event.locales|length > 1 and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
             <summary>
@@ -118,10 +118,6 @@
             </div>
         </details>
     {% elif not subheader_login_link_disabled and not is_html_export %}
-        {% if current_event %}
-            <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
-        {% else %}
-			<a href="{% url "orga:login" %}">{% translate "Login" %}</a>
-        {% endif %}
+        <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">{% translate "Login" %}</a>
     {% endif %}
 {% endwith %}
