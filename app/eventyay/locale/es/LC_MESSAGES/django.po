@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 16:16+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-02-15 10:23+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
 "Language: es\n"
@@ -75,7 +75,7 @@ msgstr "¡Tenemos nuevas sesiones!"
 #: agenda/templates/agenda/changelog_block.html:125
 #, python-format
 msgid "%(quote_open)s%(title)s%(quote_close)s by %(speakers)s"
-msgstr ""
+msgstr "%(quote_open)s%(title)s%(quote_close)s por %(speakers)s"
 
 #: agenda/templates/agenda/changelog_block.html:35
 msgid "We have a new session: "
