@@ -1,19 +1,25 @@
 import json
 import os
 from pathlib import Path
+from datetime import timedelta
 
 import pytest
 import urllib3
+import django.core.management
 from django.conf import settings
+from django.core import signing
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import CommandError
 from django.test import override_settings
 from django.urls import reverse
 from django_scopes import scope
 from lxml import etree
+from django.utils import timezone
 
 from eventyay.base.models.schedule import export_schedule_html
 from eventyay.base.models.event import Event
+from eventyay.base.models.resource import Resource
+from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.base.models.resource import Resource
 
 
@@ -124,6 +130,7 @@ def test_schedule_frab_json_export(
     client,
     django_assert_max_num_queries,
     orga_user,
+    personal_answer,
     schedule_schema_json,
 ):
     with django_assert_max_num_queries(17):
@@ -262,6 +269,212 @@ def test_schedule_speaker_ical_export(
 
 
 @pytest.mark.django_db
+def test_schedule_calendar_redirect_google_calendar(slot, client):
+    url = reverse(
+        'agenda:export.google-calendar',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert 'calendar.google.com/calendar/r?' in response['Location']
+    assert 'cid=' in response['Location']
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_webcal(slot, client):
+    url = reverse(
+        'agenda:export.webcal',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'].startswith('webcal://')
+    assert '/schedule/export/schedule.ics' in response['Location']
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_my_google_calendar_anonymous_redirects_to_login(slot, client):
+    url = reverse(
+        'agenda:export.my-google-calendar',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'] == slot.submission.event.urls.login
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirect_my_webcal_anonymous_redirects_to_login(slot, client):
+    url = reverse(
+        'agenda:export.my-webcal',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, follow=False)
+    assert response.status_code == 302
+    assert response['Location'] == slot.submission.event.urls.login
+
+
+@pytest.mark.django_db
+def test_schedule_view_exporters_include_my_calendar_for_anonymous(slot, client):
+    url = reverse(
+        'agenda:schedule',
+        kwargs={'event': slot.submission.event.slug},
+    )
+    response = client.get(url, HTTP_ACCEPT='text/html', follow=False)
+    assert response.status_code == 200
+    assert response.context is not None
+    identifiers = {exporter.identifier for exporter in response.context['exporters']}
+    assert 'my-google-calendar' in identifiers
+    assert 'my-webcal' in identifiers
+
+
+@pytest.mark.django_db
+def test_schedule_calendar_redirects_nonpublic(slot, client):
+    slot.submission.event.is_public = False
+    slot.submission.event.save()
+
+    for name in ('agenda:export.google-calendar', 'agenda:export.webcal'):
+        response = client.get(
+            reverse(name, kwargs={'event': slot.submission.event.slug}),
+            follow=True,
+        )
+        assert response.status_code == 404
+
+
+def _make_starred_ics_token(*, event, user_id: int, exp_dt) -> str:
+    return signing.dumps(
+        {
+            'user_id': user_id,
+            'exp': int(exp_dt.timestamp()),
+            'event_id': event.pk,
+        },
+        salt='my-starred-ics',
+    )
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_valid(slot, client, orga_user):
+    SubmissionFavourite.objects.create(user=orga_user, submission=slot.submission)
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 200
+    assert slot.submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_expired(slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() - timedelta(seconds=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_wrong_event(slot, other_slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=other_slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_only_allows_ics(slot, client, orga_user):
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.json',
+            'token': token,
+        },
+    )
+    client.force_login(orga_user)
+    response = client.get(url, follow=True)
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_schedule_export_tokenized_starred_ics_anonymous_succeeds(slot, client, orga_user):
+    SubmissionFavourite.objects.create(user=orga_user, submission=slot.submission)
+    token = _make_starred_ics_token(
+        event=slot.submission.event,
+        user_id=orga_user.id,
+        exp_dt=timezone.now() + timedelta(hours=1),
+    )
+    url = reverse(
+        'agenda:export-tokenized',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.ics',
+            'token': token,
+        },
+    )
+    response = client.get(url, follow=True)
+    assert response.status_code == 200
+    assert response['Content-Type'].startswith('text/calendar')
+    assert slot.submission.title in response.text
+
+
+@pytest.mark.django_db
+def test_schedule_export_my_selected_talks_anonymous_via_query_param(slot, client):
+    url = reverse(
+        'agenda:export',
+        kwargs={
+            'event': slot.submission.event.slug,
+            'name': 'schedule-my.json',
+        },
+    )
+    response = client.get(
+        url,
+        data={'talks': slot.submission.code},
+        follow=True,
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
 def test_feed_view(slot, client, django_assert_max_num_queries, schedule):
     with django_assert_max_num_queries(11):
         response = client.get(slot.submission.event.urls.feed)
@@ -271,24 +484,16 @@ def test_feed_view(slot, client, django_assert_max_num_queries, schedule):
 
 @pytest.mark.django_db
 def test_html_export_event_required():
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with pytest.raises(CommandError) as excinfo:
-        call_command("export_schedule_html")
+        django.core.management.call_command("export_schedule_html")
 
     assert "the following arguments are required: event" in str(excinfo.value)
 
 
 @pytest.mark.django_db
 def test_html_export_event_unknown(event):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with pytest.raises(CommandError) as excinfo:
-        call_command("export_schedule_html", "foobar222")
+        django.core.management.call_command("export_schedule_html", "foobar222")
     assert 'Could not find event with slug "foobar222"' in str(excinfo.value)
     export_schedule_html(event_id=22222)
     export_schedule_html(event_id=event.pk)
@@ -343,31 +548,23 @@ def test_html_export_release_with_celery(mocker, event):
 def test_html_export_release_disabled(mocker, event):
     mocker.patch("django.core.management.call_command")
 
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     with scope(event=event):
         event.feature_flags["export_html_on_release"] = False
         event.save()
         event.wip_schedule.freeze(name="ohaio means hello")
 
-    call_command.assert_not_called()
+    django.core.management.call_command.assert_not_called()
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot")
 def test_html_export_language(event):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     event.locale = "de"
     event.locale_array = "de,en"
     event.save()
     with override_settings(COMPRESS_ENABLED=True, COMPRESS_OFFLINE=True):
-        call_command("rebuild")
-        call_command("export_schedule_html", event.slug)
+        django.core.management.call_command("rebuild")
+        django.core.management.call_command("export_schedule_html", event.slug)
 
     export_path = settings.HTMLEXPORT_ROOT / "test" / "test/schedule/index.html"
     schedule_html = export_path.read_text()
@@ -379,27 +576,21 @@ def test_html_export_language(event):
 @pytest.mark.usefixtures("slot")
 def test_schedule_export_schedule_html_task(mocker, event):
     mocker.patch("django.core.management.call_command")
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
 
     export_schedule_html.apply_async(kwargs={"event_id": event.id}, ignore_result=True)
 
-    call_command.assert_called_with("export_schedule_html", event.slug, "--zip")
+    django.core.management.call_command.assert_called_with("export_schedule_html", event.slug, "--zip")
 
 
 @pytest.mark.django_db
 @pytest.mark.usefixtures("slot")
 def test_schedule_export_schedule_html_task_nozip(mocker, event):
     mocker.patch("django.core.management.call_command")
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
 
     export_schedule_html.apply_async(
         kwargs={"event_id": event.id, "make_zip": False}, ignore_result=True
     )
-    call_command.assert_called_with("export_schedule_html", event.slug)
+    django.core.management.call_command.assert_called_with("export_schedule_html", event.slug)
 
 
 @override_settings(
@@ -456,10 +647,6 @@ def test_html_export_full(
     django_assert_max_num_queries,
     zip,
 ):
-    from django.core.management import (  # Import here to avoid overriding mocks
-        call_command,
-    )
-
     event.primary_color = "#111111"
     event.is_public = False
     event.save()
@@ -482,12 +669,12 @@ def test_html_export_full(
         image_filename = slot.submission.image.name.split("/")[-1]
 
     with override_settings(COMPRESS_ENABLED=True, COMPRESS_OFFLINE=True):
-        call_command("rebuild")
+        django.core.management.call_command("rebuild")
         event = Event.objects.get(slug=event.slug)
         args = ["export_schedule_html", event.slug]
         if zip:
             args.append("--zip")
-        call_command(*args)
+        django.core.management.call_command(*args)
 
     if zip:
         full_path = settings.HTMLEXPORT_ROOT / "test.zip"
