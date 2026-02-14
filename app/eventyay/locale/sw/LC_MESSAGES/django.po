@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 12:02+0000\n"
+"PO-Revision-Date: 2026-02-14 14:57+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Swahili <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sw/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -9575,8 +9575,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Unaweza kuweka mapendekezo hadi %(deadline)s (%(timezone)s), "
-"%(until_string)s kuanzia sasa."
+"Unaweza kuweka mapendekezo hadi %(deadline)s (%(timezone)s), %(until_string)"
+"s kuanzia sasa."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
