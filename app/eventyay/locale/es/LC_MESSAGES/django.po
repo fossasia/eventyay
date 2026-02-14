@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 14:50+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-02-14 16:16+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Spanish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/es/>\n"
 "Language: es\n"
@@ -286,6 +286,8 @@ msgid ""
 "Full device access (reading and changing orders and gift cards, reading of "
 "products and settings)"
 msgstr ""
+"Acceso completo al dispositivo (lectura y modificación de pedidos y tarjetas "
+"regalo, lectura de productos y configuración)"
 
 #: api/auth/devicesecurity.py:27
 #, fuzzy
@@ -628,7 +630,7 @@ msgstr "Fecha y hora de inicio de evento"
 #: base/auth.py:104
 #, python-brace-format
 msgid "{system} User"
-msgstr ""
+msgstr "{system} Usuario"
 
 #: base/auth.py:117 base/configurations/default_setting.py:192
 #: base/forms/auth.py:227 base/models/auth.py:178
@@ -840,11 +842,11 @@ msgstr ""
 
 #: base/configurations/default_setting.py:232
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "Solicitar un número de teléfono por pedido"
 
 #: base/configurations/default_setting.py:241
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "Requerir un número de teléfono por pedido"
 
 #: base/configurations/default_setting.py:251
 msgid "Ask for invoice address"
@@ -874,6 +876,8 @@ msgid ""
 "On invoices from one EU country to another EU country with a different "
 "currency, display the tax amounts in both currencies."
 msgstr ""
+"En facturas emitidas de un país de la UE a otro con distinta moneda, mostrar "
+"los importes de impuestos en ambas monedas."
 
 #: base/configurations/default_setting.py:299
 msgid "Require invoice address"
@@ -907,6 +911,11 @@ msgid ""
 "details and for displaying the value on the invoice. The field will be "
 "optional."
 msgstr ""
+"Si desea añadir un campo de texto personalizado, por ejemplo un número de "
+"registro específico de su país, al formulario de dirección de la factura, "
+"introduzca aquí la etiqueta. Esta etiqueta se usará tanto para pedir al "
+"usuario que introduzca sus datos como para mostrar el valor en la factura. "
+"El campo será opcional."
 
 #: base/configurations/default_setting.py:346
 msgid "Ask for VAT ID"
@@ -941,13 +950,15 @@ msgstr ""
 
 #: base/configurations/default_setting.py:372
 msgid "Show paid amount on partially paid invoices"
-msgstr ""
+msgstr "Mostrar importe pagado en facturas parcialmente pagadas"
 
 #: base/configurations/default_setting.py:374
 msgid ""
 "If an invoice has already been paid partially, this option will add the paid "
 "and pending amount to the invoice."
 msgstr ""
+"Si una factura ya ha sido pagada parcialmente, esta opción añadirá el "
+"importe pagado y el importe pendiente a la factura."
 
 #: base/configurations/default_setting.py:385
 msgid "Show free products on invoices"
@@ -972,6 +983,8 @@ msgid ""
 "The expiration date will not be shown if the invoice is generated after the "
 "order is paid."
 msgstr ""
+"La fecha de vencimiento no se mostrará si la factura se genera después de "
+"que el pedido esté pagado."
 
 #: base/configurations/default_setting.py:405
 #, fuzzy
@@ -984,6 +997,8 @@ msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
+"La parte del número de factura que sigue al prefijo se rellenará con ceros a "
+"la izquierda hasta esta longitud, p. ej. INV-001 o INV-00001."
 
 #: base/configurations/default_setting.py:418
 msgid "Generate invoices with consecutive numbers"
@@ -1036,6 +1051,9 @@ msgid ""
 "this field empty, the same numbering scheme will be used that you configured "
 "for regular invoices."
 msgstr ""
+"Esto se antepondrá a los números de factura de cancelaciones. Si deja este "
+"campo vacío, se usará el mismo esquema de numeración que configuró para las "
+"facturas normales."
 
 #: base/configurations/default_setting.py:467
 msgid "Reservation period"
@@ -1093,7 +1111,7 @@ msgstr "Todos los días"
 #: base/configurations/default_setting.py:520
 #: base/configurations/default_setting.py:525
 msgid "in minutes"
-msgstr ""
+msgstr "en minutos"
 
 #: base/configurations/default_setting.py:523
 #, fuzzy
@@ -1106,6 +1124,8 @@ msgid ""
 "If using days, the order will expire at the end of the last day. Using "
 "minutes is more exact, but should only be used for real-time payment methods."
 msgstr ""
+"Si usa días, el pedido expirará al final del último día. Usar minutos es más "
+"exacto, pero sólo debe emplearse para métodos de pago en tiempo real."
 
 #: base/configurations/default_setting.py:538
 msgid "Payment term in days"
@@ -1211,6 +1231,8 @@ msgstr ""
 #: base/configurations/default_setting.py:630
 msgid "Hide \"payment pending\" state on attendee-facing pages"
 msgstr ""
+"Ocultar el estado \"pago pendiente\" en las páginas dirigidas a los "
+"asistentes"
 
 #: base/configurations/default_setting.py:632
 msgid ""
@@ -1218,6 +1240,9 @@ msgid ""
 "but no indication of missing payment will be visible on the ticket pages of "
 "attendees who did not buy the ticket themselves."
 msgstr ""
+"El panel de instrucciones de pago seguirá mostrándose al asistente "
+"principal, pero no habrá ninguna indicación de pago pendiente en las páginas "
+"de las entradas de los asistentes que no compraron la entrada por sí mismos."
 
 #: base/configurations/default_setting.py:649
 msgid "Accept late payments"
@@ -1280,7 +1305,7 @@ msgstr "Las facturas nunca se generarán automáticamente para pedidos gratuitos
 
 #: base/configurations/default_setting.py:708
 msgid "Automatically cancel and reissue invoice on address changes"
-msgstr ""
+msgstr "Cancelar y reemitir automáticamente la factura al cambiar la dirección"
 
 #: base/configurations/default_setting.py:710
 msgid ""
@@ -1288,6 +1313,9 @@ msgid ""
 "will automatically be canceled and a new invoice will be issued. This "
 "setting does not affect changes made through the backend."
 msgstr ""
+"Si los asistentes cambian la dirección de facturación en un pedido "
+"existente, la factura se cancelará automáticamente y se emitirá una nueva "
+"factura. Esta opción no afecta a los cambios realizados desde el backend."
 
 #: base/configurations/default_setting.py:723
 msgid "Address line"
@@ -1355,7 +1383,7 @@ msgstr "Número de identificación tributaria"
 
 #: base/configurations/default_setting.py:771
 msgid "e.g. tax number in Germany, ABN in Australia, …"
-msgstr ""
+msgstr "p. ej., número fiscal en Alemania, ABN en Australia, …"
 
 #: base/configurations/default_setting.py:780
 msgid "EU VAT ID"
@@ -1483,7 +1511,7 @@ msgstr "Lenguaje predefinido"
 
 #: base/configurations/default_setting.py:926
 msgid "Region"
-msgstr ""
+msgstr "Región"
 
 #: base/configurations/default_setting.py:928
 msgid ""
@@ -1492,6 +1520,11 @@ msgid ""
 "less priority than the language and is therefore mostly relevant for "
 "languages used in different regions globally (like English)."
 msgstr ""
+"Se usará para determinar el formato de fecha y hora, así como el país "
+"predeterminado para las direcciones y números de teléfono de los asistentes. "
+"Para el formateo, tiene menos prioridad que el idioma y, por tanto, resulta "
+"relevante principalmente para idiomas que se usan en diferentes regiones a "
+"nivel mundial (como el inglés)."
 
 #: base/configurations/default_setting.py:941
 #, fuzzy
@@ -1504,6 +1537,9 @@ msgid ""
 "If disabled, no date or time will be shown on the ticket shop's front page. "
 "This settings does however not affect the display in other locations."
 msgstr ""
+"Si está desactivado, no se mostrará fecha ni hora en la página principal de "
+"la tienda de entradas. Esta configuración no afecta la visualización en "
+"otros lugares."
 
 #: base/configurations/default_setting.py:954
 msgid "Show event end date"
@@ -1659,6 +1695,8 @@ msgid ""
 "If you ask for a phone number, explain why you do so and what you will use "
 "the phone number for."
 msgstr ""
+"Si solicitas un número de teléfono, explica por qué lo pides y para qué lo "
+"vas a usar."
 
 #: base/configurations/default_setting.py:1112
 #, fuzzy
@@ -1668,7 +1706,7 @@ msgstr "Recordatorio para descargar los tickets"
 
 #: base/configurations/default_setting.py:1113
 msgid "If this is off, nobody can download a ticket."
-msgstr ""
+msgstr "Si esto está desactivado, nadie podrá descargar un ticket."
 
 #: base/configurations/default_setting.py:1122
 msgid "Download date"
@@ -1697,6 +1735,9 @@ msgid ""
 "for add-on products. With this option, a separate ticket is issued for every "
 "add-on product as well."
 msgstr ""
+"Por defecto, los tickets solo se emiten para los productos seleccionados "
+"individualmente, no para los productos adicionales. Con esta opción, también "
+"se emite un ticket separado por cada producto adicional."
 
 #: base/configurations/default_setting.py:1155
 #, fuzzy
@@ -1710,6 +1751,9 @@ msgid ""
 "\"admission ticket\"in the product settings. You can also turn off ticket "
 "issuing in every product separately."
 msgstr ""
+"Si está desactivado, los tickets solo se emiten para los productos que estén "
+"marcados como «entrada» en la configuración del producto. También puedes "
+"desactivar la emisión de tickets en cada producto por separado."
 
 #: base/configurations/default_setting.py:1174
 #, fuzzy
@@ -1722,10 +1766,13 @@ msgid ""
 "If turned off, ticket downloads are only possible after an order has been "
 "marked as paid."
 msgstr ""
+"Si está desactivado, la descarga de tickets solo será posible después de que "
+"un pedido se haya marcado como pagado."
 
 #: base/configurations/default_setting.py:1190
 msgid "Do not issue ticket before email address is validated"
 msgstr ""
+"No emitir ticket hasta que la dirección de correo electrónico esté validada"
 
 #: base/configurations/default_setting.py:1192
 msgid ""
@@ -1735,6 +1782,12 @@ msgid ""
 "from the page as soon as they clicked a link in the email. Does not affect "
 "orders performed through other sales channels."
 msgstr ""
+"Si está activado, los tickets no se ofrecerán para descarga inmediatamente "
+"después de la compra. Se adjuntarán al correo de confirmación de pago (si el "
+"tamaño del archivo no es demasiado grande), y el asistente podrá "
+"descargarlos desde la página tan pronto como haya hecho clic en un enlace "
+"del correo. No afecta a los pedidos realizados a través de otros canales de "
+"venta."
 
 #: base/configurations/default_setting.py:1205
 msgid "Require user to be logged in to place an order"
@@ -1794,10 +1847,14 @@ msgid ""
 "If your event series has more than 50 dates in the future, only the month or "
 "week calendar can be used."
 msgstr ""
+"Si tu serie de eventos tiene más de 50 fechas futuras, solo se podrá usar el "
+"calendario mensual o semanal."
 
 #: base/configurations/default_setting.py:1259
 msgid "Hide all unavailable dates from calendar or list views"
 msgstr ""
+"Ocultar todas las fechas no disponibles en las vistas de calendario o de "
+"lista"
 
 #: base/configurations/default_setting.py:1269
 #: base/configurations/default_setting.py:1278
@@ -1825,6 +1882,7 @@ msgstr "Clientes pueden cancelar ordenes pagadas"
 #: base/configurations/default_setting.py:1290
 msgid "Allow attendees to modify their information after they checked in."
 msgstr ""
+"Permitir a los asistentes modificar su información después de registrarse."
 
 #: base/configurations/default_setting.py:1291
 msgid ""
@@ -1860,23 +1918,30 @@ msgid ""
 "Only allow changes if the resulting price is higher or equal than the "
 "previous price."
 msgstr ""
+"Permitir cambios solo si el precio resultante es mayor o igual que el precio "
+"anterior."
 
 #: base/configurations/default_setting.py:1331
 #: base/configurations/default_setting.py:1352
 msgid ""
 "Only allow changes if the resulting price is higher than the previous price."
 msgstr ""
+"Permitir cambios solo si el precio resultante es mayor que el precio "
+"anterior."
 
 #: base/configurations/default_setting.py:1335
 #: base/configurations/default_setting.py:1356
 msgid ""
 "Only allow changes if the resulting price is equal to the previous price."
 msgstr ""
+"Permitir cambios solo si el precio resultante es igual al precio anterior."
 
 #: base/configurations/default_setting.py:1339
 #: base/configurations/default_setting.py:1360
 msgid "Allow changes regardless of price, even if this results in a refund."
 msgstr ""
+"Permitir cambios sin importar el precio, incluso si esto resulta en un "
+"reembolso."
 
 #: base/configurations/default_setting.py:1344
 #, fuzzy
@@ -1926,19 +1991,23 @@ msgstr "Mantener una tarifa de cancelación porcentual"
 
 #: base/configurations/default_setting.py:1441
 msgid "Allow attendees to voluntarily choose a lower refund"
-msgstr ""
+msgstr "Permitir a los asistentes elegir voluntariamente un reembolso menor"
 
 #: base/configurations/default_setting.py:1442
 msgid ""
 "With this option enabled, your attendees can choose to get a smaller refund "
 "to support you."
 msgstr ""
+"Con esta opción activada, tus asistentes pueden optar por recibir un "
+"reembolso menor para apoyarte."
 
 #: base/configurations/default_setting.py:1448
 msgid ""
 "However, if you want us to help keep the lights on here, please consider "
 "using the slider below to request a smaller refund. Thank you!"
 msgstr ""
+"Sin embargo, si quieres ayudarnos a mantener el servicio, considera usar el "
+"control deslizante de abajo para solicitar un reembolso menor. ¡Gracias!"
 
 #: base/configurations/default_setting.py:1456
 #, fuzzy
@@ -1953,10 +2022,14 @@ msgid ""
 "like to receive. You can use it e.g. to explain choosing a lower refund will "
 "help your organization."
 msgstr ""
+"Este texto se mostrará entre la explicación de cómo funcionan los reembolsos "
+"y el control deslizante que tus asistentes pueden usar para elegir la "
+"cantidad que desean recibir. Puedes usarlo, por ejemplo, para explicar que "
+"elegir un reembolso menor ayudará a tu organización."
 
 #: base/configurations/default_setting.py:1475
 msgid "Step size for reduction amount"
-msgstr ""
+msgstr "Tamaño del paso para la cantidad de reducción"
 
 #: base/configurations/default_setting.py:1477
 msgid ""
@@ -1964,23 +2037,31 @@ msgid ""
 "set this to e.g. 10, they will only be able to choose values in increments "
 "of 10."
 msgstr ""
+"Por defecto, los asistentes pueden elegir una cantidad arbitraria para que "
+"te quedes. Si lo fijas, p. ej., en 10, solo podrán elegir valores en "
+"incrementos de 10."
 
 #: base/configurations/default_setting.py:1489
 msgid ""
 "Customers can only request a cancellation that needs to be approved by the "
 "event organizer before the order is canceled and a refund is issued."
 msgstr ""
+"Los clientes solo pueden solicitar una cancelación que debe ser aprobada por "
+"el organizador del evento antes de que el pedido sea cancelado y se emita un "
+"reembolso."
 
 #: base/configurations/default_setting.py:1500
 #: base/configurations/default_setting.py:1512
 msgid "All refunds are issued to the original payment method"
-msgstr ""
+msgstr "Todos los reembolsos se emiten al método de pago original"
 
 #: base/configurations/default_setting.py:1503
 #: base/configurations/default_setting.py:1515
 msgid ""
 "Customers can choose between a gift card and a refund to their payment method"
 msgstr ""
+"Los clientes pueden elegir entre una tarjeta de regalo y un reembolso a su "
+"método de pago"
 
 #: base/configurations/default_setting.py:1505
 #: base/configurations/default_setting.py:1517
@@ -2033,6 +2114,8 @@ msgid ""
 "Tickets will never be attached if they're larger than {size} to avoid email "
 "delivery problems."
 msgstr ""
+"Las entradas nunca se adjuntarán si son mayores que {size} para evitar "
+"problemas de entrega por correo electrónico."
 
 #: base/configurations/default_setting.py:1580
 #, fuzzy
@@ -2663,15 +2746,15 @@ msgstr "Sugerimos fuertemente usar un tono de rojo."
 
 #: base/configurations/default_setting.py:2063
 msgid "Page background color"
-msgstr ""
+msgstr "Color de fondo de la página"
 
 #: base/configurations/default_setting.py:2087
 msgid "Scroll-over color"
-msgstr ""
+msgstr "Color al pasar el cursor"
 
 #: base/configurations/default_setting.py:2103
 msgid "Use round edges"
-msgstr ""
+msgstr "Usar bordes redondeados"
 
 #: base/configurations/default_setting.py:2113
 #: control/templates/pretixcontrol/pdf/index.html:317
@@ -2721,12 +2804,12 @@ msgstr ""
 #: base/configurations/default_setting.py:2169
 #: base/configurations/default_setting.py:2209
 msgid "Use header image in its full size"
-msgstr ""
+msgstr "Usar la imagen del encabezado en su tamaño completo"
 
 #: base/configurations/default_setting.py:2170
 #: base/configurations/default_setting.py:2210
 msgid "We recommend to upload a picture at least 1170 pixels wide."
-msgstr ""
+msgstr "Recomendamos subir una imagen de al menos 1170 píxeles de ancho."
 
 #: base/configurations/default_setting.py:2179
 msgid "Show event title even if a logo image is present"
@@ -2787,7 +2870,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2278
 msgid "Banner text (top)"
-msgstr ""
+msgstr "Texto del banner (superior)"
 
 #: base/configurations/default_setting.py:2282
 #, fuzzy
@@ -2803,13 +2886,15 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2293
 msgid "Banner text (bottom)"
-msgstr ""
+msgstr "Texto del banner (inferior)"
 
 #: base/configurations/default_setting.py:2297
 msgid ""
 "This text will be shown below every page of your shop. Please only use this "
 "for very important messages."
 msgstr ""
+"Este texto se mostrará debajo de cada página de tu tienda. Por favor, úsalo "
+"únicamente para mensajes muy importantes."
 
 #: base/configurations/default_setting.py:2308
 msgid "Voucher explanation"
@@ -2854,10 +2939,12 @@ msgid ""
 "This message will be shown after an order has been created successfully. It "
 "will be shown in additionalto the default text."
 msgstr ""
+"Este mensaje se mostrará después de que un pedido se haya creado "
+"correctamente. Se mostrará además del texto predeterminado."
 
 #: base/configurations/default_setting.py:2354
 msgid "Help text of the phone number field"
-msgstr ""
+msgstr "Texto de ayuda del campo de número de teléfono"
 
 #: base/configurations/default_setting.py:2362
 msgid ""
@@ -2870,11 +2957,11 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2370
 msgid "Help text of the email field"
-msgstr ""
+msgstr "Texto de ayuda del campo de correo electrónico"
 
 #: base/configurations/default_setting.py:2395
 msgid "Allow creating a new team during event creation"
-msgstr ""
+msgstr "Permitir crear un nuevo equipo durante la creación del evento"
 
 #: base/configurations/default_setting.py:2397
 msgid ""
@@ -2883,6 +2970,11 @@ msgid ""
 "allows users to create an event-specified team on-the-fly, even when they do "
 "not have \"Can change teams and permissions\" permission."
 msgstr ""
+"Los usuarios que no tienen acceso a todos los eventos de este organizador "
+"deben seleccionar uno de sus equipos para tener acceso al evento creado. "
+"Esta opción permite a los usuarios crear sobre la marcha un equipo "
+"específico para el evento, incluso cuando no tienen el permiso \"Can change "
+"teams and permissions\"."
 
 #: base/configurations/default_setting.py:2423
 #: base/configurations/default_setting.py:2433 base/models/event.py:605
@@ -2978,6 +3070,8 @@ msgid ""
 "The system generates by default {}-character long gift card codes. However, "
 "if a different length is required, it can be set here."
 msgstr ""
+"El sistema genera por defecto códigos de tarjeta regalo de {} caracteres. Si "
+"se requiere otra longitud, puede establecerse aquí."
 
 #: base/configurations/default_setting.py:2482
 #, fuzzy
@@ -2995,7 +3089,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2497
 msgid "Privacy Policy URL"
-msgstr ""
+msgstr "URL de la política de privacidad"
 
 #: base/configurations/default_setting.py:2499
 #, fuzzy
@@ -3021,10 +3115,13 @@ msgid ""
 "that this can mean people will not know their seat after their purchase and "
 "it might not be written on their ticket."
 msgstr ""
+"Si está desactivado, deberá asignar los asientos manualmente en el backend. "
+"Tenga en cuenta que esto puede hacer que las personas no conozcan su asiento "
+"después de la compra y que podría no aparecer en su entrada."
 
 #: base/configurations/default_setting.py:2529
 msgid "Show button to copy user input from other products"
-msgstr ""
+msgstr "Mostrar botón para copiar datos de usuario de otros productos"
 
 #: base/configurations/default_setting.py:2537
 msgid "Start page header background image"
@@ -3057,12 +3154,12 @@ msgstr "Tratamientos más comunes en alemán"
 #: base/configurations/default_setting.py:2604
 msgctxt "person_name_salutation"
 msgid "Ms"
-msgstr ""
+msgstr "Sra."
 
 #: base/configurations/default_setting.py:2605
 msgctxt "person_name_salutation"
 msgid "Mr"
-msgstr ""
+msgstr "Sr."
 
 #: base/configurations/default_setting.py:2615
 #: base/configurations/default_setting.py:2633
@@ -3182,7 +3279,7 @@ msgstr "Cancelación"
 #: base/configurations/default_setting.py:2881
 msgctxt "person_name_sample"
 msgid "Mr"
-msgstr ""
+msgstr "Sr."
 
 #: base/configurations/default_setting.py:2873
 #, fuzzy
@@ -3194,7 +3291,7 @@ msgstr "Se requiere el nombre del cliente"
 #: base/configurations/default_setting.py:2885
 msgctxt "person_name_sample"
 msgid "MA"
-msgstr ""
+msgstr "MA"
 
 #: base/email.py:310 eventyay_common/views/event.py:286
 #: orga/templates/orga/cfp/submissiontype/list.html:57
@@ -3702,7 +3799,7 @@ msgstr "Monto de pago"
 
 #: base/exporters/orderlist.py:83
 msgid "Show multiple choice answers grouped in one column"
-msgstr ""
+msgstr "Mostrar respuestas de opción múltiple agrupadas en una columna"
 
 #: base/exporters/orderlist.py:94
 #, fuzzy
@@ -3727,6 +3824,8 @@ msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
 msgstr ""
+"Incluir solo pedidos que incluyan al menos una entrada para una fecha igual "
+"o posterior a esta. ¡También incluirá otras fechas en caso de pedidos mixtos!"
 
 #: base/exporters/orderlist.py:121
 #, fuzzy
@@ -4257,11 +4356,11 @@ msgstr "Etiqueta vacía"
 
 #: base/exporters/orderlist.py:1127 control/forms/filter.py:1112
 msgid "Valid and with value"
-msgstr ""
+msgstr "Válido y con valor"
 
 #: base/exporters/orderlist.py:1128 control/forms/filter.py:1113
 msgid "Expired and with value"
-msgstr ""
+msgstr "Caducado y con valor"
 
 #: base/exporters/orderlist.py:1129 control/forms/filter.py:183
 #: control/forms/filter.py:1114 control/forms/filter.py:1532
@@ -4288,7 +4387,7 @@ msgstr "Fecha de caducidad"
 
 #: base/exporters/orderlist.py:1179 control/forms/orders.py:648
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "Términos y condiciones especiales"
 
 #: base/exporters/orderlist.py:1180
 #: control/templates/pretixcontrol/boxoffice/payment.html:37
@@ -4433,6 +4532,7 @@ msgstr "Nuestro sistema no reconoce esta combinación de credenciales."
 #: base/forms/auth.py:47 base/forms/user.py:24
 msgid "For security reasons, please wait 5 minutes before you try again."
 msgstr ""
+"Por motivos de seguridad, espere 5 minutos antes de intentarlo de nuevo."
 
 #: base/forms/auth.py:48 base/forms/auth.py:243
 msgid "This account is inactive."
@@ -4474,7 +4574,7 @@ msgstr "Referencia interna"
 #: base/forms/questions.py:269
 msgctxt "phonenumber"
 msgid "Phone number (without international area code)"
-msgstr ""
+msgstr "Número de teléfono (sin código de país)"
 
 #: base/forms/questions.py:435 base/forms/questions.py:808
 msgid "Street and Number"
@@ -5157,10 +5257,12 @@ msgid ""
 "Does not have any effect for the validation of tickets, only for the "
 "automatic configuration of check-in devices."
 msgstr ""
+"No tiene ningún efecto en la validación de entradas, solo en la "
+"configuración automática de los dispositivos de check-in."
 
 #: base/models/checkin.py:40
 msgid "Allow re-entering after an exit scan"
-msgstr ""
+msgstr "Permitir reingreso tras un escaneo de salida"
 
 #: base/models/checkin.py:42
 #, fuzzy
@@ -5172,6 +5274,8 @@ msgstr "Solicitar direcciones de correo electrónico por ticket"
 msgid ""
 "Use this option to turn off warnings if a ticket is scanned a second time."
 msgstr ""
+"Use esta opción para desactivar las alertas si una entrada se escanea por "
+"segunda vez."
 
 #: base/models/checkin.py:46
 #, fuzzy
@@ -5238,7 +5342,7 @@ msgstr "Este identificador ya se utiliza para una pregunta diferente."
 #: base/models/devices.py:86
 #: control/templates/pretixcontrol/organizers/gates.html:16
 msgid "Gate"
-msgstr ""
+msgstr "Puerta"
 
 #: base/models/devices.py:100
 #: control/templates/pretixcontrol/organizers/devices.html:38
@@ -5395,7 +5499,7 @@ msgstr "Serie de eventos"
 
 #: base/models/event.py:667 base/payment.py:362
 msgid "Restrict to specific sales channels"
-msgstr ""
+msgstr "Restringir a canales de venta específicos"
 
 #: base/models/event.py:668
 #, fuzzy
@@ -5411,7 +5515,7 @@ msgstr "Agregar al carrito"
 
 #: base/models/event.py:673
 msgid "Create Video platform for Event."
-msgstr ""
+msgstr "Crear plataforma de vídeo para el evento."
 
 #: base/models/event.py:682
 msgid ""
@@ -5549,16 +5653,16 @@ msgstr "Tienes que configurar al menos una cuota para vender algo."
 
 #: base/models/event.py:1946
 msgid "You have unpaid invoices, please pay them before going live."
-msgstr ""
+msgstr "Tienes facturas pendientes; págalas antes de poner el evento en vivo."
 
 #: base/models/event.py:1951
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
-msgstr ""
+msgstr "Necesitas completar el parámetro meta \"{property}\"."
 
 #: base/models/event.py:1998
 msgid "You need to fill the billing information."
-msgstr ""
+msgstr "Necesitas completar la información de facturación."
 
 #: base/models/event.py:2087
 msgid ""
@@ -5688,6 +5792,9 @@ msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
+"Si está marcado, un evento solo puede ponerse en vivo si la propiedad está "
+"establecida. En las series de eventos, siempre es opcional establecer un "
+"valor para fechas individuales"
 
 #: base/models/event.py:3060
 #, fuzzy
@@ -5700,10 +5807,14 @@ msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
 msgstr ""
+"Si lo dejas vacío, se permite cualquier valor. De lo contrario, introduce un "
+"valor posible por línea."
 
 #: base/models/event.py:3067
 msgid "A property can either be required or have a default value, not both."
 msgstr ""
+"Una propiedad puede ser obligatoria o tener un valor predeterminado, no "
+"ambos."
 
 #: base/models/event.py:3069
 #, fuzzy
@@ -6037,7 +6148,7 @@ msgstr "El asiento \"{seat}\" ya no está disponible."
 #: base/models/orders.py:922
 #, python-brace-format
 msgid "The voucher \"{voucher}\" no longer has sufficient budget."
-msgstr ""
+msgstr "El cupón \"{voucher}\" ya no tiene presupuesto suficiente."
 
 #: base/models/orders.py:923
 #, fuzzy, python-brace-format
@@ -6171,6 +6282,8 @@ msgstr "Reembolso solamente"
 msgid ""
 "May be shown to the end user or used e.g. as part of a payment reference."
 msgstr ""
+"Puede mostrarse al usuario final o usarse, p. ej., como parte de una "
+"referencia de pago."
 
 #: base/models/orders.py:2058
 msgid "Payment fee"
@@ -6369,6 +6482,9 @@ msgid ""
 "information about attendees. Users with \"can change orders\" can also "
 "perform check-ins."
 msgstr ""
+"Esto incluye la búsqueda de asistentes, lo que puede usarse para obtener "
+"información personal sobre ellos. Los usuarios con \"can change orders\" "
+"también pueden realizar check-ins."
 
 #: base/models/organizer.py:378
 msgid "Can view vouchers"
@@ -6564,12 +6680,12 @@ msgstr "Has sido invitado a un equipo organizador"
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "Nombre del contacto principal"
 
 #: base/models/organizer.py:687
 #: control/forms/organizer_forms/organizer_form.py:63
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "Correo electrónico del contacto principal"
 
 #: base/models/organizer.py:692
 #: control/forms/organizer_forms/organizer_form.py:74
@@ -6627,35 +6743,39 @@ msgstr "Fecha de instalación"
 #: base/models/page.py:9
 #: control/templates/pretixcontrol/admin/pages/index.html:29
 msgid "Page title"
-msgstr ""
+msgstr "Título de la página"
 
 #: base/models/page.py:13 control/views/pages.py:64
 msgid "URL form"
-msgstr ""
+msgstr "Formato de URL"
 
 #: base/models/page.py:15
 msgid ""
 "This will be used to generate the URL of the page. Please only use latin "
 "letters, numbers, dots and dashes. You cannot change this afterwards."
 msgstr ""
+"Esto se usará para generar la URL de la página. Usa solo letras latinas, "
+"números, puntos y guiones. No podrás cambiar esto después."
 
 #: base/models/page.py:20
 msgid "Show link on the website start page"
-msgstr ""
+msgstr "Mostrar enlace en la página de inicio del sitio web"
 
 #: base/models/page.py:22
 msgid "Show in header menu on all pages"
-msgstr ""
+msgstr "Mostrar en el menú del encabezado en todas las páginas"
 
 #: base/models/page.py:23
 msgid "Show in website footer menu on all pages"
-msgstr ""
+msgstr "Mostrar en el menú del pie de página del sitio web en todas las páginas"
 
 #: base/models/page.py:27
 msgid ""
 "Require the user to acknowledge this page before the sign up is created "
 "(e.g. for terms of service)."
 msgstr ""
+"Requerir que el usuario acepte esta página antes de crear la inscripción (p. "
+"ej., para los términos del servicio)."
 
 #: base/models/page.py:30
 #, fuzzy
@@ -6836,6 +6956,12 @@ msgid ""
 "out. There might be a short period in which both products are visible while "
 "all tickets in the referenced quota are reserved, but not yet sold."
 msgstr ""
+"Si seleccionas una cuota aquí, este producto solo se mostrará cuando esa "
+"cuota no esté disponible. Si se combina con la opción de ocultar productos "
+"agotados, esto te permite reemplazar productos por otros más caros una vez "
+"que se agoten. Puede darse un breve periodo en el que ambos productos sean "
+"visibles mientras todas las entradas de la cuota referenciada estén "
+"reservadas, pero aún no vendidas."
 
 #: base/models/product.py:385
 msgid "This product can only be bought using a voucher."
@@ -7271,6 +7397,8 @@ msgstr ""
 #: base/models/product.py:1198
 msgid "Not supported by all check-in apps for all question types."
 msgstr ""
+"No es compatible con todas las aplicaciones de check-in para todos los tipos "
+"de preguntas."
 
 #: base/models/product.py:1202 control/forms/product.py:82
 #, fuzzy
@@ -7416,10 +7544,14 @@ msgid ""
 "sold, even if tickets become available again through cancellations or "
 "expiring orders. Of course, you can always re-open it manually."
 msgstr ""
+"Si activas esto, cuando la cuota se agote una vez, no se venderán más "
+"entradas, incluso si vuelven a estar disponibles por cancelaciones o pedidos "
+"que expiren. Por supuesto, siempre puedes reabrirla manualmente."
 
 #: base/models/product.py:1542
 msgid "Allow to sell more tickets once people have checked out"
 msgstr ""
+"Permitir vender más entradas después de que las personas completen la compra"
 
 #: base/models/product.py:1544
 msgid ""
@@ -7430,6 +7562,12 @@ msgid ""
 "are ignored if they are set to \"Allow re-entering after an exit scan\" to "
 "prevent accidental overbooking."
 msgstr ""
+"Con esta opción, la cuota se liberará tan pronto como las personas sean "
+"escaneadas al salir de tu evento. Esto solo ocurrirá si han sido escaneadas "
+"tanto en una entrada como en una salida y la salida es el escaneo más "
+"reciente. No importa en qué lista de check-in estuviera cada escaneo, pero "
+"las listas de check-in se ignoran si están configuradas en \"Allow re-"
+"entering after an exit scan\" para evitar una sobreventa accidental."
 
 #: base/models/product.py:1556 base/models/vouchers.py:177
 #: control/templates/pretixcontrol/items/quota_edit.html:8
@@ -8350,7 +8488,7 @@ msgstr ""
 #: base/models/tax.py:328
 msgctxt "invoice"
 msgid "VAT liability rests with the service recipient."
-msgstr ""
+msgstr "La responsabilidad del IVA recae en el destinatario del servicio."
 
 #: base/models/track.py:49 base/models/type.py:44
 #: orga/templates/orga/cfp/submissiontype/list.html:47
@@ -8434,6 +8572,8 @@ msgid ""
 "voucher across all usages. If this is sum reached, the voucher can no longer "
 "be used."
 msgstr ""
+"Esta es la cantidad monetaria máxima que se descontará con este cupón en "
+"todos sus usos. Si se alcanza esta suma, el cupón ya no podrá usarse."
 
 #: base/models/vouchers.py:127 control/forms/filter.py:1541
 msgid "Reserve ticket from quota"
@@ -8620,6 +8760,8 @@ msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
 msgstr ""
+"El asiento \"{id}\" no está disponible actualmente (bloqueado, ya vendido o "
+"con un cupón diferente)."
 
 #: base/models/vouchers.py:402
 #, fuzzy
@@ -8652,6 +8794,8 @@ msgid ""
 "This is the maximum monetary amount that will be discounted using this "
 "voucher across all usages."
 msgstr ""
+"Esta es la cantidad monetaria máxima que se descontará con este cupón en "
+"todos sus usos."
 
 #: base/models/vouchers.py:586
 #, fuzzy
@@ -8871,7 +9015,7 @@ msgstr "Mantener vacío"
 #: base/orderimport.py:103
 #, python-brace-format
 msgid "Invalid setting for column \"{header}\"."
-msgstr ""
+msgstr "Configuración inválida para la columna \"{header}\"."
 
 #: base/orderimport.py:161 presale/views/waiting.py:108
 msgctxt "subevent"
@@ -9012,7 +9156,7 @@ msgstr "Registrado automáticamente"
 
 #: base/orderimport.py:576
 msgid "You cannot assign a position secret that already exists."
-msgstr ""
+msgstr "No puede asignar un secreto de posición que ya existe."
 
 #: base/orderimport.py:602
 #, fuzzy
@@ -9184,6 +9328,8 @@ msgid ""
 "The payment method will not be shown by default but only to people who enter "
 "the shop through a special link."
 msgstr ""
+"El método de pago no se mostrará por defecto, solo a las personas que entren "
+"en la tienda mediante un enlace especial."
 
 #: base/payment.py:387
 #, fuzzy
@@ -9194,6 +9340,7 @@ msgstr "Habilitar método de pago"
 #: base/payment.py:397
 msgid "Share this link with customers who should use this payment method."
 msgstr ""
+"Comparta este enlace con los clientes que deban usar este método de pago."
 
 #: base/payment.py:431
 msgctxt "invoice"
@@ -9632,7 +9779,7 @@ msgstr "Direcciones de facturación"
 
 #: base/pdf.py:416
 msgid "Sesame Street 42"
-msgstr ""
+msgstr "Sesame Street 42"
 
 #: base/pdf.py:425
 #, fuzzy
@@ -9676,7 +9823,7 @@ msgstr "Dirección de facturación empresa"
 
 #: base/pdf.py:456
 msgid "Atlantis"
-msgstr ""
+msgstr "Atlantis"
 
 #: base/pdf.py:465
 msgid "List of Add-Ons"
@@ -9872,6 +10019,8 @@ msgstr "No fijado"
 #: base/secrets.py:95
 msgid "Random (default, works with all apps in the ecosystem)"
 msgstr ""
+"Aleatorio (predeterminado, funciona con todas las aplicaciones del "
+"ecosistema)"
 
 #: base/secrets.py:134
 msgid ""
@@ -9971,6 +10120,8 @@ msgid ""
 "All payments for this event need to be confirmed already, so no new orders "
 "can be created."
 msgstr ""
+"Todos los pagos de este evento ya deben estar confirmados, por lo que no se "
+"pueden crear nuevos pedidos."
 
 #: base/services/cart.py:85
 msgid ""
@@ -10051,6 +10202,9 @@ msgid ""
 "for. If you want to add something new to your cart using that voucher, you "
 "can do so with the voucher redemption option on the bottom of the page."
 msgstr ""
+"No encontramos ninguna posición en su carrito para la que podamos usar este "
+"cupón. Si desea añadir algo nuevo al carrito usando ese cupón, puede hacerlo "
+"con la opción de canjear cupón en la parte inferior de la página."
 
 #: base/services/cart.py:114
 msgid "Your voucher is valid for a product that is currently not for sale."
@@ -10322,6 +10476,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
+"Error al importar el valor \"{value}\" para la columna \"{column}\" en la "
+"línea \"{line}\": {message}"
 
 #: base/services/orderimport.py:126
 #, fuzzy, python-brace-format
@@ -13688,6 +13844,8 @@ msgstr "Texto informativo del organizador"
 #: control/forms/admin/vouchers.py:25
 msgid "The voucher will be valid for all events under the selected organizers."
 msgstr ""
+"El cupón será válido para todos los eventos de los organizadores "
+"seleccionados."
 
 #: control/forms/checkin.py:73 control/forms/filter.py:349
 #: control/forms/filter.py:376 control/forms/filter.py:1564
@@ -13705,7 +13863,7 @@ msgstr "Todas las fechas"
 
 #: control/forms/event.py:53
 msgid "Only allow registered accounts to get a ticket"
-msgstr ""
+msgstr "Permitir solo a cuentas registradas obtener un ticket"
 
 #: control/forms/event.py:80
 msgid "This is an event series"
@@ -13719,7 +13877,7 @@ msgstr "Modificar sólo para este evento"
 
 #: control/forms/event.py:85
 msgid "This will create a new Video platform for this event."
-msgstr ""
+msgstr "Esto creará una nueva plataforma de vídeo para este evento."
 
 #: control/forms/event.py:139
 #, fuzzy
@@ -13762,10 +13920,14 @@ msgid ""
 "have permission to edit all events under this organizer. Please select one "
 "of your existing teams that will be granted access to this event."
 msgstr ""
+"Puede crear eventos para este organizador; sin embargo, no tiene permiso "
+"para editar todos sus eventos. Seleccione uno de sus equipos existentes al "
+"que se le concederá acceso a este evento."
 
 #: control/forms/event.py:173
 msgid "Create a new team for this event with me as the only member"
 msgstr ""
+"Crear un nuevo equipo para este evento en el que yo sea el único miembro."
 
 #: control/forms/event.py:218 eventyay_common/forms/event.py:90
 msgid ""
@@ -13885,12 +14047,12 @@ msgstr "No copiar"
 
 #: control/forms/event.py:710 orga/forms/cfp.py:162 orga/forms/cfp.py:185
 msgid "Ask, but do not require input"
-msgstr ""
+msgstr "Pedir, pero no requerir entrada"
 
 #: control/forms/event.py:711 orga/forms/cfp.py:152 orga/forms/cfp.py:163
 #: orga/forms/cfp.py:186
 msgid "Ask and require input"
-msgstr ""
+msgstr "Pedir y requerir entrada"
 
 #: control/forms/event.py:747
 #, python-brace-format
@@ -13898,6 +14060,8 @@ msgid ""
 "You have configured gift cards to be valid {} years plus the year the gift "
 "card is issued in."
 msgstr ""
+"Has configurado las tarjetas regalo para que sean válidas {} años, más el "
+"año en que se emite la tarjeta."
 
 #: control/forms/event.py:765
 msgid "Tax rule for payment fees"
@@ -13942,7 +14106,7 @@ msgstr "Idioma del usuario"
 
 #: control/forms/event.py:930
 msgid "The online shop must be selected to receive these emails."
-msgstr ""
+msgstr "La tienda online debe estar seleccionada para recibir estos correos."
 
 #: control/forms/event.py:944
 #, fuzzy
@@ -13954,12 +14118,16 @@ msgid ""
 "The order placed and paid emails will only be send to orders from these "
 "sales channels. The online shop must be enabled."
 msgstr ""
+"Los correos \"pedido realizado\" y \"pedido pagado\" solo se enviarán a "
+"pedidos de estos canales de venta. La tienda online debe estar habilitada."
 
 #: control/forms/event.py:957 plugins/sendmail/forms.py:357
 msgid ""
 "This email will only be send to orders from these sales channels. The online "
 "shop must be enabled."
 msgstr ""
+"Este correo solo se enviará a pedidos de estos canales de venta. La tienda "
+"online debe estar habilitada."
 
 #: control/forms/event.py:964
 msgid "Bcc address"
@@ -14016,6 +14184,9 @@ msgid ""
 "person who orders the tickets, the following email will be sent out to the "
 "attendees."
 msgstr ""
+"Si el pedido contiene asistentes con direcciones de correo distintas a la "
+"del comprador de las entradas, el siguiente correo se enviará a los "
+"asistentes."
 
 #: control/forms/event.py:993 control/forms/event.py:1012
 #: control/forms/event.py:1031 control/forms/event.py:1094
@@ -14125,7 +14296,7 @@ msgstr ""
 
 #: control/forms/event.py:1141 control/forms/global_settings.py:140
 msgid "Sendgrid Token"
-msgstr ""
+msgstr "Token de SendGrid"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 #, fuzzy
@@ -14135,7 +14306,7 @@ msgstr "Enviar"
 
 #: control/forms/event.py:1146 control/forms/global_settings.py:45
 msgid "SMTP"
-msgstr ""
+msgstr "SMTP"
 
 #: control/forms/event.py:1149
 #, fuzzy
@@ -14207,7 +14378,7 @@ msgstr "Código de ticket"
 
 #: control/forms/event.py:1259
 msgid "For advanced users, usually does not need to be changed."
-msgstr ""
+msgstr "Para usuarios avanzados; normalmente no es necesario cambiarlo."
 
 #: control/forms/event.py:1321
 msgid "Any country"
@@ -14419,7 +14590,7 @@ msgstr "Tarifa de cancelación"
 
 #: control/forms/filter.py:177
 msgid "Fully canceled but invoice not canceled"
-msgstr ""
+msgstr "Totalmente cancelado pero la factura no está cancelada"
 
 #: control/forms/filter.py:181
 #, fuzzy
@@ -14496,16 +14667,16 @@ msgstr "{product} - Cualquier variación"
 #: control/forms/filter.py:456 control/forms/orders.py:610
 msgctxt "subevent"
 msgid "All dates starting at or after"
-msgstr ""
+msgstr "Todas las fechas a partir de"
 
 #: control/forms/filter.py:461 control/forms/orders.py:619
 msgctxt "subevent"
 msgid "All dates starting before"
-msgstr ""
+msgstr "Todas las fechas anteriores a"
 
 #: control/forms/filter.py:466
 msgid "Order placed at or after"
-msgstr ""
+msgstr "Pedido realizado a partir de"
 
 #: control/forms/filter.py:471
 #, fuzzy
@@ -14529,7 +14700,7 @@ msgstr "Pagos y reintegros de la orden"
 #: control/forms/filter.py:565 control/forms/filter.py:570
 #: control/forms/filter.py:580
 msgid "Exact matches only"
-msgstr ""
+msgstr "Solo coincidencias exactas"
 
 #: control/forms/filter.py:577
 #: control/templates/pretixcontrol/order/change.html:177
@@ -14931,7 +15102,7 @@ msgstr "Clave API de OpenCage para geocoding"
 
 #: control/forms/global_settings.py:113
 msgid "Leaflet tiles URL pattern"
-msgstr ""
+msgstr "Patrón de URL de los mosaicos de Leaflet"
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
 #: control/forms/global_settings.py:508
@@ -14941,7 +15112,7 @@ msgstr "p.ej. {sample}"
 
 #: control/forms/global_settings.py:121
 msgid "Leaflet tiles attribution"
-msgstr ""
+msgstr "Atribución de los mosaicos de Leaflet"
 
 #: control/forms/global_settings.py:130
 #, fuzzy
@@ -15084,7 +15255,7 @@ msgstr "Nombre del ticket"
 
 #: control/forms/global_settings.py:364
 msgid "A percentage fee will be charged for each ticket sold."
-msgstr ""
+msgstr "Se cobrará una tarifa porcentual por cada entrada vendida."
 
 #: control/forms/global_settings.py:371
 msgid "All registered users can create organizers"
@@ -15267,11 +15438,11 @@ msgstr "Fichero de importación"
 
 #: control/forms/orderimport.py:11
 msgid "Create a separate order for each line"
-msgstr ""
+msgstr "Crear un pedido separado por cada línea"
 
 #: control/forms/orderimport.py:12
 msgid "Create one order with one position per line"
-msgstr ""
+msgstr "Crear un pedido con una posición por línea"
 
 #: control/forms/orderimport.py:18
 #, fuzzy
@@ -15281,7 +15452,7 @@ msgstr "Marcar orden como pagada"
 
 #: control/forms/orderimport.py:19
 msgid "Create orders as pending and still require payment"
-msgstr ""
+msgstr "Crear pedidos como pendientes y que sigan requiriendo pago"
 
 #: control/forms/orderimport.py:22
 #, fuzzy
@@ -15292,7 +15463,7 @@ msgstr "Mostrar todas las ordenes en modo de prueba"
 #: control/forms/orderimport.py:32
 #, python-brace-format
 msgid "CSV column: \"{name}\""
-msgstr ""
+msgstr "Columna CSV: \"{name}\""
 
 #: control/forms/orders.py:45
 msgid "Overbook quota"
@@ -15378,12 +15549,16 @@ msgid ""
 "Re-calculate taxes based on address and product settings, keep gross amount "
 "the same."
 msgstr ""
+"Recalcular impuestos según la dirección y la configuración del producto, "
+"manteniendo el importe bruto igual."
 
 #: control/forms/orders.py:217
 msgid ""
 "Re-calculate taxes based on address and product settings, keep net amount "
 "the same."
 msgstr ""
+"Recalcular impuestos según la dirección y la configuración del producto, "
+"manteniendo el importe neto igual."
 
 #: control/forms/orders.py:223
 msgid "Issue a new invoice if required"
@@ -15561,12 +15736,18 @@ msgid ""
 "to refund some of the orders by offsetting with different orders or issuing "
 "gift cards."
 msgstr ""
+"Si está marcada, todos los pagos con un método de pago que no admite "
+"reembolsos automáticos aparecerán en su lista de tareas para reembolsos "
+"manuales. No marque esto si desea reembolsar algunos pedidos compensándolos "
+"con otros pedidos o emitiendo tarjetas regalo."
 
 #: control/forms/orders.py:635
 msgid ""
 "Refund order value to a gift card instead instead of the original payment "
 "method"
 msgstr ""
+"Reembolsar el valor del pedido a una tarjeta regalo en lugar del método de "
+"pago original"
 
 #: control/forms/orders.py:641
 #, fuzzy
@@ -15599,6 +15780,10 @@ msgid ""
 "series is only partially canceled since it consists of tickets for multiple "
 "dates."
 msgstr ""
+"Los tipos de tarifas seleccionados no se reembolsarán, sino que se añadirán "
+"a la tarifa de cancelación. Las tarifas nunca se reembolsan cuando un pedido "
+"en una serie de eventos se cancela parcialmente, ya que consiste en entradas "
+"para varias fechas."
 
 #: control/forms/orders.py:684
 #, fuzzy
@@ -15706,10 +15891,14 @@ msgstr "Por favor, seleccione una variación específica de este producto."
 msgctxt "subevent"
 msgid "If you set a date range, please set both a start and an end."
 msgstr ""
+"Si establece un rango de fechas, indique tanto la fecha de inicio como la de "
+"fin."
 
 #: control/forms/orders.py:823
 msgid "Please confirm that you want to cancel ALL dates in this event series."
 msgstr ""
+"Por favor, confirme que desea cancelar TODAS las fechas de esta serie de "
+"eventos."
 
 #: control/forms/organizer_forms/device_form.py:19
 #, fuzzy
@@ -15733,6 +15922,8 @@ msgid ""
 "Please provide your name or the name of the person responsible for this "
 "account in your organization."
 msgstr ""
+"Por favor, proporcione su nombre o el nombre de la persona responsable de "
+"esta cuenta en su organización."
 
 #: control/forms/organizer_forms/organizer_form.py:65
 msgid ""
@@ -15740,10 +15931,13 @@ msgid ""
 "contract and billing, as well as for important updates about your account "
 "and our services."
 msgstr ""
+"Usaremos esta dirección de correo electrónico para toda la comunicación "
+"relacionada con su contrato y facturación, así como para actualizaciones "
+"importantes sobre su cuenta y nuestros servicios."
 
 #: control/forms/organizer_forms/organizer_form.py:75
 msgid "Enter your organization’s legal name."
-msgstr ""
+msgstr "Introduzca el nombre legal de su organización."
 
 #: control/forms/organizer_forms/organizer_form.py:83
 #, fuzzy
@@ -15753,7 +15947,7 @@ msgstr "Dirección"
 
 #: control/forms/organizer_forms/organizer_form.py:91
 msgid "Apartment, suite, unit, etc. (optional)."
-msgstr ""
+msgstr "Apartamento, suite, unidad, etc. (opcional)."
 
 #: control/forms/organizer_forms/organizer_form.py:99
 #, fuzzy
@@ -15763,7 +15957,7 @@ msgstr "Titular de la cuenta"
 
 #: control/forms/organizer_forms/organizer_form.py:107
 msgid "Enter your city."
-msgstr ""
+msgstr "Introduzca su ciudad."
 
 #: control/forms/organizer_forms/organizer_form.py:115
 #, fuzzy
@@ -15779,11 +15973,11 @@ msgstr "Idiomas de uso"
 
 #: control/forms/organizer_forms/organizer_form.py:123
 msgid "Select your preferred language for all communication."
-msgstr ""
+msgstr "Seleccione su idioma preferido para toda la comunicación."
 
 #: control/forms/organizer_forms/organizer_form.py:128
 msgid "Tax ID (e.g., VAT, GST)"
-msgstr ""
+msgstr "ID fiscal (p. ej., IVA, GST)"
 
 #: control/forms/organizer_forms/organizer_form.py:130
 msgid ""
@@ -15791,6 +15985,9 @@ msgid ""
 "will need to charge VAT on our services and will not be able to issue "
 "reverse charge invoices."
 msgstr ""
+"Si se encuentra en la UE, proporcione su número de IVA. Sin él, tendremos "
+"que cobrar IVA en nuestros servicios y no podremos emitir facturas con "
+"inversión del sujeto pasivo."
 
 #: control/forms/organizer_forms/organizer_form.py:140
 #, fuzzy
@@ -15801,7 +15998,7 @@ msgstr "El código del recibo no existe."
 #: control/forms/organizer_forms/organizer_form.py:167
 #, python-brace-format
 msgid "VAT number validation is not supported for {}"
-msgstr ""
+msgstr "La validación del número de IVA no está disponible para {}"
 
 #: control/forms/organizer_forms/organizer_form.py:200
 #, fuzzy, python-brace-format
@@ -15899,7 +16096,7 @@ msgstr "Tipos de eventos"
 
 #: control/forms/page.py:82
 msgid "You already have a page on that URL."
-msgstr ""
+msgstr "Ya tienes una página en esa URL."
 
 #: control/forms/product.py:113
 msgid "This field is required"
@@ -16018,7 +16215,7 @@ msgstr ""
 
 #: control/forms/product.py:559
 msgid "Shown independently of other products"
-msgstr ""
+msgstr "Mostrado independientemente de otros productos"
 
 #: control/forms/product.py:667
 #, python-format
@@ -16113,7 +16310,7 @@ msgstr "Temas de actualidad"
 
 #: control/forms/subevents.py:116 control/forms/subevents.py:124
 msgid "Selection contains various values"
-msgstr ""
+msgstr "La selección contiene varios valores"
 
 #: control/forms/subevents.py:380
 msgid "Exclude these dates instead of adding them."
@@ -16181,7 +16378,7 @@ msgstr "Sus cambios no se han podido guardar. Ver abajo para más detalles."
 
 #: control/forms/vouchers.py:141
 msgid "Specific seat ID"
-msgstr ""
+msgstr "ID de asiento específico"
 
 #: control/forms/vouchers.py:182
 msgid "Invalid product selected."
@@ -16302,7 +16499,7 @@ msgstr "Número de veces que CADA uno de estos vales puede ser canjeado."
 
 #: control/forms/vouchers.py:334
 msgid "Specific seat IDs"
-msgstr ""
+msgstr "IDs de asientos específicos"
 
 #: control/forms/vouchers.py:348
 msgid "CSV input needs to contain a header row in the first line."
@@ -16722,6 +16919,8 @@ msgid ""
 "The email address has been confirmed to be working (the user clicked on a "
 "link in the email for the first time)."
 msgstr ""
+"La dirección de correo electrónico se ha confirmado como válida (el usuario "
+"hizo clic por primera vez en un enlace del correo)."
 
 #: control/logdisplay.py:507
 #, fuzzy, python-brace-format
@@ -17020,6 +17219,8 @@ msgid ""
 "A repeated password reset has been denied, as the last request was less than "
 "24 hours ago."
 msgstr ""
+"Se denegó otro restablecimiento de contraseña, ya que la última solicitud "
+"fue hace menos de 24 horas."
 
 #: control/logdisplay.py:600
 #, python-brace-format
@@ -17725,7 +17926,7 @@ msgstr "Sesiones"
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:7
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:10
 msgid "Task management"
-msgstr ""
+msgstr "Gestión de tareas"
 
 #: control/navigation.py:477
 #, fuzzy
@@ -18619,12 +18820,12 @@ msgstr "blog eventyay (anúncios de publicación, características)"
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:40
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:52
 msgid "Id"
-msgstr ""
+msgstr "Id"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:42
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:56
 msgid "Run at"
-msgstr ""
+msgstr "Ejecutar en"
 
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:43
 #: control/templates/pretixcontrol/admin/task_management/task_management.html:57
@@ -19024,7 +19225,7 @@ msgstr "Mostrar todas las ordenes en modo de prueba"
 #: control/templates/pretixcontrol/base.html:391
 #: eventyay_common/templates/eventyay_common/base.html:344
 msgid "The system automatically checks for updates in the background."
-msgstr ""
+msgstr "El sistema busca actualizaciones automáticamente en segundo plano."
 
 #: control/templates/pretixcontrol/base.html:400
 #: eventyay_common/templates/eventyay_common/base.html:353
@@ -19068,7 +19269,7 @@ msgstr "ID del recibo"
 
 #: control/templates/pretixcontrol/boxoffice/payment.html:15
 msgid "ZVT Terminal"
-msgstr ""
+msgstr "Terminal ZVT"
 
 #: control/templates/pretixcontrol/boxoffice/payment.html:16
 #, fuzzy
@@ -19267,12 +19468,17 @@ msgid ""
 "specific check-in situations. Please reach out to support if you have "
 "questions about setting this up."
 msgstr ""
+"Los ajustes en esta página están pensados para usuarios profesionales con "
+"situaciones de registro muy específicas. Ponte en contacto con el soporte si "
+"tienes preguntas sobre cómo configurarlo."
 
 #: control/templates/pretixcontrol/checkin/list_edit.html:54
 msgid ""
 "Make sure to always use the latest version of our scanning apps for these "
 "options to work."
 msgstr ""
+"Asegúrate de usar siempre la versión más reciente de nuestras apps de "
+"escaneo para que estas opciones funcionen."
 
 #: control/templates/pretixcontrol/checkin/list_edit.html:59
 msgid ""
@@ -19280,6 +19486,9 @@ msgid ""
 "and Desktop apps. Custom check-in rules do not work offline with our iOS "
 "scanning app."
 msgstr ""
+"Si usas estas opciones avanzadas, recomendamos usar nuestras apps para "
+"Android y escritorio. Las reglas de check-in personalizadas no funcionan sin "
+"conexión con nuestra app de escaneo para iOS."
 
 #: control/templates/pretixcontrol/checkin/list_edit.html:74
 #, fuzzy
@@ -19324,6 +19533,10 @@ msgid ""
 "are connected on the organizer level, you do not have to create a new device "
 "for every event but can reuse them over and over again."
 msgstr ""
+"Si tienes los permisos adecuados a nivel de organizador, puedes conectar "
+"nuevos dispositivos a tu cuenta y usarlos para validar entradas. Como los "
+"dispositivos se conectan a nivel de organizador, no tienes que crear uno "
+"nuevo para cada evento; puedes reutilizarlos una y otra vez."
 
 #: control/templates/pretixcontrol/checkin/lists.html:47
 msgid "Your search did not match any check-in lists."
@@ -19654,34 +19867,38 @@ msgid ""
 "Therefore, currently only specific changes (such as changing the variation "
 "of a product) are possible. More options might be added later."
 msgstr ""
+"Permitir que los usuarios cambien su pedido es una función en desarrollo. "
+"Por tanto, actualmente solo son posibles cambios específicos (por ejemplo, "
+"modificar la variante de un producto). Es posible que se añadan más opciones "
+"más adelante."
 
 #: control/templates/pretixcontrol/event/component_link.html:5
 #: eventyay_common/templates/eventyay_common/event/component_link.html:5
 #: eventyay_common/templates/eventyay_common/event/settings.html:21
 #: orga/templates/orga/event/component_link.html:5
 msgid "Home"
-msgstr ""
+msgstr "Inicio"
 
 #: control/templates/pretixcontrol/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/component_link.html:12
 #: eventyay_common/templates/eventyay_common/event/live.html:155
 #: orga/templates/orga/event/component_link.html:11
 msgid "Talk"
-msgstr ""
+msgstr "Ponencia"
 
 #: control/templates/pretixcontrol/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/component_link.html:17
 #: eventyay_common/templates/eventyay_common/event/settings.html:34
 #: orga/templates/orga/event/component_link.html:15
 msgid "Access videos related to this event"
-msgstr ""
+msgstr "Accede a vídeos relacionados con este evento"
 
 #: control/templates/pretixcontrol/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/component_link.html:18
 #: eventyay_common/templates/eventyay_common/event/settings.html:35
 #: orga/templates/orga/event/component_link.html:16
 msgid "Videos"
-msgstr ""
+msgstr "Vídeos"
 
 #: control/templates/pretixcontrol/event/dangerzone.html:5
 #: control/templates/pretixcontrol/event/settings.html:254
@@ -19702,6 +19919,8 @@ msgid ""
 "You can take your event offline. Nobody except your team will be able to see "
 "or access it any more."
 msgstr ""
+"Puedes poner tu evento fuera de línea. Nadie, excepto tu equipo, podrá verlo "
+"ni acceder a él."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:34
 #: control/templates/pretixcontrol/event/dangerzone.html:47
@@ -19717,6 +19936,8 @@ msgid ""
 "If you need to call off your event you want to cancel and refund all "
 "tickets, you can do so through this option."
 msgstr ""
+"Si necesitas cancelar tu evento y reembolsar todas las entradas, puedes "
+"hacerlo con esta opción."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:55
 #: control/templates/pretixcontrol/event/dangerzone.html:68
@@ -19731,6 +19952,9 @@ msgid ""
 "event and only retain the financial information such as the number and type "
 "of tickets sold."
 msgstr ""
+"Puedes eliminar datos personales, como nombres y direcciones de correo "
+"electrónico, de tu evento y conservar solo la información financiera, como "
+"el número y el tipo de entradas vendidas."
 
 #: control/templates/pretixcontrol/event/dangerzone.html:76
 #: control/templates/pretixcontrol/event/dangerzone.html:89
@@ -19743,6 +19967,8 @@ msgid ""
 "You can delete your event completely only as long as it does not contain any "
 "undeletable data, such as orders not performed in test mode."
 msgstr ""
+"Solo puedes eliminar completamente tu evento si no contiene datos no "
+"eliminables, como pedidos que no se realizaron en modo de prueba."
 
 #: control/templates/pretixcontrol/event/delete.html:9
 msgid ""
@@ -19776,6 +20002,9 @@ msgid ""
 "To ensure audit compliance and maintain trust with financial authorities, "
 "deleting orders once they have been placed is not permitted."
 msgstr ""
+"Para garantizar el cumplimiento de auditoría y mantener la confianza de las "
+"autoridades financieras, no está permitido eliminar pedidos una vez "
+"realizados."
 
 #: control/templates/pretixcontrol/event/delete.html:45
 msgid ""
@@ -19804,11 +20033,11 @@ msgstr "Sin fechas"
 #: control/templates/pretixcontrol/event/fragment_geodata.html:21
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:57
 msgid "Geocoding data © OpenStreetMap"
-msgstr ""
+msgstr "Datos de geocodificación © OpenStreetMap"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:4
 msgid "Failed to retrieve geo coordinates"
-msgstr ""
+msgstr "No se pudieron obtener las coordenadas geográficas"
 
 #: control/templates/pretixcontrol/event/fragment_geodata_autoupdate.html:5
 #, fuzzy
@@ -20344,6 +20573,8 @@ msgid ""
 "After the setup, please go to the Payment area and set up the Stripe "
 "connection."
 msgstr ""
+"Tras la configuración, ve al área de Pagos y configura la conexión con "
+"Stripe."
 
 #: control/templates/pretixcontrol/event/settings.html:7
 #: control/templates/pretixcontrol/event/settings.html:16
@@ -20668,7 +20899,7 @@ msgstr "Generar código del widget"
 #: control/templates/pretixcontrol/font_option.html:2
 msgctxt "typography"
 msgid "The quick brown fox jumps over the lazy dog."
-msgstr ""
+msgstr "El rápido zorro marrón salta sobre el perro perezoso."
 
 #: control/templates/pretixcontrol/fragment_quota_box.html:3
 #: control/templates/pretixcontrol/fragment_quota_box_paid.html:3
@@ -20696,6 +20927,14 @@ msgid ""
 "the difference.\n"
 "    "
 msgstr ""
+"\n"
+"        Si tienes una tarjeta regalo, introduce el código de la tarjeta "
+"aquí. Si la tarjeta no tiene\n"
+"suficiente crédito para pagar el pedido completo, se te mostrará esta página "
+"de nuevo y podrás\n"
+"canjear otra tarjeta regalo o seleccionar un método de pago diferente para "
+"cubrir la diferencia.\n"
+"    "
 
 #: control/templates/pretixcontrol/giftcards/checkout_confirm.html:4
 msgid ""
@@ -20707,6 +20946,12 @@ msgid ""
 "future.\n"
 "    "
 msgstr ""
+"\n"
+"        Tu tarjeta regalo se usará para pagar este pedido. Si el crédito de "
+"la tarjeta es inferior al total del pedido, podrás pagar la\n"
+"diferencia con otro método de pago. Si el crédito es superior al total del "
+"pedido, podrás volver a usar la tarjeta regalo en el futuro.\n"
+"    "
 
 #: control/templates/pretixcontrol/global_message.html:5
 #: control/templates/pretixcontrol/global_message.html:7
@@ -20770,7 +21015,7 @@ msgstr ""
 
 #: control/templates/pretixcontrol/global_sso.html:18
 msgid "Submit"
-msgstr ""
+msgstr "Enviar"
 
 #: control/templates/pretixcontrol/global_update.html:28
 #, fuzzy
@@ -20850,6 +21095,9 @@ msgid ""
 "your event. By default, the system will request attendee information and "
 "provide ticket downloads for these products."
 msgstr ""
+"Cada compra de este producto representa a una persona autorizada a entrar a "
+"tu evento. Por defecto, el sistema solicitará información de los asistentes "
+"y ofrecerá descargas de entradas para estos productos."
 
 #: control/templates/pretixcontrol/item/create.html:33
 #: control/templates/pretixcontrol/item/index.html:35
@@ -20859,6 +21107,10 @@ msgid ""
 "except if the add-on products or bundled products represent additional "
 "people (e.g. group bundles)."
 msgstr ""
+"Esta opción debería activarse para la mayoría de las cosas que denominarías "
+"'entrada'. Para complementos o paquetes de productos, debería aplicarse en "
+"la entrada principal, salvo cuando los complementos o los productos "
+"empaquetados representen personas adicionales (p. ej., paquetes grupales)."
 
 #: control/templates/pretixcontrol/item/create.html:44
 #: control/templates/pretixcontrol/item/index.html:46
@@ -27203,29 +27455,35 @@ msgstr "Tipos de eventos"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:56
 msgid "Singular event or non-event shop"
-msgstr ""
+msgstr "Evento único o tienda sin evento"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:58
 msgid ""
 "An event with individual configuration. If you create more events later, you "
 "can copy the event to save yourself some work."
 msgstr ""
+"Un evento con configuración individual. Si creas más eventos después, puedes "
+"copiar el evento para ahorrarte trabajo."
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:64
 msgid ""
 "Examples: Conferences, workshops, trade fairs, one-off concerts, sale of "
 "digital content, multi-day events with combination tickets."
 msgstr ""
+"Ejemplos: conferencias, talleres, ferias comerciales, conciertos puntuales, "
+"venta de contenido digital, eventos de varios días con entradas combinadas."
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:75
 msgid "Event series or time slot booking"
-msgstr ""
+msgstr "Serie de eventos o reservas por franja horaria"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:77
 msgid ""
 "A series of events that share the same configuration. They can still be "
 "different in their dates, locations, prices, and capacities."
 msgstr ""
+"Una serie de eventos que comparten la misma configuración. Aún así, pueden "
+"diferir en fechas, ubicaciones, precios y aforos."
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:83
 msgid ""
@@ -27233,6 +27491,9 @@ msgid ""
 "locations, museums, libraries, or swimming pools, events that need to be "
 "booked together in one cart."
 msgstr ""
+"Ejemplos: varias funciones del mismo espectáculo, el mismo concierto en "
+"varias ubicaciones, museos, bibliotecas o piscinas, eventos que deben "
+"reservarse juntos en un mismo carrito."
 
 #: eventyay_common/templates/eventyay_common/events/index.html:5
 #, fuzzy
