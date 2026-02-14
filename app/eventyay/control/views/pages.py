@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, TemplateView, UpdateView
 
 from eventyay.base.models.page import Page
+from eventyay.base.templatetags.rich_text import compile_markdown
 from eventyay.control.forms.page import PageSettingsForm
 from eventyay.control.permissions import AdministratorPermissionRequiredMixin
 from eventyay.helpers.compat import CompatDeleteView
@@ -33,7 +34,7 @@ class PageCreate(AdministratorPermissionRequiredMixin, FormView):
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
     def form_valid(self, form):
@@ -55,7 +56,7 @@ class PageDetailMixin:
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages',
+            'eventyay_admin:admin.pages',
         )
 
 
@@ -74,7 +75,7 @@ class PageUpdate(AdministratorPermissionRequiredMixin, PageDetailMixin, UpdateVi
 
     def get_success_url(self) -> str:
         return reverse(
-            'eventyay_admin.pages.edit',
+            'eventyay_admin:admin.pages.edit',
             kwargs={
                 'id': self.object.pk,
             },
@@ -141,10 +142,10 @@ class ShowPageView(TemplateView):
 
         tags = nh3.ALLOWED_TAGS
 
-        url_schemes = nh3.DEFAULT_URL_SCHEMES | {'data'}
+        url_schemes = set(getattr(nh3, 'DEFAULT_URL_SCHEMES', nh3.ALLOWED_URL_SCHEMES)) | {'data'}
 
         ctx['content'] = nh3.clean(
-            str(page.text),
+            compile_markdown(str(page.text)),
             tags=tags,
             attributes=attributes,
             url_schemes=url_schemes,
