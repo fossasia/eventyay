@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-01-25 06:41+0000\n"
-"Last-Translator: \"Masaki Murakami (VZP)\" <vzp10224@wikiusers.jp>\n"
+"PO-Revision-Date: 2026-02-14 15:14+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Japanese <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ja/>\n"
 "Language: ja\n"
@@ -53,8 +53,7 @@ msgstr ""
 
 #: agenda/templates/agenda/base.html:46
 msgid "This schedule-related page is non-public. Only organisers can see it."
-msgstr ""
-"このスケジュール関連ページは非公開です。主催者のみが見ることができます。"
+msgstr "このスケジュール関連ページは非公開です。主催者のみが見ることができます。"
 
 #: agenda/templates/agenda/changelog_block.html:15
 msgid "We have new sessions!"
@@ -105,8 +104,8 @@ msgid ""
 "follow up with the full schedule in time, stay tuned!"
 msgstr ""
 "魅力的な講演のリストを用意したので、ぜひ私達のカンファレンスの様子を知ってく"
-"ださい。これは完全なスケジュールではありませんので、ご注意ください。詳細は"
-"追ってお知らせいたしますので、ご期待ください。"
+"ださい。これは完全なスケジュールではありませんので、ご注意ください。詳細は追"
+"ってお知らせいたしますので、ご期待ください。"
 
 #: agenda/templates/agenda/featured.html:24
 msgid ""
@@ -4120,8 +4119,8 @@ msgid ""
 "You can restrict the access code to a single session type, or leave it open "
 "for all session types."
 msgstr ""
-"アクセスコードは単一の投稿タイプに限定することも可能ですし、すべての投稿タイ"
-"プに適用することも可能です。"
+"アクセスコードは単一の投稿タイプに限定することも可能ですし、すべての投稿"
+"タイプに適用することも可能です。"
 
 #: base/models/access_code.py:48 base/models/vouchers.py:124
 #: base/models/vouchers.py:562 control/views/vouchers.py:116
@@ -4196,8 +4195,8 @@ msgid ""
 "If you have registered with an email address that has a gravatar account, we "
 "can retrieve your profile picture from there."
 msgstr ""
-"gravatarアカウントに紐付けられたメールアドレスを使って登録を行った場合、プロ"
-"フィール画像はその画像が利用されます。"
+"gravatarアカウントに紐付けられたメールアドレスを使って登録を行った場合、"
+"プロフィール画像はその画像が利用されます。"
 
 #: base/models/auth.py:263 orga/templates/orga/submission/speakers.html:41
 #, fuzzy
@@ -4492,8 +4491,7 @@ msgstr ""
 
 #: base/models/event.py:588 base/models/organizer.py:124
 msgid "The slug may only contain letters, numbers, dots and dashes."
-msgstr ""
-"スラグには、文字、数字、ドット(.)、ダッシュ(-)のみを含めることができます。"
+msgstr "スラグには、文字、数字、ドット(.)、ダッシュ(-)のみを含めることができます。"
 
 #: base/models/event.py:592 base/models/organizer.py:128
 #: control/templates/pretixcontrol/admin/organizers.html:35
@@ -4625,8 +4623,7 @@ msgstr ""
 #: base/models/event.py:682
 msgid ""
 "All event dates will be localised and interpreted to be in this timezone."
-msgstr ""
-"すべてのイベントの日付はローカライズされ、そのタイムゾーンで解釈されます。"
+msgstr "すべてのイベントの日付はローカライズされ、そのタイムゾーンで解釈されます。"
 
 #: base/models/event.py:685 control/forms/event.py:223
 #: control/forms/event.py:384 event/forms.py:279
@@ -4671,8 +4668,8 @@ msgid ""
 "Upload a custom CSS file if changing the primary colour is not sufficient "
 "for you."
 msgstr ""
-"プライマリカラーの変更だけでは不十分な場合は、カスタムCSSファイルをアップロー"
-"ドしてください。"
+"プライマリカラーの変更だけでは不十分な場合は、カスタムCSSファイルを"
+"アップロードしてください。"
 
 #: base/models/event.py:721
 msgid ""
@@ -4989,8 +4986,8 @@ msgstr "ファイル"
 #: base/models/information.py:51
 msgid "Please try to keep your upload small, preferably below 16 MB."
 msgstr ""
-"ファイルをアップロードする際には、サイズが16MB以下となるよう留意してくださ"
-"い。"
+"ファイルをアップロードする際には、サイズが16MB以下となるよう留意してください"
+"。"
 
 #: base/models/invoices.py:139
 #, python-format
@@ -5712,8 +5709,8 @@ msgid ""
 msgstr ""
 "こんにちは！\n"
 "\n"
-"あなたは {name} イベントの運営チームに招待されました。 -こちらのリンクをク"
-"リックして参加してください。:\n"
+"あなたは {name} イベントの運営チームに招待されました。 -こちらのリンクを"
+"クリックして参加してください。:\n"
 "\n"
 "    {invitation_link}\n"
 "\n"
@@ -7036,8 +7033,8 @@ msgstr ""
 "- そのうち {talk_count} 個の講演がセレクトされました。\n"
 "- レビュアーは、 {review_count} 個のレビューを書きました。\n"
 "- スケジュールは、 {schedule_count} 回発行されました。\n"
-"- イベント準備から期間中を含めて、 {mail_count} 通のメールが送信されまし"
-"た。\n"
+"- イベント準備から期間中を含めて、 {mail_count} 通のメールが送信されました"
+"。\n"
 "\n"
 "もし何か不明点があれば、ぜひこちらからご意見をいただければと思います。\n"
 "https://github.com/eventyay/eventyay/issues/new\n"
@@ -9722,8 +9719,7 @@ msgstr ""
 #: cfp/flow.py:413
 msgid ""
 "Your draft was saved. You can continue to edit it as long as the CfP is open."
-msgstr ""
-"下書きは保存されました。CfPが募集中の間は、編集を続けることができます。"
+msgstr "下書きは保存されました。CfPが募集中の間は、編集を続けることができます。"
 
 #: cfp/flow.py:420
 msgid ""
@@ -9753,8 +9749,8 @@ msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
 msgstr ""
-"ログイン時にエラーが発生しました。お手数ですが、主催者にお問い合わせくださ"
-"い。"
+"ログイン時にエラーが発生しました。お手数ですが、主催者にお問い合わせください"
+"。"
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -9870,8 +9866,7 @@ msgstr "この投稿はすでに確定しています。あなたに会えるの
 msgid ""
 "This proposal cannot be confirmed at this time – please contact us if you "
 "think this is an error."
-msgstr ""
-"この投稿は現時点では確認できません - エラーだと思われる場合はご連絡ください。"
+msgstr "この投稿は現時点では確認できません - エラーだと思われる場合はご連絡ください。"
 
 #: cfp/phrases.py:28
 msgid "This proposal cannot be edited anymore."
@@ -9925,15 +9920,13 @@ msgstr "招待を送りました！"
 
 #: cfp/phrases.py:48
 msgid "You are now part of this proposal! Please fill in your profile below."
-msgstr ""
-"あなたもこの投稿の一部になりました 以下にプロフィールを記入してください。"
+msgstr "あなたもこの投稿の一部になりました 以下にプロフィールを記入してください。"
 
 #: cfp/phrases.py:51
 msgid ""
 "We are experiencing difficulties when sending mails, but your session was "
 "submitted successfully!"
-msgstr ""
-"メール送信時に問題が発生しましたが、あなたのトークは無事に投稿されました!"
+msgstr "メール送信時に問題が発生しましたが、あなたのトークは無事に投稿されました!"
 
 #: cfp/phrases.py:69 orga/views/cfp.py:343
 #, fuzzy
@@ -9946,8 +9939,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"今から %(deadline)s (%(timezone)s), %(until_string)s まで、投稿を入力できま"
-"す。"
+"今から %(deadline)s (%(timezone)s), %(until_string)s まで、投稿を入力できます"
+"。"
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -10031,8 +10024,8 @@ msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
 msgstr ""
-"もしこのサーバ上の別のイベントに対して提案したことがあれば、その時のアカウン"
-"トでログインすることで再利用できます。"
+"もしこのサーバ上の別のイベントに対して提案したことがあれば、その時の"
+"アカウントでログインすることで再利用できます。"
 
 #: cfp/templates/cfp/event/login.html:15
 #, fuzzy
@@ -10046,9 +10039,9 @@ msgid ""
 "own personalized schedule, or if you are participating in the event as a "
 "speaker or organizer."
 msgstr ""
-"イベントを閲覧したり、感想を送ったり、イベントスケジュールを受け取るためにア"
-"カウントを作る必要はありません。イベントに登壇者として参加するか、主催者チー"
-"ムに入る場合のみこのサイトでのアカウント登録が必要です。"
+"イベントを閲覧したり、感想を送ったり、イベントスケジュールを受け取るために"
+"アカウントを作る必要はありません。イベントに登壇者として参加するか、主催者"
+"チームに入る場合のみこのサイトでのアカウント登録が必要です。"
 
 #: cfp/templates/cfp/event/recover.html:25
 msgid "Set your password to access your profile and proposals"
@@ -10305,8 +10298,8 @@ msgid ""
 "session, please contact the organiser instead."
 msgstr ""
 "選考中に、こちらからあなたの提案を撤回することができます。この動作はやり直し"
-"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してくださ"
-"い。"
+"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してください"
+"。"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:127
 #, fuzzy
@@ -10326,8 +10319,8 @@ msgid ""
 "organiser instead."
 msgstr ""
 "選考中に、こちらからあなたの提案を撤回することができます。この動作はやり直し"
-"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してくださ"
-"い。"
+"ができません。撤回しても良いかどうか確かでない場合は主催者に連絡してください"
+"。"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:138
 #: orga/templates/orga/mails/outbox_form.html:89
@@ -11063,9 +11056,9 @@ msgid ""
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
 msgstr ""
-"このリクエストが本当にあなたから送られたものかどうか確認できませんでした。セ"
-"キュリティ上の理由により、処理することができません。<br>前のページに戻り、リ"
-"フレッシュしてから試してみてください。"
+"このリクエストが本当にあなたから送られたものかどうか確認できませんでした。"
+"セキュリティ上の理由により、処理することができません。<br>前のページに戻り、"
+"リフレッシュしてから試してみてください。"
 
 #: common/templates/500.html:7
 msgid "Internal server error."
@@ -12013,11 +12006,11 @@ msgid ""
 "your instance. You can disable this behavior here at any time."
 msgstr ""
 "アップデートチェックの間、eventyayは匿名のユニークなインストールID、eventyay"
-"の現在のバージョン、インストールされているプラグイン、インストール中のアク"
-"ティブなイベントと非アクティブなイベントの数をeventyay開発者によって運営され"
-"ているサーバーに報告します。私たちは匿名のデータのみを保存し、IPアドレスは一"
-"切保存せず、あなたが誰なのか、どこであなたのインスタンスを見つけたのかはわか"
-"りません。この機能はいつでも無効にすることができます。"
+"の現在のバージョン、インストールされているプラグイン、インストール中の"
+"アクティブなイベントと非アクティブなイベントの数をeventyay開発者によって運営"
+"されているサーバーに報告します。私たちは匿名のデータのみを保存し、IPアドレス"
+"は一切保存せず、あなたが誰なのか、どこであなたのインスタンスを見つけたのかは"
+"わかりません。この機能はいつでも無効にすることができます。"
 
 #: control/forms/admin/admin.py:28
 msgid "Email notifications"
@@ -12088,8 +12081,8 @@ msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
-"この短い名前は既に取られています。別の名前を選択してください（または、そのイ"
-"ベントのオーナーにあなたをチームに加えるように依頼してください）。"
+"この短い名前は既に取られています。別の名前を選択してください（または、その"
+"イベントのオーナーにあなたをチームに加えるように依頼してください）。"
 
 #: control/forms/event.py:143 eventyay_common/forms/event.py:24
 msgid "Event timezone"
@@ -16129,9 +16122,9 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"あなたは開発モードで eventyay を実行しています。もしこのページがインターネッ"
-"トからアクセス可能な状態であれば、<strong>STOP</strong>とDEBUG変数をFalseに設"
-"定してください。"
+"あなたは開発モードで eventyay を実行しています。もしこのページが"
+"インターネットからアクセス可能な状態であれば、<strong>STOP</strong>とDEBUG変"
+"数をFalseに設定してください。"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -17886,8 +17879,8 @@ msgid ""
 "Then, copy the following code to the place of your website where you want "
 "the widget to show up:"
 msgstr ""
-"次に以下のコードを、あなたのウェブサイトのウィジェットを表示させたい場所にコ"
-"ピーしてください。"
+"次に以下のコードを、あなたのウェブサイトのウィジェットを表示させたい場所に"
+"コピーしてください。"
 
 #: control/templates/pretixcontrol/event/widget.html:45
 #: control/templates/pretixcontrol/event/widget.html:58
@@ -22323,8 +22316,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"この短い名前は既に取られています。別の名前を選択してください（または、そのイ"
-"ベントのオーナーにあなたをチームに加えるように依頼してください）。"
+"この短い名前は既に取られています。別の名前を選択してください（または、その"
+"イベントのオーナーにあなたをチームに加えるように依頼してください）。"
 
 #: event/forms.py:320
 msgid ""
@@ -22332,9 +22325,9 @@ msgid ""
 "session types, and email templates. Please check those settings once the "
 "event has been created!"
 msgstr ""
-"メール設定や提案タイプ、メールテンプレートなど、過去のイベントから設定をコ"
-"ピーすることができます。イベントが作成されたら、これらの設定を確認してくださ"
-"い"
+"メール設定や提案タイプ、メールテンプレートなど、過去のイベントから設定を"
+"コピーすることができます。イベントが作成されたら、これらの設定を確認してくだ"
+"さい"
 
 #: event/stages.py:41
 msgid "Preparation"
@@ -24768,8 +24761,8 @@ msgstr ""
 "\n"
 "あなたが {event} の講演 “{title}” の参加公募に関する講演発表者として登録され"
 "ています。 \n"
-"あなたのアカウントは既に登録されていますので、以下のリンクをクリックし、パス"
-"ワードを設定してください。\n"
+"あなたのアカウントは既に登録されていますので、以下のリンクをクリックし、"
+"パスワードを設定してください。\n"
 "\n"
 "    {invitation_link}\n"
 "\n"
@@ -24811,8 +24804,8 @@ msgstr ""
 "\n"
 "あなたが {event} の講演 “{title}” の参加公募に関する講演発表者として登録され"
 "ています。 \n"
-"あなたのアカウントは既に登録されていますので、以下のリンクをクリックし、パス"
-"ワードを設定してください。\n"
+"あなたのアカウントは既に登録されていますので、以下のリンクをクリックし、"
+"パスワードを設定してください。\n"
 "\n"
 "    {invitation_link}\n"
 "\n"
@@ -25092,8 +25085,8 @@ msgid ""
 "you have published your schedule. Should end with a slash."
 msgstr ""
 "HTMLエクスポートでスケジュールを公開する場合、正しい絶対URLを様々な場所に設定"
-"する必要があります。この値はスケジュールを公開した後に設定してください。ス"
-"ラッシュで終わる必要があります。"
+"する必要があります。この値はスケジュールを公開した後に設定してください。"
+"スラッシュで終わる必要があります。"
 
 #: orga/forms/event.py:102
 msgid "Ask search engines not to index the event pages"
@@ -25111,8 +25104,8 @@ msgid ""
 "Reply-To address. If this setting is empty and you have no custom sender, "
 "your event email address will be used as Reply-To address."
 msgstr ""
-"返信先アドレスです。この設定が空で、カスタム送信者がない場合、イベントのメー"
-"ルアドレスがReply-Toアドレスとして使用されます。"
+"返信先アドレスです。この設定が空で、カスタム送信者がない場合、イベントの"
+"メールアドレスがReply-Toアドレスとして使用されます。"
 
 #: orga/forms/event.py:178
 msgid "Mail subject prefix"
@@ -25166,8 +25159,8 @@ msgid ""
 msgstr ""
 "データ保護のためにローカルではないメールサーバを使用している場合は、SSLまたは"
 "STARTTLSセキュリティを有効にする必要があります。管理者は、インスタンス全体の"
-"バイパスを追加することができます。このバイパスを使用する場合は、プライバシー"
-"ポリシーも調整してください。"
+"バイパスを追加することができます。このバイパスを使用する場合は、"
+"プライバシーポリシーも調整してください。"
 
 #: orga/forms/event.py:304
 #, fuzzy
@@ -25256,8 +25249,8 @@ msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
 "schedule is not shown here using eventyay."
 msgstr ""
-"eventyayを使ってここにスケジュールが表示されていなくても、外部ページにスケ"
-"ジュールウィジェットを表示させるように設定します。"
+"eventyayを使ってここにスケジュールが表示されていなくても、外部ページに"
+"スケジュールウィジェットを表示させるように設定します。"
 
 #: orga/forms/event.py:371
 #, fuzzy
@@ -25498,8 +25491,7 @@ msgstr "新しいスケジュールバージョンをリリースしました"
 
 #: orga/forms/schedule.py:44
 msgid "This schedule version was used already, please choose a different one."
-msgstr ""
-"このスケジュール版はすでに使用されています。別のものを選択してください。"
+msgstr "このスケジュール版はすでに使用されています。別のものを選択してください。"
 
 #: orga/forms/schedule.py:58 orga/forms/speaker.py:14
 #: orga/templates/orga/speaker/information_list.html:50
@@ -25684,8 +25676,8 @@ msgid ""
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
 "フロントページのヘッダーバナーがどのようにスタイリングされるかを選択します。"
-"パターンのソース: <a href=“http://www.heropatterns.com/“>heropatterns.com</"
-"a>, CC BY 4.0."
+"パターンのソース: <a href=“http://www.heropatterns.com/“>heropatterns.com</a>"
+", CC BY 4.0."
 
 #: orga/phrases.py:13
 msgid "Schedule display format"
@@ -25825,9 +25817,9 @@ msgid ""
 "click on the item you want to change!"
 msgstr ""
 "これは eventyay CfP エディタです。このページでは、個々のCfPステップのすべての"
-"見出しと情報テキストを変更することができます。また、個々のフィールドにカスタ"
-"ムヘルプテキストを追加することもできます。変更したい項目をクリックするだけで"
-"す。"
+"見出しと情報テキストを変更することができます。また、個々のフィールドに"
+"カスタムヘルプテキストを追加することもできます。変更したい項目をクリックする"
+"だけです。"
 
 #: orga/templates/orga/cfp/forms.html:39
 #: orga/templates/orga/cfp/talkquestion/list.html:33
@@ -26213,8 +26205,7 @@ msgstr ""
 msgid ""
 "This field has <strong>%(count)s</strong> responses, and no answers are "
 "missing."
-msgstr ""
-"この質問は<strong>%(count)s</strong>個回答され、未回答のものはありません。"
+msgstr "この質問は<strong>%(count)s</strong>個回答され、未回答のものはありません。"
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:78
 #, python-format
@@ -27046,10 +27037,10 @@ msgid ""
 "access the organiser version in automatic integrations, you’ll have to "
 "provide your authentication token just like in the API, like this:"
 msgstr ""
-"上記のエクスポートの中には、主催者のみがアクセスできるものや、主催者アカウン"
-"トでアクセスした場合の詳細情報が含まれているものもあります。自動統合で主催者"
-"版にアクセスしたい場合は、以下のようにAPIと同じように認証トークンを提供する必"
-"要があります。例: "
+"上記のエクスポートの中には、主催者のみがアクセスできるものや、主催者"
+"アカウントでアクセスした場合の詳細情報が含まれているものもあります。自動統合"
+"で主催者版にアクセスしたい場合は、以下のようにAPIと同じように認証トークンを提"
+"供する必要があります。例: "
 
 #: orga/templates/orga/review/export.html:104
 #: orga/templates/orga/schedule/export.html:188
@@ -27100,8 +27091,8 @@ msgid ""
 "You haven’t released a schedule yet – many of these data exporters only work "
 "on a released schedule."
 msgstr ""
-"スケジュールがリリースされていません - データエクスポートの機能の多くは、リ"
-"リース済みのスケジュールをもとにして動作します。"
+"スケジュールがリリースされていません - データエクスポートの機能の多くは、"
+"リリース済みのスケジュールをもとにして動作します。"
 
 #: orga/templates/orga/schedule/export.html:137
 msgid "HTML Export"
@@ -27268,8 +27259,7 @@ msgstr "未確認の講演"
 #| "%(unscheduled)s sessions have <strong>not yet been scheduled</strong>."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
-msgstr[0] ""
-"講演 %(unscheduled)s は<strong>まだスケジューリングされていません</strong>。"
+msgstr[0] "講演 %(unscheduled)s は<strong>まだスケジューリングされていません</strong>。"
 
 #: orga/templates/orga/schedule/release.html:76
 #, fuzzy, python-format
@@ -27279,8 +27269,8 @@ msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
 msgstr[0] ""
-"トラック %(no_track)s は<strong>まだトラックに割り当てられていません</"
-"strong>。"
+"トラック %(no_track)s は<strong>まだトラックに割り当てられていません</strong>"
+"。"
 
 #: orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -27362,8 +27352,8 @@ msgid ""
 "offered an additional %(quotation_open)sAbstain%(quotation_close)s button "
 "when reviewing proposals."
 msgstr ""
-"レビュースコアやテキストが不要な場合、レビュアーは投稿をレビューする際に "
-"%(quotation_open)sAbstain%(quotation_close)s ボタンを追加することを提案するこ"
+"レビュースコアやテキストが不要な場合、レビュアーは投稿をレビューする際に %"
+"(quotation_open)sAbstain%(quotation_close)s ボタンを追加することを提案するこ"
 "とが可能です。"
 
 #: orga/templates/orga/settings/review.html:84
@@ -27442,9 +27432,10 @@ msgid ""
 "your homepage, instead of using this page. If you want to disable the "
 "schedule on here entirely, please activate the setting below."
 msgstr ""
-"eventyayスケジュールウィジェットを使うことで、作成したスケジュールをこのサイ"
-"トだけではなく、あなたのウェブページにも表示することができるようになります。"
-"このサイトのスケジュールを無効化したい場合、以下の設定を有効化してください。"
+"eventyayスケジュールウィジェットを使うことで、作成したスケジュールをこの"
+"サイトだけではなく、あなたのウェブページにも表示することができるようになりま"
+"す。このサイトのスケジュールを無効化したい場合、以下の設定を有効化してくださ"
+"い。"
 
 #: orga/templates/orga/settings/widget.html:41
 msgid ""
@@ -27452,10 +27443,11 @@ msgid ""
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"eventyayスケジュールウィジェットを使うことで、作成されたスケジュールをイベン"
-"トウェブサイトに埋め込むことができるようになります。これによって、ウェブサイ"
-"ト間を移動することなく、作成されたスケジュールを確認することができるようにな"
-"ります。また、ウェブサイトにあわせてスタイルを変更することも可能です。"
+"eventyayスケジュールウィジェットを使うことで、作成されたスケジュールを"
+"イベントウェブサイトに埋め込むことができるようになります。これによって、"
+"ウェブサイト間を移動することなく、作成されたスケジュールを確認することができ"
+"るようになります。また、ウェブサイトにあわせてスタイルを変更することも可能で"
+"す。"
 
 #: orga/templates/orga/settings/widget.html:48
 msgid ""
@@ -27482,8 +27474,7 @@ msgstr ""
 msgid ""
 "Please look at <a href=\"%(link)s\">our documentation</a> for more "
 "information."
-msgstr ""
-"より詳しくは <a href=\"%(link)s\">私達のドキュメント</a> を参照ください。"
+msgstr "より詳しくは <a href=\"%(link)s\">私達のドキュメント</a> を参照ください。"
 
 #: orga/templates/orga/settings/widget.html:96
 msgid "Widget preview"
@@ -27539,9 +27530,9 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"重要なメッセージ (例: “必要な場合はHDMIコネクタを用意してください”) やファイ"
-"ル (例: カンファレンススタイルガイド)。<br> この内容は、上記の講演投稿一覧に"
-"表示されている、選択された講演者に対して表示されます。"
+"重要なメッセージ (例: “必要な場合はHDMIコネクタを用意してください”) や"
+"ファイル (例: カンファレンススタイルガイド)。<br> この内容は、上記の講演投稿"
+"一覧に表示されている、選択された講演者に対して表示されます。"
 
 #: orga/templates/orga/speaker/information_list.html:42
 msgid "Add a new note"
@@ -27919,8 +27910,8 @@ msgid ""
 "out more, please have a look at the <a %(docurl)s> API documentation</a>."
 msgstr ""
 "このトークンを使って <a %(apiurl)s>eventyay API</a> を利用できます。新しい"
-"トークンを生成すると、古いものは無効になります。詳細を知りたい場合 <a "
-"%(docurl)s> API documentation</a> をご覧ください。"
+"トークンを生成すると、古いものは無効になります。詳細を知りたい場合 <a %"
+"(docurl)s> API documentation</a> をご覧ください。"
 
 #: orga/templates/orga/user.html:69
 #, fuzzy
@@ -28148,8 +28139,8 @@ msgid ""
 "the “use custom SMTP server” checkbox, otherwise your SMTP server will not "
 "be used."
 msgstr ""
-"設定したSMTPサーバと接続できました。設定したSMTPサーバを利用するには、“カスタ"
-"ムのSMTPサーバを利用する” の設定にチェックを入れてください。"
+"設定したSMTPサーバと接続できました。設定したSMTPサーバを利用するには、“"
+"カスタムのSMTPサーバを利用する” の設定にチェックを入れてください。"
 
 #: orga/views/event.py:492
 #, fuzzy
@@ -28250,8 +28241,7 @@ msgstr "メールが送付されました。"
 #: orga/views/mails.py:303
 msgid ""
 "The email has been saved. When you send it, the updated text will be used."
-msgstr ""
-"メールが保存されました。送付する際には、更新したテキストが使用されます。"
+msgstr "メールが保存されました。送付する際には、更新したテキストが使用されます。"
 
 #: orga/views/mails.py:317
 msgid "The mail has been copied, you can edit it now."
@@ -28310,8 +28300,7 @@ msgstr "トラックが削除されました。"
 msgid ""
 "This is your new API token. Please make sure to save it, as it will not be "
 "shown again:"
-msgstr ""
-"APIトークンが再生成されました。以前のトークンはもう使うことができません。"
+msgstr "APIトークンが再生成されました。以前のトークンはもう使うことができません。"
 
 #: orga/views/person.py:78
 #, fuzzy
@@ -28328,8 +28317,8 @@ msgid ""
 "Success! {accepted} proposals were accepted, {rejected} proposals were "
 "rejected."
 msgstr ""
-"成功です！ {accepted} 個の投稿がアクセプトされ、 {rejected} 個の投稿がリジェ"
-"クトされました。"
+"成功です！ {accepted} 個の投稿がアクセプトされ、 {rejected} 個の投稿が"
+"リジェクトされました。"
 
 #: orga/views/review.py:287
 #, python-brace-format
@@ -28437,13 +28426,12 @@ msgstr "やりました、あなたのスケジュールがリリースされま
 msgid ""
 "Reset successful – start editing the schedule from your selected version!"
 msgstr ""
-"リセットに成功しました - 選択したバージョンからスケジュールの編集を開始しま"
-"す！"
+"リセットに成功しました - 選択したバージョンからスケジュールの編集を開始します"
+"！"
 
 #: orga/views/schedule.py:205
 msgid "Error retrieving the schedule version to reset to."
-msgstr ""
-"リセットするスケジュールのバージョンを取得する際にエラーが発生しました。"
+msgstr "リセットするスケジュールのバージョンを取得する際にエラーが発生しました。"
 
 #: orga/views/schedule.py:253
 msgid "You can only regenerate mails after the first schedule was released."
@@ -28590,8 +28578,7 @@ msgstr ""
 msgid ""
 "Please provide a profile picture or allow us to load your picture from "
 "gravatar!"
-msgstr ""
-"プロフィール写真を登録するか、gravatar から写真を読み込ませてください！"
+msgstr "プロフィール写真を登録するか、gravatar から写真を読み込ませてください！"
 
 #: person/forms/profile.py:174
 msgid ""
@@ -28631,8 +28618,7 @@ msgstr "登録フォームかログイン用のすべての項目を入力して
 msgid ""
 "No user account matches the entered credentials. Are you sure that you typed "
 "your password correctly?"
-msgstr ""
-"入力した条件に合致するユーザがありません。パスワードが間違っていませんか？"
+msgstr "入力した条件に合致するユーザがありません。パスワードが間違っていませんか？"
 
 #: person/forms/user.py:72
 msgid "Sorry, your account is currently disabled."
@@ -28642,8 +28628,7 @@ msgstr "すみません、アカウントが無効化されています。"
 msgid ""
 "We already have a user with that email address. Did you already register "
 "before and just need to log in?"
-msgstr ""
-"すでにこのメールアドレスは使われています。以前に登録した記憶はありませんか？"
+msgstr "すでにこのメールアドレスは使われています。以前に登録した記憶はありませんか？"
 
 #: plugins/badges/apps.py:28 plugins/badges/apps.py:31
 #: plugins/badges/signals.py:47
@@ -32303,8 +32288,7 @@ msgstr ""
 #: schedule/forms.py:75
 #, python-brace-format
 msgid "Please note that all times are in the event timezone, {tz}."
-msgstr ""
-"すべての時間表記はイベントのタイムゾーン {tz} であることに注意してください。"
+msgstr "すべての時間表記はイベントのタイムゾーン {tz} であることに注意してください。"
 
 #: schedule/forms.py:80
 msgid ""
@@ -32331,8 +32315,7 @@ msgstr "ルーム1"
 #: schedule/forms.py:197
 msgid ""
 "Description, e.g.: Our main meeting place, Room I, enter from the right."
-msgstr ""
-"情報、例: メインのミーティングスペース、ルーム1、右側から入ります、など"
+msgstr "情報、例: メインのミーティングスペース、ルーム1、右側から入ります、など"
 
 #: schedule/forms.py:200
 msgid "Information for speakers, e.g.: Projector has only HDMI input."
@@ -32428,9 +32411,9 @@ msgid ""
 "invite them to create an account. If you have more than one co-speaker, you "
 "can add more speakers after finishing the proposal process."
 msgstr ""
-"共同発表者がいる場合は、こちらにその方のメールアドレスを追加していただけれ"
-"ば、アカウントを作成するための招待を行います。複数の共同発表者がいる場合は、"
-"投稿プロセスが完了した後に追加することができます。"
+"共同発表者がいる場合は、こちらにその方のメールアドレスを追加していただければ"
+"、アカウントを作成するための招待を行います。複数の共同発表者がいる場合は、投"
+"稿プロセスが完了した後に追加することができます。"
 
 #: submission/forms/submission.py:166
 #, fuzzy
