@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-14 15:12+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-02-14 16:16+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: Arabic <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "ar/>\n"
 "Language: ar\n"
@@ -284,6 +284,8 @@ msgid ""
 "Full device access (reading and changing orders and gift cards, reading of "
 "products and settings)"
 msgstr ""
+"وصول كامل للجهاز (قراءة وتعديل الطلبات وبطاقات الهدايا، وقراءة المنتجات "
+"والإعدادات)"
 
 #: api/auth/devicesecurity.py:27
 #, fuzzy
@@ -617,7 +619,7 @@ msgstr "الحدث بدء التاريخ والوقت"
 #: base/auth.py:104
 #, python-brace-format
 msgid "{system} User"
-msgstr ""
+msgstr "{system} مستخدم"
 
 #: base/auth.py:117 base/configurations/default_setting.py:192
 #: base/forms/auth.py:227 base/models/auth.py:178
@@ -823,11 +825,11 @@ msgstr ""
 
 #: base/configurations/default_setting.py:232
 msgid "Ask for a phone number per order"
-msgstr ""
+msgstr "اطلب رقم هاتف لكل طلب"
 
 #: base/configurations/default_setting.py:241
 msgid "Require a phone number per order"
-msgstr ""
+msgstr "اجعل رقم الهاتف إلزاميًا لكل طلب"
 
 #: base/configurations/default_setting.py:251
 msgid "Ask for invoice address"
@@ -854,6 +856,8 @@ msgid ""
 "On invoices from one EU country to another EU country with a different "
 "currency, display the tax amounts in both currencies."
 msgstr ""
+"في الفواتير الصادرة من دولة أوروبية إلى دولة أوروبية أخرى بعملة مختلفة، عرض "
+"مبالغ الضريبة بالعملتين."
 
 #: base/configurations/default_setting.py:299
 msgid "Require invoice address"
@@ -887,6 +891,9 @@ msgid ""
 "details and for displaying the value on the invoice. The field will be "
 "optional."
 msgstr ""
+"إذا رغبت في إضافة حقل نصي مخصص، مثل رقم تسجيل محدد لدولة، إلى نموذج عنوان "
+"الفاتورة، أدخل تسمية الحقل هنا. ستُستخدم هذه التسمية لطلب إدخال البيانات من "
+"المستخدم ولعرض القيمة على الفاتورة. سيكون الحقل اختياريًا."
 
 #: base/configurations/default_setting.py:346
 msgid "Ask for VAT ID"
@@ -911,13 +918,15 @@ msgstr "سيتم عرض هذا النص أعلاه شكل عنوان الفات�
 
 #: base/configurations/default_setting.py:372
 msgid "Show paid amount on partially paid invoices"
-msgstr ""
+msgstr "عرض المبلغ المدفوع على الفواتير المدفوعة جزئيًا"
 
 #: base/configurations/default_setting.py:374
 msgid ""
 "If an invoice has already been paid partially, this option will add the paid "
 "and pending amount to the invoice."
 msgstr ""
+"إذا تم دفع الفاتورة جزئيًا، ستقوم هذه الخاصية بإضافة المبلغ المدفوع والمبلغ "
+"المتبقي إلى الفاتورة."
 
 #: base/configurations/default_setting.py:385
 msgid "Show free products on invoices"
@@ -940,7 +949,7 @@ msgstr "عرض زائدة أوامر"
 msgid ""
 "The expiration date will not be shown if the invoice is generated after the "
 "order is paid."
-msgstr ""
+msgstr "لن يتم عرض تاريخ الانتهاء إذا تم إنشاء الفاتورة بعد دفع الطلب."
 
 #: base/configurations/default_setting.py:405
 #, fuzzy
@@ -953,6 +962,8 @@ msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
+"سيتم ملء الجزء من رقم الفاتورة بعد البادئة بأصفار بادئة حتى هذا الطول، مثلاً "
+"INV-001 أو INV-00001."
 
 #: base/configurations/default_setting.py:418
 msgid "Generate invoices with consecutive numbers"
@@ -1053,7 +1064,7 @@ msgstr "كل الأيام"
 #: base/configurations/default_setting.py:520
 #: base/configurations/default_setting.py:525
 msgid "in minutes"
-msgstr ""
+msgstr "بالدقائق"
 
 #: base/configurations/default_setting.py:523
 #, fuzzy
@@ -1066,6 +1077,8 @@ msgid ""
 "If using days, the order will expire at the end of the last day. Using "
 "minutes is more exact, but should only be used for real-time payment methods."
 msgstr ""
+"إذا تم استخدام الأيام، ينتهي الطلب في نهاية اليوم الأخير. استخدام الدقائق أدق، "
+"لكنه ينبغي أن يُستخدم فقط لطرق الدفع الفورية."
 
 #: base/configurations/default_setting.py:538
 msgid "Payment term in days"
@@ -1165,7 +1178,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:630
 msgid "Hide \"payment pending\" state on attendee-facing pages"
-msgstr ""
+msgstr "إخفاء حالة \"في انتظار الدفع\" على صفحات الحضور"
 
 #: base/configurations/default_setting.py:632
 msgid ""
@@ -1173,6 +1186,8 @@ msgid ""
 "but no indication of missing payment will be visible on the ticket pages of "
 "attendees who did not buy the ticket themselves."
 msgstr ""
+"ستظل لوحة تعليمات الدفع معروضة للمشارك الأساسي، لكن لن يظهر أي مؤشر على عدم "
+"سداد الدفع في صفحات التذاكر للمشاركين الذين لم يشتروا التذكرة بأنفسهم."
 
 #: base/configurations/default_setting.py:649
 msgid "Accept late payments"
@@ -1233,7 +1248,7 @@ msgstr "لن تولد الفواتير تلقائيا لأوامر الحرة."
 
 #: base/configurations/default_setting.py:708
 msgid "Automatically cancel and reissue invoice on address changes"
-msgstr ""
+msgstr "إلغاء الفاتورة تلقائيًا وإعادة إصدارها عند تغيير العنوان"
 
 #: base/configurations/default_setting.py:710
 msgid ""
@@ -1241,6 +1256,9 @@ msgid ""
 "will automatically be canceled and a new invoice will be issued. This "
 "setting does not affect changes made through the backend."
 msgstr ""
+"إذا قام الحضور بتغيير عنوان الفاتورة على طلب قائم، ستتم إلغاء الفاتورة "
+"تلقائيًا وإصدار فاتورة جديدة. لا يؤثر هذا الإعداد على التغييرات التي تُجرى من "
+"خلال الواجهة الخلفية."
 
 #: base/configurations/default_setting.py:723
 msgid "Address line"
@@ -1308,7 +1326,7 @@ msgstr "ID الضرائب المحلية"
 
 #: base/configurations/default_setting.py:771
 msgid "e.g. tax number in Germany, ABN in Australia, …"
-msgstr ""
+msgstr "مثلاً رقم الضريبة في ألمانيا، ABN في أستراليا، …"
 
 #: base/configurations/default_setting.py:780
 msgid "EU VAT ID"
@@ -1427,7 +1445,7 @@ msgstr "اللغة الافتراضية"
 
 #: base/configurations/default_setting.py:926
 msgid "Region"
-msgstr ""
+msgstr "المنطقة"
 
 #: base/configurations/default_setting.py:928
 msgid ""
@@ -1436,6 +1454,9 @@ msgid ""
 "less priority than the language and is therefore mostly relevant for "
 "languages used in different regions globally (like English)."
 msgstr ""
+"سيُستخدم لتحديد تنسيق التاريخ والوقت وكذلك البلد الافتراضي لعناوين الحضور "
+"وأرقام الهواتف. بالنسبة للتنسيق، تكون له أولوية أقل من اللغة، ولذلك يكون ذا "
+"صلة بشكل أكبر باللغات المستخدمة في مناطق مختلفة عالميًا (مثل الإنجليزية)."
 
 #: base/configurations/default_setting.py:941
 #, fuzzy
@@ -1448,6 +1469,8 @@ msgid ""
 "If disabled, no date or time will be shown on the ticket shop's front page. "
 "This settings does however not affect the display in other locations."
 msgstr ""
+"إذا تم تعطيله، فلن يتم عرض أي تاريخ أو وقت على الصفحة الرئيسية لمتجر "
+"التذاكر. ومع ذلك، لا تؤثر هذه الإعدادات على العرض في أماكن أخرى."
 
 #: base/configurations/default_setting.py:954
 msgid "Show event end date"
@@ -1593,7 +1616,7 @@ msgstr "تفسير قسيمة"
 msgid ""
 "If you ask for a phone number, explain why you do so and what you will use "
 "the phone number for."
-msgstr ""
+msgstr "إذا طلبت رقم هاتف، اشرح لماذا تطلبه ولأي غرض ستستخدمه."
 
 #: base/configurations/default_setting.py:1112
 #, fuzzy
@@ -1603,7 +1626,7 @@ msgstr "تذكير تذاكر تحميل"
 
 #: base/configurations/default_setting.py:1113
 msgid "If this is off, nobody can download a ticket."
-msgstr ""
+msgstr "إذا كان هذا معطلاً، فلن يتمكن أحد من تنزيل التذكرة."
 
 #: base/configurations/default_setting.py:1122
 msgid "Download date"
@@ -1631,6 +1654,8 @@ msgid ""
 "for add-on products. With this option, a separate ticket is issued for every "
 "add-on product as well."
 msgstr ""
+"افتراضيًا، تُصدر التذاكر فقط للمنتجات المُختارة بشكل فردي، وليس للمنتجات "
+"الإضافية. مع هذا الخيار، يتم إصدار تذكرة منفصلة لكل منتج إضافي أيضًا."
 
 #: base/configurations/default_setting.py:1155
 #, fuzzy
@@ -1644,6 +1669,8 @@ msgid ""
 "\"admission ticket\"in the product settings. You can also turn off ticket "
 "issuing in every product separately."
 msgstr ""
+"إذا تم إيقافه، تُصدر التذاكر فقط للمنتجات الموسومة كـ \"تذكرة دخول\" في "
+"إعدادات المنتج. يمكنك أيضًا إيقاف إصدار التذاكر لكل منتج على حدة."
 
 #: base/configurations/default_setting.py:1174
 #, fuzzy
@@ -1656,10 +1683,11 @@ msgid ""
 "If turned off, ticket downloads are only possible after an order has been "
 "marked as paid."
 msgstr ""
+"إذا تم إيقافه، يصبح تنزيل التذاكر ممكنًا فقط بعد تمييز الطلب على أنه مدفوع."
 
 #: base/configurations/default_setting.py:1190
 msgid "Do not issue ticket before email address is validated"
-msgstr ""
+msgstr "لا تصدر التذكرة قبل التحقق من عنوان البريد الإلكتروني"
 
 #: base/configurations/default_setting.py:1192
 msgid ""
@@ -1669,6 +1697,10 @@ msgid ""
 "from the page as soon as they clicked a link in the email. Does not affect "
 "orders performed through other sales channels."
 msgstr ""
+"إذا تم تفعيل هذا الخيار، فلن تُعرض التذاكر للتنزيل مباشرةً بعد الشراء. ستُرفق "
+"برسالة تأكيد الدفع (إذا لم يكن حجم الملف كبيرًا جدًا)، وسيستطيع الحضور تنزيلها "
+"من الصفحة بمجرد النقر على الرابط في البريد الإلكتروني. لا يؤثر ذلك على الطلبات "
+"التي تتم عبر قنوات بيع أخرى."
 
 #: base/configurations/default_setting.py:1205
 msgid "Require user to be logged in to place an order"
@@ -1727,10 +1759,12 @@ msgid ""
 "If your event series has more than 50 dates in the future, only the month or "
 "week calendar can be used."
 msgstr ""
+"إذا كانت سلسلة فعالياتك تحتوي على أكثر من 50 تاريخًا مستقبلًا، فلا يمكن استخدام "
+"سوى تقويم الشهر أو الأسبوع."
 
 #: base/configurations/default_setting.py:1259
 msgid "Hide all unavailable dates from calendar or list views"
-msgstr ""
+msgstr "إخفاء جميع التواريخ غير المتاحة من عرض التقويم أو القوائم"
 
 #: base/configurations/default_setting.py:1269
 #: base/configurations/default_setting.py:1278
@@ -1758,7 +1792,7 @@ msgstr "لم يعد يمكن للعملاء تعديل أوامرهم"
 
 #: base/configurations/default_setting.py:1290
 msgid "Allow attendees to modify their information after they checked in."
-msgstr ""
+msgstr "السماح للحضور بتعديل معلوماتهم بعد تسجيل الوصول."
 
 #: base/configurations/default_setting.py:1291
 msgid ""
@@ -1793,23 +1827,24 @@ msgid ""
 "Only allow changes if the resulting price is higher or equal than the "
 "previous price."
 msgstr ""
+"السماح بالتغييرات فقط إذا كان السعر الناتج أكبر من أو مساويًا للسعر السابق."
 
 #: base/configurations/default_setting.py:1331
 #: base/configurations/default_setting.py:1352
 msgid ""
 "Only allow changes if the resulting price is higher than the previous price."
-msgstr ""
+msgstr "السماح بالتغييرات فقط إذا كان السعر الناتج أكبر من السعر السابق."
 
 #: base/configurations/default_setting.py:1335
 #: base/configurations/default_setting.py:1356
 msgid ""
 "Only allow changes if the resulting price is equal to the previous price."
-msgstr ""
+msgstr "السماح بالتغييرات فقط إذا كان السعر الناتج مساويًا للسعر السابق."
 
 #: base/configurations/default_setting.py:1339
 #: base/configurations/default_setting.py:1360
 msgid "Allow changes regardless of price, even if this results in a refund."
-msgstr ""
+msgstr "السماح بالتغييرات بغض النظر عن السعر، حتى لو أدى ذلك إلى استرداد مبلغ."
 
 #: base/configurations/default_setting.py:1344
 #, fuzzy
@@ -1858,19 +1893,21 @@ msgstr "الحفاظ على رسوم على إلغاء percentual على"
 
 #: base/configurations/default_setting.py:1441
 msgid "Allow attendees to voluntarily choose a lower refund"
-msgstr ""
+msgstr "السماح للحضور باختيار استرداد أقل طوعًا"
 
 #: base/configurations/default_setting.py:1442
 msgid ""
 "With this option enabled, your attendees can choose to get a smaller refund "
 "to support you."
-msgstr ""
+msgstr "مع تفعيل هذا الخيار، يمكن لحضورك اختيار استرداد أقل لدعمك."
 
 #: base/configurations/default_setting.py:1448
 msgid ""
 "However, if you want us to help keep the lights on here, please consider "
 "using the slider below to request a smaller refund. Thank you!"
 msgstr ""
+"ومع ذلك، إذا رغبت في أن نساعد في إبقاء المنصة تعمل، يرجى التفكير في استخدام "
+"شريط التمرير أدناه لطلب استرداد أقل. شكرًا لك!"
 
 #: base/configurations/default_setting.py:1456
 #, fuzzy
@@ -1885,10 +1922,13 @@ msgid ""
 "like to receive. You can use it e.g. to explain choosing a lower refund will "
 "help your organization."
 msgstr ""
+"سيُعرض هذا النص بين شرح كيفية عمل الاستردادات وشريط التمرير الذي يمكن للحضور "
+"استخدامه لاختيار المبلغ الذي يرغبون في استلامه. يمكنك استخدامه، على سبيل المثال"
+"، لشرح أن اختيار استرداد أقل سيساعد منظمتك."
 
 #: base/configurations/default_setting.py:1475
 msgid "Step size for reduction amount"
-msgstr ""
+msgstr "حجم خطوة التخفيض"
 
 #: base/configurations/default_setting.py:1477
 msgid ""
@@ -1896,23 +1936,28 @@ msgid ""
 "set this to e.g. 10, they will only be able to choose values in increments "
 "of 10."
 msgstr ""
+"بشكل افتراضي، يمكن للحضور اختيار مبلغ عشوائي لتحتفظ به. إذا ضبطت هذا مثلاً على "
+"10، فسيتمكنون فقط من اختيار قيم بزيادات قدرها 10."
 
 #: base/configurations/default_setting.py:1489
 msgid ""
 "Customers can only request a cancellation that needs to be approved by the "
 "event organizer before the order is canceled and a refund is issued."
 msgstr ""
+"يمكن للعملاء فقط طلب إلغاء يتطلب موافقة من منظم الحدث قبل إلغاء الطلب وإصدار "
+"الاسترداد."
 
 #: base/configurations/default_setting.py:1500
 #: base/configurations/default_setting.py:1512
 msgid "All refunds are issued to the original payment method"
-msgstr ""
+msgstr "تُصدر جميع عمليات الاسترداد إلى وسيلة الدفع الأصلية"
 
 #: base/configurations/default_setting.py:1503
 #: base/configurations/default_setting.py:1515
 msgid ""
 "Customers can choose between a gift card and a refund to their payment method"
 msgstr ""
+"يمكن للعملاء الاختيار بين بطاقة هدية أو استرداد إلى وسيلة الدفع الخاصة بهم"
 
 #: base/configurations/default_setting.py:1505
 #: base/configurations/default_setting.py:1517
@@ -1964,16 +2009,18 @@ msgid ""
 "Tickets will never be attached if they're larger than {size} to avoid email "
 "delivery problems."
 msgstr ""
+"لن يتم إرفاق التذاكر أبدًا إذا كانت أكبر من {size} لتجنب مشاكل تسليم البريد "
+"الإلكتروني."
 
 #: base/configurations/default_setting.py:1580
 msgid "Attach calendar files"
-msgstr ""
+msgstr "إرفاق ملفات التقويم"
 
 #: base/configurations/default_setting.py:1581
 msgid ""
 "If enabled, we will attach an .ics calendar file to order confirmation "
 "emails."
-msgstr ""
+msgstr "إذا تم التمكين، سنقوم بإرفاق ملف تقويم بصيغة .ics برسائل تأكيد الطلب."
 
 #: base/configurations/default_setting.py:1590
 msgid "Subject prefix"
@@ -2556,15 +2603,15 @@ msgstr "نقترح بشدة لاستخدام الظل الأحمر."
 
 #: base/configurations/default_setting.py:2063
 msgid "Page background color"
-msgstr ""
+msgstr "لون خلفية الصفحة"
 
 #: base/configurations/default_setting.py:2087
 msgid "Scroll-over color"
-msgstr ""
+msgstr "لون التحويم"
 
 #: base/configurations/default_setting.py:2103
 msgid "Use round edges"
-msgstr ""
+msgstr "استخدم حواف مستديرة"
 
 #: base/configurations/default_setting.py:2113
 #: control/templates/pretixcontrol/pdf/index.html:317
@@ -2613,12 +2660,12 @@ msgstr ""
 #: base/configurations/default_setting.py:2169
 #: base/configurations/default_setting.py:2209
 msgid "Use header image in its full size"
-msgstr ""
+msgstr "استخدم صورة الرأس بحجمها الكامل"
 
 #: base/configurations/default_setting.py:2170
 #: base/configurations/default_setting.py:2210
 msgid "We recommend to upload a picture at least 1170 pixels wide."
-msgstr ""
+msgstr "ننصح بتحميل صورة بعرض لا يقل عن 1170 بكسل."
 
 #: base/configurations/default_setting.py:2179
 msgid "Show event title even if a logo image is present"
@@ -2640,7 +2687,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2218
 msgid "Social media image"
-msgstr ""
+msgstr "صورة وسائل التواصل الاجتماعي"
 
 #: base/configurations/default_setting.py:2222
 msgid ""
@@ -2679,7 +2726,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2278
 msgid "Banner text (top)"
-msgstr ""
+msgstr "نص البانر (أعلى)"
 
 #: base/configurations/default_setting.py:2282
 #, fuzzy
@@ -2695,13 +2742,14 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2293
 msgid "Banner text (bottom)"
-msgstr ""
+msgstr "نص البانر (أسفل)"
 
 #: base/configurations/default_setting.py:2297
 msgid ""
 "This text will be shown below every page of your shop. Please only use this "
 "for very important messages."
 msgstr ""
+"سيظهر هذا النص أسفل كل صفحة من متجرك. الرجاء استخدامه فقط للرسائل الهامة جدًا."
 
 #: base/configurations/default_setting.py:2308
 msgid "Voucher explanation"
@@ -2744,10 +2792,11 @@ msgid ""
 "This message will be shown after an order has been created successfully. It "
 "will be shown in additionalto the default text."
 msgstr ""
+"سيُعرض هذا الرسالة بعد إنشاء الطلب بنجاح. سيُعرض بالإضافة إلى النص الافتراضي."
 
 #: base/configurations/default_setting.py:2354
 msgid "Help text of the phone number field"
-msgstr ""
+msgstr "نص المساعدة لحقل رقم الهاتف"
 
 #: base/configurations/default_setting.py:2362
 msgid ""
@@ -2759,11 +2808,11 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2370
 msgid "Help text of the email field"
-msgstr ""
+msgstr "نص المساعدة لحقل البريد الإلكتروني"
 
 #: base/configurations/default_setting.py:2395
 msgid "Allow creating a new team during event creation"
-msgstr ""
+msgstr "السماح بإنشاء فريق جديد أثناء إنشاء الحدث"
 
 #: base/configurations/default_setting.py:2397
 msgid ""
@@ -2772,6 +2821,10 @@ msgid ""
 "allows users to create an event-specified team on-the-fly, even when they do "
 "not have \"Can change teams and permissions\" permission."
 msgstr ""
+"يجب على المستخدمين الذين ليس لديهم صلاحية الوصول إلى جميع الفعاليات تحت هذا "
+"المنظم أن يختاروا أحد فرقهم للوصول إلى الفعالية المُنشأة. يتيح هذا الإعداد "
+"للمستخدمين إنشاء فريق مخصّص لفعالية ما على الفور، حتى لو لم يكن لديهم صلاحية "
+"\"Can change teams and permissions\"."
 
 #: base/configurations/default_setting.py:2423
 #: base/configurations/default_setting.py:2433 base/models/event.py:605
@@ -2866,6 +2919,8 @@ msgid ""
 "The system generates by default {}-character long gift card codes. However, "
 "if a different length is required, it can be set here."
 msgstr ""
+"ينشئ النظام افتراضيًا أكواد بطاقات هدايا بطول {} حرفًا. ومع ذلك، إذا كان "
+"مطلوبًا طول مختلف، يمكن تحديده هنا."
 
 #: base/configurations/default_setting.py:2482
 #, fuzzy
@@ -2883,7 +2938,7 @@ msgstr ""
 
 #: base/configurations/default_setting.py:2497
 msgid "Privacy Policy URL"
-msgstr ""
+msgstr "رابط سياسة الخصوصية"
 
 #: base/configurations/default_setting.py:2499
 #, fuzzy
@@ -2909,10 +2964,13 @@ msgid ""
 "that this can mean people will not know their seat after their purchase and "
 "it might not be written on their ticket."
 msgstr ""
+"إذا تم تعطيل هذا الخيار، فسيتعين عليك تعيين المقاعد يدويًا من الواجهة "
+"الخلفية. لاحظ أن هذا قد يجعل الأشخاص لا يعرفون مقاعدهم بعد الشراء وقد لا تُذكر "
+"على تذكرتهم."
 
 #: base/configurations/default_setting.py:2529
 msgid "Show button to copy user input from other products"
-msgstr ""
+msgstr "عرض زر لنسخ إدخال المستخدم من منتجات أخرى"
 
 #: base/configurations/default_setting.py:2537
 msgid "Start page header background image"
@@ -2943,12 +3001,12 @@ msgstr "معظم الألقاب الألمانية المشتركة"
 #: base/configurations/default_setting.py:2604
 msgctxt "person_name_salutation"
 msgid "Ms"
-msgstr ""
+msgstr "السيدة"
 
 #: base/configurations/default_setting.py:2605
 msgctxt "person_name_salutation"
 msgid "Mr"
-msgstr ""
+msgstr "السيد"
 
 #: base/configurations/default_setting.py:2615
 #: base/configurations/default_setting.py:2633
@@ -3068,7 +3126,7 @@ msgstr "إلغاء"
 #: base/configurations/default_setting.py:2881
 msgctxt "person_name_sample"
 msgid "Mr"
-msgstr ""
+msgstr "السيد"
 
 #: base/configurations/default_setting.py:2873
 #, fuzzy
@@ -3080,7 +3138,7 @@ msgstr "تتطلب اسم العميل"
 #: base/configurations/default_setting.py:2885
 msgctxt "person_name_sample"
 msgid "MA"
-msgstr ""
+msgstr "ماجستير"
 
 #: base/email.py:310 eventyay_common/views/event.py:286
 #: orga/templates/orga/cfp/submissiontype/list.html:57
@@ -3095,7 +3153,7 @@ msgstr "افتراضي"
 
 #: base/email.py:317
 msgid "Simple with logo"
-msgstr ""
+msgstr "بسيط مع شعار"
 
 #: base/email.py:650 base/email.py:759 base/email.py:782 base/email.py:788
 #: base/pdf.py:159 base/pdf.py:396 base/services/invoices.py:394
@@ -3586,7 +3644,7 @@ msgstr "دفع المبلغ"
 
 #: base/exporters/orderlist.py:83
 msgid "Show multiple choice answers grouped in one column"
-msgstr ""
+msgstr "عرض إجابات الاختيار المتعدد مجمّعة في عمود واحد"
 
 #: base/exporters/orderlist.py:94
 #, fuzzy
@@ -3611,6 +3669,8 @@ msgid ""
 "Only include orders including at least one ticket for a date on or after "
 "this date. Will also include other dates in case of mixed orders!"
 msgstr ""
+"اشمل فقط الطلبات التي تتضمن على الأقل تذكرة لتاريخ يساوي أو يلي هذا التاريخ. "
+"ستُدرَج تواريخ أخرى أيضًا في حالة الطلبات المختلطة!"
 
 #: base/exporters/orderlist.py:121
 #, fuzzy
@@ -4137,11 +4197,11 @@ msgstr "علامة فارغة"
 
 #: base/exporters/orderlist.py:1127 control/forms/filter.py:1112
 msgid "Valid and with value"
-msgstr ""
+msgstr "صالح وله قيمة"
 
 #: base/exporters/orderlist.py:1128 control/forms/filter.py:1113
 msgid "Expired and with value"
-msgstr ""
+msgstr "منتهي الصلاحية وله قيمة"
 
 #: base/exporters/orderlist.py:1129 control/forms/filter.py:183
 #: control/forms/filter.py:1114 control/forms/filter.py:1532
@@ -4168,7 +4228,7 @@ msgstr "تاريخ الانتهاء"
 
 #: base/exporters/orderlist.py:1179 control/forms/orders.py:648
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "الشروط والأحكام الخاصة"
 
 #: base/exporters/orderlist.py:1180
 #: control/templates/pretixcontrol/boxoffice/payment.html:37
@@ -4310,7 +4370,7 @@ msgstr "ولا يعرف هذا المزيج من اوراق اعتماده ال�
 
 #: base/forms/auth.py:47 base/forms/user.py:24
 msgid "For security reasons, please wait 5 minutes before you try again."
-msgstr ""
+msgstr "لأسباب أمنية، يرجى الانتظار 5 دقائق قبل المحاولة مرة أخرى."
 
 #: base/forms/auth.py:48 base/forms/auth.py:243
 msgid "This account is inactive."
@@ -4351,7 +4411,7 @@ msgstr "المرجع الداخلي"
 #: base/forms/questions.py:269
 msgctxt "phonenumber"
 msgid "Phone number (without international area code)"
-msgstr ""
+msgstr "رقم الهاتف (بدون رمز الدولة الدولي)"
 
 #: base/forms/questions.py:435 base/forms/questions.py:808
 msgid "Street and Number"
@@ -5029,10 +5089,11 @@ msgid ""
 "Does not have any effect for the validation of tickets, only for the "
 "automatic configuration of check-in devices."
 msgstr ""
+"لا يؤثر على التحقق من التذاكر، بل على التكوين التلقائي لأجهزة تسجيل الوصول فقط."
 
 #: base/models/checkin.py:40
 msgid "Allow re-entering after an exit scan"
-msgstr ""
+msgstr "السماح بإعادة الدخول بعد مسح الخروج"
 
 #: base/models/checkin.py:42
 #, fuzzy
@@ -5043,7 +5104,7 @@ msgstr "اسأل عن عناوين البريد الإلكتروني للتذك�
 #: base/models/checkin.py:43
 msgid ""
 "Use this option to turn off warnings if a ticket is scanned a second time."
-msgstr ""
+msgstr "استخدم هذا الخيار لإيقاف التحذيرات إذا تم مسح التذكرة للمرة الثانية."
 
 #: base/models/checkin.py:46
 #, fuzzy
@@ -5081,7 +5142,7 @@ msgstr "بلد"
 
 #: base/models/checkin.py:239
 msgid "Exit"
-msgstr ""
+msgstr "خروج"
 
 #: base/models/choices.py:35
 msgid "No effect"
@@ -5118,7 +5179,7 @@ msgstr "يستخدم هذا المعرف مسبقا للمسألة مختلفة.
 #: base/models/devices.py:86
 #: control/templates/pretixcontrol/organizers/gates.html:16
 msgid "Gate"
-msgstr ""
+msgstr "بوابة"
 
 #: base/models/devices.py:100
 #: control/templates/pretixcontrol/organizers/devices.html:38
@@ -5290,7 +5351,7 @@ msgstr "أضف إلى السلة"
 
 #: base/models/event.py:673
 msgid "Create Video platform for Event."
-msgstr ""
+msgstr "إنشاء منصة فيديو للحدث."
 
 #: base/models/event.py:682
 msgid ""
@@ -5425,16 +5486,16 @@ msgstr "تحتاج إلى تكوين حصة واحدة على الأقل لبي�
 
 #: base/models/event.py:1946
 msgid "You have unpaid invoices, please pay them before going live."
-msgstr ""
+msgstr "لديك فواتير غير مدفوعة، الرجاء تسديدها قبل بدء البث."
 
 #: base/models/event.py:1951
 #, python-brace-format
 msgid "You need to fill the meta parameter \"{property}\"."
-msgstr ""
+msgstr "عليك ملء معامل الميتا \"{property}\"."
 
 #: base/models/event.py:1998
 msgid "You need to fill the billing information."
-msgstr ""
+msgstr "عليك تعبئة معلومات الفوترة."
 
 #: base/models/event.py:2087
 msgid ""
@@ -5560,6 +5621,8 @@ msgid ""
 "If checked, an event can only be taken live if the property is set. In event "
 "series, its always optional to set a value for individual dates"
 msgstr ""
+"إذا تم تحديد هذا الخيار، لا يمكن وضع الحدث قيد البث إلا إذا تم تعيين الخاصية. "
+"في سلاسل الأحداث، يكون تعيين قيمة للتواريخ الفردية اختياريًا دائمًا"
 
 #: base/models/event.py:3060
 #, fuzzy
@@ -5572,10 +5635,12 @@ msgid ""
 "If you keep this empty, any value is allowed. Otherwise, enter one possible "
 "value per line."
 msgstr ""
+"إذا تركت هذا الحقل فارغًا، فمسموح بأي قيمة. وإلا، أدخل قيمة محتملة واحدة في كل "
+"سطر."
 
 #: base/models/event.py:3067
 msgid "A property can either be required or have a default value, not both."
-msgstr ""
+msgstr "يمكن أن تكون الخاصية إما مطلوبة أو لها قيمة افتراضية، وليس كلاهما."
 
 #: base/models/event.py:3069
 #, fuzzy
@@ -5601,7 +5666,7 @@ msgstr "قد تحتوي على سبيكة فقط الحروف والأرقام،
 #: control/templates/pretixcontrol/organizers/giftcard.html:39
 msgctxt "giftcard"
 msgid "Special terms and conditions"
-msgstr ""
+msgstr "الشروط والأحكام الخاصة"
 
 #: base/models/information.py:27
 #: orga/templates/orga/speaker/speakerinformation/list.html:41
@@ -5900,7 +5965,7 @@ msgstr "المقعد \"{seat}\" تتوفر لم تعد."
 #: base/models/orders.py:922
 #, python-brace-format
 msgid "The voucher \"{voucher}\" no longer has sufficient budget."
-msgstr ""
+msgstr "القسيمة \"{voucher}\" لم يعد لديها ميزانية كافية."
 
 #: base/models/orders.py:923
 #, fuzzy, python-brace-format
@@ -6033,6 +6098,7 @@ msgstr "برد فقط"
 msgid ""
 "May be shown to the end user or used e.g. as part of a payment reference."
 msgstr ""
+"قد تُعرض للمستخدم النهائي أو تُستخدم، على سبيل المثال، كجزء من مرجع الدفع."
 
 #: base/models/orders.py:2058
 msgid "Payment fee"
@@ -6227,6 +6293,9 @@ msgid ""
 "information about attendees. Users with \"can change orders\" can also "
 "perform check-ins."
 msgstr ""
+"يشمل هذا البحث عن الحضور، والذي يمكن استخدامه للحصول على معلومات شخصية عن "
+"الحضور. يمكن للمستخدمين الذين لديهم \"can change orders\" أيضًا إجراء تسجيل "
+"الحضور."
 
 #: base/models/organizer.py:378
 msgid "Can view vouchers"
@@ -6421,12 +6490,12 @@ msgstr "لقد تمت دعوتك إلى الفريق المنظم للحدث"
 #: base/models/organizer.py:682
 #: control/forms/organizer_forms/organizer_form.py:53
 msgid "Primary Contact Name"
-msgstr ""
+msgstr "اسم جهة الاتصال الأساسية"
 
 #: base/models/organizer.py:687
 #: control/forms/organizer_forms/organizer_form.py:63
 msgid "Primary Contact Email"
-msgstr ""
+msgstr "البريد الإلكتروني لجهة الاتصال الأساسية"
 
 #: base/models/organizer.py:692
 #: control/forms/organizer_forms/organizer_form.py:74
@@ -6484,11 +6553,11 @@ msgstr "تاريخ الإعداد"
 #: base/models/page.py:9
 #: control/templates/pretixcontrol/admin/pages/index.html:29
 msgid "Page title"
-msgstr ""
+msgstr "عنوان الصفحة"
 
 #: base/models/page.py:13 control/views/pages.py:64
 msgid "URL form"
-msgstr ""
+msgstr "نموذج عنوان URL"
 
 #: base/models/page.py:15
 msgid ""
@@ -7102,7 +7171,7 @@ msgstr "طرح خلال التسجيل في مكتب الاستقبال بدلا
 
 #: base/models/product.py:1198
 msgid "Not supported by all check-in apps for all question types."
-msgstr ""
+msgstr "لا تدعمه جميع تطبيقات تسجيل الحضور لكل أنواع الأسئلة."
 
 #: base/models/product.py:1202 control/forms/product.py:82
 #, fuzzy
@@ -7252,7 +7321,7 @@ msgstr ""
 
 #: base/models/product.py:1542
 msgid "Allow to sell more tickets once people have checked out"
-msgstr ""
+msgstr "السماح ببيع المزيد من التذاكر بعد تسجيل خروج الأشخاص"
 
 #: base/models/product.py:1544
 msgid ""
@@ -7263,6 +7332,11 @@ msgid ""
 "are ignored if they are set to \"Allow re-entering after an exit scan\" to "
 "prevent accidental overbooking."
 msgstr ""
+"باستخدام هذا الخيار، سيتم تحرير الحصة فور مسح الأشخاص عند مخرج الحدث. يحدث "
+"ذلك فقط إذا تم مسحهم كل من عند الدخول والخروج، وكان مسح الخروج هو الأحدث. لا "
+"يهم أي قائمة تسجيل حضور كانت تحتوي أي من المسحين، لكن تُتجاهَل قوائم تسجيل "
+"الحضور إذا تم ضبطها على \"السماح بإعادة الدخول بعد مسح الخروج\" لتجنّب الحجز "
+"الزائد عن طريق الخطأ."
 
 #: base/models/product.py:1556 base/models/vouchers.py:177
 #: control/templates/pretixcontrol/items/quota_edit.html:8
@@ -13285,7 +13359,7 @@ msgstr "جميع التواريخ"
 
 #: control/forms/event.py:53
 msgid "Only allow registered accounts to get a ticket"
-msgstr ""
+msgstr "السماح فقط للحسابات المسجلة بالحصول على تذكرة"
 
 #: control/forms/event.py:80
 msgid "This is an event series"
