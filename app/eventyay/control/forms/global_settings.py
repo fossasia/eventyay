@@ -466,6 +466,35 @@ class UpdateSettingsForm(SettingsForm):
             'locally.'
         ),
     )
+    
+    # Telemetry settings
+    telemetry_enabled = forms.BooleanField(
+        required=False,
+        label=_('Enable telemetry'),
+        help_text=_(
+            'Send anonymous usage statistics (bucketed counts, deployment info) to help track '
+            'version adoption and deployment patterns. No personal data is collected. '
+            'Data is sent approximately once per day.'
+        ),
+    )
+    telemetry_endpoint = forms.URLField(
+        required=False,
+        label=_('Telemetry endpoint'),
+        help_text=_('The URL where telemetry data will be sent (Google Apps Script URL).'),
+    )
+    telemetry_api_key = SecretKeySettingsField(
+        required=False,
+        label=_('Telemetry API key'),
+        help_text=_('API key for authenticating with the telemetry receiver.'),
+    )
+    telemetry_contact_email = forms.EmailField(
+        required=False,
+        label=_('Maintainer contact'),
+        help_text=_(
+            'Optional email address included in telemetry data to identify who maintains this instance. '
+            'Only visible to those with access to the telemetry data sheet.'
+        ),
+    )
 
     def __init__(self, *args, **kwargs):
         self.obj = GlobalSettingsObject()
