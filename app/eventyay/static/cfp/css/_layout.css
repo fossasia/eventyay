@@ -74,12 +74,13 @@ header {
     padding-bottom: 4px;
     color: var(--color-primary);
     margin-left: auto;
-	margin-right: 10px;
+	  margin-right: 10px;
     display: flex;
     flex-wrap: nowrap;
     flex-shrink: 0;
     align-items: center;
     font-size: 1rem;
+    gap: 10px;
 
     .header-nav {
       color: var(--color-primary);
