@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-01-02 14:02+0000\n"
-"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
+"PO-Revision-Date: 2026-02-14 14:29+0000\n"
+"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "de/>\n"
 "Language: de\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 "X-Poedit-Bookmarks: -1,-1,904,-1,-1,-1,-1,-1,-1,-1\n"
 
 #: agenda/phrases.py:8
@@ -657,8 +657,7 @@ msgstr "Zusatzprodukte werden nicht mitgezählt."
 msgid ""
 "Display net prices in the product list instead of gross prices (not "
 "recommended)"
-msgstr ""
-"Zeige Netto- statt Bruttopreisen in den Produktlisten (nicht empfohlen)"
+msgstr "Zeige Netto- statt Bruttopreisen in den Produktlisten (nicht empfohlen)"
 
 #: base/configurations/default_setting.py:85
 #, fuzzy
@@ -1910,8 +1909,7 @@ msgstr "Prozentuale Stornogebühr einbehalten"
 #, fuzzy
 #| msgid "Allow customers to voluntarily choose a lower refund"
 msgid "Allow attendees to voluntarily choose a lower refund"
-msgstr ""
-"Kunden erlauben, freiwillig auf einen Teil der Erstattung zu verzichten"
+msgstr "Kunden erlauben, freiwillig auf einen Teil der Erstattung zu verzichten"
 
 #: base/configurations/default_setting.py:1442
 #, fuzzy
@@ -11028,8 +11026,7 @@ msgstr ""
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr ""
-"Es gab ein Fehler beim Einloggen. Bitte wende dich an die Veranstalter."
+msgstr "Es gab ein Fehler beim Einloggen. Bitte wende dich an die Veranstalter."
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -14765,8 +14762,8 @@ msgstr "Das ausgewählte Team kann nicht gelöscht werden."
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
-"Der eingegebene Schlüssel \"%(value)s\" sieht ungültig aus. Er sollte mit "
-"\"%(prefix)s\" beginnen."
+"Der eingegebene Schlüssel \"%(value)s\" sieht ungültig aus. Er sollte mit \"%"
+"(prefix)s\" beginnen."
 
 #: control/forms/global_settings.py:555
 #, fuzzy, python-format
@@ -14777,8 +14774,8 @@ msgid ""
 "The provided key does not look valid. It should start with one of: "
 "%(prefixes)s"
 msgstr ""
-"Der eingegebene Schlüssel \"%(value)s\" sieht ungültig aus. Er sollte mit "
-"\"%(prefix)s\" beginnen."
+"Der eingegebene Schlüssel \"%(value)s\" sieht ungültig aus. Er sollte mit \"%"
+"(prefix)s\" beginnen."
 
 #: control/forms/orderimport.py:9
 msgid "Import mode"
@@ -15834,8 +15831,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Position #{posid}: {old_item} ({old_price}) geändert zu {new_item} "
-"({new_price})."
+"Position #{posid}: {old_item} ({old_price}) geändert zu {new_item} ("
+"{new_price})."
 
 #: control/logdisplay.py:70
 #, python-brace-format
@@ -15898,8 +15895,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Position #{posid} erstellt: {item} ({price}) als Zusatzprodukt zu Position "
-"#{addon_to}."
+"Position #{posid} erstellt: {item} ({price}) als Zusatzprodukt zu Position #"
+"{addon_to}."
 
 #: control/logdisplay.py:175
 #, fuzzy, python-brace-format
@@ -25188,8 +25185,7 @@ msgstr "Nutzen Sie die Option \"Schlüssel eingeben\" der Authenticator-App."
 #, fuzzy
 #| msgid "In \"Account name\", type your login name for eventyay."
 msgid "In \"Account name\", type your login name for pretix."
-msgstr ""
-"Unter \"Kontonamen\" können Sie Ihre eventyay-Benutzerkennung eingeben."
+msgstr "Unter \"Kontonamen\" können Sie Ihre eventyay-Benutzerkennung eingeben."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
