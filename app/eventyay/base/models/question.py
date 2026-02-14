@@ -166,7 +166,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
         verbose_name=_('Session Types'),
         blank=True,
     )
-    question = I18nCharField(max_length=800, verbose_name=_('Label'), null=True, blank=True)
+    question = I18nCharField(max_length=800, verbose_name=_('Custom question'))
     help_text = I18nCharField(
         null=True,
         blank=True,

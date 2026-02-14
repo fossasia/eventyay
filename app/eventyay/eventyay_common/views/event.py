@@ -29,6 +29,7 @@ from django.apps import apps
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
+from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
 from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.presale.style import regenerate_css
@@ -258,11 +259,7 @@ class EventCreateView(SafeSessionWizardView):
             event = form_dict['basics'].instance
             event.organizer = foundation_data['organizer']
 
-            plugins_default = settings.PRETIX_PLUGINS_DEFAULT
-            if isinstance(plugins_default, str):
-                default_plugins = [p.strip() for p in plugins_default.split(',') if p.strip()]
-            else:
-                default_plugins = list(plugins_default or [])
+            default_plugins = list(settings.EVENTYAY_PLUGINS_DEFAULT)
 
             ticketing_plugins = [
                 'eventyay.plugins.ticketoutputpdf',
@@ -689,20 +686,23 @@ class EventLive(TemplateView):
                 )
                 return redirect(self.request.path)
             with transaction.atomic():
+                previous_private = event.private_testmode
                 event.testmode = True
-                if event.startpage_featured:
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
                     event.startpage_featured = False
-                    event.startpage_visible = True
-                if event.private_testmode:
-                    event.private_testmode = False
+                if event.settings.get('private_testmode_tickets', True, as_type=bool):
                     event.settings.private_testmode_tickets = False
-                    event.settings.private_testmode_talks = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
                     self.request.event.log_action(
-                        'eventyay.event.private_testmode.deactivated',
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
-                event.save()
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
@@ -780,6 +780,9 @@ class EventLive(TemplateView):
             with transaction.atomic():
                 previous_private = event.private_testmode
                 event.settings.talks_testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
                 if event.settings.get('private_testmode_talks', False, as_type=bool):
                     event.settings.private_testmode_talks = False
                     event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
