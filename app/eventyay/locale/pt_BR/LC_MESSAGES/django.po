@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 15:27+0000\n"
+"PO-Revision-Date: 2026-02-14 14:42+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: Portuguese (Brazil) <https://hosted.weblate.org/projects/"
 "eventyay/eventyay/pt_BR/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -180,8 +180,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Para ver nossa programação com funcionalidade total, como conversão de fuso "
-"horário e programação pessoal, habilite o JavaScript e clique <a "
-"href=\"%(href)s\">aqui</a>."
+"horário e programação pessoal, habilite o JavaScript e clique <a href=\"%"
+"(href)s\">aqui</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -5064,8 +5064,7 @@ msgstr ""
 
 #: base/models/event.py:1943
 msgid "You need to configure at least one quota to sell anything."
-msgstr ""
-"Você precisa configurar pelo menos uma cota para vender qualquer coisa."
+msgstr "Você precisa configurar pelo menos uma cota para vender qualquer coisa."
 
 #: base/models/event.py:1946
 msgid "You have unpaid invoices, please pay them before going live."
@@ -6944,8 +6943,7 @@ msgstr ""
 #| msgid "All variations must belong to an item contained in the items list."
 msgid ""
 "All variations must belong to an product contained in the products list."
-msgstr ""
-"Todas as variações devem pertencer a um item contido na lista de itens."
+msgstr "Todas as variações devem pertencer a um item contido na lista de itens."
 
 #: base/models/product.py:1639
 #, fuzzy
@@ -10632,8 +10630,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Você pode submeter propostas até %(deadline)s (%(timezone)s), "
-"%(until_string)s a partir de agora."
+"Você pode submeter propostas até %(deadline)s (%(timezone)s), %(until_string)"
+"s a partir de agora."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -11658,8 +11656,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Parece que a comunicação entre você e o eventyay deu errado de alguma forma."
-"<br> Volte à última página e tente novamente!"
+"Parece que a comunicação entre você e o eventyay deu errado de alguma "
+"forma.<br> Volte à última página e tente novamente!"
 
 #: common/templates/403_csrf.html:7 common/templates/403_csrf.html:11
 msgid "Verification failed."
@@ -26153,8 +26151,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Temos algumas perguntas pendentes sobre você e sua proposta que "
-"gostaríamos \n"
+"Temos algumas perguntas pendentes sobre você e sua proposta que gostaríamos "
+"\n"
 "que respondesse:\n"
 "\n"
 "{questions}\n"
@@ -26231,8 +26229,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Incluiram você em uma proposta de {event_name}, intitulada "
-"“{proposal_title}”.\n"
+"Incluiram você em uma proposta de {event_name}, intitulada “{proposal_title}"
+"”.\n"
 "Uma conta foi criada para você – por favor, siga este link para definir a "
 "senha da sua conta.\"\n"
 "\n"
@@ -26259,8 +26257,8 @@ msgid ""
 msgstr ""
 "Olá!\n"
 "\n"
-"Te escolheram para palestrante do evento {event_name}, com a proposta "
-"\"{proposal_title}\".\n"
+"Te escolheram para palestrante do evento {event_name}, com a proposta \""
+"{proposal_title}\".\n"
 "Por favor, siga este link para definir a senha da sua conta.\n"
 "\n"
 "{proposal_url}\n"
@@ -26985,8 +26983,7 @@ msgstr "Pontuação média de revisão, caso já tenham havido revisões"
 
 #: orga/forms/schedule.py:150
 msgid "Resources provided by the speaker, either as links or as uploaded files"
-msgstr ""
-"Recursos fornecidos pela palestrante, como links e/ou arquivos enviados"
+msgstr "Recursos fornecidos pela palestrante, como links e/ou arquivos enviados"
 
 #: orga/forms/speaker.py:17
 #, fuzzy
@@ -27107,8 +27104,7 @@ msgstr "Formato de exibição da programação"
 
 #: orga/phrases.py:14
 msgid "The unique ID of a proposal is used in the proposal URL and in exports"
-msgstr ""
-"O ID único de uma proposta é usado no URL da proposta e nas exportações"
+msgstr "O ID único de uma proposta é usado no URL da proposta e nas exportações"
 
 #: orga/phrases.py:15
 msgid "The password was reset and the user was notified."
@@ -27831,9 +27827,9 @@ msgid ""
 msgstr ""
 "Para aceitar o convite com a conta que está atualmente ativa, use o botão "
 "abaixo. Se você deseja aceitar o convite com outra conta, pode <a href='/"
-"orga/logout/?next=%(link)s'>sair</a> e fazer login com a outra conta.</"
-"p><p>Se você acredita ter recebido este convite por engano, entre em contato "
-"com a organização diretamente."
+"orga/logout/?next=%(link)s'>sair</a> e fazer login com a outra conta.</p><p>"
+"Se você acredita ter recebido este convite por engano, entre em contato com "
+"a organização diretamente."
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -27937,8 +27933,8 @@ msgstr ""
 #, python-format
 msgid "Recipients filtered by responses to the custom field “%(question)s”."
 msgstr ""
-"Destinatários filtrados pelas respostas ao campo personalizado "
-"“%(question)s”."
+"Destinatários filtrados pelas respostas ao campo personalizado “%(question)s"
+"”."
 
 #: orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
@@ -28147,8 +28143,8 @@ msgstr ""
 "É possível usar os códigos das propostas (por exemplo, \"UX3N1\") como "
 "chaves e a identificação de quem avalia como valores, ou o contrário. A "
 "identificação pode ser o endereço de e-mail ou o código de usuário (por "
-"exemplo, \"34KJN\"). Um arquivo de exemplo pode ser encontrado <a "
-"href=\"%(href)s\">aqui</a>."
+"exemplo, \"34KJN\"). Um arquivo de exemplo pode ser encontrado <a href=\"%"
+"(href)s\">aqui</a>."
 
 #: orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -28196,8 +28192,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Pessoas revisoras poderão ver e revisar <strong>apenas as propostas "
-"atribuídas</strong>. Isto pode ser modificado nas <a "
-"href=\"%(href)s\">configurações de revisão</a>."
+"atribuídas</strong>. Isto pode ser modificado nas <a href=\"%(href)s\">"
+"configurações de revisão</a>."
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -28207,10 +28203,10 @@ msgid ""
 "them first. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"Pessoas revisoras poderão ver e revisar <strong> todas as propostas </"
-"strong>, mas suas revisões atribuídas aparecerão destacadas e serão "
-"direcionadas a elas primeiro. Você pode alterar isto nas <a "
-"href=\"%(href)s\">configurações de revisão</a>."
+"Pessoas revisoras poderão ver e revisar <strong> todas as propostas </strong>"
+", mas suas revisões atribuídas aparecerão destacadas e serão direcionadas a "
+"elas primeiro. Você pode alterar isto nas <a href=\"%(href)s\">configurações "
+"de revisão</a>."
 
 #: orga/templates/orga/review/assignment.html:114
 msgid ""
@@ -29711,8 +29707,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Não foi possível encontrar a exportação atual, tente gerá-la novamente. "
-"({error})"
+"Não foi possível encontrar a exportação atual, tente gerá-la novamente. ("
+"{error})"
 
 #: orga/views/schedule.py:167
 msgid "You have to provide a new, unique schedule version!"
