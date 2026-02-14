@@ -1,6 +1,8 @@
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
+from eventyay.control.views import organizer as organizer_control
+from eventyay.control.views import organizer_views
 from eventyay.eventyay_common.views import (
     account,
     auth,
@@ -12,10 +14,7 @@ from eventyay.eventyay_common.views import (
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
-from eventyay.control.views import (
-    organizer_views,
-    organizer as organizer_control
-)
+
 
 app_name = 'eventyay_common'
 

@@ -207,6 +207,7 @@
   gap: 0.5rem;
   flex-wrap: wrap;
   margin-top: 1.5rem;
+  align-items: center;
 }
 
 .action-buttons {
@@ -246,6 +247,18 @@
 .btn-default:hover,
 .btn-default:focus {
   background-color: #e9ecef;
+  border-color: #b0bec5;
+}
+
+.btn-white {
+  color: #333;
+  background-color: white;
+  border-color: #cfd8dc;
+}
+
+.btn-white:hover,
+.btn-white:focus {
+  background-color: #f5f5f5;
   border-color: #b0bec5;
 }
 
