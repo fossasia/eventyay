@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 09:02+0000\n"
+"PO-Revision-Date: 2026-02-14 14:44+0000\n"
 "Last-Translator: Anonymous <noreply@weblate.org>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -174,8 +174,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Pour voir notre agenda, merci d'activer Javascript ou cliquez <a "
-"href=\"%(href)s\">ici</a> pour voir l'agenda sans JavaScript (NoJS)."
+"Pour voir notre agenda, merci d'activer Javascript ou cliquez <a href=\"%"
+"(href)s\">ici</a> pour voir l'agenda sans JavaScript (NoJS)."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -1272,8 +1272,7 @@ msgstr "Afficher la date de début"
 
 #: base/configurations/default_setting.py:664
 msgid "Show the presale start date before presale has started."
-msgstr ""
-"Indiquer la date de début de la prévente avant le début de la prévente."
+msgstr "Indiquer la date de début de la prévente avant le début de la prévente."
 
 #: base/configurations/default_setting.py:676
 #: base/configurations/default_setting.py:690
@@ -1727,8 +1726,7 @@ msgstr "Rappel pour télécharger les billets"
 
 #: base/configurations/default_setting.py:1113
 msgid "If this is off, nobody can download a ticket."
-msgstr ""
-"Si cette option est désactivée, personne ne peut télécharger de billet."
+msgstr "Si cette option est désactivée, personne ne peut télécharger de billet."
 
 #: base/configurations/default_setting.py:1122
 msgid "Download date"
@@ -2669,8 +2667,8 @@ msgstr ""
 "\n"
 "nous avons reçu avec succès votre commande pour {event} avec une valeur "
 "totale.\n"
-"de {total_with_currency}. Veuillez compléter votre paiement avant le "
-"{date}.\n"
+"de {total_with_currency}. Veuillez compléter votre paiement avant le {date}"
+".\n"
 "\n"
 "{payment_info}\n"
 "\n"
@@ -2843,8 +2841,7 @@ msgstr ""
 #: base/configurations/default_setting.py:2082
 #: base/configurations/default_setting.py:2091
 msgid "Please enter the hexadecimal code of a color, e.g. #990000."
-msgstr ""
-"Veuillez entrer le code hexadécimal d'une couleur, par exemple #990000."
+msgstr "Veuillez entrer le code hexadécimal d'une couleur, par exemple #990000."
 
 #: base/configurations/default_setting.py:1989
 msgid "Primary color"
@@ -3115,8 +3112,8 @@ msgstr ""
 "Les utilisateurs qui n'ont pas accès à tous les événements de cet "
 "organisateur doivent sélectionner l'une de leurs équipes pour accéder à "
 "l'événement créé. Ce paramètre permet aux utilisateurs de créer à la volée "
-"une équipe spécifique à l'événement, même s'ils n'ont pas l'autorisation "
-"« Peut modifier les équipes et les permissions »."
+"une équipe spécifique à l'événement, même s'ils n'ont pas l'autorisation « "
+"Peut modifier les équipes et les permissions »."
 
 #: base/configurations/default_setting.py:2423
 #: base/configurations/default_setting.py:2433 base/models/event.py:605
@@ -5746,8 +5743,7 @@ msgstr "Domaine personnalisé"
 
 #: base/models/event.py:691
 msgid "Enter a custom domain, such as https://my.event.example.org"
-msgstr ""
-"Entrer un domaine personnalisé, comme https://mon.evenement.example.org"
+msgstr "Entrer un domaine personnalisé, comme https://mon.evenement.example.org"
 
 #: base/models/event.py:705
 msgid "Main event colour"
@@ -5972,8 +5968,7 @@ msgstr "Un ou plusieurs articles n'appartiennent pas à cet événement."
 
 #: base/models/event.py:3035 base/models/product.py:1671
 msgid "Can not contain spaces or special characters except underscores"
-msgstr ""
-"Ne peut pas contenir d'espaces ou de caractères spéciaux sauf soulignés"
+msgstr "Ne peut pas contenir d'espaces ou de caractères spéciaux sauf soulignés"
 
 #: base/models/event.py:3039 base/models/product.py:1675
 msgid "The property name may only contain letters, numbers and underscores."
@@ -6114,8 +6109,7 @@ msgstr "Fichier"
 
 #: base/models/information.py:51
 msgid "Please try to keep your upload small, preferably below 16 MB."
-msgstr ""
-"N'envoyez pas de fichiers trop grands, de préférence de moins de 16 Mo."
+msgstr "N'envoyez pas de fichiers trop grands, de préférence de moins de 16 Mo."
 
 #: base/models/invoices.py:139
 #, fuzzy, python-format
@@ -6616,8 +6610,7 @@ msgstr ""
 
 #: base/models/organizer.py:58
 msgid "Nobody on your teams has the permission to create new events."
-msgstr ""
-"Personne dans vos équipes n'a le droit de créer de nouveaux événements."
+msgstr "Personne dans vos équipes n'a le droit de créer de nouveaux événements."
 
 #: base/models/organizer.py:65
 #, fuzzy
@@ -7271,8 +7264,8 @@ msgid ""
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
 msgstr ""
-"Si ce produit fait partie d'une commande, la commande passera à l'état "
-"« approbation » et devra être confirmée par vous avant de pouvoir être payée "
+"Si ce produit fait partie d'une commande, la commande passera à l'état « "
+"approbation » et devra être confirmée par vous avant de pouvoir être payée "
 "et finalisée. Vous pouvez utiliser cela, par exemple, pour des billets à "
 "tarif réduit réservés à des groupes spécifiques."
 
@@ -7867,9 +7860,9 @@ msgstr ""
 "scannées à une sortie de votre événement. Cela ne se produira que si elles "
 "ont été scannées à l'entrée et à la sortie et que le scan de sortie est le "
 "plus récent. Peu importe sur quelle liste de pointage se trouvent les scans, "
-"mais les listes de pointage sont ignorées si elles sont réglées sur "
-"« Autoriser la réentrée après un scan de sortie » afin d'éviter un "
-"surbooking accidentel."
+"mais les listes de pointage sont ignorées si elles sont réglées sur « "
+"Autoriser la réentrée après un scan de sortie » afin d'éviter un surbooking "
+"accidentel."
 
 #: base/models/product.py:1556 base/models/vouchers.py:177
 #: control/templates/pretixcontrol/items/quota_edit.html:8
@@ -8157,8 +8150,7 @@ msgstr ""
 
 #: base/models/review.py:33
 msgid "Leave empty to use this category for all tracks."
-msgstr ""
-"Laisser vide pour utiliser l'adresse par défaut pour chaque itinéraire."
+msgstr "Laisser vide pour utiliser l'adresse par défaut pour chaque itinéraire."
 
 #: base/models/review.py:37
 msgid "Independent score"
@@ -8174,8 +8166,7 @@ msgstr ""
 
 #: base/models/review.py:56
 msgid "You need to keep at least one non-independent score category!"
-msgstr ""
-"Vous devez conserver au moins une catégorie de score non indépendante !"
+msgstr "Vous devez conserver au moins une catégorie de score non indépendante !"
 
 #: base/models/review.py:128
 msgid "What do you think?"
@@ -8915,8 +8906,7 @@ msgstr "Valeur du bon"
 
 #: base/models/vouchers.py:158 control/forms/vouchers.py:31
 msgid "This product is added to the user's cart if the voucher is redeemed."
-msgstr ""
-"Ce produit est ajouté au panier de l'utilisateur si le bon est utilisé."
+msgstr "Ce produit est ajouté au panier de l'utilisateur si le bon est utilisé."
 
 #: base/models/vouchers.py:169
 msgid "This variation of the product select above is being used."
@@ -10433,8 +10423,8 @@ msgstr "Vous ne pouvez pas sélectionner plus de %s articles par commande."
 msgid ""
 "You cannot select more than %(max)s products of the product %(product)s."
 msgstr ""
-"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit "
-"%(product)s."
+"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit %"
+"(product)s."
 
 #: base/services/cart.py:77
 #, fuzzy, python-format
@@ -10835,8 +10825,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
-"Erreur lors de l'importation de la valeur \"{value}\" pour la colonne "
-"\"{column}\" à la ligne \"{line}\" : {message}"
+"Erreur lors de l'importation de la valeur \"{value}\" pour la colonne \""
+"{column}\" à la ligne \"{line}\" : {message}"
 
 #: base/services/orderimport.py:126
 #, fuzzy, python-brace-format
@@ -10889,8 +10879,8 @@ msgid ""
 "You cannot select more than %(max)s products of the product %(product)s. We "
 "removed the surplus products from your cart."
 msgstr ""
-"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit "
-"%(product)s. Nous avons retiré les articles excédentaires de votre panier."
+"Vous ne pouvez pas sélectionner plus de %(max)s articles du produit %"
+"(product)s. Nous avons retiré les articles excédentaires de votre panier."
 
 #: base/services/orders.py:114
 msgid "The presale period has ended."
@@ -11107,8 +11097,7 @@ msgstr "Vous devez sélectionner une variante du produit."
 #, python-brace-format
 msgid ""
 "The quota {name} does not have enough capacity left to perform the operation."
-msgstr ""
-"Le quota {name} n' a plus assez de capacité pour effectuer l'opération."
+msgstr "Le quota {name} n' a plus assez de capacité pour effectuer l'opération."
 
 #: base/services/orders.py:1462
 msgid "There is no quota defined that allows this operation."
@@ -11566,8 +11555,7 @@ msgstr "propulsé par <a %(a_attr)s>eventyay</a>"
 #: base/templates/pretixbase/email/notification.html:55
 #: base/templates/pretixbase/email/notification.txt:14
 msgid "You receive these emails based on your notification settings."
-msgstr ""
-"Vous recevez ces e-mails en fonction de vos paramètres de notification."
+msgstr "Vous recevez ces e-mails en fonction de vos paramètres de notification."
 
 #: base/templates/pretixbase/email/notification.html:57
 msgid "Click here to view and change your notification settings"
@@ -12113,8 +12101,8 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
-"Vous, %(name)s, avez été invité à être intervenant pour la proposition "
-"\"%(talk)s\". Acceptez-vous l'invitation ?"
+"Vous, %(name)s, avez été invité à être intervenant pour la proposition \"%"
+"(talk)s\". Acceptez-vous l'invitation ?"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -13156,8 +13144,8 @@ msgid ""
 "refresh, and then try again."
 msgstr ""
 "Nous n'avons pas pu vérifier que cette requête a bien été effectuée par "
-"vous. Pour des raisons de sécurité, nous ne pouvons pas la traiter. "
-"<br>Veuillez retourner en arrière, rafraîchir la page et réessayer."
+"vous. Pour des raisons de sécurité, nous ne pouvons pas la traiter. <br>"
+"Veuillez retourner en arrière, rafraîchir la page et réessayer."
 
 #: common/templates/500.html:7
 msgid "Internal server error."
@@ -14265,8 +14253,7 @@ msgstr ""
 
 #: control/forms/event.py:173
 msgid "Create a new team for this event with me as the only member"
-msgstr ""
-"Créer une nouvelle équipe pour cet événement avec moi comme seul membre"
+msgstr "Créer une nouvelle équipe pour cet événement avec moi comme seul membre"
 
 #: control/forms/event.py:218 eventyay_common/forms/event.py:90
 msgid ""
@@ -15799,8 +15786,7 @@ msgstr "Marquer comme payé"
 
 #: control/forms/orderimport.py:19
 msgid "Create orders as pending and still require payment"
-msgstr ""
-"Créer les commandes comme en attente et exiger tout de même le paiement"
+msgstr "Créer les commandes comme en attente et exiger tout de même le paiement"
 
 #: control/forms/orderimport.py:22
 #, fuzzy
@@ -16570,8 +16556,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Ticket download is not enabled for add-on products."
 msgid "Limit one ticket per user (for this product)"
-msgstr ""
-"Le téléchargement des tickets n'est pas activé pour les produits addon."
+msgstr "Le téléchargement des tickets n'est pas activé pour les produits addon."
 
 #: control/forms/product.py:532
 msgid ""
@@ -16930,8 +16915,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Position #{posid}1 : {old_item}2 ({old_price}3) changé à {new_item}4 "
-"({new_price}5)."
+"Position #{posid}1 : {old_item}2 ({old_price}3) changé à {new_item}4 ("
+"{new_price}5)."
 
 #: control/logdisplay.py:70
 #, fuzzy, python-brace-format
@@ -17101,8 +17086,8 @@ msgstr "La liste d'enregistrement a été supprimée."
 msgid ""
 "Position #{posid} has been checked out at {datetime} for list \"{list}\"."
 msgstr ""
-"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste "
-"\"{list}\"."
+"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste \""
+"{list}\"."
 
 #: control/logdisplay.py:293
 #, fuzzy, python-brace-format
@@ -17118,8 +17103,8 @@ msgstr "Position #{posid} a été scannée pour la liste \"{list}\"."
 msgid ""
 "Position #{posid} has been checked in at {datetime} for list \"{list}\"."
 msgstr ""
-"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste "
-"\"{list}\"."
+"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste \""
+"{list}\"."
 
 #: control/logdisplay.py:302
 #, fuzzy, python-brace-format
@@ -17825,8 +17810,7 @@ msgstr "Un utilisateur a été retiré de l'équipe d'événement."
 
 #: control/logdisplay.py:647
 msgid "A voucher has been sent to a person on the waiting list."
-msgstr ""
-"Un bon de réduction a été envoyé à une personne sur la liste d'attente."
+msgstr "Un bon de réduction a été envoyé à une personne sur la liste d'attente."
 
 #: control/logdisplay.py:648
 msgid "An entry has been removed from the waiting list."
@@ -18099,8 +18083,8 @@ msgstr ""
 msgid ""
 "Position #{posid} has been checked in again at {datetime} on list \"{list}\"."
 msgstr ""
-"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste "
-"\"{list}\"."
+"Position #{posid} a été vérifiée de nouveau à {datetime} sur la liste \""
+"{list}\"."
 
 #: control/logdisplay.py:758
 #, fuzzy, python-brace-format
@@ -19465,8 +19449,8 @@ msgid ""
 "Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
 "strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le coupon de réduction "
-"<strong>%(voucher)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer le coupon de réduction <strong>%(voucher)"
+"s</strong>?"
 
 #: control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: control/templates/pretixcontrol/vouchers/detail.html:18
@@ -19885,8 +19869,8 @@ msgstr "Supprimer la liste d'enregistrement"
 msgid ""
 "Are you sure you want to delete the check-in list <strong>%(name)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement "
-"<strong>%(name)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la liste d'enregistrement <strong>%(name)"
+"s</strong>?"
 
 #: control/templates/pretixcontrol/checkin/list_delete.html:11
 #, python-format
@@ -21186,8 +21170,8 @@ msgstr "Supprimer la règle fiscale"
 msgid ""
 "Are you sure you want to delete the tax rule <strong>%(taxrule)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la règle d'imposition "
-"<strong>%(taxrule)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la règle d'imposition <strong>%(taxrule)"
+"s</strong>?"
 
 #: control/templates/pretixcontrol/event/tax_delete.html:12
 msgid ""
@@ -21211,11 +21195,11 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Ces réglages sont destinés aux utilisateurs avancés. Voir la <a "
-"href=\"%(docs)s\">documentation</a> pour plus d'informations. Notez que nous "
-"ne sommes pas responsables d'un traitement correct ou non des taxes dans "
-"votre billetterie. En cas de doute, veuillez communiquer avec un avocat ou "
-"un conseiller fiscal."
+"Ces réglages sont destinés aux utilisateurs avancés. Voir la <a href=\"%"
+"(docs)s\">documentation</a> pour plus d'informations. Notez que nous ne "
+"sommes pas responsables d'un traitement correct ou non des taxes dans votre "
+"billetterie. En cas de doute, veuillez communiquer avec un avocat ou un "
+"conseiller fiscal."
 
 #: control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -21644,8 +21628,8 @@ msgid ""
 "\"reduced\", merchandise with variations for different sizes, workshop add-"
 "on with variations for simultaneous workshops."
 msgstr ""
-"Exemples : catégorie de billets avec variations « plein tarif » et "
-"« réduit », merchandising avec variations de tailles, option d'atelier avec "
+"Exemples : catégorie de billets avec variations « plein tarif » et « réduit "
+"», merchandising avec variations de tailles, option d'atelier avec "
 "variations pour des ateliers simultanés."
 
 #: control/templates/pretixcontrol/item/create.html:97
@@ -24570,8 +24554,7 @@ msgstr "Taille de police (pt)"
 
 #: control/templates/pretixcontrol/pdf/index.html:281
 msgid "Flow multiple lines downward from specified position"
-msgstr ""
-"Dérouler plusieurs lignes vers le bas à partir de la position spécifiée"
+msgstr "Dérouler plusieurs lignes vers le bas à partir de la position spécifiée"
 
 #: control/templates/pretixcontrol/pdf/index.html:290
 msgid "Text color"
@@ -25200,8 +25183,8 @@ msgstr ""
 msgid ""
 "Are you sure you want to delete the voucher <strong>%(voucher)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le coupon de réduction "
-"<strong>%(voucher)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer le coupon de réduction <strong>%(voucher)"
+"s</strong>?"
 
 #: control/templates/pretixcontrol/vouchers/delete_bulk.html:4
 #: control/templates/pretixcontrol/vouchers/delete_bulk.html:6
@@ -25321,8 +25304,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer l'entrée de liste d'attente "
-"<strong>%(entry)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer l'entrée de liste d'attente <strong>%"
+"(entry)s</strong>?"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -25909,8 +25892,7 @@ msgstr ""
 
 #: control/views/event.py:1222 eventyay_common/views/event.py:737
 msgid "We've disabled test mode for you. Let's sell some real tickets!"
-msgstr ""
-"Nous avons désactivé le mode test pour vous. Vendons de vrais billets !"
+msgstr "Nous avons désactivé le mode test pour vous. Vendons de vrais billets !"
 
 #: control/views/event.py:1227 eventyay_common/views/event.py:807
 msgid "Private test mode cannot be enabled while tickets are published."
@@ -25920,8 +25902,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Ticket download is not enabled for add-on products."
 msgid "Private test mode is now enabled for tickets."
-msgstr ""
-"Le téléchargement des tickets n'est pas activé pour les produits addon."
+msgstr "Le téléchargement des tickets n'est pas activé pour les produits addon."
 
 #: control/views/event.py:1263 eventyay_common/views/event.py:839
 #, fuzzy
@@ -26044,8 +26025,7 @@ msgstr "Le dernier contrôle de mise à jour a échoué."
 
 #: control/views/orderimport.py:144
 msgid "We've been unable to parse the uploaded file as a CSV file."
-msgstr ""
-"Nous n'avons pas pu analyser le fichier téléversé comme un fichier CSV."
+msgstr "Nous n'avons pas pu analyser le fichier téléversé comme un fichier CSV."
 
 #: control/views/orders.py:482 presale/views/order.py:153
 #: presale/views/order.py:276 presale/views/order.py:320
@@ -26062,8 +26042,7 @@ msgstr "Code de commande inconnu ou non autorisé à accéder à cette commande.
 #, fuzzy
 #| msgid "Ticket download is not enabled for add-on products."
 msgid "Ticket download is not enabled for this product."
-msgstr ""
-"Le téléchargement des tickets n'est pas activé pour les produits addon."
+msgstr "Le téléchargement des tickets n'est pas activé pour les produits addon."
 
 #: control/views/orders.py:610
 #, fuzzy
@@ -26488,8 +26467,7 @@ msgstr ""
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was not valid."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: control/views/organizer.py:38
 msgid "Token name"
@@ -26578,8 +26556,7 @@ msgstr "La question a été ajoutée."
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was invalid, please try again."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: control/views/organizer_views/gift_card_view.py:174
 #, fuzzy
@@ -26906,8 +26883,7 @@ msgstr "Bon de réduction"
 
 #: control/views/user.py:120
 msgid "The password you entered was invalid, please try again."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: control/views/user.py:222
 #, fuzzy
@@ -27287,8 +27263,8 @@ msgstr "Supprimer un dispositif d'authentification à deux facteurs"
 msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le dispositif d'authentification "
-"\"%(device)s\"?"
+"Êtes-vous sûr de vouloir supprimer le dispositif d'authentification \"%"
+"(device)s\"?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 #, fuzzy
@@ -29102,8 +29078,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Ticket download is not enabled for add-on products."
 msgid "Private test mode is now enabled for talks."
-msgstr ""
-"Le téléchargement des tickets n'est pas activé pour les produits addon."
+msgstr "Le téléchargement des tickets n'est pas activé pour les produits addon."
 
 #: eventyay_common/views/event.py:870 orga/views/event.py:239
 #, fuzzy
@@ -29596,8 +29571,8 @@ msgid ""
 msgstr ""
 "Bonjour,\n"
 "\n"
-"Nous sommes heureux de vous annoncer que nous acceptons votre proposition "
-"“{submission_title}”\n"
+"Nous sommes heureux de vous annoncer que nous acceptons votre proposition “"
+"{submission_title}”\n"
 "pour l'évènement \"{event_name}\". Veuillez cliquer sur le lien suivant pour "
 "confirmer votre venue :\n"
 "\n"
@@ -30009,8 +29984,8 @@ msgid ""
 msgstr ""
 "Bonjour,\n"
 "\n"
-"Ceci est un code d'accès pour l'appel à participation de l’évènement "
-"\"{event}\"."
+"Ceci est un code d'accès pour l'appel à participation de l’évènement \""
+"{event}\"."
 
 #: orga/forms/cfp.py:540
 #, python-brace-format
@@ -30372,9 +30347,9 @@ msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
 msgstr ""
-"Modèle de courriel non valide ! Veuillez vérifier que vous n'avez pas de "
-"{ ou } parasites quelque part, et qu'il n'y a pas d'espaces à l'intérieur "
-"des blocs {}."
+"Modèle de courriel non valide ! Veuillez vérifier que vous n'avez pas de { "
+"ou } parasites quelque part, et qu'il n'y a pas d'espaces à l'intérieur des "
+"blocs {}."
 
 #: orga/forms/mails.py:76 orga/forms/mails.py:93
 msgid "Unknown placeholder!"
@@ -30707,9 +30682,8 @@ msgid ""
 "Choose how the frontpage header banner will be styled. Pattern source: <a "
 "href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 msgstr ""
-"Choisissez le style de la bannière de la page d'accueil. Source des "
-"patterns : <a href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC "
-"BY 4.0."
+"Choisissez le style de la bannière de la page d'accueil. Source des patterns "
+": <a href=\"http://www.heropatterns.com/\">heropatterns.com</a>, CC BY 4.0."
 
 #: orga/phrases.py:13
 msgid "Schedule display format"
@@ -31243,9 +31217,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Cette question a été répondue <strong>%(count)s</strong>, "
-"<strong>%(missing)s</strong> réponses <a "
-"href=\"%(base_search_url)sunanswered=1\">sont toujours manquantes</a>."
+"Cette question a été répondue <strong>%(count)s</strong>, <strong>%(missing)"
+"s</strong> réponses <a href=\"%(base_search_url)sunanswered=1\">sont "
+"toujours manquantes</a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, fuzzy, python-format
@@ -31494,10 +31468,10 @@ msgid ""
 msgstr ""
 "Pour accepter l'invitation avec le compte actuellement actif, merci "
 "d'utiliser le bouton ci-dessous. Si vous voulez accepter l'invitation avec "
-"un autre compte, vous pouvez vous <a href=\"/orga/logout/?"
-"next=%(link)s\">déconnecter</a> et vos reconnecter avec un autre compte. </"
-"p><p> Si vous pensez avoir reçu cette invitation par erreur, merci de bien "
-"vouloir directement contacter l'organisateur."
+"un autre compte, vous pouvez vous <a href=\"/orga/logout/?next=%(link)s\">"
+"déconnecter</a> et vos reconnecter avec un autre compte. </p><p> Si vous "
+"pensez avoir reçu cette invitation par erreur, merci de bien vouloir "
+"directement contacter l'organisateur."
 
 #: orga/templates/orga/invitation.html:45
 msgid "Join the team!"
@@ -32083,8 +32057,7 @@ msgstr "Paramètres d'export"
 #: orga/templates/orga/schedule/export.html:171
 #: orga/templates/orga/speaker/export.html:150
 msgid "You can also use the API to export or use data."
-msgstr ""
-"Vous pouvez aussi utiliser l'API pour exporter ou utiliser les données."
+msgstr "Vous pouvez aussi utiliser l'API pour exporter ou utiliser les données."
 
 #: orga/templates/orga/review/export.html:91
 #: orga/templates/orga/schedule/export.html:174
@@ -32404,9 +32377,8 @@ msgid ""
 "when reviewing proposals."
 msgstr ""
 "Si ni le score d'évaluation ni le texte d'évaluation ne sont obligatoires, "
-"les évaluateurs se verront proposer un bouton "
-"%(quotation_open)sAbstention%(quotation_close)s lors de l'évaluation des "
-"propositions."
+"les évaluateurs se verront proposer un bouton %(quotation_open)sAbstention%"
+"(quotation_close)s lors de l'évaluation des propositions."
 
 #: orga/templates/orga/settings/review.html:84
 msgid ""
@@ -33447,8 +33419,7 @@ msgstr "Plus d'exports"
 
 #: orga/views/schedule.py:112
 msgid "A new export is being generated and will be available soon."
-msgstr ""
-"Un nouvel export est en train d'être généré et sera bientôt disponible."
+msgstr "Un nouvel export est en train d'être généré et sera bientôt disponible."
 
 #: orga/views/schedule.py:119
 msgid ""
@@ -33463,8 +33434,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Impossible de trouver l'export actuel, veuillez en générer un nouveau. "
-"({error})"
+"Impossible de trouver l'export actuel, veuillez en générer un nouveau. ("
+"{error})"
 
 #: orga/views/schedule.py:167
 msgid "You have to provide a new, unique schedule version!"
@@ -34144,8 +34115,7 @@ msgstr "(optionnel)"
 #, fuzzy
 #| msgid "The password you entered was invalid, please try again."
 msgid "Your input was invalid, please see below for details."
-msgstr ""
-"Le mot de passe que vous avez entré était invalide, veuillez réessayer."
+msgstr "Le mot de passe que vous avez entré était invalide, veuillez réessayer."
 
 #: plugins/banktransfer/refund_export.py:29
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/control.html:5
@@ -35550,8 +35520,8 @@ msgid ""
 "In the section \"Applicable grants\" select \"Basic Rights\" and \"Access "
 "private information\""
 msgstr ""
-"Dans la section « Applicable grants », sélectionnez « Basic Rights » et "
-"« Access private information »"
+"Dans la section « Applicable grants », sélectionnez « Basic Rights » et « "
+"Access private information »"
 
 #: plugins/socialauth/templates/socialauth/social_setup.html:86
 msgid "Finally tick the box to accept the terms and submit."
@@ -35957,8 +35927,7 @@ msgstr "Veuillez choisir un mode de paiement."
 #: presale/checkoutflowstep/payment_step.py:121 presale/views/order.py:573
 #: presale/views/order.py:647
 msgid "The payment information you entered was incomplete."
-msgstr ""
-"Les informations de paiement que vous avez saisies étaient incomplètes."
+msgstr "Les informations de paiement que vous avez saisies étaient incomplètes."
 
 #: presale/checkoutflowstep/questions_step.py:34
 msgctxt "checkoutflow"
@@ -37803,8 +37772,8 @@ msgstr ""
 msgid ""
 "To log in and access your events, please <a %(a_attr)s>head over here</a>."
 msgstr ""
-"Si vous souhaitez configurer cette installation, veuillez <a "
-"%(a_attr)s>cliquer ici</a>."
+"Si vous souhaitez configurer cette installation, veuillez <a %(a_attr)s>"
+"cliquer ici</a>."
 
 #: presale/templates/pretixpresale/index.html:30
 msgid "Enjoy!"
@@ -38299,8 +38268,8 @@ msgstr ""
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
-"- Votre intervention \"%(title)s\" a été déplacée à %(start)s dans "
-"%(location)s"
+"- Votre intervention \"%(title)s\" a été déplacée à %(start)s dans %"
+"(location)s"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 #, fuzzy
