@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
 "PO-Revision-Date: 2026-01-02 14:02+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: German <https://hosted.weblate.org/projects/eventyay/eventyay/"
@@ -10512,33 +10512,33 @@ msgstr "Plugin: %s"
 msgid "The voucher has been sent to {recipient}."
 msgstr "Der Gutschein wurde an {recipient} verschickt."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 "Die Standardsprache muss eine der aktivierten Sprachen sein (siehe weiter "
 "oben)."
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "Deine Standardsprache muss aktiviert sein."
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 "Sie können die Angabe von Teilnehmernamen nur erfordern, wenn Sie auch nach "
 "Namen fragen."
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 "Sie müssen E-Mail-Adressen pro Ticket erfassen, wenn sie erforderlich sein "
 "sollen."
 
-#: base/settings.py:154
+#: base/settings.py:163
 #, fuzzy
 #| msgid ""
 #| "You have to ask for attendee emails if you want to make them required."
@@ -10547,19 +10547,19 @@ msgstr ""
 "Sie müssen E-Mail-Adressen pro Ticket erfassen, wenn sie erforderlich sein "
 "sollen."
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 "Sie müssen Rechnungsadressen erfassen, wenn sie erforderlich sein sollen."
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 "Sie müssen Rechnungsadressen erfordern, damit Firmennamen erforderlich sein "
 "können."
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 "Das letzte Zahlungsdatum kann nicht vor dem Ende des Vorverkaufs liegen."
@@ -14457,7 +14457,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr "Leaflet-Kacheln URL-Format"
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "z.B. {sample}"
@@ -14702,19 +14702,62 @@ msgstr ""
 "gibt. Diese Adresse wird nicht an eventyay.com übermittelt, die Mails werden "
 "von diesem Server lokal verschickt."
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable test mode"
+msgid "Enable telemetry"
+msgstr "Testmodus aktivieren"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Read all endpoints"
+msgid "Telemetry endpoint"
+msgstr "Alle Endpunkte lesen"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+#, fuzzy
+#| msgid "Bancontact"
+msgid "Maintainer contact"
+msgstr "Bancontact"
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "URLs zur Weiterleitung"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 #, fuzzy
 #| msgid "The selected team cannot be deleted."
 msgid "The Stripe key cannot be empty."
 msgstr "Das ausgewählte Team kann nicht gelöscht werden."
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -14725,7 +14768,7 @@ msgstr ""
 "Der eingegebene Schlüssel \"%(value)s\" sieht ungültig aus. Er sollte mit "
 "\"%(prefix)s\" beginnen."
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -37078,9 +37121,6 @@ msgstr "abgelehnt"
 
 #~ msgid "Alipay"
 #~ msgstr "Alipay"
-
-#~ msgid "Bancontact"
-#~ msgstr "Bancontact"
 
 #~ msgid "SOFORT"
 #~ msgstr "SOFORT"
