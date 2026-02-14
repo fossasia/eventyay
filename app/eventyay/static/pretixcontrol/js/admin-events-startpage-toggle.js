@@ -35,7 +35,9 @@
     };
 
     var relatedToggles = table.querySelectorAll('[data-event-id="' + eventId + '"]');
+    var relatedToggleStates = [];
     relatedToggles.forEach(function (input) {
+      relatedToggleStates.push(input.disabled);
       input.disabled = true;
     });
 
@@ -75,14 +77,25 @@
         if (featuredToggle) {
           featuredToggle.checked = !!result.data.startpage_featured;
         }
+        if (result.data.startpage_locked) {
+          if (visibleToggle) {
+            visibleToggle.disabled = true;
+          }
+          if (featuredToggle) {
+            featuredToggle.disabled = true;
+          }
+          relatedToggleStates = relatedToggleStates.map(function () {
+            return true;
+          });
+        }
       })
       .catch(function () {
         toggle.checked = previous;
         window.alert('Unable to update start page settings.');
       })
       .finally(function () {
-        relatedToggles.forEach(function (input) {
-          input.disabled = false;
+        relatedToggles.forEach(function (input, idx) {
+          input.disabled = !!relatedToggleStates[idx];
         });
       });
   }
