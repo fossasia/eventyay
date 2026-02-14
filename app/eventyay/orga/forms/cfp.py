@@ -9,6 +9,7 @@ from django_scopes.forms import SafeModelChoiceField, SafeModelMultipleChoiceFie
 from i18nfield.forms import I18nFormMixin, I18nModelForm
 from i18nfield.strings import LazyI18nString
 
+from eventyay.base.forms import I18nMarkdownTextarea
 from eventyay.common.forms.fields import ColorField
 from eventyay.common.forms.mixins import I18nHelpText, JsonSubfieldMixin, ReadOnlyFlag
 from eventyay.common.forms.renderers import InlineFormRenderer
@@ -244,7 +245,10 @@ class CfPForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18nModelForm):
     class Meta:
         model = CfP
         fields = ['headline', 'text', 'deadline']
-        widgets = {'deadline': HtmlDateTimeInput}
+        widgets = {
+            'deadline': HtmlDateTimeInput,
+            'text': I18nMarkdownTextarea,
+        }
         # These are JSON fields on cfp.settings
         json_fields = {
             'show_deadline': 'settings',
