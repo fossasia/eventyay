@@ -40,7 +40,7 @@
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.39.2",
-    "eslint-plugin-vue": "^9.25.0",
+    "eslint-plugin-vue": "^10.8.0",
     "eslint-plugin-vue-pug": "^0.6.2",
     "i18next-conv": "^16.0.0",
     "i18next-parser": "^9.0.0",
