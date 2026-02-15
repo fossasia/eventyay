@@ -717,17 +717,6 @@ class SubmissionTypeDefault(PermissionRequired, View):
         return redirect(self.request.event.cfp.urls.types)
 
 
-class SubmissionTypeRemoveDefault(PermissionRequired, View):
-    permission_required = 'base.update_submissiontype'
-
-    def dispatch(self, request, *args, **kwargs):
-        super().dispatch(request, *args, **kwargs)
-        self.request.event.cfp.default_type = None
-        self.request.event.cfp.save(update_fields=['default_type'])
-        messages.success(request, _('The default Session Type has been removed.'))
-        return redirect(self.request.event.cfp.urls.types)
-
-
 class TrackView(OrderActionMixin, OrgaCRUDView):
     model = Track
     form_class = TrackForm

@@ -151,11 +151,6 @@ urlpatterns = [
                     cfp.SubmissionTypeDefault.as_view(),
                     name='cfp.type.default',
                 ),
-                path(
-                    'cfp/types/remove-default/',
-                    cfp.SubmissionTypeRemoveDefault.as_view(),
-                    name='cfp.type.remove_default',
-                ),
                 *cfp.AccessCodeView.get_urls(
                     url_base='cfp/access-codes',
                     url_name='cfp.access_code',
