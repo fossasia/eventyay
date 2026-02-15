@@ -1,7 +1,4 @@
-from contextlib import suppress
-
 from asgiref.sync import async_to_sync
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import viewsets
@@ -44,35 +41,21 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     endpoint = 'stream_schedules'
     search_fields = ('title',)
 
-    def dispatch(self, request, *args, **kwargs):
-        if settings.DEBUG and request.META.get('HTTP_HOST', '').startswith(
-            ('localhost', '127.0.0.1')
-        ):
-            request._dont_enforce_csrf_checks = True
-        return super().dispatch(request, *args, **kwargs)
-
-    def initial(self, request, *args, **kwargs):
-        """Ensure request.event is set from the room if not already present."""
-        super().initial(request, *args, **kwargs)
-        room_id = self.kwargs.get('room_pk')
-        if room_id and (not hasattr(request, 'event') or not request.event):
-            with suppress(Room.DoesNotExist):
-                room = Room.objects.select_related('event', 'event__organizer').get(
-                    pk=room_id
-                )
-                request.event = room.event
-                request.organizer = room.event.organizer
-
     def get_room(self):
+        if hasattr(self, '_room_cache'):
+            return self._room_cache
+
         room_id = self.kwargs.get('room_pk')
         if not room_id:
+            self._room_cache = None
             return None
-        try:
-            if self.event:
-                return Room.objects.get(pk=room_id, event=self.event)
-            return Room.objects.select_related('event').get(pk=room_id)
-        except Room.DoesNotExist:
-            return None
+
+        queryset = Room.objects.select_related('event', 'event__organizer')
+        if self.event:
+            self._room_cache = queryset.filter(pk=room_id, event=self.event).first()
+        else:
+            self._room_cache = queryset.filter(pk=room_id).first()
+        return self._room_cache
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -83,18 +66,13 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         room_id = self.kwargs.get('room_pk')
-        if not self.event:
-            if room_id:
-                try:
-                    room = Room.objects.select_related('event').get(pk=room_id)
-                    return StreamSchedule.objects.filter(room=room)
-                except Room.DoesNotExist:
-                    return StreamSchedule.objects.none()
-            return StreamSchedule.objects.none()
         if room_id:
-            return StreamSchedule.objects.filter(
-                room_id=room_id, room__event=self.event
-            )
+            room = self.get_room()
+            if not room:
+                return StreamSchedule.objects.none()
+            return StreamSchedule.objects.filter(room=room)
+        if not self.event:
+            return StreamSchedule.objects.none()
         return StreamSchedule.objects.filter(room__event=self.event)
 
     def create(self, request, *args, **kwargs):

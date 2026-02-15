@@ -34,7 +34,6 @@ export default new Vuex.Store({
 		userTimezone: null,
 		autoplayUserSetting: !localStorage.disableAutoplay ? null : localStorage.disableAutoplay !== 'true',
 		stageStreamCollapsed: false,
-		streamReload: false,
 		streamPollInterval: null,
 		lastKnownStreamId: null,
 		now: moment(),
@@ -58,7 +57,21 @@ export default new Vuex.Store({
 				lookup[room.id] = room
 				return lookup
 			}, {})
-		}
+		},
+		eventRouting(state) {
+			const organizer = state.world?.organizer_slug
+			const event = state.world?.slug || state.world?.id
+			if (organizer && organizer !== 'default' && event) {
+				return { organizer, event }
+			}
+			if (typeof window !== 'undefined') {
+				const pathParts = window.location.pathname.split('/').filter(Boolean)
+				if (pathParts.length >= 2) {
+					return { organizer: pathParts[0], event: pathParts[1] }
+				}
+			}
+			return { organizer: null, event: null }
+		},
 	},
 	mutations: {
 		updateRooms(state, rooms) {
@@ -89,8 +102,22 @@ export default new Vuex.Store({
 		updateYoutubeTransAudio(state, youtubeTransUrl) {
 			state.youtubeTransUrl = youtubeTransUrl
 		},
-		setStreamReload(state, value) {
-			state.streamReload = value
+		setStreamPollInterval(state, streamPollInterval) {
+			state.streamPollInterval = streamPollInterval
+		},
+		setLastKnownStreamId(state, streamId) {
+			state.lastKnownStreamId = streamId
+		},
+		setRoomCurrentStream(state, {roomId, stream}) {
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+			room.currentStream = stream
+		},
+		setRoomUpcomingStream(state, {roomId, stream, startsAt}) {
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+			room.upcomingStream = stream
+			room.upcomingStreamStartsAt = startsAt
 		}
 	},
 	actions: {
@@ -130,28 +157,28 @@ export default new Vuex.Store({
 			})
 			api.on('error', error => {
 				switch (error.code) {
-					case 'world.unknown_world':
-					case 'auth.invalid_token':
-					case 'auth.denied':
-					case 'auth.missing_token':
-					case 'auth.expired_token':
-					case 'auth.missing_id_or_token':
-					case 'connection.replaced':
-						state.fatalConnectionError = error
-						api.close()
-						break
-					case 'server.fatal': {
-						const roomId = state.activeRoom?.id ?? null
-						const errorWithContext = {...error, roomId}
-						state.fatalError = errorWithContext
-						if (roomId) {
-							state.roomFatalErrors = {
-								...state.roomFatalErrors,
-								[roomId]: errorWithContext
-							}
+				case 'world.unknown_world':
+				case 'auth.invalid_token':
+				case 'auth.denied':
+				case 'auth.missing_token':
+				case 'auth.expired_token':
+				case 'auth.missing_id_or_token':
+				case 'connection.replaced':
+					state.fatalConnectionError = error
+					api.close()
+					break
+				case 'server.fatal': {
+					const roomId = state.activeRoom?.id ?? null
+					const errorWithContext = {...error, roomId}
+					state.fatalError = errorWithContext
+					if (roomId) {
+						state.roomFatalErrors = {
+							...state.roomFatalErrors,
+							[roomId]: errorWithContext
 						}
-						break
 					}
+					break
+				}
 				}
 				// TODO handle generic fatal error?
 			})
@@ -163,63 +190,64 @@ export default new Vuex.Store({
 			}
 			dispatch('chat/updateUser', {id: state.user.id, update})
 		},
+		async fetchCurrentStream({state, getters, commit}, roomId) {
+			if (!roomId || !state.connected) return
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+
+			const { organizer, event } = getters.eventRouting
+			if (!organizer || !event) return
+
+			const url = `/api/v1/organizers/${encodeURIComponent(organizer)}/events/${encodeURIComponent(event)}/rooms/${roomId}/streams/current`
+			const authHeader = api._config.token
+				? `Bearer ${api._config.token}`
+				: (api._config.clientId ? `Client ${api._config.clientId}` : null)
+			const headers = { Accept: 'application/json' }
+			if (authHeader) headers.Authorization = authHeader
+
+			const response = await fetch(url, { headers })
+			if (!response.ok && response.status !== 404) {
+				throw new Error(`Failed to fetch: ${response.status}`)
+			}
+
+			const currentStream = response.status === 404 ? null : await response.json()
+			const streamId = currentStream?.id || null
+			const previousStreamId = room.currentStream?.id || null
+			const previousStreamUrl = room.currentStream?.url || null
+			const currentStreamUrl = currentStream?.url || null
+
+			if (previousStreamId !== streamId || previousStreamUrl !== currentStreamUrl) {
+				commit('setRoomCurrentStream', { roomId, stream: currentStream })
+			}
+			if (state.lastKnownStreamId !== streamId) {
+				commit('setLastKnownStreamId', streamId)
+			}
+		},
 		startStreamPolling({state, commit, dispatch}, roomId) {
 			if (state.streamPollInterval) {
 				clearInterval(state.streamPollInterval)
 			}
-			state.streamPollInterval = setInterval(async () => {
+			dispatch('fetchCurrentStream', roomId).catch(() => {
+				// Polling failures are non-critical, continue polling
+			})
+
+			const intervalId = setInterval(async () => {
 				if (!state.activeRoom || state.activeRoom.id !== roomId || !state.connected) {
 					dispatch('stopStreamPolling')
 					return
 				}
 				try {
-					let organizer = state.world?.organizer || state.world?.organizer_slug || 'default'
-					let event = state.world?.slug || state.world?.id || 'default'
-
-					// If not available from world state, try to extract from current URL path
-					if (!organizer || organizer === 'default') {
-						const pathParts = window.location.pathname.split('/').filter(Boolean)
-						if (pathParts.length >= 2) {
-							organizer = pathParts[0]
-							event = pathParts[1]
-						}
-					}
-
-					const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${roomId}/streams/current`
-					const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
-					const headers = { Accept: 'application/json' }
-					if (authHeader) headers.Authorization = authHeader
-
-					const response = await fetch(url, { headers })
-					if (!response.ok && response.status !== 404) {
-						throw new Error(`Failed to fetch: ${response.status}`)
-					}
-					const currentStream = response.status === 404 ? null : await response.json()
-					const streamId = currentStream?.id || null
-					if (state.lastKnownStreamId !== streamId) {
-						const previousStreamId = state.lastKnownStreamId
-						const previousStreamUrl = state.rooms.find(r => r.id === roomId)?.currentStream?.url
-						state.lastKnownStreamId = streamId
-						const room = state.rooms.find(r => r.id === roomId)
-						if (room) {
-							const newStreamUrl = currentStream?.url
-							room.currentStream = currentStream
-							if (previousStreamId !== streamId || previousStreamUrl !== newStreamUrl) {
-								if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
-									window.location.reload()
-								}
-							}
-						}
-					}
+					await dispatch('fetchCurrentStream', roomId)
 				} catch (error) {
 					// Polling failures are non-critical, continue polling
 				}
 			}, 10000)
+			commit('setStreamPollInterval', intervalId)
 		},
-		stopStreamPolling({state}) {
+		stopStreamPolling({state, commit}) {
 			if (state.streamPollInterval) {
 				clearInterval(state.streamPollInterval)
-				state.streamPollInterval = null
+				commit('setStreamPollInterval', null)
 			}
 		},
 		async adminUpdateUser({dispatch}, update) {
@@ -358,30 +386,23 @@ export default new Vuex.Store({
 				state.roomViewers.splice(index, 1)
 			}
 		},
-		'api::room.stream.change'({state, commit}, {stream, reload}) {
+		'api::room.stream.change'({state, commit}, {stream}) {
 			if (!state.activeRoom) return
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
 			const streamId = stream?.id || null
-			const streamUrl = stream?.url || null
-			const previousStreamId = state.lastKnownStreamId
-			const previousStreamUrl = room.currentStream?.url || null
-			if (previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
-				room.currentStream = stream
-				state.lastKnownStreamId = streamId
-				if (reload || previousStreamId !== streamId || previousStreamUrl !== streamUrl) {
-					if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
-						window.location.reload()
-					}
-				}
-			}
+			commit('setRoomCurrentStream', { roomId: room.id, stream })
+			commit('setLastKnownStreamId', streamId)
 		},
-		'api::room.stream.will_change'({state}, {stream, starts_at}) {
+		'api::room.stream.will_change'({state, commit}, {stream, starts_at}) {
 			if (!state.activeRoom) return
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
-			room.upcomingStream = stream
-			room.upcomingStreamStartsAt = starts_at
+			commit('setRoomUpcomingStream', {
+				roomId: room.id,
+				stream,
+				startsAt: starts_at
+			})
 		}
 	},
 	modules: {

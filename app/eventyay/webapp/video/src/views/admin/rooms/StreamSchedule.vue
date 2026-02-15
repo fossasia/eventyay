@@ -152,7 +152,7 @@ export default {
 			const world = this.$store.state.world;
 
 			// Try to get from world state first, then fall back to URL path
-			let organizer = world?.organizer || world?.organizer_slug;
+			let organizer = world?.organizer_slug;
 			let event = world?.slug || world?.id;
 
 			// If not available from world state, try to extract from current URL path

@@ -98,11 +98,11 @@ class StreamScheduleSerializer(PretalxSerializer):
 
     def create(self, validated_data):
         instance = StreamSchedule(**validated_data)
-        instance.save(skip_validation=True)
+        instance.save()
         return instance
 
     def update(self, instance, validated_data):
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save(skip_validation=True)
+        instance.save()
         return instance

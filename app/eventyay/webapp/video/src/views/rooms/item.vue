@@ -48,7 +48,6 @@ import Questions from 'components/Questions'
 import MediaSourcePlaceholder from 'components/MediaSourcePlaceholder'
 import AudioTranslationDropdown from 'components/AudioTranslationDropdown'
 import UpcomingStreamCountdown from 'components/UpcomingStreamCountdown'
-import api from 'lib/api'
 
 export default {
 	name: 'Room',
@@ -100,11 +99,12 @@ export default {
 			handler: 'initializeLanguages',
 			immediate: true
 		},
-		'$store.state.streamReload'(reload) {
-			if (reload && this.room) {
-				window.location.reload()
+		'room.id'(roomId) {
+			this.$store.dispatch('stopStreamPolling')
+			if (roomId) {
+				this.$store.dispatch('startStreamPolling', roomId)
 			}
-		}
+		},
 	},
 	async created() {
 		if (this.modules['chat.native']) {
@@ -117,7 +117,6 @@ export default {
 		this.initializeLanguages()
 		if (this.room) {
 			await this.$nextTick()
-			await this.fetchCurrentStream()
 			this.$store.dispatch('startStreamPolling', this.room.id)
 		}
 	},
@@ -126,41 +125,6 @@ export default {
 		this.previousRoomId = null
 	},
 	methods: {
-		async fetchCurrentStream() {
-			if (!this.room?.id) return
-			try {
-				const world = this.$store?.state?.world
-				let organizer = world?.organizer || world?.organizer_slug
-				let event = world?.slug || world?.id
-				if (!organizer || organizer === 'default') {
-					const pathParts = window.location.pathname.split('/').filter(Boolean)
-					if (pathParts.length >= 2) {
-						organizer = pathParts[0]
-						event = pathParts[1]
-					}
-				}
-				if (!organizer || !event) return
-				const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/current`
-				const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
-				const headers = { Accept: 'application/json' }
-				if (authHeader) headers.Authorization = authHeader
-				const response = await fetch(url, { headers })
-				if (response.ok) {
-					const currentStream = await response.json()
-					if (this.room) {
-						this.room.currentStream = currentStream
-						this.$store.state.lastKnownStreamId = currentStream?.id || null
-					}
-				} else if (response.status === 404) {
-					if (this.room) {
-						this.room.currentStream = null
-						this.$store.state.lastKnownStreamId = null
-					}
-				}
-			} catch (error) {
-				// Stream fetch failures are non-critical
-			}
-		},
 		changedTabContent(tab) {
 			if (tab === this.activeSidebarTab) return
 			this.unreadTabs[tab] = true

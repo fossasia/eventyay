@@ -23,11 +23,15 @@ export default {
 			upcomingStream: null,
 			timeUntilStart: 0,
 			countdownInterval: null,
-			fetching: false
+			fetching: false,
+			tickOffsetSeconds: 0
 		}
 	},
 	computed: {
 		...mapState(['now']),
+		effectiveNow() {
+			return moment(this.now).add(this.tickOffsetSeconds, 'seconds')
+		},
 		eventTimezone() {
 			return this.$store.state.world?.timezone || 'UTC'
 		},
@@ -51,9 +55,16 @@ export default {
 		}
 	},
 	watch: {
+		now() {
+			this.tickOffsetSeconds = 0
+			this.updateCountdown()
+		},
 		room: {
 			handler: 'fetchNextStream',
 			immediate: true
+		},
+		upcomingStream() {
+			this.startCountdownTimer()
 		},
 		'room.upcomingStream'(stream) {
 			if (this.isStreamUpcoming(stream)) {
@@ -65,20 +76,38 @@ export default {
 		}
 	},
 	created() {
-		this.countdownInterval = setInterval(() => {
-			this.updateCountdown()
-		}, 1000)
+		this.startCountdownTimer()
+		document.addEventListener('visibilitychange', this.onVisibilityChange)
 	},
 	beforeUnmount() {
 		if (this.countdownInterval) {
 			clearInterval(this.countdownInterval)
 		}
+		document.removeEventListener('visibilitychange', this.onVisibilityChange)
 	},
 	methods: {
+		getTickIntervalMs() {
+			if (!this.upcomingStream) return 5000
+			return document.visibilityState === 'visible' ? 1000 : 5000
+		},
+		startCountdownTimer() {
+			const intervalMs = this.getTickIntervalMs()
+			if (this.countdownInterval) {
+				clearInterval(this.countdownInterval)
+			}
+			this.countdownInterval = setInterval(() => {
+				this.tickOffsetSeconds += intervalMs / 1000
+				this.updateCountdown()
+			}, intervalMs)
+		},
+		onVisibilityChange() {
+			this.startCountdownTimer()
+			this.updateCountdown()
+		},
 		isStreamUpcoming(stream) {
 			if (!stream || !stream.start_time) return false
 			const startTime = moment(stream.start_time)
-			return startTime.isAfter(moment())
+			return startTime.isAfter(this.effectiveNow)
 		},
 		clearStream() {
 			this.upcomingStream = null
@@ -86,33 +115,21 @@ export default {
 		},
 		async fetchNextStream() {
 			if (!this.room?.id || this.fetching) return
-			
+
 			this.fetching = true
 			try {
-				const world = this.$store?.state?.world
-				
-				let organizer = world?.organizer || world?.organizer_slug
-				let event = world?.slug || world?.id
-				
-				if (!organizer || organizer === 'default') {
-					const pathParts = window.location.pathname.split('/').filter(Boolean)
-					if (pathParts.length >= 2) {
-						organizer = pathParts[0]
-						event = pathParts[1]
-					}
-				}
-				
+				const { organizer, event } = this.$store.getters.eventRouting
 				if (!organizer || !event) {
 					this.clearStream()
 					return
 				}
-				
-				const url = `/api/v1/organizers/${organizer}/events/${event}/rooms/${this.room.id}/streams/next`
+
+				const url = `/api/v1/organizers/${encodeURIComponent(organizer)}/events/${encodeURIComponent(event)}/rooms/${this.room.id}/streams/next`
 				const authHeader = api._config.token
 					? `Bearer ${api._config.token}`
 					: api._config.clientId
-					? `Client ${api._config.clientId}`
-					: null
+						? `Client ${api._config.clientId}`
+						: null
 				const headers = { Accept: 'application/json' }
 				if (authHeader) headers.Authorization = authHeader
 
@@ -140,9 +157,9 @@ export default {
 				return
 			}
 			const startTime = moment(this.upcomingStream.start_time)
-			const now = moment()
+			const now = this.effectiveNow
 			this.timeUntilStart = Math.max(0, startTime.diff(now, 'seconds'))
-			
+
 			if (this.timeUntilStart === 0 || !this.isStreamUpcoming(this.upcomingStream)) {
 				this.clearStream()
 				if (!this.fetching) {
@@ -179,4 +196,3 @@ export default {
 			font-size: 12px
 			opacity: 0.8
 </style>
-

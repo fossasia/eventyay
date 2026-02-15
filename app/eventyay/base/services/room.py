@@ -171,7 +171,13 @@ def check_stream_schedule_changes(sender, **kwargs):
 
     cache_timeout = 300
 
-    for room in Room.objects.filter(deleted=False).select_related('event'):
+    rooms = (
+        Room.objects.filter(deleted=False, stream_schedules__isnull=False)
+        .select_related('event')
+        .distinct()
+    )
+
+    for room in rooms:
         current_stream = room.get_current_stream()
         cache_key = f'room:{room.pk}:last_broadcast_stream'
         last_broadcast_id = cache.get(cache_key)
@@ -181,5 +187,5 @@ def check_stream_schedule_changes(sender, **kwargs):
         if current_stream_id != last_broadcast_id:
             cache.set(cache_key, current_stream_id, cache_timeout)
             async_to_sync(broadcast_stream_change)(
-                str(room.pk), current_stream, reload=current_stream_id is None
+                room.pk, current_stream, reload=current_stream_id is None
             )
