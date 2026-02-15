@@ -5,10 +5,18 @@
         <span class="fa fa-filter"></span>
         <span class="sr-only">{% translate "Filter" %}</span>
     </button>
+    {% if filter_htmx_target %}
     <a href="{{ clear_url|default:request.path }}" class="btn btn-default" aria-label="{% translate 'Clear filters' %}"
         title="{% translate 'Clear filters' %}" hx-get="{{ clear_url|default:request.path }}"
-        hx-target="#orders-table-container" hx-swap="outerHTML" hx-push-url="true">
+        hx-target="{{ filter_htmx_target }}" hx-swap="outerHTML" hx-push-url="true">
         <span class="fa fa-eraser"></span>
         <span class="sr-only">{% translate "Clear filters" %}</span>
     </a>
+    {% else %}
+    <a href="{{ clear_url|default:request.path }}" class="btn btn-default" aria-label="{% translate 'Clear filters' %}"
+        title="{% translate 'Clear filters' %}">
+        <span class="fa fa-eraser"></span>
+        <span class="sr-only">{% translate "Clear filters" %}</span>
+    </a>
+    {% endif %}
 </div>

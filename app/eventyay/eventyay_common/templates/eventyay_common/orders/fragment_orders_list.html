@@ -48,9 +48,9 @@
     <div class="pagination">
         <span class="step-links">
             {% if page_obj.has_previous %}
-            <a href="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
-                hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.previous_page_number }}"
-                hx-target="#orders-table-container" hx-swap="outerHTML" hx-push-url="true">&laquo;</a>
+            <a href="{% querystring page=page_obj.previous_page_number %}"
+                hx-get="{% querystring page=page_obj.previous_page_number %}" hx-target="#orders-table-container"
+                hx-swap="outerHTML" hx-push-url="true">&laquo;</a>
             {% endif %}
 
             <span class="current">
@@ -60,9 +60,9 @@
             </span>
 
             {% if page_obj.has_next %}
-            <a href="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
-                hx-get="?{{ request.GET.urlencode }}&page={{ page_obj.next_page_number }}"
-                hx-target="#orders-table-container" hx-swap="outerHTML" hx-push-url="true">&raquo;</a>
+            <a href="{% querystring page=page_obj.next_page_number %}"
+                hx-get="{% querystring page=page_obj.next_page_number %}" hx-target="#orders-table-container"
+                hx-swap="outerHTML" hx-push-url="true">&raquo;</a>
             {% endif %}
         </span>
     </div>

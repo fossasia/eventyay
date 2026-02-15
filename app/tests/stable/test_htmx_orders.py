@@ -9,8 +9,6 @@ def test_orders_list_htmx(authenticated_client, event):
 
     # Test standard request - full page
     response = authenticated_client.get(url)
-    if response.status_code == 302:
-        pytest.fail(f"Standard request redirected to {response.url} (validation fail?)")
     assert response.status_code == 200
     template_names = [t.name for t in response.templates]
     assert 'eventyay_common/orders/orders.html' in template_names
@@ -21,9 +19,6 @@ def test_orders_list_htmx(authenticated_client, event):
     headers = {'HTTP_HX_REQUEST': 'true', 'headers': {'HX-Request': 'true'}}
     response = authenticated_client.get(url, **headers)
     
-    if response.status_code == 302:
-        pytest.fail(f"HTMX request redirected to {response.url} - Form validation failed?")
-        
     assert response.status_code == 200
     template_names = [t.name for t in response.templates]
     
