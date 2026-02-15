@@ -1251,6 +1251,24 @@ def test_orga_cannot_make_submitted_submission_readonly_token(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "action",
+    ["accept", "reject", "confirm", "cancel", "make-submitted"],
+)
+def test_submission_action_nonexistent_returns_404(
+    client, orga_user_write_token, event, action
+):
+    response = client.post(
+        event.api_urls.submissions + f"NONEXISTENT/{action}/",
+        follow=True,
+        headers={
+            "Authorization": f"Token {orga_user_write_token.token}",
+        },
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_orga_can_add_speaker_to_submission(
     client, orga_user_write_token, submission, speaker
 ):
