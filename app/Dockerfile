@@ -38,6 +38,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # Run npm stuff (needs nodejs)
 RUN make npminstall
 
+# Pre-build static.dist so the image ships with the Vite manifest
+RUN uv run python manage.py collectstatic --noinput
+
 
 ###########
 # RUNTIME #
