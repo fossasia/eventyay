@@ -4,7 +4,16 @@ services:
   web:
     image: eventyay/eventyay-next:${TAG}
     container_name: eventyay-next-web
-    command: gunicorn eventyay.config.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      gunicorn eventyay.config.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers ${GUNICORN_WORKERS:-4}
+      --timeout 120
+      --keep-alive 5
+      --max-requests 1000
+      --max-requests-jitter 50
+      --access-logfile -
+      --error-logfile -
     volumes:
       - ${DATA_DIR:-./data}/static:/home/app/web/eventyay/static.dist
       - ${DATA_DIR:-./data}/data:/home/app/web/eventyay/data
@@ -14,9 +23,18 @@ services:
       - 8000
     env_file:
       - ./.env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
 
   websocket:
     image: eventyay/eventyay-next:${TAG}
@@ -33,9 +51,17 @@ services:
       - ./.env
     environment:
       - MPLCONFIGDIR=/tmp/matplotlib
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   worker:
     image: eventyay/eventyay-next:${TAG}
@@ -48,9 +74,17 @@ services:
       - ./.env
     environment:
       - MPLCONFIGDIR=/tmp/matplotlib
+    healthcheck:
+      test: ["CMD", "celery", "-A", "eventyay", "inspect", "ping", "--timeout", "10"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   db:
     image: postgres:15
@@ -59,6 +93,12 @@ services:
       - ${DATA_DIR:-./data}/postgres:/var/lib/postgresql/data/
     env_file:
       - ./.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-eventyay} -d $${POSTGRES_DB:-eventyay}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis:
     image: redis:latest

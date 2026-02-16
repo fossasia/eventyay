@@ -18,9 +18,17 @@ services:
       - 8000:8000
     env_file:
       - ./.env.dev
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   worker:
     build: ./app
@@ -39,9 +47,17 @@ services:
       - ./.env.dev
     environment:
       - MPLCONFIGDIR=/tmp/matplotlib
+    healthcheck:
+      test: ["CMD", "celery", "-A", "eventyay", "inspect", "ping", "--timeout", "10"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   redis:
     image: redis:latest
@@ -61,6 +77,12 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data/
     env_file:
       - ./.env.dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-eventyay} -d $${POSTGRES_DB:-eventyay-db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 volumes:
   postgres_data_dev:
