@@ -837,7 +837,7 @@ class SessionTimeOutTest(TestCase):
 
         # Mark session as long (Keep me logged in)
         session = self.client.session
-        session['eventyay_auth_long_session'] = True
+        session['pretix_auth_long_session'] = True
         session.save()
 
         # Change the User-Agent to simulate viewport/device hint changes
@@ -861,7 +861,7 @@ class SessionTimeOutTest(TestCase):
 
         # Pretend the session has the long-session flag (but feature is disabled)
         session = self.client.session
-        session['eventyay_auth_long_session'] = True
+        session['pretix_auth_long_session'] = True
         session.save()
 
         # Change User-Agent: enforcement should still apply and reject the request
