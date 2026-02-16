@@ -63,6 +63,9 @@
         <div :class="'check-result-status check-result-' + checkResultColor">
           {{ checkResultText }}
         </div>
+        <div v-if="checkResult && checkResult.reason_explanation" class="panel-body reason-explanation">
+          {{ checkResult.reason_explanation }}
+        </div>
         <div class="panel-body" v-if="checkResult.position">
           <div class="details">
             <h4>

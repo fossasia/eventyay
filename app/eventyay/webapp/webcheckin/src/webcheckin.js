@@ -44,6 +44,7 @@ function buildStrings() {
     'result.rules': gettext('Entry not allowed'),
     'result.revoked': gettext('Ticket code revoked/changed'),
     'result.canceled': gettext('Order canceled'),
+    'result.invalid_time': gettext('Ticket not valid at this time'),
     'status.checkin': gettext('Checked-in Tickets'),
     'status.position': gettext('Valid Tickets'),
     'status.inside': gettext('Currently inside'),
