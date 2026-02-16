@@ -120,12 +120,24 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                     else request.COOKIES.get(enforce_cookie_name, '0') == '1'
                 )
                 if enforce_active and locale.lower() != ui_language.lower():
-                    _set_event_cookie(
-                        request,
-                        resp,
-                        enforce_cookie_name,
-                        '0',
-                        max_age,
-                    )
+                    if locale in [lc for lc, ll in settings.LANGUAGES]:
+                        if request.user.is_authenticated and request.user.locale != locale:
+                            request.user.locale = locale
+                            request.user.save(update_fields=['locale'])
+                        _set_event_cookie(
+                            request,
+                            resp,
+                            settings.LANGUAGE_COOKIE_NAME,
+                            locale,
+                            max_age,
+                        )
+                    else:
+                        _set_event_cookie(
+                            request,
+                            resp,
+                            enforce_cookie_name,
+                            '0',
+                            max_age,
+                        )
 
         return resp
