@@ -40,6 +40,12 @@ def test_tickets_dashboard_link_disabled_for_talk_only_team(client):
     tickets_url = reverse('control:event.index', kwargs={'organizer': organizer.slug, 'event': event.slug})
     assert tickets_url not in response.text
     assert 'tickets-permission-modal' in response.text
+    assert (
+        'You require additional permissions to access the tickets dashboard. Please contact the main event organisers.'
+        in response.text
+    )
+    assert 'data-toggle="modal"' in response.text
+    assert 'data-target="#tickets-permission-modal"' in response.text
 
 
 @pytest.mark.django_db
