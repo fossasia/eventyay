@@ -17,6 +17,9 @@ from eventyay.helpers.cookies import set_cookie_without_samesite
 from .robots import NoSearchIndexViewMixin
 
 
+VALID_UI_LOCALES = {code.lower() for code, __ in settings.LANGUAGES}
+
+
 def _cookie_expires(max_age: int) -> str:
     expires_at = datetime.now(timezone.utc) + timedelta(seconds=max_age)
     return f"{expires_at:%a, %d %b %Y %H:%M:%S GMT}"
@@ -120,7 +123,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                     else request.COOKIES.get(enforce_cookie_name, '0') == '1'
                 )
                 if enforce_active and locale.lower() != ui_language.lower():
-                    if locale in [lc for lc, ll in settings.LANGUAGES]:
+                    if locale.lower() in VALID_UI_LOCALES:
                         if request.user.is_authenticated and request.user.locale != locale:
                             request.user.locale = locale
                             request.user.save(update_fields=['locale'])
