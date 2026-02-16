@@ -149,7 +149,8 @@ class IndexView(AdminBase, TemplateView):
 class EventList(AdminBase, ListView):
     template_name = "control/event_list.html"
     queryset = (
-        Event.objects.annotate(
+        Event.objects.select_related('organizer')
+        .annotate(
             user_count=Count("user"),
             last_usage=Subquery(
                 PlannedUsage.objects.filter(event=OuterRef("pk"))

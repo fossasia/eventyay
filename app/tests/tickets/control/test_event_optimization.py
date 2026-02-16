@@ -1,9 +1,11 @@
 import pytest
+from datetime import datetime
 from django.test import TestCase, override_settings
 from django.db import connection, reset_queries
+from django.utils import timezone
 
 from eventyay.base.models import Event, Organizer
-from eventyay.control.views.admin_views import EventList, EventAdminToken, EventClear
+from eventyay.control.views.admin_views import EventList, EventAdminToken, EventClear, EventUpdate
 
 
 @override_settings(DEBUG=True)
@@ -24,8 +26,8 @@ class EventQuerysetOptimizationTest(TestCase):
                 organizer=self.organizer,
                 name=f"Test Event {i}",
                 slug=f"test-event-{i}",
-                date_from="2026-01-01 10:00:00",
-                date_to="2026-01-01 18:00:00",
+                date_from=timezone.make_aware(datetime(2026, 1, 1, 10, 0, 0)),
+                date_to=timezone.make_aware(datetime(2026, 1, 1, 18, 0, 0)),
                 currency="USD"
             )
             self.events.append(event)
@@ -59,38 +61,13 @@ class EventQuerysetOptimizationTest(TestCase):
             f"Possible N+1 query issue!"
         )
     
-    def test_event_admin_token_uses_select_related(self):
+    def test_event_update_uses_select_related(self):
         """
-        Test that EventAdminToken view uses select_related('organizer')
+        Test that EventUpdate view uses select_related('organizer')
+        EventUpdate is a FormView (UpdateView) for editing events.
         """
-        # Get queryset from EventAdminToken view
-        view = EventAdminToken()
-        queryset = view.get_queryset()
-        
-        # Reset query log
-        reset_queries()
-        
-        # Fetch events and access organizer
-        events = list(queryset[:10])
-        for event in events:
-            _ = event.organizer.slug
-        
-        # Count queries
-        query_count = len(connection.queries)
-        
-        # Should be optimized with select_related
-        self.assertLessEqual(
-            query_count,
-            2,
-            f"Expected max 2 queries, got {query_count}. N+1 issue in EventAdminToken!"
-        )
-    
-    def test_event_clear_uses_select_related(self):
-        """
-        Test that EventClear view uses select_related('organizer')
-        """
-        # Get queryset from EventClear view
-        view = EventClear()
+        # Get queryset from EventUpdate view
+        view = EventUpdate()
         queryset = view.get_queryset()
         
         # Reset query log
@@ -104,11 +81,65 @@ class EventQuerysetOptimizationTest(TestCase):
         # Count queries
         query_count = len(connection.queries)
         
-        # Should be optimized
+        # With select_related, should be 1-2 queries max
         self.assertLessEqual(
             query_count,
             2,
-            f"Expected max 2 queries, got {query_count}. N+1 issue in EventClear!"
+            f"Expected max 2 queries with select_related, got {query_count}. N+1 issue in EventUpdate!"
+        )
+    
+    def test_event_admin_token_uses_select_related(self):
+        """
+        Test that EventAdminToken view uses select_related('organizer')
+        when fetching a single event via its queryset.
+        EventAdminToken is a DetailView, so we test single-object fetch pattern.
+        """
+        # Get queryset from EventAdminToken view
+        view = EventAdminToken()
+        queryset = view.get_queryset()
+        
+        # Reset query log
+        reset_queries()
+        
+        # Fetch a SINGLE event and access organizer (DetailView pattern)
+        event = queryset.first()
+        _ = event.organizer.slug
+        
+        # Count queries
+        query_count = len(connection.queries)
+        
+        # With select_related, fetching event and its organizer should use a single query (JOIN)
+        self.assertEqual(
+            query_count,
+            1,
+            f"Expected 1 query with select_related on EventAdminToken queryset, got {query_count}."
+        )
+    
+    def test_event_clear_uses_select_related(self):
+        """
+        Test that EventClear view uses select_related('organizer') on its queryset.
+        EventClear is a DetailView and fetches a single object via get_object(),
+        so we test the single-object fetch pattern.
+        """
+        # Get queryset from EventClear view
+        view = EventClear()
+        queryset = view.get_queryset()
+        
+        # Reset query log
+        reset_queries()
+        
+        # Fetch a SINGLE event and access organizer (DetailView pattern)
+        event = queryset.first()
+        _ = event.organizer.name
+        
+        # Count queries
+        query_count = len(connection.queries)
+        
+        # With select_related, fetching event and its organizer should use a single query (JOIN)
+        self.assertEqual(
+            query_count,
+            1,
+            f"Expected 1 query with select_related on EventClear queryset, got {query_count}."
         )
     
     def test_n1_query_would_occur_without_select_related(self):
