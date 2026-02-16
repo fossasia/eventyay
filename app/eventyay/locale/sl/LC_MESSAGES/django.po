@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 13:14+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:59+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Slovenian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sl/>\n"
 "Language: sl\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || "
 "n%100==4 ? 2 : 3;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -168,8 +168,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Za ogled našega urnika, prosimo omogočite JavaScript ali pojdite <a "
-"href=\"%(href)s\">sem</a> za naš NoJS urnik."
+"Za ogled našega urnika, prosimo omogočite JavaScript ali pojdite <a href=\"%"
+"(href)s\">sem</a> za naš NoJS urnik."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -179,8 +179,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Da bi videli naš urnik z vso funkcionalnostjo, kot so pretvorbe časovnih "
-"pasov in osebni urnik, prosimo omogočite JavaScript in pojdite <a "
-"href=\"%(href)s\">sem</a>."
+"pasov in osebni urnik, prosimo omogočite JavaScript in pojdite <a href=\"%"
+"(href)s\">sem</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -465,8 +465,7 @@ msgstr ""
 
 #: api/serializers/product.py:416 control/forms/product.py:92
 msgid "Question cannot depend on a question asked during check-in."
-msgstr ""
-"Vprašanje ne more biti odvisno od vprašanja, zastavljenega med prijavo."
+msgstr "Vprašanje ne more biti odvisno od vprašanja, zastavljenega med prijavo."
 
 #: api/serializers/product.py:421 control/forms/product.py:97
 msgid "Circular dependency between questions detected."
@@ -7611,8 +7610,7 @@ msgstr "Navedeni ID sedeža \"{id}\" za ta dogodek ne obstaja."
 msgid ""
 "The seat \"{id}\" is currently unavailable (blocked, already sold or a "
 "different voucher)."
-msgstr ""
-"Sedež \"{id}\" trenutno ni na voljo (blokiran, že prodan ali drug bon)."
+msgstr "Sedež \"{id}\" trenutno ni na voljo (blokiran, že prodan ali drug bon)."
 
 #: base/models/vouchers.py:402
 msgid "You need to choose a specific product if you select a seat."
@@ -8104,8 +8102,7 @@ msgstr ""
 #: base/payment.py:370
 msgid ""
 "Only allow the usage of this payment provider in the selected sales channels."
-msgstr ""
-"Uporabo tega ponudnika plačil dovoli samo v izbranih prodajnih kanalih."
+msgstr "Uporabo tega ponudnika plačil dovoli samo v izbranih prodajnih kanalih."
 
 #: base/payment.py:376
 msgid "Hide payment method"
@@ -8125,8 +8122,7 @@ msgstr "Povezava za omogočanje načina plačila"
 
 #: base/payment.py:397
 msgid "Share this link with customers who should use this payment method."
-msgstr ""
-"Povezavo delite s strankami, ki bi morale uporabljati ta način plačila."
+msgstr "Povezavo delite s strankami, ki bi morale uporabljati ta način plačila."
 
 #: base/payment.py:431
 msgctxt "invoice"
@@ -8947,8 +8943,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Za izdelek %(base)s lahko izberete največ %(max)s dodatkov iz kategorije "
-"%(cat)s."
+"Za izdelek %(base)s lahko izberete največ %(max)s dodatkov iz kategorije %"
+"(cat)s."
 
 #: base/services/cart.py:122
 #, python-format
@@ -8956,8 +8952,8 @@ msgid ""
 "You need to select at least %(min)s add-ons from the category %(cat)s for "
 "the product %(base)s."
 msgstr ""
-"Za izdelek %(base)s morate izbrati vsaj %(min)s dodatke iz kategorije "
-"%(cat)s."
+"Za izdelek %(base)s morate izbrati vsaj %(min)s dodatke iz kategorije %(cat)"
+"s."
 
 #: base/services/cart.py:125
 #, python-format
@@ -8965,8 +8961,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Za izdelek %(base)s lahko največ enkrat izberete vse dodatke iz kategorije "
-"%(cat)s."
+"Za izdelek %(base)s lahko največ enkrat izberete vse dodatke iz kategorije %"
+"(cat)s."
 
 #: base/services/cart.py:127
 msgid ""
@@ -9142,8 +9138,8 @@ msgid ""
 "Error while importing value \"{value}\" for column \"{column}\" in line "
 "\"{line}\": {message}"
 msgstr ""
-"Napaka pri uvozu vrednosti \"{value}\" za stolpec \"{column}\" v vrstici "
-"\"{line}\": {message}"
+"Napaka pri uvozu vrednosti \"{value}\" za stolpec \"{column}\" v vrstici \""
+"{line}\": {message}"
 
 #: base/services/orderimport.py:126
 #, python-brace-format
@@ -9537,38 +9533,38 @@ msgstr ""
 msgid "The voucher has been sent to {recipient}."
 msgstr "Bon je poslan prejemniku/ci {recipient}."
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 msgid "Content languages must be a subset of the active languages."
 msgstr ""
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 
@@ -10499,8 +10495,7 @@ msgstr "Povratne informacije udeležencev"
 
 #: cfp/templates/cfp/event/user_submission_edit.html:39
 msgid "Attendees can leave feedback here after your session has taken place."
-msgstr ""
-"Udeleženci lahko tukaj pustijo povratne informacije po koncu vaše seje."
+msgstr "Udeleženci lahko tukaj pustijo povratne informacije po koncu vaše seje."
 
 #: cfp/templates/cfp/event/user_submission_edit.html:49
 #: orga/templates/orga/submission/content_edit.html:50
@@ -13329,7 +13324,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr "npr. {sample}"
@@ -13533,23 +13528,62 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable payment method"
+msgid "Enable telemetry"
+msgstr "Omogoči način plačila"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+msgid "Telemetry endpoint"
+msgstr ""
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "URIji za preusmeritev"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -16378,8 +16412,7 @@ msgstr ""
 #| msgid ""
 #| "You can find the current version <a href=\"%(current_url)s\">here</a>."
 msgid "You can check for updates <a href=\"%(update_url)s\">here</a>."
-msgstr ""
-"Trenutno različico lahko najdete <a href=\"%(current_url)s\">tukaj</a>."
+msgstr "Trenutno različico lahko najdete <a href=\"%(current_url)s\">tukaj</a>."
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:42
 msgid "Settings have been loaded from:"
@@ -32337,8 +32370,7 @@ msgstr "Trenutno si ogledujete starejšo različico urnika."
 #: schedule/phrases.py:25
 #, python-format
 msgid "You can find the current version <a href=\"%(current_url)s\">here</a>."
-msgstr ""
-"Trenutno različico lahko najdete <a href=\"%(current_url)s\">tukaj</a>."
+msgstr "Trenutno različico lahko najdete <a href=\"%(current_url)s\">tukaj</a>."
 
 #. Translators: “tz” is a full timezone name like “Europe/Berlin”
 #: schedule/phrases.py:28
