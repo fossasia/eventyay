@@ -107,7 +107,10 @@ services:
     volumes:
       - rd:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
 
   watchtower:
     image: nickfedor/watchtower
