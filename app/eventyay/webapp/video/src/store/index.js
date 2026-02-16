@@ -205,7 +205,7 @@ export default new Vuex.Store({
 			const headers = { Accept: 'application/json' }
 			if (authHeader) headers.Authorization = authHeader
 
-			const response = await fetch(url, { headers })
+			const response = await fetch(url, { headers, credentials: 'include' })
 			if (!response.ok && response.status !== 404) {
 				throw new Error(`Failed to fetch: ${response.status}`)
 			}
@@ -232,13 +232,14 @@ export default new Vuex.Store({
 			})
 
 			const intervalId = setInterval(async () => {
-				if (!state.activeRoom || state.activeRoom.id !== roomId || !state.connected) {
+				if (!state.activeRoom || state.activeRoom.id !== roomId) {
 					dispatch('stopStreamPolling')
 					return
 				}
+				if (!state.connected) return
 				try {
 					await dispatch('fetchCurrentStream', roomId)
-				} catch (error) {
+				} catch {
 					// Polling failures are non-critical, continue polling
 				}
 			}, 10000)
@@ -275,7 +276,7 @@ export default new Vuex.Store({
 						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
 						state.roomFatalErrors = rest
 					}
-				} catch (error) {
+				} catch {
 					// room.enter failures are non-critical, continue with room change
 				}
 			}
@@ -386,13 +387,18 @@ export default new Vuex.Store({
 				state.roomViewers.splice(index, 1)
 			}
 		},
-		'api::room.stream.change'({state, commit}, {stream}) {
+		'api::room.stream.change'({state, commit, dispatch}, {stream, reload}) {
 			if (!state.activeRoom) return
 			const room = state.rooms.find(r => r.id === state.activeRoom.id)
 			if (!room) return
 			const streamId = stream?.id || null
 			commit('setRoomCurrentStream', { roomId: room.id, stream })
 			commit('setLastKnownStreamId', streamId)
+			if (reload) {
+				dispatch('fetchCurrentStream', room.id).catch(() => {
+					// Stream refresh failures are non-critical
+				})
+			}
 		},
 		'api::room.stream.will_change'({state, commit}, {stream, starts_at}) {
 			if (!state.activeRoom) return

@@ -114,7 +114,6 @@ export default {
 		} else if (this.modules.poll) {
 			this.activeSidebarTab = 'polls'
 		}
-		this.initializeLanguages()
 		if (this.room) {
 			await this.$nextTick()
 			this.$store.dispatch('startStreamPolling', this.room.id)

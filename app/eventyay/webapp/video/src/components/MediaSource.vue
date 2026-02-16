@@ -173,6 +173,10 @@ function muteYouTubePlayer() {
 			'*'
 		);
 	} catch (error) {
+		console.warn('Failed to mute embedded YouTube player', {
+			roomId: props.room?.id,
+			error,
+		});
 	}
 }
 
@@ -184,6 +188,10 @@ function unmuteYouTubePlayer() {
 			'*'
 		);
 	} catch (error) {
+		console.warn('Failed to unmute embedded YouTube player', {
+			roomId: props.room?.id,
+			error,
+		});
 	}
 }
 

@@ -169,7 +169,8 @@ async def broadcast_stream_change(room_id, stream_schedule, reload=False):
 def check_stream_schedule_changes(sender, **kwargs):
     from django.core.cache import cache
 
-    cache_timeout = 300
+    # Keep the last broadcast marker stable across periodic runs to avoid repeated rebroadcasts.
+    cache_timeout = None
 
     rooms = (
         Room.objects.filter(deleted=False, stream_schedules__isnull=False)

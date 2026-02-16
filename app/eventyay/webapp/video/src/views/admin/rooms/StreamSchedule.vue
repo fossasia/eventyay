@@ -47,7 +47,6 @@
 import { useVuelidate } from '@vuelidate/core';
 import { required, url } from 'lib/validators';
 import api from 'lib/api';
-import config from 'config';
 import Prompt from 'components/Prompt';
 import moment from 'lib/timetravelMoment';
 

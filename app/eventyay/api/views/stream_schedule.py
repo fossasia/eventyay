@@ -40,6 +40,7 @@ class StreamScheduleViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
     serializer_class = StreamScheduleSerializer
     endpoint = 'stream_schedules'
     search_fields = ('title',)
+    write_permission = 'can_change_event_settings'
 
     def get_room(self):
         if hasattr(self, '_room_cache'):
