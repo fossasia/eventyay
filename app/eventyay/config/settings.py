@@ -1114,8 +1114,10 @@ if IS_DEVELOPMENT and '*' not in ALLOWED_HOSTS:
 # This is intentionally applied in all environments (including production)
 # so that containerized or local health checks using localhost/127.0.0.1
 # continue to work even when DEBUG is disabled.
-if 'localhost' not in ALLOWED_HOSTS and '127.0.0.1' not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, 'localhost', '127.0.0.1']))
+if 'localhost' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, 'localhost']))
+if '127.0.0.1' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = list(dict.fromkeys([*ALLOWED_HOSTS, '127.0.0.1']))
 
 EMAIL_BACKEND = conf.email_backend
 # Only effective when using 'django.core.mail.backends.filebased.EmailBackend' (default in development)

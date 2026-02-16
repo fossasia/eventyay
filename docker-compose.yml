@@ -20,7 +20,7 @@ services:
       - ./.env.dev
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthcheck/', timeout=5)"]
-      interval: 30s
+      interval: 60s
       timeout: 10s
       retries: 3
       start_period: 40s
