@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime
 from django.test import TestCase, override_settings
 from django.db import connection, reset_queries
