@@ -177,3 +177,13 @@ def is_event_team_member(context, event=None):
     if not event or not user or user.is_anonymous:
         return False
     return user.has_event_permission(event.organizer, event, request=request)
+
+
+@register.simple_tag(takes_context=True)
+def can_access_tickets_dashboard(context, event=None):
+    request = context.get('request')
+    event = event or getattr(request, 'event', None)
+    user = getattr(request, 'user', None)
+    if not event or not user or user.is_anonymous:
+        return False
+    return user.has_event_permission(event.organizer, event, 'can_view_orders', request=request)

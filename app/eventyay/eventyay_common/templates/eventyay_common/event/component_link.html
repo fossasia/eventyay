@@ -1,12 +1,19 @@
-{% load i18n %}
+{% load i18n event_tags %}
 <div class="navigation-button">
     {% if request.organizer and request.event %}
+        {% can_access_tickets_dashboard request.event as can_access_tickets_dashboard %}
         <a href="#" class="header-nav btn btn-outline-success active">
             <i class="fa fa-home"></i> {% trans "Home" %}
         </a>
+        {% if can_access_tickets_dashboard %}
         <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-ticket"></i> {% trans "Tickets" %}
         </a>
+        {% else %}
+        <a href="#" class="header-nav btn btn-outline-success" data-toggle="modal" data-target="#tickets-permission-modal">
+            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+        </a>
+        {% endif %}
         {% if is_talk_event_created %}
         <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
             <i class="fa fa-group"></i> {% trans "Talk" %}
@@ -18,4 +25,27 @@
             <i class="fa fa-video-camera"></i> {% trans "Videos" %}
         </a>
     {% endif %}
+</div>
+
+<div class="modal popup-modal" id="tickets-permission-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-body">
+                <div class="modal-card">
+                    <div class="modal-card-icon">
+                        <i class="fa fa-lock big-rotating-icon"></i>
+                    </div>
+                    <div class="modal-card-content">
+                        <h3>{% trans "Access restricted" %}</h3>
+                        <p>
+                            {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+                        </p>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                            {% trans "Ok" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
