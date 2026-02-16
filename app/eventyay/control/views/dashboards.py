@@ -620,7 +620,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
             else:
                 status = ('success', _('On sale'))
 
-        if request.user.has_event_permission(
+        if user.has_event_permission(
             event.organizer,
             event,
             'can_view_orders',
