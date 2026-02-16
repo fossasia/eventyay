@@ -32,7 +32,7 @@ export default {
 		scheduleData: { default: null },
 		generateSpeakerLinkUrl: {
 			default() {
-				return ({speaker}) => `#speaker/${speaker.code}`
+				return ({speaker}) => `#speakers/${speaker.code}`
 			}
 		},
 		onSpeakerLinkClick: {

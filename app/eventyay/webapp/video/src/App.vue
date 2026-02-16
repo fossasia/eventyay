@@ -46,9 +46,6 @@
 import { mapState } from 'vuex'
 import { computed, reactive } from 'vue'
 import moment from 'lib/timetravelMoment'
-import api from 'lib/api'
-import config from 'config'
-import QRCode from 'qrcode'
 import AppBar from 'components/AppBar'
 import RoomsSidebar from 'components/RoomsSidebar'
 import MediaSource from 'components/MediaSource'
@@ -76,9 +73,8 @@ export default {
 			}),
 			scheduleFav: (id) => this.$store.dispatch('schedule/fav', id),
 			scheduleUnfav: (id) => this.$store.dispatch('schedule/unfav', id),
-			scheduleDoExport: (option) => this.doScheduleExport(option),
-			exportBaseUrl: config.api.base + 'export-talk?export_type=',
-			qrCodeModule: QRCode,
+			scheduleExporters: computed(() => this.$store.getters['schedule/exporters'] || []),
+			scheduleMetaData: computed(() => this.$store.getters['schedule/scheduleMetaData'] || {}),
 			linkTarget: '_blank',
 			generateSessionLinkUrl: ({session}) => {
 				if (session.url) return session.url
@@ -235,30 +231,6 @@ export default {
 				return {name: 'room', params: {roomId: session.room.id}}
 			}
 			return {name: 'schedule:talk', params: {talkId: session.id}}
-		},
-		async doScheduleExport(option) {
-			try {
-				const url = config.api.base + 'export-talk?export_type=' + option.id
-				const authHeader = api._config.token ? `Bearer ${api._config.token}` : (api._config.clientId ? `Client ${api._config.clientId}` : null)
-				const result = await fetch(url, {
-					method: 'GET',
-					headers: {
-						Accept: 'application/json',
-						...(authHeader ? { Authorization: authHeader } : {})
-					}
-				}).then(r => r.json())
-				const a = document.createElement('a')
-				document.body.appendChild(a)
-				const blob = new Blob([result], {type: 'octet/stream'})
-				const downloadUrl = window.URL.createObjectURL(blob)
-				a.href = downloadUrl
-				a.download = 'schedule-' + option.id + '.' + option.id.replace('my', '')
-				a.click()
-				window.URL.revokeObjectURL(downloadUrl)
-				a.remove()
-			} catch (error) {
-				console.error('Export failed:', error)
-			}
 		},
 		hasFatalError(room) {
 			return !!(room && this.roomFatalErrors?.[room.id])

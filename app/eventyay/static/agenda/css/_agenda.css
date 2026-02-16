@@ -72,7 +72,6 @@
 }
 
 #main-container.main-schedule {
-  min-width: min-content;
   margin: 0 auto;
   padding-left: 0;
   padding-right: 0;
@@ -80,16 +79,22 @@
   #main-card {
     margin: 0 auto;
     main {
-      padding: 1rem 0;
+      padding: 0;
       width: 100%;
     }
   }
 }
 
 #main-container #fahrplan {
-  overflow-x: auto;
+  overflow: visible;
   width: 100%;
   box-sizing: border-box;
+
+  pretalx-schedule {
+    display: block;
+    width: 100%;
+    --pretalx-sticky-top-offset: 40px;
+  }
 }
 
 #fahrplan noscript,

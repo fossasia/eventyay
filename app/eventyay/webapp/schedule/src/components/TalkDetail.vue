@@ -2,7 +2,10 @@
 .c-talk-detail(v-scrollbar.y="")
 	.talk-wrapper(v-if="resolvedTalk")
 		.talk
-			h1 {{ getLocalizedString(resolvedTalk.title) }}
+			.talk-header
+				h1 {{ getLocalizedString(resolvedTalk.title) }}
+				.button-container(:class="isFaved ? 'faved' : ''")
+					fav-button(@toggleFav="toggleFav")
 			.info {{ datetime }} {{ roomName }}
 			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
 			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
@@ -31,15 +34,26 @@
 import moment from 'moment-timezone'
 import { getLocalizedString, getIconByFileEnding } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
+import FavButton from './FavButton.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent },
+	components: { MarkdownContent, FavButton },
 	inject: {
 		scheduleData: { default: null },
+		scheduleFav: {
+			default() {
+				return () => {}
+			}
+		},
+		scheduleUnfav: {
+			default() {
+				return () => {}
+			}
+		},
 		generateSpeakerLinkUrl: {
 			default() {
-				return ({speaker}) => `#speaker/${speaker.code}`
+				return ({speaker}) => `#speakers/${speaker.code}`
 			}
 		},
 		onSpeakerLinkClick: {
@@ -80,6 +94,11 @@ export default {
 			}
 			return null
 		},
+		isFaved() {
+			if (!this.resolvedTalk) return false
+			const favs = this.scheduleData?.favs || []
+			return favs.includes(this.resolvedTalk.id)
+		},
 		datetime() {
 			if (!this.resolvedTalk) return ''
 			return moment(this.resolvedTalk.start).format('L LT') + ' - ' + moment(this.resolvedTalk.end).format('LT')
@@ -110,6 +129,14 @@ export default {
 		},
 		onJoinRoomClick(event) {
 			this.$emit('joinRoom', event)
+		},
+		toggleFav() {
+			if (!this.resolvedTalk) return
+			if (this.isFaved) {
+				this.scheduleUnfav(this.resolvedTalk.id)
+			} else {
+				this.scheduleFav(this.resolvedTalk.id)
+			}
 		}
 	}
 }
@@ -128,6 +155,16 @@ export default {
 		flex: none
 		margin: 16px 0 16px 16px
 		max-width: 720px
+		.talk-header
+			display: flex
+			align-items: flex-start
+			gap: 8px
+			h1
+				flex: 1
+				margin-bottom: 0
+			.button-container
+				flex-shrink: 0
+				margin-top: 4px
 		h1
 			margin-bottom: 0
 		.info

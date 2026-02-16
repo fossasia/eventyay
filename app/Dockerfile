@@ -66,6 +66,7 @@ RUN wget -qO- https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --
 RUN apt-get update && apt-get install --no-install-recommends -y \
     netcat-traditional \
     nodejs \
+    make \
     && rm -rf /var/lib/apt/lists/*
 
 # esbuild needed by Django-Compressor

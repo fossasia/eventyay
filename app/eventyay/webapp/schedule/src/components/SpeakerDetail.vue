@@ -7,7 +7,13 @@
 				.avatar-placeholder(v-else)
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-			h2 {{ resolvedSpeaker.name || 'Speaker' }}
+			.speaker-title
+				h2 {{ resolvedSpeaker.name || 'Speaker' }}
+				a.btn-ical(v-if="icalUrl", :href="icalUrl", download)
+					svg(viewBox="0 0 16 16", width="16", height="16", fill="currentColor")
+						path(d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z")
+						path(d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z")
+					|  iCal
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
 			h3 Sessions
@@ -37,6 +43,7 @@ export default {
 	name: 'SpeakerDetail',
 	components: { MarkdownContent, Session },
 	inject: {
+		eventUrl: { default: null },
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
@@ -113,6 +120,11 @@ export default {
 			if (this.hasAmPm !== undefined && this.hasAmPm !== false) return this.hasAmPm
 			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
 			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
+		},
+		icalUrl() {
+			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
+			if (!code || !this.eventUrl) return null
+			return `${this.eventUrl}speakers/${code}/talks.ics`
 		}
 	},
 	methods: {
@@ -149,6 +161,28 @@ export default {
 		margin-bottom: 16px
 		h2
 			margin: 0
+	.speaker-title
+		display: flex
+		flex-direction: column
+		gap: 8px
+		h2
+			margin: 0
+	.btn-ical
+		display: inline-flex
+		align-items: center
+		gap: 6px
+		padding: 6px 14px
+		border: 1px solid $clr-grey-400
+		border-radius: 4px
+		font-size: 14px
+		color: $clr-primary-text-light
+		text-decoration: none
+		cursor: pointer
+		background: transparent
+		align-self: flex-start
+		&:hover
+			border-color: var(--pretalx-clr-primary, $clr-primary)
+			color: var(--pretalx-clr-primary, $clr-primary)
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px
@@ -174,6 +208,10 @@ export default {
 	.speaker-sessions
 		h3
 			margin-bottom: 8px
+		.c-linear-schedule-session
+			box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08)
+			border-radius: 6px
+			margin: 8px 0
 	@media (max-width: 768px)
 		.speaker-header
 			flex-direction: column

@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import DetailView, ListView, TemplateView
 from django_context_decorator import context
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.common.text.path import safe_filename
 from eventyay.common.views.mixins import (
@@ -27,7 +28,19 @@ from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models import TalkQuestionTarget
 
 
-class SpeakerList(EventPermissionRequired, Filterable, ListView):
+class ScheduleDataMixin:
+    """Provide schedule_json context for pages that embed the schedule widget."""
+
+    @context
+    def schedule_json(self):
+        schedule = self.request.event.current_schedule
+        if not schedule:
+            return '{}'
+        data = schedule.build_data(enrich=True)
+        return json.dumps(data, cls=I18nJSONEncoder)
+
+
+class SpeakerList(ScheduleDataMixin, EventPermissionRequired, Filterable, ListView):
     context_object_name = 'speakers'
     template_name = 'agenda/speakers.html'
     permission_required = 'base.list_schedule'
@@ -56,25 +69,10 @@ class SpeakerList(EventPermissionRequired, Filterable, ListView):
         return qs
 
     def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-        speakers_data = []
-        for profile in ctx.get('speakers', []):
-            speakers_data.append({
-                'code': profile.user.code,
-                'name': profile.user.get_display_name(),
-                'biography': str(profile.biography or ''),
-                'avatar_url': profile.user.avatar_url or '',
-                'talks': [
-                    {'title': str(t.title), 'url': str(t.urls.public)}
-                    for t in getattr(profile, 'talks', [])
-                ],
-                'url': str(profile.urls.public),
-            })
-        ctx['speakers_data_json'] = json.dumps(speakers_data)
-        return ctx
+        return super().get_context_data(**kwargs)
 
 
-class SpeakerView(PermissionRequired, TemplateView):
+class SpeakerView(ScheduleDataMixin, PermissionRequired, TemplateView):
     template_name = 'agenda/speaker.html'
     permission_required = 'base.view_speakerprofile'
     slug_field = 'code'
@@ -116,38 +114,6 @@ class SpeakerView(PermissionRequired, TemplateView):
             question__event=self.request.event,
             question__target=TalkQuestionTarget.SPEAKER,
         ).select_related('question')
-
-    @context
-    def speaker_data_json(self):
-        """Serialize speaker data as JSON for progressive enhancement."""
-        profile = self.profile
-        if not profile:
-            return '{}'
-        talks_data = []
-        for slot in self.talks:
-            sub = slot.submission
-            talks_data.append({
-                'id': sub.code,
-                'title': str(sub.title),
-                'start': f'{slot.start:%Y-%m-%dT%H:%M:%S%z}' if slot.start else None,
-                'end': f'{slot.end:%Y-%m-%dT%H:%M:%S%z}' if slot.end else None,
-                'duration': slot.duration,
-                'room': str(slot.room.name) if slot.room else None,
-                'url': str(sub.urls.public),
-            })
-        answers_data = [
-            {'question': str(a.question.question), 'answer': str(a)}
-            for a in self.answers()
-        ]
-        data = {
-            'code': profile.user.code,
-            'name': profile.user.get_display_name(),
-            'biography': str(profile.biography or ''),
-            'avatar_url': profile.user.avatar_url or '',
-            'talks': talks_data,
-            'answers': answers_data,
-        }
-        return json.dumps(data)
 
 
 class SpeakerRedirect(DetailView):

@@ -192,7 +192,8 @@ class TalkReviewView(TalkView):
 class SingleICalView(EventPageMixin, TalkMixin, View):
     def get(self, request, event, **kwargs):
         code = self.submission.code
-        talk_slots = self.submission.slots.filter(schedule=self.request.event.current_schedule, is_visible=True)
+        schedule = self.request.event.current_schedule or self.request.event.wip_schedule
+        talk_slots = self.submission.slots.filter(schedule=schedule, is_visible=True) if schedule else self.submission.slots.none()
 
         netloc = urlparse(settings.SITE_URL).netloc
         cal = vobject.iCalendar()

@@ -1,26 +1,27 @@
 <template lang="pug">
 .c-schedule-view
 	template(v-if="scheduleReady")
-		.filter-actions
-			app-dropdown(v-for="item in filterGroups", :key="item.refKey", className="schedule")
-				template(#toggler)
-					span {{ item.title }}
-					app-dropdown-content(className="schedule")
-						app-dropdown-item(v-for="entry in item.data", :key="entry.value")
-							label.checkbox-line(:style="{'--track-color': entry.color}")
-								input.filter-checkbox(type="checkbox", v-model="entry.selected", @change="onFilterChange")
-								span.checkbox-label {{ entry.label }}
-			button.fav-toggle(:class="{active: onlyFavs}", @click="toggleFavs")
-				| ★ {{ resolvedFavs.length }}
-			button.reset-btn(@click="resetAllFilters")
-				| ✕
-			.timezone-area(v-if="!inEventTimezone")
-				select.timezone-select(v-model="currentTimezone", @change="saveTimezone")
-					option(:value="resolvedSchedule.timezone") {{ resolvedSchedule.timezone }}
-					option(:value="userTimezone") {{ userTimezone }}
-			.timezone-label(v-else) {{ resolvedSchedule.timezone }}
-			.export-area
-				export-dropdown(:baseUrl="resolvedExportBaseUrl", :qrCodeModule="qrCodeModule", @export="onExport")
+		schedule-toolbar(
+			:version="resolvedMeta.version || ''",
+			:isCurrent="resolvedMeta.is_current !== false",
+			:changelogUrl="resolvedMeta.changelog_url || ''",
+			:currentScheduleUrl="resolvedMeta.current_schedule_url || ''",
+			:versions="resolvedMeta.versions || []",
+			:filterGroups="filterGroups",
+			:favsCount="resolvedFavs.length",
+			:onlyFavs="onlyFavs",
+			:hasActiveFilters="onlyFavs || activeFilterCount > 0",
+			:inEventTimezone="inEventTimezone",
+			v-model:currentTimezone="currentTimezone",
+			:scheduleTimezone="resolvedSchedule.timezone",
+			:userTimezone="userTimezone",
+			:exporters="resolvedExportersList",
+			:showFullscreen="false",
+			:showPrint="false",
+			@filterToggle="onFilterChange",
+			@toggleFavs="toggleFavs",
+			@resetFilters="resetAllFilters",
+			@saveTimezone="saveTimezone")
 		.day-tabs(v-if="computedDays && computedDays.length > 1")
 			button.day-tab(
 				v-for="day in computedDays",
@@ -67,22 +68,18 @@
 import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
-import ExportDropdown from './ExportDropdown'
-import AppDropdown from './AppDropdown'
-import AppDropdownContent from './AppDropdownContent'
-import AppDropdownItem from './AppDropdownItem'
+import ScheduleToolbar from './ScheduleToolbar'
 import { getLocalizedString } from '../utils'
 
 export default {
 	name: 'ScheduleView',
-	components: { LinearSchedule, GridScheduleWrapper, ExportDropdown, AppDropdown, AppDropdownContent, AppDropdownItem },
+	components: { LinearSchedule, GridScheduleWrapper, ScheduleToolbar },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: { default: null },
 		scheduleUnfav: { default: null },
-		scheduleDoExport: { default: null },
-		exportBaseUrl: { default: '' },
-		qrCodeModule: { default: null }
+		scheduleExporters: { default: () => [] },
+		scheduleMetaData: { default: () => ({}) }
 	},
 	props: {
 		schedule: Object,
@@ -104,9 +101,9 @@ export default {
 			type: String,
 			default: 'room'
 		},
-		exportUrl: {
-			type: String,
-			default: ''
+		exporters: {
+			type: Array,
+			default: () => []
 		}
 	},
 	emits: ['fav', 'unfav', 'export'],
@@ -139,8 +136,18 @@ export default {
 			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
 			return new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hour12
 		},
-		resolvedExportBaseUrl() {
-			return this.exportUrl || this.exportBaseUrl || ''
+		activeFilterCount() {
+			return Object.values(this.filterState)
+				.reduce((sum, group) => sum + group.filter(i => i.selected).length, 0)
+		},
+		resolvedExportersList() {
+			// Prefer prop, then injected exporters from provider
+			if (this.exporters && this.exporters.length) return this.exporters
+			const injected = this.scheduleExporters
+			return (injected && injected.length) ? injected : []
+		},
+		resolvedMeta() {
+			return this.scheduleMetaData || {}
 		},
 		scheduleReady() {
 			return !!(this.resolvedSchedule && this.enrichedSessions.length)
@@ -230,7 +237,7 @@ export default {
 				{ refKey: 'track', title: 'Tracks', data: this.filterState.tracks },
 				{ refKey: 'room', title: 'Rooms', data: this.filterState.rooms },
 				{ refKey: 'session_type', title: 'Types', data: this.filterState.types }
-			].filter(g => g.data.length > 0)
+			]
 		},
 		inEventTimezone() {
 			if (!this.resolvedSchedule?.talks?.length) return false
@@ -342,12 +349,6 @@ export default {
 			if (this.scheduleUnfav) this.scheduleUnfav(id)
 			this.$emit('unfav', id)
 		},
-		onExport(option) {
-			if (this.scheduleDoExport) {
-				this.scheduleDoExport(option)
-			}
-			this.$emit('export', option)
-		},
 		onResize() {
 			this.scrollParentWidth = this.$el?.offsetWidth || Infinity
 		}
@@ -361,45 +362,6 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
-	.filter-actions
-		display: flex
-		flex-wrap: wrap
-		align-items: center
-		gap: 8px
-		padding: 8px 16px
-		.checkbox-line
-			display: flex
-			align-items: center
-			gap: 4px
-			cursor: pointer
-			.filter-checkbox
-				accent-color: var(--track-color, var(--clr-primary))
-			.checkbox-label
-				font-size: 14px
-		.fav-toggle, .reset-btn
-			border: none
-			border-radius: 2px
-			height: 32px
-			padding: 0 16px
-			cursor: pointer
-			background: transparent
-			font-size: 14px
-			&:hover
-				background-color: rgba(0, 0, 0, 0.05)
-		.fav-toggle.active
-			border: 2px solid #f9a557
-		.timezone-area
-			margin-left: auto
-			.timezone-select
-				height: 32px
-				border-radius: 2px
-				border: 1px solid #ccc
-				font-size: 14px
-		.timezone-label
-			margin-left: auto
-			font-size: 14px
-			color: $clr-secondary-text-light
-			padding: 4px 8px
 	.day-tabs
 		display: flex
 		overflow-x: auto
@@ -437,8 +399,4 @@ export default {
 		font-size: 16px
 		color: $clr-secondary-text-light
 
-@media (max-width: 480px)
-	.c-schedule-view .filter-actions
-		flex-direction: column
-		align-items: flex-start
 </style>

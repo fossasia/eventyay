@@ -4,7 +4,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 		button.close-button(@click="close()") ✕
 		template(v-if="modalContent && modalContent.contentType === 'session'")
 			h3 {{ modalContent.contentObject.title }}
-				.button-container(:class="modalContent.contentObject.faved ? 'faved' : ''")
+				.button-container(:class="isFaved ? 'faved' : ''")
 					fav-button(@toggleFav="$emit('toggleFav', modalContent.contentObject.id)")
 
 			.card-content
@@ -14,6 +14,23 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
 					.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
 					.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
+					.session-export-area(ref="sessionExportDropdown")
+						button.session-export-btn(@click.stop="sessionExportOpen = !sessionExportOpen")
+							svg.modal-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+								path(d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4")
+								polyline(points="7 10 12 15 17 10")
+								line(x1="12", y1="15", x2="12", y2="3")
+							span Export
+							svg.modal-chevron(:class="{open: sessionExportOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+								path(d="M6 9l6 6 6-6")
+						.session-export-menu(v-if="sessionExportOpen")
+							a.session-export-item(:href="sessionIcalUrl", target="_blank")
+								svg.modal-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+									rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
+									line(x1="16", y1="2", x2="16", y2="6")
+									line(x1="8", y1="2", x2="8", y2="6")
+									line(x1="3", y1="10", x2="21", y2="10")
+								span iCal (.ics)
 				.text-content
 					.abstract(v-if="modalContent.contentObject.abstract", v-html="markdownIt.render(modalContent.contentObject.abstract)")
 					template(v-if="modalContent.contentObject.isLoading")
@@ -47,7 +64,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								.filename {{ description }}
 						a.join-room-btn(v-if="showJoinRoom && joinRoomLink", :href="joinRoomLink", @click="$emit('joinRoom', $event)") Join room
 			.speakers(v-if="modalContent.contentObject.speakers")
-				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speaker/${speaker.code}`", :key="speaker.code")
+				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speakers/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
 						img(v-if="speaker.avatar", :src="speaker.avatar", :alt="speaker.name")
 						.avatar-placeholder(v-else)
@@ -58,19 +75,24 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						p.biography(v-if="speaker.apiContent?.biography?.length > 0", v-html="markdownIt.render(speaker.apiContent.biography)")
 		template(v-if="modalContent && modalContent.contentType === 'speaker'")
 			.speaker-details
-				h3 {{ modalContent.contentObject.name }}
+				.speaker-header
+					.speaker-avatar
+						img(v-if="modalContent.contentObject.avatar", :src="modalContent.contentObject.avatar", :alt="modalContent.contentObject.name")
+						.avatar-placeholder(v-else)
+							svg(viewBox="0 0 24 24")
+								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+					.speaker-title
+						h3 {{ modalContent.contentObject.name }}
+						a.btn-ical(v-if="speakerIcalUrl", :href="speakerIcalUrl", download)
+							svg(viewBox="0 0 16 16", width="16", height="16", fill="currentColor")
+								path(d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z")
+								path(d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z")
+							|  iCal
 				.speaker-content.card-content
-					.text-content
-						template(v-if="modalContent.contentObject.isLoading")
-							bunt-progress-circular(size="big", :page="true")
-						template(v-else)
-							.biography(v-if="modalContent.contentObject.apiContent?.biography?.length > 0", v-html="markdownIt.render(modalContent.contentObject.apiContent.biography)")
-					.speaker-avatar-container(:class="{ 'outline-container': shortAnswers.length > 0 || iconAnswers.length > 0 }")
-						.img-wrapper
-							img(v-if="modalContent.contentObject.avatar", :src="modalContent.contentObject.avatar", :alt="modalContent.contentObject.name")
-							.avatar-placeholder(v-else)
-								svg(viewBox="0 0 24 24")
-									path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
+					template(v-if="modalContent.contentObject.isLoading")
+						bunt-progress-circular(size="big", :page="true")
+					template(v-else)
+						.biography(v-if="modalContent.contentObject.apiContent?.biography?.length > 0", v-html="markdownIt.render(modalContent.contentObject.apiContent.biography)")
 						.answers(v-if="shortAnswers.length > 0 || iconAnswers.length > 0")
 							hr
 							.icon-group(v-if="iconAnswers.length > 0")
@@ -123,7 +145,8 @@ export default {
 	name: 'SessionModal',
 	components: { FavButton, Session },
 	inject: {
-		remoteApiUrl: { default: '' }
+		remoteApiUrl: { default: '' },
+		eventUrl: { default: '' }
 	},
 	props: {
 		modalContent: Object,
@@ -132,6 +155,10 @@ export default {
 		hasAmPm: Boolean,
 		now: Object,
 		onHomeServer: Boolean,
+		favs: {
+			type: Array,
+			default: () => []
+		},
 		showJoinRoom: {
 			type: Boolean,
 			default: false
@@ -147,10 +174,28 @@ export default {
 			markdownIt,
 			getLocalizedString,
 			getSessionTime,
-			getIconByFileEnding
+			getIconByFileEnding,
+			sessionExportOpen: false
 		}
 	},
 	computed: {
+		isFaved () {
+			const obj = this.modalContent?.contentObject
+			if (!obj) return false
+			return this.favs.includes(obj.id)
+		},
+		sessionIcalUrl () {
+			const obj = this.modalContent?.contentObject
+			if (!obj) return '#'
+			const base = this.eventUrl || ''
+			return `${base}talk/${obj.id}.ics`
+		},
+		speakerIcalUrl () {
+			const obj = this.modalContent?.contentObject
+			if (!obj || this.modalContent.contentType !== 'speaker') return null
+			const base = this.eventUrl || ''
+			return `${base}speakers/${obj.code}/talks.ics`
+		},
 		shortAnswers () {
 			const apiContent = this.modalContent.contentObject.apiContent
 			if (!apiContent || !apiContent.answers || !apiContent.answers.length) return []
@@ -165,7 +210,19 @@ export default {
 			return apiContent.answers.filter((answer) => answer.question.variant === 'url' && answer.question.icon)
 		}
 	},
+	mounted () {
+		document.addEventListener('click', this.outsideClickExport, true)
+	},
+	beforeUnmount () {
+		document.removeEventListener('click', this.outsideClickExport, true)
+	},
 	methods: {
+		outsideClickExport (event) {
+			const path = event.composedPath ? event.composedPath() : [event.target]
+			if (this.$refs.sessionExportDropdown && !path.includes(this.$refs.sessionExportDropdown)) {
+				this.sessionExportOpen = false
+			}
+		},
 		showModal () {
 			this.$refs.modal?.showModal()
 		},
@@ -226,11 +283,59 @@ export default {
 		color: $clr-grey-600
 		margin-bottom: 8px
 		border-bottom: 1px solid $clr-grey-300
+		align-items: center
 		&>*
 			margin-right: 4px
 			margin-bottom: 8px
-			&:not(:last-child):after
+			&:not(:last-child):not(.session-export-area):after
 				content: ','
+		.session-export-area
+			position: relative
+			margin-left: auto
+			.session-export-btn
+				display: flex
+				align-items: center
+				gap: 4px
+				border: 1px solid #ccc
+				background: #fff
+				border-radius: 4px
+				padding: 4px 10px
+				font-size: 13px
+				cursor: pointer
+				color: #333
+				&:hover
+					background: #f5f5f5
+			.modal-icon
+				width: 14px
+				height: 14px
+				flex-shrink: 0
+			.modal-chevron
+				width: 12px
+				height: 12px
+				transition: transform 0.2s
+				&.open
+					transform: rotate(180deg)
+			.session-export-menu
+				position: absolute
+				right: 0
+				top: 100%
+				background: #fff
+				min-width: 180px
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+				border-radius: 4px
+				z-index: 200
+				padding: 4px 0
+				white-space: nowrap
+			.session-export-item
+				display: flex
+				align-items: center
+				gap: 8px
+				padding: 6px 12px
+				color: #333
+				text-decoration: none
+				font-size: 13px
+				&:hover
+					background-color: #f5f5f5
 
 	.card-content
 			display: flex
@@ -386,64 +491,54 @@ export default {
 
 	.speaker-details
 		h3
-			margin-bottom: 0
-		.speaker-content
+			margin: 0
+		.speaker-header
 			display: flex
-			flex-direction: row
-			align-items: flex-start
-			justify-content: space-between
+			align-items: center
+			gap: 16px
+			margin-bottom: 16px
+		.speaker-avatar
+			flex-shrink: 0
+			width: 100px
+			height: 100px
+			img, .avatar-placeholder
+				width: 100px
+				height: 100px
+				border-radius: 50%
+				object-fit: cover
+				box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px 0px, rgba(0, 0, 0, 0.24) 0px 1px 2px 0px
+			.avatar-placeholder
+				background: rgba(0,0,0,0.1)
+				display: flex
+				align-items: center
+				justify-content: center
+				svg
+					width: 60%
+					height: 60%
+					color: rgba(0,0,0,0.3)
+		.speaker-title
+			display: flex
+			flex-direction: column
+			gap: 8px
+		.btn-ical
+			display: inline-flex
+			align-items: center
+			gap: 6px
+			padding: 6px 14px
+			border: 1px solid $clr-grey-400
+			border-radius: 4px
+			font-size: 14px
+			color: $clr-primary-text-light
+			text-decoration: none
+			cursor: pointer
+			background: transparent
+			align-self: flex-start
+			&:hover
+				border-color: var(--pretalx-clr-primary, $clr-primary)
+				color: var(--pretalx-clr-primary, $clr-primary)
+		.speaker-content
 			margin-bottom: 16px
 
 			.biography
-					margin-top: 8px
-
-		.speaker-avatar-container
-			&.outline-container
-				border: 1px solid var(--pretalx-clr-primary)
-				box-shadow: rgba(0, 0, 0, 0.24) 0px 1px 2px 0px
-				border-radius: 6px
-				padding: 12px
-				margin-right: 8px
-				display: flex
-				flex-direction: column
-				align-items: center
-
-				.img-wrapper
-					padding: 0 0 8px 0
-
-			.answers
-				hr
-					color: #ced4da
-					height: 0
-					border: 0
-					border-top: 1px solid #e0e0e0
-					margin: 8px 0
-
-				.icon-group
-					justify-content: center
-
-				.inline-answer
-					margin-top: 8px
-
-					.question
-						color: var(--pretalx-clr-text)
-						margin-right: 4px;
-						strong
-							font-weight: 600
-
-					.answer
-						color: var(--pretalx-clr-text)
-
-						p
-							margin: 0
-							display: inline
-
-						.fa
-							margin-right: 4px
-
-						a
-							color: var(--pretalx-clr-primary)
-							text-decoration: none
-							&:hover
-								text-decoration: underline
+				margin-top: 8px
 </style>

@@ -1,7 +1,7 @@
 /**
  * <pretalx-fav-button> custom element — session favourite toggle.
  *
- * Discovers event slug, sub-system, and API base URL from the page URL.
+ * Discovers event slug and API base URL from the page URL.
  * Syncs fav state via Django REST API (POST/DELETE) with CSRF token.
  * Falls back to localStorage for anonymous users.
  *
@@ -11,12 +11,11 @@
 class PretalxFavButton extends HTMLElement {
   connectedCallback () {
     const parts = window.location.pathname.split('/')
-    this._subSystem = parts[1]
     this._eventSlug = parts[2]
     this._submissionId = this.getAttribute('submission-id') || parts[4]
     this._loggedIn = this.getAttribute('logged-in') === 'true'
     this._apiBase = new URL(
-      `/${this._subSystem}/api/events/${this._eventSlug}/`,
+      `/api/v1/events/${this._eventSlug}/`,
       window.location
     ).href
     this._csrfToken = document.cookie

@@ -132,9 +132,11 @@ export default defineConfig(({ mode }) => {
         theme: path.resolve(__dirname, 'src/theme'),
         'has-emoji': path.resolve(__dirname, 'build/has-emoji/emoji.json'),
         // Reduce moment-timezone data size similar to previous webpack plugin
-  'moment-timezone': 'moment-timezone/builds/moment-timezone-with-data-10-year-range',
-  // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
-  sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
+        'moment-timezone': path.resolve(__dirname, 'node_modules/moment-timezone/builds/moment-timezone-with-data-10-year-range.js'),
+        // Ensure schedule component imports resolve from video's node_modules
+        'markdown-it': path.resolve(__dirname, 'node_modules/markdown-it'),
+        // Provide default export for 'sdp' to satisfy janus/webrtc-adapter import style
+        sdp: path.resolve(__dirname, 'src/shims/sdp-default.js')
       }
     },
     optimizeDeps: {

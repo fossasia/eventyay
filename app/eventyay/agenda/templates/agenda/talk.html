@@ -41,10 +41,10 @@
                     <pretalx-fav-button submission-id="{{ submission.code }}" logged-in="{% if request.user.is_anonymous %}false{% else %}true{% endif %}"></pretalx-fav-button>
                 </span>
                 <div class="buttons d-flex justify-content-end" id="talk-buttons">
-                    {% if submission.state == "confirmed" and request.event.current_schedule %}
-                        <a class="btn btn-outline-primary ml-2" href="{{ submission.urls.ical }}">
-                            <i class="fa fa-calendar"></i> .ical
-                        </a>
+                                        {% if submission.state == "confirmed" and request.event.current_schedule %}
+                    <a class="btn outline ml-2" href="{{ submission.urls.ical }}" download>
+                        <i class="fa fa-calendar"></i> iCal (.ics)
+                    </a>
                     {% endif %}
                     {% if submission.does_accept_feedback and request.event|get_feature_flag:"use_feedback" and not is_html_export %}
                         <a href="{{ submission.urls.feedback }}" class="btn btn-success">
@@ -149,37 +149,34 @@
         </div>
     </div>
     {% if not hide_speaker_links %}
+        <div class="speakers-grid">
         {% for speaker in speakers %}
-            <div class="pretalx-session">
-                <div class="pretalx-session-time-box avatar">
-                    <a href="{{ speaker.talk_profile.urls.public }}">
-                        <div class="avatar-wrapper">
-                            {% if speaker.avatar_url and request.event.cfp.request_avatar %}
-                                <img loading="lazy" src="{{ speaker.avatar|thumbnail:"default" }}" alt="{% translate "The speaker’s profile picture" %}">
-                            {% else %}
-                                <img loading="lazy" src="{{ request.event.urls.speakers }}avatar.svg" alt="The speaker’s profile picture">
-                            {% endif %}
+            <a class="speaker-card" href="{{ speaker.talk_profile.urls.public }}">
+                <div class="speaker-card-avatar">
+                    {% if speaker.avatar_url and request.event.cfp.request_avatar %}
+                        <img loading="lazy" src="{{ speaker.avatar|thumbnail:"default" }}" alt="{{ speaker.get_display_name }}">
+                    {% else %}
+                        <div class="avatar-placeholder">
+                            <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z"/></svg>
                         </div>
-                    </a>
+                    {% endif %}
                 </div>
-                <div class="pretalx-session-info">
-                    <div class="title">
-                        <a href="{{ speaker.talk_profile.urls.public }}">{{ speaker.get_display_name }}</a>
-                    </div>
-                    <div class="abstract">{{ speaker.talk_profile.biography|default:""|event_localize|rich_text }}</div>
+                <div class="speaker-card-info">
+                    <div class="speaker-card-name">{{ speaker.get_display_name }}</div>
+                    {% if speaker.talk_profile.biography %}
+                        <div class="speaker-card-bio">{{ speaker.talk_profile.biography|event_localize|rich_text }}</div>
+                    {% endif %}
                     {% if speaker.other_submissions %}
-                        {% translate "This speaker also appears in:" %}
-                        <ul>
+                        <ul class="speaker-card-talks">
                             {% for talk in speaker.other_submissions %}
-                                <li>
-                                    <a href="{{ talk.urls.public }}">{{ talk.title|event_localize }}</a>
-                                </li>
+                                <li>{{ talk.title|event_localize }}</li>
                             {% endfor %}
                         </ul>
                     {% endif %}
                 </div>
-            </div>
+            </a>
         {% endfor %}
+        </div>
     {% endif %}
     </article>
 {% endblock agenda_content %}

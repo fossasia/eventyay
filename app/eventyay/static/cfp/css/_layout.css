@@ -71,7 +71,6 @@ header {
     }
   }
   .header-row-right {
-    padding-bottom: 4px;
     color: var(--color-primary);
     margin-left: auto;
 	margin-right: 10px;
@@ -222,9 +221,6 @@ header {
   padding: 0;
   border: none;
 
-  main {
-    padding: var(--size-spacer);
-  }
 }
 
 #event-nonpublic {

@@ -1,30 +1,35 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': days && days.length > 1 ? '48px' : '0px'}", :class="showGrid ? ['grid-schedule'] : ['list-schedule']")
+.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
 	template(v-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
+	template(v-else-if="isSpeakerView && schedule")
+		speakers-list(v-if="view === 'speakers'")
+		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
 	template(v-else-if="schedule && sessions.length")
-		schedule-toolbar(v-if="scheduleMeta",
-			:version="scheduleMeta.version",
-			:isCurrent="scheduleMeta.is_current",
-			:changelogUrl="scheduleMeta.changelog_url",
-			:exporters="scheduleMeta.exporters",
-			:fullscreenTarget="$el")
-		schedule-settings(
-			:tracks="schedule.tracks",
-			:filteredTracksCount="filteredTracks.length",
+		schedule-toolbar(v-if="scheduleMeta || schedule",
+			:version="scheduleMeta?.version || ''",
+			:isCurrent="scheduleMeta?.is_current !== false",
+			:changelogUrl="scheduleMeta?.changelog_url || ''",
+			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
+			:exporters="scheduleMeta?.exporters || []",
+			:versions="scheduleMeta?.versions || []",
+			:fullscreenTarget="$el",
+			:filterGroups="filterGroups",
 			:favsCount="favs.length",
 			:onlyFavs="onlyFavs",
+			:hasActiveFilters="onlyFavs || hasActiveFilterSelections",
 			:inEventTimezone="inEventTimezone",
 			v-model:currentTimezone="currentTimezone",
 			:scheduleTimezone="schedule.timezone",
 			:userTimezone="userTimezone",
-			@openFilter="$refs.filterModal?.showModal()",
-			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetFilteredTracks()",
-			@saveTimezone="saveTimezone"
-		)
-		bunt-tabs.days(v-if="days && days.length > 1", v-model="currentDay", ref="tabs" :class="showGrid? ['grid-tabs'] : ['list-tabs']")
-			bunt-tab(v-for="day in days", :id="day.format('YYYY-MM-DD')", :header="day.format(dateFormat)", @selected="changeDay(day)")
+			:days="days",
+			:currentDay="currentDay",
+			@selectDay="selectDay($event)",
+			@filterToggle="onlyFavs = false",
+			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
+			@resetFilters="onlyFavs = false; resetAllFilters()",
+			@saveTimezone="saveTimezone")
 		grid-schedule-wrapper(v-if="showGrid",
 			:sessions="sessions",
 			:rooms="rooms",
@@ -38,6 +43,7 @@
 			:favs="favs",
 			:onHomeServer="onHomeServer",
 			:disableAutoScroll="disableAutoScroll",
+			:forceScrollDay="forceScrollDay",
 			@changeDay="setCurrentDay($event)",
 			@fav="fav($event)",
 			@unfav="unfav($event)")
@@ -62,11 +68,6 @@
 			.btn.btn-danger(@click="errorMessages = errorMessages.filter(m => m !== message)") x
 			div.message {{ message }}
 	#bunt-teleport-target(ref="teleportTarget")
-	filter-modal(
-		ref="filterModal",
-		:tracks="allTracks",
-		@trackToggled="onlyFavs = false"
-	)
 	session-modal(
 		ref="sessionModal",
 		:modalContent="modalContent",
@@ -75,7 +76,8 @@
 		:hasAmPm="hasAmPm",
 		:now="now",
 		:onHomeServer="onHomeServer",
-		@toggleFav="favs.includes(modalContent?.contentObject.id) ? unfav(modalContent.contentObject.id) : fav(modalContent.contentObject.id)",
+		:favs="favs",
+		@toggleFav="toggleSessionModalFav",
 		@showSpeaker="showSpeakerDetails",
 		@fav="fav($event)",
 		@unfav="unfav($event)"
@@ -90,9 +92,9 @@ import LinearSchedule from '~/components/LinearSchedule'
 import GridScheduleWrapper from '~/components/GridScheduleWrapper'
 import FavButton from '~/components/FavButton'
 import Session from '~/components/Session'
-import ScheduleSettings from '~/components/ScheduleSettings'
 import SessionModal from '~/components/SessionModal'
-import FilterModal from '~/components/FilterModal'
+import SpeakersList from '~/components/SpeakersList'
+import SpeakerDetail from '~/components/SpeakerDetail'
 import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
 
 const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
@@ -104,7 +106,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, ScheduleSettings, SessionModal, FilterModal, ScheduleToolbar },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, SpeakerDetail },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -113,6 +115,16 @@ export default {
 			default: 'grid'
 		},
 		version: {
+			type: String,
+			default: ''
+		},
+		// View mode: 'schedule' (default), 'speakers' (list), 'speaker' (detail)
+		view: {
+			type: String,
+			default: 'schedule'
+		},
+		// Speaker code, used when view === 'speaker'
+		speakerCode: {
 			type: String,
 			default: ''
 		},
@@ -137,6 +149,26 @@ export default {
 				event.preventDefault()
 
 				this.showSessionDetails(session, event)
+			},
+			scheduleFav: (id) => this.fav(id),
+			scheduleUnfav: (id) => this.unfav(id),
+			scheduleData: computed(() => ({
+				schedule: this.schedule,
+				sessions: this.sessions || [],
+				favs: this.favs,
+				timezone: this.currentTimezone,
+				now: this.now,
+				hasAmPm: this.hasAmPm,
+			})),
+			generateSpeakerLinkUrl: ({speaker}) => {
+				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
+				return `#speakers/${speaker.code}`
+			},
+			onSpeakerLinkClick: (event, speaker) => {
+				if (!this.onHomeServer) {
+					event.preventDefault()
+					this.showSpeakerDetails(speaker, event)
+				}
 			}
 		}
 	},
@@ -150,9 +182,12 @@ export default {
 			userTimezone: null,
 			now: moment(),
 			currentDay: null,
+			forceScrollDay: 0,
 			currentTimezone: null,
 			favs: [],
 			allTracks: [],
+			allRooms: [],
+			allTypes: [],
 			onlyFavs: false,
 			scheduleError: false,
 			onHomeServer: false,
@@ -184,6 +219,22 @@ export default {
 		filteredTracks () {
 			return this.allTracks.filter(t => t.selected)
 		},
+		filteredRooms () {
+			return this.allRooms.filter(r => r.selected)
+		},
+		filteredTypes () {
+			return this.allTypes.filter(t => t.selected)
+		},
+		hasActiveFilterSelections () {
+			return this.filteredTracks.length > 0 || this.filteredRooms.length > 0 || this.filteredTypes.length > 0
+		},
+		filterGroups () {
+			return [
+				{ refKey: 'track', title: 'Tracks', data: this.allTracks },
+				{ refKey: 'room', title: 'Rooms', data: this.allRooms },
+				{ refKey: 'type', title: 'Types', data: this.allTypes }
+			]
+		},
 		speakersLookup () {
 			if (!this.schedule) return {}
 			return this.schedule.speakers.reduce((acc, s) => { acc[s.code] = s; return acc }, {})
@@ -193,7 +244,9 @@ export default {
 			const sessions = []
 			for (const session of this.schedule.talks.filter(s => s.start)) {
 				if (this.onlyFavs && !this.favs.includes(session.code)) continue
-				if (this.filteredTracks && this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
+				if (this.filteredTracks.length && !this.filteredTracks.find(t => t.id === session.track)) continue
+				if (this.filteredRooms.length && !this.filteredRooms.find(r => r.id === session.room)) continue
+				if (this.filteredTypes.length && !this.filteredTypes.find(t => t.value === session.session_type)) continue
 				const start = moment.tz(session.start, this.currentTimezone)
 				if (this.displayDates.length && !this.displayDates.includes(start.clone().tz(this.schedule.timezone).format('YYYY-MM-DD'))) continue
 				sessions.push({
@@ -234,24 +287,11 @@ export default {
 			if (!this.schedule?.talks?.length) return false
 			return moment().utcOffset() === moment.tz(this.schedule.timezone).utcOffset()
 		},
-		dateFormat () {
-			// Return a moment format string for day tab headers
-			let weekday = ''
-			if (this.showGrid) {
-				if (this.days && (!this.days.length || this.days.length <= 7)) {
-					weekday = 'dddd '
-				} else {
-					weekday = 'ddd '
-				}
-			}
-			let month = 'MMM'
-			if ((this.days && this.days.length <= 5) || (this.showGrid && this.schedule && this.schedule.rooms.length > 2)) {
-				month = 'MMMM'
-			}
-			return `${weekday}D ${month}`
-		},
 		hasAmPm () {
 			return new Intl.DateTimeFormat(this.locale, {hour: 'numeric'}).resolvedOptions().hour12
+		},
+		isSpeakerView () {
+			return this.view === 'speakers' || this.view === 'speaker'
 		},
 		eventSlug () {
 			let url = ''
@@ -260,12 +300,14 @@ export default {
 			} else {
 				url = new URL('http://example.org/' + this.eventUrl)
 			}
-			return url.pathname.replace(/\//g, '')
+			// Extract the last non-empty path segment as the event slug
+			const segments = url.pathname.split('/').filter(s => s.length > 0)
+			return segments[segments.length - 1] || url.pathname.replace(/\//g, '')
 		},
 		remoteApiUrl () {
 			if (!this.eventUrl) return ''
 			const eventUrlObj = new URL(this.eventUrl)
-			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/events/${this.eventSlug}/`
+			return `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
 		}
 	},
 	async created () {
@@ -300,6 +342,22 @@ export default {
 		if (window.__SCHEDULE_META__) {
 			this.scheduleMeta = window.__SCHEDULE_META__
 		}
+
+		// For speaker views, we only need schedule data + favs (no day tabs, filters, etc.)
+		if (this.isSpeakerView) {
+			if (!this.schedule) {
+				this.scheduleError = true
+				return
+			}
+			this.currentTimezone = localStorage.getItem(`${this.eventSlug}_timezone`)
+			this.currentTimezone = [this.schedule.timezone, this.userTimezone].includes(this.currentTimezone) ? this.currentTimezone : this.schedule.timezone
+			this.now = moment.tz(this.currentTimezone)
+			setInterval(() => this.now = moment.tz(this.currentTimezone), 30000)
+			this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
+			this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
+			return
+		}
+
 		if (!this.schedule.talks.length) {
 			this.scheduleError = true
 			return
@@ -314,9 +372,17 @@ export default {
 			this.onWindowResize()
 		}
 		this.schedule.tracks.forEach(t => { t.value = t.id; t.label = getLocalizedString(t.name); this.allTracks.push(t) })
+		this.schedule.rooms.forEach(r => { this.allRooms.push({ id: r.id, value: r.id, label: getLocalizedString(r.name), selected: false }) })
+		const typeSet = new Set()
+		this.schedule.talks.forEach(s => {
+			if (s.session_type && !typeSet.has(s.session_type)) {
+				typeSet.add(s.session_type)
+				this.allTypes.push({ value: s.session_type, label: s.session_type, selected: false })
+			}
+		})
 
 		// set API URL before loading favs
-		this.apiUrl = window.location.origin + '/api/events/' + this.eventSlug + '/'
+		this.apiUrl = window.location.origin + '/api/v1/events/' + this.eventSlug + '/'
 		this.favs = this.pruneFavs(await this.loadFavs(), this.schedule)
 
 		if (fragment && fragment.length === 10) {
@@ -371,6 +437,11 @@ export default {
 			this.currentDay = day.clone().startOf('day').format('YYYY-MM-DD')
 			window.location.hash = day.format('YYYY-MM-DD')
 		},
+		selectDay (dayId) {
+			this.currentDay = dayId
+			window.location.hash = dayId
+			this.forceScrollDay++
+		},
 		onWindowResize () {
 			this.scrollParentWidth = document.body.offsetWidth
 		},
@@ -382,7 +453,7 @@ export default {
 		},
 		async remoteApiRequest (path, method, data) {
 			const eventUrlObj = new URL(this.eventUrl)
-			const baseUrl = `${eventUrlObj.protocol}//${eventUrlObj.host}/api/events/${this.eventSlug}/`
+			const baseUrl = `${eventUrlObj.protocol}//${eventUrlObj.host}/api/v1/events/${this.eventSlug}/`
 			return this.apiRequest(path, method, data, baseUrl)
 		},
 		async apiRequest (path, method, data, baseUrl) {
@@ -443,6 +514,13 @@ export default {
 		},
 		saveFavs () {
 			localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
+		},
+		toggleSessionModalFav (id) {
+			if (this.favs.includes(id)) {
+				this.unfav(id)
+			} else {
+				this.fav(id)
+			}
 		},
 		fav (id) {
 			if (!this.favs.includes(id)) {
@@ -588,8 +666,10 @@ export default {
 				Promise.allSettled(speakerFetchPromises);
 			}
 		},
-		resetFilteredTracks () {
+		resetAllFilters () {
 			this.allTracks.forEach(t => t.selected = false)
+			this.allRooms.forEach(r => r.selected = false)
+			this.allTypes.forEach(t => t.selected = false)
 		}
 	}
 }
@@ -611,28 +691,31 @@ export default {
 	display: flex
 	flex-direction: column
 	min-height: 0
-	height: 100%
 	font-size: 14px
 	--pretalx-clr-text: rgb(13,15,16)
+	&:fullscreen
+		background: #fff
+		padding: 16px
+		overflow: auto
 	&.grid-schedule
-		min-width: min-content
-		max-width: var(--schedule-max-width)
 		margin: 0 auto
 	&.list-schedule
+		min-width: 0
+	&.speaker-view
 		min-width: 0
 	.days
 		background-color: $clr-white
 		tabs-style(active-color: var(--pretalx-clr-primary), indicator-color: var(--pretalx-clr-primary), background-color: transparent)
 		overflow-x: auto
 		position: sticky
-		top: var(--pretalx-sticky-top-offset, 0px)
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + 40px)
 		left: 0
 		margin-bottom: 0
 		flex: none
 		min-width: 0
-		max-width: var(--schedule-max-width)
 		height: 48px
 		z-index: 30
+		display: none
 		.bunt-tabs-header
 			min-width: min-content
 		.bunt-tabs-header-items
@@ -686,5 +769,57 @@ export default {
 		color: $clr-grey-600
 	&:hover .pretalx
 		color: #3aa57c
+
+@media print
+	.pretalx-schedule
+		height: auto !important
+		overflow: visible !important
+		&:fullscreen
+			padding: 0
+		.days
+			position: static !important
+		.error-messages
+			display: none
+	.pretalx-modal
+		display: none !important
+	.c-linear-schedule-session, .break
+		break-inside: avoid
+		page-break-inside: avoid
+		box-shadow: none !important
+		border: 1px solid #ccc !important
+		.time-box
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
+		.info
+			border: 1px solid #ccc !important
+			border-left: none !important
+			background: #fff !important
+		.session-icons
+			display: none
+	.c-grid-schedule
+		overflow: visible !important
+		.sticky-header
+			position: static !important
+		.scroll-proxy, .custom-scrollbar
+			display: none
+		.rooms-bar
+			overflow: visible !important
+		.grid-viewport
+			overflow: visible !important
+		.grid
+			min-width: 0 !important
+		.timeslice
+			position: static !important
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
+		.c-linear-schedule-session .time-box,
+		.break .time-box
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
+	.powered-by
+		display: none
 
 </style>

@@ -1,42 +1,49 @@
 <template lang="pug">
-.c-grid-schedule()
-	.grid(:style="gridStyle")
-		template(v-for="slice of visibleTimeslices")
-			.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISOString()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
-			.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
-		.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
-			svg(viewBox="0 0 10 10")
-				path(d="M 0 0 L 10 5 L 0 10 z")
-		.room(:style="{'grid-area': `1 / 1 / auto / auto`}")
-		.room(v-for="(room, index) of rooms", :style="{'grid-area': `1 / ${index + 2 } / auto / auto`}") {{ getLocalizedString(room.name) }}
-			bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
-		.room(v-if="hasSessionsWithoutRoom", :style="{'grid-area': `1 / ${rooms.length + 2} / auto / -1`}") no location
-		template(v-for="session of sessions")
-			session(
-				v-if="isProperSession(session)",
-				:session="session",
-				:now="now",
-				:locale="locale",
-				:timezone="timezone",
-				:style="getSessionStyle(session)",
-				:showAbstract="false", :showRoom="false",
-				:faved="favs.includes(session.id)",
-				:hasAmPm="hasAmPm",
-				:onHomeServer="onHomeServer",
-				@fav="$emit('fav', session.id)",
-				@unfav="$emit('unfav', session.id)"
-			)
-			.break(v-else, :style="getSessionStyle(session)")
-				.time-box
-					.start(v-if="hasAmPm", class="has-ampm")
-						.time {{ session.start.clone().tz(timezone).format('h:mm') }}
-						.ampm {{ session.start.clone().tz(timezone).format('A') }}
-					.start(v-else)
-						.time {{ session.start.clone().tz(timezone).format('HH:mm') }}
-					.duration {{ getPrettyDuration(session.start, session.end) }}
-					.buffer
-				.info
-					.title {{ getLocalizedString(session.title) }}
+.c-grid-schedule
+	.sticky-header
+		.rooms-bar(ref="roomsBar")
+			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : 'min-content'}")
+				.room
+				.room(v-for="(room, index) of rooms") {{ getLocalizedString(room.name) }}
+					bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
+				.room(v-if="hasSessionsWithoutRoom") no location
+		.custom-scrollbar(ref="customScrollbar", v-show="scrollThumbWidth > 0 && scrollThumbWidth < 100")
+			.scroll-track(ref="scrollTrack", @mousedown="onTrackClick")
+				.scroll-thumb(ref="scrollThumb", :style="{'width': scrollThumbWidth + '%', 'left': scrollThumbLeft + '%'}", @mousedown.stop="onThumbMousedown")
+	.grid-viewport(ref="gridViewport", @scroll="onViewportScroll")
+		.grid(:style="gridStyle")
+			template(v-for="slice of visibleTimeslices")
+				.timeslice(:ref="slice.name", :class="getSliceClasses(slice)", :data-slice="slice.date.toISOString()", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+				.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
+			.now(v-if="nowSlice", ref="now", :class="{'on-daybreak': nowSlice.onDaybreak}", :style="{'grid-area': `${nowSlice.slice.name} / 1 / auto / auto`, '--offset': nowSlice.offset}")
+				svg(viewBox="0 0 10 10")
+					path(d="M 0 0 L 10 5 L 0 10 z")
+			template(v-for="session of sessions")
+				session(
+					v-if="isProperSession(session)",
+					:session="session",
+					:now="now",
+					:locale="locale",
+					:timezone="timezone",
+					:style="getSessionStyle(session)",
+					:showAbstract="false", :showRoom="false",
+					:faved="favs.includes(session.id)",
+					:hasAmPm="hasAmPm",
+					:onHomeServer="onHomeServer",
+					@fav="$emit('fav', session.id)",
+					@unfav="$emit('unfav', session.id)"
+				)
+				.break(v-else, :style="getSessionStyle(session)")
+					.time-box
+						.start(v-if="hasAmPm", class="has-ampm")
+							.time {{ session.start.clone().tz(timezone).format('h:mm') }}
+							.ampm {{ session.start.clone().tz(timezone).format('A') }}
+						.start(v-else)
+							.time {{ session.start.clone().tz(timezone).format('HH:mm') }}
+						.duration {{ getPrettyDuration(session.start, session.end) }}
+						.buffer
+					.info
+						.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
 // TODO
@@ -62,6 +69,7 @@ export default {
 			}
 		},
 		currentDay: String,
+		forceScrollDay: { type: Number, default: 0 },
 		now: Object,
 		timezone: String,
 		locale: String,
@@ -73,7 +81,12 @@ export default {
 	data () {
 		return {
 			getLocalizedString,
-			getPrettyDuration
+			getPrettyDuration,
+			scrollContentWidth: 0,
+			scrollThumbWidth: 100,
+			scrollThumbLeft: 0,
+			_scrollSource: null,
+			_thumbDrag: null
 		}
 	},
 	computed: {
@@ -201,14 +214,14 @@ export default {
 			return this.timeslices.filter(slice => slice.date.minute() % 30 === 0)
 		},
 		gridStyle () {
-			let rows = '[header] 52px '
+			let rows = ''
 			rows += this.timeslices.map((slice, index) => {
 				const next = this.timeslices[index + 1]
 				let height = 60
 				if (slice.gap) {
 					height = 100
-				} else if (slice.datebreak) {
-					height = 60
+			} else if (slice.datebreak) {
+				height = 36
 				} else if (next) {
 					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
 				}
@@ -243,7 +256,13 @@ export default {
 		}
 	},
 	watch: {
-		currentDay: 'changeDay'
+		currentDay (day) {
+			// Always scroll to the start of the selected day
+			this.scrollToDayStart(day)
+		},
+		forceScrollDay () {
+			this.scrollToDayStart(this.currentDay)
+		}
 	},
 	async mounted () {
 		this.observer = new IntersectionObserver(this.onIntersect, {
@@ -255,6 +274,7 @@ export default {
 			this.observer.observe(el[0])
 		}
 		await this.$nextTick()
+		this.initScrollSync()
 		// scroll to now, unless URL overrides now
 		let fragmentIsDate = false
 		const fragment = window.location.hash.slice(1)
@@ -267,11 +287,17 @@ export default {
 		if (fragmentIsDate || !this.$refs.now) return
 		// Skip auto-scroll if disabled via prop
 		if (this.disableAutoScroll) return
-		const scrollTop = this.$refs.now.offsetTop + this.getOffsetTop()
+		const clearance = this.getStickyHeaderClearance()
+		const rect = this.$refs.now.getBoundingClientRect()
 		if (this.scrollParent) {
-			this.scrollParent.scrollTop = scrollTop
+			this.scrollParent.scrollTop += rect.top - clearance
 		} else {
-			window.scroll({top: scrollTop})
+			window.scrollBy({top: rect.top - clearance})
+		}
+	},
+	beforeUnmount () {
+		if (this._gridResizeObserver) {
+			this._gridResizeObserver.disconnect()
 		}
 	},
 	methods: {
@@ -286,8 +312,10 @@ export default {
 				'grid-column': roomIndex > -1 ? roomIndex + 2 : null
 			}
 		},
-		getOffsetTop () {
-			return window.scrollY + this.$el.getBoundingClientRect().top - 100
+		getStickyHeaderClearance () {
+			const stickyHeader = this.$el.querySelector('.sticky-header')
+			// 40px page header (when stuck) + 40px toolbar + rooms bar + scrollbar + buffer
+			return 80 + (stickyHeader ? stickyHeader.offsetHeight : 0) + 10
 		},
 		getScrolledDay () {
 			// go through all timeslices, on the first one that is actually visible in current scroll, return its date
@@ -326,15 +354,89 @@ export default {
 			return slice.date.clone().tz(this.timezone).format('h:mm A')
 		},
 		changeDay (day) {
-			if (this.getScrolledDay()?.format('YYYY-MM-DD') === day) return
+			this.scrollToDayStart(day)
+		},
+		scrollToDayStart (day) {
 			const el = this.$refs[getSliceName(moment.tz(day, this.timezone))]?.[0]
 			if (!el) return
-			const offset = el.offsetTop + this.getOffsetTop()
+			const clearance = this.getStickyHeaderClearance()
+			const rect = el.getBoundingClientRect()
 			if (this.scrollParent) {
-				this.scrollParent.scrollTop = offset
+				this.scrollParent.scrollTop += rect.top - clearance
 			} else {
-				window.scroll({top: offset})
+				window.scrollBy({top: rect.top - clearance})
 			}
+		},
+		initScrollSync () {
+			const viewport = this.$refs.gridViewport
+			if (!viewport) return
+			this.updateScrollbar()
+			this._gridResizeObserver = new ResizeObserver(() => this.updateScrollbar())
+			const grid = viewport.querySelector('.grid')
+			if (grid) this._gridResizeObserver.observe(grid)
+			setTimeout(() => this.updateScrollbar(), 200)
+		},
+		updateScrollbar () {
+			const viewport = this.$refs.gridViewport
+			if (!viewport) return
+			this.scrollContentWidth = viewport.scrollWidth
+			const ratio = viewport.clientWidth / viewport.scrollWidth
+			this.scrollThumbWidth = Math.min(100, ratio * 100)
+			const maxScroll = viewport.scrollWidth - viewport.clientWidth
+			if (maxScroll > 0) {
+				this.scrollThumbLeft = (viewport.scrollLeft / maxScroll) * (100 - this.scrollThumbWidth)
+			} else {
+				this.scrollThumbLeft = 0
+			}
+		},
+		onViewportScroll () {
+			if (this._scrollSource === 'thumb') return
+			this._scrollSource = 'viewport'
+			const viewport = this.$refs.gridViewport
+			const roomsBar = this.$refs.roomsBar
+			if (roomsBar) roomsBar.scrollLeft = viewport.scrollLeft
+			this.updateScrollbar()
+			requestAnimationFrame(() => { this._scrollSource = null })
+		},
+		onTrackClick (e) {
+			const track = this.$refs.scrollTrack
+			const viewport = this.$refs.gridViewport
+			if (!track || !viewport) return
+			const rect = track.getBoundingClientRect()
+			const clickRatio = (e.clientX - rect.left) / rect.width
+			const maxScroll = viewport.scrollWidth - viewport.clientWidth
+			viewport.scrollLeft = clickRatio * maxScroll
+			if (this.$refs.roomsBar) this.$refs.roomsBar.scrollLeft = viewport.scrollLeft
+			this.updateScrollbar()
+		},
+		onThumbMousedown (e) {
+			e.preventDefault()
+			const track = this.$refs.scrollTrack
+			const viewport = this.$refs.gridViewport
+			if (!track || !viewport) return
+			const trackRect = track.getBoundingClientRect()
+			const startX = e.clientX
+			const startScrollLeft = viewport.scrollLeft
+			const maxScroll = viewport.scrollWidth - viewport.clientWidth
+			const trackWidth = trackRect.width
+			const thumbWidthPx = (this.scrollThumbWidth / 100) * trackWidth
+			const scrollableTrack = trackWidth - thumbWidthPx
+
+			const onMouseMove = (ev) => {
+				this._scrollSource = 'thumb'
+				const dx = ev.clientX - startX
+				const scrollDelta = (dx / scrollableTrack) * maxScroll
+				viewport.scrollLeft = startScrollLeft + scrollDelta
+				if (this.$refs.roomsBar) this.$refs.roomsBar.scrollLeft = viewport.scrollLeft
+				this.updateScrollbar()
+			}
+			const onMouseUp = () => {
+				this._scrollSource = null
+				document.removeEventListener('mousemove', onMouseMove)
+				document.removeEventListener('mouseup', onMouseUp)
+			}
+			document.addEventListener('mousemove', onMouseMove)
+			document.addEventListener('mouseup', onMouseUp)
 		},
 		onIntersect (entries) {
 			// TODO still gets stuck when scrolling fast above threshold and back
@@ -352,36 +454,67 @@ export default {
 .c-grid-schedule
 	flex: auto
 	background-color: $clr-grey-50
-	.grid
-		display: grid
-		grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
-		// grid-gap: 8px
-		position: relative
-		min-width: min-content
-		> .room
-			position: sticky
-			top: calc(var(--pretalx-sticky-date-offset) + var(--pretalx-sticky-top-offset, 0px))
-			display: flex
-			justify-content: center
-			align-items: center
-			font-size: 18px
-			background-color: $clr-white
-			border-bottom: border-separator()
-			z-index: 20
-			.room-description
-				border: 2px solid $clr-grey-400
-				border-radius: 100%
-				height: 20px
-				width: 20px
-				padding: 0
-				font-weight: bold
-				min-width: 0
-				button-style(color: $clr-white, text-color: $clr-grey-500)
-				margin-left: 8px
-				.bunt-tooltip
-					height: auto
-					width: 200px
-					white-space: normal
+	.sticky-header
+		position: sticky
+		top: calc(var(--pretalx-sticky-top-offset, 0px) + 40px)
+		z-index: 25
+		background-color: $clr-white
+	.rooms-bar
+		overflow: hidden
+		.rooms-inner
+			display: grid
+			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+			min-width: min-content
+			> .room
+				display: flex
+				justify-content: center
+				align-items: center
+				font-size: 18px
+				background-color: $clr-white
+				padding: 8px 4px
+				.room-description
+					border: 2px solid $clr-grey-400
+					border-radius: 100%
+					height: 20px
+					width: 20px
+					padding: 0
+					font-weight: bold
+					min-width: 0
+					button-style(color: $clr-white, text-color: $clr-grey-500)
+					margin-left: 8px
+					.bunt-tooltip
+						height: auto
+						width: 200px
+						white-space: normal
+	.custom-scrollbar
+		padding: 0
+		.scroll-track
+			height: 3px
+			background: rgba(0, 0, 0, 0.10)
+			border-radius: 2px
+			position: relative
+			cursor: pointer
+			.scroll-thumb
+				position: absolute
+				top: 50%
+				transform: translateY(-50%)
+				height: 5px
+				background: var(--pretalx-clr-primary, #3b82f6)
+				border-radius: 3px
+				cursor: grab
+				&:active
+					cursor: grabbing
+	.grid-viewport
+		overflow-x: auto
+		overflow-y: clip
+		scrollbar-width: none
+		&::-webkit-scrollbar
+			display: none
+		.grid
+			display: grid
+			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+			position: relative
+			min-width: min-content
 		.break
 			.time-box
 				background-color: $clr-grey-500
@@ -413,6 +546,12 @@ export default {
 			font-weight: 600
 			border-top: 3px solid $clr-dividers-light
 			white-space: pre
+			padding-top: 2px
+			font-size: 12px
+			line-height: 1.2
+			overflow: hidden
+			max-height: 100%
+			align-content: start
 		&.gap
 			&::before
 				content: ''

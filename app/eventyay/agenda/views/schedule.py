@@ -22,6 +22,7 @@ from django.views.generic import TemplateView
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import (
+    build_public_schedule_exporters,
     get_schedule_exporter_content,
     get_schedule_exporters,
     is_public_schedule_empty,
@@ -310,22 +311,30 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        exporters_list = ctx.get('exporters', [])
         schedule = ctx.get('schedule')
+        version = schedule.version if schedule else None
+        released = list(
+            self.request.event.schedules.filter(version__isnull=False)
+            .order_by('-published')
+            .values_list('version', flat=True)
+        )
+        base_schedule_url = str(self.request.event.urls.schedule)
+        current_version = (
+            self.request.event.current_schedule.version
+            if self.request.event.current_schedule
+            else None
+        )
+        versions = [
+            {'version': v, 'url': f'{base_schedule_url}v/{v}/', 'isCurrent': v == current_version}
+            for v in released
+        ]
         meta = {
-            'version': schedule.version if schedule else '',
+            'version': version or '',
             'is_current': schedule == self.request.event.current_schedule if schedule else False,
             'changelog_url': str(self.request.event.urls.changelog),
-            'exporters': [
-                {
-                    'identifier': e.identifier,
-                    'verbose_name': str(e.verbose_name),
-                    'icon': e.icon,
-                    'export_url': e.export_url,
-                    'qrcode_svg': str(e.get_qrcode()) if getattr(e, 'show_qrcode', False) else '',
-                }
-                for e in exporters_list
-            ],
+            'current_schedule_url': base_schedule_url if self.request.event.current_schedule else '',
+            'versions': versions,
+            'exporters': build_public_schedule_exporters(self.request.event, version=version),
         }
         ctx['schedule_meta_json'] = json.dumps(meta)
         return ctx

@@ -1,11 +1,11 @@
 <template lang="pug">
-a.c-linear-schedule-session(:class="{faved}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
+a.c-linear-schedule-session(:class="{faved, 'has-date': showDate}", :style="style", :href="link", @click="onSessionLinkClick($event, session)", :target="linkTarget")
 	.time-box
 		.start(:class="{'has-ampm': hasAmPm}")
 			.date(v-if="showDate") {{ shortDate }}
 			.time {{ startTime.time }}
 			.ampm(v-if="startTime.ampm") {{ startTime.ampm }}
-		.duration {{ getPrettyDuration(session.start, session.end) }}
+			.duration {{ getPrettyDuration(session.start, session.end) }}
 		.buffer
 		.is-live(v-if="showLiveBadge && isLive") live
 	.info
@@ -168,9 +168,9 @@ export default {
 .c-linear-schedule-session, .break
 	z-index: 10
 	display: flex
-	min-width: 300px
-	min-height: 96px
-	margin: 8px
+	min-width: 375px
+	min-height: 100px
+	margin: 10px
 	overflow: hidden
 	color: rgb(13 15 16)
 	position: relative
@@ -200,8 +200,11 @@ export default {
 			.ampm
 				font-weight: 400
 				font-size: 13px
-		.duration
-			color: $clr-secondary-text-dark
+			.duration
+				font-weight: 400
+				font-size: 13px
+				color: $clr-secondary-text-dark
+				margin-top: 2px
 		.buffer
 			flex: auto
 		.is-live
@@ -215,6 +218,9 @@ export default {
 			color: $clr-primary-text-dark
 			letter-spacing: 0.5px
 			text-transform: uppercase
+	&.has-date
+		.time-box
+			width: 100px
 	.info
 		flex: auto
 		display: flex
