@@ -31,8 +31,9 @@ def get_language_display_names(codes: Iterable[str], prefer_natural_name: bool =
 
         base_code = info.get('public_code')
         if base_code:
-            base_code = str(base_code).lower().replace('_', '-')
-            base_info = settings.LANGUAGES_INFORMATION.get(base_code)
+            normalized_base_code = str(base_code).lower().replace('_', '-')
+            normalized_base_code = LANGUAGE_CODES_MAPPING.get(normalized_base_code, normalized_base_code)
+            base_info = settings.LANGUAGES_INFORMATION.get(normalized_base_code)
             if base_info and natural_label == (base_info.get('natural_name') or ''):
                 label = backend_label
 
