@@ -12,6 +12,7 @@ from django_scopes import get_scope
 
 from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
+from eventyay.common.language import get_language_display_names
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
 
@@ -42,11 +43,9 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
-    # Build language list with natural names (native language names)
-    languages_with_natural_names = [
-        (code, settings.LANGUAGES_INFORMATION[code]['natural_name'])
-        for code in dict(settings.LANGUAGES)
-    ]
+    # Keep UI language labels aligned with backend language definitions, while
+    # disambiguating locale variants that otherwise share the same visible name.
+    languages_with_natural_names = get_language_display_names(dict(settings.LANGUAGES), prefer_natural_name=True)
     languages = sorted(
         languages_with_natural_names,
         key=lambda l: (

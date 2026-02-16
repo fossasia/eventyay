@@ -40,6 +40,16 @@ def test_locales(event, locale_array, count):
 
 
 @pytest.mark.django_db
+def test_named_locales_disambiguate_formality_variants(event):
+    event.locale_array = "de,de-formal,nl,nl-informal"
+    event.save()
+
+    labels = dict(event.named_locales)
+    assert labels["de"] != labels["de-formal"]
+    assert labels["nl"] != labels["nl-informal"]
+
+
+@pytest.mark.django_db
 def test_initial_data(event):
     with scope(event=event):
         assert event.cfp

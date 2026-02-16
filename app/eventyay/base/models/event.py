@@ -47,7 +47,7 @@ from eventyay.base.plugins import get_all_plugins
 from eventyay.base.reldate import RelativeDateWrapper
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.validators import EventSlugBanlistValidator
-from eventyay.common.language import LANGUAGE_NAMES
+from eventyay.common.language import LANGUAGE_NAMES, get_language_display_names
 from eventyay.common.text.path import path_with_hash
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
@@ -2169,11 +2169,8 @@ class Event(
     def named_locales(self) -> list:
         """Is a list of tuples of locale codes and natural names for this
         event."""
-        return [
-            (code, language['natural_name'])
-            for code, language in settings.LANGUAGES_INFORMATION.items()
-            if code in self.locales
-        ]
+        codes = [code for code in settings.LANGUAGES_INFORMATION if code in self.locales]
+        return get_language_display_names(codes, prefer_natural_name=True)
 
     @cached_property
     def available_content_locales(self) -> list:
