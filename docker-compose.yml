@@ -81,7 +81,7 @@ services:
     env_file:
       - ./.env.dev
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-eventyay} -d $${POSTGRES_DB:-eventyay-db}"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-eventyay} -d $${POSTGRES_DB:-eventyay}"]
       interval: 10s
       timeout: 5s
       retries: 5
