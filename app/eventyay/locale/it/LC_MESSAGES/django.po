@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 15:59+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 15:17+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Italian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/it/>\n"
 "Language: it\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -160,8 +160,7 @@ msgstr ""
 
 #: agenda/templates/agenda/feedback_form.html:25
 msgid "You can’t give feedback for this session at this time."
-msgstr ""
-"Non puoi ancora fornire feedback per questa sessione in questo momento."
+msgstr "Non puoi ancora fornire feedback per questa sessione in questo momento."
 
 #: agenda/templates/agenda/schedule.html:23
 msgid "Changelog"
@@ -178,8 +177,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Per vedere il programma, attiva JavaScript oppure vai <a "
-"href=\"%(href)s\">qui</a> per il programma senza JavaScript."
+"Per vedere il programma, attiva JavaScript oppure vai <a href=\"%(href)s\">"
+"qui</a> per il programma senza JavaScript."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -5292,8 +5291,7 @@ msgstr "Limite di temi"
 
 #: base/models/information.py:37
 msgid "Leave empty to show this information to all tracks."
-msgstr ""
-"Lascia lo spazio vuoto per mostrare queste informazioni a tutti i temi."
+msgstr "Lascia lo spazio vuoto per mostrare queste informazioni a tutti i temi."
 
 #: base/models/information.py:41
 msgid "Limit to proposal types"
@@ -6063,8 +6061,8 @@ msgid ""
 "The {organizer} team"
 msgstr ""
 "Buongiorno,\n"
-"hai ricevuto un invito a far parte del team organizzatori dell'evento "
-"{name}. Fai click qui per accettarlo:\n"
+"hai ricevuto un invito a far parte del team organizzatori dell'evento {name}"
+". Fai click qui per accettarlo:\n"
 "\n"
 "{invitation_link}\n"
 "\n"
@@ -9711,40 +9709,40 @@ msgstr ""
 msgid "The voucher has been sent to {recipient}."
 msgstr ""
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "La tua lingua di default deve essere una delle tue lingue attive."
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 
@@ -10426,8 +10424,8 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
-"%(name)s sei stato invitato ad essere un relatore per la sessione "
-"“%(talk)s”. Accetti l'invito?"
+"%(name)s sei stato invitato ad essere un relatore per la sessione “%(talk)s"
+"”. Accetti l'invito?"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -13582,7 +13580,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -13784,23 +13782,64 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable webhook"
+msgid "Enable telemetry"
+msgstr "Abilita webhook"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Send all"
+msgid "Telemetry endpoint"
+msgstr "Invia tutto"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "Indirizzi URL di reindirizzamento"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -25404,8 +25443,8 @@ msgid ""
 msgstr ""
 "Buongiorno,\n"
 "\n"
-"siamo lieti di comunicarti che abbiamo accettato la tua proposta "
-"“{submission_title}”\n"
+"siamo lieti di comunicarti che abbiamo accettato la tua proposta “"
+"{submission_title}”\n"
 "per l'evento {event_name}. Clicca su questo link per confermare la tua "
 "partecipazione:\n"
 "\n"
@@ -25567,8 +25606,8 @@ msgid ""
 msgstr ""
 "Ciao!\n"
 "\n"
-"Sei stato aggiunto a una proposta di {event_name}, intitolata "
-"\"{proposal_title}\".\n"
+"Sei stato aggiunto a una proposta di {event_name}, intitolata \""
+"{proposal_title}\".\n"
 "È stato creato un account per te: segui questo link per impostare la "
 "password del tuo account.\n"
 "\n"
@@ -25595,8 +25634,8 @@ msgid ""
 msgstr ""
 "Ciao!\n"
 "\n"
-"Sei stato aggiunto a una proposta di {event_name}, intitolata "
-"\"{proposal_title}\".\n"
+"Sei stato aggiunto a una proposta di {event_name}, intitolata \""
+"{proposal_title}\".\n"
 "Segui questo link per modificare il tuo profilo utente e vedere lo stato "
 "della tua proposta:\n"
 "\n"
@@ -25809,8 +25848,7 @@ msgstr "Relatori confermati"
 
 #: orga/forms/cfp.py:651
 msgid "If you select no custom field, all will be used."
-msgstr ""
-"Se non selezioni alcun campo personalizzato, verranno utilizzati tutti."
+msgstr "Se non selezioni alcun campo personalizzato, verranno utilizzati tutti."
 
 #: orga/forms/event.py:36
 msgid "Grid"
@@ -27138,9 +27176,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Se hai già un account - sia da relatore o da organizzatore - a <a "
-"href=\"%(domain)s\">%(domain)s</a>, accedi ora. Altrimenti, crea un nuovo "
-"account per entrare nel team!"
+"Se hai già un account - sia da relatore o da organizzatore - a <a href=\"%"
+"(domain)s\">%(domain)s</a>, accedi ora. Altrimenti, crea un nuovo account "
+"per entrare nel team!"
 
 #: orga/templates/orga/invitation.html:37
 #, fuzzy, python-format
@@ -27265,8 +27303,8 @@ msgstr ""
 #, python-format
 msgid "Recipients filtered by responses to the custom field “%(question)s”."
 msgstr ""
-"Destinatari filtrati in base alle risposte al campo personalizzato "
-"“%(question)s”."
+"Destinatari filtrati in base alle risposte al campo personalizzato “%"
+"(question)s”."
 
 #: orga/templates/orga/mails/compose_session_mail_form.html:28
 #, python-format
@@ -27530,8 +27568,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "I revisori potranno vedere e revisionare<strong>solo le proposte assegnate</"
-"strong>. Puoi cambiare questa impostazione dalle <a "
-"href=\"%(href)s\">impostazioni di revisione</a>."
+"strong>. Puoi cambiare questa impostazione dalle <a href=\"%(href)s\">"
+"impostazioni di revisione</a>."
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -27543,8 +27581,8 @@ msgid ""
 msgstr ""
 "I revisori potranno vedere e revisionare <strong>tutte le proposte</strong>, "
 "ma le revisioni che gli sono state assegnate saranno evidenziate e saranno "
-"mostrate per prime. Puoi cambiare questa impostazione nelle <a "
-"href=\"%(href)s\">impostazioni di revisione</a>."
+"mostrate per prime. Puoi cambiare questa impostazione nelle <a href=\"%(href)"
+"s\">impostazioni di revisione</a>."
 
 #: orga/templates/orga/review/assignment.html:114
 msgid ""
@@ -27958,8 +27996,7 @@ msgstr "Vedi tutte le sessioni non confermate."
 msgid "One session has <strong>not yet been scheduled</strong>."
 msgid_plural "%(count)s sessions have <strong>not yet been scheduled</strong>."
 msgstr[0] "Una sessione <strong>non è ancora stata programmata</strong>."
-msgstr[1] ""
-"%(count)s sessioni <strong>non sono ancora state programmate</strong>."
+msgstr[1] "%(count)s sessioni <strong>non sono ancora state programmate</strong>."
 
 #: orga/templates/orga/schedule/release.html:76
 #, python-format
@@ -27969,8 +28006,8 @@ msgid_plural ""
 msgstr[0] ""
 "Una sessione <strong>non sono ancora state assegnate a un tema</strong>."
 msgstr[1] ""
-"%(count)s sessioni <strong>non sono ancora state assegnate a un tema</"
-"strong>."
+"%(count)s sessioni <strong>non sono ancora state assegnate a un tema</strong>"
+"."
 
 #: orga/templates/orga/schedule/release.html:92
 msgid "Warnings"
@@ -29068,8 +29105,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Non è stato possibile trovare l'esportazione corrente, prova a rigenerarla. "
-"({error})"
+"Non è stato possibile trovare l'esportazione corrente, prova a rigenerarla. ("
+"{error})"
 
 #: orga/views/schedule.py:167
 msgid "You have to provide a new, unique schedule version!"
@@ -29096,8 +29133,7 @@ msgstr "Errore nel recupero della versione del programma a cui tornare."
 
 #: orga/views/schedule.py:253
 msgid "You can only regenerate mails after the first schedule was released."
-msgstr ""
-"Puoi rigenerare le mail solo dopo la prima pubblicazione del programma."
+msgstr "Puoi rigenerare le mail solo dopo la prima pubblicazione del programma."
 
 #: orga/views/schedule.py:491
 msgid "The session has been scheduled."
@@ -33294,8 +33330,8 @@ msgstr ""
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
 msgstr ""
-"- La presentazione \"%(title)s\" è stata spostata alle %(start)s in "
-"%(location)s"
+"- La presentazione \"%(title)s\" è stata spostata alle %(start)s in %"
+"(location)s"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 msgid "Custom fields data"
