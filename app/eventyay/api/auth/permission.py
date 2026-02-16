@@ -12,16 +12,66 @@ from eventyay.helpers.security import (
 
 
 class EventPermission(BasePermission):
+    @staticmethod
+    def _get_required_permission(request, view):
+        if request.method not in SAFE_METHODS and hasattr(view, 'write_permission'):
+            return getattr(view, 'write_permission')
+        if hasattr(view, 'permission'):
+            return getattr(view, 'permission')
+        return None
+
+    @staticmethod
+    def _has_required_permission(required_permission, permission_set):
+        if isinstance(required_permission, (list, tuple)):
+            return any(permission in permission_set for permission in required_permission)
+        return not required_permission or required_permission in permission_set
+
+    @staticmethod
+    def _resolve_event(event_slug, organizer_slug=None):
+        lookup = {'slug__iexact': event_slug}
+        if organizer_slug:
+            lookup['organizer__slug__iexact'] = organizer_slug
+
+        event = Event.objects.filter(**lookup).select_related('organizer').first()
+        if event or not str(event_slug).isdigit():
+            return event
+
+        lookup = {'pk': int(event_slug)}
+        if organizer_slug:
+            lookup['organizer__slug__iexact'] = organizer_slug
+        return Event.objects.filter(**lookup).select_related('organizer').first()
+
+    @staticmethod
+    def _set_eventpermset(request, perm_holder):
+        if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(
+            request.session.session_key
+        ):
+            request.eventpermset = SuperuserPermissionSet()
+        else:
+            request.eventpermset = perm_holder.get_event_permission_set(
+                request.organizer, request.event
+            )
+
+    def _has_event_permission(
+        self, request, perm_holder, required_permission, event_slug, organizer_slug=None
+    ):
+        request.event = self._resolve_event(event_slug, organizer_slug=organizer_slug)
+        if not request.event:
+            return False
+        if not perm_holder.has_event_permission(
+            request.event.organizer, request.event, request=request
+        ):
+            return False
+
+        request.organizer = request.event.organizer
+        self._set_eventpermset(request, perm_holder)
+        return self._has_required_permission(required_permission, request.eventpermset)
+
     def has_permission(self, request, view):
         if not request.user.is_authenticated and not isinstance(request.auth, (Device, TeamAPIToken)):
             return False
 
-        if request.method not in SAFE_METHODS and hasattr(view, 'write_permission'):
-            required_permission = getattr(view, 'write_permission')
-        elif hasattr(view, 'permission'):
-            required_permission = getattr(view, 'permission')
-        else:
-            required_permission = None
+        required_permission = self._get_required_permission(request, view)
 
         if request.user.is_authenticated:
             try:
@@ -33,46 +83,25 @@ class EventPermission(BasePermission):
                 return False
 
         perm_holder = request.auth if isinstance(request.auth, (Device, TeamAPIToken)) else request.user
-        if 'event' in request.resolver_match.kwargs and 'organizer' in request.resolver_match.kwargs:
-            request.event = (
-                Event.objects.filter(
-                    slug=request.resolver_match.kwargs['event'],
-                    organizer__slug=request.resolver_match.kwargs['organizer'],
-                )
-                .select_related('organizer')
-                .first()
-            )
-            if not request.event or not perm_holder.has_event_permission(
-                request.event.organizer, request.event, request=request
+        kwargs = request.resolver_match.kwargs
+        if 'event' in kwargs:
+            if not self._has_event_permission(
+                request,
+                perm_holder,
+                required_permission,
+                event_slug=kwargs['event'],
+                organizer_slug=kwargs.get('organizer'),
             ):
                 return False
-            request.organizer = request.event.organizer
-            if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(request.session.session_key):
-                request.eventpermset = SuperuserPermissionSet()
-            else:
-                request.eventpermset = perm_holder.get_event_permission_set(request.organizer, request.event)
-
-            if isinstance(required_permission, (list, tuple)):
-                if not any(p in request.eventpermset for p in required_permission):
-                    return False
-            else:
-                if required_permission and required_permission not in request.eventpermset:
-                    return False
-
-        elif 'organizer' in request.resolver_match.kwargs:
+        elif 'organizer' in kwargs:
             if not request.organizer or not perm_holder.has_organizer_permission(request.organizer, request=request):
                 return False
             if isinstance(perm_holder, User) and perm_holder.has_active_staff_session(request.session.session_key):
                 request.orgapermset = SuperuserPermissionSet()
             else:
                 request.orgapermset = perm_holder.get_organizer_permission_set(request.organizer)
-
-            if isinstance(required_permission, (list, tuple)):
-                if not any(p in request.eventpermset for p in required_permission):
-                    return False
-            else:
-                if required_permission and required_permission not in request.orgapermset:
-                    return False
+            if not self._has_required_permission(required_permission, request.orgapermset):
+                return False
 
         if isinstance(request.auth, OAuthAccessToken):
             if not request.auth.allow_scopes(['write']) and request.method not in SAFE_METHODS:

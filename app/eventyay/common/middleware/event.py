@@ -90,15 +90,26 @@ class EventPermissionMiddleware:
                     
                     # If organizer is in URL, ensure event belongs to that organizer
                     if organizer_slug:
-                        request.event = get_object_or_404(
-                            queryset, 
+                        request.event = queryset.filter(
                             slug__iexact=event_slug,
                             organizer__slug__iexact=organizer_slug
-                        )
+                        ).first()
+                        if not request.event:
+                            with suppress(ValueError, TypeError):
+                                event_id = int(event_slug)
+                                request.event = queryset.filter(
+                                    pk=event_id,
+                                    organizer__slug__iexact=organizer_slug
+                                ).first()
                     else:
-                        request.event = get_object_or_404(queryset, slug__iexact=event_slug)
+                        request.event = queryset.filter(slug__iexact=event_slug).first()
+                        if not request.event:
+                            with suppress(ValueError, TypeError):
+                                event_id = int(event_slug)
+                                request.event = queryset.filter(pk=event_id).first()
+                    if not request.event:
+                        raise Http404("No Event matches the given query.")
                 except ValueError:
-                    # Happens mostly on malformed or malicious input
                     raise Http404()
         event = getattr(request, 'event', None)
 

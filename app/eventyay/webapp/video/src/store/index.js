@@ -34,6 +34,8 @@ export default new Vuex.Store({
 		userTimezone: null,
 		autoplayUserSetting: !localStorage.disableAutoplay ? null : localStorage.disableAutoplay !== 'true',
 		stageStreamCollapsed: false,
+		streamPollInterval: null,
+		lastKnownStreamId: null,
 		now: moment(),
 		unblockedIframeDomains: new Set(JSON.parse(localStorage.unblockedIframeDomains || '[]')),
 		youtubeTransUrl: null
@@ -55,7 +57,21 @@ export default new Vuex.Store({
 				lookup[room.id] = room
 				return lookup
 			}, {})
-		}
+		},
+		eventRouting(state) {
+			const organizer = state.world?.organizer_slug
+			const event = state.world?.slug || state.world?.id
+			if (organizer && organizer !== 'default' && event) {
+				return { organizer, event }
+			}
+			if (typeof window !== 'undefined') {
+				const pathParts = window.location.pathname.split('/').filter(Boolean)
+				if (pathParts.length >= 2) {
+					return { organizer: pathParts[0], event: pathParts[1] }
+				}
+			}
+			return { organizer: null, event: null }
+		},
 	},
 	mutations: {
 		updateRooms(state, rooms) {
@@ -85,6 +101,23 @@ export default new Vuex.Store({
 		},
 		updateYoutubeTransAudio(state, youtubeTransUrl) {
 			state.youtubeTransUrl = youtubeTransUrl
+		},
+		setStreamPollInterval(state, streamPollInterval) {
+			state.streamPollInterval = streamPollInterval
+		},
+		setLastKnownStreamId(state, streamId) {
+			state.lastKnownStreamId = streamId
+		},
+		setRoomCurrentStream(state, {roomId, stream}) {
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+			room.currentStream = stream
+		},
+		setRoomUpcomingStream(state, {roomId, stream, startsAt}) {
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+			room.upcomingStream = stream
+			room.upcomingStreamStartsAt = startsAt
 		}
 	},
 	actions: {
@@ -124,28 +157,28 @@ export default new Vuex.Store({
 			})
 			api.on('error', error => {
 				switch (error.code) {
-					case 'world.unknown_world':
-					case 'auth.invalid_token':
-					case 'auth.denied':
-					case 'auth.missing_token':
-					case 'auth.expired_token':
-					case 'auth.missing_id_or_token':
-					case 'connection.replaced':
-						state.fatalConnectionError = error
-						api.close()
-						break
-					case 'server.fatal': {
-						const roomId = state.activeRoom?.id ?? null
-						const errorWithContext = {...error, roomId}
-						state.fatalError = errorWithContext
-						if (roomId) {
-							state.roomFatalErrors = {
-								...state.roomFatalErrors,
-								[roomId]: errorWithContext
-							}
+				case 'world.unknown_world':
+				case 'auth.invalid_token':
+				case 'auth.denied':
+				case 'auth.missing_token':
+				case 'auth.expired_token':
+				case 'auth.missing_id_or_token':
+				case 'connection.replaced':
+					state.fatalConnectionError = error
+					api.close()
+					break
+				case 'server.fatal': {
+					const roomId = state.activeRoom?.id ?? null
+					const errorWithContext = {...error, roomId}
+					state.fatalError = errorWithContext
+					if (roomId) {
+						state.roomFatalErrors = {
+							...state.roomFatalErrors,
+							[roomId]: errorWithContext
 						}
-						break
 					}
+					break
+				}
 				}
 				// TODO handle generic fatal error?
 			})
@@ -156,6 +189,67 @@ export default new Vuex.Store({
 				state.user[key] = value
 			}
 			dispatch('chat/updateUser', {id: state.user.id, update})
+		},
+		async fetchCurrentStream({state, getters, commit}, roomId) {
+			if (!roomId || !state.connected) return
+			const room = state.rooms?.find(r => r.id === roomId)
+			if (!room) return
+
+			const { organizer, event } = getters.eventRouting
+			if (!organizer || !event) return
+
+			const url = `/api/v1/organizers/${encodeURIComponent(organizer)}/events/${encodeURIComponent(event)}/rooms/${roomId}/streams/current`
+			const authHeader = api._config.token
+				? `Bearer ${api._config.token}`
+				: (api._config.clientId ? `Client ${api._config.clientId}` : null)
+			const headers = { Accept: 'application/json' }
+			if (authHeader) headers.Authorization = authHeader
+
+			const response = await fetch(url, { headers, credentials: 'include' })
+			if (!response.ok && response.status !== 404) {
+				throw new Error(`Failed to fetch: ${response.status}`)
+			}
+
+			const currentStream = response.status === 404 ? null : await response.json()
+			const streamId = currentStream?.id || null
+			const previousStreamId = room.currentStream?.id || null
+			const previousStreamUrl = room.currentStream?.url || null
+			const currentStreamUrl = currentStream?.url || null
+
+			if (previousStreamId !== streamId || previousStreamUrl !== currentStreamUrl) {
+				commit('setRoomCurrentStream', { roomId, stream: currentStream })
+			}
+			if (state.lastKnownStreamId !== streamId) {
+				commit('setLastKnownStreamId', streamId)
+			}
+		},
+		startStreamPolling({state, commit, dispatch}, roomId) {
+			if (state.streamPollInterval) {
+				clearInterval(state.streamPollInterval)
+			}
+			dispatch('fetchCurrentStream', roomId).catch(() => {
+				// Polling failures are non-critical, continue polling
+			})
+
+			const intervalId = setInterval(async () => {
+				if (!state.activeRoom || state.activeRoom.id !== roomId) {
+					dispatch('stopStreamPolling')
+					return
+				}
+				if (!state.connected) return
+				try {
+					await dispatch('fetchCurrentStream', roomId)
+				} catch {
+					// Polling failures are non-critical, continue polling
+				}
+			}, 10000)
+			commit('setStreamPollInterval', intervalId)
+		},
+		stopStreamPolling({state, commit}) {
+			if (state.streamPollInterval) {
+				clearInterval(state.streamPollInterval)
+				commit('setStreamPollInterval', null)
+			}
 		},
 		async adminUpdateUser({dispatch}, update) {
 			await api.call('user.admin.update', update)
@@ -182,9 +276,8 @@ export default new Vuex.Store({
 						const {[room.id]: _removed, ...rest} = state.roomFatalErrors
 						state.roomFatalErrors = rest
 					}
-				} catch (error) {
-					// Allow ApiError instances to bubble into the websocket error handler
-					console.error('[store/changeRoom] Failed to enter room', room?.id, error)
+				} catch {
+					// room.enter failures are non-critical, continue with room change
 				}
 			}
 			dispatch('question/changeRoom', room)
@@ -293,6 +386,29 @@ export default new Vuex.Store({
 			if (index >= 0) {
 				state.roomViewers.splice(index, 1)
 			}
+		},
+		'api::room.stream.change'({state, commit, dispatch}, {stream, reload}) {
+			if (!state.activeRoom) return
+			const room = state.rooms.find(r => r.id === state.activeRoom.id)
+			if (!room) return
+			const streamId = stream?.id || null
+			commit('setRoomCurrentStream', { roomId: room.id, stream })
+			commit('setLastKnownStreamId', streamId)
+			if (reload) {
+				dispatch('fetchCurrentStream', room.id).catch(() => {
+					// Stream refresh failures are non-critical
+				})
+			}
+		},
+		'api::room.stream.will_change'({state, commit}, {stream, starts_at}) {
+			if (!state.activeRoom) return
+			const room = state.rooms.find(r => r.id === state.activeRoom.id)
+			if (!room) return
+			commit('setRoomUpcomingStream', {
+				roomId: room.id,
+				stream,
+				startsAt: starts_at
+			})
 		}
 	},
 	modules: {

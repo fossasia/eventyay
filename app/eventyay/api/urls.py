@@ -26,6 +26,7 @@ from .views import (
     schedule,
     speaker,
     speaker_information,
+    stream_schedule,
     submission,
     upload,
     user,
@@ -46,7 +47,6 @@ def talks_to_submissions_redirect(request, event, subpath):
 
     if query_string := request.META.get('QUERY_STRING', ''):
         new_path += f'?{query_string}'
-        new_path += '?' + query_string
 
     return HttpResponsePermanentRedirect(new_path)
 
@@ -112,6 +112,9 @@ checkinlist_router.register(r'positions', checkin.CheckinListPositionViewSet, ba
 question_router = routers.DefaultRouter()
 question_router.register(r'options', product.QuestionOptionViewSet)
 
+room_router = routers.DefaultRouter()
+room_router.register(r"stream-schedules", stream_schedule.StreamScheduleViewSet, basename="stream-schedule")
+
 product_router = routers.DefaultRouter()
 product_router.register(r'variations', product.ProductVariationViewSet)
 product_router.register(r'addons', product.ProductAddOnViewSet)
@@ -176,6 +179,10 @@ urlpatterns = [
         'organizers/<orgslug:organizer>/events/<slug:event>/orders/<int:order>/',
         include(order_router.urls),
     ),
+    path(
+        'organizers/<orgslug:organizer>/events/<slug:event>/rooms/<int:room_pk>/',
+        include(room_router.urls),
+    ),
     path('oauth/authorize', oauth.AuthorizationView.as_view(), name='authorize'),
     path('oauth/token', oauth.TokenView.as_view(), name='token'),
     path('oauth/revoke_token', oauth.RevokeTokenView.as_view(), name='revoke-token'),
@@ -230,9 +237,13 @@ urlpatterns = [
         submission.favourite_view,
         name='submission.favourite',
     ),
-    path('events/<slug:event>/', include(event_router.urls)),
+    path(
+        'events/<slug:event>/rooms/<int:room_pk>/',
+        include(room_router.urls),
+    ),
     path(
         'events/<slug:event>/favourite-talk/',
         submission.SubmissionFavouriteDeprecatedView.as_view(),
     ),
+    path('events/<slug:event>/', include(event_router.urls)),
 ]
