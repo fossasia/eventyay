@@ -52,7 +52,7 @@ services:
     environment:
       - MPLCONFIGDIR=/tmp/matplotlib
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001')"]
+      test: ["CMD", "sh", "-c", "nc -z localhost 8001 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
