@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-12-26 18:00+0000\n"
-"Last-Translator: Supaplex <bejokeup@gmail.com>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:20+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Chinese (Traditional Han script) <https://hosted.weblate.org/"
 "projects/eventyay/eventyay/zh_Hant/>\n"
 "Language: zh_Hant\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -83,8 +83,7 @@ msgstr "我們不得不取消這場議程： "
 msgid ""
 "We had to move some sessions, so if you were planning on seeing them, check "
 "their new dates or locations:"
-msgstr ""
-"我們必須更動一些議程，所以若您原先打算參加這些議程，請確認新的日期或地點："
+msgstr "我們必須更動一些議程，所以若您原先打算參加這些議程，請確認新的日期或地點："
 
 #: agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
@@ -833,8 +832,8 @@ msgid ""
 "The part of your invoice number after your prefix will be filled up with "
 "leading zeros up to this length, e.g. INV-001 or INV-00001."
 msgstr ""
-"您前綴之後部分您的收據號碼，會從0之後被填滿到這一長㱽，例如，INV-001 or "
-"INV-00001。"
+"您前綴之後部分您的收據號碼，會從0之後被填滿到這一長㱽，例如，INV-001 or INV-"
+"00001。"
 
 #: base/configurations/default_setting.py:418
 msgid "Generate invoices with consecutive numbers"
@@ -4184,8 +4183,8 @@ msgid ""
 "If you have registered with an email address that has a gravatar account, we "
 "can retrieve your profile picture from there."
 msgstr ""
-"如果您註冊的電子郵件地址有 gravatar 帳號，我們可以從那裡取得您的個人資料圖"
-"片。"
+"如果您註冊的電子郵件地址有 gravatar 帳號，我們可以從那裡取得您的個人資料圖片"
+"。"
 
 #: base/models/auth.py:263 orga/templates/orga/submission/speakers.html:41
 #, fuzzy
@@ -5389,8 +5388,7 @@ msgstr "您的團隊中沒有人有權限變更主辦單位層級的設定。"
 msgid ""
 "There must be at least one team with access to every event. Currently, "
 "nobody has access to {event_name}."
-msgstr ""
-"每個活動都必須至少有一個團隊擁有存取權限。目前沒有人可以存取 {event_name}。"
+msgstr "每個活動都必須至少有一個團隊擁有存取權限。目前沒有人可以存取 {event_name}。"
 
 #: base/models/organizer.py:86
 #, python-brace-format
@@ -7147,8 +7145,7 @@ msgstr "公開顯示標籤"
 msgid ""
 "Tags are currently only in use for organisers and reviewers. They will be "
 "visible publicly in a future release of pretalx."
-msgstr ""
-"標籤目前僅供主辦單位和審稿者使用。在 eventyay 的未來版本中將可以公開顯示。"
+msgstr "標籤目前僅供主辦單位和審稿者使用。在 eventyay 的未來版本中將可以公開顯示。"
 
 #: base/models/tax.py:135
 msgid "Should be short, e.g. \"VAT\""
@@ -9156,40 +9153,40 @@ msgstr ""
 msgid "The voucher has been sent to {recipient}."
 msgstr ""
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "您選擇的預設語言必須是可使用的語言之一。"
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 
@@ -9664,8 +9661,7 @@ msgstr "多告訴我們一些關於您自己的事吧！"
 msgid ""
 "This information will be publicly displayed next to your session - you can "
 "always edit for as long as proposals are still open."
-msgstr ""
-"這些資訊會公開顯示在您的演講議程中—只要還在投稿階段，您都可以編輯內容。"
+msgstr "這些資訊會公開顯示在您的演講議程中—只要還在投稿階段，您都可以編輯內容。"
 
 #: cfp/phrases.py:7
 msgid "Go to CfP"
@@ -9718,8 +9714,7 @@ msgstr "這份投稿的議程已被確認—期待看到您的演出！"
 msgid ""
 "This proposal cannot be confirmed at this time – please contact us if you "
 "think this is an error."
-msgstr ""
-"這份投稿的議程現在不應該在已確認的狀態。如果您認為有問題，請與我們聯繫。"
+msgstr "這份投稿的議程現在不應該在已確認的狀態。如果您認為有問題，請與我們聯繫。"
 
 #: cfp/phrases.py:28
 msgid "This proposal cannot be edited anymore."
@@ -9827,8 +9822,7 @@ msgid ""
 "Unfortunately, you cannot accept this invitation at the moment. This may be "
 "because the invitation has expired, or because the proposal cannot be edited "
 "any more."
-msgstr ""
-"很遺憾，你目前無法接受此邀請。這可能是因為邀請已過期，或者無法再編輯提案。"
+msgstr "很遺憾，你目前無法接受此邀請。這可能是因為邀請已過期，或者無法再編輯提案。"
 
 #: cfp/templates/cfp/event/invitation.html:21
 msgid "Please contact the conference organizers for more information."
@@ -9839,8 +9833,7 @@ msgstr "請聯絡會議召集人，以獲取更多資訊。"
 msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
-msgstr ""
-"您，%(name)s，已被邀請成為議程「%(talk)s」的講者之一。請問您接受此邀請嗎？"
+msgstr "您，%(name)s，已被邀請成為議程「%(talk)s」的講者之一。請問您接受此邀請嗎？"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -9872,8 +9865,8 @@ msgid ""
 "If you already created a proposal for a different event on this server, you "
 "can re-use your account to log in for this event."
 msgstr ""
-"如果您已在此伺服器上的其他活動中投稿過，您可以用您先前建立的帳號來登入此活"
-"動。"
+"如果您已在此伺服器上的其他活動中投稿過，您可以用您先前建立的帳號來登入此活動"
+"。"
 
 #: cfp/templates/cfp/event/login.html:15
 #, fuzzy
@@ -10015,8 +10008,7 @@ msgstr "您的個人資料"
 msgid ""
 "This data will be displayed publicly if your proposal is accepted. It is "
 "also visible to reviewers."
-msgstr ""
-"這些資料會在您的議程投稿被接受以後顯示出來。當然檢閱您的投稿的人也看得到。"
+msgstr "這些資料會在您的議程投稿被接受以後顯示出來。當然檢閱您的投稿的人也看得到。"
 
 #: cfp/templates/cfp/event/user_profile.html:36
 msgid "We have some questions"
@@ -10406,8 +10398,7 @@ msgstr "您已寫了 {count} 個字。"
 #: common/forms/widgets.py:46
 msgid ""
 "This password would take <em class=\"password_strength_time\"></em> to crack."
-msgstr ""
-"這個密碼啊，只要 <em class=\"password_strength_time\"></em> 就能破解了。"
+msgstr "這個密碼啊，只要 <em class=\"password_strength_time\"></em> 就能破解了。"
 
 #: common/forms/widgets.py:68
 msgid "Warning"
@@ -10787,8 +10778,8 @@ msgid ""
 "reasons, we cannot process it. <br> Please go back to the last page, "
 "refresh, and then try again."
 msgstr ""
-"我們無法驗證此要求是由您發出的。為了安全理由，我們暫不處理。<br>請回到上一"
-"頁，刷新頁面後再試一次。"
+"我們無法驗證此要求是由您發出的。為了安全理由，我們暫不處理。<br>請回到上一頁"
+"，刷新頁面後再試一次。"
 
 #: common/templates/500.html:7
 msgid "Internal server error."
@@ -11797,8 +11788,8 @@ msgid ""
 "This short name is already taken by another event. Please choose a different "
 "one or use the \"Set to random\" button for an automatic suggestion."
 msgstr ""
-"這個短名稱已被使用，請換另一個（或是請這個短名稱的擁有者將您加入他們的團隊"
-"中）。"
+"這個短名稱已被使用，請換另一個（或是請這個短名稱的擁有者將您加入他們的團隊中"
+"）。"
 
 #: control/forms/event.py:143 eventyay_common/forms/event.py:24
 msgid "Event timezone"
@@ -11888,8 +11879,7 @@ msgid ""
 "The default deadline for your Call for Papers. You can assign additional "
 "deadlines to individual session types, which will take precedence over this "
 "deadline."
-msgstr ""
-"「徵求議程投稿」階段的預設期限。您另外可以針對不同的提交型態給定不同的期限。"
+msgstr "「徵求議程投稿」階段的預設期限。您另外可以針對不同的提交型態給定不同的期限。"
 
 #: control/forms/event.py:472 control/forms/subevents.py:316
 #, python-brace-format
@@ -12844,7 +12834,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -13040,21 +13030,60 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+msgid "Enable telemetry"
+msgstr ""
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Read all endpoints"
+msgid "Telemetry endpoint"
+msgstr "讀取所有端點"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 msgid "Redirect URL"
 msgstr ""
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -15807,8 +15836,8 @@ msgid ""
 "strong> and set the DEBUG variable to False if this page is in any way "
 "reachable from the internet."
 msgstr ""
-"您正以開發模式執行 Eventyay。若此頁面因任何理由可以由網際網路上存取到，請"
-"<strong>停止執行</strong>並將 DEBUG 變數設為 False。"
+"您正以開發模式執行 Eventyay。若此頁面因任何理由可以由網際網路上存取到，"
+"請<strong>停止執行</strong>並將 DEBUG 變數設為 False。"
 
 #: control/templates/pretixcontrol/admin/systemconfig.html:31
 msgid "Your eventyay version is:"
@@ -22001,8 +22030,8 @@ msgid ""
 "This short name is already taken, please choose another one (or ask the "
 "owner of that event to add you to their team)."
 msgstr ""
-"這個短名稱已被使用，請換另一個（或是請這個短名稱的擁有者將您加入他們的團隊"
-"中）。"
+"這個短名稱已被使用，請換另一個（或是請這個短名稱的擁有者將您加入他們的團隊中"
+"）。"
 
 #: event/forms.py:320
 msgid ""
@@ -23100,8 +23129,8 @@ msgid ""
 "example link to your home page, your registration page, or your livestream "
 "here."
 msgstr ""
-"這些連結會顯示在所有議程相關頁面的頂部，例如議程表本身、講者頁面、議程頁面"
-"等。您可以在此連結到首頁、報名頁面或直播串流等。"
+"這些連結會顯示在所有議程相關頁面的頂部，例如議程表本身、講者頁面、議程頁面等"
+"。您可以在此連結到首頁、報名頁面或直播串流等。"
 
 #: eventyay_common/templates/eventyay_common/event/settings.html:79
 msgid "Footer links"
@@ -24447,8 +24476,7 @@ msgstr "有新的議程投稿時傳送郵件"
 msgid ""
 "If this setting is checked, you will receive an email to the organizer "
 "address for every received proposal."
-msgstr ""
-"如果勾選此選項，當收到議程投稿時就會傳送一封郵件到主辦者的電子郵件地址。"
+msgstr "如果勾選此選項，當收到議程投稿時就會傳送一封郵件到主辦者的電子郵件地址。"
 
 #: orga/forms/cfp.py:59
 msgid "Allow submitters to share their proposal publicly"
@@ -24732,8 +24760,8 @@ msgid ""
 "The password contains unsupported letters. Please only use characters A-Z, a-"
 "z, 0-9, and common special characters ({characters})."
 msgstr ""
-"密碼包含不支援的字元。請只使用字元 A-Z、a-z、0-9 和常見的特殊字元"
-"（{characters}）。"
+"密碼包含不支援的字元。請只使用字元 A-Z、a-z、0-9 和常見的特殊字元（"
+"{characters}）。"
 
 #: orga/forms/event.py:253
 msgid "You have to provide a sender address if you use a custom SMTP server."
@@ -24747,8 +24775,8 @@ msgid ""
 "Privacy Policy."
 msgstr ""
 "由於數據保護原因，如果你使用非本地郵件伺服器，則必須啟動SSL或STARTTLS安全性。"
-"你的管理員可以增加實例範圍的Bypass。如果你使用此Bypass，還請調整你的隱私政"
-"策。"
+"你的管理員可以增加實例範圍的Bypass。如果你使用此Bypass，還請調整你的隱私政策"
+"。"
 
 #: orga/forms/event.py:304
 msgid "Enable submission comments"
@@ -24828,8 +24856,7 @@ msgstr "即使議程表尚未公開依然顯示元件"
 msgid ""
 "Set to allow external pages to show the schedule widget, even if the "
 "schedule is not shown here using eventyay."
-msgstr ""
-"設定為允許外部頁面顯示議程表小配件，即使此處未使用 eventyay 顯示議程表。"
+msgstr "設定為允許外部頁面顯示議程表小配件，即使此處未使用 eventyay 顯示議程表。"
 
 #: orga/forms/event.py:371
 msgid "Limit days"
@@ -24884,8 +24911,7 @@ msgstr "新的一行"
 msgid ""
 "Invalid email template! Please check that you don’t have stray { or } "
 "somewhere, and that there are no spaces inside the {} blocks."
-msgstr ""
-"電子郵件範本無效！請檢查是否有多餘的 { 或 }，並確認在 {} 區塊內沒有空格。"
+msgstr "電子郵件範本無效！請檢查是否有多餘的 { 或 }，並確認在 {} 區塊內沒有空格。"
 
 #: orga/forms/mails.py:76 orga/forms/mails.py:93
 msgid "Unknown placeholder!"
@@ -25218,8 +25244,7 @@ msgstr "無法傳送密碼重設電子郵件，因此未重設密碼。"
 msgid ""
 "{count} emails have been saved to the outbox – you can make individual "
 "changes there or just send them all."
-msgstr ""
-"{count} 封電子郵件已儲存到寄件匣 – 您可以在那裡進行個別變更或直接全部傳送。"
+msgstr "{count} 封電子郵件已儲存到寄件匣 – 您可以在那裡進行個別變更或直接全部傳送。"
 
 #: orga/templates/orga/base.html:164
 msgid "You’re using eventyay as a superuser. This is not recommended."
@@ -25327,8 +25352,8 @@ msgid ""
 "click on the item you want to change!"
 msgstr ""
 "這是 eventyay 徵求議程投稿編輯器。此頁面允許您變更所有個別徵求議程投稿步驟的"
-"標題和資訊文字。您也可以為個別欄位新增自訂說明文字。只需點選您想要變更的項"
-"目！"
+"標題和資訊文字。您也可以為個別欄位新增自訂說明文字。只需點選您想要變更的項目"
+"！"
 
 #: orga/templates/orga/cfp/forms.html:39
 #: orga/templates/orga/cfp/talkquestion/list.html:33
@@ -25343,8 +25368,8 @@ msgid ""
 "accommodation. Custom fields can be configured either on a per-proposal "
 "level, or per speaker, as you see fit."
 msgstr ""
-"自訂欄位可以幫助您整理講者的額外詳細資料，例如服裝尺寸、特殊需求（如飲食需"
-"求）或住宿。自訂欄位可以依您的需要，針對每個投稿或每個講者進行設定。"
+"自訂欄位可以幫助您整理講者的額外詳細資料，例如服裝尺寸、特殊需求（如飲食需求"
+"）或住宿。自訂欄位可以依您的需要，針對每個投稿或每個講者進行設定。"
 
 #: orga/templates/orga/cfp/forms.html:64
 msgid "Proposal information"
@@ -25657,9 +25682,8 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"此欄位已有 <strong>%(count)s</strong> 個回應，還<a "
-"href=\"%(base_search_url)sunanswered=1\">缺少 <strong>%(missing)s</strong> 個"
-"</a>。"
+"此欄位已有 <strong>%(count)s</strong> 個回應，還<a href=\"%(base_search_url)"
+"sunanswered=1\">缺少 <strong>%(missing)s</strong> 個</a>。"
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, python-format
@@ -25737,8 +25761,8 @@ msgid ""
 "settings, set up your Call for Papers with session types and custom fields, "
 "and you’re ready to go!"
 msgstr ""
-"您的活動已經建立，並且準備好了！檢查一下活動設定，設定好徵稿（Call for "
-"Papers）的場次型態與自訂問題欄位，就可以上路了！"
+"您的活動已經建立，並且準備好了！檢查一下活動設定，設定好徵稿（Call for Papers"
+"）的場次型態與自訂問題欄位，就可以上路了！"
 
 #: orga/templates/orga/event/dashboard.html:69
 #, fuzzy
@@ -25771,8 +25795,7 @@ msgstr ""
 msgid ""
 "You are currently in the organizer area of eventyay. To view your submitted "
 "proposals, please go directly to the event page:"
-msgstr ""
-"您目前在 eventyay 的主辦單位區域。要檢視您送出的投稿，請直接前往活動頁面："
+msgstr "您目前在 eventyay 的主辦單位區域。要檢視您送出的投稿，請直接前往活動頁面："
 
 #: orga/templates/orga/includes/dashboard_block_event.html:13
 #: orga/templates/orga/speaker/form.html:30 orga/views/dashboard.py:297
@@ -25863,9 +25886,8 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"如果你已經有一個帳戶 - 作為演講者或召集人 -at <a "
-"href=\"%(domain)s\">%(domain)s</a>, ，請立即登錄。否則，建立一個新帳戶加入團"
-"隊！"
+"如果你已經有一個帳戶 - 作為演講者或召集人 -at <a href=\"%(domain)s\">%"
+"(domain)s</a>, ，請立即登錄。否則，建立一個新帳戶加入團隊！"
 
 #: orga/templates/orga/invitation.html:37
 #, fuzzy, python-format
@@ -25883,8 +25905,8 @@ msgid ""
 "in with the other account. </p><p> If you believe to have received this "
 "invitation by mistake, please contact the organizer directly."
 msgstr ""
-"要使用你當前活躍的帳戶接受邀請，請使用下面的按鈕。如果要使用其他帳戶接受邀"
-"請，可以<a href=\"/orga/logout/?next=%(link)s\">log out</a> and log in with "
+"要使用你當前活躍的帳戶接受邀請，請使用下面的按鈕。如果要使用其他帳戶接受邀請"
+"，可以<a href=\"/orga/logout/?next=%(link)s\">log out</a> and log in with "
 "the other account. </p><p> 如果你認為錯誤地收到了此邀請，請直接與主辦方聯繫。"
 
 #: orga/templates/orga/invitation.html:45
@@ -26002,8 +26024,8 @@ msgid ""
 "tab."
 msgstr ""
 "您可以在此處編輯電子郵件的預設範本和自訂範本。如果您想要傳送電子郵件給部分或"
-"全部講者，請前往「傳送電子郵件」分頁。排隊等待傳送的郵件位於「寄件匣」分頁"
-"中。"
+"全部講者，請前往「傳送電子郵件」分頁。排隊等待傳送的郵件位於「寄件匣」分頁中"
+"。"
 
 #: orga/templates/orga/mails/mailtemplate/list.html:32
 msgid ""
@@ -26228,8 +26250,8 @@ msgid ""
 "strong> proposals. You can change this in your <a href=\"%(href)s\">review "
 "settings</a>."
 msgstr ""
-"審閱者將只能查看和審閱<strong>其分配</strong>的提案。你可以在<a "
-"href=\"%(href)s\">>審閱設定中更改此設定</a>。"
+"審閱者將只能查看和審閱<strong>其分配</strong>的提案。你可以在<a href=\"%"
+"(href)s\">>審閱設定中更改此設定</a>。"
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -26439,8 +26461,8 @@ msgid ""
 "provide your authentication token just like in the API, like this:"
 msgstr ""
 "某些常規導出內容僅供召集人檢視，或者在使用召集人帳號訪問時，包含更多資訊。如"
-"果要在自動集成中檢視召集人版本，則必須像在API中一樣提供身份驗證代幣，如下所"
-"示："
+"果要在自動集成中檢視召集人版本，則必須像在API中一樣提供身份驗證代幣，如下所示"
+"："
 
 #: orga/templates/orga/review/export.html:104
 #: orga/templates/orga/schedule/export.html:188
@@ -26613,8 +26635,8 @@ msgid_plural ""
 "%(count)s sessions are still <strong>unconfirmed</strong> and will not show "
 "up on the public schedule."
 msgstr[0] ""
-"還有 %(count)s 個議程<strong>尚未確認</strong>，因此無法顯示在公開的議程表"
-"中。"
+"還有 %(count)s 個議程<strong>尚未確認</strong>，因此無法顯示在公開的議程表中"
+"。"
 
 #: orga/templates/orga/schedule/release.html:66
 msgid "See all unconfirmed sessions."
@@ -26692,8 +26714,8 @@ msgid ""
 "this server will be used (ask your administrator for details).<br> We "
 "recommend that you add email settings here explicitly."
 msgstr ""
-"如果您沒有修改電子郵件設定，將會使用伺服器的全域設定（詳情要問站台管理員）。"
-"<br>我們建議您在此自己設定電子郵件相關組態。"
+"如果您沒有修改電子郵件設定，將會使用伺服器的全域設定（詳情要問站台管理員）"
+"。<br>我們建議您在此自己設定電子郵件相關組態。"
 
 #: orga/templates/orga/settings/review.html:8
 #: orga/templates/orga/settings/review.html:25
@@ -26707,8 +26729,8 @@ msgid ""
 "offered an additional %(quotation_open)sAbstain%(quotation_close)s button "
 "when reviewing proposals."
 msgstr ""
-"如果您沒有要求要分數或檢閱意見，檢閱者在檢閱投稿時，會多一個"
-"「%(quotation_open)s棄權%(quotation_close)s」的按鍵。"
+"如果您沒有要求要分數或檢閱意見，檢閱者在檢閱投稿時，會多一個「%"
+"(quotation_open)s棄權%(quotation_close)s」的按鍵。"
 
 #: orga/templates/orga/settings/review.html:84
 msgid ""
@@ -26790,9 +26812,9 @@ msgid ""
 "website. This way, your attendees can see your schedule without leaving your "
 "website, and you can style the schedule to fit right in with your website."
 msgstr ""
-"eventyay日程安排小插件是一項將你的議程表安排嵌入到你的活動網站中的方法。這"
-"樣，你的出席者可以在不離開你的網站的情況下，查看你的議程表安排，並且你可以設"
-"定議程表，以適合你的網站。"
+"eventyay日程安排小插件是一項將你的議程表安排嵌入到你的活動網站中的方法。這樣"
+"，你的出席者可以在不離開你的網站的情況下，查看你的議程表安排，並且你可以設定"
+"議程表，以適合你的網站。"
 
 #: orga/templates/orga/settings/widget.html:48
 msgid ""
@@ -26842,8 +26864,7 @@ msgstr "議程表匯出"
 msgid ""
 "You can either create exactly the export you need in the “Custom” tab, or "
 "use these pre-built exports:"
-msgstr ""
-"你可以在「自訂」選項卡中準確建立所需的匯出，也可以使用這些預設建立的匯出："
+msgstr "你可以在「自訂」選項卡中準確建立所需的匯出，也可以使用這些預設建立的匯出："
 
 #: orga/templates/orga/speaker/form.html:94
 msgid "Emails"
@@ -27390,8 +27411,8 @@ msgid ""
 "The review phases '{phase1}' and '{phase2}' overlap. Please make sure that "
 "review phases do not overlap, then save again."
 msgstr ""
-"審稿階段「{phase1}」和「{phase2}」重疊了。請確保審稿階段不重疊，然後再次儲"
-"存。"
+"審稿階段「{phase1}」和「{phase2}」重疊了。請確保審稿階段不重疊，然後再次儲存"
+"。"
 
 #: orga/views/event.py:448
 msgid ""
@@ -27426,8 +27447,7 @@ msgstr "您現在是團隊的一員了！"
 msgid ""
 "ALL related data, such as proposals, and speaker profiles, and uploads, will "
 "also be deleted and cannot be restored."
-msgstr ""
-"所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
+msgstr "所有相關的資料，如議程投稿、講者資料、上傳資料等都會被刪除，並且無法復原。"
 
 #: orga/views/mails.py:46
 #, fuzzy
@@ -31521,8 +31541,7 @@ msgstr "請注意，所有時間均以活動時區 {tz} 顯示。"
 msgid ""
 "If you set room availabilities, speakers will only be able to set their "
 "availability for when any room is available."
-msgstr ""
-"如果您設定了會議室可用性，講者只能在任何會議室可用的時段設定其可參與時段。"
+msgstr "如果您設定了會議室可用性，講者只能在任何會議室可用的時段設定其可參與時段。"
 
 #: schedule/forms.py:110
 msgid "The submitted availability does not comply with the required format."
@@ -31563,8 +31582,7 @@ msgstr "議程表"
 msgid ""
 "You are currently viewing the editable schedule version, which is unreleased "
 "and may change at any time."
-msgstr ""
-"您現在正在查看可編輯版本的議程表。注意此版本尚未釋出，隨時都有可能改變。"
+msgstr "您現在正在查看可編輯版本的議程表。注意此版本尚未釋出，隨時都有可能改變。"
 
 #: schedule/phrases.py:24
 msgid "You are currently viewing an older schedule version."

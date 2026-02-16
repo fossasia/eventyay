@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 06:56+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:53+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Czech <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "cs/>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2);\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -169,8 +169,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"K zobrazení programu si buď povolte JavaScript, nebo navštivte <a "
-"href=\"%(href)s\">tuto</a> stránku s NoJS programem."
+"K zobrazení programu si buď povolte JavaScript, nebo navštivte <a href=\"%"
+"(href)s\">tuto</a> stránku s NoJS programem."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -5471,8 +5471,7 @@ msgstr "Nikdo ve Vašem týmu nemá oprávnění vytvářet nové události."
 #| "settings."
 msgid ""
 "Nobody on your teams has the permission to change organizer-level settings."
-msgstr ""
-"Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
+msgstr "Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
 
 #: base/models/organizer.py:76
 #, python-brace-format
@@ -6710,8 +6709,7 @@ msgstr "Minimální délka textu"
 
 #: base/models/question.py:192
 msgid "Minimum allowed text in characters or words (set in CfP settings)."
-msgstr ""
-"Minimální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
+msgstr "Minimální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
 
 #: base/models/question.py:197
 msgid "Maximum text length"
@@ -6720,8 +6718,7 @@ msgstr "Maximální délka textu"
 #: base/models/question.py:198
 msgid ""
 "Maximum allowed text length in characters or words (set in CfP settings)."
-msgstr ""
-"Maximální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
+msgstr "Maximální povolený počet znaků nebo slov v textu (podle nastavení CfP)."
 
 #: base/models/question.py:232
 msgid "Publish answers"
@@ -9341,40 +9338,40 @@ msgstr ""
 msgid "The voucher has been sent to {recipient}."
 msgstr ""
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
 #| msgid "Your default language needs to be one of your active languages."
 msgid "Content languages must be a subset of the active languages."
 msgstr "Váš výchozí jazyk musí být jedním z aktivních jazyků."
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 
@@ -9768,8 +9765,7 @@ msgstr ""
 #: cfp/flow.py:413
 msgid ""
 "Your draft was saved. You can continue to edit it as long as the CfP is open."
-msgstr ""
-"Váš koncept byl uložen. Můžete ho upravovat, dokud nebude CfP uzavřeno."
+msgstr "Váš koncept byl uložen. Můžete ho upravovat, dokud nebude CfP uzavřeno."
 
 #: cfp/flow.py:420
 msgid ""
@@ -9997,8 +9993,8 @@ msgstr ""
 #, python-format
 msgid "This Call for Papers closed on %(deadline)s (%(timezone)s)."
 msgstr ""
-"Toto shánění přednášejících (Call for Papers) skončilo %(deadline)s "
-"(%(timezone)s)."
+"Toto shánění přednášejících (Call for Papers) skončilo %(deadline)s (%"
+"(timezone)s)."
 
 #: cfp/templates/cfp/event/cfp.html:60
 #, fuzzy
@@ -13170,7 +13166,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -13368,23 +13364,62 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+msgid "Enable telemetry"
+msgstr ""
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+#, fuzzy
+#| msgid "Send all"
+msgid "Telemetry endpoint"
+msgstr "Odeslat vše"
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 #, fuzzy
 #| msgid "Redirection URIs"
 msgid "Redirect URL"
 msgstr "URI použité pro přesměrování"
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, python-format
 msgid ""
 "The provided key does not look valid. It should start with one of: "
@@ -22040,8 +22075,7 @@ msgstr ""
 msgid ""
 "You do not have permission to create organizers. Please contact an "
 "administrator."
-msgstr ""
-"Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
+msgstr "Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
 
 #: control/views/organizer_views/organizer_view.py:70
 msgid "The new organizer has been created."
@@ -24085,8 +24119,7 @@ msgstr ""
 #| "Nobody on your teams has the permission to change organiser-level "
 #| "settings."
 msgid "You do not have permission to change event settings."
-msgstr ""
-"Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
+msgstr "Nikdo ve vašem týmu nemá oprávnění změnit nastavení úrovně organizátor."
 
 #: eventyay_common/views/dashboards.py:282 eventyay_common/views/event.py:877
 msgid "Video link is now visible on public pages."
@@ -24638,8 +24671,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"S radostí vám oznamujeme, že jsme přijali vaši přihlášku "
-"„{submission_title}“\n"
+"S radostí vám oznamujeme, že jsme přijali vaši přihlášku „{submission_title}"
+"“\n"
 "na událost {event_name}. Pro potvrzení své účasti klepněte na tento odkaz:\n"
 "\n"
 "    {confirmation_link}\n"
@@ -24666,8 +24699,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"Je nám líto, ale vaši přihlášku „{submission_title}“ na událost "
-"{event_name}\n"
+"Je nám líto, ale vaši přihlášku „{submission_title}“ na událost {event_name}"
+"\n"
 "jsme nemohli přijmout. Přednášek bylo prostě přihlášených příliš mnoho.\n"
 "Doufáme, že na {event_name} přijdete alespoň jako návštěvník.\n"
 "\n"
@@ -24801,8 +24834,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"Byli jste přidáni do přihlášky na událost {event_name} s názvem "
-"„{proposal_title}“.\n"
+"Byli jste přidáni do přihlášky na událost {event_name} s názvem „"
+"{proposal_title}“.\n"
 "Vytvořili jsme proto pro vás účet – navštivte prosím tento odkaz pro "
 "nastavení hesla.\n"
 "\n"
@@ -24829,8 +24862,8 @@ msgid ""
 msgstr ""
 "Zdravíme.\n"
 "\n"
-"Byli jste přidáni do přihlášky na událost {event_name} s názvem "
-"„{proposal_title}“.\n"
+"Byli jste přidáni do přihlášky na událost {event_name} s názvem „"
+"{proposal_title}“.\n"
 "Navštivte prosím tento odkaz pro úpravu uživatelského profilu a zobrazení "
 "stavu přihlášky:\n"
 "\n"
@@ -26108,8 +26141,7 @@ msgstr "Skrýt program"
 #| "submission."
 msgid ""
 "This field is currently inactive, and will not be asked during submission."
-msgstr ""
-"Tato otázka teď není aktivní a nebude pokládána jako součást přihlášky."
+msgstr "Tato otázka teď není aktivní a nebude pokládána jako součást přihlášky."
 
 #: orga/templates/orga/cfp/question/update.html:23
 #: orga/templates/orga/cfp/talkquestion/detail.html:47
@@ -26190,9 +26222,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Tato otázka byla zatím odpovězena <strong>%(count)skrát</strong>, "
-"<strong>%(missing)s</strong> odpovědí <a "
-"href=\"%(base_search_url)sunanswered=1\">stále chybí</a>."
+"Tato otázka byla zatím odpovězena <strong>%(count)skrát</strong>, <strong>%"
+"(missing)s</strong> odpovědí <a href=\"%(base_search_url)sunanswered=1\">"
+"stále chybí</a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, fuzzy, python-format
@@ -26411,9 +26443,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Pokud už máte účet, ať už jako přednášející nebo organizátor na <a "
-"href=\"%(domain)s\">%(domain)s</a>, přihlaste se prosím. V opačném případě "
-"si prosím účet vytvořte."
+"Pokud už máte účet, ať už jako přednášející nebo organizátor na <a href=\"%"
+"(domain)s\">%(domain)s</a>, přihlaste se prosím. V opačném případě si prosím "
+"účet vytvořte."
 
 #: orga/templates/orga/invitation.html:37
 #, fuzzy, python-format
@@ -26563,8 +26595,8 @@ msgid ""
 "tab."
 msgstr ""
 "Tady můžete upravit výchozí šablony e-mailů nebo přidat vlastní. Pokud "
-"chcete poslat e-mail všem nebo jen některým přednášejícím, otevřete panel "
-"„Poslat e-maily“. E-maily budou zařazeny do panelu „K odeslání“."
+"chcete poslat e-mail všem nebo jen některým přednášejícím, otevřete panel „"
+"Poslat e-maily“. E-maily budou zařazeny do panelu „K odeslání“."
 
 #: orga/templates/orga/mails/mailtemplate/list.html:32
 msgid ""
@@ -26811,8 +26843,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Kontrolující uvidí a budou moci kontrolovat <strong>jenom jim konkrétně "
-"přiřazené</strong> přihlášky. Toto můžete změnit v <a "
-"href=\"%(href)s\">nastavení kontroly</a>."
+"přiřazené</strong> přihlášky. Toto můžete změnit v <a href=\"%(href)s\">"
+"nastavení kontroly</a>."
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -27449,8 +27481,8 @@ msgid ""
 "To embed the widget into your website, copy the following code to the "
 "<code>&lt;head></code> section of your website:"
 msgstr ""
-"Pro vložení widgetu do webu zkopírujte následující kód do sekce "
-"<code>&lt;head&gt;</code>:"
+"Pro vložení widgetu do webu zkopírujte následující kód do sekce <code>"
+"&lt;head&gt;</code>:"
 
 #: orga/templates/orga/settings/widget.html:87
 #, python-format
@@ -28386,8 +28418,7 @@ msgstr "Váš program byl zveřejněn!"
 #: orga/views/schedule.py:202
 msgid ""
 "Reset successful – start editing the schedule from your selected version!"
-msgstr ""
-"Obnovení bylo úspěšné – program začněte upravovat o vámi zvolené verze!"
+msgstr "Obnovení bylo úspěšné – program začněte upravovat o vámi zvolené verze!"
 
 #: orga/views/schedule.py:205
 msgid "Error retrieving the schedule version to reset to."
@@ -32406,8 +32437,7 @@ msgstr "- Vaše přednáška „%(title)s“ se bude konat od %(start)s v %(loca
 #: schedule/templates/schedule/speaker_notification.txt:3
 #, python-format
 msgid "- Your session “%(title)s” has been moved to %(start)s in %(location)s"
-msgstr ""
-"- Vaše přednáška „%(title)s“ byla přesunuta na %(start)s v %(location)s"
+msgstr "- Vaše přednáška „%(title)s“ byla přesunuta na %(start)s v %(location)s"
 
 #: submission/exporters.py:18 submission/exporters.py:63
 #, fuzzy

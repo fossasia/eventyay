@@ -7,9 +7,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-12 23:11+0530\n"
-"PO-Revision-Date: 2025-11-30 14:45+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"POT-Creation-Date: 2026-02-14 17:26+0530\n"
+"PO-Revision-Date: 2026-02-14 14:27+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Latvian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/lv/>\n"
 "Language: lv\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n % 10 == 0 || n % 100 >= 11 && n % 100 <= "
 "19) ? 0 : ((n % 10 == 1 && n % 100 != 11) ? 1 : 2);\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -1054,8 +1054,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Re-try payment or choose another payment method"
 msgid "Automatically on payment or when required by payment method"
-msgstr ""
-"Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
+msgstr "Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
 
 #: base/configurations/default_setting.py:687
 msgid "Generate invoices"
@@ -4213,8 +4212,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, this corresponds to:"
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, šis atbilst:"
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", šis atbilst:"
 
 #: base/invoice.py:823
 #, python-brace-format
@@ -4223,8 +4222,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
-"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja "
-"{date}, rēķina kopsumma atbilst {total}."
+"Izmantojot maiņas kursu 1:{rate}, ko Eiropas Centrālā banka publicēja {date}"
+", rēķina kopsumma atbilst {total}."
 
 #: base/invoice.py:839
 #, fuzzy
@@ -6111,8 +6110,7 @@ msgstr "Parādīt šīs biļetes gaidīšanas sarakstu"
 #, fuzzy
 #| msgid "This will only work of waiting lists are enabled for this event."
 msgid "This will only work if waiting lists are enabled for this event."
-msgstr ""
-"Šis darbosies tikai tad, ja pasākumam ir iespējoti gaidīšanas saraksti."
+msgstr "Šis darbosies tikai tad, ja pasākumam ir iespējoti gaidīšanas saraksti."
 
 #: base/models/product.py:346
 msgid "Publicly show how many tickets are still available."
@@ -6179,10 +6177,10 @@ msgid ""
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
 msgstr ""
-"Ja šis produkts ir daļa no pasūtījuma, pasūtījumam tiks piemērots "
-"“apstiprināšanas” satuss un tas būs jāapstiprina jums, pirms klients to "
-"varēs apmaksāt un pabeigt iegādes procesu. Jūs varat izmantot šo funkciju, "
-"piem. biļetēm ar atlaidi, kuras ir pieejamas tikai noteiktām grupām."
+"Ja šis produkts ir daļa no pasūtījuma, pasūtījumam tiks piemērots “"
+"apstiprināšanas” satuss un tas būs jāapstiprina jums, pirms klients to varēs "
+"apmaksāt un pabeigt iegādes procesu. Jūs varat izmantot šo funkciju, piem. "
+"biļetēm ar atlaidi, kuras ir pieejamas tikai noteiktām grupām."
 
 #: base/models/product.py:401
 msgid ""
@@ -9111,8 +9109,8 @@ msgid ""
 "We removed %(product)s from your cart as you can not buy less than %(min)s "
 "items of it."
 msgstr ""
-"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par "
-"%(min)s precēm."
+"No jūsu groza tika noņemti %(product)s, jo jūs nevarat iegādāties mazāk par %"
+"(min)s precēm."
 
 #: base/services/cart.py:81 base/services/orders.py:113
 msgid "The presale period for this event has not yet started."
@@ -9237,8 +9235,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas "
-"%(cat)s šim produktam %(base)s."
+"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas %"
+"(cat)s šim produktam %(base)s."
 
 #: base/services/cart.py:122
 #, python-format
@@ -9258,8 +9256,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas "
-"%(cat)s šim produktam %(base)s."
+"Jūs varat izvēlēties ne vairāk kā %(max)s papildinājumus no kategorijas %"
+"(cat)s šim produktam %(base)s."
 
 #: base/services/cart.py:127
 msgid ""
@@ -9865,38 +9863,38 @@ msgstr ""
 msgid "The voucher has been sent to {recipient}."
 msgstr ""
 
-#: base/settings.py:133 control/forms/event.py:264
+#: base/settings.py:142 control/forms/event.py:264
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
 
-#: base/settings.py:142 control/forms/event.py:131
+#: base/settings.py:151 control/forms/event.py:131
 msgid "Content languages must be a subset of the active languages."
 msgstr ""
 
-#: base/settings.py:146
+#: base/settings.py:155
 msgid ""
 "You cannot require specifying attendee names if you do not ask for them."
 msgstr ""
 
-#: base/settings.py:150
+#: base/settings.py:159
 msgid "You have to ask for attendee emails if you want to make them required."
 msgstr ""
 
-#: base/settings.py:154
+#: base/settings.py:163
 msgid "You have to ask for order email if you want to make it required."
 msgstr ""
 
-#: base/settings.py:158
+#: base/settings.py:167
 msgid ""
 "You have to ask for invoice addresses if you want to make them required."
 msgstr ""
 
-#: base/settings.py:164
+#: base/settings.py:173
 msgid "You have to require invoice addresses to require for company names."
 msgstr ""
 
-#: base/settings.py:173
+#: base/settings.py:182
 msgid "The last payment date cannot be before the end of presale."
 msgstr ""
 
@@ -13765,7 +13763,7 @@ msgid "Leaflet tiles URL pattern"
 msgstr ""
 
 #: control/forms/global_settings.py:114 control/forms/global_settings.py:122
-#: control/forms/global_settings.py:479
+#: control/forms/global_settings.py:508
 #, python-brace-format
 msgid "e.g. {sample}"
 msgstr ""
@@ -13981,15 +13979,54 @@ msgid ""
 "will be sent by this server locally."
 msgstr ""
 
-#: control/forms/global_settings.py:478
+#: control/forms/global_settings.py:473
+#, fuzzy
+#| msgid "Enable payment method"
+msgid "Enable telemetry"
+msgstr "Iespējot maksājuma veidu"
+
+#: control/forms/global_settings.py:475
+msgid ""
+"Send anonymous usage statistics (bucketed counts, deployment info) to help "
+"track version adoption and deployment patterns. No personal data is "
+"collected. Data is sent approximately once per day."
+msgstr ""
+
+#: control/forms/global_settings.py:482
+msgid "Telemetry endpoint"
+msgstr ""
+
+#: control/forms/global_settings.py:483
+msgid "The URL where telemetry data will be sent (Google Apps Script URL)."
+msgstr ""
+
+#: control/forms/global_settings.py:487
+msgid "Telemetry API key"
+msgstr ""
+
+#: control/forms/global_settings.py:488
+msgid "API key for authenticating with the telemetry receiver."
+msgstr ""
+
+#: control/forms/global_settings.py:492
+msgid "Maintainer contact"
+msgstr ""
+
+#: control/forms/global_settings.py:494
+msgid ""
+"Optional email address included in telemetry data to identify who maintains "
+"this instance. Only visible to those with access to the telemetry data sheet."
+msgstr ""
+
+#: control/forms/global_settings.py:507
 msgid "Redirect URL"
 msgstr ""
 
-#: control/forms/global_settings.py:519
+#: control/forms/global_settings.py:548
 msgid "The Stripe key cannot be empty."
 msgstr ""
 
-#: control/forms/global_settings.py:523
+#: control/forms/global_settings.py:552
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -13997,10 +14034,10 @@ msgstr ""
 msgid ""
 "The provided key does not look valid. It should start with \"%(prefix)s\"."
 msgstr ""
-"Iesniegtā atslēga \"%(value)s\" neizskatās derīga. Tai jāsākas ar "
-"\"%(prefix)s\"."
+"Iesniegtā atslēga \"%(value)s\" neizskatās derīga. Tai jāsākas ar \"%(prefix)"
+"s\"."
 
-#: control/forms/global_settings.py:526
+#: control/forms/global_settings.py:555
 #, fuzzy, python-format
 #| msgid ""
 #| "The provided key \"%(value)s\" does not look valid. It should start with "
@@ -14009,8 +14046,8 @@ msgid ""
 "The provided key does not look valid. It should start with one of: "
 "%(prefixes)s"
 msgstr ""
-"Iesniegtā atslēga \"%(value)s\" neizskatās derīga. Tai jāsākas ar "
-"\"%(prefix)s\"."
+"Iesniegtā atslēga \"%(value)s\" neizskatās derīga. Tai jāsākas ar \"%(prefix)"
+"s\"."
 
 #: control/forms/orderimport.py:9
 msgid "Import mode"
@@ -31746,8 +31783,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/checkout_questions.html:10
 msgid ""
 "You need to fill all fields that are marked with <span>*</span> to continue."
-msgstr ""
-"Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
+msgstr "Lai turpinātu, jāaizpilda visi lauki, kas apzīmēti ar <span> * </span>."
 
 #: presale/templates/pretixpresale/event/checkout_questions.html:69
 msgid "Copy answers from above"
@@ -32331,8 +32367,7 @@ msgstr "Lūdzu, pabeidziet maksājumu pirms %(date)s"
 
 #: presale/templates/pretixpresale/event/order.html:98
 msgid "Re-try payment or choose another payment method"
-msgstr ""
-"Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
+msgstr "Atkārtoti mēģiniet veikt maksājumu vai izvēlieties citu maksājuma veidu"
 
 #: presale/templates/pretixpresale/event/order.html:106
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:45
