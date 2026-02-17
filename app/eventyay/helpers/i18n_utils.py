@@ -1,9 +1,6 @@
-from django.conf import settings
-from django.utils.translation import get_language_info, gettext_lazy as _
-import locale
-from functools import cmp_to_key
+from django.utils.translation import get_language_info
 
-def get_styled_language_name(code, natural_name, current_locale=None):
+def get_styled_language_name(code, natural_name):
     """
     Returns the language name in the format "Translated Name (Native Name)".
     Example: "German (Deutsch)"
@@ -42,6 +39,13 @@ def get_sorted_grouped_locales(current_locale=None):
     from django.conf import settings # Import here to avoid circular dependency if any
     
     languages_config = getattr(settings, '_LANGUAGES_CONFIG', {})
+    if not languages_config:
+        # Fallback to settings.LANGUAGES if config is missing
+        # Construct a minimal config from LANGUAGES tuple
+        languages_config = {
+            code: {'name': name, 'natural_name': name} 
+            for code, name in getattr(settings, 'LANGUAGES', [])
+        }
     
     # helper to check if a code is a variant
     # We assume variants are defined in settings with 'parent' key or implicit via naming convention if we want

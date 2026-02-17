@@ -5,7 +5,7 @@ from django.utils import translation
 class I18nUtilsTest(TestCase):
     def test_get_sorted_grouped_locales_structure(self):
         translation.activate('en')
-        locales = get_sorted_grouped_locales('en')
+        locales = get_sorted_grouped_locales()
         
         self.assertTrue(isinstance(locales, list))
         self.assertTrue(len(locales) > 0)
@@ -18,7 +18,7 @@ class I18nUtilsTest(TestCase):
 
     def test_german_variants_grouping(self):
         translation.activate('en')
-        locales = get_sorted_grouped_locales('en')
+        locales = get_sorted_grouped_locales()
         
         # Find German
         german = next((l for l in locales if l['code'] == 'de'), None)
@@ -34,20 +34,21 @@ class I18nUtilsTest(TestCase):
     def test_sorting_by_translated_name(self):
         # In English, German starts with G. Spanish starts with S.
         translation.activate('en')
-        locales = get_sorted_grouped_locales('en')
+        locales = get_sorted_grouped_locales()
         
         codes = [l['code'] for l in locales]
         if 'de' in codes and 'es' in codes:
             self.assertLess(codes.index('de'), codes.index('es')) # G < S
         
         translation.activate('de')
-        locales_de = get_sorted_grouped_locales('de')
+        locales_de = get_sorted_grouped_locales()
         codes_de = [l['code'] for l in locales_de]
         
         if 'fr' in codes and 'de' in codes:
             # en: French (F) < German (G)
             self.assertLess(codes.index('fr'), codes.index('de')) 
             
+        if 'de' in codes_de and 'fr' in codes_de:
             # de: Deutsch (D) < Französisch (F)
             self.assertLess(codes_de.index('de'), codes_de.index('fr'))
 
@@ -64,7 +65,7 @@ class I18nUtilsTest(TestCase):
 
     def test_chinese_splitting(self):
         translation.activate('en')
-        locales = get_sorted_grouped_locales('en')
+        locales = get_sorted_grouped_locales()
         codes = [l['code'] for l in locales]
         
         # Check both codes are present as top-level entries (not variants of 'zh')
@@ -76,5 +77,29 @@ class I18nUtilsTest(TestCase):
         hant_entry = next(l for l in locales if l['code'] == 'zh-hant')
         
         self.assertNotEqual(hans_entry['styled_name'], hant_entry['styled_name'])
+
+    def test_get_styled_language_name(self):
+        from eventyay.helpers.i18n_utils import get_styled_language_name
+        
+        # Case 1: Translated name != Native name
+        # We need a predictable language. 'de' is usually "German" in English and "Deutsch" natively.
+        # But get_styled_language_name relies on django's get_language_info, which uses the ACTIVE language for translation.
+        # So we must activate English.
+        translation.activate('en')
+        
+        name = get_styled_language_name('de', 'Deutsch')
+        self.assertIn('Deutsch', name)
+        # In English environment, it should probably be "German (Deutsch)"
+        # But we can't easily assert "German" without knowing exactly what get_language_info returns for 'de' in 'en'.
+        # Assuming standard django conf.
+        
+        # Case 2: Translated name == Native name (case-insensitive)
+        # e.g. English in English is "English (English)" -> "English"
+        name_en = get_styled_language_name('en', 'English')
+        self.assertEqual(name_en, 'English')
+        
+        # Case 3: Unknown code (fallback)
+        name_unknown = get_styled_language_name('xx-yy', 'MyLang')
+        self.assertEqual(name_unknown, 'MyLang')
 
 

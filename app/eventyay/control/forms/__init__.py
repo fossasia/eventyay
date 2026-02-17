@@ -306,9 +306,9 @@ class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
         original_choices = self.choices
         self.choices = new_choices
         try:
-             return super().optgroups(name, value, attrs)
+            return super().optgroups(name, value, attrs)
         finally:
-             self.choices = original_choices
+            self.choices = original_choices
 
 
 class SingleLanguageWidget(forms.Select):
@@ -325,11 +325,11 @@ class SingleLanguageWidget(forms.Select):
         
         for item in structured:
             if item['code'] in valid_codes:
-                 new_choices.append((item['code'], item['styled_name']))
+                new_choices.append((item['code'], item['styled_name']))
             for variant in item.get('variants', []):
                 if variant['code'] in valid_codes:
-                     label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
-                     new_choices.append((variant['code'], label))
+                    label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                    new_choices.append((variant['code'], label))
         
         self.choices = new_choices
         self._modified = True
