@@ -1,9 +1,11 @@
 import json
 import textwrap
 from contextlib import suppress
-from urllib.parse import unquote
+from datetime import timedelta
+from urllib.parse import unquote, urlparse, urlunparse
 
 from django.contrib import messages
+from django.core import signing
 from django.http import (
     Http404,
     HttpResponse,
@@ -12,6 +14,8 @@ from django.http import (
 )
 from django.urls import resolve, reverse
 from django.utils.functional import cached_property
+from django.utils.http import urlencode
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
@@ -21,13 +25,20 @@ from eventyay.agenda.views.utils import (
     get_schedule_exporter_content,
     get_schedule_exporters,
     is_public_schedule_empty,
+    load_starred_ics_token,
     redirect_to_presale_with_warning,
 )
 from eventyay.common.signals import register_my_data_exporters
 from eventyay.common.views.mixins import EventPermissionRequired, PermissionRequired
 from eventyay.schedule.ascii import draw_ascii_schedule
 from eventyay.schedule.exporters import ScheduleData
-from eventyay.base.models.submission import SubmissionFavouriteDeprecated
+
+
+# Starred-ICS token timing: grace, fallback, refresh buffer.
+STARRED_ICS_TOKEN_SESSION_KEY = 'my_starred_ics_token'
+STARRED_ICS_TOKEN_GRACE_PERIOD = timedelta(hours=24)
+STARRED_ICS_TOKEN_FALLBACK_LIFETIME = timedelta(seconds=30)
+STARRED_ICS_TOKEN_MIN_VALIDITY = timedelta(seconds=10)
 
 
 class ScheduleMixin:
@@ -37,9 +48,62 @@ class ScheduleMixin:
             return unquote(version)
         return None
 
+    @staticmethod
+    def generate_ics_token(request, user_id):
+        """Generate a signed token for the starred-sessions ICS export.
+
+        Expiry policy:
+        - If the event has not yet ended (plus a 24h grace), expire at event end + 24h.
+        - Otherwise (event end + 24h already passed), fall back to a short-lived token.
+
+        Note:
+        The session key is rotated (so the *session-stored* token is replaced), but there is
+        no server-side revocation list. Previously issued tokens remain valid until their
+        embedded expiry time.
+        """
+        key = STARRED_ICS_TOKEN_SESSION_KEY
+        if key in request.session:
+            del request.session[key]
+
+        expiry_fallback = timezone.now() + STARRED_ICS_TOKEN_FALLBACK_LIFETIME
+        expiry = expiry_fallback
+        event = request.event
+        expiry_event = event.date_to + STARRED_ICS_TOKEN_GRACE_PERIOD
+        if timezone.is_naive(expiry_event):
+            expiry_event = timezone.make_aware(expiry_event, timezone=timezone.get_current_timezone())
+        if expiry_event > timezone.now():
+            expiry = expiry_event
+
+        value = {
+            "user_id": user_id,
+            "exp": int(expiry.timestamp()),
+            "event_id": event.pk,
+        }
+        token = signing.dumps(value, salt='my-starred-ics')
+
+        request.session[key] = token
+        return token
+
+    @staticmethod
+    def check_token_expiry(token, *, event=None):
+        """Check if a token exists and has enough time until expiry.
+
+        Returns:
+        - None if token is invalid
+        - False if token is valid but expiring soon
+        - True if token is valid and not expiring soon
+        """
+        _user_id, expiry_dt = load_starred_ics_token(token, event=event)
+        if not expiry_dt:
+            return None
+        time_until_expiry = expiry_dt - timezone.now()
+        return time_until_expiry >= STARRED_ICS_TOKEN_MIN_VALIDITY
+
     def get_object(self):
         schedule = None
-        if self.version:
+        if self.version == 'wip':
+            schedule = self.request.event.wip_schedule
+        elif self.version:
             with suppress(Exception):
                 schedule = (
                     self.request.event.schedules.filter(version__iexact=self.version).select_related('event', 'event__organizer').first()
@@ -77,14 +141,23 @@ class ExporterView(EventPermissionRequired, ScheduleMixin, TemplateView):
 
     def get(self, request, *args, **kwargs):
         url = resolve(self.request.path_info)
-        if url.url_name == 'export':
-            name = url.kwargs.get('name') or unquote(self.request.GET.get('exporter'))
+        url_name = url.url_name or ''
+        base_url_name = url_name[len('versioned-') :] if url_name.startswith('versioned-') else url_name
+
+        if 'name' in url.kwargs and url.kwargs.get('name') is not None:
+            name = url.kwargs['name']
+        elif base_url_name in ['export', 'export-tokenized']:
+            exporter_param = self.request.GET.get('exporter')
+            name = unquote(exporter_param) if exporter_param else ''
         else:
-            name = url.url_name
+            name = base_url_name
+
+        if base_url_name == 'export-tokenized' and name != 'schedule-my.ics':
+            raise Http404()
 
         if name.startswith('export.'):
             name = name[len('export.') :]
-        response = get_schedule_exporter_content(request, name, self.schedule)
+        response = get_schedule_exporter_content(request, name, self.schedule, token=kwargs.get('token'))
         if not response:
             raise Http404()
         return response
@@ -170,7 +243,53 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
 
     @context
     def exporters(self):
-        return [exporter for exporter in get_schedule_exporters(self.request, public=True) if exporter.show_public]
+        exporters = [exporter for exporter in get_schedule_exporters(self.request, public=True) if exporter.show_public]
+
+        order = {
+            'google-calendar': 0,
+            'webcal': 1,
+            'schedule.ics': 10,
+            'schedule.json': 11,
+            'schedule.xml': 12,
+            'schedule.xcal': 13,
+            'faved.ics': 14,
+            'my-google-calendar': 100,
+            'my-webcal': 101,
+            'schedule-my.ics': 110,
+            'schedule-my.json': 111,
+            'schedule-my.xml': 112,
+            'schedule-my.xcal': 113,
+        }
+
+        def sort_key(exporter):
+            identifier = exporter.identifier
+            if identifier in order:
+                return (order[identifier], exporter.verbose_name, identifier)
+
+            is_my = identifier.startswith('my-') or '-my' in identifier
+            bucket = 50 if not is_my else 150
+            return (bucket, exporter.verbose_name, identifier)
+
+        exporters.sort(key=sort_key)
+
+        export_view_name = 'agenda:export'
+        export_reverse_kwargs = {
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        }
+        if self.version is not None:
+            export_view_name = 'agenda:versioned-export'
+            export_reverse_kwargs['version'] = self.version
+
+        for exporter in exporters:
+            exporter.export_url = reverse(
+                export_view_name,
+                kwargs={
+                    **export_reverse_kwargs,
+                    'name': exporter.identifier,
+                },
+            )
+        return exporters
 
     @context
     def my_exporters(self):
@@ -233,3 +352,72 @@ class ChangelogView(EventPermissionRequired, TemplateView):
     @context
     def schedules(self):
         return self.request.event.schedules.all().filter(version__isnull=False).select_related('event', 'event__organizer')
+
+
+class CalendarRedirectView(EventPermissionRequired, ScheduleMixin, TemplateView):
+    """Handles redirects for both Google Calendar and other calendar applications."""
+
+    permission_required = 'base.list_schedule'
+
+    def get(self, request, *args, **kwargs):
+        url_name = request.resolver_match.url_name if request.resolver_match else ''
+        is_google = url_name.endswith('export.google-calendar') or url_name.endswith('export.my-google-calendar')
+        is_my = url_name.endswith('export.my-google-calendar') or url_name.endswith('export.my-webcal')
+
+        ics_view_name = 'agenda:export'
+        ics_tokenized_view_name = 'agenda:export-tokenized'
+        reverse_kwargs = {
+            'organizer': self.request.event.organizer.slug,
+            'event': self.request.event.slug,
+        }
+        if self.version is not None:
+            ics_view_name = 'agenda:versioned-export'
+            ics_tokenized_view_name = 'agenda:versioned-export-tokenized'
+            reverse_kwargs['version'] = self.version
+
+        if is_my:
+            if not request.user.is_authenticated:
+                return HttpResponseRedirect(self.request.event.urls.login)
+
+            existing_token = request.session.get(STARRED_ICS_TOKEN_SESSION_KEY)
+            generate_new_token = True
+
+            if existing_token:
+                token_status = self.check_token_expiry(existing_token, event=request.event)
+                if token_status is True:  # Token is valid and not expiring imminently
+                    token = existing_token
+                    generate_new_token = False
+
+            if generate_new_token:
+                token = self.generate_ics_token(request, request.user.id)
+
+            ics_url = request.build_absolute_uri(
+                reverse(
+                    ics_tokenized_view_name,
+                    kwargs={
+                        **reverse_kwargs,
+                        'name': 'schedule-my.ics',
+                        'token': token,
+                    },
+                )
+            )
+        else:
+            ics_url = request.build_absolute_uri(
+                reverse(
+                    ics_view_name,
+                    kwargs={
+                        **reverse_kwargs,
+                        'name': 'schedule.ics',
+                    },
+                )
+            )
+
+        if is_google:
+            google_url = f"https://calendar.google.com/calendar/r?{urlencode({'cid': ics_url})}"
+            return HttpResponseRedirect(google_url)
+
+        parsed = urlparse(ics_url)
+        webcal_url = urlunparse(('webcal',) + parsed[1:])
+        response = HttpResponse(status=302)
+        response['Location'] = webcal_url
+        return response

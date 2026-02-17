@@ -12,6 +12,10 @@ from eventyay.eventyay_common.views import (
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
+from eventyay.control.views import (
+    organizer_views,
+    organizer as organizer_control
+)
 
 app_name = 'eventyay_common'
 
@@ -33,8 +37,23 @@ urlpatterns = [
     path('widgets.json/', dashboards.user_index_widgets_lazy, name='dashboard.widgets'),
     path('organizers/', organizer.OrganizerList.as_view(), name='organizers'),
     path('organizers/add', organizer.OrganizerCreate.as_view(), name='organizers.add'),
-    path('organizer/<str:organizer>/', organizer.OrganizerUpdate.as_view(), name='organizer.update'),
-    path('organizer/<str:organizer>/teams', team.TeamListView.as_view(), name='organizer.teams'),
+    path('organizer/<str:organizer>/edit', organizer_views.organizer_view.OrganizerUpdate.as_view(), name='organizer.edit'),
+    path('organizer/<str:organizer>/delete', organizer_views.organizer_view.OrganizerDelete.as_view(), name='organizer.delete'),
+    path('organizer/<str:organizer>/events', organizer_views.organizer_view.OrganizerDetail.as_view(), name='organizer.events'),
+    path('organizer/<str:organizer>/billing', organizer_views.organizer_view.BillingSettings.as_view(), name='organizer.billing'),
+    path('organizer/<str:organizer>/teams', organizer.OrganizerTeamsView.as_view(), name='organizer.teams'),
+    path('organizer/<str:organizer>/devices', organizer_views.device_view.DeviceListView.as_view(), name='organizer.devices'),
+    path('organizer/<str:organizer>/device/add', organizer_views.device_view.DeviceCreateView.as_view(), name='organizer.devices.add'),
+    path('organizer/<str:organizer>/device/<str:device>/edit', organizer_views.device_view.DeviceUpdateView.as_view(), name='organizer.devices.edit'),
+    path('organizer/<str:organizer>/device/<str:device>/revoke', organizer_views.device_view.DeviceRevokeView.as_view(), name='organizer.devices.revoke'),
+    path('organizer/<str:organizer>/device/<str:device>/logs', organizer_views.device_view.DeviceLogView.as_view(), name='organizer.devices.logs'),
+    path('organizer/<str:organizer>/device/<str:device>/connect', organizer_views.device_view.DeviceConnectView.as_view(), name='organizer.devices.connect'),
+    path('organizer/<str:organizer>/gates', organizer_views.gate_view.GateListView.as_view(), name='organizer.gates'),
+    path('organizer/<str:organizer>/gate/add', organizer_views.gate_view.GateCreateView.as_view(), name='organizer.gates.add'),
+    path('organizer/<str:organizer>/gate/<str:gate>/edit', organizer_views.gate_view.GateUpdateView.as_view(), name='organizer.gates.edit'),
+    path('organizer/<str:organizer>/gate/<str:gate>/delete', organizer_views.gate_view.GateDeleteView.as_view(), name='organizer.gates.delete'),
+    path('organizer/<str:organizer>/export', organizer_control.ExportView.as_view(), name='organizer.export'),
+    path('organizer/<str:organizer>/export/do', organizer_control.ExportDoView.as_view(), name='organizer.export.do'),
     path('organizer/<str:organizer>/team/add', team.TeamCreateView.as_view(), name='organizer.team.add'),
     path('organizer/<str:organizer>/team/<str:team>', team.TeamMemberView.as_view(), name='organizer.team'),
     path('organizer/<str:organizer>/team/<str:team>/edit', team.TeamUpdateView.as_view(), name='organizer.team.edit'),
@@ -52,6 +71,7 @@ urlpatterns = [
                 path('widgets.json', dashboards.event_index_widgets_lazy, name='event.index.widgets'),
                 path('settings/', event.EventUpdate.as_view(), name='event.update'),
                 path('plugins/', event.EventPlugins.as_view(), name='event.plugins'),
+                path('live/', event.EventLive.as_view(), name='event.live'),
                 path('video-access/', event.VideoAccessAuthenticator.as_view(), name='event.create_access_to_video'),
             ]
         ),
