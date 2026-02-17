@@ -194,7 +194,7 @@ export default {
 		&:hover
 			background-color: rgba(0, 0, 0, 0.04)
 		&.active
-			background-color: $highlight-color
+			background-color: var(--pretalx-clr-primary)
 			color: $clr-white
 .timezone-divider
 	display: flex
