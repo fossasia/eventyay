@@ -61,6 +61,50 @@ const initDropdowns = function() {
             closeOtherDropdowns(dropdown);
         });
     });
+
+    // Initialize dashboard dropdown submenu toggle for touch/keyboard devices
+    document.querySelectorAll('.dashboard-dropdown-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(event) {
+            // Only prevent default and toggle on non-hover devices
+            // Check if this is a touch device or doesn't support hover
+            const supportsHover = window.matchMedia('(hover: hover)').matches;
+            if (!supportsHover) {
+                event.preventDefault();
+                const parent = toggle.closest('.dashboard-dropdown');
+                if (parent) {
+                    parent.classList.toggle('active');
+                    const isExpanded = parent.classList.contains('active');
+                    toggle.setAttribute('aria-expanded', isExpanded.toString());
+                }
+            }
+        });
+
+        // Keyboard support (Enter and Space keys)
+        toggle.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const parent = toggle.closest('.dashboard-dropdown');
+                if (parent) {
+                    parent.classList.toggle('active');
+                    const isExpanded = parent.classList.contains('active');
+                    toggle.setAttribute('aria-expanded', isExpanded.toString());
+                }
+            }
+        });
+    });
+
+    // Close submenu when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dashboard-dropdown')) {
+            document.querySelectorAll('.dashboard-dropdown.active').forEach(function(dropdown) {
+                dropdown.classList.remove('active');
+                const toggle = dropdown.querySelector('.dashboard-dropdown-toggle');
+                if (toggle) {
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    });
 };
 
 if (document.readyState === 'loading') {
@@ -69,4 +113,3 @@ if (document.readyState === 'loading') {
     initDropdowns();
 }
 
-export { initDropdowns };
