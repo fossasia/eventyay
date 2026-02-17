@@ -22,7 +22,7 @@ from eventyay.helpers.urls import build_absolute_uri
 
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
-from .utils import validate_login_providers
+from .utils import validate_login_providers, set_preferred_provider
 
 logger = logging.getLogger(__name__)
 adapter = get_adapter()
@@ -124,11 +124,17 @@ class OAuthReturnView(View):
                     oauth2_params = OAuth2Params.model_validate(oauth2_params)
                     query_string = urlencode(oauth2_params.model_dump())
                     auth_url = reverse('eventyay_common:oauth2_provider.authorize')
-                    # OAuth2 flow takes precedence - set as next URL for process_login
-                    # This ensures 2FA flow works correctly if user requires it
+                    
+                    # IMPORTANT: For OAuth2 integration (Talk module), we maintain the
+                    # explicit redirect behavior to preserve external callback compatibility.
+                    # If the user requires 2FA, the URL will be stored in session and
+                    # retrieved after 2FA completion via process_login's next_url handling.
                     next_url = f'{auth_url}?{query_string}'
                     request.session['socialauth_next_url'] = next_url
-                    # Process login and set cookie, respecting 2FA if required
+                    
+                    # Process login and set cookie, respecting 2FA if required.
+                    # If 2FA is not required, user will be redirected to the authorize URL.
+                    # If 2FA is required, user will complete 2FA, then be redirected to authorize URL.
                     response = process_login_and_set_cookie(request, user, keep_logged_in)
                     return response
                 except ValidationError as e:
@@ -246,52 +252,44 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         raw_providers = self.gs.settings.get('login_providers', as_type=dict)
         providers = validate_login_providers(raw_providers)
         
-        # Convert to mutable dict for updates
-        login_providers = providers.model_dump()
-        
         setting_state = request.POST.get('save_credentials', '').lower()
 
-        # Handle preferred provider selection
-        preferred_provider = request.POST.get('preferred_provider', '')
-
-        # Reset all is_preferred flags
-        for provider_name in LoginProviders.model_fields.keys():
-            if provider_name in login_providers:
-                login_providers[provider_name]['is_preferred'] = False
-
-        # Set the selected provider as preferred (if any enabled provider was selected)
-        # Validate that the preferred_provider is a valid provider from the schema
-        if (preferred_provider 
-            and preferred_provider in LoginProviders.model_fields.keys() 
-            and preferred_provider in login_providers):
-            if login_providers[preferred_provider].get('state', False):
-                login_providers[preferred_provider]['is_preferred'] = True
-
+        # Update credentials or state for each provider
         for provider_name in LoginProviders.model_fields.keys():
             if setting_state == self.SettingState.CREDENTIALS:
-                self.update_credentials(request, provider_name, login_providers)
+                self.update_credentials(request, provider_name, providers)
             else:
-                self.update_provider_state(request, provider_name, login_providers)
+                self.update_provider_state(request, provider_name, providers)
 
-        # Validate before saving
+        # Handle preferred provider selection using centralized utility function
+        # This ensures the single-preferred-provider invariant is enforced consistently
+        preferred_provider = request.POST.get('preferred_provider', '')
+        providers = set_preferred_provider(providers, preferred_provider)
+
+        # Save the updated and validated providers
+        # Note: set_preferred_provider already validates, but we save the result
         try:
-            validated_providers = LoginProviders.model_validate(login_providers)
-            self.gs.settings.set('login_providers', validated_providers.model_dump())
-        except ValidationError as e:
-            logger.error('Error while validating updated login providers: %s', e)
-            messages.error(request, _('Invalid provider configuration. Please check your settings.'))
+            self.gs.settings.set('login_providers', providers.model_dump())
+        except Exception as e:
+            logger.error('Error while saving login providers: %s', e)
+            messages.error(request, _('Failed to save provider configuration. Please try again.'))
     
         return redirect(self.get_success_url())
 
-    def update_credentials(self, request, provider, login_providers):
+    def update_credentials(self, request, provider, providers: LoginProviders):
         """Update OAuth credentials for a provider"""
         client_id_value = request.POST.get(f'{provider}_client_id', '')
         secret_value = request.POST.get(f'{provider}_secret', '')
 
         if client_id_value and secret_value:
-            login_providers[provider]['client_id'] = client_id_value
-            login_providers[provider]['secret'] = secret_value
+            # Update the provider configuration
+            provider_config = getattr(providers, provider)
+            updated_config = provider_config.model_copy(
+                update={"client_id": client_id_value, "secret": secret_value}
+            )
+            setattr(providers, provider, updated_config)
 
+            # Also update SocialApp for django-allauth
             SocialApp.objects.update_or_create(
                 provider=provider,
                 defaults={
@@ -300,29 +298,23 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 },
             )
 
-    def update_provider_state(self, request, provider, login_providers):
+    def update_provider_state(self, request, provider, providers: LoginProviders):
         """
         Update the state (enabled/disabled) of a login provider.
     
-        When a provider is disabled, this method automatically removes its preferred status
-        to prevent stale preferred_provider values. This handles the edge case where:
-        1. A provider is marked as preferred and enabled
-        2. User disables that provider without selecting a new preferred provider
-        3. The disabled provider's radio button is removed from DOM (not in form submission)
-        4. Without this logic, the disabled provider could remain marked as preferred
+        Note: The schema validator (ensure_single_preferred) will automatically
+        clear is_preferred if a provider is disabled, so we don't need to
+        handle that edge case manually here. This keeps the view logic thin
+        and centralizes invariant enforcement in the schema layer.
         """
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
-            was_enabled = login_providers[provider].get('state', False)
-            is_now_enabled = setting_state == self.SettingState.ENABLED
-
-            login_providers[provider]['state'] = is_now_enabled
-
-            # Critical: If disabling a preferred provider, remove its preferred status
-            # This prevents the form from retaining a stale preferred_provider value
-            # when the provider's radio button is no longer in the DOM
-            if was_enabled and not is_now_enabled and login_providers[provider].get('is_preferred', False):
-                login_providers[provider]['is_preferred'] = False
+            is_enabled = setting_state == self.SettingState.ENABLED
+            
+            # Update provider state
+            provider_config = getattr(providers, provider)
+            updated_config = provider_config.model_copy(update={"state": is_enabled})
+            setattr(providers, provider, updated_config)
 
     def get_success_url(self) -> str:
         return reverse('plugins:socialauth:admin.global.social.auth.settings')
