@@ -7,8 +7,8 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 12:59+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-02-14 15:10+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Dutch <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "nl/>\n"
 "Language: nl\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -176,8 +176,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Om het programma te zien, dient Javascript aan te staan, of klik <a "
-"href=\"%(href)s\">hier</a> voor ons NoJS programma."
+"Om het programma te zien, dient Javascript aan te staan, of klik <a href=\"%"
+"(href)s\">hier</a> voor ons NoJS programma."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -187,8 +187,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "Om ons programma te bekijken met volledige functionaliteit, zoals tijdzone "
-"conversies en persoonlijk programma, zet JavaScript aan en klik <a "
-"href=\"%(href)s\">hier</a>."
+"conversies en persoonlijk programma, zet JavaScript aan en klik <a href=\"%"
+"(href)s\">hier</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -501,8 +501,7 @@ msgstr "Het eventyay logo"
 msgid ""
 "The application \"{application_name}\" has been authorized to access your "
 "account."
-msgstr ""
-"De applicatie \"{application_name}\" is toegang gegeven tot uw account."
+msgstr "De applicatie \"{application_name}\" is toegang gegeven tot uw account."
 
 #: api/views/order.py:527 control/views/orders.py:1498
 #: presale/views/order.py:869 presale/views/order.py:943
@@ -1170,8 +1169,7 @@ msgstr ""
 #, fuzzy
 #| msgid "Hide \"payment pending\" state on customer-facing pages"
 msgid "Hide \"payment pending\" state on attendee-facing pages"
-msgstr ""
-"Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
+msgstr "Verberg \"wacht op betaling\"-status op pagina's zichtbaar voor klanten"
 
 #: base/configurations/default_setting.py:632
 #, fuzzy
@@ -2052,8 +2050,8 @@ msgid ""
 "Tickets will never be attached if they're larger than {size} to avoid email "
 "delivery problems."
 msgstr ""
-"Tickets worden nooit bijgevoegd bij een e-mail als ze groter zijn dan "
-"{size}, om problemen met het versturen van de e-mail te voorkomen."
+"Tickets worden nooit bijgevoegd bij een e-mail als ze groter zijn dan {size}"
+", om problemen met het versturen van de e-mail te voorkomen."
 
 #: base/configurations/default_setting.py:1580
 msgid "Attach calendar files"
@@ -5920,8 +5918,7 @@ msgstr "Een email adres of meerdere door komma's gescheiden adressen."
 
 #: base/models/mail.py:312
 msgid "By default, the organiser address is used as Reply-To."
-msgstr ""
-"Standaard wordt het adres van de organsatie gebruikt als respons adres."
+msgstr "Standaard wordt het adres van de organsatie gebruikt als respons adres."
 
 #: base/models/mail.py:318
 msgid "CC"
@@ -7583,8 +7580,7 @@ msgstr "helptekst"
 #, fuzzy
 #| msgid "Will appear just like this text below the question input field."
 msgid "Will appear just like this text below the custom input field."
-msgstr ""
-"Wordt net als deze tekst onder het invoerveld van de vraag weergegeven."
+msgstr "Wordt net als deze tekst onder het invoerveld van de vraag weergegeven."
 
 #: base/models/question.py:176
 msgid "default answer"
@@ -7781,8 +7777,7 @@ msgstr "Tags toevoegen, verwijderen en aanmaken"
 
 #: base/models/review.py:263
 msgid "Speakers can modify their proposals before acceptance"
-msgstr ""
-"Sprekers kunnen hun voorstellen wijzigen voordat ze worden geaccepteerd"
+msgstr "Sprekers kunnen hun voorstellen wijzigen voordat ze worden geaccepteerd"
 
 #: base/models/review.py:265
 msgid ""
@@ -10551,8 +10546,8 @@ msgstr "De voucher is verstuurd naar {recipient}."
 msgid ""
 "Your default locale must also be enabled for your event (see box above)."
 msgstr ""
-"Uw standaardtaal moet ook zijn ingeschakeld voor uw evenement (zie "
-"hierboven)."
+"Uw standaardtaal moet ook zijn ingeschakeld voor uw evenement (zie hierboven)"
+"."
 
 #: base/settings.py:151 control/forms/event.py:131
 #, fuzzy
@@ -11256,8 +11251,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Je kan voorstellen insturen tot %(deadline)s (%(timezone)s), "
-"%(until_string)s vanaf nu."
+"Je kan voorstellen insturen tot %(deadline)s (%(timezone)s), %(until_string)"
+"s vanaf nu."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -11631,8 +11626,8 @@ msgid ""
 "just uncertain if you can or should submit your proposal, please contact the "
 "organiser instead."
 msgstr ""
-"Je kan je concept voorstel hier verwijderen. Ja kan dit niet ongedaan maken "
-"- als je twijfelt om je voorstel in te dienen, neem contact op met de "
+"Je kan je concept voorstel hier verwijderen. Ja kan dit niet ongedaan "
+"maken - als je twijfelt om je voorstel in te dienen, neem contact op met de "
 "organisatie."
 
 #: cfp/templates/cfp/event/user_submission_edit.html:138
@@ -12327,8 +12322,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Het lijkt er op dat de communicatie tussen jou en eventyay fout is gelopen."
-"<br>Ga terug naar de vorige pagina en probeer het opnieuw!"
+"Het lijkt er op dat de communicatie tussen jou en eventyay fout is "
+"gelopen.<br>Ga terug naar de vorige pagina en probeer het opnieuw!"
 
 #: common/templates/403_csrf.html:7 common/templates/403_csrf.html:11
 msgid "Verification failed."
@@ -14497,8 +14492,7 @@ msgstr "Extra footertekst"
 
 #: control/forms/global_settings.py:67
 msgid "Will be included as additional text in the footer, site-wide."
-msgstr ""
-"Zal over de hele website als extra tekst in de footer worden opgenomen."
+msgstr "Zal over de hele website als extra tekst in de footer worden opgenomen."
 
 #: control/forms/global_settings.py:75
 msgid "Additional footer link"
@@ -15880,8 +15874,8 @@ msgid ""
 "Position #{posid}: {old_product} ({old_price}) changed to {new_product} "
 "({new_price})."
 msgstr ""
-"Plaats #{posid}: {old_item} ({old_price}) veranderd in {new_item} "
-"({new_price})."
+"Plaats #{posid}: {old_item} ({old_price}) veranderd in {new_item} ("
+"{new_price})."
 
 #: control/logdisplay.py:70
 #, python-brace-format
@@ -15944,8 +15938,8 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Plaats #{posid} aangemaakt: {item} ({price}) als add-on bij plaats "
-"#{addon_to}."
+"Plaats #{posid} aangemaakt: {item} ({price}) als add-on bij plaats #"
+"{addon_to}."
 
 #: control/logdisplay.py:175
 #, fuzzy, python-brace-format
@@ -15997,8 +15991,8 @@ msgid ""
 "Scan scan of revoked code \"{barcode}…\" at {datetime} for list \"{list}\", "
 "type \"{type}\", was uploaded."
 msgstr ""
-"Een scan van ingetrokken code \"{barcode}…\" om {datetime} voor lijst "
-"\"{list}\", type \"{type}\" is geüpload."
+"Een scan van ingetrokken code \"{barcode}…\" om {datetime} voor lijst \""
+"{list}\", type \"{type}\" is geüpload."
 
 #: control/logdisplay.py:258
 #, python-brace-format
@@ -16024,8 +16018,8 @@ msgid ""
 "Denied scan of position #{posid} for list \"{list}\", type \"{type}\", error "
 "code \"{errorcode}\"."
 msgstr ""
-"Een scan voor plaats #{posid} is geweigerd voor de lijst \"{list}\", type "
-"\"{type}\". Foutcode: \"{errorcode}\"."
+"Een scan voor plaats #{posid} is geweigerd voor de lijst \"{list}\", type \""
+"{type}\". Foutcode: \"{errorcode}\"."
 
 #: control/logdisplay.py:289
 #, python-brace-format
@@ -16064,8 +16058,8 @@ msgid ""
 "Position #{posid} has been scanned and rejected because it has already been "
 "scanned before on list \"{list}\"."
 msgstr ""
-"Plaats #{posid} is gescand en geweigerd omdat het al is gescand op lijst "
-"\"{list}\"."
+"Plaats #{posid} is gescand en geweigerd omdat het al is gescand op lijst \""
+"{list}\"."
 
 #: control/logdisplay.py:472
 msgid "This object has been created by cloning."
@@ -19162,8 +19156,8 @@ msgid ""
 "To confirm you really want this, please type out the event's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
-"Typ om zeker te zijn dat u dit echt wilt de korte naam van het evenement "
-"(\"%(slug)s\") hier:"
+"Typ om zeker te zijn dat u dit echt wilt de korte naam van het evenement (\"%"
+"(slug)s\") hier:"
 
 #: control/templates/pretixcontrol/event/delete.html:36
 msgid "Your event can not be deleted as it already contains orders."
@@ -19520,9 +19514,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more "
 "payment plugins."
 msgstr ""
-"Er zijn geen betalingsproviders beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere betalingsplug-ins."
+"Er zijn geen betalingsproviders beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"betalingsplug-ins."
 
 #: control/templates/pretixcontrol/event/payment.html:67
 msgid "Deadlines"
@@ -19861,11 +19855,11 @@ msgid ""
 "not responsible for the correct handling of taxes in your ticket shop. If in "
 "doubt, please contact a lawyer or tax consultant."
 msgstr ""
-"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a "
-"href=\"%(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee "
-"dat wij niet verantwoordelijk zijn voor de juiste behandeling van belasting "
-"bij de ticketverkoop. Neem in geval van twijfel contact op met een advocaat "
-"of belastingadviseur."
+"Deze instellingen zijn bedoeld voor gevorderde gebruikers. Zie de <a href=\"%"
+"(docs)s\">handleiding</a> voor meer informatie. Houd er rekening mee dat wij "
+"niet verantwoordelijk zijn voor de juiste behandeling van belasting bij de "
+"ticketverkoop. Neem in geval van twijfel contact op met een advocaat of "
+"belastingadviseur."
 
 #: control/templates/pretixcontrol/event/tax_edit.html:49
 msgid "Custom taxation rules"
@@ -19944,9 +19938,9 @@ msgid ""
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Er zijn geen uitvoerformaten voor tickets beschikbaar. Ga naar de <a "
-"%(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of "
-"meerdere uitvoerplug-ins."
+"Er zijn geen uitvoerformaten voor tickets beschikbaar. Ga naar de <a %"
+"(plugin_settings_href)s>plug-in-instellingen</a> en activeer een of meerdere "
+"uitvoerplug-ins."
 
 #: control/templates/pretixcontrol/event/tickets.html:71
 msgid "Download time"
@@ -21880,8 +21874,8 @@ msgid ""
 msgstr ""
 "We hebben een bericht ontvangen dat <strong>%(amount)s</strong> is "
 "terugbetaald via <strong>%(method)s</strong>. Als deze terugbetaling wordt "
-"verwerkt zal de bestelling onderbetaald zijn met <strong>%(pending)s</"
-"strong>. Het totaalbedrag is <strong>%(total)s</strong>."
+"verwerkt zal de bestelling onderbetaald zijn met <strong>%(pending)s</strong>"
+". Het totaalbedrag is <strong>%(total)s</strong>."
 
 #: control/templates/pretixcontrol/order/refund_process.html:30
 msgid "Since the order is already canceled, this will not affect its state."
@@ -22287,8 +22281,8 @@ msgid ""
 "Download an app that is compatible with eventyay. For example, our check-in "
 "app <strong>eventyay Check-in</strong> is available on all major platforms."
 msgstr ""
-"Download een app die compatibel is met eventyay. Onze incheckapp "
-"<strong>eventyay</strong> is beschikbaar op alle veelvoorkomende platforms."
+"Download een app die compatibel is met eventyay. Onze incheckapp <strong>"
+"eventyay</strong> is beschikbaar op alle veelvoorkomende platforms."
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:14
 #, fuzzy
@@ -22993,8 +22987,8 @@ msgid ""
 msgstr ""
 "Controleer opnieuw of u zeker weet dat u de gekozen soorten gegevens wilt "
 "verwijderen uit het evenement <strong>%(event)s</strong>. Voer om te "
-"bevestigen dat u dit echt wilt de korte naam van het evenement "
-"(\"%(slug)s\") hier in:"
+"bevestigen dat u dit echt wilt de korte naam van het evenement (\"%(slug)"
+"s\") hier in:"
 
 #: control/templates/pretixcontrol/shredder/download.html:41
 msgid "Event short name"
@@ -23209,8 +23203,8 @@ msgid ""
 msgstr ""
 "De quotuminstellingen van de gekozen datums verschillen en kunnen hierom "
 "niet in één keer aangepast worden. Als u dit wilt kunt u wel nieuwe quota "
-"definiëren om de quotuminstellingen van de geselecteerde datums "
-"<strong>vervangen</strong>."
+"definiëren om de quotuminstellingen van de geselecteerde datums <strong>"
+"vervangen</strong>."
 
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:257
 msgid ""
@@ -23339,8 +23333,8 @@ msgid ""
 "We just want to make sure it's really you. Please re-authenticate with "
 "'%(login_provider)s'."
 msgstr ""
-"We willen zeker zijn dat u het bent. Meld u opnieuw aan met "
-"'%(login_provider)s'."
+"We willen zeker zijn dat u het bent. Meld u opnieuw aan met '%"
+"(login_provider)s'."
 
 #: control/templates/pretixcontrol/user/reauth.html:14
 msgid ""
@@ -23515,8 +23509,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Weet u zeker dat u het volgende wachtlijstitem wilt verwijderen: "
-"<strong>%(entry)s</strong>?"
+"Weet u zeker dat u het volgende wachtlijstitem wilt verwijderen: <strong>%"
+"(entry)s</strong>?"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -24195,8 +24189,7 @@ msgstr "We konden het geüploade bestand niet openen als een CSV-bestand."
 #: presale/views/order.py:1037 presale/views/order.py:1148
 #: presale/views/order.py:1285 presale/views/order.py:1329
 msgid "Unknown order code or not authorized to access this order."
-msgstr ""
-"Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
+msgstr "Onbekende bestelcode of niet gemachtigd om deze bestelling te bekijken."
 
 #: control/views/orders.py:484 presale/views/order.py:1152
 msgid "Ticket download is not enabled for this product."
@@ -24463,8 +24456,7 @@ msgstr "De betalingstermijn is veranderd."
 msgid ""
 "We were not able to process the request completely as the server was too "
 "busy."
-msgstr ""
-"We konden uw verzoek niet verwerken, omdat de server het te druk heeft."
+msgstr "We konden uw verzoek niet verwerken, omdat de server het te druk heeft."
 
 #: control/views/orders.py:1728
 msgid "This action is only allowed for pending orders."
@@ -25413,8 +25405,8 @@ msgid ""
 "Are you sure you want to revoke access to your account for the application "
 "%(application)s?"
 msgstr ""
-"Weet u zeker dat u de toegang tot uw account voor de applicatie "
-"<strong>%(application)s</strong> wilt intrekken?"
+"Weet u zeker dat u de toegang tot uw account voor de applicatie <strong>%"
+"(application)s</strong> wilt intrekken?"
 
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:4
 #: eventyay_common/templates/eventyay_common/account/authorized-apps.html:19
@@ -25673,8 +25665,8 @@ msgid ""
 "you can <a %(login_href)s>log in</a> first and then click this link again to "
 "accept the invitation with your existing account."
 msgstr ""
-"Als u al een account op deze site heeft met een ander e-mailadres kunt u <a "
-"%(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
+"Als u al een account op deze site heeft met een ander e-mailadres kunt u <a %"
+"(login_href)s>inloggen</a> en dan opnieuw op deze link klikken om de "
 "uitnodiging met uw bestaande account te accepteren."
 
 #: eventyay_common/templates/eventyay_common/auth/invite.html:30
@@ -27456,8 +27448,8 @@ msgid ""
 msgstr ""
 "Hallo!\n"
 "\n"
-"We zijn blij je te kunnen vertellen dat we je voorstel met de titel "
-"“{submission_title}”\n"
+"We zijn blij je te kunnen vertellen dat we je voorstel met de titel “"
+"{submission_title}”\n"
 "voor {event_name} hebben geaccepteerd. Klik op deze link om je aanwezigheid "
 "te bevestigen:\n"
 "\n"
@@ -29069,9 +29061,9 @@ msgid ""
 "This field has <strong>%(count)s</strong> responses, <strong>%(missing)s</"
 "strong> <a href=\"%(base_search_url)sunanswered=1\">are still missing</a>."
 msgstr ""
-"Deze vraag is <strong>%(count)s</strong> beantwoord. Er missen nog "
-"<strong>%(missing)s</strong> <a "
-"href=\"%(base_search_url)sunanswered=1\">antwoorden</a>."
+"Deze vraag is <strong>%(count)s</strong> beantwoord. Er missen nog <strong>%"
+"(missing)s</strong> <a href=\"%(base_search_url)sunanswered=1\">antwoorden</"
+"a>."
 
 #: orga/templates/orga/cfp/talkquestion/detail.html:60
 #, fuzzy, python-format
@@ -29103,8 +29095,7 @@ msgstr ""
 
 #: orga/templates/orga/cfp/text.html:32
 msgid "The formats (sessions, workshops, panels) and their durations"
-msgstr ""
-"De soorten sessies (presentaties, workshops, panels) en de duur daarvan"
+msgstr "De soorten sessies (presentaties, workshops, panels) en de duur daarvan"
 
 #: orga/templates/orga/cfp/text.html:33
 msgid "Topics you are looking for"
@@ -29284,8 +29275,7 @@ msgstr "Uitnodiging voor het %(organiser)s team “%(name)s”"
 #, fuzzy, python-format
 #| msgid "You have been invited to join the organiser team %(name)s."
 msgid "You have been invited to join the organizer team %(name)s."
-msgstr ""
-"Je bent uitgenodigd om deel te nemen aan het organisatie team %(name)s."
+msgstr "Je bent uitgenodigd om deel te nemen aan het organisatie team %(name)s."
 
 #: orga/templates/orga/invitation.html:20
 #, fuzzy, python-format
@@ -29298,9 +29288,9 @@ msgid ""
 "href=\"%(domain)s\">%(domain)s</a>, please log in now. Otherwise, create a "
 "new account to join the team!"
 msgstr ""
-"Als je al een account hebt als spreker of als organisator op <a "
-"href=\"%(domain)s\">%(domain)s</a>, log dan nu in. Maak anders een nieuw "
-"account aan om bij het team te komen!"
+"Als je al een account hebt als spreker of als organisator op <a href=\"%"
+"(domain)s\">%(domain)s</a>, log dan nu in. Maak anders een nieuw account aan "
+"om bij het team te komen!"
 
 #: orga/templates/orga/invitation.html:37
 #, fuzzy, python-format
@@ -29642,8 +29632,8 @@ msgstr ""
 "Je kunt hier je beoordelingsopdrachten uploaden vanuit een JSON-bestand. U "
 "kunt de voorstelcodes (bijv. “UX3N1”) als sleutels hebben en de "
 "gebruikersidentificatie als waarden, of andersom. Gebruikersidentificatie "
-"kan het e-mailadres van de beoordelaar zijn of hun gebruikerscode (bijv. "
-"“34KJN”). Je kunt een voorbeeldbestand <a href=\"%(href)s\">hier</a> vinden."
+"kan het e-mailadres van de beoordelaar zijn of hun gebruikerscode (bijv. “"
+"34KJN”). Je kunt een voorbeeldbestand <a href=\"%(href)s\">hier</a> vinden."
 
 #: orga/templates/orga/review/assignment.html:23
 msgid ""
@@ -29691,8 +29681,8 @@ msgid ""
 "settings</a>."
 msgstr ""
 "Beoordelaars kunnen <strong>alleen de aan hen toegewezen</strong> "
-"voorstellen zien en beoordelen. U kunt dit wijzigen in uw <a "
-"href=\"%(href)s\">beoordelingsinstellingen</a>."
+"voorstellen zien en beoordelen. U kunt dit wijzigen in uw <a href=\"%(href)"
+"s\">beoordelingsinstellingen</a>."
 
 #: orga/templates/orga/review/assignment.html:105
 #, python-format
@@ -30125,8 +30115,7 @@ msgstr[1] "%(count)s sessies zijn <strong>nog niet geprogrammeerd</strong>."
 msgid "One session has <strong>not yet been assigned a track</strong>."
 msgid_plural ""
 "%(count)s sessions have <strong>not yet been assigned a track</strong>."
-msgstr[0] ""
-"Eén sessie heeft <strong>nog geen slot toegewezen gekregen</strong>."
+msgstr[0] "Eén sessie heeft <strong>nog geen slot toegewezen gekregen</strong>."
 msgstr[1] ""
 "%(count)s sessies hebben <strong>nog geen slot toegewezen gekregen</strong>."
 
@@ -30379,8 +30368,8 @@ msgid ""
 "files (e.g. a conference styleguide). <br> They are shown to the selected "
 "speakers above the list of their submitted sessions."
 msgstr ""
-"Voeg belangrijke berichten (bijv. \"Breng indien nodig een HDMI adapter mee."
-"\") of bestanden (bijv. een stijlgids) toe.<br> Deze worden aan de "
+"Voeg belangrijke berichten (bijv. \"Breng indien nodig een HDMI adapter "
+"mee.\") of bestanden (bijv. een stijlgids) toe.<br> Deze worden aan de "
 "geselecteerde sprekers getoond boven de lijst van hun voorstellen."
 
 #: orga/templates/orga/speaker/information_list.html:42
@@ -30471,8 +30460,7 @@ msgstr "%(count)s wijzigingen toepassen?"
 msgid ""
 "Please confirm that you really want to change the state of these %(count)s "
 "proposals."
-msgstr ""
-"Bevestig dat je de status van deze %(count)s voorstellen wilt wijzigen."
+msgstr "Bevestig dat je de status van deze %(count)s voorstellen wilt wijzigen."
 
 #: orga/templates/orga/submission/apply_pending.html:33
 #: orga/templates/orga/submission/state_change.html:34
@@ -30591,8 +30579,7 @@ msgstr "Laat dit voorstel zien in de lijst van aanbevolen sessies."
 
 #: orga/templates/orga/submission/review.html:26
 msgid "You’re not allowed to review or see reviews for your own proposals."
-msgstr ""
-"Je hebt geen toestemming om je eigen voorstellen te zien of recenceren."
+msgstr "Je hebt geen toestemming om je eigen voorstellen te zien of recenceren."
 
 #: orga/templates/orga/submission/review.html:42
 msgid "You will be able to see other reviews once you have given yours."
@@ -31229,8 +31216,7 @@ msgstr "Meer exports"
 
 #: orga/views/schedule.py:112
 msgid "A new export is being generated and will be available soon."
-msgstr ""
-"Er wordt een nieuwe export gemaakt die binnenkort beschikbaar zal zijn."
+msgstr "Er wordt een nieuwe export gemaakt die binnenkort beschikbaar zal zijn."
 
 #: orga/views/schedule.py:119
 msgid ""
@@ -31245,8 +31231,8 @@ msgstr ""
 msgid ""
 "Could not find the current export, please try to regenerate it. ({error})"
 msgstr ""
-"Kon de huidige export niet vinden, probeer deze opnieuw te genereren. "
-"({error})"
+"Kon de huidige export niet vinden, probeer deze opnieuw te genereren. ("
+"{error})"
 
 #: orga/views/schedule.py:167
 msgid "You have to provide a new, unique schedule version!"
@@ -32204,8 +32190,8 @@ msgstr[0] ""
 "aangemaakt op %(date)s, met één bestelling en een totaalbedrag van %(sum)s."
 msgstr[1] ""
 "U probeert een exportbestand met terugbetalingen te downloaden dat is "
-"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van "
-"%(sum)s."
+"aangemaakt op %(date)s, met %(cnt)s bestellingen en een totaalbedrag van %"
+"(sum)s."
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/sepa_export.html:23
 msgid ""
@@ -35433,8 +35419,7 @@ msgstr "Uw winkelwagen is leeg"
 
 #: presale/views/checkout.py:42
 msgid "The presale for this event is over or has not yet started."
-msgstr ""
-"De voorverkoop voor dit evenement is afgelopen of is nog niet begonnen."
+msgstr "De voorverkoop voor dit evenement is afgelopen of is nog niet begonnen."
 
 #: presale/views/checkout.py:49
 #, fuzzy

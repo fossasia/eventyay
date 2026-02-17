@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-11-30 17:30+0000\n"
-"Last-Translator: Anonymous <noreply@weblate.org>\n"
+"PO-Revision-Date: 2026-02-14 15:01+0000\n"
+"Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: Russian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/ru/>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -176,8 +176,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"Чтобы увидеть наше расписание, включите JavaScript или перейдите <a "
-"href=\"%(href)s\">сюда</a> для просмотра нашего NoJS расписания ."
+"Чтобы увидеть наше расписание, включите JavaScript или перейдите <a href=\"%"
+"(href)s\">сюда</a> для просмотра нашего NoJS расписания ."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -2654,8 +2654,8 @@ msgstr "Сумма была списана с вашей карты."
 #: base/email.py:776
 msgid "Please transfer money to this bank account: 9999-9999-9999-9999"
 msgstr ""
-"Пожалуйста, переведите деньги на следующий банковский счёт: "
-"9999-9999-9999-9999"
+"Пожалуйста, переведите деньги на следующий банковский счёт: 9999-9999-9999-"
+"9999"
 
 #: base/exporter.py:119 base/exporter.py:255 orga/forms/export.py:17
 msgid "Export format"
@@ -4519,8 +4519,7 @@ msgstr "Включить незавершённые заказы"
 msgid ""
 "With this option, people will be able to check in even if the order has not "
 "been paid."
-msgstr ""
-"С этой опцией можно зарегистрироваться, даже если заказ не был оплачен."
+msgstr "С этой опцией можно зарегистрироваться, даже если заказ не был оплачен."
 
 #: base/models/checkin.py:33
 #: control/templates/pretixcontrol/organizers/gates.html:5
@@ -6182,8 +6181,8 @@ msgid ""
 "paid and completed. You can use this e.g. for discounted tickets that are "
 "only available to specific groups."
 msgstr ""
-"Если этот продукт является частью заказа, заказ будет переведён в состояние "
-"«подтверждения», и вам необходимо будет подтвердить его, прежде чем он будет "
+"Если этот продукт является частью заказа, заказ будет переведён в состояние «"
+"подтверждения», и вам необходимо будет подтвердить его, прежде чем он будет "
 "оплачен и завершён. Вы можете использовать это, например, для билетов со "
 "скидкой, которые доступны только для определённых групп."
 
@@ -7769,8 +7768,7 @@ msgstr "Вам необходимо выбрать конкретное мест
 #, fuzzy
 #| msgid "This gift card can only be used in test mode."
 msgid "Seat-specific vouchers can only be used once."
-msgstr ""
-"Этот подарочный сертификат можно использовать только в тестовом режиме."
+msgstr "Этот подарочный сертификат можно использовать только в тестовом режиме."
 
 #: base/models/vouchers.py:408
 #, fuzzy, python-brace-format
@@ -8270,8 +8268,8 @@ msgid ""
 "Don't forget to set the correct fees above!"
 msgstr ""
 "Мы рекомендуем активировать эту опцию, если вы хотите, чтобы ваши "
-"пользователи оплачивали сборы вашего поставщика платёжных услуг. <a "
-"href=\"{docs_url}\" target=\"_blank\" rel=\"noopener\"> Нажмите здесь, чтобы "
+"пользователи оплачивали сборы вашего поставщика платёжных услуг. <a href=\""
+"{docs_url}\" target=\"_blank\" rel=\"noopener\"> Нажмите здесь, чтобы "
 "получить об этом подробную информацию. </a> Не забудьте установить выше "
 "правильные сборы!"
 
@@ -8452,8 +8450,7 @@ msgstr "Этот подарочный сертификат не поддержи
 
 #: base/payment.py:1268 base/payment.py:1354 base/services/orders.py:962
 msgid "This gift card can only be used in test mode."
-msgstr ""
-"Этот подарочный сертификат можно использовать только в тестовом режиме."
+msgstr "Этот подарочный сертификат можно использовать только в тестовом режиме."
 
 #: base/payment.py:1271 base/payment.py:1357 base/services/orders.py:964
 msgid "Only test gift cards can be used in test mode."
@@ -9165,8 +9162,8 @@ msgid ""
 "You can select at most %(max)s add-ons from the category %(cat)s for the "
 "product %(base)s."
 msgstr ""
-"Вы можете выбрать не более %(max)s дополнительных продуктов из категории "
-"%(cat)s для продукта %(base)s."
+"Вы можете выбрать не более %(max)s дополнительных продуктов из категории %"
+"(cat)s для продукта %(base)s."
 
 #: base/services/cart.py:122
 #, python-format
@@ -9186,8 +9183,8 @@ msgid ""
 "You can select every add-ons from the category %(cat)s for the product "
 "%(base)s at most once."
 msgstr ""
-"Вы можете выбрать не более %(max)s дополнительных продуктов из категории "
-"%(cat)s для продукта %(base)s."
+"Вы можете выбрать не более %(max)s дополнительных продуктов из категории %"
+"(cat)s для продукта %(base)s."
 
 #: base/services/cart.py:127
 msgid ""
@@ -28978,8 +28975,7 @@ msgstr ""
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to receive payments via bank transfer."
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: plugins/banktransfer/apps.py:31
 msgid ""
@@ -30222,12 +30218,9 @@ msgstr "Выбранная дата мероприятия не активна."
 #| "Do you really want to cancel this order? You cannot revert this action."
 msgid "Do you really want to purge the mail?"
 msgid_plural "Do you really want to purge {count} mails?"
-msgstr[0] ""
-"Вы действительно хотите отменить этот заказ? Это действие необратимое."
-msgstr[1] ""
-"Вы действительно хотите отменить этот заказ? Это действие необратимое."
-msgstr[2] ""
-"Вы действительно хотите отменить этот заказ? Это действие необратимое."
+msgstr[0] "Вы действительно хотите отменить этот заказ? Это действие необратимое."
+msgstr[1] "Вы действительно хотите отменить этот заказ? Это действие необратимое."
+msgstr[2] "Вы действительно хотите отменить этот заказ? Это действие необратимое."
 
 #: plugins/sendmail/views.py:449
 #, fuzzy, python-brace-format
@@ -30259,8 +30252,7 @@ msgstr "eventyay по умолчанию"
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to login via social networks"
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: plugins/socialauth/templates/socialauth/social_auth_settings.html:25
 msgid "Social login providers"
@@ -30720,8 +30712,7 @@ msgstr "Дизайн билета"
 #, fuzzy
 #| msgid "This plugin allows you to receive credit card payments via Stripe"
 msgid "This plugin allows you to perform check-in actions in your browser."
-msgstr ""
-"Этот плагин позволяет получать платежи по кредитным картам через Stripe"
+msgstr "Этот плагин позволяет получать платежи по кредитным картам через Stripe"
 
 #: plugins/webcheckin/signals.py:21
 #, fuzzy
