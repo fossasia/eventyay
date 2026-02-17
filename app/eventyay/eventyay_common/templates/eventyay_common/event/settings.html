@@ -29,13 +29,11 @@
                 <i class="fa fa-group"></i> {% trans "Talks" %}
             </a>
             {% endif %}
-            {% if is_video_enabled %}
             <a class="header-nav btn btn-outline-success"
                 href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
                 title="{% trans 'Access videos related to this event' %}">
                 <i class="fa fa-video-camera"></i> {% trans "Videos" %}
             </a>
-            {% endif %}
         </div>
     </div>
 </nav>
@@ -56,7 +54,7 @@
             {% bootstrap_field form.date_to layout="control" %}
             {% bootstrap_field form.date_admission layout="control" %}
             {% include "pretixcontrol/event/fragment_geodata.html" %}
-            {% bootstrap_field sform.contact_mail layout="control" %}
+            {% bootstrap_field form.email layout="control" %}
             {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
@@ -176,7 +174,7 @@
             {% bootstrap_field sform.logo_image layout="control" %}
             {% bootstrap_field sform.logo_image_large layout="control" %}
             {% bootstrap_field sform.og_image layout="control" %}
-            {% url "control:organizer.edit" organizer=request.organizer.slug as org_url %}
+            {% url "eventyay_common:organizer.edit" organizer=request.organizer.slug as org_url %}
             {% propagated request.event org_url "primary_color" "primary_font" "theme_color_success" "theme_color_danger" %}
             {% bootstrap_field sform.primary_color layout="control" %}
             {% bootstrap_field sform.theme_color_success layout="control" %}

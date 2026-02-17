@@ -31,7 +31,7 @@ from eventyay.common.image import gravatar_csp
 from eventyay.common.middleware.event import get_login_redirect
 from eventyay.common.text.phrases import phrases
 from eventyay.common.views import is_form_bound
-from eventyay.person.forms import LoginInfoForm, SpeakerProfileForm
+from eventyay.person.forms import SpeakerProfileForm
 from eventyay.talk_rules.person import can_view_information
 from eventyay.schedule.forms import AvailabilitiesFormMixin
 from eventyay.submission.forms import InfoForm, TalkQuestionsForm, ResourceForm
@@ -43,14 +43,6 @@ logger = logging.getLogger(__name__)
 @method_decorator(gravatar_csp(), name='dispatch')
 class ProfileView(LoggedInEventPageMixin, TemplateView):
     template_name = 'cfp/event/user_profile.html'
-
-    @context
-    @cached_property
-    def login_form(self):
-        return LoginInfoForm(
-            user=self.request.user,
-            data=self.request.POST if is_form_bound(self.request, 'login') else None,
-        )
 
     @context
     @cached_property
@@ -68,11 +60,13 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
             event=self.request.event,
             read_only=False,
             with_email=False,
+            enforce_account_name_match=True,
             field_configuration=field_configuration,
             data=self.request.POST if bind else None,
             files=self.request.FILES if bind else None,
         )
 
+    @context
     @context
     @cached_property
     def questions_form(self):
@@ -86,14 +80,11 @@ class ProfileView(LoggedInEventPageMixin, TemplateView):
         )
 
     @context
-    def questions_exist(self):
-        return self.request.event.talkquestions.filter(target='speaker').exists()
+    def profile_question_fields(self):
+        return [field for field in self.profile_form if field.name.startswith('question_')]
 
     def post(self, request, *args, **kwargs):
-        if self.login_form.is_bound and self.login_form.is_valid():
-            self.login_form.save()
-            request.user.log_action('eventyay.user.password.update')
-        elif self.profile_form.is_bound and self.profile_form.is_valid():
+        if self.profile_form.is_bound and self.profile_form.is_valid():
             self.profile_form.save()
             profile = self.request.user.profiles.get_or_create(event=self.request.event)[0]
             profile.log_action('eventyay.user.profile.update', person=request.user)
@@ -344,17 +335,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
         return True
 
-    @context
-    @cached_property
-    def qform(self):
-        return TalkQuestionsForm(
-            data=self.request.POST if self.request.method == 'POST' else None,
-            files=self.request.FILES if self.request.method == 'POST' else None,
-            submission=self.object,
-            target='submission',
-            event=self.request.event,
-            readonly=not self.can_edit,
-        )
+
 
     @cached_property
     def object(self):
@@ -362,7 +343,7 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        if form.is_valid() and self.qform.is_valid():
+        if form.is_valid():
             return self.form_valid(form)
         return self.form_invalid(form)
 
@@ -385,7 +366,6 @@ class SubmissionsEditView(LoggedInEventPageMixin, SubmissionViewMixin, UpdateVie
     def form_valid(self, form):
         if self.can_edit:
             form.save()
-            self.qform.save()
             result = self.save_formset(form.instance)
             if not result:
                 return self.get(self.request, *self.args, **self.kwargs)

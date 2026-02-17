@@ -32,35 +32,24 @@ from eventyay.api.auth.api_auth import (
     UserDeletePermissions,
     EventPermissions,
 )
-from eventyay.api.serializers.rooms import EventSerializer
-from eventyay.base.models import Channel, User
+from eventyay.api.auth.permission import CloneEventPermission, EventCRUDPermission, EventPermission
+from eventyay.api.serializers.event import (
+    CloneEventSerializer,
+    EventSerializer as ApiEventSerializer,
+    EventSettingsSerializer,
+    SubEventSerializer,
+    TaxRuleSerializer,
+)
+from eventyay.api.serializers.rooms import EventSerializer as RoomsEventSerializer
+from eventyay.api.views import ConditionalListView
+from eventyay.base.models import Channel, Device, SubEvent, TaxRule, TeamAPIToken, User
 from eventyay.base.services.event import notify_schedule_change, notify_event_change
 
 from eventyay.base.models.event import Event
-# from pretix.api.auth.permission import EventCRUDPermission  # commented out
-# from pretix.api.serializers.event import (  # commented out
-#     CloneEventSerializer,
-#     DeviceEventSettingsSerializer,
-#     EventSerializer as PretixEventSerializer,
-#     EventSettingsSerializer,
-#     SubEventSerializer,
-#     TaxRuleSerializer,
-# )
-# from pretix.api.views import ConditionalListView  # commented out
-# from pretix.base.models import (  # commented out
-#     CartPosition,
-#     Device,
-#     Order,
-#     Organizer,
-#     TaxRule,
-#     TeamAPIToken,
-# )
-# from pretix.base.models.event import SubEvent  # commented out
-# from pretix.base.settings import SETTINGS_AFFECTING_CSS  # commented out
-# from pretix.helpers.dicts import merge_dicts  # commented out
-# from pretix.presale.style import regenerate_css  # commented out
-# from pretix.presale.views.organizer import filter_qs_by_attr  # commented out
-from eventyay.api.task import configure_video_settings_for_talks
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
+from eventyay.helpers.dicts import merge_dicts
+from eventyay.presale.style import regenerate_css
+from eventyay.presale.views.organizer import filter_qs_by_attr
 from eventyay.api.utils import get_protocol
 from eventyay.eventyay_common.video.permissions import VIDEO_TRAIT_ROLE_MAP
 
@@ -108,102 +97,290 @@ with scopes_disabled():
             return queryset.filter(sales_channels__contains=value)
 
 
-# Disabled: Pretix-dependent API viewset
 class EventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix classes/serializers/permissions."""
-    pass
-# Original implementation used PretixEventSerializer, EventCRUDPermission,
-# TeamAPIToken, Device and filter_qs_by_attr
-# class EventViewSet(viewsets.ModelViewSet):
-#     serializer_class = PretixEventSerializer
-#     queryset = Event.objects.none()
-#     lookup_field = 'slug'
-#     lookup_url_kwarg = 'event'
-#     lookup_value_regex = '[^/]+'
-#     permission_classes = (EventCRUDPermission,)
-#     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
-#     ordering = ('slug',)
-#     ordering_fields = ('date_from', 'slug')
-#     filterset_class = EventFilter
-#     def get_queryset(self):
-#         if isinstance(self.request.auth, (TeamAPIToken, Device)):
-#             qs = self.request.auth.get_events_with_any_permission()
-#         elif self.request.user.is_authenticated:
-#             qs = self.request.user.get_events_with_any_permission(self.request).filter(organizer=self.request.organizer)
-#         qs = filter_qs_by_attr(qs, self.request)
-#         return qs.prefetch_related('meta_values', 'meta_values__property', 'seat_category_mappings')
-#     def perform_update(self, serializer):
-#         # used merge_dicts from pretix.helpers
-#         pass
-#     def perform_create(self, serializer):
-#         pass
-#     def perform_destroy(self, instance):
-#         pass
+    serializer_class = ApiEventSerializer
+    queryset = Event.objects.none()
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'event'
+    lookup_value_regex = '[^/]+'
+    permission_classes = (EventCRUDPermission,)
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    ordering = ('slug',)
+    ordering_fields = ('date_from', 'slug')
+    filterset_class = EventFilter
+
+    def get_queryset(self):
+        if isinstance(self.request.auth, (TeamAPIToken, Device)):
+            qs = self.request.auth.get_events_with_any_permission()
+        elif self.request.user.is_authenticated:
+            qs = self.request.user.get_events_with_any_permission(self.request)
+        else:
+            qs = Event.objects.none()
+
+        organizer = getattr(self.request, 'organizer', None)
+        if organizer:
+            qs = qs.filter(organizer=organizer)
+
+        qs = filter_qs_by_attr(qs, self.request)
+
+        return qs.prefetch_related('meta_values', 'meta_values__property', 'seat_category_mappings')
+
+    def perform_create(self, serializer):
+        inst = serializer.save(organizer=self.request.organizer)
+        inst.log_action(
+            'eventyay.event.added',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=merge_dicts(self.request.data, {'id': inst.pk}),
+        )
+
+    def perform_update(self, serializer):
+        original_data = self.get_serializer(instance=serializer.instance).data
+        serializer.save()
+        if serializer.data == original_data:
+            return
+        serializer.instance.log_action(
+            'eventyay.event.changed',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=self.request.data,
+        )
+
+    def perform_destroy(self, instance):
+        if not instance.allow_delete():
+            raise PermissionDenied(
+                "The event can not be deleted as it already contains orders. Please set 'live' to false to hide "
+                'the event and take the shop offline instead.'
+            )
+        try:
+            with transaction.atomic():
+                instance.organizer.log_action(
+                    'eventyay.event.deleted',
+                    user=self.request.user,
+                    auth=self.request.auth,
+                    data={
+                        'event_id': instance.pk,
+                        'name': str(instance.name),
+                        'slug': instance.slug,
+                        'logentries': list(instance.logentry_set.values_list('pk', flat=True)),
+                    },
+                )
+                instance.delete_sub_objects()
+                instance.delete()
+        except ProtectedError:
+            raise PermissionDenied(
+                'The event could not be deleted as some constraints (e.g. data created by plug-ins) do not allow it.'
+            )
 
 
-# Disabled: Pretix-dependent CloneEventViewSet
 class CloneEventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix CloneEventSerializer."""
+    serializer_class = CloneEventSerializer
+    queryset = Event.objects.none()
+    lookup_field = 'slug'
+    lookup_url_kwarg = 'event'
     http_method_names = ['post']
-    pass
-# class CloneEventViewSet(viewsets.ModelViewSet):
-#     serializer_class = CloneEventSerializer
-#     queryset = Event.objects.none()
-#     lookup_field = 'slug'
-#     lookup_url_kwarg = 'event'
-#     http_method_names = ['post']
-#     write_permission = 'can_create_events'
-#     ...
+    permission_classes = (CloneEventPermission,)
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx['organizer'] = self.request.organizer
+        ctx['event'] = self.kwargs.get('event')
+        return ctx
+
+    def perform_create(self, serializer):
+        inst = serializer.save(organizer=self.request.organizer)
+        inst.log_action(
+            'eventyay.event.added',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=merge_dicts(self.request.data, {'id': inst.pk}),
+        )
 
 
 with scopes_disabled():
 
-    # Disabled: Pretix-dependent SubEventFilter
     class SubEventFilter(FilterSet):
-        """Disabled because it depends on pretix SubEvent model."""
-        pass
-    # class SubEventFilter(FilterSet):
-    #     is_past = django_filters.rest_framework.BooleanFilter(method='is_past_qs')
-    #     is_future = django_filters.rest_framework.BooleanFilter(method='is_future_qs')
-    #     ends_after = django_filters.rest_framework.IsoDateTimeFilter(method='ends_after_qs')
-    #     modified_since = django_filters.IsoDateTimeFilter(field_name='last_modified', lookup_expr='gte')
-    #     class Meta:
-    #         model = SubEvent
-    #         fields = ['active', 'event__live']
-    #     ...
+        is_past = django_filters.rest_framework.BooleanFilter(method='is_past_qs')
+        is_future = django_filters.rest_framework.BooleanFilter(method='is_future_qs')
+        ends_after = django_filters.rest_framework.IsoDateTimeFilter(method='ends_after_qs')
+        modified_since = django_filters.IsoDateTimeFilter(field_name='last_modified', lookup_expr='gte')
+
+        class Meta:
+            model = SubEvent
+            fields = ['active', 'event__live']
+
+        def ends_after_qs(self, queryset, name, value):
+            expr = Q(Q(date_to__isnull=True) & Q(date_from__gte=value)) | Q(
+                Q(date_to__isnull=False) & Q(date_to__gte=value)
+            )
+            return queryset.filter(expr)
+
+        def is_past_qs(self, queryset, name, value):
+            expr = Q(Q(date_to__isnull=True) & Q(date_from__lt=now())) | Q(
+                Q(date_to__isnull=False) & Q(date_to__lt=now())
+            )
+            if value:
+                return queryset.filter(expr)
+            return queryset.exclude(expr)
+
+        def is_future_qs(self, queryset, name, value):
+            expr = Q(Q(date_to__isnull=True) & Q(date_from__gte=now())) | Q(
+                Q(date_to__isnull=False) & Q(date_to__gte=now())
+            )
+            if value:
+                return queryset.filter(expr)
+            return queryset.exclude(expr)
 
 
-# Disabled: Pretix-dependent SubEventViewSet
-class SubEventViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix SubEvent, ConditionalListView, etc."""
-    pass
-# class SubEventViewSet(ConditionalListView, viewsets.ModelViewSet):
-#     serializer_class = SubEventSerializer
-#     queryset = SubEvent.objects.none()
-#     write_permission = 'can_change_event_settings'
-#     ...
+class SubEventViewSet(ConditionalListView, viewsets.ModelViewSet):
+    serializer_class = SubEventSerializer
+    queryset = SubEvent.objects.none()
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
+    ordering = ('date_from',)
+    ordering_fields = ('date_from', 'id')
+    filterset_class = SubEventFilter
+    write_permission = 'can_change_event_settings'
+
+    def get_queryset(self):
+        if getattr(self.request, 'event', None):
+            qs = self.request.event.subevents.all()
+        else:
+            if isinstance(self.request.auth, (TeamAPIToken, Device)):
+                events_qs = self.request.auth.get_events_with_any_permission()
+            elif self.request.user.is_authenticated:
+                events_qs = self.request.user.get_events_with_any_permission(self.request)
+            else:
+                events_qs = Event.objects.none()
+            if getattr(self.request, 'organizer', None):
+                events_qs = events_qs.filter(organizer=self.request.organizer)
+            qs = SubEvent.objects.filter(event__in=events_qs)
+
+        if getattr(self.request, 'organizer', None):
+            qs = filter_qs_by_attr(qs, self.request)
+
+        return qs.select_related('event').prefetch_related(
+            'meta_values', 'meta_values__property', 'seat_category_mappings'
+        )
+
+    def perform_create(self, serializer):
+        inst = serializer.save(event=self.request.event)
+        inst.log_action(
+            'eventyay.subevent.added',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=self.request.data,
+        )
+
+    def perform_update(self, serializer):
+        original_data = self.get_serializer(instance=serializer.instance).data
+        serializer.save()
+        if serializer.data == original_data:
+            return
+        serializer.instance.log_action(
+            'eventyay.subevent.changed',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=self.request.data,
+        )
+
+    def perform_destroy(self, instance):
+        if not instance.allow_delete():
+            raise PermissionDenied(
+                "The sub-event can not be deleted as it has already been used in orders. Please set 'active' to "
+                'false instead to hide it from users.'
+            )
+        instance.log_action(
+            'eventyay.subevent.deleted',
+            user=self.request.user,
+            auth=self.request.auth,
+        )
+        instance.delete()
 
 
-# Disabled: Pretix-dependent TaxRuleViewSet
-class TaxRuleViewSet(viewsets.ModelViewSet):
-    """Disabled because it depends on pretix TaxRule and serializers."""
-    pass
-# class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
-#     serializer_class = TaxRuleSerializer
-#     queryset = TaxRule.objects.none()
-#     write_permission = 'can_change_event_settings'
-#     ...
+class TaxRuleViewSet(ConditionalListView, viewsets.ModelViewSet):
+    serializer_class = TaxRuleSerializer
+    queryset = TaxRule.objects.none()
+    write_permission = 'can_change_event_settings'
+
+    def get_queryset(self):
+        return self.request.event.tax_rules.all()
+
+    def perform_create(self, serializer):
+        inst = serializer.save(event=self.request.event)
+        inst.log_action(
+            'eventyay.event.taxrule.added',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=self.request.data,
+        )
+
+    def perform_update(self, serializer):
+        original_data = self.get_serializer(instance=serializer.instance).data
+        serializer.save(event=self.request.event)
+        if serializer.data == original_data:
+            return
+        serializer.instance.log_action(
+            'eventyay.event.taxrule.changed',
+            user=self.request.user,
+            auth=self.request.auth,
+            data=self.request.data,
+        )
+
+    def perform_destroy(self, instance):
+        if not instance.allow_delete():
+            raise PermissionDenied('This tax rule can not be deleted.')
+        instance.log_action('eventyay.event.taxrule.deleted', user=self.request.user, auth=self.request.auth)
+        instance.delete()
 
 
-# Disabled: Pretix-dependent EventSettingsView
 class EventSettingsView(views.APIView):
-    """Disabled because it depends on pretix Device and settings serializers."""
-    def get(self, request, *args, **kwargs):  # pragma: no cover
-        return Response({'detail': 'EventSettingsView disabled (pretix dependency).'}, status=501)
+    permission = 'can_change_event_settings'
+    permission_classes = (EventPermission,)
 
-    def patch(self, request, *wargs, **kwargs):  # pragma: no cover
-        return Response({'detail': 'EventSettingsView disabled (pretix dependency).'}, status=501)
-# Original used DeviceEventSettingsSerializer, EventSettingsSerializer, regenerate_css, SETTINGS_AFFECTING_CSS
+    def get(self, request, *args, **kwargs):
+        s = EventSettingsSerializer(
+            instance=request.event.settings,
+            event=request.event,
+            context={'request': request},
+        )
+        if 'explain' in request.GET:
+            return Response(
+                {
+                    fname: {
+                        'value': s.data[fname],
+                        'label': getattr(field, '_label', fname),
+                        'help_text': getattr(field, '_help_text', None),
+                    }
+                    for fname, field in s.fields.items()
+                }
+            )
+        return Response(s.data)
+
+    def patch(self, request, *wargs, **kwargs):
+        s = EventSettingsSerializer(
+            instance=request.event.settings,
+            data=request.data,
+            partial=True,
+            event=request.event,
+            context={'request': request},
+        )
+        s.is_valid(raise_exception=True)
+        with transaction.atomic():
+            s.save()
+            request.event.log_action(
+                'eventyay.event.settings',
+                user=request.user,
+                auth=request.auth,
+                data={k: v for k, v in s.validated_data.items()},
+            )
+        if any(p in s.changed_data for p in SETTINGS_AFFECTING_CSS):
+            transaction.on_commit(lambda: regenerate_css.apply_async(args=(request.event.pk,)))
+        s = EventSettingsSerializer(
+            instance=request.event.settings,
+            event=request.event,
+            context={'request': request},
+        )
+        return Response(s.data)
 
 
 def check_token_permission(token, permission_required):
@@ -259,11 +436,11 @@ class EventView(APIView):
     permission_classes = [ApiAccessRequiredPermission & EventPermissions]
 
     def get(self, request, **kwargs):
-        return Response(EventSerializer(request.event).data)
+        return Response(RoomsEventSerializer(request.event).data)
 
     @transaction.atomic
     def patch(self, request, **kwargs):
-        serializer = EventSerializer(request.event, data=request.data, partial=True)
+        serializer = RoomsEventSerializer(request.event, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         transaction.on_commit(  # pragma: no cover
@@ -284,7 +461,7 @@ class EventThemeView(APIView):
         """
         try:
             event = get_object_or_404(Event, id=kwargs["event_id"])
-            return Response(EventSerializer(event).data["config"]["theme"])
+            return Response(RoomsEventSerializer(event).data["config"]["theme"])
         except KeyError:
             logger.error(
                 "error happened when trying to get theme data of event: %s",
@@ -339,7 +516,7 @@ class CreateEventView(APIView):
                 "attendee": (
                     [attendee_trait_grants] if attendee_trait_grants else ["attendee"]
                 ),
-                "scheduleuser": ["schedule-update"],
+                "scheduleuser": [],
             }
 
             for trait_name, role_name in VIDEO_TRAIT_ROLE_MAP.items():
@@ -379,9 +556,7 @@ class CreateEventView(APIView):
                         config=config,
                         trait_grants=trait_grants,
                     )
-                configure_video_settings_for_talks.delay(
-                    event_id, days=30, number=1, traits=["schedule-update"], long=True
-                )
+                # Legacy eventyay-talk schedule connection is removed; video gets configured elsewhere.
                 site_url = settings.SITE_URL
                 protocol = get_protocol(site_url)
                 event.domain = "{}://{}".format(protocol, domain_path)
@@ -489,75 +664,11 @@ class UserFavouriteView(APIView):
         return token_decode.get("uid")
 
 
-class ExportView(APIView):
-    permission_classes = []
+"""Legacy eventyay-talk integration helpers (schedule export proxy and schedule_update push endpoint)
 
-    @staticmethod
-    def get(request, *args, **kwargs):
-        export_type = request.GET.get("export_type", "json")
-        event = get_object_or_404(Event, id=kwargs["event_id"])
-        talk_config = event.config.get("pretalx")
-        user = User.objects.filter(token_id=request.user)
-        talk_base_url = (
-            talk_config.get("domain")
-            + "/"
-            + talk_config.get("event")
-            + "/schedule/export/"
-        )
-        export_endpoint = "schedule." + export_type
-        talk_url = talk_base_url + export_endpoint
-        if "my" in export_type and user:
-            user_state = user.first().client_state
-            if (
-                user_state
-                and user_state.get("schedule")
-                and user_state.get("schedule").get("favs")
-            ):
-                talk_list = user_state.get("schedule").get("favs")
-                talk_list_str = ",".join(talk_list)
-                export_endpoint = "schedule-my." + export_type.replace("my", "")
-                talk_url = talk_base_url + export_endpoint + "?talks=" + talk_list_str
-        header = {"Content-Type": "application/json"}
-        response = requests.get(talk_url, headers=header)
-        return Response(response.content.decode("utf-8"))
-
-
-def get_domain(path):
-    if not path:
-        return ""
-    domain = urlparse(path).netloc
-    if ":" in domain:
-        domain = domain.split(":")[0]
-    return domain.lower()
-
-
-@api_view(http_method_names=["POST"])
-@permission_classes([ApiAccessRequiredPermission])
-def schedule_update(request, **kwargs):
-    """POST endpoint to notify eventyay that schedule data has changed.
-
-    Optionally, the request may contain data for the ``pretalx`` field in the
-    event config.
-    """
-    domain = get_domain(request.data.get("domain"))
-    event = request.data.get("event")
-
-    if not domain or not event:
-        return Response("Missing fields in request.", status=401)
-
-    pretalx_config = request.event.config.get("pretalx", {})
-    if domain != get_domain(
-        pretalx_config.get("domain")
-    ) or event != pretalx_config.get("event"):
-        return Response("Incorrect domain or event data", status=401)
-
-    # We assume that only pretalx uses this endpoint
-    request.event.config["pretalx"]["connected"] = True
-    request.event.config["pretalx"]["pushed"] = now().isoformat()
-    request.event.save()
-
-    async_to_sync(notify_schedule_change)(request.event.id)
-    return Response(status=200)
+These were used for connecting a talk system instance as a schedule source. The video SPA now
+connects directly, so the legacy endpoints have been removed.
+"""
 
 
 @api_view(http_method_names=["POST"])

@@ -1,0 +1,273 @@
+name: Video & Backend CI
+
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "app/eventyay/webapp/video/**"
+      - "app/**.py"
+      - "app/**/**.py"
+      - "app/pyproject.toml"
+      - "app/uv.lock"
+      - ".github/workflows/video-backend-ci.yml"
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  python-uv-check:
+    name: Backend validation (uv + Django checks)
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies
+        run: uv sync --directory app
+
+      - name: Django system checks
+        env:
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+          EVY_REDIS_URL: redis://localhost:6379/0
+        working-directory: app
+        run: uv run python manage.py check
+
+  video-build:
+    name: Video build (Vite)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/eventyay/webapp/video
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: app/eventyay/webapp/video/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build video
+        run: npm run build
+
+  pytest-integration:
+    name: Integration tests (pytest)
+    runs-on: ubuntu-latest
+    needs: python-uv-check
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: eventyay
+          POSTGRES_PASSWORD: eventyay
+          POSTGRES_DB: eventyay-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventyay -d eventyay-db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system packages (gettext)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies (including test group)
+        run: uv sync --directory app --group test
+
+      - name: Run database migrations
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+        working-directory: app
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run pytest
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+          EVY_RUNNING_ENVIRONMENT: testing
+          DJANGO_SETTINGS_MODULE: eventyay.config.settings
+        working-directory: app
+        run: uv run pytest tests/stable -v --tb=short
+
+  backend-smoke:
+    name: Backend smoke test (healthcheck)
+    runs-on: ubuntu-latest
+    needs: python-uv-check
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: eventyay
+          POSTGRES_PASSWORD: eventyay
+          POSTGRES_DB: eventyay-db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U eventyay -d eventyay-db"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system packages (gettext + redis-tools)
+        run: |
+          sudo apt-get update
+          # redis-cli is provided by redis-tools; curl is needed for the HTTP healthcheck.
+          # postgresql-client provides pg_isready on ubuntu-latest (often already present, but keep it explicit).
+          sudo apt-get install -y gettext redis-tools curl postgresql-client
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Sync dependencies
+        run: uv sync --directory app
+
+      - name: Wait for services and run migrations
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+        run: |
+          # Wait for Postgres
+          for _ in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db >/dev/null 2>&1; then
+              echo "Postgres is up"
+              break
+            fi
+            sleep 2
+          done
+          pg_isready -h localhost -p 5432 -U eventyay -d eventyay-db
+
+          # Wait for Redis
+          for _ in {1..30}; do
+            if redis-cli -h localhost -p 6379 ping >/dev/null 2>&1; then
+              echo "Redis is up"
+              break
+            fi
+            sleep 2
+          done
+          redis-cli -h localhost -p 6379 ping
+
+          cd app
+          uv run python manage.py migrate --noinput
+
+      - name: Start development server
+        env:
+          EVY_POSTGRES_USER: eventyay
+          EVY_POSTGRES_PASSWORD: eventyay
+          EVY_POSTGRES_DB: eventyay-db
+          EVY_POSTGRES_HOST: localhost
+          EVY_POSTGRES_PORT: "5432"
+          EVY_REDIS_URL: redis://localhost:6379/0
+          EVY_SECRET_KEY: ci-test-secret-key
+          EVY_DEBUG: "true"
+        run: |
+          set -e
+          cd app
+          uv run python manage.py runserver 0.0.0.0:8000 &
+          echo $! > server.pid
+          # Wait for server to be ready
+          for _ in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/healthcheck/ >/dev/null; then
+              echo "Server is healthy"
+              break
+            fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:8000/healthcheck/ >/dev/null
+
+      - name: Verify healthcheck endpoint
+        run: |
+          response=$(curl -sS -w "\n%{http_code}" http://127.0.0.1:8000/healthcheck/)
+          status_code=$(echo "$response" | tail -n1)
+          if [ "$status_code" != "200" ]; then
+            echo "Healthcheck failed with status code: $status_code"
+            exit 1
+          fi
+          echo "Healthcheck passed with status code: $status_code"
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -f app/server.pid ]; then
+            kill -TERM "$(cat app/server.pid)" || true
+          fi

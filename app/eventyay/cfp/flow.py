@@ -29,7 +29,7 @@ from eventyay.common.language import language
 from eventyay.common.text.phrases import phrases
 from eventyay.person.forms import SpeakerProfileForm, UserForm
 from eventyay.base.models import User
-from eventyay.submission.forms import InfoForm, TalkQuestionsForm
+from eventyay.submission.forms import InfoForm
 from eventyay.base.models import (
     TalkQuestionTarget,
     SubmissionStates,
@@ -233,9 +233,16 @@ class FormFlowStep(TemplateFlowStep):
                 **self.get_form_kwargs(),
             )
         if from_storage:
+            # Use distinct copies for bound data vs. initial values to avoid
+            # in-form mutations (some forms tweak the ``initial`` dict).
+            # Sharing the same object caused saved form data to be wiped when
+            # a form updated ``initial`` entries, which then also changed the
+            # bound data reference.
+            form_data = copy.deepcopy(form_initial)
+            form_initial = copy.deepcopy(form_initial)
             # For validation checks, create a bound form with session data
             return self.form_class(
-                data=form_initial,
+                data=form_data,
                 initial=form_initial,
                 files=self.get_files(),
                 **self.get_form_kwargs(),
@@ -288,11 +295,16 @@ class FormFlowStep(TemplateFlowStep):
 
         # For "submit" and "draft" actions, validate as before
         if not form.is_valid():
+            warning_messages = getattr(form, 'warning_messages', None) or []
+            for warning in filter(None, warning_messages):
+                messages.warning(self.request, warning)
+
             error_message = '\n\n'.join(
                 (f'{form.fields[key].label}: ' if key != '__all__' else '') + ' '.join(values)
                 for key, values in form.errors.items()
             )
-            messages.error(self.request, error_message)
+            if error_message:
+                messages.error(self.request, error_message)
             return self.get(request)
         self.set_data(form.cleaned_data)
         self.set_files(form.files)
@@ -442,66 +454,7 @@ class InfoStep(GenericFlowStep, FormFlowStep):
         )
 
 
-class QuestionsStep(GenericFlowStep, FormFlowStep):
-    identifier = 'questions'
-    icon = 'question-circle-o'
-    form_class = TalkQuestionsForm
-    template_name = 'cfp/event/submission_questions.html'
-    priority = 25
 
-    def is_applicable(self, request):
-        self.request = request
-        info_data = self.cfp_session.get('data', {}).get('info', {})
-        track = info_data.get('track')
-        if track:
-            questions = self.event.talkquestions.exclude(
-                Q(target=TalkQuestionTarget.SUBMISSION)
-                & (
-                    (~Q(tracks__in=[info_data.get('track')]) & Q(tracks__isnull=False))
-                    | (~Q(submission_types__in=[info_data.get('submission_type')]) & Q(submission_types__isnull=False))
-                )
-            )
-        else:
-            questions = self.event.talkquestions.exclude(
-                Q(target=TalkQuestionTarget.SUBMISSION)
-                & (~Q(submission_types__in=[info_data.get('submission_type')]) & Q(submission_types__isnull=False))
-            )
-        return questions.exists()
-
-    def get_extra_form_kwargs(self):
-        return {'target': ''}
-
-    def get_form_kwargs(self):
-        result = super().get_form_kwargs()
-        info_data = self.cfp_session.get('data', {}).get('info', {})
-        result['track'] = info_data.get('track')
-        access_code = getattr(self.request, 'access_code', None)
-        if access_code and access_code.submission_type:
-            result['submission_type'] = access_code.submission_type
-        else:
-            result['submission_type'] = info_data.get('submission_type')
-        if not self.request.user.is_anonymous:
-            result['speaker'] = self.request.user
-        return result
-
-    def done(self, request, draft=False):
-        form = self.get_form(from_storage=True)
-        form.speaker = request.user
-        form.submission = request.submission
-        form.is_valid()
-        form.save()
-
-    @property
-    def label(self):
-        return _('Additional information')
-
-    @property
-    def _title(self):
-        return _('Tell us more!')
-
-    @property
-    def _text(self):
-        return _('Before we can save your proposal, we have some more questions for you.')
 
 
 class UserStep(GenericFlowStep, FormFlowStep):
@@ -566,6 +519,7 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
         result['name'] = user.fullname if user else user_data.get('register_name')
         result['read_only'] = False
         result['essential_only'] = True
+        result['enforce_account_name_match'] = True
         return result
 
     def get_context_data(self, **kwargs):
@@ -607,7 +561,6 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
 
 DEFAULT_STEPS = (
     InfoStep,
-    QuestionsStep,
     UserStep,
     ProfileStep,
 )

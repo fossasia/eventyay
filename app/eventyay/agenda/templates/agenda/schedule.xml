@@ -1,10 +1,12 @@
-{% load xmlescape %}<?xml version='1.0' encoding='utf-8' ?>
+<?xml version='1.0' encoding='utf-8' ?>
+{% load xmlescape %}
+{% load presale_locale %}
 <!-- Made with love by eventyay v{{ version }}. -->
 <schedule>
     <generator name="eventyay" version="{{ version }}" />
     <version>{{ schedule.version|xmlescape }}</version>
     <conference>
-        <title>{{ event.name|xmlescape }}</title>
+        <title>{{ event.name|event_localize|xmlescape }}</title>
         <acronym>{{ event.slug }}</acronym>
         <start>{{ event.date_from|date:"c" }}</start>
         <end>{{ event.date_to|date:"c" }}</end>
@@ -15,37 +17,37 @@
         <time_zone_name>{{ event.timezone }}</time_zone_name>
         {% if event.color %}<color>{{ event.color }}</color>{% endif %}
         {% for track in event.tracks.all %}
-        <track name="{{ track.name }}" slug="{{ track.slug }}" {% if track.color %} color="{{ track.color.lower }}"{% endif %}{% if talk.submission.track %}{{ talk.submission.track.name }}{% endif %} />
+        <track name="{{ track.name|event_localize }}" slug="{{ track.slug }}" {% if track.color %} color="{{ track.color.lower }}"{% endif %}{% if talk.submission.track %}{{ talk.submission.track.name }}{% endif %} />
         {% endfor %}
     </conference>
     {% for day in data %}<day index='{{ day.index }}' date='{{ day.start.date|date:"c" }}' start='{{ day.start|date:"c" }}' end='{{ day.end|date:"c" }}'>
-        {% for room in day.rooms %}<room name='{{ room.name|xmlescape }}' guid='{{ room.guid }}'>
+        {% for room in day.rooms %}<room name='{{ room.name|event_localize|xmlescape }}' guid='{{ room.guid }}'>
             {% for talk in room.talks %}<event guid='{{ talk.uuid }}' id='{{ talk.submission.id }}'>
-                <room>{{ room.name|xmlescape }}</room>
-                <title>{{ talk.submission.title|xmlescape }}</title>
+                <room>{{ room.name|event_localize|xmlescape }}</room>
+                <title>{{ talk.submission.title|event_localize|xmlescape }}</title>
                 <subtitle></subtitle>
-                <type>{{ talk.submission.submission_type.name|xmlescape }}</type>
+                <type>{{ talk.submission.submission_type.name|event_localize|xmlescape }}</type>
                 <date>{{ talk.start|date:"c" }}</date>
                 <start>{{ talk.start|date:"H:i" }}</start>
                 <duration>{{ talk.export_duration }}</duration>
-                <abstract>{{ talk.submission.abstract|xmlescape }}</abstract>
+                <abstract>{{ talk.submission.abstract|event_localize|xmlescape }}</abstract>
                 <slug>{{ talk.frab_slug }}</slug>
-                <track>{% if talk.submission.track %}{{ talk.submission.track.name }}{% endif %}</track>
+                <track>{% if talk.submission.track %}{{ talk.submission.track.name|event_localize }}{% endif %}</track>
                 {% if talk.submission.urls.image %}<logo>{{ talk.submission.urls.image }}</logo>{% endif %}
                 <persons>
                     {% for person in talk.submission.speakers.all %}<person id='{{ person.id }}'>{{ person.get_display_name|xmlescape }}</person>{% endfor %}
                 </persons>
                 {% if talk.submission.content_locale %}<language>{{ talk.submission.content_locale }}</language>{% endif %}
-                {% if talk.submission.description %}<description>{{ talk.submission.description|xmlescape }}</description>{% endif %}
+                {% if talk.submission.description %}<description>{{ talk.submission.description|event_localize|xmlescape }}</description>{% endif %}
                 <recording>
                     <license>{{ talk.submission.license|xmlescape }}</license>
                     <optout>{{ talk.submission.do_not_record|yesno:"true,false" }}</optout>
                 </recording>
                 <links>{% for resource in submission.resources.all %}{% if resource.link %}
-                    <link href="{{ resource.link }}">{{ resource.description }}</link>
+                    <link href="{{ resource.link }}">{{ resource.description|event_localize }}</link>
                 {% endif %}{% endfor %}</links>
                 <attachments>{% for resource in submission.resources.all %}{% if resource.resource %}
-                    <attachment href="{{ base_url }}{{ resource.resource.url }}">{{ resource.description }}</attachment>
+                    <attachment href="{{ base_url }}{{ resource.resource.url }}">{{ resource.description|event_localize }}</attachment>
                 {% endif %}{% endfor %}</attachments>
 
                 <url>{{ talk.submission.urls.public.full }}</url>

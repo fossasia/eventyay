@@ -39,6 +39,9 @@ def filter_qs_by_attr(qs, request):
     We'll allow to filter the event list using attributes defined in the event meta data
     models in the format ?attr[meta_name]=meta_value
     """
+    if not getattr(request, 'organizer', None):
+        return qs
+
     attrs = {}
     for i, item in enumerate(request.GET.items()):
         k, v = item

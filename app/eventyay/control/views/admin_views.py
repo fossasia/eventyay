@@ -226,7 +226,7 @@ class EventAdminToken(AdminBase, DetailView):
             }
             event.save()
 
-            # Also set up the video plugin settings for the webapp
+            # Also set up the video plugin settings for the video frontend
             try:
                 event.settings.venueless_secret = secret
                 event.settings.venueless_issuer = "any"
@@ -332,7 +332,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
 
         self.object = form.save()
 
-        # Initialize Eventyay Video (ticket-video) defaults so the webapp works immediately
+        # Initialize Eventyay Video (ticket-video) defaults so the video frontend works immediately
         try:
             secret = form.instance.config["JWT_secrets"][0]["secret"]
             issuer = form.instance.config["JWT_secrets"][0]["issuer"]

@@ -58,6 +58,7 @@ from eventyay.base.settings import (
     PERSON_NAME_TITLE_GROUPS,
 )
 from eventyay.base.templatetags.rich_text import rich_text
+from eventyay.consts import SizeKey
 from eventyay.control.forms import ExtFileField, SplitDateTimeField
 from eventyay.helpers.countries import CachedCountries
 from eventyay.helpers.escapejson import escapejson_attr
@@ -500,15 +501,24 @@ class BaseQuestionsForm(forms.Form):
             )
             add_fields['state'].widget.is_required = True
 
-        field_positions = list(
-            [
-                (
-                    n,
-                    event.settings.system_question_order.get(n if n != 'state' else 'country', 0),
-                )
-                for n in add_fields.keys()
-            ]
-        )
+        # Build field positions using saved order from system_question_order
+        system_question_order = event.settings.system_question_order or {}
+        
+        field_positions = []
+        for field_name in add_fields.keys():
+            # State follows country's position
+            lookup_name = field_name if field_name != 'state' else 'country'
+            
+            # Use saved position if available, otherwise use a high default to maintain relative order
+            if lookup_name in system_question_order and system_question_order[lookup_name] >= 0:
+                position = system_question_order[lookup_name]
+            else:
+                # Default positions for fields not in saved order
+                default_order = ['attendee_name_parts', 'attendee_email', 'company', 'street', 
+                                'zipcode', 'city', 'country', 'state']
+                position = default_order.index(lookup_name) if lookup_name in default_order else 999
+            
+            field_positions.append((field_name, position))
 
         for q in questions:
             # Do we already have an answer? Provide it as the initial value
@@ -624,7 +634,7 @@ class BaseQuestionsForm(forms.Form):
                         '.tif',
                         '.tiff',
                     ),
-                    max_size=10 * 1024 * 1024,
+                    max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_QUESTION],
                 )
             elif q.type == Question.TYPE_DATE:
                 attrs = {}

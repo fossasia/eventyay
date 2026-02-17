@@ -12,7 +12,6 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.safestring import mark_safe
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.utils.translation import ngettext_lazy
@@ -31,13 +30,6 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SensibleBackWizardMixin,
 )
-from eventyay.event.forms import (
-    EventWizardBasicsForm,
-    EventWizardCopyForm,
-    EventWizardDisplayForm,
-    EventWizardInitialForm,
-    EventWizardTimelineForm,
-)
 from eventyay.base.models import Event, Team, TeamInvite
 from eventyay.orga.forms import EventForm
 from eventyay.orga.forms.event import (
@@ -48,7 +40,6 @@ from eventyay.orga.forms.event import (
     WidgetGenerationForm,
     WidgetSettingsForm,
 )
-from eventyay.orga.signals import activate_event
 from eventyay.person.forms import UserForm
 from eventyay.base.models import User
 from eventyay.base.models import ReviewPhase, ReviewScoreCategory
@@ -115,13 +106,6 @@ class EventLive(EventSettingsPermission, TemplateView):
                     'url': self.request.event.cfp.urls.text,
                 }
             )
-        if not self.request.event.landing_page_text or len(str(self.request.event.landing_page_text)) < 50:
-            warnings.append(
-                {
-                    'text': _('The event doesn’t have a landing page text yet.'),
-                    'url': self.request.event.orga_urls.settings,
-                }
-            )
         # TODO: test that mails can be sent
         if (
             self.request.event.get_feature_flag('use_tracks')
@@ -152,51 +136,109 @@ class EventLive(EventSettingsPermission, TemplateView):
             )
         result['warnings'] = warnings
         result['suggestions'] = suggestions
+        result['private_testmode_talks'] = self.request.event.settings.get('private_testmode_talks', False, as_type=bool)
+        result['talks_testmode'] = self.request.event.settings.get('talks_testmode', False, as_type=bool)
+        result['talks_published'] = self.request.event.talks_published
         return result
 
     def post(self, request, *args, **kwargs):
         event = request.event
-        action = request.POST.get('action')
-        if action == 'activate':
-            if event.is_public:
-                messages.success(request, _('This event was already live.'))
-            else:
-                responses = activate_event.send_robust(event, request=request)
-                exceptions = [response[1] for response in responses if isinstance(response[1], Exception)]
-                if exceptions:
-                    from eventyay.base.templatetags.rich_text import render_markdown
-
-                    messages.error(
-                        request,
-                        mark_safe('\n'.join(render_markdown(e) for e in exceptions)),
-                    )
-                else:
-                    event.is_public = True
-                    event.save()
-                    event.log_action(
-                        'eventyay.event.activate',
-                        person=self.request.user,
-                        orga=True,
+        if request.POST.get('talks_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing talks.'))
+                return redirect(event.orga_urls.live)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.talks_published = True
+                event.settings.private_testmode_talks = False
+                event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
                         data={},
                     )
-                    messages.success(request, _('This event is now public.'))
-                    for response in responses:
-                        if isinstance(response[1], str):
-                            messages.success(request, response[1])
-        else:  # action == 'deactivate'
-            if not event.is_public:
-                messages.success(request, _('This event was already hidden.'))
-            else:
-                event.is_public = False
+            messages.success(self.request, _('Talk pages are now published.'))
+        elif request.POST.get('talks_published') == 'false':
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.talks_published = False
+                event.settings.private_testmode_talks = True
+                event.private_testmode = True
+                if event.settings.get('talks_testmode', False, as_type=bool):
+                    event.settings.talks_testmode = False
                 event.save()
-                event.log_action(
-                    'eventyay.event.deactivate',
-                    person=self.request.user,
-                    orga=True,
-                    data={},
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Talk pages have been unpublished.'))
+        elif request.POST.get('talk_testmode') == 'true':
+            if not event.talks_published:
+                messages.error(
+                    self.request,
+                    _('Talk pages must be published before enabling talk test mode.'),
                 )
-                messages.success(request, _('This event is now hidden.'))
-        return redirect(event.orga_urls.base)
+                return redirect(event.orga_urls.live)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.talks_testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
+                if event.settings.get('private_testmode_talks', False, as_type=bool):
+                    event.settings.private_testmode_talks = False
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                event.save()
+                if previous_private and not event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+                self.request.event.log_action('eventyay.event.talk_testmode.activated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in test mode!'))
+        elif request.POST.get('talk_testmode') == 'false':
+            with transaction.atomic():
+                event.settings.talks_testmode = False
+                event.save()
+                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
+            messages.success(self.request, _('Talk pages are now in production mode.'))
+        elif request.POST.get('private_testmode_talks_action'):
+            enable = request.POST.get('private_testmode_talks_action') == 'enable'
+            if enable and event.talks_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while talks are published.'))
+                return redirect(event.orga_urls.live)
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_talks = enable
+                if enable:
+                    event.private_testmode = True
+                    event.settings.talks_testmode = False
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_tickets', True, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
+            )
+        return redirect(event.orga_urls.live)
 
 
 class EventHistory(EventSettingsPermission, ListView):
@@ -463,133 +505,6 @@ class InvitationView(FormView):
         invite.team.organizer.log_action('eventyay.invite.orga.accept', person=user, orga=True)
         messages.info(self.request, _('You are now part of the team!'))
         invite.delete()
-
-
-def condition_copy(wizard):
-    return EventWizardCopyForm.copy_from_queryset(wizard.request.user).exists()
-
-
-class EventWizard(PermissionRequired, SensibleBackWizardMixin, SessionWizardView):
-    permission_required = 'base.create_event'
-    file_storage = FileSystemStorage(location=Path(settings.MEDIA_ROOT) / 'new_event')
-    form_list = [
-        ('initial', EventWizardInitialForm),
-        ('basics', EventWizardBasicsForm),
-        ('timeline', EventWizardTimelineForm),
-        ('display', EventWizardDisplayForm),
-        ('copy', EventWizardCopyForm),
-    ]
-    condition_dict = {'copy': condition_copy}
-
-    def get_template_names(self):
-        return [f'orga/event/wizard/{self.steps.current}.html']
-
-    @context
-    def organizer(self):
-        return self.get_cleaned_data_for_step('initial').get('organizer') if self.steps.current != 'initial' else None
-
-    def render(self, form=None, **kwargs):
-        if self.steps.current != 'initial' and self.get_cleaned_data_for_step('initial') is None:
-            return self.render_goto_step('initial')
-        if self.steps.current == 'timeline':
-            fdata = self.get_cleaned_data_for_step('basics')
-            year = now().year % 100
-            if fdata and str(year) not in fdata['slug'] and str(year + 1) not in fdata['slug']:
-                messages.warning(
-                    self.request,
-                    str(_('Please consider including your event’s year in the slug, e.g. myevent{number}.')).format(
-                        number=year
-                    ),
-                )
-        elif self.steps.current == 'display':
-            date_to = self.get_cleaned_data_for_step('timeline').get('date_to')
-            if date_to and date_to < now():
-                messages.warning(
-                    self.request,
-                    _('Did you really mean to make your event take place in the past?'),
-                )
-        return super().render(form, **kwargs)
-
-    def get_form_kwargs(self, step=None):
-        kwargs = {'user': self.request.user}
-        if step != 'initial':
-            fdata = self.get_cleaned_data_for_step('initial')
-            kwargs.update(fdata or {})
-        return kwargs
-
-    @transaction.atomic()
-    def done(self, form_list, *args, **kwargs):
-        steps = {}
-        for step in ('initial', 'basics', 'timeline', 'display', 'copy'):
-            try:
-                steps[step] = self.get_cleaned_data_for_step(step)
-            except KeyError:
-                steps[step] = {}
-
-        with scopes_disabled():
-            event = Event.objects.create(
-                organizer=steps['initial']['organizer'],
-                locale_array=','.join(steps['initial']['locales']),
-                content_locale_array=','.join(steps['initial']['locales']),
-                name=steps['basics']['name'],
-                slug=steps['basics']['slug'],
-                timezone=steps['basics']['timezone'],
-                email=steps['basics']['email'],
-                locale=steps['basics']['locale'],
-                date_from=steps['timeline']['date_from'],
-                date_to=steps['timeline']['date_to'],
-            )
-        with scope(event=event):
-            deadline = steps['timeline'].get('deadline')
-            if deadline:
-                event.cfp.deadline = deadline.replace(tzinfo=event.tz)
-                event.cfp.save()
-            for setting in ('display_header_data',):
-                value = steps['display'].get(setting)
-                if value:
-                    event.settings.set(setting, value)
-
-        has_control_rights = self.request.user.teams.filter(
-            organizer=event.organizer,
-            all_events=True,
-            can_change_event_settings=True,
-            can_change_submissions=True,
-        ).exists()
-        if not has_control_rights:
-            team = Team.objects.create(
-                organizer=event.organizer,
-                name=_(f'Team {event.name}'),
-                can_change_event_settings=True,
-                can_change_submissions=True,
-            )
-            team.members.add(self.request.user)
-            team.limit_events.add(event)
-
-        logdata = {}
-        for form in form_list:
-            logdata.update(form.cleaned_data)
-        with scope(event=event):
-            event.log_action(
-                'eventyay.event.create',
-                person=self.request.user,
-                data=logdata,
-                orga=True,
-            )
-
-            if steps['copy'] and steps['copy']['copy_from_event']:
-                event.copy_data_from(
-                    steps['copy']['copy_from_event'],
-                    skip_attributes=[
-                        'locale',
-                        'locales',
-                        'primary_color',
-                        'timezone',
-                        'email',
-                        'deadline',
-                    ],
-                )
-
-        return redirect(event.orga_urls.base + '?congratulations')
 
 
 class EventDelete(PermissionRequired, ActionConfirmMixin, TemplateView):

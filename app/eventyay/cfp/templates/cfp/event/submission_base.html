@@ -8,7 +8,8 @@
 {% load rules %}
 {% load static %}
 
-{% block title %}{% if submission_title %}{{ submission_title }}{% else %}{% translate "Create proposal" %}{% endif %} :: {{ request.event.name }}{% endblock title %}
+{% load presale_locale %}
+{% block title %}{% if submission_title %}{{ submission_title|event_localize }}{% else %}{% translate "Create proposal" %}{% endif %} :: {{ request.event.name|event_localize }}{% endblock title %}
 
 {% block cfp_header %}
     {% include "cfp/includes/forms_header.html" %}
@@ -40,15 +41,15 @@
     </div>
     {% block cfp_form %}
         {% if request.user.is_authenticated %}
-        <form id="cfp-submission-form" method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %}>
+        <form id="cfp-submission-form" method="post"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
             {% csrf_token %}
             {{ wizard.management_form }}
             <div class="d-flex align-items-start">
-                <h2>{% block submission_step_title %}{{ title|default:'' }}{% endblock submission_step_title %}</h2>
+                <h2>{% block submission_step_title %}{{ title|event_localize|default:'' }}{% endblock submission_step_title %}</h2>
                 {% has_event_perm "base.update_event" request.user request request.event as can_edit_cfp %}
                 {% if can_edit_cfp %}{% block orga_edit_link %}{% orga_edit_link request.event.cfp.urls.editor %}{% endblock %}{% endif %}
             </div>
-            {% block submission_step_text %}<p>{{ text|rich_text }}</p>{% endblock %}
+            {% block submission_step_text %}<p>{{ text|event_localize|rich_text }}</p>{% endblock %}
             {% block inner %}
                 {% if uploaded_files %}
                     <div class="alert alert-info mb-3">

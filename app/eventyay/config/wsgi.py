@@ -16,6 +16,6 @@ from django.core.wsgi import get_wsgi_application
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 os.environ.setdefault('EVY_RUNNING_ENVIRONMENT', 'production')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.next_settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eventyay.config.settings')
 
 application = get_wsgi_application()

@@ -11,6 +11,7 @@ from itertools import groupby
 from pathlib import Path
 from smtplib import SMTPResponseException
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
 from css_inline import inline as inline_css
 from django.conf import settings
@@ -38,10 +39,8 @@ from eventyay.base.signals import (
     register_html_mail_renderers,
     register_mail_placeholders,
 )
-from eventyay.mail.signals import talk_register_mail_placeholders
 from eventyay.base.templatetags.rich_text import markdown_compile_email
-
-from zoneinfo import ZoneInfo
+from eventyay.helpers.i18n import is_rtl
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +175,10 @@ class FileSavedEmailBackend(_FileBasedEmailBackend):
             subdir = self.get_subdir_path()
             # We use local time, because this backend is only for development and testing.
             now = datetime.now()
-            file_name = f'{now:%Y%m%d-%H%M%S}-{abs(id(self))}.eml'
+            # Compact format: timestamp with milliseconds + random suffix
+            milliseconds = now.microsecond // 1000
+            random_suffix = secrets.token_hex(2)  # 4 characters
+            file_name = f'{now:%H%M%S}{milliseconds:03d}-{random_suffix}.eml'
             self._fname = str(subdir / file_name)
         return self._fname
 
@@ -259,7 +261,7 @@ class TemplateBasedMailRenderer(BaseHTMLMailRenderer):
             'body': body_md,
             'subject': str(subject),
             'color': settings.EVENTYAY_PRIMARY_COLOR,
-            'rtl': get_language() in settings.LANGUAGES_RTL or get_language().split('-')[0] in settings.LANGUAGES_RTL,
+            'rtl': is_rtl(),  # Uses current language automatically
         }
         if self.organizer:
             htmlctx['organizer'] = self.organizer

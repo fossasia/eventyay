@@ -36,6 +36,8 @@ body {
 // --Topbar
 
 .navbar-top-links {
+    display: flex;
+    align-items: center;
     margin-right: 0;
 }
 
@@ -93,6 +95,162 @@ body {
 .navbar-top-links .dropdown-user {
     right: 0;
     left: auto;
+}
+
+.navbar-top-links .language-switch {
+  display: flex;
+  align-items: center;
+  position: relative; // for consistent stacking
+
+  .language-form {
+    position: relative;
+  }
+
+  details.dropdown.locales {
+    position: relative;
+
+    summary.language-summary {
+      list-style: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 20px;
+
+      padding: 10px;
+      margin-right: 20px;
+
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+
+      &::marker,
+      &::-webkit-details-marker {
+        display: none;
+      }
+
+      .current-locale {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      i {
+        color: #fff;
+      }
+    }
+
+    &[open] .dropdown-content {
+      animation: dropdown 0.2s ease-in-out;
+    }
+
+    .dropdown-content {
+      position: absolute;
+      top: 100%;
+      margin-top: 6px;
+
+      min-width: 160px;
+      max-width: 400px;
+      max-height: 400px;
+
+      padding: 0;
+      list-style: none;
+
+      background: #fff;
+      border: 1px solid rgba(27, 31, 35, 0.15);
+      border-radius: 0.25rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      z-index: 2000;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+
+      &::before,
+      &::after {
+        position: absolute;
+        display: inline-block;
+        content: " ";
+      }
+
+      &::before {
+        top: -16px;
+        border: 8px solid transparent;
+        border-bottom-color: rgba(27, 31, 35, 0.15);
+      }
+
+      &::after {
+        top: -14px;
+        border: 7px solid transparent;
+        border-bottom-color: #fff;
+      }
+
+      .dropdown-item {
+        display: block;
+        width: 100%;
+
+        padding: 5px 16px;
+        border: 0;
+        background: transparent;
+
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        color: #333;
+        cursor: pointer;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        &.active {
+          background-color: $brand-primary;
+          color: #fff;
+        }
+
+        &:first-child {
+          border-top-left-radius: 0.25rem;
+          border-top-right-radius: 0.25rem;
+        }
+
+        &:last-child {
+          border-bottom-left-radius: 0.25rem;
+          border-bottom-right-radius: 0.25rem;
+        }
+      }
+    }
+
+    // Positioning variants (keep the same convention you already use)
+    .dropdown-content-s {
+      right: 50%;
+      left: auto;
+      transform: translateX(50%);
+
+      &::before,
+      &::after {
+        right: 50%;
+        transform: translateX(50%);
+      }
+    }
+
+    .dropdown-content-sw {
+      right: 0;
+      left: auto;
+
+      &::before { right: 9px; }
+      &::after  { right: 10px; }
+    }
+
+    .dropdown-content-se {
+      left: 0;
+      right: auto;
+
+      &::before { left: 9px; }
+      &::after  { left: 10px; }
+    }
+  }
+}
+
+@keyframes dropdown {
+  0% { opacity: 0; transform: translateY(-2px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 // --Sidebar
@@ -446,4 +604,10 @@ table.dataTable thead .sorting:after {
             color: darken($brand-warning, 15%);
         }
     }
+}
+
+// Utility class for sharp corners (matching talk component)
+.btn.btn-sharp,
+a.btn.btn-sharp {
+    border-radius: 0;
 }

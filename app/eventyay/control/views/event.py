@@ -1,4 +1,5 @@
 import json
+import logging
 import operator
 import re
 from collections import OrderedDict
@@ -667,27 +668,40 @@ class CancelSettings(EventSettingsViewMixin, EventSettingsFormView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data()
-        ctx['gets_notification'] = self.request.user.notifications_send and (
-            (
-                self.request.user.notification_settings.filter(
-                    event=self.request.event,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=True,
-                ).exists()
+        
+        # Check notification settings with fallback for errors
+        try:
+            ctx['gets_notification'] = self.request.user.notifications_send and (
+                (
+                    self.request.user.notification_settings.filter(
+                        event=self.request.event,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=True,
+                    ).exists()
+                )
+                or (
+                    self.request.user.notification_settings.filter(
+                        event__isnull=True,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=True,
+                    ).exists()
+                    and not self.request.user.notification_settings.filter(
+                        event=self.request.event,
+                        action_type='eventyay.event.order.refund.requested',
+                        enabled=False,
+                    ).exists()
+                )
             )
-            or (
-                self.request.user.notification_settings.filter(
-                    event__isnull=True,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=True,
-                ).exists()
-                and not self.request.user.notification_settings.filter(
-                    event=self.request.event,
-                    action_type='eventyay.event.order.refund.requested',
-                    enabled=False,
-                ).exists()
+        except Exception as e:
+            # Log unexpected errors for debugging while maintaining functionality
+            logging.getLogger(__name__).warning(
+                'Error checking notification settings for user %s: %s',
+                getattr(self.request.user, 'pk', 'unknown'),
+                str(e),
+                exc_info=True
             )
-        )
+            ctx['gets_notification'] = False
+            
         return ctx
 
 
@@ -1088,46 +1102,108 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
-        ctx['issues'] = self.request.event.live_issues
         ctx['actual_orders'] = self.request.event.orders.filter(testmode=False).exists()
+        ticketing_ready = self.request.event.products.exists() and self.request.event.quotas.exists()
+        billing_issues = self.request.event.billing_issues()
+        billing_issue_texts = {str(issue) for issue in billing_issues}
+        ctx['ticketing_ready'] = ticketing_ready
+        ctx['ticket_issues'] = (
+            [issue for issue in self.request.event.live_issues if str(issue) not in billing_issue_texts]
+            if ticketing_ready
+            else []
+        )
+        ctx['tickets_published'] = self.request.event.tickets_published
+        private_tickets = self.request.event.settings.get('private_testmode_tickets', True, as_type=bool)
+        if not self.request.event.private_testmode:
+            private_tickets = False
+        ctx['private_testmode_tickets'] = private_tickets
         return ctx
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get('live') == 'true' and not self.request.event.live_issues:
+        event = request.event
+        ticketing_ready = event.products.exists() and event.quotas.exists()
+        billing_issue_texts = {str(issue) for issue in event.billing_issues()}
+        ticket_issues = [issue for issue in event.live_issues if str(issue) not in billing_issue_texts]
+        if request.POST.get('tickets_published') == 'true':
+            if not event.live:
+                messages.error(self.request, _('Publish the event before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if not ticketing_ready:
+                messages.error(self.request, _('Please set up ticketing before publishing tickets.'))
+                return redirect(self.get_success_url())
+            if ticket_issues:
+                messages.error(self.request, _('Please resolve the ticketing issues before publishing tickets.'))
+                return redirect(self.get_success_url())
             with transaction.atomic():
-                request.event.live = True
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.activated', user=self.request.user, data={})
-            messages.success(self.request, _('Your shop is live now!'))
-        elif request.POST.get('live') == 'false':
+                previous_private = event.private_testmode
+                event.tickets_published = True
+                event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(self.request, _('Tickets are now published.'))
+            return redirect(self.get_success_url())
+        elif request.POST.get('tickets_published') == 'false':
             with transaction.atomic():
-                request.event.live = False
-                request.event.save()
-                self.request.event.log_action('eventyay.event.live.deactivated', user=self.request.user, data={})
-            messages.success(
-                self.request,
-                _("We've taken your shop down. You can re-enable it whenever you want!"),
-            )
-        elif request.POST.get('testmode') == 'true':
+                event.tickets_published = False
+                event.settings.private_testmode_tickets = True
+                event.private_testmode = True
+                if event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+            messages.success(self.request, _('Tickets have been unpublished.'))
+            return redirect(self.get_success_url())
+        if request.POST.get('testmode') == 'true':
+            if not event.tickets_published or not ticketing_ready:
+                messages.error(
+                    self.request,
+                    _('Tickets must be published and set up before enabling test mode.'),
+                )
+                return redirect(self.get_success_url())
             with transaction.atomic():
-                request.event.testmode = True
-                request.event.save()
+                previous_private = event.private_testmode
+                event.testmode = True
+                if event.startpage_visible or event.startpage_featured:
+                    event.startpage_visible = False
+                    event.startpage_featured = False
+                if event.settings.get('private_testmode_tickets', True, as_type=bool):
+                    event.settings.private_testmode_tickets = False
+                event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
                 self.request.event.log_action('eventyay.event.testmode.activated', user=self.request.user, data={})
             messages.success(self.request, _('Your shop is now in test mode!'))
         elif request.POST.get('testmode') == 'false':
             with transaction.atomic():
-                request.event.testmode = False
-                request.event.save()
+                event.testmode = False
+                event.save()
                 self.request.event.log_action(
                     'eventyay.event.testmode.deactivated',
                     user=self.request.user,
                     data={'delete': (request.POST.get('delete') == 'yes')},
                 )
-            request.event.cache.delete('complain_testmode_orders')
+            event.cache.delete('complain_testmode_orders')
             if request.POST.get('delete') == 'yes':
                 try:
                     with transaction.atomic():
-                        for order in request.event.orders.filter(testmode=True):
+                        for order in event.orders.filter(testmode=True):
                             order.gracefully_delete(user=self.request.user)
                 except ProtectedError:
                     messages.error(
@@ -1138,12 +1214,53 @@ class EventLive(EventPermissionRequiredMixin, TemplateView):
                         ),
                     )
                 else:
-                    request.event.cache.set('complain_testmode_orders', False, 30)
-            request.event.cartposition_set.filter(addon_to__isnull=False).delete()
-            request.event.cartposition_set.all().delete()
+                    event.cache.set('complain_testmode_orders', False, 30)
+            event.cartposition_set.filter(addon_to__isnull=False).delete()
+            event.cartposition_set.all().delete()
             messages.success(
                 self.request,
                 _("We've disabled test mode for you. Let's sell some real tickets!"),
+            )
+        elif request.POST.get('private_testmode_tickets_action'):
+            enable = request.POST.get('private_testmode_tickets_action') == 'enable'
+            if enable and event.tickets_published:
+                messages.error(self.request, _('Private test mode cannot be enabled while tickets are published.'))
+                return redirect(self.get_success_url())
+            with transaction.atomic():
+                previous_private = event.private_testmode
+                event.settings.private_testmode_tickets = enable
+                if enable:
+                    event.private_testmode = True
+                    if event.testmode:
+                        event.testmode = False
+                        self.request.event.log_action(
+                            'eventyay.event.testmode.deactivated',
+                            user=self.request.user,
+                            data={'delete': False},
+                        )
+                else:
+                    event.private_testmode = event.settings.get('private_testmode_talks', False, as_type=bool)
+                if event.private_testmode and event.testmode:
+                    event.testmode = False
+                    self.request.event.log_action(
+                        'eventyay.event.testmode.deactivated',
+                        user=self.request.user,
+                        data={'delete': False},
+                    )
+                event.save()
+                if previous_private != event.private_testmode:
+                    self.request.event.log_action(
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
+                        user=self.request.user,
+                        data={},
+                    )
+            messages.success(
+                self.request,
+                _('Private test mode is now enabled for tickets.')
+                if enable
+                else _('Private test mode is now disabled for tickets.'),
             )
         return redirect(self.get_success_url())
 
@@ -1583,8 +1700,6 @@ class QuickSetupView(FormView):
         return {
             'waiting_list_enabled': True,
             'ticket_download': True,
-            'contact_mail': self.request.event.settings.contact_mail,
-            'imprint_url': self.request.event.settings.imprint_url,
             'require_registered_account_for_tickets': True,
         }
 
@@ -1677,8 +1792,6 @@ class QuickSetupView(FormView):
         self.request.event.settings.show_quota_left = form.cleaned_data['show_quota_left']
         self.request.event.settings.waiting_list_enabled = form.cleaned_data['waiting_list_enabled']
         self.request.event.settings.attendee_names_required = form.cleaned_data['attendee_names_required']
-        self.request.event.settings.contact_mail = form.cleaned_data['contact_mail']
-        self.request.event.settings.imprint_url = form.cleaned_data['imprint_url']
         self.request.event.log_action(
             'eventyay.event.settings',
             user=self.request.user,

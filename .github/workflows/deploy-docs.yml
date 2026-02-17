@@ -1,19 +1,14 @@
 name: Deploy Documentation
 
 on:
+  pull_request:
+    branches:
+      - dev
   push:
     branches:
       - dev
       - main
-    paths:
-      - 'doc/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages"
@@ -22,6 +17,15 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping" --health-timeout "5s" --health-retries 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,15 +33,14 @@ jobs:
           submodules: recursive
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            enchant-2 \
             libffi-dev \
             libssl-dev \
             libxml2-dev \
@@ -46,56 +49,56 @@ jobs:
             libfreetype-dev \
             libjpeg-dev \
             libpq-dev \
+            libenchant-2-dev \
+            enchant-2 \
+            hunspell \
+            aspell-en \
             build-essential
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          cd doc
-          # Install all dependencies (Sphinx, Django, and all packages)
-          bash install-all-deps.sh
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: latest
+          enable-cache: true
 
-      - name: Build unified documentation
+      - name: Install Python dependencies
+        run: uv sync --group docs
+        working-directory: ./app
+
+      - name: Build documentation
+        working-directory: ./doc
         run: |
-          cd doc
-          # Set environment variables (conf.py handles Django setup automatically)
-          export DJANGO_SETTINGS_MODULE=eventyay.config.settings
-          export EVENTYAY_CONFIG_FILE=$(pwd)/eventyay-docs.cfg
-          export DATABASE_URL="sqlite:///:memory:"
-          export REDIS_URL="redis://localhost:6379/0"
-          export MPLCONFIGDIR=/tmp/matplotlib
-          mkdir -p $MPLCONFIGDIR
-          # Build documentation
-          make html
+          ../app/.venv/bin/sphinx-build -b html -d _build/doctrees . _build/html
 
       - name: Prepare deployment
+        if: github.event_name == 'push'
         run: |
           mkdir -p _site
-          # Copy unified documentation (includes all components: tickets, talk, video)
-          echo "Copying unified documentation..."
           cp -r doc/_build/html/* _site/
-          # Copy CNAME for custom domain (docs.eventyay.com)
           cp doc/CNAME _site/
-          # Create .nojekyll to prevent GitHub Pages from ignoring files starting with _
           touch _site/.nojekyll
-          # List contents for verification
-          echo "Documentation site structure:"
           ls -la _site/
 
       - name: Setup Pages
+        if: github.event_name == 'push'
         uses: actions/configure-pages@v4
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v4
         with:
           path: '_site'
 
   deploy:
+    if: github.event_name == 'push'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -16,18 +16,22 @@ from eventyay.base.models import Organizer, Team
 from eventyay.base.models.auth import User
 from eventyay.base.models.organizer import TeamAPIToken, TeamInvite
 from eventyay.base.services.mail import SendMailException, mail
+from eventyay.base.services.teams import send_team_invitation_email
 from eventyay.control.forms.filter import OrganizerFilterForm
+from eventyay.control.permissions import (
+    OrganizerCreationPermissionMixin,
+    OrganizerPermissionRequiredMixin,
+)
 from eventyay.control.views import CreateView, PaginationMixin, UpdateView
 from eventyay.control.views.organizer import InviteForm, TokenForm
 from eventyay.helpers.urls import build_absolute_uri as build_global_uri
 
 from ...control.forms.organizer_forms import OrganizerForm, OrganizerUpdateForm, TeamForm
-from ...control.permissions import OrganizerPermissionRequiredMixin
 
 logger = logging.getLogger(__name__)
 
 
-class OrganizerList(PaginationMixin, ListView):
+class OrganizerList(OrganizerCreationPermissionMixin, PaginationMixin, ListView):
     model = Organizer
     context_object_name = 'organizers'
     template_name = 'eventyay_common/organizers/index.html'
@@ -43,6 +47,7 @@ class OrganizerList(PaginationMixin, ListView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['filter_form'] = self.filter_form
+        ctx['can_create_organizer'] = self._can_create_organizer(self.request.user)
         return ctx
 
     @cached_property
@@ -50,15 +55,16 @@ class OrganizerList(PaginationMixin, ListView):
         return OrganizerFilterForm(data=self.request.GET, request=self.request)
 
 
-class OrganizerCreate(CreateView):
+class OrganizerCreate(OrganizerCreationPermissionMixin, CreateView):
     model = Organizer
     form_class = OrganizerForm
     template_name = 'eventyay_common/organizers/create.html'
     context_object_name = 'organizer'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_active_staff_session(self.request.session.session_key):
-            raise PermissionDenied()
+        # Check if user has permission to create organizers
+        if not self._can_create_organizer(request.user):
+            raise PermissionDenied(_('You do not have permission to create organizers. Please contact an administrator.'))
         return super().dispatch(request, *args, **kwargs)
 
     @transaction.atomic
@@ -99,7 +105,7 @@ class OrganizerCreate(CreateView):
     def get_success_url(self) -> str:
         return reverse('eventyay_common:organizers')
 
-class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
+class OrganizerTeamsView(UpdateView, OrganizerPermissionRequiredMixin):
     model = Organizer
     form_class = OrganizerUpdateForm
     template_name = 'eventyay_common/organizers/edit.html'
@@ -157,7 +163,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx['can_manage_teams'] = self.can_manage_teams
-        ctx['active_section'] = self._forced_section or self.request.GET.get('section', 'general')
+        ctx['active_section'] = 'teams'
         selected_team_id = self._selected_team_override or self.request.GET.get('team')
         selected_panel = self._selected_panel_override or self.request.GET.get('panel')
         if selected_team_id and not selected_panel:
@@ -278,7 +284,7 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             override['token_form'] = token_form
 
     def _teams_tab_url(self, team_id=None, section='teams', panel=None, anchor='organizer-messages'):
-        base = reverse('eventyay_common:organizer.update', kwargs={'organizer': self.request.organizer.slug})
+        base = reverse('eventyay_common:organizer.teams', kwargs={'organizer': self.request.organizer.slug})
         query = {'section': section}
         if team_id:
             query['team'] = team_id
@@ -499,11 +505,28 @@ class OrganizerUpdate(UpdateView, OrganizerPermissionRequiredMixin):
             return self._render_members_error(team.pk, invite_form)
 
         team.members.add(user)
+
         team.log_action(
             'eventyay.team.member.added',
             user=self.request.user,
             data={'email': user.email, 'user': user.pk},
         )
+
+        send_team_invitation_email(
+            user=user,
+            organizer_name=self.request.organizer.name,
+            team_name=team.name,
+            url=build_global_uri(
+                'eventyay_common:organizer.team',
+                kwargs={
+                    'organizer': self.request.organizer.slug,
+                    'team': team.pk,
+                },
+            ),
+            locale=self.request.LANGUAGE_CODE,
+            is_registered_user=True,
+        )
+
         messages.success(self.request, _('The new member has been added to the team.'))
         return self._redirect_to_team_permissions(team.pk)
 

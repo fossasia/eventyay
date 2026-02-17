@@ -67,21 +67,23 @@ RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 # copy project
 COPY . $APP_HOME
 
-# global-nav-menu
-COPY eventyay/frontend/global-nav-menu eventyay/frontend/global-nav-menu
-RUN npm ci --prefix=eventyay/frontend/global-nav-menu
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/global-nav-menu
 # schedule editor
-COPY eventyay/frontend/schedule-editor eventyay/frontend/schedule-editor
-RUN npm ci --prefix=eventyay/frontend/schedule-editor
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/frontend/schedule-editor
+COPY eventyay/webapp/schedule-editor eventyay/webapp/schedule-editor
+RUN npm ci --prefix=eventyay/webapp/schedule-editor
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/schedule-editor
+# schedule widget
+COPY eventyay/webapp/schedule eventyay/webapp/schedule
+RUN npm ci --prefix=eventyay/webapp/schedule
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build:wc --prefix=eventyay/webapp/schedule
 # Video SPA app
-COPY eventyay/webapp eventyay/webapp
-RUN npm ci --prefix=eventyay/webapp
-RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp
-# rollup needed by Django-Compressor
-COPY eventyay/frontend/webcheckin-bundler eventyay/frontend/webcheckin-bundler
-RUN npm ci --prefix=eventyay/frontend/webcheckin-bundler
+COPY eventyay/webapp/video eventyay/webapp/video
+RUN npm ci --prefix=eventyay/webapp/video
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend npm run build --prefix=eventyay/webapp/video
+# webcheckin web component build
+COPY eventyay/webapp/webcheckin eventyay/webapp/webcheckin
+RUN npm ci --prefix=eventyay/webapp/webcheckin
+# Write build output to compiled-frontend (collected by collectstatic)
+RUN OUT_DIR=/home/app/web/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
 # esbuild needed by Django-Compressor
 RUN npm install -g esbuild
 
@@ -112,6 +114,8 @@ RUN python manage.py collectstatic --noinput
 RUN mkdir $APP_HOME/eventyay/static.dist.backup && \
     mv $APP_HOME/eventyay/static.dist/* $APP_HOME/eventyay/static.dist.backup
 
+# Create .secrets to suppress warnings about missing directory
+RUN mkdir -p $APP_HOME/.secrets
 
 # run entrypoint.prod.sh
 ENTRYPOINT ["/home/app/web/entrypoint.prod.sh"]

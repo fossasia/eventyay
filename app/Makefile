@@ -26,12 +26,11 @@ coverage:
 
 npminstall:
 	# keep this in sync with setup.py!
-	npm ci --prefix=eventyay/frontend/global-nav-menu
-	npm ci --prefix=eventyay/frontend/schedule-editor
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/global-nav-menu
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/frontend/schedule-editor
-	npm ci --prefix=eventyay/frontend/webcheckin-bundler
-
-webappbuild:
-	npm ci --prefix=eventyay/webapp
-	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp
+	npm ci --prefix=eventyay/webapp/schedule-editor
+	npm ci --prefix=eventyay/webapp/schedule
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/schedule-editor
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build:wc --prefix=eventyay/webapp/schedule
+	npm ci --prefix=eventyay/webapp/webcheckin
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/webcheckin
+	npm ci --prefix=eventyay/webapp/video
+	OUT_DIR=$(shell pwd)/eventyay/data/compiled-frontend/ npm run build --prefix=eventyay/webapp/video

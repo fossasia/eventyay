@@ -111,7 +111,7 @@ summary.btn {
     font-weight: normal;
     --highlight-color: transparent;
     color: var(--color-primary-text);
-	border: none;	
+	border: none;
 	background: transparent;
 
     &:hover {
@@ -236,9 +236,6 @@ a {
   color: var(--color-primary-text);
   text-decoration: none;
 
-  &:hover {
-    text-decoration: underline;
-  }
 }
 
 /* Conventions and custom elements */
@@ -289,6 +286,9 @@ a {
 .alert.alert-danger:before {
   content: "";
 }
+.alert-margin {
+  margin-top: 20px;
+}
 
 .btn-outline-success {
   --highlight-color: var(--color-success);
@@ -307,7 +307,7 @@ a {
   display: flex;
   align-items: center;
   position: relative;
-  margin-bottom: var(--size-spacer);
+  margin: 16px;
   padding: 16px;
   border: 2px solid var(--highlight-color);
   color: var(--highlight-color-text);
@@ -315,17 +315,18 @@ a {
   box-shadow: var(--shadow-light);
   background: var(--color-bg);
 
-  &::before {
+    &::before {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     align-self: stretch;
     min-width: 64px;
     background-color: var(--highlight-color);
     color: white;
-    font-family: "ForkAwesome";
+    font-family: "FontAwesome";
     font-size: 20px;
-    padding: 0.75rem 1.25rem;
     margin: -16px;
     margin-right: 16px;
-    text-align: center;
   }
 
   hr {
@@ -377,6 +378,10 @@ a {
     padding: 0 0.6em;
     border-radius: 10rem;
   }
+}
+
+.badge.text-dark {
+  color: #333;
 }
 
 .card {

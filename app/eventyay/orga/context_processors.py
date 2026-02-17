@@ -30,7 +30,11 @@ def orga_events(request):
     # directly.
     context['site_name'] = settings.INSTANCE_NAME
     context['base_path'] = settings.BASE_PATH
-    context['tickets_common'] = urljoin(settings.BASE_PATH, '/common')
+    context['common_path'] = urljoin(settings.BASE_PATH, '/common')
+    context['tickets_common'] = context['common_path']
+    context['tickets_path'] = urljoin(settings.BASE_PATH, '/control')
+    context['talks_path'] = urljoin(settings.BASE_PATH, '/orga/event')
+    context['admin_path'] = urljoin(settings.BASE_PATH, '/admin')
     # Login button label
     key = settings.CALL_FOR_SPEAKER_LOGIN_BUTTON_LABEL
     button_label = CALL_FOR_SPEAKER_LOGIN_BTN_LABELS.get(key)
@@ -46,6 +50,8 @@ def orga_events(request):
 
     if not getattr(request, 'user', None) or not request.user.is_authenticated:
         return context
+
+    context['staff_session'] = request.user.has_active_staff_session(request.session.session_key)
 
     if not getattr(request, 'event', None):
         context['nav_global'] = [

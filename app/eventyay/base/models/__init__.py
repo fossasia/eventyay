@@ -90,12 +90,14 @@ from .question import (
     Answer,
     AnswerOption,
     TalkQuestion,
+    TalkQuestionRequired,
     TalkQuestionTarget,
     TalkQuestionVariant,
 )
 from .resource import Resource
 from .review import Review, ReviewPhase, ReviewScore, ReviewScoreCategory
 from .room import Reaction, Room, RoomView
+from .stream_schedule import StreamSchedule
 from .roomquestion import QuestionVote, RoomQuestion
 from .roulette import RoulettePairing, RouletteRequest
 from .schedule import Schedule
@@ -212,6 +214,7 @@ __all__ = [
     "RoomQuestion",
     "RoomView",
     "RoulettePairing",
+    "StreamSchedule",
     "RouletteRequest",
     "Schedule",
     "Seat",
@@ -232,6 +235,7 @@ __all__ = [
     "SystemLog",
     "Tag",
     "TalkQuestion",
+    "TalkQuestionRequired",
     "TalkQuestionTarget",
     "TalkQuestionVariant",
     "TalkSlot",

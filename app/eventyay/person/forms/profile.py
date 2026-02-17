@@ -15,8 +15,10 @@ from eventyay.common.forms.fields import (
     SizeFileField,
 )
 from eventyay.common.forms.mixins import (
+    ConfiguredFieldOrderMixin,
     I18nHelpText,
     PublicContent,
+    QuestionFieldsMixin,
     ReadOnlyFlag,
     RequestRequire,
 )
@@ -32,7 +34,7 @@ from eventyay.base.models import Event
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models.information import SpeakerInformation
 from eventyay.schedule.forms import AvailabilitiesFormMixin
-from eventyay.base.models import TalkQuestion
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget
 from eventyay.base.models.submission import SubmissionStates
 
 
@@ -46,6 +48,8 @@ def get_email_address_error():
 
 class SpeakerProfileForm(
     CfPFormMixin,
+    ConfiguredFieldOrderMixin,
+    QuestionFieldsMixin,
     AvailabilitiesFormMixin,
     ReadOnlyFlag,
     PublicContent,
@@ -62,15 +66,17 @@ class SpeakerProfileForm(
     ]
     FIRST_TIME_EXCLUDE = ['email']
 
-    def __init__(self, *args, name=None, **kwargs):
+    def __init__(self, *args, name=None, enforce_account_name_match=False, **kwargs):
         self.user = kwargs.pop('user', None)
         self.event = kwargs.pop('event', None)
         self.with_email = kwargs.pop('with_email', True)
         self.essential_only = kwargs.pop('essential_only', False)
+        self.enforce_account_name_match = enforce_account_name_match
         kwargs['instance'] = None
         if self.user:
             kwargs['instance'] = self.user.event_profile(self.event)
         super().__init__(*args, **kwargs, event=self.event, limit_to_rooms=True)
+        self.speaker = self.user
         read_only = kwargs.get('read_only', False)
         initial = kwargs.get('initial', {})
         initial['name'] = name
@@ -107,11 +113,23 @@ class SpeakerProfileForm(
         elif 'avatar' in self.fields:
             self.fields['avatar'].required = False
             self.fields['avatar'].widget.is_required = False
+
+        self.inject_questions_into_fields(
+            target=TalkQuestionTarget.SPEAKER,
+            event=self.event,
+            speaker=self.user,
+            readonly=read_only,
+        )
+
+        # Reorder fields based on configuration
+        self.order_fields_by_config('speaker')
+
         if self.is_bound and not self.is_valid() and 'availabilities' in self.errors:
             # Replace self.data with a version that uses initial["availabilities"]
             # in order to have event and timezone data available
-            self.data = self.data.copy()
-            self.data['availabilities'] = self.initial['availabilities']
+            data = self.data.copy()
+            data['availabilities'] = initial.get('availabilities', [])
+            self.data = data
 
     @cached_property
     def user_fields(self):
@@ -141,6 +159,23 @@ class SpeakerProfileForm(
                     _('Please provide a profile picture or allow us to load your picture from gravatar!')
                 ),
             )
+        fullname = self.cleaned_data.get('fullname')
+        if (
+            self.enforce_account_name_match
+            and self.user
+            and fullname
+            and self.user.fullname
+            and fullname.strip() != self.user.fullname.strip()
+        ):
+            self.add_error(
+                'fullname',
+                forms.ValidationError(
+                    _(
+                        'The name you entered does not match the name on your account. '
+                        'Please update your account name in your profile before submitting.'
+                    )
+                ),
+            )
         return data
 
     def save(self, **kwargs):
@@ -149,13 +184,24 @@ class SpeakerProfileForm(
             if user_attribute == 'avatar':
                 if value is False:
                     self.user.avatar = None
+                    # Clear thumbnails when removing avatar
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
                 elif value:
+                    # Clear old thumbnails before assigning new avatar
+                    self.user.avatar_thumbnail = None
+                    self.user.avatar_thumbnail_tiny = None
                     self.user.avatar = value
             elif value is None and user_attribute == 'get_gravatar':
                 self.user.get_gravatar = False
             else:
                 setattr(self.user, user_attribute, value)
-            self.user.save(update_fields=[user_attribute])
+            
+            # Add thumbnail fields to update_fields when avatar changes
+            update_fields = [user_attribute]
+            if user_attribute == 'avatar':
+                update_fields.extend(['avatar_thumbnail', 'avatar_thumbnail_tiny'])
+            self.user.save(update_fields=update_fields)
 
         self.instance.event = self.event
         self.instance.user = self.user
@@ -163,6 +209,9 @@ class SpeakerProfileForm(
 
         if self.user.avatar and 'avatar' in self.changed_data:
             self.user.process_image('avatar', generate_thumbnail=True)
+        for key, value in self.cleaned_data.items():
+            if key.startswith('question_'):
+                self.save_questions(key, value)
         return result
 
     class Meta:

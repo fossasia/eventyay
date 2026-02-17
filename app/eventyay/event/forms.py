@@ -229,7 +229,7 @@ class EventWizardBasicsForm(I18nHelpText, I18nModelForm):
 
     class Meta:
         model = Event
-        fields = ("name", "slug", "timezone", "email", "locale")
+        fields = ("name", "slug", "timezone", "locale")
         widgets = {
             "locale": EnhancedSelect,
             "timezone": EnhancedSelect,
@@ -275,6 +275,23 @@ class EventWizardDisplayForm(forms.Form):
         required=False,
         widget=HeaderSelect,
     )
+    email = forms.EmailField(
+        label=_("Organizer email address"),
+        help_text=_("We'll show this publicly to allow attendees to contact you."),
+        required=True,
+    )
+
+    def __init__(self, *args, user=None, locales=None, organizer=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        logo = Event._meta.get_field('logo')
+        self.fields['logo'] = ImageField(required=False, label=logo.verbose_name, help_text=logo.help_text)
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email', '').strip()
+        default_email = Event._meta.get_field('email').default
+        if not email or email == default_email:
+            raise forms.ValidationError(_('Please provide a valid organizer email address.'))
+        return email
 
 
 class EventWizardCopyForm(forms.Form):

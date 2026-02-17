@@ -8,7 +8,7 @@ The unified eventyay system includes several frontend applications built with mo
 
 This page provides an overview of all frontend applications. For component-specific details:
 
-- **Video Webapp**: See :doc:`/video/frontend` 
+- **Video Frontend**: See :doc:`/video/frontend` 
 - **Talk Frontend Apps**: See :doc:`/talk/developer/frontend`
 
 Video Web Application
@@ -16,7 +16,7 @@ Video Web Application
 
 The main video/virtual event interface is a comprehensive Vue 3 application.
 
-**Location**: ``app/eventyay/webapp/``
+**Location**: ``app/eventyay/webapp/video/``
 
 For complete documentation, see :doc:`/video/frontend`.
 
@@ -311,7 +311,7 @@ Building & Development
 
 .. code-block:: bash
 
-   cd app/eventyay/webapp
+  cd app/eventyay/webapp/video
    npm install
    npm run dev
 
@@ -343,15 +343,7 @@ The talk component includes two specialized frontend applications:
 
 A TypeScript/Vue 3 application for visual schedule editing.
 
-**Location**: ``app/eventyay/frontend/schedule-editor/``
-
-For complete documentation, see :doc:`/talk/developer/frontend`.
-
-**Global Navigation Menu**
-
-A web component for unified navigation across all eventyay interfaces.
-
-**Location**: ``app/eventyay/frontend/global-nav-menu/``
+**Location**: ``app/eventyay/webapp/schedule-editor/``
 
 For complete documentation, see :doc:`/talk/developer/frontend`.
 
@@ -375,11 +367,11 @@ Full Stack Development
    cd app
    make run
 
-2. **Start Webapp Frontend**:
+2. **Start Video Frontend**:
 
 .. code-block:: bash
 
-   cd app/eventyay/webapp
+  cd app/eventyay/webapp/video
    npm install
    npm run dev
 
@@ -394,7 +386,7 @@ For frontend-only changes, you can use the production backend:
 
 .. code-block:: bash
 
-   cd app/eventyay/webapp
+  cd app/eventyay/webapp/video
    # Edit config.js to point to production API
    npm run dev
 

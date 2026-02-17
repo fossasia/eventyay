@@ -21,9 +21,22 @@ from eventyay.common.forms.validators import (
 )
 from eventyay.common.forms.widgets import HtmlDateInput, HtmlDateTimeInput
 from eventyay.common.text.phrases import phrases
+from eventyay.common.utils.language import localize_event_text
 from eventyay.base.models.cfp import default_fields
+from eventyay.base.models import TalkQuestion, TalkQuestionTarget, TalkQuestionVariant
+from django.db.models import Q
 
 logger = logging.getLogger(__name__)
+
+
+class EventLocalizedModelChoiceField(forms.ModelChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'answer', obj))
+
+
+class EventLocalizedModelMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, obj):
+        return localize_event_text(getattr(obj, 'answer', obj))
 
 
 class ReadOnlyFlag:
@@ -128,13 +141,74 @@ class RequestRequire:
 
 
 class QuestionFieldsMixin:
+    def get_question_queryset(self, target, event):
+        qs = TalkQuestion.all_objects.filter(event=event, active=True, target=target)
+        return qs.order_by('position')
+
+    def inject_questions_into_fields(self, target, event, submission=None, speaker=None, review=None, track=None, submission_type=None, readonly=False):
+        """
+        Injects custom question fields into the form, filtered by track/type and pre-filled with answers.
+
+        Args:
+            target (str): TalkQuestionTarget (SUBMISSION/SPEAKER/REVIEWER).
+            event (Event): Event context.
+            submission, speaker, review: Answer contexts.
+            track, submission_type: Visibility filters.
+            readonly (bool): If True, fields are disabled.
+        """
+        questions = self.get_question_queryset(target, event)
+        # Apply filters based on submission context
+        if track:
+            questions = questions.filter(Q(tracks__in=[track]) | Q(tracks__isnull=True))
+        if submission_type:
+            questions = questions.filter(Q(submission_types__in=[submission_type]) | Q(submission_types__isnull=True))
+        
+        # Pre-fetch existing answers
+        target_object = None
+        if target == TalkQuestionTarget.SUBMISSION:
+            target_object = submission
+        elif target == TalkQuestionTarget.SPEAKER:
+            target_object = speaker
+        elif target == TalkQuestionTarget.REVIEWER:
+            target_object = review
+
+        answers_by_question = {}
+        if target_object:
+            # Build a lookup dict to avoid scanning all answers for each question
+            for answer in target_object.answers.all():
+                # Preserve the first answer per question to match previous behavior
+                answers_by_question.setdefault(answer.question_id, answer)
+
+        for question in questions.prefetch_related('options'):
+            initial_object = None
+            initial = question.default_answer
+            
+            if target_object:
+                answer = answers_by_question.get(question.id)
+                if answer:
+                    initial_object = answer
+                    initial = (
+                        answer.answer_file if question.variant == TalkQuestionVariant.FILE else answer.answer
+                    )
+
+            field = self.get_field(
+                question=question,
+                initial=initial,
+                initial_object=initial_object,
+                readonly=readonly,
+            )
+            field.question = question
+            field.answer = initial_object
+            self.fields[f'question_{question.pk}'] = field
+
     def get_field(self, *, question, initial, initial_object, readonly):
         from eventyay.base.templatetags.rich_text import rich_text
         from eventyay.base.models import TalkQuestionVariant
 
         read_only = readonly or question.read_only
-        original_help_text = question.help_text
-        help_text = rich_text(question.help_text)[len('<p>') : -len('</p>')]
+        label_text = localize_event_text(question.question)
+        original_help_text = localize_event_text(question.help_text)
+        help_text = rich_text(original_help_text or '')[len('<p>') : -len('</p>')]
         if question.is_public and self.event.get_feature_flag('show_schedule'):
             help_text += ' ' + str(phrases.base.public_content)
         count_chars = self.event.cfp.settings['count_length_in'] == 'chars'
@@ -150,7 +224,7 @@ class QuestionFieldsMixin:
             field = forms.BooleanField(
                 disabled=read_only,
                 help_text=help_text,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=widget,
                 initial=((initial == 'True') if initial else bool(question.default_answer)),
@@ -161,7 +235,7 @@ class QuestionFieldsMixin:
             field = forms.DecimalField(
                 disabled=read_only,
                 help_text=help_text,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 min_value=question.min_number,
                 max_value=question.max_number,
@@ -179,7 +253,7 @@ class QuestionFieldsMixin:
                     question.max_length,
                     self.event.cfp.settings['count_length_in'],
                 ),
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 initial=initial,
                 min_length=question.min_length if count_chars else None,
@@ -198,10 +272,10 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.URL:
             field = forms.URLField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
-                help_text=question.help_text,
+                help_text=original_help_text,
                 initial=initial,
             )
             field.original_help_text = original_help_text
@@ -209,7 +283,7 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.TEXT:
             field = forms.CharField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=forms.Textarea,
                 disabled=read_only,
@@ -236,7 +310,7 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.FILE:
             field = ExtensionFileField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
@@ -284,9 +358,9 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.CHOICES:
             choices = question.options.all()
-            field = forms.ModelChoiceField(
+            field = EventLocalizedModelChoiceField(
                 queryset=choices,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 empty_label=None,
                 initial=(initial_object.options.first() if initial_object else question.default_answer),
@@ -299,9 +373,9 @@ class QuestionFieldsMixin:
             return field
         if question.variant == TalkQuestionVariant.MULTIPLE:
             choices = question.options.all()
-            field = forms.ModelMultipleChoiceField(
+            field = EventLocalizedModelMultipleChoiceField(
                 queryset=choices,
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 widget=(
                     forms.CheckboxSelectMultiple
@@ -322,7 +396,7 @@ class QuestionFieldsMixin:
             if question.max_date:
                 attrs['data-date-end-date'] = question.max_date.isoformat()
             field = forms.DateField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
@@ -343,7 +417,7 @@ class QuestionFieldsMixin:
             if question.max_datetime:
                 attrs['max'] = question.max_datetime.isoformat()
             field = forms.DateTimeField(
-                label=question.question,
+                label=label_text,
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
@@ -508,3 +582,26 @@ class HierarkeyMixin:
         nonce = get_random_string(length=8)
         suffix = name.split('.')[-1]
         return f'{self.obj._meta.model_name}-{self.attribute_name}/{self.obj.pk}/{name}.{nonce}.{suffix}'
+
+
+class ConfiguredFieldOrderMixin:
+    def order_fields_by_config(self, config_key):
+        fields_config = self.event.cfp.settings.get('fields_config', {}).get(config_key, [])
+        if fields_config:
+            configured_names = []
+            for item in fields_config:
+                name = None
+                if isinstance(item, str):
+                    name = item
+                elif isinstance(item, dict):
+                    # Try common keys for field name in configuration dicts
+                    name = item.get('name') or item.get('field')
+                else:
+                    logger.warning('Field configuration item %r is ignored (unknown type)', item)
+                if name and name in self.fields and name not in configured_names:
+                    configured_names.append(name)
+
+            if configured_names:
+                # Preserve any fields not mentioned in the configuration at the end
+                remaining = [n for n in self.fields if n not in configured_names]
+                self.order_fields(configured_names + remaining)

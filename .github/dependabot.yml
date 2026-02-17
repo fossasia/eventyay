@@ -1,18 +1,41 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
-
-
 version: 2
 
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: "uv"
+    directory: "/app"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
     versioning-strategy: increase
+    ignore:
+      - dependency-name: "django"
+        versions: [">=6.0.0"]
+      - dependency-name: "stripe"
+        versions: [">=11.4.0"]
+      # Ignore all setuptools updates; issue is not version-specific.
+      # Can be removed once Dependabot handles no-op uv updates.
+      - dependency-name: "setuptools"
+
   - package-ecosystem: "npm"
-    directory: "/src/pretix/static/npm_dir"
+    directory: "/app/eventyay/webapp/video"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/app/eventyay/webapp/schedule"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/app/eventyay/webapp/schedule-editor"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "npm"
+    directory: "/app/eventyay/webapp/webcheckin"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10

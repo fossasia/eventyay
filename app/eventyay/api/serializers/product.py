@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
@@ -20,7 +21,7 @@ from eventyay.base.models import (
     QuestionOption,
     Quota,
 )
-
+from eventyay.consts import SizeKey
 
 class InlineProductVariationSerializer(I18nAwareModelSerializer):
     price = serializers.DecimalField(read_only=True, decimal_places=2, max_digits=10, coerce_to_string=True)
@@ -156,7 +157,7 @@ class ProductSerializer(I18nAwareModelSerializer):
         required=False,
         allow_null=True,
         allowed_types=('image/png', 'image/jpeg', 'image/gif'),
-        max_size=10 * 1024 * 1024,
+        max_size=settings.MAX_SIZE_CONFIG[SizeKey.UPLOAD_SIZE_IMAGE],
     )
 
     class Meta:

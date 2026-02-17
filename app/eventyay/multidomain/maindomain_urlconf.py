@@ -3,9 +3,7 @@ import logging
 
 from django.apps import apps
 from django.urls import include, path, re_path
-from django.views.generic import TemplateView
 
-from eventyay.cfp.views.event import EventStartpage
 from eventyay.common.urls import OrganizerSlugConverter  # noqa: F401 (registers converter)
 
 # Ticket-video integration: plugin URLs are auto-included via plugin handler below.
@@ -16,6 +14,7 @@ from eventyay.presale.urls import (
     locale_patterns,
     organizer_patterns,
 )
+from eventyay.presale.views.startpage import StartPageView
 
 from .views import VideoAssetView, VideoSPAView, AnonymousInviteRedirectView
 
@@ -36,7 +35,7 @@ presale_patterns_main = [
                     ),
                     path(
                         '',
-                        TemplateView.as_view(template_name='pretixpresale/index.html'),
+                        StartPageView.as_view(),
                         name='index',
                     ),
                 ],
@@ -47,15 +46,13 @@ presale_patterns_main = [
 ]
 
 # Plugin URL registration strategy:
-# - Local plugins (in eventyay.plugins.*): Dynamic discovery is safe because they're greppable
-#   in the local codebase (eventyay/plugins/ directory).
-# - External plugins (installed packages): Explicit registration for easier debugging and tracing.
+# - Auto-discover any installed plugin that provides EventyayPluginMeta and URLs.
 
 raw_plugin_patterns = []
 
-# Auto-register local plugins from eventyay.plugins.*
+# Auto-register installed plugins with EventyayPluginMeta
 for app in apps.get_app_configs():
-    if hasattr(app, 'EventyayPluginMeta') and app.name.startswith('eventyay.plugins.'):
+    if hasattr(app, 'EventyayPluginMeta'):
         if importlib.util.find_spec(f'{app.name}.urls'):
             try:
                 urlmod = importlib.import_module(f'{app.name}.urls')
@@ -72,45 +69,6 @@ for app in apps.get_app_configs():
                 logger.debug('Registered URLs under "%s" namespace:\n%s', app.label, single_plugin_patterns)
             except (ImportError, AttributeError, TypeError):
                 logger.exception('Error loading plugin URLs for %s', app.name)
-
-# Explicit registration for external plugins (installed packages)
-# Add external plugins here as they are installed and tested
-
-# eventyay-paypal (always installed via pyproject.toml)
-try:
-    if importlib.util.find_spec('eventyay_paypal.urls'):
-        urlmod = importlib.import_module('eventyay_paypal.urls')
-        single_plugin_patterns = []
-        if hasattr(urlmod, 'urlpatterns'):
-            single_plugin_patterns += urlmod.urlpatterns
-        if hasattr(urlmod, 'event_patterns'):
-            patterns = plugin_event_urls(urlmod.event_patterns, plugin='eventyay_paypal')
-            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
-        if hasattr(urlmod, 'organizer_patterns'):
-            patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'eventyay_paypal'))))
-        logger.debug('Registered URLs under "eventyay_paypal" namespace:\n%s', single_plugin_patterns)
-except (ImportError, AttributeError, TypeError):
-    logger.exception('Error loading plugin URLs for eventyay_paypal')
-
-# eventyay-stripe (always installed via pyproject.toml)
-try:
-    if importlib.util.find_spec('eventyay_stripe.urls'):
-        urlmod = importlib.import_module('eventyay_stripe.urls')
-        single_plugin_patterns = []
-        if hasattr(urlmod, 'urlpatterns'):
-            single_plugin_patterns += urlmod.urlpatterns
-        if hasattr(urlmod, 'event_patterns'):
-            patterns = plugin_event_urls(urlmod.event_patterns, plugin='eventyay_stripe')
-            single_plugin_patterns.append(path('<orgslug:organizer>/<slug:event>/', include(patterns)))
-        if hasattr(urlmod, 'organizer_patterns'):
-            patterns = urlmod.organizer_patterns
-            single_plugin_patterns.append(path('<orgslug:organizer>/', include(patterns)))
-        raw_plugin_patterns.append(path('', include((single_plugin_patterns, 'eventyay_stripe'))))
-        logger.debug('Registered URLs under "eventyay_stripe" namespace:\n%s', single_plugin_patterns)
-except (ImportError, AttributeError, TypeError):
-    logger.exception('Error loading plugin URLs for eventyay_stripe')
 
 
 plugin_patterns = [path('', include((raw_plugin_patterns, 'plugins')))]
@@ -142,7 +100,6 @@ unified_event_patterns = [
                 # serve all paths under /video/ to allow client-side routing.
                 # This catch-all must come after the asset pattern to allow SPA routes like /video/admin/rooms
                 re_path(r'^video(?:/.*)?$', VideoSPAView.as_view(), name='video.spa'),
-                re_path(r'^talk/?$', EventStartpage.as_view(), name='event.talk'),
                 path('', include(('eventyay.agenda.urls', 'agenda'))),
                 path('', include(('eventyay.cfp.urls', 'cfp'))),
             ]

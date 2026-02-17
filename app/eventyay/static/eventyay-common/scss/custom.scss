@@ -6,7 +6,7 @@
         border: 1px solid;
         font-size: 16px;
         font-weight: normal;
-        border-radius: 0;
+        border-radius: 0.25rem;
         padding: 7px 7px;
     }
     .header-nav.active {
@@ -17,7 +17,6 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        text-align: center;
         font-weight: 200;
         .navigation-button {
             margin-left: auto;
@@ -25,8 +24,10 @@
         a {
             pointer-events: auto;
         }
-        a:hover, a:active {
-            color: #fff;
+        a:hover,
+        a:active,
+        a:focus {
+            color: #fff !important;
             background-color: $hover-button-color !important;
         }
     }

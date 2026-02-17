@@ -49,57 +49,7 @@
                 {% endif %}
             </fieldset>
             <fieldset>
-                <legend>{% trans "Customer and attendee data" %}</legend>
-                <h4>{% trans "Customer data (once per order)" %}</h4>
-                {% if sform.order_email_asked_required %}
-                    {% bootstrap_field sform.order_email_asked_required layout="control" %}
-                {% else %}
-                    {% bootstrap_field sform.order_email_asked layout="control" %}
-                    {% bootstrap_field sform.order_email_required layout="control" %}
-                {% endif %}
-                {% bootstrap_field sform.require_registered_account_for_tickets layout="control" %}
-                {% bootstrap_field sform.order_email_asked_twice layout="control" %}
-                {% bootstrap_field sform.include_wikimedia_username layout="control" %}
-                {% bootstrap_field sform.order_phone_asked_required layout="control" %}
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "Name and address" %}
-                    </label>
-                    <div class="col-md-9 static-form-row">
-                        <p>
-                            <a href="{% url "control:event.settings.invoice" event=request.event.slug organizer=request.organizer.slug %}#tab-0-1-open" target="_blank">
-                                {% trans "See invoice settings" %}
-                            </a>
-                        </p>
-                    </div>
-                </div>
-
-                <h4>{% trans "Attendee data (once per admission ticket)" %}</h4>
-
-                {% bootstrap_field sform.attendee_names_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_emails_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_company_asked_required layout="control" %}
-                {% bootstrap_field sform.attendee_addresses_asked_required layout="control" %}
-
-                <div class="form-group">
-                    <label class="control-label col-md-3">
-                        {% trans "Custom fields" %}
-                    </label>
-                    <div class="col-md-9 static-form-row">
-                        <p>
-                            <a href="{% url "control:event.products.questions" event=request.event.slug organizer=request.organizer.slug %}" target="_blank">
-                                {% trans "Manage questions" %}
-                            </a>
-                        </p>
-                    </div>
-                </div>
-                {% bootstrap_field sform.attendee_data_explanation_text layout="control" %}
-
-                <h4>{% trans "Other settings" %}</h4>
-                {% bootstrap_field sform.name_scheme layout="control" %}
-                {% bootstrap_field sform.name_scheme_titles layout="control" %}
-                {% bootstrap_field sform.checkout_show_copy_answers_button layout="control" %}
-
+                <legend>{% trans "Order Modification" %}</legend>
                 <h4>{% translate "Changes to existing orders" %}</h4>
                 {% bootstrap_field sform.allow_modifications layout="control" %}
                 <div data-display-dependency='#id_settings-allow_modifications_0' data-inverse>
@@ -303,7 +253,7 @@
                     <span class="fa fa-trash"></span>
                     {% trans "Cancel or delete event" %}
                 </a>
-                <a href="{% url "control:events.add" %}?clone={{ request.event.pk }}"
+                <a href="{% url "eventyay_common:events.add" %}?clone={{ request.event.pk }}"
                    class="btn btn-default btn-lg">
                     <span class="fa fa-copy"></span>
                     {% trans "Clone event" %}
