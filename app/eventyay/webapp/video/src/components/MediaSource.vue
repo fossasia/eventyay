@@ -219,7 +219,7 @@ function getJoinErrorKey(error) {
 			return 'MediaSource:join-error:zoom-no-meeting-id:text'
 
 		default:
-			return 'MediaSource:join-error:default:text'
+			return null
 	}
 }
 
