@@ -56,6 +56,7 @@ def default_fields():
         'duration': {'visibility': 'do_not_ask'},
         'content_locale': {'visibility': 'required'},
         'additional_speaker': {'visibility': 'optional'},
+        'fullname': {'visibility': 'required'},
     }
 
 
