@@ -33,31 +33,28 @@ class LoginProviders(BaseModel):
         1. If a provider is disabled (state=False), it cannot be preferred (is_preferred=False)
         2. At most one enabled provider can be marked as preferred
         3. If multiple enabled providers are marked preferred, keep only the first one
+           (based on alphabetical order of provider names for deterministic behavior)
         """
         preferred_found = False
         updates = {}
 
-        for name, provider in self.providers().items():
+        # Sort by provider name to ensure deterministic behavior when multiple
+        # providers are marked as preferred
+        for name in sorted(self.model_fields.keys()):
+            provider = getattr(self, name)
+            
             # Rule 1: Clear is_preferred for any disabled provider
             if not provider.state and provider.is_preferred:
-                updates[name] = ProviderConfig(
-                    state=provider.state,
-                    client_id=provider.client_id,
-                    secret=provider.secret,
-                    is_preferred=False  # Disabled providers cannot be preferred
-                )
+                # Use model_copy to preserve all fields and only update is_preferred
+                updates[name] = provider.model_copy(update={"is_preferred": False})
             # Rule 2 & 3: Ensure only one enabled provider is preferred
             elif provider.state and provider.is_preferred:
                 if not preferred_found:
                     preferred_found = True  # keep the first enabled preferred provider
                 else:
                     # Clear extra preferred flags from duplicate preferred providers
-                    updates[name] = ProviderConfig(
-                        state=provider.state,
-                        client_id=provider.client_id,
-                        secret=provider.secret,
-                        is_preferred=False  # Clear the duplicate preference
-                    )
+                    # Use model_copy to preserve all fields and only update is_preferred
+                    updates[name] = provider.model_copy(update={"is_preferred": False})
 
         # Apply updates if any
         if updates:
