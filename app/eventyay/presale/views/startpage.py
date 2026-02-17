@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from eventyay.base.models import Event
+from eventyay.base.models.page import Page
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.common.permissions import is_admin_mode_active
 
@@ -31,6 +32,14 @@ class StartPageView(TemplateView):
         )
         ctx['site_name'] = settings.INSTANCE_NAME
         ctx['startpage_header_text'] = header_text or settings.INSTANCE_NAME
+        ctx['show_link_in_header_for_start_page'] = Page.objects.filter(
+            link_on_website_start_page=True,
+            link_in_header=True,
+        )
+        ctx['show_link_in_footer_for_start_page'] = Page.objects.filter(
+            link_on_website_start_page=True,
+            link_in_footer=True,
+        )
         search_query = self.request.GET.get('q', '').strip()
         ctx['search_query'] = search_query
         with scopes_disabled():
