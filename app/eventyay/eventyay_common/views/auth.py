@@ -181,7 +181,6 @@ def login(request):
   
     ordered_providers = dict(sorted(enabled_dict.items(), key=sort_key))
 
-
     # Convert to dict format for template (Django templates need plain dicts)
     ctx['login_providers'] = {
         name: provider.model_dump()
