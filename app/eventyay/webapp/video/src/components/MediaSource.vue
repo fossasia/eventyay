@@ -224,8 +224,8 @@ function getJoinErrorKey(error) {
 }
 
 async function initializeIframe(mute) {
-	joinErrorKey.value = null
-	iframeError.value = null
+	joinErrorKey.value = null;
+	iframeError.value = null;
 	try {
 		if (!module.value) return;
 		if (shouldUseLivestream.value) return;
