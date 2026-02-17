@@ -12,7 +12,13 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
-	.join-error(v-if="joinErrorKey", role="alert", aria-live="polite") {{ $t(joinErrorKey) }}
+	.join-error(
+	v-if="joinErrorKey",
+	role="alert",
+	aria-live="polite",
+	@click="joinErrorKey = null"
+) {{ $t(joinErrorKey) }}
+	
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -547,6 +553,7 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+	
 .join-error
 	position: fixed
 	top: 120px
@@ -556,8 +563,16 @@ iframe.iframe-media-source
 	color: $clr-danger
 	padding: 12px 16px
 	border-radius: 4px
-	z-index: 200
+	z-index: 50
 	max-width: 420px
 	text-align: center
+
+	+below('l')
+		top: 64px
+		left: 8px
+		right: 8px
+		transform: none
+		max-width: calc(100% - 16px)
+
 
 </style>
