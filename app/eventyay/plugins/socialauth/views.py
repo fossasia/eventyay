@@ -56,17 +56,24 @@ class OAuthLoginView(View):
         # Get provider configuration safely (now guaranteed to be a valid provider)
         provider_config = getattr(providers, provider, None)
 
+        # Reject login attempt if provider is disabled in global settings.
+        # This prevents users from manually hitting /oauth_login/<provider>/
+        # to bypass the admin's enable/disable control.
+        if not provider_config or not provider_config.state:
+            logger.warning(
+                "Login attempt for disabled provider '%s' rejected.",
+                provider,
+            )
+            messages.error(request, _('This login method is currently disabled.'))
+            return redirect('eventyay_common:auth.login')
+
         # Check if this provider is the preferred one.
         # A provider is considered preferred only when it exists, is enabled (state),
         # and is explicitly marked as preferred.
-        is_preferred = (
-            bool(provider_config)
-            and getattr(provider_config, 'state', False)
-            and getattr(provider_config, 'is_preferred', False)
-        )
+        is_preferred = provider_config.is_preferred
 
         # Get client_id for the provider
-        client_id = provider_config.client_id if provider_config else None
+        client_id = provider_config.client_id
 
         # Store in session that this is a preferred provider login
         if is_preferred:
@@ -335,7 +342,7 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
             is_enabled = setting_state == self.SettingState.ENABLED
-
+            
             # Update provider state
             provider_config = getattr(providers, provider)
             updated_config = provider_config.model_copy(update={"state": is_enabled})

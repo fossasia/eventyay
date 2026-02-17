@@ -101,7 +101,8 @@
 
         {# Secondary login options #}
         <div class="form-group buttons">
-            {% if backend.login_form_fields %}
+            {# Show toggle button when #login-form has content (form fields, multiple backends, or backend URL) #}
+            {% if backend.login_form_fields or backends|length > 1 or backend.url %}
                 <button type="button"
                         id="toggle-login"
                         class="btn {{ secondary_btn_class }} btn-block"
