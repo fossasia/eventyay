@@ -14,6 +14,7 @@
     		<link rel="stylesheet" type="text/x-scss" href="{% static "pretixcontrol/scss/main.scss" %}" />
             <link rel="stylesheet" type="text/x-scss" href="{% static "lightbox/css/lightbox.scss" %}" />
             <link rel="stylesheet" type="text/css" href="{% static "common/css/_dropdown.css" %}" />
+            <link rel="stylesheet" type="text/css" href="{% static "common/css/_component_nav_mobile.css" %}" />
 		{% endcompress %}
         {% if DEBUG %}
             <script type="text/javascript" src="{% url 'javascript-catalog' lang=request.LANGUAGE_CODE %}"
@@ -51,6 +52,7 @@
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/quicksetup.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/dashboard.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixcontrol/js/ui/tabs.js" %}"></script>
+            <script type="module" src="{% static "pretixcontrol/js/ui/secret-toggle.js" %}"></script>
             <script type="text/javascript" src="{% static "leaflet/leaflet.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/details.js" %}"></script>
             <script type="text/javascript" src="{% static "pretixbase/js/asynctask.js" %}"></script>
@@ -123,7 +125,7 @@
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
-					<a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
+					<a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static "pretixbase/img/eventyay-icon.svg" %}" />
                         {{ django_settings.INSTANCE_NAME }}
                     </a>
@@ -230,11 +232,7 @@
                         <div class="dropdown context-selector">
                             {% block nav_top_header %}
                                 {% if request.event %}
-                                    {% if request.resolver_match and request.resolver_match.namespace == "eventyay_common" %}
-                                        <a href="{% url "eventyay_common:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
-                                    {% else %}
-                                        <a href="{% url "control:event.index" organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
-                                    {% endif %}
+                                    <a href="{% url 'eventyay_common:event.index' organizer=request.event.organizer.slug event=request.event.slug %}" class="dropdown-toggle">
                                         <span class="fa-stack fa-lg">
                                           <i class="fa fa-circle fa-stack-2x"></i>
                                           <i class="fa fa-dashboard fa-stack-1x fa-inverse"></i>

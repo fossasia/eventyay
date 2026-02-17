@@ -322,6 +322,30 @@ class RoomModule(BaseModule):
             ]
         )
 
+    @event("stream.change")
+    async def push_stream_change(self, body):
+        await self.consumer.send_json(
+            [
+                'room.stream.change',
+                {
+                    'stream': body.get('stream'),
+                    'reload': body.get('reload', False)
+                }
+            ]
+        )
+
+    @event("stream.will_change")
+    async def push_stream_will_change(self, body):
+        await self.consumer.send_json(
+            [
+                'room.stream.will_change',
+                {
+                    'stream': body.get('stream'),
+                    'starts_at': body.get('starts_at')
+                }
+            ]
+        )
+
     @event("create", refresh_user=True)
     async def push_room_info(self, body):
         # Refresh event data from database to ensure we have the latest configuration

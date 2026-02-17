@@ -10,6 +10,7 @@
 					bunt-input(v-if="inferredType.id === 'stage' || inferredType.id === 'channel-bbb'", name="pretalx_id", v-model="config.pretalx_id", label="pretalx ID", :validation="v$.config.pretalx_id")
 					bunt-checkbox(v-if="inferredType.id === 'channel-text'", name="force_join", v-model="config.force_join", label="Force join on login (use for non-volatile, text-based chats only!!)")
 			component.stage-settings(ref="settings", v-if="inferredType && typeComponents[inferredType.id]", :is="typeComponents[inferredType.id]", :config="config", :modules="modules")
+			stream-schedule(v-if="!creating && config.id", :room-id="String(config.id)")
 	.ui-form-actions
 		bunt-button.btn-save(@click="save", :loading="saving", :error-message="error") {{ creating ? 'create' : 'save' }}
 		.errors {{ validationErrors.join(', ') }}
@@ -33,9 +34,10 @@ import ChannelZoom from './types-edit/channel-zoom'
 import ChannelRoulette from './types-edit/channel-roulette'
 import Posters from './types-edit/posters'
 import PageLanding from './types-edit/page-landing'
+import StreamSchedule from './StreamSchedule'
 
 export default {
-	components: { Prompt },
+	components: { Prompt, StreamSchedule },
 	mixins: [ValidationErrorsMixin],
 	props: {
 		config: {

@@ -592,6 +592,8 @@ class Event(
         verbose_name=_('Short form'),
     )
     live = models.BooleanField(default=False, verbose_name=_('Shop is live'))
+    startpage_visible = models.BooleanField(default=True, verbose_name=_('Visible on start page'))
+    startpage_featured = models.BooleanField(default=False, verbose_name=_('Featured on start page'))
     tickets_published = models.BooleanField(default=False, verbose_name=_('Tickets are published'))
     talks_published = models.BooleanField(default=False, verbose_name=_('Talk pages are published'))
     currency = models.CharField(
@@ -1862,6 +1864,14 @@ class Event(
                 result = True
                 break
         return result
+
+    @property
+    def talks_testmode(self):
+        return self.settings.get('talks_testmode', False, as_type=bool)
+
+    @property
+    def has_component_testmode(self):
+        return bool(self.testmode or self.talks_testmode)
 
     def user_can_view_tickets(self, user=None, request=None):
         private_tickets = self.private_testmode and self.settings.get(
