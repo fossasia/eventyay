@@ -77,6 +77,7 @@
 		:now="now",
 		:onHomeServer="onHomeServer",
 		:favs="favs",
+		:showJoinRoom="showJoinRoom",
 		@toggleFav="toggleSessionModalFav",
 		@showSpeaker="showSpeakerDetails",
 		@fav="fav($event)",
@@ -137,6 +138,16 @@ export default {
 		disableAutoScroll: {
 			type: Boolean,
 			default: false
+		},
+		// Show join-room button on sessions (video feature, available on agenda too)
+		showJoinRoom: {
+			type: Boolean,
+			default: true
+		},
+		// Base URL for video room join links (e.g. /org/event/video/rooms/)
+		joinRoomBaseUrl: {
+			type: String,
+			default: ''
 		}
 	},
 	provide () {
@@ -160,6 +171,12 @@ export default {
 				now: this.now,
 				hasAmPm: this.hasAmPm,
 			})),
+			showJoinRoom: computed(() => this.showJoinRoom),
+			getJoinRoomLink: (session) => {
+				if (!this.joinRoomBaseUrl || !session?.room) return ''
+				const roomId = typeof session.room === 'object' ? session.room.id : session.room
+				return roomId ? `${this.joinRoomBaseUrl}${roomId}/` : ''
+			},
 			generateSpeakerLinkUrl: ({speaker}) => {
 				if (this.onHomeServer) return `${this.eventUrl}speakers/${speaker.code}/`
 				return `#speakers/${speaker.code}`
@@ -476,29 +493,32 @@ export default {
 			return response.json()
 		},
 		async loadFavs () {
-			const data = localStorage.getItem(`${this.eventSlug}_favs`)
-			let favs = []
+			const storageKey = `${this.eventSlug}_favs`
+			const data = localStorage.getItem(storageKey)
+			let localFavs = []
 			if (data) {
 				try {
-					favs = JSON.parse(data) || []
+					localFavs = JSON.parse(data) || []
 				} catch {
-					localStorage.setItem(`${this.eventSlug}_favs`, '[]')
+					localStorage.setItem(storageKey, '[]')
 				}
 			}
 			if (this.loggedIn) {
 				try {
-					favs = await this.apiRequest('submissions/favourites/', 'GET').then(data => {
-						const toFav = favs.filter(e => !data.includes(e))
-						toFav.forEach(e => this.apiRequest(`submissions/${e}/favourite/`, 'POST').catch())
-						return data
-					}).catch(e => {
-						this.pushErrorMessage(this.translationMessages.favs_not_saved)
-					})
-				} catch (e) {
+					const merged = await this.apiRequest(
+						'submissions/favourites/merge/',
+						'POST',
+						localFavs
+					)
+					if (Array.isArray(merged)) {
+						localStorage.removeItem(storageKey)
+						return merged
+					}
+				} catch {
 					this.pushErrorMessage(this.translationMessages.favs_not_saved)
 				}
 			}
-			return favs || []
+			return localFavs
 		},
 		pushErrorMessage (message) {
 			if (!message || !message.length) return
@@ -513,7 +533,9 @@ export default {
 			return favs.filter(e => talkIds.includes(e))
 		},
 		saveFavs () {
-			localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
+			if (!this.loggedIn) {
+				localStorage.setItem(`${this.eventSlug}_favs`, JSON.stringify(this.favs))
+			}
 		},
 		toggleSessionModalFav (id) {
 			if (this.favs.includes(id)) {
@@ -522,28 +544,29 @@ export default {
 				this.fav(id)
 			}
 		},
-		fav (id) {
-			if (!this.favs.includes(id)) {
-				this.favs.push(id)
-				this.saveFavs()
-			}
+		async fav (id) {
+			if (this.favs.includes(id)) return
+			this.favs.push(id)
+			this.saveFavs()
 			if (this.loggedIn) {
-				this.apiRequest(`submissions/${id}/favourite/`, 'POST').catch(e => {
+				try {
+					await this.apiRequest(`submissions/${id}/favourite/`, 'POST')
+				} catch (error) {
+					console.error('Failed to save favourite: %s', error)
 					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				})
-			} else {
-				this.pushErrorMessage(this.translationMessages.favs_not_logged_in)
+				}
 			}
 		},
-		unfav (id) {
+		async unfav (id) {
 			this.favs = this.favs.filter(elem => elem !== id)
 			this.saveFavs()
 			if (this.loggedIn) {
-				this.apiRequest(`submissions/${id}/favourite/`, 'DELETE').catch(e => {
+				try {
+					await this.apiRequest(`submissions/${id}/favourite/`, 'DELETE')
+				} catch (error) {
+					console.error('Failed to remove favourite: %s', error)
 					this.pushErrorMessage(this.translationMessages.favs_not_saved)
-				})
-			} else {
-				this.pushErrorMessage(this.translationMessages.favs_not_logged_in)
+				}
 			}
 			if (!this.favs.length) this.onlyFavs = false
 		},

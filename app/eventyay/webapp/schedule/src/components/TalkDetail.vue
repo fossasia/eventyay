@@ -14,8 +14,9 @@
 				a.download(v-for="{resource, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource)", target="_blank")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
 					.filename {{ description }}
+			export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
 			slot(name="actions")
-				a.join-room-btn(v-if="showJoinRoom && joinRoomLink", :href="joinRoomLink", @click="onJoinRoomClick") Join room
+				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") Join room
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
 			.header Speakers ({{ resolvedTalk.speakers.length }})
 			.speakers-list
@@ -35,10 +36,11 @@ import moment from 'moment-timezone'
 import { getLocalizedString, getIconByFileEnding } from '../utils'
 import MarkdownContent from './MarkdownContent.vue'
 import FavButton from './FavButton.vue'
+import ExportDropdown from './ExportDropdown.vue'
 
 export default {
 	name: 'TalkDetail',
-	components: { MarkdownContent, FavButton },
+	components: { MarkdownContent, FavButton, ExportDropdown },
 	inject: {
 		scheduleData: { default: null },
 		scheduleFav: {
@@ -60,20 +62,14 @@ export default {
 			default() {
 				return () => {}
 			}
-		}
+		},
+		showJoinRoom: { default: false },
+		getJoinRoomLink: { default: () => () => '' }
 	},
 	props: {
 		talk: Object,
 		talkId: String,
 		baseUrl: {
-			type: String,
-			default: ''
-		},
-		showJoinRoom: {
-			type: Boolean,
-			default: false
-		},
-		joinRoomLink: {
 			type: String,
 			default: ''
 		}
@@ -94,6 +90,10 @@ export default {
 			}
 			return null
 		},
+		computedJoinRoomLink() {
+			if (!this.resolvedTalk) return ''
+			return this.getJoinRoomLink(this.resolvedTalk) || ''
+		},
 		isFaved() {
 			if (!this.resolvedTalk) return false
 			const favs = this.scheduleData?.favs || []
@@ -109,6 +109,21 @@ export default {
 			if (!room) return ''
 			if (typeof room === 'string') return room
 			return getLocalizedString(room.name || room)
+		},
+		talkExportOptions() {
+			const exporters = this.resolvedTalk?.exporters
+			if (!exporters) return []
+			const labels = {
+				ics: 'iCal (.ics)',
+				json: 'JSON',
+				xml: 'XML',
+				xcal: 'XCal',
+				google_calendar: 'Google Calendar',
+				webcal: 'Webcal'
+			}
+			return Object.entries(exporters)
+				.filter(([, url]) => url)
+				.map(([id, url]) => ({ id, label: labels[id] || id, url }))
 		}
 	},
 	methods: {
@@ -197,6 +212,8 @@ export default {
 			.mdi
 				font-size: 36px
 				margin: 0 4px
+	.talk-export
+		margin-top: 16px
 	.join-room-btn
 		display: inline-block
 		margin-top: 16px

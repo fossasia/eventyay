@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load html_signal %}
 {% load i18n %}
 {% load static %}
 
@@ -22,6 +23,7 @@
 {% endblock agenda_custom_header %}
 
 {% block agenda_content %}
+{% html_signal "eventyay.agenda.signals.html_above_speaker_pages" sender=request.event request=request profile=profile %}
 <div>
     <script>
     window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
@@ -31,4 +33,5 @@
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}
 </div>
+{% html_signal "eventyay.agenda.signals.html_below_speaker_pages" sender=request.event request=request profile=profile %}
 {% endblock agenda_content %}

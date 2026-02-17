@@ -1,4 +1,5 @@
 import moment from 'lib/timetravelMoment'
+import config from '../../config'
 
 // Thin adapter: loads schedule data and provides enriched sessions.
 // Filtering/export/timezone are handled by the shared ScheduleView/ScheduleToolbar.
@@ -24,6 +25,15 @@ function loadFavsFromStorage () {
 
 function saveFavsToStorage (favs) {
 	localStorage.setItem(getFavStorageKey(), JSON.stringify(favs))
+}
+
+function getCsrfToken () {
+	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	return match ? match[1] : null
+}
+
+function getApiBase () {
+	return config?.api?.base || ''
 }
 
 export default {
@@ -174,15 +184,72 @@ export default {
 				state.errorLoading = error
 			}
 		},
-		fav ({ state }, id) {
+		async fav ({ state, rootState }, id) {
 			if (!state.favs.includes(id)) {
 				state.favs.push(id)
 				saveFavsToStorage(state.favs)
 			}
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					await fetch(`${apiBase}submissions/${id}/favourite/`, {
+						method: 'POST',
+						headers,
+						credentials: 'same-origin'
+					})
+				} catch (error) {
+					console.error('Failed to save favourite: %s', error)
+				}
+			}
 		},
-		unfav ({ state }, id) {
+		async unfav ({ state, rootState }, id) {
 			state.favs = state.favs.filter(fav => fav !== id)
 			saveFavsToStorage(state.favs)
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					await fetch(`${apiBase}submissions/${id}/favourite/`, {
+						method: 'DELETE',
+						headers,
+						credentials: 'same-origin'
+					})
+				} catch (error) {
+					console.error('Failed to remove favourite: %s', error)
+				}
+			}
+		},
+		async loadFavs ({ state, rootState }) {
+			const localFavs = loadFavsFromStorage()
+			state.favs = localFavs
+			const apiBase = getApiBase()
+			if (apiBase && rootState.user) {
+				try {
+					const headers = { 'Content-Type': 'application/json' }
+					const csrf = getCsrfToken()
+					if (csrf) headers['X-CSRFToken'] = csrf
+					const response = await fetch(`${apiBase}submissions/favourites/merge/`, {
+						method: 'POST',
+						headers,
+						body: JSON.stringify(localFavs),
+						credentials: 'same-origin'
+					})
+					if (response.ok) {
+						const merged = await response.json()
+						if (Array.isArray(merged)) {
+							state.favs = merged
+							saveFavsToStorage(merged)
+						}
+					}
+				} catch (error) {
+					console.error('Failed to merge favourites: %s', error)
+				}
+			}
 		},
 		setCurrentLanguage ({ commit }, language) {
 			commit('setCurrentLanguage', language)

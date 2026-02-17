@@ -1,6 +1,7 @@
 {% extends "agenda/base.html" %}
 
 {% load compress %}
+{% load html_signal %}
 {% load i18n %}
 {% load static %}
 {% load phrases %}
@@ -16,6 +17,7 @@
 {% endblock header_right %}
 
 {% block agenda_content %}
+{% html_signal "eventyay.agenda.signals.html_above_schedule_pages" sender=request.event request=request %}
 <div id="fahrplan" class="{% if show_talk_list %}list{% else %}grid{% endif %}">
     <script>
     window.__SCHEDULE_DATA__ = {{ schedule_json|safe }};
@@ -24,7 +26,7 @@
     <script type="text/javascript" src="{{ request.event.urls.schedule_widget_script }}" async></script>
 
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
-    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if show_talk_list %}format="list"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
+    <pretalx-schedule event-url="{{ request.event.urls.base }}" version="{{ schedule.url_version }}" locale="{{ request.LANGUAGE_CODE }}" timezone="{{ event_tz }}" {% if show_talk_list %}format="list"{% endif %} {% if request.event.is_video_creation %}join-room-base-url="{{ request.event.urls.video_base }}rooms/"{% endif %} style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}" disable-auto-scroll></pretalx-schedule>
     {% endwith %}
     <noscript class="d-block">
         <div class="alert alert-info m-4">
@@ -37,4 +39,5 @@
         </div>
     </noscript>
 </div>
+{% html_signal "eventyay.agenda.signals.html_below_schedule_pages" sender=request.event request=request %}
 {% endblock agenda_content %}

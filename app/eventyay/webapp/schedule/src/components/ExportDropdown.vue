@@ -82,6 +82,9 @@ export default {
 		selectOption(option) {
 			this.selectedLabel = option.label
 			this.isOpen = false
+			if (option.url) {
+				window.open(option.url, '_blank')
+			}
 			this.$emit('export', option)
 		},
 		outsideClick(event) {
@@ -91,7 +94,7 @@ export default {
 		},
 		async generateQRCode(option) {
 			if (!QR_TYPES.includes(option.id)) return
-			const url = this.resolvedBaseUrl + option.id
+			const url = option.url || (this.resolvedBaseUrl + option.id)
 			const QRCode = this.qrCodeModule
 			if (!QRCode) return
 			try {

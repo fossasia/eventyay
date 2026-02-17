@@ -115,6 +115,41 @@ urlpatterns = [
         name='ical',
     ),
     path(
+        'talk/<slug>.json',
+        talk.SingleExportView.as_view(),
+        {'format': 'json'},
+        name='talk-export-json',
+    ),
+    path(
+        'talk/<slug>.xml',
+        talk.SingleExportView.as_view(),
+        {'format': 'xml'},
+        name='talk-export-xml',
+    ),
+    path(
+        'talk/<slug>.xcal',
+        talk.SingleExportView.as_view(),
+        {'format': 'xcal'},
+        name='talk-export-xcal',
+    ),
+    path(
+        'talk/<slug>/export/<str:format>',
+        talk.SingleExportView.as_view(),
+        name='talk-export',
+    ),
+    path(
+        'talk/<slug>/export/google-calendar',
+        talk.SingleCalendarRedirectView.as_view(),
+        {'provider': 'google-calendar'},
+        name='talk-google-calendar',
+    ),
+    path(
+        'talk/<slug>/export/webcal',
+        talk.SingleCalendarRedirectView.as_view(),
+        {'provider': 'webcal'},
+        name='talk-webcal',
+    ),
+    path(
         'talk/review/<slug>',
         talk.TalkReviewView.as_view(),
         name='review',

@@ -10,6 +10,13 @@
  */
 class PretalxFavButton extends HTMLElement {
   connectedCallback () {
+    if (!document.getElementById('fav-button-styles')) {
+      const style = document.createElement('style')
+      style.id = 'fav-button-styles'
+      style.textContent = '@keyframes fav-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } } .fav-icon { display: inline-flex; vertical-align: middle; }'
+      document.head.appendChild(style)
+    }
+
     const parts = window.location.pathname.split('/')
     this._eventSlug = parts[2]
     this._submissionId = this.getAttribute('submission-id') || parts[4]
@@ -25,12 +32,17 @@ class PretalxFavButton extends HTMLElement {
       .shift()
     this._isFaved = false
 
+    const starOutline = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2zm0 3.34L9.86 9.88l-4.58.67 3.32 3.24-.78 4.58L12 16.1l4.18 2.27-.78-4.58 3.32-3.24-4.58-.67L12 5.34z"/></svg>'
+    const starFilled = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"/></svg>'
+    this._starOutline = starOutline
+    this._starFilled = starFilled
+
     this.innerHTML =
       '<button class="btn btn-xs btn-link">' +
-      '<i class="fa fa-star-o"></i>' +
+      '<span class="fav-icon">' + starOutline + '</span>' +
       '</button>'
     this._button = this.querySelector('button')
-    this._icon = this.querySelector('i')
+    this._iconWrap = this.querySelector('.fav-icon')
     this._button.addEventListener('click', () => this._toggle())
 
     this._loadState()
@@ -70,12 +82,12 @@ class PretalxFavButton extends HTMLElement {
   }
 
   _render () {
-    this._icon.className = this._isFaved ? 'fa fa-star' : 'fa fa-star-o'
+    this._iconWrap.innerHTML = this._isFaved ? this._starFilled : this._starOutline
   }
 
   _spin () {
-    this._icon.classList.add('fa-spin')
-    setTimeout(() => this._icon.classList.remove('fa-spin'), 400)
+    this._iconWrap.style.animation = 'fav-spin 0.4s linear'
+    setTimeout(() => { this._iconWrap.style.animation = '' }, 400)
   }
 
   /**

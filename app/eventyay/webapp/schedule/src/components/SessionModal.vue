@@ -14,24 +14,9 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 						span.ampm(v-if="getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm") {{ getSessionTime(modalContent.contentObject, currentTimezone, locale, hasAmPm).ampm }}
 					.room(v-if="modalContent.contentObject.room") {{ getLocalizedString(modalContent.contentObject.room.name) }}
 					.track(v-if="modalContent.contentObject.track", :style="{ color: modalContent.contentObject.track.color }") {{ getLocalizedString(modalContent.contentObject.track.name) }}
-					.session-export-area(ref="sessionExportDropdown")
-						button.session-export-btn(@click.stop="sessionExportOpen = !sessionExportOpen")
-							svg.modal-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-								path(d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4")
-								polyline(points="7 10 12 15 17 10")
-								line(x1="12", y1="15", x2="12", y2="3")
-							span Export
-							svg.modal-chevron(:class="{open: sessionExportOpen}", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-								path(d="M6 9l6 6 6-6")
-						.session-export-menu(v-if="sessionExportOpen")
-							a.session-export-item(:href="sessionIcalUrl", target="_blank")
-								svg.modal-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
-									rect(x="3", y="4", width="18", height="18", rx="2", ry="2")
-									line(x1="16", y1="2", x2="16", y2="6")
-									line(x1="8", y1="2", x2="8", y2="6")
-									line(x1="3", y1="10", x2="21", y2="10")
-								span iCal (.ics)
+					export-dropdown.session-export-area(v-if="talkExportOptions.length", :options="talkExportOptions")
 				.text-content
+					.recording-embed(v-if="modalContent.contentObject.recording_iframe", v-html="modalContent.contentObject.recording_iframe")
 					.abstract(v-if="modalContent.contentObject.abstract", v-html="markdownIt.render(modalContent.contentObject.abstract)")
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
@@ -62,7 +47,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 							a.download(v-for="{resource, description} of modalContent.contentObject.resources", :href="resource", target="_blank")
 								.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
 								.filename {{ description }}
-						a.join-room-btn(v-if="showJoinRoom && joinRoomLink", :href="joinRoomLink", @click="$emit('joinRoom', $event)") Join room
+						a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="$emit('joinRoom', $event)") Join room
 			.speakers(v-if="modalContent.contentObject.speakers")
 				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speakers/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
@@ -135,6 +120,7 @@ import MarkdownIt from 'markdown-it'
 import { getLocalizedString, getSessionTime, getIconByFileEnding } from '../utils'
 import FavButton from './FavButton.vue'
 import Session from './Session.vue'
+import ExportDropdown from './ExportDropdown.vue'
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -143,10 +129,12 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'SessionModal',
-	components: { FavButton, Session },
+	components: { FavButton, Session, ExportDropdown },
 	inject: {
 		remoteApiUrl: { default: '' },
-		eventUrl: { default: '' }
+		eventUrl: { default: '' },
+		showJoinRoom: { default: false },
+		getJoinRoomLink: { default: () => () => '' }
 	},
 	props: {
 		modalContent: Object,
@@ -158,14 +146,6 @@ export default {
 		favs: {
 			type: Array,
 			default: () => []
-		},
-		showJoinRoom: {
-			type: Boolean,
-			default: false
-		},
-		joinRoomLink: {
-			type: String,
-			default: ''
 		}
 	},
 	emits: ['toggleFav', 'showSpeaker', 'fav', 'unfav', 'joinRoom'],
@@ -174,8 +154,7 @@ export default {
 			markdownIt,
 			getLocalizedString,
 			getSessionTime,
-			getIconByFileEnding,
-			sessionExportOpen: false
+			getIconByFileEnding
 		}
 	},
 	computed: {
@@ -184,11 +163,25 @@ export default {
 			if (!obj) return false
 			return this.favs.includes(obj.id)
 		},
-		sessionIcalUrl () {
+		computedJoinRoomLink () {
 			const obj = this.modalContent?.contentObject
-			if (!obj) return '#'
-			const base = this.eventUrl || ''
-			return `${base}talk/${obj.id}.ics`
+			if (!obj) return ''
+			return this.getJoinRoomLink(obj) || ''
+		},
+		talkExportOptions () {
+			const exporters = this.modalContent?.contentObject?.exporters
+			if (!exporters) return []
+			const labels = {
+				ics: 'iCal (.ics)',
+				json: 'JSON',
+				xml: 'XML',
+				xcal: 'XCal',
+				google_calendar: 'Google Calendar',
+				webcal: 'Webcal'
+			}
+			return Object.entries(exporters)
+				.filter(([, url]) => url)
+				.map(([id, url]) => ({ id, label: labels[id] || id, url }))
 		},
 		speakerIcalUrl () {
 			const obj = this.modalContent?.contentObject
@@ -210,19 +203,7 @@ export default {
 			return apiContent.answers.filter((answer) => answer.question.variant === 'url' && answer.question.icon)
 		}
 	},
-	mounted () {
-		document.addEventListener('click', this.outsideClickExport, true)
-	},
-	beforeUnmount () {
-		document.removeEventListener('click', this.outsideClickExport, true)
-	},
 	methods: {
-		outsideClickExport (event) {
-			const path = event.composedPath ? event.composedPath() : [event.target]
-			if (this.$refs.sessionExportDropdown && !path.includes(this.$refs.sessionExportDropdown)) {
-				this.sessionExportOpen = false
-			}
-		},
 		showModal () {
 			this.$refs.modal?.showModal()
 		},
@@ -290,52 +271,7 @@ export default {
 			&:not(:last-child):not(.session-export-area):after
 				content: ','
 		.session-export-area
-			position: relative
 			margin-left: auto
-			.session-export-btn
-				display: flex
-				align-items: center
-				gap: 4px
-				border: 1px solid #ccc
-				background: #fff
-				border-radius: 4px
-				padding: 4px 10px
-				font-size: 13px
-				cursor: pointer
-				color: #333
-				&:hover
-					background: #f5f5f5
-			.modal-icon
-				width: 14px
-				height: 14px
-				flex-shrink: 0
-			.modal-chevron
-				width: 12px
-				height: 12px
-				transition: transform 0.2s
-				&.open
-					transform: rotate(180deg)
-			.session-export-menu
-				position: absolute
-				right: 0
-				top: 100%
-				background: #fff
-				min-width: 180px
-				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
-				border-radius: 4px
-				z-index: 200
-				padding: 4px 0
-				white-space: nowrap
-			.session-export-item
-				display: flex
-				align-items: center
-				gap: 8px
-				padding: 6px 12px
-				color: #333
-				text-decoration: none
-				font-size: 13px
-				&:hover
-					background-color: #f5f5f5
 
 	.card-content
 			display: flex
@@ -375,6 +311,13 @@ export default {
 
 	.text-content
 			margin-bottom: 8px
+			.recording-embed
+				margin-bottom: 16px
+				iframe
+					width: 100%
+					aspect-ratio: 16 / 9
+					border: none
+					border-radius: 4px
 			.abstract
 				font-weight: bold
 			p

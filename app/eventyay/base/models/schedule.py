@@ -13,6 +13,7 @@ from django.utils.translation import pgettext_lazy
 from i18nfield.fields import I18nTextField
 
 from eventyay.agenda.tasks import export_schedule_html
+from eventyay.agenda.signals import register_recording_provider
 from eventyay.base.models import PretalxModel
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.text.phrases import phrases
@@ -665,6 +666,30 @@ class Schedule(PretalxModel):
                         for answer in talk.submission.answers.all()
                         if answer.question and answer.question.is_public
                     ]
+                    # Per-talk export URLs
+                    base_url = self.event.urls.base
+                    code = talk.submission.code
+                    talk_data['exporters'] = {
+                        'ics': f'{base_url}talk/{code}.ics',
+                        'json': f'{base_url}talk/{code}.json',
+                        'xml': f'{base_url}talk/{code}.xml',
+                        'xcal': f'{base_url}talk/{code}.xcal',
+                        'google_calendar': f'{base_url}talk/{code}/export/google-calendar',
+                        'webcal': f'{base_url}talk/{code}/export/webcal',
+                    }
+                    # Recording iframe from provider plugins
+                    recording_iframe = ''
+                    for __, response in register_recording_provider.send_robust(self.event):
+                        if (
+                            response
+                            and not isinstance(response, Exception)
+                            and getattr(response, 'get_recording', None)
+                        ):
+                            rec = response.get_recording(talk.submission)
+                            if rec and rec.get('iframe'):
+                                recording_iframe = rec['iframe']
+                                break
+                    talk_data['recording_iframe'] = recording_iframe
                 result['talks'].append(talk_data)
             else:
                 result['talks'].append(
@@ -692,6 +717,7 @@ class Schedule(PretalxModel):
                 'id': room.id,
                 'name': room.name,
                 'description': room.description,
+                'video_url': getattr(room, 'video_url', ''),
             }
             for room in self.event.rooms.all()
             if room in rooms
