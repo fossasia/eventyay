@@ -1,4 +1,7 @@
 from django.forms import CheckboxSelectMultiple, RadioSelect
+from django.utils.translation import get_language
+from django.utils.html import format_html
+from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
 
 
 class HeaderSelect(RadioSelect):
@@ -20,10 +23,6 @@ class MultipleLanguagesWidget(CheckboxSelectMultiple):
         return sorted(self.choices, key=lambda c: str(c[1]).lower())
 
     def optgroups(self, name, value, attrs=None):
-        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
-        from django.utils.translation import get_language
-        from django.utils.html import format_html
-
         # Get the set of valid codes from the original choices
         valid_codes = set(str(c[0]) for c in self.choices)
         

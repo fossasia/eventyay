@@ -9,8 +9,10 @@ from django.core.files.uploadedfile import UploadedFile
 from django.forms.utils import from_current_timezone
 from django.urls import reverse
 from django.utils.timezone import now
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy as _, get_language
+from django.utils.html import format_html
 from eventyay.base.forms import I18nModelForm
+from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
 
 # Import for backwards compatibility with old import paths
 from eventyay.base.forms.widgets import (  # noqa
@@ -279,10 +281,6 @@ class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
     option_template_name = 'pretixcontrol/multi_languages_widget.html'
 
     def optgroups(self, name, value, attrs=None):
-        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
-        from django.utils.translation import get_language
-        from django.utils.html import format_html
-
         # Get the set of valid codes from the original choices
         valid_codes = set(str(c[0]) for c in self.choices)
         
@@ -315,9 +313,6 @@ class SingleLanguageWidget(forms.Select):
     def modify(self):
         if hasattr(self, '_modified'):
             return self.choices
-        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
-        from django.utils.translation import get_language
-        from django.utils.safestring import mark_safe
 
         structured = get_sorted_grouped_locales(get_language())
         valid_codes = set(str(c[0]) for c in self.choices)

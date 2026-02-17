@@ -3,6 +3,12 @@ from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
 from django.utils import translation
 
 class I18nUtilsTest(TestCase):
+    def setUp(self):
+        get_sorted_grouped_locales.cache_clear()
+
+    def tearDown(self):
+        get_sorted_grouped_locales.cache_clear()
+
     def test_get_sorted_grouped_locales_structure(self):
         translation.activate('en')
         locales = get_sorted_grouped_locales()
@@ -40,7 +46,9 @@ class I18nUtilsTest(TestCase):
         if 'de' in codes and 'es' in codes:
             self.assertLess(codes.index('de'), codes.index('es')) # G < S
         
+        
         translation.activate('de')
+        get_sorted_grouped_locales.cache_clear()
         locales_de = get_sorted_grouped_locales()
         codes_de = [l['code'] for l in locales_de]
         
@@ -139,8 +147,3 @@ class I18nUtilsTest(TestCase):
                  # Variants might not have 'label' explicitly set in my code update?
                  # Let's check my code. I added 'label' to variant_entry too.
                  self.assertIn('label', variant)
-
-if __name__ == '__main__':
-    unittest.main()
-
-

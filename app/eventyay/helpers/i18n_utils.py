@@ -17,6 +17,10 @@ def get_styled_language_name(code, natural_name):
     
     return f"{translated_name} ({natural_name})"
 
+from functools import lru_cache
+from django.conf import settings # Import here to avoid circular dependency if any (as noted in review)
+
+@lru_cache(maxsize=16)
 def get_sorted_grouped_locales(current_locale=None):
     """
     Returns a sorted and grouped list of locales for UI rendering.
@@ -27,7 +31,6 @@ def get_sorted_grouped_locales(current_locale=None):
             'code': 'de',
             'name': 'German (Deutsch)',
             'natural_name': 'Deutsch',
-            'is_variant': False,
             'variants': [
                 {'code': 'de-formal', 'name': 'Formal', 'natural_name': 'Formal', ...},
                 {'code': 'de-informal', 'name': 'Informal', 'natural_name': 'Informal', ...}
@@ -36,7 +39,6 @@ def get_sorted_grouped_locales(current_locale=None):
         ...
     ]
     """
-    from django.conf import settings # Import here to avoid circular dependency if any
     
     languages_config = getattr(settings, '_LANGUAGES_CONFIG', {})
     if not languages_config:
@@ -97,7 +99,7 @@ def get_sorted_grouped_locales(current_locale=None):
 
         variant_of = info.get('variant_of')
         if variant_of and variant_of in grouped:
-             # Let's check settings for 'variant_label' or parse 'name'
+             # Use 'variant_label' if provided; otherwise fall back to the variant's 'name'.
              variant_label = info.get('variant_label', info['name'])
              
              variant_entry = {
