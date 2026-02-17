@@ -181,7 +181,7 @@ def _default_context(request):
             request=request,
         )
 
-    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_header=True)
-    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_footer=True)
+    ctx['show_link_in_header_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_header=True)
+    ctx['show_link_in_footer_for_all_pages'] = Page.objects.filter(link_in_system=True, link_in_footer=True)
 
     return ctx
