@@ -356,15 +356,15 @@ async function initializeIframe(mute) {
 			};
 		}
 	} catch (error) {
-        joinErrorKey.value = getJoinErrorKey(error);
-    
-        if (joinErrorKey.value) {
-        iframeError.value = null;
-      } else {
-        iframeError.value = error;
-      }
-		  
-      console.error('MediaSource join failed:', error)
+		joinErrorKey.value = getJoinErrorKey(error);
+
+		if (joinErrorKey.value) {
+			iframeError.value = null;
+		} else {
+			iframeError.value = error;
+		}
+
+		console.error('MediaSource join failed:', error);
 	}
 }
 
