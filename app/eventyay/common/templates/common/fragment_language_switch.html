@@ -22,7 +22,6 @@
                 {% for option in language_options %}
                     <!-- Base Language -->
                     {% if not option.variants %}
-                         <!-- Logic for simple language item -->
                          <button type="submit"
                             name="locale"
                             value="{{ option.code }}"
@@ -31,8 +30,7 @@
                             {{ option.styled_name }}
                         </button>
                     {% else %}
-                        <!-- Logic for language with variants -->
-                         <!-- Base Language Button -->
+                        <!-- Base Language Button -->
                         <button type="submit"
                             name="locale"
                             value="{{ option.code }}"

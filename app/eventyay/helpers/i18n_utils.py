@@ -47,17 +47,16 @@ def get_sorted_grouped_locales(current_locale=None):
             for code, name in getattr(settings, 'LANGUAGES', [])
         }
     
+    
     # helper to check if a code is a variant
-    # We assume variants are defined in settings with 'parent' key or implicit via naming convention if we want
-    # But based on plan, we will add 'parent' or similar to _LANGUAGES_CONFIG.
-    # For now, let's implement the logic assuming we have 'variant_of' in config, or we derive it.
+    # Variants are defined in settings via the optional 'variant_of' key in each language config entry.
+    # A locale with a non-empty 'variant_of' value is treated as a variant of the referenced parent locale.
     
     grouped = {}
     
     # First pass: Identify base languages and variants
     for code, info in languages_config.items():
-        # Skip incubating if not in dev/production depending on flag? 
-        # Using settings.LANGUAGES logic:
+        # In production environments, incubating languages are not exposed in the UI.
         is_incubating = info.get('incubating', False)
         if is_incubating and getattr(settings, 'IS_PRODUCTION', False):
              continue
@@ -85,13 +84,12 @@ def get_sorted_grouped_locales(current_locale=None):
                 # Treat as standalone entry
                 grouped[code] = entry
                 continue
-            # We will handle variants after collecting all objects
+            # We will handle variants after collecting all objects in the second pass
+            # We skip adding it to 'grouped' here to avoid duplication if parent exists
         else:
             grouped[code] = entry
 
-    # Second pass: Associate variants
-    # Use a list to avoid runtime error if we modify grouped keys? 
-    # Actually we only append to variants list of existing items, so iterating config is fine.
+    # Second pass: Associate variants with their base languages
     for code, info in languages_config.items():
         is_incubating = info.get('incubating', False)
         if is_incubating and getattr(settings, 'IS_PRODUCTION', False):
@@ -99,8 +97,6 @@ def get_sorted_grouped_locales(current_locale=None):
 
         variant_of = info.get('variant_of')
         if variant_of and variant_of in grouped:
-             # It's a variant of an existing base
-             
              # Let's check settings for 'variant_label' or parse 'name'
              variant_label = info.get('variant_label', info['name'])
              
@@ -120,6 +116,8 @@ def get_sorted_grouped_locales(current_locale=None):
     result_list = list(grouped.values())
     
     # Sort by translated name in CURRENT locale
+    # Note: We use simple case-insensitive sorting here as a lightweight "locale-aware" sort.
+    # Full ICU collation would require PyICU or relying on system locale, which is not guaranteed.
     def sort_key(item):
         return item['name_translated'].lower()
         
@@ -127,11 +125,8 @@ def get_sorted_grouped_locales(current_locale=None):
     
     # Pin current locale to the top
     if current_locale:
-        # Normalize current_locale (e.g. 'en-us' -> 'en') if exact match not found?
-        # Or just look for exact match first.
+        # Look for an exact code match in result_list and move that item to the front.
         # The 'code' in result_list matches keys in _LANGUAGES_CONFIG (e.g. 'en', 'de', 'zh-hans')
-        
-        # Try to find the item
         pinned_item = None
         for i, item in enumerate(result_list):
             if item['code'] == current_locale:

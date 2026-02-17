@@ -22,7 +22,7 @@ class MultipleLanguagesWidget(CheckboxSelectMultiple):
     def optgroups(self, name, value, attrs=None):
         from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
         from django.utils.translation import get_language
-        from django.utils.safestring import mark_safe
+        from django.utils.html import format_html
 
         # Get the set of valid codes from the original choices
         valid_codes = set(str(c[0]) for c in self.choices)
@@ -42,7 +42,7 @@ class MultipleLanguagesWidget(CheckboxSelectMultiple):
                 if v_code in valid_codes:
                     # Indent variants
                     # We use a special char or HTML entity for indentation
-                    label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                    label = format_html("&nbsp;&nbsp;&nbsp;&nbsp;↳ {}", variant['name'])
                     new_choices.append((v_code, label))
 
         # Replace self.choices with our sorted, flattened, and formatted list

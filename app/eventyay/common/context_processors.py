@@ -14,7 +14,7 @@ from eventyay.base.models.settings import GlobalSettings
 from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale
-
+from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
 from .text.phrases import phrases
 
 logger = logging.getLogger(__name__)
@@ -43,20 +43,9 @@ def locale_context(request):
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
     
-    from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
-    
-    # helper returns sorted list of dicts: {'code', 'name', 'styled_name', 'variants': [...]}
-    # We need to adapt it to what the template expects or update the template.
-    # The current template expects: language_options = [{'code': code, 'label': name}, ...]
-    # We should pass the structured object and let template handle it.
-    
+    # get_sorted_grouped_locales returns the structured locale options used by the language switcher template
     current_locale = translation.get_language()
     structured_locales = get_sorted_grouped_locales(current_locale)
-    
-    # We wrap it to match existing structure if possible, but we need the variants.
-    # Let's pass `language_options` as the new structured list.
-    # And we also need to ensure backward compatibility if other templates use it? 
-    # Current usage seems to be only in `fragment_language_switch.html`.
     
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),

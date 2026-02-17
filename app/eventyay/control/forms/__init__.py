@@ -281,7 +281,7 @@ class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
     def optgroups(self, name, value, attrs=None):
         from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
         from django.utils.translation import get_language
-        from django.utils.safestring import mark_safe
+        from django.utils.html import format_html
 
         # Get the set of valid codes from the original choices
         valid_codes = set(str(c[0]) for c in self.choices)
@@ -300,7 +300,7 @@ class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
                 v_code = variant['code']
                 if v_code in valid_codes:
                     # Indent
-                    label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                    label = format_html("&nbsp;&nbsp;&nbsp;&nbsp;↳ {}", variant['name'])
                     new_choices.append((v_code, label))
 
         original_choices = self.choices
@@ -328,7 +328,7 @@ class SingleLanguageWidget(forms.Select):
                 new_choices.append((item['code'], item['styled_name']))
             for variant in item.get('variants', []):
                 if variant['code'] in valid_codes:
-                    label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                    label = format_html("&nbsp;&nbsp;&nbsp;&nbsp;↳ {}", variant['name'])
                     new_choices.append((variant['code'], label))
         
         self.choices = new_choices
