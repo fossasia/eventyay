@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2025-12-15 07:00+0000\n"
+"PO-Revision-Date: 2026-02-17 13:56+0000\n"
 "Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Weblate 5.15-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -413,8 +413,7 @@ msgstr "Item yang dibundel tidak boleh sama dengan item yang membundelnya."
 #, fuzzy
 #| msgid "The bundled item must not have bundles on its own."
 msgid "The bundled product must not have bundles on its own."
-msgstr ""
-"Item yang dibundel tidak boleh memiliki bundel tambahan secara mandiri."
+msgstr "Item yang dibundel tidak boleh memiliki bundel tambahan secara mandiri."
 
 #: api/serializers/product.py:209
 msgid ""
@@ -12753,14 +12752,12 @@ msgid "Payment Gateways"
 msgstr ""
 
 #: control/forms/global_settings.py:422
-#, fuzzy
-#| msgid "Ticket checked in"
 msgid "Ticket fee"
-msgstr "Tiket telah lapor masuk"
+msgstr "Biaya tiket"
 
 #: control/forms/global_settings.py:428
 msgid "Maps"
-msgstr ""
+msgstr "Peta"
 
 #: control/forms/global_settings.py:453
 msgid ""
@@ -12804,21 +12801,24 @@ msgstr ""
 
 #: control/forms/global_settings.py:487
 msgid "Telemetry API key"
-msgstr ""
+msgstr "Kunci API telemetri"
 
 #: control/forms/global_settings.py:488
 msgid "API key for authenticating with the telemetry receiver."
-msgstr ""
+msgstr "Kunci API untuk mengautentikasi dengan penerima telemetri."
 
 #: control/forms/global_settings.py:492
 msgid "Maintainer contact"
-msgstr ""
+msgstr "Kontak pengelola"
 
 #: control/forms/global_settings.py:494
 msgid ""
 "Optional email address included in telemetry data to identify who maintains "
 "this instance. Only visible to those with access to the telemetry data sheet."
 msgstr ""
+"Alamat surel opsional dicantumkan dalam data telemetri untuk "
+"mengidentifikasi pengelola instansi ini. Hanya terlihat oleh mereka yang "
+"memiliki akses pada lembar data telemetri."
 
 #: control/forms/global_settings.py:507
 msgid "Redirect URL"

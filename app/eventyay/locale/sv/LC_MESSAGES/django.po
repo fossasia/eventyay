@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-01-10 23:01+0000\n"
+"PO-Revision-Date: 2026-02-16 06:15+0000\n"
 "Last-Translator: Kristoffer Grundström <swedishsailfishosuser@tutanota.com>\n"
 "Language-Team: Swedish <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/sv/>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.15.1\n"
+"X-Generator: Weblate 5.16-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -176,8 +176,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
-"För att se schemat behöver du aktiver JavaScript eller gå <a "
-"href=\"%(href)s\">hit</a> för ett statiskt schema."
+"För att se schemat behöver du aktiver JavaScript eller gå <a href=\"%(href)"
+"s\">hit</a> för ett statiskt schema."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -187,8 +187,8 @@ msgid ""
 "href=\"%(href)s\">here</a>."
 msgstr ""
 "För ett schema med full funktionalitet, såsom tidzonskonvertering och "
-"personligt program, var god aktivera JavaScript och gå <a "
-"href=\"%(href)s\">hit</a>."
+"personligt program, var god aktivera JavaScript och gå <a href=\"%(href)s\">"
+"hit</a>."
 
 #: agenda/templates/agenda/schedule_nojs.html:77
 #, python-format
@@ -3495,7 +3495,7 @@ msgstr ""
 #: base/exporters/orderlist.py:359
 #: control/templates/pretixcontrol/orders/index.html:125
 msgid "Positions"
-msgstr ""
+msgstr "Positioner"
 
 #: base/exporters/orderlist.py:364
 #, fuzzy, python-brace-format
@@ -3514,7 +3514,7 @@ msgstr ""
 #: control/templates/pretixcontrol/order/change.html:307
 #: plugins/checkinlists/exporters.py:366 plugins/checkinlists/exporters.py:501
 msgid "Price"
-msgstr ""
+msgstr "Pris"
 
 #: base/exporters/orderlist.py:549 base/exporters/orderlist.py:681
 #: control/templates/pretixcontrol/event/tax_edit.html:9
@@ -3581,7 +3581,7 @@ msgstr "Produkt"
 #: base/exporters/orderlist.py:678 base/exporters/waitinglist.py:89
 #: base/models/orders.py:1295
 msgid "Variation"
-msgstr ""
+msgstr "Variation"
 
 #: base/exporters/orderlist.py:683 base/exporters/orderlist.py:688
 #: base/forms/questions.py:410 base/models/orders.py:1306
@@ -3612,7 +3612,7 @@ msgstr "Epost till deltagare"
 #: control/templates/pretixcontrol/vouchers/detail.html:11
 #: control/templates/pretixcontrol/waitinglist/index.html:155
 msgid "Voucher"
-msgstr ""
+msgstr "Kupong"
 
 #: base/exporters/orderlist.py:698
 msgid "Pseudonymization ID"
@@ -3669,7 +3669,7 @@ msgstr "Totalt"
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:15
 #: plugins/checkinlists/exporters.py:364
 msgid "Order"
-msgstr ""
+msgstr "Beställning"
 
 #: base/exporters/orderlist.py:938 base/exporters/orderlist.py:1062
 msgid "Payment ID"
@@ -3699,7 +3699,7 @@ msgstr ""
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/import_assign.html:25
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/transaction_list.html:13
 msgid "Amount"
-msgstr ""
+msgstr "Summa"
 
 #: base/exporters/orderlist.py:944
 #: control/templates/pretixcontrol/order/index.html:617
@@ -3882,7 +3882,7 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/giftcard.html:34
 #: plugins/banktransfer/refund_export.py:29
 msgid "Currency"
-msgstr ""
+msgstr "Valuta"
 
 #: base/exporters/orderlist.py:1181
 #: control/templates/pretixcontrol/order/change.html:94
@@ -3972,7 +3972,7 @@ msgstr "Datum"
 
 #: base/exporters/waitinglist.py:96 control/views/waitinglist.py:246
 msgid "Priority"
-msgstr ""
+msgstr "Prioritet"
 
 #: base/exporters/waitinglist.py:98 base/models/vouchers.py:101
 #: base/models/vouchers.py:539
@@ -4596,7 +4596,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/events/index.html:7
 #: orga/templates/orga/base.html:458 orga/templates/orga/user.html:75
 msgid "Events"
-msgstr ""
+msgstr "Händelser"
 
 #: base/models/auth_token.py:69
 #, fuzzy
@@ -4622,7 +4622,7 @@ msgstr ""
 #: base/models/billing.py:23 base/models/orders.py:169
 #: base/models/submission.py:80 cfp/templates/cfp/event/fragment_state.html:15
 msgid "canceled"
-msgstr ""
+msgstr "avbröts"
 
 #: base/models/cfp.py:98
 msgid "headline"
@@ -4717,7 +4717,7 @@ msgstr "Land"
 
 #: base/models/checkin.py:239
 msgid "Exit"
-msgstr ""
+msgstr "Avsluta"
 
 #: base/models/choices.py:35
 msgid "No effect"
@@ -4862,21 +4862,21 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/events/create_basics.html:42
 #: presale/templates/pretixpresale/event/index.html:217
 msgid "Location"
-msgstr ""
+msgstr "Plats"
 
 #: base/models/event.py:635 base/models/event.py:2814
 msgid "Latitude"
-msgstr ""
+msgstr "Latitud"
 
 #: base/models/event.py:644 base/models/event.py:2823
 msgid "Longitude"
-msgstr ""
+msgstr "Longitud"
 
 #: base/models/event.py:655
 #: control/templates/pretixcontrol/admin/systemconfig.html:105
 #: eventyay_common/navigation.py:98
 msgid "Plugins"
-msgstr ""
+msgstr "Insticksprogram"
 
 #: base/models/event.py:657
 #: control/templates/pretixcontrol/event/index.html:155
@@ -5116,7 +5116,7 @@ msgstr ""
 #: orga/templates/orga/cfp/forms.html:849
 #: orga/templates/orga/cfp/talkquestion/list.html:56
 msgid "Active"
-msgstr ""
+msgstr "Aktiv"
 
 #: base/models/event.py:2778
 msgid ""
@@ -5520,7 +5520,7 @@ msgstr ""
 #: base/models/orders.py:1504
 msgctxt "payment_state"
 msgid "created"
-msgstr ""
+msgstr "skapades"
 
 #: base/models/orders.py:1505
 msgctxt "payment_state"
@@ -5530,17 +5530,17 @@ msgstr ""
 #: base/models/orders.py:1506
 msgctxt "payment_state"
 msgid "confirmed"
-msgstr ""
+msgstr "bekräftat"
 
 #: base/models/orders.py:1507
 msgctxt "payment_state"
 msgid "canceled"
-msgstr ""
+msgstr "avbröts"
 
 #: base/models/orders.py:1508
 msgctxt "payment_state"
 msgid "failed"
-msgstr ""
+msgstr "misslyckades"
 
 #: base/models/orders.py:1509
 msgctxt "payment_state"
@@ -5570,7 +5570,7 @@ msgstr ""
 #: base/models/orders.py:1909
 msgctxt "refund_state"
 msgid "created"
-msgstr ""
+msgstr "skapades"
 
 #: base/models/orders.py:1910
 msgctxt "refund_state"
@@ -5580,32 +5580,32 @@ msgstr ""
 #: base/models/orders.py:1911
 msgctxt "refund_state"
 msgid "done"
-msgstr ""
+msgstr "klar"
 
 #: base/models/orders.py:1912
 msgctxt "refund_state"
 msgid "failed"
-msgstr ""
+msgstr "misslyckades"
 
 #: base/models/orders.py:1914
 msgctxt "refund_state"
 msgid "canceled"
-msgstr ""
+msgstr "avbröts"
 
 #: base/models/orders.py:1922
 msgctxt "refund_source"
 msgid "Organizer"
-msgstr ""
+msgstr "Organisatör"
 
 #: base/models/orders.py:1923
 msgctxt "refund_source"
 msgid "Customer"
-msgstr ""
+msgstr "Kund"
 
 #: base/models/orders.py:1924
 msgctxt "refund_source"
 msgid "External"
-msgstr ""
+msgstr "Extern"
 
 #: base/models/orders.py:1943
 #: control/templates/pretixcontrol/order/refund_choose.html:192
@@ -5653,7 +5653,7 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/giftcard.html:103
 #: control/views/vouchers.py:121
 msgid "Value"
-msgstr ""
+msgstr "Värde"
 
 #: base/models/orders.py:2182
 msgid "Order position"
@@ -5731,7 +5731,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/base.html:4
 #: orga/templates/orga/organizer/detail.html:5 orga/views/organizer.py:80
 msgid "Organizer"
-msgstr ""
+msgstr "Organisatör"
 
 #: base/models/organizer.py:134
 #: common/templates/common/fragment_profile_dropdown.html:37
@@ -5746,7 +5746,7 @@ msgstr ""
 #: eventyay_common/templates/eventyay_common/organizers/index.html:7
 #: orga/templates/orga/base.html:462
 msgid "Organizers"
-msgstr ""
+msgstr "Organisatörer"
 
 #: base/models/organizer.py:343
 msgid "Team name"
@@ -6110,7 +6110,7 @@ msgstr ""
 #: base/models/product.py:275 base/models/product.py:950
 #: control/templates/pretixcontrol/items/index.html:45
 msgid "Category"
-msgstr ""
+msgstr "Kategori"
 
 #: base/models/product.py:277
 msgid ""
@@ -6332,7 +6332,7 @@ msgstr ""
 #: control/templates/pretixcontrol/items/questions.html:36
 #: control/templates/pretixcontrol/items/quotas.html:52
 msgid "Products"
-msgstr ""
+msgstr "Produkter"
 
 #: base/models/product.py:678
 msgid ""
@@ -6359,7 +6359,7 @@ msgstr ""
 #: base/models/product.py:739 base/models/product.py:967
 #: base/models/product.py:1195
 msgid "Position"
-msgstr ""
+msgstr "Position"
 
 #: base/models/product.py:762 base/models/vouchers.py:168
 #: base/models/waitinglist.py:72 base/orderimport.py:217
@@ -6428,7 +6428,7 @@ msgstr ""
 #: base/models/product.py:1036 base/models/product.py:1138
 #: base/models/question.py:46
 msgid "Number"
-msgstr ""
+msgstr "Nummer"
 
 #: base/models/product.py:1042
 msgid "Designated price part"
@@ -6493,7 +6493,7 @@ msgstr ""
 #: base/models/product.py:1146 base/reldate.py:163
 #: plugins/checkinlists/exporters.py:686
 msgid "Time"
-msgstr ""
+msgstr "Tid"
 
 #: base/models/product.py:1147 base/models/question.py:51
 msgid "Date and time"
@@ -6601,7 +6601,7 @@ msgstr "Skattevärde"
 
 #: base/models/product.py:1264 base/orderimport.py:686
 msgid "Question"
-msgstr ""
+msgstr "Fråga"
 
 #: base/models/product.py:1309
 msgid "An answer to this question is required to proceed."
@@ -6655,7 +6655,7 @@ msgstr ""
 #: base/models/product.py:1412
 #: control/templates/pretixcontrol/items/question.html:69
 msgid "Answer"
-msgstr ""
+msgstr "Svar"
 
 #: base/models/product.py:1434
 #, python-brace-format
@@ -6681,7 +6681,7 @@ msgstr ""
 
 #: base/models/product.py:1527 control/forms/product.py:657
 msgid "Variations"
-msgstr ""
+msgstr "Variationer"
 
 #: base/models/product.py:1531
 msgid "Close this quota permanently once it is sold out"
@@ -6712,7 +6712,7 @@ msgstr ""
 #: control/templates/pretixcontrol/items/quota_edit.html:8
 #: control/templates/pretixcontrol/items/quota_edit.html:18
 msgid "Quota"
-msgstr ""
+msgstr "Kvot"
 
 #: base/models/product.py:1557 control/navigation.py:163
 #: control/templates/pretixcontrol/items/quotas.html:4
@@ -6721,7 +6721,7 @@ msgstr ""
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:168
 #: control/templates/pretixcontrol/subevents/detail.html:58
 msgid "Quotas"
-msgstr ""
+msgstr "Kvoter"
 
 #: base/models/product.py:1629
 msgid ""
@@ -7519,7 +7519,7 @@ msgstr ""
 #: base/models/vouchers.py:112 base/models/vouchers.py:551
 #: control/views/vouchers.py:123
 msgid "Redeemed"
-msgstr ""
+msgstr "Inlöst"
 
 #: base/models/vouchers.py:114 base/models/vouchers.py:553
 msgid "Maximum discount budget"
@@ -7605,7 +7605,7 @@ msgstr ""
 #: control/templates/pretixcontrol/vouchers/index.html:6
 #: control/templates/pretixcontrol/vouchers/index.html:11
 msgid "Vouchers"
-msgstr ""
+msgstr "Kuponger"
 
 #: base/models/vouchers.py:239
 msgid "You cannot select a quota that belongs to a different event."
@@ -8518,7 +8518,7 @@ msgstr ""
 
 #: base/pdf.py:287 base/pdf.py:321 base/pdf.py:508
 msgid "2017-05-31"
-msgstr ""
+msgstr "2017-05-31"
 
 #: base/pdf.py:299
 msgid "Event begin time"
@@ -8526,7 +8526,7 @@ msgstr ""
 
 #: base/pdf.py:300
 msgid "20:00"
-msgstr ""
+msgstr "20:00"
 
 #: base/pdf.py:307
 msgid "Event end date and time"
@@ -8542,7 +8542,7 @@ msgstr ""
 
 #: base/pdf.py:334
 msgid "22:00"
-msgstr ""
+msgstr "22:00"
 
 #: base/pdf.py:345
 msgid "Event admission date and time"
@@ -8558,7 +8558,7 @@ msgstr ""
 
 #: base/pdf.py:359 base/pdf.py:530
 msgid "19:00"
-msgstr ""
+msgstr "19:00"
 
 #: base/pdf.py:371
 msgid "Event location"
@@ -8586,7 +8586,7 @@ msgstr "Fakturor"
 
 #: base/pdf.py:426
 msgid "12345"
-msgstr ""
+msgstr "12345"
 
 #: base/pdf.py:435
 msgid "Invoice address city"
@@ -8617,7 +8617,7 @@ msgstr "Fakturor"
 
 #: base/pdf.py:456
 msgid "Atlantis"
-msgstr ""
+msgstr "Atlantis"
 
 #: base/pdf.py:465
 msgid "List of Add-Ons"
@@ -9959,8 +9959,7 @@ msgstr ""
 msgid ""
 "There was an error when logging in. Please contact the organizer for further "
 "help."
-msgstr ""
-"Något gick fel när du loggade in. Kontakta organisatören för mer hjälp."
+msgstr "Något gick fel när du loggade in. Kontakta organisatören för mer hjälp."
 
 #: cfp/flow.py:491 common/templates/common/base.html:151
 #: common/templates/common/fragment_header_user.html:101
@@ -10153,8 +10152,8 @@ msgid ""
 "You can enter proposals until %(deadline)s (%(timezone)s), %(until_string)s "
 "from now."
 msgstr ""
-"Du kan skicka in förslag fram till %(deadline)s%(timezone)s, stänger om "
-"%(until_string)s."
+"Du kan skicka in förslag fram till %(deadline)s%(timezone)s, stänger om %"
+"(until_string)s."
 
 #: cfp/templates/cfp/event/cfp.html:35
 #, python-format
@@ -10205,8 +10204,8 @@ msgid ""
 "You, %(name)s, have been invited to be a speaker for the session “%(talk)s”. "
 "Do you accept the invitation?"
 msgstr ""
-"Du, %(name)s, har blivit inbjuden till att bli föreläsare för sessionen "
-"%(talk)s. Accepterar du inbjudan?"
+"Du, %(name)s, har blivit inbjuden till att bli föreläsare för sessionen %"
+"(talk)s. Accepterar du inbjudan?"
 
 #: cfp/templates/cfp/event/invitation.html:35
 msgid "Abstract:"
@@ -11224,8 +11223,8 @@ msgid ""
 "It looks as if the communication between you and eventyay went wrong in some "
 "way. <br> Please return to the last page and try again!"
 msgstr ""
-"Det verkar som att kommunikationen mellan dig och eventyay gick fel. "
-"<br>Vänligen gå till den föregående sidan och försök igen!"
+"Det verkar som att kommunikationen mellan dig och eventyay gick fel. <br>"
+"Vänligen gå till den föregående sidan och försök igen!"
 
 #: common/templates/403_csrf.html:7 common/templates/403_csrf.html:11
 msgid "Verification failed."
@@ -11922,8 +11921,7 @@ msgstr "Nytt lösenord (igen)"
 
 #: common/text/phrases.py:88
 msgid "You entered two different passwords. Please enter the same one twice!"
-msgstr ""
-"Du har fyllt i två olika lösenord. Var god full i samma i båda rutorna!"
+msgstr "Du har fyllt i två olika lösenord. Var god full i samma i båda rutorna!"
 
 #: common/text/phrases.py:89
 msgctxt "noun / heading"
@@ -14455,8 +14453,8 @@ msgid ""
 msgstr ""
 "Hej,\n"
 "\n"
-"med det här e-postmeddelandet skickar vi en eller flera kuponger för "
-"{event}:\n"
+"med det här e-postmeddelandet skickar vi en eller flera kuponger för {event}"
+":\n"
 "\n"
 "{voucher_list}\n"
 "\n"
@@ -28133,8 +28131,7 @@ msgstr ""
 msgid ""
 "There was a problem with your authentication. Please contact the organizer "
 "for further help."
-msgstr ""
-"Något gick fel när du loggade in. Kontakta organisatören för mer hjälp."
+msgstr "Något gick fel när du loggade in. Kontakta organisatören för mer hjälp."
 
 #: orga/views/event.py:506
 msgid "You are now part of the team!"

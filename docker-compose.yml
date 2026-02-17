@@ -8,6 +8,7 @@ services:
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
       - /usr/src/app/eventyay/static/schedule-editor
       - /usr/src/app/eventyay/webapp/video/node_modules
@@ -29,6 +30,7 @@ services:
     entrypoint: celery -A eventyay worker -l info
     volumes:
       - ./app/eventyay:/usr/src/app/eventyay
+      - /usr/src/app/eventyay/static.dist
       - /usr/src/app/eventyay/static/video
       - /usr/src/app/eventyay/static/schedule-editor
       - /usr/src/app/eventyay/webapp/video/node_modules
