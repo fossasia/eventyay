@@ -284,10 +284,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     @action(detail=True, methods=["POST"])
     def reject(self, request, **kwargs):
@@ -297,10 +293,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     @action(detail=True, methods=["POST"])
     def confirm(self, request, **kwargs):
@@ -310,10 +302,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     @action(detail=True, methods=["POST"])
     def cancel(self, request, **kwargs):
@@ -323,10 +311,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     @action(detail=True, methods=["POST"], url_path="make-submitted")
     def make_submitted(self, request, **kwargs):
@@ -336,10 +320,6 @@ class SubmissionViewSet(PretalxViewSetMixin, viewsets.ModelViewSet):
             return Response(SubmissionOrgaSerializer(submission).data)
         except SubmissionError as e:
             return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response(
-                {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
 
     @action(detail=True, methods=["POST"], url_path="add-speaker")
     def add_speaker(self, request, **kwargs):
