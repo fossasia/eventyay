@@ -449,6 +449,43 @@ class Product(LoggedModel):
             'check-in that the student ID card still needs to be checked.'
         ),
     )
+    checkin_text = I18nTextField(
+        verbose_name=_('Check-in text'),
+        blank=True,
+        null=True,
+        help_text=_(
+            'This text will be displayed by the check-in app when a ticket of this type is scanned.'
+        ),
+    )
+    VALIDITY_DEFAULT = 'default'
+    VALIDITY_FIXED = 'fixed'
+    VALIDITY_CHOICES = [
+        (VALIDITY_DEFAULT, _('Default (determined by event and check-in configuration)')),
+        (VALIDITY_FIXED, _('Fixed time frame')),
+    ]
+    validity_type = models.CharField(
+        verbose_name=_('Validity'),
+        max_length=10,
+        choices=VALIDITY_CHOICES,
+        default=VALIDITY_DEFAULT,
+        help_text=_(
+            'For regular events, you typically do not need to change this value. The default means that validity '
+            'is determined by the event and check-in configuration, not by the product itself. Note that validity '
+            'is stored with the ticket, so changes here will not affect existing tickets.'
+        ),
+    )
+    valid_from = models.DateTimeField(
+        verbose_name=_('Start of validity'),
+        null=True,
+        blank=True,
+        help_text=_('If set, tickets of this product will only be valid from this date and time.'),
+    )
+    valid_until = models.DateTimeField(
+        verbose_name=_('End of validity'),
+        null=True,
+        blank=True,
+        help_text=_('If set, tickets of this product will only be valid until this date and time.'),
+    )
     original_price = models.DecimalField(
         verbose_name=_('Original price'),
         blank=True,

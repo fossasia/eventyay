@@ -118,6 +118,28 @@
                         {% bootstrap_field form.generate_tickets layout="control" %}
                         {% bootstrap_field form.checkin_attention layout="control" %}
                     </fieldset>
+                    <fieldset>
+                        <legend>{% trans "Check-in & Validity" %}</legend>
+                        {% bootstrap_field form.checkin_text layout="control" %}
+                        {% bootstrap_field form.validity_type layout="control" %}
+                        <div id="validity-dates" style="{% if form.validity_type.value != 'fixed' %}display: none;{% endif %}">
+                            {% bootstrap_field form.valid_from layout="control" %}
+                            {% bootstrap_field form.valid_until layout="control" %}
+                        </div>
+                        <script>
+                            (function() {
+                                var validityType = document.getElementById('id_validity_type');
+                                var validityDates = document.getElementById('validity-dates');
+                                if (validityType && validityDates) {
+                                    function toggleValidityDates() {
+                                        validityDates.style.display = validityType.value === 'fixed' ? 'block' : 'none';
+                                    }
+                                    validityType.addEventListener('change', toggleValidityDates);
+                                    toggleValidityDates();
+                                }
+                            })();
+                        </script>
+                    </fieldset>
                     <fieldset id="tab-item-additional-settings">
                         <legend>{% trans "Additional settings" %}</legend>
                         {% bootstrap_field form.issue_giftcard layout="control" %}

@@ -593,6 +593,26 @@ class ProductUpdateForm(I18nModelForm):
                     'admission',
                     _('Gift card products should not be admission products at the same time.'),
                 )
+        # Validate validity fields
+        validity_type = d.get('validity_type', 'default')
+        valid_from = d.get('valid_from')
+        valid_until = d.get('valid_until')
+        if validity_type == 'fixed':
+            if not valid_from:
+                self.add_error(
+                    'valid_from',
+                    _('Please select a start date for the validity period.'),
+                )
+            if not valid_until:
+                self.add_error(
+                    'valid_until',
+                    _('Please select an end date for the validity period.'),
+                )
+            if valid_from and valid_until and valid_until <= valid_from:
+                self.add_error(
+                    'valid_until',
+                    _('The end date must be after the start date.'),
+                )
         return d
 
     def save(self, *args, **kwargs):
@@ -632,6 +652,10 @@ class ProductUpdateForm(I18nModelForm):
             'max_per_order',
             'min_per_order',
             'checkin_attention',
+            'checkin_text',
+            'validity_type',
+            'valid_from',
+            'valid_until',
             'generate_tickets',
             'original_price',
             'require_bundling',
@@ -642,11 +666,15 @@ class ProductUpdateForm(I18nModelForm):
         field_classes = {
             'available_from': SplitDateTimeField,
             'available_until': SplitDateTimeField,
+            'valid_from': SplitDateTimeField,
+            'valid_until': SplitDateTimeField,
             'hidden_if_available': SafeModelChoiceField,
         }
         widgets = {
             'available_from': SplitDateTimePickerWidget(),
             'available_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_available_from_0'}),
+            'valid_from': SplitDateTimePickerWidget(),
+            'valid_until': SplitDateTimePickerWidget(attrs={'data-date-after': '#id_valid_from_0'}),
             'generate_tickets': TicketNullBooleanSelect(),
             'show_quota_left': ShowQuotaNullBooleanSelect(),
         }

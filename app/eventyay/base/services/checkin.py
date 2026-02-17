@@ -18,6 +18,7 @@ from django.db.models import (
 )
 from django.db.models.functions import Coalesce, TruncDate
 from django.dispatch import receiver
+from django.utils import formats
 from django.utils.functional import cached_property
 from django.utils.timezone import now, override
 from django.utils.translation import gettext as _
@@ -447,6 +448,26 @@ def perform_checkin(
                 'incomplete',
                 require_answers,
             )
+        
+        # Check ticket validity time (only if validity_type is 'fixed' and not forced)
+        if not force and op.product.validity_type == 'fixed':
+            valid_from = op.product.valid_from
+            valid_until = op.product.valid_until
+            
+            if valid_from and dt < valid_from:
+                raise CheckInError(
+                    _('This ticket is not yet valid. It will be valid from {date}.').format(
+                        date=formats.date_format(valid_from, 'DATETIME_FORMAT')
+                    ),
+                    'invalid_time',
+                )
+            elif valid_until and dt > valid_until:
+                raise CheckInError(
+                    _('This ticket is no longer valid. It was valid until {date}.').format(
+                        date=formats.date_format(valid_until, 'DATETIME_FORMAT')
+                    ),
+                    'invalid_time',
+                )
 
         if type == Checkin.TYPE_ENTRY and clist.rules and not force:
             rule_data = LazyRuleVars(op, clist, dt)
