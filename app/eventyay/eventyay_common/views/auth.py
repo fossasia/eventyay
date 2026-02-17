@@ -134,6 +134,17 @@ def login(request):
     if request.method == 'POST':
         form = LoginForm(backend=backend, data=request.POST, request=request)
         if form.is_valid() and form.user_cache:
+            # Security check: Ensure the authenticated user matches the expected backend
+            # This guards against misconfiguration or unexpected LoginForm behavior
+            if form.user_cache.auth_backend != backend.identifier:
+                logger.error(
+                    'Backend mismatch: form authenticated user with backend "%s" but expected "%s"',
+                    form.user_cache.auth_backend,
+                    backend.identifier
+                )
+                messages.error(request, _('Authentication error. Please try again.'))
+                return redirect('eventyay_common:auth.login')
+            
             keep_logged_in = form.cleaned_data.get('keep_logged_in', False)
             return process_login_and_set_cookie(request, form.user_cache, keep_logged_in)
     else:
@@ -170,13 +181,6 @@ def login(request):
   
     ordered_providers = dict(sorted(enabled_dict.items(), key=sort_key))
 
-    # Validation: Check for preferred providers that are disabled
-    for name, provider in all_providers.items():
-        if provider.is_preferred and not provider.state:
-            logger.warning(
-                "Login provider '%s' is marked as preferred but is disabled.",
-                name,
-            )
 
     # Convert to dict format for template (Django templates need plain dicts)
     ctx['login_providers'] = {
