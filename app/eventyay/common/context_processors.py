@@ -43,10 +43,6 @@ def locale_context(request):
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
     
-    # get_sorted_grouped_locales returns the structured locale options used by the language switcher template
-    current_locale = translation.get_language()
-    structured_locales = get_sorted_grouped_locales(current_locale)
-    
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
         'js_datetime_format': get_javascript_format('DATETIME_INPUT_FORMATS'),
@@ -56,7 +52,7 @@ def locale_context(request):
         'DAY_MONTH_DATE_FORMAT': get_day_month_date_format(),
         'rtl': getattr(request, 'LANGUAGE_CODE', 'en') in settings.LANGUAGES_BIDI,
         'AVAILABLE_CALENDAR_LOCALES': AVAILABLE_CALENDAR_LOCALES,
-        'language_options': structured_locales,
+        'language_options': get_sorted_grouped_locales(translation.get_language()),
     }
 
     lang = translation.get_language()
