@@ -278,41 +278,60 @@ class SlugWidget(forms.TextInput):
 class MultipleLanguagesWidget(forms.CheckboxSelectMultiple):
     option_template_name = 'pretixcontrol/multi_languages_widget.html'
 
-    def sort(self):
-        self.choices = sorted(
-            self.choices,
-            key=lambda l: (
-                (0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2)),
-                str(l[1]),
-            ),
-        )
-
-    def options(self, name, value, attrs=None):
-        self.sort()
-        return super().options(name, value, attrs)
-
     def optgroups(self, name, value, attrs=None):
-        self.sort()
-        return super().optgroups(name, value, attrs)
+        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
+        from django.utils.translation import get_language
+        from django.utils.safestring import mark_safe
 
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        opt = super().create_option(name, value, label, selected, index, subindex, attrs)
-        opt['official'] = value in settings.LANGUAGES_OFFICIAL
-        opt['incubating'] = value in settings.LANGUAGES_INCUBATING
-        return opt
+        # Get the set of valid codes from the original choices
+        valid_codes = set(str(c[0]) for c in self.choices)
+        
+        # Get structured locales (sorted by current locale)
+        structured = get_sorted_grouped_locales(get_language())
+        
+        new_choices = []
+        for item in structured:
+            code = item['code']
+            if code in valid_codes:
+                new_choices.append((code, item['styled_name']))
+            
+            # Add variants if they exist and are valid options
+            for variant in item.get('variants', []):
+                v_code = variant['code']
+                if v_code in valid_codes:
+                    # Indent
+                    label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                    new_choices.append((v_code, label))
+
+        original_choices = self.choices
+        self.choices = new_choices
+        try:
+             return super().optgroups(name, value, attrs)
+        finally:
+             self.choices = original_choices
 
 
 class SingleLanguageWidget(forms.Select):
     def modify(self):
         if hasattr(self, '_modified'):
             return self.choices
-        self.choices = sorted(
-            self.choices,
-            key=lambda l: (
-                (0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2)),
-                str(l[1]),
-            ),
-        )
+        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
+        from django.utils.translation import get_language
+        from django.utils.safestring import mark_safe
+
+        structured = get_sorted_grouped_locales(get_language())
+        valid_codes = set(str(c[0]) for c in self.choices)
+        new_choices = []
+        
+        for item in structured:
+            if item['code'] in valid_codes:
+                 new_choices.append((item['code'], item['styled_name']))
+            for variant in item.get('variants', []):
+                if variant['code'] in valid_codes:
+                     label = mark_safe(f"&nbsp;&nbsp;&nbsp;&nbsp;↳ {variant['name']}")
+                     new_choices.append((variant['code'], label))
+        
+        self.choices = new_choices
         self._modified = True
 
     def options(self, name, value, attrs=None):

@@ -20,13 +20,31 @@
 
             <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}" role="menu">
                 {% for option in language_options %}
-                    <button type="submit"
+                    <!-- Base Language -->
+                    {% if not option.variants %}
+                         <!-- Logic for simple language item -->
+                         <button type="submit"
                             name="locale"
                             value="{{ option.code }}"
                             class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
                             role="menuitem">
-                        {{ option.label }}
-                    </button>
+                            {{ option.styled_name }}
+                        </button>
+                    {% else %}
+                        <!-- Logic for language with variants -->
+                        <div class="dropdown-header">
+                             {{ option.styled_name }}
+                        </div>
+                        {% for variant in option.variants %}
+                            <button type="submit"
+                                name="locale"
+                                value="{{ variant.code }}"
+                                class="dropdown-item pl-4 {% if variant.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                                role="menuitem">
+                                {{ variant.name }}
+                            </button>
+                        {% endfor %}
+                    {% endif %}
                 {% endfor %}
             </div>
         </details>

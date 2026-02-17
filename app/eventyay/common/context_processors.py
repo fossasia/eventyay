@@ -42,20 +42,22 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
-    # Build language list with natural names (native language names)
-    languages_with_natural_names = [
-        (code, settings.LANGUAGES_INFORMATION[code]['natural_name'])
-        for code in dict(settings.LANGUAGES)
-    ]
-    languages = sorted(
-        languages_with_natural_names,
-        key=lambda l: (
-            0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2),
-            str(l[1]),
-        ),
-    )
-    language_options = [{'code': code, 'label': name} for code, name in languages]
-
+    
+    from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
+    
+    # helper returns sorted list of dicts: {'code', 'name', 'styled_name', 'variants': [...]}
+    # We need to adapt it to what the template expects or update the template.
+    # The current template expects: language_options = [{'code': code, 'label': name}, ...]
+    # We should pass the structured object and let template handle it.
+    
+    current_locale = translation.get_language()
+    structured_locales = get_sorted_grouped_locales(current_locale)
+    
+    # We wrap it to match existing structure if possible, but we need the variants.
+    # Let's pass `language_options` as the new structured list.
+    # And we also need to ensure backward compatibility if other templates use it? 
+    # Current usage seems to be only in `fragment_language_switch.html`.
+    
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
         'js_datetime_format': get_javascript_format('DATETIME_INPUT_FORMATS'),
@@ -65,7 +67,7 @@ def locale_context(request):
         'DAY_MONTH_DATE_FORMAT': get_day_month_date_format(),
         'rtl': getattr(request, 'LANGUAGE_CODE', 'en') in settings.LANGUAGES_BIDI,
         'AVAILABLE_CALENDAR_LOCALES': AVAILABLE_CALENDAR_LOCALES,
-        'language_options': language_options,
+        'language_options': structured_locales,
     }
 
     lang = translation.get_language()

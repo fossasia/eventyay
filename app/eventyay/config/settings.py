@@ -648,6 +648,8 @@ _LANGUAGES_CONFIG = {
     'de-formal': {
         'name': _('German (formal)'),
         'natural_name': 'Deutsch',
+        'variant_label': _('Formal'),
+        'variant_of': 'de',
         'bidi': False,
         'official': True,
         'percentage': 100,
@@ -811,6 +813,8 @@ _LANGUAGES_CONFIG = {
     'nl-informal': {
         'name': _('Dutch (informal)'),
         'natural_name': 'Nederlands',
+        'variant_label': _('Informal'),
+        'variant_of': 'nl',
         'bidi': False,
         'official': False,
         'percentage': 0,
@@ -828,6 +832,8 @@ _LANGUAGES_CONFIG = {
     'pl-informal': {
         'name': _('Polish (informal)'),
         'natural_name': 'Polski (nieformalny)',
+        'variant_label': _('Informal'),
+        'variant_of': 'pl',
         'bidi': False,
         'official': False,
         'percentage': 0,
