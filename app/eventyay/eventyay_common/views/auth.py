@@ -178,7 +178,6 @@ def login(request):
     def sort_key(name_and_provider):
         name, provider = name_and_provider
         return (not provider.is_preferred, name)
-  
     ordered_providers = dict(sorted(enabled_dict.items(), key=sort_key))
 
     # Convert to dict format for template (Django templates need plain dicts)
