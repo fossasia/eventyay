@@ -16,10 +16,11 @@ from django_scopes import scope
 from lxml import etree
 from django.utils import timezone
 
+from eventyay.base.models.schedule import export_schedule_html
+from eventyay.base.models.event import Event
+from eventyay.base.models.resource import Resource
 from eventyay.base.models.submission import SubmissionFavourite
-from pretalx.agenda.tasks import export_schedule_html
-from pretalx.event.models import Event
-from pretalx.submission.models import Resource
+from eventyay.base.models.resource import Resource
 
 
 @pytest.mark.skipif(
@@ -620,7 +621,8 @@ def test_schedule_orga_trigger_export_without_celery(
 def test_schedule_orga_trigger_export_with_celery(
     mocker, orga_client, django_assert_max_num_queries, event
 ):
-    mocker.patch("pretalx.agenda.tasks.export_schedule_html.apply_async")
+    mocker.patch("eventyay.agenda.tasks.export_schedule_html.apply_async")
+    from eventyay.agenda.tasks import export_schedule_html
 
     with django_assert_max_num_queries(39):
         response = orga_client.post(

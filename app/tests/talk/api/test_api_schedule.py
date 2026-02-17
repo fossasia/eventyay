@@ -3,7 +3,7 @@ import json
 import pytest
 from django_scopes import scope
 
-from pretalx.schedule.models import Schedule
+from eventyay.base.models.schedule import Schedule
 
 
 @pytest.fixture

@@ -1,6 +1,6 @@
 import pytest
 
-from pretalx.common.exporter import BaseExporter
+from eventyay.common.exporter import BaseExporter
 
 
 def test_common_base_exporter_raises_proper_exceptions():

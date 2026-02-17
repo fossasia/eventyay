@@ -1,9 +1,8 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.common.mail import TolerantDict
-from pretalx.mail.models import QueuedMail
-
+from eventyay.common.mail import TolerantDict
+from eventyay.base.models.mail import QueuedMail
 
 @pytest.mark.parametrize(
     "key,value",

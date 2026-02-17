@@ -3,9 +3,13 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django_scopes import scope
 
-from pretalx.common.exceptions import SubmissionError
-from pretalx.submission.models import Answer, Submission, SubmissionStates
-from pretalx.submission.models.submission import submission_image_path
+from eventyay.common.exceptions import SubmissionError
+from eventyay.base.models.submission import (
+    Submission, 
+    SubmissionStates, 
+    submission_image_path
+)
+from eventyay.base.models.question import Answer
 
 
 @pytest.mark.parametrize(
@@ -305,8 +309,8 @@ def test_submission_change_slot_count(accepted_submission):
 
 @pytest.mark.django_db
 def test_submission_assign_code(submission, monkeypatch):
-    from pretalx.common.models import mixins as models_mixins
-    from pretalx.submission.models import submission as pretalx_submission
+    from eventyay.base.models import mixins as models_mixins
+    from eventyay.base.models.submission import Submission as EventyaySubmission
 
     called = -1
     submission_codes = [submission.code, submission.code, "abcdef"]
@@ -317,7 +321,7 @@ def test_submission_assign_code(submission, monkeypatch):
         return submission_codes[called]
 
     monkeypatch.setattr(models_mixins, "get_random_string", yield_random_codes)
-    new_submission = pretalx_submission.Submission()
+    new_submission = EventyaySubmission()
     assert not new_submission.code
     new_submission.assign_code()
     assert new_submission.code == "abcdef"

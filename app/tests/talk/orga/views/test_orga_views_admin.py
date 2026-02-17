@@ -3,8 +3,8 @@ import json
 import pytest
 import responses
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.person.models import User
+from eventyay.base.models.settings import GlobalSettings 
+from eventyay.base.models.auth import User
 
 
 @pytest.mark.django_db

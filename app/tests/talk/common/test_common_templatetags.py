@@ -1,11 +1,11 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.common.templatetags.copyable import copyable
-from pretalx.common.templatetags.html_signal import html_signal
-from pretalx.common.templatetags.rich_text import rich_text
-from pretalx.common.templatetags.times import times
-from pretalx.common.templatetags.xmlescape import xmlescape
+from eventyay.common.templatetags.copyable import copyable
+from eventyay.common.templatetags.html_signal import html_signal
+from eventyay.base.templatetags.rich_text import rich_text
+from eventyay.common.templatetags.times import times
+from eventyay.common.templatetags.xmlescape import xmlescape
 
 
 @pytest.mark.parametrize(

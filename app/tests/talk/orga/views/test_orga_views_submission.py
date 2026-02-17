@@ -5,9 +5,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils.timezone import now
 from django_scopes import scope
 
-from pretalx.common.models.log import ActivityLog
-from pretalx.submission.models import Submission, SubmissionStates
-from pretalx.submission.models.question import QuestionRequired, QuestionVariant
+from eventyay.base.models.log import ActivityLog
+from eventyay.base.models.submission import Submission, SubmissionStates
+from eventyay.base.models.question import TalkQuestionRequired, TalkQuestionVariant
 
 
 @pytest.mark.django_db
@@ -522,7 +522,7 @@ def test_orga_can_edit_submission_wrong_answer(
     event.feature_flags["present_multiple_times"] = True
     event.save()
     with scope(event=event):
-        question.question_required = QuestionRequired.REQUIRED
+        question.question_required = TalkQuestionRequired.REQUIRED
         question.save()
         assert event.submissions.count() == 1
         assert accepted_submission.slots.count() == 1
@@ -599,7 +599,7 @@ def test_orga_can_toggle_submission_featured(orga_client, event, submission):
 
 
 @pytest.mark.parametrize(
-    "question_type", (QuestionVariant.DATE, QuestionVariant.DATETIME)
+    "question_type", (TalkQuestionVariant.DATE, TalkQuestionVariant.DATETIME)
 )
 @pytest.mark.parametrize(
     "delta,success",
@@ -616,7 +616,7 @@ def test_orga_can_edit_submission_wrong_datetime_answer(
     min_value = now()
     max_value = now() + dt.timedelta(days=2)
     with scope(event=event):
-        question.question_required = QuestionRequired.REQUIRED
+        question.question_required = TalkQuestionRequired.REQUIRED
         question.variant = question_type
         question.min_date = min_value.date()
         question.min_datetime = min_value
@@ -625,7 +625,7 @@ def test_orga_can_edit_submission_wrong_datetime_answer(
         question.save()
 
     value = min_value + delta
-    if question_type == QuestionVariant.DATE:
+    if question_type == TalkQuestionVariant.DATE:
         value = value.date()
     value = value.isoformat()
     response = orga_client.post(

@@ -9,28 +9,32 @@ from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 from lxml import etree
 
-from pretalx.common.models.settings import GlobalSettings
-from pretalx.event.models import Event, Organiser, Team, TeamInvite
-from pretalx.mail.models import MailTemplate
-from pretalx.person.models import SpeakerInformation, SpeakerProfile, User, UserApiToken
-from pretalx.person.models.auth_token import ENDPOINTS, generate_api_token
-from pretalx.schedule.models import Availability, Room, TalkSlot
-from pretalx.submission.models import (
+from eventyay.base.models.settings import GlobalSettings
+from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer, Team, TeamInvite
+from eventyay.base.models.mail import MailTemplate
+from eventyay.base.models.information import SpeakerInformation 
+from eventyay.base.models.profile import SpeakerProfile
+from eventyay.base.models.auth import User
+from eventyay.base.models.auth_token import UserApiToken, ENDPOINTS, generate_api_token
+from eventyay.base.models.availability import Availability
+from eventyay.base.models.room import Room
+from eventyay.base.models.slot import TalkSlot
+from eventyay.base.models.question import (
     Answer,
     AnswerOption,
-    Feedback,
-    Question,
-    QuestionVariant,
-    Resource,
-    Review,
-    Submission,
-    SubmissionType,
-    SubmitterAccessCode,
-    Tag,
-    Track,
+    TalkQuestion,
+    TalkQuestionVariant,
+    TalkQuestionRequired,
 )
-from pretalx.submission.models.question import QuestionRequired
-
+from eventyay.base.models.feedback import Feedback
+from eventyay.base.models.resource import Resource
+from eventyay.base.models.review import Review
+from eventyay.base.models.submission import Submission
+from eventyay.base.models.type import SubmissionType
+from eventyay.base.models.access_code import SubmitterAccessCode
+from eventyay.base.models.tag import Tag
+from eventyay.base.models.track import Track
 
 @pytest.fixture(scope="session", autouse=True)
 def collect_static(request):
@@ -54,27 +58,27 @@ def template_patch(monkeypatch):
 @pytest.fixture
 def organiser(instance_identifier):
     with scopes_disabled():
-        o = Organiser.objects.create(name="Super Organiser", slug="superorganiser")
+        o = Organizer.objects.create(name="Super Organiser", slug="superorganiser")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -86,27 +90,27 @@ def team(organiser):
 @pytest.fixture
 def other_organiser(instance_identifier):
     with scopes_disabled():
-        o = Organiser.objects.create(name="Different Organiser", slug="diffo")
+        o = Organizer.objects.create(name="Different Organiser", slug="diffo")
         Team.objects.create(
             name="Organisers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
         )
         Team.objects.create(
             name="Organisers and reviewers",
-            organiser=o,
+            organizer=o,
             can_create_events=True,
             can_change_teams=True,
-            can_change_organiser_settings=True,
+            can_change_organizer_settings=True,
             can_change_event_settings=True,
             can_change_submissions=True,
             is_reviewer=True,
         )
-        Team.objects.create(name="Reviewers", organiser=o, is_reviewer=True)
+        Team.objects.create(name="Reviewers", organizer=o, is_reviewer=True)
     return o
 
 
@@ -121,7 +125,7 @@ def event(organiser):
             email="orga@orga.org",
             date_from=today,
             date_to=today + dt.timedelta(days=3),
-            organiser=organiser,
+            organizer=organiser,
         )
         # exporting takes quite some time, so this speeds up our tests
         event.feature_flags["export_html_on_release"] = False
@@ -141,7 +145,7 @@ def other_event(other_organiser):
             email="orga2@orga.org",
             date_from=dt.date.today() + dt.timedelta(days=1),
             date_to=dt.date.today() + dt.timedelta(days=1),
-            organiser=other_organiser,
+            organizer=other_organiser,
         )
         event.feature_flags["export_html_on_release"] = False
         event.save()
@@ -162,7 +166,7 @@ def multilingual_event(organiser):
             date_from=today,
             date_to=today + dt.timedelta(days=3),
             locale_array="en,de",
-            organiser=organiser,
+            organizer=organiser,
         )
         event.feature_flags["export_html_on_release"] = False
         event.save()
@@ -202,12 +206,12 @@ def other_resource(submission):
 @pytest.fixture
 def question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             contains_personal_data=False,
             position=1,
         )
@@ -216,12 +220,12 @@ def question(event):
 @pytest.fixture
 def question_required_always(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
-            question_required=QuestionRequired.REQUIRED,
+            question_required=TalkQuestionRequired.REQUIRED,
             contains_personal_data=False,
             position=1,
         )
@@ -233,13 +237,13 @@ def question_required_after_option_before_deadline(event):
         date_of_deadline = dt.datetime.now().replace(tzinfo=event.tz) + dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             deadline=date_of_deadline,
-            question_required=QuestionRequired.AFTER_DEADLINE,
+            question_required=TalkQuestionRequired.AFTER_DEADLINE,
             contains_personal_data=False,
             position=1,
         )
@@ -251,13 +255,13 @@ def question_freeze_after_option_before_deadline_question_required_optional(even
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) + dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             contains_personal_data=False,
             position=1,
         )
@@ -269,13 +273,13 @@ def question_freeze_after_option_after_deadline_question_required_optional(event
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) - dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             contains_personal_data=False,
             position=1,
         )
@@ -287,13 +291,13 @@ def question_freeze_after_option_before_deadline_question_required_required(even
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) + dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
-            question_required=QuestionRequired.REQUIRED,
+            question_required=TalkQuestionRequired.REQUIRED,
             contains_personal_data=False,
             position=1,
         )
@@ -305,13 +309,13 @@ def question_freeze_after_option_after_deadline_question_required_required(event
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) - dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
-            question_required=QuestionRequired.REQUIRED,
+            question_required=TalkQuestionRequired.REQUIRED,
             contains_personal_data=False,
             position=1,
         )
@@ -323,10 +327,10 @@ def question_freeze_after_option_after_deadline(event):
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) - dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
             contains_personal_data=False,
@@ -340,10 +344,10 @@ def question_freeze_after_option_before_deadline(event):
         date_of_freeze = dt.datetime.now().replace(tzinfo=event.tz) + dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             freeze_after=date_of_freeze,
             contains_personal_data=False,
@@ -357,13 +361,13 @@ def question_required_after_option_after_deadline(event):
         date_of_deadline = dt.datetime.now().replace(tzinfo=event.tz) - dt.timedelta(
             weeks=4
         )
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="How much do you like green, on a scale from 1-10?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
             deadline=date_of_deadline,
-            question_required=QuestionRequired.AFTER_DEADLINE,
+            question_required=TalkQuestionRequired.AFTER_DEADLINE,
             contains_personal_data=False,
             position=1,
         )
@@ -372,12 +376,12 @@ def question_required_after_option_after_deadline(event):
 @pytest.fixture
 def inactive_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="So, on a scale from 1–100, how much do you like red?",
-            variant=QuestionVariant.NUMBER,
+            variant=TalkQuestionVariant.NUMBER,
             target="submission",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             active=False,
             position=2,
         )
@@ -402,12 +406,12 @@ def speaker_answer(event, submission, speaker_question):
 @pytest.fixture
 def speaker_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="What is your favourite color?",
-            variant=QuestionVariant.STRING,
+            variant=TalkQuestionVariant.STRING,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=3,
         )
 
@@ -415,12 +419,12 @@ def speaker_question(event):
 @pytest.fixture
 def review_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="What is your favourite color?",
-            variant=QuestionVariant.STRING,
+            variant=TalkQuestionVariant.STRING,
             target="reviewer",
-            question_required=QuestionRequired.REQUIRED,
+            question_required=TalkQuestionRequired.REQUIRED,
             position=4,
         )
 
@@ -428,12 +432,12 @@ def review_question(event):
 @pytest.fixture
 def speaker_boolean_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="Do you like green?",
-            variant=QuestionVariant.BOOLEAN,
+            variant=TalkQuestionVariant.BOOLEAN,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=5,
         )
 
@@ -441,12 +445,12 @@ def speaker_boolean_question(event):
 @pytest.fixture
 def boolean_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="Do you like green?",
-            variant=QuestionVariant.BOOLEAN,
+            variant=TalkQuestionVariant.BOOLEAN,
             target="submission",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=6,
         )
 
@@ -454,12 +458,12 @@ def boolean_question(event):
 @pytest.fixture
 def file_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="Please submit your paper.",
-            variant=QuestionVariant.FILE,
+            variant=TalkQuestionVariant.FILE,
             target="submission",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=7,
         )
 
@@ -467,12 +471,12 @@ def file_question(event):
 @pytest.fixture
 def speaker_file_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="Please submit your CV.",
-            variant=QuestionVariant.FILE,
+            variant=TalkQuestionVariant.FILE,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=8,
         )
 
@@ -480,12 +484,12 @@ def speaker_file_question(event):
 @pytest.fixture
 def choice_question(event):
     with scope(event=event):
-        question = Question.objects.create(
+        question = TalkQuestion.objects.create(
             event=event,
             question="How much do you like green?",
-            variant=QuestionVariant.CHOICES,
+            variant=TalkQuestionVariant.CHOICES,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=9,
         )
         for answer in ("very", "incredibly", "omggreen"):
@@ -507,12 +511,12 @@ def answered_choice_question(choice_question, submission, speaker):
 @pytest.fixture
 def multiple_choice_question(event):
     with scope(event=event):
-        question = Question.objects.create(
+        question = TalkQuestion.objects.create(
             event=event,
             question="Which colors other than green do you like?",
-            variant=QuestionVariant.MULTIPLE,
+            variant=TalkQuestionVariant.MULTIPLE,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=10,
         )
         for answer in ("yellow", "blue", "black"):
@@ -523,12 +527,12 @@ def multiple_choice_question(event):
 @pytest.fixture
 def speaker_text_question(event):
     with scope(event=event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=event,
             question="Please elaborat on your like/dislike of green.",
-            variant=QuestionVariant.TEXT,
+            variant=TalkQuestionVariant.TEXT,
             target="speaker",
-            question_required=QuestionRequired.OPTIONAL,
+            question_required=TalkQuestionRequired.OPTIONAL,
             position=11,
         )
 
@@ -536,10 +540,10 @@ def speaker_text_question(event):
 @pytest.fixture
 def personal_question(submission):
     with scope(event=submission.event):
-        return Question.objects.create(
+        return TalkQuestion.objects.create(
             event=submission.event,
             target="submission",
-            variant="boolean",
+            variant=TalkQuestionVariant.BOOLEAN,
             question="Do you identify as a hacker?",
             contains_personal_data=True,
             position=12,
@@ -592,8 +596,8 @@ def orga_user(event):
             email="orgauser@orga.org",
             name="Orga User",
         )
-        team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+        team = event.organizer.teams.filter(
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         team.members.add(user)
         team.save()
@@ -641,8 +645,8 @@ def other_orga_user(event):
         user = User.objects.create_user(
             password="orgapassw0rd", email="evilorgauser@orga.org"
         )
-        team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+        team = event.organizer.teams.filter(
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         team.members.add(user)
         team.save()
@@ -657,11 +661,11 @@ def review_user(organiser, event):
             email="reviewuser@orga.org",
             name="Review User",
         )
-        if not event.organiser:
-            event.organiser = organiser
+        if not event.organizer:
+            event.organizer = organiser
             event.save()
-        team, _ = event.organiser.teams.get_or_create(
-            can_change_organiser_settings=False, is_reviewer=True
+        team, _ = event.organizer.teams.get_or_create(
+            can_change_organizer_settings=False, is_reviewer=True
         )
         team.members.add(user)
         team.save()
@@ -674,8 +678,8 @@ def other_review_user(event):
         user = User.objects.create_user(
             password="reviewpassw0rd", email="evilreviewuser@orga.org"
         )
-        team = event.organiser.teams.filter(
-            can_change_organiser_settings=False, is_reviewer=True
+        team = event.organizer.teams.filter(
+            can_change_organizer_settings=False, is_reviewer=True
         ).first()
         team.members.add(user)
         team.save()
@@ -688,8 +692,8 @@ def orga_reviewer_user(event):
         user = User.objects.create_user(
             password="orgapassw0rd", email="multiuser@orga.org"
         )
-        team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=True
+        team = event.organizer.teams.filter(
+            can_change_organizer_settings=True, is_reviewer=True
         ).first()
         team.members.add(user)
         team.save()
@@ -886,8 +890,8 @@ def deleted_submission(event, submission_data, other_speaker):
 @pytest.fixture
 def invitation(event):
     with scope(event=event):
-        team = event.organiser.teams.filter(
-            can_change_organiser_settings=True, is_reviewer=False
+        team = event.organizer.teams.filter(
+            can_change_organizer_settings=True, is_reviewer=False
         ).first()
         return TeamInvite.objects.create(
             team=team, token="testtoken", email="some@example.com"

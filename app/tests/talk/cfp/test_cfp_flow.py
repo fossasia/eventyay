@@ -3,7 +3,7 @@ from django.http import HttpResponseNotAllowed
 from django_scopes import scope
 from i18nfield.strings import LazyI18nString
 
-from pretalx.cfp.flow import BaseCfPStep, i18n_string
+from eventyay.cfp.flow import BaseCfPStep, i18n_string
 
 
 @pytest.mark.parametrize(

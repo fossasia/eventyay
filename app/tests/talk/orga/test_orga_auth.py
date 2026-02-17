@@ -3,7 +3,7 @@ from django.conf import settings
 from django.urls import reverse
 from urllib.parse import urlparse, parse_qs
 
-from pretalx.event.models import TeamInvite
+from eventyay.base.models.organizer import TeamInvite
 
 
 @pytest.mark.django_db

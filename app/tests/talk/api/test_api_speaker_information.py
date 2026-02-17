@@ -4,7 +4,7 @@ import pytest
 from django.core.files.base import ContentFile
 from django_scopes import scope
 
-from pretalx.api.serializers.speaker_information import SpeakerInformationSerializer
+from eventyay.api.serializers.speaker_information import SpeakerInformationSerializer
 
 
 @pytest.mark.django_db
@@ -87,7 +87,7 @@ def test_orga_can_see_single_speaker_information(client, orga_user_token, event)
 
 @pytest.mark.django_db
 def test_no_legacy_speaker_information_api(client, orga_user_token, event):
-    from pretalx.api.versions import LEGACY
+    from eventyay.api.versions import LEGACY
 
     with scope(event=event):
         speaker_info = event.information.create(

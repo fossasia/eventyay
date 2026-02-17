@@ -2,7 +2,7 @@ import datetime as dt
 
 import pytest
 
-from pretalx.schedule.models import Availability
+from eventyay.base.models.availability import Availability
 
 
 @pytest.mark.parametrize(

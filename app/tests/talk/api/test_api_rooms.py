@@ -5,8 +5,8 @@ import dateutil.parser
 import pytest
 from django_scopes import scope
 
-from pretalx.api.serializers.room import RoomOrgaSerializer, RoomSerializer
-from pretalx.api.versions import LEGACY
+from eventyay.api.serializers.room import RoomOrgaSerializer, RoomSerializer
+from eventyay.api.versions import LEGACY
 
 
 @pytest.mark.django_db

@@ -8,7 +8,7 @@ import responses
 from django.core.management import call_command
 from django_scopes import scope
 
-from pretalx.event.models import Event
+from eventyay.base.models.event import Event
 
 
 @pytest.mark.django_db

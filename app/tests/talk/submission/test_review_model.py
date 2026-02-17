@@ -3,8 +3,8 @@ import random
 import pytest
 from django_scopes import scope
 
-from pretalx.person.models import User
-from pretalx.submission.models import Review
+from eventyay.base.models.auth import User
+from eventyay.base.models.review import Review
 
 
 @pytest.mark.django_db

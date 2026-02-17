@@ -1,7 +1,7 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.submission.models import Answer, Question
+from eventyay.base.models.question import Answer, TalkQuestion
 
 
 @pytest.mark.parametrize("target", ("submission", "speaker", "reviewer"))
@@ -129,6 +129,6 @@ def test_question_base_properties(submission, question):
 @pytest.mark.django_db
 def test_answer_string_property(event, variant, answer, expected):
     with scope(event=event):
-        question = Question.objects.create(question="?", variant=variant, event=event)
+        question = TalkQuestion.objects.create(question="?", variant=variant, event=event)
         answer = Answer.objects.create(question=question, answer=answer)
         assert answer.answer_string == expected

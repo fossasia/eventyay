@@ -1,8 +1,8 @@
 import pytest
 from django_scopes import scope
 
-from pretalx.common.log_display import LOG_NAMES
-from pretalx.common.models.log import ActivityLog
+from eventyay.common.log_display import LOG_NAMES
+from eventyay.base.models.log import ActivityLog
 
 
 @pytest.fixture

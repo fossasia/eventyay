@@ -3,7 +3,7 @@ from rest_framework import exceptions, serializers
 
 from eventyay.api.mixins import PretalxSerializer
 from eventyay.api.versions import CURRENT_VERSIONS, register_serializer
-from eventyay.base.models.event import Event, Team
+from eventyay.base.models.event import Event
 from eventyay.base.models.organizer import Team, TeamInvite
 from eventyay.base.models.auth import User
 from eventyay.base.models.track import Track
@@ -58,7 +58,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
             "limit_tracks",
             "can_create_events",
             "can_change_teams",
-            "can_change_organiser_settings",
+            "can_change_organizer_settings",
             "can_change_event_settings",
             "can_change_submissions",
             "is_reviewer",
@@ -100,7 +100,7 @@ class TeamSerializer(FlexFieldsSerializerMixin, PretalxSerializer):
         permissions = (
             "can_create_events",
             "can_change_teams",
-            "can_change_organiser_settings",
+            "can_change_organizer_settings",
             "can_change_event_settings",
             "can_change_submissions",
             "is_reviewer",

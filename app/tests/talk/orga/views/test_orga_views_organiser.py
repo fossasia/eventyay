@@ -6,14 +6,14 @@ from django.urls import reverse
 from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
-from pretalx.event.models import Event, Organiser
-
+from eventyay.base.models.event import Event
+from eventyay.base.models.organizer import Organizer
 
 @pytest.mark.django_db
 def test_orga_create_organiser(administrator_client):
-    assert len(Organiser.objects.all()) == 0
+    assert len(Organizer.objects.all()) == 0
     response = administrator_client.post(
-        "/orga/organiser/new",
+        "/orga/organizer/new",
         data={
             "name_0": "The bestest organiser",
             "name_1": "The bestest organiser",
@@ -22,8 +22,8 @@ def test_orga_create_organiser(administrator_client):
         follow=True,
     )
     assert response.status_code == 200, response.text
-    assert len(Organiser.objects.all()) == 1
-    organiser = Organiser.objects.all().first()
+    assert len(Organizer.objects.all()) == 1
+    organiser = Organizer.objects.all().first()
     assert str(organiser.name) == "The bestest organiser", response.text
     assert str(organiser) == str(organiser.name)
 
@@ -65,7 +65,7 @@ def test_orga_edit_team(orga_client, organiser, event):
         data={
             "all_events": True,
             "can_change_submissions": True,
-            "can_change_organiser_settings": True,
+            "can_change_organizer_settings": True,
             "can_change_event_settings": True,
             "can_change_teams": True,
             "can_create_events": True,
@@ -94,7 +94,7 @@ def test_orga_edit_team_illegal(orga_client, organiser, event):
         data={
             "all_events": True,
             "can_change_submissions": True,
-            "can_change_organiser_settings": False,
+            "can_change_organizer_settings": False,
             "can_change_event_settings": True,
             "can_change_teams": False,
             "can_create_events": True,
@@ -107,7 +107,7 @@ def test_orga_edit_team_illegal(orga_client, organiser, event):
     team.refresh_from_db()
     assert team.name != "Fancy New Name"
     assert team.can_change_teams
-    assert team.can_change_organiser_settings
+    assert team.can_change_organizer_settings
 
 
 @pytest.mark.django_db
@@ -124,7 +124,7 @@ def test_orga_create_team(orga_client, organiser, event, is_administrator, orga_
         data={
             "all_events": True,
             "can_change_submissions": True,
-            "can_change_organiser_settings": True,
+            "can_change_organizer_settings": True,
             "can_change_event_settings": True,
             "can_change_teams": True,
             "can_create_events": True,
@@ -150,7 +150,7 @@ def test_orga_create_team_without_event(orga_client, organiser, event, orga_user
         follow=True,
         data={
             "can_change_submissions": True,
-            "can_change_organiser_settings": True,
+            "can_change_organizer_settings": True,
             "can_change_event_settings": True,
             "can_change_teams": True,
             "can_create_events": True,
@@ -282,20 +282,20 @@ def test_remove_other_team_member_but_not_last_member(
 @pytest.mark.django_db
 def test_organiser_cannot_delete_organiser(event, orga_client, submission):
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
-    response = orga_client.post(event.organiser.orga_urls.delete, follow=True)
+    assert Organizer.objects.count() == 1
+    response = orga_client.post(event.organizer.orga_urls.delete, follow=True)
     assert response.status_code == 404
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
+    assert Organizer.objects.count() == 1
 
 
 @pytest.mark.django_db
 def test_administrator_can_delete_organiser(event, administrator_client, submission):
     assert Event.objects.count() == 1
-    assert Organiser.objects.count() == 1
-    response = administrator_client.get(event.organiser.orga_urls.delete, follow=True)
+    assert Organizer.objects.count() == 1
+    response = administrator_client.get(event.organizer.orga_urls.delete, follow=True)
     assert response.status_code == 200
-    response = administrator_client.post(event.organiser.orga_urls.delete, follow=True)
+    response = administrator_client.post(event.organizer.orga_urls.delete, follow=True)
     assert response.status_code == 200
     assert Event.objects.count() == 0
-    assert Organiser.objects.count() == 0
+    assert Organizer.objects.count() == 0

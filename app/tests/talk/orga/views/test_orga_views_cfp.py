@@ -5,10 +5,10 @@ import pytest
 from django.core import mail as djmail
 from django_scopes import scope
 
-from pretalx.event.models import Event
-from pretalx.mail.models import QueuedMail
-from pretalx.submission.models import Question
-from pretalx.submission.models.question import QuestionRequired
+from eventyay.base.models.event import Event
+from eventyay.base.models.mail import QueuedMail
+from eventyay.base.models.question import TalkQuestion, TalkQuestionRequired
+
 
 
 @pytest.mark.django_db
@@ -203,7 +203,7 @@ def test_delete_default_submission_type(
 def test_all_questions_in_list(orga_client, question, inactive_question, event):
     with scope(event=event):
         assert event.questions.count() == 1
-        assert Question.all_objects.filter(event=event).count() == 2
+        assert TalkQuestion.all_objects.filter(event=event).count() == 2
     response = orga_client.get(event.cfp.urls.questions, follow=True)
     assert question.question in response.text
     assert inactive_question.question in response.text
@@ -221,29 +221,29 @@ def test_delete_question(orga_client, event, question):
     assert response.status_code == 200
     with scope(event=event):
         assert event.questions.count() == 0
-        assert Question.all_objects.filter(event=event).count() == 0
+        assert TalkQuestion.all_objects.filter(event=event).count() == 0
 
 
 @pytest.mark.django_db
 def test_delete_inactive_question(orga_client, event, inactive_question):
     with scope(event=event):
-        assert Question.all_objects.filter(event=event).count() == 1
+        assert TalkQuestion.all_objects.filter(event=event).count() == 1
     response = orga_client.post(inactive_question.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
         assert event.questions.count() == 0
-        assert Question.all_objects.filter(event=event).count() == 0
+        assert TalkQuestion.all_objects.filter(event=event).count() == 0
 
 
 @pytest.mark.django_db
 def test_delete_choice_question(orga_client, event, choice_question):
     with scope(event=event):
-        assert Question.all_objects.filter(event=event).count() == 1
+        assert TalkQuestion.all_objects.filter(event=event).count() == 1
     response = orga_client.post(choice_question.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
         assert event.questions.count() == 0
-        assert Question.all_objects.filter(event=event).count() == 0
+        assert TalkQuestion.all_objects.filter(event=event).count() == 0
 
 
 @pytest.mark.django_db
@@ -255,7 +255,7 @@ def test_cannot_delete_answered_question(orga_client, event, answered_choice_que
     response = orga_client.post(answered_choice_question.urls.delete, follow=True)
     assert response.status_code == 200
     with scope(event=event):
-        answered_choice_question = Question.all_objects.get(
+        answered_choice_question = TalkQuestion.all_objects.get(
             pk=answered_choice_question.pk
         )
         assert answered_choice_question
@@ -277,7 +277,7 @@ def test_can_add_simple_question(orga_client, event):
             "variant": "string",
             "active": True,
             "help_text_0": "Answer if you want to reach the other side!",
-            "question_required": QuestionRequired.OPTIONAL,
+            "question_required": TalkQuestionRequired.OPTIONAL,
         },
         follow=True,
     )
@@ -308,7 +308,7 @@ def test_can_add_simple_question_required_freeze(orga_client, event):
             "variant": "string",
             "active": True,
             "help_text_0": "Answer if you want to reach the other side!",
-            "question_required": QuestionRequired.REQUIRED,
+            "question_required": TalkQuestionRequired.REQUIRED,
             "freeze_after": "2021-06-22T12:44:42Z",
         },
         follow=True,
@@ -340,7 +340,7 @@ def test_can_add_simple_question_after_deadline(orga_client, event):
             "variant": "string",
             "active": True,
             "help_text_0": "Answer if you want to reach the other side!",
-            "question_required": QuestionRequired.AFTER_DEADLINE,
+            "question_required": TalkQuestionRequired.AFTER_DEADLINE,
             "deadline": "2021-06-22T12:44:42Z",
         },
         follow=True,
@@ -375,7 +375,7 @@ def test_can_add_simple_question_after_deadline_missing_deadline(orga_client, ev
             "variant": "string",
             "active": True,
             "help_text_0": "Answer if you want to reach the other side!",
-            "question_required": QuestionRequired.AFTER_DEADLINE,
+            "question_required": TalkQuestionRequired.AFTER_DEADLINE,
         },
         follow=True,
     )
@@ -404,7 +404,7 @@ def test_can_add_choice_question(orga_client, event):
             "form-1-answer_0": "European",
             "form-2-id": "",
             "form-2-answer_0": "",
-            "question_required": QuestionRequired.OPTIONAL,
+            "question_required": TalkQuestionRequired.OPTIONAL,
         },
         follow=True,
     )
@@ -445,7 +445,7 @@ def test_can_edit_choice_question(orga_client, event, choice_question):
             "form-2-DELETE": "on",
             "form-3-id": "",
             "form-3-answer_0": "",
-            "question_required": QuestionRequired.OPTIONAL,
+            "question_required": TalkQuestionRequired.OPTIONAL,
         },
         follow=True,
     )
@@ -555,9 +555,9 @@ def test_can_remind_answered_submission_question(
     count,
 ):
     with scope(event=event):
-        from pretalx.submission.models.question import Answer
+        from eventyay.base.models.question import Answer
 
-        question.question_required = QuestionRequired.REQUIRED
+        question.question_required = TalkQuestionRequired.REQUIRED
         question.deadline = None
         question.save()
         original_count = QueuedMail.objects.count()
@@ -587,7 +587,7 @@ def test_can_hide_question(orga_client, question):
 
     response = orga_client.get(question.urls.toggle, follow=True)
     with scope(event=question.event):
-        question = Question.all_objects.get(pk=question.pk)
+        question = TalkQuestion.all_objects.get(pk=question.pk)
 
     assert response.status_code == 200
     assert not question.active

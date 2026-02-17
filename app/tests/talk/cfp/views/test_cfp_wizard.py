@@ -10,8 +10,9 @@ from django.http.request import QueryDict
 from django.utils.timezone import now
 from django_scopes import scope, scopes_disabled
 
-from pretalx.submission.forms import InfoForm
-from pretalx.submission.models import Submission, SubmissionType
+from eventyay.submission.forms.submission import InfoForm
+from eventyay.base.models.submission import Submission
+from eventyay.base.models.type import SubmissionType
 
 
 class TestWizard:
