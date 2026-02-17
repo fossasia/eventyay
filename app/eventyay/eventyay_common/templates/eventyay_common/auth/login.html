@@ -30,12 +30,13 @@
                             {% endwith %}
                         </a>
 
-                        {# Visual indicator only: long session automatically enabled for preferred provider #}
-                        <div class="checkbox preferred-provider-remember">
-                            <label>
-                                <input type="checkbox" checked disabled>
+                        {# Visual indicator: long session automatically enabled for preferred provider #}
+                        {# Using static text with checkmark icon instead of disabled checkbox for better accessibility #}
+                        <div class="preferred-provider-remember">
+                            <span class="keep-logged-in-indicator" role="status" aria-live="polite">
+                                <span class="checkmark-icon" aria-hidden="true">✓</span>
                                 {% translate "Keep me logged in" %}
-                            </label>
+                            </span>
                         </div>
                     </div>
 

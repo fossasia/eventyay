@@ -113,27 +113,29 @@
                                 {% endif %}
                             {% endfor %}
 
-                            {# Option to clear preferred provider selection - moved to bottom for better UX #}
-                            <tr>
-                                <td colspan="2" class="no-preferred-section">
-                                    <div class="form-group no-preferred-form-group">
-                                        <div class="radio">
-                                            <label>
-                                                {# Radio button to clear preferred provider - checked if no provider is preferred #}
-                                                <input type="radio"
-                                                       name="preferred_provider"
-                                                       value=""
-                                                       {% if not any_preferred %}checked{% endif %}>
-                                                {% translate "No preferred provider (all providers shown equally)" %}
-                                            </label>
+                            {# Option to clear preferred provider selection - only shown if at least one provider is enabled #}
+                            {% if has_enabled_providers %}
+                                <tr class="no-preferred-row">
+                                    <td colspan="2" class="no-preferred-section">
+                                        <div class="form-group no-preferred-form-group">
+                                            <div class="radio">
+                                                <label>
+                                                    {# Radio button to clear preferred provider - checked if no provider is preferred #}
+                                                    <input type="radio"
+                                                           name="preferred_provider"
+                                                           value=""
+                                                           {% if not any_preferred %}checked{% endif %}>
+                                                    {% translate "No preferred provider (all providers shown equally)" %}
+                                                </label>
+                                            </div>
+                                            {# Help text explaining the no-preference option #}
+                                            <p class="help-block no-preferred-help-text">
+                                                {% translate "Select this option if you want all enabled login providers to be displayed equally, without any provider being highlighted or pre-selected." %}
+                                            </p>
                                         </div>
-                                        {# Help text explaining the no-preference option #}
-                                        <p class="help-block no-preferred-help-text">
-                                            {% translate "Select this option if you want all enabled login providers to be displayed equally, without any provider being highlighted or pre-selected." %}
-                                        </p>
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>

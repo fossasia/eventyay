@@ -37,7 +37,7 @@ class OAuthLoginView(View):
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
             request.session['socialauth_next_url'] = next_url
 
-        # VALIDATE LOGIN PROVIDERS 
+        # Parse and normalize login providers
         gs = GlobalSettingsObject()
         raw_providers = gs.settings.get('login_providers', as_type=dict)
         providers = validate_login_providers(raw_providers)
@@ -239,6 +239,12 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
             provider.state and provider.is_preferred
             for provider in providers.providers().values()
         )
+        
+        # Calculate if any providers are enabled (for conditional rendering in template)
+        context['has_enabled_providers'] = any(
+            provider.state
+            for provider in providers.providers().values()
+        )
 
         # Convert to dict for template
         context['login_providers'] = providers.model_dump()
@@ -267,17 +273,28 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
         providers = set_preferred_provider(providers, preferred_provider)
 
         # Save the updated and validated providers
-        # Note: set_preferred_provider already validates, but we save the result
         try:
             self.gs.settings.set('login_providers', providers.model_dump())
         except Exception as e:
             logger.error('Error while saving login providers: %s', e)
             messages.error(request, _('Failed to save provider configuration. Please try again.'))
+            # Re-render form with error message instead of redirecting
+            return self.render_to_response(self.get_context_data())
     
         return redirect(self.get_success_url())
 
-    def update_credentials(self, request, provider, providers: LoginProviders):
-        """Update OAuth credentials for a provider"""
+    def update_credentials(self, request: HttpRequest, provider: str, providers: LoginProviders):
+        """
+        Update OAuth credentials for a provider.
+        
+        Args:
+            request: The current HttpRequest containing POST data with the
+                    provider's client_id and secret values.
+            provider: The login provider name whose credentials are being updated
+                     (e.g., 'github', 'google', 'mediawiki').
+            providers: LoginProviders instance that will be updated with
+                      the new credentials for this provider.
+        """
         client_id_value = request.POST.get(f'{provider}_client_id', '')
         secret_value = request.POST.get(f'{provider}_secret', '')
 
@@ -298,19 +315,27 @@ class SocialLoginView(AdministratorPermissionRequiredMixin, TemplateView):
                 },
             )
 
-    def update_provider_state(self, request, provider, providers: LoginProviders):
+    def update_provider_state(self, request: HttpRequest, provider: str, providers: LoginProviders):
         """
         Update the state (enabled/disabled) of a login provider.
-    
-        Note: The schema validator (ensure_single_preferred) will automatically
-        clear is_preferred if a provider is disabled, so we don't need to
-        handle that edge case manually here. This keeps the view logic thin
-        and centralizes invariant enforcement in the schema layer.
+        
+        The schema validator (ensure_single_preferred) automatically clears
+        is_preferred if a provider is disabled, so we don't need to handle
+        that edge case manually here. This keeps the view logic thin and
+        centralizes invariant enforcement in the schema layer.
+        
+        Args:
+            request: The current HttpRequest containing POST data with the
+                    provider's login state settings.
+            provider: The login provider name whose state is being updated
+                     (e.g., 'github', 'google', 'mediawiki').
+            providers: LoginProviders instance that will be updated with
+                      the new state for this provider.
         """
         setting_state = request.POST.get(f'{provider}_login', '').lower()
         if setting_state in [s.value for s in self.SettingState]:
             is_enabled = setting_state == self.SettingState.ENABLED
-            
+
             # Update provider state
             provider_config = getattr(providers, provider)
             updated_config = provider_config.model_copy(update={"state": is_enabled})

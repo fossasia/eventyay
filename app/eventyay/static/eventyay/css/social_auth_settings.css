@@ -1,3 +1,4 @@
+/* No preferred provider section styling */
 .no-preferred-section {
     background-color: #f9f9f9;  /* Light gray background to distinguish from other rows */
     padding: 15px;               /* Inner spacing for better readability */
@@ -11,4 +12,9 @@
 .no-preferred-help-text {
     margin-top: 10px;    /* Space between radio button and help text */
     margin-bottom: 0;    /* Remove bottom margin for consistent section padding */
+}
+
+/* Ensure no preferred row only appears once */
+.no-preferred-row {
+    display: table-row;
 }

@@ -3,20 +3,34 @@
     margin-bottom: 20px;
 }
 
-/* Disabled remember-me indicator */
+/* Visual indicator for automatic "Keep me logged in" */
 .preferred-provider-remember {
     margin-top: 10px;
     margin-bottom: 0;
 }
 
-.preferred-provider-remember label {
+.preferred-provider-remember .keep-logged-in-indicator {
+    display: inline-flex;
+    align-items: center;
     font-weight: normal;
     color: #666;
-    cursor: default; /* Shows it's not clickable */
+    font-size: 14px;
 }
 
-.preferred-provider-remember input[type="checkbox"] {
-    margin-right: 5px;
+.preferred-provider-remember .keep-logged-in-indicator .checkmark-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    color: #5cb85c; /* Success green color */
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* Alternative if using Font Awesome or similar icon library */
+.preferred-provider-remember .keep-logged-in-indicator .fa-check-circle {
+    margin-right: 8px;
+    color: #5cb85c;
 }
 
 /* Login separator ("or use the following") */
