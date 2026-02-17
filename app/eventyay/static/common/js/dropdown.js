@@ -34,13 +34,14 @@ const ensureGlobalListeners = function() {
     }
     document.documentElement.dataset[GLOBAL_INIT_FLAG] = '1';
 
-    document.addEventListener('click', function(event) {
+    const handlePossibleOutsideInteraction = function(event) {
         getOpenDropdowns().forEach(function(dropdown) {
             if (!dropdown.contains(event.target)) {
                 dropdown.open = false;
             }
         });
-    });
+    };
+    document.addEventListener('pointerdown', handlePossibleOutsideInteraction, true);
 
     document.addEventListener('keydown', function(event) {
         if (event.key !== 'Escape' && event.key !== 'Esc') return;
@@ -59,6 +60,50 @@ const initDropdowns = function() {
             if (!dropdown.open) return;
             closeOtherDropdowns(dropdown);
         });
+    });
+
+    // Initialize dashboard dropdown submenu toggle for touch/keyboard devices
+    document.querySelectorAll('.dashboard-dropdown-toggle').forEach(function(toggle) {
+        toggle.addEventListener('click', function(event) {
+            // Only prevent default and toggle on non-hover devices
+            // Check if this is a touch device or doesn't support hover
+            const supportsHover = window.matchMedia('(hover: hover)').matches;
+            if (!supportsHover) {
+                event.preventDefault();
+                const parent = toggle.closest('.dashboard-dropdown');
+                if (parent) {
+                    parent.classList.toggle('active');
+                    const isExpanded = parent.classList.contains('active');
+                    toggle.setAttribute('aria-expanded', isExpanded.toString());
+                }
+            }
+        });
+
+        // Keyboard support (Enter and Space keys)
+        toggle.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                const parent = toggle.closest('.dashboard-dropdown');
+                if (parent) {
+                    parent.classList.toggle('active');
+                    const isExpanded = parent.classList.contains('active');
+                    toggle.setAttribute('aria-expanded', isExpanded.toString());
+                }
+            }
+        });
+    });
+
+    // Close submenu when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dashboard-dropdown')) {
+            document.querySelectorAll('.dashboard-dropdown.active').forEach(function(dropdown) {
+                dropdown.classList.remove('active');
+                const toggle = dropdown.querySelector('.dashboard-dropdown-toggle');
+                if (toggle) {
+                    toggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
     });
 };
 
