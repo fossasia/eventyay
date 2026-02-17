@@ -14,7 +14,7 @@
     margin-bottom: 0;    /* Remove bottom margin for consistent section padding */
 }
 
-/* Ensure no preferred row only appears once */
+/* Display the "no preferred" row as a table row */
 .no-preferred-row {
     display: table-row;
 }
