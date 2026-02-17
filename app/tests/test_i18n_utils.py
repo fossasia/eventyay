@@ -89,17 +89,58 @@ class I18nUtilsTest(TestCase):
         
         name = get_styled_language_name('de', 'Deutsch')
         self.assertIn('Deutsch', name)
-        # In English environment, it should probably be "German (Deutsch)"
-        # But we can't easily assert "German" without knowing exactly what get_language_info returns for 'de' in 'en'.
-        # Assuming standard django conf.
         
         # Case 2: Translated name == Native name (case-insensitive)
-        # e.g. English in English is "English (English)" -> "English"
         name_en = get_styled_language_name('en', 'English')
         self.assertEqual(name_en, 'English')
         
         # Case 3: Unknown code (fallback)
         name_unknown = get_styled_language_name('xx-yy', 'MyLang')
         self.assertEqual(name_unknown, 'MyLang')
+
+    def test_orphaned_variant(self):
+        # mocking settings to simulate incubating parent
+        from django.conf import settings
+        from eventyay.helpers.i18n_utils import get_sorted_grouped_locales
+        
+        # Backup original config
+        original_config = getattr(settings, '_LANGUAGES_CONFIG', {})
+        original_production = getattr(settings, 'IS_PRODUCTION', False)
+        
+        try:
+            # Mock configuration
+            settings.IS_PRODUCTION = True
+            settings._LANGUAGES_CONFIG = {
+                'parent': {'name': 'Parent', 'natural_name': 'Parent', 'incubating': True},
+                'variant': {'name': 'Variant', 'natural_name': 'Variant', 'variant_of': 'parent', 'incubating': False}
+            }
+            
+            locales = get_sorted_grouped_locales()
+            codes = [l['code'] for l in locales]
+            
+            # Parent should be missing (incubating + production)
+            self.assertNotIn('parent', codes)
+            
+            # Variant should be present (orphaned but visible)
+            self.assertIn('variant', codes)
+            
+        finally:
+            # Restore
+            settings._LANGUAGES_CONFIG = original_config
+            settings.IS_PRODUCTION = original_production
+
+    def test_label_key_presence(self):
+        translation.activate('en')
+        locales = get_sorted_grouped_locales()
+        
+        for item in locales:
+            self.assertIn('label', item)
+            for variant in item['variants']:
+                 # Variants might not have 'label' explicitly set in my code update?
+                 # Let's check my code. I added 'label' to variant_entry too.
+                 self.assertIn('label', variant)
+
+if __name__ == '__main__':
+    unittest.main()
 
 

@@ -32,9 +32,15 @@
                         </button>
                     {% else %}
                         <!-- Logic for language with variants -->
-                        <div class="dropdown-header">
-                             {{ option.styled_name }}
-                        </div>
+                         <!-- Base Language Button -->
+                        <button type="submit"
+                            name="locale"
+                            value="{{ option.code }}"
+                            class="dropdown-item dropdown-header-link {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+                            role="menuitem">
+                            {{ option.styled_name }}
+                        </button>
+                        
                         {% for variant in option.variants %}
                             <button type="submit"
                                 name="locale"

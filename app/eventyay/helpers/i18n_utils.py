@@ -80,16 +80,18 @@ def get_sorted_grouped_locales(current_locale=None):
         
         if variant_of:
             # It's a variant
-             if variant_of not in grouped:
-                 # Parent not seen yet or doesn't exist (should not happen if config is correct)
-                 # Create placeholder if needed, or wait. 
-                 # Better: iterate all, put into list, then process.
-                 pass
-             # We will handle variants after collecting all objects
+            if variant_of not in grouped:
+                # Parent not found (e.g. filtered out because incubating)
+                # Treat as standalone entry
+                grouped[code] = entry
+                continue
+            # We will handle variants after collecting all objects
         else:
             grouped[code] = entry
 
     # Second pass: Associate variants
+    # Use a list to avoid runtime error if we modify grouped keys? 
+    # Actually we only append to variants list of existing items, so iterating config is fine.
     for code, info in languages_config.items():
         is_incubating = info.get('incubating', False)
         if is_incubating and getattr(settings, 'IS_PRODUCTION', False):
@@ -98,13 +100,6 @@ def get_sorted_grouped_locales(current_locale=None):
         variant_of = info.get('variant_of')
         if variant_of and variant_of in grouped:
              # It's a variant of an existing base
-             # Use the specific name for the variant (e.g. "Formal", "Informal")
-             # We might need a 'variant_label' in settings, or derive it.
-             # For 'de-formal', name is 'German (formal)', we want just 'Formal'??
-             # User requested:
-             # German (Deutsch)
-             # ↳ Formal
-             # ↳ Informal
              
              # Let's check settings for 'variant_label' or parse 'name'
              variant_label = info.get('variant_label', info['name'])
@@ -113,8 +108,13 @@ def get_sorted_grouped_locales(current_locale=None):
                  'code': code,
                  'name': variant_label, 
                  'styled_name': variant_label, # Variants usually just show the variant name
+                 'label': variant_label, # Compatibility
              }
              grouped[variant_of]['variants'].append(variant_entry)
+        
+        # Ensure base entries have 'label' for compatibility
+        if code in grouped:
+             grouped[code]['label'] = grouped[code]['styled_name']
 
     # Convert to list and sort
     result_list = list(grouped.values())
