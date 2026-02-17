@@ -166,29 +166,65 @@ def staff_user(user):
     """Create a staff user with active staff session."""
     user.is_staff = True
     user.save()
-    user.staffsession_set.create(session_key='test-session')
+    session = user.staffsession_set.create(session_key='test-session')
     return user
 
 
 @pytest.fixture
-@scopes_disabled()
 def staff_client(client, staff_user):
     """Create an authenticated client with staff session."""
-    client.force_authenticate(user=staff_user)
+    client.force_login(staff_user)
     return client
+
+
+@pytest.mark.django_db
+def test_organizer_list_staff_permission(staff_client, organizer, staff_user):
+    """Test that staff user can see organizer list even without specific permission"""
+    # We need to manually set the session key in the client's session
+    # to match what StaffSessionMiddleware expects
+    session = staff_client.session
+    session.session_key = 'test-session'
+    session.save()
+
+    with scopes_disabled():
+        resp = staff_client.get('/api/v1/organizers/')
+        assert resp.status_code == 200
+        assert len(resp.data['results']) >= 1
+
+
+@pytest.mark.django_db
+def test_organizer_detail_staff_permission(staff_client, organizer, staff_user):
+    """Test that staff user can see organizer detail without specific permission"""
+    session = staff_client.session
+    session.session_key = 'test-session'
+    session.save()
+
+    with scopes_disabled():
+        resp = staff_client.get('/api/v1/organizers/{}/'.format(organizer.slug))
+        assert resp.status_code == 200
+        assert resp.data['slug'] == organizer.slug
+
+
+@pytest.mark.django_db
+def test_organizer_settings_staff_permission(staff_client, organizer, staff_user):
+    """Test that staff user can see organizer settings without specific permission"""
+    session = staff_client.session
+    session.session_key = 'test-session'
+    session.save()
+
+    with scopes_disabled():
+        resp = staff_client.get('/api/v1/organizers/{}/settings/'.format(organizer.slug))
+        assert resp.status_code == 200
 
 
 @pytest.mark.django_db
 def test_organizer_pagination_page_size(staff_client, organizer):
     """Test that page_size parameter works correctly."""
-    from eventyay.base.models import Organizer
-    from django_scopes import scopes_disabled
-    
     with scopes_disabled():
         # Create 5 organizers total (including existing 'dummy')
         for i in range(4):
             Organizer.objects.create(name=f'Test Org {i}', slug=f'test-org-{i}')
-    
+
     resp = staff_client.get('/api/v1/organizers/?page_size=1')
     assert resp.status_code == 200
     assert 'results' in resp.data
@@ -200,14 +236,11 @@ def test_organizer_pagination_page_size(staff_client, organizer):
 @pytest.mark.django_db
 def test_organizer_pagination_max_cap(staff_client, organizer):
     """Test that max_page_size caps at 100 even if higher value requested."""
-    from eventyay.base.models import Organizer
-    from django_scopes import scopes_disabled
-    
     with scopes_disabled():
         # Create 105 organizers to test the 100 cap
         for i in range(104):
             Organizer.objects.create(name=f'Test Org {i}', slug=f'test-org{i}')
-    
+
     resp = staff_client.get('/api/v1/organizers/?page_size=999')
     assert resp.status_code == 200
     assert 'results' in resp.data
@@ -218,20 +251,23 @@ def test_organizer_pagination_max_cap(staff_client, organizer):
 
 @pytest.mark.django_db
 def test_organizer_pagination_legacy_support(staff_client, organizer):
-    """Test that legacy limit/offset pagination still works."""
-    from eventyay.base.models import Organizer
-    from django_scopes import scopes_disabled
-    
+    """Test that legacy limit/offset pagination still works and overrides page parameter."""
     with scopes_disabled():
         # Create 15 organizers total
         for i in range(14):
             Organizer.objects.create(name=f'Test Org {i}', slug=f'testorg{i}')
     
-    resp = staff_client.get('/api/v1/organizers/?limit=10&offset=0')
+    # Include both limit/offset and page to ensure limit/offset paginator is used
+    resp = staff_client.get('/api/v1/organizers/?limit=10&offset=0&page=2')
     assert resp.status_code == 200
     assert 'results' in resp.data
     assert len(resp.data['results']) == 10
-    # Legacy format has different response structure
+    # Legacy limit/offset pagination exposes count/next/previous with limit/offset in the URLs
     assert 'count' in resp.data
+    assert 'next' in resp.data
+    # Next URL should advance offset while preserving limit, demonstrating limit/offset-based pagination
+    assert 'limit=10' in resp.data['next']
+    assert 'offset=10' in resp.data['next']
+    assert 'page=' not in resp.data['next']
 
 
