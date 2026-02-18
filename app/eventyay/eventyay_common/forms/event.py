@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from eventyay.base.forms import SettingsForm
 from eventyay.base.settings import validate_event_settings
 from eventyay.base.models import Event
+from eventyay.common.language import get_language_choices_native_with_ui_name
 from eventyay.orga.forms.widgets import MultipleLanguagesWidget
 from eventyay.control.forms import (
      SplitDateTimeField,
@@ -55,6 +56,10 @@ class EventCommonSettingsForm(SettingsForm):
     def __init__(self, *args, **kwargs):
         self.event = kwargs['obj']
         super().__init__(*args, **kwargs)
+        localized_language_choices = get_language_choices_native_with_ui_name()
+        for fname in ('locales', 'content_locales'):
+            if fname in self.fields:
+                self.fields[fname].choices = localized_language_choices
         # Ensure the language selectors use the custom dropdown widget even if defaults are not picked up elsewhere,
         # while preserving any existing widget attributes (ids, data-*, classes).
         for fname in ('locales', 'content_locales'):
