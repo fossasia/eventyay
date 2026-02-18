@@ -105,7 +105,7 @@ class TalkQuestion(OrderedModel, PretalxModel):
     the opportunity to get all the information they need.
 
     :param variant: Can be any of 'number', 'string', 'text', 'boolean',
-        'file', 'choices', or 'multiple_choice'. Defined in the
+        'file', 'choices', 'multiple_choice', or 'country'. Defined in the
         ``TalkQuestionVariant`` class.
     :param target: Can be any of 'submission', 'speaker', or 'reviewer'.
         Defined in the ``TalkQuestionTarget`` class.
