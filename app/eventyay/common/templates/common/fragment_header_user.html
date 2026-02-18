@@ -4,7 +4,7 @@
 {% load staff_session %}
 
 {% with current_event=current_event|default:request.event nav_context=nav_context|default:"agenda" %}
-    {% if current_event and current_event.locales|length > 1 and not is_html_export %}
+    {% if current_event and current_event.locales and not is_html_export %}
         <details id="locale-dropdown-label" class="dropdown locales" aria-haspopup="menu" role="menu">
             <summary>
 				{% translate "Language" %}
@@ -12,7 +12,7 @@
             </summary>
             <div id="locale-dropdown" class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}">
                 <div class="language-enforce-bar">
-                    <span id="language-enforce-label" class="language-enforce-label">{% translate "Enforce UI language" %}</span>
+                    <span id="language-enforce-label" class="language-enforce-label">{% translate "Link languages" %}</span>
                     <form method="get" action="{% url 'presale:locale.event' %}" class="language-enforce-form">
                         <input type="hidden" name="enforce_ui_language" value="{{ request.event_language_enforce_ui|yesno:'0,1' }}">
                         <input type="hidden" name="event" value="{{ current_event.slug }}">
@@ -28,11 +28,11 @@
                     </form>
                     <span class="language-enforce-help"
                           tabindex="0"
-                          aria-label="{% translate 'Help: Enforce UI language' %}"
+                          aria-label="{% translate 'Help: Link languages' %}"
                           aria-describedby="language-enforce-tooltip">
                         <i class="fa fa-info-circle" aria-hidden="true"></i>
                         <span id="language-enforce-tooltip" class="language-enforce-tooltip" role="tooltip">
-                            {% translate "When enabled, event language follows your UI language whenever that language is available for this event." %}
+                            {% translate "When enabled, event and UI languages are linked. Selecting one updates the other whenever that language is available for this event." %}
                         </span>
                     </span>
                 </div>
@@ -56,6 +56,8 @@
                             <form method="post" action="{% url 'eventyay_common:account.locale' %}">
                                 {% csrf_token %}
                                 <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                <input type="hidden" name="event" value="{{ current_event.slug }}">
+                                <input type="hidden" name="organizer" value="{{ current_event.organizer.slug }}">
                                 {% for option in language_options %}
                                     <button type="submit"
                                             name="locale"
