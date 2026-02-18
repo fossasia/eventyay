@@ -55,7 +55,11 @@ def get_language_choices_native_with_ui_name(codes=None) -> list[tuple[str, str]
         language_info = settings.LANGUAGES_INFORMATION.get(code, {})
         natural_name = language_info.get('natural_name') or str(translated_names.get(code, code))
         translated_name = str(translated_names.get(code, language_info.get('name', code)))
-        choices.append((code, f'{natural_name} ({translated_name})'))
+        if natural_name.strip().casefold() == translated_name.strip().casefold():
+            label = natural_name
+        else:
+            label = f'{natural_name} ({translated_name})'
+        choices.append((code, label))
     return choices
 
 

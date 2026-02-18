@@ -366,12 +366,12 @@ class LanguageSwitchView(View):
             event_slug = request.POST.get('event')
             organizer_slug = request.POST.get('organizer')
             event = None
-            if event_slug:
+            if event_slug and organizer_slug:
                 with scopes_disabled():
-                    event_queryset = Event.objects.filter(slug=event_slug)
-                    if organizer_slug:
-                        event_queryset = event_queryset.filter(organizer__slug=organizer_slug)
-                    event = event_queryset.first()
+                    event = Event.objects.filter(
+                        slug=event_slug,
+                        organizer__slug=organizer_slug,
+                    ).first()
 
             if event:
                 enforce_cookie_name = get_event_enforce_ui_language_cookie_name(event.slug, event.organizer.slug)

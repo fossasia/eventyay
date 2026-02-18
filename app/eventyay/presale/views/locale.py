@@ -35,13 +35,16 @@ def _set_event_cookie(request, response, key, value, max_age):
     )
 
 
-def _set_ui_language_cookie(response, locale, max_age):
-    response.set_cookie(
+def _set_ui_language_cookie(request, response, locale, max_age):
+    set_cookie_without_samesite(
+        request,
+        response,
         settings.LANGUAGE_COOKIE_NAME,
         locale,
         max_age=max_age,
         expires=_cookie_expires(max_age),
         domain=settings.SESSION_COOKIE_DOMAIN,
+        path='/',
     )
 
 
@@ -57,13 +60,7 @@ class LocaleSet(NoSearchIndexViewMixin, View):
             if request.user.is_authenticated and request.user.locale != locale:
                 request.user.locale = locale
                 request.user.save(update_fields=['locale'])
-            resp.set_cookie(
-                settings.LANGUAGE_COOKIE_NAME,
-                locale,
-                max_age=max_age,
-                expires=_cookie_expires(max_age),
-                domain=settings.SESSION_COOKIE_DOMAIN,
-            )
+            _set_ui_language_cookie(request, resp, locale, max_age)
 
         return resp
 
@@ -80,12 +77,8 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
         event_slug = request.GET.get('event')
 
         event = getattr(request, 'event', None)
-        if not event and event_slug:
-            event = (
-                Event.objects.filter(slug=event_slug, organizer__slug=organizer_slug).first()
-                if organizer_slug
-                else Event.objects.filter(slug=event_slug).first()
-            )
+        if not event and event_slug and organizer_slug:
+            event = Event.objects.filter(slug=event_slug, organizer__slug=organizer_slug).first()
 
         if event:
             max_age = 10 * 365 * 24 * 60 * 60
@@ -133,7 +126,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                 if enforce_active:
                     linked_ui_language = strict_match_language(locale, ui_supported)
                     if linked_ui_language:
-                        _set_ui_language_cookie(resp, linked_ui_language, max_age)
+                        _set_ui_language_cookie(request, resp, linked_ui_language, max_age)
                         if request.user.is_authenticated and request.user.locale != linked_ui_language:
                             request.user.locale = linked_ui_language
                             request.user.save(update_fields=['locale'])
