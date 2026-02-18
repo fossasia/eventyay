@@ -27,12 +27,12 @@
             </h3>
         </div>
         <div class="panel-body">
-            {% can_access_tickets_dashboard request.event as can_access_tickets_dashboard %}
+            {% can_access_tickets_dashboard request.event as can_access_tickets %}
             <p>
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% if can_access_tickets_dashboard %}
+                {% if can_access_tickets %}
                     {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
                 {% else %}
                     {% trans "Go to" %} <a href="#" data-toggle="modal" data-target="#tickets-permission-modal">{% trans "Tickets Dashboard" %}</a>
@@ -89,6 +89,27 @@
                         <div class="modal-card-content">
                             <h3>{% trans "Component not enabled!" %}</h3>
                             <p>{% trans "You need to enable this component first" %}</p>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal popup-modal" id="tickets-permission-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="modal-card">
+                        <div class="modal-card-icon">
+                            <i class="fa fa-lock big-rotating-icon"></i>
+                        </div>
+                        <div class="modal-card-content">
+                            <h3>{% trans "Access restricted" %}</h3>
+                            <p>
+                                {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+                            </p>
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Ok" %}</button>
                         </div>
                     </div>
