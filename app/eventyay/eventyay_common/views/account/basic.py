@@ -23,6 +23,12 @@ from django_scopes import scopes_disabled
 from eventyay.base.forms.user import UserSettingsForm
 from eventyay.base.models import Event, LogEntry, NotificationSetting, User
 from eventyay.base.notifications import get_all_notification_types
+from eventyay.common.utils.language import (
+    get_event_enforce_ui_language_cookie_name,
+    get_event_language_cookie_name,
+    strict_match_language,
+)
+from eventyay.helpers.cookies import set_cookie_without_samesite
 
 from ...navigation import get_account_navigation
 from .common import AccountMenuMixIn
@@ -356,4 +362,31 @@ class LanguageSwitchView(View):
                 expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
                 domain=settings.SESSION_COOKIE_DOMAIN,
             )
+
+            event_slug = request.POST.get('event')
+            organizer_slug = request.POST.get('organizer')
+            event = None
+            if event_slug:
+                with scopes_disabled():
+                    event_queryset = Event.objects.filter(slug=event_slug)
+                    if organizer_slug:
+                        event_queryset = event_queryset.filter(organizer__slug=organizer_slug)
+                    event = event_queryset.first()
+
+            if event:
+                enforce_cookie_name = get_event_enforce_ui_language_cookie_name(event.slug, event.organizer.slug)
+                if request.COOKIES.get(enforce_cookie_name, '0') == '1':
+                    linked_event_language = strict_match_language(locale, event.locales)
+                    if linked_event_language:
+                        event_cookie_name = get_event_language_cookie_name(event.slug, event.organizer.slug)
+                        set_cookie_without_samesite(
+                            request,
+                            response,
+                            event_cookie_name,
+                            linked_event_language,
+                            max_age=max_age,
+                            expires=expires.strftime('%a, %d-%b-%Y %H:%M:%S GMT'),
+                            domain=settings.SESSION_COOKIE_DOMAIN,
+                            path='/',
+                        )
         return response

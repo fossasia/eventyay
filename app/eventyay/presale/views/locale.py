@@ -35,6 +35,16 @@ def _set_event_cookie(request, response, key, value, max_age):
     )
 
 
+def _set_ui_language_cookie(response, locale, max_age):
+    response.set_cookie(
+        settings.LANGUAGE_COOKIE_NAME,
+        locale,
+        max_age=max_age,
+        expires=_cookie_expires(max_age),
+        domain=settings.SESSION_COOKIE_DOMAIN,
+    )
+
+
 class LocaleSet(NoSearchIndexViewMixin, View):
     def get(self, request, *args, **kwargs):
         url = request.GET.get('next', request.headers.get('Referer', '/'))
@@ -80,6 +90,7 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
         if event:
             max_age = 10 * 365 * 24 * 60 * 60
             supported = event.locales
+            ui_supported = [code for code, __ in settings.LANGUAGES]
             event_cookie_name = get_event_language_cookie_name(event.slug, event.organizer.slug)
             enforce_cookie_name = get_event_enforce_ui_language_cookie_name(event.slug, event.organizer.slug)
             ui_language = getattr(request, 'ui_language', request.LANGUAGE_CODE or settings.LANGUAGE_CODE)
@@ -119,13 +130,12 @@ class EventLocaleSet(NoSearchIndexViewMixin, View):
                     if enforce_ui_language is not None
                     else request.COOKIES.get(enforce_cookie_name, '0') == '1'
                 )
-                if enforce_active and locale.lower() != ui_language.lower():
-                    _set_event_cookie(
-                        request,
-                        resp,
-                        enforce_cookie_name,
-                        '0',
-                        max_age,
-                    )
+                if enforce_active:
+                    linked_ui_language = strict_match_language(locale, ui_supported)
+                    if linked_ui_language:
+                        _set_ui_language_cookie(resp, linked_ui_language, max_age)
+                        if request.user.is_authenticated and request.user.locale != linked_ui_language:
+                            request.user.locale = linked_ui_language
+                            request.user.save(update_fields=['locale'])
 
         return resp
