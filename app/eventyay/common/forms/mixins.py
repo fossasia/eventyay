@@ -439,7 +439,7 @@ class QuestionFieldsMixin:
                 required=question.required,
                 disabled=read_only,
                 help_text=help_text,
-                initial=(initial_object.answer if initial_object else question.default_answer) or None,
+                initial=initial or None,
             )
             field.original_help_text = original_help_text
             field.widget.attrs['placeholder'] = ''  # XSS
