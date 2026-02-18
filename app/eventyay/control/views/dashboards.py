@@ -620,21 +620,21 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
             else:
                 status = ('success', _('On sale'))
 
-        if user.has_event_permission(
-            event.organizer,
-            event,
-            'can_view_orders',
-            request=request,
-        ):
-            event_url = reverse(
-                'control:event.index',
-                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-            )
-        else:
-            event_url = reverse(
-                'eventyay_common:event.index',
-                kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-            )
+            if user.has_event_permission(
+                event.organizer,
+                event,
+                'can_view_orders',
+                request=request,
+            ):
+                event_url = reverse(
+                    'control:event.index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
+            else:
+                event_url = reverse(
+                    'eventyay_common:event.index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
 
         widgets.append(
             {

@@ -27,6 +27,7 @@
     {% endif %}
 </div>
 
+{% if not can_access_tickets %}
 <div class="modal popup-modal" id="tickets-permission-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -49,3 +50,4 @@
         </div>
     </div>
 </div>
+{% endif %}
