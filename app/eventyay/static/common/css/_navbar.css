@@ -125,6 +125,12 @@ nav.navbar.navbar-inverse .btn-link:focus i {
   outline: 0;
 }
 
+@media (min-width: 768px) {
+  .navbar-toggle {
+    display: none;
+  }
+}
+
 /* ============================================
    Sidebar toggle button - _sidebar.scss
    Overrides .navbar-toggle for sidebar
