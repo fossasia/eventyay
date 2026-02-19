@@ -1364,16 +1364,22 @@ class AbstractPosition(models.Model):
 
         # We need to clone our question objects, otherwise we will override the cached
         # answers of other products in the same cart if the question objects have been
-        # selected via prefetch_related
+        # selected via prefetch_related.
+        # Inactive questions are always excluded for consistency (checkout and backend).
+        def is_active_question(q):
+            return getattr(q, 'active', True)
+
         if not all:
             if getattr(self.product, 'questions_to_ask', None) is not None:
-                questions = list(copy.copy(q) for q in self.product.questions_to_ask if q.active)
+                questions = list(copy.copy(q) for q in self.product.questions_to_ask)
             else:
                 questions = list(
                     copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
                 )
         else:
-            questions = list(copy.copy(q) for q in self.product.questions.all())
+            questions = list(
+                copy.copy(q) for q in self.product.questions.filter(active=True)
+            )
 
         question_cache = {q.pk: q for q in questions}
 
@@ -2285,7 +2291,7 @@ class OrderPosition(AbstractPosition):
                 not self.secret
                 or OrderPosition.all.filter(
                     secret=self.secret,
-                    order__event__organizer_id=self.order.event.organizer_id,
+                    order__event=self.order.event,
                 ).exists()
             ):
                 assign_ticket_secret(
