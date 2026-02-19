@@ -35,7 +35,7 @@
 
 body.sidebar-minimized {
   .sidebar {
-    width: 45px;
+    width: $sidebar-minimized-width;
     overflow: hidden;
     transition: none;
 
@@ -87,13 +87,13 @@ body.sidebar-minimized {
   }
 
   #page-wrapper {
-    margin-left: 45px;
+    margin-left: $sidebar-minimized-width;
   }
 }
 
 // When sidebar is fully expanded (not minimized) on desktop
 body:not(.sidebar-minimized) .sidebar {
-  width: 250px;
+  width: $sidebar-width;
 
   .nav>li>a {
     .sidebar-text {
@@ -146,7 +146,7 @@ body:not(.sidebar-minimized) .sidebar {
 }
 
 body:not(.sidebar-minimized) #page-wrapper {
-  margin-left: 250px;
+  margin-left: $sidebar-width;
 }
 
 @media (max-width: 767px) {
@@ -159,7 +159,7 @@ body:not(.sidebar-minimized) #page-wrapper {
     top: var(--navbar-height, 50px);
     bottom: 0;
     left: 0;
-    width: 250px;
+    width: $sidebar-width;
     background-color: #f8f8f8;
     z-index: 12;
     transform: translateX(-100%);
@@ -210,7 +210,7 @@ body:not(.sidebar-minimized) #page-wrapper {
 
   body:not(.sidebar-minimized) .sidebar {
     transform: translateX(0%);
-    width: 250px;
+    width: $sidebar-width;
 
     .nav>li>a {
       .sidebar-text {
@@ -239,7 +239,7 @@ body:not(.sidebar-minimized) #page-wrapper {
 
 @media (hover: hover) and (pointer: fine) {
   body.sidebar-minimized .sidebar:hover {
-    width: 250px;
+    width: $sidebar-width;
     overflow-y: auto;
     overflow-x: visible;
     transition: none;
@@ -392,7 +392,7 @@ body:not(.sidebar-minimized) #page-wrapper {
   }
 
   body.sidebar-minimized:has(.sidebar:hover) #page-wrapper {
-    margin-left: 250px;
+    margin-left: $sidebar-width;
   }
 }
 
