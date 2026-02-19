@@ -1,10 +1,32 @@
+@mixin sidebar-nav-collapse {
+  .sidebar-nav .nav-second-level {
+    &.collapse {
+      display: none;
+    }
+
+    &.collapse.in {
+      display: block;
+    }
+  }
+
+  .sidebar-nav .nav-third-level {
+    &.collapse {
+      display: none;
+    }
+
+    &.collapse.in {
+      display: block;
+    }
+  }
+}
+
 .navbar-toggle-sidebar {
   display: flex;
   align-items: baseline;
   float: left;
   font-size: 14px;
   margin-left: 10px;
-  background-color: transparent !important;
+  background-color: transparent;
   border: none;
   padding: 0.5rem;
   color: #fff;
@@ -15,7 +37,7 @@
 
   &:hover,
   &:focus {
-    background-color: transparent !important;
+    background-color: transparent;
     color: rgba(255, 255, 255, 0.8);
     outline: none;
   }
@@ -208,15 +230,7 @@ body:not(.sidebar-minimized) #page-wrapper {
     }
 
     // Handle collapse state for nested menus on mobile
-    .sidebar-nav .nav-second-level {
-      &.collapse {
-        display: none;
-      }
-
-      &.collapse.in {
-        display: block;
-      }
-    }
+    @include sidebar-nav-collapse;
   }
 
   body:not(.sidebar-minimized) .sidebar {
@@ -295,15 +309,9 @@ body:not(.sidebar-minimized) #page-wrapper {
       margin-right: 40px;
     }
 
+    @include sidebar-nav-collapse;
+
     .sidebar-nav .nav-second-level {
-      &.collapse {
-        display: none;
-      }
-
-      &.collapse.in {
-        display: block;
-      }
-
       li {
         border-bottom: none;
 
@@ -314,14 +322,6 @@ body:not(.sidebar-minimized) #page-wrapper {
     }
 
     .sidebar-nav .nav-third-level {
-      &.collapse {
-        display: none;
-      }
-
-      &.collapse.in {
-        display: block;
-      }
-
       li {
         border-bottom: none;
 
