@@ -26,7 +26,7 @@ def backfill_positions(apps, _schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("base", "0013_alter_talkquestion_question"),
+        ("base", "0016_alter_talkquestion_variant"),
     ]
 
     operations = [
