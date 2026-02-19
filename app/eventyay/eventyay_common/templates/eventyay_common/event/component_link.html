@@ -1,33 +1,34 @@
 {% load i18n event_tags %}
 <div class="navigation-button">
     {% if request.organizer and request.event %}
-        {% can_access_tickets_dashboard request.event as can_access_tickets %}
-        <a href="#" class="header-nav btn btn-outline-success active">
-            <i class="fa fa-home"></i> {% trans "Home" %}
-        </a>
-        {% if can_access_tickets %}
-        <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}' class="header-nav btn btn-outline-success">
-            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-        </a>
-        {% else %}
-        <a href="#" class="header-nav btn btn-outline-success" data-toggle="modal" data-target="#tickets-permission-modal">
-            <i class="fa fa-ticket"></i> {% trans "Tickets" %}
-        </a>
-        {% endif %}
-        {% if is_talk_event_created %}
-        <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
-            <i class="fa fa-group"></i> {% trans "Talk" %}
-        </a>
-        {% endif %}
-        <a class="header-nav btn btn-outline-success"
-           href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
-           title="{% trans 'Access videos related to this event' %}">
-            <i class="fa fa-video-camera"></i> {% trans "Videos" %}
-        </a>
+    {% can_access_tickets_dashboard request.event as can_access_tickets %}
+    <a href="#" class="header-nav btn btn-outline-success active">
+        <i class="fa fa-home"></i> {% trans "Home" %}
+    </a>
+    {% if can_access_tickets %}
+    <a href='{% url "control:event.index" organizer=request.organizer.slug event=request.event.slug %}'
+        class="header-nav btn btn-outline-success">
+        <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+    </a>
+    {% else %}
+    <a href="#" class="header-nav btn btn-outline-success" data-toggle="modal" data-target="#tickets-permission-modal">
+        <i class="fa fa-ticket"></i> {% trans "Tickets" %}
+    </a>
+    {% endif %}
+    {% if is_talk_event_created %}
+    <a href='{% url "orga:event.dashboard" event=request.event.slug %}' class="header-nav btn btn-outline-success">
+        <i class="fa fa-group"></i> {% trans "Talk" %}
+    </a>
+    {% endif %}
+    <a class="header-nav btn btn-outline-success"
+        href='{% url "eventyay_common:event.create_access_to_video" organizer=request.organizer.slug event=request.event.slug %}'
+        title="{% trans 'Access videos related to this event' %}">
+        <i class="fa fa-video-camera"></i> {% trans "Videos" %}
+    </a>
     {% endif %}
 </div>
 
-{% if not can_access_tickets %}
+{% if request.organizer and request.event and not can_access_tickets %}
 <div class="modal popup-modal" id="tickets-permission-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -39,7 +40,8 @@
                     <div class="modal-card-content">
                         <h3>{% trans "Access restricted" %}</h3>
                         <p>
-                            {% trans "You require additional permissions to access the tickets dashboard. Please contact the main event organisers." %}
+                            {% trans "You require additional permissions to access the tickets dashboard. Please contact
+                            the main event organisers." %}
                         </p>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">
                             {% trans "Ok" %}
