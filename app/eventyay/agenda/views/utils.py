@@ -13,6 +13,15 @@ from django.utils import timezone
 
 from eventyay.common.exporter import BaseExporter
 from eventyay.common.signals import register_data_exporters, register_my_data_exporters
+
+
+# Same escaping Django applies inside json_script to prevent XSS in <script> tags.
+JSON_SCRIPT_ESCAPES = {ord(">"): "\\u003E", ord("<"): "\\u003C", ord("&"): "\\u0026"}
+
+
+def escape_json_for_script(json_str: str) -> str:
+    """Escape a JSON string for safe embedding in an HTML ``<script>`` tag."""
+    return json_str.translate(JSON_SCRIPT_ESCAPES)
 from eventyay.common.text.path import safe_filename
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.schedule.exporters import FavedICalExporter

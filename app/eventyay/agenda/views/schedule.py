@@ -20,9 +20,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import TemplateView
 from django_context_decorator import context
+from i18nfield.utils import I18nJSONEncoder
 
 from eventyay.agenda.views.utils import (
     build_public_schedule_exporters,
+    escape_json_for_script,
     get_schedule_exporter_content,
     get_schedule_exporters,
     is_public_schedule_empty,
@@ -309,9 +311,8 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         """Build enriched schedule data for inline embedding, avoiding extra API calls."""
         if not self.schedule:
             return '{}'
-        from i18nfield.utils import I18nJSONEncoder
         data = self.schedule.build_data(all_talks=not self.schedule.version, enrich=True)
-        return json.dumps(data, cls=I18nJSONEncoder)
+        return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
@@ -340,7 +341,7 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
             'versions': versions,
             'exporters': build_public_schedule_exporters(self.request.event, version=version),
         }
-        ctx['schedule_meta_json'] = json.dumps(meta)
+        ctx['schedule_meta_json'] = escape_json_for_script(json.dumps(meta))
         return ctx
 
 

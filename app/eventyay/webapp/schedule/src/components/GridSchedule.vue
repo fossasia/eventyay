@@ -621,11 +621,11 @@ export default {
 		border-top: 1px solid $clr-dividers-light
 		z-index: 20
 		&.datebreak
-			font-weight: 800
+			font-weight: 700
 			border-top: 3px solid $clr-dividers-light
 			white-space: pre
 			padding-top: 2px
-			font-size: 13px
+			font-size: 12px
 			line-height: 1.2
 			overflow: hidden
 			max-height: 100%

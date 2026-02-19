@@ -124,7 +124,7 @@ export default {
 			return this.timezone || this.scheduleData?.timezone || moment.tz.guess()
 		},
 		resolvedHasAmPm() {
-			if (this.hasAmPm !== undefined && this.hasAmPm !== false) return this.hasAmPm
+			if (this.hasAmPm !== undefined) return this.hasAmPm
 			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
 			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
 		},

@@ -1,5 +1,6 @@
 from collections import defaultdict, namedtuple
 from contextlib import suppress
+from functools import lru_cache
 from urllib.parse import quote
 from xml.etree.ElementTree import tostring as xml_tostring
 
@@ -18,16 +19,8 @@ from i18nfield.fields import I18nTextField
 
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.agenda.signals import register_recording_provider
-from eventyay.base.models import PretalxModel
-from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
-
-
-def _make_qr_svg(url):
-    """Generate an SVG QR code string for the given URL."""
-    image = qr_lib.make(url, image_factory=SvgPathFillImage)
-    return xml_tostring(image.get_image()).decode()
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import can_view_schedule, is_agenda_visible, is_widget_visible
@@ -37,6 +30,17 @@ from eventyay.talk_rules.submission import is_wip, orga_can_change_submissions
 
 from .mixins import PretalxModel
 from .submission import SubmissionFavourite
+
+
+@lru_cache(maxsize=512)
+def make_qr_svg(url: str) -> str:
+    """Generate an SVG QR code string for the given URL.
+
+    Results are cached because the same export URLs are generated on every
+    schedule page load and QR encoding is CPU-intensive.
+    """
+    image = qr_lib.make(url, image_factory=SvgPathFillImage)
+    return xml_tostring(image.get_image()).decode()
 
 
 class Schedule(PretalxModel):
@@ -616,6 +620,7 @@ class Schedule(PretalxModel):
                 'submission__resources',
                 'submission__answers',
                 'submission__answers__question',
+                'submission__answers__options',
             )
         talks = talks.order_by('start')
         rooms = set(self.event.rooms.filter(deleted=False)) if all_rooms else set()
@@ -662,18 +667,19 @@ class Schedule(PretalxModel):
                 if enrich:
                     talk_data['resources'] = [
                         {
-                            'resource': resource.resource.url if resource.resource else None,
+                            'resource': resource.resource.url if resource.resource else resource.link,
                             'description': str(resource.description),
                             'link': resource.link,
                         }
                         for resource in talk.submission.resources.all()
+                        if resource.resource or resource.link
                     ]
                     talk_data['answers'] = [
                         {
                             'question': str(answer.question.question),
                             'answer': str(answer.answer),
                             'question_id': answer.question_id,
-                            'options': list(answer.options.values_list('answer', flat=True)) if hasattr(answer, 'options') else [],
+                            'options': list(answer.options.values_list('answer', flat=True)),
                         }
                         for answer in talk.submission.answers.all()
                         if answer.question and answer.question.is_public
@@ -691,12 +697,12 @@ class Schedule(PretalxModel):
                         'google_calendar': google_url,
                         'webcal': webcal_url,
                         'qrcodes': {
-                            'ics': _make_qr_svg(f'{full_base_url}talk/{code}.ics'),
-                            'json': _make_qr_svg(f'{full_base_url}talk/{code}.json'),
-                            'xml': _make_qr_svg(f'{full_base_url}talk/{code}.xml'),
-                            'xcal': _make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
-                            'google_calendar': _make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
-                            'webcal': _make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
+                            'ics': make_qr_svg(f'{full_base_url}talk/{code}.ics'),
+                            'json': make_qr_svg(f'{full_base_url}talk/{code}.json'),
+                            'xml': make_qr_svg(f'{full_base_url}talk/{code}.xml'),
+                            'xcal': make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
+                            'google_calendar': make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
+                            'webcal': make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
                         },
                     }
                     # Recording iframe from provider plugins
@@ -773,12 +779,12 @@ class Schedule(PretalxModel):
                     'google_calendar': spk_google,
                     'webcal': spk_webcal,
                     'qrcodes': {
-                        'ics': _make_qr_svg(f'{spk_full_base}/talks.ics'),
-                        'json': _make_qr_svg(f'{spk_full_base}/talks.json'),
-                        'xml': _make_qr_svg(f'{spk_full_base}/talks.xml'),
-                        'xcal': _make_qr_svg(f'{spk_full_base}/talks.xcal'),
-                        'google_calendar': _make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
-                        'webcal': _make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
+                        'ics': make_qr_svg(f'{spk_full_base}/talks.ics'),
+                        'json': make_qr_svg(f'{spk_full_base}/talks.json'),
+                        'xml': make_qr_svg(f'{spk_full_base}/talks.xml'),
+                        'xcal': make_qr_svg(f'{spk_full_base}/talks.xcal'),
+                        'google_calendar': make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
+                        'webcal': make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
                     },
                 }
             speaker_list.append(speaker_data)

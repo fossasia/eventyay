@@ -13,8 +13,8 @@
 			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
 				h2 {{ t.downloads }}
-				a.download(v-for="{resource, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource)", target="_blank")
-					.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
+				a.download(v-for="{resource, link, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource || link)", target="_blank")
+					.mdi(:class="`mdi-${getIconByFileEnding(resource || link)}`")
 					.filename {{ description }}
 
 			slot(name="actions")

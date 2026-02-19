@@ -27,7 +27,7 @@ from eventyay.common.views.mixins import (
     PermissionRequired,
     SocialMediaCardMixin,
 )
-from eventyay.agenda.views.utils import is_public_speakers_empty, redirect_to_presale_with_warning
+from eventyay.agenda.views.utils import escape_json_for_script, is_public_speakers_empty, redirect_to_presale_with_warning
 from eventyay.base.models import SpeakerProfile, User
 from eventyay.base.models import TalkQuestionTarget
 
@@ -41,7 +41,7 @@ class ScheduleDataMixin:
         if not schedule:
             return '{}'
         data = schedule.build_data(enrich=True)
-        return json.dumps(data, cls=I18nJSONEncoder)
+        return escape_json_for_script(json.dumps(data, cls=I18nJSONEncoder))
 
 
 class SpeakerList(ScheduleDataMixin, EventPermissionRequired, Filterable, ListView):

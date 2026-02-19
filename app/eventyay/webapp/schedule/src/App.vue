@@ -793,8 +793,17 @@ export default {
 	--pretalx-clr-text: rgb(13,15,16)
 	&:fullscreen
 		background: #fff
-		padding: 16px
+		padding: 0
 		overflow: auto
+		--pretalx-sticky-top-offset: 0px
+		.c-schedule-toolbar
+			background: #fff
+			width: 100%
+			border-bottom: 1px solid $clr-dividers-light
+			box-shadow: 0 1px 3px rgba(0,0,0,0.08)
+		.c-grid-schedule .sticky-header
+			border-bottom: 1px solid $clr-dividers-light
+			box-shadow: 0 1px 3px rgba(0,0,0,0.06)
 	&.grid-schedule
 		margin: 0 auto
 	&.list-schedule

@@ -243,7 +243,12 @@ export default {
 		},
 		inEventTimezone() {
 			if (!this.resolvedSchedule?.talks?.length) return false
-			return moment().utcOffset() === moment.tz(this.resolvedSchedule.timezone).utcOffset()
+			const firstTalk = this.resolvedSchedule.talks[0]
+			const eventTz = this.resolvedSchedule.timezone
+			if (!firstTalk || !eventTz || !firstTalk.start) return false
+			const reference = firstTalk.start
+			const userTz = this.currentTimezone || moment.tz.guess()
+			return moment.tz(reference, userTz).utcOffset() === moment.tz(reference, eventTz).utcOffset()
 		},
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
@@ -358,6 +363,11 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
+	&:fullscreen
+		background: #fff
+		.c-schedule-toolbar
+			border-bottom: 1px solid $clr-dividers-light
+			box-shadow: 0 1px 3px rgba(0,0,0,0.08)
 	.schedule-content
 		flex: 1
 		min-height: 0

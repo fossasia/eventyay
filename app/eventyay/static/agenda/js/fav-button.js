@@ -91,7 +91,7 @@ class PretalxFavButton extends HTMLElement {
   }
 
   /**
-   * @throws {Error} when the network request fails
+   * @throws {Error} when the network request fails or returns a non-OK status
    */
   async _apiFetch (path, method) {
     const headers = { 'Content-Type': 'application/json' }
@@ -103,6 +103,9 @@ class PretalxFavButton extends HTMLElement {
       headers,
       credentials: 'same-origin',
     })
+    if (!response.ok) {
+      throw new Error(`API ${method} ${path} failed: ${response.status}`)
+    }
     return response.json()
   }
 
