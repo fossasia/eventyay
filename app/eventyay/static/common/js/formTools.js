@@ -128,6 +128,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
     wrapper.appendChild(textarea)
 
     textarea.classList.add('d-none')
+    textarea.hidden = true
+    textarea.style.display = 'none'
 
     const underlinePlugin = createEventyayUnderlinePlugin()
     const makeSimpleIconButton = ({ name, tooltip, command, extraClassName }) => {
@@ -202,6 +204,8 @@ const initToastUiMarkdownTextarea = (textarea) => {
             ['ul', 'ol', 'hr', 'link'],
         ],
     })
+    textarea.__eventyayToastUiEditor = editor
+    mount.__eventyayToastUiEditor = editor
 
     const fieldLang = textarea.getAttribute('lang') || textarea.lang
     if (fieldLang) {
@@ -347,7 +351,12 @@ const initToastUiMarkdownTextarea = (textarea) => {
         if (typeof editor.focus === 'function') editor.focus()
     })
 
-    mount.querySelector?.('.toastui-editor-mode-switch')?.classList?.add('d-none')
+    const modeSwitch = mount.querySelector?.('.toastui-editor-mode-switch')
+    if (modeSwitch instanceof HTMLElement) {
+        modeSwitch.classList?.add('d-none')
+        modeSwitch.hidden = true
+        modeSwitch.style.display = 'none'
+    }
 
     const syncToTextarea = () => {
         if (typeof editor.getMarkdown !== 'function') return
