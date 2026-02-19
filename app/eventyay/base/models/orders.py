@@ -1371,7 +1371,7 @@ class AbstractPosition(models.Model):
 
         if not all:
             if getattr(self.product, 'questions_to_ask', None) is not None:
-                questions = list(copy.copy(q) for q in self.product.questions_to_ask if q.active)
+                questions = list(copy.copy(q) for q in self.product.questions_to_ask)
             else:
                 questions = list(
                     copy.copy(q) for q in self.product.questions.filter(ask_during_checkin=False, hidden=False, active=True)
