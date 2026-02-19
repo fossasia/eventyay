@@ -1,7 +1,10 @@
 import pytest
+from django_countries.fields import Country
 from django_scopes import scope
-
+from pretalx.submission.forms import TalkQuestionsForm
 from pretalx.submission.models import Answer, Question
+
+from eventyay.helpers.countries import get_country_name
 
 
 @pytest.mark.parametrize("target", ("submission", "speaker", "reviewer"))
@@ -123,6 +126,7 @@ def test_question_base_properties(submission, question):
         ("boolean", "None", ""),
         ("file", "answer", ""),
         ("choices", "answer", ""),
+        ("country", "DE", get_country_name("DE") or "DE"),
         ("lol", "lol", None),
     ),
 )
@@ -132,3 +136,31 @@ def test_answer_string_property(event, variant, answer, expected):
         question = Question.objects.create(question="?", variant=variant, event=event)
         answer = Answer.objects.create(question=question, answer=answer)
         assert answer.answer_string == expected
+
+
+@pytest.mark.django_db
+def test_country_answer_saved_and_round_trips(submission):
+    event = submission.event
+    with scope(event=event):
+        question = Question.objects.create(
+            question='Country?',
+            variant='country',
+            event=event,
+            target='submission',
+        )
+        form = TalkQuestionsForm(
+            event=event,
+            submission=submission,
+            data={f'question_{question.pk}': 'DE'},
+        )
+        assert form.is_valid()
+        cleaned = form.cleaned_data[f'question_{question.pk}']
+        assert isinstance(cleaned, Country)
+        assert cleaned.code == 'DE'
+        form.save()
+
+        answer = submission.answers.get(question=question)
+        assert answer.answer == 'DE'
+
+        round_trip_form = TalkQuestionsForm(event=event, submission=submission)
+        assert round_trip_form.fields[f'question_{question.pk}'].initial == 'DE'
