@@ -44,6 +44,42 @@
 						.buffer
 					.info
 						.title {{ getLocalizedString(session.title) }}
+	.print-grids
+		template(v-for="(chunk, chunkIdx) of printRoomChunks", :key="chunkIdx")
+			.print-chunk
+				.print-rooms-bar(:style="{'--total-rooms': chunk.length}")
+					.room
+					.room(v-for="room of chunk") {{ getLocalizedString(room.name) }}
+				.print-grid(:style="getPrintChunkGridStyle(chunk)")
+					template(v-for="slice of visibleTimeslices")
+						.timeslice(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)") {{ getSliceLabel(slice) }}
+						.timeline(:class="getSliceClasses(slice)", :style="getSliceStyle(slice)")
+					template(v-for="session of getChunkSessions(chunk)")
+						session(
+							v-if="isProperSession(session)",
+							:session="session",
+							:now="now",
+							:locale="locale",
+							:timezone="timezone",
+							:style="getChunkSessionStyle(session, chunk)",
+							:showAbstract="false", :showRoom="false",
+							:faved="favs.includes(session.id)",
+							:hasAmPm="hasAmPm",
+							:onHomeServer="onHomeServer",
+							@fav="$emit('fav', session.id)",
+							@unfav="$emit('unfav', session.id)"
+						)
+						.break(v-else, :style="getChunkSessionStyle(session, chunk)")
+							.time-box
+								.start(v-if="hasAmPm", class="has-ampm")
+									.time {{ session.start.clone().tz(timezone).format('h:mm') }}
+									.ampm {{ session.start.clone().tz(timezone).format('A') }}
+								.start(v-else)
+									.time {{ session.start.clone().tz(timezone).format('HH:mm') }}
+								.duration {{ getPrettyDuration(session.start, session.end) }}
+								.buffer
+							.info
+								.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
 // TODO
@@ -92,6 +128,14 @@ export default {
 	computed: {
 		hasSessionsWithoutRoom () {
 			return this.sessions.some(s => !s.room)
+		},
+		printRoomChunks () {
+			const chunkSize = 4
+			const chunks = []
+			for (let i = 0; i < this.rooms.length; i += chunkSize) {
+				chunks.push(this.rooms.slice(i, i + chunkSize))
+			}
+			return chunks.length ? chunks : [this.rooms]
 		},
 		timeslices () {
 			const minimumSliceMins = 30
@@ -304,6 +348,40 @@ export default {
 		isProperSession (session) {
 			// breaks and such don't have ids
 			return !!session.id
+		},
+		getChunkSessions (chunkRooms) {
+			return this.sessions.filter(s => {
+				if (!this.isProperSession(s)) {
+					return !s.room || chunkRooms.includes(s.room)
+				}
+				return chunkRooms.includes(s.room)
+			})
+		},
+		getChunkSessionStyle (session, chunkRooms) {
+			const roomIndex = chunkRooms.indexOf(session.room)
+			const gridRow = `${getSliceName(session.start)} / ${getSliceName(session.end)}`
+			if (roomIndex > -1) {
+				return { 'grid-row': gridRow, 'grid-column': roomIndex + 2 }
+			}
+			return { 'grid-row': gridRow, 'grid-column': `2 / ${chunkRooms.length + 2}` }
+		},
+		getPrintChunkGridStyle (chunk) {
+			const rows = this.timeslices.map((slice, index) => {
+				const next = this.timeslices[index + 1]
+				let height = 60
+				if (slice.gap) {
+					height = 100
+				} else if (slice.datebreak) {
+					height = 36
+				} else if (next) {
+					height = Math.min(60, next.date.diff(slice.date, 'minutes') * 2)
+				}
+				return `[${slice.name}] minmax(${height}px, auto)`
+			}).join(' ')
+			return {
+				'--total-rooms': chunk.length,
+				'grid-template-rows': rows
+			}
 		},
 		getSessionStyle (session) {
 			const roomIndex = this.rooms.indexOf(session.room)
@@ -543,11 +621,11 @@ export default {
 		border-top: 1px solid $clr-dividers-light
 		z-index: 20
 		&.datebreak
-			font-weight: 600
+			font-weight: 800
 			border-top: 3px solid $clr-dividers-light
 			white-space: pre
 			padding-top: 2px
-			font-size: 12px
+			font-size: 13px
 			line-height: 1.2
 			overflow: hidden
 			max-height: 100%
@@ -595,4 +673,42 @@ export default {
 			fill: $clr-red
 	.bunt-scrollbar-rail-wrapper-x, .bunt-scrollbar-rail-wrapper-y
 		z-index: 30
+	.print-grids
+		display: none
+
+@media print
+	.c-grid-schedule
+		.sticky-header
+			display: none !important
+		.grid-viewport
+			display: none !important
+		.print-grids
+			display: block !important
+			.print-chunk
+				break-inside: avoid
+				page-break-inside: avoid
+				&:not(:last-child)
+					page-break-after: always
+				.print-rooms-bar
+					display: grid
+					grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+					.room
+						text-align: center
+						font-size: 16px
+						font-weight: 600
+						padding: 8px 4px
+						border-bottom: 2px solid #ccc
+				.print-grid
+					display: grid
+					grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
+					position: relative
+					.break
+						.time-box
+							-webkit-print-color-adjust: exact
+							print-color-adjust: exact
+							color-adjust: exact
+						.info
+							-webkit-print-color-adjust: exact
+							print-color-adjust: exact
+							color-adjust: exact
 </style>

@@ -885,6 +885,9 @@ export default {
 		page-break-inside: avoid
 		box-shadow: none !important
 		border: 1px solid #ccc !important
+		-webkit-print-color-adjust: exact
+		print-color-adjust: exact
+		color-adjust: exact
 		.time-box
 			-webkit-print-color-adjust: exact
 			print-color-adjust: exact
@@ -892,21 +895,21 @@ export default {
 		.info
 			border: 1px solid #ccc !important
 			border-left: none !important
-			background: #fff !important
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
 		.session-icons
 			display: none
+	.c-linear-schedule-session
+		.info
+			background: #fff !important
+	.break
+		.info
+			-webkit-print-color-adjust: exact
+			print-color-adjust: exact
+			color-adjust: exact
 	.c-grid-schedule
 		overflow: visible !important
-		.sticky-header
-			position: static !important
-		.scroll-proxy, .custom-scrollbar
-			display: none
-		.rooms-bar
-			overflow: visible !important
-		.grid-viewport
-			overflow: visible !important
-		.grid
-			min-width: 0 !important
 		.timeslice
 			position: static !important
 			-webkit-print-color-adjust: exact
@@ -914,8 +917,6 @@ export default {
 			color-adjust: exact
 			&.gap::before
 				display: none
-		.now
-			display: none
 		.c-linear-schedule-session .time-box,
 		.break .time-box
 			-webkit-print-color-adjust: exact
