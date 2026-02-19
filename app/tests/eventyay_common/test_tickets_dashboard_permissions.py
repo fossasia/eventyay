@@ -1,6 +1,7 @@
 import pytest
 from django.test import RequestFactory
 from django.urls import reverse
+from django.utils.timezone import now
 from django_scopes import scopes_disabled
 
 from eventyay.base.models import Event, Organizer, Team, User
@@ -12,9 +13,9 @@ from eventyay.multidomain.middlewares import SessionMiddleware
 def test_tickets_dashboard_link_visible_for_ticket_team(client):
     with scopes_disabled():
         organizer = Organizer.objects.create(name='Dummy', slug='dummy')
-        event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy')
+        event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy', date_from=now())
         user = User.objects.create_user('dummy@dummy.test', 'dummy')
-        team = Team.objects.create(organizer=organizer, can_view_orders=True)
+        team = Team.objects.create(organizer=organizer, name='Ticket Team', can_view_orders=True)
         team.members.add(user)
         team.limit_events.add(event)
     client.force_login(user)
@@ -29,9 +30,9 @@ def test_tickets_dashboard_link_visible_for_ticket_team(client):
 def test_tickets_dashboard_link_disabled_for_talk_only_team(client):
     with scopes_disabled():
         organizer = Organizer.objects.create(name='Dummy', slug='dummy')
-        event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy')
+        event = Event.objects.create(organizer=organizer, name='Dummy', slug='dummy', date_from=now())
         user = User.objects.create_user('dummy@dummy.test', 'dummy')
-        team = Team.objects.create(organizer=organizer)
+        team = Team.objects.create(organizer=organizer, name='Talk Team')
         team.members.add(user)
         team.limit_events.add(event)
     client.force_login(user)
@@ -49,9 +50,9 @@ def test_tickets_dashboard_link_disabled_for_talk_only_team(client):
 def test_general_dashboard_event_link_for_ticket_team(client):
     with scopes_disabled():
         organizer = Organizer.objects.create(name='Dummy', slug='dummy-ticket')
-        event = Event.objects.create(organizer=organizer, name='Dummy Event', slug='dummy-ticket')
+        event = Event.objects.create(organizer=organizer, name='Dummy Event', slug='dummy-ticket', date_from=now())
         user = User.objects.create_user('user-with-orders@example.com', 'test')
-        team = Team.objects.create(organizer=organizer, can_view_orders=True)
+        team = Team.objects.create(organizer=organizer, name='Ticket Team', can_view_orders=True)
         team.members.add(user)
         team.limit_events.add(event)
     factory = RequestFactory()
@@ -72,9 +73,9 @@ def test_general_dashboard_event_link_for_ticket_team(client):
 def test_general_dashboard_event_link_for_talk_only_user(client):
     with scopes_disabled():
         organizer = Organizer.objects.create(name='Dummy', slug='dummy-talk')
-        event = Event.objects.create(organizer=organizer, name='Dummy Event', slug='dummy-talk')
+        event = Event.objects.create(organizer=organizer, name='Dummy Event', slug='dummy-talk', date_from=now())
         user = User.objects.create_user('talk-only-user@example.com', 'test')
-        team = Team.objects.create(organizer=organizer)
+        team = Team.objects.create(organizer=organizer, name='Talk Team')
         team.members.add(user)
         team.limit_events.add(event)
     factory = RequestFactory()
