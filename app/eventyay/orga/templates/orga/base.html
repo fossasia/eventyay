@@ -93,13 +93,13 @@
                         </form>
                     {% else %}
                         <a href="{{ request.event.urls.base }}" title="{% translate "View event" %}"
-                                target="_blank" class="navbar-toggle mobile-navbar-view-link visible-xs-block">
+                                target="_blank" class="navbar-toggle mobile-navbar-view-link">
                             <i class="fa fa-eye"></i>
                         </a>
                     {% endif %}
                 {% elif request.organizer %}
                     <a href="{{ request.organizer.orga_urls.base }}" title="{% translate "Public profile" %}"  target="_blank"
-                        class="navbar-toggle mobile-navbar-view-link visible-xs-block">
+                        class="navbar-toggle mobile-navbar-view-link">
                         <i class="fa fa-eye"></i>
                     </a>
                 {% endif %}
