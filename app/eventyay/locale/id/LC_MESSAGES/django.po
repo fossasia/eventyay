@@ -20364,7 +20364,7 @@ msgstr "<strong>plus</strong> %(rate)s%% %(taxname)s"
 #: presale/templates/pretixpresale/event/fragment_cart.html:251
 #, python-format
 msgid "incl. %(rate)s%% %(taxname)s"
-msgstr "termasuk %(rate)s%% [X17]"
+msgstr "termasuk %(rate)s%% %(taxname)s"
 
 #: control/templates/pretixcontrol/order/index.html:562
 #: presale/templates/pretixpresale/event/fragment_cart.html:273
@@ -31795,7 +31795,7 @@ msgstr "<strong>plus</strong> %(rate)s%% %(name)s"
 #: presale/templates/pretixpresale/event/voucher.html:313
 #, python-format
 msgid "incl. %(rate)s%% %(name)s"
-msgstr "termasuk %(rate)s%% [X17]"
+msgstr "termasuk %(rate)s%% %(name)s"
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:197
 #: presale/templates/pretixpresale/event/voucher.html:215

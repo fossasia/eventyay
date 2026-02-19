@@ -17,6 +17,7 @@ from eventyay.cfp.signals import footer_link, html_head
 from eventyay.helpers.formats.variants import get_day_month_date_format
 from eventyay.helpers.i18n import get_javascript_format, get_moment_locale, is_rtl
 
+from .language import get_language_choices_native_with_ui_name
 from .text.phrases import phrases
 
 logger = logging.getLogger(__name__)
@@ -54,9 +55,9 @@ def locale_context(request):
     AVAILABLE_CALENDAR_LOCALES = tuple(
         f.name.removesuffix('.global.min.js') for f in cal_static_dir.rglob('*.global.min.js')
     )
-    supported_languages = [
-        (code, settings.LANGUAGES_INFORMATION[code]['natural_name']) for code in dict(settings.LANGUAGES)
-    ]
+    available_codes = [code for code, __ in settings.LANGUAGES]
+    ordered_codes = [code for code, __ in get_language_choices_native_with_ui_name(available_codes)]
+    supported_languages = [(code, settings.LANGUAGES_INFORMATION[code]['natural_name']) for code in ordered_codes]
     natural_name_counts = Counter(natural_name for __, natural_name in supported_languages)
     labels_by_code = {}
     for code, natural_name in supported_languages:
@@ -75,14 +76,7 @@ def locale_context(request):
         if label_counts[label] > 1:
             label = f'{label} ({code})'
         languages_with_natural_names.append((code, label))
-    languages = sorted(
-        languages_with_natural_names,
-        key=lambda l: (
-            0 if l[0] in settings.LANGUAGES_OFFICIAL else (1 if l[0] not in settings.LANGUAGES_INCUBATING else 2),
-            str(l[1]),
-        ),
-    )
-    language_options = [{'code': code, 'label': name} for code, name in languages]
+    language_options = [{'code': code, 'label': name} for code, name in languages_with_natural_names]
 
     context = {
         'js_date_format': get_javascript_format('DATE_INPUT_FORMATS'),
