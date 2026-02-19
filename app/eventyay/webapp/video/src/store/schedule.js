@@ -89,7 +89,9 @@ export default {
 					tags: session.tags,
 					session_type: session.session_type,
 					resources: session.resources,
-					answers: session.answers
+					answers: session.answers,
+					exporters: session.exporters,
+					recording_iframe: session.recording_iframe
 				})
 			}
 			sessions.sort((a, b) => (

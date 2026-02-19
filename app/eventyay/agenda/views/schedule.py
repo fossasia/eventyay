@@ -297,8 +297,12 @@ class ScheduleView(PermissionRequired, ScheduleMixin, TemplateView):
         return list(exporter(self.request.event) for _, exporter in register_my_data_exporters.send(self.request.event))
 
     @context
+    def is_sessions_page(self):
+        return self.request.path.endswith('/sessions/')
+
+    @context
     def show_talk_list(self):
-        return self.request.path.endswith('/sessions/') or self.request.event.display_settings['schedule'] == 'list'
+        return self.is_sessions_page() or self.request.event.display_settings['schedule'] == 'list'
 
     @context
     def schedule_json(self):
@@ -348,10 +352,47 @@ def schedule_messages(request, **kwargs):
             "You're currently not logged in, so your favourited talks will only be stored locally in your browser."
         ),
         'favs_not_saved': _('Your favourites could only be saved locally in your browser.'),
+        'no_matching_options': _('Sorry, no matching options.'),
+        'view_changelog': _('View Changelog'),
+        'go_to_current_version': _('Go to current version'),
+        'reset_all_filters': _('Reset all filters'),
+        'print': _('Print'),
+        'fullscreen': _('Fullscreen'),
+        'exit_fullscreen': _('Exit Fullscreen'),
+        'latest': _('Latest'),
+        'version_warning_editable': _(
+            'You are currently viewing the editable schedule version.'
+            ' It may not match the released version.'
+        ),
+        'version_warning_old': _(
+            'You are currently viewing an older schedule version.'
+        ),
+        'join_room': _('Join room'),
+        'speaker_fallback': _('Speaker'),
+        'speaker_name_not_provided': _('Speaker name not provided'),
+        'add_to_calendar': _('Add to Calendar'),
+        'ical': _('iCal'),
+        'json': _('JSON'),
+        'xml': _('XML'),
+        'xcal': _('XCal'),
+        'google_calendar': _('Google Calendar'),
+        'webcal': _('Webcal'),
+        'yes': _('Yes'),
+        'no': _('No'),
+        'no_speakers_found': _('No speakers found.'),
+        'sessions': _('Sessions'),
+        'tracks': _('Tracks'),
+        'speakers': _('Speakers'),
+        'downloads': _('Downloads'),
+        'export': _('Export'),
+        'no_file_provided': _('No file provided'),
+        'no_response': _('No response'),
+        'other_timezones': _('Other Timezones'),
+        'current': _('current'),
     }
     strings = {key: str(value) for key, value in strings.items()}
     return HttpResponse(
-        f'const EVENTYAY_MESSAGES = {json.dumps(strings)};',
+        f'const PRETALX_MESSAGES = {json.dumps(strings)};',
         content_type='application/javascript',
     )
 

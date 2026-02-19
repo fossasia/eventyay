@@ -1,11 +1,53 @@
 <template lang="pug">
-.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
+.pretalx-schedule(:style="{'--scrollparent-width': scrollParentWidth + 'px', '--schedule-max-width': scheduleMaxWidth + 'px', '--pretalx-sticky-date-offset': '0px'}", :class="isSpeakerView ? ['speaker-view'] : isTalkView ? ['talk-view'] : isSessionsView ? ['sessions-view', 'list-schedule'] : showGrid ? ['grid-schedule'] : ['list-schedule']")
 	template(v-if="scheduleError")
 		.schedule-error
 			.error-message An error occurred while loading the schedule. Please try again later.
+	template(v-else-if="isTalkView && schedule && resolvedTalk")
+		talk-detail(:talk="resolvedTalk", :baseUrl="eventUrl")
 	template(v-else-if="isSpeakerView && schedule")
 		speakers-list(v-if="view === 'speakers'")
 		speaker-detail(v-else-if="view === 'speaker'", :speakerId="speakerCode", :onHomeServer="onHomeServer")
+	template(v-else-if="isSessionsView && schedule && properSessions.length")
+		schedule-toolbar(v-if="scheduleMeta || schedule",
+			:version="scheduleMeta?.version || ''",
+			:isCurrent="scheduleMeta?.is_current !== false",
+			:changelogUrl="scheduleMeta?.changelog_url || ''",
+			:currentScheduleUrl="scheduleMeta?.current_schedule_url || ''",
+			:exporters="scheduleMeta?.exporters || []",
+			:versions="scheduleMeta?.versions || []",
+			:fullscreenTarget="$el",
+			:filterGroups="filterGroups",
+			:favsCount="favs.length",
+			:onlyFavs="onlyFavs",
+			:hasActiveFilters="onlyFavs || hasActiveFilterSelections",
+			:inEventTimezone="inEventTimezone",
+			v-model:currentTimezone="currentTimezone",
+			:scheduleTimezone="schedule.timezone",
+			:userTimezone="userTimezone",
+			:days="days",
+			:currentDay="currentDay",
+			@selectDay="selectDay($event)",
+			@filterToggle="onlyFavs = false",
+			@toggleFavs="onlyFavs = !onlyFavs; if (onlyFavs) resetAllFilters()",
+			@resetFilters="onlyFavs = false; resetAllFilters()",
+			@saveTimezone="saveTimezone")
+		linear-schedule(
+			:sessions="properSessions",
+			:rooms="rooms",
+			:currentDay="currentDay",
+			:now="now",
+			:hasAmPm="hasAmPm",
+			:timezone="currentTimezone",
+			:locale="locale",
+			:scrollParent="scrollParent",
+			:favs="favs",
+			:onHomeServer="onHomeServer",
+			:disableAutoScroll="disableAutoScroll",
+			:showBreaks="false",
+			@changeDay="setCurrentDay($event)",
+			@fav="fav($event)",
+			@unfav="unfav($event)")
 	template(v-else-if="schedule && sessions.length")
 		schedule-toolbar(v-if="scheduleMeta || schedule",
 			:version="scheduleMeta?.version || ''",
@@ -96,9 +138,13 @@ import Session from '~/components/Session'
 import SessionModal from '~/components/SessionModal'
 import SpeakersList from '~/components/SpeakersList'
 import SpeakerDetail from '~/components/SpeakerDetail'
-import { findScrollParent, getLocalizedString, getSessionTime } from '~/utils'
+import TalkDetail from '~/components/TalkDetail'
+import { findScrollParent, getLocalizedString, getSessionTime, isProperSession } from '~/utils'
 
-const EVENTYAY_CSRF_TOKEN = document.cookie.split('eventyay_csrftoken=').pop().split(';').shift()
+function getCsrfToken () {
+	const match = document.cookie.match(/eventyay_csrftoken=([^;]+)/)
+	return match ? match[1] : ''
+}
 
 const markdownIt = MarkdownIt({
 	linkify: false,
@@ -107,7 +153,7 @@ const markdownIt = MarkdownIt({
 
 export default {
 	name: 'PretalxSchedule',
-	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, SpeakerDetail },
+	components: { FavButton, LinearSchedule, GridScheduleWrapper, Session, SessionModal, ScheduleToolbar, SpeakersList, SpeakerDetail, TalkDetail },
 	props: {
 		eventUrl: String,
 		locale: String,
@@ -119,13 +165,18 @@ export default {
 			type: String,
 			default: ''
 		},
-		// View mode: 'schedule' (default), 'speakers' (list), 'speaker' (detail)
+		// View mode: 'schedule' (default), 'speakers' (list), 'speaker' (detail), 'talk' (single talk), 'sessions' (sessions only, no breaks)
 		view: {
 			type: String,
 			default: 'schedule'
 		},
 		// Speaker code, used when view === 'speaker'
 		speakerCode: {
+			type: String,
+			default: ''
+		},
+		// Talk/submission code, used when view === 'talk'
+		talkCode: {
 			type: String,
 			default: ''
 		},
@@ -186,7 +237,8 @@ export default {
 					event.preventDefault()
 					this.showSpeakerDetails(speaker, event)
 				}
-			}
+			},
+			translationMessages: computed(() => this.translationMessages)
 		}
 	},
 	data () {
@@ -282,6 +334,8 @@ export default {
 					session_type: session.session_type,
 					resources: session.resources,
 					answers: session.answers,
+					exporters: session.exporters,
+					recording_iframe: session.recording_iframe,
 				})
 			}
 			sessions.sort((a, b) => a.start.diff(b.start))
@@ -310,6 +364,20 @@ export default {
 		isSpeakerView () {
 			return this.view === 'speakers' || this.view === 'speaker'
 		},
+		isTalkView () {
+			return this.view === 'talk'
+		},
+		isSessionsView () {
+			return this.view === 'sessions'
+		},
+		properSessions () {
+			if (!this.sessions) return []
+			return this.sessions.filter(s => isProperSession(s))
+		},
+		resolvedTalk () {
+			if (!this.talkCode || !this.sessions) return null
+			return this.sessions.find(s => s.id === this.talkCode) || null
+		},
 		eventSlug () {
 			let url = ''
 			if (this.eventUrl.startsWith('http')) {
@@ -332,6 +400,22 @@ export default {
 		const fragment = window.location.hash.slice(1)
 		moment.locale(this.locale)
 		this.userTimezone = moment.tz.guess()
+
+		// Detect login state from the DOM element (always rendered by Django),
+		// independent of whether the PRETALX_MESSAGES JS global loaded
+		const messagesEl = document.querySelector('#pretalx-messages')
+		if (messagesEl) {
+			this.onHomeServer = true
+			if (messagesEl.dataset.loggedIn === 'true') {
+				this.loggedIn = true
+			}
+		}
+
+		// Load translation messages if available
+		/* global PRETALX_MESSAGES */
+		if (typeof PRETALX_MESSAGES !== 'undefined') {
+			this.translationMessages = PRETALX_MESSAGES
+		}
 
 		// Use inline data if available (on-site), otherwise fetch (external embed)
 		if (window.__SCHEDULE_DATA__) {
@@ -360,8 +444,8 @@ export default {
 			this.scheduleMeta = window.__SCHEDULE_META__
 		}
 
-		// For speaker views, we only need schedule data + favs (no day tabs, filters, etc.)
-		if (this.isSpeakerView) {
+		// For speaker and talk views, we only need schedule data + favs (no day tabs, filters, etc.)
+		if (this.isSpeakerView || this.isTalkView) {
 			if (!this.schedule) {
 				this.scheduleError = true
 				return
@@ -428,15 +512,6 @@ export default {
 			window.addEventListener('resize', this.onWindowResize)
 			this.onWindowResize()
 		}
-		/* global PRETALX_MESSAGES */
-		if (typeof PRETALX_MESSAGES !== 'undefined') {
-			this.translationMessages = PRETALX_MESSAGES
-			// this variable being present indicates that we're running on our home instance rather than as an embedded widget elsewhere
-			this.onHomeServer = true
-			if (document.querySelector('#pretalx-messages')?.dataset.loggedIn === 'true') {
-				this.loggedIn = true
-			}
-		}
 	},
 	destroyed () {
 		// TODO destroy observers
@@ -480,7 +555,7 @@ export default {
 			if (this.onHomeServer) {
 				headers.append('Content-Type', 'application/json')
 			}
-			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', EVENTYAY_CSRF_TOKEN)
+			if (method === 'POST' || method === 'DELETE') headers.append('X-CSRFToken', getCsrfToken())
 			const response = await fetch(url, {
 				method,
 				headers,
@@ -837,6 +912,10 @@ export default {
 			-webkit-print-color-adjust: exact
 			print-color-adjust: exact
 			color-adjust: exact
+			&.gap::before
+				display: none
+		.now
+			display: none
 		.c-linear-schedule-session .time-box,
 		.break .time-box
 			-webkit-print-color-adjust: exact

@@ -13,14 +13,14 @@
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-info
-				.name {{ speaker.name || 'Speaker' }}
+				.name {{ speaker.name || t.speaker_fallback }}
 				.biography(v-if="speaker.biography") {{ speaker.biography }}
 				.sessions-list(v-if="speaker.sessions && speaker.sessions.length")
 					span.session-title(v-for="(session, idx) in speaker.sessions", :key="session.id")
 						| {{ getLocalizedString(session.title) }}
 						span.separator(v-if="idx < speaker.sessions.length - 1") ,&nbsp;
 	.empty(v-else)
-		| No speakers found.
+		| {{ t.no_speakers_found }}
 </template>
 
 <script>
@@ -39,7 +39,8 @@ export default {
 			default() {
 				return () => {}
 			}
-		}
+		},
+		translationMessages: { default: () => ({}) }
 	},
 	props: {
 		speakers: {
@@ -53,6 +54,13 @@ export default {
 		}
 	},
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				speaker_fallback: m.speaker_fallback || 'Speaker',
+				no_speakers_found: m.no_speakers_found || 'No speakers found.',
+			}
+		},
 		resolvedSpeakers() {
 			if (this.speakers?.length) return this.speakers
 			if (this.scheduleData) {

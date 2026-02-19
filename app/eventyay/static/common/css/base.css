@@ -1123,7 +1123,7 @@ pl-0 {
     display: none;
   }
   @page {
-    size: A4 portrait;
-    margin: 0;
+    size: A4 landscape;
+    margin: 5mm;
   }
 }

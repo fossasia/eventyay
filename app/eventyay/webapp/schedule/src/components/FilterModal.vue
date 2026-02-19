@@ -2,7 +2,7 @@
 dialog.pretalx-modal#filter-modal(ref="modal", @click.stop="close()")
 	.dialog-inner(@click.stop="")
 		button.close-button(@click="close()") ✕
-		h3 Tracks
+		h3 {{ t.tracks }}
 		.checkbox-line(v-for="track in tracks", :key="track.value", :style="{'--track-color': track.color}")
 			bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="$emit('trackToggled')")
 			.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
@@ -13,6 +13,9 @@ import { getLocalizedString } from '../utils'
 
 export default {
 	name: 'FilterModal',
+	inject: {
+		translationMessages: { default: () => ({}) }
+	},
 	props: {
 		tracks: {
 			type: Array,
@@ -23,6 +26,14 @@ export default {
 	data () {
 		return {
 			getLocalizedString
+		}
+	},
+	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				tracks: m.tracks || 'Tracks',
+			}
 		}
 	},
 	methods: {

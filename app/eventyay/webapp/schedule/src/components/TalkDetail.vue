@@ -4,21 +4,23 @@
 		.talk
 			.talk-header
 				h1 {{ getLocalizedString(resolvedTalk.title) }}
-				.button-container(:class="isFaved ? 'faved' : ''")
-					fav-button(@toggleFav="toggleFav")
+				.header-actions
+					export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
+					.button-container(:class="isFaved ? 'faved' : ''")
+						fav-button(@toggleFav="toggleFav")
 			.info {{ datetime }} {{ roomName }}
 			markdown-content.abstract(v-if="resolvedTalk.abstract", :markdown="resolvedTalk.abstract")
 			markdown-content.description(v-if="resolvedTalk.description", :markdown="resolvedTalk.description")
 			.downloads(v-if="resolvedTalk.resources && resolvedTalk.resources.length > 0")
-				h2 Downloads
+				h2 {{ t.downloads }}
 				a.download(v-for="{resource, description} of resolvedTalk.resources", :href="getAbsoluteResourceUrl(resource)", target="_blank")
 					.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
 					.filename {{ description }}
-			export-dropdown.talk-export(v-if="talkExportOptions.length", :options="talkExportOptions")
+
 			slot(name="actions")
-				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") Join room
+				a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="onJoinRoomClick") {{ t.join_room }}
 		.speakers(v-if="resolvedTalk.speakers && resolvedTalk.speakers.length > 0")
-			.header Speakers ({{ resolvedTalk.speakers.length }})
+			.header {{ t.speakers }} ({{ resolvedTalk.speakers.length }})
 			.speakers-list
 				.speaker(v-for="speaker of resolvedTalk.speakers", :key="speaker.code")
 					a.speaker-link(:href="getSpeakerLink(speaker)", @click="onSpeakerClick($event, speaker)")
@@ -26,7 +28,7 @@
 						.avatar-placeholder.avatar-circle(v-else)
 							svg(viewBox="0 0 24 24")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
-						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || 'Speaker name not provided' }}
+						.name(:class="{'no-name': !speaker.name}") {{ speaker.name || t.speaker_name_not_provided }}
 					markdown-content.biography(v-if="speaker.biography", :markdown="speaker.biography")
 	bunt-progress-circular(v-else, size="huge", :page="true")
 </template>
@@ -64,7 +66,8 @@ export default {
 			}
 		},
 		showJoinRoom: { default: false },
-		getJoinRoomLink: { default: () => () => '' }
+		getJoinRoomLink: { default: () => () => '' },
+		translationMessages: { default: () => ({}) }
 	},
 	props: {
 		talk: Object,
@@ -82,6 +85,15 @@ export default {
 		}
 	},
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				join_room: m.join_room || 'Join room',
+				speaker_name_not_provided: m.speaker_name_not_provided || 'Speaker name not provided',
+				downloads: m.downloads || 'Downloads',
+				speakers: m.speakers || 'Speakers',
+			}
+		},
 		resolvedTalk() {
 			if (this.talk) return this.talk
 			if (this.talkId && this.scheduleData) {
@@ -113,17 +125,17 @@ export default {
 		talkExportOptions() {
 			const exporters = this.resolvedTalk?.exporters
 			if (!exporters) return []
-			const labels = {
-				ics: 'iCal (.ics)',
-				json: 'JSON',
-				xml: 'XML',
-				xcal: 'XCal',
-				google_calendar: 'Google Calendar',
-				webcal: 'Webcal'
-			}
-			return Object.entries(exporters)
-				.filter(([, url]) => url)
-				.map(([id, url]) => ({ id, label: labels[id] || id, url }))
+			const qr = exporters.qrcodes || {}
+			const items = [
+				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
+				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
+				{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
+				{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
+				{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
+				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
+			].filter(o => o.url)
+
+			return items
 		}
 	},
 	methods: {
@@ -165,11 +177,13 @@ export default {
 	.talk-wrapper
 		flex: auto
 		display: flex
-		justify-content: center
+		flex-direction: column
+		align-items: center
 	.talk
 		flex: none
-		margin: 16px 0 16px 16px
+		margin: 16px
 		max-width: 720px
+		width: 100%
 		.talk-header
 			display: flex
 			align-items: flex-start
@@ -177,9 +191,14 @@ export default {
 			h1
 				flex: 1
 				margin-bottom: 0
-			.button-container
+			.header-actions
+				display: flex
+				align-items: center
+				gap: 4px
 				flex-shrink: 0
 				margin-top: 4px
+			.button-container
+				flex-shrink: 0
 		h1
 			margin-bottom: 0
 		.info
@@ -212,8 +231,7 @@ export default {
 			.mdi
 				font-size: 36px
 				margin: 0 4px
-	.talk-export
-		margin-top: 16px
+
 	.join-room-btn
 		display: inline-block
 		margin-top: 16px
@@ -226,13 +244,14 @@ export default {
 		&:hover
 			opacity: 0.9
 	.speakers
-		width: 280px
-		margin: 32px 16px
+		max-width: 720px
+		width: 100%
+		margin: 0 16px 32px
 		display: flex
 		flex-direction: column
 		border: border-separator()
 		border-radius: 4px
-		align-self: flex-start
+		align-self: center
 		.header
 			border-bottom: border-separator()
 			padding: 8px
@@ -271,11 +290,8 @@ export default {
 					color: $clr-secondary-text-light
 					font-style: italic
 	@media (max-width: 768px)
-		.talk-wrapper
-			display: block
 		.speakers
-			width: auto
+			margin: 0 16px 16px
 		.talk
 			max-width: 100%
-			margin: 16px
 </style>

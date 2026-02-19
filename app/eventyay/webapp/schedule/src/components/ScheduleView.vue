@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-schedule-view
+.c-schedule-view(ref="scheduleRoot")
 	template(v-if="scheduleReady")
 		schedule-toolbar(
 			:version="resolvedMeta.version || ''",
@@ -16,19 +16,14 @@
 			:scheduleTimezone="resolvedSchedule.timezone",
 			:userTimezone="userTimezone",
 			:exporters="resolvedExportersList",
-			:showFullscreen="false",
-			:showPrint="false",
+			:fullscreenTarget="$refs.scheduleRoot",
+			:days="computedDays",
+			:currentDay="currentDay",
+			@selectDay="changeDay($event)",
 			@filterToggle="onFilterChange",
 			@toggleFavs="toggleFavs",
 			@resetFilters="resetAllFilters",
 			@saveTimezone="saveTimezone")
-		.day-tabs(v-if="computedDays && computedDays.length > 1")
-			button.day-tab(
-				v-for="day in computedDays",
-				:key="day.format('YYYY-MM-DD')",
-				:class="{active: currentDay === day.format('YYYY-MM-DD')}",
-				@click="changeDay(day)"
-			) {{ day.format(dateFormat) }}
 		.schedule-content(ref="scrollParent")
 			grid-schedule-wrapper(v-if="showGrid",
 				:sessions="filteredSessions",
@@ -55,6 +50,7 @@
 				:scrollParent="$refs.scrollParent",
 				:favs="resolvedFavs",
 				:sortBy="sortBy",
+				:showBreaks="!linearOnly",
 				@changeDay="dayScrolled",
 				@fav="onFav",
 				@unfav="onUnfav")
@@ -69,7 +65,7 @@ import moment from 'moment-timezone'
 import LinearSchedule from './LinearSchedule'
 import GridScheduleWrapper from './GridScheduleWrapper'
 import ScheduleToolbar from './ScheduleToolbar'
-import { getLocalizedString } from '../utils'
+import { getLocalizedString, isProperSession } from '../utils'
 
 export default {
 	name: 'ScheduleView',
@@ -188,12 +184,18 @@ export default {
 					tags: session.tags,
 					session_type: session.session_type,
 					resources: session.resources,
-					answers: session.answers
+					answers: session.answers,
+					exporters: session.exporters,
+					recording_iframe: session.recording_iframe
 				}))
 				.sort((a, b) => a.start.diff(b.start))
 		},
 		filteredSessions() {
 			let sessions = this.enrichedSessions
+			// In linear-only (sessions) mode, filter out breaks
+			if (this.linearOnly) {
+				sessions = sessions.filter(s => isProperSession(s))
+			}
 			if (this.onlyFavs) {
 				sessions = sessions.filter(s => this.resolvedFavs.includes(s.id))
 			}
@@ -245,12 +247,6 @@ export default {
 		},
 		showGrid() {
 			return !this.linearOnly && this.scrollParentWidth > 710
-		},
-		dateFormat() {
-			const dayCount = this.computedDays?.length || 0
-			let weekday = this.showGrid ? (dayCount <= 7 ? 'dddd ' : 'ddd ') : ''
-			let month = dayCount <= 5 ? 'MMMM' : 'MMM'
-			return `${weekday}D ${month}`
 		}
 	},
 	watch: {
@@ -362,32 +358,13 @@ export default {
 	flex-direction: column
 	min-height: 0
 	min-width: 0
-	.day-tabs
-		display: flex
-		overflow-x: auto
-		background-color: $clr-white
-		border-bottom: 1px solid $clr-grey-300
-		flex: none
-		.day-tab
-			flex: none
-			border: none
-			background: transparent
-			padding: 12px 16px
-			font-size: 14px
-			white-space: nowrap
-			cursor: pointer
-			border-bottom: 2px solid transparent
-			color: $clr-secondary-text-light
-			&:hover
-				background-color: rgba(0, 0, 0, 0.03)
-			&.active
-				color: var(--clr-primary, var(--pretalx-clr-primary, #3aa57c))
-				border-bottom-color: var(--clr-primary, var(--pretalx-clr-primary, #3aa57c))
-				font-weight: 600
 	.schedule-content
 		flex: 1
 		min-height: 0
 		overflow: auto
+		// The toolbar sits outside this scroll container, so reset
+		// the sticky offset to cancel the +40px baked into GridSchedule.
+		--pretalx-sticky-top-offset: -40px
 	.schedule-error
 		padding: 32px
 		text-align: center

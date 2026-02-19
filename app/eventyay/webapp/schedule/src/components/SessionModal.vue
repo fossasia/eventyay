@@ -37,17 +37,17 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 									span.answer(v-if="answer.question.variant === 'file'")
 										i.fa.fa-file-o
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
-										span(v-else) No file provided
-									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? 'Yes' : 'No' }}
+										span(v-else) {{ t.no_file_provided }}
+									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
 									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
-									span.answer(v-else) No response
+									span.answer(v-else) {{ t.no_response }}
 						.downloads(v-if="modalContent.contentObject.resources && modalContent.contentObject.resources.length > 0")
 							hr
-							h4 Downloads
+							h4 {{ t.downloads }}
 							a.download(v-for="{resource, description} of modalContent.contentObject.resources", :href="resource", target="_blank")
 								.mdi(:class="`mdi-${getIconByFileEnding(resource)}`")
 								.filename {{ description }}
-						a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="$emit('joinRoom', $event)") Join room
+						a.join-room-btn(v-if="showJoinRoom && computedJoinRoomLink", :href="computedJoinRoomLink", @click="$emit('joinRoom', $event)") {{ t.join_room }}
 			.speakers(v-if="modalContent.contentObject.speakers")
 				a.speaker.inner-card(v-for="speaker in modalContent.contentObject.speakers", @click="handleSpeakerClick(speaker, $event)", :href="`#speakers/${speaker.code}`", :key="speaker.code")
 					.img-wrapper
@@ -68,11 +68,7 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 								path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 					.speaker-title
 						h3 {{ modalContent.contentObject.name }}
-						a.btn-ical(v-if="speakerIcalUrl", :href="speakerIcalUrl", download)
-							svg(viewBox="0 0 16 16", width="16", height="16", fill="currentColor")
-								path(d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z")
-								path(d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z")
-							|  iCal
+						export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
 				.speaker-content.card-content
 					template(v-if="modalContent.contentObject.isLoading")
 						bunt-progress-circular(size="big", :page="true")
@@ -95,10 +91,10 @@ dialog.pretalx-modal#session-modal(ref="modal", @click.stop="close()")
 									span.answer(v-if="answer.question.variant === 'file'")
 										i.fa.fa-file-o
 										a(v-if="answer.answer_file", :href="answer.answer_file.url") {{ answer.answer_file }}
-										span(v-else) No file provided
-									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? 'Yes' : 'No' }}
+										span(v-else) {{ t.no_file_provided }}
+									span.answer(v-else-if="answer.question.variant === 'boolean'") {{ answer.answer ? t.yes : t.no }}
 									span.answer(v-else-if="answer.answer", v-html="markdownIt.render(answer.answer)")
-									span.answer(v-else) No response
+									span.answer(v-else) {{ t.no_response }}
 			.speaker-sessions
 				session(
 					v-for="session in modalContent.contentObject.sessions",
@@ -134,7 +130,8 @@ export default {
 		remoteApiUrl: { default: '' },
 		eventUrl: { default: '' },
 		showJoinRoom: { default: false },
-		getJoinRoomLink: { default: () => () => '' }
+		getJoinRoomLink: { default: () => () => '' },
+		translationMessages: { default: () => ({}) }
 	},
 	props: {
 		modalContent: Object,
@@ -158,6 +155,18 @@ export default {
 		}
 	},
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				yes: m.yes || 'Yes',
+				no: m.no || 'No',
+				join_room: m.join_room || 'Join room',
+				downloads: m.downloads || 'Downloads',
+				no_file_provided: m.no_file_provided || 'No file provided',
+				no_response: m.no_response || 'No response',
+				ical: m.ical || 'iCal',
+			}
+		},
 		isFaved () {
 			const obj = this.modalContent?.contentObject
 			if (!obj) return false
@@ -171,23 +180,36 @@ export default {
 		talkExportOptions () {
 			const exporters = this.modalContent?.contentObject?.exporters
 			if (!exporters) return []
-			const labels = {
-				ics: 'iCal (.ics)',
-				json: 'JSON',
-				xml: 'XML',
-				xcal: 'XCal',
-				google_calendar: 'Google Calendar',
-				webcal: 'Webcal'
-			}
-			return Object.entries(exporters)
-				.filter(([, url]) => url)
-				.map(([id, url]) => ({ id, label: labels[id] || id, url }))
+			const qr = exporters.qrcodes || {}
+			const items = [
+				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters.google_calendar, icon: 'fa-google', qrcode_svg: qr.google_calendar },
+				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters.webcal, icon: 'fa-calendar', qrcode_svg: qr.webcal },
+				{ id: 'ics', label: 'iCal', url: exporters.ics, icon: 'fa-calendar', qrcode_svg: qr.ics },
+				{ id: 'json', label: 'JSON (frab compatible)', url: exporters.json, icon: 'fa-code', qrcode_svg: qr.json },
+				{ id: 'xml', label: 'XML (frab compatible)', url: exporters.xml, icon: 'fa-code', qrcode_svg: qr.xml },
+				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters.xcal, icon: 'fa-calendar', qrcode_svg: qr.xcal },
+			].filter(o => o.url)
+
+			return items
 		},
-		speakerIcalUrl () {
+		speakerExportOptions () {
 			const obj = this.modalContent?.contentObject
-			if (!obj || this.modalContent.contentType !== 'speaker') return null
-			const base = this.eventUrl || ''
-			return `${base}speakers/${obj.code}/talks.ics`
+			if (!obj || this.modalContent.contentType !== 'speaker') return []
+			const exporters = obj.exporters
+			const base = `${this.eventUrl || ''}speakers/${obj.code}`
+			// Need either inline exporters data or a base URL to build URLs
+			if (!exporters && !this.eventUrl) return []
+			const qr = exporters?.qrcodes || {}
+			const items = [
+				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters?.google_calendar || `${base}/talks/export/google-calendar`, icon: 'fa-google', qrcode_svg: qr.google_calendar },
+				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters?.webcal || `${base}/talks/export/webcal`, icon: 'fa-calendar', qrcode_svg: qr.webcal },
+				{ id: 'ics', label: 'iCal', url: exporters?.ics || `${base}/talks.ics`, icon: 'fa-calendar', qrcode_svg: qr.ics },
+				{ id: 'json', label: 'JSON (frab compatible)', url: exporters?.json || `${base}/talks.json`, icon: 'fa-code', qrcode_svg: qr.json },
+				{ id: 'xml', label: 'XML (frab compatible)', url: exporters?.xml || `${base}/talks.xml`, icon: 'fa-code', qrcode_svg: qr.xml },
+				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters?.xcal || `${base}/talks.xcal`, icon: 'fa-calendar', qrcode_svg: qr.xcal },
+			].filter(o => o.url)
+
+			return items
 		},
 		shortAnswers () {
 			const apiContent = this.modalContent.contentObject.apiContent
@@ -463,22 +485,8 @@ export default {
 			display: flex
 			flex-direction: column
 			gap: 8px
-		.btn-ical
-			display: inline-flex
-			align-items: center
-			gap: 6px
-			padding: 6px 14px
-			border: 1px solid $clr-grey-400
-			border-radius: 4px
-			font-size: 14px
-			color: $clr-primary-text-light
-			text-decoration: none
-			cursor: pointer
-			background: transparent
+		.speaker-export
 			align-self: flex-start
-			&:hover
-				border-color: var(--pretalx-clr-primary, $clr-primary)
-				color: var(--pretalx-clr-primary, $clr-primary)
 		.speaker-content
 			margin-bottom: 16px
 

@@ -68,7 +68,7 @@ class VideoSPAView(View):
 
             with scope(event=event):
                 schedule = event.current_schedule or event.wip_schedule
-                schedule_data = schedule.build_data(all_talks=False) if schedule else None
+                schedule_data = schedule.build_data(all_talks=False, enrich=True) if schedule else None
                 schedule_version = schedule.version if schedule else None
                 schedule_exporters = build_public_schedule_exporters(event, version=schedule_version)
 
@@ -112,6 +112,7 @@ class VideoSPAView(View):
                     'exporters': schedule_exporters,
                 },
                 # Extra values expected by config.js/theme
+                'eventUrl': str(event.urls.base),
                 'eventSlug': event.slug,
                 'basePath': base_path,
                 'defaultLocale': 'en',

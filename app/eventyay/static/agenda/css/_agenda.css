@@ -320,6 +320,27 @@ article .pretalx-session .pretalx-session-info .abstract {
   }
   .container {
     max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+  #main-container {
+    padding: 0;
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+  #main-container.main-schedule {
+    padding: 0;
+    margin: 0;
+  }
+  #main-card {
+    margin: 0;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
+  #main-card main {
+    padding: 0;
   }
 }
 

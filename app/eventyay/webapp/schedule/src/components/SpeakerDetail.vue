@@ -8,15 +8,11 @@
 					svg(viewBox="0 0 24 24")
 						path(fill="currentColor", d="M12,1A5.8,5.8 0 0,1 17.8,6.8A5.8,5.8 0 0,1 12,12.6A5.8,5.8 0 0,1 6.2,6.8A5.8,5.8 0 0,1 12,1M12,15C18.63,15 24,17.67 24,21V23H0V21C0,17.67 5.37,15 12,15Z")
 			.speaker-title
-				h2 {{ resolvedSpeaker.name || 'Speaker' }}
-				a.btn-ical(v-if="icalUrl", :href="icalUrl", download)
-					svg(viewBox="0 0 16 16", width="16", height="16", fill="currentColor")
-						path(d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm-5 3a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zm3 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z")
-						path(d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z")
-					|  iCal
+				h2 {{ resolvedSpeaker.name || t.speaker_fallback }}
+			export-dropdown.speaker-export(v-if="speakerExportOptions.length", :options="speakerExportOptions")
 		markdown-content.biography(v-if="resolvedSpeaker.biography", :markdown="resolvedSpeaker.biography")
 		.speaker-sessions(v-if="resolvedSessions && resolvedSessions.length")
-			h3 Sessions
+			h3 {{ t.sessions }}
 			session(
 				v-for="s in resolvedSessions",
 				:key="s.id",
@@ -38,10 +34,11 @@
 import moment from 'moment-timezone'
 import MarkdownContent from './MarkdownContent.vue'
 import Session from './Session.vue'
+import ExportDropdown from './ExportDropdown.vue'
 
 export default {
 	name: 'SpeakerDetail',
-	components: { MarkdownContent, Session },
+	components: { MarkdownContent, Session, ExportDropdown },
 	inject: {
 		eventUrl: { default: null },
 		scheduleData: { default: null },
@@ -56,7 +53,8 @@ export default {
 			default() {
 				return () => {}
 			}
-		}
+		},
+		translationMessages: { default: () => ({}) }
 	},
 	props: {
 		speaker: Object,
@@ -80,6 +78,15 @@ export default {
 	},
 	emits: ['fav', 'unfav'],
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				speaker_fallback: m.speaker_fallback || 'Speaker',
+				ical: m.ical || 'iCal',
+				sessions: m.sessions || 'Sessions',
+				export: m.export || 'Exports',
+			}
+		},
 		resolvedSpeaker() {
 			if (this.speaker) return this.speaker
 			if (this.speakerId && this.scheduleData) {
@@ -121,10 +128,27 @@ export default {
 			if (this.scheduleData?.hasAmPm !== undefined) return this.scheduleData.hasAmPm
 			return new Intl.DateTimeFormat(undefined, {hour: 'numeric'}).resolvedOptions().hour12
 		},
-		icalUrl() {
+		speakerBaseUrl() {
 			const code = this.speakerId || this.speaker?.code || this.resolvedSpeaker?.code
 			if (!code || !this.eventUrl) return null
-			return `${this.eventUrl}speakers/${code}/talks.ics`
+			return `${this.eventUrl}speakers/${code}`
+		},
+		speakerExportOptions() {
+			const exporters = this.resolvedSpeaker?.exporters
+			const base = this.speakerBaseUrl
+			// Need either inline exporters data or a base URL to build URLs
+			if (!exporters && !base) return []
+			const qr = exporters?.qrcodes || {}
+			const items = [
+				{ id: 'google_calendar', label: 'Add to Google Calendar', url: exporters?.google_calendar || (base && `${base}/talks/export/google-calendar`), icon: 'fa-google', qrcode_svg: qr.google_calendar },
+				{ id: 'webcal', label: 'Add to Other Calendar', url: exporters?.webcal || (base && `${base}/talks/export/webcal`), icon: 'fa-calendar', qrcode_svg: qr.webcal },
+				{ id: 'ics', label: 'iCal', url: exporters?.ics || (base && `${base}/talks.ics`), icon: 'fa-calendar', qrcode_svg: qr.ics },
+				{ id: 'json', label: 'JSON (frab compatible)', url: exporters?.json || (base && `${base}/talks.json`), icon: 'fa-code', qrcode_svg: qr.json },
+				{ id: 'xml', label: 'XML (frab compatible)', url: exporters?.xml || (base && `${base}/talks.xml`), icon: 'fa-code', qrcode_svg: qr.xml },
+				{ id: 'xcal', label: 'XCal (frab compatible)', url: exporters?.xcal || (base && `${base}/talks.xcal`), icon: 'fa-calendar', qrcode_svg: qr.xcal },
+			].filter(o => o.url)
+
+			return items
 		}
 	},
 	methods: {
@@ -162,27 +186,15 @@ export default {
 		h2
 			margin: 0
 	.speaker-title
+		flex: 1
 		display: flex
 		flex-direction: column
 		gap: 8px
 		h2
 			margin: 0
-	.btn-ical
-		display: inline-flex
-		align-items: center
-		gap: 6px
-		padding: 6px 14px
-		border: 1px solid $clr-grey-400
-		border-radius: 4px
-		font-size: 14px
-		color: $clr-primary-text-light
-		text-decoration: none
-		cursor: pointer
-		background: transparent
-		align-self: flex-start
-		&:hover
-			border-color: var(--pretalx-clr-primary, $clr-primary)
-			color: var(--pretalx-clr-primary, $clr-primary)
+	.speaker-export
+		flex-shrink: 0
+		align-self: center
 	.speaker-avatar
 		flex-shrink: 0
 		width: 128px

@@ -60,6 +60,7 @@ export default {
 	components: { AppBar, RoomsSidebar, MediaSource, GreetingPrompt, Notifications },
 	provide() {
 		return {
+			eventUrl: window.eventyay?.eventUrl || '',
 			scheduleData: reactive({
 				schedule: computed(() => this.$store.state.schedule?.schedule),
 				sessions: computed(() => this.$store.getters['schedule/sessions']),
@@ -441,4 +442,79 @@ export default {
 		position: absolute
 		width: 0
 		height: 0
+
+@media print
+	.v-app
+		display: block !important
+		overflow: visible !important
+		height: auto !important
+		.c-app-bar
+			display: none !important
+		.c-rooms-sidebar
+			display: none !important
+		.sidebar-backdrop
+			display: none !important
+		.disconnected-warning
+			display: none !important
+		.native-permission-blocker
+			display: none !important
+		.app-content
+			padding-top: 0 !important
+			height: auto !important
+			overflow: visible !important
+			display: block !important
+		.pretalx-schedule
+			height: auto !important
+			overflow: visible !important
+			&:fullscreen
+				padding: 0
+			.days
+				position: static !important
+			.error-messages
+				display: none
+		.pretalx-modal
+			display: none !important
+		.c-linear-schedule-session, .break
+			break-inside: avoid
+			page-break-inside: avoid
+			box-shadow: none !important
+			border: 1px solid #ccc !important
+			.time-box
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+			.info
+				border: 1px solid #ccc !important
+				border-left: none !important
+				background: #fff !important
+			.session-icons
+				display: none
+		.c-grid-schedule
+			overflow: visible !important
+			.sticky-header
+				position: static !important
+			.scroll-proxy, .custom-scrollbar
+				display: none
+			.rooms-bar
+				overflow: visible !important
+			.grid-viewport
+				overflow: visible !important
+			.grid
+				min-width: 0 !important
+			.timeslice
+				position: static !important
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+				&.gap::before
+					display: none
+			.now
+				display: none
+			.c-linear-schedule-session .time-box,
+			.break .time-box
+				-webkit-print-color-adjust: exact
+				print-color-adjust: exact
+				color-adjust: exact
+		.powered-by
+			display: none
 </style>

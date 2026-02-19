@@ -1,75 +1,64 @@
 <template lang="pug">
 .c-export-dropdown(ref="dropdown")
-	button.export-toggle(@click="isOpen = !isOpen")
-		| {{ selectedLabel || 'Add to Calendar' }}
-	.dropdown-menu(v-if="isOpen")
-		.dropdown-item(
-			v-for="option in exportOptions",
-			:key="option.id",
-			@click="selectOption(option)",
-			@mouseover="setHovered(option)",
-			@mouseleave="clearHovered(option)"
-		)
-			.item-text {{ option.label }}
-			img.qr-thumb(v-if="qrCodes[option.id]", :src="qrCodes[option.id]", alt="QR")
-			transition(name="fade")
-				.qr-popup(v-if="hoveredOption === option && qrCodes[option.id]")
-					img(:src="qrCodes[option.id]", alt="QR Code")
+	button.export-toggle(@click="toggle")
+		svg.export-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
+			path(d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4")
+			polyline(points="7 10 12 15 17 10")
+			line(x1="12", y1="15", x2="12", y2="3")
+		|  {{ t.exports }}
+	.exporter-menu(v-if="isOpen", :style="menuStyle")
+		template(v-for="(option, idx) in exportOptions", :key="option.divider ? `div-${idx}` : option.id")
+			.exporter-divider(v-if="option.divider")
+			a.exporter-item(
+				v-else,
+				:href="option.url",
+				target="_blank",
+				@mouseover="onItemHover($event, option)",
+				@mouseleave="hoveredOption = null"
+			)
+				span.exporter-icon(v-if="option.icon")
+					svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2", v-html="faIconSvg(option.icon)")
+				span.exporter-name {{ option.label }}
+	.qr-hover(v-if="hoveredOption && hoveredOption.qrcode_svg", :style="qrStyle", v-html="hoveredOption.qrcode_svg")
 </template>
 
 <script>
-const DEFAULT_EXPORT_TYPES = [
-	{ id: 'ics', label: 'Session ICal' },
-	{ id: 'json', label: 'Session JSON' },
-	{ id: 'xcal', label: 'Session XCal' },
-	{ id: 'xml', label: 'Session XML' },
-	{ id: 'myics', label: 'My \u2B50 Sessions ICal' },
-	{ id: 'myjson', label: 'My \u2B50 Sessions JSON' },
-	{ id: 'myxcal', label: 'My \u2B50 Sessions XCal' },
-	{ id: 'myxml', label: 'My \u2B50 Sessions XML' },
-]
-
-const QR_TYPES = ['ics', 'xml', 'myics', 'myxml']
+const FA_SVG_MAP = {
+	'fa-calendar': '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+	'fa-code': '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+	'fa-google': '<circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/>',
+	'fa-star': '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+}
 
 export default {
 	name: 'ExportDropdown',
 	inject: {
-		exportBaseUrl: { default: '' }
+		translationMessages: { default: () => ({}) }
 	},
 	props: {
 		options: {
 			type: Array,
-			default: () => DEFAULT_EXPORT_TYPES
-		},
-		baseUrl: {
-			type: String,
-			default: ''
-		},
-		qrCodeModule: {
-			type: Object,
-			default: null
+			default: () => []
 		}
 	},
 	emits: ['export'],
 	data() {
 		return {
 			isOpen: false,
-			selectedLabel: null,
 			hoveredOption: null,
-			qrCodes: {}
+			menuStyle: {},
+			qrStyle: {}
 		}
 	},
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				exports: m.exports || 'Exports',
+			}
+		},
 		exportOptions() {
 			return this.options
-		},
-		resolvedBaseUrl() {
-			return this.baseUrl || this.exportBaseUrl || ''
-		}
-	},
-	created() {
-		if (this.resolvedBaseUrl) {
-			this.exportOptions.forEach(opt => this.generateQRCode(opt))
 		}
 	},
 	mounted() {
@@ -79,37 +68,52 @@ export default {
 		document.removeEventListener('click', this.outsideClick)
 	},
 	methods: {
-		selectOption(option) {
-			this.selectedLabel = option.label
-			this.isOpen = false
-			if (option.url) {
-				window.open(option.url, '_blank')
+		faIconSvg(icon) {
+			if (!icon) return ''
+			return FA_SVG_MAP[icon] || '<circle cx="12" cy="12" r="10"/>'
+		},
+		toggle() {
+			this.isOpen = !this.isOpen
+			if (this.isOpen) {
+				this.$nextTick(() => this.positionMenu())
+			} else {
+				this.hoveredOption = null
 			}
-			this.$emit('export', option)
+		},
+		positionMenu() {
+			const el = this.$refs.dropdown
+			if (!el) return
+			const rect = el.getBoundingClientRect()
+			this.menuStyle = {
+				position: 'fixed',
+				top: `${rect.bottom + 2}px`,
+				right: `${window.innerWidth - rect.right}px`
+			}
+		},
+		onItemHover(event, option) {
+			this.hoveredOption = option
+			if (!option.qrcode_svg) return
+			const itemEl = event.currentTarget
+			const rect = itemEl.getBoundingClientRect()
+			// Position QR to the left of the menu item using fixed positioning
+			// QR box is ~144px wide (128px + 16px padding)
+			const qrWidth = 148
+			let left = rect.left - qrWidth - 4
+			// If it would go off the left edge, show to the right instead
+			if (left < 0) {
+				left = rect.right + 4
+			}
+			this.qrStyle = {
+				position: 'fixed',
+				top: `${rect.top}px`,
+				left: `${left}px`
+			}
 		},
 		outsideClick(event) {
-			if (!this.$refs.dropdown?.contains(event.target)) {
+			const path = event.composedPath()
+			if (!path.includes(this.$refs.dropdown)) {
 				this.isOpen = false
 			}
-		},
-		async generateQRCode(option) {
-			if (!QR_TYPES.includes(option.id)) return
-			const url = option.url || (this.resolvedBaseUrl + option.id)
-			const QRCode = this.qrCodeModule
-			if (!QRCode) return
-			try {
-				QRCode.toDataURL(url, { scale: 1 }, (err, dataUrl) => {
-					if (!err) this.qrCodes[option.id] = dataUrl
-				})
-			} catch {
-				// QR generation failed, skip
-			}
-		},
-		setHovered(option) {
-			this.hoveredOption = QR_TYPES.includes(option.id) ? option : null
-		},
-		clearHovered(option) {
-			if (this.hoveredOption === option) this.hoveredOption = null
 		}
 	}
 }
@@ -126,41 +130,60 @@ export default {
 		border-radius: 2px
 		cursor: pointer
 		background: transparent
-		padding: 0 12px
+		padding: 0 10px
+		font-size: 14px
+		display: flex
+		align-items: center
+		gap: 4px
 		&:hover
 			background-color: rgba(0, 0, 0, 0.05)
-	.dropdown-menu
-		position: absolute
-		right: 0
-		background-color: #f9f9f9
-		min-width: 180px
-		box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2)
-		z-index: 10
-	.dropdown-item
+	.export-icon
+		width: 16px
+		height: 16px
+	.exporter-menu
+		position: fixed
+		background: #fff
+		min-width: 280px
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15)
+		border-radius: 4px
+		z-index: 10000
+		padding: 4px 0
+		white-space: nowrap
+	.exporter-divider
+		height: 1px
+		background: #e0e0e0
+		margin: 4px 0
+	.exporter-item
 		display: flex
-		justify-content: space-between
 		align-items: center
-		padding: 4px 8px
-		color: black
-		cursor: pointer
+		gap: 8px
+		padding: 6px 12px
+		color: #333
+		text-decoration: none
+		position: relative
 		&:hover
-			background-color: #f1f1f1
-	.qr-thumb
-		width: 20px
-		height: 20px
-	.qr-popup
-		position: absolute
-		right: 100%
-		top: 0
-		padding: 10px
-		background: white
-		border: 1px solid #ccc
-		box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1)
-		img
-			width: 150px
-			height: 150px
+			background-color: #f5f5f5
+		.exporter-icon
+			width: 20px
+			text-align: center
+			.tb-icon
+				width: 16px
+				height: 16px
+	.qr-hover
+		position: fixed
+		padding: 8px
+		background: #fff
+		border: 1px solid #ddd
+		border-radius: 4px
+		box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1)
+		z-index: 10001
+		pointer-events: none
+		svg
+			width: 128px
+			height: 128px
+			display: block
 	.fade-enter-active, .fade-leave-active
-		transition: opacity 0.5s
+		transition: opacity 0.3s
 	.fade-enter-from, .fade-leave-to
 		opacity: 0
 </style>

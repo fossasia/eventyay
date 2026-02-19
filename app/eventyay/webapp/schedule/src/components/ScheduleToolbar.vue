@@ -21,7 +21,7 @@
 					points="14.43,10 12,2 9.57,10 2,10 8.18,14.41 5.83,22 12,17.31 18.18,22 15.83,14.41 22,10"
 				)
 			|  {{ favsCount }}
-		button.toolbar-btn.reset-btn(v-if="hasActiveFilters", @click="$emit('resetFilters')", title="Reset all filters")
+		button.toolbar-btn.reset-btn(v-if="hasActiveFilters", @click="$emit('resetFilters')", :title="t.reset_all_filters")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				path(d="M18 6L6 18M6 6l12 12")
 	.toolbar-center(v-if="days && days.length > 1")
@@ -59,9 +59,9 @@
 						)
 							span {{ option.label }}
 					div.timezone-divider(v-if="otherTimezones.length")
-						span Other Timezones
+					span.timezone-section-label {{ t.other_timezones }}
 				template(#no-options)
-					span(v-if="otherTimezones.length") Sorry, no matching options.
+					span(v-if="otherTimezones.length") {{ t.no_matching_options }}
 		.timezone-label(v-else) {{ scheduleTimezone }}
 		.version-area(v-if="versionOptions.length || changelogUrl")
 			.version-dropdown(ref="versionDropdown")
@@ -80,17 +80,17 @@
 						:class="{active: v.version === version}"
 					)
 						span {{ 'v' + v.version }}
-						span.version-current-badge(v-if="v.isCurrent") current
+						span.version-current-badge(v-if="v.isCurrent") {{ t.current }}
 					.version-menu-divider(v-if="changelogUrl && versionOptions.length")
 					a.version-item.changelog-link(v-if="changelogUrl", :href="changelogUrl")
 						svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 							path(d="M4 19.5A2.5 2.5 0 016.5 17H20")
 							path(d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z")
-						span View Changelog
+						span {{ t.view_changelog }}
 		.version-warning(v-if="version && !isCurrent")
 			small.text-muted {{ versionWarningText }}
 			a.current-version-link(v-if="currentScheduleUrl", :href="currentScheduleUrl")
-				|  Go to current version
+				|  {{ t.go_to_current_version }}
 		.exporter-area(v-if="resolvedExporters.length")
 			.exporter-dropdown(ref="exportDropdown")
 				button.toolbar-btn(@click="exportOpen = !exportOpen")
@@ -98,7 +98,7 @@
 						path(d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4")
 						polyline(points="7 10 12 15 17 10")
 						line(x1="12", y1="15", x2="12", y2="3")
-					|  Export
+					|  {{ t.export }}
 				.exporter-menu(v-if="exportOpen")
 					a.exporter-item(
 						v-for="exp in resolvedExporters",
@@ -113,12 +113,12 @@
 						span.exporter-name {{ exp.verbose_name }}
 						transition(name="fade")
 							.qr-hover(v-if="hoveredExporter === exp && exp.qrcode_svg", v-html="exp.qrcode_svg")
-		button.toolbar-btn(v-if="showPrint", @click="printSchedule", title="Print")
+		button.toolbar-btn(v-if="showPrint", @click="printSchedule", :title="t.print")
 			svg.tb-icon(viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="6 9 6 2 18 2 18 9")
 				path(d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2")
 				rect(x="6", y="14", width="12", height="8")
-		button.toolbar-btn(v-if="showFullscreen", @click="toggleFullscreen", :title="isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'")
+		button.toolbar-btn(v-if="showFullscreen", @click="toggleFullscreen", :title="isFullscreen ? t.exit_fullscreen : t.fullscreen")
 			svg.tb-icon(v-if="!isFullscreen", viewBox="0 0 24 24", fill="none", stroke="currentColor", stroke-width="2")
 				polyline(points="15 3 21 3 21 9")
 				polyline(points="9 21 3 21 3 15")
@@ -144,6 +144,9 @@ const FA_SVG_MAP = {
 
 export default {
 	name: 'ScheduleToolbar',
+	inject: {
+		translationMessages: { default: () => ({}) }
+	},
 	props: {
 		version: { type: String, default: '' },
 		isCurrent: { type: Boolean, default: true },
@@ -177,12 +180,30 @@ export default {
 		}
 	},
 	computed: {
+		t() {
+			const m = this.translationMessages || {}
+			return {
+				no_matching_options: m.no_matching_options || 'Sorry, no matching options.',
+				other_timezones: m.other_timezones || 'Other Timezones',
+				view_changelog: m.view_changelog || 'View Changelog',
+				go_to_current_version: m.go_to_current_version || 'Go to current version',
+				reset_all_filters: m.reset_all_filters || 'Reset all filters',
+				print: m.print || 'Print',
+				fullscreen: m.fullscreen || 'Fullscreen',
+				exit_fullscreen: m.exit_fullscreen || 'Exit Fullscreen',
+				latest: m.latest || 'Latest',
+				version_warning_editable: m.version_warning_editable || 'You are currently viewing the editable schedule version, which is unreleased and may change at any time.',
+				version_warning_old: m.version_warning_old || 'You are currently viewing an older schedule version.',
+				export: m.export || 'Export',
+				current: m.current || 'current',
+			}
+		},
 		resolvedExporters() {
 			return this.exporters || []
 		},
 		currentVersionLabel() {
 			if (this.version) return 'v' + this.version
-			return 'Latest'
+			return this.t.latest
 		},
 		versionOptions() {
 			if (!this.versions || !this.versions.length) return []
@@ -194,9 +215,9 @@ export default {
 		},
 		versionWarningText() {
 			if (!this.version) {
-				return 'You are currently viewing the editable schedule version, which is unreleased and may change at any time.'
+				return this.t.version_warning_editable
 			}
-			return 'You are currently viewing an older schedule version.'
+			return this.t.version_warning_old
 		},
 		availableTimezones() {
 			if (typeof Intl?.supportedValuesOf === 'function') {
@@ -372,7 +393,6 @@ export default {
 		flex-wrap: nowrap
 		flex: 1
 		min-width: 0
-		overflow-x: auto
 		.fav-toggle
 			display: flex
 			align-items: center
@@ -512,13 +532,27 @@ export default {
 							display: none !important
 						.open-indicator
 							position: absolute
-							right: 4px
+							right: 6px
 							top: 50%
 							transform: translateY(-50%)
-							font-size: 18px
-							line-height: 1
+							font-size: 0
+							line-height: 0
 							color: #666
 							pointer-events: none
+							transition: transform 0.25s ease
+							&::after
+								content: ''
+								display: inline-block
+								width: 0
+								height: 0
+								border-left: 4px solid transparent
+								border-right: 4px solid transparent
+								border-top: 5px solid #666
+								vertical-align: middle
+				&.open
+					.bunt-input .label-input-container .open-indicator
+						transform: translateY(-50%) rotate(180deg)
+				.bunt-input
 					.hint
 						display: none
 		.timezone-label
@@ -678,7 +712,7 @@ export default {
 .timezone-divider
 	display: flex
 	align-items: center
-	min-height: 44px
+	min-height: 8px
 	padding: 0 12px
 	border-top: 1px solid #d0d7de
 	border-bottom: 1px solid #d0d7de
@@ -687,6 +721,13 @@ export default {
 	font-weight: 700
 	text-transform: uppercase
 	letter-spacing: 0.02em
+	user-select: none
+.timezone-section-label
+	display: block
+	padding: 6px 12px 2px
+	font-weight: 600
+	font-size: 12px
+	color: $clr-secondary-text-light
 	user-select: none
 
 .chevron-icon

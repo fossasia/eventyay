@@ -1,6 +1,10 @@
 from collections import defaultdict, namedtuple
 from contextlib import suppress
 from urllib.parse import quote
+from xml.etree.ElementTree import tostring as xml_tostring
+
+import qrcode as qr_lib
+from qrcode.image.svg import SvgPathFillImage
 
 from django.conf import settings
 from django.db import models, transaction
@@ -18,6 +22,12 @@ from eventyay.base.models import PretalxModel
 from eventyay.base.models.submission import SubmissionFavourite
 from eventyay.common.text.phrases import phrases
 from eventyay.common.urls import EventUrls
+
+
+def _make_qr_svg(url):
+    """Generate an SVG QR code string for the given URL."""
+    image = qr_lib.make(url, image_factory=SvgPathFillImage)
+    return xml_tostring(image.get_image()).decode()
 from eventyay.schedule.notifications import render_notifications
 from eventyay.schedule.signals import schedule_release
 from eventyay.talk_rules.agenda import can_view_schedule, is_agenda_visible, is_widget_visible
@@ -619,6 +629,8 @@ class Schedule(PretalxModel):
             'event_end': self.event.date_to.isoformat(),
         }
         show_do_not_record = self.event.cfp.request_do_not_record
+        base_url = str(self.event.urls.base)
+        full_base_url = str(self.event.urls.base.full())
         for talk in talks:
             # Only add room if it's not deleted
             if talk.room and not talk.room.deleted:
@@ -667,15 +679,25 @@ class Schedule(PretalxModel):
                         if answer.question and answer.question.is_public
                     ]
                     # Per-talk export URLs
-                    base_url = self.event.urls.base
                     code = talk.submission.code
+                    ics_url = f'{base_url}talk/{code}.ics'
+                    google_url = f'{base_url}talk/{code}/export/google-calendar'
+                    webcal_url = f'{base_url}talk/{code}/export/webcal'
                     talk_data['exporters'] = {
-                        'ics': f'{base_url}talk/{code}.ics',
+                        'ics': ics_url,
                         'json': f'{base_url}talk/{code}.json',
                         'xml': f'{base_url}talk/{code}.xml',
                         'xcal': f'{base_url}talk/{code}.xcal',
-                        'google_calendar': f'{base_url}talk/{code}/export/google-calendar',
-                        'webcal': f'{base_url}talk/{code}/export/webcal',
+                        'google_calendar': google_url,
+                        'webcal': webcal_url,
+                        'qrcodes': {
+                            'ics': _make_qr_svg(f'{full_base_url}talk/{code}.ics'),
+                            'json': _make_qr_svg(f'{full_base_url}talk/{code}.json'),
+                            'xml': _make_qr_svg(f'{full_base_url}talk/{code}.xml'),
+                            'xcal': _make_qr_svg(f'{full_base_url}talk/{code}.xcal'),
+                            'google_calendar': _make_qr_svg(f'{full_base_url}talk/{code}/export/google-calendar'),
+                            'webcal': _make_qr_svg(f'{full_base_url}talk/{code}/export/webcal'),
+                        },
                     }
                     # Recording iframe from provider plugins
                     recording_iframe = ''
@@ -723,8 +745,9 @@ class Schedule(PretalxModel):
             if room in rooms
         ]
         include_avatar = self.event.cfp.request_avatar
-        result['speakers'] = [
-            {
+        speaker_list = []
+        for user in speakers:
+            speaker_data = {
                 'code': user.code,
                 'name': user.fullname or None,
                 'biography': getattr(user.event_profile(self.event), 'biography', ''),
@@ -736,8 +759,30 @@ class Schedule(PretalxModel):
                     user.get_avatar_url(event=self.event, thumbnail='tiny') if include_avatar else None
                 ),
             }
-            for user in speakers
-        ]
+            if enrich:
+                spk_base = f'{base_url}speakers/{user.code}'
+                spk_full_base = f'{full_base_url}speakers/{user.code}'
+                spk_ics = f'{spk_base}/talks.ics'
+                spk_google = f'{spk_base}/talks/export/google-calendar'
+                spk_webcal = f'{spk_base}/talks/export/webcal'
+                speaker_data['exporters'] = {
+                    'ics': spk_ics,
+                    'json': f'{spk_base}/talks.json',
+                    'xml': f'{spk_base}/talks.xml',
+                    'xcal': f'{spk_base}/talks.xcal',
+                    'google_calendar': spk_google,
+                    'webcal': spk_webcal,
+                    'qrcodes': {
+                        'ics': _make_qr_svg(f'{spk_full_base}/talks.ics'),
+                        'json': _make_qr_svg(f'{spk_full_base}/talks.json'),
+                        'xml': _make_qr_svg(f'{spk_full_base}/talks.xml'),
+                        'xcal': _make_qr_svg(f'{spk_full_base}/talks.xcal'),
+                        'google_calendar': _make_qr_svg(f'{spk_full_base}/talks/export/google-calendar'),
+                        'webcal': _make_qr_svg(f'{spk_full_base}/talks/export/webcal'),
+                    },
+                }
+            speaker_list.append(speaker_data)
+        result['speakers'] = speaker_list
         return result
 
     def __str__(self) -> str:

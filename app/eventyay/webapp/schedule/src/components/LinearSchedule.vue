@@ -17,7 +17,7 @@
 					@fav="$emit('fav', session.id)",
 					@unfav="$emit('unfav', session.id)"
 				)
-				.break(v-else)
+				.break(v-else-if="showBreaks")
 					.title {{ getLocalizedString(session.title) }}
 </template>
 <script>
@@ -48,6 +48,10 @@ export default {
 			type: String,
 			default: 'room',
 			validator: v => ['room', 'title', 'popularity'].includes(v)
+		},
+		showBreaks: {
+			type: Boolean,
+			default: true
 		}
 	},
 	data () {

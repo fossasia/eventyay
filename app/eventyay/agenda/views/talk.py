@@ -80,7 +80,10 @@ class TalkMixin(PermissionRequired):
         return self.submission
 
 
-class TalkView(TalkMixin, TemplateView):
+from eventyay.agenda.views.speaker import ScheduleDataMixin
+
+
+class TalkView(ScheduleDataMixin, TalkMixin, TemplateView):
     template_name = 'agenda/talk.html'
 
     def get_contrast_color(self, bg_color):
@@ -341,7 +344,11 @@ class SingleCalendarRedirectView(EventPageMixin, TalkMixin, View):
 
         slot = talk_slots.first()
         ical_url = request.build_absolute_uri(
-            reverse('agenda:ical', kwargs={'event': event, 'slug': slug})
+            reverse('agenda:ical', kwargs={
+                'organizer': request.event.organizer.slug,
+                'event': event,
+                'slug': slug,
+            })
         )
 
         if provider == 'google-calendar':
