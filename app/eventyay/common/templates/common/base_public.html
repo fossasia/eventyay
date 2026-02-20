@@ -8,7 +8,7 @@
 {% load tz %}
 {% load static %}
 
-{% with current_event=request.event|default:event %}
+{% with current_event=request.event|default:None %}
 <!DOCTYPE html>
 <html lang="{{ html_locale }}"{% if rtl %} dir="rtl" class="rtl"{% endif %}>
     <head>
