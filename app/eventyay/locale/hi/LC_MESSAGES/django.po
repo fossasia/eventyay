@@ -7677,12 +7677,12 @@ msgstr ""
 #: base/models/tax.py:196
 #, python-brace-format
 msgid "incl. {rate}% {name}"
-msgstr "[ X6X]% {name} सहित"
+msgstr "{rate}% {name} सहित"
 
 #: base/models/tax.py:198
 #, python-brace-format
 msgid "plus {rate}% {name}"
-msgstr "[ X5X]% {name} अतिरिक्त"
+msgstr "{rate}% {name} अतिरिक्त"
 
 #: base/models/tax.py:200
 msgid "reverse charge enabled"
