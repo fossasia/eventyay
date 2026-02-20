@@ -179,7 +179,9 @@ class OrganizerUpdate(OrganizerPermissionRequiredMixin, UpdateView):
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         if self.request.user.has_active_staff_session(self.request.session.session_key):
-            kwargs['domain'] = True
+            # Custom domain feature is temporarily disabled.
+            # Uncomment when the feature is ready for re-enablement.
+            # kwargs['domain'] = True
             kwargs['change_slug'] = True
         return kwargs
 
