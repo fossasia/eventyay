@@ -217,10 +217,10 @@ const initToastUiMarkdownTextarea = (textarea) => {
     }
 
     const installAbsoluteLinkOnlyValidation = () => {
-        if (!window.MutationObserver) return () => {}
+        if (!window.MutationObserver) return () => { }
 
         const root = mount.querySelector?.('.toastui-editor-defaultUI')
-        if (!root || root.dataset.eventyayAbsoluteLinkOnlyBound === 'true') return () => {}
+        if (!root || root.dataset.eventyayAbsoluteLinkOnlyBound === 'true') return () => { }
 
         root.dataset.eventyayAbsoluteLinkOnlyBound = 'true'
 
@@ -713,10 +713,80 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
     }
 }
 
+/**
+ * Wrap bare <input type="file"> elements with a styled button + filename label,
+ * matching the pattern used in common/avatar.html.
+ * Skips inputs already inside .avatar-upload (handled by profile.js)
+ * or already wrapped by a previous call.
+ *
+ * Translated labels come from the hidden #eventyay-file-input-i18n div
+ * rendered by forms_header.html via Django's {% translate %} tags.
+ */
+let _fileInputIdCounter = 0
+const initFileInputWrappers = () => {
+    const i18nEl = document.getElementById('eventyay-file-input-i18n')
+    const defaultChooseLabel = i18nEl?.dataset?.chooseFile || 'Choose file'
+    const defaultNoFileLabel = i18nEl?.dataset?.noFile || 'No file chosen'
+
+    document.querySelectorAll('input[type="file"]').forEach((input) => {
+        // Skip if already handled by the avatar template or already wrapped
+        if (input.closest('.avatar-upload')) return
+        if (input.closest('.eventyay-file-pick-wrapper')) return
+        if (input.dataset.eventyayFileWrapped === 'true') return
+
+        input.dataset.eventyayFileWrapped = 'true'
+
+        const chooseLabel = input.dataset.chooseFileLabel || defaultChooseLabel
+        const noFileText = input.dataset.noFileLabel || defaultNoFileLabel
+
+        // Build the wrapper
+        const wrapper = document.createElement('div')
+        wrapper.className = 'eventyay-file-pick-wrapper'
+
+        // Delegate clicks on the wrapper (e.g. the white area) to the input
+        wrapper.addEventListener('click', (event) => {
+            if (event.target !== label && event.target !== input) {
+                input.click()
+            }
+        })
+
+        // Styled button label
+        const label = document.createElement('label')
+        label.setAttribute('for', input.id || '')
+        label.textContent = chooseLabel
+
+        // Filename display span
+        const nameSpan = document.createElement('span')
+        nameSpan.className = 'eventyay-file-name text-muted small ms-2'
+        nameSpan.dataset.noFile = noFileText
+        nameSpan.textContent = noFileText
+
+        // Insert wrapper before the input, then move input inside
+        input.parentNode.insertBefore(wrapper, input)
+        wrapper.appendChild(label)
+        wrapper.appendChild(nameSpan)
+        wrapper.appendChild(input)
+
+        // If input has no id, generate one so the label works
+        if (!input.id) {
+            input.id = 'eventyay-file-' + (++_fileInputIdCounter)
+            label.setAttribute('for', input.id)
+        }
+
+        // Update filename display on change
+        input.addEventListener('change', () => {
+            nameSpan.textContent = (input.files && input.files.length > 0)
+                ? input.files[0].name
+                : noFileText
+        })
+    })
+}
+
 /* Register handlers */
 onReady(() => {
     upgradeMarkdownEditors(document)
     startMarkdownEditorObserver()
+    initFileInputWrappers()
     document
         .querySelectorAll("input[data-maxsize][type=file]")
         .forEach((element) => initFileSizeCheck(element))

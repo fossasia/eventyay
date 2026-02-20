@@ -186,6 +186,50 @@ input[type="file"] {
     cursor: pointer;
   }
 }
+/* Global styled file input wrapper (created by formTools.js) */
+.eventyay-file-pick-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;  background-color: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--size-border-radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  &:focus-within {
+    border-color: var(--color-primary-light);
+    box-shadow: var(--shadow-focus);
+  }
+  label {
+    background-color: #e9ecef;
+    border-right: 1px solid var(--color-border);
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: var(--color-text);
+    cursor: pointer;
+    white-space: nowrap;
+    margin-bottom: 0;
+    &:hover {
+      background-color: #dde0e3;
+    }
+  }
+  input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+}
+.eventyay-file-name {
+  font-size: 0.875em;
+  color: #6c757d;
+  padding: 0.375rem 0.75rem;
+}
 ::file-selector-button {
   margin-left: -6px;
   color: white;
