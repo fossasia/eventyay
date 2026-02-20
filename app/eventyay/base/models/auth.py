@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import binascii
 import json
 import logging
@@ -10,6 +12,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Self
 from urllib.parse import urlencode, urljoin
 
+from allauth.account.models import EmailAddress
 from channels.db import database_sync_to_async
 from django.conf import settings
 from django.contrib.auth.models import (
@@ -46,6 +49,7 @@ from ...helpers.u2f import pub_key_from_der, websafe_decode
 from .base import LoggingMixin
 from .mixins import FileCleanupMixin, GenerateCode
 
+
 # from eventyay.person.signals import delete_user as delete_user_signal
 
 logger = logging.getLogger(__name__)
@@ -79,13 +83,13 @@ class UserManager(BaseUserManager):
     model documentation to see what's so special about our user model.
     """
 
-    def create_user(self, email: str, password: str = None, **kwargs):
+    def create_user(self, email: str, password: str = None, **kwargs) -> User:
         user = self.model(email=email, **kwargs)
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email: str, password: str = None):  # NOQA
+    def create_superuser(self, email: str, password: str = None) -> User:
         # Not used in the software but required by Django
         if password is None:
             raise Exception('You must provide a password')
@@ -97,13 +101,13 @@ class UserManager(BaseUserManager):
         user.save()
         return user
 
-    def create_adminuser(self, email: str, password: str = None):
+    def create_adminuser(self, email: str, password: str = None) -> User:
         """
         Command: python manage.py create_admin_user
         Create an admin user without setting is_superuser to True.
         """
         if password is None:
-            raise ValueError("You must provide a password")
+            raise ValueError('You must provide a password')
 
         user = self.model(email=email)
         user.is_staff = True
@@ -123,6 +127,7 @@ def generate_session_token():
 
 def generate_short_token():
     return get_random_string(length=24)
+
 
 class SuperuserPermissionSet:
     def __contains__(self, item):
@@ -160,14 +165,14 @@ class User(
     """
 
     class ModerationState(models.TextChoices):
-        NONE = ""
-        SILENCED = "silenced"
-        BANNED = "banned"
+        NONE = ''
+        SILENCED = 'silenced'
+        BANNED = 'banned'
 
     class UserType(models.TextChoices):
-        PERSON = "person"
-        KIOSK = "kiosk"
-        ANONYMOUS = "anon"
+        PERSON = 'person'
+        KIOSK = 'kiosk'
+        ANONYMOUS = 'anon'
 
     USERNAME_FIELD = 'email'
     EMAIL_FIELD = 'email'
@@ -199,31 +204,23 @@ class User(
     # Video/Event fields
     client_id = models.CharField(max_length=200, db_index=True, null=True, blank=True)
     token_id = models.CharField(max_length=200, db_index=True, null=True, blank=True)
-    event = models.ForeignKey(to="Event", db_index=True, on_delete=models.CASCADE, null=True, blank=True)
+    event = models.ForeignKey(to='Event', db_index=True, on_delete=models.CASCADE, null=True, blank=True)
     moderation_state = models.CharField(
         max_length=8,
         default=ModerationState.NONE,
         choices=ModerationState.choices,
     )
-    type = models.CharField(
-        max_length=8, default=UserType.PERSON, choices=UserType.choices
-    )
+    type = models.CharField(max_length=8, default=UserType.PERSON, choices=UserType.choices)
     show_publicly = models.BooleanField(default=True)
     profile = JSONField(default=dict)
     client_state = JSONField(default=dict)
     traits = JSONField(blank=True, default=list)
     pretalx_id = models.CharField(max_length=200, null=True, blank=True)
-    blocked_users = models.ManyToManyField(
-        "self", related_name="blocked_by", symmetrical=False
-    )
+    blocked_users = models.ManyToManyField('self', related_name='blocked_by', symmetrical=False)
     last_login = models.DateTimeField(null=True, blank=True)
     deleted = models.BooleanField(default=False)
-    social_login_id_twitter = models.CharField(
-        null=True, blank=True, max_length=190, db_index=True
-    )
-    social_login_id_linkedin = models.CharField(
-        null=True, blank=True, max_length=190, db_index=True
-    )
+    social_login_id_twitter = models.CharField(null=True, blank=True, max_length=190, db_index=True)
+    social_login_id_linkedin = models.CharField(null=True, blank=True, max_length=190, db_index=True)
 
     # Cache attributes for video functionality
     _grant_cache = None
@@ -292,7 +289,6 @@ class User(
         self._membership_cache = None
         self._block_cache = {}
 
-
     class Meta:
         verbose_name = _('User')
         verbose_name_plural = _('Users')
@@ -301,13 +297,85 @@ class User(
             'administrator': is_administrator,
         }
 
+    # Properties
+    @property
+    def name(self):
+        return self.fullname
+
+    @property
+    def top_logentries(self):
+        return self.all_logentries
+
+    @property
+    def all_logentries(self):
+        from eventyay.base.models import LogEntry
+
+        return LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=self.pk)
+
+    @property
+    def is_banned(self):
+        return self.moderation_state == self.ModerationState.BANNED or self.deleted
+
+    @property
+    def is_silenced(self):
+        return self.moderation_state == self.ModerationState.SILENCED
+
+    @cached_property
+    def guid(self) -> str:
+        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{self.email.strip()}'))
+
+    @cached_property
+    def gravatar_parameter(self) -> str:
+        return md5(self.email.strip().encode()).hexdigest()
+
+    @cached_property
+    def has_avatar(self) -> bool:
+        return bool(self.avatar) and self.avatar != 'False'
+
+    @cached_property
+    def primary_email(self) -> str:
+        """
+        Get the primary email address for sending emails to this user.
+
+        Returns the email address marked as primary in the EmailAddress model.
+        If no primary email address is set, falls back to the user's email field.
+
+        Note: Use this address only for sending emails, not for identification, because
+        we don't use `allauth.account.auth_backends.AuthenticationBackend` for authentication.
+
+        Returns:
+            str: The primary email address if available, otherwise the user's email field,
+                 or an empty string if neither exists.
+        """
+        email_address = EmailAddress.objects.filter(user=self, primary=True).first()
+        if email_address:
+            return email_address.email
+        return self.email or ''
+
+    @cached_property
+    def email_addresses(self) -> tuple[str, ...]:
+        """
+        Return a tuple of all unique email addresses associated with this user.
+
+        This includes the primary email address and any additional email addresses
+        linked to the user via the EmailAddress model. The result is used for filtering
+        Event, Order, and Submission objects based on the user's email addresses.
+
+        Returns:
+            tuple[str, ...]: A tuple containing all unique email addresses as strings.
+        """
+        addrs = frozenset([self.email.lower()]) if self.email else frozenset()
+        # django-allauth already make email addresses lowercase in its model.
+        return tuple(addrs | frozenset(EmailAddress.objects.filter(user=self).values_list('email', flat=True)))
+
+    # Methods
     def save(self, *args, **kwargs):
         # In some flows (e.g., anonymous/kiosk or external auth), users can be created
         # without an email. Guard against calling lower() on None.
         if self.email:
             self.email = self.email.lower()
         is_new = not self.pk
-        
+
         # Invalidate avatar_url cache if avatar might have changed
         if not is_new:
             update_fields = kwargs.get('update_fields')
@@ -335,16 +403,12 @@ class User(
         # users may be created without an email/fullname. Returning None breaks
         # Django debug toolbar (and logging) JSON serialization when it calls str().
         return (
-            (self.fullname or "").strip()
-            or (self.email or "").strip()
-            or (self.nick or "").strip()
-            or (self.client_id or "").strip()
-            or f"user:{self.pk}"
+            (self.fullname or '').strip()
+            or (self.email or '').strip()
+            or (self.nick or '').strip()
+            or (self.client_id or '').strip()
+            or f'user:{self.pk}'
         )
-
-    # @property
-    # def is_superuser(self):
-    #    return False
 
     def get_short_name(self) -> str:
         """
@@ -377,7 +441,6 @@ class User(
 
     def send_security_notice(self, messages, email=None):
         from eventyay.base.services.mail import SendMailException, mail
-
 
         try:
             with language(self.locale):
@@ -418,27 +481,17 @@ class User(
             user=self,
         )
 
-    @property
-    def top_logentries(self):
-        return self.all_logentries
-
-    @property
-    def all_logentries(self):
-        from eventyay.base.models import LogEntry
-
-        return LogEntry.objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=self.pk)
-
     def _get_teams_for_organizer(self, organizer):
-        if 'o{}'.format(organizer.pk) not in self._teamcache:
-            self._teamcache['o{}'.format(organizer.pk)] = list(self.teams.filter(organizer=organizer))
-        return self._teamcache['o{}'.format(organizer.pk)]
+        if f'o{organizer.pk}' not in self._teamcache:
+            self._teamcache[f'o{organizer.pk}'] = list(self.teams.filter(organizer=organizer))
+        return self._teamcache[f'o{organizer.pk}']
 
     def _get_teams_for_event(self, organizer, event):
-        if 'e{}'.format(event.pk) not in self._teamcache:
-            self._teamcache['e{}'.format(event.pk)] = list(
+        if f'e{event.pk}' not in self._teamcache:
+            self._teamcache[f'e{event.pk}'] = list(
                 self.teams.filter(organizer=organizer).filter(Q(all_events=True) | Q(limit_events=event))
             )
-        return self._teamcache['e{}'.format(event.pk)]
+        return self._teamcache[f'e{event.pk}']
 
     def get_event_permission_set(self, organizer, event) -> set:
         """
@@ -484,7 +537,7 @@ class User(
             return True
         teams = self._get_teams_for_event(organizer, event)
         if teams:
-            self._teamcache['e{}'.format(event.pk)] = teams
+            self._teamcache[f'e{event.pk}'] = teams
             if isinstance(perm_name, (tuple, list)):
                 return any([any(team.has_permission(p) for team in teams) for p in perm_name])
             if not perm_name or any([team.has_permission(perm_name) for team in teams]):
@@ -566,7 +619,6 @@ class User(
 
         return Organizer.objects.filter(id__in=self.teams.filter(**kwargs).values_list('organizer', flat=True))
 
-
     def has_active_staff_session(self, session_key=None):
         """
         Returns whether or not a user has an active staff session (formerly known as superuser session)
@@ -609,8 +661,9 @@ class User(
 
     # From talk
     def get_display_name(self) -> str:
-        """Returns a user's name or 'Unnamed user'."""
-        return str(self.fullname) if self.fullname else str(self)
+        """Returns a user's fullname, nickname, email or 'Unnamed user'."""
+        display_name = ((self.fullname or self.nick or self.email) or '').strip()
+        return display_name if display_name else 'Unnamed user'
 
     # Override to add caching.
     def has_perm(self, perm: str, obj: Self | None = None) -> bool:
@@ -743,6 +796,7 @@ the eventyay robot"""
 
     class orga_urls(EventUrls):
         """URL patterns for organizer panel views related to this user."""
+
         admin = '/orga/admin/users/{self.code}/'
 
     @transaction.atomic
@@ -837,21 +891,9 @@ the eventyay team"""
     # shred.alters_data = True
 
     @cached_property
-    def guid(self) -> str:
-        return str(uuid.uuid5(uuid.NAMESPACE_URL, f'acct:{self.email.strip()}'))
-
-    @cached_property
-    def gravatar_parameter(self) -> str:
-        return md5(self.email.strip().encode()).hexdigest()
-
-    @cached_property
-    def has_avatar(self) -> bool:
-        return bool(self.avatar) and self.avatar != 'False'
-
-    @cached_property
     def avatar_url(self) -> str:
         """Returns avatar URL with cache-busting timestamp parameter.
-        
+
         Uses the avatar file's actual modification time for most accurate cache-busting.
         Falls back to current time if file doesn't exist or can't be accessed.
         """
@@ -864,24 +906,24 @@ the eventyay team"""
             except (OSError, ValueError, AttributeError):
                 # Fallback to current time if file doesn't exist or can't be accessed
                 timestamp = int(time.time() * 1000)
-            
-            return f"{self.avatar.url}?v={timestamp}"
+
+            return f'{self.avatar.url}?v={timestamp}'
         return ''
 
     def get_avatar_url(self, event=None, thumbnail=None):
         """Returns the full avatar URL with cache-busting parameter.
-        
+
         Args:
             event: Optional event for custom domain support
             thumbnail: Optional thumbnail size ('tiny' or 'default')
-        
+
         Returns:
             URL string with cache-busting query parameter
         """
         # Check if we have an avatar
         if not self.has_avatar:
             return ''
-        
+
         # Determine which image to use
         if not thumbnail:
             image = self.avatar
@@ -889,10 +931,10 @@ the eventyay team"""
             image = self.avatar_thumbnail_tiny if thumbnail == 'tiny' else self.avatar_thumbnail
             if not image:
                 image = create_thumbnail(self.avatar, thumbnail)
-        
+
         if not image:
             return ''
-        
+
         # Build base URL with cache-busting
         try:
             # Get the actual file modification time for cache-busting
@@ -902,9 +944,9 @@ the eventyay team"""
         except (OSError, ValueError, AttributeError):
             # Fallback to current time if file doesn't exist
             timestamp = int(time.time() * 1000)
-        
-        image_url = f"{image.url}?v={timestamp}"
-        
+
+        image_url = f'{image.url}?v={timestamp}'
+
         if event and event.custom_domain:
             return urljoin(event.custom_domain, image_url)
         return urljoin(settings.SITE_URL, image_url)
@@ -952,13 +994,13 @@ the eventyay team"""
         self.roulette_pairing_left.all().delete()
         self.roulette_pairing_right.all().delete()
         self.audit_logs.filter(
-            type__startswith="auth.user.profile",
+            type__startswith='auth.user.profile',
             data__object=str(self.pk),
         ).update(
             data={
-                "object": str(self.pk),
-                "old": {"__redacted": True},
-                "new": {"__redacted": True},
+                'object': str(self.pk),
+                'old': {'__redacted': True},
+                'new': {'__redacted': True},
             }
         )
         self.exhibitor_staff.all().delete()
@@ -968,21 +1010,19 @@ the eventyay team"""
         for dm_channel in self.chat_channels.filter(channel__room__isnull=True):
             if dm_channel.channel.members.filter(user__deleted=False).count() == 1:
                 # Last one standing, delete DM channel including all messages as well as shared pictures
-                for event in dm_channel.channel.chat_events.filter(
-                    event_type="channel.message"
-                ):
-                    if event.content.get("files", []):
-                        for file in event.content.get("files", []):
-                            basename = os.path.basename(file["url"])
-                            fileid = basename.split(".")[0]
+                for event in dm_channel.channel.chat_events.filter(event_type='channel.message'):
+                    if event.content.get('files', []):
+                        for file in event.content.get('files', []):
+                            basename = os.path.basename(file['url'])
+                            fileid = basename.split('.')[0]
                             sf = StoredFile.objects.filter(id=fileid, user=self).first()
                             if sf:
                                 sf.full_delete()
                 dm_channel.channel.delete()
 
-        if "avatar" in self.profile and "url" in self.profile["avatar"]:
-            basename = os.path.basename(self.profile["avatar"]["url"])
-            fileid = basename.split(".")[0]
+        if 'avatar' in self.profile and 'url' in self.profile['avatar']:
+            basename = os.path.basename(self.profile['avatar']['url'])
+            fileid = basename.split('.')[0]
             sf = StoredFile.objects.filter(id=fileid, user=self).first()
             if sf:
                 sf.full_delete()
@@ -1005,58 +1045,38 @@ the eventyay team"""
         # Important: If this is updated, eventyay.base.services.user.get_public_users also needs to be updated!
         # For performance reasons, it does not use this method directly.
         d = {
-            "id": str(self.id),
-            "profile": self.profile,
-            "pretalx_id": self.pretalx_id,
-            "deleted": self.deleted,
-            "badges": (
-                sorted(
-                    list(
-                        {
-                            badge
-                            for trait, badge in trait_badges_map.items()
-                            if trait in self.traits
-                        }
-                    )
-                )
+            'id': str(self.id),
+            'profile': self.profile,
+            'pretalx_id': self.pretalx_id,
+            'deleted': self.deleted,
+            'badges': (
+                sorted(list({badge for trait, badge in trait_badges_map.items() if trait in self.traits}))
                 if trait_badges_map
                 else []
             ),
         }
-        d["inactive"] = self.last_login is None or self.last_login < now() - timedelta(
-            hours=36
-        )
+        d['inactive'] = self.last_login is None or self.last_login < now() - timedelta(hours=36)
         if include_admin_info:
-            d["moderation_state"] = self.moderation_state
-            d["token_id"] = self.token_id
+            d['moderation_state'] = self.moderation_state
+            d['token_id'] = self.token_id
         if include_client_state:
-            d["client_state"] = self.client_state
+            d['client_state'] = self.client_state
         if include_personal_data:
-            d["wikimedia_username"] = self.wikimedia_username
+            d['wikimedia_username'] = self.wikimedia_username
         return d
-
-    @property
-    def is_banned(self):
-        return self.moderation_state == self.ModerationState.BANNED or self.deleted
-
-    @property
-    def is_silenced(self):
-        return self.moderation_state == self.ModerationState.SILENCED
 
     # Role and grant methods (video/event)
     def _update_grant_cache(self):
-        self._grant_cache = {
-            "event": set(self.event_grants.values_list("role", flat=True))
-        }
-        for v in self.room_grants.values("role", "room"):
-            self._grant_cache.setdefault(v["room"], set())
-            self._grant_cache[v["room"]].add(v["role"])
+        self._grant_cache = {'event': set(self.event_grants.values_list('role', flat=True))}
+        for v in self.room_grants.values('role', 'room'):
+            self._grant_cache.setdefault(v['room'], set())
+            self._grant_cache[v['room']].add(v['role'])
 
     def get_role_grants(self, room=None):
         if self._grant_cache is None:
             self._update_grant_cache()
 
-        roles = self._grant_cache["event"]
+        roles = self._grant_cache['event']
         if room:
             roles |= self._grant_cache.get(room.id, set())
         return roles
@@ -1065,15 +1085,13 @@ the eventyay team"""
         if self._grant_cache is None:
             await database_sync_to_async(self._update_grant_cache)()
 
-        roles = self._grant_cache["event"]
+        roles = self._grant_cache['event']
         if room:
             roles |= self._grant_cache.get(room.id, set())
         return roles
 
     def _update_membership_cache(self):
-        self._membership_cache = {
-            str(i) for i in self.chat_channels.values_list("channel_id", flat=True)
-        }
+        self._membership_cache = {str(i) for i in self.chat_channels.values_list('channel_id', flat=True)}
 
     async def is_member_of_channel_async(self, channel_id):
         if self._membership_cache is None:
@@ -1087,9 +1105,7 @@ the eventyay team"""
 
             @database_sync_to_async
             def _add():
-                self._block_cache[channel.id] = channel.members.filter(
-                    user__in=self.blocked_by.all()
-                ).exists()
+                self._block_cache[channel.id] = channel.members.filter(user__in=self.blocked_by.all()).exists()
 
             await _add()
         return self._block_cache[channel.id]
@@ -1102,15 +1118,9 @@ the eventyay team"""
 
 # Related models for video/event functionality
 class RoomGrant(models.Model):
-    event = models.ForeignKey(
-        "Event", related_name="room_grants", on_delete=models.CASCADE
-    )
-    room = models.ForeignKey(
-        "Room", related_name="role_grants", on_delete=models.CASCADE
-    )
-    user = models.ForeignKey(
-        "User", related_name="room_grants", on_delete=models.CASCADE
-    )
+    event = models.ForeignKey('Event', related_name='room_grants', on_delete=models.CASCADE)
+    room = models.ForeignKey('Room', related_name='role_grants', on_delete=models.CASCADE)
+    user = models.ForeignKey('User', related_name='room_grants', on_delete=models.CASCADE)
     role = models.CharField(max_length=200)
 
     def save(self, *args, **kwargs):
@@ -1125,12 +1135,8 @@ class RoomGrant(models.Model):
 
 
 class EventGrant(models.Model):
-    event = models.ForeignKey(
-        "Event", related_name="event_grants", on_delete=models.CASCADE
-    )
-    user = models.ForeignKey(
-        "User", related_name="event_grants", on_delete=models.CASCADE
-    )
+    event = models.ForeignKey('Event', related_name='event_grants', on_delete=models.CASCADE)
+    user = models.ForeignKey('User', related_name='event_grants', on_delete=models.CASCADE)
     role = models.CharField(max_length=200)
 
     def save(self, *args, **kwargs):
@@ -1145,9 +1151,7 @@ class EventGrant(models.Model):
 
 
 class ShortToken(models.Model):
-    event = models.ForeignKey(
-        "Event", related_name="short_tokens", on_delete=models.CASCADE
-    )
+    event = models.ForeignKey('Event', related_name='short_tokens', on_delete=models.CASCADE)
     expires = models.DateTimeField()
     short_token = models.CharField(
         db_index=True,
@@ -1156,6 +1160,7 @@ class ShortToken(models.Model):
         max_length=150,
     )
     long_token = models.TextField()
+
 
 # Staff session models (from ticketing)
 class StaffSession(models.Model):
@@ -1197,7 +1202,7 @@ class U2FDevice(Device):
         # https://www.w3.org/TR/webauthn/#sctn-encoded-credPubKey-examples
         pub_key = pub_key_from_der(websafe_decode(d['publicKey'].replace('+', '-').replace('/', '_')))
         pub_key = binascii.unhexlify(
-            'A5010203262001215820{:064x}225820{:064x}'.format(pub_key.public_numbers().x, pub_key.public_numbers().y)
+            f'A5010203262001215820{pub_key.public_numbers().x:064x}225820{pub_key.public_numbers().y:064x}'
         )
         return pub_key
 

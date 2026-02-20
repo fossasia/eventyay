@@ -54,7 +54,7 @@
         <div class='form-group'>
             <label class='col-md-3 control-label'>{{ _('Email Address') }}</label>
             <div class='col-md-9'>
-                <p>{{ primary_email }}</p>
+                <p>{{ primary_email|default:'(no email address)' }}</p>
                 <p class='help-block'>
                     <a href="{% url 'eventyay_common:account.email' %}">
                         {{ _('Manage email addresses') }}

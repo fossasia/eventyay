@@ -1,11 +1,12 @@
 from datetime import datetime, time
+from typing import cast
 
 import pytz
 from dateutil.parser import parse
 from django.core.exceptions import PermissionDenied
 from django.db.models import Max, Min, Q
 from django.db.models.functions import Coalesce, Greatest
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.formats import date_format, get_format
@@ -16,11 +17,11 @@ from django.utils.translation import pgettext
 from eventyay.base.models import (
     EventMetaProperty,
     EventMetaValue,
+    Order,
+    Organizer,
     ProductMetaProperty,
     ProductMetaValue,
     ProductVariation,
-    Order,
-    Organizer,
     User,
     Voucher,
 )
@@ -154,7 +155,7 @@ def event_list(request):
     return JsonResponse(doc)
 
 
-def nav_context_list(request):
+def nav_context_list(request: HttpRequest):
     query = request.GET.get('query', '').strip()
     organizer = request.GET.get('organizer', None)
 
@@ -163,8 +164,9 @@ def nav_context_list(request):
     except ValueError:
         page = 1
 
+    user = cast(User, request.user)
     qs_events = (
-        request.user.get_events_with_any_permission(request)
+        user.get_events_with_any_permission(request)
         .filter(Q(name__icontains=i18ncomp(query)) | Q(slug__icontains=query))
         .annotate(
             min_from=Min('subevents__date_from'),
@@ -178,10 +180,10 @@ def nav_context_list(request):
         .order_by('-order_from')
     )
 
-    if request.user.has_active_staff_session(request.session.session_key):
+    if user.has_active_staff_session(request.session.session_key):
         qs_orga = Organizer.objects.all()
     else:
-        qs_orga = Organizer.objects.filter(pk__in=request.user.teams.values_list('organizer', flat=True))
+        qs_orga = Organizer.objects.filter(pk__in=user.teams.values_list('organizer', flat=True))
     if query:
         qs_orga = qs_orga.filter(Q(name__icontains=query) | Q(slug__icontains=query))
 
@@ -192,15 +194,15 @@ def nav_context_list(request):
             .only('event', 'code', 'pk')
             .order_by()
         )
-        if not request.user.has_active_staff_session(request.session.session_key):
+        if not user.has_active_staff_session(request.session.session_key):
             qs_orders = qs_orders.filter(
                 Q(
-                    event__organizer_id__in=request.user.teams.filter(
+                    event__organizer_id__in=user.teams.filter(
                         all_events=True, can_view_orders=True
                     ).values_list('organizer', flat=True)
                 )
                 | Q(
-                    event_id__in=request.user.teams.filter(can_view_orders=True).values_list(
+                    event_id__in=user.teams.filter(can_view_orders=True).values_list(
                         'limit_events__id', flat=True
                     )
                 )
@@ -212,15 +214,15 @@ def nav_context_list(request):
             .only('event', 'code', 'pk')
             .order_by()
         )
-        if not request.user.has_active_staff_session(request.session.session_key):
+        if not user.has_active_staff_session(request.session.session_key):
             qs_vouchers = qs_vouchers.filter(
                 Q(
-                    event__organizer_id__in=request.user.teams.filter(
+                    event__organizer_id__in=user.teams.filter(
                         all_events=True, can_view_vouchers=True
                     ).values_list('organizer', flat=True)
                 )
                 | Q(
-                    event_id__in=request.user.teams.filter(can_view_vouchers=True).values_list(
+                    event_id__in=user.teams.filter(can_view_vouchers=True).values_list(
                         'limit_events__id', flat=True
                     )
                 )
@@ -231,14 +233,14 @@ def nav_context_list(request):
 
     show_user = (
         not query
-        or (query and request.user.email and query.lower() in request.user.email.lower())
-        or (query and request.user.fullname and query.lower() in request.user.fullname.lower())
+        or (query and user.primary_email and query.lower() in user.primary_email.lower())
+        or (query and user.fullname and query.lower() in user.fullname.lower())
     )
     total = qs_events.count() + qs_orga.count()
     pagesize = 20
     offset = (page - 1) * pagesize
     results = (
-        ([serialize_user(request.user)] if show_user else [])
+        ([serialize_user(user)] if show_user else [])
         + [serialize_orga(e) for e in qs_orga[offset : offset + (pagesize if query else 5)]]
         + [
             serialize_event(e)
@@ -254,7 +256,7 @@ def nav_context_list(request):
         except Organizer.DoesNotExist:
             pass
         else:
-            if request.user.has_organizer_permission(organizer, request=request):
+            if user.has_organizer_permission(organizer, request=request):
                 organizer = serialize_orga(organizer)
                 if organizer in results:
                     results.remove(organizer)
@@ -532,20 +534,20 @@ def productvarquota_select2(request, **kwargs):
         if variations:
             choices.append((str(i.pk), _('{product} – Any variation').format(product=i), ''))
             for v in variations:
-                choices.append(('%d-%d' % (i.pk, v.pk), '%s – %s' % (i, v.value), ''))
+                choices.append((f'{i.pk}-{v.pk}', f'{i} – {v.value}', ''))
         else:
             choices.append((str(i.pk), str(i), ''))
     for q in quotaqs:
         if request.event.has_subevents:
             choices.append(
                 (
-                    'q-%d' % q.pk,
+                    f'q-{q.pk}',
                     _('Any product in quota "{quota}"').format(quota=q),
                     str(q.subevent),
                 )
             )
         else:
-            choices.append(('q-%d' % q.pk, _('Any product in quota "{quota}"').format(quota=q), ''))
+            choices.append((f'q-{q.pk}', _('Any product in quota "{quota}"').format(quota=q), ''))
 
     doc = {
         'results': [

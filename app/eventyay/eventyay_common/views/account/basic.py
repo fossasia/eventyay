@@ -1,6 +1,7 @@
 import datetime as dt
 from collections import defaultdict
 from logging import getLogger
+from typing import cast
 
 from allauth.account.forms import ResetPasswordForm
 from allauth.socialaccount import providers
@@ -82,6 +83,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         return super().post(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
+        # TODO: Drop the feature of password changing, email changing and use django-allauth flows instead.
         self._old_email = self.request.user.email
         return self.request.user
 
@@ -146,7 +148,8 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         request = self.request
-        user = request.user
+        # This page requires login, so we can safely cast.
+        user = cast(User, request.user)
         ctx['nav_items'] = get_account_navigation(request)
         requires_reset = not user.has_usable_password()
         ctx['requires_password_reset'] = requires_reset
@@ -154,10 +157,7 @@ class GeneralSettingsView(LoginRequiredMixin, AccountMenuMixIn, UpdateView):
         ctx['password_reset_message'] = build_password_reset_message(requires_reset, provider_label)
 
         # Get the primary email or fallback to first email or user email
-        email_addresses = user.emailaddress_set.all()
-        primary_email = next((ea.email for ea in email_addresses if ea.primary), None)
-        if not primary_email:
-            primary_email = next((ea.email for ea in email_addresses), user.email or _('(no email address)'))
+        primary_email = user.primary_email
         ctx['primary_email'] = primary_email
 
         # Passed by the post() method when the password reset form was submitted.

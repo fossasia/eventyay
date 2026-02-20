@@ -31,7 +31,7 @@
                         {% blocktrans with event_name=event_name %}
                             Want to create a {{ event_name }} account?
                         {% endblocktrans %}
-                        <a class="btn btn-link" href="{% url 'eventyay_common:auth.register' %}?next={{ request.get_full_path|urlencode }}">
+                        <a class="btn btn-link" href="{% url 'account_signup' %}?next={{ request.get_full_path|urlencode }}">
                             {% translate 'Sign up here' %}
                         </a>
                     </p>

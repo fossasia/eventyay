@@ -2,11 +2,13 @@ import base64
 import json
 import logging
 import time
+from typing import cast
 from urllib.parse import quote
 
 import webauthn
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.models import AnonymousUser
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
@@ -16,6 +18,7 @@ from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import ListView, TemplateView, UpdateView
+from django.db.models.functions import Lower
 from webauthn.helpers import generate_challenge
 
 from eventyay.base.auth import get_auth_backends
@@ -23,6 +26,7 @@ from eventyay.base.forms.auth import ReauthForm
 from eventyay.base.models import (
     Order,
     U2FDevice,
+    User,
     WebAuthnDevice,
 )
 from eventyay.base.models.auth import StaffSession
@@ -35,6 +39,7 @@ from eventyay.control.permissions import (
     StaffMemberRequiredMixin,
 )
 from eventyay.eventyay_common.views.auth import get_u2f_appid, get_webauthn_rp_id
+
 
 logger = logging.getLogger(__name__)
 
@@ -162,6 +167,7 @@ class ReauthView(TemplateView):
             request=self.request,
             data=self.request.POST if self.request.method == 'POST' else None,
             initial={
+                # For authentication, we don't use primary_email.
                 'email': self.request.user.email,
             },
         )
@@ -235,16 +241,22 @@ class UserOrdersView(ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        qs = (
-            Order.objects.filter(Q(email__iexact=self.request.user.email)).select_related('event').order_by('-datetime')
+        user = cast(User | AnonymousUser, self.request.user)
+        if not user.is_authenticated:
+            return Order.objects.none()
+        queryset = Order.objects.select_related('event').annotate(email_lower=Lower('email'))
+        # django-allauth already makes email addresses lowercase in its model.
+        queryset = (
+            queryset.filter(Q(email_lower__in=user.email_addresses)).order_by('-datetime')
         )
 
         # Filter by event if provided
+        # TODO: Use django-filters here
         event_id = self.request.GET.get('event')
         if event_id:
-            qs = qs.filter(event_id=event_id)
+            queryset = queryset.filter(event_id=event_id)
 
-        return qs
+        return queryset
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)

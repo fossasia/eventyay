@@ -1,17 +1,17 @@
 import datetime as dt
 import logging
-from datetime import datetime, timedelta
-from datetime import timezone as tz
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from urllib.parse import urlparse
 
 import jwt
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
+from django.db.models import Case, F, IntegerField, Max, Min, Prefetch, Q, Sum, When
 from django.db.models.deletion import ProtectedError
-from django.db.models import Case, F, Max, Min, Prefetch, Q, Sum, When, IntegerField
 from django.db.models.functions import Coalesce, Greatest
 from django.http import HttpRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect
@@ -19,40 +19,40 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.timezone import get_current_timezone_name
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import ListView, TemplateView
+from django.views.generic import ListView, TemplateView, View
 from django_scopes import scope
 from pytz import timezone
 from rest_framework import views
-from django.views import View
-from django.apps import apps
 
 from eventyay.base.forms import SafeSessionWizardView
 from eventyay.base.i18n import language
 from eventyay.base.models import Event, EventMetaValue, Organizer, Quota
-from eventyay.consts import DEFAULT_PLUGINS
 from eventyay.base.services import tickets
-from eventyay.base.settings import SETTINGS_AFFECTING_CSS
-from eventyay.presale.style import regenerate_css
 from eventyay.base.services.quotas import QuotaAvailability
+from eventyay.base.settings import SETTINGS_AFFECTING_CSS
 from eventyay.control.forms.event import EventWizardBasicsForm, EventWizardFoundationForm
 from eventyay.control.forms.filter import EventFilterForm
 from eventyay.control.permissions import EventPermissionRequiredMixin
 from eventyay.control.views import PaginationMixin, UpdateView
-from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin, EventPlugins as ControlEventPlugins
+from eventyay.control.views.event import DecoupleMixin, EventSettingsViewMixin
+from eventyay.control.views.event import EventPlugins as ControlEventPlugins
 from eventyay.control.views.product import MetaDataEditorMixin
 from eventyay.eventyay_common.forms.event import EventCommonSettingsForm
 from eventyay.eventyay_common.utils import (
     EventCreatedFor,
     check_create_permission,
     encode_email,
-    generate_token,
 )
-from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
 from eventyay.eventyay_common.video.permissions import collect_user_video_traits
 from eventyay.helpers.plugin_enable import is_video_enabled
+from eventyay.orga.forms.event import EventFooterLinkFormset, EventHeaderLinkFormset
+from eventyay.presale.style import regenerate_css
+
 from ..forms.event import EventUpdateForm
 
+
 logger = logging.getLogger(__name__)
+
 
 class EventList(PaginationMixin, ListView):
     model = Event
@@ -294,7 +294,7 @@ class EventCreateView(SafeSessionWizardView):
             # Persist timezone on the event model as well so downstream consumers see the updated value
             event.timezone = basics_data['timezone']
             event.save(update_fields=['timezone'])
-            
+
             # Save imprint_url to settings (consistent with EventCommonSettingsForm)
             if basics_data.get('imprint_url'):
                 event.settings.set('imprint_url', basics_data['imprint_url'])
@@ -320,9 +320,9 @@ class EventCreateView(SafeSessionWizardView):
                 }
 
             event.log_action(
-                    action='eventyay.event.added',
-                    user=self.request.user,
-                )
+                action='eventyay.event.added',
+                user=self.request.user,
+            )
 
         return redirect(
             reverse(
@@ -456,7 +456,6 @@ class EventUpdate(
         if not check_create_permission(self.request):
             messages.error(self.request, _('You do not have permission to perform this action.'))
             return False
-
 
         return True
 
@@ -799,7 +798,9 @@ class EventLive(TemplateView):
             with transaction.atomic():
                 event.settings.talks_testmode = False
                 event.save()
-                self.request.event.log_action('eventyay.event.talk_testmode.deactivated', user=self.request.user, data={})
+                self.request.event.log_action(
+                    'eventyay.event.talk_testmode.deactivated', user=self.request.user, data={}
+                )
             messages.success(self.request, _('Talk pages are now in production mode.'))
         elif request.POST.get('private_testmode_tickets_action'):
             enable = request.POST.get('private_testmode_tickets_action') == 'enable'
@@ -830,13 +831,17 @@ class EventLive(TemplateView):
                 event.save()
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
             messages.success(
                 self.request,
-                _('Private test mode is now enabled for tickets.') if enable else _('Private test mode is now disabled for tickets.'),
+                _('Private test mode is now enabled for tickets.')
+                if enable
+                else _('Private test mode is now disabled for tickets.'),
             )
         elif request.POST.get('private_testmode_talks_action'):
             enable = request.POST.get('private_testmode_talks_action') == 'enable'
@@ -861,13 +866,17 @@ class EventLive(TemplateView):
                 event.save()
                 if previous_private != event.private_testmode:
                     self.request.event.log_action(
-                        'eventyay.event.private_testmode.activated' if event.private_testmode else 'eventyay.event.private_testmode.deactivated',
+                        'eventyay.event.private_testmode.activated'
+                        if event.private_testmode
+                        else 'eventyay.event.private_testmode.deactivated',
                         user=self.request.user,
                         data={},
                     )
             messages.success(
                 self.request,
-                _('Private test mode is now enabled for talks.') if enable else _('Private test mode is now disabled for talks.'),
+                _('Private test mode is now enabled for talks.')
+                if enable
+                else _('Private test mode is now disabled for talks.'),
             )
         elif request.POST.get('toggle_video_visibility') is not None:
             current_setting = event.settings.get('venueless_show_public_link', False)
@@ -948,26 +957,26 @@ class VideoAccessAuthenticator(View):
         request = self.request
 
         # Ensure JWT configuration exists
-        if not event.config or not event.config.get("JWT_secrets"):
+        if not event.config or not event.config.get('JWT_secrets'):
             from django.utils.crypto import get_random_string
 
             secret = get_random_string(length=64)
             event.config = {
-                "JWT_secrets": [
+                'JWT_secrets': [
                     {
-                        "issuer": "any",
-                        "audience": "eventyay",
-                        "secret": secret,
+                        'issuer': 'any',
+                        'audience': 'eventyay',
+                        'secret': secret,
                     }
                 ]
             }
             event.save()
 
         # Get or use existing JWT secret
-        jwt_config = event.config["JWT_secrets"][0]
-        secret = jwt_config["secret"]
-        audience = jwt_config["audience"]
-        issuer = jwt_config["issuer"]
+        jwt_config = event.config['JWT_secrets'][0]
+        secret = jwt_config['secret']
+        audience = jwt_config['audience']
+        issuer = jwt_config['issuer']
 
         # Setup video plugin settings for the video frontend
         # Set each video config setting individually if missing
@@ -977,15 +986,16 @@ class VideoAccessAuthenticator(View):
             event.settings.venueless_issuer = issuer
         if not event.settings.venueless_audience:
             event.settings.venueless_audience = audience
+
         def build_video_url(host=None):
             scheme = 'https' if request.is_secure() else 'http'
             base_host = host or request.get_host()
-            return f"{scheme}://{base_host}{event.urls.video_base}"
+            return f'{scheme}://{base_host}{event.urls.video_base}'
 
         if not event.settings.venueless_url:
             event.settings.venueless_url = build_video_url()
             logger.info(
-                "Initialized video_url for event %s to %s",
+                'Initialized video_url for event %s to %s',
                 event.slug,
                 event.settings.venueless_url,
             )
@@ -998,13 +1008,13 @@ class VideoAccessAuthenticator(View):
             if saved.netloc and saved.netloc != current_host:
                 event.settings.venueless_url = build_video_url(current_host)
                 logger.info(
-                    "Adjusted video_url for event %s to %s",
+                    'Adjusted video_url for event %s to %s',
                     event.slug,
                     event.settings.venueless_url,
                 )
         except Exception:
             logger.exception(
-                "Failed to parse video_url for event %s; falling back to current host.",
+                'Failed to parse video_url for event %s; falling back to current host.',
                 event.slug,
             )
             event.settings.venueless_url = build_video_url()
@@ -1012,8 +1022,9 @@ class VideoAccessAuthenticator(View):
         # Video is integrated; do not toggle event plugins here.
 
     def generate_token_url(self, request, traits):
+        # TODO: Use primary_email after enabling django-allauth backend.
         uid_token = encode_email(request.user.email)
-        iat = datetime.now(tz.utc)
+        iat = datetime.now(UTC)
         exp = iat + dt.timedelta(days=1)
         payload = {
             'iss': self.request.event.settings.venueless_issuer,
@@ -1025,7 +1036,7 @@ class VideoAccessAuthenticator(View):
         }
         token = jwt.encode(payload, self.request.event.settings.venueless_secret, algorithm='HS256')
         base_url = self.request.event.settings.venueless_url
-        return '{}/#token={}'.format(base_url, token).replace('//#', '/#')
+        return f'{base_url}/#token={token}'.replace('//#', '/#')
 
 
 class EventSearchView(views.APIView):

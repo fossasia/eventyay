@@ -8,7 +8,6 @@ from celery.exceptions import TaskError
 from csp.decorators import csp_update
 from django.conf import settings
 from django.contrib import messages
-from django.db.models.deletion import ProtectedError
 from django.http import FileResponse, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
@@ -23,6 +22,7 @@ from i18nfield.utils import I18nJSONEncoder
 from eventyay.agenda.management.commands.export_schedule_html import get_export_zip_path
 from eventyay.agenda.tasks import export_schedule_html
 from eventyay.agenda.views.utils import get_schedule_exporters
+from eventyay.base.models import Availability, Room, TalkSlot
 from eventyay.common.language import get_current_language_information
 from eventyay.common.text.path import safe_filename
 from eventyay.common.text.phrases import phrases
@@ -34,7 +34,7 @@ from eventyay.common.views.mixins import (
 )
 from eventyay.orga.forms.schedule import ScheduleExportForm, ScheduleReleaseForm
 from eventyay.schedule.forms import QuickScheduleForm, RoomForm
-from eventyay.base.models import Availability, Room, TalkSlot
+
 
 SCRIPT_SRC = "'self' 'unsafe-eval'"
 DEFAULT_SRC = "'self'"
@@ -222,7 +222,7 @@ class ScheduleToggleView(EventPermissionRequired, View):
                     'is_show_schedule': self.request.event.feature_flags['show_schedule'],
                     'event_slug': self.request.event.slug,
                     'organiser_slug': self.request.event.organiser.slug,
-                    'user_email': self.request.user.email,
+                    'user_email': self.request.user.primary_email,
                 },
                 ignore_result=True,
             )
@@ -231,8 +231,6 @@ class ScheduleToggleView(EventPermissionRequired, View):
                 "Unexpected error when trying to trigger schedule's state to external system: %s",
                 e,
             )
-        except Exception as e:
-            logger.error('Unexpected error in task: %s', e)
         return redirect(self.request.event.orga_urls.schedule)
 
 

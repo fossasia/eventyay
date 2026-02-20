@@ -1,6 +1,8 @@
 from django.urls import include, path
 from django.views.generic import RedirectView, TemplateView
 
+from eventyay.control.views import organizer as organizer_control
+from eventyay.control.views import organizer_views
 from eventyay.eventyay_common.views import (
     account,
     auth,
@@ -12,10 +14,7 @@ from eventyay.eventyay_common.views import (
 from eventyay.eventyay_common.views.account.email import EmailAddressManagementView
 from eventyay.eventyay_common.views.orders import MyOrdersView
 from eventyay.eventyay_common.views.sessions import MySessionsView
-from eventyay.control.views import (
-    organizer_views,
-    organizer as organizer_control
-)
+
 
 app_name = 'eventyay_common'
 
@@ -28,7 +27,7 @@ urlpatterns = [
     path('logout/', auth.logout, name='auth.logout'),
     path('login/', auth.login, name='auth.login'),
     path('login/2fa/', auth.Login2FAView.as_view(), name='auth.login.2fa'),
-    path('register/', auth.register, name='auth.register'),
+    path('account/signup/', include('allauth.account.urls')),
     path('invite/<str:token>/', auth.invite, name='auth.invite'),
     path('forgot/', auth.Forgot.as_view(), name='auth.forgot'),
     path('forgot/recover/', auth.Recover.as_view(), name='auth.forgot.recover'),

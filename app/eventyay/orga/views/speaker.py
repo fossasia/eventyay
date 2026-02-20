@@ -10,6 +10,9 @@ from django.views.generic import DetailView, FormView, ListView, View
 from django_context_decorator import context
 
 from eventyay.agenda.views.utils import get_schedule_exporters
+from eventyay.base.models import Answer, SpeakerProfile, User
+from eventyay.base.models.information import SpeakerInformation
+from eventyay.base.models.submission import SubmissionStates
 from eventyay.common.exceptions import SendMailException
 from eventyay.common.image import gravatar_csp
 from eventyay.common.text.phrases import phrases
@@ -29,12 +32,8 @@ from eventyay.person.forms import (
     SpeakerInformationForm,
     SpeakerProfileForm,
 )
-from eventyay.base.models import SpeakerProfile, User
-from eventyay.base.models.information import SpeakerInformation
-from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.submission.forms import TalkQuestionsForm
-from eventyay.base.models import Answer
-from eventyay.base.models.submission import SubmissionStates
+from eventyay.talk_rules.person import is_only_reviewer
 from eventyay.talk_rules.submission import limit_for_reviewers, speaker_profiles_for_user
 
 
@@ -200,7 +199,8 @@ class SpeakerPasswordReset(SpeakerViewMixin, ActionConfirmMixin, DetailView):
 
     def action_object_name(self):
         user = self.get_object()
-        return f'{user.get_display_name()} ({user.email})'
+        display_name = user.get_display_name()
+        return f'{display_name} ({user.primary_email})'
 
     def action_back_url(self):
         return self.get_object().event_profile(self.request.event).orga_urls.base

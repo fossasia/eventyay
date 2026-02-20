@@ -23,6 +23,7 @@ from eventyay.helpers.urls import build_absolute_uri
 from .schemas.login_providers import LoginProviders
 from .schemas.oauth2_params import OAuth2Params
 
+
 logger = logging.getLogger(__name__)
 adapter = get_adapter()
 
@@ -30,7 +31,7 @@ adapter = get_adapter()
 class OAuthLoginView(View):
     def get(self, request: HttpRequest, provider: str) -> HttpResponse:
         self.set_oauth2_params(request)
-        
+
         # Store the 'next' URL in session for redirecting user back after login
         next_url = request.GET.get('next', '')
         if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
@@ -76,7 +77,7 @@ class OAuthReturnView(View):
     def get(self, request: HttpRequest) -> HttpResponse:
         try:
             user = self.get_or_create_user(request)
-            
+
             # Check for OAuth2 params first (Talk module integration)
             oauth2_params = request.session.pop('oauth2_params', {})
             if oauth2_params:
@@ -91,14 +92,14 @@ class OAuthReturnView(View):
                     return redirect(f'{auth_url}?{query_string}')
                 except ValidationError as e:
                     logger.warning('Ignore invalid OAuth2 parameters: %s.', e)
-            
+
             # Retrieve and re-validate the stored 'next' URL from session
             # Re-validation provides defense against session tampering
             next_url = request.session.pop('socialauth_next_url', None)
             if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts=None):
                 # Store in session with a clear key for process_login to use
                 request.session['socialauth_next_url'] = next_url
-            
+
             response = process_login_and_set_cookie(request, user, False)
             return response
         except AttributeError as e:

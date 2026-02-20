@@ -1,12 +1,13 @@
 import logging
 
 from django import template
+from django.contrib.auth.models import AnonymousUser
 from django.http import QueryDict
 from django.urls import reverse
-
 from django_scopes import scopes_disabled
 
-from eventyay.base.models import Order, OrderPosition
+from eventyay.base.models import User
+
 
 register = template.Library()
 logger = logging.getLogger(__name__)
@@ -41,69 +42,21 @@ def cfp_locale_switch_url(context, locale_code):
 
 
 @register.filter
-def short_user_label(user):
+def short_user_label(user: User | AnonymousUser | None) -> str:
     """
     Compact user display: prefer first name, then full name, then email local part.
     Truncate to 11 chars with ellipsis when longer.
     """
-    if not user:
+    if not user or not user.is_authenticated:
         return ''
-    first = getattr(user, 'first_name', None) or getattr(user, 'firstname', None)
-    if not first:
-        fullname = getattr(user, 'fullname', None) or getattr(user, 'name', None)
-        if fullname:
-            parts = fullname.split()
-            first = parts[0] if parts else fullname
-    email = getattr(user, 'email', '') or ''
-    label = (first or '').strip() or (email.split('@')[0] if email else '')
-    if len(label) > 11:
-        label = label[:11] + '…'
-    return label
-
-
-@register.simple_tag(takes_context=True)
-def user_has_valid_ticket(context, event=None):
-    """Return True if the current authenticated user has a valid order/ticket granting video access.
-
-    Mirrors the access rules used by the presale online video join flow.
-    """
-    request = context.get('request')
-    if not request or not hasattr(request, 'user') or not request.user.is_authenticated:
-        return False
-
-    event = event or getattr(request, 'event', None)
-    if not event:
-        return False
-
-    if not request.user.email:
-        return False
-
-    allowed_statuses = [Order.STATUS_PAID]
-    if event.settings.venueless_allow_pending:
-        allowed_statuses.append(Order.STATUS_PENDING)
-
-    if event.settings.venueless_all_products:
-        return OrderPosition.objects.filter(
-            order__event=event,
-            order__email__iexact=request.user.email,
-            order__status__in=allowed_statuses,
-            product__admission=True,
-            canceled=False,
-            addon_to__isnull=True,
-        ).exists()
-
-    allowed_products = event.settings.venueless_products or []
-    if not allowed_products:
-        return False
-
-    return OrderPosition.objects.filter(
-        order__event=event,
-        order__email__iexact=request.user.email,
-        order__status__in=allowed_statuses,
-        product_id__in=allowed_products,
-        canceled=False,
-        addon_to__isnull=True,
-    ).exists()
+    # Try using first part of full name
+    name_parts = user.fullname.split() if user.fullname else []
+    label = name_parts[0] if name_parts else ''
+    if not label:
+        # Fall back to first part of primary email
+        label = user.primary_email.split('@')[0]
+    # Truncate to 11 chars with ellipsis
+    return (label[:11] + '…') if len(label) > 11 else label
 
 
 @register.filter

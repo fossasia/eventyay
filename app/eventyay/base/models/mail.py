@@ -175,7 +175,7 @@ class MailTemplate(PretalxModel):
         else:
             raise TypeError('First argument to to_mail must be a string or a User, not ' + str(type(user)))
         if users and not commit:
-            address = ','.join(user.email for user in users)
+            address = ','.join(user.primary_email for user in users)
             users = None
         event = event or self.event
 
@@ -409,7 +409,7 @@ class QueuedMail(PretalxModel):
 
         to = self.to.split(',') if self.to else []
         if self.id:
-            to += [user.email for user in self.to_users.all()]
+            to += [user.primary_email for user in self.to_users.all()]
             if has_event:
                 queuedmail_pre_send.send_robust(
                     sender=self.event,
@@ -446,7 +446,7 @@ class QueuedMail(PretalxModel):
                 'pretalx.mail.sent',
                 person=requestor,
                 orga=orga,
-                data={'to_users': [(user.pk, user.email) for user in self.to_users.all()]},
+                data={'to_users': [(user.pk, user.primary_email) for user in self.to_users.all()]},
             )
             self.save()
             queuedmail_post_send.send(

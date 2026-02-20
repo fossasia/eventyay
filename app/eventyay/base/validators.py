@@ -1,7 +1,8 @@
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.deconstruct import deconstructible
 from django.utils.translation import gettext_lazy as _
+
+from eventyay.consts import EVENTYAY_EMAIL_NONE_VALUE
 
 
 class BanlistValidator:
@@ -59,5 +60,5 @@ class OrganizerSlugBanlistValidator(BanlistValidator):
 @deconstructible
 class EmailBanlistValidator(BanlistValidator):
     banlist = [
-        settings.EVENTYAY_EMAIL_NONE_VALUE,
+        EVENTYAY_EMAIL_NONE_VALUE,
     ]
