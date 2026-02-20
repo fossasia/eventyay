@@ -310,9 +310,7 @@ def update_user(
         ):
             user.client_state = data.get("client_state")
             save_fields.append("client_state")
-            # Call talk component to update favs talks
-            if user.token_id is not None:
-                update_fav_talks(user.token_id, data["client_state"], event_id)
+            # Legacy eventyay-talk favourite syncing was removed.
 
         if save_fields:
             user.save(update_fields=save_fields)
@@ -325,46 +323,6 @@ def update_user(
         else user
     )
 
-
-def update_fav_talks(user_token_id, talks, event_id):
-    try:
-        talk_list = talks.get("schedule").get("favs")
-        event = get_object_or_404(Event, id=event_id)
-        jwt_config = event.config.get("JWT_secrets")
-        if not jwt_config:
-            return
-        talk_token = get_user_video_token(user_token_id, jwt_config[0])
-
-        talk_config = event.config.get("pretalx")
-        if not talk_config:
-            return
-        talk_url = (
-            talk_config.get("domain")
-            + "/api/events/"
-            + talk_config.get("event")
-            + "/favourite-talk/"
-        )
-        header = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {talk_token}",
-        }
-        requests.post(talk_url, data=json.dumps(talk_list), headers=header)
-    except Event.DoesNotExist or Exception:
-        pass
-
-
-def get_user_video_token(user_code, video_settings):
-    iat = dt.datetime.utcnow()
-    exp = iat + dt.timedelta(days=30)
-    payload = {
-        "iss": video_settings.get("issuer"),
-        "aud": video_settings.get("audience"),
-        "exp": exp,
-        "iat": iat,
-        "uid": user_code,
-    }
-    token = jwt.encode(payload, video_settings.get("secret"), algorithm="HS256")
-    return token
 
 
 def start_view(user: User, delete=False):

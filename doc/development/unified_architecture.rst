@@ -176,8 +176,8 @@ The unified frontend uses:
 Key frontend modules:
 
 * ``app/eventyay/static/`` - Shared static assets
-* ``app/eventyay/webapp/`` - Vue.js applications
-* ``app/eventyay/frontend/`` - Component libraries
+* ``app/eventyay/webapp/`` - Frontend applications and shared component libraries
+* ``app/eventyay/webapp/video/`` - Video Vue 3 SPA
 
 Deployment Options
 ------------------

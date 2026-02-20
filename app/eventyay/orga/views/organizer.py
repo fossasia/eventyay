@@ -185,9 +185,3 @@ def speaker_search(request, *args, **kwargs):
     )
 
 
-def redirect_team_management(request, organizer, team_pk=None, **kwargs):
-    target = reverse("eventyay_common:organizer.update", kwargs={"organizer": organizer})
-    query = "?section=permissions"
-    if team_pk is not None:
-        query = f"{query}&team={team_pk}"
-    return redirect(f"{target}{query}")

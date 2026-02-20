@@ -39,7 +39,7 @@ class GateCreateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.gates',
+            'eventyay_common:organizer.gates',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
@@ -78,7 +78,7 @@ class GateUpdateView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.gates',
+            'eventyay_common:organizer.gates',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },
@@ -110,7 +110,7 @@ class GateDeleteView(OrganizerDetailViewMixin, OrganizerPermissionRequiredMixin,
 
     def get_success_url(self):
         return reverse(
-            'control:organizer.gates',
+            'eventyay_common:organizer.gates',
             kwargs={
                 'organizer': self.request.organizer.slug,
             },

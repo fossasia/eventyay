@@ -1,34 +1,33 @@
-const changeSelectAll = (e) => {
-    const checkBox = document.querySelector("#select-all")
-    checkBox
-        .closest("fieldset")
-        .querySelectorAll("input[type=checkbox]")
-        .forEach((element) => (element.checked = checkBox.checked))
+const changeSelectAll = () => {
+    const selectAllCheckbox = document.querySelector("#select-all")
+    if (!selectAllCheckbox) return
+
+    const fieldset = selectAllCheckbox.closest("fieldset")
+    if (!fieldset) return
+
+    fieldset.querySelectorAll('input[type="checkbox"]:not(#select-all)').forEach((checkbox) => {
+        checkbox.checked = selectAllCheckbox.checked
+    })
 }
 
 const addHook = () => {
     const updateVisibility = () => {
         const delimiter = document.querySelector("#data-delimiter")
         if (delimiter) {
-            const isCSV = document.querySelector(
-                "#id_export_format input[value='csv']",
-            ).checked
-            if (isCSV) {
-                document.querySelector("#data-delimiter").style.display =
-                    "block"
-            } else {
-                document.querySelector("#data-delimiter").style.display = "none"
-            }
+            const csvRadio = document.querySelector("#id_export_format input[value='csv']")
+            delimiter.style.display = csvRadio?.checked ? "block" : "none"
         }
     }
+
     updateVisibility()
-    document
-        .querySelectorAll("#id_export_format input")
-        .forEach((element) =>
-            element.addEventListener("change", updateVisibility),
-        )
-    document
-        .querySelector("#select-all")
-        .addEventListener("change", changeSelectAll)
+    document.querySelectorAll("#id_export_format input").forEach((element) =>
+        element.addEventListener("change", updateVisibility)
+    )
+
+    const selectAll = document.querySelector("#select-all")
+    if (selectAll) {
+        selectAll.addEventListener("change", changeSelectAll)
+    }
 }
+
 onReady(addHook)

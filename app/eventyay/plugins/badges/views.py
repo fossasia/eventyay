@@ -34,9 +34,11 @@ class BadgePluginEnabledMixin:
 
     def dispatch(self, request, *args, **kwargs):
         if 'eventyay.plugins.badges' not in request.event.get_plugins():
-            return redirect('control:event.settings.plugins', 
-                          organizer=request.event.organizer.slug, 
-                          event=request.event.slug)
+            return redirect(
+                'eventyay_common:event.plugins',
+                organizer=request.event.organizer.slug,
+                event=request.event.slug,
+            )
         return super().dispatch(request, *args, **kwargs)
 
 class LayoutListView(BadgePluginEnabledMixin, EventPermissionRequiredMixin, ListView):

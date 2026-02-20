@@ -309,7 +309,7 @@ class OnlineVideoJoin(EventPermissionRequired, View):
         iat = dt.datetime.now(dt.UTC)
         exp = iat + dt.timedelta(days=30)
         profile = {
-            "display_name": request.user.name,
+            "display_name": request.user.fullname,
             "fields": {
                 "pretalx_id": request.user.code,
             },

@@ -744,5 +744,5 @@ def test_schedule_expand_slots(client, event, slot, track):
     assert isinstance(submission_content["speakers"], list)
     speaker_data = submission_content["speakers"][0]
     assert speaker_data["code"] == speaker.code
-    assert speaker_data["name"] == speaker.name
+    assert speaker_data["name"] == speaker.fullname
     assert speaker_data["biography"] == profile.biography
