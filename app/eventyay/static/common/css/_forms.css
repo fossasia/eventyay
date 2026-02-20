@@ -190,7 +190,8 @@ input[type="file"] {
 .eventyay-file-pick-wrapper {
   display: flex;
   align-items: center;
-  position: relative;  background-color: #fff;
+  position: relative;
+  background-color: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--size-border-radius);
   overflow: hidden;

@@ -733,6 +733,11 @@ const initFileInputWrappers = () => {
         if (input.closest('.avatar-upload')) return
         if (input.closest('.eventyay-file-pick-wrapper')) return
         if (input.dataset.eventyayFileWrapped === 'true') return
+        // Allow explicit opt-out for integrations that manage their own file UI
+        if (input.dataset.eventyayFileWrapper === 'disabled') return
+        // Skip inputs that are already inside known custom upload/button wrappers
+        if (input.closest('.fileinput-button')) return
+        if (input.closest('.btn')) return
 
         input.dataset.eventyayFileWrapped = 'true'
 
