@@ -123,6 +123,25 @@ class TicketLayout(LoggedModel):
     {
         "type":"textarea",
         "left":"17.50",
+        "bottom":"221.30",
+        "fontsize":"13.0",
+        "color":[
+            0,
+            0,
+            0,
+            1
+        ],
+        "fontfamily":"Open Sans",
+        "bold":false,
+        "italic":false,
+        "width":"110.00",
+        "content":"ticket_validity",
+        "text":"Valid: 2017-05-31 20:00 \\u2013 2017-06-01 18:00",
+        "align":"left"
+    },
+    {
+        "type":"textarea",
+        "left":"17.50",
         "bottom":"204.80",
         "fontsize":"13.0",
         "color":[

@@ -352,6 +352,28 @@
                                         {{ line.subevent.date_from|date:"TIME_FORMAT" }}
                                     {% endif %}
                                 {% endif %}
+                                <br/>
+                                <span class="fa fa-clock-o fa-fw"></span>
+                                {% trans "Valid:" %}
+                                {% if line.product.validity_mode == "fixed" %}
+                                    {% if line.product.validity_fixed_from %}
+                                        {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                    {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
+                                    {% if line.product.validity_fixed_until %}
+                                        {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                {% else %}
+                                    {% with validity_source=line.subevent|default:request.event %}
+                                        {% if validity_source.date_from %}
+                                            {{ validity_source.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                                        {% endif %}
+                                        {% if validity_source.date_from and validity_source.date_to %}&ndash;{% endif %}
+                                        {% if validity_source.date_to %}
+                                            {{ validity_source.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                                        {% endif %}
+                                    {% endwith %}
+                                {% endif %}
                                 {% if not line.canceled %}
                                     <div class="position-buttons">
                                         {% if line.generate_ticket %}
