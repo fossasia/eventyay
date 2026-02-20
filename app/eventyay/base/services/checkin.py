@@ -454,6 +454,20 @@ def perform_checkin(
             if not logic.apply(clist.rules, rule_data):
                 raise CheckInError(_('This entry is not permitted due to custom rules.'), 'rules')
 
+        if type == Checkin.TYPE_ENTRY and not force:
+            product = op.product
+            if getattr(product, 'validity_mode', '') == 'fixed':
+                if product.validity_fixed_from and dt < product.validity_fixed_from:
+                    raise CheckInError(
+                        _('This ticket is not yet valid.'),
+                        'invalid',
+                    )
+                if product.validity_fixed_until and dt > product.validity_fixed_until:
+                    raise CheckInError(
+                        _('This ticket is no longer valid.'),
+                        'invalid',
+                    )
+
         device = None
         if isinstance(auth, Device):
             device = auth
