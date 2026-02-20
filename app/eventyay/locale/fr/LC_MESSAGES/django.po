@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-20 09:33+0000\n"
+"PO-Revision-Date: 2026-02-20 09:54+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -10180,7 +10180,7 @@ msgstr ""
 #: base/services/update_check.py:110 base/services/update_check.py:117
 #, python-format
 msgid "Plugin: %s"
-msgstr "Extension: %s"
+msgstr "Plugin: %s"
 
 #: base/services/vouchers.py:45 control/logdisplay.py:602
 #, python-brace-format
