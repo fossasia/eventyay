@@ -171,7 +171,7 @@
                             {% if request.event %}
                                 <a href="{{ request.event.urls.login }}?next={{ request.path|urlencode }}">login</a>
                             {% else %}
-                                <a href="{% url "orga:login" %}">login</a>
+                                <a href="{% url 'eventyay_common:auth.login' %}?next={{ request.path|urlencode }}">login</a>
                             {% endif %}
                         {% endif %}
                     </div>
