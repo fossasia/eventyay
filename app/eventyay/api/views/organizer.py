@@ -21,6 +21,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from eventyay.api.models import OAuthAccessToken
+from eventyay.api.pagination import PageNumberPagination
 from eventyay.api.serializers.organizer import (
     DeviceSerializer,
     GiftCardSerializer,
@@ -49,9 +50,15 @@ from eventyay.helpers.dicts import merge_dicts
 from eventyay.presale.style import regenerate_organizer_css
 
 
+class OrganizerPagination(PageNumberPagination):
+    page_size = 25
+    max_page_size = 100
+
+
 class OrganizerViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = OrganizerSerializer
     queryset = Organizer.objects.none()
+    pagination_class = OrganizerPagination
     lookup_field = 'slug'
     lookup_url_kwarg = 'organizer'
     lookup_value_regex = '[^/]+'
