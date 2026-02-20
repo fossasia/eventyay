@@ -748,17 +748,17 @@ const initFileInputWrappers = () => {
         const wrapper = document.createElement('div')
         wrapper.className = 'eventyay-file-pick-wrapper'
 
+        // Styled button label
+        const label = document.createElement('label')
+        label.setAttribute('for', input.id || '')
+        label.textContent = chooseLabel
+
         // Delegate clicks on the wrapper (e.g. the white area) to the input
         wrapper.addEventListener('click', (event) => {
             if (event.target !== label && event.target !== input) {
                 input.click()
             }
         })
-
-        // Styled button label
-        const label = document.createElement('label')
-        label.setAttribute('for', input.id || '')
-        label.textContent = chooseLabel
 
         // Filename display span
         const nameSpan = document.createElement('span')
