@@ -591,7 +591,7 @@ class Submission(GenerateCode, PretalxModel):
         if template.text != template_text:
             template.text = template_text
             template.save()
-        if self.event.mail_settings['mail_on_new_submission']:
+        if self.event.mail_settings['mail_on_new_submission'] and self.event.email:
             self.event.get_mail_template(MailTemplateRoles.NEW_SUBMISSION_INTERNAL).to_mail(
                 user=self.event.email,
                 event=self.event,
