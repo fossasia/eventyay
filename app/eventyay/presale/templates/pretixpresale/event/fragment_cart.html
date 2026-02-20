@@ -36,6 +36,27 @@
                 {% endif %}
             {% endif %}
 
+            <br />
+            <span class="fa fa-clock-o fa-fw" aria-hidden="true"></span>
+            {% trans "Valid:" %}
+            {% if line.product.validity_mode == "fixed" %}
+                {% if line.product.validity_fixed_from %}
+                    {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                {% endif %}
+                {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
+                {% if line.product.validity_fixed_until %}
+                    {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                {% endif %}
+            {% else %}
+                {% if event.date_from %}
+                    {{ event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                {% endif %}
+                {% if event.date_from and event.date_to %}&ndash;{% endif %}
+                {% if event.date_to %}
+                    {{ event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                {% endif %}
+            {% endif %}
+
             {% if line.issued_gift_cards %}
                 <dl>
                     {% for gc in line.issued_gift_cards.all %}

@@ -352,6 +352,26 @@
                                         {{ line.subevent.date_from|date:"TIME_FORMAT" }}
                                     {% endif %}
                                 {% endif %}
+                                <br/>
+                                <span class="fa fa-clock-o fa-fw"></span>
+                                {% trans "Valid:" %}
+                                {% if line.product.validity_mode == "fixed" %}
+                                    {% if line.product.validity_fixed_from %}
+                                        {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                    {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
+                                    {% if line.product.validity_fixed_until %}
+                                        {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                {% else %}
+                                    {% if request.event.date_from %}
+                                        {{ request.event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                    {% if request.event.date_from and request.event.date_to %}&ndash;{% endif %}
+                                    {% if request.event.date_to %}
+                                        {{ request.event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                                    {% endif %}
+                                {% endif %}
                                 {% if not line.canceled %}
                                     <div class="position-buttons">
                                         {% if line.generate_ticket %}

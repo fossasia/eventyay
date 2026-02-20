@@ -386,6 +386,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
     seat = InlineSeatSerializer(read_only=True)
     country = CompatibleCountryField(source='*')
     attendee_name = serializers.CharField(required=False)
+    validity_mode = serializers.SerializerMethodField(read_only=True)
+    validity_fixed_from = serializers.SerializerMethodField(read_only=True)
+    validity_fixed_until = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = OrderPosition
@@ -420,6 +423,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
             'pdf_data',
             'seat',
             'canceled',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         )
         read_only_fields = (
             'id',
@@ -442,6 +448,9 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
             'pdf_data',
             'seat',
             'canceled',
+            'validity_mode',
+            'validity_fixed_from',
+            'validity_fixed_until',
         )
 
     def __init__(self, *args, **kwargs):
@@ -453,6 +462,17 @@ class OrderPositionSerializer(I18nAwareModelSerializer):
             or 'can_view_orders' not in request.eventpermset
         ):
             self.fields.pop('pdf_data', None)
+
+    def get_validity_mode(self, obj):
+        return getattr(obj.product, 'validity_mode', '') or None
+
+    def get_validity_fixed_from(self, obj):
+        val = getattr(obj.product, 'validity_fixed_from', None)
+        return val.isoformat() if val else None
+
+    def get_validity_fixed_until(self, obj):
+        val = getattr(obj.product, 'validity_fixed_until', None)
+        return val.isoformat() if val else None
 
     def validate(self, data):
         if data.get('attendee_name') and data.get('attendee_name_parts'):
