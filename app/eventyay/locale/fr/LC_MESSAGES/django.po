@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: 1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-15 10:23+0000\n"
+"PO-Revision-Date: 2026-02-20 09:33+0000\n"
 "Last-Translator: Mario Behling <mb@mariobehling.de>\n"
 "Language-Team: French <https://hosted.weblate.org/projects/eventyay/eventyay/"
 "fr/>\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Weblate 5.16-dev\n"
+"X-Generator: Weblate 5.16.1-dev\n"
 
 #: agenda/phrases.py:8
 msgid "Thank you for your feedback!"
@@ -4640,8 +4640,8 @@ msgid ""
 "Using the conversion rate of 1:{rate} as published by the European Central "
 "Bank on {date}, the invoice total corresponds to {total}."
 msgstr ""
-"En utilisant le taux de conversion de 1: {rate} publié par la Banque "
-"centrale européenne le {date}, le total de la facture correspond à {total}."
+"Selon le taux de conversion 1:{rate} publié par la Banque centrale "
+"européenne le {date}, le total de la facture correspond à {total} ."
 
 #: base/invoice.py:839
 msgid "Modern Invoice Renderer"
@@ -5592,13 +5592,13 @@ msgstr "N'envoyez pas de fichiers trop grands, de préférence de moins de 16 Mo
 #, python-format
 msgctxt "invoice"
 msgid "Tax ID: %s"
-msgstr "Identifiant fiscal: %s"
+msgstr "Identifiant fiscal : %s"
 
 #: base/models/invoices.py:145 base/services/invoices.py:113
 #, python-format
 msgctxt "invoice"
 msgid "VAT-ID: %s"
-msgstr "ID TVA: %s"
+msgstr "Numéro de TVA : %s"
 
 #: base/models/log.py:163
 #, python-brace-format
@@ -5837,7 +5837,9 @@ msgstr "Le bon \"{voucher}\" a été utilisé entre-temps."
 #: presale/templates/pretixpresale/event/order.html:64
 #, python-format
 msgid "Your order: %(code)s"
-msgstr "Votre commande: %(code)s"
+msgstr ""
+"Votre commande : %(code)s==WEBLATE_PART==Commande n° %(code)"
+"s==WEBLATE_PART==Référence de commande : %(code)s"
 
 #: base/models/orders.py:1208
 msgid "<file>"
@@ -5894,7 +5896,7 @@ msgstr "Inscription à l'événement confirmée : %(code)s"
 #: base/models/orders.py:1788
 #, python-format
 msgid "Payment received for your order: %(code)s"
-msgstr "Paiement reçu pour votre commande: %(code)s"
+msgstr "Paiement confirmé pour la commande : %(code)s"
 
 #: base/models/orders.py:1908
 msgctxt "refund_state"
@@ -7974,9 +7976,8 @@ msgid ""
 "Reverse Charge: According to Article 194, 196 of Council Directive 2006/112/"
 "EEC, VAT liability rests with the service recipient."
 msgstr ""
-"Frais inversés: Conformément à l'article 194,196 de la directive 2006/112/"
-"CEE du Conseil, l'assujettissement à la TVA incombe au destinataire du "
-"service."
+"Frais inversés : En vertu des articles 194 et 196 de la directive 2006/112/"
+"CE du Conseil, le destinataire du service est redevable de la TVA."
 
 #: base/models/tax.py:328
 msgctxt "invoice"
@@ -8416,7 +8417,7 @@ msgstr "Voir les détails de la commande"
 #: base/notifications.py:240
 #, python-brace-format
 msgid "A new order has been placed: {order.code}"
-msgstr "Une nouvelle commande a été passée: {order.code}"
+msgstr "Commande enregistrée : {order.code}"
 
 #: base/notifications.py:246
 #, python-brace-format
@@ -9262,7 +9263,7 @@ msgstr "Place : numéro de siège"
 #: base/pdf.py:618 base/pdf.py:656
 #, python-brace-format
 msgid "Question: {question}"
-msgstr "Question: {question}"
+msgstr "Question posée : {question}"
 
 #: base/pdf.py:657
 #, python-brace-format
@@ -9987,22 +9988,22 @@ msgstr ""
 #: base/services/orders.py:1318
 #, python-format
 msgid "Your order is about to expire: %(code)s"
-msgstr "Votre commande est sur le point d'expirer: %(code)s"
+msgstr "Expiration imminente de votre commande : %(code)s"
 
 #: base/services/orders.py:1320
 #, python-format
 msgid "Your order is pending payment: %(code)s"
-msgstr "Votre commande est en attente de paiement: %(code)s"
+msgstr "Votre commande attend le paiement: %(code)s"
 
 #: base/services/orders.py:1399
 #, python-format
 msgid "Your ticket is ready for download: %(code)s"
-msgstr "Votre ticket est prêt à être téléchargé: %(code)s"
+msgstr "Votre ticket est prêt au téléchargement: %(code)s"
 
 #: base/services/orders.py:1442
 #, python-format
 msgid "Your order has been changed: %(code)s"
-msgstr "Votre commande a été modifiée: %(code)s"
+msgstr "Commande modifiée: %(code)s"
 
 #: base/services/orders.py:1460
 msgid "You need to select a variation of the product."
@@ -10179,7 +10180,7 @@ msgstr ""
 #: base/services/update_check.py:110 base/services/update_check.py:117
 #, python-format
 msgid "Plugin: %s"
-msgstr "Plugin: %s"
+msgstr "Extension: %s"
 
 #: base/services/vouchers.py:45 control/logdisplay.py:602
 #, python-brace-format
@@ -10400,7 +10401,7 @@ msgstr "Si ce problème persiste, veuillez nous contacter."
 
 #: base/templates/500.html:13
 msgid "If you contact us, please send us the following code:"
-msgstr "Si vous nous contactez, veuillez nous envoyer le code suivant:"
+msgstr "Si vous contactez notre support, veuillez indiquer le code suivant:"
 
 #: base/templates/csrffail.html:4 base/templates/csrffail.html:8
 msgid "Verification failed"
@@ -10460,11 +10461,11 @@ msgstr "Cliquez ici pour désactiver immédiatement toutes les notifications."
 
 #: base/templates/pretixbase/email/notification.txt:15
 msgid "Click here to view and change your notification settings:"
-msgstr "Cliquez ici pour voir et modifier vos paramètres de notification:"
+msgstr "Cliquez ici pour consulter et modifier vos paramètres de notification :"
 
 #: base/templates/pretixbase/email/notification.txt:17
 msgid "Click here disable all notifications immediately:"
-msgstr "Cliquez ici pour désactiver immédiatement toutes les notifications:"
+msgstr "Cliquez pour désactiver toutes les notifications immédiatement :"
 
 #: base/templates/pretixbase/email/order_details.html:7
 msgid ""
@@ -10476,12 +10477,12 @@ msgstr ""
 #: base/templates/pretixbase/email/order_details.html:12
 #: base/templates/pretixbase/email/order_details.html:64
 msgid "Event:"
-msgstr "Événement:"
+msgstr "Nom de l'événement:"
 
 #: base/templates/pretixbase/email/order_details.html:28
 #: base/templates/pretixbase/email/order_details.html:81
 msgid "Order code:"
-msgstr "Code de commande:"
+msgstr "Numéro de commande:"
 
 #: base/templates/pretixbase/email/order_details.html:33
 msgid "created by"
@@ -10501,8 +10502,8 @@ msgid ""
 "You are receiving this email because you placed an order for the following "
 "event:"
 msgstr ""
-"Vous recevez cet email parce que vous avez passé une commande pour "
-"l'événement suivant:"
+"Nous vous envoyons cet e-mail suite à votre commande pour l'événement suivant"
+" :"
 
 #: base/templates/pretixbase/email/order_details.html:90
 msgid "Details:"
@@ -13170,7 +13171,7 @@ msgstr "Signature"
 #: control/forms/event.py:974
 #, python-brace-format
 msgid "This will be attached to every email. Available placeholders: {event}"
-msgstr "Ceci sera joint à chaque email. Nombre de places disponibles: {event}"
+msgstr "Ce contenu sera joint à chaque e-mail. Variables disponibles: {event}"
 
 #: control/forms/event.py:976
 msgid "e.g. your contact details"
@@ -15321,7 +15322,7 @@ msgstr "(inconnu)"
 
 #: control/logdisplay.py:47
 msgid "The order has been changed:"
-msgstr "La commande a été modifiée:"
+msgstr "La commande a été mise à jour:"
 
 #: control/logdisplay.py:58
 #, python-brace-format
@@ -15335,7 +15336,7 @@ msgstr ""
 #: control/logdisplay.py:70
 #, python-brace-format
 msgid "Position #{posid}: Seat \"{old_seat}\" changed to \"{new_seat}\"."
-msgstr "Position #{posid}: Place \"{old_seat}\" changée en \"{new_seat}\"."
+msgstr "Position #{posid} : Place \"{old_seat}\" modifiée en \"{new_seat}\"."
 
 #: control/logdisplay.py:83
 #, python-brace-format
@@ -15389,13 +15390,13 @@ msgid ""
 "Position #{posid} created: {product} ({price}) as an add-on to position "
 "#{addon_to}."
 msgstr ""
-"Position #{posid} créée: {product} ({price}) en tant qu'add-on à la position "
-"#{addon_to}."
+"Position #{posid} créée : {product} ({price}) en tant qu'add-on à la "
+"position #{addon_to}."
 
 #: control/logdisplay.py:175
 #, python-brace-format
 msgid "Position #{posid} created: {product} ({price})."
-msgstr "Position #{posid} créée: {product} ({price})."
+msgstr "Position #{posid} créée : {product} ({price})."
 
 #: control/logdisplay.py:185
 #, python-brace-format
@@ -15408,7 +15409,7 @@ msgid ""
 "Position #{posid} ({old_product}, {old_price}) split into new order: {order}"
 msgstr ""
 "Position #{posid} ({old_product}, {old_price}) scindée en une nouvelle "
-"commande: {order}"
+"commande : {order}"
 
 #: control/logdisplay.py:212
 #, python-brace-format
@@ -15808,7 +15809,7 @@ msgstr "Le paiement {local_id} a échoué."
 #: control/logdisplay.py:568
 #, python-brace-format
 msgid "The order could not be marked as paid: {message}"
-msgstr "La commande n'a pas pu être marquée comme payée: {message}"
+msgstr "La commande n'a pas pu être marquée comme payée : {message}"
 
 #: control/logdisplay.py:569
 msgid "The order has been overpaid."
@@ -17099,7 +17100,7 @@ msgstr "Supprimer une page"
 #: control/templates/pretixcontrol/admin/pages/delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the page <strong>%(name)s</strong>?"
-msgstr "Êtes-vous sûr de vouloir supprimer la page <strong>%(name)s</strong>?"
+msgstr "Confirmez-vous la suppression de la page <strong>%(name)s</strong>?"
 
 #: control/templates/pretixcontrol/admin/pages/form.html:5
 #: control/templates/pretixcontrol/admin/pages/form.html:19
@@ -17379,7 +17380,7 @@ msgstr "Cette installation semble être une installation de développement."
 #: control/templates/pretixcontrol/global_update.html:47
 #, python-format
 msgid "Last updated: %(date)s"
-msgstr "Dernière mise à jour: %(date)s"
+msgstr "Dernière mise à jour : %(date)s"
 
 #: control/templates/pretixcontrol/admin/update.html:63
 #: control/templates/pretixcontrol/global_update.html:59
@@ -17510,7 +17511,7 @@ msgid ""
 "Are you sure you want to delete the voucher <strong>%(invoice_voucher)s</"
 "strong>?"
 msgstr ""
-"Voulez-vous vraiment supprimer le bon <strong>%(invoice_voucher)s</strong>?"
+"Voulez-vous vraiment supprimer le bon <strong>%(invoice_voucher)s</strong> ?"
 
 #: control/templates/pretixcontrol/admin/vouchers/detail.html:9
 #: control/templates/pretixcontrol/vouchers/detail.html:18
@@ -17563,7 +17564,7 @@ msgid ""
 "access to your account?"
 msgstr ""
 "Voulez-vous vraiment autoriser l'application <strong>%(application)s</"
-"strong> à accéder à votre compte?"
+"strong> à accéder à votre compte ?"
 
 #: control/templates/pretixcontrol/auth/oauth_authorization.html:24
 #, python-format
@@ -17805,7 +17806,7 @@ msgstr "Code d'autorisation"
 #: control/templates/pretixcontrol/checkin/list_edit.html:18
 #, python-format
 msgid "Check-in list: %(name)s"
-msgstr "Liste d'enregistrement: %(name)s"
+msgstr "Liste d'enregistrement : %(name)s"
 
 #: control/templates/pretixcontrol/checkin/index.html:19
 msgid "Edit list configuration"
@@ -17840,7 +17841,7 @@ msgstr "Enregistré automatiquement"
 #: control/templates/pretixcontrol/checkin/index.html:156
 #, python-format
 msgid "Exit: %(date)s"
-msgstr "Quitter: %(date)s"
+msgstr "Quitter : %(date)s"
 
 #: control/templates/pretixcontrol/checkin/index.html:169
 msgid "Check-In selected attendees"
@@ -17865,7 +17866,7 @@ msgid ""
 "Are you sure you want to delete the check-in list <strong>%(name)s</strong>?"
 msgstr ""
 "Êtes-vous sûr de vouloir supprimer la liste d'enregistrement <strong>%(name)"
-"s</strong>?"
+"s</strong> ?"
 
 #: control/templates/pretixcontrol/checkin/list_delete.html:11
 #, python-format
@@ -17945,14 +17946,12 @@ msgid ""
 "festival with festival passes that allow access to every or multiple "
 "performances as well as tickets only valid for single performances."
 msgstr ""
-"Vous pouvez créer plusieurs listes d'enregistrement pour séparer plusieurs "
-"parties de votre événement, par exemple si vous disposez d'entrées séparées "
-"pour plusieurs types de tickets. Les différentes listes d'enregistrement "
-"sont totalement indépendantes: si un ticket apparaît sur deux listes, il est "
-"valable une fois sur chaque liste. Cela peut s'avérer utile si vous "
-"organisez un festival avec des laissez-passer qui vous permettent d'accéder "
-"à chaque représentation ou à plusieurs, ainsi que des billets valables "
-"uniquement pour une seule représentation."
+"Créez plusieurs listes d'enregistrement pour segmenter les différentes "
+"sections de votre événement — utile si vous avez plusieurs catégories de "
+"billets. Les listes sont indépendantes : un billet présent sur plusieurs "
+"listes peut être utilisé une fois par liste. Idéal pour les festivals avec "
+"des passes permettant l'accès à plusieurs spectacles et des billets valables "
+"uniquement pour une représentation."
 
 #: control/templates/pretixcontrol/checkin/lists.html:30
 msgid ""
@@ -18703,7 +18702,7 @@ msgstr "Fournisseur de paiement :"
 
 #: control/templates/pretixcontrol/event/payment_provider.html:21
 msgid "Warning:"
-msgstr "Avertissement:"
+msgstr "Avis :"
 
 #: control/templates/pretixcontrol/event/payment_provider.html:22
 msgid ""
@@ -18757,12 +18756,12 @@ msgstr ""
 #: control/templates/pretixcontrol/event/plugins.html:50
 #: eventyay_common/templates/eventyay_common/event/plugins.html:50
 msgid "This plugin cannot be enabled for the following reasons:"
-msgstr "Ce plugin ne peut pas être activé pour les raisons suivantes:"
+msgstr "Impossible d'activer ce plugin pour les raisons suivantes :"
 
 #: control/templates/pretixcontrol/event/plugins.html:60
 #: eventyay_common/templates/eventyay_common/event/plugins.html:60
 msgid "This plugin reports the following problems:"
-msgstr "Ce plugin signale les problèmes suivants:"
+msgstr "Ce plugin signale les problèmes suivants :"
 
 #: control/templates/pretixcontrol/event/plugins.html:72
 #: eventyay_common/templates/eventyay_common/event/plugins.html:72
@@ -18927,38 +18926,29 @@ msgstr "Modifications des commandes existantes"
 #: control/templates/pretixcontrol/event/settings.html:61
 #: eventyay_common/templates/eventyay_common/event/settings.html:169
 #: orga/views/event.py:79
-#, fuzzy
-#| msgid "Text"
 msgid "Texts"
-msgstr "Texte"
+msgstr "Textes"
 
 #: control/templates/pretixcontrol/event/settings.html:66
 msgid "Confirmation text"
 msgstr "Texte de confirmation"
 
 #: control/templates/pretixcontrol/event/settings.html:71
-#, fuzzy
-#| msgid ""
-#| "This text needs to be confirmed by the user before a purchase is "
-#| "possible. You could for example link your terms of service here. If you "
-#| "use the Pages feature to publish your terms of service, you don't need "
-#| "this setting since you can configure it there."
 msgid ""
 "These texts need to be confirmed by the user before a purchase is possible. "
 "You could for example link your terms of service here. If you use the Pages "
 "feature to publish your terms of service, you don't need this setting since "
 "you can configure it there."
 msgstr ""
-"Ce texte doit être confirmé par l'utilisateur avant tout achat. Vous pouvez "
-"par exemple lier vos conditions d'utilisation ici. Si vous utilisez la "
-"fonction Pages pour publier vos conditions d'utilisation, vous n'avez pas "
-"besoin de ce paramètre puisque vous pouvez le configurer ici."
+"Ces textes doivent être confirmés par l'utilisateur avant qu'un achat soit "
+"possible. Vous pouvez par exemple y mettre un lien vers vos conditions "
+"d'utilisation ici. Si vous utilisez la fonctionnalité Pages pour publier vos "
+"conditions d'utilisation, vous n'avez pas besoin de ce paramètre puisque "
+"vous pouvez le configurer là-bas."
 
 #: control/templates/pretixcontrol/event/settings.html:128
-#, fuzzy
-#| msgid "Confirmation text"
 msgid "Add confirmation text"
-msgstr "Texte de confirmation"
+msgstr "Ajouter le texte de confirmation"
 
 #: control/templates/pretixcontrol/event/settings.html:151
 msgid "Display"
@@ -18969,10 +18959,8 @@ msgid "Cart"
 msgstr "Panier"
 
 #: control/templates/pretixcontrol/event/settings.html:186
-#, fuzzy
-#| msgid "Event date"
 msgid "Item metadata"
-msgstr "Date de l'événement"
+msgstr "Métadonnées de l'élément"
 
 #: control/templates/pretixcontrol/event/settings.html:188
 msgid ""
@@ -18991,10 +18979,8 @@ msgstr "Ajouter une propriété"
 
 #: control/templates/pretixcontrol/event/settings.html:259
 #: control/templates/pretixcontrol/organizers/detail.html:112
-#, fuzzy
-#| msgid "Choose event"
 msgid "Clone event"
-msgstr "Choisir un événement"
+msgstr "Dupliquer l'événement"
 
 #: control/templates/pretixcontrol/event/settings_base.html:15
 #: eventyay_common/templates/eventyay_common/event/settings_base.html:15
@@ -19021,8 +19007,8 @@ msgstr "Supprimer la règle fiscale"
 msgid ""
 "Are you sure you want to delete the tax rule <strong>%(taxrule)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la règle d'imposition <strong>%(taxrule)"
-"s</strong>?"
+"Confirmez-vous la suppression de la règle d'imposition <strong>%(taxrule)s</"
+"strong> ?"
 
 #: control/templates/pretixcontrol/event/tax_delete.html:12
 msgid ""
@@ -19036,7 +19022,7 @@ msgstr ""
 #: control/templates/pretixcontrol/event/tax_edit.html:17
 #, python-format
 msgid "Tax rule: %(name)s"
-msgstr "Règle fiscale: %(name)s"
+msgstr "Règle fiscale : %(name)s"
 
 #: control/templates/pretixcontrol/event/tax_edit.html:40
 #, python-format
@@ -19084,10 +19070,8 @@ msgstr "Ajouter une nouvelle règle"
 
 #: control/templates/pretixcontrol/event/tax_edit.html:151
 #: control/templates/pretixcontrol/organizers/edit.html:86
-#, fuzzy
-#| msgid "Change"
 msgid "Change history"
-msgstr "Changer"
+msgstr "Historique des modifications"
 
 #: control/templates/pretixcontrol/event/tax_index.html:16
 msgid "You haven't created any tax rules yet."
@@ -19108,10 +19092,8 @@ msgid "Ticket download"
 msgstr "Téléchargement du ticket"
 
 #: control/templates/pretixcontrol/event/tickets.html:18
-#, fuzzy
-#| msgid "Global settings"
 msgid "Download settings"
-msgstr "Paramètres globaux"
+msgstr "Paramètres de téléchargement"
 
 #: control/templates/pretixcontrol/event/tickets.html:21
 msgid ""
@@ -19123,58 +19105,45 @@ msgstr ""
 "sortie."
 
 #: control/templates/pretixcontrol/event/tickets.html:35
-#, fuzzy
-#| msgid "Download date"
 msgid "Download formats"
-msgstr "Date de téléchargement"
+msgstr "Formats de téléchargement"
 
 #: control/templates/pretixcontrol/event/tickets.html:63
-#, fuzzy, python-format
-#| msgid ""
-#| "There are no ticket outputs available. Please go to the plugin settings "
-#| "and activate one or more ticket output plugins."
+#, python-format
 msgid ""
 "There are no ticket outputs available. Please go to the <a "
 "%(plugin_settings_href)s>plugin settings</a> and activate one or more ticket "
 "output plugins."
 msgstr ""
-"Il n' y a pas de sortie de ticket disponible. Veuillez aller dans les "
-"paramètres du plugin et activer un ou plusieurs plugins de sortie de ticket."
+"Aucune sortie de billets n'est disponible. Veuillez aller dans les <a %"
+"(plugin_settings_href)s>paramètres des plugins</a> et activer un ou "
+"plusieurs plugins de sortie de billets."
 
 #: control/templates/pretixcontrol/event/tickets.html:71
-#, fuzzy
-#| msgid "Download ticket"
 msgid "Download time"
-msgstr "Télécharger le ticket"
+msgstr "Heure de téléchargement"
 
 #: control/templates/pretixcontrol/event/tickets.html:75
-#, fuzzy
-#| msgid "Ticket design"
 msgid "Ticket codes"
-msgstr "Conception des billets"
+msgstr "Codes des billets"
 
 #: control/templates/pretixcontrol/event/widget.html:17
-#, fuzzy
-#| msgid ""
-#| "The pretix widget is a way to embed your ticket shop into your event "
-#| "website. This way, your visitors can buy their ticket right away without "
-#| "leaving your website."
 msgid ""
 "A widget allows you to embed your ticket shop directly into your event "
 "website. This enables your visitors to purchase tickets instantly without "
 "leaving your site."
 msgstr ""
-"Le widget eventyay est un moyen d'intégrer votre billetterie dans votre site "
-"web événementiel. De cette façon, vos visiteurs peuvent acheter leur ticket "
-"tout de suite sans quitter votre site."
+"Un widget vous permet d'intégrer directement la billetterie sur le site de "
+"votre événement. Ainsi, vos visiteurs peuvent acheter des billets "
+"instantanément sans quitter votre site."
 
 #: control/templates/pretixcontrol/event/widget.html:23
 msgid ""
 "To embed the widget onto your website, simply copy the following code to the "
 "<code>&lt;head&gt;</code> section of your website:"
 msgstr ""
-"Pour intégrer le widget sur votre site Web, il vous suffit de copier le code "
-"suivant dans la section <code>&lt;head&gt;</code> de votre site Web:"
+"Pour intégrer le widget à votre site, copiez simplement le code suivant dans "
+"la section <code>&lt;head&gt;</code> de votre site :"
 
 #: control/templates/pretixcontrol/event/widget.html:31
 #: orga/templates/orga/settings/widget.html:69
@@ -19182,8 +19151,8 @@ msgid ""
 "Then, copy the following code to the place of your website where you want "
 "the widget to show up:"
 msgstr ""
-"Ensuite, copiez le code suivant à l'endroit de votre site où vous voulez que "
-"le widget apparaisse:"
+"Placez ensuite le code ci-dessous à l'endroit de votre site où le widget "
+"doit s'afficher :"
 
 #: control/templates/pretixcontrol/event/widget.html:45
 #: control/templates/pretixcontrol/event/widget.html:58
@@ -19221,7 +19190,7 @@ msgstr "Portez ce vieux whisky au juge blond qui fume."
 #: control/templates/pretixcontrol/fragment_quota_box.html:3
 #: control/templates/pretixcontrol/fragment_quota_box_paid.html:3
 msgid "Quota:"
-msgstr "Quota:"
+msgstr "Quota :"
 
 #: control/templates/pretixcontrol/fragment_quota_box.html:3
 #, python-format
@@ -19231,7 +19200,7 @@ msgstr "Chiffres en %(date)s"
 #: control/templates/pretixcontrol/fragment_quota_box_paid.html:3
 #, python-format
 msgid "Currently available: %(num)s"
-msgstr "Actuellement disponible: %(num)s"
+msgstr "Actuellement disponible : %(num)s"
 
 #: control/templates/pretixcontrol/giftcards/checkout.html:4
 msgid ""
@@ -19338,16 +19307,12 @@ msgid "Submit"
 msgstr "Soumettre"
 
 #: control/templates/pretixcontrol/global_update.html:28
-#, fuzzy
-#| msgid "The eventyay.com server returned an error code."
 msgid "The eventyay server returned an error code."
-msgstr "Le serveur eventyay.com a renvoyé un code d'erreur."
+msgstr "Le serveur eventyay a renvoyé un code d'erreur."
 
 #: control/templates/pretixcontrol/global_update.html:30
-#, fuzzy
-#| msgid "The eventyay.com server could not be reached."
 msgid "The eventyay server could not be reached."
-msgstr "Le serveur eventyay.com n'a pas pu être joint."
+msgstr "Impossible de joindre le serveur eventyay."
 
 #: control/templates/pretixcontrol/includes/logs.html:51
 #: eventyay_common/templates/eventyay_common/includes/logs.html:51
@@ -19356,7 +19321,7 @@ msgstr "Voir le journal complet"
 
 #: control/templates/pretixcontrol/item/base.html:9
 msgid "Modify product:"
-msgstr "Modifier le produit:"
+msgstr "Modifier le produit :"
 
 #: control/templates/pretixcontrol/item/base.html:11
 msgid "Create product"
@@ -19393,17 +19358,13 @@ msgstr ""
 
 #: control/templates/pretixcontrol/item/create.html:19
 #: control/templates/pretixcontrol/item/index.html:21
-#, fuzzy
-#| msgid "Product name"
 msgid "Product type"
-msgstr "Nom du produit"
+msgstr "Type de produit"
 
 #: control/templates/pretixcontrol/item/create.html:25
 #: control/templates/pretixcontrol/item/index.html:27
-#, fuzzy
-#| msgid "All products"
 msgid "Admission product"
-msgstr "Tous les produits"
+msgstr "Produit d'admission"
 
 #: control/templates/pretixcontrol/item/create.html:27
 msgid ""
@@ -19431,10 +19392,8 @@ msgstr ""
 
 #: control/templates/pretixcontrol/item/create.html:44
 #: control/templates/pretixcontrol/item/index.html:46
-#, fuzzy
-#| msgid "All products"
 msgid "Non-admission product"
-msgstr "Tous les produits"
+msgstr "Produit sans admission"
 
 #: control/templates/pretixcontrol/item/create.html:46
 msgid ""
@@ -19454,16 +19413,12 @@ msgstr ""
 "billet principal."
 
 #: control/templates/pretixcontrol/item/create.html:69
-#, fuzzy
-#| msgid "Product with variations"
 msgid "Product without variations"
-msgstr "Produit avec des variantes"
+msgstr "Produit sans variantes"
 
 #: control/templates/pretixcontrol/item/create.html:76
-#, fuzzy
-#| msgid "Product with variations"
 msgid "Product with multiple variations"
-msgstr "Produit avec des variantes"
+msgstr "Produit avec plusieurs variantes"
 
 #: control/templates/pretixcontrol/item/create.html:78
 msgid ""
@@ -19513,8 +19468,7 @@ msgstr ""
 #: control/templates/pretixcontrol/item/delete.html:19
 #, python-format
 msgid "Are you sure you want to delete the product <strong>%(item)s</strong>?"
-msgstr ""
-"Êtes-vous sûr de vouloir supprimer le produit <strong>%(item)s</strong>?"
+msgstr "Confirmez-vous la suppression du produit <strong>%(item)s</strong> ?"
 
 #: control/templates/pretixcontrol/item/delete.html:22
 #: control/templates/pretixcontrol/items/quota_delete.html:24
@@ -19665,8 +19619,7 @@ msgstr "Supprimer catégorie de produit"
 #: control/templates/pretixcontrol/items/category_delete.html:9
 #, python-format
 msgid "Are you sure you want to delete the category <strong>%(name)s</strong>?"
-msgstr ""
-"Êtes-vous sûr de vouloir supprimer la catégorie <strong>%(name)s</strong>?"
+msgstr "Voulez-vous vraiment supprimer la catégorie <strong>%(name)s</strong> ?"
 
 #: control/templates/pretixcontrol/items/description_delete.html:4
 #: control/templates/pretixcontrol/items/description_delete.html:6
@@ -19887,7 +19840,7 @@ msgstr "Paramètres du formulaire"
 #: control/templates/pretixcontrol/items/question.html:9
 #, python-format
 msgid "Question: %(name)s"
-msgstr "Question: %(name)s"
+msgstr "Question : %(name)s"
 
 #: control/templates/pretixcontrol/items/question.html:13
 #: control/templates/pretixcontrol/items/question.html:55
@@ -19944,7 +19897,8 @@ msgstr "Supprimer la question"
 msgid ""
 "Are you sure you want to delete the question <strong>%(question)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la question <strong>%(question)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la question <strong>%(question)s</strong> "
+"?"
 
 #: control/templates/pretixcontrol/items/question_delete.html:11
 msgid ""
@@ -20040,7 +19994,7 @@ msgstr "Tous les produits d'admission"
 #: control/templates/pretixcontrol/items/quota_edit.html:16
 #, python-format
 msgid "Quota: %(name)s"
-msgstr "Quota: %(name)s"
+msgstr "Quota : %(name)s"
 
 #: control/templates/pretixcontrol/items/quota.html:17
 msgid "Edit quota"
@@ -20117,11 +20071,11 @@ msgstr "Supprimer le quota"
 #, python-format
 msgid "Are you sure you want to delete the quota <strong>%(quota)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le quota <strong>1%(quota)s2</strong>3?"
+"Êtes-vous sûr de vouloir supprimer le quota <strong>1%(quota)s2</strong>3 ?"
 
 #: control/templates/pretixcontrol/items/quota_delete.html:12
 msgid "The following products might be no longer available for sale:"
-msgstr "Les produits suivants pourraient ne plus être disponibles à la vente:"
+msgstr "Les articles suivants risquent de ne plus être disponibles à la vente :"
 
 #: control/templates/pretixcontrol/items/quota_edit.html:36
 msgid "Items"
@@ -20256,7 +20210,7 @@ msgstr "Oui, supprimer la demande"
 #: presale/templates/pretixpresale/event/order_change.html:9
 #, python-format
 msgid "Change order: %(code)s"
-msgstr "Modifier l'ordre: %(code)s"
+msgstr "Modifier l'ordre : %(code)s"
 
 #: control/templates/pretixcontrol/order/change.html:18
 #: control/templates/pretixcontrol/order/change_contact.html:12
@@ -20465,7 +20419,7 @@ msgstr "Prolonger le délai de paiement"
 #: control/templates/pretixcontrol/order/index.html:20
 #, python-format
 msgid "Order details: %(code)s"
-msgstr "Détails de la commande: %(code)s"
+msgstr "Détails de la commande : %(code)s"
 
 #: control/templates/pretixcontrol/order/index.html:18
 #: presale/templates/pretixpresale/event/fragment_cart.html:7
@@ -20640,7 +20594,7 @@ msgstr "Scan d'entrée : %(date)s"
 #: control/templates/pretixcontrol/order/index.html:340
 #: presale/templates/pretixpresale/event/fragment_cart.html:27
 msgid "Voucher code used:"
-msgstr "Code de réduction utilisé:"
+msgstr "Code de réduction utilisé :"
 
 #: control/templates/pretixcontrol/order/index.html:342
 #, python-format
@@ -20815,7 +20769,7 @@ msgstr ""
 #: control/templates/pretixcontrol/order/mail_history.html:39
 #: control/templates/pretixcontrol/order/mail_history.html:50
 msgid "Subject:"
-msgstr "Sujet:"
+msgstr "Sujet :"
 
 #: control/templates/pretixcontrol/order/pay.html:5
 #: control/templates/pretixcontrol/order/pay.html:9
@@ -21376,8 +21330,7 @@ msgid ""
 "To confirm you really want this, please type out the organizer's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
-"Pour confirmer que vous le souhaitez vraiment, veuillez saisir le nom court "
-"de l'organisateur (\"%(slug)s\") ici:"
+"Pour confirmer, tapez le nom court de l'organisateur (\"%(slug)s\") ici :"
 
 #: control/templates/pretixcontrol/organizers/delete.html:44
 msgid ""
@@ -21391,7 +21344,7 @@ msgstr ""
 #: control/templates/pretixcontrol/organizers/detail.html:6
 #, python-format
 msgid "Organizer: %(name)s"
-msgstr "Organisateur: %(name)s"
+msgstr "Organisateur : %(name)s"
 
 #: control/templates/pretixcontrol/organizers/device_connect.html:6
 msgid "Connect to device:"
@@ -21811,7 +21764,7 @@ msgstr "%(count)s élements"
 #: control/templates/pretixcontrol/pagination.html:38
 #: control/templates/pretixcontrol/pagination_huge.html:38
 msgid "Show per page:"
-msgstr "Afficher par page:"
+msgstr "Afficher par page :"
 
 #: control/templates/pretixcontrol/pagination_huge.html:14
 #, python-format
@@ -22017,7 +21970,7 @@ msgstr "Contenu du texte"
 
 #: control/templates/pretixcontrol/pdf/index.html:367
 msgid "Event attribute:"
-msgstr "Attribut d'événement:"
+msgstr "Attribut d'événement :"
 
 #: control/templates/pretixcontrol/pdf/index.html:372
 msgid "Item attribute:"
@@ -22071,66 +22024,47 @@ msgid "Step 1: Download data"
 msgstr "Étape 1 : Télécharger les données"
 
 #: control/templates/pretixcontrol/shredder/download.html:17
-#, fuzzy
-#| msgid "Download date"
 msgid "(Optional) Step 1: Download data"
-msgstr "Date de téléchargement"
+msgstr "(Facultatif) Étape 1 : Télécharger les données"
 
 #: control/templates/pretixcontrol/shredder/download.html:20
-#, fuzzy
-#| msgid ""
-#| "You are about to permanently delete data from the server, even though you "
-#| "might be required to keep some of this data on file. You should therefore "
-#| "download the following file and store it in a safe place:"
 msgid ""
 "You are about to permanently delete data from the server, even though you "
 "might be required to keep some of this data on file. You can therefore "
 "download the following file and store it in a safe place:"
 msgstr ""
-"Vous êtes sur le point de supprimer de façon permanente des données du "
-"serveur, même si vous êtes tenu de conserver une partie de ces données dans "
-"un fichier. Vous devriez donc télécharger le fichier suivant et le stocker "
-"dans un endroit sûr :"
+"Vous allez supprimer définitivement des données du serveur, alors que vous "
+"pourriez devoir en conserver certaines. Vous pouvez télécharger le fichier "
+"suivant et le stocker en lieu sûr :"
 
 #: control/templates/pretixcontrol/shredder/download.html:29
-#, fuzzy
-#| msgid "Download date"
 msgid "Download data"
-msgstr "Date de téléchargement"
+msgstr "Télécharger les données"
 
 #: control/templates/pretixcontrol/shredder/download.html:34
-#, fuzzy
-#| msgid "Step 3: Confirm deletion"
 msgid "Step 2: Confirm deletion"
-msgstr "Etape 3 : Confirmer la suppression"
+msgstr "Étape 2 : Confirmer la suppression"
 
 #: control/templates/pretixcontrol/shredder/download.html:36
-#, fuzzy, python-format
-#| msgid ""
-#| "Please re-check that you are fully certain that you want to delete the "
-#| "selected categories of data from the event <strong>%(event)s</strong>. In "
-#| "this case, please enter your user password here:"
+#, python-format
 msgid ""
 "Please re-check that you are fully certain that you want to delete the "
 "selected categories of data from the event <strong>%(event)s</strong>. To "
 "confirm you really want this, please type out the event's short name "
 "(\"%(slug)s\") here:"
 msgstr ""
-"Veuillez vérifier à nouveau que vous êtes certain de vouloir supprimer les "
-"catégories de données sélectionnées de l'événement <strong>1%(event)s2</"
-"strong>3. dans ce cas, veuillez entrer votre mot de passe utilisateur ici :"
+"Veuillez revérifier que vous êtes bien certain de vouloir supprimer les "
+"catégories de données sélectionnées de l'événement <strong>%(event)s</strong>"
+". Pour confirmer que vous souhaitez vraiment cela, veuillez taper ici le nom "
+"court de l'événement (\"%(slug)s\") :"
 
 #: control/templates/pretixcontrol/shredder/download.html:41
-#, fuzzy
-#| msgid "Event name"
 msgid "Event short name"
-msgstr "Nom de l'événement"
+msgstr "Nom abrégé de l'événement"
 
 #: control/templates/pretixcontrol/shredder/download.html:46
-#, fuzzy
-#| msgid "Step 2: Confirm download"
 msgid "Step 3: Confirm download"
-msgstr "Etape 2 : Confirmer le téléchargement"
+msgstr "Étape 3 : Confirmer le téléchargement"
 
 #: control/templates/pretixcontrol/shredder/download.html:48
 msgid ""
@@ -22143,10 +22077,8 @@ msgstr ""
 "ici pour confirmer que vous avez bien téléchargé le fichier."
 
 #: control/templates/pretixcontrol/shredder/download.html:53
-#, fuzzy
-#| msgid "Confirmation text"
 msgid "Confirmation code"
-msgstr "Texte de confirmation"
+msgstr "Code de confirmation"
 
 #: control/templates/pretixcontrol/shredder/index.html:11
 msgid ""
@@ -22195,10 +22127,8 @@ msgstr ""
 "historiques ne peuvent pas être téléchargées pour le moment."
 
 #: control/templates/pretixcontrol/shredder/index.html:46
-#, fuzzy
-#| msgid "no selection"
 msgid "Data selection"
-msgstr "aucune sélection"
+msgstr "Sélection des données"
 
 #: control/templates/pretixcontrol/shredder/index.html:63
 msgid ""
@@ -22209,18 +22139,14 @@ msgstr ""
 "avoir besoin en cas de contrôle fiscal."
 
 #: control/templates/pretixcontrol/subevents/bulk.html:10
-#, fuzzy
-#| msgid "Create multiple voucher"
 msgctxt "subevent"
 msgid "Create multiple dates"
-msgstr "Créer plusieurs bons de réduction"
+msgstr "Créer plusieurs dates"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:35
 #: control/templates/pretixcontrol/subevents/bulk.html:146
-#, fuzzy
-#| msgid "Delete tax rule"
 msgid "Repetition rule"
-msgstr "Supprimer la règle fiscale"
+msgstr "Règle de répétition"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:81
 #: control/templates/pretixcontrol/subevents/bulk.html:192
@@ -22263,67 +22189,49 @@ msgid "Repeat until %(until)s"
 msgstr "Répéter jusqu'à %(until)s1"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:258
-#, fuzzy
-#| msgid "Preview"
 msgctxt "subevent"
 msgid "Preview"
-msgstr "Prévisualisation"
+msgstr "Aperçu"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:265
-#, fuzzy
-#| msgid "Time"
 msgctxt "subevent"
 msgid "Times"
-msgstr "Durée"
+msgstr "Horaires"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:339
-#, fuzzy
-#| msgid "Start of presale"
 msgid "Start of first slot"
-msgstr "Début de la prévente"
+msgstr "Début du premier créneau"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:345
-#, fuzzy
-#| msgid "End of presale"
 msgid "End of time slots"
-msgstr "Fin de la prévente"
+msgstr "Fin des créneaux horaires"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:351
-#, fuzzy
-#| msgid "Gift card"
 msgid "Length of slots"
-msgstr "Carte-cadeau"
+msgstr "Durée des créneaux"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:355
 #: control/templates/pretixcontrol/subevents/bulk.html:364
 #: orga/forms/cfp.py:454 orga/forms/submission.py:189
 #: orga/templates/orga/submission/content.html:135
-#, fuzzy
-#| msgid "days before"
 msgid "minutes"
-msgstr "jours avant"
+msgstr "minutes"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:360
 msgid "Break between slots"
 msgstr "Pause entre les créneaux"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:370
-#, fuzzy
-#| msgid "User created."
 msgid "Create"
-msgstr "Utilisateur créé."
+msgstr "Créer"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:377
-#, fuzzy
-#| msgid "Add a new ticket type"
 msgid "Add a single time slot"
-msgstr "Ajouter un nouveau type de ticket"
+msgstr "Ajouter un créneau horaire unique"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:379
-#, fuzzy
-#| msgid "Add a new ticket type"
 msgid "Add many time slots"
-msgstr "Ajouter un nouveau type de ticket"
+msgstr "Ajouter plusieurs créneaux horaires"
 
 #: control/templates/pretixcontrol/subevents/bulk.html:479
 #: control/templates/pretixcontrol/subevents/bulk_edit.html:246
@@ -22386,7 +22294,7 @@ msgstr "Supprimer la date"
 #, python-format
 msgid "Are you sure you want to delete the date <strong>%(subevent)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer la date <strong>%(subevent)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer la date <strong>%(subevent)s</strong> ?"
 
 #: control/templates/pretixcontrol/subevents/delete_bulk.html:4
 #: control/templates/pretixcontrol/subevents/delete_bulk.html:6
@@ -22563,8 +22471,8 @@ msgstr ""
 msgid ""
 "Are you sure you want to delete the voucher <strong>%(voucher)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer le coupon de réduction <strong>%(voucher)"
-"s</strong>?"
+"Voulez-vous vraiment supprimer le coupon de réduction <strong>%(voucher)s</"
+"strong> ?"
 
 #: control/templates/pretixcontrol/vouchers/delete_bulk.html:4
 #: control/templates/pretixcontrol/vouchers/delete_bulk.html:6
@@ -22667,8 +22575,8 @@ msgid ""
 "Are you sure you want to delete the following waiting list entry "
 "<strong>%(entry)s</strong>?"
 msgstr ""
-"Êtes-vous sûr de vouloir supprimer l'entrée de liste d'attente <strong>%"
-"(entry)s</strong>?"
+"Êtes-vous sûr de vouloir supprimer l'entrée suivante de la liste d'attente "
+"<strong>%(entry)s</strong> ?"
 
 #: control/templates/pretixcontrol/waitinglist/index.html:18
 msgid ""
@@ -23107,7 +23015,7 @@ msgstr ""
 #: control/views/event.py:814 orga/views/event.py:441
 #, python-format
 msgid "An error occurred while contacting the SMTP server: %s"
-msgstr "Une erreur s'est produite lors du contact avec le serveur SMTP: %s"
+msgstr "Une erreur s'est produite lors du contact avec le serveur SMTP : %s"
 
 #: control/views/event.py:821
 msgid ""
@@ -23646,7 +23554,7 @@ msgstr ""
 #: plugins/sendmail/views.py:370 plugins/sendmail/views.py:556
 #, python-brace-format
 msgid "Subject: {subject}"
-msgstr "Sujet: {subject}"
+msgstr "Sujet : {subject}"
 
 #: control/views/orders.py:2283 control/views/orders.py:2353
 #, python-brace-format
@@ -23656,7 +23564,7 @@ msgstr "Votre message a été mis en file d'attente et sera envoyé à {}."
 #: control/views/orders.py:2288 control/views/orders.py:2358
 #, python-brace-format
 msgid "Failed to send mail to the following user: {}"
-msgstr "Echec de l'envoi de mail à l'utilisateur suivant: {}"
+msgstr "Echec de l'envoi de mail à l'utilisateur suivant : {}"
 
 #: control/views/orders.py:2388 presale/views/order.py:1110
 msgid ""
@@ -24002,7 +23910,7 @@ msgstr "{} nouvelles dates ont été créées."
 
 #: control/views/typeahead.py:62
 msgid "Series:"
-msgstr "Séries:"
+msgstr "Séries :"
 
 #: control/views/typeahead.py:88
 #, python-brace-format
@@ -24045,7 +23953,7 @@ msgstr "Tout produit"
 #: control/views/vouchers.py:296
 #, python-brace-format
 msgid "The new voucher has been created: {code}"
-msgstr "Le nouveau bon a été créé: {code}"
+msgstr "Le nouveau bon a été créé : {code}"
 
 #: control/views/vouchers.py:327
 msgid "There is no voucher with the given voucher code."
@@ -24281,11 +24189,11 @@ msgstr "Ajouter un dispositif d'authentification à deux facteurs"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:21
 msgid "To set up this device, please follow the following steps:"
-msgstr "Pour configurer cet appareil, veuillez suivre les étapes suivantes:"
+msgstr "Pour configurer cet appareil, veuillez suivre les étapes suivantes :"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:25
 msgid "Download the Google Authenticator application to your phone:"
-msgstr "Téléchargez l'application Google Authenticator sur votre téléphone:"
+msgstr "Téléchargez l'application Google Authenticator sur votre téléphone :"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:30
 msgid "Android (Google Play)"
@@ -24306,11 +24214,12 @@ msgstr "Blackberry (Lien via Google)"
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:52
 msgid "Add a new account to the app by scanning the following barcode:"
 msgstr ""
-"Ajoutez un nouveau compte à l'application en scannant le code-barres suivant:"
+"Ajoutez un nouveau compte à l'application en scannant le code-barres suivant "
+":"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:56
 msgid "Can't scan the barcode?"
-msgstr "Vous ne pouvez pas scanner le code-barres?"
+msgstr "Vous n'arrivez pas à scanner le code-barres?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:62
 msgid "Use the \"provide a key\" option of your authenticator app."
@@ -24324,7 +24233,7 @@ msgstr "Dans \"Nom du compte\", saisissez votre identifiant pour pretix."
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:68
 msgid "In \"Secret\"/\"Account Key\", enter the following code:"
-msgstr "Dans\" Secret\"/\"Clé de compte\", entrez le code suivant:"
+msgstr "Dans \"Secret\"/\"Clé de compte\", saisissez le code suivant :"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:73
 msgid "copy"
@@ -24339,7 +24248,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:87
 msgid "Enter the displayed code here:"
-msgstr "Entrez ici le code affiché:"
+msgstr "Veuillez entrer le code affiché ici :"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-totp.html:96
 #: eventyay_common/templates/eventyay_common/account/2fa-confirm-webauthn.html:32
@@ -24370,7 +24279,7 @@ msgid ""
 "Are you sure you want to delete the authentication device \"%(device)s\"?"
 msgstr ""
 "Êtes-vous sûr de vouloir supprimer le dispositif d'authentification \"%"
-"(device)s\"?"
+"(device)s\" ?"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-delete.html:25
 msgid "You will no longer be able to use this device to log in to pretix."
@@ -24496,7 +24405,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:119
 msgid "Unused tokens:"
-msgstr "Tokens inutilisés:"
+msgstr "Tokens inutilisés :"
 
 #: eventyay_common/templates/eventyay_common/account/2fa-main-settings.html:127
 msgid "Generate new emergency tokens"
@@ -24826,7 +24735,7 @@ msgstr "Vous n'avez aucun événement à venir"
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:123
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:85
 msgid "Component not enabled!"
-msgstr "Composant non activé!"
+msgstr "Composant non activé !"
 
 #: eventyay_common/templates/eventyay_common/dashboard/dashboard.html:124
 #: eventyay_common/templates/eventyay_common/event/fragment_dashboard.html:86
@@ -25375,10 +25284,8 @@ msgid "Getting in touch"
 msgstr "Prise de contact"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:50
-#, fuzzy
-#| msgid "Event date"
 msgid "Event type"
-msgstr "Date de l'événement"
+msgstr "Type d'événement"
 
 #: eventyay_common/templates/eventyay_common/events/create_foundation.html:56
 msgid "Singular event or non-event shop"
@@ -25597,7 +25504,7 @@ msgstr "Autorisations vidéo"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:5
 msgid "Delete team:"
-msgstr "Supprimer l'équipe:"
+msgstr "Supprimer l'équipe :"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:7
 msgid ""
@@ -25609,7 +25516,7 @@ msgstr ""
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_delete.html:17
 msgid "Are you sure you want to delete the team?"
-msgstr "Vous êtes sûr de vouloir supprimer l'équipe?"
+msgstr "Voulez-vous vraiment supprimer l'équipe ?"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_edit.html:11
 msgid "You will be able to add team members in the next step."
@@ -25617,7 +25524,7 @@ msgstr "Vous pourrez ajouter des membres d'équipe à l'étape suivante."
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:7
 msgid "Team:"
-msgstr "Équipe:"
+msgstr "Équipe :"
 
 #: eventyay_common/templates/eventyay_common/organizers/teams/team_members.html:44
 msgid "Are you sure you want to remove this member?"
@@ -25983,7 +25890,7 @@ msgstr ""
 
 #: eventyay_common/views/event.py:797 orga/views/event.py:203
 msgid "Talk pages are now in test mode!"
-msgstr "Les pages des présentations sont maintenant en mode test!"
+msgstr "Les pages des présentations sont maintenant en mode test !"
 
 #: eventyay_common/views/event.py:803 orga/views/event.py:209
 msgid "Talk pages are now in production mode."
@@ -26085,9 +25992,8 @@ msgid ""
 "Please copy this secret to a safe place. You will not be able to view it "
 "again here."
 msgstr ""
-"Un nouveau token API a été créé avec la clé secrète suivante: {}.\n"
-"Veuillez recopier cette clée dans un endroit sûr. Vous ne pourrez plus le "
-"voir ici."
+"Un nouveau token API a été créé avec le secret : {} \n"
+"Pensez à sauvegarder ce secret en lieu sûr ; il ne sera plus accessible ici."
 
 #: eventyay_common/views/organizer.py:623 eventyay_common/views/team.py:457
 #, python-format
@@ -29334,7 +29240,7 @@ msgstr "La proposition a été créée avec un code d'accès :"
 
 #: orga/templates/orga/submission/content.html:116
 msgid "Don't record this session."
-msgstr "Ne pas enregistrer cette session."
+msgstr "N'enregistrez pas cette session."
 
 #: orga/templates/orga/submission/content.html:203
 msgid "No answer provided"
@@ -30649,13 +30555,13 @@ msgid ""
 "After completing your purchase, we will ask you to transfer the money to the "
 "following bank account, using a personal reference code:"
 msgstr ""
-"Après avoir effectué votre achat, nous vous demanderons de virer l'argent "
-"sur le compte bancaire suivant, en utilisant un code de référence personnel:"
+"Après avoir finalisé votre achat, veuillez transférer l'argent sur le compte "
+"bancaire ci-dessous en indiquant votre code de référence personnel :"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:20
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:30
 msgid "Reference code (important):"
-msgstr "Code de référence (important):"
+msgstr "Code de référence (important) :"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/checkout_payment_form.html:23
 msgid ""
@@ -30840,11 +30746,12 @@ msgstr "Révision des paiements invalides et ignorés"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:13
 msgid "Please transfer the full amount to the following bank account:"
-msgstr "Veuillez virer le montant total sur le compte bancaire suivant:"
+msgstr ""
+"Veuillez transférer la totalité du montant sur le compte bancaire suivant :"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:29
 msgid "Amount:"
-msgstr "Montant:"
+msgstr "Montant :"
 
 #: plugins/banktransfer/templates/pretixplugins/banktransfer/pending.html:33
 msgid ""
@@ -31225,7 +31132,7 @@ msgstr "Page %d"
 #: plugins/reports/exporters.py:151
 #, python-format
 msgid "Created: %s"
-msgstr "Créé: %s"
+msgstr "Créé : %s"
 
 #: plugins/reports/exporters.py:202
 msgid "Order overview (PDF)"
@@ -31685,7 +31592,7 @@ msgstr "Cet e-mail a déjà été envoyé et ne peut pas être modifié."
 #: plugins/sendmail/views.py:545 plugins/sendmail/views.py:551
 #, python-brace-format
 msgid "Invalid placeholder(s): {}"
-msgstr "Espace réservé invalide(s): {}"
+msgstr "Marqueur invalide : {}"
 
 #: plugins/sendmail/views.py:405
 msgid "This mail has already been sent and cannot be deleted."
@@ -32325,12 +32232,12 @@ msgstr "requis"
 #: presale/ical.py:53
 #, python-brace-format
 msgid "Tickets: {url}"
-msgstr "Tickets: {url}"
+msgstr "Billets : {url}"
 
 #: presale/ical.py:57
 #, python-brace-format
 msgid "Admission: {datetime}"
-msgstr "Admission: {datetime}"
+msgstr "Admission : {datetime}"
 
 #: presale/ical.py:62
 #, python-brace-format
@@ -32427,7 +32334,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/fragment_product_list.html:217
 #, python-format
 msgid "minimum amount to order: %(num)s"
-msgstr "quantité minimum à commander: %(num)s"
+msgstr "quantité minimale à commander : %(num)s"
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:103
 #: presale/templates/pretixpresale/event/fragment_product_list.html:67
@@ -32860,7 +32767,7 @@ msgstr "Téléchargez vos billets ici :"
 
 #: presale/templates/pretixpresale/event/fragment_downloads.html:48
 msgid "Download all tickets at once:"
-msgstr "Téléchargez tous les billets en même temps:"
+msgstr "Téléchargez tous les billets d'un coup :"
 
 #: presale/templates/pretixpresale/event/fragment_downloads.html:66
 msgid "Download your ticket here:"
@@ -33052,25 +32959,25 @@ msgstr "La prévente de cet événement n' a pas encore commencé."
 #: presale/templates/pretixpresale/event/voucher.html:29
 #, python-format
 msgid "Begin: %(time)s"
-msgstr "Début: %(time)s"
+msgstr "Début : %(time)s"
 
 #: presale/templates/pretixpresale/event/index.html:237
 #: presale/templates/pretixpresale/event/voucher.html:34
 #, python-format
 msgid "End: %(time)s"
-msgstr "Fin: %(time)s"
+msgstr "Fin : %(time)s"
 
 #: presale/templates/pretixpresale/event/index.html:247
 #: presale/templates/pretixpresale/event/voucher.html:42
 #, python-format
 msgid "Admission: %(time)s"
-msgstr "Admission: %(time)s"
+msgstr "Admission : %(time)s"
 
 #: presale/templates/pretixpresale/event/index.html:253
 #: presale/templates/pretixpresale/event/voucher.html:46
 #, python-format
 msgid "Admission: %(datetime)s"
-msgstr "Admission: %(datetime)s"
+msgstr "Admission : %(datetime)s"
 
 #: presale/templates/pretixpresale/event/index.html:265
 #: presale/templates/pretixpresale/event/voucher.html:57
@@ -33147,9 +33054,7 @@ msgstr ""
 #: presale/templates/pretixpresale/event/order.html:17
 #: presale/templates/pretixpresale/event/order.html:45
 msgid "Your order has been processed successfully! See below for details."
-msgstr ""
-"Votre commande a été traitée avec succès! Les détails de votre commande sont "
-"repris ci-dessous."
+msgstr "Votre commande a été traitée avec succès. Voir les détails ci-dessous."
 
 #: presale/templates/pretixpresale/event/order.html:19
 #: presale/templates/pretixpresale/event/order.html:47
@@ -33407,7 +33312,7 @@ msgstr "Demander l'annulation : %(code)s"
 #: presale/templates/pretixpresale/event/order_cancel.html:16
 #, python-format
 msgid "Cancel order: %(code)s"
-msgstr "Annuler la commande: %(code)s"
+msgstr "Annuler la commande : %(code)s"
 
 #: presale/templates/pretixpresale/event/order_cancel.html:27
 msgid ""
@@ -33512,7 +33417,7 @@ msgstr "Enregistrer les modifications"
 #: presale/templates/pretixpresale/event/order_modify.html:9
 #, python-format
 msgid "Modify order: %(code)s"
-msgstr "Modifier l'ordre: %(code)s"
+msgstr "Modifier l'ordre : %(code)s"
 
 #: presale/templates/pretixpresale/event/order_modify.html:19
 msgid ""
@@ -33532,7 +33437,7 @@ msgstr "Ordre de paiement"
 #: presale/templates/pretixpresale/event/order_pay_confirm.html:8
 #, python-format
 msgid "Pay order: %(code)s"
-msgstr "Ordre de paiement: %(code)s"
+msgstr "Effectuer le paiement : %(code)s"
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:5
 msgid "Change payment method"
@@ -33548,9 +33453,8 @@ msgid ""
 "Please note: If you change your payment method, your order total will change "
 "by the amount displayed to the right of each method."
 msgstr ""
-"Remarque: Si vous changez de mode de paiement, le montant total de votre "
-"commande changera en fonction du montant affiché à droite de chaque mode de "
-"paiement."
+"Attention : si vous changez de mode de paiement, le total de votre commande "
+"variera selon le montant affiché à droite de chaque mode."
 
 #: presale/templates/pretixpresale/event/order_pay_change.html:46
 msgid "There are no alternative payment providers available for this order."
@@ -33622,8 +33526,8 @@ msgid ""
 "You entered a voucher code that allows you to buy one of the following "
 "products at the specified price:"
 msgstr ""
-"Vous avez saisi un code promotionnel qui vous permet d'acheter l'un des "
-"produits suivants au prix indiqué:"
+"Vous avez entré un code promo qui vous permet d'acheter l'un des produits "
+"suivants au prix indiqué :"
 
 #: presale/templates/pretixpresale/event/voucher.html:131
 #, python-format
