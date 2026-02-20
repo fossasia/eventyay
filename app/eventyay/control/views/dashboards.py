@@ -620,6 +620,22 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
             else:
                 status = ('success', _('On sale'))
 
+            if user.has_event_permission(
+                event.organizer,
+                event,
+                'can_view_orders',
+                request=request,
+            ):
+                event_url = reverse(
+                    'control:event.index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
+            else:
+                event_url = reverse(
+                    'eventyay_common:event.index',
+                    kwargs={'event': event.slug, 'organizer': event.organizer.slug},
+                )
+
         widgets.append(
             {
                 'content': tpl.format(
@@ -639,10 +655,7 @@ def widgets_for_event_qs(request, qs, user, nmax, lazy=False):
                         if tzname != request.timezone and not event.has_subevents
                         else ''
                     ),
-                    url=reverse(
-                        'control:event.index',
-                        kwargs={'event': event.slug, 'organizer': event.organizer.slug},
-                    ),
+                    url=event_url,
                     orders=(
                         '<a href="{orders_url}" class="orders">{orders_text}</a>'.format(
                             orders_url=reverse(

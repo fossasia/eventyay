@@ -1,4 +1,4 @@
-{% load i18n %}
+{% load i18n event_tags %}
 <div class="dashboard custom">
     <div class="panel panel-default items widget-container widget-full no-padding">
         <div class="panel-heading">
@@ -27,11 +27,16 @@
             </h3>
         </div>
         <div class="panel-body">
+            {% can_access_tickets_dashboard request.event as can_access_tickets %}
             <p>
                 {% trans "Set up and configure ticketing for the event and sell add-ons such as premium access or Swag. Manage attendees and exhibitors, design custom badges, and streamline event marketing by sending targeted emails." %}
             </p>
             <p>
-                {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% if can_access_tickets %}
+                    {% trans "Go to" %} <a href="{% url 'control:event.index' organizer=request.organizer.slug event=request.event.slug %}">{% trans "Tickets Dashboard" %}</a>
+                {% else %}
+                    {% trans "Go to" %} <a href="#" data-toggle="modal" data-target="#tickets-permission-modal">{% trans "Tickets Dashboard" %}</a>
+                {% endif %}
             </p>
         </div>
     </div>
