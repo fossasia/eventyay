@@ -3,7 +3,9 @@
 <li class="nav-item">
     <details class="dropdown fix-height" id="profile-dropdown">
         <summary class="header-nav">
-            <i class="fa fa-user"></i> {{ request.user.get_full_name }}
+            <i class="fa fa-user"></i> 
+            <span class="user-name-full">{% if request.user.first_name %}{{ request.user.first_name }}{% else %}{{ request.user.get_full_name }}{% endif %}</span>
+            <span class="user-name-mobile">{% if request.user.first_name %}{{ request.user.first_name }}{% else %}{{ request.user.get_full_name }}{% endif %}</span>
             <i class="fa fa-caret-down"></i>
         </summary>
         <div class="dropdown-content dropdown-content-sw">

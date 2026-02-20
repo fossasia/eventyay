@@ -102,26 +102,9 @@
                     <i class="fa fa-bars fa-lg"></i>
                 </button>
                 <div class="navbar-header">
-                    {% if request.event %}
-                        {% if has_domain and not request.event.live %}
-                            <form action="{% eventurl request.event 'presale:event.auth' %}" method="post"
-                                    target="_blank" class="mobile-navbar-view-form visible-xs-block">
-                                {% csrf_token %}
-                                <input type="hidden" value="{{ new_session }}" name="session">
-                                <button type="submit" class="btn btn-link navbar-toggle">
-                                    <i class="fa fa-eye"></i>
-                                </button>
-                            </form>
-                        {% else %}
-                            <a href="{% eventurl request.event 'presale:event.index' %}" title="{% translate "View event" %}"
-                                    target="_blank" class="navbar-toggle mobile-navbar-view-link">
-                                <i class="fa fa-eye"></i>
-                            </a>
-                        {% endif %}
-                    {% endif %}
                     <a class="navbar-brand" href="{% url 'eventyay_common:dashboard' %}">
                         <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
-                        {{ settings.INSTANCE_NAME }}
+                        <span class="site-name-text">{{ settings.INSTANCE_NAME }}</span>
                     </a>
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -155,7 +138,7 @@
 					      <summary class="language-summary" aria-label="{{ _('Language') }}">
 					        {% for option in language_options %}
 					          {% if option.code|lower == request.LANGUAGE_CODE|lower %}
-					            <span class="current-locale">{{ option.label }}</span>
+					            <span class="current-locale language-text">{{ option.label }}</span>
 					          {% endif %}
 					        {% endfor %}
 					        <i class="fa fa-caret-down ml-1" aria-hidden="true"></i>
@@ -197,6 +180,25 @@
                     {{ staff_session|json_script:"is_admin_mode" }}
                     {{ talk_hostname|json_script:"talk_hostname_url" }}
                     {% include "common/fragment_profile_dropdown.html" %}
+                    {% if request.event %}
+                        <li class="mobile-view-event visible-xs-block">
+                            {% if has_domain and not request.event.live %}
+                                <form action="{% eventurl request.event 'presale:event.auth' %}" method="post"
+                                        target="_blank" class="mobile-navbar-view-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" value="{{ new_session }}" name="session">
+                                    <button type="submit" class="btn btn-link mobile-view-event-btn">
+                                        <i class="fa fa-eye"></i>
+                                    </button>
+                                </form>
+                            {% else %}
+                                <a href="{% eventurl request.event 'presale:event.index' %}" title="{% translate "View event" %}"
+                                        target="_blank" class="mobile-navbar-view-link mobile-view-event-btn">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            {% endif %}
+                        </li>
+                    {% endif %}
                 </ul>
                 <div class="navbar-default sidebar" role="navigation">
                     <div class="sidebar-nav navbar-nav-collapse navbar-collapse">
