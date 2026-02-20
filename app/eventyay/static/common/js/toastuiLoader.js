@@ -5,13 +5,13 @@
     const toastUiCssUrl = scriptEl?.dataset?.toastuiCss
     const toastUiJsUrl = scriptEl?.dataset?.toastuiJs
 
-    window.eventyayEditorConfig = {
-        lang: scriptEl?.dataset?.toastuiLang || 'en',
-        t: {
-            undo: scriptEl?.dataset?.toastuiTUndo || 'Undo',
-            redo: scriptEl?.dataset?.toastuiTRedo || 'Redo',
-            underline: scriptEl?.dataset?.toastuiTUnderline || 'Underline',
-        },
+    window.eventyayEditorConfig = window.eventyayEditorConfig || {}
+    window.eventyayEditorConfig.lang = scriptEl?.dataset?.toastuiLang || 'en'
+    window.eventyayEditorConfig.t = {
+        ...(window.eventyayEditorConfig.t || {}),
+        undo: scriptEl?.dataset?.toastuiTUndo || 'Undo',
+        redo: scriptEl?.dataset?.toastuiTRedo || 'Redo',
+        underline: scriptEl?.dataset?.toastuiTUnderline || 'Underline',
     }
 
     const selector = 'textarea[data-markdown-field="true"], .markdown-wrapper textarea'
