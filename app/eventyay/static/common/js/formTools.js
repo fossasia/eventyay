@@ -156,29 +156,30 @@ const initToastUiMarkdownTextarea = (textarea) => {
 
     const undoToolbarItem = makeSimpleIconButton({
         name: 'eventyayUndo',
-        tooltip: 'Undo',
+        tooltip: window.eventyayEditorConfig?.t?.undo || 'Undo',
         command: 'undo',
         extraClassName: 'eventyay-undo',
     })
 
     const redoToolbarItem = makeSimpleIconButton({
         name: 'eventyayRedo',
-        tooltip: 'Redo',
+        tooltip: window.eventyayEditorConfig?.t?.redo || 'Redo',
         command: 'redo',
         extraClassName: 'eventyay-redo',
     })
 
     const underlineToolbarItem = (() => {
         const button = document.createElement('button')
+        const underlineLabel = window.eventyayEditorConfig?.t?.underline || 'Underline'
         button.type = 'button'
         button.className = 'toastui-editor-toolbar-icons eventyay-underline'
-        button.setAttribute('aria-label', 'Underline')
-        button.title = 'Underline'
+        button.setAttribute('aria-label', underlineLabel)
+        button.title = underlineLabel
         button.addEventListener('mousedown', (event) => event.preventDefault())
 
         return {
             name: 'underline',
-            tooltip: 'Underline',
+            tooltip: underlineLabel,
             el: button,
             onMounted(execCommand) {
                 button.addEventListener('click', () => execCommand('underline'))
