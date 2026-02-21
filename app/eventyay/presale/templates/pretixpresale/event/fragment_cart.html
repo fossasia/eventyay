@@ -41,19 +41,27 @@
             {% trans "Valid:" %}
             {% if line.product.validity_mode == "fixed" %}
                 {% if line.product.validity_fixed_from %}
-                    {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ line.product.validity_fixed_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
                 {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
                 {% if line.product.validity_fixed_until %}
-                    {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ line.product.validity_fixed_until.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
             {% else %}
                 {% if event.date_from %}
-                    {{ event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ event.date_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
                 {% if event.date_from and event.date_to %}&ndash;{% endif %}
                 {% if event.date_to %}
-                    {{ event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ event.date_to.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
             {% endif %}
 

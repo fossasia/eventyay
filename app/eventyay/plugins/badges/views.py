@@ -213,6 +213,7 @@ class LayoutEditorView(BaseEditorView):
             self.request.event,
             override_layout or self.get_current_layout(),
             bgf,
+            auto_inject_validity=False,
         )
         p = canvas.Canvas(buffer, pagesize=pagesizes.A4)
         r.draw_page(p, op.order, op)

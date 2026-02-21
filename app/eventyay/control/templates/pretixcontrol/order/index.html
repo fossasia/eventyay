@@ -357,21 +357,30 @@
                                 {% trans "Valid:" %}
                                 {% if line.product.validity_mode == "fixed" %}
                                     {% if line.product.validity_fixed_from %}
-                                        {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                                        <span class="order-datetime" data-datetime="{{ line.product.validity_fixed_from.isoformat }}">
+                                            {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                                        </span>
                                     {% endif %}
                                     {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
                                     {% if line.product.validity_fixed_until %}
-                                        {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                                        <span class="order-datetime" data-datetime="{{ line.product.validity_fixed_until.isoformat }}">
+                                            {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                                        </span>
                                     {% endif %}
                                 {% else %}
                                     {% if request.event.date_from %}
-                                        {{ request.event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                                        <span class="order-datetime" data-datetime="{{ request.event.date_from.isoformat }}">
+                                            {{ request.event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                                        </span>
                                     {% endif %}
                                     {% if request.event.date_from and request.event.date_to %}&ndash;{% endif %}
                                     {% if request.event.date_to %}
-                                        {{ request.event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                                        <span class="order-datetime" data-datetime="{{ request.event.date_to.isoformat }}">
+                                            {{ request.event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                                        </span>
                                     {% endif %}
                                 {% endif %}
+                                <span class="text-muted tz-indicator-inline"></span>
                                 {% if not line.canceled %}
                                     <div class="position-buttons">
                                         {% if line.generate_ticket %}
