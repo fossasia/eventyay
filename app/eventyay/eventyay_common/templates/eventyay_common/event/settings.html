@@ -58,6 +58,16 @@
             {% bootstrap_field sform.imprint_url layout="control" %}
             <div class="form-group">
                 <label class="col-md-3 control-label">
+                    {% translate "Menu" %}<br>
+                    <span class="optional">{% trans "Optional" %}</span>
+                </label>
+                <div class="col-md-9">
+                    {% bootstrap_field sform.menu_label_tickets layout="inline" form_group_class="" %}
+                    {% bootstrap_field sform.menu_label_join_video layout="inline" form_group_class="" %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-md-3 control-label">
                     {% translate "Header links" %}
                 </label>
                 <div class="col-md-9">

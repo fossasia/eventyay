@@ -2556,6 +2556,28 @@ Your {event} team"""
             help_text=_('Short text displayed on the public start page banner.'),
         ),
     },
+    'menu_label_tickets': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'form_kwargs': dict(
+            label=_('Alternative menu text for Tickets'),
+            help_text=_('Custom label for the "Tickets" menu item. Leave empty to use default.'),
+            required=False,
+        ),
+    },
+    'menu_label_join_video': {
+        'default': '',
+        'type': str,
+        'form_class': forms.CharField,
+        'serializer_class': serializers.CharField,
+        'form_kwargs': dict(
+            label=_('Alternative menu text for Join Online Video'),
+            help_text=_('Custom label for the "Join Online Video" menu item. Leave empty to use default.'),
+            required=False,
+        ),
+    },
 }
 
 CSS_SETTINGS = {
