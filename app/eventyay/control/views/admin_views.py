@@ -149,7 +149,8 @@ class IndexView(AdminBase, TemplateView):
 class EventList(AdminBase, ListView):
     template_name = "control/event_list.html"
     queryset = (
-        Event.objects.annotate(
+        Event.objects.select_related('organizer')
+        .annotate(
             user_count=Count("user"),
             last_usage=Subquery(
                 PlannedUsage.objects.filter(event=OuterRef("pk"))
@@ -178,7 +179,7 @@ class EventList(AdminBase, ListView):
 
 class EventAdminToken(AdminBase, DetailView):
     template_name = "control/event_clear.html"
-    queryset = Event.objects.all()
+    queryset = Event.objects.select_related('organizer').all()
     success_url = "/admin/video/events/"
 
     def get_object(self, queryset=None):
@@ -396,7 +397,7 @@ class EventCreate(FormsetMixin, AdminBase, CreateView):
 class EventUpdate(FormsetMixin, AdminBase, UpdateView):
     template_name = "control/event_update.html"
     form_class = EventForm
-    queryset = Event.objects.all()
+    queryset = Event.objects.select_related('organizer').all()
     success_url = "/admin/video/events/"
 
     def get_context_data(self, **kwargs):
@@ -427,7 +428,7 @@ class EventUpdate(FormsetMixin, AdminBase, UpdateView):
 
 class EventClear(AdminBase, DetailView):
     template_name = "control/event_clear.html"
-    queryset = Event.objects.all()
+    queryset = Event.objects.select_related('organizer').all()
     success_url = "/admin/video/events/"
 
     def post(self, request, *args, **kwargs):
