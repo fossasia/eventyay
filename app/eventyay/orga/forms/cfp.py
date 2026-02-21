@@ -66,6 +66,11 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         widget=forms.RadioSelect(),
         required=False,
     )
+    cfp_enable_gravatar = forms.BooleanField(
+        label=_('Enable Gravatar'),
+        help_text=_('Allow speakers to use Gravatar for their profile picture.'),
+        required=False,
+    )
 
     def __init__(self, *args, obj, **kwargs):
         kwargs.pop('read_only')  # added in ActionFromUrl view mixin, but not needed here.
@@ -74,6 +79,7 @@ class CfPGeneralSettingsForm(ReadOnlyFlag, I18nHelpText, JsonSubfieldMixin, I18n
         if getattr(obj, 'email', None):
             self.fields['mail_on_new_submission'].help_text += f' (<a href="mailto:{obj.email}">{obj.email}</a>)'
         self.initial['count_length_in'] = obj.cfp.settings.get('count_length_in', 'chars')
+        self.initial['cfp_enable_gravatar'] = obj.cfp.enable_gravatar
 
     def save(self, *args, **kwargs):
         current_count_length_in = self.instance.cfp.settings.get('count_length_in', 'chars')
@@ -195,6 +201,7 @@ class CfPSettingsForm(CfPGeneralSettingsForm):
         fields_config = self.instance.cfp.settings.get('fields_config')
 
         self.instance.cfp.settings['count_length_in'] = self.cleaned_data.get('count_length_in') or 'chars'
+        self.instance.cfp.settings['cfp_enable_gravatar'] = self.cleaned_data.get('cfp_enable_gravatar', False)
 
         # Restore fields_config after setting other values (also when it is an empty dict)
         if fields_config is not None:
