@@ -11,7 +11,14 @@
 	Livestream(v-if="room && shouldUseLivestream", ref="livestream", :room="room", :module="module", :size="background ? 'tiny' : 'normal'", :key="`livestream-${room.id}`")
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
-	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.error-container(v-if="iframeError")
+		.error-card
+			.error-title {{ iframeError.title || $t('MediaSource:iframe-error:title') }}
+			.error-message {{ iframeError.message || $t('MediaSource:iframe-error:text') }}
+			.error-code(v-if="iframeError.code") {{ $t('MediaSource:error-code:label') }}: {{ iframeError.code }}
+			.error-actions
+				bunt-button(v-if="iframeError.code === 'bbb.join.missing_profile' || iframeError.code === 'zoom.join.missing_profile'", @click="$router.push({name: 'preferences'})") {{ $t('MediaSource:error-goto-profile:button') }}
+				bunt-button(v-else, @click="retryInitializeIframe()") {{ $t('MediaSource:error-retry:button') }}
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -212,18 +219,24 @@ async function initializeIframe(mute) {
 			: module.value.type;
 		switch (effectiveModuleType) {
 			case 'call.bigbluebutton': {
-				({ url: iframeUrl } = await api.call('bbb.room_url', {
-					room: props.room.id,
-				}));
-				hideIfBackground = true;
-				break;
+				try {
+					({ url: iframeUrl } = await api.call('bbb.room_url', { room: props.room.id }))
+				} catch (error) {
+					handleBBBError(error)
+					return
+				}
+				hideIfBackground = true
+				break
 			}
 			case 'call.zoom': {
-				({ url: iframeUrl } = await api.call('zoom.room_url', {
-					room: props.room.id,
-				}));
-				hideIfBackground = true;
-				break;
+				try {
+					({ url: iframeUrl } = await api.call('zoom.room_url', { room: props.room.id }))
+				} catch (error) {
+					handleZoomError(error)
+					return
+				}
+				hideIfBackground = true
+				break
 			}
 			case 'livestream.iframe': {
 				if (props.room?.currentStream?.url) {
@@ -326,6 +339,8 @@ async function initializeIframe(mute) {
 			};
 		}
 	} catch (error) {
+		// Non-API errors (e.g., iframeError set by error handlers)
+		console.error('Error initializing iframe:', error)
 		iframeError.value = error;
 	}
 }
@@ -333,6 +348,30 @@ async function initializeIframe(mute) {
 function destroyIframe() {
 	iframeEl.value?.remove();
 	iframeEl.value = null;
+}
+
+
+function handleBBBError(error) {
+	const errorCode = error.apiError?.code
+	console.error('[BBB Error]', errorCode, error)
+	
+	iframeError.value = {
+		code: errorCode || 'bbb.unknown'
+	}
+}
+
+function handleZoomError(error) {
+	const errorCode = error.apiError?.code
+	console.error('[Zoom Error]', errorCode, error)
+	
+	iframeError.value = {
+		code: errorCode || 'zoom.unknown'
+	}
+}
+
+async function retryInitializeIframe() {
+	iframeError.value = null
+	await initializeIframe(false)
 }
 
 function isPlaying() {
@@ -509,4 +548,49 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+.error-container
+	position: fixed
+	top: 104px
+	width: var(--mediasource-placeholder-width)
+	height: var(--mediasource-placeholder-height)
+	display: flex
+	align-items: center
+	justify-content: center
+	z-index: 100
+	+below('l')
+		bottom: calc(var(--vh100) - 48px - 56px - var(--mediasource-placeholder-height))
+		right: calc(100vw - var(--mediasource-placeholder-width))
+		top: auto
+.error-card
+	background: white
+	border: 1px solid #e0e0e0
+	border-radius: 8px
+	padding: 24px
+	max-width: 400px
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+	text-align: center
+.error-title
+	font-size: 18px
+	font-weight: 600
+	color: #d32f2f
+	margin-bottom: 12px
+.error-message
+	font-size: 14px
+	color: #666
+	margin-bottom: 16px
+	line-height: 1.5
+.error-code
+	font-size: 12px
+	color: #999
+	margin-bottom: 16px
+	font-family: monospace
+	background: #f5f5f5
+	padding: 8px
+	border-radius: 4px
+.error-actions
+	display: flex
+	gap: 8px
+	justify-content: center
+	.bunt-button
+		min-width: 120px
 </style>

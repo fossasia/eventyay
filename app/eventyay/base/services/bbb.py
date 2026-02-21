@@ -96,7 +96,10 @@ def get_create_params_for_call_id(call_id, record, user):
     try:
         call = BBBCall.objects.get(id=call_id, invited_members__in=[user])
         if not call.server.active:
-            call.server = choose_server(event=call.event)
+            server = choose_server(event=call.event)
+            if not server:
+                raise ValueError("No active BBB server available")
+            call.server = server
             call.save(update_fields=["server"])
     except BBBCall.DoesNotExist:
         return None, None
@@ -131,7 +134,10 @@ def get_create_params_for_room(
     try:
         call = BBBCall.objects.get(room=room)
         if not call.server.active:
-            call.server = choose_server(event=room.event, room=room)
+            server = choose_server(event=room.event, room=room)
+            if not server:
+                raise ValueError("No active BBB server available")
+            call.server = server
             call.save(update_fields=["server"])
         if call.guest_policy != guest_policy:
             call.guest_policy = guest_policy
@@ -140,12 +146,15 @@ def get_create_params_for_room(
             call.voice_bridge = voice_bridge
             call.save(update_fields=["voice_bridge"])
     except BBBCall.DoesNotExist:
+        server = choose_server(
+            event=room.event, room=room, prefer_server=prefer_server
+        )
+        if not server:
+            raise ValueError("No active BBB server available")
         call = BBBCall.objects.create(
             room=room,
             event=room.event,
-            server=choose_server(
-                event=room.event, room=room, prefer_server=prefer_server
-            ),
+            server=server,
             voice_bridge=voice_bridge,
             guest_policy=guest_policy,
         )
