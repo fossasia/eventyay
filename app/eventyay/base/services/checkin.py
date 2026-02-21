@@ -4,6 +4,7 @@ from functools import partial, reduce
 import dateutil
 import dateutil.parser
 from django.core.files import File
+from django.utils.formats import date_format
 from django.db import transaction
 from django.db.models import (
     BooleanField,
@@ -460,16 +461,16 @@ def perform_checkin(
                 if product.validity_fixed_from and dt < product.validity_fixed_from:
                     raise CheckInError(
                         _('This ticket is not yet valid (valid from %(from)s, current time %(now)s).') % {
-                            'from': product.validity_fixed_from.isoformat(),
-                            'now': dt.isoformat(),
+                            'from': date_format(product.validity_fixed_from, 'SHORT_DATETIME_FORMAT'),
+                            'now': date_format(dt, 'SHORT_DATETIME_FORMAT'),
                         },
                         'invalid_time',
                     )
                 if product.validity_fixed_until and dt > product.validity_fixed_until:
                     raise CheckInError(
                         _('This ticket is no longer valid (valid until %(until)s, current time %(now)s).') % {
-                            'until': product.validity_fixed_until.isoformat(),
-                            'now': dt.isoformat(),
+                            'until': date_format(product.validity_fixed_until, 'SHORT_DATETIME_FORMAT'),
+                            'now': date_format(dt, 'SHORT_DATETIME_FORMAT'),
                         },
                         'invalid_time',
                     )
