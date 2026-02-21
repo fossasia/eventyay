@@ -71,8 +71,8 @@ def _ticket_validity_text(op, order, ev):
     if vuntil:
         parts.append(date_format(vuntil.astimezone(tz), 'SHORT_DATETIME_FORMAT'))
     if not parts:
-        return ''
-    tz_abbr = vfrom.astimezone(tz).strftime('%Z') if vfrom else vuntil.astimezone(tz).strftime('%Z')
+        return None
+    tz_abbr = f"{vfrom.astimezone(tz):%Z}" if vfrom else f"{vuntil.astimezone(tz):%Z}"
     return '{}: {} ({})'.format(str(_('Valid')), ' – '.join(parts), tz_abbr)
 
 
