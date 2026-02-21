@@ -52,6 +52,7 @@ def _ticket_validity_text(op, order, ev):
 
     For fixed validity: shows the custom from/until range.
     For default validity: shows the event start/end as the valid period.
+    Includes the event timezone abbreviation for clarity.
     """
     product = op.product
     mode = getattr(product, 'validity_mode', '') or ''
@@ -71,7 +72,8 @@ def _ticket_validity_text(op, order, ev):
         parts.append(date_format(vuntil.astimezone(tz), 'SHORT_DATETIME_FORMAT'))
     if not parts:
         return ''
-    return '{}: {}'.format(str(_('Valid')), ' – '.join(parts))
+    tz_abbr = vfrom.astimezone(tz).strftime('%Z') if vfrom else vuntil.astimezone(tz).strftime('%Z')
+    return '{}: {} ({})'.format(str(_('Valid')), ' – '.join(parts), tz_abbr)
 
 
 DEFAULT_VARIABLES = OrderedDict(
@@ -749,12 +751,13 @@ def get_variables(event):
 
 
 class Renderer:
-    def __init__(self, event, layout, background_file):
+    def __init__(self, event, layout, background_file, *, auto_inject_validity: bool = True):
         self.layout = layout
         self.background_file = background_file
         self.variables = get_variables(event)
         self.images = get_images(event)
         self.event = event
+        self.auto_inject_validity = auto_inject_validity
         if self.background_file:
             self.bg_bytes = self.background_file.read()
             self.bg_pdf = PdfReader(BytesIO(self.bg_bytes), strict=False)
@@ -939,40 +942,41 @@ class Renderer:
         canvas.restoreState()
 
     def draw_page(self, canvas: Canvas, order: Order, op: OrderPosition, show_page=True):
-        # Auto-inject ticket_validity if the layout does not already include it
         layout = self.layout
-        has_validity = any(
-            o.get('type') == 'textarea' and o.get('content') == 'ticket_validity'
-            for o in layout
-        )
-        if not has_validity:
-            # Find the lowest textarea bottom position to place validity below it
-            lowest_bottom = None
-            for o in layout:
-                if o.get('type') == 'textarea':
-                    try:
-                        b = float(o['bottom'])
-                        if lowest_bottom is None or b < lowest_bottom:
-                            lowest_bottom = b
-                    except (KeyError, ValueError):
-                        pass
-            validity_bottom = (lowest_bottom - 10.4) if lowest_bottom is not None else 184.10
-            layout = list(layout) + [
-                {
-                    'type': 'textarea',
-                    'left': '17.50',
-                    'bottom': str(round(validity_bottom, 2)),
-                    'fontsize': '13.0',
-                    'color': [0, 0, 0, 1],
-                    'fontfamily': 'Open Sans',
-                    'bold': False,
-                    'italic': False,
-                    'width': '110.00',
-                    'content': 'ticket_validity',
-                    'text': 'Valid: 2017-05-31 20:00 – 2017-06-01 18:00',
-                    'align': 'left',
-                }
-            ]
+        if self.auto_inject_validity:
+            # Auto-inject ticket_validity if the layout does not already include it
+            has_validity = any(
+                o.get('type') == 'textarea' and o.get('content') == 'ticket_validity'
+                for o in layout
+            )
+            if not has_validity:
+                # Find the lowest textarea bottom position to place validity below it
+                lowest_bottom = None
+                for o in layout:
+                    if o.get('type') == 'textarea':
+                        try:
+                            b = float(o['bottom'])
+                            if lowest_bottom is None or b < lowest_bottom:
+                                lowest_bottom = b
+                        except (KeyError, ValueError):
+                            pass
+                validity_bottom = (lowest_bottom - 10.4) if lowest_bottom is not None else 184.10
+                layout = list(layout) + [
+                    {
+                        'type': 'textarea',
+                        'left': '17.50',
+                        'bottom': str(round(validity_bottom, 2)),
+                        'fontsize': '13.0',
+                        'color': [0, 0, 0, 1],
+                        'fontfamily': 'Open Sans',
+                        'bold': False,
+                        'italic': False,
+                        'width': '110.00',
+                        'content': 'ticket_validity',
+                        'text': 'Valid: 2017-05-31 20:00 – 2017-06-01 18:00',
+                        'align': 'left',
+                    }
+                ]
 
         for o in layout:
             if o['type'] == 'barcodearea':

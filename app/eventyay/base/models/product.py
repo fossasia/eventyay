@@ -497,13 +497,13 @@ class Product(LoggedModel):
         verbose_name=_('Valid from'),
         null=True,
         blank=True,
-        help_text=_('The ticket is valid for entry starting at this date and time.'),
+        help_text=_('The ticket is valid for entry starting at this date and time. Times are interpreted in the event timezone.'),
     )
     validity_fixed_until = models.DateTimeField(
         verbose_name=_('Valid until'),
         null=True,
         blank=True,
-        help_text=_('The ticket is valid for entry until this date and time.'),
+        help_text=_('The ticket is valid for entry until this date and time. Times are interpreted in the event timezone.'),
     )
 
     # !!! Attention: If you add new fields here, also add them to the copying code in

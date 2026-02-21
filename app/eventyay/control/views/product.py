@@ -1465,9 +1465,6 @@ class ProductUpdateGeneral(ProductDetailMixin, EventPermissionRequiredMixin, Met
                     }
                 )
             self.object.log_action('eventyay.event.product.changed', user=self.request.user, data=data)
-            # Invalidate ticket cache synchronously so stale PDFs are cleared
-            # immediately, even if Celery is not running.
-            invalidate_cache(event=self.request.event.pk, product=self.object.pk)
             invalidate_cache.apply_async(kwargs={'event': self.request.event.pk, 'product': self.object.pk})
         for f in self.plugin_forms:
             f.save()

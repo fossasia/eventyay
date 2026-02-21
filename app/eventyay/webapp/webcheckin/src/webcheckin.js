@@ -41,6 +41,7 @@ function buildStrings() {
     'result.invalid': gettext('Invalid ticket'),
     'result.product': gettext('Invalid product'),
     'result.unpaid': gettext('Ticket not paid'),
+    'result.invalid_time': gettext('Ticket not valid at this time'),
     'result.rules': gettext('Entry not allowed'),
     'result.revoked': gettext('Ticket code revoked/changed'),
     'result.canceled': gettext('Order canceled'),
