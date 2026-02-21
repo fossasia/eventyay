@@ -1,5 +1,4 @@
 import copy
-import json
 from collections import OrderedDict
 from datetime import datetime, time, timedelta
 from io import BytesIO
@@ -34,8 +33,8 @@ from ...helpers.templatetags.jsonfield import JSONExtract
 
 
 class BadgeRenderer(Renderer):
-    def __init__(self, event, layout, bgf, ask_user_fields=None):
-        super().__init__(event, layout, bgf)
+    def __init__(self, event, layout, bgf, ask_user_fields=None, *, auto_inject_validity: bool = False):
+        super().__init__(event, layout, bgf, auto_inject_validity=auto_inject_validity)
         self.ask_user_fields = {str(value) for value in (ask_user_fields or [])}
 
     def _get_text_content(self, op: OrderPosition, order: Order, o: dict, inner=False):

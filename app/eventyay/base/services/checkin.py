@@ -459,13 +459,19 @@ def perform_checkin(
             if getattr(product, 'validity_mode', '') == 'fixed':
                 if product.validity_fixed_from and dt < product.validity_fixed_from:
                     raise CheckInError(
-                        _('This ticket is not yet valid.'),
-                        'invalid',
+                        _('This ticket is not yet valid (valid from %(from)s, current time %(now)s).') % {
+                            'from': product.validity_fixed_from.isoformat(),
+                            'now': dt.isoformat(),
+                        },
+                        'invalid_time',
                     )
                 if product.validity_fixed_until and dt > product.validity_fixed_until:
                     raise CheckInError(
-                        _('This ticket is no longer valid.'),
-                        'invalid',
+                        _('This ticket is no longer valid (valid until %(until)s, current time %(now)s).') % {
+                            'until': product.validity_fixed_until.isoformat(),
+                            'now': dt.isoformat(),
+                        },
+                        'invalid_time',
                     )
 
         device = None

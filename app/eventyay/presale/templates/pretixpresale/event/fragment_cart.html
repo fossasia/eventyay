@@ -41,20 +41,28 @@
             {% trans "Valid:" %}
             {% if line.product.validity_mode == "fixed" %}
                 {% if line.product.validity_fixed_from %}
-                    {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ line.product.validity_fixed_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ line.product.validity_fixed_from|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
                 {% if line.product.validity_fixed_from and line.product.validity_fixed_until %}&ndash;{% endif %}
                 {% if line.product.validity_fixed_until %}
-                    {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                    <span data-time="{{ line.product.validity_fixed_until.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                        {{ line.product.validity_fixed_until|date:"SHORT_DATETIME_FORMAT" }}
+                    </span>
                 {% endif %}
             {% else %}
                 {% with validity_event=line.subevent|default:event %}
                     {% if validity_event.date_from %}
-                        {{ validity_event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                        <span data-time="{{ validity_event.date_from.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                            {{ validity_event.date_from|date:"SHORT_DATETIME_FORMAT" }}
+                        </span>
                     {% endif %}
                     {% if validity_event.date_from and validity_event.date_to %}&ndash;{% endif %}
                     {% if validity_event.date_to %}
-                        {{ validity_event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                        <span data-time="{{ validity_event.date_to.isoformat }}" data-timezone="{{ request.event.timezone }}">
+                            {{ validity_event.date_to|date:"SHORT_DATETIME_FORMAT" }}
+                        </span>
                     {% endif %}
                 {% endwith %}
             {% endif %}
