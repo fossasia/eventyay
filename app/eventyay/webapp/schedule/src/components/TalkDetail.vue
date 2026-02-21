@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-talk-detail(v-scrollbar.y="")
+.c-talk-detail
 	.talk-wrapper(v-if="resolvedTalk")
 		.talk
 			.talk-header
@@ -178,12 +178,9 @@ export default {
 		flex: auto
 		display: flex
 		flex-direction: column
-		align-items: center
 	.talk
 		flex: none
 		margin: 16px
-		max-width: 720px
-		width: 100%
 		.talk-header
 			display: flex
 			align-items: flex-start
@@ -244,14 +241,11 @@ export default {
 		&:hover
 			opacity: 0.9
 	.speakers
-		max-width: 720px
-		width: 100%
 		margin: 0 16px 32px
 		display: flex
 		flex-direction: column
 		border: border-separator()
 		border-radius: 4px
-		align-self: center
 		.header
 			border-bottom: border-separator()
 			padding: 8px

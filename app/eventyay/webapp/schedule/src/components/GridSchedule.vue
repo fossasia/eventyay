@@ -2,7 +2,7 @@
 .c-grid-schedule
 	.sticky-header
 		.rooms-bar(ref="roomsBar")
-			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : 'min-content'}")
+			.rooms-inner(:style="{'--total-rooms': rooms.length, 'min-width': scrollContentWidth ? (scrollContentWidth + 'px') : null}")
 				.room
 				.room(v-for="(room, index) of rooms") {{ getLocalizedString(room.name) }}
 					bunt-button.room-description(v-if="getLocalizedString(room.description)", :tooltip="getLocalizedString(room.description)", tooltip-placement="bottom-end") ?
@@ -542,7 +542,7 @@ export default {
 		.rooms-inner
 			display: grid
 			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
-			min-width: min-content
+			min-width: max(min-content, 100%)
 			> .room
 				display: flex
 				justify-content: center
@@ -592,7 +592,7 @@ export default {
 			display: grid
 			grid-template-columns: 78px repeat(var(--total-rooms), 1fr) auto
 			position: relative
-			min-width: min-content
+			min-width: max(min-content, 100%)
 		.break
 			.time-box
 				background-color: $clr-grey-500

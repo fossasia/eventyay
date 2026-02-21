@@ -72,6 +72,7 @@
 }
 
 #main-container.main-schedule {
+  max-width: 100%;
   margin: 0 auto;
   padding-left: 0;
   padding-right: 0;

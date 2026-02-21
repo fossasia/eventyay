@@ -4,7 +4,9 @@ dialog.pretalx-modal#filter-modal(ref="modal", @click.stop="close()")
 		button.close-button(@click="close()") ✕
 		h3 {{ t.tracks }}
 		.checkbox-line(v-for="track in tracks", :key="track.value", :style="{'--track-color': track.color}")
-			bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="$emit('trackToggled')")
+			.checkbox-row
+				bunt-checkbox(type="checkbox", :label="track.label", :name="track.value + track.label", v-model="track.selected", :value="track.value", @input="$emit('trackToggled')")
+				span.track-color-dot(v-if="track.color", :style="{backgroundColor: track.color}")
 			.track-description(v-if="getLocalizedString(track.description).length") {{ getLocalizedString(track.description) }}
 </template>
 
@@ -51,9 +53,18 @@ export default {
 #filter-modal
 	.checkbox-line
 		margin: 16px 8px
+		.checkbox-row
+			display: flex
+			align-items: center
+			gap: 6px
 		.bunt-checkbox.checked .bunt-checkbox-box
 			background-color: var(--track-color)
 			border-color: var(--track-color)
+		.track-color-dot
+			width: 10px
+			height: 10px
+			border-radius: 50%
+			flex-shrink: 0
 		.track-description
 			color: $clr-grey-600
 			margin-left: 32px

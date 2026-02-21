@@ -31,6 +31,10 @@
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="talk" talk-code="{{ submission.code }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}
+    <noscript>
+        <h1>{{ submission.title|event_localize }}</h1>
+        <p>{{ submission_description|event_localize }}</p>
+    </noscript>
 </div>
 {% html_signal "eventyay.agenda.signals.html_below_session_pages" sender=request.event request=request submission=submission %}
 {% endblock agenda_content %}

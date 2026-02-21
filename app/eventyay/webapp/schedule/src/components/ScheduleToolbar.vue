@@ -12,6 +12,7 @@
 					template(v-if="group.data.length")
 						label.filter-dropdown-item(v-for="item in group.data", :key="item.value")
 							input.filter-checkbox(type="checkbox", :checked="item.selected", @change="toggleFilter(item)")
+							span.track-color-dot(v-if="item.color", :style="{backgroundColor: item.color}")
 							span.filter-dropdown-label(:style="item.color ? {'--track-color': item.color} : {}") {{ item.label }}
 					.filter-dropdown-empty(v-else) No {{ group.title.toLowerCase() }} available
 		button.toolbar-btn.fav-toggle(v-if="favsCount", :class="{active: onlyFavs}", @click="$emit('toggleFavs')")
@@ -374,7 +375,6 @@ export default {
 	justify-content: space-between
 	flex-wrap: nowrap
 	gap: 8px
-	padding: 4px 16px
 	font-size: 14px
 	position: sticky
 	top: var(--pretalx-sticky-top-offset, 0px)
@@ -430,6 +430,11 @@ export default {
 			.filter-checkbox
 				accent-color: var(--track-color, var(--clr-primary, #3aa57c))
 				margin: 0
+			.track-color-dot
+				width: 10px
+				height: 10px
+				border-radius: 50%
+				flex-shrink: 0
 			.filter-dropdown-label
 				white-space: nowrap
 		.filter-badge

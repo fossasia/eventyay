@@ -32,6 +32,10 @@
     {% with event_tz=request.event.settings.timezone|default:request.event.timezone %}
     <pretalx-schedule event-url="{{ request.event.urls.base }}" locale="{{ request.LANGUAGE_CODE }}" view="speaker" speaker-code="{{ profile.user.code }}" style="--pretalx-clr-primary: {{ request.event.visible_primary_color }}"></pretalx-schedule>
     {% endwith %}
+    <noscript>
+        <h1>{{ profile.user.get_display_name }}</h1>
+        {% if profile.biography %}<p>{{ profile.biography }}</p>{% endif %}
+    </noscript>
 </div>
 {% html_signal "eventyay.agenda.signals.html_below_speaker_pages" sender=request.event request=request profile=profile %}
 {% endblock agenda_content %}

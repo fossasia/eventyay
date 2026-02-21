@@ -1,5 +1,5 @@
 <template lang="pug">
-.c-speaker-detail(v-scrollbar.y="")
+.c-speaker-detail
 	.speaker-wrapper(v-if="resolvedSpeaker")
 		.speaker-header
 			.speaker-avatar
@@ -168,16 +168,12 @@ export default {
 .c-speaker-detail
 	display: flex
 	flex-direction: column
-	min-height: 0
 	background-color: $clr-white
 	.speaker-wrapper
 		flex: auto
 		display: flex
 		flex-direction: column
-		max-width: 800px
-		margin: 0 auto
 		padding: 16px
-		width: 100%
 	.speaker-header
 		display: flex
 		align-items: center
