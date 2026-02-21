@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load bootstrap3 %}
+{% load static %}
 
 <fieldset>
     <legend>{% translate "General information" %}</legend>
@@ -76,7 +77,9 @@
                                 {% for track in event_data.tracks %}
                                 <div style="padding: 3px 0;">
                                     <label style="font-weight: normal;">
-                                        <input type="checkbox" name="{{ form.limit_tracks.html_name }}" value="{{ track.id }}"{% if track.id in form.selected_track_ids %} checked{% endif %}>
+                                        <input type="checkbox" name="{{ form.limit_tracks.html_name }}"
+                                            value="{{ track.id }}" {% if track.id in form.selected_track_ids %}
+                                            checked{% endif %}>
                                         {{ track.name }}
                                     </label>
                                 </div>
@@ -113,79 +116,4 @@
     {% bootstrap_field form.can_video_manage_configuration layout="control" %}
 </fieldset>
 
-<script>
-    (function () {
-        function initEventTrackSelectors() {
-            document.querySelectorAll('.event-track-filter').forEach(function (select) {
-                if (select.dataset.initialized) return;
-                select.dataset.initialized = 'true';
-
-                var container = select.closest('.event-track-selector');
-                if (!container) return;
-
-                select.addEventListener('change', function () {
-                    var selectedEventId = this.value;
-                    var placeholder = container.querySelector('.event-tracks-placeholder');
-                    var groups = container.querySelectorAll('.event-track-group');
-
-                    groups.forEach(function (group) {
-                        group.style.display = 'none';
-                    });
-
-                    if (selectedEventId) {
-                        if (placeholder) placeholder.style.display = 'none';
-                        var targetGroup = container.querySelector('[data-event-group-id="' + selectedEventId + '"]');
-                        if (targetGroup) {
-                            targetGroup.style.display = 'block';
-                        }
-                    } else {
-                        if (placeholder) placeholder.style.display = 'block';
-                    }
-                });
-
-                container.querySelectorAll('.track-select-all').forEach(function (link) {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        var eventId = this.getAttribute('data-event-id');
-                        var group = container.querySelector('[data-event-group-id="' + eventId + '"]');
-                        if (group) {
-                            group.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-                                cb.checked = true;
-                            });
-                        }
-                    });
-                });
-
-                container.querySelectorAll('.track-select-none').forEach(function (link) {
-                    link.addEventListener('click', function (e) {
-                        e.preventDefault();
-                        var eventId = this.getAttribute('data-event-id');
-                        var group = container.querySelector('[data-event-group-id="' + eventId + '"]');
-                        if (group) {
-                            group.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
-                                cb.checked = false;
-                            });
-                        }
-                    });
-                });
-
-                if (select.options.length === 2) {
-                    select.selectedIndex = 1;
-                    select.dispatchEvent(new Event('change'));
-                }
-            });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initEventTrackSelectors);
-        } else {
-            initEventTrackSelectors();
-        }
-
-        if (typeof $ !== 'undefined') {
-            $(document).on('shown.bs.collapse', function () {
-                initEventTrackSelectors();
-            });
-        }
-    })();
-</script>
+<script src="{% static 'common/js/eventTrackSelector.js' %}"></script>
