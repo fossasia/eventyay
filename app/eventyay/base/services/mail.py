@@ -47,6 +47,7 @@ from eventyay.base.services.tasks import TransactionAwareTask
 from eventyay.base.services.tickets import get_tickets_for_order
 from eventyay.base.settings import GlobalSettingsObject
 from eventyay.base.signals import email_filter, global_email_filter
+from eventyay.common.mail import get_reply_to_address
 from eventyay.celery_app import app
 from eventyay.consts import SizeKey
 from eventyay.multidomain.urlreverse import build_absolute_uri
@@ -158,6 +159,7 @@ def mail(
         content_plain = body_plain = render_mail(template, context)
         subject = str(subject).format_map(TolerantDict(context))
         sender = sender or (event.settings.get('mail_from') if event else settings.MAIL_FROM) or settings.MAIL_FROM
+        sender_email_raw = sender
         if event:
             sender_name = str(event.name)
             if len(sender_name) > 75:
@@ -183,18 +185,16 @@ def mail(
                 for bcc_mail in event.settings.mail_bcc.split(','):
                     bcc.append(bcc_mail.strip())
 
-            if not auto_email:
-                if (
-                    event_reply_to
-                    and not headers.get('Reply-To')
-                ):
-                    headers['Reply-To'] = event_reply_to          
-            elif (
-                event.settings.mail_from == settings.DEFAULT_FROM_EMAIL
-                and event.settings.contact_mail
-                and not headers.get('Reply-To')
-            ):
-                headers['Reply-To'] = event.settings.contact_mail
+            # Use unified Reply-To resolution
+            if not headers.get('Reply-To'):
+                reply_to = get_reply_to_address(
+                    event,
+                    override=event_reply_to if not auto_email else None,
+                    sender_email=sender_email_raw
+                )
+                
+                if reply_to:
+                    headers['Reply-To'] = reply_to
 
             prefix = event.settings.get('mail_prefix')
             if prefix and prefix.startswith('[') and prefix.endswith(']'):

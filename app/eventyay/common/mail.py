@@ -82,12 +82,13 @@ def mail_send_task(
         if event.mail_settings['smtp_use_custom']:  # pragma: no cover
             sender = event.mail_settings['mail_from'] or sender
 
-        reply_to = reply_to or event.mail_settings['reply_to']
-        if not reply_to and sender == settings.MAIL_FROM:
-            reply_to = event.email
+        # Use unified Reply-To resolution
+        if not reply_to:
+            reply_to = get_reply_to_address(event, sender_email=sender)
 
         if isinstance(reply_to, str):
             reply_to = [formataddr((str(event.name), reply_to))]
+        reply_to = reply_to or []
 
         sender = formataddr((str(event.name), sender or settings.MAIL_FROM))
 
@@ -134,3 +135,52 @@ def mail_send_task(
     except Exception as exception:  # pragma: no cover
         logger.exception('Error sending email')
         raise SendMailException(f'Failed to send an email to {to}: {exception}')
+
+
+def get_reply_to_address(
+    event,
+    *,
+    override=None,
+    template=None,
+    sender_email=None
+):
+    """
+    Resolve Reply-To email address with unified precedence.
+    
+    Event.email is OPTIONAL (may be provided during event creation), and the Reply-To header is OPTIONAL.
+    
+    Precedence (highest to lowest):
+    1. Explicit override parameter (manual emails)
+    2. Template-level reply_to (talk-specific templates)
+    3. Custom SMTP reply_to (event.mail_settings['reply_to'])
+    4. Event.email (ONLY when using default system sender)
+    5. None (no Reply-To header - acceptable)
+    
+    When custom SMTP sender is configured, Event.email is NOT automatically
+    used as Reply-To. Organizers can explicitly set mail_settings['reply_to']
+    if they want a different Reply-To than their SMTP sender.
+    
+    Args:
+        event: Event instance
+        override: Explicit Reply-To override
+        template: Email template with optional reply_to field
+        sender_email: The actual sender email being used (to determine SMTP context)
+    
+    Returns:
+        Reply-To email address or None
+    """
+    if override:
+        return override
+    
+    if template and hasattr(template, 'reply_to') and template.reply_to:
+        return template.reply_to
+    
+    if event.mail_settings.get('reply_to'):
+        return event.mail_settings['reply_to']
+    
+    # Only use Event.email when using default system sender
+    if sender_email == settings.MAIL_FROM and event.email:
+        return event.email
+    
+    # No Reply-To header - let email client handle it
+    return None
