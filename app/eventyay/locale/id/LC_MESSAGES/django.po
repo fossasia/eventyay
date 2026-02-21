@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-14 17:26+0530\n"
-"PO-Revision-Date: 2026-02-17 16:22+0000\n"
-"Last-Translator: OpenAI <noreply-mt-openai@weblate.org>\n"
+"PO-Revision-Date: 2026-02-21 07:53+0000\n"
+"Last-Translator: Mujadidi <mujadidi.bjm@gmail.com>\n"
 "Language-Team: Indonesian <https://hosted.weblate.org/projects/eventyay/"
 "eventyay/id/>\n"
 "Language: id\n"
@@ -59,7 +59,7 @@ msgstr ""
 
 #: agenda/templates/agenda/changelog_block.html:15
 msgid "We have new sessions!"
-msgstr ""
+msgstr "Kami memiliki sesi baru!"
 
 #: agenda/templates/agenda/changelog_block.html:22
 #: agenda/templates/agenda/changelog_block.html:40
@@ -73,15 +73,15 @@ msgstr "%(quote_open)s%(title)s%(quote_close)s oleh %(speakers)s"
 
 #: agenda/templates/agenda/changelog_block.html:35
 msgid "We have a new session: "
-msgstr ""
+msgstr "Kami memiliki sesi baru: "
 
 #: agenda/templates/agenda/changelog_block.html:55
 msgid "Sadly, we had to cancel sessions:"
-msgstr ""
+msgstr "Sayangnya, kami harus membatalkan sesi berikut:"
 
 #: agenda/templates/agenda/changelog_block.html:73
 msgid "We sadly had to cancel a session: "
-msgstr ""
+msgstr "Sayangnya kami harus membatalkan sesi berikut: "
 
 #: agenda/templates/agenda/changelog_block.html:92
 msgid ""
@@ -93,7 +93,7 @@ msgstr ""
 
 #: agenda/templates/agenda/changelog_block.html:120
 msgid "We have moved a session around: "
-msgstr ""
+msgstr "Kami telah memindahkan sesi ke: "
 
 #: agenda/templates/agenda/featured.html:15
 msgid "Welcome to our list of featured sessions!"
@@ -173,6 +173,8 @@ msgid ""
 "To see our schedule, please either enable JavaScript or go <a "
 "href=\"%(href)s\">here</a> for our NoJS schedule."
 msgstr ""
+"Untuk melihat jadwal kami, silakan izinkan JavaScript atau buka <a href=\"%"
+"(href)s\">di sini</a> untuk melihat jadwal NoJS."
 
 #: agenda/templates/agenda/schedule_nojs.html:21
 #, python-format
@@ -20364,7 +20366,7 @@ msgstr "<strong>plus</strong> %(rate)s%% %(taxname)s"
 #: presale/templates/pretixpresale/event/fragment_cart.html:251
 #, python-format
 msgid "incl. %(rate)s%% %(taxname)s"
-msgstr "termasuk %(rate)s%% [X17]"
+msgstr "termasuk %(rate)s%% %(taxname)s"
 
 #: control/templates/pretixcontrol/order/index.html:562
 #: presale/templates/pretixpresale/event/fragment_cart.html:273
@@ -26235,10 +26237,12 @@ msgid ""
 "You can upload options here, one option per line. To use multiple languages, "
 "please upload a JSON file with a list of options:"
 msgstr ""
+"Anda bisa mengunggah opsi disini, satu opsi per baris. Untuk menggunakan "
+"bahasa lain, mohon unggah berkas JSON dengan daftar opsi:"
 
 #: orga/forms/cfp.py:271
 msgid "Replace existing options"
-msgstr ""
+msgstr "Ganti opsi yang sudah ada"
 
 #: orga/forms/cfp.py:273
 msgid ""
@@ -26247,44 +26251,48 @@ msgid ""
 "you do not check this, the uploaded options will be added to the existing "
 "ones, without adding duplicates."
 msgstr ""
+"Jika Anda mengunggah opsi baru, apakah Anda ingin mengganti opsi yang "
+"sebelumnya ada? Mohon perhatikan bahwa hal ini akan MENGHAPUS semua respon "
+"pada kolom kustom ini! Jika anda tidak mencentang pilihan ini, opsi yang "
+"diunggah akan ditambahkan ke opsi yang sudah ada, tanpa menambahkan duplikat."
 
 #: orga/forms/cfp.py:310
 msgid "Could not read file."
-msgstr ""
+msgstr "Tidak dapat membaca berkas."
 
 #: orga/forms/cfp.py:315
 msgid "JSON file does not contain a list."
-msgstr ""
+msgstr "Berkas JSON tidak berisi daftar."
 
 #: orga/forms/cfp.py:317
 msgid "JSON file does not contain a list of objects."
-msgstr ""
+msgstr "Berkas JSON tidak berisi daftar objek."
 
 #: orga/forms/cfp.py:329
 msgid "Please select a deadline after which the field should become mandatory."
-msgstr ""
+msgstr "Silakan pilih batas waktu setelah kolom ini menjadi wajib diisi."
 
 #: orga/forms/cfp.py:338
 msgid "You cannot replace options without uploading new ones."
-msgstr ""
+msgstr "Anda tidak dapat mengganti opsi tanpa mengunggah opsi yang baru."
 
 #: orga/forms/cfp.py:440
 msgid "You already have a session type by this name!"
-msgstr ""
+msgstr "Anda sudah memiliki tipe sesi dengan nama ini!"
 
 #: orga/forms/cfp.py:465
 #, python-brace-format
 msgid "You can create an access code <a href=\"{url}\">here</a>."
-msgstr ""
+msgstr "Anda dapat membuat kode akses <a href=\"{url}\">di sini</a>."
 
 #: orga/forms/cfp.py:474
 msgid "You already have a track by this name!"
-msgstr ""
+msgstr "Anda telah memiliki track dengan nama ini!"
 
 #: orga/forms/cfp.py:526
 #, python-brace-format
 msgid "Access code for the {event} CfP"
-msgstr ""
+msgstr "Akses kode untuk CfP {event}"
 
 #: orga/forms/cfp.py:530
 #, python-brace-format
@@ -26293,25 +26301,29 @@ msgid ""
 "\n"
 "This is an access code for the {event} CfP."
 msgstr ""
+"Hai!\n"
+"\n"
+"Ini adalah kode akses untuk CfP {event}."
 
 #: orga/forms/cfp.py:540
 #, python-brace-format
 msgid "It will allow you to submit a proposal to the “{track}” track."
 msgstr ""
+"Ini akan mengizinkan Anda untuk mengirimkan proposal ke track \"{track}\"."
 
 #: orga/forms/cfp.py:547
 msgid "It will allow you to submit a proposal to our CfP."
-msgstr ""
+msgstr "Ini akan mengizinkan Anda untuk mengirimkan proposal ke CfP kami."
 
 #: orga/forms/cfp.py:551
 #, python-brace-format
 msgid "This access code is valid until {date}."
-msgstr ""
+msgstr "Akses kode ini berlaku sampai {date}."
 
 #: orga/forms/cfp.py:558
 #, python-brace-format
 msgid "The code can be redeemed multiple times ({num})."
-msgstr ""
+msgstr "Kode ini dapat digunakan beberapa kali ({num})."
 
 #: orga/forms/cfp.py:560
 #, python-brace-format
@@ -26324,14 +26336,21 @@ msgid ""
 "I’m looking forward to your proposal!\n"
 "{name}"
 msgstr ""
+"\n"
+"Silakan ikuti pranala ini untuk menggunakan kode\n"
+"\n"
+"..{url}\n"
+"\n"
+"Kami menantikan proposal anda!\n"
+"{name}"
 
 #: orga/forms/cfp.py:591
 msgid "Accepted or confirmed speakers"
-msgstr ""
+msgstr "Pembicara terverifikasi atau dikonfirmasi"
 
 #: orga/forms/cfp.py:592
 msgid "Confirmed speakers"
-msgstr ""
+msgstr "Pembicara terkonfirmasi"
 
 #: orga/forms/cfp.py:651
 msgid "If you select no custom field, all will be used."
@@ -31795,7 +31814,7 @@ msgstr "<strong>plus</strong> %(rate)s%% %(name)s"
 #: presale/templates/pretixpresale/event/voucher.html:313
 #, python-format
 msgid "incl. %(rate)s%% %(name)s"
-msgstr "termasuk %(rate)s%% [X17]"
+msgstr "termasuk %(rate)s%% %(name)s"
 
 #: presale/templates/pretixpresale/event/checkout_addons.html:197
 #: presale/templates/pretixpresale/event/voucher.html:215
