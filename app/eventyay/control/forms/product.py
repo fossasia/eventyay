@@ -590,6 +590,9 @@ class ProductUpdateForm(I18nModelForm):
 
     def clean(self):
         d = super().clean()
+        if d.get('validity_mode') != 'fixed':
+            d['validity_fixed_from'] = None
+            d['validity_fixed_until'] = None
         if d['issue_giftcard']:
             if d['tax_rule'] and d['tax_rule'].rate > 0:
                 self.add_error(
