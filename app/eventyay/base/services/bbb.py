@@ -16,6 +16,7 @@ from django.utils.html import escape
 from lxml import etree
 from yarl import URL
 
+from eventyay.features.live.exceptions import ConsumerException
 from eventyay.base.models import BBBServer, BBBCall
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,7 @@ def choose_server(event, room=None, prefer_server=None):
             # the cost value temporarily with every added meeting.
             BBBServer.objects.filter(pk=server.pk).update(cost=F("cost") + Value(10))
         return server
+    raise ConsumerException("bbb.no_server")
 
 
 @database_sync_to_async

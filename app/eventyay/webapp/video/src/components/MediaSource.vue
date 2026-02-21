@@ -12,6 +12,13 @@
 	JanusCall(v-else-if="room && module.type === 'call.janus'", ref="janus", :room="room", :module="module", :background="background", :size="background ? 'tiny' : 'normal'", :key="`janus-${room.id}`")
 	JanusChannelCall(v-else-if="call", ref="janus", :call="call", :background="background", :size="background ? 'tiny' : 'normal'", :key="`call-${call.id}`", @close="$emit('close')")
 	.iframe-error(v-if="iframeError") {{ $t('MediaSource:iframe-error:text') }}
+	.join-error(
+	v-if="joinErrorKey",
+	role="alert",
+	aria-live="polite",
+	@click="joinErrorKey = null"
+) {{ $t(joinErrorKey) }}
+	
 	iframe#video-player-translation(v-if="languageIframeUrl", :src="languageIframeUrl", style="position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none;", frameborder="0", gesture="media", allow="autoplay; encrypted-media", referrerpolicy="strict-origin-when-cross-origin")
 </template>
 <script setup>
@@ -44,9 +51,11 @@ const store = useStore();
 const route = useRoute();
 
 const iframeError = ref(null);
+const joinErrorKey = ref(null);
 const iframeEl = ref(null);
 const languageIframeUrl = ref(null);
 const isUnmounted = ref(false);
+
 
 // Template refs
 const livestream = ref(null);
@@ -195,7 +204,34 @@ function unmuteYouTubePlayer() {
 	}
 }
 
+function getJoinErrorKey(error) {
+	const code =
+		error?.apiError?.code ??
+		error?.error ??
+		error?.message ??
+		null
+
+	switch (code) {
+		case 'bbb.join.missing_profile':
+			return 'MediaSource:join-error:missing-profile:text'
+
+		case 'bbb.failed':
+			return 'MediaSource:join-error:bbb-failed:text'
+
+		case 'bbb.no_server':
+			return 'MediaSource:join-error:no-server:text'
+
+		case 'zoom.no_meeting_id':
+			return 'MediaSource:join-error:zoom-no-meeting-id:text'
+
+		default:
+			return null
+	}
+}
+
 async function initializeIframe(mute) {
+	joinErrorKey.value = null;
+	iframeError.value = null;
 	try {
 		if (!module.value) return;
 		if (shouldUseLivestream.value) return;
@@ -326,7 +362,15 @@ async function initializeIframe(mute) {
 			};
 		}
 	} catch (error) {
-		iframeError.value = error;
+		joinErrorKey.value = getJoinErrorKey(error);
+
+		if (joinErrorKey.value) {
+			iframeError.value = null;
+		} else {
+			iframeError.value = error;
+		}
+
+		console.error('MediaSource join failed:', error);
 	}
 }
 
@@ -509,4 +553,26 @@ iframe.iframe-media-source
 		&.hide-if-background
 			width: 0
 			height: 0
+	
+.join-error
+	position: fixed
+	top: 120px
+	left: 50%
+	transform: translateX(-50%)
+	background: rgba($clr-danger, 0.12)
+	color: $clr-danger
+	padding: 12px 16px
+	border-radius: 4px
+	z-index: 50
+	max-width: 420px
+	text-align: center
+
+	+below('l')
+		top: 64px
+		left: 8px
+		right: 8px
+		transform: none
+		max-width: calc(100% - 16px)
+
+
 </style>
