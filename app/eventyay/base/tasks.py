@@ -15,6 +15,7 @@ from eventyay.base.services import (  # noqa: F401
     orderimport,
     orders,
     shredder,
+    telemetry,
     tickets,
     update_check,
     waitinglist,

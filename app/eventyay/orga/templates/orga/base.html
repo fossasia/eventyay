@@ -54,14 +54,15 @@
         {% if request.event and request.event.visible_primary_color %}<link rel="stylesheet" type="text/css" href="{{ request.event.urls.settings_css }}?target=orga&c={{ request.event.visible_primary_color|urlencode }}" />{% endif %}
         {% block stylesheets %}{% endblock stylesheets %}
         {% compress js %}
+            <script defer src="{% static 'common/js/toastuiLoader.js' %}" data-toastui-css="{% static 'vendored/toastui-editor/toastui-editor.min.css' %}" data-toastui-js="{% static 'vendored/toastui-editor/toastui-editor.min.js' %}"></script>
             <script defer src="{% static 'common/js/base.js' %}"></script>
             <script defer src="{% static 'common/js/collapse.js' %}"></script>
             <script type="module" src="{% static 'common/js/dropdown.js' %}"></script>
             <script defer src="{% static 'orga/js/main.js' %}"></script>
             <script defer src="{% static 'orga/js/typeahead.js' %}"></script>
             <script defer src="{% static 'vendored/choices/choices.min.js' %}"></script>
-            <script defer src="{% static 'vendored/marked.min.js' %}"></script> {# required by formtools.js #}
-            <script defer src="{% static 'vendored/purify.min.js' %}"></script> {# required by formtools.js #}
+            <script defer src="{% static 'vendored/marked.min.js' %}"></script> {# used by orga JS for markdown rendering (e.g. orga/js/cfp_flow.js) #}
+            <script defer src="{% static 'vendored/purify.min.js' %}"></script> {# used by orga JS for sanitizing rendered HTML #}
             <script defer src="{% static 'common/js/formTools.js' %}"></script>
             <script defer src="{% static 'common/js/lightbox.js' %}"></script>
             <script defer src="{% static 'orga/js/sidebar.js' %}"></script>
@@ -110,6 +111,15 @@
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+                {% if show_link_in_header_for_all_pages %}
+                    {% for page in show_link_in_header_for_all_pages %}
+                        <li>
+                            <a href='{% url "page" slug=page.slug %}' title='{{ page.title|safe }}'>
+                                {{ page.title|safe }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% endif %}
                 {% if request.user.is_staff and not request.user|has_active_staff_session:request.session.session_key %}
                     <li>
                         <form action="{% url 'control:user.sudo' %}?next={{ request.path|add:"?"|add:request.GET.urlencode|urlencode }}" method="post">
@@ -483,6 +493,17 @@
                     {% if development_mode %}
                         <span class="text-warning">· {% translate "running in development mode" %}</span>
                     {% endif %}
+                    <ul class="list-inline text-center" style="margin-top: 20px">
+                        {% if show_link_in_footer_for_all_pages %}
+                            {% for page in show_link_in_footer_for_all_pages %}
+                                <li>
+                                    <a href='{% url "page" slug=page.slug %}' title='{{ page.title|safe }}'>
+                                        {{ page.title|safe }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
                 </footer>
             </div>
         </div>

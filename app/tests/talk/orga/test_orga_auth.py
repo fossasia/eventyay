@@ -11,7 +11,7 @@ def test_orga_successful_login(client, user, template_patch):
     user.set_password("testtest")
     user.save()
     response = client.post(
-        reverse("orga:login"),
+        reverse("eventyay_common:auth.login"),
         data={"login_email": user.email, "login_password": "testtest"},
         follow=True,
     )
@@ -21,7 +21,7 @@ def test_orga_successful_login(client, user, template_patch):
 
 @pytest.mark.django_db
 def test_orga_redirect_when_logged_in(orga_client, user):
-    response = orga_client.get(reverse("orga:login"))
+    response = orga_client.get(reverse("eventyay_common:auth.login"))
     assert response.status_code == 302
 
 
@@ -35,7 +35,7 @@ def test_orga_redirect_login(client, orga_user, event):
     final_url = response.redirect_chain[-1][0]
     parsed_url = urlparse(final_url)
 
-    expected_login_url = reverse("orga:login")
+    expected_login_url = reverse("eventyay_common:auth.login")
     assert parsed_url.path == expected_login_url
 
     query_params_parsed = parse_qs(parsed_url.query)
