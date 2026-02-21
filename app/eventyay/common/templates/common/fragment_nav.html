@@ -3,6 +3,7 @@
 {% load event_tags %}
 {% load eventurl %}
 {% load staff_session %}
+{% load nav_tags %}
 
 {% with current_event=request.event path=request.path_info schedule_label=phrases.schedule.schedule|default:_("Schedule") sessions_label=phrases.schedule.sessions|default:_("Sessions") speakers_label=phrases.schedule.speakers|default:_("Speakers") %}
     {% tickets_tab_visible as show_tickets_tab %}
@@ -12,7 +13,7 @@
     </a>
     {% if show_tickets_tab %}
         <a href="{% url 'presale:event.index' event=current_event.slug organizer=current_event.organizer.slug %}#tickets" id="nav-tab-tickets" class="header-tab">
-            <i class="fa fa-ticket"></i> {% if current_event.settings.menu_label_tickets %}{{ current_event.settings.menu_label_tickets }}{% else %}{% translate "Tickets" %}{% endif %}
+            <i class="fa fa-ticket"></i> {% get_menu_label current_event 'menu_label_tickets' as custom_label %}{% if custom_label %}{{ custom_label }}{% else %}{% translate "Tickets" %}{% endif %}
         </a>
     {% endif %}
     {% if show_talks_tab %}
@@ -64,11 +65,11 @@
     {% if show_online_video_link|default:False %}
         {% if nav_context == "presale" %}
             <a id="join-event-link" href="{% eventurl current_event 'presale:event.onlinevideo.join' %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> {% if current_event.settings.menu_label_join_video %}{{ current_event.settings.menu_label_join_video }}{% else %}{% translate "Join online video" %}{% endif %}
+                <i class="fa fa-video-camera"></i> {% get_menu_label current_event 'menu_label_join_video' as custom_label %}{% if custom_label %}{{ custom_label }}{% else %}{% translate "Join online video" %}{% endif %}
             </a>
         {% else %}
             <a id="join-event-link" href="{% url 'agenda:event.onlinevideo.join' organizer=current_event.organizer.slug event=current_event.slug %}" class="header-tab {% if '/onlinevideo' in path %}active{% endif %}">
-                <i class="fa fa-video-camera"></i> {% if current_event.settings.menu_label_join_video %}{{ current_event.settings.menu_label_join_video }}{% else %}{% translate "Join online video" %}{% endif %}
+                <i class="fa fa-video-camera"></i> {% get_menu_label current_event 'menu_label_join_video' as custom_label %}{% if custom_label %}{{ custom_label }}{% else %}{% translate "Join online video" %}{% endif %}
             </a>
         {% endif %}
     {% endif %}
