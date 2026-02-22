@@ -39,11 +39,7 @@ class UpdateView(EventBasedFormMixin, edit.UpdateView):
 
 
 class ChartContainingView:
-    def get(self, request, *args, **kwargs):
-        resp = super().get(request, *args, **kwargs)
-        # required by raphael.js
-        resp['Content-Security-Policy'] = "script-src 'unsafe-eval'; style-src 'unsafe-inline'"
-        return resp
+    pass
 
 
 class PaginationMixin:

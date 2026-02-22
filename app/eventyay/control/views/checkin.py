@@ -260,9 +260,7 @@ class CheckinListCreate(EventPermissionRequiredMixin, CreateView):
     context_object_name = 'checkinlist'
 
     def dispatch(self, request, *args, **kwargs):
-        r = super().dispatch(request, *args, **kwargs)
-        r['Content-Security-Policy'] = "script-src 'unsafe-eval'"
-        return r
+        return super().dispatch(request, *args, **kwargs)
 
     @cached_property
     def copy_from(self):
@@ -317,9 +315,7 @@ class CheckinListUpdate(EventPermissionRequiredMixin, UpdateView):
     context_object_name = 'checkinlist'
 
     def dispatch(self, request, *args, **kwargs):
-        r = super().dispatch(request, *args, **kwargs)
-        r['Content-Security-Policy'] = "script-src 'unsafe-eval'"
-        return r
+        return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None) -> CheckinList:
         try:

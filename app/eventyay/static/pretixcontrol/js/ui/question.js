@@ -1,89 +1,104 @@
-/*global $, Morris, gettext*/
+/*global $, Chart, gettext*/
 $(function () {
     // Question view
     if (!$("#question-stats").length) {
         return;
     }
 
-    $(".chart").css("height", "250px");
-    var data_type = $("#question_chart").attr("data-type"),
-        data = JSON.parse($("#question-chart-data").html()),
-        others_sum = 0,
-        max_num = 8;
+    var data_type = $("#question_chart").attr("data-type");
+    var raw_data = JSON.parse($("#question-chart-data").html());
+    var max_num = (data_type === 'N') ? 20 : 8;
+    var others_sum = 0;
 
-    for (var i in data) {
-        data[i].value = data[i].count;
-        data[i].label = data[i].answer;
-        if (data[i].label.length > 20) {
-            data[i].label = data[i].label.substring(0, 20) + '…';
+    // Truncate long labels
+    for (var i = 0; i < raw_data.length; i++) {
+        raw_data[i].value = raw_data[i].count;
+        raw_data[i].label = raw_data[i].answer;
+        if (raw_data[i].label.length > 20) {
+            raw_data[i].label = raw_data[i].label.substring(0, 20) + '…';
         }
     }
 
-    if (data_type == 'N') {
-        // Sort
-        data.sort(function (a, b) {
-            if (parseFloat(a.label) > parseFloat(b.label)) {
-                return 1;
-            } else if (parseFloat(a.label) < parseFloat(b.label)) {
-                return -1;
-            } else {
-                return 0;
-            }
+    // Sort numeric type
+    if (data_type === 'N') {
+        raw_data.sort(function (a, b) {
+            return parseFloat(a.label) - parseFloat(b.label);
         });
-        max_num = 20;
     }
 
-    // Limit shown options
-    if (data.length > max_num) {
-        for (var i = max_num; i < data.length; i++) {
-            others_sum += data[i].count;
+    // Limit options
+    if (raw_data.length > max_num) {
+        for (var j = max_num; j < raw_data.length; j++) {
+            others_sum += raw_data[j].count;
         }
-        data = data.slice(0, max_num);
-        data.push({'value': others_sum, 'label': gettext('Others')});
+        raw_data = raw_data.slice(0, max_num);
+        raw_data.push({'value': others_sum, 'label': gettext('Others'), 'count': others_sum});
     }
+
+    var canvas = document.createElement('canvas');
+    $("#question_chart").css("height", "250px").empty().append(canvas);
+
+    var labels = raw_data.map(function (d) { return d.label; });
+    var values = raw_data.map(function (d) { return d.value || d.count; });
 
     if (data_type === 'B') {
-        var colors;
-        if (data[0].answer_bool) {
-            colors = ['#50A167', '#C44F4F'];
+        var bgColors;
+        if (raw_data[0] && raw_data[0].answer_bool) {
+            bgColors = ['#50A167', '#C44F4F'];
         } else {
-            colors = ['#C44F4F', '#50A167'];
+            bgColors = ['#C44F4F', '#50A167'];
         }
-        new Morris.Donut({
-            element: 'question_chart',
-            data: data,
-            resize: true,
-            colors: colors
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 1 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
         });
     } else if (data_type === 'C') {
-        new Morris.Donut({
-            element: 'question_chart',
-            data: data,
-            resize: true,
-            colors: [
-                '#7F4A91',
-                '#50A167',
-                '#FFB419',
-                '#5F9CD4',
-                '#C44F4F',
-                '#83FFFA',
-                '#FF6C38',
-                '#1f5b8e',
-                '#2d683c',
-            ]
+        var palette = [
+            '#7F4A91', '#50A167', '#FFB419', '#5F9CD4', '#C44F4F',
+            '#83FFFA', '#FF6C38', '#1f5b8e', '#2d683c'
+        ];
+        new Chart(canvas, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{ data: values, backgroundColor: palette.slice(0, values.length), borderWidth: 1 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
         });
     } else {  // M, N, S, T
-        new Morris.Bar({
-            element: 'question_chart',
-            data: data,
-            resize: true,
-            xkey: 'label',
-            ykeys: ['count'],
-            labels: [gettext('Count')]
+        new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: gettext('Count'),
+                    data: values,
+                    backgroundColor: '#2185d0'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { ticks: { maxRotation: 30 } },
+                    y: { beginAtZero: true }
+                },
+                plugins: { legend: { display: false } }
+            }
         });
     }
-
-    // N, S, T
 });
 
 $(function () {
@@ -131,13 +146,13 @@ $(function () {
 
         var organizer = $("body").attr("data-organizer");
         var event = $("body").attr("data-event");
-        
+
         if (!organizer || !event) {
             $val.parent().find(".loading-indicator").remove();
             $val.show();
             return;
         }
-        
+
         var ajaxUrl = `/control/event/${organizer}/${event}/questions/${val}/options/`;
         $.ajax({
             url: ajaxUrl,

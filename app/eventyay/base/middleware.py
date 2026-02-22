@@ -216,7 +216,6 @@ class SecurityMiddleware(MiddlewareMixin):
                 'https://checkout.stripe.com',
                 'https://js.stripe.com',
                 'http://localhost:8080',
-                "'unsafe-eval'",  # Required for buntpapier and other libraries that use eval()
             ],
             'object-src': ["'none'"],
             'frame-src': [
@@ -251,8 +250,7 @@ class SecurityMiddleware(MiddlewareMixin):
         if request.path.startswith('/video/'):
             h['script-src-elem'] = [
                 '{static}',
-                "'unsafe-eval'",  # Required for Vue.js and buntpapier libraries
-                "'unsafe-inline'",  # Required for server-injected configuration scripts
+                "'unsafe-inline'",  # Required for server-injected configuration scripts (window.venueless)
             ]
             if settings.DEBUG:
                 h['script-src-elem'].insert(1, 'http://localhost:8080')  # Development only
