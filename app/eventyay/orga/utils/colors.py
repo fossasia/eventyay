@@ -27,10 +27,10 @@ def calculate_contrast_ratio(rgb1, rgb2):
     return l2 / l1
 
 
-def generate_random_high_contrast_color(min_contrast=2.5, max_attempts=100, exclude_colors=None):
+def generate_random_high_contrast_color(min_contrast=3.0, max_attempts=100, exclude_colors=None):
     """Generate a random hex color with sufficient contrast against white background."""
     exclude_colors = exclude_colors or set()
-    exclude_set = {color.lower() for color in exclude_colors}
+    exclude_set = {color.lower() for color in exclude_colors if isinstance(color, str) and color}
 
     for _ in range(max_attempts):
         r = random.randint(RGB_MIN, RGB_MAX)

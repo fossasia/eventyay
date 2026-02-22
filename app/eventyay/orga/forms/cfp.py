@@ -423,12 +423,11 @@ class TrackForm(ReadOnlyFlag, I18nHelpText, I18nModelForm):
                         initial['color'] = generate_random_high_contrast_color(
                             exclude_colors=existing_colors
                         )
-                    except ValueError as e:
-                        self._color_generation_error = str(e)
+                    except ValueError:
+                        # If we cannot generate a color, fall back to no initial color
+                        pass
             kwargs['initial'] = initial
         super().__init__(*args, **kwargs)
-        if hasattr(self, '_color_generation_error'):
-            self.add_error('color', forms.ValidationError(self._color_generation_error))
         if self.instance.pk:
             url = f'{event.cfp.urls.new_access_code}?track={self.instance.pk}'
             self.fields['requires_access_code'].help_text += ' ' + _(
