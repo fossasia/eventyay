@@ -123,7 +123,7 @@
                     {% endif %}
                     <a class="navbar-brand" href="{% url 'presale:index' %}">
                         <img src="{% static 'pretixbase/img/eventyay-icon.svg' %}" />
-                        {{ settings.INSTANCE_NAME }}
+                        <span class="brand-text">{{ settings.INSTANCE_NAME }}</span>
                     </a>
                 </div>
                 <ul class="nav navbar-nav navbar-top-links navbar-left flip hidden-xs">
@@ -146,6 +146,38 @@
                     {% endif %}
                 </ul>
                 <ul class="nav navbar-nav navbar-top-links navbar-right flip">
+					<li class="language-switch">
+					  <form method="post"
+					        action="{% url 'eventyay_common:account.locale' %}"
+					        class="language-form">
+					    {% csrf_token %}
+					    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+					
+					    <details class="dropdown locales" aria-haspopup="menu">
+					      <summary class="language-summary" aria-label="{{ _('Language') }}">
+                            {% for option in language_options %}
+                                {% if option.code|lower == request.LANGUAGE_CODE|lower %}
+                                <span class="current-locale language-text">{{ option.label }}</span>
+                                {% endif %}
+                            {% endfor %}
+                            <i class="fa fa-globe language-icon" aria-hidden="true" style="font-size: 16px;"></i>
+                            <i class="fa fa-caret-down language-caret" aria-hidden="true"></i>
+                          </summary>
+					      <div class="dropdown-content dropdown-content-s{% if rtl %}e{% else %}w{% endif %}"
+					           role="menu">
+					        {% for option in language_options %}
+					          <button type="submit"
+					                  name="locale"
+					                  value="{{ option.code }}"
+					                  class="dropdown-item {% if option.code|lower == request.LANGUAGE_CODE|lower %}active{% endif %}"
+					                  role="menuitem">
+					            {{ option.label }}
+					          </button>
+					        {% endfor %}
+					      </div>
+					    </details>
+					  </form>
+					</li>
                     {% if show_link_in_header_for_all_pages %}
                         {% for page in show_link_in_header_for_all_pages %}
                             <li>
