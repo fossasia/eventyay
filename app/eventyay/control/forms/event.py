@@ -633,6 +633,8 @@ class EventSettingsForm(SettingsForm):
         'event_logo_image',
         'logo_show_title',
         'og_image',
+        'menu_label_tickets',
+        'menu_label_join_video',
     ]
 
     def clean(self):

@@ -3,6 +3,7 @@
 {% load eventurl %}
 {% load event_tags %}
 {% load staff_session %}
+{% load nav_tags %}
 
 <nav id='header-nav-bar'>
     <div class="navigation">
@@ -16,7 +17,7 @@
         {% if request.event.live or is_organiser %}
             {% if show_tickets_tab %}
                 <a href="{% eventurl request.event 'presale:event.index' %}#tickets" id="nav-tab-tickets" class="header-tab">
-                    <i class="fa fa-ticket"></i> {% translate "Tickets" %}
+                    <i class="fa fa-ticket"></i> {% get_menu_label request.event 'menu_label_tickets' as label %}{{ label|default:_('Tickets') }}
                 </a>
             {% endif %}
         {% endif %}
@@ -59,7 +60,7 @@
             <div class="video-link">
                 <a id="join-event-link" class="header-tab join-event {% if request.path_info == '/onlinevideo' %}underline{% endif %}"
                     href="{% eventurl request.event 'presale:event.onlinevideo.join' %}">
-                    <i class="fa fa-video-camera"></i> {% translate "Join online video" %}
+                    <i class="fa fa-video-camera"></i> {% get_menu_label request.event 'menu_label_join_video' as label %}{{ label|default:_('Join online video') }}
                 </a>
             </div>
         {% endif %}
