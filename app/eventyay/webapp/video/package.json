@@ -66,7 +66,7 @@
     "@vue-macros/reactivity-transform": "^0.4.3",
     "@vue/eslint-config-standard": "^9.0.1",
     "@vue/language-plugin-pug": "^3.2.4",
-    "eslint": "^9.39.2",
+    "eslint": "^10.0.1",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-vue": "^10.8.0",
     "eslint-plugin-vue-pug": "^1.0.0-alpha.5",
