@@ -35,6 +35,7 @@ from .views import (
     waitinglist,
     webhooks,
 )
+from eventyay.consts import STRIPE_WEBHOOK_PATH
 from .views.stripe import stripe_webhook_view
 
 
@@ -207,7 +208,7 @@ urlpatterns = [
         BillingInvoicePreview.as_view(),
         name='billing-testing',
     ),
-    path('webhook/stripe', stripe_webhook_view, name='stripe-webhook'),
+    path(STRIPE_WEBHOOK_PATH, stripe_webhook_view, name='stripe-webhook'),
     path(
         '<orgslug:organizer>/<slug:event>/schedule-public',
         event.talk_schedule_public,
