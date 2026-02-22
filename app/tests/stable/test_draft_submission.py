@@ -1,9 +1,10 @@
 import pytest
 from django_scopes import scope
 from eventyay.base.models import (
-    Submission, SubmissionType, CfP, SubmissionStates,
+    Submission, SubmissionType, SubmissionStates,
     TalkQuestion, TalkQuestionTarget, TalkQuestionVariant, TalkQuestionRequired,
 )
+
 
 class TestDraftSubmission:
 
@@ -14,7 +15,7 @@ class TestDraftSubmission:
             st = SubmissionType.objects.filter(event=event).first()
             if not st:
                 st = SubmissionType.objects.create(event=event, name="Talk")
-            
+
             # Ensure talks are accessible
             event.talks_published = True
             event.cfp.fields["abstract"]["visibility"] = "required"
@@ -25,8 +26,11 @@ class TestDraftSubmission:
     def perform_init_wizard(self, client, event=None):
         url = f"/{event.organizer.slug}/{event.slug}/submit/"
         response = client.get(url, follow=True)
-        # Check if it redirected to the first step (info)
-        current_url = response.redirect_chain[-1][0] if response.redirect_chain else response.request.get('PATH_INFO', url)
+        # Extract the final URL after all redirects, falling back to url
+        try:
+            current_url = response.redirect_chain[-1][0]
+        except IndexError:
+            current_url = url
         return response, current_url
 
     @pytest.mark.django_db
@@ -37,7 +41,7 @@ class TestDraftSubmission:
 
         # Start wizard
         response, current_url = self.perform_init_wizard(client, event=event)
-        
+
         # Post only title and click "Save as draft"
         data = {
             "title": "Minimal Draft Title",
@@ -46,10 +50,11 @@ class TestDraftSubmission:
             "submission_type": submission_type,
         }
         response = client.post(current_url, data=data, follow=True)
-        
+
         # Should redirect to submissions list (me/submissions)
-        assert "/me/submissions/" in response.request.get("PATH_INFO", ""), f"Did not reach submissions list. Final URL: {response.request.get('PATH_INFO')}"
-        
+        final_path = response.wsgi_request.path
+        assert "/me/submissions/" in final_path, f"Did not reach submissions list. Final URL: {final_path}"
+
         # Verify submission exists in DRAFT state
         with scope(event=event):
             submission = Submission.all_objects.filter(title="Minimal Draft Title").first()
@@ -64,31 +69,32 @@ class TestDraftSubmission:
 
         # Start wizard
         response, current_url = self.perform_init_wizard(client, event=event)
-        
+
         # Try to submit without abstract
         data = {
             "title": "Failing submission",
             "action": "submit",
             "content_locale": "en",
             "submission_type": submission_type,
-            "abstract": "", # Should be required
+            "abstract": "",  # Should be required
         }
         response = client.post(current_url, data=data, follow=True)
-        
+
         # Should NOT redirect to success page
-        assert "/me/submissions/" not in response.request.get("PATH_INFO", "")
-        
+        final_path = response.wsgi_request.path
+        assert "/me/submissions/" not in final_path
+
         # Check if error message is in content
         content = response.content.decode().lower()
         assert "is required" in content or "required" in content
+
     @pytest.mark.django_db
     def test_draft_submission_skips_boolean_and_avatar_validation(self, event, client, user, cfp_setup):
         """Verify that draft submission skips boolean field requirement and avatar requirement."""
         client.force_login(user)
         submission_type = cfp_setup.pk
-        
+
         with scope(event=event):
-            # Add a required boolean question
             # Add a required boolean question
             TalkQuestion.objects.create(
                 event=event,
@@ -97,29 +103,28 @@ class TestDraftSubmission:
                 target=TalkQuestionTarget.SUBMISSION,
                 question_required=TalkQuestionRequired.REQUIRED,
             )
-            
+
             # Require avatar
             event.cfp.fields['avatar']['visibility'] = 'required'
             event.cfp.save()
 
         # Start wizard
         response, current_url = self.perform_init_wizard(client, event=event)
-        
-        # Post draft without boolean answer and without avatar (avatar is handled in SpeakerStep/UserStep usually)
-        # However, SpeakerProfileForm is usually part of the flow.
-        # For simplicity, let's just test that the draft action works and redirects.
+
+        # Post draft without boolean answer and without avatar
         data = {
             "title": "Draft with missing requirements",
             "action": "draft",
             "content_locale": "en",
             "submission_type": submission_type,
-            # 'question_{q.pk}' is missing
+            # 'question_{q.pk}' is missing intentionally
         }
         response = client.post(current_url, data=data, follow=True)
-        
+
         # Should redirect to submissions list (meaning validation didn't block it)
-        assert "/me/submissions/" in response.request.get("PATH_INFO", ""), f"Draft was blocked. Final URL: {response.request.get('PATH_INFO')}"
-        
+        final_path = response.wsgi_request.path
+        assert "/me/submissions/" in final_path, f"Draft was blocked. Final URL: {final_path}"
+
         with scope(event=event):
             submission = Submission.all_objects.filter(title="Draft with missing requirements").first()
             assert submission is not None

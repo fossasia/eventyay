@@ -326,7 +326,7 @@ class FormFlowStep(TemplateFlowStep):
                             'Your current inputs on this step have been kept; please review and fix the errors below.'
                         ),
                     )
-                    self.set_data(form.data)  # Keep current input in the session even if invalid
+                    self.set_data(form.cleaned_data)  # Keep valid input in the session even if the form is invalid
                     if form.files:
                         self.set_files(form.files)
                     return self.get(request)
@@ -424,14 +424,26 @@ class InfoStep(GenericFlowStep, FormFlowStep):
                         result[field] = obj
         return result
 
+    def get_form(self, from_storage=False, not_strict=None):
+        form = super().get_form(from_storage=from_storage, not_strict=not_strict)
+        if from_storage and not_strict and not form.data.get('title'):
+            # Inject a default title for drafts before the form is validated,
+            # because Submission.title is a non-blank field and without this,
+            # is_valid() would always fail for title-less drafts.
+            data = dict(form.data)
+            data['title'] = str(_('Draft Proposal'))
+            return self.form_class(
+                data=data,
+                initial=form.initial,
+                files=form.files,
+                not_strict=not_strict,
+                **self.get_form_kwargs(),
+            )
+        return form
+
     def done(self, request, draft=False):
         self.request = request
         form = self.get_form(from_storage=True, not_strict=draft)
-        
-        # Inject default title for drafts if missing, so validation passes
-        if draft and not form.data.get('title'):
-            form.data['title'] = str(_('Draft Proposal'))
-
         # Ensure the instance is updated with data from session
         is_valid = form.is_valid()
         if not is_valid:
@@ -583,6 +595,20 @@ class ProfileStep(GenericFlowStep, FormFlowStep):
     def done(self, request, draft=False):
         form = self.get_form(from_storage=True, not_strict=draft)
         if not form.is_valid():
+            if draft:
+                messages.error(
+                    request,
+                    gettext(
+                        'Your profile draft could not be saved because some information is incomplete or invalid. Please review the errors below.'
+                    ),
+                )
+            else:
+                messages.error(
+                    request,
+                    gettext(
+                        'Your profile could not be saved because some information is incomplete or invalid. Please review the errors below.'
+                    ),
+                )
             return
         form.user = request.user
         form.save()
